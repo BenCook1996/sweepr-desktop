@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.env
+data/
+*.db
+*.log
+.DS_Store
+
+# Tauri specific
+app/src-tauri/target/
+app/src-tauri/gen/
+
+mobile/android/.gradle/

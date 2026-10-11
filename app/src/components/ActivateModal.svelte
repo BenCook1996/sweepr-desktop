@@ -1,0 +1,309 @@
+<script lang="ts">
+  import { api, errorMessage } from "../lib/api";
+  import { PRICING } from "../lib/format";
+
+  let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
+
+  let email = $state("");
+  let emailConfirm = $state("");
+  let busy = $state(false);
+  let error = $state<string | null>(null);
+  let waitingPayment = $state(false);
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+  }
+
+  async function checkLicense(): Promise<boolean> {
+    try {
+      const s = await api.licenseStatus(true);
+      if (s.active) {
+        stopPolling();
+        open = false;
+        if (onActivated) onActivated();
+        return true;
+      }
+    } catch { /* polling */ }
+    return false;
+  }
+
+  async function handleActivate() {
+    error = null;
+    if (!email.trim() || !email.includes("@")) {
+      error = "Please enter a valid email address.";
+      return;
+    }
+    if (email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) {
+      error = "Email addresses do not match.";
+      return;
+    }
+
+    busy = true;
+    try {
+      await api.startCheckout();
+      waitingPayment = true;
+      stopPolling();
+      let ticks = 0;
+      pollTimer = setInterval(async () => {
+        if (++ticks > 150) stopPolling();
+        await checkLicense();
+      }, 4000);
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  function close() {
+    stopPolling();
+    open = false;
+    error = null;
+    waitingPayment = false;
+  }
+</script>
+
+{#if open}
+  <div class="modal-backdrop" onclick={close} role="presentation">
+    <div class="modal-sheet card" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.key === "Escape" && close()} role="dialog" aria-modal="true" tabindex="-1">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">Activate now</h2>
+        <button class="close-btn" onclick={close} aria-label="Close">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      {#if !waitingPayment}
+        <div class="modal-body">
+          <p class="prompt-text">
+            Please enter your <strong>Email address</strong> (required for activation)
+          </p>
+
+          <div class="inputs-group">
+            <input
+              type="email"
+              bind:value={email}
+              placeholder="Enter email address"
+              class="soft-input"
+            />
+            <input
+              type="email"
+              bind:value={emailConfirm}
+              placeholder="Re-enter email address"
+              class="soft-input"
+            />
+          </div>
+
+          <div class="pricing-hint muted small">
+            {PRICING.activation} for your first {PRICING.trialDays} days, then {PRICING.monthly}/month. Cancel anytime.
+          </div>
+
+          {#if error}
+            <div class="error-banner">{error}</div>
+          {/if}
+
+          <div class="action-row">
+            <button class="primary begin-btn" disabled={busy} onclick={handleActivate}>
+              {busy ? "Opening checkout…" : "Begin activation"}
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Footer Links -->
+        <div class="modal-footer">
+          <a href="#privacy" class="footer-link">Privacy Policy</a>
+          <a href="#sales" class="footer-link">Sales Policy</a>
+          <a href="#info" class="footer-link">More info</a>
+        </div>
+
+      {:else}
+        <!-- Waiting on Checkout Completion -->
+        <div class="modal-body waiting-body">
+          <div class="spinner"></div>
+          <h3>Checkout opened in browser</h3>
+          <p class="muted small">Please complete payment in the secure Stripe window. Sweepr will activate automatically once confirmed.</p>
+          {#if error}
+            <div class="error-banner">{error}</div>
+          {/if}
+          <button class="primary begin-btn" style="margin-top: 16px;" onclick={checkLicense}>
+            Check activation status
+          </button>
+          <button class="ghost" style="margin-top: 6px;" onclick={close}>Cancel</button>
+        </div>
+      {/if}
+    </div>
+  </div>
+{/if}
+
+<style>
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    display: grid;
+    place-items: center;
+    z-index: 200;
+    padding: 20px;
+  }
+
+  .modal-sheet {
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+    padding: 28px 36px 20px 36px;
+    display: flex;
+    flex-direction: column;
+    animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+    letter-spacing: -0.4px;
+  }
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    box-shadow: none;
+  }
+  .close-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .prompt-text {
+    font-size: 15px;
+    color: #334155;
+    margin: 0 0 20px 0;
+  }
+  .prompt-text strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .inputs-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .soft-input {
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 9999px;
+    background: #edf3f8;
+    border: 1.5px solid transparent;
+    font-size: 14px;
+    color: #0f172a;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .soft-input:focus {
+    background: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+
+  .pricing-hint {
+    margin-bottom: 20px;
+  }
+
+  .action-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .begin-btn {
+    padding: 12px 42px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    box-shadow: none;
+    transition: all 0.2s ease;
+  }
+  .begin-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 36px;
+    padding-top: 14px;
+  }
+  .footer-link {
+    font-size: 12px;
+    color: #64748b;
+    text-decoration: underline;
+    transition: color 0.15s;
+  }
+  .footer-link:hover {
+    color: #0f172a;
+  }
+
+  .waiting-body {
+    padding: 20px 0;
+  }
+  .spinner {
+    width: 38px;
+    height: 38px;
+    border: 3.5px solid #e2e8f0;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .error-banner {
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    background: #fef2f2;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+    border-radius: 8px;
+    font-size: 12.5px;
+    width: 100%;
+  }
+</style>

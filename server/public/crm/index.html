@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sweepr Subscription CRM & Customer Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            surface: {
+              800: '#1e293b',
+              850: '#162032',
+              900: '#0f172a',
+              950: '#090d16',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .badge-active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-trialing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-past_due { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-canceled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-none { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-surface-950 text-slate-100 min-h-screen flex antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Sidebar -->
+  <aside class="w-64 border-r border-slate-800 bg-surface-900/90 backdrop-blur-xl flex flex-col fixed inset-y-0 z-30">
+    <div class="p-6 border-b border-slate-800/80 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-bold">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-base tracking-tight text-white block">Sweepr CRM</span>
+          <span class="text-xs text-brand-400 font-mono font-medium">Subscription Engine</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation links -->
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+      <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Main Menu</div>
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+        <span>Overview & Metrics</span>
+      </button>
+      <button onclick="switchTab('customers')" id="nav-customers" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        <span>Customer Directory</span>
+      </button>
+      <button onclick="switchTab('subscriptions')" id="nav-subscriptions" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="credit-card" class="w-4 h-4"></i>
+        <span>Subscriptions & MRR</span>
+      </button>
+      <button onclick="switchTab('activities')" id="nav-activities" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="activity" class="w-4 h-4"></i>
+        <span>Activity & Audit Log</span>
+      </button>
+
+      <div class="pt-6 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Operations</div>
+      <button onclick="seedDemoData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-brand-300 hover:bg-brand-500/10 transition-all">
+        <i data-lucide="database" class="w-4 h-4 text-brand-400"></i>
+        <span>Load Demo Data</span>
+      </button>
+      <button onclick="syncStripe()" id="btn-sync-stripe" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all">
+        <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-400"></i>
+        <span>Sync from Stripe</span>
+      </button>
+      <a href="/" target="_blank" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <i data-lucide="external-link" class="w-4 h-4"></i>
+        <span>View Public Site</span>
+      </a>
+    </nav>
+
+    <!-- User Profile Footer -->
+    <div class="p-4 border-t border-slate-800 bg-surface-900/60">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-semibold text-xs text-brand-400">
+          AD
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs font-semibold text-white truncate">Administrator</div>
+          <div class="text-[11px] text-slate-400 truncate">crm-admin@sweepr.local</div>
+        </div>
+        <span class="inline-block w-2 h-2 rounded-full bg-brand-400"></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="ml-64 flex-1 flex flex-col min-h-screen">
+
+    <!-- Top Navbar -->
+    <header class="h-16 border-b border-slate-800 bg-surface-900/50 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-20">
+      <div class="flex items-center gap-4">
+        <h1 id="page-title" class="text-lg font-bold text-white tracking-tight">Overview & Metrics</h1>
+        <div class="h-4 w-px bg-slate-800"></div>
+        <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700/50">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Engine Online</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+          <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Search accounts, emails, IDs..." class="bg-surface-800/80 border border-slate-700 text-xs rounded-lg pl-9 pr-4 py-2 w-64 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-colors">
+        </div>
+        <button onclick="openMakeMePaidModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-brand-500/20 border border-amber-500/30 text-amber-300 hover:border-amber-400 hover:text-white text-xs font-bold transition-all shadow-sm">
+          <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+          <span>Make Myself Paid</span>
+        </button>
+        <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md shadow-brand-500/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Create Subscription</span>
+        </button>
+        <button onclick="refreshData()" class="p-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 transition-all">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Pages Container -->
+    <div class="p-8 flex-1">
+
+      <!-- TAB 1: DASHBOARD / OVERVIEW -->
+      <section id="tab-dashboard" class="space-y-8">
+        
+        <!-- Key Financial Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden shadow-lg group hover:border-brand-500/40 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Monthly Recurring (MRR)</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl font-black text-white font-mono" id="stat-mrr">$0.00</div>
+            <div class="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
+              <span class="text-emerald-400 font-semibold" id="stat-arr">$0.00 ARR</span>
+              <span>annual run-rate</span>
+            </div>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden shadow-lg group hover:border-blue-500/40 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Subscribers</span>
+              <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl font-black text-white font-mono" id="stat-active-subs">0</div>
+            <div class="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
+              <span class="text-blue-400 font-semibold" id="stat-trialing-subs">0 in trial</span>
+              <span>converting</span>
+            </div>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden shadow-lg group hover:border-amber-500/40 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Past Due / Dunning</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl font-black text-amber-400 font-mono" id="stat-past-due">0</div>
+            <div class="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
+              <span class="text-amber-300 font-semibold" id="stat-at-risk">0 at risk</span>
+              <span>needs attention</span>
+            </div>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden shadow-lg group hover:border-purple-500/40 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Protected Hardware</span>
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                <i data-lucide="laptop" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-2xl font-black text-white font-mono" id="stat-devices">0</div>
+            <div class="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
+              <span class="text-purple-400 font-semibold" id="stat-avg-health">100%</span>
+              <span>avg health score</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Breakdown & Fast Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="font-bold text-white text-base">Subscription Funnel & Cohort Health</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Real-time status breakdown across customer accounts</p>
+              </div>
+              <span class="text-xs font-mono text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-full border border-brand-500/20">Live Sync</span>
+            </div>
+
+            <!-- Health Distribution Bars -->
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Active Paying Customers</span>
+                  <span class="font-mono text-emerald-400" id="funnel-active">0 accounts</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div id="bar-active" class="bg-gradient-to-r from-emerald-500 to-brand-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400"></span> Free Trials in Progress</span>
+                  <span class="font-mono text-blue-400" id="funnel-trials">0 accounts</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div id="bar-trials" class="bg-gradient-to-r from-blue-500 to-sky-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Past Due / Dunning Grace</span>
+                  <span class="font-mono text-amber-400" id="funnel-past-due">0 accounts</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div id="bar-past-due" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Churned / Canceled</span>
+                  <span class="font-mono text-rose-400" id="funnel-canceled">0 accounts</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div id="bar-canceled" class="bg-gradient-to-r from-rose-500 to-red-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Operator Tips -->
+            <div class="mt-8 p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 flex items-start gap-3">
+              <i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+              <div class="text-xs text-slate-300 leading-relaxed">
+                <span class="font-semibold text-white">Revenue Operations Note:</span> Sweepr automatically synchronizes subscription states with Stripe webhooks. Involuntary dunning gives customers a 3-day offline grace period before locking machine entitlements.
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions & At-Risk Callouts -->
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-white text-base">Quick Operator Actions</h3>
+                <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div class="space-y-3">
+                <button onclick="openMakeMePaidModal()" class="w-full text-left p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-brand-500/10 border border-amber-500/40 hover:border-amber-400 hover:bg-surface-800 transition-all flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5"><i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i> Make Myself a Paid User</div>
+                    <div class="text-[11px] text-slate-400">One-click lifetime VIP access & instant PC activation</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-amber-400"></i>
+                </button>
+
+                <button onclick="openCreateSubscriptionModal()" class="w-full text-left p-3.5 rounded-xl bg-surface-800/80 border border-slate-700 hover:border-brand-500/50 hover:bg-surface-800 transition-all flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-white flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-brand-400"></i> Create Paid Subscription</div>
+                    <div class="text-[11px] text-slate-400">Issue custom monthly, annual, or lifetime plans</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </button>
+
+                <button onclick="switchTab('customers')" class="w-full text-left p-3.5 rounded-xl bg-surface-800/80 border border-slate-700 hover:border-brand-500/50 hover:bg-surface-800 transition-all flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-white">Search Customer Directory</div>
+                    <div class="text-[11px] text-slate-400">Manage 360 profiles & devices</div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </button>
+
+                <button onclick="seedDemoData()" class="w-full text-left p-3.5 rounded-xl bg-surface-800/80 border border-slate-700 hover:border-blue-500/50 hover:bg-surface-800 transition-all flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-white">Load Sample B2B Portfolio</div>
+                    <div class="text-[11px] text-slate-400">Seed active, trial & dunning demo accounts</div>
+                  </div>
+                  <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i>
+                </button>
+
+                <button onclick="syncStripe()" class="w-full text-left p-3.5 rounded-xl bg-surface-800/80 border border-slate-700 hover:border-emerald-500/50 hover:bg-surface-800 transition-all flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-white">Run Stripe Reconcile</div>
+                    <div class="text-[11px] text-slate-400">Pull latest customers & invoices</div>
+                  </div>
+                  <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-400"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-800/80">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">System Specs</div>
+              <div class="text-xs font-mono text-slate-400 space-y-1">
+                <div>Backend: Hono + Node 22 (Built-in SQLite)</div>
+                <div>Licensing: Ed25519 Compact JWS</div>
+                <div>Billing: Stripe Billing v17 API</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- TAB 2: CUSTOMERS DIRECTORY -->
+      <section id="tab-customers" class="hidden space-y-6">
+        
+        <!-- Filter Pills Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-surface-900 p-4 rounded-2xl border border-slate-800">
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Filter:</span>
+            <button onclick="filterStatus('all')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500 text-white shadow-sm" data-status="all">All Accounts</button>
+            <button onclick="filterStatus('active')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="active">Active</button>
+            <button onclick="filterStatus('trialing')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="trialing">Trialing</button>
+            <button onclick="filterStatus('past_due')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="past_due">Past Due (Dunning)</button>
+            <button onclick="filterStatus('canceled')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="canceled">Canceled</button>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-xs text-slate-400 font-mono" id="customer-count-label">Showing 0 customers</div>
+            <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+              <span>New Paid Customer</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-surface-850/80 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="py-3.5 px-6">Customer / Account</th>
+                  <th class="py-3.5 px-4">Subscription</th>
+                  <th class="py-3.5 px-4">Monthly Value</th>
+                  <th class="py-3.5 px-4">Devices</th>
+                  <th class="py-3.5 px-4">Health</th>
+                  <th class="py-3.5 px-4">Stage</th>
+                  <th class="py-3.5 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customers-table-body" class="divide-y divide-slate-800/80 text-slate-300">
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-slate-400">Loading customers...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SUBSCRIPTIONS OVERVIEW -->
+      <section id="tab-subscriptions" class="hidden space-y-6">
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="font-bold text-white text-base mb-1">Active Recurring Agreements</h3>
+              <p class="text-xs text-slate-400">Complete ledger of billing agreements, price intervals, and automated renewals</p>
+            </div>
+            <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Create Subscription</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-surface-850/80 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="py-3.5 px-6">Account ID</th>
+                  <th class="py-3.5 px-4">Plan Interval</th>
+                  <th class="py-3.5 px-4">Status</th>
+                  <th class="py-3.5 px-4">Unit Price</th>
+                  <th class="py-3.5 px-4">Renewal Date</th>
+                  <th class="py-3.5 px-4">Auto-Renew</th>
+                  <th class="py-3.5 px-6 text-right">360 View</th>
+                </tr>
+              </thead>
+              <tbody id="subscriptions-table-body" class="divide-y divide-slate-800/80 text-slate-300">
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-slate-400">Loading subscriptions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: AUDIT & ACTIVITIES LOG -->
+      <section id="tab-activities" class="hidden space-y-6">
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="font-bold text-white text-base">Global Audit & Event Stream</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Immutable audit trail of purchases, grants, plan modifications, and hardware activations</p>
+            </div>
+            <button onclick="loadActivities()" class="text-xs bg-surface-800 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300 hover:text-white flex items-center gap-2">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+            </button>
+          </div>
+
+          <div id="activities-stream" class="space-y-4">
+            <div class="py-12 text-center text-slate-400 text-xs">Loading audit events...</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- CUSTOMER 360 DRAWER / MODAL -->
+  <div id="drawer-360" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex justify-end transition-opacity">
+    <div class="w-full max-w-2xl bg-surface-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden animate-slide-left">
+      
+      <!-- Drawer Header -->
+      <div class="p-6 border-b border-slate-800 bg-surface-850/90 flex items-start justify-between">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-brand-500/20" id="drawer-avatar">
+            AC
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h2 id="drawer-name" class="font-bold text-lg text-white">Customer Name</h2>
+              <span id="drawer-status-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-active">Active</span>
+            </div>
+            <div id="drawer-email" class="text-xs text-slate-400 font-mono mt-0.5">email@domain.com</div>
+            <div class="flex items-center gap-3 mt-2 text-xs text-slate-400">
+              <span id="drawer-account-id" class="font-mono bg-slate-800 px-2 py-0.5 rounded text-[11px]">acc_123</span>
+              <span id="drawer-stripe-link" class="text-brand-400 font-mono text-[11px]">Stripe ID: None</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeDrawer()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Fast Action Ribbon -->
+      <div class="p-4 bg-surface-900 border-b border-slate-800 flex items-center gap-2 flex-wrap">
+        <button onclick="openGrantModal()" class="px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="gift" class="w-3.5 h-3.5"></i> Grant / Extend Plan
+        </button>
+        <button onclick="openCancelModal()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-rose-500/20 hover:text-rose-400 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
+          <i data-lucide="slash" class="w-3.5 h-3.5"></i> Cancel Sub
+        </button>
+        <button onclick="generatePortalLink()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-blue-500/20 hover:text-blue-400 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Stripe Portal Link
+        </button>
+        <button onclick="openEditProfileModal()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Profile
+        </button>
+      </div>
+
+      <!-- Drawer Tabs Navigation -->
+      <div class="px-6 border-b border-slate-800 flex gap-6 text-xs font-semibold">
+        <button onclick="switchDrawerTab('overview')" id="dtab-nav-overview" class="py-3 border-b-2 border-brand-500 text-brand-400">Subscription & Details</button>
+        <button onclick="switchDrawerTab('devices')" id="dtab-nav-devices" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-white">Hardware Devices</button>
+        <button onclick="switchDrawerTab('invoices')" id="dtab-nav-invoices" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-white">Invoices & Billing</button>
+        <button onclick="switchDrawerTab('timeline')" id="dtab-nav-timeline" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-white">Timeline & Notes</button>
+      </div>
+
+      <!-- Drawer Content Body -->
+      <div class="p-6 flex-1 overflow-y-auto space-y-6">
+
+        <!-- Drawer Tab 1: Overview -->
+        <div id="dtab-overview" class="space-y-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-surface-850 border border-slate-800">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Current Tier</span>
+              <div class="text-base font-bold text-white capitalize" id="drawer-plan">Monthly Pro</div>
+              <div class="text-xs text-slate-400 mt-1" id="drawer-billing-info">$9.99 / month</div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-surface-850 border border-slate-800">
+              <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Period Expiration</span>
+              <div class="text-base font-bold text-white font-mono" id="drawer-period-end">In 28 days</div>
+              <div class="text-xs text-slate-400 mt-1" id="drawer-autorenew-info">Auto-renew active</div>
+            </div>
+          </div>
+
+          <!-- Customer Health & Lifetime Value -->
+          <div class="p-5 rounded-xl bg-surface-850 border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white">Customer Relationship Health</span>
+              <span class="text-xs font-mono font-bold text-brand-400" id="drawer-health-score">98 / 100</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-2">
+              <div id="drawer-health-bar" class="bg-brand-500 h-2 rounded-full" style="width: 98%"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs pt-2">
+              <div>
+                <span class="text-slate-400 block text-[11px]">Cumulative Lifetime Value:</span>
+                <span class="font-bold text-white font-mono text-sm" id="drawer-ltv">$198.00</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Lifecycle Stage:</span>
+                <span class="font-bold text-white capitalize text-sm" id="drawer-stage">Customer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drawer Tab 2: Devices -->
+        <div id="dtab-devices" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Authorized Hardware Units</h4>
+            <span class="text-xs text-slate-400 font-mono" id="drawer-device-count">0 devices registered</span>
+          </div>
+          <div id="drawer-devices-list" class="space-y-3">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Drawer Tab 3: Invoices -->
+        <div id="dtab-invoices" class="hidden space-y-4">
+          <h4 class="text-xs font-bold text-white uppercase tracking-wider">Historical Transactions & Receipts</h4>
+          <div id="drawer-invoices-list" class="space-y-3">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Drawer Tab 4: Timeline & Notes -->
+        <div id="dtab-timeline" class="hidden space-y-6">
+          <!-- Add Note Form -->
+          <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 space-y-3">
+            <h5 class="text-xs font-bold text-white">Add Customer Success Note</h5>
+            <textarea id="note-input" rows="2" placeholder="Record customer feedback, support call notes, or renewal expectations..." class="w-full bg-surface-900 border border-slate-700 rounded-lg p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+            <div class="flex justify-end">
+              <button onclick="submitNote()" class="px-3.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-semibold text-xs flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Save Note
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes & Activities Combined Timeline -->
+          <div class="space-y-3" id="drawer-timeline-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GRANT / EXTEND LICENSE -->
+  <div id="modal-grant" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white text-base">Grant / Extend Subscription</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Status to Grant</label>
+          <select id="grant-status" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white">
+            <option value="active">Active (Paid Access)</option>
+            <option value="trialing">Trialing (Free Trial)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
+          <select id="grant-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white">
+            <option value="monthly">Monthly Pro ($9.99/mo)</option>
+            <option value="annual">Annual Enterprise ($99.00/yr)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Duration (Days from Today)</label>
+          <input type="number" id="grant-days" value="30" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono">
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">Cancel</button>
+        <button onclick="submitGrant()" class="px-4 py-2 rounded-lg bg-brand-500 text-white text-xs font-semibold hover:bg-brand-600">Apply Grant</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CANCEL SUBSCRIPTION -->
+  <div id="modal-cancel" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white text-base">Cancel Customer Subscription</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Choose whether to terminate access immediately or allow the customer to continue using the software until the current billing cycle expires.
+      </p>
+      <div class="space-y-3 text-xs">
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-surface-850 border border-slate-800 cursor-pointer">
+          <input type="radio" name="cancel-type" value="period_end" checked class="mt-0.5 text-brand-500">
+          <div>
+            <div class="font-semibold text-white">Cancel at Period End (Recommended)</div>
+            <div class="text-slate-400 text-[11px]">Keeps access active until their current paid period finishes.</div>
+          </div>
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-surface-850 border border-slate-800 cursor-pointer">
+          <input type="radio" name="cancel-type" value="immediate" class="mt-0.5 text-rose-500">
+          <div>
+            <div class="font-semibold text-rose-400">Cancel Immediately</div>
+            <div class="text-slate-400 text-[11px]">Instantly revokes device entitlement tokens.</div>
+          </div>
+        </label>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">Go Back</button>
+        <button onclick="submitCancel()" class="px-4 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700">Confirm Cancellation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE PAID SUBSCRIPTION -->
+  <div id="modal-create-subscription" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-lg bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-base">Create Paid Subscription</h3>
+            <p class="text-[11px] text-slate-400">Issue an active license agreement and customer record</p>
+          </div>
+        </div>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Customer Name</label>
+            <input type="text" id="create-sub-name" placeholder="e.g. Benjamin" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Email Address <span class="text-rose-400">*</span></label>
+            <input type="email" id="create-sub-email" placeholder="e.g. user@domain.com" required class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
+            <select id="create-sub-plan" onchange="handlePlanChange(this.value)" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-500">
+              <option value="annual" selected>Annual Pro ($99.00/yr)</option>
+              <option value="monthly">Monthly Pro ($9.99/mo)</option>
+              <option value="lifetime">Lifetime VIP ($199.00 one-time)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Subscription Status</label>
+            <select id="create-sub-status" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-500">
+              <option value="active" selected>Active (Paid License)</option>
+              <option value="trialing">Trialing (Free Trial)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Duration (Days)</label>
+            <input type="number" id="create-sub-days" value="365" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Amount Paid ($ USD)</label>
+            <input type="number" step="0.01" id="create-sub-amount" value="99.00" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <!-- Local Machine Activation Option -->
+        <div class="p-3.5 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-start gap-3">
+          <input type="checkbox" id="create-sub-local-app" checked class="mt-1 w-4 h-4 text-brand-500 rounded bg-surface-800 border-slate-700">
+          <div class="flex-1">
+            <label for="create-sub-local-app" class="font-bold text-brand-300 block cursor-pointer">Activate on this PC (Instant Desktop Unlock)</label>
+            <p class="text-slate-400 text-[11px] mt-0.5">Automatically registers this computer's hardware ID and writes the signed license token to Sweepr AppData.</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Notes / Reference (Optional)</label>
+          <textarea id="create-sub-notes" rows="2" placeholder="e.g. Paid subscriber created via CRM administration" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onclick="submitCreateSubscription()" id="btn-submit-create-sub" class="px-5 py-2 rounded-lg bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 transition-colors shadow-lg shadow-brand-500/20 flex items-center gap-2">
+          <span>Create Paid Subscription</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MAKE MYSELF PAID (1-CLICK VIP) -->
+  <div id="modal-make-me-paid" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-amber-500/40 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-surface-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/20">
+            <i data-lucide="crown" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base">Make Myself a Paid User</h3>
+            <p class="text-[11px] text-amber-400 font-medium">Owner & Developer Instant License</p>
+          </div>
+        </div>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="p-3.5 rounded-xl bg-surface-850 border border-slate-800 text-slate-300 space-y-1.5 leading-relaxed">
+          <p class="font-semibold text-white">This action will automatically:</p>
+          <ul class="space-y-1 text-slate-400 list-disc list-inside">
+            <li>Create an <span class="text-emerald-400 font-medium">Active Lifetime VIP</span> subscription in CRM</li>
+            <li>Detect your computer's hardware MachineGuid</li>
+            <li>Write your <span class="text-brand-300 font-mono">account.json</span> credentials to Sweepr AppData</li>
+            <li>Generate an Ed25519 cryptographic token so Sweepr unlocks offline & online</li>
+          </ul>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Your Name</label>
+          <input type="text" id="mmp-name" value="Benjamin" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Your Email</label>
+          <input type="email" id="mmp-email" value="benjamin@sweepr.local" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Plan Level</label>
+          <select id="mmp-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-amber-500">
+            <option value="lifetime" selected>👑 Lifetime VIP Access (100 Years • Unrestricted)</option>
+            <option value="annual">Annual Pro ($99.00/yr)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onclick="submitMakeMePaid()" id="btn-submit-mmp" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-brand-500 hover:from-amber-400 hover:to-brand-400 text-surface-950 font-black text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Activate My Machine Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUCCESS CREDENTIALS & ACTIVATION -->
+  <div id="modal-credentials" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-emerald-500/40 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 mx-auto flex items-center justify-center text-xl">
+          <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+        </div>
+        <h3 class="font-extrabold text-white text-lg">Paid Subscription Activated!</h3>
+        <p id="cred-message" class="text-xs text-slate-300 leading-relaxed"></p>
+      </div>
+
+      <div class="space-y-3 bg-surface-850 p-4 rounded-xl border border-slate-800 text-xs font-mono">
+        <div>
+          <span class="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Account ID</span>
+          <div class="flex items-center justify-between text-white mt-0.5">
+            <span id="cred-acc-id" class="text-brand-400 font-bold truncate"></span>
+            <button onclick="copyToClipboard('cred-acc-id')" class="text-slate-400 hover:text-white ml-2"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+        <div>
+          <span class="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Refresh Token</span>
+          <div class="flex items-center justify-between text-slate-300 mt-0.5">
+            <span id="cred-token" class="truncate text-[11px]"></span>
+            <button onclick="copyToClipboard('cred-token')" class="text-slate-400 hover:text-white ml-2"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </div>
+        <div id="cred-local-badge" class="pt-2 border-t border-slate-800 text-[11px] text-emerald-400 flex items-center gap-1.5 font-sans font-medium">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Desktop app files updated in AppData</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModals()" class="w-full py-2.5 rounded-lg bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 transition-colors">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    let activeCustomer = null;
+    let allCustomers = [];
+    let currentFilterStatus = 'all';
+
+    // Initialize Dashboard
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      refreshData();
+    });
+
+    async function refreshData() {
+      await Promise.all([
+        loadStats(),
+        loadCustomers(),
+        loadActivities()
+      ]);
+    }
+
+    // Switch Main Menu Tabs
+    function switchTab(tab) {
+      document.querySelectorAll('main > div > section').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60";
+      });
+      document.getElementById(`nav-${tab}`).className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20";
+
+      const titles = {
+        dashboard: "Overview & Metrics",
+        customers: "Customer Directory",
+        subscriptions: "Subscriptions & Recurring Revenue",
+        activities: "Activity & Audit Log"
+      };
+      document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
+      lucide.createIcons();
+    }
+
+    // Fetch CRM Stats
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/crm/stats');
+        const stats = await res.json();
+
+        document.getElementById('stat-mrr').textContent = `$${(stats.mrrCents / 100).toFixed(2)}`;
+        document.getElementById('stat-arr').textContent = `$${(stats.arrCents / 100).toFixed(2)}`;
+        document.getElementById('stat-active-subs').textContent = stats.activeSubscriptions;
+        document.getElementById('stat-trialing-subs').textContent = `${stats.trialingSubscriptions} in trial`;
+        document.getElementById('stat-past-due').textContent = stats.pastDueSubscriptions;
+        document.getElementById('stat-at-risk').textContent = `${stats.atRiskAccountsCount} at risk`;
+        document.getElementById('stat-devices').textContent = stats.activeDevices;
+        document.getElementById('stat-avg-health').textContent = `${stats.averageHealthScore}%`;
+
+        // Funnel calculation
+        const total = Math.max(stats.totalCustomers, 1);
+        document.getElementById('funnel-active').textContent = `${stats.activeSubscriptions} accounts`;
+        document.getElementById('bar-active').style.width = `${(stats.activeSubscriptions / total) * 100}%`;
+
+        document.getElementById('funnel-trials').textContent = `${stats.trialingSubscriptions} accounts`;
+        document.getElementById('bar-trials').style.width = `${(stats.trialingSubscriptions / total) * 100}%`;
+
+        document.getElementById('funnel-past-due').textContent = `${stats.pastDueSubscriptions} accounts`;
+        document.getElementById('bar-past-due').style.width = `${(stats.pastDueSubscriptions / total) * 100}%`;
+
+        document.getElementById('funnel-canceled').textContent = `${stats.canceledSubscriptions} accounts`;
+        document.getElementById('bar-canceled').style.width = `${(stats.canceledSubscriptions / total) * 100}%`;
+      } catch (err) {
+        console.error("Failed to load CRM stats:", err);
+      }
+    }
+
+    // Fetch Customers Directory
+    async function loadCustomers(search = '') {
+      try {
+        let url = `/api/crm/customers?status=${currentFilterStatus}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        allCustomers = data.customers;
+
+        renderCustomersTable(allCustomers);
+        renderSubscriptionsTable(allCustomers);
+        document.getElementById('customer-count-label').textContent = `Showing ${allCustomers.length} of ${data.total} accounts`;
+      } catch (err) {
+        console.error("Failed to load customers:", err);
+      }
+    }
+
+    function renderCustomersTable(customers) {
+      const tbody = document.getElementById('customers-table-body');
+      if (customers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400">No customers found. Click <strong>Load Demo Data</strong> above to seed sample data.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = customers.map(c => {
+        const initials = (c.name || c.email || c.id).slice(0, 2).toUpperCase();
+        const statusBadgeClass = `badge-${c.subscription_status}`;
+        const healthColor = c.health_score > 70 ? 'text-emerald-400' : c.health_score > 40 ? 'text-amber-400' : 'text-rose-400';
+
+        return `
+          <tr class="hover:bg-surface-850/60 transition-colors cursor-pointer group" onclick="openCustomer360('${c.id}')">
+            <td class="py-4 px-6">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-slate-800 text-brand-400 font-bold flex items-center justify-center text-xs border border-slate-700">
+                  ${initials}
+                </div>
+                <div>
+                  <div class="font-bold text-white group-hover:text-brand-400 transition-colors">${c.name || 'Anonymous User'}</div>
+                  <div class="text-[11px] text-slate-400 font-mono">${c.email || c.id}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-4 px-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusBadgeClass} capitalize">
+                ${c.subscription_status}
+              </span>
+            </td>
+            <td class="py-4 px-4 font-mono font-bold text-white">
+              $${(c.amount_cents / 100).toFixed(2)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${c.billing_interval}</span>
+            </td>
+            <td class="py-4 px-4">
+              <span class="inline-flex items-center gap-1.5 font-mono text-slate-300">
+                <i data-lucide="laptop" class="w-3.5 h-3.5 text-slate-400"></i> ${c.device_count}
+              </span>
+            </td>
+            <td class="py-4 px-4">
+              <span class="font-mono font-bold ${healthColor}">${c.health_score}%</span>
+            </td>
+            <td class="py-4 px-4">
+              <span class="capitalize text-slate-300 bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-700/60">${c.lifecycle_stage}</span>
+            </td>
+            <td class="py-4 px-6 text-right">
+              <button onclick="event.stopPropagation(); openCustomer360('${c.id}')" class="px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-brand-500 hover:text-white text-slate-300 font-semibold text-xs border border-slate-700 transition-all">
+                360 View
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderSubscriptionsTable(customers) {
+      const tbody = document.getElementById('subscriptions-table-body');
+      tbody.innerHTML = customers.map(c => {
+        const dateStr = c.current_period_end ? new Date(c.current_period_end * 1000).toLocaleDateString() : 'N/A';
+        return `
+          <tr class="hover:bg-surface-850/60 transition-colors">
+            <td class="py-4 px-6 font-mono text-white font-semibold">${c.id}</td>
+            <td class="py-4 px-4 capitalize text-slate-300">${c.plan || 'Monthly'} (${c.billing_interval})</td>
+            <td class="py-4 px-4"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${c.subscription_status} capitalize">${c.subscription_status}</span></td>
+            <td class="py-4 px-4 font-mono text-white">$${(c.amount_cents / 100).toFixed(2)}</td>
+            <td class="py-4 px-4 font-mono text-slate-300">${dateStr}</td>
+            <td class="py-4 px-4">
+              <span class="text-xs font-semibold ${c.cancel_at_period_end ? 'text-rose-400' : 'text-emerald-400'}">
+                ${c.cancel_at_period_end ? 'Cancels at end' : 'Renews Automatically'}
+              </span>
+            </td>
+            <td class="py-4 px-6 text-right">
+              <button onclick="openCustomer360('${c.id}')" class="text-brand-400 hover:underline font-semibold">Inspect</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Filter by status pill
+    function filterStatus(status) {
+      currentFilterStatus = status;
+      document.querySelectorAll('.status-filter').forEach(btn => {
+        if (btn.dataset.status === status) {
+          btn.className = "status-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500 text-white shadow-sm";
+        } else {
+          btn.className = "status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800";
+        }
+      });
+      loadCustomers(document.getElementById('global-search').value);
+    }
+
+    // Global Search debouncing
+    let searchTimeout = null;
+    function handleSearch(val) {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        loadCustomers(val);
+      }, 250);
+    }
+
+    // Open Customer 360 Drawer
+    async function openCustomer360(customerId) {
+      try {
+        const res = await fetch(`/api/crm/customers/${customerId}`);
+        const data = await res.json();
+        activeCustomer = data;
+
+        const acc = data.account;
+        const ent = data.entitlement;
+
+        document.getElementById('drawer-name').textContent = acc.name || 'Anonymous Account';
+        document.getElementById('drawer-email').textContent = acc.email || 'No email attached';
+        document.getElementById('drawer-account-id').textContent = acc.id;
+        document.getElementById('drawer-stripe-link').textContent = acc.stripe_customer_id ? `Stripe: ${acc.stripe_customer_id}` : 'Stripe: None';
+        document.getElementById('drawer-avatar').textContent = (acc.name || acc.email || acc.id).slice(0, 2).toUpperCase();
+
+        const badge = document.getElementById('drawer-status-badge');
+        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${ent.status} capitalize`;
+        badge.textContent = ent.status;
+
+        document.getElementById('drawer-plan').textContent = `${ent.plan || 'Monthly'} Tier`;
+        document.getElementById('drawer-period-end').textContent = ent.current_period_end ? new Date(ent.current_period_end * 1000).toLocaleDateString() : 'Continuous';
+        document.getElementById('drawer-autorenew-info').textContent = ent.cancel_at_period_end ? 'Scheduled to Cancel at Period End' : 'Auto-renew active';
+
+        document.getElementById('drawer-health-score').textContent = `${acc.health_score || 100} / 100`;
+        document.getElementById('drawer-health-bar').style.width = `${acc.health_score || 100}%`;
+        document.getElementById('drawer-ltv').textContent = `$${((acc.total_spend_cents || 0) / 100).toFixed(2)}`;
+        document.getElementById('drawer-stage').textContent = acc.lifecycle_stage || 'customer';
+
+        // Render Devices
+        renderDrawerDevices(data.devices);
+
+        // Render Invoices
+        renderDrawerInvoices(data.invoices);
+
+        // Render Timeline & Notes
+        renderDrawerTimeline(data.activities, data.notes);
+
+        document.getElementById('drawer-360').classList.remove('hidden');
+        switchDrawerTab('overview');
+        lucide.createIcons();
+      } catch (err) {
+        console.error("Failed to load customer profile:", err);
+      }
+    }
+
+    function renderDrawerDevices(devices) {
+      const list = document.getElementById('drawer-devices-list');
+      document.getElementById('drawer-device-count').textContent = `${devices.length} registered hardware machines`;
+
+      if (devices.length === 0) {
+        list.innerHTML = `<div class="p-4 rounded-xl bg-surface-850 text-slate-400 text-center text-xs">No devices linked to this account yet.</div>`;
+        return;
+      }
+
+      list.innerHTML = devices.map(d => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 flex items-center justify-between">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-white text-xs">${d.id.slice(0, 16)}...</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${d.revoked ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
+                ${d.revoked ? 'Revoked' : 'Active'}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-400">Last seen: ${new Date(d.last_seen * 1000).toLocaleString()}</div>
+          </div>
+          <div>
+            ${d.revoked 
+              ? `<button onclick="restoreDevice('${d.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white text-xs font-semibold transition-all">Restore</button>`
+              : `<button onclick="revokeDevice('${d.id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-all">Revoke</button>`
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDrawerInvoices(invoices) {
+      const list = document.getElementById('drawer-invoices-list');
+      if (invoices.length === 0) {
+        list.innerHTML = `<div class="p-4 rounded-xl bg-surface-850 text-slate-400 text-center text-xs">No past invoices found.</div>`;
+        return;
+      }
+
+      list.innerHTML = invoices.map(inv => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 flex items-center justify-between text-xs">
+          <div>
+            <div class="font-mono font-bold text-white">${inv.id}</div>
+            <div class="text-[11px] text-slate-400">${new Date(inv.created_at * 1000).toLocaleDateString()}</div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="font-mono font-bold text-white">$${(inv.amount_paid_cents / 100).toFixed(2)}</div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} uppercase">${inv.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDrawerTimeline(activities, notes) {
+      const list = document.getElementById('drawer-timeline-list');
+      const combined = [
+        ...notes.map(n => ({ type: 'note', title: `Note by ${n.author}`, desc: n.content, time: n.created_at })),
+        ...activities.map(a => ({ type: a.type, title: a.title, desc: a.description, time: a.created_at }))
+      ].sort((a, b) => b.time - a.time);
+
+      list.innerHTML = combined.map(item => `
+        <div class="p-3.5 rounded-xl bg-surface-850 border border-slate-800 text-xs space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold ${item.type === 'note' ? 'text-brand-400' : 'text-white'}">${item.title}</span>
+            <span class="text-[11px] text-slate-500 font-mono">${new Date(item.time * 1000).toLocaleTimeString()}</span>
+          </div>
+          <div class="text-slate-300 leading-relaxed">${item.desc || ''}</div>
+        </div>
+      `).join('');
+    }
+
+    function switchDrawerTab(tab) {
+      ['overview', 'devices', 'invoices', 'timeline'].forEach(t => {
+        document.getElementById(`dtab-${t}`).classList.add('hidden');
+        document.getElementById(`dtab-nav-${t}`).className = "py-3 border-b-2 border-transparent text-slate-400 hover:text-white";
+      });
+      document.getElementById(`dtab-${tab}`).classList.remove('hidden');
+      document.getElementById(`dtab-nav-${tab}`).className = "py-3 border-b-2 border-brand-500 text-brand-400";
+      lucide.createIcons();
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer-360').classList.add('hidden');
+    }
+
+    // Modal Controls
+    function openGrantModal() { document.getElementById('modal-grant').classList.remove('hidden'); lucide.createIcons(); }
+    function openCancelModal() { document.getElementById('modal-cancel').classList.remove('hidden'); lucide.createIcons(); }
+    function openCreateSubscriptionModal() {
+      document.getElementById('modal-create-subscription').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function openMakeMePaidModal() {
+      document.getElementById('modal-make-me-paid').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function handlePlanChange(plan) {
+      const daysInput = document.getElementById('create-sub-days');
+      const amountInput = document.getElementById('create-sub-amount');
+      if (plan === 'monthly') {
+        daysInput.value = '30';
+        amountInput.value = '9.99';
+      } else if (plan === 'annual') {
+        daysInput.value = '365';
+        amountInput.value = '99.00';
+      } else if (plan === 'lifetime') {
+        daysInput.value = '36500';
+        amountInput.value = '199.00';
+      }
+    }
+
+    function closeModals() {
+      document.getElementById('modal-grant').classList.add('hidden');
+      document.getElementById('modal-cancel').classList.add('hidden');
+      document.getElementById('modal-create-subscription').classList.add('hidden');
+      document.getElementById('modal-make-me-paid').classList.add('hidden');
+      document.getElementById('modal-credentials').classList.add('hidden');
+    }
+
+    function showCredentialsModal(data, msg) {
+      closeModals();
+      document.getElementById('cred-message').textContent = msg || data.message || 'Subscription successfully activated.';
+      document.getElementById('cred-acc-id').textContent = data.account_id || 'N/A';
+      document.getElementById('cred-token').textContent = data.refresh_token || 'Saved securely in database';
+      
+      const localBadge = document.getElementById('cred-local-badge');
+      if (data.local_activated) {
+        localBadge.classList.remove('hidden');
+      } else {
+        localBadge.classList.add('hidden');
+      }
+
+      document.getElementById('modal-credentials').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function copyToClipboard(elementId) {
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text);
+      alert('Copied to clipboard: ' + text);
+    }
+
+    // Submit Create Paid Subscription
+    async function submitCreateSubscription() {
+      const name = document.getElementById('create-sub-name').value.trim();
+      const email = document.getElementById('create-sub-email').value.trim();
+      const plan = document.getElementById('create-sub-plan').value;
+      const status = document.getElementById('create-sub-status').value;
+      const days = Number(document.getElementById('create-sub-days').value || 365);
+      const amountVal = parseFloat(document.getElementById('create-sub-amount').value || '0');
+      const amount_cents = Math.round(amountVal * 100);
+      const activate_local_app = document.getElementById('create-sub-local-app').checked;
+      const notes = document.getElementById('create-sub-notes').value.trim();
+
+      if (!email) {
+        alert('Please enter a customer email address.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit-create-sub');
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Creating...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/crm/subscriptions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            plan,
+            status,
+            days,
+            amount_cents,
+            activate_local_app,
+            notes,
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          alert('Failed to create subscription: ' + (data.error || 'Server error'));
+          return;
+        }
+
+        showCredentialsModal(data, `Paid ${plan.toUpperCase()} subscription created for ${name || email}!`);
+        await refreshData();
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      } finally {
+        btn.innerHTML = origText;
+        lucide.createIcons();
+      }
+    }
+
+    // Submit Make Myself Paid
+    async function submitMakeMePaid() {
+      const name = document.getElementById('mmp-name').value.trim() || 'Benjamin';
+      const email = document.getElementById('mmp-email').value.trim() || 'benjamin@sweepr.local';
+      const plan = document.getElementById('mmp-plan').value || 'lifetime';
+
+      const btn = document.getElementById('btn-submit-mmp');
+      const origText = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Activating Machine...</span>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch('/api/crm/make-me-paid', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            plan,
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          alert('Failed to activate: ' + (data.error || 'Server error'));
+          return;
+        }
+
+        showCredentialsModal(data, `👑 You are now an active paid ${plan.toUpperCase()} user! Sweepr desktop app has been unlocked on your PC.`);
+        await refreshData();
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      } finally {
+        btn.innerHTML = origText;
+        lucide.createIcons();
+      }
+    }
+
+    // Submit Actions
+    async function submitGrant() {
+      if (!activeCustomer) return;
+      const status = document.getElementById('grant-status').value;
+      const plan = document.getElementById('grant-plan').value;
+      const days = document.getElementById('grant-days').value;
+
+      await fetch(`/api/crm/customers/${activeCustomer.account.id}/grant`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status, plan, days })
+      });
+      closeModals();
+      await openCustomer360(activeCustomer.account.id);
+      refreshData();
+    }
+
+    async function submitCancel() {
+      if (!activeCustomer) return;
+      const immediate = document.querySelector('input[name="cancel-type"]:checked').value === 'immediate';
+
+      await fetch(`/api/crm/customers/${activeCustomer.account.id}/cancel`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ immediate })
+      });
+      closeModals();
+      await openCustomer360(activeCustomer.account.id);
+      refreshData();
+    }
+
+    async function submitNote() {
+      const content = document.getElementById('note-input').value.trim();
+      if (!content || !activeCustomer) return;
+
+      await fetch(`/api/crm/customers/${activeCustomer.account.id}/notes`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ content, author: 'Admin' })
+      });
+      document.getElementById('note-input').value = '';
+      await openCustomer360(activeCustomer.account.id);
+    }
+
+    async function revokeDevice(deviceId) {
+      if (!activeCustomer) return;
+      await fetch(`/api/crm/customers/${activeCustomer.account.id}/devices/${deviceId}/revoke`, { method: 'POST' });
+      await openCustomer360(activeCustomer.account.id);
+    }
+
+    async function restoreDevice(deviceId) {
+      if (!activeCustomer) return;
+      await fetch(`/api/crm/customers/${activeCustomer.account.id}/devices/${deviceId}/restore`, { method: 'POST' });
+      await openCustomer360(activeCustomer.account.id);
+    }
+
+    async function generatePortalLink() {
+      if (!activeCustomer) return;
+      const res = await fetch(`/api/crm/customers/${activeCustomer.account.id}/portal-link`, { method: 'POST' });
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        alert(data.error || 'Customer has no active Stripe ID yet');
+      }
+    }
+
+    // Load Audit Activity Stream
+    async function loadActivities() {
+      try {
+        const res = await fetch('/api/crm/activities?limit=25');
+        const data = await res.json();
+        const container = document.getElementById('activities-stream');
+
+        if (data.activities.length === 0) {
+          container.innerHTML = `<div class="py-12 text-center text-slate-400 text-xs">No audit events logged yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = data.activities.map(act => `
+          <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 flex items-start justify-between text-xs">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-surface-800 border border-slate-700 flex items-center justify-center text-brand-400 flex-shrink-0 mt-0.5">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="font-bold text-white">${act.title}</div>
+                <div class="text-slate-400 mt-0.5">${act.description || ''}</div>
+                <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${act.account_id} • Actor: ${act.actor}</div>
+              </div>
+            </div>
+            <span class="text-[11px] font-mono text-slate-500">${new Date(act.created_at * 1000).toLocaleTimeString()}</span>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      } catch (err) {
+        console.error("Failed to load activities:", err);
+      }
+    }
+
+    // Seed Demo Data
+    async function seedDemoData() {
+      try {
+        const res = await fetch('/api/crm/seed-demo', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          alert('Demo customers and subscriptions successfully seeded!');
+          refreshData();
+        }
+      } catch (err) {
+        alert('Failed to seed demo data');
+      }
+    }
+
+    // Sync from Stripe
+    async function syncStripe() {
+      const btn = document.getElementById('btn-sync-stripe');
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-400"></i><span>Syncing...</span>`;
+      try {
+        const res = await fetch('/api/crm/sync-stripe', { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          alert(`Stripe Sync Completed:\n• ${data.synced.customers} customers\n• ${data.synced.subscriptions} subscriptions\n• ${data.synced.invoices} invoices`);
+          refreshData();
+        } else {
+          alert(`Stripe Sync: ${data.error}`);
+        }
+      } catch (err) {
+        alert('Stripe sync request failed');
+      } finally {
+        btn.innerHTML = orig;
+        lucide.createIcons();
+      }
+    }
+  </script>
+</body>
+</html>

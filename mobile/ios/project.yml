@@ -1,0 +1,21 @@
+name: Sweepr
+options:
+  bundleIdPrefix: com.sweepr
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios.git
+    from: 5.0.0
+targets:
+  Sweepr:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources: [Sources]
+    dependencies:
+      - package: RevenueCat
+    info:
+      path: Info.plist
+      properties:
+        UILaunchStoryboardName: LaunchScreen
+        NSPhotoLibraryUsageDescription: "Sweepr analyzes your library on-device to group duplicates and help you reclaim space."
+        NSContactsUsageDescription: "Sweepr scans your contacts locally to find and merge duplicate entries."

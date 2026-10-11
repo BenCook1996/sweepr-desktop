@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand names: never translated -->
+    <string name="app_name" translatable="false">Sweepr</string>
+    <string name="brand_premium" translatable="false">Sweepr Premium</string>
+
+    <!-- Language names, always shown in their own language -->
+    <string name="lang_en" translatable="false">English</string>
+    <string name="lang_es" translatable="false">Español</string>
+    <string name="lang_fr" translatable="false">Français</string>
+    <string name="lang_de" translatable="false">Deutsch</string>
+    <string name="lang_it" translatable="false">Italiano</string>
+    <string name="lang_pt" translatable="false">Português</string>
+    <string name="lang_nl" translatable="false">Nederlands</string>
+
+    <!-- Common -->
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="option_system_default">System default</string>
+    <string name="error_no_browser">No browser available</string>
+    <string name="error_no_email_app">No email app installed</string>
+    <string name="status_no_permission">No permission</string>
+    <string name="status_not_scanned">Not scanned yet</string>
+    <string name="status_tap_to_scan">Tap to scan</string>
+    <string name="status_no_duplicates">No duplicates</string>
+    <plurals name="duplicates_count">
+        <item quantity="one">%d duplicate</item>
+        <item quantity="other">%d duplicates</item>
+    </plurals>
+    <plurals name="videos_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_clean">Clean</string>
+    <string name="nav_tips">Tips</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Categories -->
+    <string name="category_photos">Photos</string>
+    <string name="category_videos">Videos</string>
+    <string name="category_screenshots">Screenshots</string>
+    <string name="category_contacts">Contacts</string>
+    <string name="category_swipe_review">Swipe Review</string>
+    <string name="category_photos_videos">Photos &amp; Videos</string>
+    <string name="category_swipe_cleanup">Swipe Cleanup</string>
+
+    <!-- Home / dashboard -->
+    <string name="dashboard_percent">%1$d%%</string>
+    <string name="dashboard_used_of">%1$s of %2$s</string>
+    <string name="dashboard_used_tap">Used · tap for details</string>
+    <string name="dashboard_limited_access">Limited photo access: Sweepr can only see the photos you picked. Allow full access in Settings for a complete scan.</string>
+    <string name="dashboard_clean_header">Clean</string>
+    <string name="scan_scanning">Scanning…</string>
+    <string name="scan_rescan">Rescan · %1$s junk found</string>
+    <string name="scan_my_phone">Scan My Phone</string>
+    <string name="storage_breakdown_title">Storage Breakdown</string>
+    <string name="storage_total_used">Total Used: %1$s</string>
+    <string name="storage_run_scan">Run a scan to see how much space photos &amp; videos use.</string>
+    <string name="storage_photos_videos">Photos &amp; Videos: %1$s</string>
+    <string name="storage_other">Other Apps &amp; OS: %1$s</string>
+    <string name="storage_free">Free Space: %1$s</string>
+    <plurals name="card_photos_duplicates">
+        <item quantity="one">%1$d duplicate · %2$s</item>
+        <item quantity="other">%1$d duplicates · %2$s</item>
+    </plurals>
+    <plurals name="card_swipe_subtitle">
+        <item quantity="one">%d item to review\nmonth by month</item>
+        <item quantity="other">%d items to review\nmonth by month</item>
+    </plurals>
+    <plurals name="card_screenshots_found">
+        <item quantity="one">%1$d found\n%2$s</item>
+        <item quantity="other">%1$d found\n%2$s</item>
+    </plurals>
+    <plurals name="card_contacts_to_merge">
+        <item quantity="one">%d to merge</item>
+        <item quantity="other">%d to merge</item>
+    </plurals>
+    <string name="cleanup_working">Working…</string>
+    <string name="cleanup_now">Clean Up Now</string>
+    <plurals name="cleanup_files">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <plurals name="cleanup_merge_contacts">
+        <item quantity="one">merge %d contact</item>
+        <item quantity="other">merge %d contacts</item>
+    </plurals>
+
+    <!-- Smart Clean tab -->
+    <string name="clean_title">Smart Clean</string>
+    <string name="clean_scanning">Scanning</string>
+    <string name="clean_deletable_items">Deletable Items</string>
+    <string name="clean_tap_to">Tap to</string>
+    <string name="clean_scan">Scan</string>
+    <string name="clean_storage_used">%1$s of %2$s Used</string>
+    <plurals name="clean_photos_status">
+        <item quantity="one">%1$d duplicate &amp; similar · %2$s</item>
+        <item quantity="other">%1$d duplicates &amp; similar · %2$s</item>
+    </plurals>
+    <plurals name="clean_videos_status">
+        <item quantity="one">%1$d video · %2$s</item>
+        <item quantity="other">%1$d videos · %2$s</item>
+    </plurals>
+    <plurals name="screenshots_status">
+        <item quantity="one">%1$d screenshot · %2$s</item>
+        <item quantity="other">%1$d screenshots · %2$s</item>
+    </plurals>
+    <plurals name="clean_swipe_status">
+        <item quantity="one">%d item, month by month</item>
+        <item quantity="other">%d items, month by month</item>
+    </plurals>
+
+    <!-- Shared media components -->
+    <string name="media_play_video">Play video</string>
+    <string name="cleanup_move_to_trash">Move to trash</string>
+    <string name="cleanup_select_items">Select items to clean</string>
+    <string name="cleanup_bar_label">%1$s · %2$d (%3$s)</string>
+    <string name="media_hint">Tap to select · long-press to preview</string>
+    <string name="media_untitled">Untitled</string>
+
+    <!-- Photos & videos / screenshots screens -->
+    <string name="tab_duplicates">Duplicates (%1$d)</string>
+    <string name="tab_similar">Similar (%1$d)</string>
+    <string name="tab_videos">Videos (%1$d)</string>
+    <plurals name="group_identical_copies">
+        <item quantity="one">%d identical copy</item>
+        <item quantity="other">%d identical copies</item>
+    </plurals>
+    <plurals name="group_similar_shots">
+        <item quantity="one">%d similar shot</item>
+        <item quantity="other">%d similar shots</item>
+    </plurals>
+    <string name="empty_no_duplicates">No duplicate photos or videos found 🎉</string>
+    <string name="empty_no_similar">No similar photos found 🎉</string>
+    <string name="videos_largest_first">Largest videos first</string>
+    <string name="empty_no_videos">No videos found</string>
+    <string name="empty_no_screenshots">No screenshots found 🎉</string>
+    <string name="group_intro">We keep the BEST copy and pre-select the rest. Tap to select · long-press to preview.</string>
+    <string name="group_can_be_freed">%1$s can be freed</string>
+    <string name="action_deselect">Deselect</string>
+    <string name="action_select_extras">Select extras</string>
+    <string name="action_deselect_all">Deselect all</string>
+    <string name="action_select_all">Select all</string>
+    <string name="badge_best">BEST</string>
+
+    <!-- Contacts -->
+    <string name="contacts_select_to_merge">Select contacts to merge</string>
+    <plurals name="contacts_merge_n">
+        <item quantity="one">Merge %d duplicate</item>
+        <item quantity="other">Merge %d duplicates</item>
+    </plurals>
+    <string name="contacts_permission_text">Sweepr needs access to your contacts to find duplicates.</string>
+    <string name="contacts_permission_button">Allow contacts access</string>
+    <string name="contacts_none_found">No duplicate contacts found 🎉</string>
+    <string name="contacts_merge_explainer">Merging links duplicates into one contact. No numbers or emails are deleted, and you can separate them again from your Contacts app.</string>
+    <string name="contacts_no_phone">No phone number</string>
+    <string name="contacts_merge_now">Merge now</string>
+    <string name="contact_no_name">(No name)</string>
+    <string name="contact_reason_same_name_number">Same name &amp; number</string>
+    <string name="contact_reason_same_name">Same name</string>
+    <string name="contact_reason_same_number">Same phone number</string>
+
+    <!-- Swipe cleanup -->
+    <string name="swipe_empty">No photos or videos to review</string>
+    <string name="swipe_intro">Pick a month, then swipe left to delete or right to keep.</string>
+    <plurals name="swipe_month_items">
+        <item quantity="one">%1$d item · %2$s</item>
+        <item quantity="other">%1$d items · %2$s</item>
+    </plurals>
+    <string name="swipe_progress">Reviewed %1$d/%2$d · to delete: %3$d</string>
+    <string name="swipe_month_clean">This month is all clean 🎉</string>
+    <string name="swipe_all_reviewed">All reviewed!</string>
+    <string name="swipe_kept_everything">You kept everything this month.</string>
+    <plurals name="swipe_move_n">
+        <item quantity="one">Tap the button below to move %d item to the trash.</item>
+        <item quantity="other">Tap the button below to move %d items to the trash.</item>
+    </plurals>
+    <string name="swipe_start_again">Start this month again</string>
+    <string name="swipe_delete">Delete</string>
+    <string name="swipe_undo">Undo</string>
+    <string name="swipe_keep">Keep</string>
+    <string name="swipe_video">Video</string>
+    <string name="swipe_stamp_keep">KEEP</string>
+    <string name="swipe_stamp_delete">DELETE</string>
+
+    <!-- Messages (snackbars) -->
+    <string name="msg_need_permissions">Sweepr needs access to photos or contacts to scan. Enable it in Settings.</string>
+    <string name="msg_restore_failed">Restore failed: %1$s</string>
+    <string name="msg_premium_restored">Premium restored – you\'re all set</string>
+    <string name="msg_no_subscription_found">No previous subscription found on this Google account</string>
+    <string name="scan_status_media">Scanning photos &amp; videos…</string>
+    <string name="scan_status_contacts">Checking contacts…</string>
+    <string name="msg_cleanup_start_failed">Couldn\'t start cleanup: %1$s</string>
+    <string name="msg_cleanup_cancelled">Cleanup cancelled – nothing was deleted</string>
+    <string name="msg_nothing_deleted">Nothing was deleted</string>
+    <plurals name="msg_freed_deleted">
+        <item quantity="one">Freed %1$s · %2$d item deleted</item>
+        <item quantity="other">Freed %1$s · %2$d items deleted</item>
+    </plurals>
+    <plurals name="msg_freed_trashed">
+        <item quantity="one">Freed %1$s · %2$d item moved to trash</item>
+        <item quantity="other">Freed %1$s · %2$d items moved to trash</item>
+    </plurals>
+    <string name="msg_merge_failed">Couldn\'t merge contacts</string>
+    <plurals name="msg_merged">
+        <item quantity="one">Merged %d duplicate contact</item>
+        <item quantity="other">Merged %d duplicate contacts</item>
+    </plurals>
+    <string name="msg_allow_contacts_merge">Allow contacts access to merge duplicates</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_account">My Account</string>
+    <string name="settings_account_premium">Sweepr Premium · active</string>
+    <string name="settings_account_free">Free plan · upgrade to clean</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_logs">Generate Log Files</string>
+    <string name="settings_logs_collecting">Collecting diagnostics…</string>
+    <string name="settings_logs_detail">Send diagnostics to support</string>
+    <string name="settings_reminders">Reminders</string>
+    <string name="settings_reminders_blocked">%1$s · notifications blocked</string>
+    <string name="settings_reminders_dialog_title">Clean-up reminders</string>
+    <string name="settings_reminders_dialog_subtitle">Get a nudge to scan and tidy your phone so storage never fills up.</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_permissions">Permissions</string>
+    <string name="perm_photos_limited">Photos: limited</string>
+    <string name="perm_photos_allowed">Photos: allowed</string>
+    <string name="perm_photos_denied">Photos: not allowed</string>
+    <string name="perm_contacts_allowed">Contacts: allowed</string>
+    <string name="perm_contacts_read_only">Contacts: read only</string>
+    <string name="perm_contacts_denied">Contacts: not allowed</string>
+    <string name="settings_rescan">Rescan device</string>
+    <string name="settings_rescan_detail">Run a fresh scan now</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_detail">Version, privacy and support</string>
+    <string name="toast_allow_notifications">Allow notifications in system settings to receive reminders</string>
+    <string name="toast_no_share_app">No app available to share the log</string>
+    <string name="toast_log_failed">Couldn\'t create the log file</string>
+    <string name="log_share_subject">Sweepr log file</string>
+    <string name="log_share_chooser">Send log file</string>
+
+    <!-- Theme / reminder options -->
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="reminder_off">Off</string>
+    <string name="reminder_weekly">Every week</string>
+    <string name="reminder_monthly">Every month</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">Cleanup reminders</string>
+    <string name="notif_channel_desc">Regular reminders to keep your phone clean</string>
+    <string name="notif_title">Time for a Sweepr clean-up</string>
+    <string name="notif_text_percent">Your storage is %1$d%% full. Tap to find duplicates, screenshots and junk you can clear.</string>
+    <string name="notif_text">Tap to scan for duplicates, screenshots and junk you can clear.</string>
+
+    <!-- My Account -->
+    <string name="account_free_plan">Free plan</string>
+    <string name="account_free_detail">Scanning is free. Upgrade to clean up duplicates, screenshots, videos and contacts in one tap.</string>
+    <string name="account_active">Active</string>
+    <string name="account_trial_renews">Intro period · renews %1$s</string>
+    <string name="account_renews">Renews %1$s</string>
+    <string name="account_cancelled_until">Cancelled · access until %1$s</string>
+    <string name="account_premium_includes">Premium includes</string>
+    <string name="account_feature_clean_now">One-tap Clean Up Now for all junk found</string>
+    <string name="account_feature_duplicates">Delete duplicate &amp; similar photos</string>
+    <string name="account_feature_swipe">Swipe through and clear old photos &amp; videos</string>
+    <string name="account_feature_screenshots">Bulk-delete screenshots</string>
+    <string name="account_feature_contacts">Merge duplicate contacts</string>
+    <string name="account_upgrade">Upgrade to Premium</string>
+    <string name="account_manage">Manage subscription</string>
+    <string name="account_manage_detail">Change or cancel in Google Play</string>
+    <string name="account_restore">Restore purchases</string>
+    <string name="account_restore_checking">Checking Google Play…</string>
+    <string name="account_restore_detail">Already subscribed? Restore it on this phone</string>
+    <string name="account_customer_id">Customer ID</string>
+    <string name="account_not_available">Not available</string>
+    <string name="account_customer_id_clip_label">Sweepr customer ID</string>
+    <string name="account_customer_id_copied">Customer ID copied – include it when contacting support</string>
+    <string name="account_billing_note">Subscriptions are billed through Google Play and renew automatically until cancelled. You can cancel any time in Google Play.</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_website">Website</string>
+    <string name="about_privacy">Privacy Policy</string>
+    <string name="about_privacy_detail">Photos and contacts never leave your phone</string>
+    <string name="about_terms">Terms &amp; Conditions</string>
+    <string name="about_contact">Contact support</string>
+    <string name="about_support_subject">Sweepr support (v%1$s)</string>
+    <string name="about_rate">Rate Sweepr</string>
+    <string name="about_rate_detail">Enjoying it? A review helps a lot</string>
+
+    <!-- Tips & Tricks -->
+    <string name="tips_title">Tips &amp; Tricks</string>
+    <string name="tips_heading">Manually clean your device</string>
+    <string name="tips_subheading">Quick wins for the space Sweepr can\'t clear automatically.</string>
+    <string name="tips_couldnt_open">Couldn\'t open that on this phone</string>
+
+    <string name="tip_browser_title">Clear Browser Cache</string>
+    <string name="tip_browser_subtitle">Speed up your web browsing</string>
+    <string name="tip_browser_step1">Tap \"Open browser settings\" below.</string>
+    <string name="tip_browser_step2">Choose \"Storage &amp; cache\" (or \"Storage\").</string>
+    <string name="tip_browser_step3">Tap \"Clear cache\". Don\'t tap \"Clear storage\" unless you want to sign out of websites.</string>
+    <string name="tip_browser_action">Open browser settings</string>
+
+    <string name="tip_apps_title">Delete Unused Apps</string>
+    <string name="tip_apps_subtitle">Declutter your device</string>
+    <string name="tip_apps_step1">Tap \"See my apps\" below to open the full app list.</string>
+    <string name="tip_apps_step2">Sort by size or look for apps you haven\'t opened in months.</string>
+    <string name="tip_apps_step3">Tap an app, then \"Uninstall\". Most apps can be reinstalled from Play Store any time.</string>
+    <string name="tip_apps_action">See my apps</string>
+
+    <string name="tip_trash_title">Empty Your Photo Trash</string>
+    <string name="tip_trash_subtitle">Get space back from deleted photos now</string>
+    <string name="tip_trash_step1">Photos Sweepr removes go to the system trash and still use space for 30 days.</string>
+    <string name="tip_trash_step2">Open your gallery app and go to Library → Trash (or Recycle bin).</string>
+    <string name="tip_trash_step3">Tap \"Empty trash\" to free that space immediately.</string>
+    <string name="tip_trash_action">Open gallery</string>
+
+    <string name="tip_downloads_title">Clean Up Downloads</string>
+    <string name="tip_downloads_subtitle">Old PDFs, APKs and attachments add up</string>
+    <string name="tip_downloads_step1">Tap \"Open Downloads\" below.</string>
+    <string name="tip_downloads_step2">Sort by size and delete files you no longer need – installers (.apk) and old attachments are safe to remove.</string>
+    <string name="tip_downloads_action">Open Downloads</string>
+
+    <string name="tip_whatsapp_title">Free Up WhatsApp Storage</string>
+    <string name="tip_whatsapp_subtitle">Forwarded videos and memes pile up</string>
+    <string name="tip_whatsapp_step1">Open WhatsApp → Settings → Storage and data → Manage storage.</string>
+    <string name="tip_whatsapp_step2">Review \"Larger than 5 MB\" and \"Forwarded many times\" first.</string>
+    <string name="tip_whatsapp_step3">Select and delete what you don\'t need. In each chat you can also turn off \"Media visibility\".</string>
+    <string name="tip_whatsapp_action">Open WhatsApp</string>
+
+    <string name="tip_caches_title">Clear App Caches</string>
+    <string name="tip_caches_subtitle">Social and streaming apps cache gigabytes</string>
+    <string name="tip_caches_step1">Tap \"Open storage settings\" below.</string>
+    <string name="tip_caches_step2">Open \"Apps\" and sort by size.</string>
+    <string name="tip_caches_step3">Tap big apps like TikTok, Instagram, Spotify or YouTube → Storage → \"Clear cache\". Your account and downloads stay.</string>
+    <string name="tip_caches_action">Open storage settings</string>
+
+    <string name="tip_storage_title">Use Android\'s Storage Manager</string>
+    <string name="tip_storage_subtitle">Remove backed-up photos and large files</string>
+    <string name="tip_storage_step1">Tap \"Open storage manager\" below.</string>
+    <string name="tip_storage_step2">Use \"Free up space\" to remove photos already backed up to the cloud, large files and unused apps.</string>
+    <string name="tip_storage_action">Open storage manager</string>
+</resources>

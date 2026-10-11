@@ -1,0 +1,370 @@
+package com.sweepr.app
+
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallActivityLauncher
+import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResult
+import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResultHandler
+
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var paywallLauncher: PaywallActivityLauncher
+
+    /** What the user was trying to do when the paywall opened – resumed after they subscribe. */
+    private var afterPurchase: (() -> Unit)? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Must be created in onCreate. Scanning is free; cleaning is Premium (Google Play
+        // subscription via RevenueCat). If they subscribe or restore, carry on with the clean.
+        paywallLauncher = PaywallActivityLauncher(
+            resultCaller = this,
+            resultHandler = object : PaywallResultHandler {
+                override fun onActivityResult(result: PaywallResult) {
+                    val action = afterPurchase
+                    afterPurchase = null
+                    if (result is PaywallResult.Purchased || result is PaywallResult.Restored) action?.invoke()
+                }
+            },
+        )
+
+        setContent {
+            SweeprTheme {
+                SweeprRoot(
+                    onShowPaywall = { then ->
+                        afterPurchase = then
+                        paywallLauncher.launch(shouldDisplayDismissButton = true)
+                    },
+                )
+            }
+        }
+    }
+}
+
+enum class Screen {
+    // Bottom-navigation tabs
+    Dashboard, SmartClean, Tips, Settings,
+
+    // Detail screens
+    PhotosVideos, Swipe, Screenshots, Contacts, Account, About,
+}
+
+private val TABS = listOf(Screen.Dashboard, Screen.SmartClean, Screen.Tips, Screen.Settings)
+private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Swipe, Screen.Screenshots, Screen.Contacts)
+
+data class PermissionState(
+    val media: Boolean = false,
+    val mediaLimited: Boolean = false,
+    val contactsRead: Boolean = false,
+    val contactsWrite: Boolean = false,
+)
+
+object AppPermissions {
+    private fun mediaPermissions(): Array<String> = when {
+        Build.VERSION.SDK_INT >= 34 -> arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+        )
+        Build.VERSION.SDK_INT >= 33 -> arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+        )
+        Build.VERSION.SDK_INT >= 29 -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    }
+
+    /** Also asks for notifications (Android 13+) so the monthly reminder can be shown. */
+    fun all(): Array<String> {
+        val notifications = if (Build.VERSION.SDK_INT >= 33) arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
+        return mediaPermissions() + arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) + notifications
+    }
+
+    fun current(context: Context): PermissionState {
+        fun granted(permission: String) =
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+
+        val full = if (Build.VERSION.SDK_INT >= 33) {
+            granted(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            granted(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        val limited = !full && Build.VERSION.SDK_INT >= 34 &&
+            granted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+
+        return PermissionState(
+            media = full || limited,
+            mediaLimited = limited,
+            contactsRead = granted(Manifest.permission.READ_CONTACTS),
+            contactsWrite = granted(Manifest.permission.WRITE_CONTACTS),
+        )
+    }
+}
+
+@Composable
+fun SweeprRoot(
+    vm: DashboardViewModel = viewModel(),
+    onShowPaywall: (then: () -> Unit) -> Unit = {},
+) {
+    val context = LocalContext.current
+    val state by vm.state.collectAsState()
+    var screen by rememberSaveable { mutableStateOf(Screen.Dashboard) }
+    var lastTab by rememberSaveable { mutableStateOf(Screen.Dashboard) }
+    var permissions by remember { mutableStateOf(AppPermissions.current(context)) }
+    var scanAfterGrant by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) {
+        permissions = AppPermissions.current(context)
+        if (scanAfterGrant) {
+            scanAfterGrant = false
+            if (permissions.media || permissions.contactsRead) {
+                vm.scan(permissions)
+            } else {
+                vm.showMessage(context.getString(R.string.msg_need_permissions))
+            }
+        }
+    }
+
+    // Android's own "Allow Sweepr to move these items to trash?" confirmation dialog.
+    val trashLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        vm.onTrashResult(result.resultCode == Activity.RESULT_OK)
+    }
+
+    val requestAccessAndScan: () -> Unit = {
+        if (permissions.media && permissions.contactsRead) {
+            vm.scan(permissions)
+        } else {
+            scanAfterGrant = true
+            permissionLauncher.launch(AppPermissions.all())
+        }
+    }
+    val requestPermissions: () -> Unit = {
+        scanAfterGrant = true
+        permissionLauncher.launch(AppPermissions.all())
+    }
+
+    // Ask for access as soon as the app opens.
+    LaunchedEffect(Unit) {
+        if (!permissions.media || !permissions.contactsRead) permissionLauncher.launch(AppPermissions.all())
+    }
+
+    // Re-check permissions when coming back from the system Settings app.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) permissions = AppPermissions.current(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(state.pendingTrash) {
+        state.pendingTrash?.let { pending ->
+            trashLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
+        }
+    }
+
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            vm.clearMessage()
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    // Results screens need a scan first (e.g. after the process was restarted).
+    val current = if (!state.hasScanned && screen in RESULT_SCREENS) lastTab else screen
+    val isTab = current in TABS
+
+    val selectTab: (Screen) -> Unit = { tab ->
+        lastTab = tab
+        screen = tab
+    }
+    val open: (Screen) -> Unit = { target ->
+        if (target in TABS) selectTab(target) else screen = target
+    }
+    val goBack: () -> Unit = {
+        screen = when {
+            current == Screen.Account || current == Screen.About -> Screen.Settings
+            current in TABS -> Screen.Dashboard.also { lastTab = it }
+            else -> lastTab
+        }
+    }
+
+    // Premium gate: scanning is free, cleaning needs the subscription. If the user
+    // subscribes from the paywall, the clean they asked for runs straight away.
+    fun premium(action: () -> Unit) {
+        if (state.hasPremium) action() else onShowPaywall(action)
+    }
+
+    val handleTrash: (List<MediaItem>) -> Unit = { items -> premium { vm.requestTrash(items) } }
+    val handleMerge: (Set<String>) -> Unit = { groups -> premium { vm.mergeContactGroups(groups) } }
+    val handleCleanUp: () -> Unit = { premium { vm.cleanUpSelected(AppPermissions.current(context)) } }
+
+    BackHandler(enabled = current != Screen.Dashboard) { goBack() }
+
+    Scaffold(
+        bottomBar = {
+            if (isTab) SweeprBottomBar(current, selectTab)
+        },
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
+            when (current) {
+                Screen.Dashboard -> DashboardScreen(
+                    state = state,
+                    permissions = permissions,
+                    onScan = requestAccessAndScan,
+                    onOpen = open,
+                    onCleanUp = handleCleanUp,
+                )
+                Screen.SmartClean -> SmartCleanScreen(
+                    state = state,
+                    permissions = permissions,
+                    onScan = requestAccessAndScan,
+                    onOpen = open,
+                    onRequestPermission = requestPermissions,
+                    onCleanUp = handleCleanUp,
+                )
+                Screen.Tips -> TipsScreen()
+                Screen.Settings -> SettingsScreen(
+                    state = state,
+                    permissions = permissions,
+                    onOpen = open,
+                    onRescan = {
+                        selectTab(Screen.Dashboard)
+                        requestAccessAndScan()
+                    },
+                    onBack = goBack,
+                )
+                Screen.Account -> AccountScreen(
+                    state = state,
+                    onUpgrade = { onShowPaywall {} },
+                    onRestore = vm::restorePurchases,
+                    onBack = goBack,
+                )
+                Screen.About -> AboutScreen(onBack = goBack)
+                Screen.PhotosVideos -> PhotosVideosScreen(
+                    state = state,
+                    onToggle = vm::toggleMedia,
+                    onSetSelected = vm::setMediaSelected,
+                    onTrash = handleTrash,
+                    onBack = goBack,
+                )
+                Screen.Screenshots -> ScreenshotsScreen(
+                    state = state,
+                    onToggle = vm::toggleMedia,
+                    onSetSelected = vm::setMediaSelected,
+                    onTrash = handleTrash,
+                    onBack = goBack,
+                )
+                Screen.Swipe -> SwipeCleanupScreen(
+                    items = state.media.everything,
+                    busy = state.isBusy,
+                    onTrash = handleTrash,
+                    onBack = goBack,
+                )
+                Screen.Contacts -> ContactsScreen(
+                    state = state,
+                    permissions = permissions,
+                    onToggle = vm::toggleContactGroup,
+                    onMerge = handleMerge,
+                    onRequestPermission = requestPermissions,
+                    onBack = goBack,
+                )
+            }
+
+            // Sits above the sticky Clean Up Now / Move to trash buttons.
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = 88.dp),
+            )
+        }
+    }
+}
+
+private data class NavTab(val screen: Screen, val labelRes: Int, val icon: ImageVector)
+
+private val NAV_TABS = listOf(
+    NavTab(Screen.Dashboard, R.string.nav_home, Icons.Default.Home),
+    NavTab(Screen.SmartClean, R.string.nav_clean, Icons.Default.Delete),
+    NavTab(Screen.Tips, R.string.nav_tips, Icons.Default.Info),
+    NavTab(Screen.Settings, R.string.nav_settings, Icons.Default.Settings),
+)
+
+@Composable
+private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+        NAV_TABS.forEach { tab ->
+            NavigationBarItem(
+                selected = current == tab.screen,
+                onClick = { onSelect(tab.screen) },
+                icon = { Icon(tab.icon, contentDescription = stringResource(tab.labelRes)) },
+                label = { Text(stringResource(tab.labelRes)) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = SweeprGreen,
+                    selectedTextColor = SweeprGreen,
+                    indicatorColor = SweeprGreen.copy(alpha = 0.15f),
+                    unselectedIconColor = Color.Gray,
+                    unselectedTextColor = Color.Gray,
+                ),
+            )
+        }
+    }
+}

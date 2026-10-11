@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Sweepr</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="text-gray-800 flex flex-col items-center justify-center min-h-screen">
+
+  <div class="glass-card p-10 w-full max-w-md mx-4 relative overflow-hidden">
+    <a href="/" class="absolute top-6 left-6 text-gray-400 hover:text-gray-800 transition-colors">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    </a>
+    
+    <div class="text-center mb-8 mt-4">
+      <div class="logo-box mx-auto mb-4">S</div>
+      <h1 class="text-2xl font-black">Login</h1>
+      <p class="text-gray-500 mt-2 text-sm">Manage your subscription, update payment methods, and download the app.</p>
+    </div>
+
+    <form id="loginForm" class="flex flex-col gap-4">
+      <div id="emailSection">
+        <label class="block text-sm font-semibold mb-1">Email Address</label>
+        <input type="email" id="email" required placeholder="you@example.com" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow bg-white">
+      </div>
+      <div id="otpSection" class="hidden">
+        <label class="block text-sm font-semibold mb-1">Login Code</label>
+        <p class="text-xs text-gray-500 mb-2">We sent a 6-digit code to your email.</p>
+        <input type="text" id="otp" placeholder="123456" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow bg-white text-center tracking-widest font-mono text-lg">
+      </div>
+      <button type="submit" class="btn btn-go w-full justify-center gap-2" id="loginBtn">
+        <span>Continue</span>
+        <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </button>
+    </form>
+    
+    <div id="message" class="hidden mt-4 text-center text-sm font-medium p-3 rounded-lg bg-green-50 text-green-700 border border-green-200"></div>
+
+    <div class="text-center mt-6 pt-5 border-t border-gray-100">
+      <p class="text-xs text-gray-500 mb-2 font-medium">Don't have Sweepr yet?</p>
+      <a href="/order" class="btn btn-go w-full justify-center gap-2 text-sm">
+        <span>Buy Now</span>
+        <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="mt-8 text-xs text-gray-500 flex gap-4">
+    <a href="/terms" class="hover:text-gray-900 transition-colors">Terms</a>
+    <a href="/privacy" class="hover:text-gray-900 transition-colors">Privacy</a>
+    <a href="/support" class="hover:text-gray-900 transition-colors">Support</a>
+  </div>
+
+  <script>
+    let awaitingOtp = false;
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const msg = document.getElementById('message');
+      const emailInput = document.getElementById('email');
+      const emailSection = document.getElementById('emailSection');
+      const otpSection = document.getElementById('otpSection');
+      const otpInput = document.getElementById('otp');
+
+      btn.disabled = true;
+      btn.textContent = "Please wait...";
+      msg.classList.add('hidden');
+
+      const email = emailInput.value;
+
+      try {
+        if (!awaitingOtp) {
+          const res = await fetch('/api/portal-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          
+          const data = await res.json();
+          if (data.otpSent) {
+            awaitingOtp = true;
+            emailSection.classList.add('hidden');
+            otpSection.classList.remove('hidden');
+            btn.textContent = "Verify Code";
+            btn.disabled = false;
+          } else {
+            msg.textContent = data.error || "No active subscription found for this email.";
+            msg.classList.remove('hidden');
+            msg.classList.replace('bg-green-50', 'bg-red-50');
+            msg.classList.replace('text-green-700', 'text-red-700');
+            msg.classList.replace('border-green-200', 'border-red-200');
+            btn.disabled = false;
+            btn.textContent = "Continue";
+          }
+        } else {
+          // Verify OTP
+          const res = await fetch('/api/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code: otpInput.value })
+          });
+          const data = await res.json();
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else {
+            msg.textContent = data.error || "Invalid code.";
+            msg.classList.remove('hidden');
+            msg.classList.replace('bg-green-50', 'bg-red-50');
+            msg.classList.replace('text-green-700', 'text-red-700');
+            msg.classList.replace('border-green-200', 'border-red-200');
+            btn.disabled = false;
+            btn.textContent = "Verify Code";
+          }
+        }
+      } catch (err) {
+        msg.textContent = "Network error. Please try again.";
+        msg.classList.remove('hidden');
+        msg.classList.replace('bg-green-50', 'bg-red-50');
+        msg.classList.replace('text-green-700', 'text-red-700');
+        msg.classList.replace('border-green-200', 'border-red-200');
+        btn.disabled = false;
+        btn.textContent = awaitingOtp ? "Verify Code" : "Continue";
+      }
+    });
+  </script>
+</body>
+</html>

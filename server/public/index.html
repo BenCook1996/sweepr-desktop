@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sweepr - The Cleanest Desktop Experience</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="text-gray-800">
+
+  <!-- Navigation -->
+  <nav class="glass-nav px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-8">
+      <a href="/" class="flex items-center gap-3 text-inherit no-underline">
+        <div class="logo-box">S</div>
+        <span class="font-extrabold text-xl tracking-tight text-gray-900">Sweepr</span>
+      </a>
+      <div class="hidden md:flex items-center gap-2">
+        <a href="/#features" class="btn btn-ghost text-sm">Features</a>
+        <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
+      </div>
+    </div>
+    <div class="flex gap-3 items-center">
+      <a href="/login" class="btn btn-ghost text-sm">Login</a>
+      <a href="/download" class="btn btn-go gap-2">
+        <span>Get Sweepr</span>
+        <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="flex-1 pt-32 pb-20 px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
+    <div class="flex-1">
+      <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight text-gray-900">
+        Revive your PC. <br>
+        <span style="color: var(--accent);">In seconds.</span>
+      </h1>
+      <p class="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto md:mx-0">
+        Reclaim gigabytes of lost storage, uninstall stubborn apps, and optimize your memory. Experience the sleekest, fastest desktop cleaner ever built.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
+        <a href="/order" id="buyBtn" class="btn btn-go btn-big pulse-glow gap-2.5">
+          <span>Buy Now</span>
+          <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+        <a href="/pricing" class="btn btn-big">View Plans & Pricing</a>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start mt-4 text-xs text-gray-500 font-medium">
+        <span>⚡ Instant Download</span>
+        <span>•</span>
+        <span>🛡️ 30-Day Money-Back Guarantee</span>
+      </div>
+    </div>
+    <div class="flex-1 relative w-full max-w-lg">
+      <div class="glass-card p-6 flex flex-col gap-4 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-800">Scan Complete</h3>
+            <p class="text-sm text-gray-500">Found 12.4 GB of junk</p>
+          </div>
+        </div>
+        <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-green-500 w-3/4 rounded-full"></div>
+        </div>
+        <a href="/order" class="btn btn-go w-full mt-2 gap-2">
+          <span>Clean my Device Now</span>
+          <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Features & Purchase section -->
+  <section id="purchase" class="py-16 px-6">
+    <div class="max-w-6xl mx-auto text-center">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-14 text-left">
+        <div class="glass-card p-6">
+          <div class="text-2xl mb-4" style="color: var(--accent);">⚡</div>
+          <h3 class="font-bold mb-2 text-gray-900">Deep Clean</h3>
+          <p class="text-sm text-gray-600">Remove system caches, temporary files, and stubborn leftovers.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="text-2xl mb-4" style="color: var(--accent);">🔍</div>
+          <h3 class="font-bold mb-2 text-gray-900">Duplicate Finder</h3>
+          <p class="text-sm text-gray-600">Free up massive space by safely merging identical files.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="text-2xl mb-4" style="color: var(--accent);">🚀</div>
+          <h3 class="font-bold mb-2 text-gray-900">App Uninstaller</h3>
+          <p class="text-sm text-gray-600">Completely wipe applications and their hidden registry keys.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="text-2xl mb-4" style="color: var(--accent);">⏱️</div>
+          <h3 class="font-bold mb-2 text-gray-900">RAM & Boot Booster</h3>
+          <p class="text-sm text-gray-600">Free up active memory and stop sluggish apps from slowing down startup.</p>
+        </div>
+        <div class="glass-card p-6">
+          <div class="text-2xl mb-4" style="color: var(--accent);">🛡️</div>
+          <h3 class="font-bold mb-2 text-gray-900">DoD File Shredder</h3>
+          <p class="text-sm text-gray-600">Permanently erase sensitive files using DoD 5220.22-M military-grade wipes.</p>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-8 text-center text-gray-500 text-sm border-t border-gray-100">
+    <div class="flex justify-center gap-6 mb-4">
+      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms & Conditions</a>
+      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
+      <a href="/support" class="hover:text-emerald-600 transition-colors">Support</a>
+    </div>
+    <p>&copy; 2026 Sweepr Inc. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.buy-trigger').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const purchase = document.getElementById('purchase');
+        const email = document.getElementById('email');
+        if (purchase) {
+          purchase.scrollIntoView({ behavior: 'smooth' });
+        }
+        if (email) {
+          setTimeout(() => email.focus(), 400);
+        }
+      });
+    });
+
+    document.getElementById('purchaseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('checkoutBtn');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span>Redirecting to Checkout...</span>`;
+
+      const email = document.getElementById('email').value;
+
+      try {
+        const res = await fetch('/api/web-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Checkout failed: ' + (data.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+        }
+      } catch (err) {
+        alert('Failed to connect to checkout.');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      }
+    });
+  </script>
+</body>
+</html>

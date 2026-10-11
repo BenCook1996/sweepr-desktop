@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Sweepr</string>
+    <string name="brand_premium" translatable="false">Sweepr Premium</string>
+    <string name="lang_en" translatable="false">English</string>
+    <string name="lang_es" translatable="false">Español</string>
+    <string name="lang_fr" translatable="false">Français</string>
+    <string name="lang_de" translatable="false">Deutsch</string>
+    <string name="lang_it" translatable="false">Italiano</string>
+    <string name="lang_pt" translatable="false">Português</string>
+    <string name="lang_nl" translatable="false">Nederlands</string>
+    <string name="action_back">Terug</string>
+    <string name="action_close">Sluiten</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="option_system_default">Systeemstandaard</string>
+    <string name="error_no_browser">Geen browser beschikbaar</string>
+    <string name="error_no_email_app">Geen e-mailapp geïnstalleerd</string>
+    <string name="status_no_permission">Geen toestemming</string>
+    <string name="status_not_scanned">Nog niet gescand</string>
+    <string name="status_tap_to_scan">Tik om te scannen</string>
+    <string name="status_no_duplicates">Geen duplicaten</string>
+    <plurals name="duplicates_count">
+        <item quantity="one">%d duplicaat</item>
+        <item quantity="other">%d duplicaten</item>
+    </plurals>
+    <plurals name="videos_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d video\'s</item>
+    </plurals>
+    <string name="nav_home">Home</string>
+    <string name="nav_clean">Opschonen</string>
+    <string name="nav_tips">Tips</string>
+    <string name="nav_settings">Instell.</string>
+    <string name="category_photos">Foto\'s</string>
+    <string name="category_videos">Video\'s</string>
+    <string name="category_screenshots">Screenshots</string>
+    <string name="category_contacts">Contacten</string>
+    <string name="category_swipe_review">Beoordelen</string>
+    <string name="category_photos_videos">Foto\'s &amp; Video\'s</string>
+    <string name="category_swipe_cleanup">Snelle schoonmaak</string>
+    <string name="dashboard_percent">%1$d%%</string>
+    <string name="dashboard_used_of">%1$s van %2$s</string>
+    <string name="dashboard_used_tap">Gebruikt · tik voor details</string>
+    <string name="dashboard_limited_access">Beperkte toegang: Sweepr ziet alleen geselecteerde foto\'s. Geef volledige toegang voor een complete scan.</string>
+    <string name="dashboard_clean_header">Opschonen</string>
+    <string name="scan_scanning">Scannen…</string>
+    <string name="scan_rescan">Opnieuw scannen · %1$s afval</string>
+    <string name="scan_my_phone">Scan mijn telefoon</string>
+    <string name="storage_breakdown_title">Opslaggebruik</string>
+    <string name="storage_total_used">Totaal gebruikt: %1$s</string>
+    <string name="storage_run_scan">Voer een scan uit om te zien hoeveel ruimte foto\'s en video\'s innemen.</string>
+    <string name="storage_photos_videos">Foto\'s &amp; Video\'s: %1$s</string>
+    <string name="storage_other">Andere apps &amp; OS: %1$s</string>
+    <string name="storage_free">Vrije ruimte: %1$s</string>
+    <plurals name="card_photos_duplicates">
+        <item quantity="one">%1$d duplicaat · %2$s</item>
+        <item quantity="other">%1$d duplicaten · %2$s</item>
+    </plurals>
+    <plurals name="card_swipe_subtitle">
+        <item quantity="one">%d item te beoordelen\nmaand per maand</item>
+        <item quantity="other">%d items te beoordelen\nmaand per maand</item>
+    </plurals>
+    <plurals name="card_screenshots_found">
+        <item quantity="one">%1$d gevonden\n%2$s</item>
+        <item quantity="other">%1$d gevonden\n%2$s</item>
+    </plurals>
+    <plurals name="card_contacts_to_merge">
+        <item quantity="one">%d samen te voegen</item>
+        <item quantity="other">%d samen te voegen</item>
+    </plurals>
+    <string name="cleanup_working">Bezig…</string>
+    <string name="cleanup_now">Nu opschonen</string>
+    <plurals name="cleanup_files">
+        <item quantity="one">%d bestand</item>
+        <item quantity="other">%d bestanden</item>
+    </plurals>
+    <plurals name="cleanup_merge_contacts">
+        <item quantity="one">voeg %d contact samen</item>
+        <item quantity="other">voeg %d contacten samen</item>
+    </plurals>
+    <string name="clean_title">Slim opschonen</string>
+    <string name="clean_scanning">Scannen</string>
+    <string name="clean_deletable_items">Verwijderbare items</string>
+    <string name="clean_tap_to">Tik om te</string>
+    <string name="clean_scan">Scannen</string>
+    <string name="clean_storage_used">%1$s van %2$s in gebruik</string>
+    <plurals name="clean_photos_status">
+        <item quantity="one">%1$d duplicaat/soortgelijk · %2$s</item>
+        <item quantity="other">%1$d duplicaten/soortgelijke · %2$s</item>
+    </plurals>
+    <plurals name="clean_videos_status">
+        <item quantity="one">%1$d video · %2$s</item>
+        <item quantity="other">%1$d video\'s · %2$s</item>
+    </plurals>
+    <plurals name="screenshots_status">
+        <item quantity="one">%1$d screenshot · %2$s</item>
+        <item quantity="other">%1$d screenshots · %2$s</item>
+    </plurals>
+    <plurals name="clean_swipe_status">
+        <item quantity="one">%d item, maand per maand</item>
+        <item quantity="other">%d items, maand per maand</item>
+    </plurals>
+    <string name="media_play_video">Video afspelen</string>
+    <string name="cleanup_move_to_trash">Naar prullenbak verplaatsen</string>
+    <string name="cleanup_select_items">Selecteer om op te schonen</string>
+    <string name="cleanup_bar_label">%1$s · %2$d (%3$s)</string>
+    <string name="media_hint">Tik om te selecteren · vasthouden voor voorbeeld</string>
+    <string name="media_untitled">Naamloos</string>
+    <string name="tab_duplicates">Duplicaten (%1$d)</string>
+    <string name="tab_similar">Soortgelijk (%1$d)</string>
+    <string name="tab_videos">Video\'s (%1$d)</string>
+    <plurals name="group_identical_copies">
+        <item quantity="one">%d identieke kopie</item>
+        <item quantity="other">%d identieke kopieën</item>
+    </plurals>
+    <plurals name="group_similar_shots">
+        <item quantity="one">%d soortgelijke foto</item>
+        <item quantity="other">%d soortgelijke foto\'s</item>
+    </plurals>
+    <string name="empty_no_duplicates">Geen dubbele foto\'s of video\'s gevonden 🎉</string>
+    <string name="empty_no_similar">Geen soortgelijke foto\'s gevonden 🎉</string>
+    <string name="videos_largest_first">Grootste video\'s eerst</string>
+    <string name="empty_no_videos">Geen video\'s</string>
+    <string name="empty_no_screenshots">Geen screenshots 🎉</string>
+    <string name="group_intro">We behouden de BESTE kopie en selecteren de rest voor. Tik om te kiezen.</string>
+    <string name="group_can_be_freed">%1$s vrij te maken</string>
+    <string name="action_deselect">Deselecteren</string>
+    <string name="action_select_extras">Extra\'s selecteren</string>
+    <string name="action_deselect_all">Alles deselecteren</string>
+    <string name="action_select_all">Alles selecteren</string>
+    <string name="badge_best">BESTE</string>
+    <string name="contacts_select_to_merge">Selecteer contacten om samen te voegen</string>
+    <plurals name="contacts_merge_n">
+        <item quantity="one">Voeg %d duplicaat samen</item>
+        <item quantity="other">Voeg %d duplicaten samen</item>
+    </plurals>
+    <string name="contacts_permission_text">Sweepr heeft toegang tot contacten nodig om duplicaten te vinden.</string>
+    <string name="contacts_permission_button">Toegang verlenen</string>
+    <string name="contacts_none_found">Geen dubbele contacten gevonden 🎉</string>
+    <string name="contacts_merge_explainer">Samenvoegen combineert duplicaten. Geen nummers of e-mails worden verwijderd.</string>
+    <string name="contacts_no_phone">Geen telefoonnummer</string>
+    <string name="contacts_merge_now">Nu samenvoegen</string>
+    <string name="contact_no_name">(Geen naam)</string>
+    <string name="contact_reason_same_name_number">Zelfde naam en nummer</string>
+    <string name="contact_reason_same_name">Zelfde naam</string>
+    <string name="contact_reason_same_number">Zelfde nummer</string>
+    <string name="swipe_empty">Geen foto\'s of video\'s om te beoordelen</string>
+    <string name="swipe_intro">Kies een maand, veeg links om te verwijderen, rechts om te behouden.</string>
+    <plurals name="swipe_month_items">
+        <item quantity="one">%1$d item · %2$s</item>
+        <item quantity="other">%1$d items · %2$s</item>
+    </plurals>
+    <string name="swipe_progress">Beoordeeld %1$d/%2$d · te verwijderen: %3$d</string>
+    <string name="swipe_month_clean">Deze maand is schoon 🎉</string>
+    <string name="swipe_all_reviewed">Alles beoordeeld!</string>
+    <string name="swipe_kept_everything">Je hebt alles bewaard deze maand.</string>
+    <plurals name="swipe_move_n">
+        <item quantity="one">Tik hieronder om %d item naar de prullenbak te verplaatsen.</item>
+        <item quantity="other">Tik hieronder om %d items naar de prullenbak te verplaatsen.</item>
+    </plurals>
+    <string name="swipe_start_again">Begin deze maand opnieuw</string>
+    <string name="swipe_delete">Verwijder</string>
+    <string name="swipe_undo">Ongedaan maken</string>
+    <string name="swipe_keep">Behoud</string>
+    <string name="swipe_video">Video</string>
+    <string name="swipe_stamp_keep">BEHOUD</string>
+    <string name="swipe_stamp_delete">VERWIJDER</string>
+    <string name="msg_need_permissions">Sweepr heeft toegang tot foto\'s/contacten nodig. Zet dit aan in Instellingen.</string>
+    <string name="msg_restore_failed">Herstellen mislukt: %1$s</string>
+    <string name="msg_premium_restored">Premium hersteld - je bent klaar</string>
+    <string name="msg_no_subscription_found">Geen abonnement gevonden op dit Google-account</string>
+    <string name="scan_status_media">Foto\'s &amp; video\'s scannen…</string>
+    <string name="scan_status_contacts">Contacten controleren…</string>
+    <string name="msg_cleanup_start_failed">Kon niet starten: %1$s</string>
+    <string name="msg_cleanup_cancelled">Schoonmaken geannuleerd - niets verwijderd</string>
+    <string name="msg_nothing_deleted">Niets werd verwijderd</string>
+    <plurals name="msg_freed_deleted">
+        <item quantity="one">%1$s vrijgemaakt · %2$d item verwijderd</item>
+        <item quantity="other">%1$s vrijgemaakt · %2$d items verwijderd</item>
+    </plurals>
+    <plurals name="msg_freed_trashed">
+        <item quantity="one">%1$s vrijgemaakt · %2$d item in de prullenbak</item>
+        <item quantity="other">%1$s vrijgemaakt · %2$d items in de prullenbak</item>
+    </plurals>
+    <string name="msg_merge_failed">Kon contacten niet samenvoegen</string>
+    <plurals name="msg_merged">
+        <item quantity="one">%d dubbel contact samengevoegd</item>
+        <item quantity="other">%d dubbele contacten samengevoegd</item>
+    </plurals>
+    <string name="msg_allow_contacts_merge">Sta toegang tot contacten toe om samen te voegen</string>
+    <string name="settings_title">Instellingen</string>
+    <string name="settings_account">Mijn account</string>
+    <string name="settings_account_premium">Sweepr Premium · actief</string>
+    <string name="settings_account_free">Gratis plan · upgrade om op te schonen</string>
+    <string name="settings_theme">Thema</string>
+    <string name="settings_logs">Genereer logbestanden</string>
+    <string name="settings_logs_collecting">Diagnostiek verzamelen…</string>
+    <string name="settings_logs_detail">Verzend diagnostiek naar support</string>
+    <string name="settings_reminders">Herinneringen</string>
+    <string name="settings_reminders_blocked">%1$s · meldingen geblokkeerd</string>
+    <string name="settings_reminders_dialog_title">Schoonmaakherinneringen</string>
+    <string name="settings_reminders_dialog_subtitle">Krijg een seintje om je telefoon op te schonen.</string>
+    <string name="settings_language">Taal</string>
+    <string name="settings_permissions">Rechten</string>
+    <string name="perm_photos_limited">Foto\'s: beperkt</string>
+    <string name="perm_photos_allowed">Foto\'s: toegestaan</string>
+    <string name="perm_photos_denied">Foto\'s: niet toegestaan</string>
+    <string name="perm_contacts_allowed">Contacten: toegestaan</string>
+    <string name="perm_contacts_read_only">Contacten: alleen lezen</string>
+    <string name="perm_contacts_denied">Contacten: niet toegestaan</string>
+    <string name="settings_rescan">Apparaat opnieuw scannen</string>
+    <string name="settings_rescan_detail">Voer nu een nieuwe scan uit</string>
+    <string name="settings_about">Over</string>
+    <string name="settings_about_detail">Versie, privacy en support</string>
+    <string name="toast_allow_notifications">Sta meldingen toe in instellingen</string>
+    <string name="toast_no_share_app">Geen app om het logbestand te delen</string>
+    <string name="toast_log_failed">Kon logbestand niet maken</string>
+    <string name="log_share_subject">Sweepr logbestand</string>
+    <string name="log_share_chooser">Verzend logbestand</string>
+    <string name="theme_light">Licht</string>
+    <string name="theme_dark">Donker</string>
+    <string name="reminder_off">Uit</string>
+    <string name="reminder_weekly">Elke week</string>
+    <string name="reminder_monthly">Elke maand</string>
+    <string name="notif_channel_name">Schoonmaakherinneringen</string>
+    <string name="notif_channel_desc">Regelmatige herinneringen om je telefoon schoon te houden</string>
+    <string name="notif_title">Tijd voor een Sweepr-schoonmaak</string>
+    <string name="notif_text_percent">Je opslag is %1$d%% vol. Tik om op te schonen.</string>
+    <string name="notif_text">Tik om te zoeken en vuil op te schonen.</string>
+    <string name="account_free_plan">Gratis plan</string>
+    <string name="account_free_detail">Scannen is gratis. Upgrade om te verwijderen met 1 tik.</string>
+    <string name="account_active">Actief</string>
+    <string name="account_trial_renews">Proefperiode · vernieuwt %1$s</string>
+    <string name="account_renews">Vernieuwt %1$s</string>
+    <string name="account_cancelled_until">Geannuleerd · toegang tot %1$s</string>
+    <string name="account_premium_includes">Premium bevat</string>
+    <string name="account_feature_clean_now">1-tik \"Nu opschonen\"</string>
+    <string name="account_feature_duplicates">Verwijder dubbele foto\'s</string>
+    <string name="account_feature_swipe">Veeg oude foto\'s weg</string>
+    <string name="account_feature_screenshots">Verwijder screenshots in bulk</string>
+    <string name="account_feature_contacts">Voeg dubbele contacten samen</string>
+    <string name="account_upgrade">Upgrade naar Premium</string>
+    <string name="account_manage">Abonnement beheren</string>
+    <string name="account_manage_detail">Wijzig of annuleer in Google Play</string>
+    <string name="account_restore">Aankopen herstellen</string>
+    <string name="account_restore_checking">Google Play controleren…</string>
+    <string name="account_restore_detail">Al geabonneerd? Herstel hier</string>
+    <string name="account_customer_id">Klant-ID</string>
+    <string name="account_not_available">Niet beschikbaar</string>
+    <string name="account_customer_id_clip_label">Sweepr ID</string>
+    <string name="account_customer_id_copied">Gekopieerd - voeg toe bij supportverzoek</string>
+    <string name="account_billing_note">Abonnementen gefactureerd door Google Play.</string>
+    <string name="about_version">Versie %1$s</string>
+    <string name="about_website">Website</string>
+    <string name="about_privacy">Privacybeleid</string>
+    <string name="about_privacy_detail">Foto\'s/contacten verlaten je telefoon nooit</string>
+    <string name="about_terms">Algemene voorwaarden</string>
+    <string name="about_contact">Neem contact op</string>
+    <string name="about_support_subject">Sweepr Support (v%1$s)</string>
+    <string name="about_rate">Beoordeel Sweepr</string>
+    <string name="about_rate_detail">Vind je het leuk? Een recensie helpt enorm</string>
+    <string name="tips_title">Tips &amp; Trucs</string>
+    <string name="tips_heading">Je apparaat handmatig schoonmaken</string>
+    <string name="tips_subheading">Snelle winst voor de ruimte die Sweepr niet aankan.</string>
+    <string name="tips_couldnt_open">Kon hier niet openen</string>
+    <string name="tip_browser_title">Browsercache wissen</string>
+    <string name="tip_browser_subtitle">Versnel je browsen</string>
+    <string name="tip_browser_step1">Tik op \"Browser-instellingen openen\".</string>
+    <string name="tip_browser_step2">Kies \"Opslag en cache\".</string>
+    <string name="tip_browser_step3">Tik op \"Cache wissen\".</string>
+    <string name="tip_browser_action">Browser-instellingen openen</string>
+    <string name="tip_apps_title">Ongebruikte apps verwijderen</string>
+    <string name="tip_apps_subtitle">Ruim je apparaat op</string>
+    <string name="tip_apps_step1">Tik op \"Bekijk mijn apps\".</string>
+    <string name="tip_apps_step2">Sorteer op grootte of ongebruikt.</string>
+    <string name="tip_apps_step3">Tik op de app en vervolgens \"Verwijderen\".</string>
+    <string name="tip_apps_action">Bekijk mijn apps</string>
+    <string name="tip_trash_title">Fotoprullenbak legen</string>
+    <string name="tip_trash_subtitle">Krijg direct ruimte terug</string>
+    <string name="tip_trash_step1">Verwijderde foto\'s nemen 30 dagen ruimte in.</string>
+    <string name="tip_trash_step2">Open je galerij en ga naar Prullenbak.</string>
+    <string name="tip_trash_step3">Tik op \"Prullenbak legen\".</string>
+    <string name="tip_trash_action">Open galerij</string>
+    <string name="tip_downloads_title">Downloads opschonen</string>
+    <string name="tip_downloads_subtitle">Oude PDF\'s en bijlagen</string>
+    <string name="tip_downloads_step1">Tik op \"Open Downloads\".</string>
+    <string name="tip_downloads_step2">Sorteer op grootte en verwijder bestanden.</string>
+    <string name="tip_downloads_action">Open Downloads</string>
+    <string name="tip_whatsapp_title">WhatsApp-opslag vrijmaken</string>
+    <string name="tip_whatsapp_subtitle">Doorgestuurde video\'s en memes</string>
+    <string name="tip_whatsapp_step1">Open WhatsApp → Instellingen → Opslag en data.</string>
+    <string name="tip_whatsapp_step2">Bekijk \"Groter dan 5 MB\".</string>
+    <string name="tip_whatsapp_step3">Verwijder wat je niet nodig hebt.</string>
+    <string name="tip_whatsapp_action">Open WhatsApp</string>
+    <string name="tip_caches_title">App-caches wissen</string>
+    <string name="tip_caches_subtitle">Social media cachet gigabytes</string>
+    <string name="tip_caches_step1">Tik op \"Open opslaginstellingen\".</string>
+    <string name="tip_caches_step2">Open \"Apps\" en sorteer op grootte.</string>
+    <string name="tip_caches_step3">Tik op grote apps → \"Cache wissen\".</string>
+    <string name="tip_caches_action">Open opslaginstellingen</string>
+    <string name="tip_storage_title">Opslagbeheer gebruiken</string>
+    <string name="tip_storage_subtitle">Verwijder back-upfoto\'s</string>
+    <string name="tip_storage_step1">Tik op \"Open opslagbeheer\".</string>
+    <string name="tip_storage_step2">Gebruik \"Ruimte vrijmaken\" voor geüploade foto\'s.</string>
+    <string name="tip_storage_action">Open opslagbeheer</string>
+</resources>

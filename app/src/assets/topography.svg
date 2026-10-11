@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+  <defs>
+    <pattern id="iso-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 0 24 L 24 0 L 48 24 L 24 48 Z" fill="none" stroke="#cbd5e1" stroke-width="0.6" stroke-opacity="0.35" />
+    </pattern>
+    <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="0.8" fill="#94a3b8" fill-opacity="0.25" />
+    </pattern>
+  </defs>
+
+  <!-- Base background -->
+  <rect width="100%" height="100%" fill="#f8fafc" />
+  
+  <!-- Subtle Isometric Grid & Dots -->
+  <rect width="100%" height="100%" fill="url(#iso-grid)" />
+  <rect width="100%" height="100%" fill="url(#dot-grid)" />
+
+  <!-- Topographic Contour Curves -->
+  <g fill="none" stroke="#94a3b8" stroke-opacity="0.28" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top-Right Ridge -->
+    <path d="M 650 -50 C 720 180, 880 220, 1020 160 C 1150 110, 1220 220, 1280 320" />
+    <path d="M 680 -50 C 750 190, 900 240, 1040 180 C 1170 130, 1240 240, 1300 340" stroke-opacity="0.22" />
+    <path d="M 710 -50 C 780 200, 920 260, 1060 200 C 1190 150, 1260 260, 1320 360" />
+    <path d="M 740 -50 C 810 210, 940 280, 1080 220 C 1210 170, 1280 280, 1340 380" stroke-opacity="0.18" />
+    <path d="M 770 -50 C 840 220, 960 300, 1100 240 C 1230 190, 1300 300, 1360 400" />
+    <path d="M 800 -50 C 870 230, 980 320, 1120 260 C 1250 210, 1320 320, 1380 420" stroke-opacity="0.15" />
+    <path d="M 830 -50 C 900 240, 1000 340, 1140 280 C 1270 230, 1340 340, 1400 440" />
+
+    <!-- Center Flowing Contour Waves -->
+    <path d="M -100 280 C 180 180, 320 480, 580 340 C 840 200, 980 460, 1300 380" />
+    <path d="M -100 340 C 170 240, 330 520, 590 390 C 850 250, 970 500, 1300 430" stroke-opacity="0.22" />
+    <path d="M -100 400 C 160 300, 340 560, 600 440 C 860 300, 960 540, 1300 480" />
+    <path d="M -100 460 C 150 360, 350 600, 610 490 C 870 350, 950 580, 1300 530" stroke-opacity="0.2" />
+    <path d="M -100 520 C 140 420, 360 640, 620 540 C 880 400, 940 620, 1300 580" />
+    <path d="M -100 580 C 130 480, 370 680, 630 590 C 890 450, 930 660, 1300 630" stroke-opacity="0.16" />
+    <path d="M -100 640 C 120 540, 380 720, 640 640 C 900 500, 920 700, 1300 680" />
+
+    <!-- Bottom Left Hill Contours -->
+    <path d="M -80 820 C 60 720, 220 860, 380 780 C 520 710, 620 890, 780 860" />
+    <path d="M -80 880 C 50 780, 230 910, 390 830 C 530 760, 610 930, 770 910" stroke-opacity="0.22" />
+    <path d="M -80 940 C 40 840, 240 960, 400 880 C 540 810, 600 970, 760 960" />
+    <path d="M -80 1000 C 30 900, 250 1010, 410 930 C 550 860, 590 1010, 750 1010" stroke-opacity="0.18" />
+    <path d="M -80 1060 C 20 960, 260 1060, 420 980 C 560 910, 580 1050, 740 1060" />
+
+    <!-- Topographic closed loops (Peaks/Depressions) -->
+    <ellipse cx="980" cy="850" rx="140" ry="80" transform="rotate(-15 980 850)" stroke-opacity="0.2" />
+    <ellipse cx="980" cy="850" rx="100" ry="55" transform="rotate(-15 980 850)" />
+    <ellipse cx="980" cy="850" rx="60" ry="32" transform="rotate(-15 980 850)" stroke-opacity="0.32" />
+    <ellipse cx="980" cy="850" rx="25" ry="14" transform="rotate(-15 980 850)" stroke-opacity="0.38" />
+
+    <ellipse cx="180" cy="160" rx="110" ry="60" transform="rotate(20 180 160)" stroke-opacity="0.18" />
+    <ellipse cx="180" cy="160" rx="75" ry="40" transform="rotate(20 180 160)" />
+    <ellipse cx="180" cy="160" rx="40" ry="20" transform="rotate(20 180 160)" stroke-opacity="0.28" />
+  </g>
+</svg>

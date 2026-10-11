@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Sweepr",
+  "version": "0.1.0",
+  "identifier": "com.sweepr.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Sweepr",
+        "width": 980,
+        "height": 680,
+        "minWidth": 820,
+        "minHeight": 560,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "dmg", "app", "deb", "rpm", "appimage"],
+    "icon": [ "icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico" ],
+    "shortDescription": "Safe, honest disk cleaner",
+    "category": "Utility",
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "wix": {
+        "dialogImagePath": "icons/wix-dialog.bmp",
+        "bannerPath": "icons/wix-banner.bmp"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "compression": "lzma",
+        "sidebarImage": "icons/nsis-sidebar.bmp",
+        "headerImage": "icons/nsis-header.bmp",
+        "installerIcon": "icons/icon.ico",
+        "template": "installer.nsi"
+      }
+    },
+    "macOS": { "minimumSystemVersion": "11.0", "hardenedRuntime": true }
+  }
+}
+
+
