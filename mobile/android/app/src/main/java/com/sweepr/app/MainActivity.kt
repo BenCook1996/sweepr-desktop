@@ -1,6 +1,7 @@
 package com.sweepr.app
 
 import android.Manifest
+import androidx.compose.ui.res.stringResource
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager

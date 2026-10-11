@@ -62,8 +62,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 
-private const val HINT = stringResource(R.string.media_hint)
-
 @Composable
 fun PhotosVideosScreen(
     state: DashboardState,
@@ -196,7 +194,7 @@ private fun GroupGrid(
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
-                "We keep the BEST copy and pre-select the rest. $HINT.",
+                stringResource(R.string.group_intro),
                 color = Color.Gray,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(4.dp),
@@ -261,7 +259,7 @@ private fun FlatGrid(
             Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(header, fontWeight = FontWeight.Bold)
-                    Text(HINT, color = Color.Gray, fontSize = 12.sp)
+                    Text(stringResource(R.string.media_hint), color = Color.Gray, fontSize = 12.sp)
                 }
                 TextButton(onClick = { onSetSelected(mediaItems.map { it.uri }, !allSelected) }) {
                     Text(if (allSelected) stringResource(R.string.action_deselect_all) else stringResource(R.string.action_select_all))

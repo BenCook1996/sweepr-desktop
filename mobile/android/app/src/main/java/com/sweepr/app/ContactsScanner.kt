@@ -69,7 +69,7 @@ object ContactsScanner {
         }
         val firstWithKey = HashMap<String, Int>()
         entries.forEachIndexed { i, entry ->
-            for (key in keysFor(entry)) {
+            for (key in keysFor(context, entry)) {
                 val j = firstWithKey.putIfAbsent(key, i)
                 if (j != null) parent[find(i)] = find(j)
             }
@@ -106,7 +106,7 @@ object ContactsScanner {
         if (ops.isNotEmpty()) context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
     }
 
-    private fun keysFor(entry: ContactEntry): List<String> {
+    private fun keysFor(context: Context, entry: ContactEntry): List<String> {
         val keys = mutableListOf<String>()
         val name = normalizeName(entry.name)
         if (name.isNotEmpty() && entry.name != context.getString(R.string.contact_no_name)) keys += "n:$name"

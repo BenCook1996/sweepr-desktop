@@ -319,7 +319,7 @@ private fun <T> ChoiceDialog(
     title: String,
     options: List<T>,
     selected: T,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
     subtitle: String? = null,
