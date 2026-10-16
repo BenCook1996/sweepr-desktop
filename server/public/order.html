@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" type="image/png" href="/favicon.png">
   <link rel="shortcut icon" href="/favicon.ico">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
   <style>
     /* 3D Box Mockup CSS */
@@ -197,16 +197,16 @@
           <!-- Consent Checkboxes (Matching screenshot) -->
           <div class="space-y-3 text-xs text-gray-700">
             <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+              <input type="checkbox" id="termsConsent" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
               <span class="leading-snug">
                 I agree to pay £1.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
               </span>
             </label>
 
             <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+              <input type="checkbox" id="legalConsent" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
               <span class="leading-snug">
-                I agree to the <a href="#" class="text-blue-600 underline">Terms of Service</a> and <a href="#" class="text-blue-600 underline">Privacy Policy</a>
+                I agree to the <a href="/terms" class="text-blue-600 underline">Terms of Service</a> and <a href="/privacy" class="text-blue-600 underline">Privacy Policy</a>
               </span>
             </label>
           </div>
@@ -280,6 +280,15 @@
 
   <script>
     async function triggerCheckout(method = 'card') {
+      const termsConsent = document.getElementById('termsConsent');
+      const legalConsent = document.getElementById('legalConsent');
+      if (!termsConsent.checked || !legalConsent.checked) {
+        if (!termsConsent.checked) termsConsent.focus();
+        else legalConsent.focus();
+        alert('Please agree to the subscription terms, Terms of Service, and Privacy Policy to continue.');
+        return;
+      }
+
       const emailInput = document.getElementById('email');
       const email = emailInput.value.trim();
       if (!email) {
