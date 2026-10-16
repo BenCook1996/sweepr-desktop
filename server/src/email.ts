@@ -7,6 +7,7 @@ export async function sendSubscriptionEmail(
   planOrCode: string,
   name?: string
 ) {
+  const recipient = to.trim().toLowerCase();
   const isOtp = type === "otp";
   const isProduction = process.env.NODE_ENV === "production";
   const subject = isOtp
@@ -76,7 +77,7 @@ export async function sendSubscriptionEmail(
         },
         body: JSON.stringify({
           from,
-          to: [to],
+          to: [recipient],
           subject,
           text: body,
           html: htmlBody,
@@ -86,7 +87,7 @@ export async function sendSubscriptionEmail(
         const errJson = await resp.json().catch(() => ({}));
         throw new Error(errJson.message || `HTTP ${resp.status}`);
       }
-      console.log(`[EMAIL] Successfully sent real email to ${to} via Resend HTTPS API`);
+      console.log(`[EMAIL] Successfully sent real email to ${recipient} via Resend HTTPS API`);
       return;
     } catch (err: any) {
       console.error(`[EMAIL] Failed to send via Resend API:`, err?.message || err);
@@ -105,7 +106,7 @@ export async function sendSubscriptionEmail(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          personalizations: [{ to: [{ email: to }] }],
+          personalizations: [{ to: [{ email: recipient }] }],
           from: { email: from },
           subject,
           content: [
@@ -118,7 +119,7 @@ export async function sendSubscriptionEmail(
         const text = await resp.text().catch(() => "");
         throw new Error(`HTTP ${resp.status}: ${text}`);
       }
-      console.log(`[EMAIL] Successfully sent real email to ${to} via SendGrid HTTPS API`);
+      console.log(`[EMAIL] Successfully sent real email to ${recipient} via SendGrid HTTPS API`);
       return;
     } catch (err: any) {
       console.error(`[EMAIL] Failed to send via SendGrid API:`, err?.message || err);
@@ -146,14 +147,14 @@ export async function sendSubscriptionEmail(
 
       await transporter.sendMail({
         from: `"Sweepr" <${user}>`,
-        to,
+        to: recipient,
         subject,
         text: body,
         html: htmlBody,
       });
-      console.log(`[EMAIL] Successfully sent real email to ${to} via Gmail`);
+      console.log(`[EMAIL] Successfully sent real email to ${recipient} via Gmail`);
     } catch (err: any) {
-      console.error(`[EMAIL] Failed to send email to ${to} via Gmail SMTP:`, err?.message || err);
+      console.error(`[EMAIL] Failed to send email to ${recipient} via Gmail SMTP:`, err?.message || err);
     }
   } else {
     console.log(`[EMAIL] Skipping real email send: No email provider configured (RESEND_API_KEY, SENDGRID_API_KEY, or SMTP_GMAIL_USER/PASS)`);

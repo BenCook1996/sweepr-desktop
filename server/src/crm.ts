@@ -232,7 +232,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
   // 6b. Create New Paid Subscription / Customer
   router.post("/subscriptions", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    const email = (body.email || "").trim();
+    const email = (body.email || "").trim().toLowerCase();
     if (!email) return c.json({ error: "Email is required" }, 400);
 
     const name = (body.name || email.split("@")[0] || "Customer").trim();
