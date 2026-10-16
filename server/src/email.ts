@@ -8,8 +8,9 @@ export async function sendSubscriptionEmail(
   name?: string
 ) {
   const isOtp = type === "otp";
+  const isProduction = process.env.NODE_ENV === "production";
   const subject = isOtp
-    ? `Your Sweepr Login Code: ${planOrCode}`
+    ? `Your Sweepr Login Code`
     : type === "activated"
     ? `Welcome to Sweepr ${planOrCode.toUpperCase()}!`
     : `Sweepr Subscription Canceled`;
@@ -20,19 +21,26 @@ export async function sendSubscriptionEmail(
     ? `Hi ${name || 'Customer'},\n\nYour Sweepr ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nThank you for choosing Sweepr.`
     : `Hi ${name || 'Customer'},\n\nYour Sweepr subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe Sweepr Team`;
 
-  console.log(`\n=== EMAIL DISPATCH ===\nTo: ${to}\nSubject: ${subject}\n\n${body}\n======================\n`);
+  if (isProduction) {
+    // Never print bodies (which may contain login codes) in production logs.
+    console.log(`[EMAIL] Dispatching "${subject}" (${type})`);
+  } else {
+    const logRawOtp = process.env.LOG_OTP_CODES === "1";
+    const safeBody = isOtp && !logRawOtp ? body.replace(planOrCode, "[REDACTED-OTP]") : body;
+    console.log(`\n=== EMAIL DISPATCH ===\nTo: ${to}\nSubject: ${subject}\n\n${safeBody}\n======================\n`);
 
-  // Log to file for development / verification
-  try {
-    const logPath = join(process.cwd(), "data", "emails.log");
-    const logDir = dirname(logPath);
-    if (!existsSync(logDir)) {
-      mkdirSync(logDir, { recursive: true });
+    // Log to file for development / verification (restricted file mode 0600)
+    try {
+      const logPath = join(process.cwd(), "data", "emails.log");
+      const logDir = dirname(logPath);
+      if (!existsSync(logDir)) {
+        mkdirSync(logDir, { recursive: true, mode: 0o700 });
+      }
+      const logEntry = `[${new Date().toISOString()}] To: ${to} | Subject: ${subject}\n${safeBody}\n---\n`;
+      appendFileSync(logPath, logEntry, { encoding: "utf8", mode: 0o600 });
+    } catch (err) {
+      console.error("Failed to write to emails.log", err);
     }
-    const logEntry = `[${new Date().toISOString()}] To: ${to} | Subject: ${subject}\n${body}\n---\n`;
-    appendFileSync(logPath, logEntry, "utf8");
-  } catch (err) {
-    console.error("Failed to write to emails.log", err);
   }
 
   // Attempt to send via Gmail SMTP

@@ -6,7 +6,10 @@ import { createApp } from "../src/app.js";
 
 const { privateKey } = generateKeyPairSync("ed25519");
 
-function setup(now = () => Math.floor(Date.now() / 1000)) {
+const ADMIN_PASSWORD = "test-admin-password";
+const ADMIN_AUTH = `Basic ${Buffer.from(`admin:${ADMIN_PASSWORD}`).toString("base64")}`;
+
+function setup(now = () => Math.floor(Date.now() / 1000), overrides: Record<string, unknown> = {}) {
   const repo = openDb(":memory:");
   const app = createApp({
     repo,
@@ -20,28 +23,75 @@ function setup(now = () => Math.floor(Date.now() / 1000)) {
       priceMonthly: "",
       trialDays: 7,
       tokenTtlHours: 72,
-      maxDevices: 2,
+      maxDevicesPc: 2,
+      maxDevicesMobile: 2,
       devEndpoints: true,
       pastDueGraceDays: 3,
+      crmAdminUser: "admin",
+      crmAdminPassword: ADMIN_PASSWORD,
+      ...overrides,
     },
   });
 
-  const get = (path: string) => app.request(path, { method: "GET" });
+  const auth = { authorization: ADMIN_AUTH };
+  const get = (path: string) => app.request(path, { method: "GET", headers: auth });
   const post = (path: string, body?: unknown) =>
     app.request(path, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...auth },
       body: body ? JSON.stringify(body) : undefined,
     });
   const patch = (path: string, body: unknown) =>
     app.request(path, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...auth },
       body: JSON.stringify(body),
     });
 
   return { repo, app, get, post, patch };
 }
+
+test("CRM: requires admin auth", async () => {
+  const { app } = setup();
+  const noAuth = await app.request("/api/crm/stats");
+  assert.equal(noAuth.status, 401);
+  assert.match(noAuth.headers.get("www-authenticate") ?? "", /^Basic /);
+
+  const bad = await app.request("/api/crm/stats", {
+    headers: { authorization: `Basic ${Buffer.from("admin:wrong").toString("base64")}` },
+  });
+  assert.equal(bad.status, 401);
+
+  // Static copy of the CRM HTML must not be reachable without auth (case/encoding tricks included).
+  for (const p of ["/crm", "/crm/index.html", "/CRM/index.html", "/%63rm/index.html", "/admin"]) {
+    assert.equal((await app.request(p)).status, 401, p);
+  }
+
+  const ok = await app.request("/api/crm/stats", { headers: { authorization: ADMIN_AUTH } });
+  assert.equal(ok.status, 200);
+});
+
+test("CRM: disabled (503) when no admin password configured", async () => {
+  const { app } = setup(undefined, { crmAdminPassword: "" });
+  const res = await app.request("/api/crm/stats", { headers: { authorization: ADMIN_AUTH } });
+  assert.equal(res.status, 503);
+});
+
+test("CRM: rejects cross-origin writes", async () => {
+  const { app } = setup();
+  const res = await app.request("/api/crm/subscriptions", {
+    method: "POST",
+    headers: { authorization: ADMIN_AUTH, origin: "https://evil.example", "content-type": "application/json" },
+    body: JSON.stringify({ email: "x@example.com" }),
+  });
+  assert.equal(res.status, 403);
+});
+
+test("CRM: dev-only endpoints are disabled without devEndpoints", async () => {
+  const { post } = setup(undefined, { devEndpoints: false });
+  assert.equal((await post("/api/crm/seed-demo")).status, 404);
+  assert.equal((await post("/api/crm/make-me-paid", {})).status, 404);
+});
 
 test("CRM: seed demo accounts and retrieve stats", async () => {
   const { post, get } = setup();

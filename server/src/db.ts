@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { timingSafeEqual } from "node:crypto";
 
 export type EntStatus =
   | "trialing" | "active" | "past_due" | "canceled" | "unpaid"
@@ -229,6 +230,11 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "total_spend_cents", "INTEGER DEFAULT 0");
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
+  ensureColumn(db, "devices", "token_hash", "TEXT");
+  // OTPs are now stored hashed with a failed-attempt counter. Any pre-existing (plaintext) codes are dropped.
+  const otpCols = db.prepare(`PRAGMA table_info(otps)`).all() as Array<{ name: string }>;
+  if (!otpCols.some((c) => c.name === "attempts")) db.exec(`DELETE FROM otps`);
+  ensureColumn(db, "otps", "attempts", "INTEGER NOT NULL DEFAULT 0");
 
   return new Repo(db);
 }
@@ -238,19 +244,39 @@ const now = () => Math.floor(Date.now() / 1000);
 export class Repo {
   constructor(readonly db: DatabaseSync) {}
 
-  setOtp(email: string, code: string, expires_at: number) {
+  /** Stores only a hash of the code (callers pass sha256(code)); resets the failed-attempt counter and prunes expired OTPs. */
+  setOtp(email: string, codeHash: string, expires_at: number) {
+    this.db.prepare(`DELETE FROM otps WHERE expires_at < ?`).run(now());
     this.db.prepare(`
-      INSERT INTO otps (email, code, expires_at) 
-      VALUES (?, ?, ?) 
-      ON CONFLICT(email) DO UPDATE SET code=excluded.code, expires_at=excluded.expires_at
-    `).run(email, code, expires_at);
+      INSERT INTO otps (email, code, expires_at, attempts) 
+      VALUES (?, ?, ?, 0) 
+      ON CONFLICT(email) DO UPDATE SET code=excluded.code, expires_at=excluded.expires_at, attempts=0
+    `).run(email, codeHash, expires_at);
   }
 
-  verifyOtp(email: string, code: string, now: number): boolean {
-    const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ?`).get(email) as any;
+  /** Compares sha256 hex digests in constant time. The OTP is burned after MAX_OTP_ATTEMPTS failures. */
+  verifyOtp(email: string, codeHash: string, now: number): boolean {
+    const MAX_OTP_ATTEMPTS = 5;
+    const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ?`).get(email) as
+      | { code: string; expires_at: number; attempts: number | null }
+      | undefined;
     if (!otp) return false;
-    if (otp.expires_at < now) return false;
-    if (otp.code !== code) return false;
+    if (otp.expires_at < now) {
+      this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
+      return false;
+    }
+    const a = Buffer.from(String(otp.code), "utf8");
+    const b = Buffer.from(String(codeHash), "utf8");
+    const ok = a.length === b.length && timingSafeEqual(a, b);
+    if (!ok) {
+      const attempts = (otp.attempts ?? 0) + 1;
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
+      } else {
+        this.db.prepare(`UPDATE otps SET attempts = ? WHERE email = ?`).run(attempts, email);
+      }
+      return false;
+    }
     this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
     return true;
   }
@@ -273,7 +299,14 @@ export class Repo {
   }
 
   accountByTokenHash(hash: string): Account | undefined {
-    return this.db.prepare("SELECT * FROM accounts WHERE refresh_token_hash = ?").get(hash) as Account | undefined;
+    const direct = this.db.prepare("SELECT * FROM accounts WHERE refresh_token_hash = ?").get(hash) as Account | undefined;
+    if (direct) return direct;
+    return this.db.prepare(`
+      SELECT a.* FROM accounts a
+      JOIN devices d ON a.id = d.account_id
+      WHERE d.token_hash = ? AND d.revoked = 0
+      LIMIT 1
+    `).get(hash) as Account | undefined;
   }
 
   accountById(id: string): Account | undefined {
@@ -284,19 +317,56 @@ export class Repo {
     return this.db.prepare("SELECT * FROM accounts WHERE stripe_customer_id = ?").get(customerId) as Account | undefined;
   }
 
+  /** Returns the highest-priority account matching `email` (paid/active entitlements first). */
   accountByEmail(email: string): Account | undefined {
-    return this.db.prepare("SELECT * FROM accounts WHERE email = ? COLLATE NOCASE").get(email) as Account | undefined;
+    return this.db.prepare(`
+      SELECT a.* FROM accounts a
+      LEFT JOIN entitlements e ON a.id = e.account_id
+      WHERE a.email = ? COLLATE NOCASE
+      ORDER BY CASE
+        WHEN e.status IN ('active', 'trialing', 'past_due') THEN 0
+        WHEN a.stripe_customer_id IS NOT NULL THEN 1
+        ELSE 2
+      END, a.created_at DESC
+      LIMIT 1
+    `).get(email) as Account | undefined;
   }
 
   setCustomer(accountId: string, customerId: string, email?: string) {
     const t = now();
+    const owner = this.accountByCustomer(customerId);
+    if (owner && owner.id !== accountId) {
+      // Another account already owns this Stripe customer ID; do not cause a UNIQUE constraint fault.
+      return;
+    }
     if (email) {
-      this.db.prepare("UPDATE accounts SET stripe_customer_id = ?, email = COALESCE(email, ?), updated_at = ? WHERE id = ?")
+      this.db.prepare("UPDATE accounts SET stripe_customer_id = COALESCE(stripe_customer_id, ?), email = COALESCE(email, ?), updated_at = ? WHERE id = ?")
         .run(customerId, email, t, accountId);
     } else {
-      this.db.prepare("UPDATE accounts SET stripe_customer_id = ?, updated_at = ? WHERE id = ?")
+      this.db.prepare("UPDATE accounts SET stripe_customer_id = COALESCE(stripe_customer_id, ?), updated_at = ? WHERE id = ?")
         .run(customerId, t, accountId);
     }
+  }
+
+  setDeviceTokenHash(accountId: string, deviceId: string, tokenHash: string) {
+    this.db.prepare("UPDATE devices SET token_hash = ?, last_seen = ? WHERE account_id = ? AND id = ? AND revoked = 0")
+      .run(tokenHash, now(), accountId, deviceId);
+  }
+
+  deleteAccount(accountId: string): boolean {
+    const acc = this.accountById(accountId);
+    if (!acc) return false;
+    if (acc.email) {
+      this.db.prepare("DELETE FROM otps WHERE email = ? COLLATE NOCASE").run(acc.email);
+    }
+    this.db.prepare("DELETE FROM admin_notes WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM activities WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM invoices WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM subscriptions WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM entitlements WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM devices WHERE account_id = ?").run(accountId);
+    const r = this.db.prepare("DELETE FROM accounts WHERE id = ?").run(accountId);
+    return Number(r.changes) > 0;
   }
 
   updateAccountProfile(accountId: string, updates: { name?: string; email?: string; notes?: string; health_score?: number; lifecycle_stage?: string }) {
@@ -708,7 +778,9 @@ export class Repo {
 
   /** Returns true if this is the first time we've seen the event (idempotency). */
   markEventProcessed(eventId: string): boolean {
-    const r = this.db.prepare("INSERT OR IGNORE INTO processed_events (id, processed_at) VALUES (?, ?)").run(eventId, now());
+    const t = now();
+    this.db.prepare("DELETE FROM processed_events WHERE processed_at < ?").run(t - 30 * 86400);
+    const r = this.db.prepare("INSERT OR IGNORE INTO processed_events (id, processed_at) VALUES (?, ?)").run(eventId, t);
     return Number(r.changes) > 0;
   }
 
