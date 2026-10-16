@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { setSignedCookie } from "hono/cookie";
 import type Stripe from "stripe";
-import { createHash, randomInt } from "node:crypto";
+import { createHash, randomInt, type KeyObject } from "node:crypto";
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";

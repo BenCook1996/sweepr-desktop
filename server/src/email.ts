@@ -43,32 +43,8 @@ export async function sendSubscriptionEmail(
     }
   }
 
-  // Attempt to send via Gmail SMTP
-  const rawUser = process.env.SMTP_GMAIL_USER;
-  const rawPass = process.env.SMTP_GMAIL_PASS;
-  const user = rawUser?.trim().replace(/^["']|["']$/g, "");
-  // Google App Passwords are 16 lowercase characters often grouped with spaces (e.g. "abcd efgh ijkl mnop")
-  const pass = rawPass?.trim().replace(/\s+/g, "").replace(/^["']|["']$/g, "");
-
-  if (user && pass) {
-    try {
-      const nodemailer = (await import("nodemailer")).default;
-      
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user,
-          pass,
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
-      });
-
-      const htmlBody = isOtp
-        ? `
+  const htmlBody = isOtp
+    ? `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
   <div style="text-align: center; margin-bottom: 24px;">
     <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
@@ -85,7 +61,88 @@ export async function sendSubscriptionEmail(
     &copy; Sweepr Desktop &bull; Fast, private, intelligent PC cleaner
   </div>
 </div>`
-        : undefined;
+    : undefined;
+
+  // 1. Try Resend HTTP API (Port 443 HTTPS - never blocked by cloud firewalls like Railway)
+  const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (resendApiKey) {
+    try {
+      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "Sweepr <onboarding@resend.dev>";
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          text: body,
+          html: htmlBody,
+        }),
+      });
+      if (!resp.ok) {
+        const errJson = await resp.json().catch(() => ({}));
+        throw new Error(errJson.message || `HTTP ${resp.status}`);
+      }
+      console.log(`[EMAIL] Successfully sent real email to ${to} via Resend HTTPS API`);
+      return;
+    } catch (err: any) {
+      console.error(`[EMAIL] Failed to send via Resend API:`, err?.message || err);
+    }
+  }
+
+  // 2. Try SendGrid HTTP API (Port 443 HTTPS)
+  const sendgridApiKey = process.env.SENDGRID_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (sendgridApiKey) {
+    try {
+      const from = process.env.EMAIL_FROM || "support@sweepr.app";
+      const resp = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sendgridApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: to }] }],
+          from: { email: from },
+          subject,
+          content: [
+            { type: "text/plain", value: body },
+            ...(htmlBody ? [{ type: "text/html", value: htmlBody }] : []),
+          ],
+        }),
+      });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        throw new Error(`HTTP ${resp.status}: ${text}`);
+      }
+      console.log(`[EMAIL] Successfully sent real email to ${to} via SendGrid HTTPS API`);
+      return;
+    } catch (err: any) {
+      console.error(`[EMAIL] Failed to send via SendGrid API:`, err?.message || err);
+    }
+  }
+
+  // 3. Fallback: SMTP (Gmail / Custom SMTP)
+  const rawUser = process.env.SMTP_GMAIL_USER;
+  const rawPass = process.env.SMTP_GMAIL_PASS;
+  const user = rawUser?.trim().replace(/^["']|["']$/g, "");
+  const pass = rawPass?.trim().replace(/\s+/g, "").replace(/^["']|["']$/g, "");
+
+  if (user && pass) {
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: { user, pass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 10000,
+      });
 
       await transporter.sendMail({
         from: `"Sweepr" <${user}>`,
@@ -96,15 +153,30 @@ export async function sendSubscriptionEmail(
       });
       console.log(`[EMAIL] Successfully sent real email to ${to} via Gmail`);
     } catch (err: any) {
-      console.error(`[EMAIL] Failed to send email to ${to} via Gmail:`, err?.message || err);
+      console.error(`[EMAIL] Failed to send email to ${to} via Gmail SMTP:`, err?.message || err);
     }
   } else {
-    console.log(`[EMAIL] Skipping real email send: SMTP_GMAIL_USER and SMTP_GMAIL_PASS are not set in .env (user=${Boolean(user)}, pass=${Boolean(pass)})`);
+    console.log(`[EMAIL] Skipping real email send: No email provider configured (RESEND_API_KEY, SENDGRID_API_KEY, or SMTP_GMAIL_USER/PASS)`);
   }
 }
 
-/** Check whether SMTP credentials are set and verify connection against Gmail servers. */
-export async function verifySmtp(): Promise<{ ok: boolean; configured: boolean; user?: string; error?: string }> {
+/** Check whether email provider credentials are set and verify connectivity. */
+export async function verifySmtp(): Promise<{ ok: boolean; provider: string; configured: boolean; user?: string; error?: string }> {
+  const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (resendApiKey) {
+    try {
+      const resp = await fetch("https://api.resend.com/api-keys", {
+        headers: { Authorization: `Bearer ${resendApiKey}` },
+      });
+      if (resp.ok) {
+        return { ok: true, provider: "Resend HTTPS (Port 443)", configured: true };
+      }
+      return { ok: false, provider: "Resend", configured: true, error: `Resend API returned HTTP ${resp.status}` };
+    } catch (err: any) {
+      return { ok: false, provider: "Resend", configured: true, error: err?.message };
+    }
+  }
+
   const rawUser = process.env.SMTP_GMAIL_USER;
   const rawPass = process.env.SMTP_GMAIL_PASS;
   const user = rawUser?.trim().replace(/^["']|["']$/g, "");
@@ -113,8 +185,8 @@ export async function verifySmtp(): Promise<{ ok: boolean; configured: boolean; 
   if (!user || !pass) {
     return {
       ok: false,
+      provider: "none",
       configured: false,
-      user: user ? `${user.slice(0, 3)}***@***` : undefined,
       error: `Missing credentials in Railway Variables: ${!user ? "SMTP_GMAIL_USER missing. " : ""}${!pass ? "SMTP_GMAIL_PASS missing." : ""}`.trim(),
     };
   }
@@ -126,20 +198,22 @@ export async function verifySmtp(): Promise<{ ok: boolean; configured: boolean; 
       port: 465,
       secure: true,
       auth: { user, pass },
-      connectionTimeout: 8000,
+      connectionTimeout: 4000,
     });
     await transporter.verify();
     return {
       ok: true,
+      provider: "Gmail SMTP",
       configured: true,
       user: `${user.slice(0, 3)}***@***`,
     };
   } catch (err: any) {
     return {
       ok: false,
+      provider: "Gmail SMTP",
       configured: true,
       user: `${user.slice(0, 3)}***@***`,
-      error: err?.message || "Failed to authenticate with Gmail SMTP",
+      error: `${err?.message || "Failed to authenticate"}. Note: Railway blocks outbound SMTP ports (25, 465, 587). Using RESEND_API_KEY sends via standard HTTPS Port 443.`,
     };
   }
 }
