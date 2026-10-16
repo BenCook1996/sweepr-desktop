@@ -28,6 +28,11 @@
       <div id="emailSection">
         <label class="block text-sm font-semibold mb-1">Email Address</label>
         <input type="email" id="email" required placeholder="you@example.com" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow bg-white">
+        <div class="mt-2 flex items-center justify-end">
+          <button type="button" id="haveCodeBtn" class="text-xs font-semibold text-green-600 hover:text-green-700 transition-colors">
+            Already have a 6-digit code? Enter it here
+          </button>
+        </div>
       </div>
       
       <div id="otpSection" class="hidden">
@@ -36,7 +41,7 @@
           <button type="button" id="changeEmailBtn" class="text-xs text-green-600 hover:text-green-700 font-medium transition-colors">Change email</button>
         </div>
         <p class="text-xs text-gray-500 mb-2">
-          We sent a 6-digit login code to <strong id="targetEmail" class="text-gray-800 font-semibold"></strong>.
+          Enter the 6-digit login code for <strong id="targetEmail" class="text-gray-800 font-semibold"></strong>.
         </p>
         <input type="text" id="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow bg-white text-center tracking-widest font-mono text-xl font-bold">
         
@@ -87,6 +92,7 @@
     const targetEmail = document.getElementById('targetEmail');
     const changeEmailBtn = document.getElementById('changeEmailBtn');
     const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const haveCodeBtn = document.getElementById('haveCodeBtn');
 
     function showMessage(text, type) {
       if (!text) {
@@ -135,7 +141,7 @@
       emailInput.focus();
     }
 
-    function showOtpStep(email) {
+    function showOtpStep(email, withCooldown = true) {
       awaitingOtp = true;
       emailSection.classList.add('hidden');
       otpSection.classList.remove('hidden');
@@ -144,8 +150,38 @@
       loginBtn.disabled = false;
       otpInput.value = '';
       otpInput.focus();
-      startCooldown(30);
+      if (withCooldown) {
+        startCooldown(30);
+      } else {
+        if (cooldownTimer) clearInterval(cooldownTimer);
+        cooldownSeconds = 0;
+        resendOtpBtn.disabled = false;
+        resendOtpBtn.textContent = "Didn't receive it? Resend code";
+      }
     }
+
+    haveCodeBtn.addEventListener('click', () => {
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        showMessage("Please enter your email address first, then click 'Already have a 6-digit code?'.", 'error');
+        emailInput.focus();
+        return;
+      }
+      showMessage('', false);
+      showOtpStep(email, false);
+    });
+
+    // Support URL params e.g. /login?email=user@example.com&step=otp
+    (function initFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const qEmail = params.get('email');
+      if (qEmail) {
+        emailInput.value = qEmail;
+        if (params.get('step') === 'otp') {
+          showOtpStep(qEmail, false);
+        }
+      }
+    })();
 
     backBtn.addEventListener('click', (e) => {
       if (awaitingOtp) {

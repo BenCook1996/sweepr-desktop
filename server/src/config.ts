@@ -23,8 +23,8 @@ export const config = {
   crmAdminPassword: process.env.CRM_ADMIN_PASSWORD ?? "",
   // Shared secret configured as the Authorization header value in the RevenueCat webhook settings.
   revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET ?? "",
-  // Only trust cf-connecting-ip / x-forwarded-for when running behind a trusted reverse proxy.
-  trustProxy: process.env.TRUST_PROXY === "1",
+  // Only trust cf-connecting-ip / x-forwarded-for when running behind a trusted reverse proxy (e.g. Railway / Cloudflare).
+  trustProxy: process.env.TRUST_PROXY === "1" || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID),
   stripeCoupon: process.env.STRIPE_COUPON ?? "MYskiOdE",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",

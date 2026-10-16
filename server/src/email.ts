@@ -1,12 +1,23 @@
 import { appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 
+export interface EmailDispatchResult {
+  ok: boolean;
+  provider: string;
+  id?: string;
+  error?: string;
+  to?: string;
+  timestamp?: string;
+}
+
+let lastDispatch: EmailDispatchResult | null = null;
+
 export async function sendSubscriptionEmail(
   to: string,
   type: "activated" | "canceled" | "otp",
   planOrCode: string,
   name?: string
-) {
+): Promise<EmailDispatchResult> {
   const recipient = to.trim().toLowerCase();
   const isOtp = type === "otp";
   const isProduction = process.env.NODE_ENV === "production";
@@ -28,7 +39,7 @@ export async function sendSubscriptionEmail(
   } else {
     const logRawOtp = process.env.LOG_OTP_CODES === "1";
     const safeBody = isOtp && !logRawOtp ? body.replace(planOrCode, "[REDACTED-OTP]") : body;
-    console.log(`\n=== EMAIL DISPATCH ===\nTo: ${to}\nSubject: ${subject}\n\n${safeBody}\n======================\n`);
+    console.log(`\n=== EMAIL DISPATCH ===\nTo: ${recipient}\nSubject: ${subject}\n\n${safeBody}\n======================\n`);
 
     // Log to file for development / verification (restricted file mode 0600)
     try {
@@ -37,7 +48,7 @@ export async function sendSubscriptionEmail(
       if (!existsSync(logDir)) {
         mkdirSync(logDir, { recursive: true, mode: 0o700 });
       }
-      const logEntry = `[${new Date().toISOString()}] To: ${to} | Subject: ${subject}\n${safeBody}\n---\n`;
+      const logEntry = `[${new Date().toISOString()}] To: ${recipient} | Subject: ${subject}\n${safeBody}\n---\n`;
       appendFileSync(logPath, logEntry, { encoding: "utf8", mode: 0o600 });
     } catch (err) {
       console.error("Failed to write to emails.log", err);
@@ -83,14 +94,18 @@ export async function sendSubscriptionEmail(
           html: htmlBody,
         }),
       });
+      const respData: any = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        throw new Error(errJson.message || `HTTP ${resp.status}`);
+        throw new Error(respData.message || `HTTP ${resp.status}`);
       }
-      console.log(`[EMAIL] Successfully sent real email to ${recipient} via Resend HTTPS API`);
-      return;
+      console.log(`[EMAIL] Successfully sent real email to ${recipient} via Resend HTTPS API (id=${respData.id})`);
+      lastDispatch = { ok: true, provider: "Resend HTTPS", id: respData.id, to: recipient, timestamp: new Date().toISOString() };
+      return lastDispatch;
     } catch (err: any) {
-      console.error(`[EMAIL] Failed to send via Resend API:`, err?.message || err);
+      const errMsg = err?.message || String(err);
+      console.error(`[EMAIL] Failed to send via Resend API:`, errMsg);
+      lastDispatch = { ok: false, provider: "Resend HTTPS", error: errMsg, to: recipient, timestamp: new Date().toISOString() };
+      // Fall through if SMTP is also configured, otherwise return error
     }
   }
 
@@ -120,9 +135,12 @@ export async function sendSubscriptionEmail(
         throw new Error(`HTTP ${resp.status}: ${text}`);
       }
       console.log(`[EMAIL] Successfully sent real email to ${recipient} via SendGrid HTTPS API`);
-      return;
+      lastDispatch = { ok: true, provider: "SendGrid HTTPS", to: recipient, timestamp: new Date().toISOString() };
+      return lastDispatch;
     } catch (err: any) {
-      console.error(`[EMAIL] Failed to send via SendGrid API:`, err?.message || err);
+      const errMsg = err?.message || String(err);
+      console.error(`[EMAIL] Failed to send via SendGrid API:`, errMsg);
+      lastDispatch = { ok: false, provider: "SendGrid HTTPS", error: errMsg, to: recipient, timestamp: new Date().toISOString() };
     }
   }
 
@@ -145,7 +163,7 @@ export async function sendSubscriptionEmail(
         socketTimeout: 10000,
       });
 
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `"Sweepr" <${user}>`,
         to: recipient,
         subject,
@@ -153,22 +171,34 @@ export async function sendSubscriptionEmail(
         html: htmlBody,
       });
       console.log(`[EMAIL] Successfully sent real email to ${recipient} via Gmail`);
+      lastDispatch = { ok: true, provider: "Gmail SMTP", id: info?.messageId, to: recipient, timestamp: new Date().toISOString() };
+      return lastDispatch;
     } catch (err: any) {
-      console.error(`[EMAIL] Failed to send email to ${recipient} via Gmail SMTP:`, err?.message || err);
+      const errMsg = err?.message || String(err);
+      console.error(`[EMAIL] Failed to send email to ${recipient} via Gmail SMTP:`, errMsg);
+      if (!lastDispatch) {
+        lastDispatch = { ok: false, provider: "Gmail SMTP", error: errMsg, to: recipient, timestamp: new Date().toISOString() };
+      }
+      return lastDispatch;
     }
-  } else {
-    console.log(`[EMAIL] Skipping real email send: No email provider configured (RESEND_API_KEY, SENDGRID_API_KEY, or SMTP_GMAIL_USER/PASS)`);
   }
+
+  if (lastDispatch) {
+    return lastDispatch;
+  }
+
+  console.log(`[EMAIL] Skipping real email send: No email provider configured (RESEND_API_KEY, SENDGRID_API_KEY, or SMTP_GMAIL_USER/PASS)`);
+  return { ok: false, provider: "none", error: "No email provider configured", to: recipient, timestamp: new Date().toISOString() };
 }
 
 /** Check whether email provider credentials are set and verify connectivity. */
-export async function verifySmtp(): Promise<{ ok: boolean; provider: string; configured: boolean; user?: string; error?: string }> {
+export async function verifySmtp(): Promise<{ ok: boolean; provider: string; configured: boolean; user?: string; error?: string; last_dispatch?: EmailDispatchResult | null }> {
   const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
   if (resendApiKey) {
     if (resendApiKey.startsWith("re_") && resendApiKey.length > 10) {
-      return { ok: true, provider: "Resend HTTPS (Port 443)", configured: true };
+      return { ok: true, provider: "Resend HTTPS (Port 443)", configured: true, last_dispatch: lastDispatch };
     }
-    return { ok: false, provider: "Resend", configured: true, error: "Invalid RESEND_API_KEY format (must start with re_)" };
+    return { ok: false, provider: "Resend", configured: true, error: "Invalid RESEND_API_KEY format (must start with re_)", last_dispatch: lastDispatch };
   }
 
   const rawUser = process.env.SMTP_GMAIL_USER;
@@ -182,6 +212,7 @@ export async function verifySmtp(): Promise<{ ok: boolean; provider: string; con
       provider: "none",
       configured: false,
       error: `Missing credentials in Railway Variables: ${!user ? "SMTP_GMAIL_USER missing. " : ""}${!pass ? "SMTP_GMAIL_PASS missing." : ""}`.trim(),
+      last_dispatch: lastDispatch,
     };
   }
 
@@ -200,6 +231,7 @@ export async function verifySmtp(): Promise<{ ok: boolean; provider: string; con
       provider: "Gmail SMTP",
       configured: true,
       user: `${user.slice(0, 3)}***@***`,
+      last_dispatch: lastDispatch,
     };
   } catch (err: any) {
     return {
@@ -208,6 +240,7 @@ export async function verifySmtp(): Promise<{ ok: boolean; provider: string; con
       configured: true,
       user: `${user.slice(0, 3)}***@***`,
       error: `${err?.message || "Failed to authenticate"}. Note: Railway blocks outbound SMTP ports (25, 465, 587). Using RESEND_API_KEY sends via standard HTTPS Port 443.`,
+      last_dispatch: lastDispatch,
     };
   }
 }

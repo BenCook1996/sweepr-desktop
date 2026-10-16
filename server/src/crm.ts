@@ -647,34 +647,34 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     if (!customer) return c.json({ error: "Customer not found" }, 404);
     if (!customer.email) return c.json({ error: "Customer has no email address" }, 400);
 
+    const normEmail = customer.email.trim().toLowerCase();
     const code = randomInt(100000, 1000000).toString();
     const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
-    repo.setOtp(customer.email, sha256(code), expiresAt);
+    repo.setOtp(normEmail, sha256(code), expiresAt);
 
-    let emailSent = false;
-    let emailStatus = "Dispatched via email queue";
-    try {
-      sendSubscriptionEmail(customer.email, "otp", code).catch(console.error);
-      emailSent = true;
-    } catch (err: any) {
-      emailStatus = err.message || "Failed to queue email";
-    }
+    const dispatch = await sendSubscriptionEmail(normEmail, "otp", code);
+    const emailSent = dispatch.ok;
+    const emailStatus = dispatch.ok
+      ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
+      : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
 
     repo.addActivity({
       account_id: id,
       type: "otp_generated",
       title: "Login Code Generated",
-      description: `Generated 6-digit login passcode (${code}) for customer portal`,
+      description: `Generated 6-digit login passcode (${code}) for customer portal — ${emailStatus}`,
       actor: "admin",
+      metadata: { code, email: normEmail, dispatch },
     });
 
     return c.json({
       ok: true,
       code,
-      email: customer.email,
+      email: normEmail,
       expires_at: expiresAt,
       email_sent: emailSent,
       email_status: emailStatus,
+      dispatch,
       message: `Passcode: ${code} (Expires in 15 mins)`,
     });
   });

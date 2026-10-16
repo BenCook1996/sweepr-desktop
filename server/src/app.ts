@@ -348,8 +348,19 @@ export function createApp(deps: AppDeps) {
       const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60; // 15 mins
       repo.setOtp(email, sha256(code), expiresAt);
 
-      import("./email.js").then((m) => {
-        m.sendSubscriptionEmail(email, "otp", code).catch(console.error);
+      const { sendSubscriptionEmail } = await import("./email.js");
+      const dispatch = await sendSubscriptionEmail(email, "otp", code);
+      const statusText = dispatch.ok
+        ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
+        : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
+
+      repo.addActivity({
+        account_id: account.id,
+        type: "otp_requested",
+        title: "Customer Requested Login Code",
+        description: `6-digit code (${code}) requested via /login — ${statusText}`,
+        actor: "customer",
+        metadata: { code, email, dispatch },
       });
     }
 
@@ -374,6 +385,14 @@ export function createApp(deps: AppDeps) {
     if (!account) return invalid();
 
     limitOtpVerifyEmail.reset(email);
+    limitOtpSendEmail.reset(email);
+    repo.addActivity({
+      account_id: account.id,
+      type: "portal_login",
+      title: "Customer Logged Into Portal",
+      description: `Verified 6-digit OTP code and signed in to customer dashboard`,
+      actor: "customer",
+    });
     await setSignedCookie(c, SESSION_COOKIE, account.id, sessionSecret, {
       path: "/",
       httpOnly: true,
@@ -471,8 +490,19 @@ export function createApp(deps: AppDeps) {
       const code = randomInt(100000, 1000000).toString();
       const expiresAt = now() + 15 * 60;
       repo.setOtp(email, sha256(code), expiresAt);
-      import("./email.js").then((m) => {
-        m.sendSubscriptionEmail(email, "otp", code).catch(console.error);
+      const { sendSubscriptionEmail } = await import("./email.js");
+      const dispatch = await sendSubscriptionEmail(email, "otp", code);
+      const statusText = dispatch.ok
+        ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
+        : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
+
+      repo.addActivity({
+        account_id: account.id,
+        type: "otp_requested",
+        title: "Device Link Login Code Requested",
+        description: `6-digit code (${code}) requested via app — ${statusText}`,
+        actor: "customer",
+        metadata: { code, email, dispatch },
       });
     }
     return c.json({ otpSent: true });
@@ -503,6 +533,7 @@ export function createApp(deps: AppDeps) {
     }
 
     limitOtpVerifyEmail.reset(email);
+    limitOtpSendEmail.reset(email);
     const refreshToken = randomToken(32);
     repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
     const ent = repo.entitlement(account.id);

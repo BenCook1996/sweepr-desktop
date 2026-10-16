@@ -246,23 +246,25 @@ export class Repo {
 
   /** Stores only a hash of the code (callers pass sha256(code)); resets the failed-attempt counter and prunes expired OTPs. */
   setOtp(email: string, codeHash: string, expires_at: number) {
-    this.db.prepare(`DELETE FROM otps WHERE expires_at < ?`).run(now());
+    const normEmail = email.trim().toLowerCase();
+    this.db.prepare(`DELETE FROM otps WHERE expires_at < ? OR email = ? COLLATE NOCASE`).run(now(), normEmail);
     this.db.prepare(`
       INSERT INTO otps (email, code, expires_at, attempts) 
       VALUES (?, ?, ?, 0) 
       ON CONFLICT(email) DO UPDATE SET code=excluded.code, expires_at=excluded.expires_at, attempts=0
-    `).run(email, codeHash, expires_at);
+    `).run(normEmail, codeHash, expires_at);
   }
 
   /** Compares sha256 hex digests in constant time. The OTP is burned after MAX_OTP_ATTEMPTS failures. */
   verifyOtp(email: string, codeHash: string, now: number): boolean {
     const MAX_OTP_ATTEMPTS = 5;
-    const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ?`).get(email) as
-      | { code: string; expires_at: number; attempts: number | null }
+    const normEmail = email.trim().toLowerCase();
+    const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ? COLLATE NOCASE`).get(normEmail) as
+      | { email: string; code: string; expires_at: number; attempts: number | null }
       | undefined;
     if (!otp) return false;
     if (otp.expires_at < now) {
-      this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
+      this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
       return false;
     }
     const a = Buffer.from(String(otp.code), "utf8");
@@ -271,13 +273,13 @@ export class Repo {
     if (!ok) {
       const attempts = (otp.attempts ?? 0) + 1;
       if (attempts >= MAX_OTP_ATTEMPTS) {
-        this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
+        this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
       } else {
-        this.db.prepare(`UPDATE otps SET attempts = ? WHERE email = ?`).run(attempts, email);
+        this.db.prepare(`UPDATE otps SET attempts = ? WHERE email = ? COLLATE NOCASE`).run(attempts, normEmail);
       }
       return false;
     }
-    this.db.prepare(`DELETE FROM otps WHERE email = ?`).run(email);
+    this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
     return true;
   }
 
