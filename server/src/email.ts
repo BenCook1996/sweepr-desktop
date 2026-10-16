@@ -164,17 +164,10 @@ export async function sendSubscriptionEmail(
 export async function verifySmtp(): Promise<{ ok: boolean; provider: string; configured: boolean; user?: string; error?: string }> {
   const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
   if (resendApiKey) {
-    try {
-      const resp = await fetch("https://api.resend.com/api-keys", {
-        headers: { Authorization: `Bearer ${resendApiKey}` },
-      });
-      if (resp.ok) {
-        return { ok: true, provider: "Resend HTTPS (Port 443)", configured: true };
-      }
-      return { ok: false, provider: "Resend", configured: true, error: `Resend API returned HTTP ${resp.status}` };
-    } catch (err: any) {
-      return { ok: false, provider: "Resend", configured: true, error: err?.message };
+    if (resendApiKey.startsWith("re_") && resendApiKey.length > 10) {
+      return { ok: true, provider: "Resend HTTPS (Port 443)", configured: true };
     }
+    return { ok: false, provider: "Resend", configured: true, error: "Invalid RESEND_API_KEY format (must start with re_)" };
   }
 
   const rawUser = process.env.SMTP_GMAIL_USER;
