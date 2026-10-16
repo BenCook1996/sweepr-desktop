@@ -15,6 +15,6 @@ if (!stripe) console.warn("[config] STRIPE_SECRET_KEY not set: checkout/portal/w
 
 const app = createApp({ repo, signingKey, stripe, config });
 
-serve({ fetch: app.fetch, port: config.port }, (info) => {
-  console.log(`Sweepr licence server listening on http://localhost:${info.port}`);
+serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
+  console.log(`Sweepr licence server listening on http://${info.address}:${info.port}`);
 });
