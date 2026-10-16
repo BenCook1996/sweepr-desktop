@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { setSignedCookie } from "hono/cookie";
 import type Stripe from "stripe";
 import type { KeyObject } from "node:crypto";
 import { createHash } from "node:crypto";
@@ -21,6 +22,7 @@ export interface CrmRouterDeps {
     trialDays: number;
     maxDevicesPc?: number;
     maxDevicesMobile?: number;
+    sessionSecret?: string;
     /** Enables host-mutating dev helpers (make-me-paid, seed-demo, activate_local_app). Never in production. */
     devEndpoints?: boolean;
   };
@@ -637,6 +639,65 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     } catch (e: any) {
       return c.json({ error: e.message || "Failed to create portal session" }, 500);
     }
+  });
+
+  // 10b. Generate One-Time Login Code (OTP) for customer
+  router.post("/customers/:id/otp", async (c) => {
+    const id = c.req.param("id");
+    const customer = repo.accountById(id);
+    if (!customer) return c.json({ error: "Customer not found" }, 404);
+    if (!customer.email) return c.json({ error: "Customer has no email address" }, 400);
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
+    repo.setOtp(customer.email, sha256(code), expiresAt);
+
+    let emailSent = false;
+    let emailStatus = "Dispatched via email queue";
+    try {
+      sendSubscriptionEmail(customer.email, "otp", code).catch(console.error);
+      emailSent = true;
+    } catch (err: any) {
+      emailStatus = err.message || "Failed to queue email";
+    }
+
+    repo.addActivity({
+      account_id: id,
+      type: "otp_generated",
+      title: "Login Code Generated",
+      description: `Generated 6-digit login passcode (${code}) for customer portal`,
+      actor: "admin",
+    });
+
+    return c.json({
+      ok: true,
+      code,
+      email: customer.email,
+      expires_at: expiresAt,
+      email_sent: emailSent,
+      email_status: emailStatus,
+      message: `Passcode: ${code} (Expires in 15 mins)`,
+    });
+  });
+
+  // 10c. One-click admin login into customer dashboard
+  router.post("/customers/:id/impersonate", async (c) => {
+    const id = c.req.param("id");
+    const customer = repo.accountById(id);
+    if (!customer) return c.json({ error: "Customer not found" }, 404);
+
+    if (deps.config.sessionSecret) {
+      const isHttps = /^https:/i.test(deps.config.publicUrl);
+      await setSignedCookie(c, "sweepr_session", customer.id, deps.config.sessionSecret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "Lax",
+        secure: isHttps,
+        maxAge: 86400 * 30,
+      });
+    }
+
+    return c.json({ ok: true, redirect: "/dashboard" });
   });
 
   // 11. Revoke / Restore Device

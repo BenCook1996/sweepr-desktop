@@ -490,6 +490,12 @@
         <button onclick="openEditProfileModal()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
           <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Profile
         </button>
+        <button onclick="generateOtpCode()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i> Get Login Code (OTP)
+        </button>
+        <button onclick="impersonateCustomer()" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-brand-500/20 hover:text-brand-400 text-slate-300 text-xs font-medium border border-slate-700 flex items-center gap-1.5">
+          <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Open Customer Portal
+        </button>
       </div>
 
       <!-- Drawer Tabs Navigation -->
@@ -1410,6 +1416,37 @@
         window.open(data.url, '_blank');
       } else {
         alert(data.error || 'Customer has no active Stripe ID yet');
+      }
+    }
+
+    async function generateOtpCode() {
+      if (!activeCustomer) return;
+      try {
+        const res = await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/otp`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          alert(`🔑 Login Passcode for ${data.email}:\n\n${data.code}\n\nValid for 15 minutes.\nEmail status: ${data.email_status}`);
+          await openCustomer360(activeCustomer.account.id);
+        } else {
+          alert('Failed to generate code: ' + (data.error || 'Server error'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      }
+    }
+
+    async function impersonateCustomer() {
+      if (!activeCustomer) return;
+      try {
+        const res = await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/impersonate`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok && data.redirect) {
+          window.open(data.redirect, '_blank');
+        } else {
+          alert('Failed to log in: ' + (data.error || 'Server error'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
       }
     }
 
