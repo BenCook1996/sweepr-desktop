@@ -19,22 +19,33 @@ export interface CrmRouterDeps {
     pastDueGraceDays: number;
     tokenTtlHours: number;
     trialDays: number;
-    maxDevices?: number;
+    maxDevicesPc?: number;
+    maxDevicesMobile?: number;
+    /** Enables host-mutating dev helpers (make-me-paid, seed-demo, activate_local_app). Never in production. */
+    devEndpoints?: boolean;
   };
   now?: () => number;
 }
 
+let cachedDeviceId: string | null = null;
+
 export function getLocalWindowsDeviceId(): string {
-  try {
-    const out = execSync('powershell -Command "(Get-ItemProperty -Path HKLM:\\SOFTWARE\\Microsoft\\Cryptography -Name MachineGuid).MachineGuid"', {
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "ignore"],
-    }).trim();
-    if (out) {
-      return createHash("sha256").update(out + "sweepr-device-v1").digest("hex");
-    }
-  } catch {}
-  return "3e7e8c84f19b05f7425c71586037803c7de15612d966fa13d0444220bbc6e2d3";
+  if (cachedDeviceId) return cachedDeviceId;
+  if (process.platform === "win32") {
+    try {
+      const out = execSync('powershell -Command "(Get-ItemProperty -Path HKLM:\\SOFTWARE\\Microsoft\\Cryptography -Name MachineGuid).MachineGuid"', {
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "ignore"],
+        timeout: 4000,
+      }).trim();
+      if (out) {
+        cachedDeviceId = createHash("sha256").update(out + "sweepr-device-v1").digest("hex");
+        return cachedDeviceId;
+      }
+    } catch {}
+  }
+  cachedDeviceId = "3e7e8c84f19b05f7425c71586037803c7de15612d966fa13d0444220bbc6e2d3";
+  return cachedDeviceId;
 }
 
 export function activateLocalSweepr(
@@ -326,7 +337,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     }
 
     let localActivation = null;
-    if (body.activate_local_app) {
+    if (body.activate_local_app && config.devEndpoints) {
       const localDeviceId = getLocalWindowsDeviceId();
       repo.touchDevice(accountId, localDeviceId, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
       if (refreshToken) {
@@ -355,6 +366,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
   // 6c. One-Click Make Myself a Paid User (Instant Machine Unlock)
   router.post("/make-me-paid", async (c) => {
+    if (!config.devEndpoints) return c.json({ error: "disabled: dev endpoints only" }, 404);
     const body = await c.req.json().catch(() => ({}));
     const email = (body.email || "benjamin@sweepr.local").trim();
     const name = (body.name || "Benjamin").trim();
@@ -664,7 +676,14 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       const stripeCustomers = await stripe.customers.list({ limit: 100 });
       for (const sc of stripeCustomers.data) {
         if (sc.deleted) continue;
-        let acc = repo.accountByCustomer(sc.id) || (sc.email ? repo.accountByEmail(sc.email) : undefined);
+        let acc = repo.accountByCustomer(sc.id);
+        if (!acc && sc.email) {
+          const byEmail = repo.accountByEmail(sc.email);
+          // Only attach to an email-matched account if it isn't already bound to a different Stripe customer.
+          if (byEmail && (!byEmail.stripe_customer_id || byEmail.stripe_customer_id === sc.id)) {
+            acc = byEmail;
+          }
+        }
         if (!acc) {
           const newId = `acc_${randomToken(12)}`;
           const token = randomToken(32);
@@ -760,6 +779,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
   // 14. Seed Demo CRM Data for testing/showcasing
   router.post("/seed-demo", (c) => {
+    if (!config.devEndpoints) return c.json({ error: "disabled: dev endpoints only" }, 404);
     const t = now();
     const demoAccounts = [
       {

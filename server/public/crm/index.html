@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sweepr Subscription CRM & Customer Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js" integrity="sha384-0v3Wh0ZtiQBYCYywQoeMDA5mAw5Z01p0lhorqy0BlwFrcN6u3lmN7K0U/e1uezmr" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -827,13 +827,55 @@
 
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
+    // Safe lucide fallback so CDN or CSP blocks never freeze UI actions
+    window.lucide = window.lucide || { createIcons: () => {} };
+    function safeCreateIcons() {
+      try {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.safeCreateIcons();
+        }
+      } catch (e) {
+        console.warn('Lucide icon error:', e);
+      }
+    }
+
     let activeCustomer = null;
     let allCustomers = [];
     let currentFilterStatus = 'all';
 
+    // XSS protection: every server-provided value rendered via innerHTML must go through esc().
+    function escapeHtml(v) {
+      return String(v ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    const esc = escapeHtml;
+    // Only allow simple tokens in CSS class fragments built from data (e.g. badge-${status}).
+    const cls = (v) => String(v ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
+    const money = (cents) => (Number(cents || 0) / 100).toFixed(2);
+
+    // Delegated handlers: ids travel in escaped data-* attributes, never inside inline JS strings.
+    document.addEventListener('click', (e) => {
+      const deviceBtn = e.target.closest('[data-device-action]');
+      if (deviceBtn) {
+        e.stopPropagation();
+        const id = deviceBtn.dataset.deviceId;
+        if (deviceBtn.dataset.deviceAction === 'restore') restoreDevice(id); else revokeDevice(id);
+        return;
+      }
+      const openEl = e.target.closest('[data-open-customer]');
+      if (openEl) {
+        e.stopPropagation();
+        openCustomer360(openEl.dataset.openCustomer);
+      }
+    });
+
     // Initialize Dashboard
     window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
+      safeCreateIcons();
       refreshData();
     });
 
@@ -862,7 +904,7 @@
         activities: "Activity & Audit Log"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     // Fetch CRM Stats
@@ -923,51 +965,51 @@
       }
 
       tbody.innerHTML = customers.map(c => {
-        const initials = (c.name || c.email || c.id).slice(0, 2).toUpperCase();
-        const statusBadgeClass = `badge-${c.subscription_status}`;
+        const initials = esc((c.name || c.email || c.id || '').slice(0, 2).toUpperCase());
+        const statusBadgeClass = `badge-${cls(c.subscription_status)}`;
         const healthColor = c.health_score > 70 ? 'text-emerald-400' : c.health_score > 40 ? 'text-amber-400' : 'text-rose-400';
 
         return `
-          <tr class="hover:bg-surface-850/60 transition-colors cursor-pointer group" onclick="openCustomer360('${c.id}')">
+          <tr class="hover:bg-surface-850/60 transition-colors cursor-pointer group" data-open-customer="${esc(c.id)}">
             <td class="py-4 px-6">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-xl bg-slate-800 text-brand-400 font-bold flex items-center justify-center text-xs border border-slate-700">
                   ${initials}
                 </div>
                 <div>
-                  <div class="font-bold text-white group-hover:text-brand-400 transition-colors">${c.name || 'Anonymous User'}</div>
-                  <div class="text-[11px] text-slate-400 font-mono">${c.email || c.id}</div>
+                  <div class="font-bold text-white group-hover:text-brand-400 transition-colors">${esc(c.name || 'Anonymous User')}</div>
+                  <div class="text-[11px] text-slate-400 font-mono">${esc(c.email || c.id)}</div>
                 </div>
               </div>
             </td>
             <td class="py-4 px-4">
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusBadgeClass} capitalize">
-                ${c.subscription_status}
+                ${esc(c.subscription_status)}
               </span>
             </td>
             <td class="py-4 px-4 font-mono font-bold text-white">
-              $${(c.amount_cents / 100).toFixed(2)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${c.billing_interval}</span>
+              $${money(c.amount_cents)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${esc(c.billing_interval)}</span>
             </td>
             <td class="py-4 px-4">
               <span class="inline-flex items-center gap-1.5 font-mono text-slate-300">
-                <i data-lucide="laptop" class="w-3.5 h-3.5 text-slate-400"></i> ${c.device_count}
+                <i data-lucide="laptop" class="w-3.5 h-3.5 text-slate-400"></i> ${Number(c.device_count || 0)}
               </span>
             </td>
             <td class="py-4 px-4">
-              <span class="font-mono font-bold ${healthColor}">${c.health_score}%</span>
+              <span class="font-mono font-bold ${healthColor}">${Number(c.health_score || 0)}%</span>
             </td>
             <td class="py-4 px-4">
-              <span class="capitalize text-slate-300 bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-700/60">${c.lifecycle_stage}</span>
+              <span class="capitalize text-slate-300 bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-700/60">${esc(c.lifecycle_stage)}</span>
             </td>
             <td class="py-4 px-6 text-right">
-              <button onclick="event.stopPropagation(); openCustomer360('${c.id}')" class="px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-brand-500 hover:text-white text-slate-300 font-semibold text-xs border border-slate-700 transition-all">
+              <button data-open-customer="${esc(c.id)}" class="px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-brand-500 hover:text-white text-slate-300 font-semibold text-xs border border-slate-700 transition-all">
                 360 View
               </button>
             </td>
           </tr>
         `;
       }).join('');
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     function renderSubscriptionsTable(customers) {
@@ -976,18 +1018,18 @@
         const dateStr = c.current_period_end ? new Date(c.current_period_end * 1000).toLocaleDateString() : 'N/A';
         return `
           <tr class="hover:bg-surface-850/60 transition-colors">
-            <td class="py-4 px-6 font-mono text-white font-semibold">${c.id}</td>
-            <td class="py-4 px-4 capitalize text-slate-300">${c.plan || 'Monthly'} (${c.billing_interval})</td>
-            <td class="py-4 px-4"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${c.subscription_status} capitalize">${c.subscription_status}</span></td>
-            <td class="py-4 px-4 font-mono text-white">$${(c.amount_cents / 100).toFixed(2)}</td>
-            <td class="py-4 px-4 font-mono text-slate-300">${dateStr}</td>
+            <td class="py-4 px-6 font-mono text-white font-semibold">${esc(c.id)}</td>
+            <td class="py-4 px-4 capitalize text-slate-300">${esc(c.plan || 'Monthly')} (${esc(c.billing_interval)})</td>
+            <td class="py-4 px-4"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${cls(c.subscription_status)} capitalize">${esc(c.subscription_status)}</span></td>
+            <td class="py-4 px-4 font-mono text-white">$${money(c.amount_cents)}</td>
+            <td class="py-4 px-4 font-mono text-slate-300">${esc(dateStr)}</td>
             <td class="py-4 px-4">
               <span class="text-xs font-semibold ${c.cancel_at_period_end ? 'text-rose-400' : 'text-emerald-400'}">
                 ${c.cancel_at_period_end ? 'Cancels at end' : 'Renews Automatically'}
               </span>
             </td>
             <td class="py-4 px-6 text-right">
-              <button onclick="openCustomer360('${c.id}')" class="text-brand-400 hover:underline font-semibold">Inspect</button>
+              <button data-open-customer="${esc(c.id)}" class="text-brand-400 hover:underline font-semibold">Inspect</button>
             </td>
           </tr>
         `;
@@ -1019,7 +1061,7 @@
     // Open Customer 360 Drawer
     async function openCustomer360(customerId) {
       try {
-        const res = await fetch(`/api/crm/customers/${customerId}`);
+        const res = await fetch(`/api/crm/customers/${encodeURIComponent(customerId)}`);
         const data = await res.json();
         activeCustomer = data;
 
@@ -1033,7 +1075,7 @@
         document.getElementById('drawer-avatar').textContent = (acc.name || acc.email || acc.id).slice(0, 2).toUpperCase();
 
         const badge = document.getElementById('drawer-status-badge');
-        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${ent.status} capitalize`;
+        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${cls(ent.status)} capitalize`;
         badge.textContent = ent.status;
 
         document.getElementById('drawer-plan').textContent = `${ent.plan || 'Monthly'} Tier`;
@@ -1056,7 +1098,7 @@
 
         document.getElementById('drawer-360').classList.remove('hidden');
         switchDrawerTab('overview');
-        lucide.createIcons();
+        safeCreateIcons();
       } catch (err) {
         console.error("Failed to load customer profile:", err);
       }
@@ -1075,17 +1117,17 @@
         <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 flex items-center justify-between">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="font-mono font-bold text-white text-xs">${d.id.slice(0, 16)}...</span>
+              <span class="font-mono font-bold text-white text-xs">${esc(String(d.id ?? '').slice(0, 16))}...</span>
               <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${d.revoked ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
                 ${d.revoked ? 'Revoked' : 'Active'}
               </span>
             </div>
-            <div class="text-[11px] text-slate-400">Last seen: ${new Date(d.last_seen * 1000).toLocaleString()}</div>
+            <div class="text-[11px] text-slate-400">Last seen: ${esc(new Date(d.last_seen * 1000).toLocaleString())}</div>
           </div>
           <div>
             ${d.revoked 
-              ? `<button onclick="restoreDevice('${d.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white text-xs font-semibold transition-all">Restore</button>`
-              : `<button onclick="revokeDevice('${d.id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-all">Revoke</button>`
+              ? `<button data-device-action="restore" data-device-id="${esc(d.id)}" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white text-xs font-semibold transition-all">Restore</button>`
+              : `<button data-device-action="revoke" data-device-id="${esc(d.id)}" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-all">Revoke</button>`
             }
           </div>
         </div>
@@ -1102,12 +1144,12 @@
       list.innerHTML = invoices.map(inv => `
         <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 flex items-center justify-between text-xs">
           <div>
-            <div class="font-mono font-bold text-white">${inv.id}</div>
-            <div class="text-[11px] text-slate-400">${new Date(inv.created_at * 1000).toLocaleDateString()}</div>
+            <div class="font-mono font-bold text-white">${esc(inv.id)}</div>
+            <div class="text-[11px] text-slate-400">${esc(new Date(inv.created_at * 1000).toLocaleDateString())}</div>
           </div>
           <div class="flex items-center gap-4">
-            <div class="font-mono font-bold text-white">$${(inv.amount_paid_cents / 100).toFixed(2)}</div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} uppercase">${inv.status}</span>
+            <div class="font-mono font-bold text-white">$${money(inv.amount_paid_cents)}</div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} uppercase">${esc(inv.status)}</span>
           </div>
         </div>
       `).join('');
@@ -1123,10 +1165,10 @@
       list.innerHTML = combined.map(item => `
         <div class="p-3.5 rounded-xl bg-surface-850 border border-slate-800 text-xs space-y-1">
           <div class="flex items-center justify-between">
-            <span class="font-bold ${item.type === 'note' ? 'text-brand-400' : 'text-white'}">${item.title}</span>
-            <span class="text-[11px] text-slate-500 font-mono">${new Date(item.time * 1000).toLocaleTimeString()}</span>
+            <span class="font-bold ${item.type === 'note' ? 'text-brand-400' : 'text-white'}">${esc(item.title)}</span>
+            <span class="text-[11px] text-slate-500 font-mono">${esc(new Date(item.time * 1000).toLocaleTimeString())}</span>
           </div>
-          <div class="text-slate-300 leading-relaxed">${item.desc || ''}</div>
+          <div class="text-slate-300 leading-relaxed">${esc(item.desc || '')}</div>
         </div>
       `).join('');
     }
@@ -1138,7 +1180,7 @@
       });
       document.getElementById(`dtab-${tab}`).classList.remove('hidden');
       document.getElementById(`dtab-nav-${tab}`).className = "py-3 border-b-2 border-brand-500 text-brand-400";
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     function closeDrawer() {
@@ -1146,15 +1188,15 @@
     }
 
     // Modal Controls
-    function openGrantModal() { document.getElementById('modal-grant').classList.remove('hidden'); lucide.createIcons(); }
-    function openCancelModal() { document.getElementById('modal-cancel').classList.remove('hidden'); lucide.createIcons(); }
+    function openGrantModal() { document.getElementById('modal-grant').classList.remove('hidden'); safeCreateIcons(); }
+    function openCancelModal() { document.getElementById('modal-cancel').classList.remove('hidden'); safeCreateIcons(); }
     function openCreateSubscriptionModal() {
       document.getElementById('modal-create-subscription').classList.remove('hidden');
-      lucide.createIcons();
+      safeCreateIcons();
     }
     function openMakeMePaidModal() {
       document.getElementById('modal-make-me-paid').classList.remove('hidden');
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     function handlePlanChange(plan) {
@@ -1194,7 +1236,7 @@
       }
 
       document.getElementById('modal-credentials').classList.remove('hidden');
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     function copyToClipboard(elementId) {
@@ -1222,8 +1264,9 @@
 
       const btn = document.getElementById('btn-submit-create-sub');
       const origText = btn.innerHTML;
+      btn.disabled = true;
       btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Creating...</span>`;
-      lucide.createIcons();
+      safeCreateIcons();
 
       try {
         const res = await fetch('/api/crm/subscriptions', {
@@ -1241,9 +1284,9 @@
           })
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) {
-          alert('Failed to create subscription: ' + (data.error || 'Server error'));
+          alert('Failed to create subscription: ' + (data.error || `HTTP ${res.status}`));
           return;
         }
 
@@ -1252,8 +1295,9 @@
       } catch (err) {
         alert('Request failed: ' + err.message);
       } finally {
+        btn.disabled = false;
         btn.innerHTML = origText;
-        lucide.createIcons();
+        safeCreateIcons();
       }
     }
 
@@ -1265,8 +1309,9 @@
 
       const btn = document.getElementById('btn-submit-mmp');
       const origText = btn.innerHTML;
+      btn.disabled = true;
       btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Activating Machine...</span>`;
-      lucide.createIcons();
+      safeCreateIcons();
 
       try {
         const res = await fetch('/api/crm/make-me-paid', {
@@ -1279,9 +1324,14 @@
           })
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) {
-          alert('Failed to activate: ' + (data.error || 'Server error'));
+          const err = data.error || `HTTP ${res.status}`;
+          if (err.includes('dev endpoints only')) {
+            alert('Dev endpoints are disabled on this server.\n\nTip: You can create a subscription anytime using the "+ Create Subscription" button in the top right!');
+          } else {
+            alert('Failed to activate: ' + err);
+          }
           return;
         }
 
@@ -1290,8 +1340,9 @@
       } catch (err) {
         alert('Request failed: ' + err.message);
       } finally {
+        btn.disabled = false;
         btn.innerHTML = origText;
-        lucide.createIcons();
+        safeCreateIcons();
       }
     }
 
@@ -1302,7 +1353,7 @@
       const plan = document.getElementById('grant-plan').value;
       const days = document.getElementById('grant-days').value;
 
-      await fetch(`/api/crm/customers/${activeCustomer.account.id}/grant`, {
+      await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/grant`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ status, plan, days })
@@ -1316,7 +1367,7 @@
       if (!activeCustomer) return;
       const immediate = document.querySelector('input[name="cancel-type"]:checked').value === 'immediate';
 
-      await fetch(`/api/crm/customers/${activeCustomer.account.id}/cancel`, {
+      await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/cancel`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ immediate })
@@ -1330,7 +1381,7 @@
       const content = document.getElementById('note-input').value.trim();
       if (!content || !activeCustomer) return;
 
-      await fetch(`/api/crm/customers/${activeCustomer.account.id}/notes`, {
+      await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/notes`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ content, author: 'Admin' })
@@ -1341,19 +1392,19 @@
 
     async function revokeDevice(deviceId) {
       if (!activeCustomer) return;
-      await fetch(`/api/crm/customers/${activeCustomer.account.id}/devices/${deviceId}/revoke`, { method: 'POST' });
+      await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/devices/${encodeURIComponent(deviceId)}/revoke`, { method: 'POST' });
       await openCustomer360(activeCustomer.account.id);
     }
 
     async function restoreDevice(deviceId) {
       if (!activeCustomer) return;
-      await fetch(`/api/crm/customers/${activeCustomer.account.id}/devices/${deviceId}/restore`, { method: 'POST' });
+      await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/devices/${encodeURIComponent(deviceId)}/restore`, { method: 'POST' });
       await openCustomer360(activeCustomer.account.id);
     }
 
     async function generatePortalLink() {
       if (!activeCustomer) return;
-      const res = await fetch(`/api/crm/customers/${activeCustomer.account.id}/portal-link`, { method: 'POST' });
+      const res = await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/portal-link`, { method: 'POST' });
       const data = await res.json();
       if (data.url) {
         window.open(data.url, '_blank');
@@ -1381,15 +1432,15 @@
                 <i data-lucide="zap" class="w-4 h-4"></i>
               </div>
               <div>
-                <div class="font-bold text-white">${act.title}</div>
-                <div class="text-slate-400 mt-0.5">${act.description || ''}</div>
-                <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${act.account_id} • Actor: ${act.actor}</div>
+                <div class="font-bold text-white">${esc(act.title)}</div>
+                <div class="text-slate-400 mt-0.5">${esc(act.description || '')}</div>
+                <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${esc(act.account_id)} • Actor: ${esc(act.actor)}</div>
               </div>
             </div>
-            <span class="text-[11px] font-mono text-slate-500">${new Date(act.created_at * 1000).toLocaleTimeString()}</span>
+            <span class="text-[11px] font-mono text-slate-500">${esc(new Date(act.created_at * 1000).toLocaleTimeString())}</span>
           </div>
         `).join('');
-        lucide.createIcons();
+        safeCreateIcons();
       } catch (err) {
         console.error("Failed to load activities:", err);
       }
@@ -1427,9 +1478,10 @@
         alert('Stripe sync request failed');
       } finally {
         btn.innerHTML = orig;
-        lucide.createIcons();
+        safeCreateIcons();
       }
     }
   </script>
 </body>
 </html>
+
