@@ -9,7 +9,7 @@ import { execSync } from "node:child_process";
 import type { Repo, EntStatus } from "./db.js";
 import { randomToken, sha256, signEntitlement } from "./tokens.js";
 import { periodEnd } from "./stripe.js";
-import { sendSubscriptionEmail } from "./email.js";
+import { sendSubscriptionEmail, verifySmtp } from "./email.js";
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -698,6 +698,12 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     }
 
     return c.json({ ok: true, redirect: "/dashboard" });
+  });
+
+  // 10d. Test / diagnose SMTP Gmail configuration
+  router.get("/smtp-status", async (c) => {
+    const status = await verifySmtp();
+    return c.json(status);
   });
 
   // 11. Revoke / Restore Device

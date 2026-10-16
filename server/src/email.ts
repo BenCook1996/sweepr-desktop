@@ -44,33 +44,102 @@ export async function sendSubscriptionEmail(
   }
 
   // Attempt to send via Gmail SMTP
-  const user = process.env.SMTP_GMAIL_USER;
-  const pass = process.env.SMTP_GMAIL_PASS;
+  const rawUser = process.env.SMTP_GMAIL_USER;
+  const rawPass = process.env.SMTP_GMAIL_PASS;
+  const user = rawUser?.trim().replace(/^["']|["']$/g, "");
+  // Google App Passwords are 16 lowercase characters often grouped with spaces (e.g. "abcd efgh ijkl mnop")
+  const pass = rawPass?.trim().replace(/\s+/g, "").replace(/^["']|["']$/g, "");
 
   if (user && pass) {
     try {
-      // Dynamically import nodemailer so the server doesn't crash if the user hasn't installed it yet
       const nodemailer = (await import("nodemailer")).default;
       
       const transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
         auth: {
           user,
           pass,
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
       });
 
+      const htmlBody = isOtp
+        ? `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+  <div style="text-align: center; margin-bottom: 24px;">
+    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
+    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Your Sweepr Login Code</h2>
+    <p style="color: #64748b; font-size: 14px; margin: 0;">Use the 6-digit code below to securely sign in to your Sweepr account.</p>
+  </div>
+  <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+    <span style="font-family: monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #059669;">${planOrCode}</span>
+  </div>
+  <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center; margin: 0 0 20px 0;">
+    This one-time passcode will expire in <strong>15 minutes</strong>.<br>If you did not request this login code, you can safely ignore this email.
+  </p>
+  <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+    &copy; Sweepr Desktop &bull; Fast, private, intelligent PC cleaner
+  </div>
+</div>`
+        : undefined;
+
       await transporter.sendMail({
-        from: `"Sweepr Team" <${user}>`,
+        from: `"Sweepr" <${user}>`,
         to,
         subject,
         text: body,
+        html: htmlBody,
       });
       console.log(`[EMAIL] Successfully sent real email to ${to} via Gmail`);
-    } catch (err) {
-      console.error(`[EMAIL] Failed to send email to ${to} via Gmail:`, err);
+    } catch (err: any) {
+      console.error(`[EMAIL] Failed to send email to ${to} via Gmail:`, err?.message || err);
     }
   } else {
-    console.log(`[EMAIL] Skipping real email send: SMTP_GMAIL_USER and SMTP_GMAIL_PASS are not set in .env`);
+    console.log(`[EMAIL] Skipping real email send: SMTP_GMAIL_USER and SMTP_GMAIL_PASS are not set in .env (user=${Boolean(user)}, pass=${Boolean(pass)})`);
+  }
+}
+
+/** Check whether SMTP credentials are set and verify connection against Gmail servers. */
+export async function verifySmtp(): Promise<{ ok: boolean; configured: boolean; user?: string; error?: string }> {
+  const rawUser = process.env.SMTP_GMAIL_USER;
+  const rawPass = process.env.SMTP_GMAIL_PASS;
+  const user = rawUser?.trim().replace(/^["']|["']$/g, "");
+  const pass = rawPass?.trim().replace(/\s+/g, "").replace(/^["']|["']$/g, "");
+
+  if (!user || !pass) {
+    return {
+      ok: false,
+      configured: false,
+      user: user ? `${user.slice(0, 3)}***@***` : undefined,
+      error: `Missing credentials in Railway Variables: ${!user ? "SMTP_GMAIL_USER missing. " : ""}${!pass ? "SMTP_GMAIL_PASS missing." : ""}`.trim(),
+    };
+  }
+
+  try {
+    const nodemailer = (await import("nodemailer")).default;
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user, pass },
+      connectionTimeout: 8000,
+    });
+    await transporter.verify();
+    return {
+      ok: true,
+      configured: true,
+      user: `${user.slice(0, 3)}***@***`,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      configured: true,
+      user: `${user.slice(0, 3)}***@***`,
+      error: err?.message || "Failed to authenticate with Gmail SMTP",
+    };
   }
 }
