@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { setSignedCookie } from "hono/cookie";
 import type Stripe from "stripe";
-import type { KeyObject } from "node:crypto";
-import { createHash } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
@@ -648,7 +647,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     if (!customer) return c.json({ error: "Customer not found" }, 404);
     if (!customer.email) return c.json({ error: "Customer has no email address" }, 400);
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
     const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60;
     repo.setOtp(customer.email, sha256(code), expiresAt);
 
