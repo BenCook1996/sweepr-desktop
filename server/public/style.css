@@ -93,6 +93,7 @@ button.btn:hover:not(:disabled),
   border-color: rgba(0,0,0,0.12);
   background-color: #ffffff;
   background: #ffffff;
+  color: var(--text);
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
