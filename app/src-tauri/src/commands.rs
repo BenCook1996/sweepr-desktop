@@ -659,13 +659,22 @@ pub struct AppInfo {
     pub version: String,
     pub platform: String,
     pub api_url: String,
+    pub installer_mode: bool,
 }
 
 #[tauri::command]
 pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
+    let installer_mode = std::env::args().any(|a| a == "--installer");
     AppInfo {
         version: app.package_info().version.to_string(),
         platform: std::env::consts::OS.to_string(),
         api_url: state.licensing.api_url().to_string(),
+        installer_mode,
     }
 }
+
+#[tauri::command]
+pub fn quit_app(app: AppHandle) {
+    app.exit(0);
+}
+

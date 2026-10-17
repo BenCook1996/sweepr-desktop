@@ -4,6 +4,7 @@
   import Utilities from "./components/Utilities.svelte";
   import Account from "./components/Account.svelte";
   import ActivateModal from "./components/ActivateModal.svelte";
+  import Installer from "./components/Installer.svelte";
   import { api, ACTIVATE_EVENT, type LicenseStatus, type AppInfo } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
 
@@ -12,9 +13,24 @@
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
   let showActivateModal = $state(false);
+  let appReady = $state(false);
+  let showStartupInstaller = $state(
+    typeof localStorage !== "undefined" && !localStorage.getItem("sweepr_installed_v1")
+  );
   let theme = $state<"light" | "dark">(
     (typeof localStorage !== "undefined" && (localStorage.getItem("sweepr_theme") as "light" | "dark")) || "light"
   );
+
+  function completeStartupInstaller() {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sweepr_installed_v1", "1");
+      localStorage.setItem("sweepr_first_open", "1");
+    }
+    showStartupInstaller = false;
+    setTimeout(() => {
+      if (!license?.active) showActivateModal = true;
+    }, 400);
+  }
 
   function toggleTheme() {
     theme = theme === "dark" ? "light" : "dark";
@@ -44,12 +60,23 @@
 
   $effect(() => {
     refreshLicense();
-    api.appInfo().then((i) => (info = i)).catch(() => {});
-    // Auto-pop activation modal on first launch if not activated
-    if (!localStorage.getItem("sweepr_first_open")) {
+    api
+      .appInfo()
+      .then((i) => {
+        info = i;
+        if (i.installer_mode) {
+          showStartupInstaller = true;
+        }
+        appReady = true;
+      })
+      .catch(() => {
+        appReady = true;
+      });
+    // Auto-pop activation modal on first launch if not in startup installer mode
+    if (!showStartupInstaller && !localStorage.getItem("sweepr_first_open")) {
       localStorage.setItem("sweepr_first_open", "1");
       setTimeout(() => {
-        if (!license?.active) showActivateModal = true;
+        if (!showStartupInstaller && !license?.active) showActivateModal = true;
       }, 400);
     }
   });
@@ -70,6 +97,15 @@
   ];
 </script>
 
+{#if !appReady}
+  <div style="width: 100vw; height: 100vh; background: #f8fafc;"></div>
+{:else if showStartupInstaller}
+  <Installer
+    fullScreen={true}
+    onComplete={completeStartupInstaller}
+    onClose={() => api.quitApp()}
+  />
+{:else}
 <div class="app-layout">
   <!-- Clean Modern Navigation Header (Concept 5) -->
   <header class="top-nav">
@@ -162,6 +198,7 @@
 
   <ActivateModal bind:open={showActivateModal} onActivated={refreshLicense} />
 </div>
+{/if}
 
 <style>
   .app-layout {

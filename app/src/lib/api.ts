@@ -15,7 +15,7 @@ export interface LicenseStatus { active: boolean; status: string; plan: string |
 export interface AppMemory { name: string; bytes: number; processes: number }
 export interface MemoryOverview { total_bytes: number; used_bytes: number; available_bytes: number; top_apps: AppMemory[] }
 export interface StartupItem { name: string; command: string; scope: string; enabled?: boolean; impact?: string }
-export interface AppInfo { version: string; platform: string; api_url: string }
+export interface AppInfo { version: string; platform: string; api_url: string; installer_mode?: boolean }
 export interface AppError { kind: "payment_required" | "network" | "license" | "not_found" | "other"; message: string }
 
 export interface LargeFileEntry { path: string; name: string; ext: string; size: number; modified_at: number }
@@ -142,6 +142,7 @@ export const api = {
   listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
   restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
   appInfo: () => invoke<AppInfo>("app_info"),
+  quitApp: () => invoke<void>("quit_app"),
 };
 
 export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }

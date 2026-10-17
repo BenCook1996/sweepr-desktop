@@ -1,10 +1,25 @@
 <script lang="ts">
+  import { openUrl } from "@tauri-apps/plugin-opener";
+
   type Step = "welcome" | "installing" | "complete";
-  let { onComplete, onClose }: { onComplete?: () => void; onClose?: () => void } = $props();
+  let {
+    onComplete,
+    onClose,
+    fullScreen = false,
+  }: {
+    onComplete?: () => void;
+    onClose?: () => void;
+    fullScreen?: boolean;
+  } = $props();
 
   let step = $state<Step>("welcome");
   let progress = $state(0);
   let statusText = $state("Preparing to install SWEEPR Cleaner…");
+
+  function openLegal(e: MouseEvent, url: string) {
+    e.preventDefault();
+    openUrl(url).catch(() => {});
+  }
 
   function startInstall() {
     step = "installing";
@@ -32,7 +47,7 @@
   }
 </script>
 
-<div class="installer-window">
+<div class="installer-window" class:full-screen={fullScreen}>
   <!-- Frameless Header -->
   <header class="installer-header">
     <div class="header-left">
@@ -108,7 +123,7 @@
     <!-- Legal Footer -->
     <footer class="installer-footer">
       <p class="footer-legal">
-        By clicking Install, you are agreeing to SWEEPR Cleaner <a href="#terms" class="legal-link">End User License Agreement</a>, <a href="#privacy" class="legal-link">Privacy Policy</a>, and <a href="#terms" class="legal-link">Terms of Service</a>.
+        By clicking Install, you are agreeing to SWEEPR Cleaner <a href="https://sweeprcleaner.com/terms" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/terms")} class="legal-link">End User License Agreement</a>, <a href="https://sweeprcleaner.com/privacy" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/privacy")} class="legal-link">Privacy Policy</a>, and <a href="https://sweeprcleaner.com/terms" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/terms")} class="legal-link">Terms of Service</a>.
         <br />
         Once you click "INSTALL", the installation process will begin and cannot be cancelled or aborted.
       </p>
@@ -171,6 +186,16 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #1e293b;
     position: relative;
+  }
+
+  .installer-window.full-screen {
+    max-width: none;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 
   /* Installer Top Bar */

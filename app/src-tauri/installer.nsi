@@ -69,6 +69,7 @@ Var UpdateMode
 Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
+Var InteractiveLaunch
 
 Name "${PRODUCTNAME}"
 Caption "SWEEPR Cleaner 0.1.0 Installer"
@@ -493,6 +494,13 @@ Function .onInit
     StrCpy $UpdateMode 1
   ${EndIf}
 
+  ${IfNot} ${Silent}
+  ${AndIf} $PassiveMode <> 1
+  ${AndIf} $UpdateMode <> 1
+    StrCpy $InteractiveLaunch 1
+    SetSilent silent
+  ${EndIf}
+
   !if "${DISPLAYLANGUAGESELECTOR}" == "true"
     !insertmacro MUI_LANGDLL_DISPLAY
   !endif
@@ -730,9 +738,9 @@ Section Install
 SectionEnd
 
 Function .onInstSuccess
-  ; Check for `/R` flag only in silent and passive installers because
-  ; GUI installer has a toggle for the user to (re)start the app
-  ${If} $PassiveMode = 1
+  ${If} $InteractiveLaunch = 1
+    Exec '"$INSTDIR\${MAINBINARYNAME}.exe" --installer'
+  ${ElseIf} $PassiveMode = 1
   ${OrIf} ${Silent}
     ${GetOptions} $CMDLINE "/R" $R0
     ${IfNot} ${Errors}
