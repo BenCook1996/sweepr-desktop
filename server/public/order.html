@@ -305,6 +305,74 @@
       <!-- LEFT COLUMN: Product Overview, Included Bundles & Pricing Breakdown -->
       <div class="lg:col-span-6 space-y-6">
         
+        <!-- Plan Selection Section -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-700">Select Your Plan</span>
+            <span class="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              14-Day Money-Back Guarantee
+            </span>
+          </div>
+
+          <!-- 3 Plan Cards (Annual, 6-Month, Monthly) -->
+          <div class="grid grid-cols-1 gap-2.5">
+            <!-- 1. Annual Plan (Default Selected & Highlighted) -->
+            <label id="planCardAnnual" class="relative flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 shadow-xs cursor-pointer transition-all">
+              <div class="flex items-center gap-3">
+                <input type="radio" name="orderPlan" id="radioPlanAnnual" value="annual" checked onchange="selectOrderPlan('annual')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-gray-900 text-sm">Annual Plan</span>
+                    <span class="badge free px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">MOST POPULAR / BEST VALUE</span>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-0.5">Billed annually at £49.99/year • Save 58% vs monthly</div>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-lg font-black text-gray-900">£4.16<span class="text-xs font-medium text-gray-500">/mo</span></div>
+                <div class="text-[11px] text-gray-500">£49.99/yr</div>
+              </div>
+            </label>
+
+            <!-- 2. 6-Month Plan -->
+            <label id="planCardSixMonth" class="relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all">
+              <div class="flex items-center gap-3">
+                <input type="radio" name="orderPlan" id="radioPlanSixMonth" value="six_month" onchange="selectOrderPlan('six_month')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-gray-900 text-sm">6-Month Plan</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-teal-800 bg-teal-100 uppercase tracking-wider">SAVE 50%</span>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-0.5">Billed every 6 months at £29.99 • Save 50% vs monthly</div>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-lg font-black text-gray-900">£4.99<span class="text-xs font-medium text-gray-500">/mo</span></div>
+                <div class="text-[11px] text-gray-500">£29.99/6mo</div>
+              </div>
+            </label>
+
+            <!-- 3. Monthly Plan -->
+            <label id="planCardMonthly" class="relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all">
+              <div class="flex items-center gap-3">
+                <input type="radio" name="orderPlan" id="radioPlanMonthly" value="monthly" onchange="selectOrderPlan('monthly')" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-gray-900 text-sm">Monthly Plan</span>
+                    <span id="monthlyIntroPill" class="hidden inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-800 bg-emerald-100 uppercase tracking-wider">1st Month £1.99</span>
+                  </div>
+                  <div id="monthlyPlanDesc" class="text-xs text-gray-500 mt-0.5">Flexible month-to-month billing &bull; Cancel anytime</div>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <div id="monthlyPriceDisplay" class="text-lg font-black text-gray-900">£9.99<span class="text-xs font-medium text-gray-500">/mo</span></div>
+                <div id="monthlySubDisplay" class="text-[11px] text-gray-500">per month</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        
         <!-- Main Product Item Card -->
         <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/80 shadow-sm flex items-start justify-between gap-4">
           <div class="flex items-start gap-4">
@@ -326,11 +394,11 @@
 
             <!-- Product Details -->
             <div>
-              <!-- Discount Badge (Appears when introductory offer is active) -->
-              <div id="productTag" class="hidden mb-1.5">
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
+              <!-- Discount / Savings Badge -->
+              <div id="productTag" class="mb-1.5">
+                <span id="productTagContent" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
                   <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-                  Save £8.00 off 1st month
+                  Save 58% vs monthly billing
                 </span>
               </div>
 
@@ -351,8 +419,8 @@
 
           <!-- Product Price -->
           <div class="text-right shrink-0">
-            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£9.99</div>
-            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per month</div>
+            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
+            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per year (£4.16/mo)</div>
           </div>
         </div>
 
@@ -399,8 +467,21 @@
         <!-- Order Breakdown Card -->
         <div class="bg-white rounded-xl p-5 border border-gray-200/80 shadow-sm space-y-3 text-sm">
           <div class="flex items-center justify-between text-gray-700">
-            <span>SWEEPR Cleaner Pro (Monthly Plan)</span>
-            <span class="font-semibold text-gray-900">£9.99/month</span>
+            <span id="summaryPlanTitle">SWEEPR Cleaner Pro (Annual Plan)</span>
+            <span id="summaryPlanPrice" class="font-semibold text-gray-900">£49.99/year</span>
+          </div>
+
+          <!-- Savings Line (Annual / 6-Month) -->
+          <div id="savingsSummaryRow" class="flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
+            <div class="flex items-center justify-between">
+              <span class="flex items-center gap-1.5">
+                <span id="savingsSummaryLabel">Annual Plan Savings (Save 58%)</span>
+              </span>
+              <span id="savingsSummaryAmount" class="font-bold">- £69.89</span>
+            </div>
+            <div id="savingsSummaryNote" class="text-[11px] text-gray-500 font-normal">
+              Billed annually at £49.99/year (£4.16/month equivalent) instead of standard £119.88/year.
+            </div>
           </div>
 
           <!-- Discount Line (Shows when 1st month discount is applied) -->
@@ -418,7 +499,7 @@
 
           <div class="pt-3 border-t border-gray-200 flex items-center justify-between">
             <span class="font-bold text-gray-900 text-base">Total Today (GBP)</span>
-            <span id="totalTodayText" class="font-black text-2xl text-gray-900">£9.99</span>
+            <span id="totalTodayText" class="font-black text-2xl text-gray-900">£49.99</span>
           </div>
         </div>
 
@@ -464,7 +545,7 @@
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
               <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span id="termsConsentLabel" class="leading-snug">
-                I agree to pay £9.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
+                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
               </span>
             </label>
 
@@ -775,6 +856,7 @@
   <!-- CHECKOUT CLIENT SCRIPT -->
   <script>
     // State
+    let selectedPlan = 'annual'; // 'annual' | 'six_month' | 'monthly'
     let isDiscountApplied = false;
     let stripe = null;
     let elements = null;
@@ -782,11 +864,140 @@
     let checkoutConfig = {
       publishableKey: '',
       elementsEnabled: false,
-      amountTodayPence: 199,
-      amountRegularPence: 999
+      amountTodayPence: 4999,
+      amountRegularPence: 4999
     };
     let discountModalShown = false;
     let inactivityTimer = null;
+    let paymentRequestInstance = null;
+
+    function getAmountTodayPence() {
+      if (selectedPlan === 'annual') return 4999;
+      if (selectedPlan === 'six_month') return 2999;
+      return isDiscountApplied ? 199 : 999;
+    }
+
+    function updatePaymentRequestTotal() {
+      if (!paymentRequestInstance) return;
+      try {
+        paymentRequestInstance.update({
+          total: {
+            label: selectedPlan === 'annual'
+              ? 'SWEEPR Cleaner Pro (Annual)'
+              : selectedPlan === 'six_month'
+              ? 'SWEEPR Cleaner Pro (6-Month)'
+              : 'SWEEPR Cleaner Pro Subscription',
+            amount: getAmountTodayPence()
+          }
+        });
+      } catch (err) {}
+    }
+
+    function selectOrderPlan(plan) {
+      selectedPlan = plan;
+
+      const cardAnnual = document.getElementById('planCardAnnual');
+      const cardSixMonth = document.getElementById('planCardSixMonth');
+      const cardMonthly = document.getElementById('planCardMonthly');
+      const radioAnnual = document.getElementById('radioPlanAnnual');
+      const radioSixMonth = document.getElementById('radioPlanSixMonth');
+      const radioMonthly = document.getElementById('radioPlanMonthly');
+
+      const selectedClass = 'relative flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 shadow-xs cursor-pointer transition-all';
+      const normalClass = 'relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all';
+
+      if (cardAnnual) cardAnnual.className = plan === 'annual' ? selectedClass : normalClass;
+      if (cardSixMonth) cardSixMonth.className = plan === 'six_month' ? selectedClass : normalClass;
+      if (cardMonthly) cardMonthly.className = plan === 'monthly' ? selectedClass : normalClass;
+
+      if (radioAnnual) radioAnnual.checked = (plan === 'annual');
+      if (radioSixMonth) radioSixMonth.checked = (plan === 'six_month');
+      if (radioMonthly) radioMonthly.checked = (plan === 'monthly');
+
+      const productPriceTop = document.getElementById('productPriceTop');
+      const productPriceSub = document.getElementById('productPriceSub');
+      const productTag = document.getElementById('productTag');
+      const productTagContent = document.getElementById('productTagContent');
+      const summaryPlanTitle = document.getElementById('summaryPlanTitle');
+      const summaryPlanPrice = document.getElementById('summaryPlanPrice');
+      const savingsSummaryRow = document.getElementById('savingsSummaryRow');
+      const savingsSummaryLabel = document.getElementById('savingsSummaryLabel');
+      const savingsSummaryAmount = document.getElementById('savingsSummaryAmount');
+      const savingsSummaryNote = document.getElementById('savingsSummaryNote');
+      const discountSummaryRow = document.getElementById('discountSummaryRow');
+      const totalTodayText = document.getElementById('totalTodayText');
+      const termsConsentLabel = document.getElementById('termsConsentLabel');
+
+      if (plan === 'annual') {
+        if (productPriceTop) productPriceTop.textContent = '£49.99';
+        if (productPriceSub) productPriceSub.textContent = 'per year (£4.16/mo)';
+        if (productTag) productTag.classList.remove('hidden');
+        if (productTagContent) {
+          productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 58% vs monthly billing`;
+        }
+        if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Annual Plan)';
+        if (summaryPlanPrice) summaryPlanPrice.textContent = '£49.99/year';
+        if (savingsSummaryRow) savingsSummaryRow.classList.remove('hidden');
+        if (savingsSummaryLabel) savingsSummaryLabel.textContent = 'Annual Plan Savings (Save 58%)';
+        if (savingsSummaryAmount) savingsSummaryAmount.textContent = '- £69.89';
+        if (savingsSummaryNote) savingsSummaryNote.textContent = 'Billed annually at £49.99/year (£4.16/month equivalent) instead of standard £119.88/year.';
+        if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
+        if (totalTodayText) totalTodayText.textContent = '£49.99';
+        if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+      } else if (plan === 'six_month') {
+        if (productPriceTop) productPriceTop.textContent = '£29.99';
+        if (productPriceSub) productPriceSub.textContent = 'every 6 months (£4.99/mo)';
+        if (productTag) productTag.classList.remove('hidden');
+        if (productTagContent) {
+          productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-teal-800 bg-teal-100 border border-teal-300';
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-teal-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 50% vs monthly billing`;
+        }
+        if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (6-Month Plan)';
+        if (summaryPlanPrice) summaryPlanPrice.textContent = '£29.99/6 months';
+        if (savingsSummaryRow) savingsSummaryRow.classList.remove('hidden');
+        if (savingsSummaryLabel) savingsSummaryLabel.textContent = '6-Month Plan Savings (Save 50%)';
+        if (savingsSummaryAmount) savingsSummaryAmount.textContent = '- £29.95';
+        if (savingsSummaryNote) savingsSummaryNote.textContent = 'Billed every 6 months at £29.99 (£4.99/month equivalent) instead of standard £59.94/6-months.';
+        if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
+        if (totalTodayText) totalTodayText.textContent = '£29.99';
+        if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £29.99 today which will auto renew at £29.99 every 6 months unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+      } else {
+        if (savingsSummaryRow) savingsSummaryRow.classList.add('hidden');
+        if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Monthly Plan)';
+
+        if (isDiscountApplied) {
+          if (productPriceTop) productPriceTop.textContent = '£1.99';
+          if (productPriceSub) productPriceSub.textContent = '1st month (renews £9.99/mo)';
+          if (productTag) productTag.classList.remove('hidden');
+          if (productTagContent) {
+            productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
+            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £8.00 off 1st month`;
+          }
+          if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
+          if (discountSummaryRow) discountSummaryRow.classList.remove('hidden');
+          if (totalTodayText) totalTodayText.textContent = '£1.99';
+          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £1.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £8.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
+        } else {
+          if (productPriceTop) productPriceTop.textContent = '£9.99';
+          if (productPriceSub) productPriceSub.textContent = 'per month';
+          if (productTag) productTag.classList.add('hidden');
+          if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
+          if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
+          if (totalTodayText) totalTodayText.textContent = '£9.99';
+          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £9.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+        }
+      }
+
+      updatePaymentRequestTotal();
+
+      try {
+        const savedLang = localStorage.getItem('sweepr_lang');
+        if (savedLang && savedLang !== 'en' && typeof window.applyDictionary === 'function') {
+          window.applyDictionary(savedLang);
+        }
+      } catch (e) {}
+    }
 
     // 1. Initialize Page and Checkout Config
     async function initCheckout() {
@@ -806,10 +1017,21 @@
       startInactivityTimer();
       setupExitIntent();
 
-      // Check URL parameters for intro offer / discount flags
+      // Check URL parameters for intro offer / discount flags or selected plan
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('discount') === '1' || urlParams.get('offer') === 'intro' || urlParams.get('intro') === '1' || urlParams.get('plan') === 'intro') {
+      const planParam = urlParams.get('plan');
+      const offerParam = urlParams.get('offer');
+      const discountParam = urlParams.get('discount');
+
+      if (offerParam === 'intro' || discountParam === '1' || urlParams.get('intro') === '1' || planParam === 'intro') {
         activateDiscountOffer();
+      } else if (planParam === 'six_month' || planParam === '6month' || planParam === 'sixmonth') {
+        selectOrderPlan('six_month');
+      } else if (planParam === 'monthly') {
+        selectOrderPlan('monthly');
+      } else {
+        // Default to Annual Plan (£49.99/year — £4.16/mo, Save 58%) with "Most Popular / Best Value" badge
+        selectOrderPlan('annual');
       }
     }
 
@@ -860,23 +1082,27 @@
     async function setupStripePaymentRequest() {
       if (!stripe) return;
       try {
-        const paymentRequest = stripe.paymentRequest({
+        paymentRequestInstance = stripe.paymentRequest({
           country: 'GB',
           currency: 'gbp',
           total: {
-            label: 'SWEEPR Cleaner Pro Subscription',
-            amount: isDiscountApplied ? 199 : 999
+            label: selectedPlan === 'annual'
+              ? 'SWEEPR Cleaner Pro (Annual)'
+              : selectedPlan === 'six_month'
+              ? 'SWEEPR Cleaner Pro (6-Month)'
+              : 'SWEEPR Cleaner Pro Subscription',
+            amount: getAmountTodayPence()
           },
           requestPayerName: true,
           requestPayerEmail: true
         });
 
-        const canMakePaymentResult = await paymentRequest.canMakePayment();
+        const canMakePaymentResult = await paymentRequestInstance.canMakePayment();
         if (canMakePaymentResult) {
           const prContainer = document.getElementById('stripePaymentRequestContainer');
           const prBtnMount = document.getElementById('paymentRequestBtn');
           const prButton = elements.create('paymentRequestButton', {
-            paymentRequest,
+            paymentRequest: paymentRequestInstance,
             style: {
               paymentRequestButton: {
                 theme: 'dark',
@@ -890,7 +1116,7 @@
           // Hide redundant generic GPay button if native PR button is mounted
           document.getElementById('expressGPayBtn').classList.add('hidden');
 
-          paymentRequest.on('paymentmethod', async (ev) => {
+          paymentRequestInstance.on('paymentmethod', async (ev) => {
             try {
               const res = await fetch('/api/create-subscription', {
                 method: 'POST',
@@ -898,7 +1124,8 @@
                 body: JSON.stringify({
                   email: ev.payerEmail,
                   name: ev.payerName,
-                  applyDiscount: isDiscountApplied
+                  applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
+                  plan: selectedPlan
                 })
               });
               const data = await res.json();
@@ -1022,33 +1249,26 @@
       isDiscountApplied = true;
 
       // Update Header Banner (Obsidian & Emerald brand styling)
-      document.getElementById('bannerTitle').innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for £1.99</span>`;
-      document.getElementById('bannerSubtitle').innerHTML = `⚡ Full Pro Access across all your PCs &amp; mobile devices. Renews at standard £9.99/mo; cancel anytime in 1 click.`;
+      const bannerTitle = document.getElementById('bannerTitle');
+      const bannerSubtitle = document.getElementById('bannerSubtitle');
+      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for £1.99</span>`;
+      if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Full Pro Access across all your PCs &amp; mobile devices. Renews at standard £9.99/mo; cancel anytime in 1 click.`;
 
-      // Update Product Box
-      document.getElementById('productTag').classList.remove('hidden');
-      document.getElementById('productSubtitle').textContent = 'Introductory 1st-Month Discount';
-      document.getElementById('productPriceTop').textContent = '£1.99';
-      document.getElementById('productPriceSub').textContent = '1st month (renews £9.99/mo)';
+      // Update monthly card pill & details
+      const monthlyIntroPill = document.getElementById('monthlyIntroPill');
+      const monthlyPriceDisplay = document.getElementById('monthlyPriceDisplay');
+      const monthlySubDisplay = document.getElementById('monthlySubDisplay');
+      const monthlyPlanDesc = document.getElementById('monthlyPlanDesc');
+      if (monthlyIntroPill) monthlyIntroPill.classList.remove('hidden');
+      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `£1.99<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
+      if (monthlySubDisplay) monthlySubDisplay.textContent = 'renews £9.99/mo';
+      if (monthlyPlanDesc) monthlyPlanDesc.textContent = 'Special 1st-month introductory rate • Renews standard £9.99/mo';
 
-      // Update Order Summary Breakdown
-      document.getElementById('discountSummaryRow').classList.remove('hidden');
-      document.getElementById('totalTodayText').textContent = '£1.99';
-
-      // Update Terms Checkbox text: explicitly states discount applies only to month 1 and does NOT reduce £9.99 renewals
-      document.getElementById('termsConsentLabel').textContent = 
-        'I agree to pay £1.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £8.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
-
-      // Re-apply current language translations if non-English
-      try {
-        const savedLang = localStorage.getItem('sweepr_lang');
-        if (savedLang && savedLang !== 'en' && typeof window.applyDictionary === 'function') {
-          window.applyDictionary(savedLang);
-        }
-      } catch (e) {}
+      // Switch selection to monthly plan
+      selectOrderPlan('monthly');
 
       // Smooth scroll to checkout box
-      document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('checkoutBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // 7. Express Wallet Trigger (GPay / Apple Pay)
@@ -1114,8 +1334,8 @@
               name: cardName,
               address: billingAddress,
               postcode: billingPostcode,
-              applyDiscount: isDiscountApplied,
-              plan: 'monthly'
+              applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
+              plan: selectedPlan
             })
           });
 
@@ -1183,8 +1403,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
-            applyDiscount: isDiscountApplied,
-            plan: 'monthly'
+            applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
+            plan: selectedPlan
           })
         });
 
