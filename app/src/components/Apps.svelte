@@ -23,10 +23,13 @@
   let regBackups = $state<RegistryBackupEntry[]>([]);
   let loading = $state(true);
   let updaterLoading = $state(false);
+  let updaterLoaded = $state(false);
   let upgradingId = $state<string | null>(null);
   let updaterMessage = $state<string | null>(null);
   let remnantsLoading = $state(false);
+  let remnantsLoaded = $state(false);
   let regLoading = $state(false);
+  let regLoaded = $state(false);
   let proNotice = $state<string | null>(null);
   let error = $state<string | null>(null);
 
@@ -36,6 +39,7 @@
 
   async function loadOutdated() {
     updaterLoading = true;
+    updaterLoaded = true;
     error = null;
     try {
       outdated = await api.checkOutdatedSoftware();
@@ -65,6 +69,7 @@
 
   async function loadRemnants() {
     remnantsLoading = true;
+    remnantsLoaded = true;
     try {
       remnants = await api.scanAppRemnants();
     } catch {
@@ -76,6 +81,7 @@
 
   async function loadRegistry() {
     regLoading = true;
+    regLoaded = true;
     try {
       regIssues = await api.scanRegistry();
       regBackups = await api.listRegistryBackups();
@@ -87,13 +93,13 @@
   }
 
   $effect(() => {
-    if (mode === "updater" && !outdated.length && !updaterLoading) {
+    if (mode === "updater" && !updaterLoaded && !updaterLoading) {
       loadOutdated();
     }
-    if (mode === "remnants" && !remnants.length) {
+    if (mode === "remnants" && !remnantsLoaded && !remnantsLoading) {
       loadRemnants();
     }
-    if (mode === "registry" && !regIssues.length && !regBackups.length) {
+    if (mode === "registry" && !regLoaded && !regLoading) {
       loadRegistry();
     }
   });

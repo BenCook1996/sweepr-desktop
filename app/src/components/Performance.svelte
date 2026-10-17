@@ -57,17 +57,19 @@
 {#if error}<div class="card error-banner">{error}</div>{/if}
 
 {#if mem}
-  <div class="grid">
+  <div class="grid" class:has-tip={usedPct > 85}>
     <div class="card stat">
       <div class="muted small">In use</div>
       <div class="value">{formatBytes(mem.used_bytes)} <span class="muted small">of {formatBytes(mem.total_bytes)}</span></div>
       <div class="bar"><div class:hot={usedPct > 85} style="width:{usedPct}%"></div></div>
       <div class="muted small">{usedPct}% used · {formatBytes(mem.available_bytes)} available</div>
     </div>
-    <div class="card stat">
-      <div class="muted small">Tip</div>
-      <div>{usedPct > 85 ? "Memory is under pressure. Closing the top apps below will help most." : "Memory looks healthy. No action needed."}</div>
-    </div>
+    {#if usedPct > 85}
+      <div class="card stat">
+        <div class="muted small">Tip</div>
+        <div>Memory is under pressure. Closing the top apps below will help most.</div>
+      </div>
+    {/if}
   </div>
 
   <h3>Top apps by memory</h3>
@@ -123,7 +125,8 @@
 <style>
   h1 { margin: 0 0 6px; font-size: 24px; }
   h3 { margin: 26px 0 10px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
+  .grid.has-tip { grid-template-columns: 1fr 1fr; }
   .stat { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
   .value { font-size: 22px; font-weight: 700; }
   .bar { height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }

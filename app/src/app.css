@@ -208,3 +208,22 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.55); }
+
+@keyframes sweepr-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: block;
+  width: 38px;
+  height: 38px;
+  border: 3.5px solid #e2e8f0;
+  border-top-color: var(--accent) !important;
+  border-right-color: rgba(16, 185, 129, 0.35);
+  border-radius: 50%;
+  transform: rotate(var(--sweepr-spin, 0deg)) !important;
+  will-change: transform;
+  margin: 0 auto;
+}
+

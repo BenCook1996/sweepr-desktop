@@ -285,6 +285,7 @@ fn dir_size_and_files(dir: &std::path::Path, max_entries: usize) -> (u64, u64) {
     let mut files = 0u64;
     for (idx, entry) in walkdir::WalkDir::new(dir)
         .follow_links(false)
+        .max_depth(4)
         .into_iter()
         .filter_entry(|e| !crate::safety::is_link_like(e))
         .flatten()
@@ -370,7 +371,7 @@ fn find_remnants_blocking(exclusions: &[std::path::PathBuf]) -> Vec<AppRemnant> 
             if matches_installed {
                 continue;
             }
-            let (bytes, files) = dir_size_and_files(&path, 15_000);
+            let (bytes, files) = dir_size_and_files(&path, 3_000);
             if bytes < 64 * 1024 || files == 0 {
                 continue;
             }
