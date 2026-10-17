@@ -448,6 +448,77 @@
         btn.innerHTML = originalHTML;
       }
     });
+
+    // Plan selection logic (Annual [Default & Highlighted], 6-Month, Monthly)
+    let selectedPricingPlan = 'annual';
+
+    function setPricingPlan(plan) {
+      selectedPricingPlan = plan;
+      const tabAnnual = document.getElementById('tabPricingAnnual');
+      const tabSixMonth = document.getElementById('tabPricingSixMonth');
+      const tabMonthly = document.getElementById('tabPricingMonthly');
+      const badge = document.getElementById('pricingCardBadge');
+      const priceAmount = document.getElementById('pricingPriceAmount');
+      const priceInterval = document.getElementById('pricingPriceInterval');
+      const priceSubtext = document.getElementById('pricingPriceSubtext');
+      const ctaBtn = document.getElementById('pricingCtaBtn');
+
+      if (!tabAnnual || !tabSixMonth || !tabMonthly) return;
+
+      const inactiveClasses = "relative py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60";
+      const activeClasses = "relative py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500/30 ring-1 ring-emerald-500/20";
+
+      tabAnnual.className = inactiveClasses;
+      tabSixMonth.className = inactiveClasses;
+      tabMonthly.className = inactiveClasses;
+
+      if (plan === 'annual') {
+        tabAnnual.className = activeClasses;
+        badge.textContent = 'MOST POPULAR / BEST VALUE';
+        badge.className = 'badge free px-2.5 py-1 text-xs font-bold uppercase tracking-wider';
+        priceAmount.textContent = '£49.99';
+        priceInterval.textContent = 'per year (£4.16/mo)';
+        priceSubtext.textContent = 'Just £4.16/month billed annually at £49.99. Save 58% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
+        if (ctaBtn) ctaBtn.href = '/order?plan=annual';
+      } else if (plan === 'six_month') {
+        tabSixMonth.className = activeClasses;
+        badge.textContent = 'SAVE 50%';
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-teal-800 bg-teal-100 border border-teal-200 uppercase tracking-wider';
+        priceAmount.textContent = '£29.99';
+        priceInterval.textContent = 'every 6 months (£4.99/mo)';
+        priceSubtext.textContent = 'Just £4.99/month billed every 6 months at £29.99. Save 50% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
+        if (ctaBtn) ctaBtn.href = '/order?plan=six_month';
+      } else {
+        tabMonthly.className = activeClasses;
+        badge.textContent = 'FLEXIBLE';
+        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-gray-800 bg-gray-100 border border-gray-200 uppercase tracking-wider';
+        priceAmount.textContent = '£9.99';
+        priceInterval.textContent = 'per month';
+        priceSubtext.textContent = 'Pay £9.99 monthly unless cancelled. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
+        if (ctaBtn) ctaBtn.href = '/order?plan=monthly';
+      }
+
+      // Re-trigger translation if non-English
+      try {
+        const savedLang = localStorage.getItem('sweepr_lang');
+        if (savedLang && savedLang !== 'en' && typeof window.applyDictionary === 'function') {
+          window.applyDictionary(savedLang);
+        }
+      } catch (e) {}
+    }
+
+    // Initialize plan on page load based on URL or default to Annual
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const plan = urlParams.get('plan');
+      if (plan === 'six_month' || plan === '6month' || plan === 'sixmonth') {
+        setPricingPlan('six_month');
+      } else if (plan === 'monthly') {
+        setPricingPlan('monthly');
+      } else {
+        setPricingPlan('annual');
+      }
+    });
   </script>
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="/i18n.js"></script>
