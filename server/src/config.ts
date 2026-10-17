@@ -45,4 +45,7 @@ export const config = {
     process.env.NODE_ENV !== "production" &&
     /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|test)(:|\/|$)/i.test(process.env.PUBLIC_URL ?? "http://localhost:8787"),
   pastDueGraceDays: 3,
+  gaMeasurementId: process.env.GA_MEASUREMENT_ID ?? "",
+  metaPixelId: process.env.META_PIXEL_ID ?? "",
+  clarityProjectId: process.env.CLARITY_PROJECT_ID ?? "",
 };
