@@ -413,7 +413,23 @@ export function createApp(deps: AppDeps) {
     // Reuse an existing account for this email if present (avoids orphaned duplicate rows).
     const existing = repo.accountByEmail(email);
     if (existing && isEntitled(repo.entitlement(existing.id), now(), config.pastDueGraceDays)) {
-      return c.json({ error: "already_active" }, 409);
+      const existingEnt = repo.entitlement(existing.id);
+      let isRealActiveSub = true;
+      if (existingEnt?.stripe_subscription_id && typeof (stripe.subscriptions as any)?.retrieve === "function") {
+        try {
+          const sub = await stripe.subscriptions.retrieve(existingEnt.stripe_subscription_id);
+          if (sub && sub.status && !["active", "trialing", "past_due"].includes(sub.status)) {
+            isRealActiveSub = false;
+          }
+        } catch (err: any) {
+          if (err?.code === "resource_missing" || String(err?.message || "").includes("No such subscription")) {
+            isRealActiveSub = false;
+          }
+        }
+      }
+      if (isRealActiveSub) {
+        return c.json({ error: "already_active" }, 409);
+      }
     }
     let accountId: string;
     if (existing) {
@@ -431,8 +447,17 @@ export function createApp(deps: AppDeps) {
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
       let customerId = existing?.stripe_customer_id ?? null;
       if (customerId) {
-        await stripe.customers.update(customerId, { email, metadata: attributionMeta });
-      } else {
+        try {
+          await stripe.customers.update(customerId, { email, metadata: attributionMeta });
+        } catch (custErr: any) {
+          if (custErr?.code === "resource_missing" || String(custErr?.message || "").includes("No such customer")) {
+            customerId = null;
+          } else {
+            throw custErr;
+          }
+        }
+      }
+      if (!customerId) {
         const customer = await stripe.customers.create({ email, metadata: attributionMeta });
         customerId = customer.id;
         repo.setCustomer(accountId, customerId, email);
@@ -609,7 +634,23 @@ export function createApp(deps: AppDeps) {
 
     const existing = providedEmail ? repo.accountByEmail(providedEmail) : undefined;
     if (existing && isEntitled(repo.entitlement(existing.id), now(), config.pastDueGraceDays)) {
-      return c.json({ error: "This email already has an active SWEEPR Cleaner Pro subscription." }, 409);
+      const existingEnt = repo.entitlement(existing.id);
+      let isRealActiveSub = true;
+      if (existingEnt?.stripe_subscription_id && typeof (stripe.subscriptions as any)?.retrieve === "function") {
+        try {
+          const sub = await stripe.subscriptions.retrieve(existingEnt.stripe_subscription_id);
+          if (sub && sub.status && !["active", "trialing", "past_due"].includes(sub.status)) {
+            isRealActiveSub = false;
+          }
+        } catch (err: any) {
+          if (err?.code === "resource_missing" || String(err?.message || "").includes("No such subscription")) {
+            isRealActiveSub = false;
+          }
+        }
+      }
+      if (isRealActiveSub) {
+        return c.json({ error: "This email already has an active SWEEPR Cleaner Pro subscription." }, 409);
+      }
     }
 
     let accountId: string;
@@ -632,15 +673,24 @@ export function createApp(deps: AppDeps) {
     const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
     try {
       if (customerId) {
-        await stripe.customers.update(customerId, {
-          ...(providedEmail ? { email: providedEmail } : {}),
-          ...(name ? { name } : {}),
-          ...(addressLine1 || postalCode
-            ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
-            : {}),
-          metadata: attributionMeta,
-        });
-      } else {
+        try {
+          await stripe.customers.update(customerId, {
+            ...(providedEmail ? { email: providedEmail } : {}),
+            ...(name ? { name } : {}),
+            ...(addressLine1 || postalCode
+              ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
+              : {}),
+            metadata: attributionMeta,
+          });
+        } catch (custErr: any) {
+          if (custErr?.code === "resource_missing" || String(custErr?.message || "").includes("No such customer")) {
+            customerId = null;
+          } else {
+            throw custErr;
+          }
+        }
+      }
+      if (!customerId) {
         const customer = await stripe.customers.create({
           ...(providedEmail ? { email: providedEmail } : {}),
           ...(name ? { name } : {}),

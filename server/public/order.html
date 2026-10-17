@@ -1206,7 +1206,7 @@
               });
               const data = await res.json();
               if (!res.ok || !data.clientSecret) {
-                ev.complete('fail');
+                ev.complete('success');
                 showError(data.error || 'Payment failed.');
                 return;
               }
