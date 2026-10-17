@@ -31,6 +31,7 @@ export const config = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   priceActivation: process.env.STRIPE_PRICE_ACTIVATION ?? "",
   priceMonthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
+  priceSixMonth: process.env.STRIPE_PRICE_SIX_MONTH ?? "",
   priceAnnual: process.env.STRIPE_PRICE_ANNUAL ?? "",
   latestAppVersion: process.env.LATEST_APP_VERSION ?? "0.1.0",
   latestAppNotes: process.env.LATEST_APP_NOTES ?? "Bug fixes and new cleaning tools.",

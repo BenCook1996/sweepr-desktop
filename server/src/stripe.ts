@@ -34,14 +34,16 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
 
   const price = sub.items?.data?.[0]?.price;
   const interval = price?.recurring?.interval ?? "month";
-  const amountCents = price?.unit_amount ?? 999;
+  const intervalCount = price?.recurring?.interval_count ?? 1;
   const currentPeriodEnd = periodEnd(sub);
+  const planName = interval === "year" ? "annual" : intervalCount === 6 ? "six_month" : (sub.metadata?.plan || "monthly");
+  const amountCents = price?.unit_amount ?? (interval === "year" ? 4999 : intervalCount === 6 ? 2999 : 999);
 
   repo.upsertEntitlement({
     account_id: account.id,
     stripe_subscription_id: sub.id,
     status: sub.status as EntStatus,
-    plan: interval === "year" ? "annual" : "monthly",
+    plan: planName,
     current_period_end: currentPeriodEnd,
     cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
   });
@@ -51,10 +53,10 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     account_id: account.id,
     stripe_subscription_id: sub.id,
     status: sub.status as EntStatus,
-    plan: interval === "year" ? "annual" : "monthly",
+    plan: planName,
     amount_cents: amountCents,
     currency: sub.currency || "usd",
-    billing_interval: interval,
+    billing_interval: interval === "year" ? "year" : intervalCount === 6 ? "6-month" : "month",
     current_period_start: (sub as any).current_period_start ?? null,
     current_period_end: currentPeriodEnd,
     cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
@@ -67,7 +69,7 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     account_id: account.id,
     type: "subscription_synced",
     title: "Subscription Synchronized",
-    description: `Status: ${sub.status}, Plan: ${interval === "year" ? "annual" : "monthly"}`,
+    description: `Status: ${sub.status}, Plan: ${planName}`,
     actor: "stripe",
     metadata: { subscription_id: sub.id, status: sub.status },
   });

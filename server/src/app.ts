@@ -368,7 +368,9 @@ export function createApp(deps: AppDeps) {
     if (!body.email) return c.json({ error: "email_required" }, 400);
     const email = normalizeEmail(body.email);
     if (!email) return c.json({ error: "invalid_email" }, 400);
-    const plan: "monthly" | "annual" = body.plan === "annual" ? "annual" : "monthly";
+    const rawPlan = typeof body.plan === "string" ? body.plan.toLowerCase() : "";
+    const plan: "monthly" | "six_month" | "annual" =
+      rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
     // Reuse an existing account for this email if present (avoids orphaned duplicate rows).
@@ -389,6 +391,7 @@ export function createApp(deps: AppDeps) {
     }
 
     const isAnnual = plan === "annual";
+    const isSixMonth = plan === "six_month";
     const lineItems = isAnnual
       ? [
           config.priceAnnual
@@ -399,6 +402,20 @@ export function createApp(deps: AppDeps) {
                   unit_amount: 4999,
                   recurring: { interval: "year" },
                   product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
+                },
+                quantity: 1,
+              },
+        ]
+      : isSixMonth
+      ? [
+          config.priceSixMonth
+            ? { price: config.priceSixMonth, quantity: 1 }
+            : {
+                price_data: {
+                  currency: "gbp",
+                  unit_amount: 2999,
+                  recurring: { interval: "month", interval_count: 6 },
+                  product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
                 },
                 quantity: 1,
               },
@@ -417,7 +434,7 @@ export function createApp(deps: AppDeps) {
               },
         ];
 
-    const applyDiscount = body.applyDiscount !== false;
+    const applyDiscount = body.applyDiscount !== false && plan === "monthly";
     // managed_payments isn't in the Stripe SDK's typings yet, hence the cast.
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
       const session = await stripe.checkout.sessions.create({
@@ -425,7 +442,7 @@ export function createApp(deps: AppDeps) {
         client_reference_id: accountId,
         ...(existing?.stripe_customer_id ? { customer: existing.stripe_customer_id } : { customer_email: email }),
         line_items: lineItems,
-        ...(isAnnual || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
         subscription_data: {
           metadata: attributionMeta,
         },
@@ -447,9 +464,14 @@ export function createApp(deps: AppDeps) {
       stripeConfigured: Boolean(stripe),
       elementsEnabled: Boolean(stripe && validPk),
       currency: "gbp",
-      amountTodayPence: 199,
-      amountRegularPence: 999,
-      amountRecurringPence: 999,
+      amountTodayPence: 4999,
+      amountRegularPence: 4999,
+      amountRecurringPence: 4999,
+      plans: {
+        annual: { amountPence: 4999, interval: "year", name: "SWEEPR Cleaner Pro (Annual)" },
+        six_month: { amountPence: 2999, interval: "6 months", name: "SWEEPR Cleaner Pro (6-Month)" },
+        monthly: { amountPence: 999, introAmountPence: 199, interval: "month", name: "SWEEPR Cleaner Pro (Monthly)" },
+      },
     });
   });
 
@@ -474,8 +496,10 @@ export function createApp(deps: AppDeps) {
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";
     const addressLine1 = typeof body.address === "string" ? body.address.trim().slice(0, 200) : "";
     const postalCode = typeof body.postcode === "string" ? body.postcode.trim().slice(0, 32) : "";
-    const plan: "monthly" | "annual" = body.plan === "annual" ? "annual" : "monthly";
-    const applyDiscount = body.applyDiscount !== false;
+    const rawPlan = typeof body.plan === "string" ? body.plan.toLowerCase() : "";
+    const plan: "monthly" | "six_month" | "annual" =
+      rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
+    const applyDiscount = body.applyDiscount !== false && plan === "monthly";
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
     const existing = repo.accountByEmail(email);
@@ -525,19 +549,39 @@ export function createApp(deps: AppDeps) {
       }
 
       const isAnnual = plan === "annual";
-      const priceId = isAnnual ? config.priceAnnual : config.priceMonthly;
-      if (!priceId || priceId.includes("...")) {
-        return c.json({ error: "Stripe price ID not configured on server." }, 503);
-      }
+      const isSixMonth = plan === "six_month";
+      const priceId = isAnnual ? config.priceAnnual : isSixMonth ? config.priceSixMonth : config.priceMonthly;
+      const hasValidPriceId = Boolean(priceId && !priceId.includes("..."));
+
+      const itemConfig = hasValidPriceId
+        ? { price: priceId }
+        : {
+            price_data: {
+              currency: "gbp",
+              product_data: {
+                name: isAnnual
+                  ? "SWEEPR Cleaner Pro (Annual)"
+                  : isSixMonth
+                  ? "SWEEPR Cleaner Pro (6-Month)"
+                  : "SWEEPR Cleaner Pro (Monthly)",
+              },
+              unit_amount: isAnnual ? 4999 : isSixMonth ? 2999 : 999,
+              recurring: isAnnual
+                ? { interval: "year" }
+                : isSixMonth
+                ? { interval: "month", interval_count: 6 }
+                : { interval: "month" },
+            },
+          };
 
       const subParams: any = {
         customer: customerId,
-        items: [{ price: priceId }],
+        items: [itemConfig],
         payment_behavior: "default_incomplete",
         payment_settings: {
           save_default_payment_method: "on_subscription",
         },
-        ...(isAnnual || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
         metadata: attributionMeta,
         expand: ["latest_invoice.payment_intent"],
       };
@@ -1197,11 +1241,14 @@ export function createApp(deps: AppDeps) {
     }
     const body = await c.req.json().catch(() => ({}));
     const email = normalizeEmail(body?.email) ?? account.email ?? undefined;
-    const plan = body?.plan === "annual" ? "annual" : "monthly";
+    const rawPlan = typeof body?.plan === "string" ? body.plan.toLowerCase() : "";
+    const plan: "monthly" | "six_month" | "annual" =
+      rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     if (email && !account.email) {
       repo.updateAccountProfile(account.id, { email });
     }
     const isAnnual = plan === "annual";
+    const isSixMonth = plan === "six_month";
     const lineItems = isAnnual
       ? config.priceAnnual
         ? [{ price: config.priceAnnual, quantity: 1 }]
@@ -1216,6 +1263,20 @@ export function createApp(deps: AppDeps) {
               quantity: 1,
             },
           ]
+      : isSixMonth
+      ? config.priceSixMonth
+        ? [{ price: config.priceSixMonth, quantity: 1 }]
+        : [
+            {
+              price_data: {
+                currency: "gbp",
+                unit_amount: 2999,
+                recurring: { interval: "month", interval_count: 6 },
+                product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
+              },
+              quantity: 1,
+            },
+          ]
       : [{ price: config.priceMonthly, quantity: 1 }];
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -1226,7 +1287,7 @@ export function createApp(deps: AppDeps) {
         ? { customer_email: email }
         : {}),
       line_items: lineItems,
-      ...(isAnnual ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+      ...(isAnnual || isSixMonth ? {} : { discounts: [{ coupon: stripeCoupon }] }),
       subscription_data: {
         metadata: { account_id: account.id, plan },
       },

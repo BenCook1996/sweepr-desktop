@@ -11,7 +11,7 @@
   // Global config fallback
   window.SWEEPR_ANALYTICS_CONFIG = Object.assign(
     {
-      gaMeasurementId: '',   // e.g. 'G-XXXXXXXXXX'
+      gaMeasurementId: 'G-CM9FPJV4C2',
       metaPixelId: '',       // e.g. '123456789012345'
       clarityProjectId: '',  // e.g. 'abcdef1234'
       debug: false
