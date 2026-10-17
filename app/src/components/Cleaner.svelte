@@ -272,8 +272,8 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
             <div class="rec-details">
-              <div class="rec-name">Web Browser & App Caches</div>
-              <div class="muted small">Chrome, Edge, Firefox, dev caches</div>
+              <div class="rec-name">Browsers, Caches & Duplicates</div>
+              <div class="muted small">Browser caches, dev caches & duplicate files</div>
             </div>
             <div class="rec-stat">
               <span class="badge pro">Pro</span>

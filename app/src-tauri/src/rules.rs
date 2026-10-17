@@ -50,6 +50,7 @@ enum Base {
     Temp,
     LocalAppData,
     RoamingAppData,
+    UserFolders,
 }
 
 impl Base {
@@ -60,8 +61,29 @@ impl Base {
             Base::Temp => Some(std::env::temp_dir()),
             Base::LocalAppData => dirs::data_local_dir(),
             Base::RoamingAppData => dirs::data_dir(),
+            Base::UserFolders => dirs::home_dir(),
         }
     }
+}
+
+fn user_folder_roots() -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = Vec::new();
+    for dir in [
+        dirs::download_dir(),
+        dirs::document_dir(),
+        dirs::picture_dir(),
+        dirs::video_dir(),
+        dirs::audio_dir(),
+        dirs::desktop_dir(),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if dir.is_dir() && !roots.iter().any(|r| r == &dir) {
+            roots.push(dir);
+        }
+    }
+    roots
 }
 
 /// Simple glob for a single path segment: supports `*` anywhere in the segment.
@@ -133,6 +155,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "app_caches", name: "Desktop app caches", description: "Caches from installed desktop apps. They rebuild on next launch.", group: Group::Apps, base: RoamingAppData, patterns: &["discord/Cache", "discord/Code Cache", "Code/Cache", "Code/CachedData", "Microsoft/Teams/Cache", "Slack/Cache"], min_age_hours: 0, free: false },
         Spec { id: "spotify", name: "Spotify offline cache", description: "Streaming cache (not your downloaded playlists).", group: Group::Apps, base: LocalAppData, patterns: &["Spotify/Data"], min_age_hours: 0, free: false },
         Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "duplicates", name: "Duplicate Files", description: "Identical copies of files, photos, documents, and installers across your device. The original copy is always preserved.", group: Group::System, base: UserFolders, patterns: &[""], min_age_hours: 0, free: false },
         Spec { id: "dev_caches", name: "Developer package caches", description: "npm, pnpm, pip, Yarn, NuGet and Composer download caches. Packages re-download when needed.", group: Group::Developer, base: LocalAppData, patterns: &["npm-cache/_cacache", "pnpm/store", "pip/cache", "Yarn/Cache", "NuGet/v3-cache", "Composer/cache"], min_age_hours: 0, free: false },
         Spec { id: "build_caches", name: "Gradle & Cargo build caches", description: "Cached Gradle and Rust Cargo registry archives in your user profile (~/.gradle/caches, ~/.cargo/registry/cache).", group: Group::Developer, base: Home, patterns: &[".gradle/caches", ".cargo/registry/cache"], min_age_hours: 24 * 7, free: false },
     ]
@@ -148,6 +171,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "logs", name: "User & crash logs", description: "~/Library/Logs and CrashReporter diagnostic logs.", group: Group::System, base: Home, patterns: &["Library/Logs", "Library/Application Support/CrashReporter"], min_age_hours: 24, free: false },
         Spec { id: "xcode", name: "Xcode derived data", description: "Build products. Xcode regenerates them on next build.", group: Group::Developer, base: Home, patterns: &["Library/Developer/Xcode/DerivedData"], min_age_hours: 0, free: false },
         Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "duplicates", name: "Duplicate Files", description: "Identical copies of files, photos, documents, and installers across your device. The original copy is always preserved.", group: Group::System, base: UserFolders, patterns: &[""], min_age_hours: 0, free: false },
         Spec { id: "dev_caches", name: "Developer package & build caches", description: "npm, Gradle and Cargo download caches.", group: Group::Developer, base: Home, patterns: &[".npm/_cacache", ".gradle/caches", ".cargo/registry/cache"], min_age_hours: 0, free: false },
     ]
 }
@@ -161,6 +185,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "user_caches", name: "App & browser caches", description: "~/.cache. Apps rebuild these automatically.", group: Group::Apps, base: Home, patterns: &[".cache"], min_age_hours: 24, free: false },
         Spec { id: "logs", name: "User state logs", description: "~/.local/state/log diagnostic logs.", group: Group::System, base: Home, patterns: &[".local/state/log"], min_age_hours: 24, free: false },
         Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "duplicates", name: "Duplicate Files", description: "Identical copies of files, photos, documents, and installers across your device. The original copy is always preserved.", group: Group::System, base: UserFolders, patterns: &[""], min_age_hours: 0, free: false },
         Spec { id: "dev_caches", name: "Developer package & build caches", description: "npm, Gradle and Cargo download caches.", group: Group::Developer, base: Home, patterns: &[".npm/_cacache", ".gradle/caches", ".cargo/registry/cache"], min_age_hours: 0, free: false },
     ]
 }
@@ -171,11 +196,14 @@ pub fn all() -> Vec<Rule> {
     specs()
         .into_iter()
         .map(|s| {
-            let roots = s
-                .base
-                .resolve()
-                .map(|b| s.patterns.iter().flat_map(|p| expand(&b, p)).collect())
-                .unwrap_or_default();
+            let roots = match s.base {
+                Base::UserFolders => user_folder_roots(),
+                _ => s
+                    .base
+                    .resolve()
+                    .map(|b| s.patterns.iter().flat_map(|p| expand(&b, p)).collect())
+                    .unwrap_or_default(),
+            };
             Rule {
                 id: s.id,
                 name: s.name,

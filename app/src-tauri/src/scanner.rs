@@ -4,14 +4,38 @@ use crate::rules::{Group, Rule};
 use crate::safety;
 use rayon::prelude::*;
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashSet};
+use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant, SystemTime};
 use walkdir::WalkDir;
 
 const TOP_FILES: usize = 50;
+const MIN_DUP_SIZE: u64 = 1024;
+const MAX_DUP_FILES: usize = 60_000;
+const DUP_SKIP_DIRS: &[&str] = &[
+    ".git",
+    "node_modules",
+    "target",
+    ".gradle",
+    ".cargo",
+    ".rustup",
+    ".vscode",
+    ".idea",
+    ".agents",
+    "appdata",
+    "library",
+    "__pycache__",
+    ".next",
+    "dist",
+    "build",
+    "venv",
+    ".venv",
+];
 
 #[derive(Serialize, Clone)]
 pub struct FileEntry {
@@ -141,6 +165,180 @@ pub fn is_file_old_and_unused(
     true
 }
 
+fn is_copy_filename(path: &Path) -> bool {
+    let Some(stem) = path.file_stem().map(|s| s.to_string_lossy().to_ascii_lowercase()) else {
+        return false;
+    };
+    if stem.ends_with(" - copy") || stem.ends_with(" copy") || stem.contains(" - copy (") {
+        return true;
+    }
+    if let Some(open_idx) = stem.rfind(" (") {
+        if let Some(inside) = stem[open_idx + 2..].strip_suffix(')') {
+            if !inside.is_empty() && inside.chars().all(|c| c.is_ascii_digit()) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn partial_file_hash(path: &Path, size: u64) -> Option<[u8; 32]> {
+    let mut file = File::open(path).ok()?;
+    let mut hasher = Sha256::new();
+    let mut buf = [0u8; 8192];
+    if size <= 16_384 {
+        loop {
+            let n = file.read(&mut buf).ok()?;
+            if n == 0 {
+                break;
+            }
+            hasher.update(&buf[..n]);
+        }
+    } else {
+        hasher.update(size.to_le_bytes());
+        let n1 = file.read(&mut buf).ok()?;
+        hasher.update(&buf[..n1]);
+        file.seek(SeekFrom::End(-8192)).ok()?;
+        let n2 = file.read(&mut buf).ok()?;
+        hasher.update(&buf[..n2]);
+    }
+    Some(hasher.finalize().into())
+}
+
+fn full_file_hash(path: &Path) -> Option<[u8; 32]> {
+    let mut file = File::open(path).ok()?;
+    let mut hasher = Sha256::new();
+    let mut buf = [0u8; 65536];
+    loop {
+        let n = file.read(&mut buf).ok()?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+    Some(hasher.finalize().into())
+}
+
+fn for_each_device_duplicate(
+    roots: &[PathBuf],
+    exclusions: &[PathBuf],
+    mut f: impl FnMut(&Path, u64),
+) {
+    let mut by_size: HashMap<u64, Vec<(PathBuf, u64)>> = HashMap::new();
+    let mut visited: HashSet<String> = HashSet::new();
+    let mut scanned = 0usize;
+
+    for root in roots {
+        if !root.exists() || safety::is_excluded(root, exclusions) {
+            continue;
+        }
+        let walker = WalkDir::new(root)
+            .follow_links(false)
+            .min_depth(1)
+            .max_depth(6)
+            .into_iter()
+            .filter_entry(|e| {
+                if safety::is_link_like(e) || safety::is_excluded(e.path(), exclusions) {
+                    return false;
+                }
+                if e.file_type().is_dir() && e.depth() > 0 {
+                    let name = e.file_name().to_string_lossy().to_ascii_lowercase();
+                    if DUP_SKIP_DIRS.iter().any(|skip| name == *skip) {
+                        return false;
+                    }
+                }
+                true
+            });
+
+        for entry in walker.flatten() {
+            if scanned >= MAX_DUP_FILES {
+                break;
+            }
+            if !entry.file_type().is_file() || !entry.path().starts_with(root) {
+                continue;
+            }
+            if safety::is_excluded(entry.path(), exclusions) {
+                continue;
+            }
+            let Ok(md) = entry.metadata() else { continue };
+            let len = md.len();
+            if len < MIN_DUP_SIZE {
+                continue;
+            }
+            let norm_key = entry.path().to_string_lossy().to_ascii_lowercase();
+            if !visited.insert(norm_key) {
+                continue;
+            }
+            scanned += 1;
+            let ts = md
+                .created()
+                .or_else(|_| md.modified())
+                .ok()
+                .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(u64::MAX);
+            by_size.entry(len).or_default().push((entry.into_path(), ts));
+        }
+    }
+
+    for (size, candidates) in by_size {
+        if candidates.len() < 2 {
+            continue;
+        }
+        let mut by_partial: HashMap<[u8; 32], Vec<(PathBuf, u64)>> = HashMap::new();
+        for (p, ts) in candidates {
+            if let Some(ph) = partial_file_hash(&p, size) {
+                by_partial.entry(ph).or_default().push((p, ts));
+            }
+        }
+
+        for (_ph, partial_group) in by_partial {
+            if partial_group.len() < 2 {
+                continue;
+            }
+            if size <= 16_384 {
+                let mut group = partial_group;
+                group.sort_by(|(pa, tsa), (pb, tsb)| {
+                    is_copy_filename(pa)
+                        .cmp(&is_copy_filename(pb))
+                        .then_with(|| tsa.cmp(tsb))
+                        .then_with(|| pa.as_os_str().len().cmp(&pb.as_os_str().len()))
+                        .then_with(|| pa.cmp(pb))
+                });
+                for (dup_path, _) in &group[1..] {
+                    if !is_file_currently_in_use(dup_path) {
+                        f(dup_path, size);
+                    }
+                }
+            } else {
+                let mut by_full: HashMap<[u8; 32], Vec<(PathBuf, u64)>> = HashMap::new();
+                for (p, ts) in partial_group {
+                    if let Some(fh) = full_file_hash(&p) {
+                        by_full.entry(fh).or_default().push((p, ts));
+                    }
+                }
+                for (_fh, mut group) in by_full {
+                    if group.len() < 2 {
+                        continue;
+                    }
+                    group.sort_by(|(pa, tsa), (pb, tsb)| {
+                        is_copy_filename(pa)
+                            .cmp(&is_copy_filename(pb))
+                            .then_with(|| tsa.cmp(tsb))
+                            .then_with(|| pa.as_os_str().len().cmp(&pb.as_os_str().len()))
+                            .then_with(|| pa.cmp(pb))
+                    });
+                    for (dup_path, _) in &group[1..] {
+                        if !is_file_currently_in_use(dup_path) {
+                            f(dup_path, size);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Walk every eligible file of a rule. This is the single source of truth used
 /// by BOTH scanning and cleaning, so the cleaner can never touch a file the
 /// scanner wouldn't have reported.
@@ -150,6 +348,11 @@ pub fn for_each_target(rule: &Rule, f: impl FnMut(&Path, u64)) {
 }
 
 pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut f: impl FnMut(&Path, u64)) {
+    if rule.id == "duplicates" {
+        for_each_device_duplicate(&rule.roots, exclusions, f);
+        return;
+    }
+
     let cutoff = SystemTime::now()
         .checked_sub(Duration::from_secs(rule.min_age_hours * 3600))
         .unwrap_or(SystemTime::UNIX_EPOCH);
