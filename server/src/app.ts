@@ -453,6 +453,15 @@ export function createApp(deps: AppDeps) {
     });
   });
 
+  // Public analytics configuration for Google Analytics 4, Meta Pixel, and Microsoft Clarity
+  app.get("/api/analytics-config", (c) => {
+    return c.json({
+      gaMeasurementId: config.gaMeasurementId || "",
+      metaPixelId: config.metaPixelId || "",
+      clarityProjectId: config.clarityProjectId || "",
+    });
+  });
+
   // Create an incomplete Stripe Subscription for on-page card / Apple Pay / Google Pay confirmation
   app.post("/api/create-subscription", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);

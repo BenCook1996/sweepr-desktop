@@ -47,6 +47,7 @@ export function renderPseoDirectory(): string {
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
+  <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="bg-[#fafafa] text-gray-800">
@@ -178,6 +179,7 @@ export function renderPseoPage(item: CleanItem): string {
 
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
+  <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="bg-[#fafafa] text-gray-800">
