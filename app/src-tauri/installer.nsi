@@ -6,11 +6,10 @@ ManifestDPIAware true
 ; https://github.com/tauri-apps/tauri/pull/10106
 ManifestDPIAwareness PerMonitorV2
 
-!if "lzma" == "none"
+!if "{{compression}}" == "none"
   SetCompress off
 !else
-  ; Set the compression algorithm. We default to LZMA.
-  SetCompressor /SOLID "lzma"
+  SetCompressor zlib
 !endif
 
 ; Keep above !include to stay ahead of any plugin command
@@ -32,38 +31,38 @@ ${StrLoc}
 
 !define WEBVIEW2APPGUID "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
-!define MANUFACTURER "sweepr"
-!define PRODUCTNAME "Sweepr"
-!define VERSION "0.1.0"
-!define VERSIONWITHBUILD "0.1.0.0"
-!define HOMEPAGE ""
-!define INSTALLMODE "currentUser"
-!define LICENSE ""
-!define INSTALLERICON "C:\Users\Benjamin\Downloads\desktop_cleaner\app\src-tauri\icons\icon.ico"
-!define SIDEBARIMAGE "C:\Users\Benjamin\Downloads\desktop_cleaner\app\src-tauri\icons\nsis-sidebar.bmp"
-!define HEADERIMAGE "C:\Users\Benjamin\Downloads\desktop_cleaner\app\src-tauri\icons\nsis-header.bmp"
-!define UNINSTALLERICON ""
-!define UNINSTALLERHEADERIMAGE ""
-!define MAINBINARYNAME "sweepr"
-!define MAINBINARYSRCPATH "C:\Users\Benjamin\Downloads\desktop_cleaner\app\src-tauri\target\release\sweepr.exe"
-!define BUNDLEID "com.sweepr.app"
-!define COPYRIGHT ""
-!define OUTFILE "nsis-output.exe"
-!define ARCH "x64"
-!define ADDITIONALPLUGINSPATH "C:\Users\Benjamin\AppData\Local\tauri\NSIS\Plugins\x86-unicode\additional"
-!define ALLOWDOWNGRADES "true"
-!define DISPLAYLANGUAGESELECTOR "false"
-!define INSTALLWEBVIEW2MODE "downloadBootstrapper"
-!define WEBVIEW2INSTALLERARGS "/silent"
-!define WEBVIEW2BOOTSTRAPPERPATH ""
-!define WEBVIEW2INSTALLERPATH ""
-!define MINIMUMWEBVIEW2VERSION ""
+!define MANUFACTURER "{{manufacturer}}"
+!define PRODUCTNAME "{{product_name}}"
+!define VERSION "{{version}}"
+!define VERSIONWITHBUILD "{{version_with_build}}"
+!define HOMEPAGE "{{homepage}}"
+!define INSTALLMODE "{{install_mode}}"
+!define LICENSE "{{license}}"
+!define INSTALLERICON "{{{installer_icon}}}"
+!define SIDEBARIMAGE "{{{sidebar_image}}}"
+!define HEADERIMAGE "{{{header_image}}}"
+!define UNINSTALLERICON "{{{uninstaller_icon}}}"
+!define UNINSTALLERHEADERIMAGE "{{{uninstaller_header_image}}}"
+!define MAINBINARYNAME "{{main_binary_name}}"
+!define MAINBINARYSRCPATH "{{{main_binary_path}}}"
+!define BUNDLEID "{{bundle_id}}"
+!define COPYRIGHT "{{copyright}}"
+!define OUTFILE "{{{out_file}}}"
+!define ARCH "{{arch}}"
+!define ADDITIONALPLUGINSPATH "{{{additional_plugins_path}}}"
+!define ALLOWDOWNGRADES "{{allow_downgrades}}"
+!define DISPLAYLANGUAGESELECTOR "{{display_language_selector}}"
+!define INSTALLWEBVIEW2MODE "{{install_webview2_mode}}"
+!define WEBVIEW2INSTALLERARGS "{{webview2_installer_args}}"
+!define WEBVIEW2BOOTSTRAPPERPATH "{{{webview2_bootstrapper_path}}}"
+!define WEBVIEW2INSTALLERPATH "{{{webview2_installer_path}}}"
+!define MINIMUMWEBVIEW2VERSION "{{minimum_webview2_version}}"
 !define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCTNAME}"
 !define MANUKEY "Software\${MANUFACTURER}"
 !define MANUPRODUCTKEY "${MANUKEY}\${PRODUCTNAME}"
-!define UNINSTALLERSIGNCOMMAND ""
-!define ESTIMATEDSIZE "4755"
-!define STARTMENUFOLDER ""
+!define UNINSTALLERSIGNCOMMAND "{{{uninstaller_sign_cmd}}}"
+!define ESTIMATEDSIZE "{{estimated_size}}"
+!define STARTMENUFOLDER "{{start_menu_folder}}"
 
 Var PassiveMode
 Var UpdateMode
@@ -470,9 +469,13 @@ FunctionEnd
 !insertmacro MUI_UNPAGE_INSTFILES
 
 ;Languages
-!insertmacro MUI_LANGUAGE "English"
+{{#each languages}}
+  !insertmacro MUI_LANGUAGE "{{this}}"
+{{/each}}
 !insertmacro MUI_RESERVEFILE_LANGDLL
-  !include "C:\Users\Benjamin\Downloads\desktop_cleaner\app\src-tauri\target\release\nsis\x64\English.nsh"
+{{#each language_files}}
+  !include "{{this}}"
+{{/each}}
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
