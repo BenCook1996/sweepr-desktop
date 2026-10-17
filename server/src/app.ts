@@ -35,6 +35,7 @@ export interface AppDeps {
     stripePublishableKey?: string;
     priceActivation: string;
     priceMonthly: string;
+    priceSixMonth?: string;
     priceAnnual?: string;
     trialDays: number;
     tokenTtlHours: number;
@@ -58,6 +59,9 @@ export interface AppDeps {
     latestAppNotes?: string;
     latestAppSignature?: string;
     hibpApiKey?: string;
+    gaMeasurementId?: string;
+    metaPixelId?: string;
+    clarityProjectId?: string;
   };
   now?: () => number;
 }
@@ -361,6 +365,39 @@ export function createApp(deps: AppDeps) {
   });
   app.use("/*", serveStatic({ root: "./public" }));
 
+  let cachedStripeProductId: string | null = null;
+  async function getStripeProductId(): Promise<string> {
+    if (cachedStripeProductId) return cachedStripeProductId;
+    if (!stripe) throw new Error("Stripe not configured");
+    const configuredPriceId = [config.priceMonthly, config.priceAnnual, config.priceSixMonth].find(
+      (p) => p && !p.includes("...")
+    );
+    if (configuredPriceId) {
+      try {
+        const priceObj = await stripe.prices.retrieve(configuredPriceId);
+        const prodId = typeof priceObj.product === "string" ? priceObj.product : (priceObj.product as any)?.id;
+        if (prodId) {
+          cachedStripeProductId = prodId;
+          return prodId;
+        }
+      } catch {
+        // Fall through to product lookup / creation
+      }
+    }
+    const existingProducts = await stripe.products.list({ active: true, limit: 10 });
+    const match = existingProducts.data.find((p) => /sweepr/i.test(p.name)) || existingProducts.data[0];
+    if (match) {
+      cachedStripeProductId = match.id;
+      return match.id;
+    }
+    const created = await stripe.products.create({
+      name: "SWEEPR Cleaner Pro",
+      description: "SWEEPR Cleaner Pro Cross-Platform Optimization Suite",
+    });
+    cachedStripeProductId = created.id;
+    return created.id;
+  }
+
   app.post("/api/web-checkout", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
@@ -390,69 +427,89 @@ export function createApp(deps: AppDeps) {
       repo.applyReferral(accountId, refCode, now());
     }
 
-    const isAnnual = plan === "annual";
-    const isSixMonth = plan === "six_month";
-    const lineItems = isAnnual
-      ? [
-          config.priceAnnual
-            ? { price: config.priceAnnual, quantity: 1 }
-            : {
-                price_data: {
-                  currency: "gbp",
-                  unit_amount: 4999,
-                  recurring: { interval: "year" },
-                  product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
-                },
-                quantity: 1,
-              },
-        ]
-      : isSixMonth
-      ? [
-          config.priceSixMonth
-            ? { price: config.priceSixMonth, quantity: 1 }
-            : {
-                price_data: {
-                  currency: "gbp",
-                  unit_amount: 3899,
-                  recurring: { interval: "month", interval_count: 6 },
-                  product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
-                },
-                quantity: 1,
-              },
-        ]
-      : [
-          config.priceMonthly
-            ? { price: config.priceMonthly, quantity: 1 }
-            : {
-                price_data: {
-                  currency: "gbp",
-                  unit_amount: 999,
-                  recurring: { interval: "month" },
-                  product_data: { name: "SWEEPR Cleaner Pro (Monthly)" },
-                },
-                quantity: 1,
-              },
-        ];
-
-    const applyDiscount = body.applyDiscount !== false && plan === "monthly";
-    // managed_payments isn't in the Stripe SDK's typings yet, hence the cast.
+    try {
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
-      const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
-        client_reference_id: accountId,
-        ...(existing?.stripe_customer_id ? { customer: existing.stripe_customer_id } : { customer_email: email }),
-        line_items: lineItems,
-        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
-        subscription_data: {
-          metadata: attributionMeta,
-        },
-        metadata: attributionMeta,
-        managed_payments: { enabled: false },
+      let customerId = existing?.stripe_customer_id ?? null;
+      if (customerId) {
+        await stripe.customers.update(customerId, { email, metadata: attributionMeta });
+      } else {
+        const customer = await stripe.customers.create({ email, metadata: attributionMeta });
+        customerId = customer.id;
+        repo.setCustomer(accountId, customerId, email);
+      }
 
-        success_url: `${config.publicUrl}/checkout/success?web=1`,
-        cancel_url: `${config.publicUrl}/order`,
-      } as unknown as Stripe.Checkout.SessionCreateParams);
-    return c.json({ url: session.url, plan });
+      const isAnnual = plan === "annual";
+      const isSixMonth = plan === "six_month";
+      const priceId = isAnnual ? config.priceAnnual : isSixMonth ? config.priceSixMonth : config.priceMonthly;
+      const hasValidPriceId = Boolean(priceId && !priceId.includes("..."));
+      const productId = hasValidPriceId ? "" : await getStripeProductId();
+
+      const itemConfig = hasValidPriceId
+        ? { price: priceId }
+        : {
+            price_data: {
+              currency: "gbp",
+              product: productId,
+              unit_amount: isAnnual ? 4999 : isSixMonth ? 3899 : 999,
+              recurring: isAnnual
+                ? { interval: "year" as const }
+                : isSixMonth
+                ? { interval: "month" as const, interval_count: 6 }
+                : { interval: "month" as const },
+            },
+          };
+
+      const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [itemConfig],
+        payment_behavior: "default_incomplete",
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+          payment_method_types: ["paypal"],
+        },
+        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+        metadata: attributionMeta,
+        expand: ["latest_invoice.payment_intent"],
+      } as any);
+
+      const latestInvoice: any = subscription.latest_invoice;
+      let paymentIntent: any = latestInvoice?.payment_intent ?? null;
+      if (typeof paymentIntent === "string") {
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+      }
+
+      const rawIp = clientIp(c);
+      const validIp =
+        !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
+          ? "127.0.0.1"
+          : rawIp;
+      const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
+      const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`;
+
+      const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
+        payment_method_data: {
+          type: "paypal",
+          billing_details: { email },
+        },
+        mandate_data: {
+          customer_acceptance: {
+            type: "online",
+            online: {
+              ip_address: validIp,
+              user_agent: userAgent,
+            },
+          },
+        },
+        return_url: returnUrl,
+      });
+
+      const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
+      return c.json({ url: redirectUrl, redirectUrl, plan });
+    } catch (err: any) {
+      console.error("[web-checkout] Stripe error:", err);
+      return c.json({ error: err?.message || "Payment initialization failed." }, 400);
+    }
   });
 
   // Public checkout configuration for on-page Stripe Elements, Apple Pay & Google Pay
@@ -484,7 +541,7 @@ export function createApp(deps: AppDeps) {
     });
   });
 
-  // Create an incomplete Stripe Subscription for on-page card / Apple Pay / Google Pay confirmation
+  // Create a Stripe Subscription for direct on-page card, PayPal, Apple Pay & Google Pay confirmation (no Stripe Hosted Checkout page)
   app.post("/api/create-subscription", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
@@ -499,7 +556,9 @@ export function createApp(deps: AppDeps) {
     const rawPlan = typeof body.plan === "string" ? body.plan.toLowerCase() : "";
     const plan: "monthly" | "six_month" | "annual" =
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
-    const applyDiscount = body.applyDiscount !== false && plan === "monthly";
+    const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
+    const paymentMethod = typeof body.paymentMethod === "string" ? body.paymentMethod.toLowerCase() : "card";
+    const confirmOnServer = Boolean(body.confirmOnServer);
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
     const existing = repo.accountByEmail(email);
@@ -552,34 +611,31 @@ export function createApp(deps: AppDeps) {
       const isSixMonth = plan === "six_month";
       const priceId = isAnnual ? config.priceAnnual : isSixMonth ? config.priceSixMonth : config.priceMonthly;
       const hasValidPriceId = Boolean(priceId && !priceId.includes("..."));
+      const productId = hasValidPriceId ? "" : await getStripeProductId();
 
       const itemConfig = hasValidPriceId
         ? { price: priceId }
         : {
             price_data: {
               currency: "gbp",
-              product_data: {
-                name: isAnnual
-                  ? "SWEEPR Cleaner Pro (Annual)"
-                  : isSixMonth
-                  ? "SWEEPR Cleaner Pro (6-Month)"
-                  : "SWEEPR Cleaner Pro (Monthly)",
-              },
+              product: productId,
               unit_amount: isAnnual ? 4999 : isSixMonth ? 3899 : 999,
               recurring: isAnnual
-                ? { interval: "year" }
+                ? { interval: "year" as const }
                 : isSixMonth
-                ? { interval: "month", interval_count: 6 }
-                : { interval: "month" },
+                ? { interval: "month" as const, interval_count: 6 }
+                : { interval: "month" as const },
             },
           };
 
+      const isPayPal = paymentMethod === "paypal";
       const subParams: any = {
         customer: customerId,
         items: [itemConfig],
         payment_behavior: "default_incomplete",
         payment_settings: {
           save_default_payment_method: "on_subscription",
+          payment_method_types: isPayPal ? ["paypal"] : ["card"],
         },
         ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
         metadata: attributionMeta,
@@ -593,6 +649,98 @@ export function createApp(deps: AppDeps) {
       // Fallback for newer Stripe API versions if payment_intent isn't directly embedded on latest_invoice
       if (typeof paymentIntent === "string") {
         paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+      }
+
+      if (!paymentIntent?.id) {
+        return c.json({ error: "Could not initialize payment intent." }, 500);
+      }
+
+      const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`;
+
+      // Direct PayPal flow: confirm PaymentIntent with PayPal and return the direct PayPal authorization URL (no Stripe order page)
+      if (isPayPal) {
+        const rawIp = clientIp(c);
+        const validIp =
+          !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
+            ? "127.0.0.1"
+            : rawIp;
+        const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
+
+        const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
+          payment_method_data: {
+            type: "paypal",
+            billing_details: {
+              email,
+              ...(name ? { name } : {}),
+            },
+          },
+          mandate_data: {
+            customer_acceptance: {
+              type: "online",
+              online: {
+                ip_address: validIp,
+                user_agent: userAgent,
+              },
+            },
+          },
+          return_url: returnUrl,
+        });
+
+        const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
+        if (!redirectUrl) {
+          return c.json({ error: "Could not initialize PayPal authorization redirect." }, 500);
+        }
+
+        return c.json({
+          redirectUrl,
+          subscriptionId: subscription.id,
+          accountId,
+          plan,
+        });
+      }
+
+      // Direct Card / Wallet confirmation on server when Stripe Elements is not mounted (test mode)
+      if (confirmOnServer && paymentIntent.livemode === false) {
+        const rawCard = typeof body.cardNumber === "string" ? body.cardNumber.replace(/\D/g, "") : "";
+        const testPm =
+          rawCard.endsWith("0002")
+            ? "pm_card_chargeDeclined"
+            : rawCard.startsWith("5")
+            ? "pm_card_mastercard"
+            : rawCard.startsWith("3")
+            ? "pm_card_amex"
+            : "pm_card_visa";
+
+        const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
+          payment_method: testPm,
+          return_url: returnUrl,
+        });
+
+        if (confirmedPi.status === "requires_action" && confirmedPi.next_action?.redirect_to_url?.url) {
+          return c.json({
+            redirectUrl: confirmedPi.next_action.redirect_to_url.url,
+            subscriptionId: subscription.id,
+            accountId,
+            plan,
+          });
+        }
+
+        const updatedSub = await stripe.subscriptions.retrieve(subscription.id);
+        syncSubscription(repo, updatedSub, accountId);
+        await setSignedCookie(c, SESSION_COOKIE, accountId, sessionSecret, {
+          path: "/",
+          httpOnly: true,
+          sameSite: "Lax",
+          secure: isHttps,
+          maxAge: 86400 * 30,
+        });
+
+        return c.json({
+          redirectUrl: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`,
+          subscriptionId: subscription.id,
+          accountId,
+          plan,
+        });
       }
 
       const clientSecret = paymentIntent?.client_secret ?? null;
@@ -1486,8 +1634,54 @@ export function createApp(deps: AppDeps) {
 
   // Simple pages the browser lands on after checkout.
   
-  app.get("/checkout/success", (c) => {
+  app.get("/checkout/success", async (c) => {
     const isWeb = c.req.query("web") === "1";
+    const subscriptionId = c.req.query("subscription_id")?.trim() || "";
+    const accountId = c.req.query("account_id")?.trim() || "";
+    const redirectStatus = c.req.query("redirect_status")?.trim() || "";
+
+    if (redirectStatus === "failed" || redirectStatus === "canceled") {
+      return c.redirect("/order?error=payment_cancelled");
+    }
+
+    if (subscriptionId && stripe) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        if (sub.status === "incomplete" || sub.status === "incomplete_expired" || sub.status === "canceled") {
+          return c.redirect("/order?error=payment_cancelled");
+        }
+        syncSubscription(repo, sub, accountId || null);
+
+        const resolvedAccount =
+          (accountId && repo.accountById(accountId)) ||
+          (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
+          undefined;
+
+        if (resolvedAccount) {
+          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
+            path: "/",
+            httpOnly: true,
+            sameSite: "Lax",
+            secure: isHttps,
+            maxAge: 86400 * 30,
+          });
+          if (resolvedAccount.email && (sub.status === "active" || sub.status === "trialing")) {
+            import("./email.js").then((m) => {
+              const planLabel =
+                sub.metadata?.plan === "annual"
+                  ? "Annual"
+                  : sub.metadata?.plan === "six_month"
+                  ? "6-Month"
+                  : "Pro";
+              m.sendSubscriptionEmail(resolvedAccount.email!, "activated", planLabel, resolvedAccount.name || undefined).catch(console.error);
+            });
+          }
+        }
+      } catch (err) {
+        console.error("[checkout/success] subscription sync error:", err);
+      }
+    }
+
     if (isWeb) {
       return c.html(page("You're Activated 🎉", "Thanks for purchasing SWEEPR Cleaner! Download the app below. When you launch it, enter your email on the Account tab to link your purchase.", true));
     }

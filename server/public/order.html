@@ -1014,6 +1014,17 @@
       const planParam = urlParams.get('plan');
       const offerParam = urlParams.get('offer');
       const discountParam = urlParams.get('discount');
+      const errorParam = urlParams.get('error');
+      const emailParam = urlParams.get('email');
+
+      if (emailParam) {
+        const emailEl = document.getElementById('email');
+        if (emailEl && !emailEl.value) emailEl.value = emailParam;
+      }
+
+      if (errorParam === 'payment_cancelled' || errorParam === 'payment_incomplete') {
+        showError('Your payment was cancelled or not completed. No charge was made — please try again below.');
+      }
 
       let storedPlan = null;
       try { storedPlan = sessionStorage.getItem('sweepr_selected_plan'); } catch (e) {}
@@ -1269,10 +1280,16 @@
 
     // 7. Express Wallet Trigger (GPay / Apple Pay)
     function triggerExpressWallet() {
+      if (paymentRequestInstance) {
+        try {
+          paymentRequestInstance.show();
+          return;
+        } catch (err) {}
+      }
       triggerCheckout('wallet');
     }
 
-    // 8. Main Form Submission & Checkout Flow
+    // 8. Main Form Submission & Checkout Flow (Direct PayPal / Wallet / Card without Stripe Hosted Checkout page)
     async function triggerCheckout(method = 'card') {
       const errBox = document.getElementById('checkoutError');
       errBox.classList.add('hidden');
@@ -1292,8 +1309,9 @@
       const emailInput = document.getElementById('email');
       const email = emailInput.value.trim();
       if (!email || !email.includes('@')) {
+        emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         emailInput.focus();
-        showError('Please enter a valid email address.');
+        showError('Please enter your email address so we can deliver your SWEEPR Cleaner Pro license.');
         return;
       }
 
@@ -1302,19 +1320,62 @@
       const billingPostcode = document.getElementById('billingPostcode').value.trim();
 
       const btn = document.getElementById('submitBtn');
+      const paypalBtn = document.getElementById('paypalBtn');
+      const expressGPayBtn = document.getElementById('expressGPayBtn');
       const originalBtnHTML = btn.innerHTML;
+      const originalPaypalHTML = paypalBtn ? paypalBtn.innerHTML : '';
+      const originalGPayHTML = expressGPayBtn ? expressGPayBtn.innerHTML : '';
+
       btn.disabled = true;
       btn.classList.add('opacity-80', 'cursor-not-allowed');
-      btn.innerHTML = `
-        <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span class="uppercase tracking-wide font-black">Processing Secure Payment...</span>
-      `;
+      if (paypalBtn) paypalBtn.disabled = true;
+      if (expressGPayBtn) expressGPayBtn.disabled = true;
+
+      if (method === 'paypal' && paypalBtn) {
+        paypalBtn.innerHTML = `
+          <svg class="animate-spin h-4 w-4 text-[#003087] mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="font-bold text-sm text-[#003087]">Connecting to PayPal...</span>
+        `;
+      } else {
+        btn.innerHTML = `
+          <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="uppercase tracking-wide font-black">Processing Secure Payment...</span>
+        `;
+      }
 
       try {
-        // Case A: Stripe Elements on-page confirmation (if Stripe configured & available)
+        // Case A: Direct PayPal Authorization (Never redirects to Stripe's hosted order page)
+        if (method === 'paypal') {
+          const subRes = await fetch('/api/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              name: cardName || undefined,
+              address: billingAddress || undefined,
+              postcode: billingPostcode || undefined,
+              applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
+              plan: selectedPlan,
+              paymentMethod: 'paypal'
+            })
+          });
+
+          const subData = await subRes.json();
+          if (!subRes.ok || !subData.redirectUrl) {
+            throw new Error(subData.error || 'Unable to connect to PayPal. Please try again.');
+          }
+
+          window.location.href = subData.redirectUrl;
+          return;
+        }
+
+        // Case B: Stripe Elements on-page card confirmation (when publishableKey is configured)
         if (stripe && cardElements && method === 'card') {
           if (!cardName) {
             document.getElementById('cardName').focus();
@@ -1331,7 +1392,8 @@
               address: billingAddress,
               postcode: billingPostcode,
               applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
-              plan: selectedPlan
+              plan: selectedPlan,
+              paymentMethod: 'card'
             })
           });
 
@@ -1341,7 +1403,7 @@
           }
 
           // Step 2: Confirm card payment directly on the page with Stripe
-          const { error: stripeErr, paymentIntent } = await stripe.confirmCardPayment(subData.clientSecret, {
+          const { error: stripeErr } = await stripe.confirmCardPayment(subData.clientSecret, {
             payment_method: {
               card: cardElements.cardNumberEl,
               billing_details: {
@@ -1373,10 +1435,14 @@
           return;
         }
 
-        // Case B: Express / Fallback Checkout via /api/web-checkout
-        // If Stripe Elements isn't mounted or user chose PayPal/Wallet
+        // Case C: On-page Card / Wallet confirmation without Stripe Hosted Checkout
+        let rawNum = '';
         if (method === 'card') {
-          const rawNum = document.getElementById('fallbackCardNumber').value.replace(/\s/g, '');
+          if (!cardName) {
+            document.getElementById('cardName').focus();
+            throw new Error('Please enter the name on your card.');
+          }
+          rawNum = document.getElementById('fallbackCardNumber').value.replace(/\s/g, '');
           const rawExp = document.getElementById('fallbackCardExpiry').value.trim();
           const rawCvc = document.getElementById('fallbackCardCvc').value.trim();
 
@@ -1394,21 +1460,28 @@
           }
         }
 
-        const res = await fetch('/api/web-checkout', {
+        const subRes = await fetch('/api/create-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
+            name: cardName || undefined,
+            address: billingAddress || undefined,
+            postcode: billingPostcode || undefined,
             applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
-            plan: selectedPlan
+            plan: selectedPlan,
+            paymentMethod: method,
+            confirmOnServer: true,
+            cardNumber: rawNum || undefined
           })
         });
 
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
+        const subData = await subRes.json();
+        if (subRes.ok && subData.redirectUrl) {
+          window.location.href = subData.redirectUrl;
+          return;
         } else {
-          throw new Error(data.error || 'Server error while redirecting to secure checkout.');
+          throw new Error(subData.error || 'Unable to process payment. Please verify your payment details.');
         }
 
       } catch (err) {
@@ -1416,6 +1489,14 @@
         btn.disabled = false;
         btn.classList.remove('opacity-80', 'cursor-not-allowed');
         btn.innerHTML = originalBtnHTML;
+        if (paypalBtn) {
+          paypalBtn.disabled = false;
+          paypalBtn.innerHTML = originalPaypalHTML;
+        }
+        if (expressGPayBtn) {
+          expressGPayBtn.disabled = false;
+          expressGPayBtn.innerHTML = originalGPayHTML;
+        }
       }
     }
 
