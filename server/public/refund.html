@@ -4,7 +4,7 @@
   <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>14-Day Money-Back Guarantee & Refund Policy - SWEEPR Cleaner</title>
+  <title>14-Day Money-Back Guarantee &amp; Refund Policy - SWEEPR Cleaner</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
@@ -19,6 +19,54 @@
       <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
     </a>
     <div class="flex gap-2 md:gap-3 items-center">
+      <!-- Language Selector Dropdown -->
+      <div class="relative inline-block text-left" id="langDropdownContainer">
+        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
+          <span class="text-base" id="currentLangFlag">🌐</span>
+          <span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
+          <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all">
+          <div class="space-y-0.5 text-xs">
+            <button type="button" onclick="setLanguage('en')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">EN</span>
+            </button>
+            <button type="button" onclick="setLanguage('de')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇩🇪</span> <span>Deutsch</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">DE</span>
+            </button>
+            <button type="button" onclick="setLanguage('fr')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇫🇷</span> <span>Français</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">FR</span>
+            </button>
+            <button type="button" onclick="setLanguage('es')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇪🇸</span> <span>Español</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">ES</span>
+            </button>
+            <button type="button" onclick="setLanguage('it')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇮🇹</span> <span>Italiano</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">IT</span>
+            </button>
+            <button type="button" onclick="setLanguage('pt')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇵🇹</span> <span>Português</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">PT</span>
+            </button>
+            <button type="button" onclick="setLanguage('nl')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇳🇱</span> <span>Nederlands</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">NL</span>
+            </button>
+            <button type="button" onclick="setLanguage('ja')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
+              <span class="flex items-center gap-2"><span>🇯🇵</span> <span>日本語</span></span>
+              <span class="text-[10px] text-gray-400 font-mono">JA</span>
+            </button>
+          </div>
+        </div>
+      </div>
       <a href="/login" class="btn btn-ghost text-sm">Login</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2">
         <span>Get SWEEPR Cleaner</span>
@@ -36,7 +84,7 @@
       <p class="text-sm text-gray-500">Last updated: October 2026</p>
 
       <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-5 text-sm text-gray-800">
-        <strong>Our Promise:</strong> You are eligible for a full 100% refund within <strong>14 days</strong> of any charge if you are not completely satisfied with SWEEPR Cleaner Pro—no hassle, no complicated forms.
+        <span class="font-bold">Our Promise:</span> You are eligible for a full 100% refund within 14 days of any charge if you are not completely satisfied with SWEEPR Cleaner Pro—no hassle, no complicated forms.
       </div>
 
       <div>
@@ -49,7 +97,7 @@
         <p>You are in full control of your subscription at all times. To cancel automatic renewal before your next billing date:</p>
         <ol class="list-decimal pl-5 space-y-2 mt-2">
           <li>Visit the <a href="/login" class="text-emerald-600 font-semibold underline">SWEEPR Cleaner Customer Portal</a> and sign in with your email address (we will send you an instant 6-digit login code).</li>
-          <li>Click <strong>Manage Billing &amp; Payments</strong> or <strong>Cancel Subscription</strong> on your dashboard.</li>
+          <li>Click <span class="font-bold">Manage Billing &amp; Payments</span> or <span class="font-bold">Cancel Subscription</span> on your dashboard.</li>
           <li>Your cancellation takes effect immediately, and you will never be billed again.</li>
         </ol>
       </div>
@@ -70,5 +118,8 @@
     </div>
     <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
   </footer>
+  <div id="google_translate_element" style="display:none !important;"></div>
+  <script src="/i18n.js"></script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>
