@@ -132,7 +132,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "firefox", name: "Firefox cache", description: "Cached web content. Logins and history are not touched.", group: Group::Browsers, base: LocalAppData, patterns: &["Mozilla/Firefox/Profiles/*/cache2"], min_age_hours: 0, free: false },
         Spec { id: "app_caches", name: "App caches (Discord, Teams, VS Code, Spotify)", description: "Caches from popular desktop apps. They rebuild on next launch.", group: Group::Apps, base: RoamingAppData, patterns: &["discord/Cache", "discord/Code Cache", "Code/Cache", "Code/CachedData", "Microsoft/Teams/Cache", "Slack/Cache"], min_age_hours: 0, free: false },
         Spec { id: "spotify", name: "Spotify offline cache", description: "Streaming cache (not your downloaded playlists).", group: Group::Apps, base: LocalAppData, patterns: &["Spotify/Data"], min_age_hours: 0, free: false },
-        Spec { id: "downloads", name: "Old Downloads", description: "Files in your Downloads folder older than 30 days.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
         Spec { id: "dev_caches", name: "Developer package caches", description: "npm, pnpm, pip, Yarn, NuGet and Composer download caches. Packages re-download when needed.", group: Group::Developer, base: LocalAppData, patterns: &["npm-cache/_cacache", "pnpm/store", "pip/cache", "Yarn/Cache", "NuGet/v3-cache", "Composer/cache"], min_age_hours: 0, free: false },
         Spec { id: "build_caches", name: "Gradle & Cargo build caches", description: "Cached Gradle and Rust Cargo registry archives in your user profile (~/.gradle/caches, ~/.cargo/registry/cache).", group: Group::Developer, base: Home, patterns: &[".gradle/caches", ".cargo/registry/cache"], min_age_hours: 24 * 7, free: false },
     ]
@@ -147,7 +147,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "user_caches", name: "App & browser caches", description: "~/Library/Caches (including Homebrew & browser caches). Apps rebuild these automatically.", group: Group::Apps, base: Home, patterns: &["Library/Caches"], min_age_hours: 24, free: false },
         Spec { id: "logs", name: "User & crash logs", description: "~/Library/Logs and CrashReporter diagnostic logs.", group: Group::System, base: Home, patterns: &["Library/Logs", "Library/Application Support/CrashReporter"], min_age_hours: 24, free: false },
         Spec { id: "xcode", name: "Xcode derived data", description: "Build products. Xcode regenerates them on next build.", group: Group::Developer, base: Home, patterns: &["Library/Developer/Xcode/DerivedData"], min_age_hours: 0, free: false },
-        Spec { id: "downloads", name: "Old Downloads", description: "Files in your Downloads folder older than 30 days.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
         Spec { id: "dev_caches", name: "Developer package & build caches", description: "npm, Gradle and Cargo download caches.", group: Group::Developer, base: Home, patterns: &[".npm/_cacache", ".gradle/caches", ".cargo/registry/cache"], min_age_hours: 0, free: false },
     ]
 }
@@ -160,7 +160,7 @@ fn specs() -> Vec<Spec> {
         Spec { id: "trash", name: "Trash bin", description: "Files in ~/.local/share/Trash older than 24 hours.", group: Group::System, base: Home, patterns: &[".local/share/Trash/files", ".local/share/Trash/info"], min_age_hours: 24, free: true },
         Spec { id: "user_caches", name: "App & browser caches", description: "~/.cache. Apps rebuild these automatically.", group: Group::Apps, base: Home, patterns: &[".cache"], min_age_hours: 24, free: false },
         Spec { id: "logs", name: "User state logs", description: "~/.local/state/log diagnostic logs.", group: Group::System, base: Home, patterns: &[".local/state/log"], min_age_hours: 24, free: false },
-        Spec { id: "downloads", name: "Old Downloads", description: "Files in your Downloads folder older than 30 days.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
+        Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },
         Spec { id: "dev_caches", name: "Developer package & build caches", description: "npm, Gradle and Cargo download caches.", group: Group::Developer, base: Home, patterns: &[".npm/_cacache", ".gradle/caches", ".cargo/registry/cache"], min_age_hours: 0, free: false },
     ]
 }

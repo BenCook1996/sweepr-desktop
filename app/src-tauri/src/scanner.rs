@@ -5,7 +5,7 @@ use crate::safety;
 use rayon::prelude::*;
 use serde::Serialize;
 use std::cmp::Reverse;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant, SystemTime};
@@ -49,6 +49,98 @@ pub struct ScanProgress {
     pub bytes_so_far: u64,
 }
 
+/// Collect lowercase filenames recently opened by the user according to the OS
+/// (e.g., `%APPDATA%\Microsoft\Windows\Recent\*.lnk` modified/accessed after `cutoff`).
+fn recently_used_file_names(cutoff: SystemTime) -> HashSet<String> {
+    let mut set = HashSet::new();
+    #[cfg(target_os = "windows")]
+    if let Some(roaming) = dirs::data_dir() {
+        let recent_dir = roaming.join("Microsoft").join("Windows").join("Recent");
+        if let Ok(rd) = std::fs::read_dir(recent_dir) {
+            for entry in rd.flatten() {
+                let Ok(md) = entry.metadata() else { continue };
+                let is_recent_lnk = md.modified().map(|t| t > cutoff).unwrap_or(false)
+                    || md.accessed().map(|t| t > cutoff).unwrap_or(false)
+                    || md.created().map(|t| t > cutoff).unwrap_or(false);
+                if !is_recent_lnk {
+                    continue;
+                }
+                let name = entry.file_name().to_string_lossy().to_ascii_lowercase();
+                if let Some(target_name) = name.strip_suffix(".lnk") {
+                    if !target_name.is_empty() {
+                        set.insert(target_name.to_string());
+                    }
+                }
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = cutoff;
+    set
+}
+
+/// Check if a file is currently held open by any running process without
+/// touching its `LastAccessTime` metadata.
+fn is_file_currently_in_use(path: &Path) -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // `access_mode(0)` requests metadata-only access (does not read data or update LastAccessTime).
+        // `share_mode(0)` fails with ERROR_SHARING_VIOLATION (32) if any process has an open handle.
+        match std::fs::OpenOptions::new().access_mode(0).share_mode(0).open(path) {
+            Ok(_) => false,
+            Err(e) => e.raw_os_error() == Some(32),
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = path;
+        false
+    }
+}
+
+/// Verify that a file is both older than `cutoff` AND unused since `cutoff`.
+pub fn is_file_old_and_unused(
+    path: &Path,
+    md: &std::fs::Metadata,
+    cutoff: SystemTime,
+    recent_names: &HashSet<String>,
+) -> bool {
+    // 1. Must not have been modified after cutoff
+    match md.modified() {
+        Ok(m) if m <= cutoff => {}
+        _ => return false,
+    }
+    // 2. Must not have been created/downloaded onto this system after cutoff
+    if let Ok(created) = md.created() {
+        if created > cutoff {
+            return false;
+        }
+    }
+    // 3. Must not have been accessed/opened after cutoff
+    if let Ok(accessed) = md.accessed() {
+        if accessed > cutoff {
+            return false;
+        }
+    }
+    // 4. Must not appear in OS Recent Items within the cutoff window
+    if let Some(fname) = path.file_name().map(|n| n.to_string_lossy().to_ascii_lowercase()) {
+        if recent_names.contains(&fname) {
+            return false;
+        }
+        if let Some(stem) = path.file_stem().map(|s| s.to_string_lossy().to_ascii_lowercase()) {
+            if recent_names.contains(&stem) {
+                return false;
+            }
+        }
+    }
+    // 5. Must not be currently open/locked by any running application
+    if is_file_currently_in_use(path) {
+        return false;
+    }
+    true
+}
+
 /// Walk every eligible file of a rule. This is the single source of truth used
 /// by BOTH scanning and cleaning, so the cleaner can never touch a file the
 /// scanner wouldn't have reported.
@@ -61,6 +153,12 @@ pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut 
     let cutoff = SystemTime::now()
         .checked_sub(Duration::from_secs(rule.min_age_hours * 3600))
         .unwrap_or(SystemTime::UNIX_EPOCH);
+    let check_unused = rule.id == "downloads";
+    let recent_names = if check_unused {
+        recently_used_file_names(cutoff)
+    } else {
+        HashSet::new()
+    };
 
     for root in &rule.roots {
         if !safety::is_safe_scan_root(root, rule.min_age_hours) || safety::is_excluded(root, exclusions) {
@@ -80,7 +178,11 @@ pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut 
                 continue;
             }
             let Ok(md) = entry.metadata() else { continue };
-            if rule.min_age_hours > 0 {
+            if check_unused {
+                if !is_file_old_and_unused(entry.path(), &md, cutoff, &recent_names) {
+                    continue;
+                }
+            } else if rule.min_age_hours > 0 {
                 match md.modified() {
                     Ok(m) if m <= cutoff => {}
                     _ => continue,
