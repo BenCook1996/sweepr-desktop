@@ -2,7 +2,8 @@ node_modules/
 dist/
 build/
 .env
-data/
+/data/
+server/data/
 *.db
 *.log
 .DS_Store
