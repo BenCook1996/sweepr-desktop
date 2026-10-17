@@ -44,6 +44,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SWEEPR_LICENSE_PUBKEY: ${{ secrets.SWEEPR_LICENSE_PUBKEY }}
+          SWEEPR_API_URL: ${{ secrets.SWEEPR_API_URL }}
         with:
           projectPath: "./app"
           tagName: "v__VERSION__"

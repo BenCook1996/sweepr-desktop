@@ -4,12 +4,89 @@
     <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sweepr - The Cleanest Desktop Experience</title>
+  <title>Sweepr: Fast PC Cleaner & Optimizer for Windows 11 & Mac</title>
+  <meta name="description" content="Reclaim 20+ GB of hidden disk space, purge bloated RAM, uninstall stubborn apps, and shred sensitive files in 60 seconds. Lightweight Rust engine with zero bloatware.">
+  <link rel="canonical" href="https://sweeprcleaner.com/">
+
+  <!-- Open Graph / Social Meta -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sweeprcleaner.com/">
+  <meta property="og:title" content="Sweepr: Fast PC Cleaner & Optimizer for Windows 11 & Mac">
+  <meta property="og:description" content="Reclaim lost gigabytes and boost startup speed without slow background daemons or popups.">
+  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+
+  <!-- Twitter Meta -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://sweeprcleaner.com/">
+  <meta name="twitter:title" content="Sweepr: Fast PC Cleaner & Optimizer for Windows 11 & Mac">
+  <meta name="twitter:description" content="Reclaim lost gigabytes in under 60 seconds with native Rust performance. Zero bloatware.">
+  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
+
+  <!-- Structured Data (JSON-LD) for Search Rich Snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Sweepr",
+        "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android, iOS",
+        "applicationCategory": "UtilitiesApplication",
+        "fileSize": "14MB",
+        "offers": {
+          "@type": "Offer",
+          "price": "1.99",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31",
+          "description": "7-day full Pro trial for £1.99, then £9.99/month. Cancel anytime."
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "12400",
+          "bestRating": "5",
+          "worstRating": "1"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is Sweepr different from CCleaner or legacy cleaners?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sweepr is built in native Rust (<15MB installer) instead of heavy legacy code. It runs zero background telemetry daemons, bundles zero third-party adware, and shows exact file paths and byte counts before deleting anything."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How many devices does one Sweepr license cover?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Every Sweepr Pro license covers up to 3 Desktop PCs (Windows, Mac, Linux) and 2 Mobile devices (Android, iOS)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I cancel my subscription anytime?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, you can cancel in one click from your self-service dashboard with no dark patterns, backed by a 30-day money-back guarantee."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="alternate icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
+  <script src="/attribution.js"></script>
 </head>
 <body class="text-gray-800">
 
@@ -23,6 +100,8 @@
       <div class="hidden md:flex items-center gap-2">
         <a href="/#features" class="btn btn-ghost text-sm">Features</a>
         <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
+        <a href="/clean" class="btn btn-ghost text-sm">Directory</a>
+        <a href="/vs/ccleaner" class="btn btn-ghost text-sm text-emerald-700 font-semibold">vs CCleaner</a>
       </div>
     </div>
     <div class="flex gap-2 md:gap-3 items-center">
@@ -45,16 +124,18 @@
         Reclaim gigabytes of lost storage, uninstall stubborn apps, and optimize your memory. Experience the sleekest, fastest desktop cleaner ever built.
       </p>
       <div class="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
-        <a href="/order" id="buyBtn" class="btn btn-go btn-big pulse-glow gap-2.5">
-          <span>Buy Now</span>
+        <a href="/download" id="downloadBtn" class="btn btn-go btn-big pulse-glow gap-2.5">
+          <span>Free Download</span>
           <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/pricing" class="btn btn-big">View Plans & Pricing</a>
+        <a href="/order" class="btn btn-big bg-white border border-gray-300 hover:border-gray-400 text-gray-800">Try 7-Day Pro for £1.99</a>
       </div>
       <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start mt-4 text-xs text-gray-500 font-medium">
-        <span>⚡ Instant Download</span>
+        <span>⚡ 60-Second Scan</span>
         <span>•</span>
         <span>🛡️ 30-Day Money-Back Guarantee</span>
+        <span>•</span>
+        <span>🔒 Zero Bloatware</span>
       </div>
     </div>
     <div class="flex-1 relative w-full max-w-lg">

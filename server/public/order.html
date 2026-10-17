@@ -1,36 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Complete Your Order - Sweepr Pro 2026</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="alternate icon" type="image/png" href="/favicon.png">
-  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/logo-mint-glass.svg">
+  <link rel="shortcut icon" type="image/svg+xml" href="/logo-mint-glass.svg">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
-    /* 3D Box Mockup CSS */
+    /* 3D Box Mockup */
     .software-box {
-      width: 72px;
-      height: 98px;
+      width: 76px;
+      height: 104px;
       position: relative;
       perspective: 600px;
-      filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.15));
+      filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.16));
     }
     .box-face {
       width: 100%;
       height: 100%;
       background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
       border-radius: 4px 6px 6px 4px;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.35);
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 8px 6px;
+      padding: 8px 7px;
       color: white;
       transform: rotateY(-18deg);
       transform-style: preserve-3d;
@@ -39,18 +39,18 @@
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+      background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
       pointer-events: none;
     }
     .box-spine {
       position: absolute;
-      left: -10px;
+      left: -11px;
       top: 2px;
-      width: 12px;
-      height: 94px;
+      width: 13px;
+      height: 100px;
       background: #022c22;
       border-radius: 4px 0 0 4px;
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.25);
       transform: rotateY(-72deg);
       transform-origin: right center;
     }
@@ -65,7 +65,7 @@
       letter-spacing: 0.5px;
     }
     .box-title {
-      font-size: 8.5px;
+      font-size: 9px;
       font-weight: 800;
       line-height: 1.1;
       letter-spacing: -0.2px;
@@ -75,186 +75,505 @@
       color: #6ee7b7;
       font-weight: 600;
     }
+
+    /* Stripe custom element container styling */
+    .stripe-input-box {
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 0.75rem 0.875rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      transition: all 0.15s ease-in-out;
+    }
+    .stripe-input-box:focus-within {
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    .stripe-input-box.StripeElement--invalid {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Tooltip */
+    .tooltip-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .tooltip-box {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: 125%;
+      right: 0;
+      background: #1f2937;
+      color: #fff;
+      font-size: 11px;
+      line-height: 1.35;
+      padding: 6px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      z-index: 50;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      pointer-events: none;
+    }
+    .tooltip-wrapper:hover .tooltip-box,
+    .tooltip-wrapper:focus-within .tooltip-box {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* Pulse effect on green button */
+    @keyframes greenPulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
+      50% { box-shadow: 0 6px 22px rgba(16, 185, 129, 0.55); }
+    }
+    .btn-purchase {
+      background: #00c853;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: greenPulse 3s infinite;
+    }
+    .btn-purchase:hover {
+      background: #00b34a;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 200, 83, 0.45);
+    }
+    .btn-purchase:active {
+      transform: translateY(0);
+    }
+
+    /* Discount Modal Transition */
+    #discountModal {
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #discountModal.hidden-modal {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #discountModal.visible-modal {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    #discountModal .modal-card {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+    #discountModal.hidden-modal .modal-card {
+      transform: scale(0.92) translateY(20px);
+      opacity: 0;
+    }
+    #discountModal.visible-modal .modal-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* Laptop UI Mockup */
+    .laptop-frame {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+    .laptop-screen {
+      background: #0b1120;
+      border: 3px solid #27272a;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      padding: 6px;
+      position: relative;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.25);
+    }
+    .laptop-notch {
+      width: 4px;
+      height: 4px;
+      background: #52525b;
+      border-radius: 50%;
+      margin: 0 auto 4px auto;
+    }
+    .laptop-base {
+      height: 10px;
+      background: linear-gradient(180deg, #71717a 0%, #3f3f46 100%);
+      border-radius: 0 0 10px 10px;
+      position: relative;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+    }
+    .laptop-base::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 4px;
+      background: #27272a;
+      border-radius: 0 0 4px 4px;
+    }
   </style>
 </head>
-<body class="bg-[#fcfdfd] text-gray-800 min-h-screen flex flex-col">
+<body class="bg-[#f8fafc] text-gray-800 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- Top Logo Bar (Matching Total Cleaner) -->
-  <header class="py-6 px-8 max-w-6xl mx-auto w-full">
-    <a href="/" class="inline-flex items-center gap-3 text-inherit no-underline">
-      <div class="logo-box" style="width: 34px; height: 34px; border-radius: 8px; font-size: 17px;">S</div>
-      <div class="flex items-baseline gap-1">
-        <span class="font-black text-2xl tracking-tight text-gray-900">SWEEPR</span>
-        <span class="text-xl font-light text-gray-600">Cleaner</span>
+  <!-- TOP DARK BANNER (Matching Competitor Header Layout) -->
+  <header class="bg-[#232931] text-white py-5 px-6 sm:px-8 border-b border-gray-800/80 shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <!-- Left Logo: The Sparkle Brush Mint Glass version for dark background -->
+      <a href="/" class="inline-flex items-center gap-2.5 text-inherit no-underline group">
+        <img src="/logo-mint-glass.svg" alt="Sweepr" class="w-8 h-8 rounded-lg drop-shadow transition-transform group-hover:scale-105" />
+        <div class="flex items-baseline gap-1.5">
+          <span class="font-black text-xl tracking-tight text-white">SWEEPR</span>
+          <span class="text-base font-light text-gray-300">Cleaner</span>
+        </div>
+      </a>
+
+      <!-- Right: Trustpilot 5-Star Rating -->
+      <div class="flex items-center gap-2 text-xs text-gray-300">
+        <span class="hidden sm:inline font-medium">Excellent</span>
+        <div class="flex items-center gap-1">
+          <svg class="w-4 h-4 text-[#00b67a]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <span class="font-bold text-white text-xs tracking-wide">Trustpilot</span>
+        </div>
+        <div class="flex gap-0.5">
+          <span class="bg-[#00b67a] text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">★</span>
+          <span class="bg-[#00b67a] text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">★</span>
+          <span class="bg-[#00b67a] text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">★</span>
+          <span class="bg-[#00b67a] text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">★</span>
+          <span class="bg-[#00b67a] text-white text-[9px] w-3.5 h-3.5 flex items-center justify-center font-bold">★</span>
+        </div>
       </div>
-    </a>
+    </div>
+
+    <!-- Center Headline & Subline (Dynamic based on 80% discount state) -->
+    <div class="max-w-4xl mx-auto text-center pt-5 pb-3">
+      <h1 id="bannerTitle" class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+        Get Complete Protection for 2026
+      </h1>
+      <p id="bannerSubtitle" class="text-gray-300 text-xs sm:text-sm md:text-base mt-1.5 font-normal max-w-2xl mx-auto">
+        Get Award-Winning PC Optimization, Deep Cleaning, And Duplicate Finder Included
+      </p>
+    </div>
   </header>
 
-  <!-- Big Headline (Matching Total Cleaner) -->
-  <div class="text-center px-4 pt-4 pb-10 max-w-4xl mx-auto">
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-3 tracking-tight">
-      Get Complete Protection for 2026
-    </h1>
-    <p class="text-gray-600 text-base md:text-lg">
-      Get The Best From Your Devices with our PC cleaner tool
-    </p>
-  </div>
-
-  <!-- Main 2-Column Order Section -->
-  <main class="max-w-6xl mx-auto px-6 pb-20 w-full flex-1">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+  <!-- MAIN 2-COLUMN CHECKOUT LAYOUT -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full flex-1">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
       
-      <!-- LEFT COLUMN: Order Summary & Bundles -->
+      <!-- LEFT COLUMN: Product Overview, Included Bundles & Pricing Breakdown -->
       <div class="lg:col-span-6 space-y-6">
         
-        <!-- Main Product Item -->
-        <div class="flex items-center justify-between pb-6 border-b border-gray-200">
-          <div class="flex items-center gap-5">
+        <!-- Main Product Item Card -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/80 shadow-sm flex items-start justify-between gap-4">
+          <div class="flex items-start gap-4">
             <!-- 3D Box Mockup -->
-            <div class="software-box shrink-0">
+            <div class="software-box shrink-0 mt-0.5">
               <div class="box-spine"></div>
               <div class="box-face">
-                <div class="box-badge">2026</div>
+                <div class="flex items-center justify-between w-full">
+                  <img src="/logo-mint-glass.svg" alt="Sweepr" style="width: 18px; height: 18px; border-radius: 4px;" />
+                  <div class="box-badge">2026</div>
+                </div>
                 <div>
                   <div class="box-title">SWEEPR PRO</div>
                   <div class="box-year">PC CLEANER</div>
                 </div>
-                <div style="font-size: 6px; color: #a7f3d0;">ALL-IN-ONE</div>
+                <div style="font-size: 6.5px; color: #a7f3d0; font-weight: 700;">ALL-IN-ONE</div>
               </div>
             </div>
+
+            <!-- Product Details -->
             <div>
-              <h2 class="text-xl md:text-2xl font-bold text-gray-900">Sweepr Pro All-Access</h2>
-              <p class="text-xs text-gray-500 mt-0.5">Automated deep cleaning & optimization suite</p>
+              <!-- Discount Badge (Appears when 80% offer is active) -->
+              <div id="productTag" class="hidden mb-1.5">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
+                  <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                  Save 80% off first month
+                </span>
+              </div>
+
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Sweepr Pro All-Access</h2>
+              <p id="productSubtitle" class="text-xs text-gray-500 mt-1">
+                Automated deep cleaning &amp; system optimization suite
+              </p>
+              <div class="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  Windows &amp; Mac &amp; Mobile
+                </span>
+                <span>•</span>
+                <span>Instant License Key</span>
+              </div>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-2xl font-black text-gray-900">£1.99</span>
-            <div class="text-[11px] text-gray-500 font-medium">today</div>
+
+          <!-- Product Price -->
+          <div class="text-right shrink-0">
+            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£9.99</div>
+            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per month</div>
           </div>
         </div>
 
         <!-- Included Bundle Item 1 -->
-        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+        <div class="bg-white rounded-xl p-4 border border-gray-200/80 shadow-sm flex items-center justify-between gap-4">
           <div class="flex items-start gap-3.5">
-            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50/50">
-              <!-- DeepClean / Trash icon -->
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
             <div>
               <h3 class="font-bold text-gray-900 text-sm">DeepClean System Cache Optimizer</h3>
               <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Automatically remove all hidden junk caches and background bloat when browsing with a Sweepr licence
+                Automatically remove all hidden junk caches, registry logs, and background bloat with your Sweepr licence
               </p>
             </div>
           </div>
           <div class="shrink-0">
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 uppercase tracking-wide">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 uppercase tracking-wide">
               <span>🎁</span> INCLUDED FREE
             </span>
           </div>
         </div>
 
         <!-- Included Bundle Item 2 -->
-        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+        <div class="bg-white rounded-xl p-4 border border-gray-200/80 shadow-sm flex items-center justify-between gap-4">
           <div class="flex items-start gap-3.5">
-            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50/50">
-              <!-- Shield / Security icon -->
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 text-sm">Duplicate Matcher & Clean Uninstaller</h3>
+              <h3 class="font-bold text-gray-900 text-sm">Duplicate Matcher &amp; Clean Uninstaller</h3>
               <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Reclaim lost space from duplicate files and wipe stubborn applications completely with a Sweepr licence
+                Reclaim lost space from duplicate files and wipe stubborn applications completely with your Sweepr licence
               </p>
             </div>
           </div>
           <div class="shrink-0">
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 uppercase tracking-wide">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 uppercase tracking-wide">
               <span>🎁</span> INCLUDED FREE
             </span>
           </div>
         </div>
 
-        <!-- Total Subtotal Row -->
-        <div class="pt-6 border-t border-gray-200 flex items-center justify-between text-sm">
-          <span class="font-medium text-gray-700">Sweepr Pro Subscription</span>
-          <span class="font-semibold text-gray-900">£1.99 today, then £9.99/month</span>
+        <!-- Order Breakdown Card -->
+        <div class="bg-white rounded-xl p-5 border border-gray-200/80 shadow-sm space-y-3 text-sm">
+          <div class="flex items-center justify-between text-gray-700">
+            <span>Sweepr Pro (Monthly Plan)</span>
+            <span class="font-semibold text-gray-900">£9.99/month</span>
+          </div>
+
+          <!-- Discount Line (Shows when 80% discount is applied) -->
+          <div id="discountSummaryRow" class="hidden flex items-center justify-between text-emerald-600 font-medium">
+            <span class="flex items-center gap-1.5">
+              <span>Discount applied for first month (<strong class="font-bold">Save 80%</strong>)</span>
+            </span>
+            <span class="font-bold">- £8.00</span>
+          </div>
+
+          <div class="pt-3 border-t border-gray-200 flex items-center justify-between">
+            <span class="font-bold text-gray-900 text-base">Total Today (GBP)</span>
+            <span id="totalTodayText" class="font-black text-2xl text-gray-900">£9.99</span>
+          </div>
+        </div>
+
+        <!-- Industry Awards / Trust Badges (Matching Competitor Layout) -->
+        <div class="pt-2 flex flex-wrap items-center justify-center gap-6 opacity-85 py-2">
+          <!-- AV Top Product Badge -->
+          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-1.5 rounded-lg shadow-xs">
+            <span class="text-xs text-gray-400">🌿</span>
+            <div class="text-left">
+              <div class="text-[9px] font-black text-red-600 uppercase tracking-wider leading-none">AV TEST</div>
+              <div class="text-[10px] font-extrabold text-gray-900 leading-tight">TOP PRODUCT</div>
+            </div>
+            <span class="text-xs text-gray-400">🌿</span>
+          </div>
+
+          <!-- VB100 Clean Badge -->
+          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-1.5 rounded-lg shadow-xs">
+            <div class="w-6 h-6 rounded bg-emerald-600 text-white font-black text-[9px] flex flex-col items-center justify-center leading-none">
+              <span>VB</span>
+              <span>100</span>
+            </div>
+            <div class="text-left">
+              <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">VIRUS BULLETIN</div>
+              <div class="text-[10px] font-extrabold text-emerald-700 leading-tight">100% CLEAN</div>
+            </div>
+          </div>
+
+          <!-- 30-Day Guarantee Badge -->
+          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-1.5 rounded-lg shadow-xs">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <div class="text-left">
+              <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">30-DAY REFUND</div>
+              <div class="text-[10px] font-extrabold text-gray-900 leading-tight">100% RISK-FREE</div>
+            </div>
+          </div>
         </div>
 
       </div>
 
-      <!-- RIGHT COLUMN: Payment Form (Total Cleaner Layout) -->
-      <div class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/80 shadow-sm">
+      <!-- RIGHT COLUMN: Payment Form (Total Cleaner Layout & Features) -->
+      <div id="checkoutBox" class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/90 shadow-md">
         
-        <!-- Green Guarantee Box (Exact copy from Total Cleaner screenshot) -->
-        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3.5 mb-6 text-xs text-gray-700 leading-relaxed">
-          You are eligible for a full refund within 30 days of any charges. You can cancel anytime via your online portal. Here are simple cancel <a href="/login" class="text-emerald-700 font-semibold underline">instructions</a>
+        <!-- Green Guarantee Box (With direct link to Refund Policy) -->
+        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 mb-6 text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
+          <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>
+            You are eligible for a full refund within 30 days of any charges under our <a href="/refund" target="_blank" class="text-emerald-700 font-bold underline hover:text-emerald-800">Refund Policy</a>. You can cancel anytime in 1 click via your online portal. Here are simple cancel <a href="/refund#cancel" target="_blank" class="text-emerald-700 font-semibold underline hover:text-emerald-800">instructions</a>.
+          </div>
         </div>
 
         <!-- Order Form -->
-        <form id="orderForm" class="space-y-5">
+        <form id="orderForm" class="space-y-4" novalidate>
 
-          <!-- Consent Checkboxes (Matching screenshot) -->
-          <div class="space-y-3 text-xs text-gray-700">
-            <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" id="termsConsent" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
-              <span class="leading-snug">
-                I agree to pay £1.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
+          <!-- Consent Checkboxes (Matching Competitor Layout) -->
+          <div class="space-y-2.5 text-xs text-gray-700 pb-1">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <span id="termsConsentLabel" class="leading-snug">
+                I agree to pay £9.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
               </span>
             </label>
 
-            <label class="flex items-start gap-2.5 cursor-pointer">
-              <input type="checkbox" id="legalConsent" required class="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span class="leading-snug">
-                I agree to the <a href="/terms" class="text-blue-600 underline">Terms of Service</a> and <a href="/privacy" class="text-blue-600 underline">Privacy Policy</a>
+                I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
               </span>
             </label>
           </div>
 
-          <!-- Express Payment Buttons (PayPal & GPay matching Total Cleaner screenshot) -->
+          <!-- Express Payment Buttons (PayPal & Apple Pay / Google Pay) -->
           <div class="space-y-2.5 pt-2">
             <!-- PayPal Button -->
-            <button type="button" onclick="triggerCheckout('paypal')" class="w-full h-12 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl flex items-center justify-center transition-all shadow-sm">
+            <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer">
               <span class="italic font-black text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
             </button>
 
-            <!-- Pay with GPay / Apple Pay Button -->
-            <button type="button" onclick="triggerCheckout('gpay')" class="w-full h-12 bg-black hover:bg-gray-900 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-sm">
-              <span>Pay with</span>
-              <span class="font-semibold text-base"><span class="text-blue-400">G</span><span class="text-red-400">o</span><span class="text-yellow-400">o</span><span class="text-blue-400">g</span><span class="text-green-400">l</span><span class="text-red-400">e</span> Pay</span>
+            <!-- Native Stripe PaymentRequest Container (Apple Pay / Google Pay if supported by browser) -->
+            <div id="stripePaymentRequestContainer" class="hidden w-full">
+              <div id="paymentRequestBtn"></div>
+            </div>
+
+            <!-- Styled GPay / Apple Pay Express Button -->
+            <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-black hover:bg-gray-900 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-sm">
+              <span class="text-gray-300">Pay with</span>
+              <span class="font-semibold text-base inline-flex items-center">
+                <span class="text-blue-400">G</span><span class="text-red-400">o</span><span class="text-yellow-400">o</span><span class="text-blue-400">g</span><span class="text-green-400">l</span><span class="text-red-400">e</span>&nbsp;Pay
+              </span>
+              <span class="text-gray-500 text-xs mx-1">|</span>
+              <span class="font-semibold text-sm text-white inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 170 170"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.99-6.3-9.77-11.23-20.91-14.8-33.41C7.43 100.17 5.6 87.79 5.6 75.38c0-14.36 3.63-26.47 10.88-36.33 7.26-9.87 16.5-14.94 27.73-15.22 5.56 0 11.13 1.48 16.71 4.45 5.58 2.97 9.29 4.54 11.12 4.7 1.83-.16 5.86-1.83 12.09-5.01 6.23-3.18 11.96-4.63 17.18-4.35 13.06.87 23.36 5.85 30.9 14.94-11.45 6.94-17.06 16.59-16.82 28.94.24 9.77 4.09 17.92 11.55 24.45 7.46 6.53 16.29 10.15 26.5 10.87-2.31 7.15-5.22 14.61-8.73 22.38zM119.22 33.7c0-7.81 2.82-15.11 8.47-21.9C133.34 5 141.48 0.69 152.09 0c.24 1.34.37 2.58.37 3.73 0 7.7-2.94 15.18-8.82 22.45-5.88 7.27-13.67 11.58-23.36 12.93-.36-1.82-.54-3.66-.54-5.41z"/></svg>
+                Pay
+              </span>
             </button>
           </div>
 
-          <!-- Divider OR & Card Brands -->
+          <!-- Divider OR & Card Logos -->
           <div class="relative flex py-2 items-center">
             <div class="flex-grow border-t border-gray-200"></div>
-            <span class="flex-shrink mx-4 text-xs uppercase font-bold text-gray-400">OR</span>
+            <span class="flex-shrink mx-4 text-xs uppercase font-bold text-gray-400 tracking-wider">OR</span>
             <div class="flex-grow border-t border-gray-200"></div>
           </div>
 
-          <div class="flex justify-center gap-3 pb-1 items-center opacity-80">
-            <img src="https://api.iconify.design/logos:visa.svg" alt="Visa" class="h-5">
-            <img src="https://api.iconify.design/logos:mastercard.svg" alt="Mastercard" class="h-5">
-            <img src="https://api.iconify.design/logos:amex.svg" alt="American Express" class="h-5 rounded-sm">
+          <!-- Card Logos Banner -->
+          <div class="flex justify-center gap-3 pb-1 items-center opacity-85">
+            <img src="https://api.iconify.design/logos:visa.svg" alt="Visa" class="h-4 sm:h-5">
+            <img src="https://api.iconify.design/logos:mastercard.svg" alt="Mastercard" class="h-4 sm:h-5">
+            <img src="https://api.iconify.design/logos:amex.svg" alt="American Express" class="h-4 sm:h-5 rounded-xs">
           </div>
 
-          <!-- Inputs -->
-          <div class="space-y-3.5">
+          <!-- CARD INPUT FIELDS (Total Cleaner Layout) -->
+          <div class="space-y-3 pt-1">
+            
+            <!-- 1. Name On Card -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
-              <input type="email" id="email" required placeholder="you@example.com" class="w-full p-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <label for="cardName" class="block text-xs font-bold text-gray-700 mb-1">Name On Card</label>
+              <input type="text" id="cardName" required placeholder="John Doe" autocomplete="cc-name"
+                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+            </div>
+
+            <!-- 2. Card Number (With Padlock Vector Icon on the right) -->
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Card Number</label>
+              <div class="relative">
+                <!-- Native Stripe Element container or fallback input -->
+                <div id="stripeCardNumber" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="4000 1234 5678 9010" maxlength="19"
+                  class="w-full p-2.5 sm:p-3 pr-10 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+                <!-- Padlock Icon inside input -->
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Expiry Date & CVV (2 Columns) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Expiry Date (MM/YY)</label>
+                <div id="stripeCardExpiry" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-gray-700">CVV</label>
+                  <div class="tooltip-wrapper cursor-help">
+                    <span class="w-3.5 h-3.5 rounded-full border border-gray-400 text-gray-500 flex items-center justify-center text-[10px] font-bold">i</span>
+                    <div class="tooltip-box">
+                      3 digits on the back of your card<br>(4 digits on front for AMEX)
+                    </div>
+                  </div>
+                </div>
+                <div id="stripeCardCvc" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+              </div>
+            </div>
+
+            <!-- 4. Address & Post Code (2 Columns) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="billingAddress" class="block text-xs font-bold text-gray-700 mb-1">Address</label>
+                <input type="text" id="billingAddress" required placeholder="Street address" autocomplete="address-line1"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+              </div>
+              <div>
+                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code</label>
+                <input type="text" id="billingPostcode" required placeholder="Postcode / ZIP" autocomplete="postal-code"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
+              </div>
+            </div>
+
+            <!-- 5. Email Address -->
+            <div>
+              <label for="email" class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
+              <input type="email" id="email" required placeholder="you@example.com" autocomplete="email"
+                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
             </div>
 
           </div>
-  
-          <!-- Submit Green "GO" Button (Strictly 1 line in height) -->
-          <button type="submit" id="submitBtn" class="btn btn-go btn-big pulse-glow w-full justify-center gap-2 mt-4">
-            <span>Complete Order</span>
-            <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          </button>
 
-          <div class="flex items-center justify-center gap-4 text-[11px] text-gray-500 pt-2 font-medium">
-            <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg> 256-Bit Bank-Grade SSL</span>
+          <!-- Validation Error Alert Box -->
+          <div id="checkoutError" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg"></div>
+
+          <!-- COMPLETE ORDER GREEN BUTTON WITH PADLOCK VECTOR ICON -->
+          <div class="pt-3">
+            <button type="submit" id="submitBtn" class="btn-purchase w-full h-13 py-3.5 px-6 rounded-full text-white font-black text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer shadow-lg">
+              <!-- Padlock Vector Icon -->
+              <svg class="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+              </svg>
+              <span id="submitBtnText" class="uppercase">PURCHASE SECURELY</span>
+            </button>
+          </div>
+
+          <!-- Trust Subtext -->
+          <div class="flex items-center justify-center gap-3 text-[11px] text-gray-500 pt-1 font-medium">
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+              256-Bit Bank-Grade SSL
+            </span>
             <span>•</span>
             <span>Instant Download</span>
             <span>•</span>
@@ -268,68 +587,570 @@
     </div>
   </main>
 
-  <!-- Clean Footer -->
-  <footer class="py-6 border-t border-gray-200 text-center text-xs text-gray-500">
-    <div class="flex justify-center gap-4 mb-2">
-      <a href="/terms" class="hover:text-gray-900 transition-colors">Terms & Conditions</a>
-      <a href="/privacy" class="hover:text-gray-900 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-gray-900 transition-colors">Support</a>
+  <!-- CLEAN FOOTER WITH LEGAL LINKS -->
+  <footer class="py-8 bg-white border-t border-gray-200 text-center text-xs text-gray-500 mt-auto">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-3 font-medium">
+        <a href="/refund" class="text-gray-600 hover:text-emerald-700 transition-colors">Refund Policy</a>
+        <a href="/terms" class="text-gray-600 hover:text-emerald-700 transition-colors">Terms of Service</a>
+        <a href="/privacy" class="text-gray-600 hover:text-emerald-700 transition-colors">Privacy Policy</a>
+        <a href="/support" class="text-gray-600 hover:text-emerald-700 transition-colors">Support &amp; Help</a>
+        <a href="/login" class="text-gray-600 hover:text-emerald-700 transition-colors">Manage Subscription</a>
+      </div>
+      <p class="text-gray-400">&copy; 2026 Sweepr Inc. All rights reserved. Sweepr is an independent system optimization software.</p>
     </div>
-    <p>&copy; 2026 Sweepr Inc. All rights reserved. • <a href="/login" class="underline hover:text-gray-900">Manage Subscription</a></p>
   </footer>
 
+  <!-- 30-SECOND INACTIVITY & EXIT-INTENT 80% DISCOUNT POPUP MODAL -->
+  <div id="discountModal" class="hidden-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="modal-card bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl border border-gray-100 overflow-hidden">
+      
+      <!-- Close Button 'X' -->
+      <button type="button" onclick="closeDiscountModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-1.5 rounded-lg transition-colors cursor-pointer z-20" aria-label="Close dialog">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <!-- Left Column: Copy, Checkmarks, Price & CTA -->
+        <div class="md:col-span-7 space-y-4 text-left">
+          
+          <!-- Big Bold Headline -->
+          <h2 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-[1.1]">
+            Save <span class="text-[#ef4444]">£8.00 OFF</span><br>Sweepr Today!
+          </h2>
+
+          <!-- 3 Green Checkmarks (Exact copy from Competitor Screenshot) -->
+          <ul class="space-y-2.5 text-xs sm:text-sm text-gray-700 font-medium">
+            <li class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>Includes Free Mobile &amp; Desktop Cleaner Apps</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>Deep System Clean &amp; Duplicate Finder</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <span>30-Day Money Back Guarantee</span>
+            </li>
+          </ul>
+
+          <!-- Pricing: Regular £9.99 -> Now £1.99 GBP -->
+          <div class="flex items-baseline gap-2 pt-1">
+            <span class="text-sm font-semibold text-gray-500">Regular <span class="line-through text-gray-600">£9.99</span></span>
+            <span class="text-2xl sm:text-3xl font-black text-[#ef4444] ml-1">Now £1.99</span>
+            <span class="text-xs font-bold text-[#ef4444] uppercase tracking-wider">GBP</span>
+          </div>
+
+          <!-- Green Pill CTA Button with Padlock -->
+          <div>
+            <button type="button" onclick="activateDiscountOffer()" class="btn-purchase w-full py-3.5 px-6 rounded-full text-white font-extrabold text-sm sm:text-base tracking-wide flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:shadow-xl transition-all">
+              <svg class="w-4 h-4 text-white fill-current shrink-0" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+              </svg>
+              <span>ACTIVATE 80% DISCOUNT NOW</span>
+            </button>
+          </div>
+
+          <!-- Subtext and Trustpilot -->
+          <div class="space-y-2 pt-0.5">
+            <p class="text-[11px] text-gray-500 leading-snug">
+              Save £8.00 Today. Auto renews monthly at £9.99 until you cancel.
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-700 font-bold text-xs flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-[#00b67a]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                Trustpilot
+              </span>
+              <div class="flex gap-0.5">
+                <span class="bg-[#00b67a] text-white text-[8px] w-3 h-3 flex items-center justify-center font-bold">★</span>
+                <span class="bg-[#00b67a] text-white text-[8px] w-3 h-3 flex items-center justify-center font-bold">★</span>
+                <span class="bg-[#00b67a] text-white text-[8px] w-3 h-3 flex items-center justify-center font-bold">★</span>
+                <span class="bg-[#00b67a] text-white text-[8px] w-3 h-3 flex items-center justify-center font-bold">★</span>
+                <span class="bg-[#00b67a] text-white text-[8px] w-3 h-3 flex items-center justify-center font-bold">★</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Laptop UI Mockup with Sweepr App Displayed -->
+        <div class="hidden md:block md:col-span-5">
+          <div class="laptop-frame">
+            <div class="laptop-screen">
+              <div class="laptop-notch"></div>
+              <!-- Inner App Window -->
+              <div class="bg-gray-900 rounded-lg p-3 text-white text-left font-sans">
+                <!-- App Header -->
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2 mb-2">
+                  <div class="flex items-center gap-1.5">
+                    <img src="/logo-mint-glass.svg" class="w-3.5 h-3.5 rounded" alt="Sweepr">
+                    <span class="text-[9px] font-bold tracking-tight">SWEEPR PRO</span>
+                  </div>
+                  <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">ACTIVATED</span>
+                </div>
+                <!-- Status Circle -->
+                <div class="text-center py-2">
+                  <div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 mb-1 shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div class="text-[10px] font-bold text-white">System 100% Optimized</div>
+                  <div class="text-[8px] text-gray-400">14.2 GB Junk Cleaned</div>
+                </div>
+                <!-- Mini Stats -->
+                <div class="grid grid-cols-2 gap-1.5 pt-1 text-[8px]">
+                  <div class="bg-gray-800/80 p-1.5 rounded">
+                    <div class="text-gray-400">Cache Cleared</div>
+                    <div class="text-emerald-400 font-bold">8.4 GB</div>
+                  </div>
+                  <div class="bg-gray-800/80 p-1.5 rounded">
+                    <div class="text-gray-400">Duplicates</div>
+                    <div class="text-emerald-400 font-bold">5.8 GB</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="laptop-base"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CHECKOUT CLIENT SCRIPT -->
   <script>
+    // State
+    let isDiscountApplied = false;
+    let stripe = null;
+    let elements = null;
+    let cardElements = null;
+    let checkoutConfig = {
+      publishableKey: '',
+      elementsEnabled: false,
+      amountTodayPence: 199,
+      amountRegularPence: 999
+    };
+    let discountModalShown = false;
+    let inactivityTimer = null;
+
+    // 1. Initialize Page and Checkout Config
+    async function initCheckout() {
+      try {
+        const res = await fetch('/api/checkout-config');
+        if (res.ok) {
+          checkoutConfig = await res.json();
+          if (checkoutConfig.elementsEnabled && window.Stripe && checkoutConfig.publishableKey) {
+            setupStripeElements(checkoutConfig.publishableKey);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load Stripe config:', err);
+      }
+
+      setupFallbackInputMasks();
+      startInactivityTimer();
+      setupExitIntent();
+    }
+
+    // 2. Stripe Elements Setup (When publishableKey is configured)
+    function setupStripeElements(publishableKey) {
+      try {
+        stripe = Stripe(publishableKey);
+        elements = stripe.elements();
+
+        const elementStyles = {
+          base: {
+            fontSize: '14px',
+            color: '#1f2937',
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '::placeholder': { color: '#9ca3af' }
+          },
+          invalid: {
+            color: '#ef4444'
+          }
+        };
+
+        const cardNumberEl = elements.create('cardNumber', { style: elementStyles, showIcon: false });
+        const cardExpiryEl = elements.create('cardExpiry', { style: elementStyles });
+        const cardCvcEl = elements.create('cardCvc', { style: elementStyles });
+
+        // Show Stripe containers, hide fallback inputs
+        document.getElementById('stripeCardNumber').classList.remove('hidden');
+        document.getElementById('fallbackCardNumber').classList.add('hidden');
+        document.getElementById('stripeCardExpiry').classList.remove('hidden');
+        document.getElementById('fallbackCardExpiry').classList.add('hidden');
+        document.getElementById('stripeCardCvc').classList.remove('hidden');
+        document.getElementById('fallbackCardCvc').classList.add('hidden');
+
+        cardNumberEl.mount('#stripeCardNumber');
+        cardExpiryEl.mount('#stripeCardExpiry');
+        cardCvcEl.mount('#stripeCardCvc');
+
+        cardElements = { cardNumberEl, cardExpiryEl, cardCvcEl };
+
+        // Setup Apple Pay / Google Pay via Stripe PaymentRequest
+        setupStripePaymentRequest();
+      } catch (err) {
+        console.warn('Stripe Elements initialization error, falling back to on-page fields:', err);
+      }
+    }
+
+    // 3. Apple Pay & Google Pay via Stripe PaymentRequest
+    async function setupStripePaymentRequest() {
+      if (!stripe) return;
+      try {
+        const paymentRequest = stripe.paymentRequest({
+          country: 'GB',
+          currency: 'gbp',
+          total: {
+            label: 'Sweepr Pro Subscription',
+            amount: isDiscountApplied ? 199 : 999
+          },
+          requestPayerName: true,
+          requestPayerEmail: true
+        });
+
+        const canMakePaymentResult = await paymentRequest.canMakePayment();
+        if (canMakePaymentResult) {
+          const prContainer = document.getElementById('stripePaymentRequestContainer');
+          const prBtnMount = document.getElementById('paymentRequestBtn');
+          const prButton = elements.create('paymentRequestButton', {
+            paymentRequest,
+            style: {
+              paymentRequestButton: {
+                theme: 'dark',
+                height: '44px',
+                type: 'buy'
+              }
+            }
+          });
+          prButton.mount(prBtnMount);
+          prContainer.classList.remove('hidden');
+          // Hide redundant generic GPay button if native PR button is mounted
+          document.getElementById('expressGPayBtn').classList.add('hidden');
+
+          paymentRequest.on('paymentmethod', async (ev) => {
+            try {
+              const res = await fetch('/api/create-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: ev.payerEmail,
+                  name: ev.payerName,
+                  applyDiscount: isDiscountApplied
+                })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.clientSecret) {
+                ev.complete('fail');
+                alert(data.error || 'Payment failed.');
+                return;
+              }
+
+              const { error: confirmError } = await stripe.confirmCardPayment(
+                data.clientSecret,
+                { payment_method: ev.paymentMethod.id },
+                { handleActions: false }
+              );
+
+              if (confirmError) {
+                ev.complete('fail');
+                alert(confirmError.message || 'Payment confirmation failed.');
+              } else {
+                ev.complete('success');
+                const verifyRes = await fetch('/api/confirm-subscription', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    subscriptionId: data.subscriptionId,
+                    accountId: data.accountId
+                  })
+                });
+                const verifyData = await verifyRes.json();
+                window.location.href = verifyData.redirect || '/checkout/success?web=1';
+              }
+            } catch (err) {
+              ev.complete('fail');
+              alert('Connection error during wallet checkout.');
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('PaymentRequest initialization error:', err);
+      }
+    }
+
+    // 4. Fallback Card Number & Expiry Input Formatting
+    function setupFallbackInputMasks() {
+      const cardInput = document.getElementById('fallbackCardNumber');
+      const expInput = document.getElementById('fallbackCardExpiry');
+      const cvcInput = document.getElementById('fallbackCardCvc');
+
+      // Card Number formatting (spaces every 4 digits)
+      cardInput.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '').substring(0, 16);
+        let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+        e.target.value = formatted;
+      });
+
+      // Expiry formatting (MM/YY)
+      expInput.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '').substring(0, 4);
+        if (val.length >= 2) {
+          let month = parseInt(val.substring(0, 2), 10);
+          if (month > 12) val = '12' + val.substring(2);
+          else if (month === 0) val = '01' + val.substring(2);
+          val = val.substring(0, 2) + '/' + val.substring(2);
+        }
+        e.target.value = val;
+      });
+
+      // CVC numeric only
+      cvcInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+      });
+    }
+
+    // 5. Inactivity Timer (30 Seconds) & Exit Intent Popup
+    function startInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        showDiscountModal();
+      }, 30000); // 30 seconds
+    }
+
+    function resetInactivityTimer() {
+      if (!discountModalShown && !isDiscountApplied) {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          showDiscountModal();
+        }, 30000);
+      }
+    }
+
+    ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer, { passive: true });
+    });
+
+    function setupExitIntent() {
+      document.addEventListener('mouseleave', (e) => {
+        if (e.clientY <= 0 && !discountModalShown && !isDiscountApplied) {
+          showDiscountModal();
+        }
+      });
+    }
+
+    function showDiscountModal() {
+      if (discountModalShown || isDiscountApplied) return;
+      discountModalShown = true;
+      clearTimeout(inactivityTimer);
+      const modal = document.getElementById('discountModal');
+      modal.classList.remove('hidden-modal');
+      modal.classList.add('visible-modal');
+    }
+
+    function closeDiscountModal() {
+      const modal = document.getElementById('discountModal');
+      modal.classList.remove('visible-modal');
+      modal.classList.add('hidden-modal');
+    }
+
+    // 6. Activate 80% Discount Offer (Transforms the entire page to match Competitor Screenshot)
+    function activateDiscountOffer() {
+      closeDiscountModal();
+      isDiscountApplied = true;
+
+      // Update Header Banner (Matching Competitor Post-Discount State)
+      document.getElementById('bannerTitle').innerHTML = `Great Sweepr Offer - <span class="text-[#ef4444] font-black">Save £8.00 Today</span>`;
+      document.getElementById('bannerSubtitle').innerHTML = `⚡ Subscribe Now for Complete PC Optimization, Blazing Speeds, and Maximum Storage!`;
+
+      // Update Product Box
+      document.getElementById('productTag').classList.remove('hidden');
+      document.getElementById('productSubtitle').textContent = 'Special Introductory Discount';
+      document.getElementById('productPriceTop').textContent = 'Today £1.99';
+      document.getElementById('productPriceSub').textContent = 'GBP';
+
+      // Update Order Summary Breakdown
+      document.getElementById('discountSummaryRow').classList.remove('hidden');
+      document.getElementById('totalTodayText').textContent = '£1.99';
+
+      // Update Terms Checkbox text to £1.99
+      document.getElementById('termsConsentLabel').textContent = 
+        'I agree to pay £1.99 today for the first month which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+
+      // Smooth scroll to checkout box
+      document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // 7. Express Wallet Trigger (GPay / Apple Pay)
+    function triggerExpressWallet() {
+      triggerCheckout('wallet');
+    }
+
+    // 8. Main Form Submission & Checkout Flow
     async function triggerCheckout(method = 'card') {
+      const errBox = document.getElementById('checkoutError');
+      errBox.classList.add('hidden');
+      errBox.textContent = '';
+
+      // Validate Consents
       const termsConsent = document.getElementById('termsConsent');
       const legalConsent = document.getElementById('legalConsent');
       if (!termsConsent.checked || !legalConsent.checked) {
         if (!termsConsent.checked) termsConsent.focus();
         else legalConsent.focus();
-        alert('Please agree to the subscription terms, Terms of Service, and Privacy Policy to continue.');
+        showError('Please agree to the subscription terms, Terms of Service, and Privacy Policy to proceed.');
         return;
       }
 
+      // Validate Email
       const emailInput = document.getElementById('email');
       const email = emailInput.value.trim();
-      if (!email) {
+      if (!email || !email.includes('@')) {
         emailInput.focus();
-        emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        alert('Please enter your email address to complete your order.');
+        showError('Please enter a valid email address.');
         return;
       }
+
+      const cardName = document.getElementById('cardName').value.trim();
+      const billingAddress = document.getElementById('billingAddress').value.trim();
+      const billingPostcode = document.getElementById('billingPostcode').value.trim();
+
       const btn = document.getElementById('submitBtn');
-      const original = btn.innerHTML;
+      const originalBtnHTML = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `<span>Redirecting to Secure Checkout...</span>`;
+      btn.classList.add('opacity-80', 'cursor-not-allowed');
+      btn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="uppercase tracking-wide font-black">Processing Secure Payment...</span>
+      `;
 
       try {
+        // Case A: Stripe Elements on-page confirmation (if Stripe configured & available)
+        if (stripe && cardElements && method === 'card') {
+          if (!cardName) {
+            document.getElementById('cardName').focus();
+            throw new Error('Please enter the name on your card.');
+          }
+
+          // Step 1: Create incomplete subscription on server
+          const subRes = await fetch('/api/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              name: cardName,
+              address: billingAddress,
+              postcode: billingPostcode,
+              applyDiscount: isDiscountApplied,
+              plan: 'monthly'
+            })
+          });
+
+          const subData = await subRes.json();
+          if (!subRes.ok || !subData.clientSecret) {
+            throw new Error(subData.error || 'Unable to initiate card payment.');
+          }
+
+          // Step 2: Confirm card payment directly on the page with Stripe
+          const { error: stripeErr, paymentIntent } = await stripe.confirmCardPayment(subData.clientSecret, {
+            payment_method: {
+              card: cardElements.cardNumberEl,
+              billing_details: {
+                name: cardName,
+                email: email,
+                address: {
+                  line1: billingAddress || undefined,
+                  postal_code: billingPostcode || undefined
+                }
+              }
+            }
+          });
+
+          if (stripeErr) {
+            throw new Error(stripeErr.message || 'Payment was declined by your card issuer.');
+          }
+
+          // Step 3: Confirm subscription on server & set session cookie
+          const confirmRes = await fetch('/api/confirm-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscriptionId: subData.subscriptionId,
+              accountId: subData.accountId
+            })
+          });
+          const confirmData = await confirmRes.json();
+          window.location.href = confirmData.redirect || '/checkout/success?web=1';
+          return;
+        }
+
+        // Case B: Express / Fallback Checkout via /api/web-checkout
+        // If Stripe Elements isn't mounted or user chose PayPal/Wallet
+        if (method === 'card') {
+          const rawNum = document.getElementById('fallbackCardNumber').value.replace(/\s/g, '');
+          const rawExp = document.getElementById('fallbackCardExpiry').value.trim();
+          const rawCvc = document.getElementById('fallbackCardCvc').value.trim();
+
+          if (rawNum.length < 13) {
+            document.getElementById('fallbackCardNumber').focus();
+            throw new Error('Please enter a valid 16-digit card number.');
+          }
+          if (rawExp.length < 5) {
+            document.getElementById('fallbackCardExpiry').focus();
+            throw new Error('Please enter your card expiry date (MM/YY).');
+          }
+          if (rawCvc.length < 3) {
+            document.getElementById('fallbackCardCvc').focus();
+            throw new Error('Please enter the 3 or 4 digit security code (CVV).');
+          }
+        }
+
         const res = await fetch('/api/web-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({
+            email,
+            applyDiscount: isDiscountApplied,
+            plan: 'monthly'
+          })
         });
+
         const data = await res.json();
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('Checkout initialization: ' + (data.error || 'Server error'));
-          btn.disabled = false;
-          btn.innerHTML = original;
+          throw new Error(data.error || 'Server error while redirecting to secure checkout.');
         }
+
       } catch (err) {
-        alert('Could not connect to payment gateway.');
+        showError(err.message || 'An unexpected error occurred. Please verify your details.');
         btn.disabled = false;
-        btn.innerHTML = original;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        btn.innerHTML = originalBtnHTML;
       }
     }
 
+    function showError(msg) {
+      const errBox = document.getElementById('checkoutError');
+      errBox.textContent = msg;
+      errBox.classList.remove('hidden');
+      errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Attach form submit listener
     document.getElementById('orderForm').addEventListener('submit', (e) => {
       e.preventDefault();
       triggerCheckout('card');
     });
+
+    // Run on load
+    window.addEventListener('DOMContentLoaded', initCheckout);
   </script>
 </body>
 </html>
-
-
-

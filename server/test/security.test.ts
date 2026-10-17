@@ -265,4 +265,81 @@ test("Store-compliant account deletion (DELETE /v1/account) wipes account and cr
   assert.equal(repo.accountByEmail("delete-me@example.com"), undefined);
 });
 
+test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and breach check", async () => {
+  const { post, repo, app } = setup({ latestAppVersion: "0.2.0" });
+
+  // 1. Auto-updater returns 204 when up-to-date and 200 manifest when outdated
+  const upToDate = await app.request("/v1/updates/windows/x86_64/0.2.0");
+  assert.equal(upToDate.status, 204);
+  const outdated = await app.request("/v1/updates/windows/x86_64/0.1.0");
+  assert.equal(outdated.status, 200);
+  const manifest = await outdated.json();
+  assert.equal(manifest.version, "0.2.0");
+  assert.ok(manifest.url.includes("/download?platform=windows"));
+
+  // 2. Telemetry crash & funnel event recording
+  const crashRes = await post("/v1/telemetry/crash", {
+    platform: "windows",
+    app_version: "0.1.0",
+    error_type: "Panic",
+    message: "test crash",
+  });
+  assert.equal(crashRes.status, 200);
+
+  const eventRes = await post("/v1/telemetry/event", {
+    event_name: "scan_started",
+    platform: "windows",
+  });
+  assert.equal(eventRes.status, 200);
+
+  const badEventRes = await post("/v1/telemetry/event", {
+    event_name: "unknown_event",
+    platform: "windows",
+  });
+  assert.equal(badEventRes.status, 400);
+
+  // 3. Support ticket creation
+  const supRes = await post("/v1/support", {
+    email: "help@example.com",
+    subject: "Question",
+    message: "Need help with licence",
+    platform: "windows",
+  });
+  assert.equal(supRes.status, 200);
+  const supBody = await supRes.json();
+  assert.equal(supBody.ok, true);
+  assert.equal(repo.listSupportTickets().length, 1);
+
+  // 4. Referrals & Winback
+  repo.createAccount("acc_ref", sha256("tok_ref"), "ref@example.com");
+  const code = repo.ensureReferralCode("acc_ref");
+  assert.ok(code.startsWith("SWP-"));
+  const redir = await app.request(`/r/${code}`);
+  assert.equal(redir.status, 302);
+  assert.ok(redir.headers.get("location")?.includes(`ref=${code}`));
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  repo.upsertEntitlement({
+    account_id: "acc_ref",
+    stripe_subscription_id: "sub_ref",
+    status: "active",
+    plan: "monthly",
+    current_period_end: nowSec + 10 * 86400,
+    cancel_at_period_end: 1,
+  });
+  const wb1 = repo.claimWinback("acc_ref", 30, nowSec);
+  assert.equal(wb1.ok, true);
+  assert.equal(wb1.current_period_end, nowSec + 40 * 86400);
+  const wb2 = repo.claimWinback("acc_ref", 30, nowSec);
+  assert.equal(wb2.ok, false);
+  assert.equal(wb2.error, "already_claimed");
+
+  // 5. Breach check validation
+  const badPrefix = await post("/v1/breach-check/password", { prefix: "xyz" });
+  assert.equal(badPrefix.status, 400);
+  const emailBreach = await post("/v1/breach-check/email", { email: "test@example.com" });
+  assert.equal(emailBreach.status, 200);
+});
+
+
 

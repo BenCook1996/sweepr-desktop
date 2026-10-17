@@ -345,4 +345,103 @@
     <string name="tip_storage_step1">Tap \"Open storage manager\" below.</string>
     <string name="tip_storage_step2">Use \"Free up space\" to remove photos already backed up to the cloud, large files and unused apps.</string>
     <string name="tip_storage_action">Open storage manager</string>
+
+    <!-- New Categories, Tabs & Best Shot -->
+    <string name="category_large_files">Large Files (&gt;50 MB)</string>
+    <string name="category_messenger_media">Messenger Media</string>
+    <string name="category_trash">Recently Deleted (Trash)</string>
+    <string name="tab_blurry">Blurry (%1$d)</string>
+    <string name="tab_large_files">Large &gt;50MB (%1$d)</string>
+    <string name="tab_messenger">Messenger (%1$d)</string>
+    <string name="kind_identical_copies">identical copies</string>
+    <string name="kind_similar_shots">similar shots</string>
+    <string name="badge_best_shot">BEST SHOT</string>
+    <string name="header_blurry_count">%1$d blurry / out-of-focus photos · %2$s</string>
+    <string name="empty_no_blurry">No blurry photos detected 🎉</string>
+    <string name="header_large_files">%1$d large media files (&gt;50 MB) · %2$s</string>
+    <string name="empty_no_large_files">No media files over 50 MB found 🎉</string>
+    <string name="header_messenger_media">%1$d WhatsApp &amp; Telegram items · %2$s</string>
+    <string name="empty_no_messenger">No WhatsApp or Telegram media found 🎉</string>
+
+    <!-- Video Compressor (#17) -->
+    <string name="compressor_badge">Compress</string>
+    <string name="compressor_title">Video Compressor</string>
+    <string name="compressor_subtitle">Estimated space saved: ~%1$s</string>
+    <string name="compressor_preset_720p">720p Compact (Save ~60%%)</string>
+    <string name="compressor_preset_1080p">1080p Balanced (Save ~40%%)</string>
+    <string name="compressor_preset_480p">480p Max Saver (Save ~72%%)</string>
+    <string name="compressor_action_start">Compress Video</string>
+    <string name="compressor_working_title">Compressing video…</string>
+    <string name="compressor_done_title">Video Compressed!</string>
+    <string name="compressor_done_summary">Original: %1$s → Compressed: %2$s\nSpace saved: %3$s (%4$d%%)</string>
+    <string name="compressor_saved_location">Saved to Movies/Sweepr/%1$s. The original is kept until you move it to System Trash.</string>
+    <string name="compressor_trash_original">Move Original to Trash</string>
+    <string name="compressor_keep_both">Keep Both</string>
+    <string name="compressor_failed">Could not compress video: %1$s</string>
+
+    <!-- System Trash Undo (#20) -->
+    <string name="trash_explainer">Items moved to Android System Trash stay recoverable for 30 days.</string>
+    <string name="trash_header_count">%1$d items in System Trash · %2$s</string>
+    <string name="trash_restore_action">Restore from Trash</string>
+    <string name="empty_trash">System Trash is empty</string>
+    <string name="msg_restore_trash_failed">Couldn\'t restore items: %1$s</string>
+    <plurals name="msg_restored_from_trash">
+        <item quantity="one">Restored %d item from System Trash</item>
+        <item quantity="other">Restored %d items from System Trash</item>
+    </plurals>
+
+    <!-- Home-Screen Storage Widget (#21) -->
+    <string name="widget_title">Sweepr Storage</string>
+    <string name="widget_description">Live phone storage used/free %% and one-tap Clean Now shortcut</string>
+    <string name="widget_storage_default">Storage Ready</string>
+    <string name="widget_storage_percent">%1$d%% used · %2$d%% free</string>
+    <string name="widget_storage_detail">%1$s used · %2$s free</string>
+    <string name="widget_tap_to_clean">Tap to scan &amp; clean junk</string>
+    <string name="widget_clean_now">Clean Now</string>
+
+    <!-- Annual Plan, Retention & Cross-Platform OTP (#23, #26, #27, #25) -->
+    <string name="plan_annual_title">Annual Plan</string>
+    <string name="plan_annual_price">£49.99/yr</string>
+    <string name="plan_annual_subtitle">£4.17/mo equivalent · Billed annually · No free trial</string>
+    <string name="plan_annual_badge">SAVE 58%%</string>
+    <string name="plan_monthly_title">Monthly Plan</string>
+    <string name="plan_monthly_price">£9.99/mo</string>
+    <string name="plan_monthly_subtitle">Flexible monthly billing · Cancel anytime · No free trial</string>
+    <string name="plan_cta_annual">Continue with Annual (£49.99/yr)</string>
+    <string name="plan_cta_monthly">Continue with Monthly (£9.99/mo)</string>
+    <string name="retention_dialog_title">Manage or Cancel Subscription</string>
+    <string name="retention_dialog_message">Before you go — you can save 58%% by switching to the Annual Plan, or manage/cancel your renewal anytime in Google Play.</string>
+    <string name="retention_offer_annual">Switch to Annual (£49.99/yr — Save 58%% vs Monthly)</string>
+    <string name="retention_switch_annual">View Annual Offer</string>
+    <string name="retention_continue_google_play">Open Google Play</string>
+    <string name="account_sign_in_title">Sign in with Sweepr Account</string>
+    <string name="account_sign_in_subtitle">Sync an existing Sweepr subscription via email code</string>
+    <string name="account_sign_in_desc">Enter your Sweepr account email to sync your existing subscription across devices.</string>
+    <string name="account_otp_enter_code_title">Enter verification code</string>
+    <string name="account_otp_code_sent_desc">Enter the 6-digit code sent to %1$s.</string>
+    <string name="account_email_label">Email address</string>
+    <string name="account_otp_code_label">6-digit code</string>
+    <string name="account_otp_send_btn">Send Code</string>
+    <string name="account_otp_verify_btn">Verify</string>
+    <string name="account_otp_invalid_email">Please enter a valid email address.</string>
+    <string name="account_otp_sent_to">Verification code sent to %1$s</string>
+    <string name="account_otp_send_failed">Could not send verification code.</string>
+    <string name="account_otp_enter_6_digits">Please enter the 6-digit verification code.</string>
+    <string name="account_otp_invalid_code">Invalid or expired verification code.</string>
+    <string name="account_signed_in_as">Signed in as %1$s</string>
+    <string name="account_cross_platform_active">Cross-platform plan active</string>
+    <string name="account_linked_status">Linked to Sweepr account</string>
+    <string name="account_sign_out">Sign Out</string>
+    <string name="account_sign_out_detail">Unlink this device from %1$s</string>
+    <string name="account_signed_out_msg">Signed out of your Sweepr account.</string>
+    <string name="account_delete_title">Delete Account &amp; Data</string>
+    <string name="account_delete_subtitle">Permanently delete your Sweepr account</string>
+    <string name="account_delete_confirm_title">Delete Sweepr Account?</string>
+    <string name="account_delete_confirm_body">This permanently deletes your Sweepr account (%1$s), linked devices, and account data. If you have a Google Play subscription, manage or cancel its renewal in Google Play.</string>
+    <string name="account_delete_permanently">Delete Permanently</string>
+    <string name="account_deleted_msg">Your Sweepr account and associated data have been permanently deleted.</string>
+    <string name="account_delete_failed_msg">Could not delete account. Please try again.</string>
+    <string name="review_prompt_title">Enjoying Sweepr?</string>
+    <string name="review_prompt_body">You\'ve just completed your 2nd cleanup! A quick rating on Google Play helps us a lot.</string>
+    <string name="review_prompt_later">Not now</string>
 </resources>

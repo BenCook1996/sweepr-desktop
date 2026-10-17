@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { api, errorMessage, type CategoryResult, type CleanReport, type LicenseStatus, type ScanProgress, type ScanReport } from "../lib/api";
+  import { api, errorMessage, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type ScanReport, type SystemOverview } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import Paywall from "./Paywall.svelte";
-  import { addLifetimeStats } from "../lib/store";
+  import { addLifetimeStats, getLifetimeStats } from "../lib/store";
 
   let { license, onLicenseChange }: { license: LicenseStatus | null; onLicenseChange: (force?: boolean) => Promise<void> } = $props();
 
@@ -16,6 +16,16 @@
   let showPaywall = $state(false);
   let error = $state<string | null>(null);
   let results = $state<CleanReport[]>([]);
+  let exclusions = $state<string[]>([]);
+  let showExclusions = $state(false);
+  let newExclusionPath = $state("");
+  let quarantine = $state<QuarantineEntry[]>([]);
+  let showQuarantine = $state(false);
+  let restoreNotice = $state<string | null>(null);
+  let runningConflicts = $state<RunningAppConflict[]>([]);
+  let sysOverview = $state<SystemOverview | null>(null);
+  let startupCount = $state<number | null>(null);
+  let lifetimeStats = $state(getLifetimeStats());
 
   const nonEmpty = $derived(report?.categories.filter((c) => c.bytes > 0) ?? []);
   const empty = $derived(report?.categories.filter((c) => c.bytes === 0) ?? []);
@@ -26,6 +36,94 @@
   const freed = $derived(results.reduce((s, r) => s + r.bytes_freed, 0));
   const skipped = $derived(results.reduce((s, r) => s + r.files_skipped, 0));
   const removed = $derived(results.reduce((s, r) => s + r.files_removed, 0));
+
+  const diskUsedBytes = $derived(
+    sysOverview ? Math.max(0, sysOverview.disk_total_bytes - sysOverview.disk_available_bytes) : 0
+  );
+  const diskUsedPct = $derived(
+    sysOverview && sysOverview.disk_total_bytes > 0
+      ? Math.round((diskUsedBytes / sysOverview.disk_total_bytes) * 100)
+      : 0
+  );
+  const diskFreePct = $derived(sysOverview ? Math.max(0, 100 - diskUsedPct) : 0);
+  const memUsedPct = $derived(
+    sysOverview && sysOverview.memory_total_bytes > 0
+      ? Math.round((sysOverview.memory_used_bytes / sysOverview.memory_total_bytes) * 100)
+      : 0
+  );
+
+  $effect(() => {
+    api.listExclusions().then((list) => (exclusions = list)).catch(() => {});
+    api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+    api.systemOverview().then((o) => (sysOverview = o)).catch(() => {});
+    api.startupItems().then((items) => (startupCount = items.length)).catch(() => {});
+  });
+
+  async function toggleQuarantineDrawer() {
+    showQuarantine = !showQuarantine;
+    if (showQuarantine) {
+      quarantine = await api.listQuarantine().catch(() => []);
+    }
+  }
+
+  async function restoreQuarantined(item: QuarantineEntry) {
+    error = null;
+    restoreNotice = null;
+    try {
+      const restoredPath = await api.restoreQuarantineItem(item.id);
+      quarantine = quarantine.filter((q) => q.id !== item.id);
+      restoreNotice = `Restored ${item.file_name} to ${restoredPath}`;
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
+
+  $effect(() => {
+    if (phase === "results") {
+      const ids = selectedCats.map((c) => c.id);
+      if (ids.length > 0) {
+        api.checkRunningApps(ids).then((c) => (runningConflicts = c)).catch(() => (runningConflicts = []));
+      } else {
+        runningConflicts = [];
+      }
+    }
+  });
+
+  async function refreshConflicts() {
+    const ids = selectedCats.map((c) => c.id);
+    runningConflicts = ids.length ? await api.checkRunningApps(ids).catch(() => []) : [];
+  }
+
+  async function excludePath(path: string) {
+    try {
+      exclusions = await api.addExclusion(path);
+      if (phase === "results") {
+        await scan();
+      }
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
+
+  async function addCustomExclusion() {
+    if (!newExclusionPath.trim()) return;
+    try {
+      exclusions = await api.addExclusion(newExclusionPath.trim());
+      newExclusionPath = "";
+      if (phase === "results") await scan();
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
+
+  async function removeExcludedPath(path: string) {
+    try {
+      exclusions = await api.removeExclusion(path);
+      if (phase === "results") await scan();
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
 
   async function scan() {
     error = null;
@@ -64,6 +162,8 @@
       const totalFreed = results.reduce((s, r) => s + r.bytes_freed, 0);
       const totalRemoved = results.reduce((s, r) => s + r.files_removed, 0);
       addLifetimeStats(totalFreed, totalRemoved);
+      lifetimeStats = getLifetimeStats();
+      api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
 
       phase = "done";
     } catch (e: any) {
@@ -86,6 +186,37 @@
   </div>
 {/if}
 
+{#if showQuarantine}
+  <div class="card" style="padding: 18px 22px; margin-bottom: 18px;">
+    <div class="row" style="margin-bottom: 10px;">
+      <strong>Quarantine / Undo Vault ({quarantine.length})</strong>
+      <div class="spacer"></div>
+      <span class="muted small">Items retained for 7 days for one-click recovery</span>
+      <button class="ghost" style="padding: 4px 10px; font-size: 12px;" onclick={() => (showQuarantine = false)}>Close</button>
+    </div>
+    {#if restoreNotice}
+      <div class="small" style="color: var(--accent); margin-bottom: 8px;">{restoreNotice}</div>
+    {/if}
+    {#if quarantine.length === 0}
+      <div class="muted small">Quarantine vault is empty.</div>
+    {:else}
+      <div style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
+        {#each quarantine as q}
+          <div class="row" style="background: var(--panel-2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <span class="badge free">{q.category_id}</span>
+            <div style="flex: 1; min-width: 0;">
+              <strong class="small">{q.file_name}</strong>
+              <div class="mono muted small" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={q.original_path}>{shortenPath(q.original_path, 70)}</div>
+            </div>
+            <span class="mono small">{formatBytes(q.size)}</span>
+            <button class="primary" style="padding: 4px 12px; font-size: 11.5px;" onclick={() => restoreQuarantined(q)}>Restore</button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+  </div>
+{/if}
+
 {#if phase === "idle"}
   <!-- Concept 5: Pixel-Perfect Technical Topography Bento Dashboard -->
   <div class="dashboard-container">
@@ -98,13 +229,16 @@
           <span class="muted small">Diagnostics & storage analysis ready</span>
         </div>
       </div>
+      <button class="ghost" onclick={toggleQuarantineDrawer}>
+        Quarantine / Undo ({quarantine.length})
+      </button>
     </div>
 
     <!-- Main Dashboard Grid: 6 Cards in 3 perfectly aligned columns -->
     <div class="dashboard-grid">
       <!-- 1. Left Card: Cleanup Recommendations -->
       <div class="card bento-card recs-card">
-        <div class="card-header-label">CLEANUP RECOMMENDATIONS</div>
+        <div class="card-header-label">CLEANUP AREAS</div>
         
         <div class="rec-items">
           <div class="rec-item">
@@ -116,8 +250,7 @@
               <div class="muted small">Temp logs, crash dumps</div>
             </div>
             <div class="rec-stat">
-              <span class="rec-size">4.2 GB</span>
-              <span class="badge free">Ready</span>
+              <span class="badge free">Free</span>
             </div>
           </div>
 
@@ -130,8 +263,7 @@
               <div class="muted small">24h+ app temporary files</div>
             </div>
             <div class="rec-stat">
-              <span class="rec-size">1.8 GB</span>
-              <span class="badge free">Ready</span>
+              <span class="badge free">Free</span>
             </div>
           </div>
 
@@ -140,29 +272,28 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </div>
             <div class="rec-details">
-              <div class="rec-name">Web Browser Caches</div>
-              <div class="muted small">Chrome, Edge, Firefox</div>
+              <div class="rec-name">Web Browser & App Caches</div>
+              <div class="muted small">Chrome, Edge, Firefox, dev caches</div>
             </div>
             <div class="rec-stat">
-              <span class="rec-size">1.1 GB</span>
               <span class="badge pro">Pro</span>
             </div>
           </div>
         </div>
 
         <button class="primary clean-cta-btn" onclick={scan}>
-          CLEAN 7.1 GB
+          SCAN FOR JUNK
         </button>
       </div>
 
       <!-- 2. Centerpiece Card: System Status Overview (Hero) -->
       <div class="card bento-card hero-status-card">
-        <div class="card-header-label">SYSTEM STATUS <span class="highlight">Overview</span></div>
+        <div class="card-header-label">SYSTEM DRIVE <span class="highlight">{sysOverview?.disk_mount || "Overview"}</span></div>
         
         <div class="gauge-container">
           <svg viewBox="0 0 200 120" class="gauge-svg">
             <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round" />
-            <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="url(#topography-gradient)" stroke-width="14" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="35" />
+            <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="url(#topography-gradient)" stroke-width="14" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset={sysOverview ? Math.round(238.76 * (1 - diskFreePct / 100)) : 60} />
             <defs>
               <linearGradient id="topography-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#10b981" />
@@ -171,9 +302,9 @@
             </defs>
           </svg>
           <div class="gauge-center">
-            <span class="gauge-number">92%</span>
-            <span class="gauge-subtitle">System Health</span>
-            <span class="gauge-badge">Optimized</span>
+            <span class="gauge-number">{sysOverview ? `${diskFreePct}%` : "—"}</span>
+            <span class="gauge-subtitle">Free Disk Space</span>
+            <span class="gauge-badge">{sysOverview ? `${formatBytes(sysOverview.disk_available_bytes)} available` : "Ready to scan"}</span>
           </div>
         </div>
 
@@ -191,24 +322,23 @@
         <div class="subcard-section">
           <div class="row section-title-row">
             <div class="card-header-label">STORAGE</div>
-            <div class="small-muted-label">Drive C: · Total 1 TB</div>
+            <div class="small-muted-label">
+              {sysOverview ? `${sysOverview.disk_mount} · Total ${formatBytes(sysOverview.disk_total_bytes)}` : "Loading drive…"}
+            </div>
           </div>
           
           <div class="storage-headline">
-            <span class="storage-used-label">Used: <strong>450 GB</strong></span>
-            <span class="storage-free-label muted small">550 GB Free</span>
+            <span class="storage-used-label">Used: <strong>{sysOverview ? formatBytes(diskUsedBytes) : "—"}</strong></span>
+            <span class="storage-free-label muted small">{sysOverview ? `${formatBytes(sysOverview.disk_available_bytes)} Free` : ""}</span>
           </div>
 
           <div class="segmented-bar">
-            <div class="bar-segment apps" style="width: 45%;"></div>
-            <div class="bar-segment files" style="width: 25%;"></div>
-            <div class="bar-segment system" style="width: 15%;"></div>
+            <div class="bar-segment apps" style="width: {diskUsedPct}%;"></div>
           </div>
 
           <div class="legend-row">
-            <span class="legend-chip"><span class="chip-dot emerald"></span> Apps 450 GB</span>
-            <span class="legend-chip"><span class="chip-dot amber"></span> Files 1.3 GB</span>
-            <span class="legend-chip"><span class="chip-dot slate"></span> System</span>
+            <span class="legend-chip"><span class="chip-dot emerald"></span> Used ({diskUsedPct}%)</span>
+            <span class="legend-chip"><span class="chip-dot slate"></span> Free ({diskFreePct}%)</span>
           </div>
         </div>
 
@@ -223,29 +353,29 @@
           <div class="perf-metric-row">
             <div class="perf-col">
               <span class="muted small">Memory:</span>
-              <strong class="perf-val">65% Used</strong>
+              <strong class="perf-val">{sysOverview ? `${memUsedPct}% Used` : "—"}</strong>
             </div>
             <div class="perf-col">
               <span class="muted small">CPU:</span>
-              <strong class="perf-val">24%</strong>
+              <strong class="perf-val">{sysOverview ? `${Math.round(sysOverview.cpu_usage_percent)}%` : "—"}</strong>
             </div>
             <button class="ghost action-pill-btn" onclick={scan}>
-              OPTIMIZE
+              SCAN
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Row 2: 3 Compact Status Tiles (Col 1: Duplicates, Col 2: Startup Apps, Col 3: Battery) -->
+      <!-- Row 2: 3 Compact Status Tiles -->
       <div class="card status-tile">
         <div class="tile-icon-box blue">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7v14H3V7h5zm13 0v14h-5V7h5zM15 3v18H9V3h6z"/></svg>
         </div>
         <div class="tile-content">
-          <div class="tile-label">DUPLICATE FILES</div>
-          <div class="tile-value">789 MB <span class="tile-sub">to recover</span></div>
+          <div class="tile-label">JUNK & CACHE SCAN</div>
+          <div class="tile-value">Run a scan <span class="tile-sub">to check space</span></div>
         </div>
-        <button class="ghost tile-action-btn" onclick={scan}>REVIEW</button>
+        <button class="ghost tile-action-btn" onclick={scan}>SCAN</button>
       </div>
 
       <div class="card status-tile">
@@ -254,20 +384,20 @@
         </div>
         <div class="tile-content">
           <div class="tile-label">STARTUP APPS</div>
-          <div class="tile-value">4 <span class="tile-sub">Apps Impacting Boot</span></div>
+          <div class="tile-value">{startupCount !== null ? startupCount : "—"} <span class="tile-sub">Registered at login</span></div>
         </div>
-        <button class="ghost tile-action-btn" onclick={scan}>MANAGE</button>
+        <span class="badge free">DETECTED</span>
       </div>
 
       <div class="card status-tile">
         <div class="tile-icon-box green">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="11" x2="23" y2="13"/></svg>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div class="tile-content">
-          <div class="tile-label">BATTERY HEALTH</div>
-          <div class="tile-value">95% <span class="tile-sub">High Capacity</span></div>
+          <div class="tile-label">LIFETIME CLEANED</div>
+          <div class="tile-value">{formatBytes(lifetimeStats.bytesFreed)} <span class="tile-sub">({formatCount(lifetimeStats.filesRemoved)} files)</span></div>
         </div>
-        <span class="badge free">HEALTHY</span>
+        <span class="badge free">TOTAL</span>
       </div>
     </div>
   </div>
@@ -294,12 +424,61 @@
         <div class="muted small" style="margin-top: 2px;">{formatCount(report.total_files)} files across {nonEmpty.length} areas · scanned in {(report.duration_ms / 1000).toFixed(1)}s</div>
       </div>
       <div class="spacer"></div>
+      <button class="ghost rescan-btn" onclick={toggleQuarantineDrawer}>
+        <span>Quarantine / Undo ({quarantine.length})</span>
+      </button>
+      <button class="ghost rescan-btn" onclick={() => (showExclusions = !showExclusions)}>
+        <span>Exclusions ({exclusions.length})</span>
+      </button>
       <button class="ghost rescan-btn" onclick={scan}>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         <span>Rescan Drive</span>
       </button>
     </div>
   </header>
+
+  {#if showExclusions}
+    <div class="card" style="padding: 18px 22px; margin-bottom: 18px;">
+      <div class="row" style="margin-bottom: 10px;">
+        <strong>Excluded Paths & Folders (Allowlist)</strong>
+        <div class="spacer"></div>
+        <span class="muted small">Sweepr will never scan or delete anything inside these paths</span>
+      </div>
+      <div class="row" style="gap: 10px; margin-bottom: 12px;">
+        <input
+          type="text"
+          bind:value={newExclusionPath}
+          placeholder="Add full folder or file path to exclude (e.g. C:\Users\me\Downloads\Keep)"
+          style="flex: 1; padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--border); font-size: 13px;"
+        />
+        <button class="primary" style="padding: 8px 16px; font-size: 12.5px;" onclick={addCustomExclusion}>Add Exclusion</button>
+      </div>
+      {#if exclusions.length === 0}
+        <div class="muted small">No excluded paths configured yet. You can also click "Ignore" next to any file below.</div>
+      {:else}
+        <div style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;">
+          {#each exclusions as ex}
+            <div class="row" style="background: #f8fafc; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
+              <span class="mono small grow" title={ex}>{ex}</span>
+              <button class="ghost" style="padding: 3px 10px; font-size: 11.5px;" onclick={() => removeExcludedPath(ex)}>Remove</button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+
+  {#if runningConflicts.length > 0}
+    <div class="card" style="padding: 14px 18px; margin-bottom: 18px; border-left: 4px solid #f59e0b; background: #fffbeb; display: flex; align-items: center; gap: 12px;">
+      <div style="flex: 1;">
+        <strong style="color: #92400e; font-size: 13.5px;">Apps currently running: {runningConflicts.map((c) => c.app_name).join(", ")}</strong>
+        <div style="color: #b45309; font-size: 12.5px; margin-top: 2px;">
+          Close these apps before cleaning so Windows releases locks on their cache files and Sweepr can reclaim 100% of their space.
+        </div>
+      </div>
+      <button class="ghost" style="font-size: 12px; padding: 6px 12px;" onclick={refreshConflicts}>Recheck</button>
+    </div>
+  {/if}
 
   <!-- Results Bento Grid -->
   <div class="results-grid">
@@ -333,7 +512,11 @@
             <div class="muted small">Locations: {c.roots.join(" · ")}</div>
             <div class="muted small" style="margin:8px 0 4px 0">Largest files:</div>
             {#each c.top_files as f}
-              <div class="row file-line"><span class="mono grow" title={f.path}>{shortenPath(f.path, 80)}</span><span class="mono">{formatBytes(f.size)}</span></div>
+              <div class="row file-line" style="gap: 8px;">
+                <span class="mono grow" title={f.path}>{shortenPath(f.path, 70)}</span>
+                <span class="mono">{formatBytes(f.size)}</span>
+                <button class="ghost" style="padding: 2px 8px; font-size: 11px;" title="Add file to exclusion allowlist" onclick={() => excludePath(f.path)}>Ignore</button>
+              </div>
             {/each}
           </div>
         {/if}

@@ -53,10 +53,17 @@ object LogFiles {
             val m = state.media
             appendLine("  items=${m.everything.size} videos=${m.videos.size} screenshots=${m.screenshots.size}")
             appendLine("  duplicateGroups=${m.duplicateGroups.size} similarGroups=${m.similarGroups.size}")
+            appendLine("  largeFiles=${m.largeFiles.size} messengerMedia=${m.messengerMedia.size} trashed=${m.trashed.size}")
             appendLine("  reclaimable=${formatBytes(m.reclaimableBytes)} selected=${state.selectedMedia.size} (${formatBytes(state.selectedBytes)})")
             appendLine("  contactGroups=${state.contactGroups.size}")
             appendLine()
-            appendLine("App log (this process only)")
+            val lastCrash = File(dir, "last_crash.txt")
+            if (lastCrash.exists()) {
+                appendLine("Last recorded crash")
+                appendLine("--------------------------------")
+                appendLine(runCatching { lastCrash.readText() }.getOrDefault(""))
+            }
+            appendLine("App log (this process only, warnings and errors)")
             appendLine("--------------------------------")
             append(readOwnLogcat())
         }
@@ -64,13 +71,37 @@ object LogFiles {
         return File(dir, "sweepr-log-$stamp.txt").apply { writeText(report) }
     }
 
-    /** Apps may always read their own log lines; no permission needed. */
+    /**
+     * Apps may always read their own log lines; no permission needed.
+     * Only warnings and above ("*:W") are included, and anything that looks like a
+     * purchase token / receipt / auth secret is redacted before it leaves the device.
+     */
     private fun readOwnLogcat(): String = runCatching {
-        val process = ProcessBuilder("logcat", "-d", "-t", "800", "--pid=${Process.myPid()}")
+        val process = ProcessBuilder("logcat", "-d", "-t", "800", "--pid=${Process.myPid()}", "*:W")
             .redirectErrorStream(true)
             .start()
-        process.inputStream.bufferedReader().use { it.readText() }
+        process.inputStream.bufferedReader().useLines { lines ->
+            lines.joinToString(separator = "\n", postfix = "\n") { redact(it) }
+        }
     }.getOrElse { "Couldn't read log: ${it.message}" }
+
+    /** Billing secrets that must never end up in a support email. */
+    private val SENSITIVE_LINE = Regex(
+        "purchase_?token|receipt|signature|originalJson|order_?id|GPA\\.\\d|Bearer\\s|Authorization",
+        RegexOption.IGNORE_CASE,
+    )
+    private val TOKEN_VALUE = Regex(
+        "((?:[A-Za-z_]*token|receipt|signature)\\s*[=:]\\s*\"?)[^\\s\",;}]+",
+        RegexOption.IGNORE_CASE,
+    )
+
+    private fun redact(line: String): String {
+        val masked = TOKEN_VALUE.replace(line) { "${it.groupValues[1]}[REDACTED]" }
+        return if (SENSITIVE_LINE.containsMatchIn(masked)) "[line redacted: billing data]" else masked
+    }
+
+    fun redactText(text: String): String =
+        text.lineSequence().joinToString("\n") { redact(it) }
 
     fun share(context: Context, file: File) {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -78,14 +109,17 @@ object LogFiles {
             .setType("text/plain")
             .putExtra(Intent.EXTRA_STREAM, uri)
             .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.log_share_subject))
-            .putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        if (SUPPORT_EMAIL.isNotBlank()) send.putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
         context.startActivity(
             Intent.createChooser(send, context.getString(R.string.log_share_chooser)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
 }
 
-// TODO: Fill these in before launch
-const val SUPPORT_EMAIL = ""
-const val WEBSITE_URL = ""
+const val DEFAULT_WEBSITE_URL = "https://sweeprcleaner.com"
+const val DEFAULT_SUPPORT_EMAIL = "support@sweeprcleaner.com"
+
+val SUPPORT_EMAIL: String = BuildConfig.SWEEPR_SUPPORT_EMAIL.ifBlank { DEFAULT_SUPPORT_EMAIL }
+val WEBSITE_URL: String = BuildConfig.SWEEPR_WEBSITE_URL.ifBlank { DEFAULT_WEBSITE_URL }
+val API_URL: String = BuildConfig.SWEEPR_API_URL.ifBlank { WEBSITE_URL }

@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 export type EntStatus =
   | "trialing" | "active" | "past_due" | "canceled" | "unpaid"
@@ -17,8 +17,41 @@ export interface Account {
   health_score: number;
   lifecycle_stage: string;
   total_spend_cents: number;
+  referral_code: string | null;
+  referred_by: string | null;
+  winback_claimed?: number;
   created_at: number;
   updated_at: number | null;
+}
+
+export interface CrashReportRecord {
+  id: number;
+  platform: string;
+  app_version: string;
+  error_type: string;
+  message: string;
+  stack: string;
+  created_at: number;
+}
+
+export interface AnalyticsEventRecord {
+  id: number;
+  event_name: string;
+  platform: string;
+  account_id: string | null;
+  metadata: string | null;
+  created_at: number;
+}
+
+export interface SupportTicketRecord {
+  id: number;
+  email: string;
+  subject: string;
+  message: string;
+  platform: string;
+  logs: string | null;
+  status: string;
+  created_at: number;
 }
 
 export interface Entitlement {
@@ -124,6 +157,13 @@ export interface CrmStats {
   activeDevices: number;
   atRiskAccountsCount: number;
   currency: string;
+  crashes_7d: number;
+  funnel: Record<string, number>;
+}
+
+export function generateReferralCode(seed: string): string {
+  const hash = createHash("sha256").update(`sweepr-ref:${seed}`).digest("hex").toUpperCase();
+  return `SWP-${hash.slice(0, 6)}`;
 }
 
 function ensureColumn(db: DatabaseSync, table: string, col: string, def: string) {
@@ -219,6 +259,33 @@ export function openDb(path: string) {
       content TEXT NOT NULL,
       created_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS crash_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      platform TEXT,
+      app_version TEXT,
+      error_type TEXT,
+      message TEXT,
+      stack TEXT,
+      created_at INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_name TEXT,
+      platform TEXT,
+      account_id TEXT,
+      metadata TEXT,
+      created_at INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS support_tickets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT,
+      subject TEXT,
+      message TEXT,
+      platform TEXT,
+      logs TEXT,
+      status TEXT DEFAULT 'open',
+      created_at INTEGER
+    );
   `);
 
   // Ensure extended CRM columns on accounts table
@@ -228,6 +295,9 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "health_score", "INTEGER DEFAULT 100");
   ensureColumn(db, "accounts", "lifecycle_stage", "TEXT DEFAULT 'lead'");
   ensureColumn(db, "accounts", "total_spend_cents", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "referral_code", "TEXT");
+  ensureColumn(db, "accounts", "referred_by", "TEXT");
+  ensureColumn(db, "accounts", "winback_claimed", "INTEGER DEFAULT 0");
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
   ensureColumn(db, "devices", "token_hash", "TEXT");
@@ -235,6 +305,12 @@ export function openDb(path: string) {
   const otpCols = db.prepare(`PRAGMA table_info(otps)`).all() as Array<{ name: string }>;
   if (!otpCols.some((c) => c.name === "attempts")) db.exec(`DELETE FROM otps`);
   ensureColumn(db, "otps", "attempts", "INTEGER NOT NULL DEFAULT 0");
+
+  // Backfill referral_code on any pre-existing accounts
+  const missingRef = db.prepare(`SELECT id FROM accounts WHERE referral_code IS NULL OR referral_code = ''`).all() as Array<{ id: string }>;
+  for (const row of missingRef) {
+    db.prepare(`UPDATE accounts SET referral_code = ? WHERE id = ?`).run(generateReferralCode(row.id), row.id);
+  }
 
   return new Repo(db);
 }
@@ -284,12 +360,13 @@ export class Repo {
   }
 
 
-  createAccount(id: string, refreshTokenHash: string, email?: string) {
+  createAccount(id: string, refreshTokenHash: string, email?: string, referredBy?: string | null) {
     const t = now();
+    const referralCode = generateReferralCode(id);
     this.db.prepare(`
-      INSERT INTO accounts (id, refresh_token_hash, email, health_score, lifecycle_stage, total_spend_cents, created_at, updated_at)
-      VALUES (?, ?, ?, 100, 'lead', 0, ?, ?)
-    `).run(id, refreshTokenHash, email ?? null, t, t);
+      INSERT INTO accounts (id, refresh_token_hash, email, health_score, lifecycle_stage, total_spend_cents, referral_code, referred_by, created_at, updated_at)
+      VALUES (?, ?, ?, 100, 'lead', 0, ?, ?, ?, ?)
+    `).run(id, refreshTokenHash, email ?? null, referralCode, referredBy ?? null, t, t);
 
     this.addActivity({
       account_id: id,
@@ -763,6 +840,12 @@ export class Repo {
       SELECT COUNT(*) as count FROM devices WHERE revoked = 0
     `).get() as { count: number };
 
+    const crashesRow = this.db.prepare(`
+      SELECT COUNT(*) as count FROM crash_reports WHERE created_at >= ?
+    `).get(now() - 7 * 86400) as { count: number };
+
+    const funnel = this.getFunnelSummary();
+
     return {
       totalCustomers: Number(counts.total_customers || 0),
       activeSubscriptions: activeSubs,
@@ -775,7 +858,225 @@ export class Repo {
       activeDevices: Number(deviceCountRow.count || 0),
       atRiskAccountsCount: Number(counts.at_risk || 0),
       currency: "USD",
+      crashes_7d: Number(crashesRow?.count || 0),
+      funnel,
     };
+  }
+
+  addCrashReport(item: { platform?: string; app_version?: string; error_type?: string; message?: string; stack?: string }): number {
+    const t = now();
+    const platform = String(item.platform ?? "unknown").trim().slice(0, 64);
+    const appVersion = String(item.app_version ?? "0.1.0").trim().slice(0, 32);
+    const errorType = String(item.error_type ?? "Error").trim().slice(0, 128);
+    const message = String(item.message ?? "").trim().slice(0, 1024);
+    const stack = String(item.stack ?? "").trim().slice(0, 8192);
+
+    const res = this.db.prepare(`
+      INSERT INTO crash_reports (platform, app_version, error_type, message, stack, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(platform, appVersion, errorType, message, stack, t);
+    return Number(res.lastInsertRowid);
+  }
+
+  getCrashReports(limit = 50): CrashReportRecord[] {
+    return this.db.prepare(`SELECT * FROM crash_reports ORDER BY created_at DESC LIMIT ?`).all(limit) as unknown as CrashReportRecord[];
+  }
+
+  addAnalyticsEvent(item: { event_name: string; platform?: string; account_id?: string | null; metadata?: unknown }): number {
+    const t = now();
+    const eventName = String(item.event_name ?? "").trim().slice(0, 64);
+    const platform = String(item.platform ?? "unknown").trim().slice(0, 64);
+    const accountId = item.account_id ? String(item.account_id).trim().slice(0, 64) : null;
+    const metadata = item.metadata !== undefined && item.metadata !== null
+      ? (typeof item.metadata === "string" ? item.metadata : JSON.stringify(item.metadata)).slice(0, 2048)
+      : null;
+
+    const res = this.db.prepare(`
+      INSERT INTO analytics_events (event_name, platform, account_id, metadata, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(eventName, platform, accountId, metadata, t);
+    return Number(res.lastInsertRowid);
+  }
+
+  getFunnelSummary(): Record<string, number> {
+    const base: Record<string, number> = {
+      scan_started: 0,
+      scan_completed: 0,
+      paywall_viewed: 0,
+      checkout_started: 0,
+      purchase_completed: 0,
+      clean_completed: 0,
+    };
+    const rows = this.db.prepare(`
+      SELECT event_name, COUNT(*) as count
+      FROM analytics_events
+      GROUP BY event_name
+    `).all() as Array<{ event_name: string; count: number }>;
+    for (const r of rows) {
+      if (r.event_name) {
+        base[r.event_name] = Number(r.count || 0);
+      }
+    }
+    return base;
+  }
+
+  getTelemetry(limit = 50) {
+    const crashes = this.getCrashReports(limit);
+    const events = this.db.prepare(`SELECT * FROM analytics_events ORDER BY created_at DESC LIMIT ?`).all(limit) as unknown as AnalyticsEventRecord[];
+    const funnel = this.getFunnelSummary();
+    const crashes7dRow = this.db.prepare(`SELECT COUNT(*) as count FROM crash_reports WHERE created_at >= ?`).get(now() - 7 * 86400) as { count: number };
+    const tickets = this.getSupportTickets(limit);
+    return {
+      crashes_7d: Number(crashes7dRow?.count || 0),
+      funnel,
+      crashes,
+      events,
+      support_tickets: tickets,
+    };
+  }
+
+  addSupportTicket(item: { email: string; subject: string; message: string; platform?: string; logs?: string }): number {
+    const t = now();
+    const email = String(item.email ?? "").trim().toLowerCase().slice(0, 254);
+    const subject = String(item.subject ?? "Support Request").trim().slice(0, 200);
+    const message = String(item.message ?? "").trim().slice(0, 8000);
+    const platform = String(item.platform ?? "web").trim().slice(0, 64);
+    const logs = item.logs ? String(item.logs).slice(0, 32768) : null;
+
+    const res = this.db.prepare(`
+      INSERT INTO support_tickets (email, subject, message, platform, logs, status, created_at)
+      VALUES (?, ?, ?, ?, ?, 'open', ?)
+    `).run(email, subject, message, platform, logs, t);
+    const ticketId = Number(res.lastInsertRowid);
+
+    const acc = email ? this.accountByEmail(email) : undefined;
+    if (acc) {
+      this.addActivity({
+        account_id: acc.id,
+        type: "support_ticket",
+        title: `Support Ticket #${ticketId}: ${subject}`,
+        description: message.length > 140 ? `${message.slice(0, 140)}...` : message,
+        actor: "customer",
+        metadata: { ticket_id: ticketId, platform, has_logs: Boolean(logs) },
+      });
+    }
+    return ticketId;
+  }
+
+  getSupportTickets(limit = 50): SupportTicketRecord[] {
+    return this.db.prepare(`SELECT * FROM support_tickets ORDER BY created_at DESC LIMIT ?`).all(limit) as unknown as SupportTicketRecord[];
+  }
+
+  ensureReferralCode(accountId: string): string {
+    const acc = this.accountById(accountId);
+    if (acc?.referral_code) return acc.referral_code;
+    const code = generateReferralCode(accountId);
+    this.db.prepare(`UPDATE accounts SET referral_code = ?, updated_at = ? WHERE id = ?`).run(code, now(), accountId);
+    return code;
+  }
+
+  accountByReferralCode(code: string): Account | undefined {
+    const norm = String(code ?? "").trim().toUpperCase();
+    if (!norm) return undefined;
+    return this.db.prepare(`SELECT * FROM accounts WHERE referral_code = ? COLLATE NOCASE LIMIT 1`).get(norm) as Account | undefined;
+  }
+
+  referralsCount(accountId: string): number {
+    const code = this.ensureReferralCode(accountId);
+    const row = this.db.prepare(`
+      SELECT COUNT(*) as count FROM accounts
+      WHERE (referred_by = ? COLLATE NOCASE OR referred_by = ?) AND id != ?
+    `).get(code, accountId, accountId) as { count: number };
+    return Number(row?.count || 0);
+  }
+
+  applyReferral(referredAccountId: string, rawCode: string, nowSec = now()): boolean {
+    const code = String(rawCode ?? "").trim().toUpperCase();
+    if (!code) return false;
+    const referred = this.accountById(referredAccountId);
+    if (!referred || referred.referred_by) return false;
+    const referrer = this.accountByReferralCode(code);
+    if (!referrer || referrer.id === referredAccountId) return false;
+
+    const referrerCode = this.ensureReferralCode(referrer.id);
+    this.db.prepare(`UPDATE accounts SET referred_by = ?, updated_at = ? WHERE id = ?`).run(referrerCode, nowSec, referredAccountId);
+
+    // Reward referrer with +30 days on their entitlement if they have one, or grant 30 days active
+    const refEnt = this.entitlement(referrer.id);
+    const baseEnd = refEnt?.current_period_end && refEnt.current_period_end > nowSec ? refEnt.current_period_end : nowSec;
+    const newEnd = baseEnd + 30 * 86400;
+    this.upsertEntitlement({
+      account_id: referrer.id,
+      stripe_subscription_id: refEnt?.stripe_subscription_id ?? null,
+      status: refEnt?.status === "trialing" ? "trialing" : "active",
+      plan: refEnt?.plan ?? "monthly",
+      current_period_end: newEnd,
+      cancel_at_period_end: refEnt?.cancel_at_period_end ?? 0,
+    });
+
+    this.addActivity({
+      account_id: referrer.id,
+      type: "referral_reward",
+      title: "Referral Reward (+30 Days)",
+      description: `Referred account ${referred.email || referredAccountId} with code ${referrerCode}`,
+      actor: "system",
+      metadata: { referred_account_id: referredAccountId, code: referrerCode, new_period_end: newEnd },
+    });
+    return true;
+  }
+
+  recordCrashReport(item: { platform?: string; app_version?: string; error_type?: string; message?: string; stack?: string }): number {
+    return this.addCrashReport(item);
+  }
+
+  recordAnalyticsEvent(item: { event_name: string; platform?: string; account_id?: string | null; metadata?: unknown }): number {
+    return this.addAnalyticsEvent(item);
+  }
+
+  createSupportTicket(item: { email: string; subject: string; message: string; platform?: string; logs?: string }): number {
+    return this.addSupportTicket(item);
+  }
+
+  listSupportTickets(limit = 50): SupportTicketRecord[] {
+    return this.getSupportTickets(limit);
+  }
+
+  getTelemetrySummary(limit = 50) {
+    return this.getTelemetry(limit);
+  }
+
+  claimWinback(accountId: string, daysOrNow = 30, nowSecArg = now()): { ok: boolean; error?: string; current_period_end?: number; status?: EntStatus } {
+    const days = daysOrNow > 100000 ? 30 : Math.max(1, Math.min(daysOrNow, 365));
+    const nowSec = daysOrNow > 100000 ? daysOrNow : nowSecArg;
+    const acc = this.accountById(accountId);
+    if (!acc) return { ok: false, error: "account_not_found" };
+    if (acc.winback_claimed) {
+      return { ok: false, error: "already_claimed" };
+    }
+    const ent = this.entitlement(accountId);
+    if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
+      return { ok: false, error: "no_active_subscription" };
+    }
+
+    const baseEnd = ent.current_period_end && ent.current_period_end > nowSec ? ent.current_period_end : nowSec;
+    const newEnd = baseEnd + days * 86400;
+    this.db.prepare(`UPDATE accounts SET winback_claimed = 1, updated_at = ? WHERE id = ?`).run(nowSec, accountId);
+    this.upsertEntitlement({
+      ...ent,
+      current_period_end: newEnd,
+      cancel_at_period_end: 0,
+    });
+
+    this.addActivity({
+      account_id: accountId,
+      type: "winback_claimed",
+      title: `Customer Claimed Retention Offer (+${days} Days)`,
+      description: `Extended subscription period end by ${days} days via portal win-back offer`,
+      actor: "customer",
+      metadata: { previous_period_end: ent.current_period_end, new_period_end: newEnd },
+    });
+
+    return { ok: true, current_period_end: newEnd, status: ent.status };
   }
 
   /** Returns true if this is the first time we've seen the event (idempotency). */

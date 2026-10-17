@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /crm
+Disallow: /checkout/
+Disallow: /api/
+Disallow: /dev/
+
+# Explicitly permit AI Search and Answer Engines for LLM citations (GEO/AEO)
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://sweeprcleaner.com/sitemap.xml

@@ -389,11 +389,15 @@ impl Licensing {
         Ok(r.url)
     }
 
-    pub async fn checkout_url(&self, email: Option<&str>) -> AppResult<String> {
-        let body = email
-            .map(str::trim)
-            .filter(|e| !e.is_empty())
-            .map(|e| serde_json::json!({ "email": e }));
+    pub async fn checkout_url(&self, email: Option<&str>, plan: Option<&str>) -> AppResult<String> {
+        let mut map = serde_json::Map::new();
+        if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
+            map.insert("email".into(), serde_json::Value::String(e.to_string()));
+        }
+        if let Some(p) = plan.map(str::trim).filter(|p| matches!(*p, "monthly" | "annual")) {
+            map.insert("plan".into(), serde_json::Value::String(p.to_string()));
+        }
+        let body = if map.is_empty() { None } else { Some(serde_json::Value::Object(map)) };
         self.post_for_url("/v1/checkout", body).await
     }
 

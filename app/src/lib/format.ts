@@ -18,4 +18,8 @@ export function shortenPath(p: string, max = 80): string {
 export const PRICING = {
   activation: "£1.99",
   monthly: "£9.99",
+  annual: "£49.99",
+  annualSave: "Save 58%",
+  trialDays: 30,
 } as const;
+

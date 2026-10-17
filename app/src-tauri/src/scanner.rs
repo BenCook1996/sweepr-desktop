@@ -52,23 +52,31 @@ pub struct ScanProgress {
 /// Walk every eligible file of a rule. This is the single source of truth used
 /// by BOTH scanning and cleaning, so the cleaner can never touch a file the
 /// scanner wouldn't have reported.
-pub fn for_each_target(rule: &Rule, mut f: impl FnMut(&Path, u64)) {
+#[allow(dead_code)]
+pub fn for_each_target(rule: &Rule, f: impl FnMut(&Path, u64)) {
+    for_each_target_with_exclusions(rule, &[], f);
+}
+
+pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut f: impl FnMut(&Path, u64)) {
     let cutoff = SystemTime::now()
         .checked_sub(Duration::from_secs(rule.min_age_hours * 3600))
         .unwrap_or(SystemTime::UNIX_EPOCH);
 
     for root in &rule.roots {
-        if !safety::is_safe_root(root) {
+        if !safety::is_safe_scan_root(root, rule.min_age_hours) || safety::is_excluded(root, exclusions) {
             continue;
         }
         let walker = WalkDir::new(root)
             .follow_links(false)
             .min_depth(1)
             .into_iter()
-            .filter_entry(|e| !safety::is_link_like(e));
+            .filter_entry(|e| !safety::is_link_like(e) && !safety::is_excluded(e.path(), exclusions));
 
         for entry in walker.flatten() {
             if !entry.file_type().is_file() || !entry.path().starts_with(root) {
+                continue;
+            }
+            if safety::is_excluded(entry.path(), exclusions) {
                 continue;
             }
             let Ok(md) = entry.metadata() else { continue };
@@ -83,12 +91,12 @@ pub fn for_each_target(rule: &Rule, mut f: impl FnMut(&Path, u64)) {
     }
 }
 
-fn scan_rule(rule: &Rule) -> CategoryResult {
+fn scan_rule(rule: &Rule, exclusions: &[PathBuf]) -> CategoryResult {
     let mut bytes = 0u64;
     let mut files = 0u64;
     let mut heap: BinaryHeap<Reverse<(u64, PathBuf)>> = BinaryHeap::new();
 
-    for_each_target(rule, |path, size| {
+    for_each_target_with_exclusions(rule, exclusions, |path, size| {
         bytes += size;
         files += 1;
         if heap.len() < TOP_FILES {
@@ -120,7 +128,16 @@ fn scan_rule(rule: &Rule) -> CategoryResult {
     }
 }
 
+#[allow(dead_code)]
 pub fn scan_all(rules: &[Rule], on_progress: impl Fn(ScanProgress) + Sync) -> ScanReport {
+    scan_all_with_exclusions(rules, &[], on_progress)
+}
+
+pub fn scan_all_with_exclusions(
+    rules: &[Rule],
+    exclusions: &[PathBuf],
+    on_progress: impl Fn(ScanProgress) + Sync,
+) -> ScanReport {
     let started = Instant::now();
     let done = AtomicUsize::new(0);
     let bytes_so_far = AtomicU64::new(0);
@@ -129,7 +146,7 @@ pub fn scan_all(rules: &[Rule], on_progress: impl Fn(ScanProgress) + Sync) -> Sc
     let mut categories: Vec<CategoryResult> = rules
         .par_iter()
         .map(|rule| {
-            let res = scan_rule(rule);
+            let res = scan_rule(rule, exclusions);
             let b = bytes_so_far.fetch_add(res.bytes, Ordering::Relaxed) + res.bytes;
             let d = done.fetch_add(1, Ordering::Relaxed) + 1;
             on_progress(ScanProgress {

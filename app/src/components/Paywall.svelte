@@ -10,6 +10,7 @@
   } = $props();
 
   let stage = $state<"offer" | "waiting">("offer");
+  let selectedPlan = $state<"monthly" | "annual">("monthly");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -36,7 +37,7 @@
     error = null;
     busy = true;
     try {
-      await api.startCheckout(); // opens Stripe Checkout in the system browser
+      await api.startCheckout(undefined, selectedPlan); // opens Stripe Checkout in the system browser
       stage = "waiting";
       let ticks = 0;
       stopPolling();
@@ -75,11 +76,48 @@
         <h2 id="pw-title">Clean {formatBytes(bytes)} now</h2>
         <p class="muted">You've seen exactly what's there. Activate Sweepr to clean every category, and keep your machine tidy with ongoing rule updates.</p>
 
+        <div class="plan-selector" role="radiogroup" aria-label="Select billing plan">
+          <button
+            type="button"
+            class="plan-option"
+            class:selected={selectedPlan === "monthly"}
+            onclick={() => (selectedPlan = "monthly")}
+            aria-pressed={selectedPlan === "monthly"}
+          >
+            <div class="row" style="justify-content: space-between; width: 100%;">
+              <strong>Monthly</strong>
+              <span class="badge free">30d Trial</span>
+            </div>
+            <div class="opt-price">{PRICING.activation} today</div>
+            <div class="muted small">then {PRICING.monthly}/mo</div>
+          </button>
+
+          <button
+            type="button"
+            class="plan-option"
+            class:selected={selectedPlan === "annual"}
+            onclick={() => (selectedPlan = "annual")}
+            aria-pressed={selectedPlan === "annual"}
+          >
+            <div class="row" style="justify-content: space-between; width: 100%;">
+              <strong>Annual</strong>
+              <span class="badge pro">{PRICING.annualSave}</span>
+            </div>
+            <div class="opt-price">{PRICING.annual}/yr</div>
+            <div class="muted small">{PRICING.annualSave} · no free trial</div>
+          </button>
+        </div>
+
         <div class="price card">
-          <div class="row"><strong class="amount">{PRICING.activation}</strong><span class="muted">for your first {PRICING.trialDays} days</span></div>
-          <div class="muted">then <strong style="color:var(--text)">{PRICING.monthly}/month</strong>. Cancel anytime in two clicks.</div>
+          {#if selectedPlan === "monthly"}
+            <div class="row"><strong class="amount">{PRICING.activation}</strong><span class="muted">today (first {PRICING.trialDays} days)</span></div>
+            <div class="muted">then <strong style="color:var(--text)">{PRICING.monthly}/month</strong>. Cancel anytime in two clicks.</div>
+          {:else}
+            <div class="row"><strong class="amount">{PRICING.annual}</strong><span class="muted">/yr — {PRICING.annualSave}</span></div>
+            <div class="muted">Billed annually (<strong style="color:var(--text)">no free trial</strong>). Cancel anytime in two clicks.</div>
+          {/if}
           <ul>
-            <li>We email you 3 days before your first {PRICING.monthly} payment</li>
+            <li>Covers up to 3 PCs + 3 mobile devices</li>
             <li>Cancel from the app or your account page</li>
             <li>Secure checkout by Stripe, opens in your browser</li>
           </ul>
@@ -87,7 +125,9 @@
 
         {#if error}<div class="error-banner">{error}</div>{/if}
 
-        <button class="primary big" disabled={busy} onclick={activate}>{busy ? "Opening checkout…" : `Activate for ${PRICING.activation}`}</button>
+        <button class="primary big" disabled={busy} onclick={activate}>
+          {busy ? "Opening checkout…" : selectedPlan === "annual" ? `Activate Annual (${PRICING.annual}/yr)` : `Activate for ${PRICING.activation}`}
+        </button>
         <div class="row" style="justify-content:center">
           {#if freeBytes > 0}
             <button class="ghost" onclick={onCleanFree}>Clean free items only ({formatBytes(freeBytes)})</button>
@@ -108,8 +148,28 @@
 
 <style>
   .backdrop { position: fixed; inset: 0; background: #0009; display: grid; place-items: center; z-index: 50; backdrop-filter: blur(3px); }
-  .sheet { width: 440px; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+  .sheet { width: 480px; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
   h2 { margin: 0; }
+  .plan-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .plan-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 3px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-2);
+    cursor: pointer;
+    box-shadow: none;
+    white-space: normal;
+  }
+  .plan-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .opt-price { font-size: 18px; font-weight: 800; color: var(--accent); }
   .price { padding: 16px; text-align: left; background: var(--panel-2); display: flex; flex-direction: column; gap: 6px; }
   .amount { font-size: 26px; color: var(--accent); }
   ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }

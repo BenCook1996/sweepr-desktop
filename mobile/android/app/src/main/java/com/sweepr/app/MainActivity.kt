@@ -1,29 +1,30 @@
 package com.sweepr.app
 
 import android.Manifest
-import androidx.compose.ui.res.stringResource
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -33,20 +34,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -54,8 +60,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallActivityLauncher
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResult
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResultHandler
-
-import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var paywallLauncher: PaywallActivityLauncher
@@ -97,11 +101,11 @@ enum class Screen {
     Dashboard, SmartClean, Tips, Settings,
 
     // Detail screens
-    PhotosVideos, Swipe, Screenshots, Contacts, Account, About,
+    PhotosVideos, Swipe, Screenshots, Contacts, Trash, Account, About,
 }
 
 private val TABS = listOf(Screen.Dashboard, Screen.SmartClean, Screen.Tips, Screen.Settings)
-private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Swipe, Screen.Screenshots, Screen.Contacts)
+private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Swipe, Screen.Screenshots, Screen.Contacts, Screen.Trash)
 
 data class PermissionState(
     val media: Boolean = false,
@@ -161,6 +165,7 @@ fun SweeprRoot(
     val state by vm.state.collectAsState()
     var screen by rememberSaveable { mutableStateOf(Screen.Dashboard) }
     var lastTab by rememberSaveable { mutableStateOf(Screen.Dashboard) }
+    var photosInitialTab by rememberSaveable { mutableIntStateOf(0) }
     var permissions by remember { mutableStateOf(AppPermissions.current(context)) }
     var scanAfterGrant by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -179,7 +184,7 @@ fun SweeprRoot(
         }
     }
 
-    // Android's own "Allow Sweepr to move these items to trash?" confirmation dialog.
+    // Android's own "Allow Sweepr to move these items to trash?" or restore confirmation dialog.
     val trashLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult(),
     ) { result ->
@@ -227,6 +232,37 @@ fun SweeprRoot(
         }
     }
 
+    // #25 In-App Review prompt after the user's 2nd successful cleanup
+    if (state.promptInAppReview) {
+        AlertDialog(
+            onDismissRequest = vm::clearReviewPrompt,
+            title = { Text(stringResource(R.string.review_prompt_title)) },
+            text = { Text(stringResource(R.string.review_prompt_body)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        vm.clearReviewPrompt()
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${context.packageName}"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        }.onFailure {
+                            context.openUrl("https://play.google.com/store/apps/details?id=${context.packageName}")
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.about_rate))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = vm::clearReviewPrompt) {
+                    Text(stringResource(R.string.review_prompt_later))
+                }
+            },
+        )
+    }
+
     // Results screens need a scan first (e.g. after the process was restarted).
     val current = if (!state.hasScanned && screen in RESULT_SCREENS) lastTab else screen
     val isTab = current in TABS
@@ -237,6 +273,10 @@ fun SweeprRoot(
     }
     val open: (Screen) -> Unit = { target ->
         if (target in TABS) selectTab(target) else screen = target
+    }
+    val openPhotosTab: (Int) -> Unit = { tab ->
+        photosInitialTab = tab
+        screen = Screen.PhotosVideos
     }
     val goBack: () -> Unit = {
         screen = when {
@@ -253,6 +293,10 @@ fun SweeprRoot(
     }
 
     val handleTrash: (List<MediaItem>) -> Unit = { items -> premium { vm.requestTrash(items) } }
+    val handleRestoreTrash: (List<MediaItem>) -> Unit = { items -> vm.requestRestoreFromTrash(items) }
+    val handleCompressVideo: (MediaItem, CompressionPreset) -> Unit = { item, preset ->
+        premium { vm.compressVideo(item, preset) }
+    }
     val handleMerge: (Set<String>) -> Unit = { groups -> premium { vm.mergeContactGroups(groups) } }
     val handleCleanUp: () -> Unit = { premium { vm.cleanUpSelected(AppPermissions.current(context)) } }
 
@@ -270,6 +314,7 @@ fun SweeprRoot(
                     permissions = permissions,
                     onScan = requestAccessAndScan,
                     onOpen = open,
+                    onOpenPhotosTab = openPhotosTab,
                     onCleanUp = handleCleanUp,
                 )
                 Screen.SmartClean -> SmartCleanScreen(
@@ -277,6 +322,7 @@ fun SweeprRoot(
                     permissions = permissions,
                     onScan = requestAccessAndScan,
                     onOpen = open,
+                    onOpenPhotosTab = openPhotosTab,
                     onRequestPermission = requestPermissions,
                     onCleanUp = handleCleanUp,
                 )
@@ -295,14 +341,21 @@ fun SweeprRoot(
                     state = state,
                     onUpgrade = { onShowPaywall {} },
                     onRestore = vm::restorePurchases,
+                    onSendOtp = vm::sendOtp,
+                    onVerifyOtp = vm::verifyOtp,
+                    onSignOut = vm::signOutAccount,
+                    onDeleteAccount = vm::deleteAccount,
                     onBack = goBack,
                 )
                 Screen.About -> AboutScreen(onBack = goBack)
                 Screen.PhotosVideos -> PhotosVideosScreen(
                     state = state,
+                    initialTab = photosInitialTab,
                     onToggle = vm::toggleMedia,
                     onSetSelected = vm::setMediaSelected,
                     onTrash = handleTrash,
+                    onCompressVideo = handleCompressVideo,
+                    onClearCompressionResult = vm::clearCompressionResult,
                     onBack = goBack,
                 )
                 Screen.Screenshots -> ScreenshotsScreen(
@@ -310,6 +363,13 @@ fun SweeprRoot(
                     onToggle = vm::toggleMedia,
                     onSetSelected = vm::setMediaSelected,
                     onTrash = handleTrash,
+                    onBack = goBack,
+                )
+                Screen.Trash -> TrashScreen(
+                    state = state,
+                    onToggleTrash = vm::toggleTrash,
+                    onSetTrashSelected = vm::setTrashSelected,
+                    onRestore = handleRestoreTrash,
                     onBack = goBack,
                 )
                 Screen.Swipe -> SwipeCleanupScreen(

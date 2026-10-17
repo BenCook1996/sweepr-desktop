@@ -17,5 +17,22 @@ targets:
       path: Info.plist
       properties:
         UILaunchStoryboardName: LaunchScreen
-        NSPhotoLibraryUsageDescription: "Sweepr analyzes your library on-device to group duplicates and help you reclaim space."
-        NSContactsUsageDescription: "Sweepr scans your contacts locally to find and merge duplicate entries."
+        NSPhotoLibraryUsageDescription: "Sweepr analyzes your library on-device to group duplicates, similar shots, screenshots, and large videos so you can reclaim storage space."
+        NSPhotoLibraryAddUsageDescription: "Sweepr saves compressed videos back to your photo library after hardware compression."
+        NSContactsUsageDescription: "Sweepr scans your contacts locally on-device to find duplicate and incomplete entries and merge them safely."
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # RevenueCat public SDK key (appl_...). Supply REVENUECAT_API_KEY as a build setting
+        # (e.g. an uncommitted Secrets.xcconfig); read at launch in SweeprApp.swift.
+        REVENUECAT_API_KEY: "$(REVENUECAT_API_KEY)"
+        SWEEPR_WEBSITE_URL: "https://sweepr.app"
+        SWEEPR_SUPPORT_EMAIL: "support@sweepr.app"
+        SWEEPR_API_URL: "https://api.sweepr.app"
+

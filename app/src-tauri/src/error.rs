@@ -39,7 +39,20 @@ impl Serialize for AppError {
 
 impl From<reqwest::Error> for AppError {
     fn from(e: reqwest::Error) -> Self {
-        AppError::Network(e.to_string())
+        if e.is_connect() || e.is_timeout() {
+            return AppError::Network(
+                "Could not connect to the Sweepr server. Please check your internet connection and try again.".into(),
+            );
+        }
+        if let Some(status) = e.status() {
+            return match status.as_u16() {
+                409 => AppError::License("This account already has an active subscription.".into()),
+                429 => AppError::Network("Too many requests. Please wait a moment and try again.".into()),
+                503 => AppError::Network("Checkout service is temporarily unavailable. Please try again shortly.".into()),
+                code => AppError::Network(format!("Server returned an unexpected error (HTTP {code}).")),
+            };
+        }
+        AppError::Network("Unable to complete network request. Please try again.".into())
     }
 }
 

@@ -101,6 +101,18 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     return c.json(stats);
   });
 
+  // 1b. Crash Reports, Funnel Analytics & Support Tickets Telemetry
+  router.get("/telemetry", (c) => {
+    const limit = Math.min(Math.max(Number(c.req.query("limit") || 50), 1), 200);
+    const summary = repo.getTelemetrySummary(limit);
+    const tickets = repo.listSupportTickets(25);
+    return c.json({
+      ...summary,
+      tickets,
+      support_tickets: tickets,
+    });
+  });
+
   // 2. Customer List with Search, Filter & Pagination
   router.get("/customers", (c) => {
     const search = c.req.query("search") || undefined;

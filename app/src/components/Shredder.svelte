@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { api, type LicenseStatus } from "../lib/api";
+  import { api, errorMessage, isPaymentRequired, requestActivation, type LicenseStatus } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
   let { license } = $props<{ license: LicenseStatus | null }>();
@@ -7,7 +7,7 @@
   let shredding = $state(false);
   let statusMessage = $state("");
   let isError = $state(false);
-  let passes = $state(3); // DoD 5220.22-M standard 3 passes
+  let needsPro = $state(false);
 
   async function handleShred() {
     if (!filePath.trim()) {
@@ -16,20 +16,27 @@
       return;
     }
 
-    if (!confirm(`CAUTION: DoD 5220.22-M Secure Deletion is IRREVERSIBLE.\n\n"${filePath}" will be overwritten 3 times with zeros, ones, and pseudo-random bytes, then destroyed.\n\nProceed?`)) {
+    if (!confirm(`This is IRREVERSIBLE.\n\n"${filePath}" will be overwritten 3 times (zeros, ones, then a fixed 0x55 pattern) and then deleted.\n\nProceed?`)) {
       return;
     }
 
     shredding = true;
-    statusMessage = "Overwriting file sectors (Pass 1: 0x00, Pass 2: 0xFF, Pass 3: Random)...";
+    needsPro = false;
+    statusMessage = "Overwriting file (pass 1: 0x00, pass 2: 0xFF, pass 3: 0x55)…";
     isError = false;
 
     try {
       const bytes = await api.shredFile(filePath.trim());
-      statusMessage = `Successfully shredded ${formatBytes(bytes)}! Data has been sanitized according to DoD 5220.22-M standards and deleted.`;
+      statusMessage = `Overwrote ${formatBytes(bytes)} three times and deleted the file.`;
       filePath = "";
-    } catch (e: any) {
-      statusMessage = `Shredding failed: ${e}`;
+    } catch (e) {
+      if (isPaymentRequired(e)) {
+        needsPro = true;
+        statusMessage = "The file shredder is a Pro feature. Activate your Sweepr licence to use it.";
+        requestActivation();
+      } else {
+        statusMessage = `Shredding failed: ${errorMessage(e)}`;
+      }
       isError = true;
     } finally {
       shredding = false;
@@ -38,14 +45,13 @@
 </script>
 
 <div class="header">
-  <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">DriveScrubber & Secure Shredder</h1>
-  <p class="muted small" style="margin-top: 4px;">US Department of Defense (DoD 5220.22-M) compliant multi-pass permanent data sanitization.</p>
+  <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Secure File Shredder</h1>
+  <p class="muted small" style="margin-top: 4px;">Overwrites a single file three times before deleting it.</p>
 </div>
 
 <div class="card shred-card">
   <div class="shred-badge-row">
-    <span class="badge free">DoD 5220.22-M Certified</span>
-    <span class="muted small">3 Overwrite Passes</span>
+    <span class="muted small">3-pass overwrite</span>
   </div>
 
   <div class="shred-info-box">
@@ -53,8 +59,8 @@
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     </div>
     <div>
-      <strong>Permanent Data Incinerator</strong>
-      <p class="muted small" style="margin: 4px 0 0 0;">Unlike standard deletion or Recycle Bin emptying, secure shredding writes binary patterns across physical disk sectors so files cannot be recovered by forensic tools.</p>
+      <strong>How it works, and its limits</strong>
+      <p class="muted small" style="margin: 4px 0 0 0;">Unlike normal deletion or emptying the Recycle Bin, the file's contents are overwritten in place (zeros, ones, then a 0x55 pattern) before it is deleted. This is best-effort: on SSDs and flash drives, and in cloud-synced folders (OneDrive, Dropbox…), backups or shadow copies, earlier copies of the data may survive. System and program folders are protected and can't be shredded.</p>
     </div>
   </div>
 
@@ -72,6 +78,9 @@
   {#if statusMessage}
     <div class="status-box" class:error={isError} class:success={!isError}>
       {statusMessage}
+      {#if needsPro && !license?.active}
+        <button class="primary" style="margin-left: 10px;" onclick={requestActivation}>Activate</button>
+      {/if}
     </div>
   {/if}
 </div>

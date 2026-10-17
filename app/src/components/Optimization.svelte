@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Memory from "./Memory.svelte";
+  import Performance from "./Performance.svelte";
   import Apps from "./Apps.svelte";
   import type { LicenseStatus } from "../lib/api";
 
@@ -23,7 +23,7 @@
 
   <div class="subnav-content">
     {#if subTab === "memory"}
-      <Memory {license} />
+      <Performance {license} />
     {:else}
       <Apps {license} />
     {/if}

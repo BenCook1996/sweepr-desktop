@@ -14,34 +14,142 @@ export interface CleanReport { category_id: string; bytes_freed: number; files_r
 export interface LicenseStatus { active: boolean; status: string; plan: string | null; expires_at: number | null; offline: boolean; dev_unlock: boolean }
 export interface AppMemory { name: string; bytes: number; processes: number }
 export interface MemoryOverview { total_bytes: number; used_bytes: number; available_bytes: number; top_apps: AppMemory[] }
-export interface StartupItem { name: string; command: string; scope: string }
+export interface StartupItem { name: string; command: string; scope: string; enabled?: boolean; impact?: string }
 export interface AppInfo { version: string; platform: string; api_url: string }
 export interface AppError { kind: "payment_required" | "network" | "license" | "not_found" | "other"; message: string }
+
+export interface LargeFileEntry { path: string; name: string; ext: string; size: number; modified_at: number }
+export interface DiskBreakdownItem { label: string; bytes: number; files: number }
+export interface LargeFilesReport {
+  total_scanned_bytes: number;
+  total_scanned_files: number;
+  top_files: LargeFileEntry[];
+  by_extension: DiskBreakdownItem[];
+  by_folder: DiskBreakdownItem[];
+}
+
+export interface OutdatedApp {
+  name: string;
+  id: string;
+  current_version: string;
+  available_version: string;
+  source: string;
+}
+
+export interface QuarantineEntry {
+  id: string;
+  original_path: string;
+  file_name: string;
+  size: number;
+  category_id: string;
+  deleted_at: number;
+}
+
+export interface CleanHistoryEntry {
+  id?: string;
+  timestamp: number;
+  bytes_freed: number;
+  files_removed: number;
+  categories?: string[];
+  mode?: string;
+}
+
+export interface BrowserPrivacyItem {
+  id?: string;
+  browser: string;
+  name?: string;
+  cache_bytes: number;
+  cookies_bytes: number;
+  history_bytes: number;
+  total_bytes?: number;
+  installed?: boolean;
+}
+
+export interface AppUpdateInfo {
+  update_available: boolean;
+  latest_version: string;
+  current_version: string;
+  notes: string;
+  url: string;
+}
 
 export const isAppError = (e: unknown): e is AppError =>
   typeof e === "object" && e !== null && "kind" in e && "message" in e;
 
 export const errorMessage = (e: unknown) => (isAppError(e) ? e.message : String(e));
 
+export const isPaymentRequired = (e: unknown) => isAppError(e) && e.kind === "payment_required";
+
+/** Ask the app shell to open the activation (checkout) modal. */
+export const ACTIVATE_EVENT = "sweepr-open-activate";
+export const requestActivation = () => window.dispatchEvent(new CustomEvent(ACTIVATE_EVENT));
+
 export const api = {
-  fetchApps: () => invoke<InstalledApp[]>('fetch_apps'),
-  uninstallApp: (uninstall_string: string) => invoke<void>('uninstall_app', { uninstallString: uninstall_string }),
-  findDuplicates: (dir: string) => invoke<DuplicateGroup[]>('find_duplicates', { dir }),
+  fetchApps: () => invoke<InstalledApp[]>("fetch_apps"),
+  /** Only the app id is sent; Rust looks up the uninstaller in the registry. */
+  uninstallApp: (id: string) => invoke<void>("uninstall_app", { id }),
+  scanAppRemnants: () => invoke<AppRemnant[]>("scan_app_remnants"),
+  cleanAppRemnant: (path: string) => invoke<void>("clean_app_remnant", { path }),
+  checkOutdatedSoftware: () => invoke<OutdatedApp[]>("check_outdated_software"),
+  upgradeSoftware: (id: string) => invoke<string>("upgrade_software", { id }),
+  findDuplicates: (dir: string) => invoke<DuplicateGroup[]>("find_duplicates", { dir }),
+  deleteDuplicates: (dir: string, files: string[], useTrash = true) =>
+    invoke<DuplicateCleanReport>("delete_duplicates", { dir, files, useTrash }),
+  scanLargeFiles: (dir: string, minBytes = 50 * 1024 * 1024) =>
+    invoke<LargeFilesReport>("scan_large_files", { dir, minBytes }),
+  deleteLargeFile: (dir: string, file: string, useTrash = true) =>
+    invoke<number>("delete_large_file", { dir, file, useTrash, path: file }),
   scan: () => invoke<ScanReport>("scan_start"),
   onScanProgress: (cb: (p: ScanProgress) => void): Promise<UnlistenFn> =>
     listen<ScanProgress>("scan://progress", (e) => cb(e.payload)),
   clean: (ids: string[], useTrash: boolean) => invoke<CleanReport[]>("clean_categories", { ids, useTrash }),
+  listQuarantine: () => invoke<QuarantineEntry[]>("list_quarantine"),
+  restoreQuarantineItem: (id: string) => invoke<string>("restore_quarantine_item", { id }),
+  getCleaningHistory: () => invoke<CleanHistoryEntry[]>("get_cleaning_history"),
+  listExclusions: () => invoke<string[]>("list_exclusions"),
+  addExclusion: (path: string) => invoke<string[]>("add_exclusion", { path }),
+  removeExclusion: (path: string) => invoke<string[]>("remove_exclusion", { path }),
+  checkRunningApps: (categoryIds: string[]) => invoke<RunningAppConflict[]>("check_running_apps", { categoryIds }),
   licenseStatus: (force = false) => invoke<LicenseStatus>("license_status", { force }),
-  startCheckout: () => invoke<void>("start_checkout"),
+  startCheckout: (email?: string, plan: "monthly" | "annual" = "monthly") =>
+    invoke<void>("start_checkout", { email: email ?? null, plan }),
+  requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
+  verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
   openBillingPortal: () => invoke<void>("open_billing_portal"),
   memory: () => invoke<MemoryOverview>("memory_overview"),
+  startupItems: () => invoke<StartupItem[]>("startup_items"),
+  toggleStartupItem: (name: string, scope: string, enabled: boolean) =>
+    invoke<StartupItem[]>("toggle_startup_item", { name, scope, enabled }),
+  getAutostart: () => invoke<boolean>("get_autostart"),
+  setAutostart: (enabled: boolean) => invoke<boolean>("set_autostart", { enabled }),
+  getScheduleSettings: () => invoke<string>("get_schedule_settings"),
+  setScheduleSettings: (schedule: string) => invoke<string>("set_schedule_settings", { schedule }),
+  systemOverview: () => invoke<SystemOverview>("system_overview"),
+  openBreachCheck: () => invoke<void>("open_breach_check"),
+  scanBrowserPrivacy: () => invoke<BrowserPrivacyItem[]>("scan_browser_privacy"),
+  cleanBrowserPrivacy: (
+    browsers: string[],
+    clearCache: boolean,
+    clearCookies: boolean,
+    clearHistory: boolean
+  ) => invoke<number>("clean_browser_privacy", { browsers, clearCache, clearCookies, clearHistory }),
+  checkPasswordBreach: (password: string) => invoke<number>("check_password_breach", { password }),
+  checkAppUpdate: () => invoke<AppUpdateInfo>("check_app_update"),
+  sendSupportReport: (email: string, subject: string, message: string) =>
+    invoke<void>("send_support_report", { email, subject, message }),
   shredFile: (path: string) => invoke<number>("shred_file", { path }),
   scanRegistry: () => invoke<RegistryIssue[]>("scan_registry"),
   fixRegistryIssue: (key_path: string) => invoke<void>("fix_registry_issue", { keyPath: key_path }),
+  listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
+  restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
   appInfo: () => invoke<AppInfo>("app_info"),
 };
 
-export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; uninstall_string: string; }
+export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }
+export interface AppRemnant { name: string; path: string; location: string; bytes: number; files: number; }
 export interface DuplicateGroup { hash: string; size: number; files: string[]; }
+export interface DuplicateCleanReport { files_removed: number; bytes_freed: number; files_skipped: number; }
 export interface RegistryIssue { key: string; name: string; issue_type: string; details: string; }
-
+export interface RegistryBackupEntry { id: string; key: string; name: string; issue_type: string; value: string; backed_up_at: number; }
+export interface RunningAppConflict { category_id: string; app_name: string; process_count: number; }
+export interface SystemOverview { disk_mount: string; disk_total_bytes: number; disk_available_bytes: number; memory_total_bytes: number; memory_used_bytes: number; cpu_usage_percent: number; }

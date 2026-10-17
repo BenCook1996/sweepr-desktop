@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Auto Backup rules for Android 11 and below (API 23-30).
+    Only the user-preferences file (theme + reminders) is backed up; once an <include> is present,
+    everything not included – RevenueCat caches, databases, cache dir / log files – is left out.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="sweepr_prefs.xml" />
+</full-backup-content>

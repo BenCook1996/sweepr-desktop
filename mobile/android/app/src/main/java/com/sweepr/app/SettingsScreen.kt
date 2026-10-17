@@ -278,6 +278,12 @@ fun SettingsScreen(
             )
             SettingsItem(
                 icon = Icons.Default.Refresh,
+                title = stringResource(R.string.category_trash),
+                value = stringResource(R.string.trash_explainer),
+                onClick = { onOpen(Screen.Trash) },
+            )
+            SettingsItem(
+                icon = Icons.Default.Refresh,
                 title = stringResource(R.string.settings_rescan),
                 value = stringResource(R.string.settings_rescan_detail),
                 onClick = onRescan,

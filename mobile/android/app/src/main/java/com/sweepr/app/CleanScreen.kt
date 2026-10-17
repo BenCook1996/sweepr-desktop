@@ -3,88 +3,54 @@
 package com.sweepr.app
 
 import androidx.compose.foundation.background
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.height
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.size
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Card
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 
 /**
- * Clean tab (stringResource(R.string.clean_title)): one gauge showing how much junk the scan found, a row per
+ * Clean tab: one gauge showing how much junk the scan found, a row per
  * category with its status, and the Clean Up Now button that removes everything selected.
  */
 @Composable
@@ -93,6 +59,7 @@ fun SmartCleanScreen(
     permissions: PermissionState,
     onScan: () -> Unit,
     onOpen: (Screen) -> Unit,
+    onOpenPhotosTab: (Int) -> Unit = { onOpen(Screen.PhotosVideos) },
     onRequestPermission: () -> Unit,
     onCleanUp: () -> Unit,
 ) {
@@ -116,15 +83,12 @@ fun SmartCleanScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             ArcGauge(
-                progress = when {
-                    scanned -> 1f
-                    else -> 0f
-                },
+                progress = if (scanned) 1f else 0f,
                 color = SweeprGreen,
                 loading = state.isScanning,
                 onClick = if (state.isBusy) null else onScan,
             ) {
-                Icon(Icons.Default.Delete, null, tint = SweeprGreen, modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.clean_title), tint = SweeprGreen, modifier = Modifier.size(28.dp))
                 Spacer(Modifier.height(4.dp))
                 when {
                     state.isScanning -> {
@@ -146,7 +110,7 @@ fun SmartCleanScreen(
                     }
                 }
                 Text(
-                    "${formatBytes(storage.used)} of ${formatBytes(storage.total)} Used",
+                    stringResource(R.string.clean_storage_used, formatBytes(storage.used), formatBytes(storage.total)),
                     color = Color.Gray,
                     fontSize = 12.sp,
                 )
@@ -157,7 +121,13 @@ fun SmartCleanScreen(
             fun rowAction(granted: Boolean, screen: Screen): () -> Unit = when {
                 !granted -> onRequestPermission
                 !scanned -> onScan
-                else -> { { onOpen(screen) } }
+                else -> ({ onOpen(screen) })
+            }
+
+            fun tabAction(granted: Boolean, tabIndex: Int): () -> Unit = when {
+                !granted -> onRequestPermission
+                !scanned -> onScan
+                else -> ({ onOpenPhotosTab(tabIndex) })
             }
 
             CategoryRow(
@@ -167,9 +137,9 @@ fun SmartCleanScreen(
                 status = when {
                     !permissions.media -> stringResource(R.string.status_no_permission)
                     !scanned -> stringResource(R.string.status_not_scanned)
-                    else -> "${photoExtras.size} duplicates & similar · ${formatBytes(photoExtras.sumOf { it.size })}"
+                    else -> "${photoExtras.size} · ${formatBytes(photoExtras.sumOf { it.size })}"
                 },
-                onClick = rowAction(permissions.media, Screen.PhotosVideos),
+                onClick = tabAction(permissions.media, 1),
             )
             CategoryRow(
                 icon = Icons.Default.PlayArrow,
@@ -178,9 +148,31 @@ fun SmartCleanScreen(
                 status = when {
                     !permissions.media -> stringResource(R.string.status_no_permission)
                     !scanned -> stringResource(R.string.status_not_scanned)
-                    else -> "${media.videos.size} videos · ${formatBytes(media.videos.sumOf { it.size })}"
+                    else -> "${media.videos.size} · ${formatBytes(media.videos.sumOf { it.size })}"
                 },
-                onClick = rowAction(permissions.media, Screen.PhotosVideos),
+                onClick = tabAction(permissions.media, 3),
+            )
+            CategoryRow(
+                icon = Icons.Default.Star,
+                color = Color(0xFF0EA5E9),
+                title = stringResource(R.string.category_large_files),
+                status = when {
+                    !permissions.media -> stringResource(R.string.status_no_permission)
+                    !scanned -> stringResource(R.string.status_not_scanned)
+                    else -> "${media.largeFiles.size} · ${formatBytes(media.largeFiles.sumOf { it.size })}"
+                },
+                onClick = tabAction(permissions.media, 4),
+            )
+            CategoryRow(
+                icon = Icons.Default.Email,
+                color = Color(0xFF22C55E),
+                title = stringResource(R.string.category_messenger_media),
+                status = when {
+                    !permissions.media -> stringResource(R.string.status_no_permission)
+                    !scanned -> stringResource(R.string.status_not_scanned)
+                    else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
+                },
+                onClick = tabAction(permissions.media, 5),
             )
             CategoryRow(
                 icon = Icons.Default.Create,
@@ -189,7 +181,7 @@ fun SmartCleanScreen(
                 status = when {
                     !permissions.media -> stringResource(R.string.status_no_permission)
                     !scanned -> stringResource(R.string.status_not_scanned)
-                    else -> "${media.screenshots.size} screenshots · ${formatBytes(media.screenshots.sumOf { it.size })}"
+                    else -> "${media.screenshots.size} · ${formatBytes(media.screenshots.sumOf { it.size })}"
                 },
                 onClick = rowAction(permissions.media, Screen.Screenshots),
             )
@@ -201,7 +193,7 @@ fun SmartCleanScreen(
                     !permissions.contactsRead -> stringResource(R.string.status_no_permission)
                     !scanned -> stringResource(R.string.status_not_scanned)
                     contactDupes == 0 -> stringResource(R.string.status_no_duplicates)
-                    else -> "$contactDupes duplicates"
+                    else -> "$contactDupes"
                 },
                 onClick = rowAction(permissions.contactsRead, Screen.Contacts),
             )
@@ -209,8 +201,15 @@ fun SmartCleanScreen(
                 icon = Icons.Default.ThumbUp,
                 color = Color(0xFFF59E0B),
                 title = stringResource(R.string.category_swipe_review),
-                status = if (scanned) "${media.everything.size} items, month by month" else stringResource(R.string.status_not_scanned),
+                status = if (scanned) "${media.everything.size}" else stringResource(R.string.status_not_scanned),
                 onClick = rowAction(permissions.media, Screen.Swipe),
+            )
+            CategoryRow(
+                icon = Icons.Default.Refresh,
+                color = Color(0xFF14B8A6),
+                title = stringResource(R.string.category_trash),
+                status = if (scanned) "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}" else stringResource(R.string.status_not_scanned),
+                onClick = rowAction(permissions.media, Screen.Trash),
             )
         }
     }
@@ -226,7 +225,10 @@ private fun CategoryRow(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .semantics { contentDescription = "$title, $status" },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -236,7 +238,7 @@ private fun CategoryRow(
                 Modifier.size(44.dp).clip(CircleShape).background(color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+                Icon(icon, contentDescription = title, tint = color, modifier = Modifier.size(24.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
@@ -247,7 +249,7 @@ private fun CategoryRow(
                     fontSize = 13.sp,
                 )
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.Gray)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
         }
     }
 }

@@ -4,13 +4,35 @@
   import Utilities from "./components/Utilities.svelte";
   import Account from "./components/Account.svelte";
   import ActivateModal from "./components/ActivateModal.svelte";
-  import { api, type LicenseStatus, type AppInfo } from "./lib/api";
+  import { api, ACTIVATE_EVENT, type LicenseStatus, type AppInfo } from "./lib/api";
+  import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
 
   type Tab = "cleaner" | "optimization" | "utilities" | "account";
   let tab = $state<Tab>("cleaner");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
   let showActivateModal = $state(false);
+  let theme = $state<"light" | "dark">(
+    (typeof localStorage !== "undefined" && (localStorage.getItem("sweepr_theme") as "light" | "dark")) || "light"
+  );
+
+  function toggleTheme() {
+    theme = theme === "dark" ? "light" : "dark";
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sweepr_theme", theme);
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle("dark", theme === "dark");
+    }
+  }
+
+  $effect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle("dark", theme === "dark");
+    }
+  });
 
   async function refreshLicense(force = false) {
     try {
@@ -32,11 +54,19 @@
     }
   });
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "cleaner", label: "Dashboard", icon: "M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6zM4 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2zM14 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2z" },
-    { id: "optimization", label: "Optimization", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
-    { id: "utilities", label: "Utilities & Privacy", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
-    { id: "account", label: "Account", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
+  // Pro features (uninstaller, registry repair, duplicates, shredder) ask for
+  // activation when the backend answers `payment_required`.
+  $effect(() => {
+    const open = () => (showActivateModal = true);
+    window.addEventListener(ACTIVATE_EVENT, open);
+    return () => window.removeEventListener(ACTIVATE_EVENT, open);
+  });
+
+  const tabs: { id: Tab; key: string; icon: string }[] = [
+    { id: "cleaner", key: "nav.cleaner", icon: "M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6zM4 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2zM14 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2z" },
+    { id: "optimization", key: "nav.optimization", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
+    { id: "utilities", key: "nav.utilities", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
+    { id: "account", key: "nav.account", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
   ];
 </script>
 
@@ -44,33 +74,76 @@
   <!-- Clean Modern Navigation Header (Concept 5) -->
   <header class="top-nav">
     <div class="brand">
-      <div class="logo">S</div>
+      <div class="logo" aria-label="Sweepr">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+          <defs>
+            <linearGradient id="appEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#047857" />
+            </linearGradient>
+            <linearGradient id="appMintBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ecfdf5" />
+              <stop offset="100%" stop-color="#d1fae5" />
+            </linearGradient>
+          </defs>
+          <rect class="logo-bg-rect" x="2" y="2" width="96" height="96" rx="24" stroke-width="2" />
+          <line class="logo-handle" x1="76" y1="24" x2="53" y2="47" stroke-width="8" stroke-linecap="round" />
+          <path class="logo-primary" d="M 42 40 L 60 58 L 55 64 L 36 45 Z" />
+          <path class="logo-primary" d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" />
+          <line class="logo-slit" x1="34" y1="76" x2="43" y2="63" stroke-width="3" stroke-linecap="round" />
+          <line class="logo-slit" x1="27" y1="69" x2="36" y2="56" stroke-width="3" stroke-linecap="round" />
+          <path class="logo-sparkle" d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" />
+          <circle class="logo-dot" cx="62" cy="79" r="3.5" />
+        </svg>
+      </div>
       <div class="brand-text">
         <span class="brand-name">Sweepr</span>
       </div>
     </div>
 
-    <nav class="nav-tabs">
-      {#each tabs as t}
-        <button class="nav-tab" class:active={tab === t.id} onclick={() => (tab = t.id)}>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={t.icon} /></svg>
-          <span>{t.label}</span>
+    <nav class="nav-tabs" aria-label="Main navigation">
+      {#each tabs as item}
+        <button
+          class="nav-tab"
+          class:active={tab === item.id}
+          aria-current={tab === item.id ? "page" : undefined}
+          aria-label={t(item.key, $lang)}
+          onclick={() => (tab = item.id)}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={item.icon} /></svg>
+          <span>{t(item.key, $lang)}</span>
         </button>
       {/each}
     </nav>
 
-    <div class="header-right">
-      <div class="status-indicator">
-        <span class="pulse-dot"></span>
-        <span>Protected</span>
-      </div>
+    <div class="header-right sidebar-footer">
+      <select
+        class="lang-picker"
+        aria-label="Select language"
+        value={$lang}
+        onchange={(e) => setLang((e.currentTarget as HTMLSelectElement).value as Lang)}
+      >
+        {#each LANGUAGES as l}
+          <option value={l.code}>{l.code.toUpperCase()} · {l.label}</option>
+        {/each}
+      </select>
+
+      <button
+        class="theme-toggle-btn"
+        onclick={toggleTheme}
+        aria-label={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
+        title={`Theme: ${theme === "dark" ? "Dark" : "Light"}`}
+      >
+        {theme === "dark" ? t("theme.dark", $lang) : t("theme.light", $lang)}
+      </button>
+
       {#if license?.active}
-        <span class="tier-badge pro">{license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? "Activated" : "Pro"}</span>
+        <span class="tier-badge pro">{license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : t("tier.pro", $lang)}</span>
       {:else}
-        <button class="key-icon-btn" onclick={() => (showActivateModal = true)} title="Activate Sweepr License">
+        <button class="key-icon-btn" onclick={() => (showActivateModal = true)} title="Activate Sweepr License" aria-label="Activate Sweepr License">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9l-1.5-1.5L5 9a7 7 0 1 0 10 10l2-2m-2-2l2-2m-2-2l2-2"/></svg>
         </button>
-        <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>Free Tier</button>
+        <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>{t("tier.free", $lang)}</button>
       {/if}
     </div>
   </header>
@@ -83,7 +156,7 @@
     {:else if tab === "utilities"}
       <Utilities {license} />
     {:else if tab === "account"}
-      <Account {license} onLicenseChange={refreshLicense} />
+      <Account {license} {info} onRefresh={() => refreshLicense(true)} />
     {/if}
   </main>
 
@@ -127,17 +200,40 @@
     flex-shrink: 0;
   }
   .logo {
-    width: 30px;
-    height: 30px;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    color: #fff;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     display: grid;
     place-items: center;
-    font-weight: 800;
-    font-size: 16px;
     box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+    overflow: hidden;
   }
+  .logo-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .logo-bg-rect { fill: url(#appEmeraldBg); stroke: rgba(255, 255, 255, 0.22); }
+  .logo-primary { fill: #ffffff; }
+  .logo-handle { stroke: #a7f3d0; }
+  .logo-slit { stroke: #047857; }
+  .logo-sparkle { fill: #ffffff; }
+  .logo-dot { fill: #a7f3d0; }
+
+  @media (prefers-color-scheme: dark) {
+    .logo-bg-rect { fill: url(#appMintBg); stroke: rgba(5, 150, 105, 0.25); }
+    .logo-primary { fill: #059669; }
+    .logo-handle { stroke: #10b981; }
+    .logo-slit { stroke: #d1fae5; }
+    .logo-sparkle { fill: #047857; }
+    .logo-dot { fill: #10b981; }
+  }
+  :global(.dark) .logo-bg-rect { fill: url(#appMintBg); stroke: rgba(5, 150, 105, 0.25); }
+  :global(.dark) .logo-primary { fill: #059669; }
+  :global(.dark) .logo-handle { stroke: #10b981; }
+  :global(.dark) .logo-slit { stroke: #d1fae5; }
+  :global(.dark) .logo-sparkle { fill: #047857; }
+  :global(.dark) .logo-dot { fill: #10b981; }
   .brand-text {
     display: flex;
     align-items: center;
@@ -196,24 +292,37 @@
     white-space: nowrap;
   }
 
-  .status-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  .lang-picker {
     font-size: 11.5px;
     font-weight: 600;
-    color: #047857;
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.25);
     padding: 4px 10px;
     border-radius: 9999px;
-    white-space: nowrap;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
   }
-  .pulse-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
+
+  .theme-toggle-btn {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    box-shadow: none;
+  }
+
+  :global(:root[data-theme="dark"]) .top-nav {
+    background: rgba(30, 41, 59, 0.94);
+  }
+  :global(:root[data-theme="dark"]) button.nav-tab.active {
+    color: #34d399;
+  }
+  :global(:root[data-theme="dark"]) button.nav-tab.active svg {
+    stroke: #34d399;
   }
 
   .key-icon-btn {

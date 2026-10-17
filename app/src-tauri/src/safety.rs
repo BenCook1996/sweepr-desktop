@@ -57,6 +57,22 @@ pub fn is_safe_root(root: &Path) -> bool {
     !denied.iter().any(|d| paths_equal(d, root))
 }
 
+/// Same as [`is_safe_root`], except `dirs::download_dir()` is permitted when the
+/// rule enforces at least a 30-day minimum file age (`min_age_hours >= 24 * 30`).
+pub fn is_safe_scan_root(root: &Path, min_age_hours: u64) -> bool {
+    if is_safe_root(root) {
+        return true;
+    }
+    if min_age_hours >= 24 * 30 {
+        if let Some(dl) = dirs::download_dir() {
+            if root.is_absolute() && paths_equal(&dl, root) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 fn paths_equal(a: &Path, b: &Path) -> bool {
     #[cfg(windows)]
     {
@@ -74,17 +90,90 @@ pub fn is_link_like(entry: &DirEntry) -> bool {
     if entry.path_is_symlink() || entry.file_type().is_symlink() {
         return true;
     }
+    match entry.metadata() {
+        Ok(md) => metadata_is_link_like(&md),
+        Err(_) => false,
+    }
+}
+
+/// Same test as [`is_link_like`] for metadata obtained via
+/// `std::fs::symlink_metadata` (which does not follow links).
+pub fn metadata_is_link_like(md: &std::fs::Metadata) -> bool {
+    if md.file_type().is_symlink() {
+        return true;
+    }
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt;
         const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
-        if let Ok(md) = entry.metadata() {
-            if md.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
-                return true;
-            }
+        if md.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+            return true;
         }
     }
     false
+}
+
+/// Normalise a path for prefix comparison: strip the Windows verbatim prefix
+/// produced by `canonicalize`, unify separators and case, trim trailing slashes.
+fn normalise_for_compare(p: &Path) -> String {
+    let s = p.to_string_lossy();
+    #[cfg(windows)]
+    {
+        let s = if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+            format!(r"\\{rest}")
+        } else if let Some(rest) = s.strip_prefix(r"\\?\") {
+            rest.to_string()
+        } else {
+            s.to_string()
+        };
+        s.replace('/', "\\").trim_end_matches('\\').to_lowercase()
+    }
+    #[cfg(not(windows))]
+    {
+        s.trim_end_matches('/').to_string()
+    }
+}
+
+/// True if `child` is `parent` or lies inside it. Both paths should be
+/// absolute; they are canonicalised when possible.
+pub fn is_within(child: &Path, parent: &Path) -> bool {
+    let c = std::fs::canonicalize(child).unwrap_or_else(|_| child.to_path_buf());
+    let p = std::fs::canonicalize(parent).unwrap_or_else(|_| parent.to_path_buf());
+    let (c, p) = (normalise_for_compare(&c), normalise_for_compare(&p));
+    if p.is_empty() {
+        // Filesystem root ("/"): everything is inside it.
+        return true;
+    }
+    let sep = if cfg!(windows) { '\\' } else { '/' };
+    c == p || (c.starts_with(&p) && c[p.len()..].starts_with(sep))
+}
+
+/// True if `path` matches or is inside any user-configured exclusion path.
+pub fn is_excluded(path: &Path, exclusions: &[ std::path::PathBuf ]) -> bool {
+    exclusions.iter().any(|ex| is_within(path, ex))
+}
+
+fn exclusions_file(data_dir: &Path) -> std::path::PathBuf {
+    data_dir.join("exclusions.json")
+}
+
+pub fn load_exclusions(data_dir: &Path) -> Vec<std::path::PathBuf> {
+    let file = exclusions_file(data_dir);
+    let Ok(raw) = std::fs::read_to_string(file) else {
+        return Vec::new();
+    };
+    let list: Vec<String> = serde_json::from_str(&raw).unwrap_or_default();
+    list.into_iter()
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .collect()
+}
+
+pub fn save_exclusions(data_dir: &Path, paths: &[std::path::PathBuf]) -> std::io::Result<()> {
+    std::fs::create_dir_all(data_dir)?;
+    let strings: Vec<String> = paths.iter().map(|p| p.to_string_lossy().into_owned()).collect();
+    let json = serde_json::to_string_pretty(&strings).unwrap_or_else(|_| "[]".into());
+    std::fs::write(exclusions_file(data_dir), json)
 }
 
 #[cfg(test)]
@@ -106,5 +195,23 @@ mod tests {
     #[test]
     fn allows_temp() {
         assert!(is_safe_root(&std::env::temp_dir()));
+    }
+
+    #[test]
+    fn containment() {
+        let t = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        assert!(is_within(&t.join("a").join("b.txt"), &t));
+        assert!(is_within(&t, &t));
+        let sibling = format!("{}-sibling", t.to_string_lossy().trim_end_matches(['\\', '/']));
+        assert!(!is_within(Path::new(&sibling), &t));
+    }
+
+    #[test]
+    fn exclusions_match_files_and_dirs() {
+        let t = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let ex = vec![t.join("keep_dir"), t.join("keep_file.log")];
+        assert!(is_excluded(&t.join("keep_dir").join("nested.bin"), &ex));
+        assert!(is_excluded(&t.join("keep_file.log"), &ex));
+        assert!(!is_excluded(&t.join("other.log"), &ex));
     }
 }

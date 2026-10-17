@@ -179,13 +179,98 @@ fun formatDate(ms: Long): String =
 // ---------- Shared components ----------
 
 @Composable
+fun SweeprBrushLogo(modifier: Modifier = Modifier.size(30.dp)) {
+    val mode by Prefs.theme.collectAsState()
+    val dark = when (mode) {
+        ThemeMode.System -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+    }
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val s = size.minDimension / 100f
+        val bgStart = if (dark) Color(0xFFECFDF5) else Color(0xFF10B981)
+        val bgEnd = if (dark) Color(0xFFD1FAE5) else Color(0xFF047857)
+        val fgPrimary = if (dark) Color(0xFF059669) else Color.White
+        val fgSecondary = if (dark) Color(0xFF10B981) else Color(0xFFA7F3D0)
+        val slitColor = if (dark) Color(0xFFD1FAE5) else Color(0xFF047857)
+        val sparkleColor = if (dark) Color(0xFF047857) else Color.White
+
+        drawRoundRect(
+            brush = androidx.compose.ui.graphics.Brush.linearGradient(listOf(bgStart, bgEnd)),
+            topLeft = androidx.compose.ui.geometry.Offset(4f * s, 4f * s),
+            size = androidx.compose.ui.geometry.Size(92f * s, 92f * s),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(22f * s, 22f * s),
+        )
+        drawLine(
+            color = fgSecondary,
+            start = androidx.compose.ui.geometry.Offset(76f * s, 24f * s),
+            end = androidx.compose.ui.geometry.Offset(53f * s, 47f * s),
+            strokeWidth = 8f * s,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        val collar = androidx.compose.ui.graphics.Path().apply {
+            moveTo(42f * s, 40f * s)
+            lineTo(60f * s, 58f * s)
+            lineTo(55f * s, 64f * s)
+            lineTo(36f * s, 45f * s)
+            close()
+        }
+        drawPath(collar, color = fgPrimary)
+        val bristles = androidx.compose.ui.graphics.Path().apply {
+            moveTo(34f * s, 48f * s)
+            lineTo(52f * s, 66f * s)
+            lineTo(38f * s, 82f * s)
+            cubicTo(30f * s, 78f * s, 22f * s, 70f * s, 18f * s, 62f * s)
+            close()
+        }
+        drawPath(bristles, color = fgPrimary)
+        drawLine(
+            color = slitColor,
+            start = androidx.compose.ui.geometry.Offset(34f * s, 76f * s),
+            end = androidx.compose.ui.geometry.Offset(43f * s, 63f * s),
+            strokeWidth = 3f * s,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        drawLine(
+            color = slitColor,
+            start = androidx.compose.ui.geometry.Offset(27f * s, 69f * s),
+            end = androidx.compose.ui.geometry.Offset(36f * s, 56f * s),
+            strokeWidth = 3f * s,
+            cap = androidx.compose.ui.graphics.StrokeCap.Round,
+        )
+        val star = androidx.compose.ui.graphics.Path().apply {
+            moveTo(74f * s, 56f * s)
+            quadraticBezierTo(74f * s, 65f * s, 83f * s, 65f * s)
+            quadraticBezierTo(74f * s, 65f * s, 74f * s, 74f * s)
+            quadraticBezierTo(74f * s, 65f * s, 65f * s, 65f * s)
+            quadraticBezierTo(74f * s, 65f * s, 74f * s, 56f * s)
+            close()
+        }
+        drawPath(star, color = sparkleColor)
+        drawCircle(
+            color = fgSecondary,
+            radius = 3.5f * s,
+            center = androidx.compose.ui.geometry.Offset(62f * s, 79f * s),
+        )
+    }
+}
+
+@Composable
 fun SweeprTopBar(
     title: String,
     onBack: (() -> Unit)?,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
-        title = { Text(title, fontWeight = FontWeight.Bold) },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onBack == null) {
+                    SweeprBrushLogo(Modifier.size(28.dp))
+                    Spacer(Modifier.width(10.dp))
+                }
+                Text(title, fontWeight = FontWeight.Bold)
+            }
+        },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
@@ -195,7 +280,7 @@ fun SweeprTopBar(
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = SweeprGreen,
             navigationIconContentColor = SweeprGreen,
             actionIconContentColor = SweeprGreen,
@@ -211,6 +296,8 @@ fun MediaThumb(
     onToggle: () -> Unit,
     onPreview: () -> Unit,
     badge: String? = null,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null,
 ) {
     Box(
         modifier = Modifier
@@ -222,7 +309,7 @@ fun MediaThumb(
     ) {
         AsyncImage(
             model = item.uri,
-            contentDescription = item.name,
+            contentDescription = "${item.name}, ${formatBytes(item.size)}",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
@@ -239,8 +326,25 @@ fun MediaThumb(
                     .align(Alignment.TopStart)
                     .padding(4.dp)
                     .background(SweeprGreenDark, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                    .padding(horizontal = 5.dp, vertical = 2.dp),
             )
+        } else if (actionLabel != null && onActionClick != null) {
+            Surface(
+                onClick = onActionClick,
+                color = SweeprGreenDark.copy(alpha = 0.92f),
+                shape = RoundedCornerShape(6.dp),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(4.dp),
+            ) {
+                Text(
+                    text = actionLabel,
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                )
+            }
         }
         SelectionDot(selected, Modifier.align(Alignment.TopEnd).padding(6.dp))
         Row(
@@ -252,7 +356,7 @@ fun MediaThumb(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (item.isVideo) {
-                Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.swipe_video), tint = Color.White, modifier = Modifier.size(12.dp))
                 Text(formatDuration(item.durationMs), color = Color.White, fontSize = 10.sp)
                 Spacer(Modifier.weight(1f))
             }

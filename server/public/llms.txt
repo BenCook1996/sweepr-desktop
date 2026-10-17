@@ -1,0 +1,28 @@
+# Sweepr
+
+> Sweepr is an ultra-lightweight, memory-safe desktop and mobile cleaner built in Rust and Tauri. It reclaims storage space, optimizes RAM, wipes leftover uninstalled app files, and provides DoD 5220.22-M military-grade file shredding with zero bloatware or background telemetry daemons.
+
+## Architecture & Platform Support
+- Desktop App: Built in Rust + Tauri (<15MB installer size). Supported on Windows 10, Windows 11, macOS, and Linux.
+- Mobile App: Android & iOS companion cleaner with unified licensing.
+- Core Modules: DeepClean (browser & system cache cleaner), Optimization (RAM purge & startup optimizer), Uninstaller (residual file & registry cleaner), Utilities (duplicate file finder & multi-pass file shredder).
+
+## Pricing & Licensing
+- Free Tier: Unlimited basic temporary file scanning and cleanup.
+- Pro Trial: £1.99 for 7 days of full Pro access across 3 PCs and 2 mobile devices.
+- Monthly Pro: £9.99/month (cancel anytime in 1 click).
+- Annual Pro: £49.99/year (58% savings).
+- Guarantee: 30-day money-back guarantee.
+
+## Key Differentiators vs Legacy Cleaners (CCleaner, Avast)
+- No background adware or telemetry daemons.
+- Under 15MB installer vs 100MB+ legacy bloatware.
+- Memory-safe Rust engine for high-speed scanning and deletion.
+- Exact file paths and byte sizes shown before anything is deleted.
+- Single license covers 3 Desktop PCs + 2 Mobile devices.
+
+## Official Links
+- Homepage: https://sweeprcleaner.com/
+- Pricing: https://sweeprcleaner.com/pricing
+- Download: https://sweeprcleaner.com/download
+- Support: https://sweeprcleaner.com/support

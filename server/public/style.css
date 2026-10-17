@@ -52,11 +52,15 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
 }
 
-.btn {
+.btn,
+button.btn,
+[type="submit"].btn,
+[type="button"].btn {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-top: 1px solid var(--border-highlight);
+  background-color: var(--panel-2);
   background: var(--panel-2);
   color: var(--text);
   border-radius: 12px;
@@ -74,13 +78,20 @@ body {
 }
 
 @media (min-width: 768px) {
-  .btn {
+  .btn,
+  button.btn,
+  [type="submit"].btn,
+  [type="button"].btn {
     padding: 0 20px;
   }
 }
 
-.btn:hover {
-  border-color: rgba(0,0,0,0.08);
+.btn:hover:not(:disabled),
+button.btn:hover:not(:disabled),
+[type="submit"].btn:hover:not(:disabled),
+[type="button"].btn:hover:not(:disabled) {
+  border-color: rgba(0,0,0,0.12);
+  background-color: #ffffff;
   background: #ffffff;
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
@@ -101,7 +112,10 @@ body {
 }
 
 /* Dedicated "Green Means GO" High-Conversion CTA */
-.btn-go {
+.btn-go,
+button.btn-go,
+[type="submit"].btn-go,
+[type="button"].btn-go {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -132,7 +146,10 @@ body {
   100% { left: 220%; }
 }
 
-.btn-go:hover:not(:disabled) {
+.btn-go:hover:not(:disabled),
+button.btn-go:hover:not(:disabled),
+[type="submit"].btn-go:hover:not(:disabled),
+[type="button"].btn-go:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 8px 30px rgba(16, 185, 129, 0.55), 0 0 0 2px rgba(16, 185, 129, 0.3);
   transform: translateY(-2px) scale(1.03);
@@ -168,13 +185,19 @@ body {
   }
 }
 
-.btn-ghost {
+.btn-ghost,
+button.btn-ghost,
+[type="submit"].btn-ghost,
+[type="button"].btn-ghost {
   background: transparent;
   border-color: transparent;
   color: var(--muted);
   box-shadow: none;
 }
-.btn-ghost:hover {
+.btn-ghost:hover:not(:disabled),
+button.btn-ghost:hover:not(:disabled),
+[type="submit"].btn-ghost:hover:not(:disabled),
+[type="button"].btn-ghost:hover:not(:disabled) {
   color: var(--text);
   background: var(--panel-2);
 }
@@ -198,14 +221,39 @@ body {
 .logo-box {
   width: 40px;
   height: 40px;
-  background: var(--accent);
-  color: #fff;
+  background-image: url("/logo-emerald.svg");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
   border-radius: 10px;
-  display: grid;
+  display: inline-grid;
   place-items: center;
-  font-weight: 800;
-  font-size: 20px;
+  font-size: 0;
+  color: transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
 }
+
+.logo-box svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.logo-box.logo-mint,
+.dark .logo-box,
+[data-theme="dark"] .logo-box {
+  background-image: url("/logo-mint-glass.svg");
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo-box {
+    background-image: url("/logo-mint-glass.svg");
+  }
+}
+
 
 
 

@@ -6,9 +6,11 @@
 
   let email = $state("");
   let emailConfirm = $state("");
+  let selectedPlan = $state<"monthly" | "annual">("monthly");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
+  let activeInfo = $state<"privacy" | "sales" | "info" | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
 
   function stopPolling() {
@@ -42,7 +44,7 @@
 
     busy = true;
     try {
-      await api.startCheckout();
+      await api.startCheckout(email.trim(), selectedPlan);
       waitingPayment = true;
       stopPolling();
       let ticks = 0;
@@ -62,6 +64,7 @@
     open = false;
     error = null;
     waitingPayment = false;
+    activeInfo = null;
   }
 </script>
 
@@ -83,23 +86,61 @@
             Please enter your <strong>Email address</strong> (required for activation)
           </p>
 
+          <div class="plan-cards" role="radiogroup" aria-label="Select billing plan">
+            <button
+              type="button"
+              class="plan-card"
+              class:selected={selectedPlan === "monthly"}
+              onclick={() => (selectedPlan = "monthly")}
+              aria-pressed={selectedPlan === "monthly"}
+            >
+              <div class="row" style="justify-content: space-between; width: 100%;">
+                <strong>Monthly Plan</strong>
+                <span class="badge free">30-Day Trial</span>
+              </div>
+              <div class="plan-price">{PRICING.activation} today</div>
+              <div class="muted small">then {PRICING.monthly}/mo · Cancel anytime</div>
+            </button>
+
+            <button
+              type="button"
+              class="plan-card"
+              class:selected={selectedPlan === "annual"}
+              onclick={() => (selectedPlan = "annual")}
+              aria-pressed={selectedPlan === "annual"}
+            >
+              <div class="row" style="justify-content: space-between; width: 100%;">
+                <strong>Annual Plan</strong>
+                <span class="badge pro">{PRICING.annualSave}</span>
+              </div>
+              <div class="plan-price">{PRICING.annual}/yr</div>
+              <div class="muted small">{PRICING.annualSave} · Billed yearly, no free trial</div>
+            </button>
+          </div>
+
           <div class="inputs-group">
             <input
               type="email"
               bind:value={email}
               placeholder="Enter email address"
               class="soft-input"
+              aria-label="Email address"
             />
             <input
               type="email"
               bind:value={emailConfirm}
               placeholder="Re-enter email address"
               class="soft-input"
+              aria-label="Confirm email address"
             />
           </div>
 
           <div class="pricing-hint muted small">
-            {PRICING.activation} for your first {PRICING.trialDays} days, then {PRICING.monthly}/month. Cancel anytime.
+            {#if selectedPlan === "monthly"}
+              {PRICING.activation} today, then {PRICING.monthly}/month. Cancel anytime.
+            {:else}
+              {PRICING.annual}/yr — {PRICING.annualSave}, no free trial. Cancel anytime.
+            {/if}
           </div>
 
           {#if error}
@@ -108,16 +149,30 @@
 
           <div class="action-row">
             <button class="primary begin-btn" disabled={busy} onclick={handleActivate}>
-              {busy ? "Opening checkout…" : "Begin activation"}
+              {busy ? "Opening checkout…" : selectedPlan === "annual" ? `Activate Annual (${PRICING.annual}/yr)` : "Begin activation"}
             </button>
           </div>
         </div>
 
+        {#if activeInfo === "privacy"}
+          <div class="info-drawer muted small">
+            <strong>Privacy Policy:</strong> Sweepr scans your files locally on your PC—never uploading file names or contents. Your email is used solely for licence activation and billing receipts via Stripe.
+          </div>
+        {:else if activeInfo === "sales"}
+          <div class="info-drawer muted small">
+            <strong>Sales Policy:</strong> {PRICING.activation} for your first {PRICING.trialDays} days on the Monthly plan (then {PRICING.monthly}/month), or {PRICING.annual}/year on the Annual plan ({PRICING.annualSave}, no trial). Cancel anytime in 1 click from the Account tab.
+          </div>
+        {:else if activeInfo === "info"}
+          <div class="info-drawer muted small">
+            <strong>More info:</strong> Your Sweepr Pro subscription unlocks deep browser/app cache cleanup, duplicate finder, registry repair, file shredder, and covers up to 3 PCs + 3 mobile devices.
+          </div>
+        {/if}
+
         <!-- Modal Footer Links -->
         <div class="modal-footer">
-          <a href="#privacy" class="footer-link">Privacy Policy</a>
-          <a href="#sales" class="footer-link">Sales Policy</a>
-          <a href="#info" class="footer-link">More info</a>
+          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "privacy" ? null : "privacy")}>Privacy Policy</button>
+          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "sales" ? null : "sales")}>Sales Policy</button>
+          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "info" ? null : "info")}>More info</button>
         </div>
 
       {:else}
@@ -153,10 +208,10 @@
 
   .modal-sheet {
     width: 100%;
-    max-width: 520px;
-    background: #ffffff;
+    max-width: 540px;
+    background: var(--panel-solid, #ffffff);
     border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    border: 1px solid var(--border);
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
     padding: 28px 36px 20px 36px;
     display: flex;
@@ -168,19 +223,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
   .modal-title {
     font-size: 24px;
     font-weight: 700;
     margin: 0;
-    color: #0f172a;
+    color: var(--text);
     letter-spacing: -0.4px;
   }
   .close-btn {
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: var(--muted);
     cursor: pointer;
     padding: 6px;
     border-radius: 8px;
@@ -189,8 +244,8 @@
     box-shadow: none;
   }
   .close-btn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--panel-2);
+    color: var(--text);
   }
 
   .modal-body {
@@ -200,13 +255,45 @@
     text-align: center;
   }
   .prompt-text {
-    font-size: 15px;
-    color: #334155;
-    margin: 0 0 20px 0;
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    margin: 0 0 14px 0;
   }
   .prompt-text strong {
-    color: #0f172a;
+    color: var(--text);
     font-weight: 700;
+  }
+
+  .plan-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  .plan-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-2);
+    cursor: pointer;
+    box-shadow: none;
+    white-space: normal;
+  }
+  .plan-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .plan-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-top: 2px;
   }
 
   .inputs-group {
@@ -234,7 +321,7 @@
   }
 
   .pricing-hint {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
   .action-row {
@@ -247,17 +334,25 @@
     border-radius: 10px;
     font-weight: 700;
     font-size: 14px;
-    background: #e2e8f0;
-    color: #475569;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: #ffffff;
     border: none;
-    box-shadow: none;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
     transition: all 0.2s ease;
   }
   .begin-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    color: #ffffff;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
     transform: translateY(-1px);
+  }
+
+  .info-drawer {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-align: left;
+    line-height: 1.45;
   }
 
   .modal-footer {
@@ -265,17 +360,24 @@
     align-items: center;
     justify-content: center;
     gap: 20px;
-    margin-top: 36px;
-    padding-top: 14px;
+    margin-top: 20px;
+    padding-top: 12px;
   }
   .footer-link {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    cursor: pointer;
     font-size: 12px;
-    color: #64748b;
+    font-weight: 500;
+    color: var(--muted);
     text-decoration: underline;
     transition: color 0.15s;
   }
   .footer-link:hover {
-    color: #0f172a;
+    color: var(--text);
+    background: transparent;
   }
 
   .waiting-body {
