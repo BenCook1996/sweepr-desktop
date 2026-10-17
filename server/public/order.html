@@ -1038,6 +1038,14 @@
       document.getElementById('termsConsentLabel').textContent = 
         'I agree to pay £1.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £8.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
 
+      // Re-apply current language translations if non-English
+      try {
+        const savedLang = localStorage.getItem('sweepr_lang');
+        if (savedLang && savedLang !== 'en' && typeof window.applyDictionary === 'function') {
+          window.applyDictionary(savedLang);
+        }
+      } catch (e) {}
+
       // Smooth scroll to checkout box
       document.getElementById('checkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
