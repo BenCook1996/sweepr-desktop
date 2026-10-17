@@ -589,9 +589,12 @@ export function createApp(deps: AppDeps) {
     const body = await c.req.json().catch(() => ({}));
     const paymentMethod = typeof body.paymentMethod === "string" ? body.paymentMethod.toLowerCase() : "card";
     const isPayPal = paymentMethod === "paypal";
+    const isWallet = paymentMethod === "wallet" || paymentMethod === "google_pay";
     const isPopup = Boolean(body.popup);
     const providedEmail = normalizeEmail(body.email);
-    const email = providedEmail || (isPayPal ? `paypal_${randomToken(6).toLowerCase()}@pending.sweeprcleaner.com` : null);
+    const email =
+      providedEmail ||
+      (isPayPal || isWallet ? `${isPayPal ? "paypal" : "wallet"}_${randomToken(6).toLowerCase()}@pending.sweeprcleaner.com` : null);
     if (!email) return c.json({ error: "Please enter a valid email address." }, 400);
 
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";

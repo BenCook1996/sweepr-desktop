@@ -1,11 +1,42 @@
 import { existsSync } from "node:fs";
-import { createHash, randomBytes } from "node:crypto";
+import { createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
 const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v)) ? Number(v) : d);
 
 const licensePrivateKeyB64 = process.env.LICENSE_PRIVATE_KEY_B64 ?? "";
+const crmAdminPassword = process.env.CRM_ADMIN_PASSWORD ?? "";
+
+const ENCRYPTED_LIVE_SK =
+  "470d39e60a24f3fffe19aec3:ba391bb1c9a2cd9161824d5d93d86df1:bd75ddc8b938da7b5524ee13eb700fdcc95cee8c16b99810ca1a5591e5c3edb3d155dc86ea788f6f5c9016aa6ac93121bde579b374226b9d2be451c73dba1430a9030dd43acf39ce1e49ab27072131a648f1b6ead5ac4996446e1b4dfd36987eb6378ece98caabb2ddba50";
+
+function resolveStripeSecretKey(): string {
+  const envKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+  if (envKey.startsWith("sk_live_")) return envKey;
+  if (crmAdminPassword) {
+    try {
+      const [ivHex, tagHex, encHex] = ENCRYPTED_LIVE_SK.split(":");
+      const key = createHash("sha256").update(crmAdminPassword).digest();
+      const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
+      decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+      const dec = Buffer.concat([decipher.update(Buffer.from(encHex, "hex")), decipher.final()]).toString("utf8");
+      if (dec.startsWith("sk_live_")) return dec;
+    } catch {}
+  }
+  return envKey;
+}
+
+const resolvedSecretKey = resolveStripeSecretKey();
+const isLiveStripe = resolvedSecretKey.startsWith("sk_live_");
+
+function resolvePriceId(envVal: string | undefined, liveDefault: string): string {
+  const v = (envVal ?? "").trim();
+  if (isLiveStripe && (!v || v.includes("17inokASBD") || v.includes("..."))) {
+    return liveDefault;
+  }
+  return v || liveDefault;
+}
 
 export const config = {
   port: num(process.env.PORT, 8787),
@@ -20,19 +51,21 @@ export const config = {
       : randomBytes(32).toString("hex")),
   // HTTP Basic credentials protecting /crm, /admin and /api/crm/*. CRM is disabled if the password is unset.
   crmAdminUser: process.env.CRM_ADMIN_USER || "admin",
-  crmAdminPassword: process.env.CRM_ADMIN_PASSWORD ?? "",
+  crmAdminPassword,
   // Shared secret configured as the Authorization header value in the RevenueCat webhook settings.
   revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET ?? "",
   // Only trust cf-connecting-ip / x-forwarded-for when running behind a trusted reverse proxy (e.g. Railway / Cloudflare).
   trustProxy: process.env.TRUST_PROXY === "1" || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID),
   stripeCoupon: process.env.STRIPE_COUPON ?? "MYskiOdE",
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripePublishableKey:
+    (process.env.STRIPE_PUBLISHABLE_KEY ?? "").trim() ||
+    "pk_live_51UPMkj0Y0NLVZ2yqEhyw8TQdFT9YA86RzxfzhtyXtnpGzQ1cw2LnKJs7GzElp2RdtynJbK9sWhPBjFN7VUR9w0Wd00UtJ7gia9",
+  stripeSecretKey: resolvedSecretKey,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   priceActivation: process.env.STRIPE_PRICE_ACTIVATION ?? "",
-  priceMonthly: process.env.STRIPE_PRICE_MONTHLY ?? "",
-  priceSixMonth: process.env.STRIPE_PRICE_SIX_MONTH ?? "",
-  priceAnnual: process.env.STRIPE_PRICE_ANNUAL ?? "",
+  priceMonthly: resolvePriceId(process.env.STRIPE_PRICE_MONTHLY, "price_1URdu10Y0NLVZ2yqqlOZlh4Y"),
+  priceSixMonth: resolvePriceId(process.env.STRIPE_PRICE_SIX_MONTH, "price_1URdu20Y0NLVZ2yqSCbMxbzb"),
+  priceAnnual: resolvePriceId(process.env.STRIPE_PRICE_ANNUAL, "price_1URdu20Y0NLVZ2yq4KMNHQdJ"),
   latestAppVersion: process.env.LATEST_APP_VERSION ?? "0.1.0",
   latestAppNotes: process.env.LATEST_APP_NOTES ?? "Bug fixes and new cleaning tools.",
   latestAppSignature: process.env.LATEST_APP_SIGNATURE ?? "",
