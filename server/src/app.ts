@@ -541,13 +541,57 @@ export function createApp(deps: AppDeps) {
     });
   });
 
+  // Helper to sync PayPal payer_email onto accounts created via Express PayPal popup without upfront email
+  async function syncPayPalCustomerEmail(sub: Stripe.Subscription, accountIdHint?: string | null) {
+    if (!stripe) return;
+    try {
+      const resolvedAccount =
+        (accountIdHint && repo.accountById(accountIdHint)) ||
+        (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
+        undefined;
+      if (!resolvedAccount) return;
+      const currentEmail = resolvedAccount.email || "";
+      if (currentEmail && !currentEmail.endsWith("@pending.sweeprcleaner.com")) return;
+
+      let pm: any =
+        typeof sub.default_payment_method === "object" && sub.default_payment_method
+          ? sub.default_payment_method
+          : null;
+      if (!pm) {
+        const latestInv: any = sub.latest_invoice;
+        const pi: any = latestInv?.payment_intent;
+        if (pi && typeof pi.payment_method === "object" && pi.payment_method) {
+          pm = pi.payment_method;
+        } else if (typeof sub.default_payment_method === "string") {
+          pm = await stripe.paymentMethods.retrieve(sub.default_payment_method).catch(() => null);
+        }
+      }
+      const payerEmail = normalizeEmail(pm?.paypal?.payer_email || pm?.billing_details?.email);
+      if (payerEmail && !payerEmail.endsWith("@pending.sweeprcleaner.com")) {
+        const existingWithEmail = repo.accountByEmail(payerEmail);
+        if (!existingWithEmail || existingWithEmail.id === resolvedAccount.id) {
+          repo.updateAccountProfile(resolvedAccount.id, { email: payerEmail });
+          if (resolvedAccount.stripe_customer_id) {
+            await stripe.customers.update(resolvedAccount.stripe_customer_id, { email: payerEmail }).catch(() => {});
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[paypal-sync] Failed to sync PayPal payer email:", e);
+    }
+  }
+
   // Create a Stripe Subscription for direct on-page card, PayPal, Apple Pay & Google Pay confirmation (no Stripe Hosted Checkout page)
   app.post("/api/create-subscription", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
 
     const body = await c.req.json().catch(() => ({}));
-    const email = normalizeEmail(body.email);
+    const paymentMethod = typeof body.paymentMethod === "string" ? body.paymentMethod.toLowerCase() : "card";
+    const isPayPal = paymentMethod === "paypal";
+    const isPopup = Boolean(body.popup);
+    const providedEmail = normalizeEmail(body.email);
+    const email = providedEmail || (isPayPal ? `paypal_${randomToken(6).toLowerCase()}@pending.sweeprcleaner.com` : null);
     if (!email) return c.json({ error: "Please enter a valid email address." }, 400);
 
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";
@@ -557,11 +601,10 @@ export function createApp(deps: AppDeps) {
     const plan: "monthly" | "six_month" | "annual" =
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
-    const paymentMethod = typeof body.paymentMethod === "string" ? body.paymentMethod.toLowerCase() : "card";
     const confirmOnServer = Boolean(body.confirmOnServer);
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
-    const existing = repo.accountByEmail(email);
+    const existing = providedEmail ? repo.accountByEmail(providedEmail) : undefined;
     if (existing && isEntitled(repo.entitlement(existing.id), now(), config.pastDueGraceDays)) {
       return c.json({ error: "This email already has an active SWEEPR Cleaner Pro subscription." }, 409);
     }
@@ -587,7 +630,7 @@ export function createApp(deps: AppDeps) {
     try {
       if (customerId) {
         await stripe.customers.update(customerId, {
-          email,
+          ...(providedEmail ? { email: providedEmail } : {}),
           ...(name ? { name } : {}),
           ...(addressLine1 || postalCode
             ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
@@ -596,7 +639,7 @@ export function createApp(deps: AppDeps) {
         });
       } else {
         const customer = await stripe.customers.create({
-          email,
+          ...(providedEmail ? { email: providedEmail } : {}),
           ...(name ? { name } : {}),
           ...(addressLine1 || postalCode
             ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
@@ -628,7 +671,6 @@ export function createApp(deps: AppDeps) {
             },
           };
 
-      const isPayPal = paymentMethod === "paypal";
       const subParams: any = {
         customer: customerId,
         items: [itemConfig],
@@ -655,9 +697,9 @@ export function createApp(deps: AppDeps) {
         return c.json({ error: "Could not initialize payment intent." }, 500);
       }
 
-      const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`;
+      const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}${isPopup ? "&popup=1" : ""}`;
 
-      // Direct PayPal flow: confirm PaymentIntent with PayPal and return the direct PayPal authorization URL (no Stripe order page)
+      // Direct PayPal flow: confirm PaymentIntent with PayPal and return the direct PayPal authorization URL
       if (isPayPal) {
         const rawIp = clientIp(c);
         const validIp =
@@ -669,10 +711,14 @@ export function createApp(deps: AppDeps) {
         const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
           payment_method_data: {
             type: "paypal",
-            billing_details: {
-              email,
-              ...(name ? { name } : {}),
-            },
+            ...(providedEmail || name
+              ? {
+                  billing_details: {
+                    ...(providedEmail ? { email: providedEmail } : {}),
+                    ...(name ? { name } : {}),
+                  },
+                }
+              : {}),
           },
           mandate_data: {
             customer_acceptance: {
@@ -696,6 +742,7 @@ export function createApp(deps: AppDeps) {
           subscriptionId: subscription.id,
           accountId,
           plan,
+          livemode: Boolean(confirmedPi.livemode),
         });
       }
 
@@ -760,16 +807,28 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // Immediately verify & sync an on-page subscription after stripe.confirmCardPayment succeeds
+  // Immediately verify & sync an on-page or popup subscription
   app.post("/api/confirm-subscription", async (c) => {
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const body = await c.req.json().catch(() => ({}));
     const subscriptionId = typeof body.subscriptionId === "string" ? body.subscriptionId.trim() : "";
     const accountId = typeof body.accountId === "string" ? body.accountId.trim() : "";
+    const checkOnly = Boolean(body.checkOnly);
     if (!subscriptionId) return c.json({ error: "missing_subscription_id" }, 400);
 
     try {
-      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      const sub = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
+      });
+
+      if (checkOnly && sub.status !== "active" && sub.status !== "trialing") {
+        return c.json({
+          ok: false,
+          status: sub.status,
+        });
+      }
+
+      await syncPayPalCustomerEmail(sub, accountId || null);
       syncSubscription(repo, sub, accountId || null);
 
       const resolvedAccount =
@@ -785,7 +844,11 @@ export function createApp(deps: AppDeps) {
           secure: isHttps,
           maxAge: 86400 * 30,
         });
-        if (resolvedAccount.email && (sub.status === "active" || sub.status === "trialing")) {
+        if (
+          resolvedAccount.email &&
+          !resolvedAccount.email.endsWith("@pending.sweeprcleaner.com") &&
+          (sub.status === "active" || sub.status === "trialing")
+        ) {
           import("./email.js").then((m) => {
             m.sendSubscriptionEmail(resolvedAccount.email!, "activated", "Pro", resolvedAccount.name || undefined).catch(console.error);
           });
@@ -795,7 +858,7 @@ export function createApp(deps: AppDeps) {
       return c.json({
         ok: true,
         status: sub.status,
-        redirect: "/checkout/success?web=1",
+        redirect: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscriptionId)}&account_id=${encodeURIComponent(resolvedAccount?.id || accountId)}`,
       });
     } catch (err: any) {
       console.error("[confirm-subscription] error:", err);
@@ -1634,22 +1697,67 @@ export function createApp(deps: AppDeps) {
 
   // Simple pages the browser lands on after checkout.
   
+  const popupClosePage = (status: "success" | "cancelled", targetUrl: string) => {
+    const safeUrl = JSON.stringify(targetUrl);
+    const safeStatus = JSON.stringify(status);
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Pay with PayPal</title></head><body style="font-family:system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#f8fafc;color:#1e293b;"><div style="text-align:center;padding:24px;"><p style="font-weight:600;margin-bottom:12px;">${status === "success" ? "Payment authorized! Returning to SWEEPR Cleaner..." : "Returning to SWEEPR Cleaner..."}</p></div><script>
+      (function() {
+        var targetUrl = ${safeUrl};
+        var status = ${safeStatus};
+        var payload = { type: status === 'success' ? 'paypal_success' : 'paypal_cancelled', redirectUrl: targetUrl, ts: Date.now() };
+        try {
+          if (window.BroadcastChannel) {
+            var bc = new BroadcastChannel('sweepr_paypal_checkout');
+            bc.postMessage(payload);
+          }
+        } catch (e) {}
+        try {
+          localStorage.setItem('sweepr_paypal_event', JSON.stringify(payload));
+        } catch (e) {}
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(payload, window.location.origin);
+            if (status === 'success') {
+              window.opener.location.href = targetUrl;
+            }
+            window.close();
+            return;
+          }
+        } catch (e) {}
+        try { window.close(); } catch (e) {}
+        setTimeout(function() {
+          window.location.href = targetUrl;
+        }, 400);
+      })();
+    </script></body></html>`;
+  };
+
   app.get("/checkout/success", async (c) => {
     const isWeb = c.req.query("web") === "1";
+    const isPopup = c.req.query("popup") === "1";
     const subscriptionId = c.req.query("subscription_id")?.trim() || "";
     const accountId = c.req.query("account_id")?.trim() || "";
     const redirectStatus = c.req.query("redirect_status")?.trim() || "";
 
     if (redirectStatus === "failed" || redirectStatus === "canceled") {
+      if (isPopup) {
+        return c.html(popupClosePage("cancelled", "/order?error=payment_cancelled"));
+      }
       return c.redirect("/order?error=payment_cancelled");
     }
 
     if (subscriptionId && stripe) {
       try {
-        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const sub = await stripe.subscriptions.retrieve(subscriptionId, {
+          expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
+        });
         if (sub.status === "incomplete" || sub.status === "incomplete_expired" || sub.status === "canceled") {
+          if (isPopup) {
+            return c.html(popupClosePage("cancelled", "/order?error=payment_cancelled"));
+          }
           return c.redirect("/order?error=payment_cancelled");
         }
+        await syncPayPalCustomerEmail(sub, accountId || null);
         syncSubscription(repo, sub, accountId || null);
 
         const resolvedAccount =
@@ -1665,7 +1773,11 @@ export function createApp(deps: AppDeps) {
             secure: isHttps,
             maxAge: 86400 * 30,
           });
-          if (resolvedAccount.email && (sub.status === "active" || sub.status === "trialing")) {
+          if (
+            resolvedAccount.email &&
+            !resolvedAccount.email.endsWith("@pending.sweeprcleaner.com") &&
+            (sub.status === "active" || sub.status === "trialing")
+          ) {
             import("./email.js").then((m) => {
               const planLabel =
                 sub.metadata?.plan === "annual"
@@ -1680,6 +1792,10 @@ export function createApp(deps: AppDeps) {
       } catch (err) {
         console.error("[checkout/success] subscription sync error:", err);
       }
+    }
+
+    if (isPopup) {
+      return c.html(popupClosePage("success", "/checkout/success?web=1"));
     }
 
     if (isWeb) {

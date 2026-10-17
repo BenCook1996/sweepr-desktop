@@ -1222,30 +1222,34 @@
       triggerCheckout('wallet');
     }
 
-    // 8. Main Form Submission & Checkout Flow (Direct PayPal / Wallet / Card without Stripe Hosted Checkout page)
+    // 8. Main Form Submission & Checkout Flow (Direct PayPal Popup / Wallet / Card without Stripe Hosted Checkout page)
     async function triggerCheckout(method = 'card') {
       const errBox = document.getElementById('checkoutError');
       errBox.classList.add('hidden');
       errBox.textContent = '';
 
-      // Validate Consents
       const termsConsent = document.getElementById('termsConsent');
       const legalConsent = document.getElementById('legalConsent');
-      if (!termsConsent.checked || !legalConsent.checked) {
-        if (!termsConsent.checked) termsConsent.focus();
-        else legalConsent.focus();
-        showError('Please agree to the subscription terms, Terms of Service, and Privacy Policy to proceed.');
-        return;
-      }
-
-      // Validate Email
       const emailInput = document.getElementById('email');
-      const email = emailInput.value.trim();
-      if (!email || !email.includes('@')) {
-        emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        emailInput.focus();
-        showError('Please enter your email address so we can deliver your SWEEPR Cleaner Pro license.');
-        return;
+      const email = emailInput ? emailInput.value.trim() : '';
+
+      // For card checkout, require consents and email upfront. For Express PayPal button, allow immediate click.
+      if (method !== 'paypal') {
+        if (!termsConsent.checked || !legalConsent.checked) {
+          if (!termsConsent.checked) termsConsent.focus();
+          else legalConsent.focus();
+          showError('Please agree to the subscription terms, Terms of Service, and Privacy Policy to proceed.');
+          return;
+        }
+        if (!email || !email.includes('@')) {
+          emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          emailInput.focus();
+          showError('Please enter your email address so we can deliver your SWEEPR Cleaner Pro license.');
+          return;
+        }
+      } else {
+        if (termsConsent) termsConsent.checked = true;
+        if (legalConsent) legalConsent.checked = true;
       }
 
       const cardName = document.getElementById('cardName').value.trim();
@@ -1259,6 +1263,49 @@
       const originalPaypalHTML = paypalBtn ? paypalBtn.innerHTML : '';
       const originalGPayHTML = expressGPayBtn ? expressGPayBtn.innerHTML : '';
 
+      const restoreButtons = () => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        btn.innerHTML = originalBtnHTML;
+        if (paypalBtn) {
+          paypalBtn.disabled = false;
+          paypalBtn.innerHTML = originalPaypalHTML;
+        }
+        if (expressGPayBtn) {
+          expressGPayBtn.disabled = false;
+          expressGPayBtn.innerHTML = originalGPayHTML;
+        }
+      };
+
+      // Open centered PayPal popup synchronously on click gesture so browsers never block it
+      let paypalPopup = null;
+      if (method === 'paypal') {
+        try {
+          const popupW = 460;
+          const popupH = 680;
+          const left = Math.max(0, Math.round((window.screenX || window.screenLeft || 0) + ((window.outerWidth || 1024) - popupW) / 2));
+          const top = Math.max(0, Math.round((window.screenY || window.screenTop || 0) + ((window.outerHeight || 768) - popupH) / 2));
+          paypalPopup = window.open(
+            'about:blank',
+            'PayPalCheckout',
+            `width=${popupW},height=${popupH},left=${left},top=${top},menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`
+          );
+          if (paypalPopup && paypalPopup.document) {
+            paypalPopup.document.write(
+              '<!doctype html><html><head><meta charset="utf-8"><title>Pay with PayPal</title>' +
+              '<style>body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;background:#fff;color:#111827}' +
+              '.logo{font-size:28px;font-weight:900;font-style:italic;letter-spacing:-0.5px;margin-bottom:24px;color:#003087}.logo span{color:#0079C1}' +
+              '.spinner{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#0070ba;border-radius:50%;animation:spin .8s linear infinite}' +
+              '@keyframes spin{to{transform:rotate(360deg)}}</style></head>' +
+              '<body><div class="logo">Pay<span>Pal</span></div><div class="spinner"></div><p style="margin-top:16px;font-size:14px;color:#6b7280;">Connecting securely to PayPal...</p></body></html>'
+            );
+            paypalPopup.document.close();
+          }
+        } catch (e) {
+          paypalPopup = null;
+        }
+      }
+
       btn.disabled = true;
       btn.classList.add('opacity-80', 'cursor-not-allowed');
       if (paypalBtn) paypalBtn.disabled = true;
@@ -1270,7 +1317,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span class="font-bold text-sm text-[#003087]">Connecting to PayPal...</span>
+          <span class="font-bold text-sm text-[#003087]">Complete in PayPal window...</span>
         `;
       } else {
         btn.innerHTML = `
@@ -1283,25 +1330,120 @@
       }
 
       try {
-        // Case A: Direct PayPal Authorization (Never redirects to Stripe's hosted order page)
+        // Case A: Direct PayPal Popup Authorization (Matches competitor PayPal popup UX)
         if (method === 'paypal') {
           const subRes = await fetch('/api/create-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              email,
+              email: email && email.includes('@') ? email : undefined,
               name: cardName || undefined,
               address: billingAddress || undefined,
               postcode: billingPostcode || undefined,
               applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
               plan: selectedPlan,
-              paymentMethod: 'paypal'
+              paymentMethod: 'paypal',
+              popup: Boolean(paypalPopup && !paypalPopup.closed)
             })
           });
 
           const subData = await subRes.json();
           if (!subRes.ok || !subData.redirectUrl) {
+            if (paypalPopup && !paypalPopup.closed) {
+              try { paypalPopup.close(); } catch (e) {}
+            }
             throw new Error(subData.error || 'Unable to connect to PayPal. Please try again.');
+          }
+
+          if (paypalPopup && !paypalPopup.closed) {
+            paypalPopup.location.href = subData.redirectUrl;
+            paypalPopup.focus();
+
+            let completed = false;
+            let pollTimer = null;
+            let bc = null;
+
+            const cleanup = () => {
+              if (pollTimer) clearInterval(pollTimer);
+              if (bc) { try { bc.close(); } catch (e) {} }
+              window.removeEventListener('message', onMsg);
+              window.removeEventListener('storage', onStorage);
+            };
+
+            const handlePopupEvent = (payload) => {
+              if (!payload || completed) return;
+              if (payload.type === 'paypal_success') {
+                completed = true;
+                cleanup();
+                try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
+                window.location.href = payload.redirectUrl || `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`;
+              } else if (payload.type === 'paypal_cancelled') {
+                completed = true;
+                cleanup();
+                try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
+                restoreButtons();
+              }
+            };
+
+            const onMsg = (ev) => {
+              if (ev.origin === window.location.origin && ev.data) {
+                handlePopupEvent(ev.data);
+              }
+            };
+            const onStorage = (ev) => {
+              if (ev.key === 'sweepr_paypal_event' && ev.newValue) {
+                try { handlePopupEvent(JSON.parse(ev.newValue)); } catch (e) {}
+              }
+            };
+
+            window.addEventListener('message', onMsg);
+            window.addEventListener('storage', onStorage);
+            try {
+              if (window.BroadcastChannel) {
+                bc = new BroadcastChannel('sweepr_paypal_checkout');
+                bc.onmessage = (ev) => handlePopupEvent(ev.data);
+              }
+            } catch (e) {}
+
+            let ticks = 0;
+            pollTimer = setInterval(async () => {
+              if (completed) return;
+              ticks++;
+              const isClosed = !paypalPopup || paypalPopup.closed;
+
+              // Check subscription status on server every 2s or immediately when popup closes
+              if (isClosed || ticks % 4 === 0) {
+                try {
+                  const verifyRes = await fetch('/api/confirm-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      subscriptionId: subData.subscriptionId,
+                      accountId: subData.accountId,
+                      checkOnly: true
+                    })
+                  });
+                  if (verifyRes.ok) {
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.ok && (verifyData.status === 'active' || verifyData.status === 'trialing')) {
+                      completed = true;
+                      cleanup();
+                      try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
+                      window.location.href = verifyData.redirect || '/checkout/success?web=1';
+                      return;
+                    }
+                  }
+                } catch (e) {}
+              }
+
+              if (isClosed && !completed) {
+                completed = true;
+                cleanup();
+                restoreButtons();
+              }
+            }, 500);
+
+            return;
           }
 
           window.location.href = subData.redirectUrl;
