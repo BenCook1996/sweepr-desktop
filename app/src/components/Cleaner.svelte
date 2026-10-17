@@ -673,10 +673,8 @@
   }
   .rec-name {
     font-weight: 600;
-    font-size: 13.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: clamp(11.5px, 1.15vw, 13.5px);
+    line-height: 1.25;
   }
   .rec-stat {
     display: flex;
@@ -840,17 +838,18 @@
     letter-spacing: 0.5px;
   }
 
-  /* Bottom Row Tiles with generous spacing and internal padding */
+  /* Bottom Row Tiles with dynamic text sizing (no truncation) */
   .status-tile {
-    padding: 20px 24px;
+    container-type: inline-size;
+    padding: 16px 18px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
   }
   .tile-icon-box {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -861,31 +860,39 @@
   .tile-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
   .tile-label {
-    font-size: 11px;
+    font-size: clamp(9.5px, 3.3cqw, 11px);
     font-weight: 800;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     color: var(--muted);
+    line-height: 1.2;
   }
   .tile-value {
-    font-size: 16px;
+    font-size: clamp(12px, 4.3cqw, 15px);
     font-weight: 800;
     color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 5px;
+    row-gap: 1px;
   }
   .tile-sub {
-    font-size: 12px;
+    font-size: clamp(10.5px, 3.5cqw, 12px);
     font-weight: 500;
     color: var(--muted);
   }
   .tile-action-btn {
-    font-size: 11.5px;
+    font-size: clamp(10px, 3.3cqw, 11.5px);
     font-weight: 700;
-    padding: 5px 14px;
-    letter-spacing: 0.5px;
+    padding: 5px 12px;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
   }
 
   /* Results Phase Styles */
