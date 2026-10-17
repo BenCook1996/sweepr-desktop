@@ -213,12 +213,12 @@ export function securityHeaders(opts: { hsts: boolean }): MiddlewareHandler {
     set("X-Frame-Options", "DENY");
     set("X-Content-Type-Options", "nosniff");
     set("Referrer-Policy", "strict-origin-when-cross-origin");
-    set("Permissions-Policy", 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com"), usb=()');
+    set("Permissions-Policy", 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://pay.google.com"), usb=()');
     set(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://r.stripe.com https://q.stripe.com https://m.stripe.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+      "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://js.stripe.com https://pay.google.com https://translate.google.com https://translate.googleapis.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://pay.google.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://r.stripe.com https://q.stripe.com https://m.stripe.com https://pay.google.com https://www.google.com https://translate.googleapis.com https://www.google-analytics.com https://www.clarity.ms; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://pay.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
     );
-    set("Cross-Origin-Opener-Policy", "same-origin");
+    set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
     if (opts.hsts) set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   };
 }

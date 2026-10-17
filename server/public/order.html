@@ -441,29 +441,23 @@
 
           <!-- Express Payment Buttons (PayPal & Apple Pay / Google Pay) -->
           <div class="space-y-2.5 pt-2">
-            <!-- PayPal Button -->
-            <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer">
+            <!-- PayPal Button (Hidden while Stripe live PayPal merchant verification is in progress) -->
+            <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="hidden w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl items-center justify-center transition-all shadow-xs cursor-pointer">
               <span class="italic font-black text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
             </button>
 
             <!-- Official Dynamic Google Pay Button Container (Shows stored card art + last 4 digits e.g. G Pay | •••• 4040) -->
             <div id="googlePayButtonContainer" class="hidden w-full h-11 overflow-hidden rounded-xl"></div>
 
-            <!-- Native Stripe PaymentRequest Container (Apple Pay / Google Pay if supported by browser) -->
+            <!-- Native Stripe PaymentRequest Container (Apple Pay on Safari) -->
             <div id="stripePaymentRequestContainer" class="hidden w-full">
               <div id="paymentRequestBtn"></div>
             </div>
 
-            <!-- Styled GPay / Apple Pay Express Button -->
-            <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-black hover:bg-gray-900 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-sm">
-              <span class="text-gray-300">Pay with</span>
-              <span class="font-semibold text-base inline-flex items-center">
-                <span class="text-blue-400">G</span><span class="text-red-400">o</span><span class="text-yellow-400">o</span><span class="text-blue-400">g</span><span class="text-green-400">l</span><span class="text-red-400">e</span>&nbsp;Pay
-              </span>
-              <span class="text-gray-500 text-xs mx-1">|</span>
-              <span class="font-semibold text-sm text-white inline-flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 170 170"><path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.64-13.99-6.3-9.77-11.23-20.91-14.8-33.41C7.43 100.17 5.6 87.79 5.6 75.38c0-14.36 3.63-26.47 10.88-36.33 7.26-9.87 16.5-14.94 27.73-15.22 5.56 0 11.13 1.48 16.71 4.45 5.58 2.97 9.29 4.54 11.12 4.7 1.83-.16 5.86-1.83 12.09-5.01 6.23-3.18 11.96-4.63 17.18-4.35 13.06.87 23.36 5.85 30.9 14.94-11.45 6.94-17.06 16.59-16.82 28.94.24 9.77 4.09 17.92 11.55 24.45 7.46 6.53 16.29 10.15 26.5 10.87-2.31 7.15-5.22 14.61-8.73 22.38zM119.22 33.7c0-7.81 2.82-15.11 8.47-21.9C133.34 5 141.48 0.69 152.09 0c.24 1.34.37 2.58.37 3.73 0 7.7-2.94 15.18-8.82 22.45-5.88 7.27-13.67 11.58-23.36 12.93-.36-1.82-.54-3.66-.54-5.41z"/></svg>
-                Pay
+            <!-- Styled GPay Express Button (Remains visible until dynamic Google Pay card button mounts) -->
+            <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-[#202124] hover:bg-black text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-sm">
+              <span class="font-semibold text-base inline-flex items-center tracking-tight">
+                <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span>&nbsp;<span class="text-white font-semibold">Pay</span>
               </span>
             </button>
           </div>
@@ -1221,11 +1215,9 @@
         const canMakePaymentResult = await paymentRequestInstance.canMakePayment();
         if (canMakePaymentResult) {
           canMakePaymentReady = true;
-          const gpayContainer = document.getElementById('googlePayButtonContainer');
-          const gpayAlreadyVisible = gpayContainer && !gpayContainer.classList.contains('hidden');
 
-          // Mount Stripe PR button only if official Google Pay card-preview button isn't already visible (e.g. for Apple Pay on Safari)
-          if (!gpayAlreadyVisible) {
+          // Mount Stripe PR button for Apple Pay (Safari), while Chrome/Edge uses the official Google Pay dynamic card-preview button
+          if (canMakePaymentResult.applePay) {
             const prContainer = document.getElementById('stripePaymentRequestContainer');
             const prBtnMount = document.getElementById('paymentRequestBtn');
             const prButton = elements.create('paymentRequestButton', {
@@ -1234,13 +1226,18 @@
                 paymentRequestButton: {
                   theme: 'dark',
                   height: '44px',
-                  type: 'plain'
+                  type: 'default'
                 }
               }
             });
             prButton.mount(prBtnMount);
-            prContainer.classList.remove('hidden');
-            document.getElementById('expressGPayBtn').classList.add('hidden');
+            prButton.on('ready', () => {
+              const gpayContainer = document.getElementById('googlePayButtonContainer');
+              if (!gpayContainer || gpayContainer.classList.contains('hidden')) {
+                prContainer.classList.remove('hidden');
+                document.getElementById('expressGPayBtn').classList.add('hidden');
+              }
+            });
           }
 
           paymentRequestInstance.on('paymentmethod', async (ev) => {
