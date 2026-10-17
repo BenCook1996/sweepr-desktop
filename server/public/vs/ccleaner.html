@@ -63,6 +63,7 @@
   <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
+  <script src="/nav.js" defer></script>
 </head>
 <body class="text-gray-800 bg-[#fafafa]">
 
@@ -71,12 +72,73 @@
     <div class="flex items-center gap-3 md:gap-8">
       <a href="/" class="flex items-center gap-3 text-inherit no-underline">
         <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">Sweepr</span>
+        <span class="font-extrabold text-xl tracking-tight text-gray-900">Sweepr <span class="text-emerald-600">Cleaner</span></span>
       </a>
       <div class="hidden md:flex items-center gap-2">
         <a href="/#features" class="btn btn-ghost text-sm">Features</a>
         <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-        <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full">Comparison</span>
+        <!-- Consolidated Compare & Guides Menu -->
+        <div class="relative inline-block text-left" id="navDropdownContainer">
+          <button type="button" id="navDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 cursor-pointer font-medium" aria-expanded="false" aria-haspopup="true">
+            <span>Compare &amp; Guides</span>
+            <svg id="navDropdownChevron" class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          
+          <!-- Dropdown Flyout with Visual Tiles -->
+          <div id="navDropdownMenu" class="hidden absolute left-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-[340px] sm:w-[420px] bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-2xl p-2.5 z-50 transition-all">
+            <div class="grid grid-cols-1 gap-1.5">
+              <!-- Tile 1: Sweepr vs CCleaner -->
+              <a href="/vs/ccleaner" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Sweepr vs CCleaner</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Comparison</span>
+                  </div>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Head-to-head speed, memory footprint, and background telemetry comparison.</p>
+                </div>
+              </a>
+
+              <!-- Tile 2: CCleaner Alternatives -->
+              <a href="/alternatives/ccleaner" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">CCleaner Alternatives</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">2026 Guide</span>
+                  </div>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Top 5 tested lightweight cleaner utilities and privacy tools for Windows.</p>
+                </div>
+              </a>
+
+              <!-- Tile 3: Storage & Cache Directory -->
+              <a href="/clean" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1 mb-0.5">
+                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Storage &amp; Cache Directory</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">40+ Guides</span>
+                  </div>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Directory of hidden Windows caches, AppData bloat, and safe manual cleanup steps.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="flex gap-2 md:gap-3 items-center">
