@@ -349,19 +349,34 @@ pub fn detect_running_conflicts(category_ids: &[String]) -> Vec<RunningAppConfli
         *counts.entry(name).or_insert(0) += 1;
     }
 
-    let mappings: &[(&str, &str, &[&str])] = &[
-        ("chrome", "Google Chrome", &["chrome"]),
-        ("edge", "Microsoft Edge", &["msedge"]),
-        ("brave", "Brave Browser", &["brave"]),
-        ("firefox", "Mozilla Firefox", &["firefox"]),
-        ("spotify", "Spotify", &["spotify"]),
-        ("app_caches", "Discord / VS Code / Teams / Slack", &["discord", "code", "teams", "ms-teams", "slack"]),
+    let roaming = dirs::data_dir();
+
+    // (category_id, display_name, process_names, optional_roaming_subfolder_check)
+    let mappings: &[(&str, &str, &[&str], Option<&str>)] = &[
+        ("chrome", "Google Chrome", &["chrome"], None),
+        ("edge", "Microsoft Edge", &["msedge"], None),
+        ("brave", "Brave Browser", &["brave"], None),
+        ("firefox", "Mozilla Firefox", &["firefox"], None),
+        ("spotify", "Spotify", &["spotify"], None),
+        ("app_caches", "Discord", &["discord"], Some("discord/Cache")),
+        ("app_caches", "VS Code", &["code"], Some("Code/Cache")),
+        ("app_caches", "Microsoft Teams", &["teams", "ms-teams"], Some("Microsoft/Teams/Cache")),
+        ("app_caches", "Slack", &["slack"], Some("Slack/Cache")),
     ];
 
     let mut conflicts = Vec::new();
-    for (cat_id, label, procs) in mappings {
+    for (cat_id, label, procs, required_subdir) in mappings {
         if !category_ids.iter().any(|c| c == cat_id) {
             continue;
+        }
+        if let Some(sub) = required_subdir {
+            let exists = roaming
+                .as_ref()
+                .map(|r| r.join(sub).is_dir())
+                .unwrap_or(false);
+            if !exists {
+                continue;
+            }
         }
         let total: u32 = procs.iter().filter_map(|p| counts.get(*p)).sum();
         if total > 0 {
