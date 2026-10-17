@@ -131,17 +131,18 @@
       50% { box-shadow: 0 6px 22px rgba(16, 185, 129, 0.55); }
     }
     .btn-purchase {
-      background: #00c853;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       animation: greenPulse 3s infinite;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.15);
     }
     .btn-purchase:hover {
-      background: #00b34a;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(0, 200, 83, 0.45);
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.55), 0 0 0 2px rgba(16, 185, 129, 0.3);
     }
     .btn-purchase:active {
-      transform: translateY(0);
+      transform: translateY(1px);
     }
 
     /* Discount Modal Transition */
