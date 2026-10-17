@@ -23,6 +23,9 @@ struct DashboardView: View {
             }
             .navigationTitle("SWEEPR Cleaner")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    SweeprLogoView(size: 30)
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task { await vm.scan() }

@@ -66,7 +66,6 @@ pub fn run() {
             commands::start_checkout,
             commands::request_login_otp,
             commands::verify_login_otp,
-            commands::open_billing_portal,
             commands::memory_overview,
             commands::startup_items,
             commands::toggle_startup_item,

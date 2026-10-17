@@ -264,10 +264,8 @@ fun SweeprTopBar(
     TopAppBar(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onBack == null) {
-                    SweeprBrushLogo(Modifier.size(28.dp))
-                    Spacer(Modifier.width(10.dp))
-                }
+                SweeprBrushLogo(Modifier.size(28.dp))
+                Spacer(Modifier.width(10.dp))
                 Text(title, fontWeight = FontWeight.Bold)
             }
         },

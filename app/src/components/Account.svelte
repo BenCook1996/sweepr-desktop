@@ -8,14 +8,13 @@
     type LicenseStatus,
   } from "../lib/api";
   import { getLifetimeStats, type LifetimeStats } from "../lib/store";
-  import { formatBytes, formatCount, PRICING } from "../lib/format";
+  import { formatBytes, formatCount } from "../lib/format";
   import Installer from "./Installer.svelte";
 
   let { license, info, onRefresh }: { license: LicenseStatus | null; info: AppInfo | null; onRefresh: () => Promise<void> } = $props();
   let error = $state<string | null>(null);
   let busy = $state(false);
   let showInstaller = $state(false);
-  let selectedPlan = $state<"monthly" | "annual">("monthly");
   let linkEmail = $state("");
   let otpCode = $state("");
   let otpSent = $state(false);
@@ -54,20 +53,11 @@
     api.getCleaningHistory().then((h) => (history = h)).catch(() => {});
   });
 
-  async function portal() {
-    error = null;
-    try {
-      await api.openBillingPortal();
-    } catch (e) {
-      error = errorMessage(e);
-    }
-  }
-
   async function startPlanCheckout() {
     error = null;
     busy = true;
     try {
-      await api.startCheckout(linkEmail.trim() || undefined, selectedPlan);
+      await api.startCheckout(linkEmail.trim() || undefined);
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -192,48 +182,15 @@
       </div>
       {#if expiry}<div class="muted small">Licence check valid until {expiry}. It renews automatically while you're online.</div>{/if}
       <div class="row">
-        <button onclick={portal}>Manage or cancel subscription</button>
         <button class="ghost" disabled={busy} onclick={refresh}>Refresh status</button>
       </div>
     {:else}
-      <div class="row"><strong>Choose a SWEEPR Cleaner Pro Plan</strong></div>
-      <p class="muted small" style="margin: 0;">Scanning, file review, memory insights and temporary file cleaning are free forever. Upgrade to unlock all Pro tools:</p>
-
-      <div class="plan-cards" role="radiogroup" aria-label="Select billing plan">
-        <button
-          type="button"
-          class="plan-card"
-          class:selected={selectedPlan === "monthly"}
-          onclick={() => (selectedPlan = "monthly")}
-          aria-pressed={selectedPlan === "monthly"}
-        >
-          <div class="row" style="justify-content: space-between; width: 100%;">
-            <strong>Monthly</strong>
-            <span class="badge free">30d Trial</span>
-          </div>
-          <div class="plan-price">{PRICING.activation} today</div>
-          <div class="muted small">then {PRICING.monthly}/mo</div>
-        </button>
-
-        <button
-          type="button"
-          class="plan-card"
-          class:selected={selectedPlan === "annual"}
-          onclick={() => (selectedPlan = "annual")}
-          aria-pressed={selectedPlan === "annual"}
-        >
-          <div class="row" style="justify-content: space-between; width: 100%;">
-            <strong>Annual</strong>
-            <span class="badge pro">{PRICING.annualSave}</span>
-          </div>
-          <div class="plan-price">{PRICING.annual}/yr</div>
-          <div class="muted small">{PRICING.annualSave} — no free trial</div>
-        </button>
-      </div>
+      <div class="row"><strong>Free plan</strong></div>
+      <p class="muted small" style="margin: 0;">Scanning, file review, memory insights and temporary file cleaning are free forever. Activate SWEEPR Cleaner Pro to unlock every cleaning category and optimization tool.</p>
 
       <div class="row" style="gap: 8px; flex-wrap: wrap;">
         <button class="primary" disabled={busy} onclick={startPlanCheckout}>
-          {selectedPlan === "annual" ? `Subscribe Annual (${PRICING.annual}/yr)` : `Start Trial (${PRICING.activation} today)`}
+          View Plans &amp; Upgrade
         </button>
         <button class="ghost" disabled={busy} onclick={refresh}>I've already paid: refresh</button>
       </div>

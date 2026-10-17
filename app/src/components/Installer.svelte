@@ -40,8 +40,25 @@
     </div>
 
     <div class="header-center">
-      <div class="installer-logo">S</div>
-      <span class="installer-brand">SWEEPR Cleaner</span>
+      <div class="installer-logo" aria-hidden="true">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+          <defs>
+            <linearGradient id="instEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#047857" />
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="96" height="96" rx="24" fill="url(#instEmeraldBg)" />
+          <line x1="76" y1="24" x2="53" y2="47" stroke="#a7f3d0" stroke-width="8" stroke-linecap="round" />
+          <path d="M 42 40 L 60 58 L 55 64 L 36 45 Z" fill="#ffffff" />
+          <path d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" fill="#ffffff" />
+          <line x1="34" y1="76" x2="43" y2="63" stroke="#047857" stroke-width="3" stroke-linecap="round" />
+          <line x1="27" y1="69" x2="36" y2="56" stroke="#047857" stroke-width="3" stroke-linecap="round" />
+          <path d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" fill="#ffffff" />
+          <circle cx="62" cy="79" r="3.5" fill="#a7f3d0" />
+        </svg>
+      </div>
+      <span class="installer-brand">SWEEPR <span style="color: #059669; font-weight: 800;">Cleaner</span></span>
     </div>
 
     <div class="header-right">
@@ -180,13 +197,8 @@
   .installer-logo {
     width: 24px;
     height: 24px;
-    background: linear-gradient(135deg, #059669, #10b981);
-    color: #ffffff;
-    border-radius: 6px;
     display: grid;
     place-items: center;
-    font-size: 13px;
-    font-weight: 800;
   }
   .installer-brand {
     font-size: 16px;

@@ -99,14 +99,14 @@ function Draw-Sidebar($g, $width, $height) {
     $g.DrawImage($sLogo, $badgeX, $badgeY, $badgeSize, $badgeSize)
     $sLogo.Dispose()
 
-    # 3. Sweepr Brand Title
+    # 3. SWEEPR Cleaner Brand Title
     $fontFamily = New-Object System.Drawing.FontFamily("Segoe UI")
-    $titleFont = New-Object System.Drawing.Font $fontFamily, 14, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+    $titleFont = New-Object System.Drawing.Font $fontFamily, 13, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
     $centerFormat = New-Object System.Drawing.StringFormat
     $centerFormat.Alignment = [System.Drawing.StringAlignment]::Center
     $whiteBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
     $titleRect = New-Object System.Drawing.RectangleF 0, 62, $width, 22
-    $g.DrawString("Sweepr", $titleFont, $whiteBrush, $titleRect, $centerFormat)
+    $g.DrawString("SWEEPR Cleaner", $titleFont, $whiteBrush, $titleRect, $centerFormat)
     $titleFont.Dispose()
 
     # Subtitle
@@ -239,15 +239,15 @@ $gBanner.DrawImage($sLogo, 444, 9, 38, 38)
 $sLogo.Dispose()
 
 $fontFamily = New-Object System.Drawing.FontFamily("Segoe UI")
-$bTitleFont = New-Object System.Drawing.Font $fontFamily, 13, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+$bTitleFont = New-Object System.Drawing.Font $fontFamily, 11.5, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
 $bTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#064e3b"))
-$gBanner.DrawString("Sweepr", $bTitleFont, $bTitleBrush, 380, 11)
+$gBanner.DrawString("SWEEPR Cleaner", $bTitleFont, $bTitleBrush, 344, 12)
 $bTitleFont.Dispose()
 $bTitleBrush.Dispose()
 
 $bSubFont = New-Object System.Drawing.Font $fontFamily, 8.5, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
 $bSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#059669"))
-$gBanner.DrawString("Setup Wizard", $bSubFont, $bSubBrush, 380, 29)
+$gBanner.DrawString("Setup Wizard", $bSubFont, $bSubBrush, 344, 29)
 $bSubFont.Dispose()
 $bSubBrush.Dispose()
 $fontFamily.Dispose()
@@ -310,19 +310,19 @@ $bottomPen2.Dispose()
 
 # Brand icon and text
 $sLogo = [System.Drawing.Image]::FromFile($sLogoPath)
-$gNsisHead.DrawImage($sLogo, 102, 9, 38, 38)
+$gNsisHead.DrawImage($sLogo, 104, 9, 38, 38)
 $sLogo.Dispose()
 
 $fontFamily = New-Object System.Drawing.FontFamily("Segoe UI")
-$headTitleFont = New-Object System.Drawing.Font $fontFamily, 13, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+$headTitleFont = New-Object System.Drawing.Font $fontFamily, 11, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
 $headTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#064e3b"))
-$gNsisHead.DrawString("Sweepr", $headTitleFont, $headTitleBrush, 28, 11)
+$gNsisHead.DrawString("SWEEPR Cleaner", $headTitleFont, $headTitleBrush, 10, 12)
 $headTitleFont.Dispose()
 $headTitleBrush.Dispose()
 
 $headSubFont = New-Object System.Drawing.Font $fontFamily, 8.5, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
 $headSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#059669"))
-$gNsisHead.DrawString("Setup Wizard", $headSubFont, $headSubBrush, 28, 29)
+$gNsisHead.DrawString("Setup Wizard", $headSubFont, $headSubBrush, 10, 29)
 $headSubFont.Dispose()
 $headSubBrush.Dispose()
 $fontFamily.Dispose()

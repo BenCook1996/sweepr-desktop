@@ -196,12 +196,6 @@ pub async fn verify_login_otp(state: State<'_, AppState>, email: String, code: S
 }
 
 #[tauri::command]
-pub async fn open_billing_portal(app: AppHandle, state: State<'_, AppState>) -> AppResult<()> {
-    let url = state.licensing.portal_url().await?;
-    app.opener().open_url(url, None::<&str>).map_err(|e| AppError::Other(e.to_string()))
-}
-
-#[tauri::command]
 pub async fn memory_overview() -> AppResult<MemoryOverview> {
     tauri::async_runtime::spawn_blocking(memory::overview).await.map_err(join_err)
 }

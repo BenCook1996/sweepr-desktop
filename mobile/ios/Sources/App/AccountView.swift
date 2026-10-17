@@ -209,6 +209,11 @@ struct AccountView: View {
                 }
             }
             .navigationTitle("Account")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    SweeprLogoView(size: 30)
+                }
+            }
             .sheet(isPresented: $showSignInSheet) {
                 otpSignInSheet
             }

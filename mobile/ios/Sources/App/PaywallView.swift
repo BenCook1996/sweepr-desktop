@@ -18,15 +18,15 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
 
     var fallbackPrice: String {
         switch self {
-        case .annual: return "£49.99 / year"
-        case .monthly: return "£9.99 / month"
+        case .annual: return "Annual Plan"
+        case .monthly: return "Monthly Plan"
         }
     }
 
     var fallbackSubtitle: String {
         switch self {
-        case .annual: return "Just £4.17/mo · Save 58% · Billed annually (no free trial)"
-        case .monthly: return "Flexible monthly billing · Cancel anytime (no free trial)"
+        case .annual: return "Save 58% · Billed annually"
+        case .monthly: return "Flexible monthly billing · Cancel anytime"
         }
     }
 
@@ -69,9 +69,7 @@ struct PaywallView: View {
                 VStack(spacing: 24) {
                     // Hero Header
                     VStack(spacing: 10) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 56))
-                            .foregroundColor(.sweeprEmerald)
+                        SweeprLogoView(size: 72)
                             .padding(.top, 12)
 
                         Text("Upgrade to SWEEPR Cleaner Pro")
@@ -98,7 +96,7 @@ struct PaywallView: View {
                     .cornerRadius(16)
                     .padding(.horizontal)
 
-                    // Monthly (£9.99/mo) & Annual (£49.99/yr — Save 58%, no free trial) Selector
+                    // Plan Selector
                     VStack(spacing: 12) {
                         ForEach(SubscriptionPlanOption.allCases) { option in
                             planSelectorCard(option: option)

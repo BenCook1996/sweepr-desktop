@@ -401,17 +401,17 @@
 
     <!-- Annual Plan, Retention & Cross-Platform OTP (#23, #26, #27, #25) -->
     <string name="plan_annual_title">Annual Plan</string>
-    <string name="plan_annual_price">£49.99/yr</string>
-    <string name="plan_annual_subtitle">£4.17/mo equivalent · Billed annually · No free trial</string>
+    <string name="plan_annual_price">Best Value</string>
+    <string name="plan_annual_subtitle">Save 58% · Billed annually</string>
     <string name="plan_annual_badge">SAVE 58%%</string>
     <string name="plan_monthly_title">Monthly Plan</string>
-    <string name="plan_monthly_price">£9.99/mo</string>
-    <string name="plan_monthly_subtitle">Flexible monthly billing · Cancel anytime · No free trial</string>
-    <string name="plan_cta_annual">Continue with Annual (£49.99/yr)</string>
-    <string name="plan_cta_monthly">Continue with Monthly (£9.99/mo)</string>
+    <string name="plan_monthly_price">Flexible</string>
+    <string name="plan_monthly_subtitle">Flexible monthly billing · Cancel anytime</string>
+    <string name="plan_cta_annual">Continue with Annual Plan</string>
+    <string name="plan_cta_monthly">Continue with Monthly Plan</string>
     <string name="retention_dialog_title">Manage or Cancel Subscription</string>
     <string name="retention_dialog_message">Before you go — you can save 58%% by switching to the Annual Plan, or manage/cancel your renewal anytime in Google Play.</string>
-    <string name="retention_offer_annual">Switch to Annual (£49.99/yr — Save 58%% vs Monthly)</string>
+    <string name="retention_offer_annual">Switch to Annual Plan (Save 58%% vs Monthly)</string>
     <string name="retention_switch_annual">View Annual Offer</string>
     <string name="retention_continue_google_play">Open Google Play</string>
     <string name="account_sign_in_title">Sign in with SWEEPR Cleaner Account</string>

@@ -12,6 +12,101 @@ extension Color {
     static let cardBackground = Color(UIColor.secondarySystemBackground)
 }
 
+// MARK: - Sparkle Brush Brand Logo (Website Concept 1: Emerald Fill / Dark Mode Mint Glass)
+struct SweeprLogoView: View {
+    var size: CGFloat = 32
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let isDark = colorScheme == .dark
+        Canvas { context, canvasSize in
+            let s = min(canvasSize.width, canvasSize.height) / 100.0
+            let bgStart = isDark
+                ? Color(red: 236 / 255, green: 253 / 255, blue: 245 / 255)
+                : Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
+            let bgEnd = isDark
+                ? Color(red: 209 / 255, green: 250 / 255, blue: 229 / 255)
+                : Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+            let fgPrimary = isDark
+                ? Color(red: 5 / 255, green: 150 / 255, blue: 105 / 255)
+                : Color.white
+            let fgSecondary = isDark
+                ? Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
+                : Color(red: 167 / 255, green: 243 / 255, blue: 208 / 255)
+            let slitColor = isDark
+                ? Color(red: 209 / 255, green: 250 / 255, blue: 229 / 255)
+                : Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+            let sparkleColor = isDark
+                ? Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+                : Color.white
+
+            // 1. Squircle Container
+            let bgRect = CGRect(x: 4 * s, y: 4 * s, width: 92 * s, height: 92 * s)
+            let bgPath = Path(roundedRect: bgRect, cornerRadius: 22 * s)
+            context.fill(
+                bgPath,
+                with: .linearGradient(
+                    Gradient(colors: [bgStart, bgEnd]),
+                    startPoint: CGPoint(x: 0, y: 0),
+                    endPoint: CGPoint(x: 100 * s, y: 100 * s)
+                )
+            )
+
+            // 2. Angled Broom Handle
+            var handle = Path()
+            handle.move(to: CGPoint(x: 76 * s, y: 24 * s))
+            handle.addLine(to: CGPoint(x: 53 * s, y: 47 * s))
+            context.stroke(handle, with: .color(fgSecondary), style: StrokeStyle(lineWidth: 8 * s, lineCap: .round))
+
+            // 3. Brush Collar
+            var collar = Path()
+            collar.move(to: CGPoint(x: 42 * s, y: 40 * s))
+            collar.addLine(to: CGPoint(x: 60 * s, y: 58 * s))
+            collar.addLine(to: CGPoint(x: 55 * s, y: 64 * s))
+            collar.addLine(to: CGPoint(x: 36 * s, y: 45 * s))
+            collar.closeSubpath()
+            context.fill(collar, with: .color(fgPrimary))
+
+            // 4. Sweeping Bristles
+            var bristles = Path()
+            bristles.move(to: CGPoint(x: 34 * s, y: 48 * s))
+            bristles.addLine(to: CGPoint(x: 52 * s, y: 66 * s))
+            bristles.addLine(to: CGPoint(x: 38 * s, y: 82 * s))
+            bristles.addCurve(
+                to: CGPoint(x: 18 * s, y: 62 * s),
+                control1: CGPoint(x: 30 * s, y: 78 * s),
+                control2: CGPoint(x: 22 * s, y: 70 * s)
+            )
+            bristles.closeSubpath()
+            context.fill(bristles, with: .color(fgPrimary))
+
+            // 5. Bristle Slits
+            var slits = Path()
+            slits.move(to: CGPoint(x: 34 * s, y: 76 * s))
+            slits.addLine(to: CGPoint(x: 43 * s, y: 63 * s))
+            slits.move(to: CGPoint(x: 27 * s, y: 69 * s))
+            slits.addLine(to: CGPoint(x: 36 * s, y: 56 * s))
+            context.stroke(slits, with: .color(slitColor), style: StrokeStyle(lineWidth: 3 * s, lineCap: .round))
+
+            // 6. 4-Point Sparkle
+            var star = Path()
+            star.move(to: CGPoint(x: 74 * s, y: 56 * s))
+            star.addQuadCurve(to: CGPoint(x: 83 * s, y: 65 * s), control: CGPoint(x: 74 * s, y: 65 * s))
+            star.addQuadCurve(to: CGPoint(x: 74 * s, y: 74 * s), control: CGPoint(x: 74 * s, y: 65 * s))
+            star.addQuadCurve(to: CGPoint(x: 65 * s, y: 65 * s), control: CGPoint(x: 74 * s, y: 65 * s))
+            star.addQuadCurve(to: CGPoint(x: 74 * s, y: 56 * s), control: CGPoint(x: 74 * s, y: 65 * s))
+            star.closeSubpath()
+            context.fill(star, with: .color(sparkleColor))
+
+            // 7. Secondary Sparkle Dot
+            let dotRect = CGRect(x: (62 - 3.5) * s, y: (79 - 3.5) * s, width: 7 * s, height: 7 * s)
+            context.fill(Path(ellipseIn: dotRect), with: .color(fgSecondary))
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
 func formatByteCount(_ bytes: Int64) -> String {
     let formatter = ByteCountFormatter()
     formatter.allowedUnits = [.useBytes, .useKB, .useMB, .useGB]

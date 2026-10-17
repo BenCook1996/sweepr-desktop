@@ -14,12 +14,3 @@ export function shortenPath(p: string, max = 80): string {
   if (p.length <= max) return p;
   return p.slice(0, 24) + "…" + p.slice(-(max - 25));
 }
-
-export const PRICING = {
-  activation: "£1.99",
-  monthly: "£9.99",
-  annual: "£49.99",
-  annualSave: "Save 58%",
-  trialDays: 30,
-} as const;
-

@@ -97,7 +97,7 @@
         </svg>
       </div>
       <div class="brand-text">
-        <span class="brand-name">SWEEPR Cleaner</span>
+        <span class="brand-name">SWEEPR <span class="brand-accent">Cleaner</span></span>
       </div>
     </div>
 
@@ -243,6 +243,13 @@
     font-size: 16px;
     letter-spacing: -0.4px;
     color: var(--text);
+  }
+  .brand-accent {
+    color: #059669;
+    font-weight: 800;
+  }
+  :global(.dark) .brand-accent {
+    color: #34d399;
   }
 
   /* Clean, seamlessly integrated tab buttons */

@@ -115,7 +115,6 @@ export const api = {
     invoke<void>("start_checkout", { email: email ?? null, plan }),
   requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
   verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
-  openBillingPortal: () => invoke<void>("open_billing_portal"),
   memory: () => invoke<MemoryOverview>("memory_overview"),
   startupItems: () => invoke<StartupItem[]>("startup_items"),
   toggleStartupItem: (name: string, scope: string, enabled: boolean) =>

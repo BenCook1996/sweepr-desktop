@@ -212,6 +212,7 @@ Save-MultiSizeIco -Path "$root\server\public\favicon.ico" -Theme "emerald"
 # 3. Tauri Desktop App Bundle Icons
 $tauriIcons = @{
     "32x32.png"            = 32
+    "64x64.png"            = 64
     "128x128.png"          = 128
     "128x128@2x.png"       = 256
     "icon.png"             = 512
@@ -261,7 +262,7 @@ $iosIconSet = "$root\mobile\ios\Sources\Assets.xcassets\AppIcon.appiconset"
 Save-Png -Path "$iosIconSet\AppIcon-Light.png" -Size 1024 -Theme "emerald" -Shape "fullbleed"
 Save-Png -Path "$iosIconSet\AppIcon-Dark.png"  -Size 1024 -Theme "mint"    -Shape "fullbleed"
 
-# 5. Mobile Android Mipmaps
+# 5. Mobile Android Mipmaps (Native Android + Tauri Android icons)
 $androidMipmaps = @{
     "mipmap-mdpi"    = 48
     "mipmap-hdpi"    = 72
@@ -273,6 +274,11 @@ foreach ($kv in $androidMipmaps.GetEnumerator()) {
     $folder = "$root\mobile\android\app\src\main\res\$($kv.Key)"
     Save-Png -Path "$folder\ic_launcher.png"       -Size $kv.Value -Theme "emerald" -Shape "squircle"
     Save-Png -Path "$folder\ic_launcher_round.png" -Size $kv.Value -Theme "emerald" -Shape "circle"
+
+    $tauriAndroidFolder = "$root\app\src-tauri\icons\android\$($kv.Key)"
+    Save-Png -Path "$tauriAndroidFolder\ic_launcher.png"            -Size $kv.Value -Theme "emerald" -Shape "squircle"
+    Save-Png -Path "$tauriAndroidFolder\ic_launcher_round.png"      -Size $kv.Value -Theme "emerald" -Shape "circle"
+    Save-Png -Path "$tauriAndroidFolder\ic_launcher_foreground.png" -Size $kv.Value -Theme "emerald" -Shape "squircle"
 }
 
 Write-Output "Generated all Sparkle Brush icons (Emerald Fill + Dark Mode Mint Glass) successfully!"

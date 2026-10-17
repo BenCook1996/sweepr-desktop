@@ -318,19 +318,13 @@ fun AccountScreen(
                 }
 
                 Spacer(Modifier.height(16.dp))
-                PlanSelectorSection(
-                    selectedPlan = selectedPlan,
-                    onSelectPlan = { selectedPlan = it },
-                )
-                Spacer(Modifier.height(14.dp))
                 Button(
                     onClick = onUpgrade,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(26.dp),
                 ) {
                     Text(
-                        if (selectedPlan == PlanTier.ANNUAL) stringResource(R.string.plan_cta_annual)
-                        else stringResource(R.string.plan_cta_monthly),
+                        stringResource(R.string.account_upgrade),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                     )
@@ -435,81 +429,6 @@ fun AccountScreen(
     }
 }
 
-@Composable
-fun PlanSelectorSection(
-    selectedPlan: PlanTier,
-    onSelectPlan: (PlanTier) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PlanOptionCard(
-            selected = selectedPlan == PlanTier.ANNUAL,
-            title = stringResource(R.string.plan_annual_title),
-            price = stringResource(R.string.plan_annual_price),
-            subtitle = stringResource(R.string.plan_annual_subtitle),
-            badge = stringResource(R.string.plan_annual_badge),
-            onClick = { onSelectPlan(PlanTier.ANNUAL) },
-        )
-        PlanOptionCard(
-            selected = selectedPlan == PlanTier.MONTHLY,
-            title = stringResource(R.string.plan_monthly_title),
-            price = stringResource(R.string.plan_monthly_price),
-            subtitle = stringResource(R.string.plan_monthly_subtitle),
-            badge = null,
-            onClick = { onSelectPlan(PlanTier.MONTHLY) },
-        )
-    }
-}
-
-@Composable
-private fun PlanOptionCard(
-    selected: Boolean,
-    title: String,
-    price: String,
-    subtitle: String,
-    badge: String?,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) SweeprGreen else Color.Gray.copy(alpha = 0.3f)),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) SweeprGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(
-                selected = selected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = SweeprGreen),
-            )
-            Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(title, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    if (badge != null) {
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            badge,
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .background(SweeprGreenDark, RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
-                        )
-                    }
-                }
-                Text(subtitle, color = Color.Gray, fontSize = 12.sp)
-            }
-            Text(price, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = SweeprGreenDark)
-        }
-    }
-}
-
 /** About: version, website, privacy, terms and support contact. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
@@ -537,12 +456,7 @@ fun AboutScreen(onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(28.dp))
-            Box(
-                Modifier.size(80.dp).clip(CircleShape).background(SweeprGreen),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("S", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            }
+            SweeprBrushLogo(Modifier.size(80.dp))
             Spacer(Modifier.height(12.dp))
             Text(stringResource(R.string.app_name), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = SweeprGreen)
             Text(stringResource(R.string.about_version, version), color = Color.Gray, fontSize = 13.sp)

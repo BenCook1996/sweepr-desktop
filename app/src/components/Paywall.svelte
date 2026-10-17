@@ -1,6 +1,6 @@
 <script lang="ts">
   import { api, errorMessage } from "../lib/api";
-  import { formatBytes, PRICING } from "../lib/format";
+  import { formatBytes } from "../lib/format";
 
   let {
     open, bytes, freeBytes, onClose, onActivated, onCleanFree,
@@ -10,7 +10,6 @@
   } = $props();
 
   let stage = $state<"offer" | "waiting">("offer");
-  let selectedPlan = $state<"monthly" | "annual">("monthly");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -37,7 +36,7 @@
     error = null;
     busy = true;
     try {
-      await api.startCheckout(undefined, selectedPlan); // opens Stripe Checkout in the system browser
+      await api.startCheckout(); // opens Stripe Checkout in the system browser
       stage = "waiting";
       let ticks = 0;
       stopPolling();
@@ -76,49 +75,12 @@
         <h2 id="pw-title">Clean {formatBytes(bytes)} now</h2>
         <p class="muted">You've seen exactly what's there. Activate SWEEPR Cleaner to clean every category, and keep your machine tidy with ongoing rule updates.</p>
 
-        <div class="plan-selector" role="radiogroup" aria-label="Select billing plan">
-          <button
-            type="button"
-            class="plan-option"
-            class:selected={selectedPlan === "monthly"}
-            onclick={() => (selectedPlan = "monthly")}
-            aria-pressed={selectedPlan === "monthly"}
-          >
-            <div class="row" style="justify-content: space-between; width: 100%;">
-              <strong>Monthly</strong>
-              <span class="badge free">30d Trial</span>
-            </div>
-            <div class="opt-price">{PRICING.activation} today</div>
-            <div class="muted small">then {PRICING.monthly}/mo</div>
-          </button>
-
-          <button
-            type="button"
-            class="plan-option"
-            class:selected={selectedPlan === "annual"}
-            onclick={() => (selectedPlan = "annual")}
-            aria-pressed={selectedPlan === "annual"}
-          >
-            <div class="row" style="justify-content: space-between; width: 100%;">
-              <strong>Annual</strong>
-              <span class="badge pro">{PRICING.annualSave}</span>
-            </div>
-            <div class="opt-price">{PRICING.annual}/yr</div>
-            <div class="muted small">{PRICING.annualSave} · no free trial</div>
-          </button>
-        </div>
-
         <div class="price card">
-          {#if selectedPlan === "monthly"}
-            <div class="row"><strong class="amount">{PRICING.activation}</strong><span class="muted">today (first {PRICING.trialDays} days)</span></div>
-            <div class="muted">then <strong style="color:var(--text)">{PRICING.monthly}/month</strong>. Cancel anytime in two clicks.</div>
-          {:else}
-            <div class="row"><strong class="amount">{PRICING.annual}</strong><span class="muted">/yr — {PRICING.annualSave}</span></div>
-            <div class="muted">Billed annually (<strong style="color:var(--text)">no free trial</strong>). Cancel anytime in two clicks.</div>
-          {/if}
+          <div class="row"><strong>SWEEPR Cleaner Pro</strong></div>
+          <div class="muted small">Choose the plan that works best for you at checkout.</div>
           <ul>
+            <li>Unlocks all deep-cleaning categories, browser &amp; app caches, and Pro optimization tools</li>
             <li>Covers up to 3 PCs + 3 mobile devices</li>
-            <li>Cancel from the app or your account page</li>
             <li>Secure checkout by Stripe, opens in your browser</li>
           </ul>
         </div>
@@ -126,7 +88,7 @@
         {#if error}<div class="error-banner">{error}</div>{/if}
 
         <button class="primary big" disabled={busy} onclick={activate}>
-          {busy ? "Opening checkout…" : selectedPlan === "annual" ? `Activate Annual (${PRICING.annual}/yr)` : `Activate for ${PRICING.activation}`}
+          {busy ? "Opening checkout…" : "Activate SWEEPR Cleaner Pro"}
         </button>
         <div class="row" style="justify-content:center">
           {#if freeBytes > 0}

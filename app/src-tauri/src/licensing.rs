@@ -401,10 +401,6 @@ impl Licensing {
         self.post_for_url("/v1/checkout", body).await
     }
 
-    pub async fn portal_url(&self) -> AppResult<String> {
-        self.post_for_url("/v1/portal", None).await
-    }
-
     /// Step 1 of linking an existing email purchase to this desktop device.
     pub async fn request_email_otp(&self, email: &str) -> AppResult<()> {
         let email = email.trim();

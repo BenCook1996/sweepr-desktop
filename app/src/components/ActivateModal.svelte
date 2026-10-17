@@ -1,12 +1,10 @@
 <script lang="ts">
   import { api, errorMessage } from "../lib/api";
-  import { PRICING } from "../lib/format";
 
   let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
 
   let email = $state("");
   let emailConfirm = $state("");
-  let selectedPlan = $state<"monthly" | "annual">("monthly");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
@@ -44,7 +42,7 @@
 
     busy = true;
     try {
-      await api.startCheckout(email.trim(), selectedPlan);
+      await api.startCheckout(email.trim());
       waitingPayment = true;
       stopPolling();
       let ticks = 0;
@@ -86,38 +84,6 @@
             Please enter your <strong>Email address</strong> (required for activation)
           </p>
 
-          <div class="plan-cards" role="radiogroup" aria-label="Select billing plan">
-            <button
-              type="button"
-              class="plan-card"
-              class:selected={selectedPlan === "monthly"}
-              onclick={() => (selectedPlan = "monthly")}
-              aria-pressed={selectedPlan === "monthly"}
-            >
-              <div class="row" style="justify-content: space-between; width: 100%;">
-                <strong>Monthly Plan</strong>
-                <span class="badge free">30-Day Trial</span>
-              </div>
-              <div class="plan-price">{PRICING.activation} today</div>
-              <div class="muted small">then {PRICING.monthly}/mo · Cancel anytime</div>
-            </button>
-
-            <button
-              type="button"
-              class="plan-card"
-              class:selected={selectedPlan === "annual"}
-              onclick={() => (selectedPlan = "annual")}
-              aria-pressed={selectedPlan === "annual"}
-            >
-              <div class="row" style="justify-content: space-between; width: 100%;">
-                <strong>Annual Plan</strong>
-                <span class="badge pro">{PRICING.annualSave}</span>
-              </div>
-              <div class="plan-price">{PRICING.annual}/yr</div>
-              <div class="muted small">{PRICING.annualSave} · Billed yearly, no free trial</div>
-            </button>
-          </div>
-
           <div class="inputs-group">
             <input
               type="email"
@@ -135,21 +101,13 @@
             />
           </div>
 
-          <div class="pricing-hint muted small">
-            {#if selectedPlan === "monthly"}
-              {PRICING.activation} today, then {PRICING.monthly}/month. Cancel anytime.
-            {:else}
-              {PRICING.annual}/yr — {PRICING.annualSave}, no free trial. Cancel anytime.
-            {/if}
-          </div>
-
           {#if error}
             <div class="error-banner">{error}</div>
           {/if}
 
           <div class="action-row">
             <button class="primary begin-btn" disabled={busy} onclick={handleActivate}>
-              {busy ? "Opening checkout…" : selectedPlan === "annual" ? `Activate Annual (${PRICING.annual}/yr)` : "Begin activation"}
+              {busy ? "Opening checkout…" : "Begin activation"}
             </button>
           </div>
         </div>
@@ -160,7 +118,7 @@
           </div>
         {:else if activeInfo === "sales"}
           <div class="info-drawer muted small">
-            <strong>Sales Policy:</strong> {PRICING.activation} for your first {PRICING.trialDays} days on the Monthly plan (then {PRICING.monthly}/month), or {PRICING.annual}/year on the Annual plan ({PRICING.annualSave}, no trial). Cancel anytime in 1 click from the Account tab.
+            <strong>Sales Policy:</strong> Flexible subscription plans are available at checkout. Taxes are calculated automatically based on your region.
           </div>
         {:else if activeInfo === "info"}
           <div class="info-drawer muted small">
