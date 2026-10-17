@@ -545,7 +545,7 @@ export class Repo {
 
     // Also mirror to subscriptions table for CRM subscription history
     const subId = e.stripe_subscription_id || `sub_${e.account_id}`;
-    const amount = e.plan === "annual" ? 4999 : e.plan === "six_month" ? 2999 : 999;
+    const amount = e.plan === "annual" ? 4999 : e.plan === "six_month" ? 3899 : 999;
     this.upsertSubscription({
       id: subId,
       account_id: e.account_id,

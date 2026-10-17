@@ -413,7 +413,7 @@ export function createApp(deps: AppDeps) {
             : {
                 price_data: {
                   currency: "gbp",
-                  unit_amount: 2999,
+                  unit_amount: 3899,
                   recurring: { interval: "month", interval_count: 6 },
                   product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
                 },
@@ -469,7 +469,7 @@ export function createApp(deps: AppDeps) {
       amountRecurringPence: 4999,
       plans: {
         annual: { amountPence: 4999, interval: "year", name: "SWEEPR Cleaner Pro (Annual)" },
-        six_month: { amountPence: 2999, interval: "6 months", name: "SWEEPR Cleaner Pro (6-Month)" },
+        six_month: { amountPence: 3899, interval: "6 months", name: "SWEEPR Cleaner Pro (6-Month)" },
         monthly: { amountPence: 999, introAmountPence: 199, interval: "month", name: "SWEEPR Cleaner Pro (Monthly)" },
       },
     });
@@ -565,7 +565,7 @@ export function createApp(deps: AppDeps) {
                   ? "SWEEPR Cleaner Pro (6-Month)"
                   : "SWEEPR Cleaner Pro (Monthly)",
               },
-              unit_amount: isAnnual ? 4999 : isSixMonth ? 2999 : 999,
+              unit_amount: isAnnual ? 4999 : isSixMonth ? 3899 : 999,
               recurring: isAnnual
                 ? { interval: "year" }
                 : isSixMonth
@@ -1270,7 +1270,7 @@ export function createApp(deps: AppDeps) {
             {
               price_data: {
                 currency: "gbp",
-                unit_amount: 2999,
+                unit_amount: 3899,
                 recurring: { interval: "month", interval_count: 6 },
                 product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
               },

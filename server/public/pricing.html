@@ -209,6 +209,21 @@
 
       <!-- Right Column: Product Pricing Card (Direct Checkout) -->
       <div id="order" class="w-full lg:w-[460px] shrink-0">
+        <!-- 3-Way Plan Toggle Tabs -->
+        <div class="bg-gray-100/90 p-1.5 rounded-2xl flex items-center gap-1 mb-3 border border-gray-200/80">
+          <button type="button" id="tabPricingAnnual" onclick="setPricingPlan('annual')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500/30 ring-1 ring-emerald-500/20">
+            <span>Annual</span>
+            <span class="inline-block ml-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">Save 58%</span>
+          </button>
+          <button type="button" id="tabPricingSixMonth" onclick="setPricingPlan('six_month')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60">
+            <span>6-Month</span>
+            <span class="inline-block ml-1 text-[10px] font-bold text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded-full">Save 35%</span>
+          </button>
+          <button type="button" id="tabPricingMonthly" onclick="setPricingPlan('monthly')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60">
+            <span>Monthly</span>
+          </button>
+        </div>
+
         <div class="glass-card p-8 relative overflow-hidden border border-emerald-100/80 shadow-2xl">
           <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
           
@@ -217,16 +232,16 @@
               <span class="text-xs font-bold text-emerald-700 tracking-wider uppercase">Official Full License</span>
               <h3 class="text-2xl font-black text-gray-900">SWEEPR Cleaner Pro</h3>
             </div>
-            <span class="badge free px-2.5 py-1 text-xs font-bold">MOST POPULAR</span>
+            <span id="pricingCardBadge" class="badge free px-2.5 py-1 text-xs font-bold uppercase tracking-wider">MOST POPULAR / BEST VALUE</span>
           </div>
 
           <div class="my-6 pb-6 border-b border-gray-100">
             <div class="flex items-baseline gap-2">
-              <span class="text-5xl font-black text-gray-900">£1.99</span>
-              <span class="text-gray-500 font-medium text-sm">1st month</span>
+              <span id="pricingPriceAmount" class="text-5xl font-black text-gray-900">£49.99</span>
+              <span id="pricingPriceInterval" class="text-gray-500 font-medium text-sm">per year (£4.16/mo)</span>
             </div>
-            <p class="text-xs text-gray-500 mt-2">
-              Pay £1.99 today for your 1st month, then renews at the standard £9.99/month unless cancelled. The introductory discount does not reduce future renewals. Cancel anytime with 1 click.
+            <p id="pricingPriceSubtext" class="text-xs text-gray-500 mt-2">
+              Just £4.16/month billed annually at £49.99. Save 58% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.
             </p>
           </div>
 
@@ -256,7 +271,7 @@
 
           <!-- Order CTA -->
           <div class="space-y-3 pt-2">
-            <a href="/order?offer=intro" class="btn btn-go btn-big pulse-glow w-full justify-center gap-2">
+            <a id="pricingCtaBtn" href="/order?plan=annual" class="btn btn-go btn-big pulse-glow w-full justify-center gap-2">
               <span>Buy Now</span>
               <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
@@ -482,11 +497,11 @@
         if (ctaBtn) ctaBtn.href = '/order?plan=annual';
       } else if (plan === 'six_month') {
         tabSixMonth.className = activeClasses;
-        badge.textContent = 'SAVE 50%';
+        badge.textContent = 'SAVE 35%';
         badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-teal-800 bg-teal-100 border border-teal-200 uppercase tracking-wider';
-        priceAmount.textContent = '£29.99';
-        priceInterval.textContent = 'every 6 months (£4.99/mo)';
-        priceSubtext.textContent = 'Just £4.99/month billed every 6 months at £29.99. Save 50% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
+        priceAmount.textContent = '£38.99';
+        priceInterval.textContent = 'every 6 months (£6.50/mo)';
+        priceSubtext.textContent = 'Just £6.50/month billed every 6 months at £38.99. Save 35% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
         if (ctaBtn) ctaBtn.href = '/order?plan=six_month';
       } else {
         tabMonthly.className = activeClasses;
