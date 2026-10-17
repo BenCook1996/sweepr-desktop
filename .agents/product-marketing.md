@@ -15,7 +15,7 @@
   - **Web & Licensing Backend (`server/`):** Express + SQLite/Postgres + Stripe Subscriptions + RevenueCat Webhooks + Magic-Link Customer Portal (`/dashboard`) + Built-in Referral Engine (`/r/:code`).
 - **Business model:** Freemium + Tripwire Subscription:
   - **Free Tier:** Unlimited basic system temp scans & initial cleanup ("Value Before Ask").
-  - **Introductory Tripwire Offer:** **£1.99 today** (7-day full Pro access via Stripe coupon `MYskiOdE`), auto-renewing at **£9.99/month** (`priceMonthly`).
+  - **Introductory Tripwire Offer:** **£1.99 today** (1st month full Pro access via Stripe coupon `MYskiOdE`), auto-renewing at **£9.99/month** (`priceMonthly`). Discount applies strictly to month 1 and does not reduce future renewals.
   - **Annual Plan:** **£49.99/year** (~£4.16/mo, 58% savings).
   - **Lifetime License (CRM / Upsell):** **£199 one-time** (`crm.ts`).
   - **Multi-Device Entitlement:** 1 Pro license unlocks **up to 3 Desktop PCs + 2 Mobile devices** with a 30-day money-back guarantee.
@@ -57,7 +57,7 @@
 | Competitor | Category | Why Users Hate Them (Vulnerability) | How Sweepr Wins |
 | :--- | :--- | :--- | :--- |
 | **CCleaner (Gen Digital / Avast)** | Direct Incumbent | Acquired by Avast; infamous for bundled browser/antivirus offers, persistent background monitoring agents, pop-up upsells, and past supply-chain security controversies. | **Zero bloatware, Rust-native (<15MB), privacy-first.** Sweepr runs when you tell it to and never sells your telemetry or bundles third-party adware. |
-| **CleanMyPC / CleanMyMac (MacPaw)** | Direct Premium | CleanMyPC was sunset/neglected compared to CleanMyMac; expensive single-OS licensing (£35–£80/yr). | **Cross-platform license (3 PCs + 2 Mobile devices)** included in one plan, starting with a £1.99 7-day Pro trial. |
+| **CleanMyPC / CleanMyMac (MacPaw)** | Direct Premium | CleanMyPC was sunset/neglected compared to CleanMyMac; expensive single-OS licensing (£35–£80/yr). | **Cross-platform license (3 PCs + 2 Mobile devices)** included in one plan, starting with a £1.99 1st-month introductory Pro offer. |
 | **BleachBit** | Open-Source Alternative | Extremely dated Windows 95-style UI; dangerous checkboxes that can accidentally wipe needed user data; no RAM optimizer, duplicate visual merger, or smart uninstaller. | **Modern consumer UX with safety guardrails.** Sweepr gives BleachBit-level transparency with a polished dark-mode UI and safe defaults. |
 | **Windows Storage Sense / Disk Cleanup** | Status Quo (Built-in) | Misses third-party browser caches (Chrome/Edge/Brave/Discord/Spotify/Steam), doesn't remove leftover app folders, doesn't find duplicate files, and doesn't shred files. | **Finds 3–5x more reclaimable space** across third-party apps, duplicates, and startup bloat. |
 | **Avast Cleanup / Iolo System Mechanic** | Legacy Scareware | Uses aggressive red "CRITICAL ALERT: 4,821 ISSUES FOUND!" scareware tactics and slows down the machine with heavy background services. | **Honest diagnostics ("Anti-Scareware").** Shows exact file paths and byte counts before you clean. |
