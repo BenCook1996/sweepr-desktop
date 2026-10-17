@@ -606,6 +606,40 @@ export function createApp(deps: AppDeps) {
     }
   }
 
+  async function dispatchActivationEmail(account: Account, planLabel: string) {
+    const email = normalizeEmail(account.email);
+    if (!email || email.endsWith("@pending.sweeprcleaner.com")) return;
+
+    const recentSent = repo.db
+      .prepare(
+        "SELECT id FROM activities WHERE account_id = ? AND type = 'welcome_email_sent' AND created_at > ? LIMIT 1"
+      )
+      .get(account.id, now() - 300);
+    if (recentSent) return;
+
+    const activationKey = randomInt(100000, 1000000).toString();
+    const expiresAt = now() + 7 * 86400; // 7 days validity for subscription activation key
+    repo.setOtp(email, sha256(activationKey), expiresAt);
+
+    const { sendSubscriptionEmail } = await import("./email.js");
+    const dispatch = await sendSubscriptionEmail(
+      email,
+      "activated",
+      planLabel,
+      account.name || undefined,
+      activationKey
+    ).catch((err) => ({ ok: false, provider: "error", error: String(err) }));
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "welcome_email_sent",
+      title: "Welcome & Subscription Key Sent",
+      description: `6-digit Subscription Key (${activationKey}) sent to ${email}`,
+      actor: "system",
+      metadata: { code: activationKey, email, plan: planLabel, dispatch },
+    });
+  }
+
   // Create a Stripe Subscription for direct on-page card, PayPal, Apple Pay & Google Pay confirmation (no Stripe Hosted Checkout page)
   app.post("/api/create-subscription", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
@@ -897,14 +931,14 @@ export function createApp(deps: AppDeps) {
           secure: isHttps,
           maxAge: 86400 * 30,
         });
-        if (
-          resolvedAccount.email &&
-          !resolvedAccount.email.endsWith("@pending.sweeprcleaner.com") &&
-          (sub.status === "active" || sub.status === "trialing")
-        ) {
-          import("./email.js").then((m) => {
-            m.sendSubscriptionEmail(resolvedAccount.email!, "activated", "Pro", resolvedAccount.name || undefined).catch(console.error);
-          });
+        if (sub.status === "active" || sub.status === "trialing") {
+          const planLabel =
+            sub.metadata?.plan === "annual"
+              ? "Annual"
+              : sub.metadata?.plan === "six_month"
+              ? "6-Month"
+              : "Pro";
+          await dispatchActivationEmail(resolvedAccount, planLabel);
         }
       }
 
@@ -1826,20 +1860,14 @@ export function createApp(deps: AppDeps) {
             secure: isHttps,
             maxAge: 86400 * 30,
           });
-          if (
-            resolvedAccount.email &&
-            !resolvedAccount.email.endsWith("@pending.sweeprcleaner.com") &&
-            (sub.status === "active" || sub.status === "trialing")
-          ) {
-            import("./email.js").then((m) => {
-              const planLabel =
-                sub.metadata?.plan === "annual"
-                  ? "Annual"
-                  : sub.metadata?.plan === "six_month"
-                  ? "6-Month"
-                  : "Pro";
-              m.sendSubscriptionEmail(resolvedAccount.email!, "activated", planLabel, resolvedAccount.name || undefined).catch(console.error);
-            });
+          if (sub.status === "active" || sub.status === "trialing") {
+            const planLabel =
+              sub.metadata?.plan === "annual"
+                ? "Annual"
+                : sub.metadata?.plan === "six_month"
+                ? "6-Month"
+                : "Pro";
+            await dispatchActivationEmail(resolvedAccount, planLabel);
           }
         }
       } catch (err) {
@@ -1852,7 +1880,13 @@ export function createApp(deps: AppDeps) {
     }
 
     if (isWeb) {
-      return c.html(page("You're Activated 🎉", "Thanks for purchasing SWEEPR Cleaner! Download the app below. When you launch it, enter your email on the Account tab to link your purchase.", true));
+      return c.html(
+        page(
+          "You're Activated 🎉",
+          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.",
+          true
+        )
+      );
     }
     return c.html(page("You're Activated 🎉", "Return to SWEEPR Cleaner. It will unlock automatically within a few seconds."));
   });

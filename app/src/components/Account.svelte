@@ -239,17 +239,26 @@
       </div>
 
       <hr style="border: none; border-top: 1px solid var(--border, #e2e8f0); width: 100%; margin: 4px 0;" />
-      <div class="row"><strong>Purchased on the website? Link your email</strong></div>
+      <div class="row"><strong>Purchased on the website? Activate with your Email &amp; Subscription Key</strong></div>
       {#if !otpSent}
         <div class="row" style="gap: 8px; flex-wrap: wrap;">
           <input type="email" bind:value={linkEmail} placeholder="Enter checkout email" style="flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);" />
-          <button class="primary" disabled={busy} onclick={sendOtp}>Send verification code</button>
+          <button class="primary" disabled={busy} onclick={() => {
+            error = null;
+            if (!linkEmail.trim() || !linkEmail.includes("@")) {
+              error = "Please enter the email address used at checkout.";
+              return;
+            }
+            otpSent = true;
+          }}>Enter 6-Digit Key</button>
+          <button class="ghost" disabled={busy} onclick={sendOtp}>Email me a new key</button>
         </div>
       {:else}
-        <p class="muted small" style="margin: 0;">Enter the 6-digit code sent to <strong>{linkEmail}</strong>:</p>
+        <p class="muted small" style="margin: 0;">Enter the 6-digit Subscription Key sent to <strong>{linkEmail}</strong>:</p>
         <div class="row" style="gap: 8px; flex-wrap: wrap;">
-          <input type="text" maxlength="6" bind:value={otpCode} placeholder="6-digit code" style="width: 140px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); letter-spacing: 2px;" />
-          <button class="primary" disabled={busy} onclick={verifyOtp}>Verify & Activate</button>
+          <input type="text" maxlength="6" bind:value={otpCode} placeholder="6-digit key" style="width: 140px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); letter-spacing: 2px;" />
+          <button class="primary" disabled={busy} onclick={verifyOtp}>Verify &amp; Activate</button>
+          <button class="ghost" disabled={busy} onclick={sendOtp}>Resend key</button>
           <button class="ghost" disabled={busy} onclick={() => { otpSent = false; otpCode = ""; }}>Change email</button>
         </div>
       {/if}

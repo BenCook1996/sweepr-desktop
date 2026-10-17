@@ -16,29 +16,36 @@ export async function sendSubscriptionEmail(
   to: string,
   type: "activated" | "canceled" | "otp",
   planOrCode: string,
-  name?: string
+  name?: string,
+  activationCode?: string
 ): Promise<EmailDispatchResult> {
   const recipient = to.trim().toLowerCase();
   const isOtp = type === "otp";
+  const isActivated = type === "activated";
   const isProduction = process.env.NODE_ENV === "production";
   const subject = isOtp
     ? `Your SWEEPR Cleaner Login Code`
-    : type === "activated"
-    ? `Welcome to SWEEPR Cleaner ${planOrCode.toUpperCase()}!`
+    : isActivated
+    ? `Welcome to SWEEPR Cleaner ${planOrCode.toUpperCase()} — Your Subscription Key`
     : `SWEEPR Cleaner Subscription Canceled`;
 
   const body = isOtp
     ? `Hi,\n\nHere is your one-time login code for SWEEPR Cleaner: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nThe SWEEPR Cleaner Team`
-    : type === "activated"
-    ? `Hi ${name || 'Customer'},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nThank you for choosing SWEEPR Cleaner.`
-    : `Hi ${name || 'Customer'},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe SWEEPR Cleaner Team`;
+    : isActivated
+    ? activationCode
+      ? `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nYour Subscription Activation Key: ${activationCode}\nRegistered Email: ${recipient}\n\nHow to activate SWEEPR Cleaner Pro:\n1. Download SWEEPR Cleaner: https://sweeprcleaner.com/download\n2. Launch the app and open the "Account & Settings" tab (or visit https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp).\n3. Enter your email (${recipient}) and your 6-digit Subscription Key (${activationCode}) to unlock all Pro features.\n\nThank you for choosing SWEEPR Cleaner.`
+      : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nThank you for choosing SWEEPR Cleaner.`
+    : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe SWEEPR Cleaner Team`;
 
   if (isProduction) {
     // Never print bodies (which may contain login codes) in production logs.
     console.log(`[EMAIL] Dispatching "${subject}" (${type})`);
   } else {
     const logRawOtp = process.env.LOG_OTP_CODES === "1";
-    const safeBody = isOtp && !logRawOtp ? body.replace(planOrCode, "[REDACTED-OTP]") : body;
+    let safeBody = isOtp && !logRawOtp ? body.replace(planOrCode, "[REDACTED-OTP]") : body;
+    if (isActivated && activationCode && !logRawOtp) {
+      safeBody = safeBody.replaceAll(activationCode, "[REDACTED-OTP]");
+    }
     console.log(`\n=== EMAIL DISPATCH ===\nTo: ${recipient}\nSubject: ${subject}\n\n${safeBody}\n======================\n`);
 
     // Log to file for development / verification (restricted file mode 0600)
@@ -71,6 +78,42 @@ export async function sendSubscriptionEmail(
   </p>
   <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
     &copy; SWEEPR Cleaner Desktop &bull; Fast, private, intelligent PC cleaner
+  </div>
+</div>`
+    : isActivated
+    ? `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+  <div style="text-align: center; margin-bottom: 24px;">
+    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
+    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Welcome to SWEEPR Cleaner ${planOrCode.toUpperCase()}!</h2>
+    <p style="color: #475569; font-size: 14px; margin: 0;">Hi ${name || "Customer"}, your subscription is now active and ready to use across up to 3 PCs and 2 mobile devices.</p>
+  </div>
+  ${
+    activationCode
+      ? `
+  <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #047857; margin-bottom: 8px;">Your 6-Digit Subscription Activation Key</div>
+    <span style="font-family: monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #059669;">${activationCode}</span>
+    <div style="font-size: 12px; color: #475569; margin-top: 8px;">Registered Email: <strong>${recipient}</strong></div>
+  </div>`
+      : ""
+  }
+  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin: 20px 0;">
+    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">How to Activate SWEEPR Cleaner Pro:</div>
+    <ol style="margin: 0; padding-left: 18px; color: #475569; font-size: 13px; line-height: 1.7;">
+      <li>Download and install <strong>SWEEPR Cleaner</strong> using the button below.</li>
+      <li>Open the <strong>Account &amp; Settings</strong> tab inside the app.</li>
+      <li>Enter your email (<strong>${recipient}</strong>) and your <strong>6-digit Subscription Key</strong>${activationCode ? ` (<strong>${activationCode}</strong>)` : ""} to unlock all Pro features immediately.</li>
+    </ol>
+  </div>
+  <div style="text-align: center; margin: 24px 0 16px 0;">
+    <a href="https://sweeprcleaner.com/download" style="display: inline-block; background: #10b981; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none; padding: 13px 28px; border-radius: 9999px;">Download SWEEPR Cleaner for Windows</a>
+  </div>
+  <div style="text-align: center; margin-bottom: 20px;">
+    <a href="https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp" style="font-size: 13px; font-weight: 600; color: #059669; text-decoration: underline;">Open Online Customer Portal &rarr;</a>
+  </div>
+  <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+    &copy; 2026 SWEEPR Cleaner Inc. &bull; Need help? Reply to this email or visit <a href="https://sweeprcleaner.com/support" style="color: #64748b;">sweeprcleaner.com/support</a>
   </div>
 </div>`
     : undefined;

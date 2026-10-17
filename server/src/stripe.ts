@@ -90,9 +90,36 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       if (subId) syncSubscription(repo, await stripe.subscriptions.retrieve(subId), accountId);
       
       if (email) {
-        import("./email.js").then((m) => {
-          m.sendSubscriptionEmail(email, "activated", "Pro", s.customer_details?.name || undefined).catch(console.error);
-        });
+        const normEmail = email.trim().toLowerCase();
+        const nowSec = Math.floor(Date.now() / 1000);
+        const recentSent = accountId
+          ? repo.db
+              .prepare(
+                "SELECT id FROM activities WHERE account_id = ? AND type = 'welcome_email_sent' AND created_at > ? LIMIT 1"
+              )
+              .get(accountId, nowSec - 300)
+          : null;
+        if (!recentSent) {
+          const { randomInt } = await import("node:crypto");
+          const { sha256 } = await import("./tokens.js");
+          const activationKey = randomInt(100000, 1000000).toString();
+          repo.setOtp(normEmail, sha256(activationKey), nowSec + 7 * 86400);
+          if (accountId) {
+            repo.addActivity({
+              account_id: accountId,
+              type: "welcome_email_sent",
+              title: "Welcome & Subscription Key Sent",
+              description: `6-digit Subscription Key (${activationKey}) sent to ${normEmail}`,
+              actor: "stripe",
+              metadata: { code: activationKey, email: normEmail, plan: "Pro" },
+            });
+          }
+          import("./email.js").then((m) => {
+            m.sendSubscriptionEmail(normEmail, "activated", "Pro", s.customer_details?.name || undefined, activationKey).catch(
+              console.error
+            );
+          });
+        }
       }
       break;
     }

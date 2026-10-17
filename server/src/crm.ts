@@ -235,7 +235,9 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     });
 
     if (customer.email && status === "active") {
-      sendSubscriptionEmail(customer.email, "activated", plan, customer.name || undefined).catch(console.error);
+      const activationKey = randomInt(100000, 1000000).toString();
+      repo.setOtp(customer.email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      sendSubscriptionEmail(customer.email, "activated", plan, customer.name || undefined, activationKey).catch(console.error);
     }
 
     return c.json({ ok: true, customer: repo.getCustomer360(id) });
@@ -364,7 +366,9 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     }
 
     if (email && status === "active") {
-      sendSubscriptionEmail(email, "activated", plan, name).catch(console.error);
+      const activationKey = randomInt(100000, 1000000).toString();
+      repo.setOtp(email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      sendSubscriptionEmail(email, "activated", plan, name, activationKey).catch(console.error);
     }
 
     return c.json({
@@ -499,7 +503,9 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     );
 
     if (email) {
-      sendSubscriptionEmail(email, "activated", plan, name).catch(console.error);
+      const activationKey = randomInt(100000, 1000000).toString();
+      repo.setOtp(email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      sendSubscriptionEmail(email, "activated", plan, name, activationKey).catch(console.error);
     }
 
     return c.json({
