@@ -12,7 +12,6 @@
   let report = $state<ScanReport | null>(null);
   let selected = $state<Record<string, boolean>>({});
   let expanded = $state<string | null>(null);
-  let useTrash = $state(true);
   let showPaywall = $state(false);
   let error = $state<string | null>(null);
   let results = $state<CleanReport[]>([]);
@@ -157,7 +156,7 @@
     showPaywall = false;
     phase = "cleaning";
     try {
-      results = await api.clean(cats.map((c) => c.id), useTrash);
+      results = await api.clean(cats.map((c) => c.id), false);
       
       const totalFreed = results.reduce((s, r) => s + r.bytes_freed, 0);
       const totalRemoved = results.reduce((s, r) => s + r.files_removed, 0);
@@ -531,12 +530,8 @@
 
   <!-- Floating Action Dock -->
   <footer class="card action-dock">
-    <label class="row small recycle-label">
-      <input type="checkbox" bind:checked={useTrash} />
-      <span>Move to {report && navigator.userAgent.includes("Windows") ? "Recycle Bin" : "Trash"} (recoverable)</span>
-    </label>
-    <div class="spacer"></div>
     <span class="selected-count-label">{formatBytes(selectedBytes)} selected</span>
+    <div class="spacer"></div>
     <button class="primary clean-action-btn" disabled={!selectedCats.length} onclick={requestClean}>
       Clean {formatBytes(selectedBytes)}
     </button>
@@ -984,10 +979,6 @@
     background: rgba(255, 255, 255, 0.94);
     box-shadow: 0 10px 35px rgba(15, 23, 42, 0.1);
     z-index: 100;
-  }
-  .recycle-label {
-    cursor: pointer;
-    font-weight: 500;
   }
   .selected-count-label {
     font-weight: 600;
