@@ -233,7 +233,7 @@
     </div>
 
     <p class="muted small" style="margin: 0 0 16px 0; line-height: 1.5;">
-      Sweepr does not collect, store, or transmit your email address for breach checks. Clicking below opens <strong>haveibeenpwned.com</strong> in your default browser.
+      SWEEPR Cleaner does not collect, store, or transmit your email address for breach checks. Clicking below opens <strong>haveibeenpwned.com</strong> in your default browser.
     </p>
 
     <div class="row">

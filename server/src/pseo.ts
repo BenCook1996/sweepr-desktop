@@ -42,7 +42,7 @@ export function renderPseoDirectory(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Windows Cache & Storage Cleanup Directory | Sweepr Cleaner</title>
+  <title>Windows Cache & Storage Cleanup Directory | SWEEPR Cleaner</title>
   <meta name="description" content="Browse verified guides to cleaning hidden Windows folders, app caches, and temporary files safely without breaking your operating system.">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
@@ -53,7 +53,7 @@ export function renderPseoDirectory(): string {
   <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
     <a href="/" class="flex items-center gap-3 text-inherit no-underline">
       <div class="logo-box">S</div>
-      <span class="font-extrabold text-xl tracking-tight text-gray-900">Sweepr <span class="text-emerald-600">Cleaner</span></span>
+      <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
     </a>
     <div class="flex gap-3 items-center">
       <div class="relative inline-block text-left" id="langDropdownContainer">
@@ -78,7 +78,7 @@ export function renderPseoDirectory(): string {
         </div>
       </div>
       <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-      <a href="/download" class="btn btn-go text-sm">Get Sweepr Cleaner</a>
+      <a href="/download" class="btn btn-go text-sm">Get SWEEPR Cleaner</a>
     </div>
   </nav>
 
@@ -111,7 +111,7 @@ export function renderPseoDirectory(): string {
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center mt-12">
       <h3 class="text-2xl font-bold mb-2">Want to clean all of these in 60 seconds?</h3>
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        Sweepr Cleaner checks all 40+ hidden locations simultaneously and safely frees space without you having to run manual commands.
+        SWEEPR Cleaner checks all 40+ hidden locations simultaneously and safely frees space without you having to run manual commands.
       </p>
       <a href="/download" class="btn btn-go btn-big">Download Free Scan</a>
     </div>
@@ -136,7 +136,7 @@ export function renderPseoPage(item: CleanItem): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How to Clean ${item.name} | Is It Safe to Delete? | Sweepr Cleaner</title>
+  <title>How to Clean ${item.name} | Is It Safe to Delete? | SWEEPR Cleaner</title>
   <meta name="description" content="Step-by-step guide to cleaning ${item.name} (${item.path}). Reclaim ${item.avgSpace}. Learn whether it's safe to delete and how to clean it safely.">
   <link rel="canonical" href="https://sweeprcleaner.com/clean/${item.category}/${item.slug}">
   
@@ -185,7 +185,7 @@ export function renderPseoPage(item: CleanItem): string {
     <div class="flex items-center gap-4">
       <a href="/" class="flex items-center gap-3 text-inherit no-underline">
         <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">Sweepr <span class="text-emerald-600">Cleaner</span></span>
+        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
       </a>
       <a href="/clean" class="text-xs font-semibold text-gray-500 hover:text-gray-900">Directory &rarr;</a>
     </div>
@@ -212,7 +212,7 @@ export function renderPseoPage(item: CleanItem): string {
         </div>
       </div>
       <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-      <a href="/download" class="btn btn-go text-sm">Get Sweepr Cleaner</a>
+      <a href="/download" class="btn btn-go text-sm">Get SWEEPR Cleaner</a>
     </div>
   </nav>
 
@@ -258,7 +258,7 @@ export function renderPseoPage(item: CleanItem): string {
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center shadow-lg">
       <h3 class="text-2xl font-bold mb-2">Clean ${item.name} Automatically</h3>
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        Sweepr Cleaner safely purges ${item.name} plus 40+ other hidden application caches and orphaned files with a single click. Zero risk of breaking Windows.
+        SWEEPR Cleaner safely purges ${item.name} plus 40+ other hidden application caches and orphaned files with a single click. Zero risk of breaking Windows.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
         <a href="/download" class="btn btn-go gap-2">

@@ -21,7 +21,7 @@ struct DashboardView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Sweepr")
+            .navigationTitle("SWEEPR Cleaner")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -258,7 +258,7 @@ struct DashboardView: View {
             .accessibilityLabel(
                 vm.hasPremium
                     ? "Clean up \(vm.selectedMediaIDs.count) selected media items and \(vm.selectedContactGroupIDs.count) duplicate contact groups"
-                    : "Unlock 1-Click Clean Up with Sweepr Pro"
+                    : "Unlock 1-Click Clean Up with SWEEPR Cleaner Pro"
             )
             .accessibilityHint("Moves selected photos and videos to Recently Deleted for 30 days and merges selected duplicate contacts")
         }

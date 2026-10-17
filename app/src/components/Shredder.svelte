@@ -32,7 +32,7 @@
     } catch (e) {
       if (isPaymentRequired(e)) {
         needsPro = true;
-        statusMessage = "The file shredder is a Pro feature. Activate your Sweepr licence to use it.";
+        statusMessage = "The file shredder is a Pro feature. Activate your SWEEPR Cleaner licence to use it.";
         requestActivation();
       } else {
         statusMessage = `Shredding failed: ${errorMessage(e)}`;

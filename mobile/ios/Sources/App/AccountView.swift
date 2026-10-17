@@ -25,7 +25,7 @@ struct AccountView: View {
                 Section(header: Text("Membership")) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(vm.hasPremium ? "Sweepr Pro Active" : "Free Plan")
+                            Text(vm.hasPremium ? "SWEEPR Cleaner Pro Active" : "Free Plan")
                                 .font(.headline)
                                 .foregroundColor(vm.hasPremium ? .sweeprEmerald : .primary)
                             Text(vm.subscriptionInfoText)
@@ -39,7 +39,7 @@ struct AccountView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(.sweeprEmerald)
-                            .accessibilityLabel("Upgrade to Sweepr Pro")
+                            .accessibilityLabel("Upgrade to SWEEPR Cleaner Pro")
                         }
                     }
                     .padding(.vertical, 4)
@@ -59,10 +59,10 @@ struct AccountView: View {
                     .accessibilityLabel("Manage Apple Subscription")
                 }
 
-                // 2. Cross-Platform Sweepr Account (Store-compliant Guidelines 3.1.2 & 5.1.1(v))
+                // 2. Cross-Platform SWEEPR Cleaner Account (Store-compliant Guidelines 3.1.2 & 5.1.1(v))
                 Section(
-                    header: Text("Sweepr Account"),
-                    footer: Text("Link your email with a 6-digit OTP to sync your Sweepr Pro entitlement across Windows, macOS, Linux, iOS, and Android.")
+                    header: Text("SWEEPR Cleaner Account"),
+                    footer: Text("Link your email with a 6-digit OTP to sync your SWEEPR Cleaner Pro entitlement across Windows, macOS, Linux, iOS, and Android.")
                 ) {
                     if vm.linkedAccount.isSignedIn {
                         HStack {
@@ -82,7 +82,7 @@ struct AccountView: View {
                         } label: {
                             Text("Delete Account & Data")
                         }
-                        .accessibilityLabel("Delete Sweepr Account and Data permanently")
+                        .accessibilityLabel("Delete SWEEPR Cleaner Account and Data permanently")
                     } else {
                         Button {
                             otpEmail = ""
@@ -90,16 +90,16 @@ struct AccountView: View {
                             otpSent = false
                             showSignInSheet = true
                         } label: {
-                            Label("Link Sweepr Account (6-Digit Email OTP)", systemImage: "envelope.badge.shield.half.filled")
+                            Label("Link SWEEPR Cleaner Account (6-Digit Email OTP)", systemImage: "envelope.badge.shield.half.filled")
                         }
-                        .accessibilityLabel("Link Sweepr Account via 6-digit Email OTP")
+                        .accessibilityLabel("Link SWEEPR Cleaner Account via 6-digit Email OTP")
                     }
                 }
 
                 // 3. Referral Code Card
                 Section(
                     header: Text("Refer a Friend"),
-                    footer: Text("Share your Sweepr referral code with friends or redeem a friend's invite code.")
+                    footer: Text("Share your SWEEPR Cleaner referral code with friends or redeem a friend's invite code.")
                 ) {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -124,7 +124,7 @@ struct AccountView: View {
                             if let shareURL = URL(string: "\(AppConfig.websiteURL)?ref=\(vm.linkedAccount.referralCode)") {
                                 ShareLink(
                                     item: shareURL,
-                                    message: Text("Clean up your phone & PC with Sweepr! Use my referral code \(vm.linkedAccount.referralCode)")
+                                    message: Text("Clean up your phone & PC with SWEEPR Cleaner! Use my referral code \(vm.linkedAccount.referralCode)")
                                 ) {
                                     Label("Share", systemImage: "square.and.arrow.up")
                                         .font(.caption)
@@ -176,9 +176,9 @@ struct AccountView: View {
                     Button {
                         vm.requestAppStoreReview()
                     } label: {
-                        Label("Rate Sweepr on the App Store", systemImage: "star.bubble")
+                        Label("Rate SWEEPR Cleaner on the App Store", systemImage: "star.bubble")
                     }
-                    .accessibilityLabel("Rate Sweepr on the App Store")
+                    .accessibilityLabel("Rate SWEEPR Cleaner on the App Store")
                 }
 
                 // 5. Legal, Diagnostics & Support
@@ -225,7 +225,7 @@ struct AccountView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently deletes your Sweepr account, linked devices, and server records via DELETE /v1/account. Active Apple StoreKit subscriptions are managed in your Apple ID settings.")
+                Text("This permanently deletes your SWEEPR Cleaner account, linked devices, and server records via DELETE /v1/account. Active Apple StoreKit subscriptions are managed in your Apple ID settings.")
             }
         }
     }
@@ -235,7 +235,7 @@ struct AccountView: View {
             Form {
                 Section(
                     header: Text("6-Digit Email OTP Verification"),
-                    footer: Text("We'll send a one-time 6-digit verification code to link this device with your Sweepr account.")
+                    footer: Text("We'll send a one-time 6-digit verification code to link this device with your SWEEPR Cleaner account.")
                 ) {
                     if !otpSent {
                         TextField("Email Address", text: $otpEmail)
@@ -274,7 +274,7 @@ struct AccountView: View {
                     }
                 }
             }
-            .navigationTitle("Link Sweepr Account")
+            .navigationTitle("Link SWEEPR Cleaner Account")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { showSignInSheet = false }

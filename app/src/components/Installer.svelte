@@ -4,12 +4,12 @@
 
   let step = $state<Step>("welcome");
   let progress = $state(0);
-  let statusText = $state("Preparing to install Sweepr…");
+  let statusText = $state("Preparing to install SWEEPR Cleaner…");
 
   function startInstall() {
     step = "installing";
     progress = 0;
-    statusText = "Preparing to install Sweepr…";
+    statusText = "Preparing to install SWEEPR Cleaner…";
 
     const interval = setInterval(() => {
       progress += Math.floor(Math.random() * 8) + 4;
@@ -21,7 +21,7 @@
         statusText = "Finalizing secure file shredder and privacy guard…";
       } else if (progress >= 100) {
         progress = 100;
-        statusText = "Installation complete! Launching Sweepr…";
+        statusText = "Installation complete! Launching SWEEPR Cleaner…";
         clearInterval(interval);
         setTimeout(() => {
           if (onComplete) onComplete();
@@ -36,12 +36,12 @@
   <!-- Frameless Header -->
   <header class="installer-header">
     <div class="header-left">
-      Sweepr 0.1.0 Installer
+      SWEEPR Cleaner 0.1.0 Installer
     </div>
 
     <div class="header-center">
       <div class="installer-logo">S</div>
-      <span class="installer-brand">Sweepr</span>
+      <span class="installer-brand">SWEEPR Cleaner</span>
     </div>
 
     <div class="header-right">
@@ -55,7 +55,7 @@
   {#if step === "welcome"}
     <main class="installer-body welcome-layout">
       <div class="left-col">
-        <h1 class="welcome-heading">Welcome to Sweepr</h1>
+        <h1 class="welcome-heading">Welcome to SWEEPR Cleaner</h1>
         <p class="welcome-sub">Smart Performance, Deep Cleaning and Privacy for your PC.</p>
 
         <button class="primary install-btn" onclick={startInstall}>
@@ -64,7 +64,7 @@
       </div>
 
       <div class="right-col">
-        <!-- Friendly smiling computer mascot with Sweepr Emerald styling -->
+        <!-- Friendly smiling computer mascot with SWEEPR Cleaner Emerald styling -->
         <div class="mascot-container">
           <svg viewBox="0 0 200 160" width="200" height="160" class="mascot-svg">
             <!-- Monitor Frame -->
@@ -91,7 +91,7 @@
     <!-- Legal Footer -->
     <footer class="installer-footer">
       <p class="footer-legal">
-        By clicking Install, you are agreeing to Sweepr <a href="#terms" class="legal-link">End User License Agreement</a>, <a href="#privacy" class="legal-link">Privacy Policy</a>, and <a href="#terms" class="legal-link">Terms of Service</a>.
+        By clicking Install, you are agreeing to SWEEPR Cleaner <a href="#terms" class="legal-link">End User License Agreement</a>, <a href="#privacy" class="legal-link">Privacy Policy</a>, and <a href="#terms" class="legal-link">Terms of Service</a>.
         <br />
         Once you click "INSTALL", the installation process will begin and cannot be cancelled or aborted.
       </p>
@@ -99,7 +99,7 @@
 
   {:else if step === "installing"}
     <main class="installer-body progress-layout">
-      <h1 class="progress-heading">Thank you for downloading Sweepr</h1>
+      <h1 class="progress-heading">Thank you for downloading SWEEPR Cleaner</h1>
 
       <!-- Segmented Circular Spinner with Percentage -->
       <div class="spinner-box">
@@ -129,10 +129,10 @@
   {:else if step === "complete"}
     <main class="installer-body progress-layout">
       <div class="complete-icon-bubble">✓</div>
-      <h1 class="progress-heading" style="margin-top: 16px;">Sweepr is Ready!</h1>
+      <h1 class="progress-heading" style="margin-top: 16px;">SWEEPR Cleaner is Ready!</h1>
       <p class="progress-sub">Installation finished successfully.</p>
       <button class="primary install-btn" style="margin-top: 24px;" onclick={onComplete}>
-        LAUNCH SWEEPR
+        LAUNCH SWEEPR CLEANER
       </button>
     </main>
   {/if}

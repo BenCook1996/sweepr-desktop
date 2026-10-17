@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sweepr Subscription CRM & Customer Portal</title>
+  <title>SWEEPR Cleaner Subscription CRM & Customer Portal</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
@@ -63,9 +63,9 @@
   <aside class="w-64 border-r border-slate-800 bg-surface-900/90 backdrop-blur-xl flex flex-col fixed inset-y-0 z-30">
     <div class="p-6 border-b border-slate-800/80 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="/logo-mint-glass.svg" alt="Sweepr" class="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20" />
+        <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" class="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20" />
         <div>
-          <span class="font-extrabold text-base tracking-tight text-white block">Sweepr CRM</span>
+          <span class="font-extrabold text-base tracking-tight text-white block">SWEEPR Cleaner CRM</span>
           <span class="text-xs text-brand-400 font-mono font-medium">Subscription Engine</span>
         </div>
       </div>
@@ -277,7 +277,7 @@
             <div class="mt-8 p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 flex items-start gap-3">
               <i data-lucide="lightbulb" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
               <div class="text-xs text-slate-300 leading-relaxed">
-                <span class="font-semibold text-white">Revenue Operations Note:</span> Sweepr automatically synchronizes subscription states with Stripe webhooks. Involuntary dunning gives customers a 3-day offline grace period before locking machine entitlements.
+                <span class="font-semibold text-white">Revenue Operations Note:</span> SWEEPR Cleaner automatically synchronizes subscription states with Stripe webhooks. Involuntary dunning gives customers a 3-day offline grace period before locking machine entitlements.
               </div>
             </div>
           </div>
@@ -720,7 +720,7 @@
           <input type="checkbox" id="create-sub-local-app" checked class="mt-1 w-4 h-4 text-brand-500 rounded bg-surface-800 border-slate-700">
           <div class="flex-1">
             <label for="create-sub-local-app" class="font-bold text-brand-300 block cursor-pointer">Activate on this PC (Instant Desktop Unlock)</label>
-            <p class="text-slate-400 text-[11px] mt-0.5">Automatically registers this computer's hardware ID and writes the signed license token to Sweepr AppData.</p>
+            <p class="text-slate-400 text-[11px] mt-0.5">Automatically registers this computer's hardware ID and writes the signed license token to SWEEPR Cleaner AppData.</p>
           </div>
         </div>
 
@@ -761,8 +761,8 @@
           <ul class="space-y-1 text-slate-400 list-disc list-inside">
             <li>Create an <span class="text-emerald-400 font-medium">Active Lifetime VIP</span> subscription in CRM</li>
             <li>Detect your computer's hardware MachineGuid</li>
-            <li>Write your <span class="text-brand-300 font-mono">account.json</span> credentials to Sweepr AppData</li>
-            <li>Generate an Ed25519 cryptographic token so Sweepr unlocks offline & online</li>
+            <li>Write your <span class="text-brand-300 font-mono">account.json</span> credentials to SWEEPR Cleaner AppData</li>
+            <li>Generate an Ed25519 cryptographic token so SWEEPR Cleaner unlocks offline & online</li>
           </ul>
         </div>
 
@@ -1343,7 +1343,7 @@
           return;
         }
 
-        showCredentialsModal(data, `👑 You are now an active paid ${plan.toUpperCase()} user! Sweepr desktop app has been unlocked on your PC.`);
+        showCredentialsModal(data, `👑 You are now an active paid ${plan.toUpperCase()} user! SWEEPR Cleaner desktop app has been unlocked on your PC.`);
         await refreshData();
       } catch (err) {
         alert('Request failed: ' + err.message);

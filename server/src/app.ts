@@ -262,7 +262,7 @@ export function createApp(deps: AppDeps) {
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.
   const page = (rawTitle: string, msg: string, downloadLink = false) => {
     const title = escapeHtml(rawTitle);
-    return `<!doctype html><head><meta charset="utf-8"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate icon" type="image/png" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"></head><body style="font-family:system-ui, sans-serif;background:#ffffff;background-image:radial-gradient(circle at 10% 20%, rgba(220, 255, 230, 0.4) 0%, rgba(255, 255, 255, 1) 40%),radial-gradient(circle at 90% 80%, rgba(240, 255, 250, 0.5) 0%, rgba(255, 255, 255, 1) 40%);color:#1f2937;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center;padding:40px;background:rgba(255,255,255,0.7);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.05);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.05);max-width:400px;"><h1 style="margin-top:0">${title}</h1><p style="color:#6b7280;line-height:1.5">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Download Sweepr</a>' : ''}</div></body>`;
+    return `<!doctype html><head><meta charset="utf-8"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate icon" type="image/png" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"></head><body style="font-family:system-ui, sans-serif;background:#ffffff;background-image:radial-gradient(circle at 10% 20%, rgba(220, 255, 230, 0.4) 0%, rgba(255, 255, 255, 1) 40%),radial-gradient(circle at 90% 80%, rgba(240, 255, 250, 0.5) 0%, rgba(255, 255, 255, 1) 40%);color:#1f2937;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center;padding:40px;background:rgba(255,255,255,0.7);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.05);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.05);max-width:400px;"><h1 style="margin-top:0">${title}</h1><p style="color:#6b7280;line-height:1.5">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body>`;
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
@@ -319,7 +319,7 @@ export function createApp(deps: AppDeps) {
       : detectPlatform(ua);
 
     if (!platform) {
-      return c.html(pickerPage("Download Sweepr", "Choose your device:"));
+      return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device:"));
     }
 
     // Mobile: send to the store listing once it's live; until then, serve the APK directly on Android.
@@ -330,18 +330,18 @@ export function createApp(deps: AppDeps) {
       if (existsSync(apk)) {
         return streamFile(apk, "application/vnd.android.package-archive", "Sweepr.apk");
       }
-      return c.html(pickerPage("Android App Coming Soon", "Sweepr for Android will be on Google Play very soon. In the meantime you can get the desktop version:"));
+      return c.html(pickerPage("Android App Coming Soon", "SWEEPR Cleaner for Android will be on Google Play very soon. In the meantime you can get the desktop version:"));
     }
     if (platform === "ios") {
       const appStoreUrl = process.env.APP_STORE_URL;
       if (appStoreUrl) return c.redirect(appStoreUrl);
-      return c.html(pickerPage("iPhone App Coming Soon", "Sweepr for iPhone and iPad is on the way. In the meantime you can get the desktop version:"));
+      return c.html(pickerPage("iPhone App Coming Soon", "SWEEPR Cleaner for iPhone and iPad is on the way. In the meantime you can get the desktop version:"));
     }
 
     const { file, type, label } = DESKTOP_FILES[platform];
     const installerPath = `./public/${file}`;
     if (!existsSync(installerPath)) {
-      return c.html(pickerPage(`${label} Version Coming Soon`, `Sweepr for ${label} will be available soon. Other versions:`));
+      return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`));
     }
 
     return streamFile(installerPath, type, file);
@@ -398,7 +398,7 @@ export function createApp(deps: AppDeps) {
                   currency: "gbp",
                   unit_amount: 4999,
                   recurring: { interval: "year" },
-                  product_data: { name: "Sweepr Cleaner Pro (Annual)" },
+                  product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
                 },
                 quantity: 1,
               },
@@ -411,7 +411,7 @@ export function createApp(deps: AppDeps) {
                   currency: "gbp",
                   unit_amount: 999,
                   recurring: { interval: "month" },
-                  product_data: { name: "Sweepr Cleaner Pro (Monthly)" },
+                  product_data: { name: "SWEEPR Cleaner Pro (Monthly)" },
                 },
                 quantity: 1,
               },
@@ -471,7 +471,7 @@ export function createApp(deps: AppDeps) {
 
     const existing = repo.accountByEmail(email);
     if (existing && isEntitled(repo.entitlement(existing.id), now(), config.pastDueGraceDays)) {
-      return c.json({ error: "This email already has an active Sweepr Pro subscription." }, 409);
+      return c.json({ error: "This email already has an active SWEEPR Cleaner Pro subscription." }, 409);
     }
 
     let accountId: string;
@@ -1202,7 +1202,7 @@ export function createApp(deps: AppDeps) {
                 currency: "gbp",
                 unit_amount: 4999,
                 recurring: { interval: "year" },
-                product_data: { name: "Sweepr Pro (Annual)" },
+                product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
               },
               quantity: 1,
             },
@@ -1419,12 +1419,12 @@ export function createApp(deps: AppDeps) {
   app.get("/checkout/success", (c) => {
     const isWeb = c.req.query("web") === "1";
     if (isWeb) {
-      return c.html(page("You're Activated 🎉", "Thanks for purchasing Sweepr! Download the app below. When you launch it, enter your email on the Account tab to link your purchase.", true));
+      return c.html(page("You're Activated 🎉", "Thanks for purchasing SWEEPR Cleaner! Download the app below. When you launch it, enter your email on the Account tab to link your purchase.", true));
     }
-    return c.html(page("You're Activated 🎉", "Return to Sweepr. It will unlock automatically within a few seconds."));
+    return c.html(page("You're Activated 🎉", "Return to SWEEPR Cleaner. It will unlock automatically within a few seconds."));
   });
   app.get("/checkout/cancel", (c) => c.html(page("Checkout Cancelled", "No charge was made. You can safely close this tab.")));
-  app.get("/checkout/portal-return", (c) => c.html(page("All Set", "You can close this tab and return to Sweepr.")));
+  app.get("/checkout/portal-return", (c) => c.html(page("All Set", "You can close this tab and return to SWEEPR Cleaner.")));
 
   if (config.devEndpoints && process.env.NODE_ENV !== "production") {
     console.warn("[dev] DEV_ENDPOINTS enabled: /dev/grant is active (loopback only). Never enable in production.");

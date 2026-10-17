@@ -71,8 +71,8 @@ Var WixMode
 Var OldMainBinaryName
 
 Name "${PRODUCTNAME}"
-Caption "Sweepr 0.1.0 Installer"
-BrandingText "Sweepr • Safe, Honest PC Cleaner"
+Caption "SWEEPR Cleaner 0.1.0 Installer"
+BrandingText "SWEEPR Cleaner • Safe, Honest PC Cleaner"
 OutFile "${OUTFILE}"
 
 ; We don't actually use this value as default install path,
@@ -161,9 +161,9 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 
 ; Installer pages, must be ordered as they appear
 ; 1. Welcome Page
-!define MUI_WELCOMEPAGE_TITLE "Welcome to Sweepr"
+!define MUI_WELCOMEPAGE_TITLE "Welcome to SWEEPR Cleaner"
 !define MUI_WELCOMEPAGE_TITLE_3LINES
-!define MUI_WELCOMEPAGE_TEXT "Smart Performance, Deep Cleaning and Privacy for your PC.$\r$\n$\r$\nSweepr safely removes temporary junk, optimizes memory and startup programs, and protects your privacy with DoD 5220.22-M file shredding.$\r$\n$\r$\nClick Install to begin."
+!define MUI_WELCOMEPAGE_TEXT "Smart Performance, Deep Cleaning and Privacy for your PC.$\r$\n$\r$\nSWEEPR Cleaner safely removes temporary junk, optimizes memory and startup programs, and protects your privacy with DoD 5220.22-M file shredding.$\r$\n$\r$\nClick Install to begin."
 Function WelcomeShow
   GetDlgItem $0 $HWNDPARENT 1
   SendMessage $0 ${WM_SETTEXT} 0 "STR:Install"
@@ -406,15 +406,15 @@ Var AppStartMenuFolder
 
 ; 8. Finish page
 !define MUI_FINISHPAGE_NOAUTOCLOSE
-!define MUI_FINISHPAGE_TITLE "Sweepr is Ready!"
-!define MUI_FINISHPAGE_TEXT "Sweepr has been successfully installed on your computer.$\r$\n$\r$\nClick Finish to launch Sweepr."
+!define MUI_FINISHPAGE_TITLE "SWEEPR Cleaner is Ready!"
+!define MUI_FINISHPAGE_TEXT "SWEEPR Cleaner has been successfully installed on your computer.$\r$\n$\r$\nClick Finish to launch SWEEPR Cleaner."
 ; Use show readme button in the finish page as a button create a desktop shortcut
 !define MUI_FINISHPAGE_SHOWREADME
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "$(createDesktop)"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateOrUpdateDesktopShortcut
 ; Show run app after installation.
 !define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_TEXT "Launch Sweepr now"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch SWEEPR Cleaner now"
 !define MUI_FINISHPAGE_RUN_FUNCTION RunMainBinary
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_FINISH

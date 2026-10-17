@@ -89,7 +89,7 @@ class AppViewModel: ObservableObject {
     @Published var isWorking = false
     @Published var alertMessage: String? = nil
 
-    private static let entitlementIDs = ["premium", "Sweepr Pro"]
+    private static let entitlementIDs = ["premium", "Sweepr Pro", "SWEEPR Cleaner Pro"]
 
     init() {
         refreshStorage()
@@ -122,11 +122,11 @@ class AppViewModel: ObservableObject {
             if let exp = info.entitlements.all.values.first(where: { $0.isActive })?.expirationDate {
                 let formatter = DateFormatter()
                 formatter.dateStyle = .medium
-                subscriptionInfoText = "Sweepr Pro (Renews \(formatter.string(from: exp)))"
+                subscriptionInfoText = "SWEEPR Cleaner Pro (Renews \(formatter.string(from: exp)))"
             } else if linkedAccount.serverActive {
-                subscriptionInfoText = "Sweepr Pro (Cross-Platform Account Linked)"
+                subscriptionInfoText = "SWEEPR Cleaner Pro (Cross-Platform Account Linked)"
             } else {
-                subscriptionInfoText = "Sweepr Pro (Active)"
+                subscriptionInfoText = "SWEEPR Cleaner Pro (Active)"
             }
         } else {
             subscriptionInfoText = "Free Plan"
@@ -370,7 +370,7 @@ class AppViewModel: ObservableObject {
         linkedAccount = AccountService.clearAccount()
         Task { _ = try? await Purchases.shared.logOut() }
         hasPremium = false
-        alertMessage = "Signed out of your Sweepr account."
+        alertMessage = "Signed out of your SWEEPR Cleaner account."
     }
 
     func deleteAccount() async {
@@ -379,7 +379,7 @@ class AppViewModel: ObservableObject {
         do {
             try await AccountService.deleteAccount(current: linkedAccount)
             signOut()
-            alertMessage = "Your Sweepr account and associated data have been permanently deleted."
+            alertMessage = "Your SWEEPR Cleaner account and associated data have been permanently deleted."
         } catch {
             CrashLogger.recordError("DeleteAccount", error: error)
             alertMessage = "Could not delete account: \(error.localizedDescription)"
@@ -451,7 +451,7 @@ struct ContentView: View {
                         Label(item.title, systemImage: item.systemImage)
                             .tag(item)
                     }
-                    .navigationTitle("Sweepr")
+                    .navigationTitle("SWEEPR Cleaner")
                 } detail: {
                     destinationView(for: splitSelection ?? .dashboard)
                 }
@@ -475,7 +475,7 @@ struct ContentView: View {
             get: { vm.alertMessage.map { AlertItem(message: $0) } },
             set: { _ in vm.alertMessage = nil }
         )) { item in
-            Alert(title: Text("Sweepr"), message: Text(item.message), dismissButton: .default(Text("OK")))
+            Alert(title: Text("SWEEPR Cleaner"), message: Text(item.message), dismissButton: .default(Text("OK")))
         }
     }
 

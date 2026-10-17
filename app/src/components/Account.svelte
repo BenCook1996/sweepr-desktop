@@ -160,7 +160,7 @@
     try {
       await api.sendSupportReport(
         supportEmail.trim(),
-        supportSubject.trim() || "Sweepr Desktop Support Report",
+        supportSubject.trim() || "SWEEPR Cleaner Desktop Support Report",
         supportMessage.trim()
       );
       supportMessage = "";
@@ -196,7 +196,7 @@
         <button class="ghost" disabled={busy} onclick={refresh}>Refresh status</button>
       </div>
     {:else}
-      <div class="row"><strong>Choose a Sweepr Pro Plan</strong></div>
+      <div class="row"><strong>Choose a SWEEPR Cleaner Pro Plan</strong></div>
       <p class="muted small" style="margin: 0;">Scanning, file review, memory insights and temporary file cleaning are free forever. Upgrade to unlock all Pro tools:</p>
 
       <div class="plan-cards" role="radiogroup" aria-label="Select billing plan">
@@ -263,15 +263,15 @@
       <div class="spacer"></div>
       <span class="badge free">Automation</span>
     </div>
-    <p class="muted small" style="margin: 0;">Configure Sweepr to launch quietly with Windows and run scheduled background maintenance.</p>
+    <p class="muted small" style="margin: 0;">Configure SWEEPR Cleaner to launch quietly with Windows and run scheduled background maintenance.</p>
 
     <label class="row" style="justify-content: space-between; cursor: pointer; padding: 6px 0;">
-      <span>Launch Sweepr at Windows sign-in (Autostart)</span>
+      <span>Launch SWEEPR Cleaner at Windows sign-in (Autostart)</span>
       <input
         type="checkbox"
         checked={autostart}
         onchange={(e) => toggleAutostart((e.currentTarget as HTMLInputElement).checked)}
-        aria-label="Launch Sweepr at Windows sign-in"
+        aria-label="Launch SWEEPR Cleaner at Windows sign-in"
       />
     </label>
 
@@ -303,7 +303,7 @@
       <button class="ghost small" onclick={() => api.getCleaningHistory().then((h) => (history = h)).catch(() => {})}>Refresh</button>
     </div>
     <p class="muted" style="margin: 0">
-      Sweepr has saved you <strong>{formatBytes(stats.bytesFreed)}</strong> by removing <strong>{formatCount(stats.filesRemoved)}</strong> junk files so far.
+      SWEEPR Cleaner has saved you <strong>{formatBytes(stats.bytesFreed)}</strong> by removing <strong>{formatCount(stats.filesRemoved)}</strong> junk files so far.
     </p>
 
     {#if history.length > 0}
@@ -328,7 +328,7 @@
       <div class="spacer"></div>
       {#if info}<span class="badge free">v{info.version}</span>{/if}
     </div>
-    <p class="muted small" style="margin: 0;">Check for the latest Sweepr release and cleaning rules definition updates.</p>
+    <p class="muted small" style="margin: 0;">Check for the latest SWEEPR Cleaner release and cleaning rules definition updates.</p>
     <div class="row">
       <button class="primary" disabled={checkingUpdate} onclick={checkUpdates}>
         {checkingUpdate ? "Checking…" : "Check for Updates"}
@@ -395,7 +395,7 @@
 {/if}
 
 {#if info}
-  <p class="muted small">Sweepr v{info.version} · {info.platform} · licence server {info.api_url}</p>
+  <p class="muted small">SWEEPR Cleaner v{info.version} · {info.platform} · licence server {info.api_url}</p>
 {/if}
 
 <style>

@@ -74,7 +74,7 @@
     <div class="sheet card" role="dialog" aria-modal="true" aria-labelledby="pw-title" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.key === "Escape" && close()}>
       {#if stage === "offer"}
         <h2 id="pw-title">Clean {formatBytes(bytes)} now</h2>
-        <p class="muted">You've seen exactly what's there. Activate Sweepr to clean every category, and keep your machine tidy with ongoing rule updates.</p>
+        <p class="muted">You've seen exactly what's there. Activate SWEEPR Cleaner to clean every category, and keep your machine tidy with ongoing rule updates.</p>
 
         <div class="plan-selector" role="radiogroup" aria-label="Select billing plan">
           <button

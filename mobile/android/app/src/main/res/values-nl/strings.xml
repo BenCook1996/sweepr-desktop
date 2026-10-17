@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Sweepr</string>
-    <string name="brand_premium" translatable="false">Sweepr Premium</string>
+    <string name="app_name" translatable="false">SWEEPR Cleaner</string>
+    <string name="brand_premium" translatable="false">SWEEPR Cleaner Pro</string>
     <string name="lang_en" translatable="false">English</string>
     <string name="lang_es" translatable="false">Español</string>
     <string name="lang_fr" translatable="false">Français</string>
@@ -41,7 +41,7 @@
     <string name="dashboard_percent">%1$d%%</string>
     <string name="dashboard_used_of">%1$s van %2$s</string>
     <string name="dashboard_used_tap">Gebruikt · tik voor details</string>
-    <string name="dashboard_limited_access">Beperkte toegang: Sweepr ziet alleen geselecteerde foto\'s. Geef volledige toegang voor een complete scan.</string>
+    <string name="dashboard_limited_access">Beperkte toegang: SWEEPR Cleaner ziet alleen geselecteerde foto\'s. Geef volledige toegang voor een complete scan.</string>
     <string name="dashboard_clean_header">Opschonen</string>
     <string name="scan_scanning">Scannen…</string>
     <string name="scan_rescan">Opnieuw scannen · %1$s afval</string>
@@ -134,7 +134,7 @@
         <item quantity="one">Voeg %d duplicaat samen</item>
         <item quantity="other">Voeg %d duplicaten samen</item>
     </plurals>
-    <string name="contacts_permission_text">Sweepr heeft toegang tot contacten nodig om duplicaten te vinden.</string>
+    <string name="contacts_permission_text">SWEEPR Cleaner heeft toegang tot contacten nodig om duplicaten te vinden.</string>
     <string name="contacts_permission_button">Toegang verlenen</string>
     <string name="contacts_none_found">Geen dubbele contacten gevonden 🎉</string>
     <string name="contacts_merge_explainer">Samenvoegen combineert duplicaten. Geen nummers of e-mails worden verwijderd.</string>
@@ -165,7 +165,7 @@
     <string name="swipe_video">Video</string>
     <string name="swipe_stamp_keep">BEHOUD</string>
     <string name="swipe_stamp_delete">VERWIJDER</string>
-    <string name="msg_need_permissions">Sweepr heeft toegang tot foto\'s/contacten nodig. Zet dit aan in Instellingen.</string>
+    <string name="msg_need_permissions">SWEEPR Cleaner heeft toegang tot foto\'s/contacten nodig. Zet dit aan in Instellingen.</string>
     <string name="msg_restore_failed">Herstellen mislukt: %1$s</string>
     <string name="msg_premium_restored">Premium hersteld - je bent klaar</string>
     <string name="msg_no_subscription_found">Geen abonnement gevonden op dit Google-account</string>
@@ -190,7 +190,7 @@
     <string name="msg_allow_contacts_merge">Sta toegang tot contacten toe om samen te voegen</string>
     <string name="settings_title">Instellingen</string>
     <string name="settings_account">Mijn account</string>
-    <string name="settings_account_premium">Sweepr Premium · actief</string>
+    <string name="settings_account_premium">SWEEPR Cleaner Pro · actief</string>
     <string name="settings_account_free">Gratis plan · upgrade om op te schonen</string>
     <string name="settings_theme">Thema</string>
     <string name="settings_logs">Genereer logbestanden</string>
@@ -215,7 +215,7 @@
     <string name="toast_allow_notifications">Sta meldingen toe in instellingen</string>
     <string name="toast_no_share_app">Geen app om het logbestand te delen</string>
     <string name="toast_log_failed">Kon logbestand niet maken</string>
-    <string name="log_share_subject">Sweepr logbestand</string>
+    <string name="log_share_subject">SWEEPR Cleaner logbestand</string>
     <string name="log_share_chooser">Verzend logbestand</string>
     <string name="theme_light">Licht</string>
     <string name="theme_dark">Donker</string>
@@ -224,7 +224,7 @@
     <string name="reminder_monthly">Elke maand</string>
     <string name="notif_channel_name">Schoonmaakherinneringen</string>
     <string name="notif_channel_desc">Regelmatige herinneringen om je telefoon schoon te houden</string>
-    <string name="notif_title">Tijd voor een Sweepr-schoonmaak</string>
+    <string name="notif_title">Tijd voor een SWEEPR Cleaner-schoonmaak</string>
     <string name="notif_text_percent">Je opslag is %1$d%% vol. Tik om op te schonen.</string>
     <string name="notif_text">Tik om te zoeken en vuil op te schonen.</string>
     <string name="account_free_plan">Gratis plan</string>
@@ -247,7 +247,7 @@
     <string name="account_restore_detail">Al geabonneerd? Herstel hier</string>
     <string name="account_customer_id">Klant-ID</string>
     <string name="account_not_available">Niet beschikbaar</string>
-    <string name="account_customer_id_clip_label">Sweepr ID</string>
+    <string name="account_customer_id_clip_label">SWEEPR Cleaner ID</string>
     <string name="account_customer_id_copied">Gekopieerd - voeg toe bij supportverzoek</string>
     <string name="account_billing_note">Abonnementen gefactureerd door Google Play.</string>
     <string name="about_version">Versie %1$s</string>
@@ -256,12 +256,12 @@
     <string name="about_privacy_detail">Foto\'s/contacten verlaten je telefoon nooit</string>
     <string name="about_terms">Algemene voorwaarden</string>
     <string name="about_contact">Neem contact op</string>
-    <string name="about_support_subject">Sweepr Support (v%1$s)</string>
-    <string name="about_rate">Beoordeel Sweepr</string>
+    <string name="about_support_subject">SWEEPR Cleaner Support (v%1$s)</string>
+    <string name="about_rate">Beoordeel SWEEPR Cleaner</string>
     <string name="about_rate_detail">Vind je het leuk? Een recensie helpt enorm</string>
     <string name="tips_title">Tips &amp; Trucs</string>
     <string name="tips_heading">Je apparaat handmatig schoonmaken</string>
-    <string name="tips_subheading">Snelle winst voor de ruimte die Sweepr niet aankan.</string>
+    <string name="tips_subheading">Snelle winst voor de ruimte die SWEEPR Cleaner niet aankan.</string>
     <string name="tips_couldnt_open">Kon hier niet openen</string>
     <string name="tip_browser_title">Browsercache wissen</string>
     <string name="tip_browser_subtitle">Versnel je browsen</string>
@@ -342,7 +342,7 @@
         <item quantity="one">%d item hersteld uit de prullenbak</item>
         <item quantity="other">%d items hersteld uit de prullenbak</item>
     </plurals>
-    <string name="widget_title">Sweepr Opslag</string>
+    <string name="widget_title">SWEEPR Cleaner Opslag</string>
     <string name="widget_description">Percentage gebruikt/vrij geheugen en Nu opschonen-knop</string>
     <string name="widget_storage_default">Opslag gereed</string>
     <string name="widget_storage_percent">%1$d%% gebruikt · %2$d%% vrij</string>
@@ -363,9 +363,9 @@
     <string name="retention_offer_annual">Overstappen naar Jaarlijks (£49.99/jaar — Bespaar 58%%)</string>
     <string name="retention_switch_annual">Jaaraanbieding bekijken</string>
     <string name="retention_continue_google_play">Google Play openen</string>
-    <string name="account_sign_in_title">Inloggen met Sweepr-account</string>
+    <string name="account_sign_in_title">Inloggen met SWEEPR Cleaner-account</string>
     <string name="account_sign_in_subtitle">Synchroniseer een bestaand abonnement via e-mailcode</string>
-    <string name="account_sign_in_desc">Voer het e-mailadres van je Sweepr-account in om je abonnement te synchroniseren.</string>
+    <string name="account_sign_in_desc">Voer het e-mailadres van je SWEEPR Cleaner-account in om je abonnement te synchroniseren.</string>
     <string name="account_otp_enter_code_title">Voer verificatiecode in</string>
     <string name="account_otp_code_sent_desc">Voer de 6-cijferige code in die naar %1$s is verzonden.</string>
     <string name="account_email_label">E-mailadres</string>
@@ -379,18 +379,18 @@
     <string name="account_otp_invalid_code">Ongeldige of verlopen code.</string>
     <string name="account_signed_in_as">Ingelogd als %1$s</string>
     <string name="account_cross_platform_active">Cross-platform abonnement actief</string>
-    <string name="account_linked_status">Gekoppeld aan Sweepr-account</string>
+    <string name="account_linked_status">Gekoppeld aan SWEEPR Cleaner-account</string>
     <string name="account_sign_out">Uitloggen</string>
     <string name="account_sign_out_detail">Dit apparaat ontkoppelen van %1$s</string>
-    <string name="account_signed_out_msg">Uitgelogd bij je Sweepr-account.</string>
+    <string name="account_signed_out_msg">Uitgelogd bij je SWEEPR Cleaner-account.</string>
     <string name="account_delete_title">Account en gegevens verwijderen</string>
-    <string name="account_delete_subtitle">Verwijder je Sweepr-account definitief</string>
-    <string name="account_delete_confirm_title">Sweepr-account verwijderen?</string>
-    <string name="account_delete_confirm_body">Hiermee verwijder je definitief je Sweepr-account (%1$s) en gegevens. Beheer Google Play-abonnementen in Google Play.</string>
+    <string name="account_delete_subtitle">Verwijder je SWEEPR Cleaner-account definitief</string>
+    <string name="account_delete_confirm_title">SWEEPR Cleaner-account verwijderen?</string>
+    <string name="account_delete_confirm_body">Hiermee verwijder je definitief je SWEEPR Cleaner-account (%1$s) en gegevens. Beheer Google Play-abonnementen in Google Play.</string>
     <string name="account_delete_permanently">Definitief verwijderen</string>
-    <string name="account_deleted_msg">Je Sweepr-account en bijbehorende gegevens zijn verwijderd.</string>
+    <string name="account_deleted_msg">Je SWEEPR Cleaner-account en bijbehorende gegevens zijn verwijderd.</string>
     <string name="account_delete_failed_msg">Account kon niet worden verwijderd.</string>
-    <string name="review_prompt_title">Blij met Sweepr?</string>
+    <string name="review_prompt_title">Blij met SWEEPR Cleaner?</string>
     <string name="review_prompt_body">Je hebt zojuist je 2e opschoonbeurt voltooid! Een beoordeling op Google Play helpt ons enorm.</string>
     <string name="review_prompt_later">Niet nu</string>
 </resources>

@@ -11,8 +11,8 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
 
     var fallbackTitle: String {
         switch self {
-        case .annual: return "Sweepr Pro Annual"
-        case .monthly: return "Sweepr Pro Monthly"
+        case .annual: return "SWEEPR Cleaner Pro Annual"
+        case .monthly: return "SWEEPR Cleaner Pro Monthly"
         }
     }
 
@@ -74,7 +74,7 @@ struct PaywallView: View {
                             .foregroundColor(.sweeprEmerald)
                             .padding(.top, 12)
 
-                        Text("Upgrade to Sweepr Pro")
+                        Text("Upgrade to SWEEPR Cleaner Pro")
                             .font(.title)
                             .fontWeight(.bold)
 
@@ -91,7 +91,7 @@ struct PaywallView: View {
                         BenefitRow(icon: "checkmark.circle.fill", text: "SHA-256 Exact Duplicate & 8×8 dHash Best Shot Finder")
                         BenefitRow(icon: "checkmark.circle.fill", text: "Hardware Video Compression for Videos >50 MB")
                         BenefitRow(icon: "checkmark.circle.fill", text: "Smart Contact Duplicate Merger & Incomplete Cleaner")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Cross-Platform Sweepr Account Sync (Desktop, iOS, Android)")
+                        BenefitRow(icon: "checkmark.circle.fill", text: "Cross-Platform SWEEPR Cleaner Account Sync (Desktop, iOS, Android)")
                     }
                     .padding()
                     .background(Color.cardBackground)
@@ -133,8 +133,8 @@ struct PaywallView: View {
                     .padding(.horizontal)
                     .accessibilityLabel(
                         selectedPlan == .annual
-                            ? "Subscribe to Sweepr Pro Annual for \(priceText(for: .annual)), save 58 percent, no free trial"
-                            : "Subscribe to Sweepr Pro Monthly for \(priceText(for: .monthly)), no free trial"
+                            ? "Subscribe to SWEEPR Cleaner Pro Annual for \(priceText(for: .annual)), save 58 percent, no free trial"
+                            : "Subscribe to SWEEPR Cleaner Pro Monthly for \(priceText(for: .monthly)), no free trial"
                     )
 
                     Text("No free trial. Payment will be charged to your Apple ID account at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.")
@@ -169,7 +169,7 @@ struct PaywallView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Sweepr Pro")
+            .navigationTitle("SWEEPR Cleaner Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

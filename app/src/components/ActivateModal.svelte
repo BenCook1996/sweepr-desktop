@@ -156,7 +156,7 @@
 
         {#if activeInfo === "privacy"}
           <div class="info-drawer muted small">
-            <strong>Privacy Policy:</strong> Sweepr scans your files locally on your PC—never uploading file names or contents. Your email is used solely for licence activation and billing receipts via Stripe.
+            <strong>Privacy Policy:</strong> SWEEPR Cleaner scans your files locally on your PC—never uploading file names or contents. Your email is used solely for licence activation and billing receipts via Stripe.
           </div>
         {:else if activeInfo === "sales"}
           <div class="info-drawer muted small">
@@ -164,7 +164,7 @@
           </div>
         {:else if activeInfo === "info"}
           <div class="info-drawer muted small">
-            <strong>More info:</strong> Your Sweepr Pro subscription unlocks deep browser/app cache cleanup, duplicate finder, registry repair, file shredder, and covers up to 3 PCs + 3 mobile devices.
+            <strong>More info:</strong> Your SWEEPR Cleaner Pro subscription unlocks deep browser/app cache cleanup, duplicate finder, registry repair, file shredder, and covers up to 3 PCs + 3 mobile devices.
           </div>
         {/if}
 
@@ -180,7 +180,7 @@
         <div class="modal-body waiting-body">
           <div class="spinner"></div>
           <h3>Checkout opened in browser</h3>
-          <p class="muted small">Please complete payment in the secure Stripe window. Sweepr will activate automatically once confirmed.</p>
+          <p class="muted small">Please complete payment in the secure Stripe window. SWEEPR Cleaner will activate automatically once confirmed.</p>
           {#if error}
             <div class="error-banner">{error}</div>
           {/if}

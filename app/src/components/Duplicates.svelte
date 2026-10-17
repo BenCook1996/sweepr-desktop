@@ -195,7 +195,7 @@
   </div>
 {:else if needsPro && !license?.active}
   <div class="card" style="padding: 14px 18px; border-left: 4px solid #f59e0b; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-    <span>This feature requires Sweepr Pro. Activate your licence to continue.</span>
+    <span>This feature requires SWEEPR Cleaner Pro. Activate your licence to continue.</span>
     <div class="spacer"></div>
     <button class="primary" onclick={requestActivation}>Activate</button>
   </div>

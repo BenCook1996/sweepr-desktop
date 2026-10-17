@@ -16,10 +16,11 @@ targets:
     info:
       path: Info.plist
       properties:
+        CFBundleDisplayName: "SWEEPR Cleaner"
         UILaunchStoryboardName: LaunchScreen
-        NSPhotoLibraryUsageDescription: "Sweepr analyzes your library on-device to group duplicates, similar shots, screenshots, and large videos so you can reclaim storage space."
-        NSPhotoLibraryAddUsageDescription: "Sweepr saves compressed videos back to your photo library after hardware compression."
-        NSContactsUsageDescription: "Sweepr scans your contacts locally on-device to find duplicate and incomplete entries and merge them safely."
+        NSPhotoLibraryUsageDescription: "SWEEPR Cleaner analyzes your library on-device to group duplicates, similar shots, screenshots, and large videos so you can reclaim storage space."
+        NSPhotoLibraryAddUsageDescription: "SWEEPR Cleaner saves compressed videos back to your photo library after hardware compression."
+        NSContactsUsageDescription: "SWEEPR Cleaner scans your contacts locally on-device to find duplicate and incomplete entries and merge them safely."
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

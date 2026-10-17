@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Brand names: never translated -->
-    <string name="app_name" translatable="false">Sweepr</string>
-    <string name="brand_premium" translatable="false">Sweepr Premium</string>
+    <string name="app_name" translatable="false">SWEEPR Cleaner</string>
+    <string name="brand_premium" translatable="false">SWEEPR Cleaner Pro</string>
 
     <!-- Language names, always shown in their own language -->
     <string name="lang_en" translatable="false">English</string>
@@ -52,7 +52,7 @@
     <string name="dashboard_percent">%1$d%%</string>
     <string name="dashboard_used_of">%1$s of %2$s</string>
     <string name="dashboard_used_tap">Used · tap for details</string>
-    <string name="dashboard_limited_access">Limited photo access: Sweepr can only see the photos you picked. Allow full access in Settings for a complete scan.</string>
+    <string name="dashboard_limited_access">Limited photo access: SWEEPR Cleaner can only see the photos you picked. Allow full access in Settings for a complete scan.</string>
     <string name="dashboard_clean_header">Clean</string>
     <string name="scan_scanning">Scanning…</string>
     <string name="scan_rescan">Rescan · %1$s junk found</string>
@@ -153,7 +153,7 @@
         <item quantity="one">Merge %d duplicate</item>
         <item quantity="other">Merge %d duplicates</item>
     </plurals>
-    <string name="contacts_permission_text">Sweepr needs access to your contacts to find duplicates.</string>
+    <string name="contacts_permission_text">SWEEPR Cleaner needs access to your contacts to find duplicates.</string>
     <string name="contacts_permission_button">Allow contacts access</string>
     <string name="contacts_none_found">No duplicate contacts found 🎉</string>
     <string name="contacts_merge_explainer">Merging links duplicates into one contact. No numbers or emails are deleted, and you can separate them again from your Contacts app.</string>
@@ -188,7 +188,7 @@
     <string name="swipe_stamp_delete">DELETE</string>
 
     <!-- Messages (snackbars) -->
-    <string name="msg_need_permissions">Sweepr needs access to photos or contacts to scan. Enable it in Settings.</string>
+    <string name="msg_need_permissions">SWEEPR Cleaner needs access to photos or contacts to scan. Enable it in Settings.</string>
     <string name="msg_restore_failed">Restore failed: %1$s</string>
     <string name="msg_premium_restored">Premium restored – you\'re all set</string>
     <string name="msg_no_subscription_found">No previous subscription found on this Google account</string>
@@ -215,7 +215,7 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_account">My Account</string>
-    <string name="settings_account_premium">Sweepr Premium · active</string>
+    <string name="settings_account_premium">SWEEPR Cleaner Pro · active</string>
     <string name="settings_account_free">Free plan · upgrade to clean</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_logs">Generate Log Files</string>
@@ -240,7 +240,7 @@
     <string name="toast_allow_notifications">Allow notifications in system settings to receive reminders</string>
     <string name="toast_no_share_app">No app available to share the log</string>
     <string name="toast_log_failed">Couldn\'t create the log file</string>
-    <string name="log_share_subject">Sweepr log file</string>
+    <string name="log_share_subject">SWEEPR Cleaner log file</string>
     <string name="log_share_chooser">Send log file</string>
 
     <!-- Theme / reminder options -->
@@ -253,7 +253,7 @@
     <!-- Notifications -->
     <string name="notif_channel_name">Cleanup reminders</string>
     <string name="notif_channel_desc">Regular reminders to keep your phone clean</string>
-    <string name="notif_title">Time for a Sweepr clean-up</string>
+    <string name="notif_title">Time for a SWEEPR Cleaner clean-up</string>
     <string name="notif_text_percent">Your storage is %1$d%% full. Tap to find duplicates, screenshots and junk you can clear.</string>
     <string name="notif_text">Tap to scan for duplicates, screenshots and junk you can clear.</string>
 
@@ -278,7 +278,7 @@
     <string name="account_restore_detail">Already subscribed? Restore it on this phone</string>
     <string name="account_customer_id">Customer ID</string>
     <string name="account_not_available">Not available</string>
-    <string name="account_customer_id_clip_label">Sweepr customer ID</string>
+    <string name="account_customer_id_clip_label">SWEEPR Cleaner customer ID</string>
     <string name="account_customer_id_copied">Customer ID copied – include it when contacting support</string>
     <string name="account_billing_note">Subscriptions are billed through Google Play and renew automatically until cancelled. You can cancel any time in Google Play.</string>
 
@@ -289,14 +289,14 @@
     <string name="about_privacy_detail">Photos and contacts never leave your phone</string>
     <string name="about_terms">Terms &amp; Conditions</string>
     <string name="about_contact">Contact support</string>
-    <string name="about_support_subject">Sweepr support (v%1$s)</string>
-    <string name="about_rate">Rate Sweepr</string>
+    <string name="about_support_subject">SWEEPR Cleaner support (v%1$s)</string>
+    <string name="about_rate">Rate SWEEPR Cleaner</string>
     <string name="about_rate_detail">Enjoying it? A review helps a lot</string>
 
     <!-- Tips & Tricks -->
     <string name="tips_title">Tips &amp; Tricks</string>
     <string name="tips_heading">Manually clean your device</string>
-    <string name="tips_subheading">Quick wins for the space Sweepr can\'t clear automatically.</string>
+    <string name="tips_subheading">Quick wins for the space SWEEPR Cleaner can\'t clear automatically.</string>
     <string name="tips_couldnt_open">Couldn\'t open that on this phone</string>
 
     <string name="tip_browser_title">Clear Browser Cache</string>
@@ -315,7 +315,7 @@
 
     <string name="tip_trash_title">Empty Your Photo Trash</string>
     <string name="tip_trash_subtitle">Get space back from deleted photos now</string>
-    <string name="tip_trash_step1">Photos Sweepr removes go to the system trash and still use space for 30 days.</string>
+    <string name="tip_trash_step1">Photos SWEEPR Cleaner removes go to the system trash and still use space for 30 days.</string>
     <string name="tip_trash_step2">Open your gallery app and go to Library → Trash (or Recycle bin).</string>
     <string name="tip_trash_step3">Tap \"Empty trash\" to free that space immediately.</string>
     <string name="tip_trash_action">Open gallery</string>
@@ -391,7 +391,7 @@
     </plurals>
 
     <!-- Home-Screen Storage Widget (#21) -->
-    <string name="widget_title">Sweepr Storage</string>
+    <string name="widget_title">SWEEPR Cleaner Storage</string>
     <string name="widget_description">Live phone storage used/free %% and one-tap Clean Now shortcut</string>
     <string name="widget_storage_default">Storage Ready</string>
     <string name="widget_storage_percent">%1$d%% used · %2$d%% free</string>
@@ -414,9 +414,9 @@
     <string name="retention_offer_annual">Switch to Annual (£49.99/yr — Save 58%% vs Monthly)</string>
     <string name="retention_switch_annual">View Annual Offer</string>
     <string name="retention_continue_google_play">Open Google Play</string>
-    <string name="account_sign_in_title">Sign in with Sweepr Account</string>
-    <string name="account_sign_in_subtitle">Sync an existing Sweepr subscription via email code</string>
-    <string name="account_sign_in_desc">Enter your Sweepr account email to sync your existing subscription across devices.</string>
+    <string name="account_sign_in_title">Sign in with SWEEPR Cleaner Account</string>
+    <string name="account_sign_in_subtitle">Sync an existing SWEEPR Cleaner subscription via email code</string>
+    <string name="account_sign_in_desc">Enter your SWEEPR Cleaner account email to sync your existing subscription across devices.</string>
     <string name="account_otp_enter_code_title">Enter verification code</string>
     <string name="account_otp_code_sent_desc">Enter the 6-digit code sent to %1$s.</string>
     <string name="account_email_label">Email address</string>
@@ -430,18 +430,18 @@
     <string name="account_otp_invalid_code">Invalid or expired verification code.</string>
     <string name="account_signed_in_as">Signed in as %1$s</string>
     <string name="account_cross_platform_active">Cross-platform plan active</string>
-    <string name="account_linked_status">Linked to Sweepr account</string>
+    <string name="account_linked_status">Linked to SWEEPR Cleaner account</string>
     <string name="account_sign_out">Sign Out</string>
     <string name="account_sign_out_detail">Unlink this device from %1$s</string>
-    <string name="account_signed_out_msg">Signed out of your Sweepr account.</string>
+    <string name="account_signed_out_msg">Signed out of your SWEEPR Cleaner account.</string>
     <string name="account_delete_title">Delete Account &amp; Data</string>
-    <string name="account_delete_subtitle">Permanently delete your Sweepr account</string>
-    <string name="account_delete_confirm_title">Delete Sweepr Account?</string>
-    <string name="account_delete_confirm_body">This permanently deletes your Sweepr account (%1$s), linked devices, and account data. If you have a Google Play subscription, manage or cancel its renewal in Google Play.</string>
+    <string name="account_delete_subtitle">Permanently delete your SWEEPR Cleaner account</string>
+    <string name="account_delete_confirm_title">Delete SWEEPR Cleaner Account?</string>
+    <string name="account_delete_confirm_body">This permanently deletes your SWEEPR Cleaner account (%1$s), linked devices, and account data. If you have a Google Play subscription, manage or cancel its renewal in Google Play.</string>
     <string name="account_delete_permanently">Delete Permanently</string>
-    <string name="account_deleted_msg">Your Sweepr account and associated data have been permanently deleted.</string>
+    <string name="account_deleted_msg">Your SWEEPR Cleaner account and associated data have been permanently deleted.</string>
     <string name="account_delete_failed_msg">Could not delete account. Please try again.</string>
-    <string name="review_prompt_title">Enjoying Sweepr?</string>
+    <string name="review_prompt_title">Enjoying SWEEPR Cleaner?</string>
     <string name="review_prompt_body">You\'ve just completed your 2nd cleanup! A quick rating on Google Play helps us a lot.</string>
     <string name="review_prompt_later">Not now</string>
 </resources>

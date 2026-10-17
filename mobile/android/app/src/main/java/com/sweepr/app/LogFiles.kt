@@ -28,7 +28,7 @@ object LogFiles {
         }.getOrNull() ?: "?"
 
         val report = buildString {
-            appendLine("Sweepr diagnostics – $stamp")
+            appendLine("SWEEPR Cleaner diagnostics – $stamp")
             appendLine("================================")
             appendLine("App version: $version")
             appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE})")

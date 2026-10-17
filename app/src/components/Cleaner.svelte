@@ -442,7 +442,7 @@
       <div class="row" style="margin-bottom: 10px;">
         <strong>Excluded Paths & Folders (Allowlist)</strong>
         <div class="spacer"></div>
-        <span class="muted small">Sweepr will never scan or delete anything inside these paths</span>
+        <span class="muted small">SWEEPR Cleaner will never scan or delete anything inside these paths</span>
       </div>
       <div class="row" style="gap: 10px; margin-bottom: 12px;">
         <input
@@ -473,7 +473,7 @@
       <div style="flex: 1;">
         <strong style="color: #92400e; font-size: 13.5px;">Apps currently running: {runningConflicts.map((c) => c.app_name).join(", ")}</strong>
         <div style="color: #b45309; font-size: 12.5px; margin-top: 2px;">
-          Close these apps before cleaning so Windows releases locks on their cache files and Sweepr can reclaim 100% of their space.
+          Close these apps before cleaning so Windows releases locks on their cache files and SWEEPR Cleaner can reclaim 100% of their space.
         </div>
       </div>
       <button class="ghost" style="font-size: 12px; padding: 6px 12px;" onclick={refreshConflicts}>Recheck</button>

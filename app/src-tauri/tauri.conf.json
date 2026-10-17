@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Sweepr",
+        "title": "SWEEPR Cleaner",
         "width": 980,
         "height": 680,
         "minWidth": 820,
@@ -28,10 +28,10 @@
     "active": true,
     "targets": ["nsis", "msi", "dmg", "app", "deb", "rpm", "appimage"],
     "icon": [ "icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico" ],
-    "publisher": "Sweepr",
-    "copyright": "Copyright © 2026 Sweepr. All rights reserved.",
+    "publisher": "SWEEPR Cleaner",
+    "copyright": "Copyright © 2026 SWEEPR Cleaner. All rights reserved.",
     "shortDescription": "Safe, honest disk cleaner",
-    "longDescription": "Sweepr Desktop — Fast, private, intelligent PC disk and system cleaner for Windows.",
+    "longDescription": "SWEEPR Cleaner Desktop — Fast, private, intelligent PC disk and system cleaner for Windows.",
     "category": "Utility",
     "windows": {
       "webviewInstallMode": { "type": "downloadBootstrapper" },

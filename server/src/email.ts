@@ -22,16 +22,16 @@ export async function sendSubscriptionEmail(
   const isOtp = type === "otp";
   const isProduction = process.env.NODE_ENV === "production";
   const subject = isOtp
-    ? `Your Sweepr Login Code`
+    ? `Your SWEEPR Cleaner Login Code`
     : type === "activated"
-    ? `Welcome to Sweepr ${planOrCode.toUpperCase()}!`
-    : `Sweepr Subscription Canceled`;
+    ? `Welcome to SWEEPR Cleaner ${planOrCode.toUpperCase()}!`
+    : `SWEEPR Cleaner Subscription Canceled`;
 
   const body = isOtp
-    ? `Hi,\n\nHere is your one-time login code for Sweepr: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nThe Sweepr Team`
+    ? `Hi,\n\nHere is your one-time login code for SWEEPR Cleaner: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nThe SWEEPR Cleaner Team`
     : type === "activated"
-    ? `Hi ${name || 'Customer'},\n\nYour Sweepr ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nThank you for choosing Sweepr.`
-    : `Hi ${name || 'Customer'},\n\nYour Sweepr subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe Sweepr Team`;
+    ? `Hi ${name || 'Customer'},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.\n\nThank you for choosing SWEEPR Cleaner.`
+    : `Hi ${name || 'Customer'},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe SWEEPR Cleaner Team`;
 
   if (isProduction) {
     // Never print bodies (which may contain login codes) in production logs.
@@ -60,8 +60,8 @@ export async function sendSubscriptionEmail(
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
   <div style="text-align: center; margin-bottom: 24px;">
     <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
-    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Your Sweepr Login Code</h2>
-    <p style="color: #64748b; font-size: 14px; margin: 0;">Use the 6-digit code below to securely sign in to your Sweepr account.</p>
+    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Your SWEEPR Cleaner Login Code</h2>
+    <p style="color: #64748b; font-size: 14px; margin: 0;">Use the 6-digit code below to securely sign in to your SWEEPR Cleaner account.</p>
   </div>
   <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
     <span style="font-family: monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #059669;">${planOrCode}</span>
@@ -70,7 +70,7 @@ export async function sendSubscriptionEmail(
     This one-time passcode will expire in <strong>15 minutes</strong>.<br>If you did not request this login code, you can safely ignore this email.
   </p>
   <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
-    &copy; Sweepr Desktop &bull; Fast, private, intelligent PC cleaner
+    &copy; SWEEPR Cleaner Desktop &bull; Fast, private, intelligent PC cleaner
   </div>
 </div>`
     : undefined;
@@ -79,7 +79,7 @@ export async function sendSubscriptionEmail(
   const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
   if (resendApiKey) {
     try {
-      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "Sweepr <onboarding@resend.dev>";
+      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "SWEEPR Cleaner <onboarding@resend.dev>";
       const resp = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -164,7 +164,7 @@ export async function sendSubscriptionEmail(
       });
 
       const info = await transporter.sendMail({
-        from: `"Sweepr" <${user}>`,
+        from: `"SWEEPR Cleaner" <${user}>`,
         to: recipient,
         subject,
         text: body,

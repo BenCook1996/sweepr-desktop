@@ -74,7 +74,7 @@
   <!-- Clean Modern Navigation Header (Concept 5) -->
   <header class="top-nav">
     <div class="brand">
-      <div class="logo" aria-label="Sweepr">
+      <div class="logo" aria-label="SWEEPR Cleaner">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
           <defs>
             <linearGradient id="appEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -97,7 +97,7 @@
         </svg>
       </div>
       <div class="brand-text">
-        <span class="brand-name">Sweepr</span>
+        <span class="brand-name">SWEEPR Cleaner</span>
       </div>
     </div>
 
@@ -140,7 +140,7 @@
       {#if license?.active}
         <span class="tier-badge pro">{license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : t("tier.pro", $lang)}</span>
       {:else}
-        <button class="key-icon-btn" onclick={() => (showActivateModal = true)} title="Activate Sweepr License" aria-label="Activate Sweepr License">
+        <button class="key-icon-btn" onclick={() => (showActivateModal = true)} title="Activate SWEEPR Cleaner License" aria-label="Activate SWEEPR Cleaner License">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9l-1.5-1.5L5 9a7 7 0 1 0 10 10l2-2m-2-2l2-2m-2-2l2-2"/></svg>
         </button>
         <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>{t("tier.free", $lang)}</button>

@@ -100,7 +100,7 @@
 
   function handleError(e: unknown, feature: string) {
     if (isPaymentRequired(e)) {
-      proNotice = `${feature} is a Pro feature. Activate your Sweepr licence to use it.`;
+      proNotice = `${feature} is a Pro feature. Activate your SWEEPR Cleaner licence to use it.`;
       requestActivation();
     } else {
       error = errorMessage(e);
