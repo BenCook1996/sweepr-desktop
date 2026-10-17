@@ -267,8 +267,8 @@ export function renderPseoPage(item: CleanItem): string {
           <span>Download Free Scan</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/order?offer=intro" class="btn bg-white/10 hover:bg-white/20 text-white text-sm">
-          Get 1st Month for £1.99
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn bg-white/10 hover:bg-white/20 text-white text-sm">
+          Get Pro Now
         </a>
       </div>
     </div>

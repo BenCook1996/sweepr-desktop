@@ -3356,6 +3356,35 @@ const I18N_DICTIONARY = {
   }
 };
 
+Object.assign(I18N_DICTIONARY.de, {
+  "Get Pro Now": "Jetzt Pro holen",
+  "Get Pro Now →": "Jetzt Pro holen →"
+});
+Object.assign(I18N_DICTIONARY.fr, {
+  "Get Pro Now": "Obtenir Pro maintenant",
+  "Get Pro Now →": "Obtenir Pro maintenant →"
+});
+Object.assign(I18N_DICTIONARY.es, {
+  "Get Pro Now": "Obtener Pro ahora",
+  "Get Pro Now →": "Obtener Pro ahora →"
+});
+Object.assign(I18N_DICTIONARY.it, {
+  "Get Pro Now": "Ottieni Pro ora",
+  "Get Pro Now →": "Ottieni Pro ora →"
+});
+Object.assign(I18N_DICTIONARY.pt, {
+  "Get Pro Now": "Obter Pro agora",
+  "Get Pro Now →": "Obter Pro agora →"
+});
+Object.assign(I18N_DICTIONARY.nl, {
+  "Get Pro Now": "Nu Pro halen",
+  "Get Pro Now →": "Nu Pro halen →"
+});
+Object.assign(I18N_DICTIONARY.ja, {
+  "Get Pro Now": "今すぐProを入手",
+  "Get Pro Now →": "今すぐProを入手 →"
+});
+
 /**
  * Traverses and translates matching DOM text nodes losslessly
  */

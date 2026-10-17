@@ -819,6 +819,7 @@
 
     function selectOrderPlan(plan) {
       selectedPlan = plan;
+      try { sessionStorage.setItem('sweepr_selected_plan', plan); } catch (e) {}
 
       const cardAnnual = document.getElementById('planCardAnnual');
       const cardSixMonth = document.getElementById('planCardSixMonth');
