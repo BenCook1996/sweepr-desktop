@@ -82,12 +82,21 @@ pub fn app_path_target_missing(default_val: &str) -> Option<String> {
     }
 }
 
+fn is_abs_or_win_drive(p: &str) -> bool {
+    let bytes = p.as_bytes();
+    std::path::Path::new(p).is_absolute()
+        || (bytes.len() >= 3
+            && bytes[0].is_ascii_alphabetic()
+            && bytes[1] == b':'
+            && (bytes[2] == b'\\' || bytes[2] == b'/'))
+}
+
 /// A Run entry is orphaned if its executable doesn't exist. Commands with
 /// unresolved environment variables or bare program names are never flagged.
 pub fn run_entry_target_missing(cmd: &str) -> Option<String> {
     let (exe, _) = crate::cmdline::split_command(cmd);
     let exe = exe.trim();
-    if exe.is_empty() || exe.contains('%') || !std::path::Path::new(exe).is_absolute() {
+    if exe.is_empty() || exe.contains('%') || !is_abs_or_win_drive(exe) {
         return None;
     }
     if std::path::Path::new(exe).exists() {
