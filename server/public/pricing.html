@@ -207,23 +207,8 @@
         </div>
       </div>
 
-      <!-- Right Column: Product Pricing Card (Direct Checkout) -->
+      <!-- Right Column: Product Pricing Card (Direct Checkout - Default Annual) -->
       <div id="order" class="w-full lg:w-[460px] shrink-0">
-        <!-- 3-Way Plan Toggle Tabs -->
-        <div class="bg-gray-100/90 p-1.5 rounded-2xl flex items-center gap-1 mb-3 border border-gray-200/80">
-          <button type="button" id="tabPricingAnnual" onclick="setPricingPlan('annual')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500/30 ring-1 ring-emerald-500/20">
-            <span>Annual</span>
-            <span class="inline-block ml-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">Save 58%</span>
-          </button>
-          <button type="button" id="tabPricingSixMonth" onclick="setPricingPlan('six_month')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60">
-            <span>6-Month</span>
-            <span class="inline-block ml-1 text-[10px] font-bold text-teal-700 bg-teal-100 px-1.5 py-0.5 rounded-full">Save 35%</span>
-          </button>
-          <button type="button" id="tabPricingMonthly" onclick="setPricingPlan('monthly')" class="relative flex-1 py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60">
-            <span>Monthly</span>
-          </button>
-        </div>
-
         <div class="glass-card p-8 relative overflow-hidden border border-emerald-100/80 shadow-2xl">
           <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600"></div>
           
@@ -232,15 +217,15 @@
               <span class="text-xs font-bold text-emerald-700 tracking-wider uppercase">Official Full License</span>
               <h3 class="text-2xl font-black text-gray-900">SWEEPR Cleaner Pro</h3>
             </div>
-            <span id="pricingCardBadge" class="badge free px-2.5 py-1 text-xs font-bold uppercase tracking-wider">MOST POPULAR / BEST VALUE</span>
+            <span class="badge free px-2.5 py-1 text-xs font-bold uppercase tracking-wider">MOST POPULAR / BEST VALUE</span>
           </div>
 
           <div class="my-6 pb-6 border-b border-gray-100">
             <div class="flex items-baseline gap-2">
-              <span id="pricingPriceAmount" class="text-5xl font-black text-gray-900">£49.99</span>
-              <span id="pricingPriceInterval" class="text-gray-500 font-medium text-sm">per year (£4.16/mo)</span>
+              <span class="text-5xl font-black text-gray-900">£49.99</span>
+              <span class="text-gray-500 font-medium text-sm">per year (£4.16/mo)</span>
             </div>
-            <p id="pricingPriceSubtext" class="text-xs text-gray-500 mt-2">
+            <p class="text-xs text-gray-500 mt-2">
               Just £4.16/month billed annually at £49.99. Save 58% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.
             </p>
           </div>
@@ -271,7 +256,7 @@
 
           <!-- Order CTA -->
           <div class="space-y-3 pt-2">
-            <a id="pricingCtaBtn" href="/order?plan=annual" class="btn btn-go btn-big pulse-glow w-full justify-center gap-2">
+            <a href="/order?plan=annual" class="btn btn-go btn-big pulse-glow w-full justify-center gap-2">
               <span>Buy Now</span>
               <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
@@ -282,6 +267,12 @@
               <span>•</span>
               <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Cancel in 1-Click</span>
             </div>
+            <div class="text-center pt-3 border-t border-gray-100 mt-4">
+              <a href="#compare-plans" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1">
+                <span>Looking for other plans? Compare all options below</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </a>
+            </div>
           </div>
 
         </div>
@@ -289,11 +280,101 @@
 
     </div>
 
-    <!-- Feature Comparison Matrix (Total Cleaner style) -->
-    <section class="mt-28">
-      <div class="text-center max-w-2xl mx-auto mb-16">
-        <h2 class="text-3xl font-black text-gray-900 mb-4">Compare Plans</h2>
-        <p class="text-gray-600">See everything included in SWEEPR Cleaner Free vs. full SWEEPR Cleaner Pro capabilities.</p>
+    <!-- Feature Comparison Matrix & Plan Selector -->
+    <section id="compare-plans" class="mt-28">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-3xl font-black text-gray-900 mb-3">Compare Plans</h2>
+        <p class="text-gray-600">Select a Pro plan duration below or compare full feature capabilities in the table.</p>
+      </div>
+
+      <!-- 3-Way Plan Selector Cards (Default: Annual) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16 items-stretch">
+        
+        <!-- 1. Annual Plan (Default Selected & Highlighted) -->
+        <div id="compareCardAnnual" onclick="selectComparePlan('annual')" class="relative rounded-2xl p-6 border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/70 to-white shadow-xl flex flex-col justify-between cursor-pointer transition-all transform hover:-translate-y-1">
+          <div class="absolute -top-3.5 left-1/2 transform -translate-x-1/2">
+            <span class="badge free px-3 py-1 text-[11px] font-black uppercase tracking-wider shadow-sm">MOST POPULAR / BEST VALUE</span>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mt-2 mb-3">
+              <span class="text-base font-black text-gray-900">Annual Plan</span>
+              <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Save 58%</span>
+            </div>
+            <div class="mb-4">
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-black text-gray-900">£49.99</span>
+                <span class="text-xs font-bold text-gray-500">/year</span>
+              </div>
+              <div class="text-xs font-semibold text-emerald-700 mt-1">Just £4.16/month equivalent</div>
+            </div>
+            <p class="text-xs text-gray-600 mb-5 leading-relaxed">
+              Billed annually at £49.99/year. Maximum savings for full 2026 system optimization, automated registry fixes, and deep file cleaning.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-emerald-100">
+            <a id="compareBtnAnnual" href="/order?plan=annual" class="btn btn-go w-full justify-center text-center font-bold text-sm py-3">
+              <span>Choose Annual Plan</span>
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. 6-Month Plan -->
+        <div id="compareCardSixMonth" onclick="selectComparePlan('six_month')" class="relative rounded-2xl p-6 border border-gray-200 bg-white hover:border-emerald-300 shadow-sm flex flex-col justify-between cursor-pointer transition-all transform hover:-translate-y-1">
+          <div class="absolute -top-3.5 left-1/2 transform -translate-x-1/2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black text-teal-800 bg-teal-100 border border-teal-200 uppercase tracking-wider shadow-xs">SAVE 35%</span>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mt-2 mb-3">
+              <span class="text-base font-black text-gray-900">6-Month Plan</span>
+              <span class="text-xs font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">Save 35%</span>
+            </div>
+            <div class="mb-4">
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-black text-gray-900">£38.99</span>
+                <span class="text-xs font-bold text-gray-500">/6 months</span>
+              </div>
+              <div class="text-xs font-semibold text-teal-700 mt-1">Just £6.50/month equivalent</div>
+            </div>
+            <p class="text-xs text-gray-600 mb-5 leading-relaxed">
+              Billed every 6 months at £38.99. Balanced semi-annual savings with full 2026 Pro cleaning features and priority updates.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-gray-100">
+            <a id="compareBtnSixMonth" href="/order?plan=six_month" class="w-full py-3 px-4 rounded-xl border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-center font-bold text-sm block transition-colors">
+              <span>Choose 6-Month Plan</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. Monthly Plan -->
+        <div id="compareCardMonthly" onclick="selectComparePlan('monthly')" class="relative rounded-2xl p-6 border border-gray-200 bg-white hover:border-emerald-300 shadow-sm flex flex-col justify-between cursor-pointer transition-all transform hover:-translate-y-1">
+          <div class="absolute -top-3.5 left-1/2 transform -translate-x-1/2">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black text-gray-700 bg-gray-100 border border-gray-200 uppercase tracking-wider shadow-xs">FLEXIBLE</span>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mt-2 mb-3">
+              <span class="text-base font-black text-gray-900">Monthly Plan</span>
+              <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Cancel Anytime</span>
+            </div>
+            <div class="mb-4">
+              <div class="flex items-baseline gap-1">
+                <span class="text-4xl font-black text-gray-900">£9.99</span>
+                <span class="text-xs font-bold text-gray-500">/month</span>
+              </div>
+              <div class="text-xs font-semibold text-gray-500 mt-1">Standard monthly billing</div>
+            </div>
+            <p class="text-xs text-gray-600 mb-5 leading-relaxed">
+              Pay £9.99 monthly with no long-term commitment. Full Pro cleaning capabilities; cancel anytime in 1 click via your customer portal.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-gray-100">
+            <a id="compareBtnMonthly" href="/order?plan=monthly" class="w-full py-3 px-4 rounded-xl border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-center font-bold text-sm block transition-colors">
+              <span>Choose Monthly Plan</span>
+            </a>
+          </div>
+        </div>
+
       </div>
 
       <div class="glass-card overflow-hidden">
@@ -353,6 +434,17 @@
                 <td class="p-4 text-center font-bold text-emerald-700 bg-emerald-50/30">✓ 24/7 Priority</td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr class="border-t border-gray-200 bg-white/60">
+                <td class="p-5 font-bold text-gray-900">Get Started</td>
+                <td class="p-5 text-center">
+                  <a href="/#download" class="btn btn-ghost text-xs px-4 py-2 font-semibold">Free Download</a>
+                </td>
+                <td class="p-5 text-center bg-emerald-50/30">
+                  <a id="tableProCtaBtn" href="/order?plan=annual" class="btn btn-go text-xs font-bold px-4 py-2.5 justify-center w-full">Get Pro (Annual - £49.99/yr)</a>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -464,53 +556,50 @@
       }
     });
 
-    // Plan selection logic (Annual [Default & Highlighted], 6-Month, Monthly)
+    // Compare Plans Section: Plan Selection Logic (Annual [Default & Highlighted], 6-Month, Monthly)
     let selectedPricingPlan = 'annual';
 
-    function setPricingPlan(plan) {
+    function selectComparePlan(plan) {
       selectedPricingPlan = plan;
-      const tabAnnual = document.getElementById('tabPricingAnnual');
-      const tabSixMonth = document.getElementById('tabPricingSixMonth');
-      const tabMonthly = document.getElementById('tabPricingMonthly');
-      const badge = document.getElementById('pricingCardBadge');
-      const priceAmount = document.getElementById('pricingPriceAmount');
-      const priceInterval = document.getElementById('pricingPriceInterval');
-      const priceSubtext = document.getElementById('pricingPriceSubtext');
-      const ctaBtn = document.getElementById('pricingCtaBtn');
+      try {
+        sessionStorage.setItem('sweepr_selected_plan', plan);
+      } catch (e) {}
 
-      if (!tabAnnual || !tabSixMonth || !tabMonthly) return;
+      const cardAnnual = document.getElementById('compareCardAnnual');
+      const cardSixMonth = document.getElementById('compareCardSixMonth');
+      const cardMonthly = document.getElementById('compareCardMonthly');
 
-      const inactiveClasses = "relative py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer text-gray-600 hover:text-gray-900 hover:bg-white/60";
-      const activeClasses = "relative py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500/30 ring-1 ring-emerald-500/20";
+      const btnAnnual = document.getElementById('compareBtnAnnual');
+      const btnSixMonth = document.getElementById('compareBtnSixMonth');
+      const btnMonthly = document.getElementById('compareBtnMonthly');
 
-      tabAnnual.className = inactiveClasses;
-      tabSixMonth.className = inactiveClasses;
-      tabMonthly.className = inactiveClasses;
+      const activeCardClass = 'relative rounded-2xl p-6 border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/70 to-white shadow-xl flex flex-col justify-between cursor-pointer transition-all transform hover:-translate-y-1';
+      const normalCardClass = 'relative rounded-2xl p-6 border border-gray-200 bg-white hover:border-emerald-300 shadow-sm flex flex-col justify-between cursor-pointer transition-all transform hover:-translate-y-1';
 
-      if (plan === 'annual') {
-        tabAnnual.className = activeClasses;
-        badge.textContent = 'MOST POPULAR / BEST VALUE';
-        badge.className = 'badge free px-2.5 py-1 text-xs font-bold uppercase tracking-wider';
-        priceAmount.textContent = '£49.99';
-        priceInterval.textContent = 'per year (£4.16/mo)';
-        priceSubtext.textContent = 'Just £4.16/month billed annually at £49.99. Save 58% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
-        if (ctaBtn) ctaBtn.href = '/order?plan=annual';
-      } else if (plan === 'six_month') {
-        tabSixMonth.className = activeClasses;
-        badge.textContent = 'SAVE 35%';
-        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-teal-800 bg-teal-100 border border-teal-200 uppercase tracking-wider';
-        priceAmount.textContent = '£38.99';
-        priceInterval.textContent = 'every 6 months (£6.50/mo)';
-        priceSubtext.textContent = 'Just £6.50/month billed every 6 months at £38.99. Save 35% compared to monthly. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
-        if (ctaBtn) ctaBtn.href = '/order?plan=six_month';
-      } else {
-        tabMonthly.className = activeClasses;
-        badge.textContent = 'FLEXIBLE';
-        badge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold text-gray-800 bg-gray-100 border border-gray-200 uppercase tracking-wider';
-        priceAmount.textContent = '£9.99';
-        priceInterval.textContent = 'per month';
-        priceSubtext.textContent = 'Pay £9.99 monthly unless cancelled. Includes all features, 14-day money-back guarantee, cancel anytime in 1 click.';
-        if (ctaBtn) ctaBtn.href = '/order?plan=monthly';
+      const activeBtnClass = 'btn btn-go w-full justify-center text-center font-bold text-sm py-3';
+      const normalBtnClass = 'w-full py-3 px-4 rounded-xl border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 text-center font-bold text-sm block transition-colors';
+
+      if (cardAnnual) cardAnnual.className = plan === 'annual' ? activeCardClass : normalCardClass;
+      if (cardSixMonth) cardSixMonth.className = plan === 'six_month' ? activeCardClass : normalCardClass;
+      if (cardMonthly) cardMonthly.className = plan === 'monthly' ? activeCardClass : normalCardClass;
+
+      if (btnAnnual) btnAnnual.className = plan === 'annual' ? activeBtnClass : normalBtnClass;
+      if (btnSixMonth) btnSixMonth.className = plan === 'six_month' ? activeBtnClass : normalBtnClass;
+      if (btnMonthly) btnMonthly.className = plan === 'monthly' ? activeBtnClass : normalBtnClass;
+
+      // Update table CTA button in the Pro column footer
+      const tableProCta = document.getElementById('tableProCtaBtn');
+      if (tableProCta) {
+        if (plan === 'annual') {
+          tableProCta.href = '/order?plan=annual';
+          tableProCta.textContent = 'Get Pro (Annual - £49.99/yr)';
+        } else if (plan === 'six_month') {
+          tableProCta.href = '/order?plan=six_month';
+          tableProCta.textContent = 'Get Pro (6-Month - £38.99/6mo)';
+        } else {
+          tableProCta.href = '/order?plan=monthly';
+          tableProCta.textContent = 'Get Pro (Monthly - £9.99/mo)';
+        }
       }
 
       // Re-trigger translation if non-English
@@ -522,16 +611,21 @@
       } catch (e) {}
     }
 
+    // Alias for compatibility
+    function setPricingPlan(plan) {
+      selectComparePlan(plan);
+    }
+
     // Initialize plan on page load based on URL or default to Annual
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const plan = urlParams.get('plan');
       if (plan === 'six_month' || plan === '6month' || plan === 'sixmonth') {
-        setPricingPlan('six_month');
+        selectComparePlan('six_month');
       } else if (plan === 'monthly') {
-        setPricingPlan('monthly');
+        selectComparePlan('monthly');
       } else {
-        setPricingPlan('annual');
+        selectComparePlan('annual');
       }
     });
   </script>

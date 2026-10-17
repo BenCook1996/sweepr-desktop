@@ -1023,11 +1023,15 @@
       const offerParam = urlParams.get('offer');
       const discountParam = urlParams.get('discount');
 
+      let storedPlan = null;
+      try { storedPlan = sessionStorage.getItem('sweepr_selected_plan'); } catch (e) {}
+      const effectivePlan = planParam || storedPlan;
+
       if (offerParam === 'intro' || discountParam === '1' || urlParams.get('intro') === '1' || planParam === 'intro') {
         activateDiscountOffer();
-      } else if (planParam === 'six_month' || planParam === '6month' || planParam === 'sixmonth') {
+      } else if (effectivePlan === 'six_month' || effectivePlan === '6month' || effectivePlan === 'sixmonth') {
         selectOrderPlan('six_month');
-      } else if (planParam === 'monthly') {
+      } else if (effectivePlan === 'monthly') {
         selectOrderPlan('monthly');
       } else {
         // Default to Annual Plan (£49.99/year — £4.16/mo, Save 58%) with "Most Popular / Best Value" badge
