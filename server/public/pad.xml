@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XML_DIZ_INFO>
+  <MASTER_PAD_VERSION_INFO>
+    <MASTER_PAD_VERSION>4.0</MASTER_PAD_VERSION>
+    <MASTER_PAD_EDITOR>SWEEPR PAD Generator</MASTER_PAD_EDITOR>
+    <MASTER_PAD_INFO>Portable Application Description, or PAD for short, is a data set that is used by shareware authors to disseminate information to anyone interested in their software products.</MASTER_PAD_INFO>
+  </MASTER_PAD_VERSION_INFO>
+  <Company_Info>
+    <Company_Name>Benjamin Cook</Company_Name>
+    <Address_1>United Kingdom</Address_1>
+    <City_Town>London</City_Town>
+    <Country>United Kingdom</Country>
+    <Company_WebSite_URL>https://sweeprcleaner.com</Company_WebSite_URL>
+    <Contact_Info>
+      <Author_First_Name>Benjamin</Author_First_Name>
+      <Author_Last_Name>Cook</Author_Last_Name>
+      <Author_Email>support@sweeprcleaner.com</Author_Email>
+      <Contact_First_Name>Benjamin</Contact_First_Name>
+      <Contact_Last_Name>Cook</Contact_Last_Name>
+      <Contact_Email>support@sweeprcleaner.com</Contact_Email>
+    </Contact_Info>
+    <Support_Info>
+      <Sales_Email>support@sweeprcleaner.com</Sales_Email>
+      <Support_Email>support@sweeprcleaner.com</Support_Email>
+      <General_Email>support@sweeprcleaner.com</General_Email>
+    </Support_Info>
+  </Company_Info>
+  <Program_Info>
+    <Program_Name>SWEEPR Cleaner</Program_Name>
+    <Program_Version>0.1.0</Program_Version>
+    <Program_Release_Month>10</Program_Release_Month>
+    <Program_Release_Day>18</Program_Release_Day>
+    <Program_Release_Year>2026</Program_Release_Year>
+    <Program_Cost_Dollars>12.99</Program_Cost_Dollars>
+    <Program_Type>Freemium</Program_Type>
+    <Program_Release_Status>Major Update</Program_Release_Status>
+    <Program_Install_Support>Install and Uninstall</Program_Install_Support>
+    <Program_OS_Support>Win10,Win10 x64,Win11</Program_OS_Support>
+    <Program_Language>English,French,German,Spanish,Italian,Portuguese,Dutch,Japanese</Program_Language>
+    <File_Info>
+      <File_Size_Bytes>5387776</File_Size_Bytes>
+      <File_Size_K>5261</File_Size_K>
+      <File_Size_MB>5.39</File_Size_MB>
+    </File_Info>
+    <Expire_Info>
+      <Has_Expire_Info>N</Has_Expire_Info>
+    </Expire_Info>
+    <Program_Change_Info>Initial release with native Rust DeepClean engine, Smart App Uninstaller, Startup &amp; RAM Optimizer, SHA-256 Duplicate Finder, DoD 5220.22-M File Shredder, and 7-day Quarantine Rollback.</Program_Change_Info>
+    <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
+    <Program_Specific_Category>System Utilities</Program_Specific_Category>
+    <Program_System_Requirements>Windows 10 or Windows 11 (64-bit), 50 MB RAM, 20 MB free disk space</Program_System_Requirements>
+  </Program_Info>
+  <Program_Descriptions>
+    <English>
+      <Keywords>pc cleaner, disk cleaner, system optimizer, ccleaner alternative, uninstaller, duplicate file finder, file shredder, registry cleaner</Keywords>
+      <Char_Desc_45>Ultra-lightweight Rust PC &amp; disk cleaner.</Char_Desc_45>
+      <Char_Desc_80>Native Rust PC cleaner, smart uninstaller, RAM optimizer &amp; DoD file shredder.</Char_Desc_80>
+      <Char_Desc_250>SWEEPR Cleaner is an ultra-lightweight native Rust PC cleaner and privacy optimizer for Windows 10 and 11. Features 60-second deep cache cleanup, Smart Uninstaller, Startup &amp; RAM Optimizer, SHA-256 Duplicate Finder, and 1-click Quarantine rollback.</Char_Desc_250>
+      <Char_Desc_450>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust. Designed as a clean, bloatware-free alternative to legacy PC cleaners, SWEEPR runs strictly on-demand with zero background daemons or telemetry. Includes DeepClean cache cleanup, Smart App Uninstaller, Startup &amp; RAM Purge, SHA-256 Duplicate Finder, DoD 5220.22-M File Shredder, and 7-day Quarantine with 1-click rollback.</Char_Desc_450>
+      <Char_Desc_2000>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust for Windows 10 and Windows 11.
+
+Designed specifically as an alternative to legacy PC cleaners that have become bloated with background daemons, telemetry, and popup ads, SWEEPR Cleaner delivers maximum disk recovery with zero system overhead.
+
+Key Features:
+- Native Rust Engine (5.4 MB): Starts instantly, consumes under 40 MB of RAM during execution, and finishes deep system scans in under 60 seconds.
+- Zero Background Processes: SWEEPR runs strictly on-demand with no startup services or background CPU usage.
+- 7-Day Quarantine &amp; 1-Click Rollback: Isolates removed caches into a secure quarantine so you can restore files with one click.
+- DeepClean Cache Engine: Cleans Windows Temp, AppData, browser caches (Chrome, Edge, Firefox, Brave), GPU shader caches, and diagnostic crash dumps.
+- Smart App Uninstaller: Discovers and erases stubborn leftovers, orphaned folders, and stale registry keys left behind by standard Windows uninstalls.
+- Duplicate File Finder: Uses cryptographic SHA-256 byte verification to safely detect and remove identical duplicate files.
+- Secure File Shredder: Meets DoD 5220.22-M sanitization standards for permanent deletion of sensitive personal files.</Char_Desc_2000>
+    </English>
+  </Program_Descriptions>
+  <Web_Info>
+    <Application_URLs>
+      <Application_Info_URL>https://sweeprcleaner.com</Application_Info_URL>
+      <Application_Order_URL>https://sweeprcleaner.com/order</Application_Order_URL>
+      <Application_Screenshot_URL>https://sweeprcleaner.com/screenshot.png</Application_Screenshot_URL>
+      <Application_Icon_URL>https://sweeprcleaner.com/icon-32x32.png</Application_Icon_URL>
+      <Application_XML_File_URL>https://sweeprcleaner.com/pad.xml</Application_XML_File_URL>
+    </Application_URLs>
+    <Download_URLs>
+      <Primary_Download_URL>https://sweeprcleaner.com/SWEEPRCleaner.exe</Primary_Download_URL>
+      <Secondary_Download_URL>https://sweeprcleaner.com/Sweepr_Setup.msi</Secondary_Download_URL>
+    </Download_URLs>
+  </Web_Info>
+</XML_DIZ_INFO>
