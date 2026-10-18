@@ -273,9 +273,9 @@ export function createApp(deps: AppDeps) {
   type Platform = "android" | "ios" | "windows" | "mac" | "linux";
 
   const DESKTOP_FILES: Record<"windows" | "mac" | "linux", { file: string; type: string; label: string }> = {
-    windows: { file: "Sweepr_Setup.exe", type: "application/vnd.microsoft.portable-executable", label: "Windows" },
-    mac: { file: "Sweepr_Setup.dmg", type: "application/x-apple-diskimage", label: "Mac" },
-    linux: { file: "Sweepr_Setup.AppImage", type: "application/x-executable", label: "Linux" },
+    windows: { file: "SWEEPRCleaner.exe", type: "application/vnd.microsoft.portable-executable", label: "Windows" },
+    mac: { file: "SWEEPRCleaner.dmg", type: "application/x-apple-diskimage", label: "Mac" },
+    linux: { file: "SWEEPRCleaner.AppImage", type: "application/x-executable", label: "Linux" },
   };
 
   /** Order matters: Android and ChromeOS user agents also contain "Linux". */
@@ -313,6 +313,8 @@ export function createApp(deps: AppDeps) {
       },
     });
   };
+
+  app.get("/Sweepr_Setup.exe", (c) => c.redirect("/download?platform=windows", 302));
 
   app.get("/download", (c) => {
     const ua = c.req.header("user-agent")?.toLowerCase() || "";

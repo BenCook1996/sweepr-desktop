@@ -148,11 +148,12 @@ test("security headers present; HSTS only for https", async () => {
 test("download streams installer with Content-Length", async () => {
   const { app } = setup();
   const res = await app.request("/download?platform=windows");
-  if (existsSync("./public/Sweepr_Setup.exe")) {
+  if (existsSync("./public/SWEEPRCleaner.exe")) {
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get("content-length"), String(statSync("./public/Sweepr_Setup.exe").size));
+    assert.equal(res.headers.get("content-length"), String(statSync("./public/SWEEPRCleaner.exe").size));
+    assert.equal(res.headers.get("content-disposition"), 'attachment; filename="SWEEPRCleaner.exe"');
     const buf = Buffer.from(await res.arrayBuffer());
-    assert.equal(buf.length, statSync("./public/Sweepr_Setup.exe").size);
+    assert.equal(buf.length, statSync("./public/SWEEPRCleaner.exe").size);
   } else {
     assert.equal(res.status, 200); // "coming soon" picker page
   }

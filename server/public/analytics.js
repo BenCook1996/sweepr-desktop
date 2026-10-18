@@ -249,7 +249,7 @@
       const text = (target.innerText || target.textContent || '').trim().slice(0, 50);
 
       // Download Buttons
-      if (href === '/download' || href.includes('Sweepr_Setup.exe') || href.includes('.apk')) {
+      if (href === '/download' || href.includes('SWEEPRCleaner.exe') || href.includes('Sweepr_Setup.exe') || href.includes('.apk')) {
         window.sweeprTrack('download_click', {
           button_text: text,
           href: href
