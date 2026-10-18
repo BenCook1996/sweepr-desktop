@@ -236,15 +236,15 @@
     width: 100%;
     padding: 12px 18px;
     border-radius: 9999px;
-    background: #edf3f8;
-    border: 1.5px solid transparent;
+    background: var(--panel-2);
+    border: 1.5px solid var(--border);
     font-size: 14px;
-    color: #0f172a;
+    color: var(--text);
     outline: none;
     transition: all 0.2s ease;
   }
   .soft-input:focus {
-    background: #ffffff;
+    background: var(--panel-solid);
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
   }
@@ -276,7 +276,7 @@
   .spinner {
     width: 38px;
     height: 38px;
-    border: 3.5px solid #e2e8f0;
+    border: 3.5px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
@@ -291,9 +291,9 @@
   .error-banner {
     padding: 8px 14px;
     margin-bottom: 14px;
-    background: #fef2f2;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger);
     border-radius: 8px;
     font-size: 12.5px;
     width: 100%;

@@ -657,18 +657,37 @@ pub struct AppUpdateInfo {
     pub current_version: String,
     pub notes: String,
     pub url: String,
+    pub source: String,
+    pub sha256: Option<String>,
 }
+
+const GITHUB_RELEASES_LATEST_URL: &str =
+    "https://api.github.com/repos/BenCook1996/sweepr-desktop/releases/latest";
 
 fn is_newer_version(latest: &str, current: &str) -> bool {
     let parse = |s: &str| -> Vec<u32> {
         s.trim()
             .trim_start_matches(['v', 'V'])
+            .split(['.', '-', '+'])
+            .next()
+            .unwrap_or("")
             .split('.')
             .map(|p| p.parse::<u32>().unwrap_or(0))
             .collect()
     };
-    let l = parse(latest);
-    let c = parse(current);
+    let max_parts = |s: &str| -> Vec<u32> {
+        s.trim()
+            .trim_start_matches(['v', 'V'])
+            .split(['-', '+'])
+            .next()
+            .unwrap_or("")
+            .split('.')
+            .map(|p| p.parse::<u32>().unwrap_or(0))
+            .collect()
+    };
+    let _ = parse;
+    let l = max_parts(latest);
+    let c = max_parts(current);
     for i in 0..l.len().max(c.len()) {
         let lv = *l.get(i).unwrap_or(&0);
         let cv = *c.get(i).unwrap_or(&0);
@@ -682,70 +701,239 @@ fn is_newer_version(latest: &str, current: &str) -> bool {
     false
 }
 
-#[tauri::command]
-pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> AppResult<AppUpdateInfo> {
-    let current = app.package_info().version.to_string();
-    let api_url = state.licensing.api_url();
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(6))
-        .build()
-        .map_err(|e| AppError::Other(e.to_string()))?;
+fn is_trusted_update_url(url: &str, api_url: &str) -> bool {
+    let u = url.trim();
+    if u.starts_with("https://github.com/BenCook1996/sweepr-desktop/releases/download/")
+        || u.starts_with("https://objects.githubusercontent.com/")
+        || u.starts_with("https://release-assets.githubusercontent.com/")
+        || u.starts_with("https://sweeprcleaner.com/")
+    {
+        return true;
+    }
+    let clean_api = api_url.trim_end_matches('/');
+    if clean_api.starts_with("https://") && u.starts_with(clean_api) {
+        return true;
+    }
+    #[cfg(debug_assertions)]
+    if (clean_api.starts_with("http://localhost") || clean_api.starts_with("http://127.0.0.1"))
+        && u.starts_with(clean_api)
+    {
+        return true;
+    }
+    false
+}
 
-    let res = client.get(format!("{api_url}/v1/updates/latest.json")).send().await;
-    if let Ok(resp) = res {
+fn normalize_sha256_hex(raw: &str) -> Option<String> {
+    let trimmed = raw
+        .trim()
+        .strip_prefix("sha256:")
+        .or_else(|| raw.trim().strip_prefix("SHA256:"))
+        .unwrap_or(raw.trim())
+        .trim();
+    if trimmed.len() == 64 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+        Some(trimmed.to_ascii_lowercase())
+    } else {
+        None
+    }
+}
+
+async fn fetch_latest_update_manifest(
+    client: &reqwest::Client,
+    current: &str,
+    api_url: &str,
+) -> AppUpdateInfo {
+    let user_agent = format!("SweeprCleaner/{current}");
+
+    // 1. Check GitHub Releases first (https://api.github.com/repos/BenCook1996/sweepr-desktop/releases/latest)
+    if let Ok(resp) = client
+        .get(GITHUB_RELEASES_LATEST_URL)
+        .header("User-Agent", &user_agent)
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+    {
+        if resp.status().is_success() {
+            if let Ok(release) = resp.json::<serde_json::Value>().await {
+                let latest = release
+                    .get("tag_name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .trim()
+                    .trim_start_matches(['v', 'V'])
+                    .to_string();
+
+                if !latest.is_empty() {
+                    let notes = release
+                        .get("body")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("New GitHub release available.")
+                        .trim()
+                        .to_string();
+
+                    let mut asset_url = String::new();
+                    let mut asset_sha256: Option<String> = None;
+
+                    if let Some(assets) = release.get("assets").and_then(|a| a.as_array()) {
+                        for asset in assets {
+                            let name = asset
+                                .get("name")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_ascii_lowercase();
+                            let dl = asset
+                                .get("browser_download_url")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            if (name.ends_with(".exe") || name.ends_with(".msi"))
+                                && is_trusted_update_url(dl, api_url)
+                            {
+                                asset_url = dl.to_string();
+                                asset_sha256 = asset
+                                    .get("digest")
+                                    .and_then(|v| v.as_str())
+                                    .and_then(normalize_sha256_hex);
+                                if name.contains("setup") || name.contains("sweepr") {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    let update_available = is_newer_version(&latest, current);
+                    if update_available && !asset_url.is_empty() {
+                        return AppUpdateInfo {
+                            update_available: true,
+                            latest_version: latest,
+                            current_version: current.to_string(),
+                            notes,
+                            url: asset_url,
+                            source: "github".into(),
+                            sha256: asset_sha256,
+                        };
+                    } else if !update_available {
+                        return AppUpdateInfo {
+                            update_available: false,
+                            latest_version: latest,
+                            current_version: current.to_string(),
+                            notes: "Verified against GitHub Releases — SWEEPR Cleaner is up to date.".into(),
+                            url: String::new(),
+                            source: "github".into(),
+                            sha256: asset_sha256,
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Fallback: Check Sweepr Update Server ({api_url}/v1/updates/latest.json)
+    if let Ok(resp) = client
+        .get(format!("{}/v1/updates/latest.json", api_url.trim_end_matches('/')))
+        .header("User-Agent", &user_agent)
+        .send()
+        .await
+    {
         if resp.status().is_success() {
             if let Ok(info) = resp.json::<serde_json::Value>().await {
                 let latest = info
                     .get("version")
                     .and_then(|v| v.as_str())
-                    .unwrap_or(&current)
+                    .unwrap_or(current)
+                    .trim()
                     .trim_start_matches(['v', 'V'])
                     .to_string();
-                let notes = info.get("notes").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let url = info
+                let notes = info
+                    .get("notes")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let candidate_url = info
                     .get("url")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string())
-                    .unwrap_or_else(|| format!("{api_url}/download?platform=windows"));
-                let update_available = !latest.is_empty() && is_newer_version(&latest, &current);
-                return Ok(AppUpdateInfo {
+                    .unwrap_or_else(|| format!("{}/download?platform=windows", api_url.trim_end_matches('/')));
+                let sha256 = info
+                    .get("sha256")
+                    .and_then(|v| v.as_str())
+                    .and_then(normalize_sha256_hex);
+                let url = if is_trusted_update_url(&candidate_url, api_url) {
+                    candidate_url
+                } else {
+                    String::new()
+                };
+                let update_available =
+                    !latest.is_empty() && !url.is_empty() && is_newer_version(&latest, current);
+                return AppUpdateInfo {
                     update_available,
                     latest_version: latest,
-                    current_version: current,
-                    notes,
+                    current_version: current.to_string(),
+                    notes: if notes.is_empty() {
+                        "Verified against SWEEPR update server.".into()
+                    } else {
+                        notes
+                    },
                     url,
-                });
+                    source: "server".into(),
+                    sha256,
+                };
             }
         }
     }
 
-    Ok(AppUpdateInfo {
+    AppUpdateInfo {
         update_available: false,
-        latest_version: current.clone(),
-        current_version: current,
+        latest_version: current.to_string(),
+        current_version: current.to_string(),
         notes: "SWEEPR Cleaner is up to date.".into(),
         url: String::new(),
-    })
+        source: "local".into(),
+        sha256: None,
+    }
+}
+
+#[tauri::command]
+pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> AppResult<AppUpdateInfo> {
+    let current = app.package_info().version.to_string();
+    let api_url = state.licensing.api_url().to_string();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(8))
+        .build()
+        .map_err(|e| AppError::Other(e.to_string()))?;
+
+    Ok(fetch_latest_update_manifest(&client, &current, &api_url).await)
 }
 
 #[tauri::command]
 pub async fn install_app_update(
     app: AppHandle,
     state: State<'_, AppState>,
-    download_url: Option<String>,
+    _download_url: Option<String>,
 ) -> AppResult<()> {
-    let api_url = state.licensing.api_url();
-    let target_url = download_url
-        .filter(|u| u.starts_with("http://") || u.starts_with("https://"))
-        .unwrap_or_else(|| format!("{api_url}/download?platform=windows"));
+    use sha2::{Digest, Sha256};
 
+    let current = app.package_info().version.to_string();
+    let api_url = state.licensing.api_url().to_string();
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(120))
         .build()
         .map_err(|e| AppError::Other(e.to_string()))?;
 
+    // Always re-query the authoritative update manifest rather than trusting a caller-supplied URL
+    let manifest = fetch_latest_update_manifest(&client, &current, &api_url).await;
+    if !manifest.update_available || manifest.url.is_empty() {
+        return Err(AppError::Other(
+            "No newer verified update is currently available.".into(),
+        ));
+    }
+    if !is_trusted_update_url(&manifest.url, &api_url) {
+        return Err(AppError::Other(
+            "Refusing to download update from an untrusted URL.".into(),
+        ));
+    }
+
     let resp = client
-        .get(&target_url)
+        .get(&manifest.url)
+        .header("User-Agent", format!("SweeprCleaner/{current}"))
         .send()
         .await
         .map_err(|e| AppError::Other(format!("Failed to download update: {e}")))?;
@@ -762,15 +950,42 @@ pub async fn install_app_update(
         .await
         .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?;
 
-    if bytes.len() < 1024 {
-        return Err(AppError::Other("Downloaded update package is invalid.".into()));
+    // Verify minimum installer size and Windows PE ('MZ') header
+    if bytes.len() < 64 * 1024 || &bytes[0..2] != b"MZ" {
+        return Err(AppError::Other(
+            "Downloaded update package is not a valid Windows executable.".into(),
+        ));
     }
 
-    let temp_path = std::env::temp_dir().join("SWEEPRCleaner.exe");
-    std::fs::write(&temp_path, &bytes)
+    // Verify SHA-256 digest when provided by GitHub Releases or the update server
+    if let Some(expected_sha256) = &manifest.sha256 {
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
+        let actual_hex: String = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        if !actual_hex.eq_ignore_ascii_case(expected_sha256) {
+            return Err(AppError::Other(
+                "Update SHA-256 integrity check failed. Aborting installation.".into(),
+            ));
+        }
+    }
+
+    let updates_dir = state.data_dir.join("updates");
+    std::fs::create_dir_all(&updates_dir)
+        .map_err(|e| AppError::Other(format!("Failed creating updates folder: {e}")))?;
+    let safe_ver: String = manifest
+        .latest_version
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-')
+        .collect();
+    let installer_path = updates_dir.join(format!("SWEEPRCleaner-setup-v{safe_ver}.exe"));
+    std::fs::write(&installer_path, &bytes)
         .map_err(|e| AppError::Other(format!("Failed writing update installer: {e}")))?;
 
-    std::process::Command::new(&temp_path)
+    std::process::Command::new(&installer_path)
         .spawn()
         .map_err(|e| AppError::Other(format!("Failed launching update installer: {e}")))?;
 
@@ -842,15 +1057,13 @@ pub fn quit_app(app: AppHandle) {
 #[cfg(target_os = "windows")]
 fn create_windows_shortcut(lnk_path: &std::path::Path, target_exe: &str, working_dir: &str) {
     use std::os::windows::process::CommandExt;
-    let lnk = lnk_path.to_string_lossy().replace('\'', "''");
-    let exe = target_exe.replace('\'', "''");
-    let dir = working_dir.replace('\'', "''");
-    let script = format!(
-        "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('{lnk}'); $s.TargetPath = '{exe}'; $s.WorkingDirectory = '{dir}'; $s.IconLocation = '{exe},0'; $s.Description = 'SWEEPR Cleaner'; $s.Save()"
-    );
+    let script = "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:SWEEPR_LNK); $s.TargetPath = $env:SWEEPR_EXE; $s.WorkingDirectory = $env:SWEEPR_DIR; $s.IconLocation = ($env:SWEEPR_EXE + ',0'); $s.Description = 'SWEEPR Cleaner'; $s.Save()";
     let _ = std::process::Command::new("powershell")
         .creation_flags(0x08000000)
-        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .env("SWEEPR_LNK", lnk_path.as_os_str())
+        .env("SWEEPR_EXE", target_exe)
+        .env("SWEEPR_DIR", working_dir)
+        .args(["-NoProfile", "-NonInteractive", "-Command", script])
         .status();
 }
 
@@ -926,6 +1139,96 @@ pub async fn complete_installation(
         });
     }
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn uninstall_self(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    remove_app_data: bool,
+) -> AppResult<()> {
+    // 1. Remove Windows Autostart registry value
+    let _ = memory::set_autostart_enabled(false);
+
+    // 2. Disable & remove the Windows Scheduled Task ("SweeprScheduledClean")
+    let mut sched_cfg = crate::scheduler::load_config(&state.data_dir);
+    sched_cfg.enabled = false;
+    let _ = crate::scheduler::save_config(&state.data_dir, sched_cfg);
+    let _ = std::fs::remove_file(state.data_dir.join("schedule.txt"));
+
+    // 3. Remove Desktop & Start Menu shortcuts
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(desktop) = dirs::desktop_dir() {
+            for name in ["SWEEPR Cleaner.lnk", "SWEEPRCleaner.lnk", "Sweepr.lnk"] {
+                let _ = std::fs::remove_file(desktop.join(name));
+            }
+        }
+        if let Some(appdata) = dirs::data_dir() {
+            let programs = appdata.join("Microsoft\\Windows\\Start Menu\\Programs");
+            for rel in [
+                "SWEEPR Cleaner.lnk",
+                "SWEEPRCleaner.lnk",
+                "Sweepr.lnk",
+                "SWEEPR Cleaner\\SWEEPR Cleaner.lnk",
+                "SWEEPRCleaner\\SWEEPRCleaner.lnk",
+                "Sweepr\\Sweepr.lnk",
+            ] {
+                let _ = std::fs::remove_file(programs.join(rel));
+            }
+            for folder in ["SWEEPR Cleaner", "SWEEPRCleaner", "Sweepr"] {
+                let _ = std::fs::remove_dir(programs.join(folder));
+            }
+        }
+    }
+
+    // 4. Optionally wipe local app data (settings, quarantine vault, logs, cached license)
+    if remove_app_data {
+        if let Ok(entries) = std::fs::read_dir(&state.data_dir) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let _ = std::fs::remove_dir_all(&p);
+                } else {
+                    let _ = std::fs::remove_file(&p);
+                }
+            }
+        }
+        let _ = std::fs::remove_dir_all(&state.data_dir);
+    }
+
+    // 5. Launch NSIS uninstaller if installed via setup, or schedule self-deletion for standalone exe
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+
+        let mut launched_uninstaller = false;
+        if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(parent) = exe_path.parent() {
+                let nsis_uninst = parent.join("uninstall.exe");
+                if nsis_uninst.is_file() {
+                    if std::process::Command::new(&nsis_uninst).spawn().is_ok() {
+                        launched_uninstaller = true;
+                    }
+                }
+            }
+
+            if !launched_uninstaller {
+                // Schedule removal of the standalone executable once this process exits
+                let _ = std::process::Command::new("cmd")
+                    .creation_flags(0x08000000)
+                    .env("SWEEPR_SELF_EXE", exe_path.as_os_str())
+                    .args([
+                        "/C",
+                        "ping 127.0.0.1 -n 3 > NUL & del /f /q \"%SWEEPR_SELF_EXE%\"",
+                    ])
+                    .spawn();
+            }
+        }
+    }
+
+    app.exit(0);
     Ok(())
 }
 

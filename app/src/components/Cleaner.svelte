@@ -470,7 +470,7 @@
         
         <div class="gauge-container">
           <svg viewBox="0 0 200 120" class="gauge-svg">
-            <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round" />
+            <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="var(--border)" stroke-width="14" stroke-linecap="round" />
             <path d="M 24 105 A 76 76 0 0 1 176 105" fill="none" stroke="url(#topography-gradient)" stroke-width="14" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset={sysOverview ? Math.round(238.76 * (1 - diskFreePct / 100)) : 60} />
             <defs>
               <linearGradient id="topography-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -651,7 +651,7 @@
       {:else}
         <div style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto;">
           {#each exclusions as ex}
-            <div class="row" style="background: #f8fafc; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <div class="row" style="background: var(--panel-2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
               <span class="mono small grow" title={ex}>{ex}</span>
               <button class="ghost" style="padding: 3px 10px; font-size: 11.5px;" onclick={() => removeExcludedPath(ex)}>Remove</button>
             </div>
@@ -662,10 +662,10 @@
   {/if}
 
   {#if runningConflicts.length > 0}
-    <div class="card" style="padding: 14px 18px; margin-bottom: 18px; border-left: 4px solid #f59e0b; background: #fffbeb; display: flex; align-items: center; gap: 12px;">
+    <div class="card" style="padding: 14px 18px; margin-bottom: 18px; border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.14); display: flex; align-items: center; gap: 12px;">
       <div style="flex: 1;">
-        <strong style="color: #92400e; font-size: 13.5px;">Apps currently running: {runningConflicts.map((c) => c.app_name).join(", ")}</strong>
-        <div style="color: #b45309; font-size: 12.5px; margin-top: 2px;">
+        <strong style="color: var(--warn); font-size: 13.5px;">Apps currently running: {runningConflicts.map((c) => c.app_name).join(", ")}</strong>
+        <div class="muted" style="font-size: 12.5px; margin-top: 2px;">
           Close these apps before cleaning so Windows releases locks on their cache files and SWEEPR Cleaner can reclaim 100% of their space.
         </div>
       </div>
@@ -798,7 +798,7 @@
     color: var(--accent);
   }
   .dot-separator {
-    color: #cbd5e1;
+    color: var(--muted);
     font-size: 12px;
   }
 
@@ -849,9 +849,9 @@
     place-items: center;
     flex-shrink: 0;
   }
-  .icon-bubble.emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
+  .icon-bubble.emerald { background: rgba(16, 185, 129, 0.12); color: var(--accent); }
   .icon-bubble.amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
-  .icon-bubble.blue { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+  .icon-bubble.blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
   .rec-details {
     flex: 1;
     min-width: 0;
@@ -969,13 +969,13 @@
   .segmented-bar {
     height: 10px;
     border-radius: 9999px;
-    background: #e2e8f0;
+    background: var(--panel-2);
     display: flex;
     overflow: hidden;
   }
   .bar-segment.apps { background: #059669; }
   .bar-segment.files { background: #f59e0b; }
-  .bar-segment.system { background: #cbd5e1; }
+  .bar-segment.system { background: var(--border); }
   .legend-row {
     display: flex;
     align-items: center;
@@ -996,7 +996,7 @@
   }
   .chip-dot.emerald { background: #059669; }
   .chip-dot.amber { background: #f59e0b; }
-  .chip-dot.slate { background: #cbd5e1; }
+  .chip-dot.slate { background: var(--border); }
   .divider {
     height: 1px;
     background: var(--border);
@@ -1039,8 +1039,8 @@
     place-items: center;
     flex-shrink: 0;
   }
-  .tile-icon-box.blue { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
-  .tile-icon-box.emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
+  .tile-icon-box.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+  .tile-icon-box.emerald { background: rgba(16, 185, 129, 0.1); color: var(--accent); }
   .tile-icon-box.green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
   .tile-content {
     flex: 1;
@@ -1166,8 +1166,8 @@
     width: min(880px, calc(100vw - 64px));
     padding: 12px 24px;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.1);
+    background: var(--panel-solid);
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.15);
     z-index: 100;
   }
   .selected-count-label {
@@ -1194,7 +1194,7 @@
   .progress-bar-track {
     width: 320px;
     height: 8px;
-    background: #e2e8f0;
+    background: var(--panel-2);
     border-radius: 9999px;
     overflow: hidden;
     margin-bottom: 14px;
@@ -1214,7 +1214,7 @@
   .spinner {
     width: 44px;
     height: 44px;
-    border: 3.5px solid #e2e8f0;
+    border: 3.5px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
@@ -1247,7 +1247,7 @@
     padding: 12px 18px;
     margin-bottom: 20px;
     border-left: 4px solid var(--danger);
-    background: #fff5f5;
+    background: rgba(239, 68, 68, 0.14);
     color: var(--danger);
     display: flex;
     align-items: center;

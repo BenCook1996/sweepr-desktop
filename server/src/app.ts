@@ -1088,10 +1088,10 @@ export function createApp(deps: AppDeps) {
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "Too many attempts. Please try again later." }, 429);
     if (!/^\d{6}$/.test(code)) return invalid();
 
-    const valid = repo.verifyOtp(email, sha256(code), Math.floor(Date.now() / 1000));
+    const valid = repo.verifyRecentEmailCode(email, code, sha256(code), Math.floor(Date.now() / 1000));
     if (!valid) return invalid();
 
-    const account = repo.accountByEmail(email);
+    const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
     if (!account) return invalid();
 
     limitOtpVerifyEmail.reset(email);
@@ -1856,7 +1856,7 @@ export function createApp(deps: AppDeps) {
     const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
     if (account) {
       const code = randomInt(100000, 1000000).toString();
-      const expiresAt = now() + 15 * 60;
+      const expiresAt = now() + 7 * 86400;
       repo.setOtp(email, sha256(code), expiresAt);
       const { sendSubscriptionEmail } = await import("./email.js");
       const dispatch = await sendSubscriptionEmail(email, "otp", code);
@@ -1889,7 +1889,8 @@ export function createApp(deps: AppDeps) {
     }
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
-    if (!repo.verifyOtp(email, sha256(code), now())) {
+    const t = now();
+    if (!repo.verifyRecentEmailCode(email, code, sha256(code), t)) {
       return c.json({ error: "invalid_or_expired_code" }, 400);
     }
     const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
@@ -1905,11 +1906,28 @@ export function createApp(deps: AppDeps) {
     const refreshToken = randomToken(32);
     repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
     const ent = repo.entitlement(account.id);
-    const active = isEntitled(ent, now(), config.pastDueGraceDays);
+    const active = isEntitled(ent, t, config.pastDueGraceDays);
+    let token: string | null = null;
+    if (active && ent) {
+      let exp = t + config.tokenTtlHours * 3600;
+      if (ent.current_period_end) {
+        exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
+      }
+      exp = Math.max(exp, t + 300);
+      token = signEntitlement(signingKey, {
+        sub: account.id,
+        device_id: deviceId,
+        status: ent.status === "trialing" ? "trialing" : "active",
+        plan: ent.plan ?? "monthly",
+        iat: t,
+        exp,
+      });
+    }
     return c.json({
       account_id: account.id,
       email: account.email ?? email,
       refresh_token: refreshToken,
+      token,
       active,
       status: ent?.status ?? "none",
       plan: ent?.plan ?? null,

@@ -637,8 +637,8 @@
 <style>
   .header { margin-bottom: 24px; }
   .notice { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 18px; font-size: 13.5px; }
-  .pro-notice { background: #fffbeb; border: 1px solid rgba(245, 158, 11, 0.35); color: #92400e; }
-  .error-notice { background: #fef2f2; border: 1px solid rgba(239, 68, 68, 0.3); color: #991b1b; }
+  .pro-notice { background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: var(--text); }
+  .error-notice { background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); }
   .drop-filter-bar {
     display: flex;
     align-items: center;
@@ -650,12 +650,12 @@
   }
   .drop-filter-bar.drag-over {
     border-color: var(--accent);
-    background: #ecfdf5;
+    background: var(--accent-light);
   }
   .filter-input {
     flex: 1;
     border: none;
-    background: transparent;
+    background: transparent !important;
     font-size: 13.5px;
     color: var(--text);
     outline: none;
@@ -679,17 +679,21 @@
     cursor: pointer;
     box-shadow: none;
   }
+  .mode-btn:hover {
+    color: var(--text);
+    background: transparent;
+  }
   .mode-btn.active {
     background: var(--panel-solid);
     color: var(--accent);
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
   }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; padding-bottom: 40px; }
   .item { padding: 20px 22px; display: flex; flex-direction: column; justify-content: space-between; }
   .grow { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .small-btn { font-size: 12px; padding: 5px 14px; border-radius: 9999px; }
-  .spinner { width: 36px; height: 36px; border: 3.5px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto; }
+  .spinner { width: 36px; height: 36px; border: 3.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .status-icon-bubble { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; font-weight: 800; }
-  .status-icon-bubble.green { background: #dcfce7; color: #059669; }
+  .status-icon-bubble.green { background: var(--accent-light); color: var(--accent); }
 </style>

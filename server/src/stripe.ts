@@ -29,8 +29,9 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   }
   if (customerId && !account.stripe_customer_id) repo.setCustomer(account.id, customerId);
 
+  const existingEnt = repo.entitlement(account.id);
   // Never let a later webhook overwrite a dispute-based revocation.
-  if (repo.entitlement(account.id)?.status === "disputed") return;
+  if (existingEnt?.status === "disputed") return;
 
   const price = sub.items?.data?.[0]?.price;
   const interval = price?.recurring?.interval ?? "month";
@@ -39,14 +40,28 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   const planName = interval === "year" ? "annual" : intervalCount === 6 ? "six_month" : (sub.metadata?.plan || "monthly");
   const amountCents = price?.unit_amount ?? (interval === "year" ? 6499 : intervalCount === 6 ? 4799 : 1199);
 
-  repo.upsertEntitlement({
-    account_id: account.id,
-    stripe_subscription_id: sub.id,
-    status: sub.status as EntStatus,
-    plan: planName,
-    current_period_end: currentPeriodEnd,
-    cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
-  });
+  // Never let an abandoned checkout (incomplete / incomplete_expired) or a non-active webhook
+  // for a different subscription ID overwrite an already active/trialing or lifetime entitlement.
+  const isExistingActive = existingEnt?.status === "active" || existingEnt?.status === "trialing";
+  const isIncomingActive = sub.status === "active" || sub.status === "trialing";
+  const shouldUpdateEntitlement =
+    !isExistingActive ||
+    isIncomingActive ||
+    (existingEnt?.stripe_subscription_id === sub.id &&
+      existingEnt?.stripe_subscription_id !== "sub_owner_lifetime" &&
+      sub.status !== "incomplete" &&
+      sub.status !== "incomplete_expired");
+
+  if (shouldUpdateEntitlement) {
+    repo.upsertEntitlement({
+      account_id: account.id,
+      stripe_subscription_id: sub.id,
+      status: sub.status as EntStatus,
+      plan: planName,
+      current_period_end: currentPeriodEnd,
+      cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
+    });
+  }
 
   repo.upsertSubscription({
     id: sub.id,

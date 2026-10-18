@@ -45,12 +45,12 @@
 </div>
 
 <style>
-  .optimization-view { display: flex; flex-direction: column; gap: 20px; }
+  .optimization-view { display: flex; flex-direction: column; gap: 20px; color: var(--text); }
   .subnav-bar { display: flex; align-items: center; justify-content: flex-start; }
-  .subnav-pill { display: flex; flex-wrap: wrap; gap: 4px; background: rgba(241, 245, 249, 0.85); padding: 4px; border-radius: 9999px; border: 1px solid var(--border); }
+  .subnav-pill { display: flex; flex-wrap: wrap; gap: 4px; background: var(--panel-2); padding: 4px; border-radius: 9999px; border: 1px solid var(--border); }
   .subnav-btn { background: transparent; border: none; padding: 7px 18px; border-radius: 9999px; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; box-shadow: none; }
-  .subnav-btn:hover { color: var(--text); }
-  .subnav-btn.active { background: #ffffff; color: var(--accent); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
+  .subnav-btn:hover { color: var(--text); background: transparent; }
+  .subnav-btn.active { background: var(--panel-solid); color: var(--accent); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); }
   .subnav-btn.active svg { stroke: var(--accent); }
   .subnav-content { flex: 1; }
 </style>

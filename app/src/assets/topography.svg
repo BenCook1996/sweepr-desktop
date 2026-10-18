@@ -8,10 +8,7 @@
     </pattern>
   </defs>
 
-  <!-- Base background -->
-  <rect width="100%" height="100%" fill="#f8fafc" />
-  
-  <!-- Subtle Isometric Grid & Dots -->
+  <!-- Subtle Isometric Grid & Dots (transparent base so CSS var(--bg) controls light/dark background) -->
   <rect width="100%" height="100%" fill="url(#iso-grid)" />
   <rect width="100%" height="100%" fill="url(#dot-grid)" />
 

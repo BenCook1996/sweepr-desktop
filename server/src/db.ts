@@ -355,14 +355,14 @@ export class Repo {
   }
 
   /** Compares sha256 hex digests in constant time. The OTP is burned after MAX_OTP_ATTEMPTS failures. */
-  verifyOtp(email: string, codeHash: string, now: number): boolean {
+  verifyOtp(email: string, codeHash: string, nowSec: number): boolean {
     const MAX_OTP_ATTEMPTS = 5;
     const normEmail = email.trim().toLowerCase();
     const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ? COLLATE NOCASE`).get(normEmail) as
       | { email: string; code: string; expires_at: number; attempts: number | null }
       | undefined;
     if (!otp) return false;
-    if (otp.expires_at < now) {
+    if (otp.expires_at < nowSec) {
       this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
       return false;
     }
@@ -378,8 +378,60 @@ export class Repo {
       }
       return false;
     }
-    this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
+    if (normEmail.startsWith("emailchange:")) {
+      this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
+    } else {
+      // Keep Subscription Activation Keys / login codes valid until expiry so the customer
+      // can sign in to the web portal AND activate up to 3 PCs + 2 mobile devices with the same key.
+      this.db.prepare(`UPDATE otps SET attempts = 0 WHERE email = ? COLLATE NOCASE`).run(normEmail);
+    }
     return true;
+  }
+
+  /**
+   * Verifies a 6-digit code against the current `otps` table or any recent (≤7 days)
+   * Subscription Key / OTP dispatched to `email` in the account's activity log.
+   */
+  verifyRecentEmailCode(email: string, rawCode: string, codeHash: string, nowSec: number): boolean {
+    if (this.verifyOtp(email, codeHash, nowSec)) return true;
+    const normEmail = email.trim().toLowerCase();
+    const cleanCode = rawCode.trim();
+    if (!/^\d{6}$/.test(cleanCode)) return false;
+
+    const rows = this.db
+      .prepare(
+        `SELECT act.metadata_json, act.description
+         FROM activities act
+         JOIN accounts a ON a.id = act.account_id
+         WHERE a.email = ? COLLATE NOCASE
+           AND act.type IN ('welcome_email_sent', 'otp_requested', 'otp_generated')
+           AND act.created_at >= ?
+         ORDER BY act.created_at DESC
+         LIMIT 10`
+      )
+      .all(normEmail, nowSec - 7 * 86400) as Array<{ metadata_json: string | null; description: string | null }>;
+
+    const targetBuf = Buffer.from(cleanCode, "utf8");
+    for (const row of rows) {
+      let candidate = "";
+      if (row.metadata_json) {
+        try {
+          const parsed = JSON.parse(row.metadata_json);
+          if (typeof parsed?.code === "string") candidate = parsed.code.trim();
+        } catch {}
+      }
+      if (!candidate && row.description) {
+        const m = row.description.match(/\((\d{6})\)/);
+        if (m) candidate = m[1];
+      }
+      if (candidate.length === 6) {
+        const candBuf = Buffer.from(candidate, "utf8");
+        if (candBuf.length === targetBuf.length && timingSafeEqual(candBuf, targetBuf)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 

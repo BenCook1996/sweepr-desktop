@@ -405,13 +405,13 @@
   }
   .error-banner {
     border-left: 4px solid var(--danger);
-    background: #fff5f5;
+    background: rgba(239, 68, 68, 0.12);
     color: var(--danger);
   }
   .success-banner {
     border-left: 4px solid var(--accent);
-    background: #ecfdf5;
-    color: #065f46;
+    background: var(--accent-light);
+    color: var(--text);
   }
   .schedule-grid {
     display: grid;
@@ -465,10 +465,14 @@
     cursor: pointer;
     box-shadow: none;
   }
+  .pill-btn:hover {
+    color: var(--text);
+    background: transparent;
+  }
   .pill-btn.active {
-    background: #ffffff;
+    background: var(--panel-solid);
     color: var(--accent);
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
   .time-row {
     gap: 14px;

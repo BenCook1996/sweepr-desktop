@@ -6,11 +6,8 @@
     requestActivation,
     type AppInfo,
     type AppUpdateInfo,
-    type CleanHistoryEntry,
     type LicenseStatus,
   } from "../lib/api";
-  import { getLifetimeStats, type LifetimeStats } from "../lib/store";
-  import { formatBytes, formatCount } from "../lib/format";
 
   let { license, info, onRefresh }: { license: LicenseStatus | null; info: AppInfo | null; onRefresh: () => Promise<void> } = $props();
   let error = $state<string | null>(null);
@@ -19,15 +16,16 @@
   let otpCode = $state("");
   let otpSent = $state(false);
   let linkSuccess = $state<string | null>(null);
-  let stats = $state<LifetimeStats>({ bytesFreed: 0, filesRemoved: 0 });
 
   // Scheduled Auto-Clean & Autostart (#9)
   let autostart = $state(false);
   let schedule = $state("off");
   let scheduleSaved = $state<string | null>(null);
 
-  // Cleaning History (#13)
-  let history = $state<CleanHistoryEntry[]>([]);
+  // Uninstall SWEEPR Cleaner
+  let removeAppData = $state(false);
+  let confirmUninstall = $state(false);
+  let uninstalling = $state(false);
 
   // App Update Checker
   let updateInfo = $state<AppUpdateInfo | null>(null);
@@ -35,16 +33,8 @@
   let installingUpdate = $state(false);
 
   $effect(() => {
-    stats = getLifetimeStats();
-    const cb = () => (stats = getLifetimeStats());
-    window.addEventListener("sweepr-stats-update", cb);
-    return () => window.removeEventListener("sweepr-stats-update", cb);
-  });
-
-  $effect(() => {
     api.getAutostart().then((v) => (autostart = v)).catch(() => {});
     api.getScheduleSettings().then((s) => (schedule = s || "off")).catch(() => {});
-    api.getCleaningHistory().then((h) => (history = h)).catch(() => {});
     api.checkAppUpdate().then((u) => (updateInfo = u)).catch(() => {});
   });
 
@@ -82,6 +72,7 @@
     try {
       await api.requestLoginOtp(linkEmail.trim());
       otpSent = true;
+      linkSuccess = `Sent a 6-digit Subscription Key to ${linkEmail.trim()}. Check your inbox (or enter any existing key below).`;
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -92,12 +83,16 @@
   async function verifyOtp() {
     error = null;
     linkSuccess = null;
+    if (!linkEmail.trim() || !linkEmail.includes("@")) {
+      error = "Please enter the email address used at checkout.";
+      return;
+    }
     busy = true;
     try {
       await api.verifyLoginOtp(linkEmail.trim(), otpCode.trim());
       otpSent = false;
       otpCode = "";
-      linkSuccess = "Device successfully linked to your subscription.";
+      linkSuccess = "Device successfully activated with your subscription.";
       await onRefresh();
     } catch (e) {
       error = errorMessage(e);
@@ -161,6 +156,18 @@
     } catch (e) {
       error = errorMessage(e);
       installingUpdate = false;
+    }
+  }
+
+  async function runUninstallSelf() {
+    if (uninstalling) return;
+    error = null;
+    uninstalling = true;
+    try {
+      await api.uninstallSelf(removeAppData);
+    } catch (e) {
+      error = errorMessage(e);
+      uninstalling = false;
     }
   }
 
@@ -266,29 +273,44 @@
     {/if}
   </div>
 
-  <!-- Lifetime Stats & Cleaning History (#13) -->
+  <!-- Uninstall SWEEPR Cleaner -->
   <div class="card box">
     <div class="row">
-      <strong>Lifetime Stats & Cleaning History</strong>
+      <strong>Uninstall SWEEPR Cleaner</strong>
       <div class="spacer"></div>
-      <button class="ghost small" onclick={() => api.getCleaningHistory().then((h) => (history = h)).catch(() => {})}>Refresh</button>
+      <span class="badge">Application</span>
     </div>
-    <p class="muted" style="margin: 0">
-      SWEEPR Cleaner has saved you <strong>{formatBytes(stats.bytesFreed)}</strong> by removing <strong>{formatCount(stats.filesRemoved)}</strong> junk files so far.
+    <p class="muted small" style="margin: 0;">
+      Cleanly remove SWEEPR Cleaner from this PC, including its Windows sign-in entry, scheduled background tasks, and Desktop/Start Menu shortcuts.
     </p>
 
-    {#if history.length > 0}
-      <div class="history-list">
-        {#each history.slice(0, 8) as entry}
-          <div class="row history-item">
-            <span class="mono small">{new Date(entry.timestamp * 1000).toLocaleDateString("en-GB")}</span>
-            <span class="muted small" style="flex: 1;">{formatCount(entry.files_removed)} files removed</span>
-            <strong style="color: var(--accent); font-size: 12.5px;">{formatBytes(entry.bytes_freed)}</strong>
-          </div>
-        {/each}
+    <label class="row" style="justify-content: space-between; cursor: pointer; padding: 4px 0;">
+      <span class="small">Also remove local settings, quarantine vault &amp; logs</span>
+      <input
+        type="checkbox"
+        bind:checked={removeAppData}
+        aria-label="Also remove local settings, quarantine vault and logs"
+      />
+    </label>
+
+    {#if !confirmUninstall}
+      <div class="row">
+        <button class="danger-outline" disabled={uninstalling} onclick={() => (confirmUninstall = true)}>
+          Uninstall SWEEPR Cleaner…
+        </button>
       </div>
     {:else}
-      <div class="muted small">No recent cleaning sessions logged yet.</div>
+      <div class="uninstall-confirm small">
+        <strong>Are you sure you want to uninstall SWEEPR Cleaner from this PC?</strong>
+        <div class="row" style="gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+          <button class="danger-btn" disabled={uninstalling} onclick={runUninstallSelf}>
+            {uninstalling ? "Uninstalling…" : "Yes, Uninstall Now"}
+          </button>
+          <button class="ghost" disabled={uninstalling} onclick={() => (confirmUninstall = false)}>
+            Cancel
+          </button>
+        </div>
+      </div>
     {/if}
   </div>
 
@@ -299,7 +321,7 @@
       <div class="spacer"></div>
       {#if info}<span class="badge free">v{info.version}</span>{/if}
     </div>
-    <p class="muted small" style="margin: 0;">SWEEPR Cleaner automatically checks for updates on launch and in the background.</p>
+    <p class="muted small" style="margin: 0;">SWEEPR Cleaner securely checks GitHub Releases and the SWEEPR update server over HTTPS with SHA-256 integrity verification.</p>
     <div class="row" style="gap: 8px; flex-wrap: wrap;">
       <button class="ghost" disabled={checkingUpdate || installingUpdate} onclick={checkUpdates}>
         {checkingUpdate ? "Checking…" : "Check for Updates"}
@@ -317,6 +339,9 @@
           <div class="muted">{updateInfo.notes}</div>
         {:else}
           <strong>You are running the latest version (v{updateInfo.current_version}).</strong>
+          {#if updateInfo.notes}
+            <div class="muted" style="margin-top: 2px;">{updateInfo.notes}</div>
+          {/if}
         {/if}
       </div>
     {/if}
@@ -336,19 +361,38 @@
     margin-bottom: 16px;
   }
   .box { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 150px;
-    overflow-y: auto;
-    border-top: 1px solid var(--border);
-    padding-top: 8px;
+  .uninstall-confirm {
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--danger-soft, rgba(239, 68, 68, 0.1));
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: var(--text);
   }
-  .history-item {
-    padding: 4px 8px;
-    border-radius: 6px;
-    background: var(--panel-2);
+  .danger-outline {
+    background: transparent;
+    color: var(--danger, #ef4444);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .danger-outline:hover:not(:disabled) {
+    background: var(--danger-soft, rgba(239, 68, 68, 0.12));
+    border-color: var(--danger, #ef4444);
+  }
+  .danger-btn {
+    background: var(--danger, #ef4444);
+    color: #ffffff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .danger-btn:hover:not(:disabled) {
+    filter: brightness(0.95);
   }
   .update-box {
     padding: 10px 12px;

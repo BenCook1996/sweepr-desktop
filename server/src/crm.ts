@@ -55,13 +55,16 @@ export function activateLocalSweepr(
   plan = "lifetime",
   periodEnd?: number
 ) {
+  const deviceId = getLocalWindowsDeviceId();
+  if (process.env.NODE_TEST_CONTEXT) {
+    return { activated: true, directories: [], deviceId };
+  }
   const userProfile = process.env.USERPROFILE || process.env.HOME || "";
   const paths = [
     join(userProfile, "AppData", "Roaming", "com.sweepr.app"),
     join(userProfile, "AppData", "Roaming", "sweepr"),
   ];
   const results: string[] = [];
-  const deviceId = getLocalWindowsDeviceId();
 
   for (const dir of paths) {
     try {

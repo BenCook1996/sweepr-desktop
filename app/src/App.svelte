@@ -86,22 +86,27 @@
     }, 450);
   }
 
+  function applyThemeToDom(current: "light" | "dark") {
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = current;
+      document.documentElement.classList.toggle("dark", current === "dark");
+      if (document.body) {
+        document.body.dataset.theme = current;
+        document.body.classList.toggle("dark", current === "dark");
+      }
+    }
+  }
+
   function toggleTheme() {
     theme = theme === "dark" ? "light" : "dark";
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("sweepr_theme", theme);
     }
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.theme = theme;
-      document.documentElement.classList.toggle("dark", theme === "dark");
-    }
+    applyThemeToDom(theme);
   }
 
   $effect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.theme = theme;
-      document.documentElement.classList.toggle("dark", theme === "dark");
-    }
+    applyThemeToDom(theme);
   });
 
   async function refreshLicense(force = false) {
@@ -173,7 +178,7 @@
 </script>
 
 {#if !appReady}
-  <div style="width: 100vw; height: 100vh; background: #f8fafc;"></div>
+  <div style="width: 100vw; height: 100vh; background: var(--bg);"></div>
 {:else if showStartupInstaller}
   <Installer
     fullScreen={true}
@@ -369,9 +374,14 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: transparent;
+    background-color: var(--bg);
+    background-image: url("./assets/topography.svg");
+    background-size: 900px 900px;
+    background-repeat: repeat;
+    background-attachment: fixed;
     color: var(--text);
     overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   /* Clean floating header dock */
@@ -382,7 +392,7 @@
     margin: 14px 24px 0 24px;
     padding: 6px 18px;
     height: 54px;
-    background: rgba(255, 255, 255, 0.94);
+    background: var(--panel);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--border);
@@ -484,16 +494,16 @@
   }
   button.nav-tab:hover {
     color: var(--text);
-    background: rgba(241, 245, 249, 0.8);
+    background: var(--panel-2);
     transform: none;
   }
   button.nav-tab.active {
     background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+    color: var(--accent);
     font-weight: 700;
   }
   button.nav-tab.active svg {
-    stroke: #047857;
+    stroke: var(--accent);
   }
 
   .header-right {
@@ -538,7 +548,7 @@
   }
   .gear-icon-btn:hover,
   .gear-icon-btn.active {
-    color: #047857;
+    color: var(--accent);
     border-color: rgba(16, 185, 129, 0.45);
     background: rgba(16, 185, 129, 0.12);
     transform: none;
@@ -583,10 +593,10 @@
   }
   .dropdown-item.active {
     background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+    color: var(--accent);
   }
   .dropdown-item.activate-item {
-    color: #047857;
+    color: var(--accent);
     background: rgba(16, 185, 129, 0.1);
   }
   .dropdown-item.activate-item:hover {
@@ -645,20 +655,11 @@
   :global(:root[data-theme="dark"]) .top-nav {
     background: rgba(30, 41, 59, 0.94);
   }
-  :global(:root[data-theme="dark"]) button.nav-tab.active {
-    color: #34d399;
-  }
-  :global(:root[data-theme="dark"]) button.nav-tab.active svg {
-    stroke: #34d399;
-  }
-  :global(:root[data-theme="dark"]) .gear-icon-btn:hover,
-  :global(:root[data-theme="dark"]) .gear-icon-btn.active,
-  :global(:root[data-theme="dark"]) .dropdown-item.active,
-  :global(:root[data-theme="dark"]) .dropdown-item.activate-item {
-    color: #34d399;
-  }
   :global(:root[data-theme="dark"]) .settings-dropdown {
     background: #1e293b;
+  }
+  :global(:root[data-theme="dark"]) .tier-badge.free {
+    color: #fbbf24;
   }
 
   .tier-badge.clickable {
@@ -680,13 +681,13 @@
     white-space: nowrap;
   }
   .tier-badge.free {
-    background: rgba(245, 158, 11, 0.12);
+    background: rgba(245, 158, 11, 0.14);
     color: #b45309;
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(245, 158, 11, 0.3);
   }
   .tier-badge.pro {
     background: rgba(16, 185, 129, 0.15);
-    color: #047857;
+    color: var(--accent);
     border: 1px solid rgba(16, 185, 129, 0.3);
   }
 

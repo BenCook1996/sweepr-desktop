@@ -205,7 +205,7 @@
     align-items: flex-start;
     gap: 16px;
     padding: 16px 18px;
-    background: rgba(241, 245, 249, 0.7);
+    background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 14px;
     margin-bottom: 20px;
@@ -215,7 +215,7 @@
     height: 44px;
     border-radius: 12px;
     background: rgba(16, 185, 129, 0.15);
-    color: #059669;
+    color: var(--accent);
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -232,7 +232,7 @@
     padding: 12px 18px;
     border-radius: 9999px;
     border: 1.5px solid var(--border);
-    background: #ffffff;
+    background: var(--panel-solid);
     font-size: 13.5px;
     color: var(--text);
     outline: none;
@@ -254,13 +254,13 @@
     font-size: 13.5px;
   }
   .status-box.success {
-    background: #ecfdf5;
-    color: #065f46;
+    background: var(--accent-light);
+    color: var(--text);
     border: 1px solid rgba(16, 185, 129, 0.3);
   }
   .status-box.error {
-    background: #fef2f2;
-    color: #991b1b;
+    background: rgba(239, 68, 68, 0.14);
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.3);
   }
 </style>

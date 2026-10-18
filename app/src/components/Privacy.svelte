@@ -400,7 +400,7 @@
           <strong>Good news!</strong> This password was not found in any known public data breaches.
         </div>
       {:else}
-        <div class="breach-alert" style="margin-top: 14px; background: #fef2f2; color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.25);">
+        <div class="breach-alert" style="margin-top: 14px; background: rgba(239, 68, 68, 0.14); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);">
           <strong>Warning:</strong> This password has appeared <strong>{formatCount(breachCount)}</strong> times in known data breaches. Avoid using it.
         </div>
       {/if}
@@ -475,7 +475,7 @@
   .item { padding: 22px 24px; }
   .icon-bubble { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-right: 12px; flex-shrink: 0; }
   .icon-bubble.amber { background: rgba(245, 158, 11, 0.15); color: #d97706; }
-  .icon-bubble.emerald { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  .icon-bubble.emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
   .browser-list { display: flex; flex-direction: column; gap: 8px; }
   .browser-row { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); flex-wrap: wrap; }
   .breach-alert { padding: 12px 16px; border-radius: 12px; font-size: 13px; }
@@ -513,7 +513,7 @@
     gap: 6px;
     padding: 4px 10px;
     border-radius: 9999px;
-    background: #ffffff;
+    background: var(--panel-solid);
     border: 1px solid var(--border);
     font-size: 12px;
     font-weight: 600;
@@ -537,7 +537,7 @@
     overflow-y: auto;
   }
   .ext-row {
-    background: #ffffff;
+    background: var(--panel-solid);
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid var(--border);

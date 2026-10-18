@@ -93,6 +93,7 @@ pub fn run() {
             commands::app_info,
             commands::quit_app,
             commands::complete_installation,
+            commands::uninstall_self,
             commands::kill_process,
             commands::boost_gaming_mode,
             commands::system_health_details,

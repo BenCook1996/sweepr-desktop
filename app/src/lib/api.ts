@@ -71,6 +71,8 @@ export interface AppUpdateInfo {
   current_version: string;
   notes: string;
   url: string;
+  source?: string;
+  sha256?: string | null;
 }
 
 export const isAppError = (e: unknown): e is AppError =>
@@ -176,6 +178,8 @@ export const api = {
       startMenuShortcut,
       launchOnStartup,
     }),
+  uninstallSelf: (removeAppData = false) =>
+    invoke<void>("uninstall_self", { removeAppData }),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }

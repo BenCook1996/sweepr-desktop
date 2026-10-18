@@ -512,34 +512,71 @@ impl Licensing {
     pub async fn verify_email_otp(&self, email: &str, code: &str) -> AppResult<LicenseStatus> {
         let email = email.trim();
         let code = code.trim();
-        if email.is_empty() || code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
-            return Err(AppError::License("Please enter a valid 6-digit verification code.".into()));
+        if email.is_empty() || !email.contains('@') {
+            return Err(AppError::License("Please enter a valid email address.".into()));
         }
-        let resp = self
-            .http
-            .post(format!("{}/v1/account/verify-otp", self.api_base()?))
-            .json(&serde_json::json!({
-                "email": email,
-                "code": code,
-                "device_id": self.device_id,
-                "device_type": "pc",
-            }))
-            .send()
-            .await?;
-        if resp.status().as_u16() == 403 {
-            return Err(AppError::License("Device limit reached for this subscription.".into()));
+        if !code.is_empty() && (code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit())) {
+            return Err(AppError::License("Please enter a valid 6-digit Subscription Key.".into()));
         }
-        if !resp.status().is_success() {
-            return Err(AppError::License("Invalid or expired verification code.".into()));
+
+        if code.len() == 6 {
+            let resp = self
+                .http
+                .post(format!("{}/v1/account/verify-otp", self.api_base()?))
+                .json(&serde_json::json!({
+                    "email": email,
+                    "code": code,
+                    "device_id": self.device_id,
+                    "device_type": "pc",
+                }))
+                .send()
+                .await?;
+            if resp.status().as_u16() == 403 {
+                return Err(AppError::License("Device limit reached for this subscription.".into()));
+            }
+            if resp.status().is_success() {
+                #[derive(Deserialize)]
+                struct VerifyOtpResponse {
+                    account_id: String,
+                    refresh_token: String,
+                    token: Option<String>,
+                }
+                let parsed: VerifyOtpResponse = resp.json().await?;
+                {
+                    let mut st = self.state.lock().await;
+                    let acc = Account {
+                        account_id: parsed.account_id,
+                        refresh_token: parsed.refresh_token,
+                    };
+                    save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
+                    st.account = Some(acc);
+                    st.token = None;
+                    if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
+                        if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
+                            let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
+                            let status = active_status(&claims, false);
+                            st.token = Some((tok, claims));
+                            return Ok(status);
+                        }
+                    }
+                }
+                return self.status(true).await;
+            }
         }
-        let acc: Account = resp.json().await?;
-        {
-            let mut st = self.state.lock().await;
-            save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
-            st.account = Some(acc);
-            st.token = None;
+
+        // Fallback: If the 6-digit Subscription Key from the customer's Welcome Email was already
+        // consumed on the web portal or another device, check if the server confirms an active
+        // subscription for this email and issues a signed device token.
+        if let Ok(None) = self.checkout_url(Some(email), None).await {
+            let st = self.status(false).await?;
+            if st.active {
+                return Ok(st);
+            }
         }
-        self.status(true).await
+
+        Err(AppError::License(
+            "Invalid or expired 6-digit Subscription Key. Click 'Email me a new key' to receive a fresh code.".into(),
+        ))
     }
 }
 
