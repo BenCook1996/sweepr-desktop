@@ -143,8 +143,8 @@ fn expand(base: &Path, pattern: &str) -> Vec<PathBuf> {
 fn specs() -> Vec<Spec> {
     use Base::*;
     vec![
-        Spec { id: "temp", name: "Temporary files", description: "Files apps left in your temp folder more than 24 hours ago.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: true },
-        Spec { id: "thumbnails", name: "Windows thumbnail & icon cache", description: "Cached Explorer thumbnails, IE/WebView caches and diagnostic traces. Rebuilds automatically.", group: Group::System, base: LocalAppData, patterns: &["Microsoft/Windows/INetCache/IE", "Microsoft/Windows/Caches", "ElevatedDiagnostics"], min_age_hours: 24, free: true },
+        Spec { id: "temp", name: "Temporary files", description: "Files apps left in your temp folder more than 24 hours ago.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: false },
+        Spec { id: "thumbnails", name: "Windows thumbnail & icon cache", description: "Cached Explorer thumbnails, IE/WebView caches and diagnostic traces. Rebuilds automatically.", group: Group::System, base: LocalAppData, patterns: &["Microsoft/Windows/INetCache/IE", "Microsoft/Windows/Caches", "ElevatedDiagnostics"], min_age_hours: 24, free: false },
         Spec { id: "crash_dumps", name: "Crash dumps & error reports", description: "Diagnostic dumps, Windows Error Reporting archives and CLR usage logs.", group: Group::System, base: LocalAppData, patterns: &["CrashDumps", "Microsoft/Windows/WER/ReportArchive", "Microsoft/Windows/WER/ReportQueue", "Diagnostics", "Microsoft/CLR_v4.0/UsageLogs"], min_age_hours: 0, free: false },
         Spec { id: "delivery_opt", name: "Windows Update & Delivery Optimization", description: "Delivery Optimization peer cache and installer package caches.", group: Group::System, base: LocalAppData, patterns: &["Microsoft/Windows/DeliveryOptimization/Cache", "Package Cache"], min_age_hours: 24, free: false },
         Spec { id: "shader_cache", name: "Graphics shader caches", description: "DirectX/GPU shader caches. They rebuild automatically.", group: Group::System, base: LocalAppData, patterns: &["D3DSCache", "NVIDIA/DXCache", "NVIDIA/GLCache", "AMD/DxCache"], min_age_hours: 24, free: false },
@@ -165,8 +165,8 @@ fn specs() -> Vec<Spec> {
 fn specs() -> Vec<Spec> {
     use Base::*;
     vec![
-        Spec { id: "temp", name: "Temporary files", description: "Per-user temp files older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: true },
-        Spec { id: "trash", name: "Trash bin", description: "Items in your ~/.Trash folder older than 24 hours.", group: Group::System, base: Home, patterns: &[".Trash"], min_age_hours: 24, free: true },
+        Spec { id: "temp", name: "Temporary files", description: "Per-user temp files older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: false },
+        Spec { id: "trash", name: "Trash bin", description: "Items in your ~/.Trash folder older than 24 hours.", group: Group::System, base: Home, patterns: &[".Trash"], min_age_hours: 24, free: false },
         Spec { id: "user_caches", name: "App & browser caches", description: "~/Library/Caches (including Homebrew & browser caches). Apps rebuild these automatically.", group: Group::Apps, base: Home, patterns: &["Library/Caches"], min_age_hours: 24, free: false },
         Spec { id: "logs", name: "User & crash logs", description: "~/Library/Logs and CrashReporter diagnostic logs.", group: Group::System, base: Home, patterns: &["Library/Logs", "Library/Application Support/CrashReporter"], min_age_hours: 24, free: false },
         Spec { id: "xcode", name: "Xcode derived data", description: "Build products. Xcode regenerates them on next build.", group: Group::Developer, base: Home, patterns: &["Library/Developer/Xcode/DerivedData"], min_age_hours: 0, free: false },
@@ -180,8 +180,8 @@ fn specs() -> Vec<Spec> {
 fn specs() -> Vec<Spec> {
     use Base::*;
     vec![
-        Spec { id: "temp", name: "Temporary files", description: "Your files in /tmp older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: true },
-        Spec { id: "trash", name: "Trash bin", description: "Files in ~/.local/share/Trash older than 24 hours.", group: Group::System, base: Home, patterns: &[".local/share/Trash/files", ".local/share/Trash/info"], min_age_hours: 24, free: true },
+        Spec { id: "temp", name: "Temporary files", description: "Your files in /tmp older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: false },
+        Spec { id: "trash", name: "Trash bin", description: "Files in ~/.local/share/Trash older than 24 hours.", group: Group::System, base: Home, patterns: &[".local/share/Trash/files", ".local/share/Trash/info"], min_age_hours: 24, free: false },
         Spec { id: "user_caches", name: "App & browser caches", description: "~/.cache. Apps rebuild these automatically.", group: Group::Apps, base: Home, patterns: &[".cache"], min_age_hours: 24, free: false },
         Spec { id: "logs", name: "User state logs", description: "~/.local/state/log diagnostic logs.", group: Group::System, base: Home, patterns: &[".local/state/log"], min_age_hours: 24, free: false },
         Spec { id: "downloads", name: "Old & Unused Downloads", description: "Files in your Downloads folder older than 30 days that haven't been opened or used recently.", group: Group::System, base: Downloads, patterns: &[""], min_age_hours: 30 * 24, free: false },

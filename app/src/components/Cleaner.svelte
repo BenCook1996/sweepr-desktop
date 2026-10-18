@@ -348,7 +348,7 @@
             </div>
             <div class="rec-stat">
               <div class="rec-size">{report ? formatBytes(systemJunkBytes) : initialScanning ? "…" : "0 B"}</div>
-              <span class="badge free">Free</span>
+              {#if !license?.active}<span class="badge pro">Pro</span>{/if}
             </div>
           </div>
 
@@ -362,7 +362,7 @@
             </div>
             <div class="rec-stat">
               <div class="rec-size">{report ? formatBytes(tempFilesBytes) : initialScanning ? "…" : "0 B"}</div>
-              <span class="badge free">Free</span>
+              {#if !license?.active}<span class="badge pro">Pro</span>{/if}
             </div>
           </div>
 
@@ -376,7 +376,7 @@
             </div>
             <div class="rec-stat">
               <div class="rec-size">{report ? formatBytes(proCachesBytes) : initialScanning ? "…" : "0 B"}</div>
-              <span class="badge pro">Pro</span>
+              {#if !license?.active}<span class="badge pro">Pro</span>{/if}
             </div>
           </div>
         </div>

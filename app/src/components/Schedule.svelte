@@ -75,11 +75,15 @@
     config.categories = rules.map((r) => r.id);
   }
 
-  function selectFreeCategories() {
-    config.categories = rules.filter((r) => r.free).map((r) => r.id);
+  function clearAllCategories() {
+    config.categories = [];
   }
 
   async function saveSchedule() {
+    if (config.enabled && !license?.active) {
+      window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+      return;
+    }
     saving = true;
     error = null;
     notice = null;
@@ -99,6 +103,10 @@
   }
 
   async function triggerNow() {
+    if (!license?.active) {
+      window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+      return;
+    }
     runningNow = true;
     error = null;
     notice = null;
@@ -321,7 +329,7 @@
         </div>
         <div class="row" style="gap: 6px;">
           <button type="button" class="ghost mini-btn" onclick={selectAllCategories}>All</button>
-          <button type="button" class="ghost mini-btn" onclick={selectFreeCategories}>Free Only</button>
+          <button type="button" class="ghost mini-btn" onclick={clearAllCategories}>None</button>
         </div>
       </div>
 
@@ -336,9 +344,7 @@
             <div class="cat-info">
               <div class="row" style="gap: 8px;">
                 <strong class="small">{r.name}</strong>
-                {#if r.free}
-                  <span class="badge free">Free</span>
-                {:else if !license?.active}
+                {#if !license?.active}
                   <span class="badge pro">Pro</span>
                 {/if}
               </div>
