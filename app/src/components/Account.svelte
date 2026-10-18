@@ -9,12 +9,10 @@
   } from "../lib/api";
   import { getLifetimeStats, type LifetimeStats } from "../lib/store";
   import { formatBytes, formatCount } from "../lib/format";
-  import Installer from "./Installer.svelte";
 
   let { license, info, onRefresh }: { license: LicenseStatus | null; info: AppInfo | null; onRefresh: () => Promise<void> } = $props();
   let error = $state<string | null>(null);
   let busy = $state(false);
-  let showInstaller = $state(false);
   let linkEmail = $state("");
   let otpCode = $state("");
   let otpSent = $state(false);
@@ -299,7 +297,6 @@
       <button class="primary" disabled={checkingUpdate} onclick={checkUpdates}>
         {checkingUpdate ? "Checking…" : "Check for Updates"}
       </button>
-      <button class="ghost" onclick={() => (showInstaller = true)}>Installer Preview</button>
     </div>
     {#if updateInfo}
       <div class="update-box small">
@@ -354,12 +351,6 @@
   </div>
 </div>
 
-{#if showInstaller}
-  <div class="installer-modal-overlay">
-    <Installer onClose={() => (showInstaller = false)} onComplete={() => (showInstaller = false)} />
-  </div>
-{/if}
-
 {#if info}
   <p class="muted small">SWEEPR Cleaner v{info.version} · {info.platform} · licence server {info.api_url}</p>
 {/if}
@@ -373,34 +364,6 @@
     margin-bottom: 16px;
   }
   .box { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .plan-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .plan-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 3px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-    background: var(--panel-2);
-    cursor: pointer;
-    box-shadow: none;
-    white-space: normal;
-  }
-  .plan-card.selected {
-    border-color: var(--accent);
-    background: var(--accent-light);
-  }
-  .plan-price {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--accent);
-  }
   .history-list {
     display: flex;
     flex-direction: column;
@@ -425,15 +388,5 @@
     border-left: 4px solid var(--danger);
     color: var(--danger);
     margin-bottom: 16px;
-  }
-  .installer-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: blur(8px);
-    display: grid;
-    place-items: center;
-    z-index: 1000;
-    padding: 20px;
   }
 </style>
