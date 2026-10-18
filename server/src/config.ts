@@ -71,8 +71,15 @@ export const config = {
   crmAdminPassword,
   // Shared secret configured as the Authorization header value in the RevenueCat webhook settings.
   revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET ?? "",
-  // Only trust cf-connecting-ip / x-forwarded-for when running behind a trusted reverse proxy (e.g. Railway / Cloudflare).
-  trustProxy: process.env.TRUST_PROXY === "1" || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID),
+  // Only trust cf-connecting-ip / x-forwarded-for when running behind a trusted reverse proxy (e.g. Render / Railway / Cloudflare).
+  trustProxy:
+    process.env.TRUST_PROXY === "1" ||
+    Boolean(
+      process.env.RENDER ||
+        process.env.RENDER_SERVICE_ID ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        process.env.RAILWAY_PROJECT_ID
+    ),
   stripeCoupon: process.env.STRIPE_COUPON ?? "MYskiOdE",
   stripePublishableKey:
     (process.env.STRIPE_PUBLISHABLE_KEY ?? "").trim() ||
@@ -96,7 +103,7 @@ export const config = {
     process.env.NODE_ENV !== "production" &&
     /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|test)(:|\/|$)/i.test(process.env.PUBLIC_URL ?? "http://localhost:8787"),
   pastDueGraceDays: 3,
-  gaMeasurementId: process.env.GA_MEASUREMENT_ID ?? "",
+  gaMeasurementId: process.env.GA_MEASUREMENT_ID || "G-CM9FPJV4C2",
   metaPixelId: process.env.META_PIXEL_ID ?? "",
   clarityProjectId: process.env.CLARITY_PROJECT_ID ?? "",
 };

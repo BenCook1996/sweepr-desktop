@@ -24,6 +24,13 @@ import {
   securityHeaders,
 } from "./security.js";
 import { cleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import {
+  resolvePricingForRequest,
+  getPricingForCountryOrCurrency,
+  PRICING_BY_CURRENCY,
+  COUNTRY_TO_CURRENCY,
+  COUNTRY_TO_LANG,
+} from "./pricing.js";
 
 export interface AppDeps {
   repo: Repo;
@@ -400,6 +407,36 @@ export function createApp(deps: AppDeps) {
     return created.id;
   }
 
+  const cachedIntroCoupons = new Map<string, string>();
+  async function getOrCreateIntroCoupon(currency: string, discountAmount: number): Promise<string> {
+    if (!stripe) return stripeCoupon;
+    const normCurr = currency.toLowerCase();
+    const couponId = `sweepr_intro_${normCurr}_${discountAmount}`;
+    if (cachedIntroCoupons.has(couponId)) return cachedIntroCoupons.get(couponId)!;
+    try {
+      const existingCoupon = await stripe.coupons.retrieve(couponId);
+      if (existingCoupon && existingCoupon.id) {
+        cachedIntroCoupons.set(couponId, existingCoupon.id);
+        return existingCoupon.id;
+      }
+    } catch {
+      // Create currency-specific coupon below
+    }
+    try {
+      const created = await stripe.coupons.create({
+        id: couponId,
+        currency: normCurr,
+        amount_off: discountAmount,
+        duration: "once",
+        name: "Introductory 1st-Month Offer",
+      });
+      cachedIntroCoupons.set(couponId, created.id);
+      return created.id;
+    } catch {
+      return stripeCoupon;
+    }
+  }
+
   app.post("/api/web-checkout", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
@@ -446,6 +483,10 @@ export function createApp(deps: AppDeps) {
     }
 
     try {
+      const localizedPricing = await resolvePricingForRequest(c, {
+        country: typeof body.country === "string" ? body.country : undefined,
+        currency: typeof body.currency === "string" ? body.currency : undefined,
+      });
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
       let customerId = existing?.stripe_customer_id ?? null;
       if (customerId) {
@@ -467,26 +508,31 @@ export function createApp(deps: AppDeps) {
 
       const isAnnual = plan === "annual";
       const isSixMonth = plan === "six_month";
-      const priceId = isAnnual ? config.priceAnnual : isSixMonth ? config.priceSixMonth : config.priceMonthly;
-      const hasValidPriceId = Boolean(priceId && !priceId.includes("..."));
-      const productId = hasValidPriceId ? "" : await getStripeProductId();
+      const productId = await getStripeProductId();
+      const unitAmount = isAnnual
+        ? localizedPricing.annualAmount
+        : isSixMonth
+        ? localizedPricing.sixMonthAmount
+        : localizedPricing.monthlyAmount;
 
-      const itemConfig = hasValidPriceId
-        ? { price: priceId }
-        : {
-            price_data: {
-              currency: "gbp",
-              product: productId,
-              unit_amount: isAnnual ? 4999 : isSixMonth ? 3899 : 999,
-              recurring: isAnnual
-                ? { interval: "year" as const }
-                : isSixMonth
-                ? { interval: "month" as const, interval_count: 6 }
-                : { interval: "month" as const },
-            },
-          };
+      const itemConfig = {
+        price_data: {
+          currency: localizedPricing.currency,
+          product: productId,
+          unit_amount: unitAmount,
+          recurring: isAnnual
+            ? { interval: "year" as const }
+            : isSixMonth
+            ? { interval: "month" as const, interval_count: 6 }
+            : { interval: "month" as const },
+        },
+      };
 
       const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
+      const introCouponId =
+        !isAnnual && !isSixMonth && applyDiscount
+          ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
+          : "";
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [itemConfig],
@@ -495,7 +541,7 @@ export function createApp(deps: AppDeps) {
           save_default_payment_method: "on_subscription",
           payment_method_types: ["paypal"],
         },
-        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+        ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
         expand: ["latest_invoice.payment_intent"],
       } as any);
@@ -532,29 +578,60 @@ export function createApp(deps: AppDeps) {
       });
 
       const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
-      return c.json({ url: redirectUrl, redirectUrl, plan });
+      return c.json({ url: redirectUrl, redirectUrl, plan, currency: localizedPricing.currency });
     } catch (err: any) {
       console.error("[web-checkout] Stripe error:", err);
       return c.json({ error: err?.message || "Payment initialization failed." }, 400);
     }
   });
 
-  // Public checkout configuration for on-page Stripe Elements, Apple Pay & Google Pay
-  app.get("/api/checkout-config", (c) => {
+  // Public checkout configuration for on-page Stripe Elements, Apple Pay, Google Pay & localized Geo-Pricing
+  app.get("/api/checkout-config", async (c) => {
     const pk = (config.stripePublishableKey ?? "").trim();
     const validPk = pk.startsWith("pk_") && !pk.includes("...") ? pk : "";
+    const localizedPricing = await resolvePricingForRequest(c);
     return c.json({
       publishableKey: validPk,
       stripeConfigured: Boolean(stripe),
       elementsEnabled: Boolean(stripe && validPk),
-      currency: "gbp",
-      amountTodayPence: 4999,
-      amountRegularPence: 4999,
-      amountRecurringPence: 4999,
+      country: localizedPricing.country,
+      countryFlag: localizedPricing.countryFlag,
+      language: localizedPricing.language,
+      currency: localizedPricing.currency,
+      currencyCode: localizedPricing.currencyCode,
+      symbol: localizedPricing.symbol,
+      symbolPosition: localizedPricing.symbolPosition,
+      zeroDecimal: localizedPricing.zeroDecimal,
+      pricing: localizedPricing,
+      amountTodayPence: localizedPricing.annualAmount,
+      amountRegularPence: localizedPricing.annualAmount,
+      amountRecurringPence: localizedPricing.annualAmount,
       plans: {
-        annual: { amountPence: 4999, interval: "year", name: "SWEEPR Cleaner Pro (Annual)" },
-        six_month: { amountPence: 3899, interval: "6 months", name: "SWEEPR Cleaner Pro (6-Month)" },
-        monthly: { amountPence: 999, introAmountPence: 199, interval: "month", name: "SWEEPR Cleaner Pro (Monthly)" },
+        annual: {
+          amountPence: localizedPricing.annualAmount,
+          formatted: localizedPricing.annualFormatted,
+          monthlyEqFormatted: localizedPricing.annualMonthlyEqFormatted,
+          savingsPercent: localizedPricing.annualSavingsPercent,
+          interval: "year",
+          name: "SWEEPR Cleaner Pro (Annual)",
+        },
+        six_month: {
+          amountPence: localizedPricing.sixMonthAmount,
+          formatted: localizedPricing.sixMonthFormatted,
+          monthlyEqFormatted: localizedPricing.sixMonthMonthlyEqFormatted,
+          savingsPercent: localizedPricing.sixMonthSavingsPercent,
+          interval: "6 months",
+          name: "SWEEPR Cleaner Pro (6-Month)",
+        },
+        monthly: {
+          amountPence: localizedPricing.monthlyAmount,
+          formatted: localizedPricing.monthlyFormatted,
+          introAmountPence: localizedPricing.introMonthlyAmount,
+          introFormatted: localizedPricing.introMonthlyFormatted,
+          introSavingsFormatted: localizedPricing.introSavingsFormatted,
+          interval: "month",
+          name: "SWEEPR Cleaner Pro (Monthly)",
+        },
       },
     });
   });
@@ -739,26 +816,37 @@ export function createApp(deps: AppDeps) {
         repo.setCustomer(accountId, customerId, email);
       }
 
+      const localizedPricing = await resolvePricingForRequest(c, {
+        country: typeof body.country === "string" ? body.country : undefined,
+        currency: typeof body.currency === "string" ? body.currency : undefined,
+      });
+
       const isAnnual = plan === "annual";
       const isSixMonth = plan === "six_month";
-      const priceId = isAnnual ? config.priceAnnual : isSixMonth ? config.priceSixMonth : config.priceMonthly;
-      const hasValidPriceId = Boolean(priceId && !priceId.includes("..."));
-      const productId = hasValidPriceId ? "" : await getStripeProductId();
+      const productId = await getStripeProductId();
+      const unitAmount = isAnnual
+        ? localizedPricing.annualAmount
+        : isSixMonth
+        ? localizedPricing.sixMonthAmount
+        : localizedPricing.monthlyAmount;
 
-      const itemConfig = hasValidPriceId
-        ? { price: priceId }
-        : {
-            price_data: {
-              currency: "gbp",
-              product: productId,
-              unit_amount: isAnnual ? 4999 : isSixMonth ? 3899 : 999,
-              recurring: isAnnual
-                ? { interval: "year" as const }
-                : isSixMonth
-                ? { interval: "month" as const, interval_count: 6 }
-                : { interval: "month" as const },
-            },
-          };
+      const itemConfig = {
+        price_data: {
+          currency: localizedPricing.currency,
+          product: productId,
+          unit_amount: unitAmount,
+          recurring: isAnnual
+            ? { interval: "year" as const }
+            : isSixMonth
+            ? { interval: "month" as const, interval_count: 6 }
+            : { interval: "month" as const },
+        },
+      };
+
+      const introCouponId =
+        !isAnnual && !isSixMonth && applyDiscount
+          ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
+          : "";
 
       const subParams: any = {
         customer: customerId,
@@ -768,7 +856,7 @@ export function createApp(deps: AppDeps) {
           save_default_payment_method: "on_subscription",
           payment_method_types: isPayPal ? ["paypal"] : ["card"],
         },
-        ...(isAnnual || isSixMonth || !applyDiscount ? {} : { discounts: [{ coupon: stripeCoupon }] }),
+        ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
         expand: ["latest_invoice.payment_intent"],
       };
@@ -1052,6 +1140,100 @@ export function createApp(deps: AppDeps) {
     const referralCode = repo.ensureReferralCode(account.id);
     const referralsCount = repo.referralsCount(account.id);
 
+    let paymentMethod: {
+      id: string;
+      brand: string;
+      last4: string;
+      exp_month: number;
+      exp_year: number;
+    } | null = null;
+    let billingAddress: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+      country?: string;
+    } | null = null;
+    let subscriptionDetails: {
+      unit_amount: number | null;
+      currency: string;
+      interval: string;
+      interval_count: number;
+      discount_percent: number | null;
+    } | null = null;
+
+    if (stripe && account.stripe_customer_id) {
+      try {
+        const cust = await stripe.customers.retrieve(account.stripe_customer_id, {
+          expand: ["invoice_settings.default_payment_method"],
+        });
+        if (!(cust as any).deleted) {
+          const cObj = cust as Stripe.Customer;
+          if (cObj.address) {
+            billingAddress = {
+              line1: cObj.address.line1 || "",
+              line2: cObj.address.line2 || "",
+              city: cObj.address.city || "",
+              state: cObj.address.state || "",
+              postal_code: cObj.address.postal_code || "",
+              country: cObj.address.country || "",
+            };
+          }
+          const defPm = cObj.invoice_settings?.default_payment_method;
+          if (defPm && typeof defPm === "object" && (defPm as Stripe.PaymentMethod).card) {
+            const pm = defPm as Stripe.PaymentMethod;
+            paymentMethod = {
+              id: pm.id,
+              brand: pm.card!.brand || "card",
+              last4: pm.card!.last4 || "••••",
+              exp_month: pm.card!.exp_month || 0,
+              exp_year: pm.card!.exp_year || 0,
+            };
+          } else {
+            const pms = await stripe.paymentMethods.list({
+              customer: account.stripe_customer_id,
+              type: "card",
+              limit: 1,
+            });
+            const firstPm = pms.data[0];
+            if (firstPm?.card) {
+              paymentMethod = {
+                id: firstPm.id,
+                brand: firstPm.card.brand || "card",
+                last4: firstPm.card.last4 || "••••",
+                exp_month: firstPm.card.exp_month || 0,
+                exp_year: firstPm.card.exp_year || 0,
+              };
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[dashboard-data] Failed to retrieve Stripe customer details:", err);
+      }
+
+      if (ent?.stripe_subscription_id && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(ent.stripe_subscription_id);
+          const item = sub.items?.data?.[0];
+          const price = item?.price;
+          const discountObj = (sub as any).discount || (sub as any).discounts?.[0];
+          const discountPct = discountObj?.coupon?.percent_off ?? null;
+          if (price) {
+            subscriptionDetails = {
+              unit_amount: price.unit_amount ?? null,
+              currency: (price.currency || "usd").toUpperCase(),
+              interval: price.recurring?.interval || "month",
+              interval_count: price.recurring?.interval_count || 1,
+              discount_percent: discountPct,
+            };
+          }
+        } catch (err) {
+          console.warn("[dashboard-data] Failed to retrieve Stripe subscription details:", err);
+        }
+      }
+    }
+
     return c.json({
       account_id: account.id,
       email: account.email,
@@ -1062,6 +1244,10 @@ export function createApp(deps: AppDeps) {
       cancel_at_period_end: Boolean(ent?.cancel_at_period_end),
       has_stripe: !!account.stripe_customer_id,
       stripe_configured: !!stripe,
+      stripe_publishable_key: config.stripePublishableKey || null,
+      payment_method: paymentMethod,
+      billing_address: billingAddress,
+      subscription_details: subscriptionDetails,
       referral_code: referralCode,
       referrals_count: referralsCount,
       winback_claimed: Boolean(account.winback_claimed),
@@ -1074,43 +1260,16 @@ export function createApp(deps: AppDeps) {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
     }
-    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const accountId = await sessionAccountId(c);
     if (!accountId) return c.json({ error: "unauthorized" }, 401);
 
     const account = repo.accountById(accountId);
     if (!account) return c.json({ error: "account_not_found" }, 404);
 
-    let customerId = account.stripe_customer_id;
-    if (!customerId) {
-      try {
-        const created = await stripe.customers.create({
-          ...(account.email ? { email: account.email } : {}),
-          ...(account.name ? { name: account.name } : {}),
-          metadata: { account_id: account.id },
-        });
-        customerId = created.id;
-        repo.setCustomer(account.id, customerId, account.email ?? undefined);
-      } catch (err: any) {
-        console.error("[portal] failed to create Stripe customer:", err);
-        return c.json({ error: "no_stripe_customer" }, 404);
-      }
-    }
-
-    let returnBase = config.publicUrl;
-    try {
-      const reqOrigin = new URL(c.req.url).origin;
-      if (reqOrigin && reqOrigin !== "http://localhost") returnBase = reqOrigin;
-    } catch {}
-
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${returnBase}/dashboard`,
-    });
     if (c.req.method === "POST") {
-      return c.json({ url: session.url });
+      return c.json({ url: "/dashboard#billing" });
     }
-    return c.redirect(session.url);
+    return c.redirect("/dashboard#billing");
   };
 
   app.get("/api/billing-portal", createBillingPortalSession);
@@ -1254,7 +1413,7 @@ export function createApp(deps: AppDeps) {
     return c.json({ ok: true, email: newEmail });
   });
 
-  // 3a. Cancel Subscription at End of Billing Period
+  // 3a. Cancel Subscription at End of Billing Period (with Exit Survey telemetry)
   app.post("/api/portal/cancel-subscription", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
@@ -1264,15 +1423,23 @@ export function createApp(deps: AppDeps) {
     const account = repo.accountById(accountId);
     if (!account) return c.json({ error: "account_not_found" }, 404);
 
+    const body = await c.req.json().catch(() => ({}));
+    const reason = String(body?.reason ?? "unspecified").trim().slice(0, 120);
+    const feedback = String(body?.feedback ?? "").trim().slice(0, 1000);
+
     const ent = repo.entitlement(accountId);
     if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
       return c.json({ error: "No active subscription found to cancel." }, 400);
     }
 
-    if (ent.stripe_subscription_id && stripe) {
+    if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
       try {
         await stripe.subscriptions.update(ent.stripe_subscription_id, {
           cancel_at_period_end: true,
+          metadata: {
+            cancel_reason: reason,
+            ...(feedback ? { cancel_feedback: feedback.slice(0, 450) } : {}),
+          },
         });
       } catch (err: any) {
         console.error("[portal] stripe cancel_at_period_end error:", err);
@@ -1290,9 +1457,9 @@ export function createApp(deps: AppDeps) {
       account_id: account.id,
       type: "subscription_canceled",
       title: "Customer Scheduled Cancellation",
-      description: `Scheduled subscription (${ent.plan || "subscription"}) to cancel at period end`,
+      description: `Scheduled subscription (${ent.plan || "subscription"}) to cancel at period end (Reason: ${reason}${feedback ? ` — "${feedback}"` : ""})`,
       actor: "customer",
-      metadata: { plan: ent.plan, current_period_end: periodEnd },
+      metadata: { plan: ent.plan, current_period_end: periodEnd, reason, feedback },
     });
 
     if (account.email) {
@@ -1325,7 +1492,7 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "No subscription found." }, 400);
     }
 
-    if (ent.stripe_subscription_id && stripe) {
+    if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
       try {
         await stripe.subscriptions.update(ent.stripe_subscription_id, {
           cancel_at_period_end: false,
@@ -1356,6 +1523,205 @@ export function createApp(deps: AppDeps) {
       cancel_at_period_end: false,
       current_period_end: ent.current_period_end,
     });
+  });
+
+  // 3c. Claim 50% Off Loyalty Retention Discount (3 Months)
+  app.post("/api/portal/claim-retention-discount", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account) return c.json({ error: "account_not_found" }, 404);
+
+    const ent = repo.entitlement(accountId);
+    if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
+      return c.json({ error: "No active subscription found." }, 400);
+    }
+
+    if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+      try {
+        const couponId = "SWEEPR_RETENTION_50_3MO";
+        try {
+          await stripe.coupons.retrieve(couponId);
+        } catch {
+          await stripe.coupons.create({
+            id: couponId,
+            percent_off: 50,
+            duration: "repeating",
+            duration_in_months: 3,
+            name: "50% Off Loyalty Retention Offer (3 Months)",
+          });
+        }
+        await stripe.subscriptions.update(ent.stripe_subscription_id, {
+          discounts: [{ coupon: couponId }],
+          cancel_at_period_end: false,
+        });
+      } catch (err: any) {
+        console.warn("[portal] stripe retention coupon warning:", err?.message || err);
+      }
+    }
+
+    repo.upsertEntitlement({
+      ...ent,
+      cancel_at_period_end: 0,
+    });
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "retention_discount_claimed",
+      title: "Customer Claimed 50% Loyalty Retention Offer",
+      description: `Applied 50% off for next 3 billing cycles and kept subscription active`,
+      actor: "customer",
+    });
+
+    return c.json({
+      ok: true,
+      discount_percent: 50,
+      cancel_at_period_end: false,
+      current_period_end: ent.current_period_end,
+    });
+  });
+
+  // 3d. Update Billing Information (Name & Address)
+  app.post("/api/portal/billing-info", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account) return c.json({ error: "account_not_found" }, 404);
+
+    const body = await c.req.json().catch(() => ({}));
+    const name = String(body?.name ?? account.name ?? "").trim().slice(0, 120);
+    const line1 = String(body?.line1 ?? "").trim().slice(0, 200);
+    const city = String(body?.city ?? "").trim().slice(0, 100);
+    const postalCode = String(body?.postal_code ?? "").trim().slice(0, 40);
+    const country = String(body?.country ?? "").trim().toUpperCase().slice(0, 2);
+
+    if (name) {
+      repo.db.prepare("UPDATE accounts SET name = ?, updated_at = ? WHERE id = ?").run(name, now(), account.id);
+    }
+
+    if (stripe && account.stripe_customer_id) {
+      try {
+        await stripe.customers.update(account.stripe_customer_id, {
+          ...(name ? { name } : {}),
+          address: {
+            line1,
+            city,
+            postal_code: postalCode,
+            ...(country ? { country } : {}),
+          },
+        });
+      } catch (err: any) {
+        console.warn("[portal] failed to update Stripe customer address:", err?.message || err);
+      }
+    }
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "billing_info_updated",
+      title: "Customer Updated Billing Information",
+      description: `Updated billing address (${[line1, city, postalCode].filter(Boolean).join(", ") || "updated"})`,
+      actor: "customer",
+    });
+
+    return c.json({
+      ok: true,
+      name,
+      billing_address: { line1, city, postal_code: postalCode, country },
+    });
+  });
+
+  // 3e. Create Stripe SetupIntent for inline Branded Card Update
+  app.post("/api/portal/setup-intent", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account) return c.json({ error: "account_not_found" }, 404);
+
+    let customerId = account.stripe_customer_id;
+    if (!customerId) {
+      const created = await stripe.customers.create({
+        ...(account.email ? { email: account.email } : {}),
+        ...(account.name ? { name: account.name } : {}),
+        metadata: { account_id: account.id },
+      });
+      customerId = created.id;
+      repo.setCustomer(account.id, customerId, account.email ?? undefined);
+    }
+
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ["card"],
+      usage: "off_session",
+    });
+
+    return c.json({ clientSecret: setupIntent.client_secret });
+  });
+
+  // 3f. Attach & Set Default Payment Method from Branded Card Modal
+  app.post("/api/portal/update-payment-method", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account || !account.stripe_customer_id) return c.json({ error: "no_stripe_customer" }, 404);
+
+    const body = await c.req.json().catch(() => ({}));
+    const paymentMethodId = String(body?.paymentMethodId ?? "").trim();
+    if (!paymentMethodId) return c.json({ error: "missing_payment_method" }, 400);
+
+    try {
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: account.stripe_customer_id,
+      }).catch(() => {});
+
+      await stripe.customers.update(account.stripe_customer_id, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      });
+
+      const ent = repo.entitlement(accountId);
+      if (ent?.stripe_subscription_id && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+        await stripe.subscriptions.update(ent.stripe_subscription_id, {
+          default_payment_method: paymentMethodId,
+        }).catch(() => {});
+      }
+
+      const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+      repo.addActivity({
+        account_id: account.id,
+        type: "payment_method_updated",
+        title: "Customer Updated Payment Card",
+        description: `Updated default card to ${(pm.card?.brand || "Card").toUpperCase()} •••• ${pm.card?.last4 || ""}`,
+        actor: "customer",
+      });
+
+      return c.json({
+        ok: true,
+        payment_method: pm.card
+          ? {
+              id: pm.id,
+              brand: pm.card.brand,
+              last4: pm.card.last4,
+              exp_month: pm.card.exp_month,
+              exp_year: pm.card.exp_year,
+            }
+          : null,
+      });
+    } catch (err: any) {
+      return c.json({ error: err?.message || "Failed to update payment method." }, 400);
+    }
   });
 
   // 4. Unlink / Remove a Device
@@ -1708,46 +2074,41 @@ export function createApp(deps: AppDeps) {
         // Ignore if email is already associated with another account
       }
     }
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+    });
     const isAnnual = plan === "annual";
     const isSixMonth = plan === "six_month";
-    const hasMonthlyPrice = Boolean(config.priceMonthly && !config.priceMonthly.includes("..."));
-    const hasAnnualPrice = Boolean(config.priceAnnual && !config.priceAnnual.includes("..."));
-    const hasSixMonthPrice = Boolean(config.priceSixMonth && !config.priceSixMonth.includes("..."));
     const lineItems = isAnnual
-      ? hasAnnualPrice
-        ? [{ price: config.priceAnnual, quantity: 1 }]
-        : [
-            {
-              price_data: {
-                currency: "gbp",
-                unit_amount: 4999,
-                recurring: { interval: "year" as const },
-                product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
-              },
-              quantity: 1,
+      ? [
+          {
+            price_data: {
+              currency: localizedPricing.currency,
+              unit_amount: localizedPricing.annualAmount,
+              recurring: { interval: "year" as const },
+              product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
             },
-          ]
+            quantity: 1,
+          },
+        ]
       : isSixMonth
-      ? hasSixMonthPrice
-        ? [{ price: config.priceSixMonth, quantity: 1 }]
-        : [
-            {
-              price_data: {
-                currency: "gbp",
-                unit_amount: 3899,
-                recurring: { interval: "month" as const, interval_count: 6 },
-                product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
-              },
-              quantity: 1,
+      ? [
+          {
+            price_data: {
+              currency: localizedPricing.currency,
+              unit_amount: localizedPricing.sixMonthAmount,
+              recurring: { interval: "month" as const, interval_count: 6 },
+              product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
             },
-          ]
-      : hasMonthlyPrice
-      ? [{ price: config.priceMonthly, quantity: 1 }]
+            quantity: 1,
+          },
+        ]
       : [
           {
             price_data: {
-              currency: "gbp",
-              unit_amount: 999,
+              currency: localizedPricing.currency,
+              unit_amount: localizedPricing.monthlyAmount,
               recurring: { interval: "month" as const },
               product_data: { name: "SWEEPR Cleaner Pro (Monthly)" },
             },
@@ -1906,17 +2267,12 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/v1/portal", auth, async (c) => {
-    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const account = c.get("account");
-    if (!account.stripe_customer_id) return c.json({ error: "no_customer" }, 404);
-    const session = await stripe.billingPortal.sessions.create({
-      customer: account.stripe_customer_id,
-      return_url: `${config.publicUrl}/checkout/portal-return`,
-    });
-    return c.json({ url: session.url });
+    const emailParam = account?.email ? `?email=${encodeURIComponent(account.email)}` : "";
+    return c.json({ url: `${config.publicUrl}/login${emailParam}` });
   });
 
-  app.post("/webhooks/stripe", async (c) => {
+  const handleStripeWebhook = async (c: any) => {
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const sig = c.req.header("stripe-signature") ?? "";
     const raw = await c.req.text(); // raw body is required for signature verification
@@ -1935,7 +2291,11 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "handler_failed" }, 500);
     }
     return c.json({ received: true });
-  });
+  };
+
+  app.post("/webhooks/stripe", handleStripeWebhook);
+  app.post("/api/webhook/stripe", handleStripeWebhook);
+  app.post("/api/webhooks/stripe", handleStripeWebhook);
 
   app.post("/webhooks/revenuecat", async (c) => {
     // Verify standard RevenueCat Authorization header. RC sends exactly the value configured in its dashboard,
