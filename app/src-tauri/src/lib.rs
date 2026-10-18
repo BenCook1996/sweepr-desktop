@@ -91,6 +91,7 @@ pub fn run() {
             commands::send_support_report,
             commands::app_info,
             commands::quit_app,
+            commands::complete_installation,
             duplicates::find_duplicates,
             duplicates::delete_duplicates,
             duplicates::scan_large_files,

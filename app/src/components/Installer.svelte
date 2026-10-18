@@ -1,7 +1,8 @@
 <script lang="ts">
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import { api } from "../lib/api";
 
-  type Step = "welcome" | "installing" | "complete";
+  type Step = "welcome" | "options" | "installing";
   let {
     onComplete,
     onClose,
@@ -16,9 +17,18 @@
   let progress = $state(0);
   let statusText = $state("Preparing to install SWEEPR Cleaner…");
 
+  // Setup questions / options
+  let desktopShortcut = $state(true);
+  let startMenuShortcut = $state(true);
+  let launchOnStartup = $state(false);
+
   function openLegal(e: MouseEvent, url: string) {
     e.preventDefault();
     openUrl(url).catch(() => {});
+  }
+
+  function goToOptions() {
+    step = "options";
   }
 
   function startInstall() {
@@ -33,17 +43,21 @@
       } else if (progress >= 50 && progress < 75) {
         statusText = "Setting up registry and cache diagnostic modules…";
       } else if (progress >= 75 && progress < 100) {
-        statusText = "Finalizing secure file shredder and privacy guard…";
+        statusText = "Applying shortcut preferences and finalizing setup…";
       } else if (progress >= 100) {
         progress = 100;
-        statusText = "Installation complete! Launching SWEEPR Cleaner…";
+        statusText = "Installation complete! Opening SWEEPR Cleaner…";
         clearInterval(interval);
-        setTimeout(() => {
+        setTimeout(async () => {
+          try {
+            await api.completeInstallation(desktopShortcut, startMenuShortcut, launchOnStartup);
+          } catch {
+            // Continue even if shortcut helper fails
+          }
           if (onComplete) onComplete();
-          else step = "complete";
-        }, 800);
+        }, 450);
       }
-    }, 120);
+    }, 110);
   }
 </script>
 
@@ -90,7 +104,7 @@
         <h1 class="welcome-heading">Welcome to SWEEPR Cleaner</h1>
         <p class="welcome-sub">Smart Performance, Deep Cleaning and Privacy for your PC.</p>
 
-        <button class="primary install-btn" onclick={startInstall}>
+        <button class="primary install-btn" onclick={goToOptions}>
           INSTALL
         </button>
       </div>
@@ -124,10 +138,53 @@
     <footer class="installer-footer">
       <p class="footer-legal">
         By clicking Install, you are agreeing to SWEEPR Cleaner <a href="https://sweeprcleaner.com/terms" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/terms")} class="legal-link">End User License Agreement</a>, <a href="https://sweeprcleaner.com/privacy" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/privacy")} class="legal-link">Privacy Policy</a>, and <a href="https://sweeprcleaner.com/terms" onclick={(e) => openLegal(e, "https://sweeprcleaner.com/terms")} class="legal-link">Terms of Service</a>.
-        <br />
-        Once you click "INSTALL", the installation process will begin and cannot be cancelled or aborted.
       </p>
     </footer>
+
+  {:else if step === "options"}
+    <main class="installer-body options-layout">
+      <div class="options-container">
+        <div class="options-header">
+          <h1 class="options-heading">Installation Options</h1>
+          <p class="options-sub">Choose your shortcuts and startup preferences before installing SWEEPR Cleaner:</p>
+        </div>
+
+        <div class="options-list">
+          <label class="option-card" class:checked={desktopShortcut}>
+            <input type="checkbox" bind:checked={desktopShortcut} />
+            <div class="option-text">
+              <span class="option-title">Create a Desktop shortcut</span>
+              <span class="option-desc">Place a SWEEPR Cleaner icon on your Desktop for quick one-click access.</span>
+            </div>
+          </label>
+
+          <label class="option-card" class:checked={startMenuShortcut}>
+            <input type="checkbox" bind:checked={startMenuShortcut} />
+            <div class="option-text">
+              <span class="option-title">Create a Start Menu shortcut</span>
+              <span class="option-desc">Add SWEEPR Cleaner to your Windows Start Menu programs list.</span>
+            </div>
+          </label>
+
+          <label class="option-card" class:checked={launchOnStartup}>
+            <input type="checkbox" bind:checked={launchOnStartup} />
+            <div class="option-text">
+              <span class="option-title">Launch SWEEPR Cleaner when Windows starts</span>
+              <span class="option-desc">Automatically open SWEEPR Cleaner when you sign in to your PC.</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="options-actions">
+          <button class="secondary-btn" onclick={() => (step = "welcome")}>
+            Back
+          </button>
+          <button class="primary install-btn" onclick={startInstall}>
+            CONTINUE &amp; INSTALL
+          </button>
+        </div>
+      </div>
+    </main>
 
   {:else if step === "installing"}
     <main class="installer-body progress-layout">
@@ -156,16 +213,6 @@
       </div>
 
       <p class="progress-sub">{statusText}</p>
-    </main>
-
-  {:else if step === "complete"}
-    <main class="installer-body progress-layout">
-      <div class="complete-icon-bubble">✓</div>
-      <h1 class="progress-heading" style="margin-top: 16px;">SWEEPR Cleaner is Ready!</h1>
-      <p class="progress-sub">Installation finished successfully.</p>
-      <button class="primary install-btn" style="margin-top: 24px;" onclick={onComplete}>
-        LAUNCH SWEEPR CLEANER
-      </button>
     </main>
   {/if}
 </div>
@@ -357,15 +404,98 @@
     color: #475569;
     margin: 0;
   }
-  .complete-icon-bubble {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: #dcfce7;
-    color: #059669;
-    display: grid;
-    place-items: center;
-    font-size: 28px;
+  /* Options Screen Layout */
+  .options-layout {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .options-container {
+    width: 100%;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .options-heading {
+    font-size: 26px;
     font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.4px;
+  }
+  .options-sub {
+    font-size: 14px;
+    color: #475569;
+    margin: 0;
+  }
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .option-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 15px 18px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .option-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+  .option-card.checked {
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+  .option-card input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #059669;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .option-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .option-desc {
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+  .options-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+  .secondary-btn {
+    padding: 11px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .secondary-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    transform: none;
   }
 </style>

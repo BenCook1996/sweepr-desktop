@@ -739,3 +739,94 @@ pub fn quit_app(app: AppHandle) {
     app.exit(0);
 }
 
+#[cfg(target_os = "windows")]
+fn create_windows_shortcut(lnk_path: &std::path::Path, target_exe: &str, working_dir: &str) {
+    use std::os::windows::process::CommandExt;
+    let lnk = lnk_path.to_string_lossy().replace('\'', "''");
+    let exe = target_exe.replace('\'', "''");
+    let dir = working_dir.replace('\'', "''");
+    let script = format!(
+        "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('{lnk}'); $s.TargetPath = '{exe}'; $s.WorkingDirectory = '{dir}'; $s.IconLocation = '{exe},0'; $s.Description = 'SWEEPR Cleaner'; $s.Save()"
+    );
+    let _ = std::process::Command::new("powershell")
+        .creation_flags(0x08000000)
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .status();
+}
+
+#[tauri::command]
+pub async fn complete_installation(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    desktop_shortcut: bool,
+    start_menu_shortcut: bool,
+    launch_on_startup: bool,
+) -> AppResult<()> {
+    use tauri::Manager;
+    let _ = std::fs::write(state.data_dir.join("installed_v1.flag"), b"1");
+    let _ = memory::set_autostart_enabled(launch_on_startup);
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(exe_path) = std::env::current_exe() {
+            let exe_str = exe_path.to_string_lossy().to_string();
+            let work_dir = exe_path
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+
+            if let Some(desktop) = dirs::desktop_dir() {
+                let candidates = [
+                    desktop.join("SWEEPR Cleaner.lnk"),
+                    desktop.join("SWEEPRCleaner.lnk"),
+                    desktop.join("Sweepr.lnk"),
+                ];
+                if desktop_shortcut {
+                    let _ = std::fs::remove_file(&candidates[1]);
+                    let _ = std::fs::remove_file(&candidates[2]);
+                    create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                } else {
+                    for c in &candidates {
+                        let _ = std::fs::remove_file(c);
+                    }
+                }
+            }
+
+            if let Some(appdata) = dirs::data_dir() {
+                let programs = appdata.join("Microsoft\\Windows\\Start Menu\\Programs");
+                let candidates = [
+                    programs.join("SWEEPR Cleaner.lnk"),
+                    programs.join("SWEEPRCleaner.lnk"),
+                    programs.join("Sweepr.lnk"),
+                    programs.join("SWEEPR Cleaner\\SWEEPR Cleaner.lnk"),
+                    programs.join("SWEEPRCleaner\\SWEEPRCleaner.lnk"),
+                    programs.join("Sweepr\\Sweepr.lnk"),
+                ];
+                if start_menu_shortcut {
+                    let _ = std::fs::remove_file(&candidates[1]);
+                    let _ = std::fs::remove_file(&candidates[2]);
+                    create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                } else {
+                    for c in &candidates {
+                        let _ = std::fs::remove_file(c);
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(win) = app.get_webview_window("main") {
+        let _ = win.hide();
+        let win_clone = win.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(320));
+            let _ = win_clone.show();
+            let _ = win_clone.unminimize();
+            let _ = win_clone.set_focus();
+        });
+    }
+
+    Ok(())
+}
+
+

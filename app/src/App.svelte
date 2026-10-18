@@ -21,7 +21,11 @@
     (typeof localStorage !== "undefined" && (localStorage.getItem("sweepr_theme") as "light" | "dark")) || "light"
   );
 
+  let startupInitialized = false;
+  let installerCompleted = false;
+
   function completeStartupInstaller() {
+    installerCompleted = true;
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("sweepr_installed_v1", "1");
       localStorage.setItem("sweepr_first_open", "1");
@@ -29,7 +33,7 @@
     showStartupInstaller = false;
     setTimeout(() => {
       if (!license?.active) showActivateModal = true;
-    }, 400);
+    }, 450);
   }
 
   function toggleTheme() {
@@ -59,26 +63,27 @@
   }
 
   $effect(() => {
+    if (startupInitialized) return;
+    startupInitialized = true;
     refreshLicense();
     api
       .appInfo()
       .then((i) => {
         info = i;
-        if (i.installer_mode) {
+        if (i.installer_mode && !installerCompleted) {
           showStartupInstaller = true;
         }
         appReady = true;
+        if (!showStartupInstaller && !localStorage.getItem("sweepr_first_open")) {
+          localStorage.setItem("sweepr_first_open", "1");
+          setTimeout(() => {
+            if (!showStartupInstaller && !license?.active) showActivateModal = true;
+          }, 400);
+        }
       })
       .catch(() => {
         appReady = true;
       });
-    // Auto-pop activation modal on first launch if not in startup installer mode
-    if (!showStartupInstaller && !localStorage.getItem("sweepr_first_open")) {
-      localStorage.setItem("sweepr_first_open", "1");
-      setTimeout(() => {
-        if (!showStartupInstaller && !license?.active) showActivateModal = true;
-      }, 400);
-    }
   });
 
   // Pro features ask for activation when the backend answers `payment_required`.

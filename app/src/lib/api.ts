@@ -147,6 +147,16 @@ export const api = {
   restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
   appInfo: () => invoke<AppInfo>("app_info"),
   quitApp: () => invoke<void>("quit_app"),
+  completeInstallation: (
+    desktopShortcut: boolean,
+    startMenuShortcut: boolean,
+    launchOnStartup: boolean
+  ) =>
+    invoke<void>("complete_installation", {
+      desktopShortcut,
+      startMenuShortcut,
+      launchOnStartup,
+    }),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }
