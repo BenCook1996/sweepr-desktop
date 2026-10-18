@@ -362,5 +362,23 @@ test("CRM: lead capture records country, device, and datetime in CRM", async () 
   assert.equal(detail.account.country, "GB");
   assert.equal(detail.account.lead_device, "iPhone / iOS");
   assert.equal(detail.account.created_at, fixedNow);
+
+  // 5. Verify visiting /order sets sweepr_visited_order cookie and returning to / redirects back to /order
+  const orderVisit = await app.request("/order");
+  assert.equal(orderVisit.status, 200);
+  const setCookieHeader = orderVisit.headers.get("set-cookie") || "";
+  assert.match(setCookieHeader, /sweepr_visited_order=1/);
+
+  const returnVisit = await app.request("/", {
+    headers: { cookie: "sweepr_visited_order=1" },
+  });
+  assert.equal(returnVisit.status, 302);
+  assert.equal(returnVisit.headers.get("location"), "/order");
+
+  // Explicit logo click (/?home=1) bypasses the redirect
+  const explicitHome = await app.request("/?home=1", {
+    headers: { cookie: "sweepr_visited_order=1" },
+  });
+  assert.equal(explicitHome.status, 200);
 });
 

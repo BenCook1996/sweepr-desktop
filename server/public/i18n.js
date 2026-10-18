@@ -3,6 +3,43 @@
  * Provides client-side instant dictionary translation + deep DOM Google Translate fallback.
  */
 
+(function() {
+  try {
+    var path = window.location.pathname || '/';
+    if (/^\/(order|checkout)(\.html|\/|$)/i.test(path)) {
+      localStorage.setItem('sweepr_visited_order', '1');
+      document.cookie = 'sweepr_visited_order=1; path=/; max-age=2592000; SameSite=Lax';
+      return;
+    }
+    if (/^\/(dashboard|checkout\/success)/i.test(path)) {
+      localStorage.removeItem('sweepr_visited_order');
+      document.cookie = 'sweepr_visited_order=; path=/; max-age=0';
+      return;
+    }
+    // Never redirect legal, login, support, or admin pages
+    if (/^\/(terms|privacy|refund|login|support|crm|admin)(\.html|\/|$)/i.test(path)) {
+      return;
+    }
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('home') === '1' || params.get('noredirect') === '1') return;
+
+    var visitedOrder = localStorage.getItem('sweepr_visited_order') === '1' || /(?:^|;\s*)sweepr_visited_order=1(?:;|$)/.test(document.cookie);
+    if (!visitedOrder) return;
+
+    var ref = document.referrer || '';
+    var isExternalOrDirectReturn = true;
+    try {
+      if (ref && new URL(ref).origin === window.location.origin) {
+        isExternalOrDirectReturn = false;
+      }
+    } catch (e) {}
+
+    if (isExternalOrDirectReturn || path === '/' || path === '/index.html') {
+      window.location.replace('/order' + (window.location.search || ''));
+    }
+  } catch (e) {}
+})();
+
 const LANGS = {
   en: { name: 'English', flag: '🇬🇧', code: 'EN' },
   de: { name: 'Deutsch', flag: '🇩🇪', code: 'DE' },

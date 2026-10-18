@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { getSignedCookie, setSignedCookie, deleteCookie } from "hono/cookie";
+import { getCookie, setCookie, getSignedCookie, setSignedCookie, deleteCookie } from "hono/cookie";
 import { bodyLimit } from "hono/body-limit";
 import { readFileSync, existsSync, statSync, createReadStream } from "node:fs";
 import { Readable } from "node:stream";
@@ -221,14 +221,37 @@ export function createApp(deps: AppDeps) {
   app.get("/admin", (c) => c.redirect("/crm"));
 
   // Explicit HTML page routes for clean URLs
-  app.get("/order", (c) => {
+  const ORDER_VISITED_COOKIE = "sweepr_visited_order";
+  const handleHomeRoute = async (c: Context) => {
+    const visitedOrder = getCookie(c, ORDER_VISITED_COOKIE) === "1";
+    const bypass = c.req.query("home") === "1" || c.req.query("noredirect") === "1";
+    const referer = c.req.header("referer") || "";
+    const fromOrderPage = /\/(order|checkout)(\b|\/|\?|$)/i.test(referer);
+    if (visitedOrder && !bypass && !fromOrderPage) {
+      const loggedInAccountId = await sessionAccountId(c);
+      if (!loggedInAccountId) {
+        return c.redirect("/order", 302);
+      }
+    }
+    const file = "./public/index.html";
+    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+  };
+  app.get("/", handleHomeRoute);
+  app.get("/index.html", handleHomeRoute);
+
+  const handleOrderRoute = (c: Context) => {
+    setCookie(c, ORDER_VISITED_COOKIE, "1", {
+      path: "/",
+      sameSite: "Lax",
+      secure: isHttps,
+      maxAge: 86400 * 30,
+    });
     const file = "./public/order.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
-  });
-  app.get("/checkout", (c) => {
-    const file = "./public/order.html";
-    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
-  });
+  };
+  app.get("/order", handleOrderRoute);
+  app.get("/order.html", handleOrderRoute);
+  app.get("/checkout", handleOrderRoute);
   app.get("/pricing", (c) => {
     const file = "./public/pricing.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
@@ -1075,6 +1098,7 @@ export function createApp(deps: AppDeps) {
         undefined;
 
       if (resolvedAccount) {
+        deleteCookie(c, ORDER_VISITED_COOKIE, { path: "/" });
         await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
           path: "/",
           httpOnly: true,
@@ -2528,6 +2552,7 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    deleteCookie(c, ORDER_VISITED_COOKIE, { path: "/" });
     if (isPopup) {
       return c.html(popupClosePage("success", "/checkout/success?web=1"));
     }
@@ -2536,7 +2561,7 @@ export function createApp(deps: AppDeps) {
       return c.html(
         page(
           "You're Activated 🎉",
-          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.",
+          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.<script>try{localStorage.removeItem('sweepr_visited_order');document.cookie='sweepr_visited_order=; path=/; max-age=0';}catch(e){}</script>",
           true
         )
       );

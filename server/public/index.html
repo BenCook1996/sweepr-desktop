@@ -5,6 +5,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SWEEPR Cleaner: Fast PC Cleaner & Optimizer for Windows 11 & Mac</title>
+  <script>
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('home') === '1' || params.get('noredirect') === '1') return;
+        var ref = document.referrer || '';
+        var fromOrder = false;
+        try {
+          if (ref && new URL(ref).origin === window.location.origin && /^\/(order|checkout)(\b|\/|$)/i.test(new URL(ref).pathname)) {
+            fromOrder = true;
+          }
+        } catch (e) {}
+        var visitedOrder = localStorage.getItem('sweepr_visited_order') === '1' || /(?:^|;\s*)sweepr_visited_order=1(?:;|$)/.test(document.cookie);
+        if (visitedOrder && !fromOrder) {
+          window.location.replace('/order' + (window.location.search || ''));
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta name="description" content="Reclaim 20+ GB of hidden disk space, purge bloated RAM, uninstall stubborn apps, and shred sensitive files in 60 seconds. Lightweight Rust engine with zero bloatware.">
   <link rel="canonical" href="https://sweeprcleaner.com/">
 
