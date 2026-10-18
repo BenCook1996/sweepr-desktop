@@ -97,6 +97,10 @@
         </div>
         <span id="nav-outreach-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30">256</span>
       </button>
+      <button onclick="switchTab('telemetry')" id="nav-telemetry" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="life-buoy" class="w-4 h-4 text-emerald-400"></i>
+        <span>Support & Telemetry</span>
+      </button>
 
       <div class="pt-6 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Operations</div>
       <button onclick="seedDemoData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-brand-300 hover:bg-brand-500/10 transition-all">
@@ -577,6 +581,84 @@
         </div>
       </section>
 
+      <!-- TAB 6: SUPPORT TICKETS, FUNNEL ANALYTICS & CRASH TELEMETRY -->
+      <section id="tab-telemetry" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Support Tickets</span>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="tel-stat-tickets" class="text-2xl font-extrabold font-mono text-white">0</span>
+              <span class="text-xs text-slate-400">recent tickets</span>
+            </div>
+          </div>
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Scans Completed</span>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="tel-stat-scans" class="text-2xl font-extrabold font-mono text-brand-400">0</span>
+              <span class="text-xs text-slate-400">funnel events</span>
+            </div>
+          </div>
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Checkouts &amp; Purchases</span>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="tel-stat-checkouts" class="text-2xl font-extrabold font-mono text-emerald-400">0</span>
+              <span class="text-xs text-slate-400">conversion events</span>
+            </div>
+          </div>
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Crash Reports (7d)</span>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span id="tel-stat-crashes" class="text-2xl font-extrabold font-mono text-amber-400">0</span>
+              <span class="text-xs text-slate-400">last 7 days</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">Customer Support Tickets</h3>
+              <span class="text-xs text-slate-400 font-mono">/api/support-ticket &amp; /v1/support</span>
+            </div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-surface-850 border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                  <tr>
+                    <th class="py-3 px-4">Customer / Platform</th>
+                    <th class="py-3 px-4">Subject &amp; Message</th>
+                    <th class="py-3 px-4">Created</th>
+                  </tr>
+                </thead>
+                <tbody id="telemetry-tickets-body" class="divide-y divide-slate-800/80">
+                  <tr><td colspan="3" class="py-8 text-center text-slate-400">No support tickets submitted yet.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+              <h3 class="font-bold text-white text-sm">Crash Reports &amp; Diagnostics</h3>
+              <span class="text-xs text-slate-400 font-mono">/v1/telemetry/crash</span>
+            </div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-surface-850 border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                  <tr>
+                    <th class="py-3 px-4">Platform / Version</th>
+                    <th class="py-3 px-4">Error &amp; Message</th>
+                    <th class="py-3 px-4">Time</th>
+                  </tr>
+                </thead>
+                <tbody id="telemetry-crashes-body" class="divide-y divide-slate-800/80">
+                  <tr><td colspan="3" class="py-8 text-center text-slate-400">Zero crashes reported.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 
@@ -738,13 +820,15 @@
         <div>
           <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
           <select id="grant-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white">
-            <option value="monthly">Monthly Pro ($9.99/mo)</option>
-            <option value="annual">Annual Enterprise ($99.00/yr)</option>
+            <option value="annual" selected>Annual Pro (£49.99 / $64.99/yr)</option>
+            <option value="six_month">6-Month Pro (£38.99 / $47.99/6mo)</option>
+            <option value="monthly">Monthly Pro (£9.99 / $11.99/mo)</option>
+            <option value="lifetime">Lifetime VIP ($199.00)</option>
           </select>
         </div>
         <div>
           <label class="block text-slate-400 mb-1 font-medium">Duration (Days from Today)</label>
-          <input type="number" id="grant-days" value="30" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono">
+          <input type="number" id="grant-days" value="365" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono">
         </div>
       </div>
       <div class="flex justify-end gap-3 pt-2">
@@ -819,8 +903,9 @@
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
             <select id="create-sub-plan" onchange="handlePlanChange(this.value)" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-500">
-              <option value="annual" selected>Annual Pro ($99.00/yr)</option>
-              <option value="monthly">Monthly Pro ($9.99/mo)</option>
+              <option value="annual" selected>Annual Pro (£49.99 / $64.99/yr)</option>
+              <option value="six_month">6-Month Pro (£38.99 / $47.99/6mo)</option>
+              <option value="monthly">Monthly Pro (£9.99 / $11.99/mo)</option>
               <option value="lifetime">Lifetime VIP ($199.00 one-time)</option>
             </select>
           </div>
@@ -839,8 +924,8 @@
             <input type="number" id="create-sub-days" value="365" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
           </div>
           <div>
-            <label class="block text-slate-400 mb-1 font-medium">Amount Paid ($ USD)</label>
-            <input type="number" step="0.01" id="create-sub-amount" value="99.00" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
+            <label class="block text-slate-400 mb-1 font-medium">Amount Paid (£ / $)</label>
+            <input type="number" step="0.01" id="create-sub-amount" value="49.99" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
           </div>
         </div>
 
@@ -909,7 +994,7 @@
           <label class="block text-slate-400 mb-1 font-medium">Plan Level</label>
           <select id="mmp-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-amber-500">
             <option value="lifetime" selected>👑 Lifetime VIP Access (100 Years • Unrestricted)</option>
-            <option value="annual">Annual Pro ($99.00/yr)</option>
+            <option value="annual">Annual Pro (£49.99 / $64.99/yr)</option>
           </select>
         </div>
       </div>
@@ -1107,8 +1192,73 @@
         loadStats(),
         loadCustomers(),
         loadActivities(),
-        loadOutreach()
+        loadOutreach(),
+        loadTelemetry()
       ]);
+    }
+
+    async function loadTelemetry() {
+      try {
+        const res = await fetch('/api/crm/telemetry');
+        if (!res.ok) return;
+        const data = await res.json();
+        const tickets = data.support_tickets || data.tickets || [];
+        const crashes = data.crashes || [];
+        const funnel = data.funnel || {};
+
+        const elTickets = document.getElementById('tel-stat-tickets');
+        const elScans = document.getElementById('tel-stat-scans');
+        const elCheckouts = document.getElementById('tel-stat-checkouts');
+        const elCrashes = document.getElementById('tel-stat-crashes');
+        if (elTickets) elTickets.textContent = String(tickets.length);
+        if (elScans) elScans.textContent = String((funnel.scan_started || 0) + (funnel.scan_completed || 0));
+        if (elCheckouts) elCheckouts.textContent = String((funnel.checkout_started || 0) + (funnel.purchase_completed || 0));
+        if (elCrashes) elCrashes.textContent = String(data.crashes_7d ?? crashes.length);
+
+        const tBody = document.getElementById('telemetry-tickets-body');
+        if (tBody) {
+          if (tickets.length === 0) {
+            tBody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-slate-400">No support tickets submitted yet.</td></tr>';
+          } else {
+            tBody.innerHTML = tickets.map(t => `
+              <tr class="hover:bg-surface-850/60">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-white">${esc(t.email || 'Anonymous')}</div>
+                  <div class="text-[10px] text-brand-400 uppercase font-mono">${esc(t.platform || 'web')} · ${esc(t.status || 'open')}</div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-slate-200">${esc(t.subject || 'Support Request')}</div>
+                  <div class="text-slate-400 line-clamp-2">${esc(t.message || '')}</div>
+                </td>
+                <td class="py-3 px-4 text-slate-400 font-mono whitespace-nowrap">${t.created_at ? new Date(t.created_at * 1000).toLocaleDateString() : '-'}</td>
+              </tr>
+            `).join('');
+          }
+        }
+
+        const cBody = document.getElementById('telemetry-crashes-body');
+        if (cBody) {
+          if (crashes.length === 0) {
+            cBody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-slate-400">Zero crashes reported.</td></tr>';
+          } else {
+            cBody.innerHTML = crashes.map(cr => `
+              <tr class="hover:bg-surface-850/60">
+                <td class="py-3 px-4">
+                  <div class="font-bold text-amber-400 uppercase font-mono">${esc(cr.platform || 'desktop')}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">v${esc(cr.app_version || '0.1.0')}</div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-slate-200 font-mono">${esc(cr.error_type || 'Crash')}</div>
+                  <div class="text-slate-400 line-clamp-2 font-mono text-[11px]">${esc(cr.message || '')}</div>
+                </td>
+                <td class="py-3 px-4 text-slate-400 font-mono whitespace-nowrap">${cr.created_at ? new Date(cr.created_at * 1000).toLocaleDateString() : '-'}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load telemetry:', err);
+      }
     }
 
     // Switch Main Menu Tabs
@@ -1135,7 +1285,8 @@
         customers: "Customer Directory",
         subscriptions: "Subscriptions & Recurring Revenue",
         activities: "Activity & Audit Log",
-        outreach: "Outreach & Directories Log"
+        outreach: "Outreach & Directories Log",
+        telemetry: "Support Tickets, Funnel & Crash Telemetry"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
       safeCreateIcons();
@@ -1443,9 +1594,12 @@
       if (plan === 'monthly') {
         daysInput.value = '30';
         amountInput.value = '9.99';
+      } else if (plan === 'six_month') {
+        daysInput.value = '180';
+        amountInput.value = '38.99';
       } else if (plan === 'annual') {
         daysInput.value = '365';
-        amountInput.value = '99.00';
+        amountInput.value = '49.99';
       } else if (plan === 'lifetime') {
         daysInput.value = '36500';
         amountInput.value = '199.00';

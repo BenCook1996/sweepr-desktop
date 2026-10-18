@@ -61,8 +61,8 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     symbolPosition: "prefix",
     zeroDecimal: false,
     annualAmount: 4999,
-    sixMonthAmount: 3699,
-    monthlyAmount: 899,
+    sixMonthAmount: 3899,
+    monthlyAmount: 999,
     introMonthlyAmount: 199,
   },
   eur: {

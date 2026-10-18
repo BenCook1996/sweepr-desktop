@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Complete Your Order - SWEEPR Cleaner Pro</title>
-  <link rel="icon" type="image/svg+xml" href="/logo-mint-glass.svg">
-  <link rel="shortcut icon" type="image/svg+xml" href="/logo-mint-glass.svg">
+  <link rel="icon" type="image/svg+xml" href="/padlock-favicon.svg">
+  <link rel="shortcut icon" type="image/svg+xml" href="/padlock-favicon.svg">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
   <script src="https://js.stripe.com/v3/"></script>
@@ -327,18 +327,18 @@
               <div id="productTag" class="mb-1.5">
                 <span id="productTagContent" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
                   <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-                  Save 55% vs monthly billing
+                  Save 58% vs monthly billing
                 </span>
               </div>
 
               <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">SWEEPR Cleaner Pro All-Access</h2>
               <p id="productSubtitle" class="text-xs text-gray-500 mt-1">
-                Automated deep cleaning &amp; system optimization suite
+                2026 Native Rust deep cleaning, optimization &amp; privacy suite
               </p>
               <div class="flex items-center gap-2 mt-2 text-xs text-gray-600">
                 <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                  Windows &amp; Mac
+                  3 PCs + 2 Mobile Devices
                 </span>
                 <span>•</span>
                 <span>Instant License Key</span>
@@ -348,8 +348,70 @@
 
           <!-- Product Price -->
           <div class="text-right shrink-0">
-            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">$64.99</div>
-            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per year ($5.41/mo)</div>
+            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
+            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per year (£4.16/mo)</div>
+          </div>
+        </div>
+
+        <!-- 3-Way Plan Duration Selector -->
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200/80 shadow-sm space-y-2.5">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-gray-500">Choose Your Billing Plan</span>
+            <span class="text-[11px] font-semibold text-emerald-700">14-Day Money-Back Guarantee</span>
+          </div>
+
+          <!-- Annual Plan Option -->
+          <div id="planCardAnnual" onclick="selectOrderPlan('annual')" class="relative flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 shadow-xs cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+              <input type="radio" name="orderPlan" id="radioPlanAnnual" checked class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-gray-900 text-sm">Annual Plan</span>
+                  <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white">Best Value · Save 58%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">Just £4.16/mo billed annually • Covers 3 PCs + 2 Phones</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="font-black text-gray-900 text-base">£49.99<span class="text-xs font-medium text-gray-500">/yr</span></div>
+              <div class="text-[11px] text-emerald-700 font-semibold">£4.16/mo eq.</div>
+            </div>
+          </div>
+
+          <!-- 6-Month Plan Option -->
+          <div id="planCardSixMonth" onclick="selectOrderPlan('six_month')" class="relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+              <input type="radio" name="orderPlan" id="radioPlanSixMonth" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-gray-900 text-sm">6-Month Plan</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">Save 35%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">Just £6.50/mo billed every 6 months • Cancel anytime</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="font-black text-gray-900 text-base">£38.99<span class="text-xs font-medium text-gray-500">/6mo</span></div>
+              <div class="text-[11px] text-teal-700 font-semibold">£6.50/mo eq.</div>
+            </div>
+          </div>
+
+          <!-- Monthly Plan Option -->
+          <div id="planCardMonthly" onclick="selectOrderPlan('monthly')" class="relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all">
+            <div class="flex items-center gap-3">
+              <input type="radio" name="orderPlan" id="radioPlanMonthly" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-bold text-gray-900 text-sm">Monthly Plan</span>
+                  <span id="monthlyIntroPill" class="hidden text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white">1st Month £1.99</span>
+                </div>
+                <p id="monthlyPlanDesc" class="text-xs text-gray-500 mt-0.5">Flexible month-to-month billing • Cancel in 1 click</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <div id="monthlyPriceDisplay" class="font-black text-gray-900 text-base">£9.99<span class="text-xs font-medium text-gray-500">/mo</span></div>
+              <div id="monthlySubDisplay" class="text-[11px] text-gray-500 font-medium">Cancel anytime</div>
+            </div>
           </div>
         </div>
 
@@ -360,9 +422,9 @@
               <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 text-sm">DeepClean System Cache Optimizer</h3>
+              <h3 class="font-bold text-gray-900 text-sm">DeepClean System, Messenger &amp; Gaming Optimizer</h3>
               <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Automatically remove all hidden junk caches, registry logs, and background bloat with your SWEEPR Cleaner licence
+                Wipe OS, browser &amp; Slack/Teams/Discord caches with 7-day Quarantine rollback, plus 1-click Gaming RAM Boost &amp; Context Menu Manager
               </p>
             </div>
           </div>
@@ -380,9 +442,9 @@
               <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 text-sm">Duplicate Matcher &amp; Clean Uninstaller</h3>
+              <h3 class="font-bold text-gray-900 text-sm">Uninstaller, Winget Updater, Duplicate Mover &amp; SSD Shredder</h3>
               <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Reclaim lost space from duplicate files and wipe stubborn applications completely with your SWEEPR Cleaner licence
+                Includes Drag-and-Drop Uninstaller, Winget Updater, SHA-256 Duplicate &amp; Large File Mover, Browser SQLite Compactor &amp; Mobile App
               </p>
             </div>
           </div>
@@ -397,19 +459,19 @@
         <div class="bg-white rounded-xl p-5 border border-gray-200/80 shadow-sm space-y-3 text-sm">
           <div class="flex items-center justify-between text-gray-700">
             <span id="summaryPlanTitle">SWEEPR Cleaner Pro (Annual Plan)</span>
-            <span id="summaryPlanPrice" class="font-semibold text-gray-900">$64.99/year</span>
+            <span id="summaryPlanPrice" class="font-semibold text-gray-900">£49.99/year</span>
           </div>
 
           <!-- Savings Line (Annual / 6-Month) -->
           <div id="savingsSummaryRow" class="flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
             <div class="flex items-center justify-between">
               <span class="flex items-center gap-1.5">
-                <span id="savingsSummaryLabel">Annual Plan Savings (Save 55%)</span>
+                <span id="savingsSummaryLabel">Annual Plan Savings (Save 58%)</span>
               </span>
-              <span id="savingsSummaryAmount" class="font-bold">- $78.89</span>
+              <span id="savingsSummaryAmount" class="font-bold">- £69.89</span>
             </div>
             <div id="savingsSummaryNote" class="text-[11px] text-gray-500 font-normal">
-              Billed annually at $64.99/year ($5.41/month equivalent) instead of standard $143.88/year.
+              Billed annually at £49.99/year (£4.16/month equivalent) instead of standard £119.88/year.
             </div>
           </div>
 
@@ -417,18 +479,18 @@
           <div id="discountSummaryRow" class="hidden flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
             <div class="flex items-center justify-between">
               <span class="flex items-center gap-1.5">
-                <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong" class="font-bold">Save $10.00</strong>)</span>
+                <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong" class="font-bold">Save £8.00</strong>)</span>
               </span>
-              <span id="discountAmountMinus" class="font-bold">- $10.00</span>
+              <span id="discountAmountMinus" class="font-bold">- £8.00</span>
             </div>
             <div id="discountNoteText" class="text-[11px] text-gray-500 font-normal">
-              Discount applies strictly to month 1. All future monthly renewals are billed at the standard rate of $11.99/month unless cancelled.
+              Discount applies strictly to month 1. All future monthly renewals are billed at the standard rate of £9.99/month unless cancelled.
             </div>
           </div>
 
           <div class="pt-3 border-t border-gray-200 flex items-center justify-between">
-            <span id="totalTodayLabel" class="font-bold text-gray-900 text-base">Total Today (USD)</span>
-            <span id="totalTodayText" class="font-black text-2xl text-gray-900">$64.99</span>
+            <span id="totalTodayLabel" class="font-bold text-gray-900 text-base">Total Today (GBP)</span>
+            <span id="totalTodayText" class="font-black text-2xl text-gray-900">£49.99</span>
           </div>
         </div>
 
@@ -474,7 +536,7 @@
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
               <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span id="termsConsentLabel" class="leading-snug">
-                I agree to pay $64.99 today which will auto renew at $64.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
+                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
               </span>
             </label>
 
@@ -667,7 +729,7 @@
 
           <!-- Headline -->
           <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Get 1st Month of <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">SWEEPR Cleaner</span> for Just <span id="modalIntroPriceText">$1.99</span>
+            Get 1st Month of <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">SWEEPR Cleaner</span> for Just <span id="modalIntroPriceText">£1.99</span>
           </h2>
 
           <!-- 3 Checkmarks with Emerald Accent -->
@@ -676,13 +738,13 @@
               <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
               </div>
-              <span>Includes Full Pro Coverage Across Up to 3 Desktop PCs</span>
+              <span>Includes Full Pro Coverage Across Up to 3 PCs + 2 Mobile Devices</span>
             </li>
             <li class="flex items-center gap-2.5">
               <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
               </div>
-              <span>Deep System Cache Clean &amp; Duplicate Shredder</span>
+              <span>Deep System Cache Clean, Gaming Boost, Winget Updater &amp; SSD Shredder</span>
             </li>
             <li class="flex items-center gap-2.5">
               <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
@@ -692,18 +754,18 @@
             </li>
           </ul>
 
-          <!-- Pricing: Standard $11.99/mo -> 1st Month $1.99 -->
+          <!-- Pricing: Standard £9.99/mo -> 1st Month £1.99 -->
           <div class="bg-white/5 border border-white/10 rounded-xl p-3 flex items-baseline justify-between">
             <div>
               <span class="text-xs text-gray-400 block">1st Month Only</span>
               <div class="flex items-baseline gap-2">
-                <span id="modalIntroBigPrice" class="text-2xl sm:text-3xl font-black text-emerald-400">$1.99</span>
-                <span id="modalRegularStrikePrice" class="text-xs text-gray-400 line-through">Regular $11.99</span>
+                <span id="modalIntroBigPrice" class="text-2xl sm:text-3xl font-black text-emerald-400">£1.99</span>
+                <span id="modalRegularStrikePrice" class="text-xs text-gray-400 line-through">Regular £9.99</span>
               </div>
             </div>
             <div class="text-right">
               <span class="text-[11px] text-gray-400 block">Renews at</span>
-              <span id="modalRenewMonthlyPrice" class="text-xs font-bold text-gray-200">$11.99/month</span>
+              <span id="modalRenewMonthlyPrice" class="text-xs font-bold text-gray-200">£9.99/month</span>
             </div>
           </div>
 
@@ -720,7 +782,7 @@
           <!-- Subtext and Trust Guarantees -->
           <div class="space-y-1.5 pt-0.5 text-center">
             <p id="modalSavingsNote" class="text-[11px] text-gray-400 leading-snug">
-              Introductory $10.00 savings applies strictly to month 1. Auto-renews at standard $11.99/month unless cancelled.
+              Introductory £8.00 savings applies strictly to month 1. Auto-renews at standard £9.99/month unless cancelled.
             </p>
             <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-emerald-400/90 font-medium pt-1 px-1">
               <span class="whitespace-nowrap flex items-center gap-1">🔒 256-Bit SSL</span>

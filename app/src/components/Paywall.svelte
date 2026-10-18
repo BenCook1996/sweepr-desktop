@@ -10,6 +10,7 @@
   } = $props();
 
   let stage = $state<"offer" | "waiting">("offer");
+  let selectedPlan = $state<"annual" | "monthly">("annual");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -36,7 +37,7 @@
     error = null;
     busy = true;
     try {
-      await api.startCheckout(); // opens Stripe Checkout in the system browser
+      await api.startCheckout(undefined, selectedPlan); // opens Stripe Checkout in the system browser
       stage = "waiting";
       let ticks = 0;
       stopPolling();
@@ -73,22 +74,49 @@
     <div class="sheet card" role="dialog" aria-modal="true" aria-labelledby="pw-title" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.key === "Escape" && close()}>
       {#if stage === "offer"}
         <h2 id="pw-title">Clean {formatBytes(bytes)} now</h2>
-        <p class="muted">You've seen exactly what's there. Activate SWEEPR Cleaner to clean every category, and keep your machine tidy with ongoing rule updates.</p>
+        <p class="muted">You've seen exactly what's there. Activate SWEEPR Cleaner Pro to unlock every cleaning, optimization, and privacy tool.</p>
+
+        <div class="plan-picker">
+          <button
+            type="button"
+            class="plan-option {selectedPlan === 'annual' ? 'selected' : ''}"
+            onclick={() => (selectedPlan = "annual")}
+          >
+            <div class="plan-top">
+              <strong>Annual Pro</strong>
+              <span class="save-badge">Save 58%</span>
+            </div>
+            <div class="plan-price">£49.99<span class="per">/yr</span></div>
+            <div class="plan-sub">£4.16/mo eq. · Best Value</div>
+          </button>
+
+          <button
+            type="button"
+            class="plan-option {selectedPlan === 'monthly' ? 'selected' : ''}"
+            onclick={() => (selectedPlan = "monthly")}
+          >
+            <div class="plan-top">
+              <strong>Monthly Pro</strong>
+              <span class="flex-badge">Flexible</span>
+            </div>
+            <div class="plan-price">£9.99<span class="per">/mo</span></div>
+            <div class="plan-sub">Cancel anytime in 1 click</div>
+          </button>
+        </div>
 
         <div class="price card">
-          <div class="row"><strong>SWEEPR Cleaner Pro</strong></div>
-          <div class="muted small">Choose the plan that works best for you at checkout.</div>
+          <div class="row"><strong>Included with SWEEPR Cleaner Pro</strong></div>
           <ul>
-            <li>Unlocks all deep-cleaning categories, browser &amp; app caches, and Pro optimization tools</li>
-            <li>Covers up to 3 Desktop PCs</li>
-            <li>Secure checkout by Stripe, opens in your browser</li>
+            <li>DeepClean system, browser &amp; messenger caches + 7-day Quarantine rollback</li>
+            <li>RAM Purge, 1-Click Gaming Boost, Context Menu Manager, Winget Updater &amp; SSD Shredder</li>
+            <li>Covers up to 3 Desktop PCs + 2 Mobile devices (14-day money-back guarantee)</li>
           </ul>
         </div>
 
         {#if error}<div class="error-banner">{error}</div>{/if}
 
         <button class="primary big" disabled={busy} onclick={activate}>
-          {busy ? "Opening checkout…" : "Activate SWEEPR Cleaner Pro"}
+          {busy ? "Opening checkout…" : selectedPlan === "annual" ? "Continue with Annual Pro (£49.99/yr)" : "Continue with Monthly Pro (£9.99/mo)"}
         </button>
         <div class="row" style="justify-content:center">
           <button class="ghost" onclick={close}>Not now</button>
@@ -107,10 +135,19 @@
 
 <style>
   .backdrop { position: fixed; inset: 0; background: #0009; display: grid; place-items: center; z-index: 50; backdrop-filter: blur(3px); }
-  .sheet { width: 480px; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+  .sheet { width: 500px; max-width: 94vw; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
   h2 { margin: 0; }
-  .price { padding: 16px; text-align: left; background: var(--panel-2); display: flex; flex-direction: column; gap: 6px; }
-  ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+  .plan-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+  .plan-option { padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border, #e2e8f0); background: var(--panel, #fff); cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.15s ease; color: inherit; }
+  .plan-option.selected { border-color: var(--accent, #10b981); background: rgba(16, 185, 129, 0.08); box-shadow: 0 0 0 1px var(--accent, #10b981); }
+  .plan-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; }
+  .save-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; background: #10b981; color: #fff; }
+  .flex-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; background: var(--panel-2, #f1f5f9); color: var(--muted, #64748b); }
+  .plan-price { font-size: 20px; font-weight: 800; }
+  .plan-price .per { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .plan-sub { font-size: 11px; color: var(--muted); }
+  .price { padding: 14px 16px; text-align: left; background: var(--panel-2); display: flex; flex-direction: column; gap: 4px; }
+  ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.65; }
   .spinner { align-self: center; width: 36px; height: 36px; border: 4px solid var(--panel-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>

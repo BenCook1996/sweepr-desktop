@@ -1,28 +1,36 @@
 # Sweepr Cleaner
 
-> Sweepr Cleaner is an ultra-lightweight, memory-safe desktop and mobile cleaner built in Rust and Tauri. It reclaims storage space, optimizes RAM, wipes leftover uninstalled app files, and provides DoD 5220.22-M military-grade file shredding with zero bloatware or background telemetry daemons.
+> Sweepr Cleaner is an ultra-lightweight, memory-safe desktop and mobile cleaner built in Rust and Tauri. It reclaims storage space, optimizes RAM & gaming performance, cleans browser & messenger caches, updates outdated software via Winget, and provides SSD-aware secure file shredding (1-pass zero-fill for SSDs and 3-pass overwrite for HDDs) with zero bloatware or background telemetry daemons.
 
 ## Architecture & Platform Support
 - Desktop App: Built in Rust + Tauri (<15MB installer size). Supported on Windows 10, Windows 11, macOS, and Linux.
-- Mobile App: Android & iOS companion cleaner with unified licensing.
-- Core Modules: DeepClean (browser & system cache cleaner), Optimization (RAM purge & startup optimizer), Uninstaller (residual file & registry cleaner), Utilities (duplicate file finder & multi-pass file shredder).
+- Mobile App: Android & iOS companion cleaner with unified cross-platform licensing.
+- Core Desktop Modules:
+  - DeepClean: System temp, browser caches, Messenger & Collaboration caches (Slack, Teams, Zoom, Telegram, Discord), Windows Installer & INet cache slimmer, Activity & JumpList traces, and unified 7-day Quarantine + Recycle Bin inspector.
+  - Optimization (RAM, Processes & Boot): Real-time RAM purge, interactive Process Manager (End Task), 1-click Gaming & Focus Boost, Startup Apps optimizer, Windows Right-Click Context Menu manager, and real Boot Time & Battery Health diagnostics.
+  - Software & Shortcuts: Drag-and-Drop App Uninstaller with leftover file/registry scanner, Winget Software Updater, Registry Repair, and Broken Shortcuts (.lnk) & Empty Folder cleaner.
+  - Storage & Duplicates: Cryptographic SHA-256 Duplicate Finder, Visual Disk Map, Large File Finder (>50MB), and 1-click Large File Mover across drives.
+  - Privacy, Browser & Shredder: Browser Privacy Cleaner, Smart Cookie Allowlist, Browser SQLite Database VACUUM Compactor, Browser Extension Inspector, k-Anonymity Password Breach Check, Cryptographic Password Generator, and SSD-Aware Secure File Shredder (1-pass & 3-pass).
+- Core Mobile Modules: Duplicate & Similar Photo Cleaner with Best Shot AI, Blurry Photo Detector, Swipe-to-Clean Photo Triage Mode, Hardware Video Compressor, Batch Photo Optimizer & EXIF GPS Location Privacy Stripper, WhatsApp & Telegram Media Cleaner, Safe Contact Merger & Old Calendar Events (>1 yr) Cleaner, 30-Day System Trash Undo, and Live Home-Screen Storage Widget.
 
 ## Pricing & Licensing
-- Free Tier: Unlimited basic temporary file scanning and cleanup.
-- Pro Introductory Plan: £1.99 for the 1st month of full Pro access across 3 PCs and 2 mobile devices, auto-renewing at £9.99/month. Cancel anytime in 1 click.
+- Free Tier: Unlimited system & storage scanning and previewing.
+- Annual Pro (Most Popular): £49.99/year (£4.16/mo equivalent — Save 58%, no free trial).
+- 6-Month Pro: £38.99 every 6 months (£6.50/mo equivalent — Save 35%).
 - Monthly Pro: £9.99/month (cancel anytime in 1 click).
-- Annual Pro: £49.99/year (58% savings).
-- Guarantee: 30-day money-back guarantee.
+- Pro Introductory Offer: £1.99 for the 1st month of full Pro access across 3 Desktop PCs + 2 Mobile devices, auto-renewing at £9.99/month.
+- Guarantee: 14-day money-back guarantee.
 
 ## Key Differentiators vs Legacy Cleaners (CCleaner, Avast)
 - No background adware or telemetry daemons.
 - Under 15MB installer vs 100MB+ legacy bloatware.
 - Memory-safe Rust engine for high-speed scanning and deletion.
-- Exact file paths and byte sizes shown before anything is deleted.
-- Single license covers 3 Desktop PCs + 2 Mobile devices.
+- Exact file paths and byte sizes shown before anything is deleted, backed by a 7-day Quarantine rollback.
+- Single license covers up to 3 Desktop PCs + 2 Mobile devices.
 
 ## Official Links
 - Homepage: https://sweeprcleaner.com/
 - Pricing: https://sweeprcleaner.com/pricing
+- Order: https://sweeprcleaner.com/order
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support

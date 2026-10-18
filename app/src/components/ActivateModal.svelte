@@ -5,6 +5,7 @@
 
   let email = $state("");
   let emailConfirm = $state("");
+  let selectedPlan = $state<"annual" | "monthly">("annual");
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
@@ -41,7 +42,7 @@
 
     busy = true;
     try {
-      const activatedImmediately = await api.startCheckout(email.trim());
+      const activatedImmediately = await api.startCheckout(email.trim(), selectedPlan);
       if (activatedImmediately || (await checkLicense())) {
         stopPolling();
         open = false;
@@ -85,7 +86,7 @@
       {#if !waitingPayment}
         <div class="modal-body">
           <p class="prompt-text">
-            Please enter your <strong>Email address</strong> (required for activation)
+            Please enter your <strong>Email address</strong> (existing subscribers unlock immediately; new users continue to checkout)
           </p>
 
           <div class="inputs-group">
@@ -103,6 +104,25 @@
               class="soft-input"
               aria-label="Confirm email address"
             />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:340px; margin-bottom:14px; text-align:left;">
+            <button
+              type="button"
+              onclick={() => (selectedPlan = "annual")}
+              style="padding:8px 10px; border-radius:9px; border:1.5px solid {selectedPlan === 'annual' ? '#10b981' : '#cbd5e1'}; background:{selectedPlan === 'annual' ? 'rgba(16,185,129,0.1)' : 'transparent'}; cursor:pointer; font-size:12px;"
+            >
+              <div style="font-weight:700;">Annual · £49.99/yr</div>
+              <div style="font-size:10.5px; color:#059669; font-weight:600;">Save 58% (£4.16/mo)</div>
+            </button>
+            <button
+              type="button"
+              onclick={() => (selectedPlan = "monthly")}
+              style="padding:8px 10px; border-radius:9px; border:1.5px solid {selectedPlan === 'monthly' ? '#10b981' : '#cbd5e1'}; background:{selectedPlan === 'monthly' ? 'rgba(16,185,129,0.1)' : 'transparent'}; cursor:pointer; font-size:12px;"
+            >
+              <div style="font-weight:700;">Monthly · £9.99/mo</div>
+              <div style="font-size:10.5px; opacity:0.75;">Flexible · Cancel anytime</div>
+            </button>
           </div>
 
           {#if error}

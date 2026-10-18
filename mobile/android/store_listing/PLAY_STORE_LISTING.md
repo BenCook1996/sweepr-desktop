@@ -43,17 +43,22 @@ Whether it's thousands of duplicate and burst photos, blurry out-of-focus shots,
 • Instantly spot your largest videos and media files over 50 MB sorted largest-first.
 • Compress large videos to 1080p, 720p, or 480p directly on your phone using hardware acceleration — saving up to 72% of space while keeping the original until you move it to System Trash.
 
+🛡️ Batch Photo Optimizer & EXIF GPS Location Privacy Stripper
+• Shrink oversized photos (>1.5 MB) with smart 82% JPEG optimization while preserving visual clarity.
+• Strip embedded EXIF GPS location coordinates from your photos in one tap before sharing them on social media.
+
 💬 Messenger Media Cleaner (WhatsApp & Telegram)
 • Review and clean saved WhatsApp and Telegram photos and videos in one dedicated view using Android's safe Scoped Storage.
 
-👆 Month-by-Month Swipe Cleanup
-• Turn photo decluttering into a breeze: pick any month and swipe right to keep or swipe left to trash.
+👆 Swipe-to-Clean Photo Triage & Month-by-Month Deck
+• Switch any photo category (Duplicates, Similar, Blurry, Screenshots, Messenger Media) into interactive Swipe Triage Mode, or pick any month — swipe right to keep, swipe left to trash, with instant undo.
 
 🖼️ One-Tap Screenshot Cleaner
 • Gather every old receipt, map, and accidental screenshot in one place and clear them in bulk.
 
-👥 Safe Duplicate Contact Merger
+👥 Safe Duplicate Contact Merger & Old Calendar Events Cleaner
 • Finds contacts sharing the same name or phone number and links them using Android's native Contacts provider — no phone numbers or emails are ever lost.
+• Scans and cleans expired non-recurring calendar events older than 1 year to declutter your schedule.
 
 🗑️ 30-Day System Trash & One-Tap Undo
 • Everything you clean on Android 11+ goes to the Android System Trash for 30 days. Changed your mind? Restore items anytime from the Recently Deleted (Trash) view inside Sweepr.
@@ -62,21 +67,22 @@ Whether it's thousands of duplicate and burst photos, blurry out-of-focus shots,
 • Keep an eye on your used and free storage percentage right from your home screen with a one-tap "Clean Now" shortcut.
 
 🔒 100% ON-DEVICE PRIVACY
-• Your photos, videos, and contacts are scanned locally on your phone and are never uploaded to any server.
+• Your photos, videos, contacts, and calendar events are scanned locally on your phone and are never uploaded to any server.
 • Strictly compliant with Google Play's Scoped Storage policies — no invasive all-files permissions.
 
 💳 SUBSCRIPTION & PRICING
 • Scanning your phone is completely free.
-• Unlock unlimited cleanup, video compression, swipe review, and contact merging with Sweepr Premium:
+• Unlock unlimited cleanup, video & photo optimization, EXIF GPS privacy stripping, swipe triage, and contact/calendar cleanup with Sweepr Premium:
   – Monthly Plan: £9.99/month (no free trial, cancel anytime in Google Play)
-  – Annual Plan: £49.99/year — Save 58% (£4.17/mo equivalent, no free trial, cancel anytime in Google Play)
+  – Annual Plan: £49.99/year — Save 58% (£4.16/mo equivalent, no free trial, cancel anytime in Google Play)
+  – Cross-Platform Account Linking: Link your Sweepr Pro license via 6-digit email OTP to share access across up to 3 Desktop PCs + 2 Mobile devices.
 • Subscriptions renew automatically through Google Play unless cancelled before the renewal date at https://play.google.com/store/account/subscriptions.
 ```
 
 ---
 
 ## ASO Keywords & Semantic Targets
-- **Primary Keywords:** phone cleaner, storage cleaner, duplicate photo remover, similar photos, best shot, video compressor, screenshot cleaner, contact merger, swipe photo cleaner, free up space, whatsapp cleaner
+- **Primary Keywords:** phone cleaner, storage cleaner, duplicate photo remover, similar photos, best shot, video compressor, photo compressor, exif gps remover, screenshot cleaner, contact merger, calendar cleaner, swipe photo cleaner, free up space, whatsapp cleaner
 - **Secondary Keywords:** blurry photo detector, large files cleaner, gallery cleaner, declutter photos, storage widget, system trash restore
 
 ---

@@ -175,11 +175,20 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     const status: EntStatus = body.status === "active" ? "active" : "trialing";
     const plan = body.plan || "monthly";
-    const days = Number(body.days || 30);
+    const days = Number(body.days || (plan === "annual" ? 365 : plan === "six_month" ? 180 : plan === "lifetime" ? 36500 : 30));
     const periodEnd = now() + days * 86400;
-    const amount_cents = body.amount_cents !== undefined ? Number(body.amount_cents) : (plan === "annual" ? 9900 : plan === "lifetime" ? 19900 : 999);
+    const amount_cents =
+      body.amount_cents !== undefined
+        ? Number(body.amount_cents)
+        : plan === "annual"
+        ? 4999
+        : plan === "six_month"
+        ? 3899
+        : plan === "lifetime"
+        ? 19900
+        : 999;
     const currency = (body.currency || "usd").toLowerCase();
-    const interval = plan === "annual" ? "year" : plan === "lifetime" ? "lifetime" : "month";
+    const interval = plan === "annual" ? "year" : plan === "six_month" ? "6 months" : plan === "lifetime" ? "lifetime" : "month";
 
     const subId = `sub_${randomToken(8)}`;
     repo.upsertEntitlement({
@@ -250,17 +259,21 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     if (!email) return c.json({ error: "Email is required" }, 400);
 
     const name = (body.name || email.split("@")[0] || "Customer").trim();
-    const plan = body.plan || "annual"; // monthly | annual | lifetime
+    const plan = body.plan || "annual"; // monthly | six_month | annual | lifetime
     const status: EntStatus = body.status === "trialing" ? "trialing" : "active";
     const currency = (body.currency || "usd").toLowerCase();
 
-    let defaultAmount = 9900;
+    let defaultAmount = 4999;
     let defaultDays = 365;
     let interval = "year";
     if (plan === "monthly") {
       defaultAmount = 999;
       defaultDays = 30;
       interval = "month";
+    } else if (plan === "six_month") {
+      defaultAmount = 3899;
+      defaultDays = 180;
+      interval = "6 months";
     } else if (plan === "lifetime") {
       defaultAmount = 19900;
       defaultDays = 36500;

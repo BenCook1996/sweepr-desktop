@@ -31,7 +31,7 @@
     <Program_Release_Month>10</Program_Release_Month>
     <Program_Release_Day>18</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
-    <Program_Cost_Dollars>12.99</Program_Cost_Dollars>
+    <Program_Cost_Dollars>11.99</Program_Cost_Dollars>
     <Program_Type>Freemium</Program_Type>
     <Program_Release_Status>Major Update</Program_Release_Status>
     <Program_Install_Support>Install and Uninstall</Program_Install_Support>
@@ -45,18 +45,18 @@
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
     </Expire_Info>
-    <Program_Change_Info>Initial release with native Rust DeepClean engine, Smart App Uninstaller, Startup &amp; RAM Optimizer, SHA-256 Duplicate Finder, DoD 5220.22-M File Shredder, and 7-day Quarantine Rollback.</Program_Change_Info>
+    <Program_Change_Info>2026 release with native Rust DeepClean &amp; Messenger Cache engine, Drag-and-Drop App Uninstaller, Winget Software Updater, RAM &amp; Gaming Boost, Context Menu Manager, SHA-256 Duplicate &amp; Large File Mover, Browser SQLite Compactor, SSD-Aware File Shredder, and 7-day Quarantine Rollback.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category>System Utilities</Program_Specific_Category>
     <Program_System_Requirements>Windows 10 or Windows 11 (64-bit), 50 MB RAM, 20 MB free disk space</Program_System_Requirements>
   </Program_Info>
   <Program_Descriptions>
     <English>
-      <Keywords>pc cleaner, disk cleaner, system optimizer, ccleaner alternative, uninstaller, duplicate file finder, file shredder, registry cleaner</Keywords>
+      <Keywords>pc cleaner, disk cleaner, system optimizer, ccleaner alternative, uninstaller, duplicate file finder, file shredder, registry cleaner, winget updater</Keywords>
       <Char_Desc_45>Ultra-lightweight Rust PC &amp; disk cleaner.</Char_Desc_45>
-      <Char_Desc_80>Native Rust PC cleaner, smart uninstaller, RAM optimizer &amp; DoD file shredder.</Char_Desc_80>
-      <Char_Desc_250>SWEEPR Cleaner is an ultra-lightweight native Rust PC cleaner and privacy optimizer for Windows 10 and 11. Features 60-second deep cache cleanup, Smart Uninstaller, Startup &amp; RAM Optimizer, SHA-256 Duplicate Finder, and 1-click Quarantine rollback.</Char_Desc_250>
-      <Char_Desc_450>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust. Designed as a clean, bloatware-free alternative to legacy PC cleaners, SWEEPR runs strictly on-demand with zero background daemons or telemetry. Includes DeepClean cache cleanup, Smart App Uninstaller, Startup &amp; RAM Purge, SHA-256 Duplicate Finder, DoD 5220.22-M File Shredder, and 7-day Quarantine with 1-click rollback.</Char_Desc_450>
+      <Char_Desc_80>Native Rust PC cleaner, smart uninstaller, RAM optimizer &amp; SSD file shredder.</Char_Desc_80>
+      <Char_Desc_250>SWEEPR Cleaner is an ultra-lightweight native Rust PC cleaner and privacy optimizer for Windows 10 and 11. Features 60-second deep cache cleanup, Drag-and-Drop Uninstaller, Winget App Updater, RAM &amp; Gaming Boost, SHA-256 Duplicate Finder, and 7-day Quarantine rollback.</Char_Desc_250>
+      <Char_Desc_450>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust. Designed as a clean, bloatware-free alternative to legacy PC cleaners, SWEEPR runs strictly on-demand with zero background daemons or telemetry. Includes DeepClean system &amp; messenger cache cleanup, Drag-and-Drop Uninstaller, Winget Updater, RAM &amp; Gaming Boost, SHA-256 Duplicate &amp; Large File Mover, SSD-Aware File Shredder, and 7-day Quarantine rollback.</Char_Desc_450>
       <Char_Desc_2000>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust for Windows 10 and Windows 11.
 
 Designed specifically as an alternative to legacy PC cleaners that have become bloated with background daemons, telemetry, and popup ads, SWEEPR Cleaner delivers maximum disk recovery with zero system overhead.
@@ -64,11 +64,12 @@ Designed specifically as an alternative to legacy PC cleaners that have become b
 Key Features:
 - Native Rust Engine (5.4 MB): Starts instantly, consumes under 40 MB of RAM during execution, and finishes deep system scans in under 60 seconds.
 - Zero Background Processes: SWEEPR runs strictly on-demand with no startup services or background CPU usage.
-- 7-Day Quarantine &amp; 1-Click Rollback: Isolates removed caches into a secure quarantine so you can restore files with one click.
-- DeepClean Cache Engine: Cleans Windows Temp, AppData, browser caches (Chrome, Edge, Firefox, Brave), GPU shader caches, and diagnostic crash dumps.
-- Smart App Uninstaller: Discovers and erases stubborn leftovers, orphaned folders, and stale registry keys left behind by standard Windows uninstalls.
-- Duplicate File Finder: Uses cryptographic SHA-256 byte verification to safely detect and remove identical duplicate files.
-- Secure File Shredder: Meets DoD 5220.22-M sanitization standards for permanent deletion of sensitive personal files.</Char_Desc_2000>
+- 7-Day Quarantine &amp; Recycle Bin Inspector: Isolates removed caches into a secure quarantine so you can restore files with one click.
+- DeepClean Cache Engine: Cleans Windows Temp, AppData, browser caches (Chrome, Edge, Firefox, Brave), Messenger caches (Slack, Teams, Zoom, Telegram, Discord), GPU shader caches, and Windows Installer &amp; INet caches.
+- Performance, Gaming Boost &amp; Context Menu Manager: Real-time RAM purge, interactive Process Manager, 1-click Gaming Boost, Startup Apps optimizer, and Windows Right-Click Context Menu manager.
+- Smart App Uninstaller &amp; Winget Updater: Drag-and-drop shortcut resolver, leftover file &amp; registry scanner, broken shortcuts (.lnk) cleaner, and 1-click Winget software updates.
+- Duplicate Finder &amp; Large File Mover: Cryptographic SHA-256 duplicate detection, visual disk breakdown, and 1-click large file relocation to secondary drives.
+- Privacy Hub &amp; SSD-Aware File Shredder: Smart Cookie Allowlist, Browser SQLite Compactor, Extension Inspector, k-Anonymity Password Breach Check, and SSD-aware 1-pass zero-fill / 3-pass HDD overwrite file shredder.</Char_Desc_2000>
     </English>
   </Program_Descriptions>
   <Web_Info>
