@@ -393,4 +393,50 @@
     <string name="review_prompt_title">Gefällt Ihnen SWEEPR Cleaner?</string>
     <string name="review_prompt_body">Sie haben Ihre 2. Bereinigung abgeschlossen! Eine Bewertung bei Google Play hilft uns sehr.</string>
     <string name="review_prompt_later">Später</string>
+
+    <string name="triage_mode_grid">Rasteransicht</string>
+    <string name="triage_mode_swipe">Swipe-Modus</string>
+    <string name="triage_progress_status">Foto %1$d von %2$d · %3$s für Papierkorb</string>
+    <string name="triage_done_subtitle">%1$s für den Papierkorb markiert. Unten auf In den Papierkorb tippen.</string>
+    <string name="triage_review_again">Erneut prüfen</string>
+    <string name="triage_btn_trash">Papierkorb</string>
+    <string name="triage_btn_keep">Behalten</string>
+    <string name="triage_sharpness_badge">Schärfe %1$s</string>
+    <string name="triage_marked_trash_badge">PAPIERKORB</string>
+
+    <string name="media_opt_tab_video">Video-Kompressor</string>
+    <string name="media_opt_tab_photo_privacy">Foto-Optimierer &amp; GPS</string>
+    <string name="photo_opt_toggle_compress">Dateigröße komprimieren (82% JPEG)</string>
+    <string name="photo_opt_toggle_compress_sub">Skaliert &gt;2560px herab &amp; speichert mit 82% Qualität</string>
+    <string name="photo_opt_toggle_gps">EXIF-GPS-Standortdaten entfernen</string>
+    <string name="photo_opt_toggle_gps_sub">Entfernt versteckte GPS-Tags (%1$d Fotos mit GPS)</string>
+    <string name="photo_opt_batch_cta">%1$d Fotos optimieren (~%2$s sparen)</string>
+    <string name="photo_opt_batch_gps_only_cta">EXIF-GPS aus %1$d Fotos entfernen</string>
+    <string name="photo_opt_empty">Keine großen Fotos (&gt;1,5 MB) oder GPS-Fotos gefunden 🎉</string>
+    <string name="photo_opt_badge_action">Optimieren</string>
+    <string name="photo_opt_badge_gps">GPS</string>
+    <string name="photo_opt_header_count">%1$d optimierbare Fotos · %2$s</string>
+    <string name="photo_opt_working_title">Fotos werden optimiert…</string>
+    <string name="photo_opt_working_body">Auflösung wird komprimiert und EXIF-GPS-Daten werden entfernt…</string>
+    <string name="photo_opt_done_title">Fotos optimiert!</string>
+    <string name="photo_opt_done_summary">%1$d Fotos optimiert: %2$s → %3$s\nGesparter Platz: %4$s (%5$d%%)</string>
+    <string name="photo_opt_gps_stripped_summary">EXIF-GPS-Standort aus %1$d Fotos entfernt</string>
+    <string name="photo_opt_saved_location">In Pictures/Sweepr gespeichert. Originale bleiben erhalten, bis sie in den 30-Tage-Papierkorb verschoben werden.</string>
+    <string name="photo_opt_trash_original">Original in 30-Tage-Papierkorb</string>
+    <string name="photo_opt_failed">Ausgewählte Fotos konnten nicht optimiert werden.</string>
+
+    <string name="contacts_tab_cleanup">Kontakte bereinigen</string>
+    <string name="calendar_tab_old_events">Alte Termine (&gt;1 J.)</string>
+    <string name="calendar_permission_text">SWEEPR Cleaner benötigt Kalenderzugriff, um abgelaufene Termine älter als 1 Jahr zu finden und zu löschen.</string>
+    <string name="calendar_permission_button">Kalenderzugriff erlauben</string>
+    <string name="calendar_none_found">Keine Kalendertermine älter als 1 Jahr gefunden 🎉</string>
+    <string name="calendar_header_count">%1$d abgelaufene Termine (&gt;1 Jahr alt)</string>
+    <string name="calendar_explainer">Nicht wiederkehrende vergangene Termine älter als 1 Jahr.</string>
+    <string name="calendar_select_to_delete">Alte Termine zum Löschen auswählen</string>
+    <string name="calendar_delete_selected">%1$d alte Termine löschen</string>
+    <string name="calendar_untitled_event">Unbenannter Termin</string>
+    <plurals name="msg_calendar_events_deleted">
+        <item quantity="one">%d alter Kalendertermin gelöscht</item>
+        <item quantity="other">%d alte Kalendertermine gelöscht</item>
+    </plurals>
 </resources>

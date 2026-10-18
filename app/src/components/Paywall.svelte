@@ -80,7 +80,7 @@
           <div class="muted small">Choose the plan that works best for you at checkout.</div>
           <ul>
             <li>Unlocks all deep-cleaning categories, browser &amp; app caches, and Pro optimization tools</li>
-            <li>Covers up to 3 PCs + 3 mobile devices</li>
+            <li>Covers up to 3 Desktop PCs</li>
             <li>Secure checkout by Stripe, opens in your browser</li>
           </ul>
         </div>
@@ -109,28 +109,7 @@
   .backdrop { position: fixed; inset: 0; background: #0009; display: grid; place-items: center; z-index: 50; backdrop-filter: blur(3px); }
   .sheet { width: 480px; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
   h2 { margin: 0; }
-  .plan-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .plan-option {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 3px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1.5px solid var(--border);
-    background: var(--panel-2);
-    cursor: pointer;
-    box-shadow: none;
-    white-space: normal;
-  }
-  .plan-option.selected {
-    border-color: var(--accent);
-    background: var(--accent-light);
-  }
-  .opt-price { font-size: 18px; font-weight: 800; color: var(--accent); }
   .price { padding: 16px; text-align: left; background: var(--panel-2); display: flex; flex-direction: column; gap: 6px; }
-  .amount { font-size: 26px; color: var(--accent); }
   ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
   .spinner { align-self: center; width: 36px; height: 36px; border: 4px solid var(--panel-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }

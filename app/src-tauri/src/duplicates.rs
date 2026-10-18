@@ -421,6 +421,95 @@ pub async fn delete_large_file(state: State<'_, AppState>, path: String) -> AppR
     .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
 }
 
+pub fn move_large_file_blocking(dir: &str, file: &str, target_dir: &str) -> AppResult<String> {
+    let file_path = PathBuf::from(file.trim());
+    if !file_path.is_absolute() {
+        return Err(AppError::Other("File path must be absolute.".into()));
+    }
+    if !dir.trim().is_empty() {
+        let scan_root = validate_scan_folder(dir)?;
+        if !safety::is_within(&file_path, scan_root) {
+            return Err(AppError::Other("Selected file must be inside the scanned folder.".into()));
+        }
+    }
+    #[cfg(windows)]
+    {
+        for var in ["SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "ProgramData"] {
+            if let Ok(v) = std::env::var(var) {
+                if safety::is_within(&file_path, Path::new(&v)) {
+                    return Err(AppError::Other(
+                        "Refusing to move a protected Windows or Program Files item.".into(),
+                    ));
+                }
+            }
+        }
+    }
+    let md = std::fs::symlink_metadata(&file_path)
+        .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
+    if !md.is_file() || safety::metadata_is_link_like(&md) {
+        return Err(AppError::Other("Refusing to move symlink or non-regular file.".into()));
+    }
+    let canon_file = std::fs::canonicalize(&file_path)
+        .map_err(|e| AppError::Other(format!("Cannot resolve file path: {e}")))?;
+    let canon_md = std::fs::symlink_metadata(&canon_file)
+        .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
+    if !canon_md.is_file() || safety::metadata_is_link_like(&canon_md) {
+        return Err(AppError::Other("Refusing to move symlink or non-regular file.".into()));
+    }
+
+    let target_root = PathBuf::from(target_dir.trim());
+    if !target_root.is_absolute() {
+        return Err(AppError::Other("Destination folder must be a full (absolute) path.".into()));
+    }
+    if let Ok(tmd) = std::fs::symlink_metadata(&target_root) {
+        if safety::metadata_is_link_like(&tmd) {
+            return Err(AppError::Other(
+                "Refusing to move into a symlink or junction folder.".into(),
+            ));
+        }
+        if !tmd.is_dir() {
+            return Err(AppError::Other("Destination path is not a folder.".into()));
+        }
+    } else {
+        std::fs::create_dir_all(&target_root)
+            .map_err(|e| AppError::Other(format!("Could not create destination folder: {e}")))?;
+    }
+
+    let file_name = canon_file
+        .file_name()
+        .ok_or_else(|| AppError::Other("Could not determine file name.".into()))?;
+    let dest = target_root.join(file_name);
+    if dest.exists() || std::fs::symlink_metadata(&dest).is_ok() {
+        return Err(AppError::Other(
+            "A file with that name already exists in the destination folder.".into(),
+        ));
+    }
+
+    if std::fs::rename(&canon_file, &dest).is_err() {
+        std::fs::copy(&canon_file, &dest)
+            .map_err(|e| AppError::Other(format!("Failed copying file to destination: {e}")))?;
+        if let Err(e) = std::fs::remove_file(&canon_file) {
+            let _ = std::fs::remove_file(&dest);
+            return Err(AppError::Other(format!("Failed removing original file after copy: {e}")));
+        }
+    }
+
+    Ok(dest.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+pub async fn move_large_file(
+    state: State<'_, AppState>,
+    dir: String,
+    file: String,
+    target_dir: String,
+) -> AppResult<String> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(move || move_large_file_blocking(&dir, &file, &target_dir))
+        .await
+        .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -454,7 +543,8 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("sweepr-large-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("videos")).unwrap();
-        std::fs::write(dir.join("videos").join("movie.mp4"), vec![b'x'; 2048]).unwrap();
+        let movie = dir.join("videos").join("movie.mp4");
+        std::fs::write(&movie, vec![b'x'; 2048]).unwrap();
         std::fs::write(dir.join("notes.txt"), vec![b'y'; 64]).unwrap();
 
         let d = dir.to_string_lossy().to_string();
@@ -465,6 +555,17 @@ mod tests {
         assert!(!rep.by_extension.is_empty());
         assert!(!rep.by_folder.is_empty());
 
+        let dest_dir = dir.join("archive");
+        let moved_to = move_large_file_blocking(
+            &d,
+            &movie.to_string_lossy(),
+            &dest_dir.to_string_lossy(),
+        )
+        .unwrap();
+        assert!(!movie.exists());
+        assert!(Path::new(&moved_to).exists());
+
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
+

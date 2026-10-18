@@ -173,9 +173,11 @@ class AppViewModel: ObservableObject {
     @Published var mediaResult = MediaScanResult()
     @Published var contactGroups: [ContactDuplicateGroup] = []
     @Published var incompleteContacts: [ContactEntry] = []
+    @Published var oldCalendarEvents: [OldCalendarEvent] = []
     @Published var selectedMediaIDs: Set<String> = []
     @Published var selectedContactGroupIDs: Set<String> = []
     @Published var selectedIncompleteContactIDs: Set<String> = []
+    @Published var selectedCalendarEventIDs: Set<String> = []
     @Published var storage = StorageInfo.current()
 
     @Published var hasPremium = false
@@ -290,6 +292,80 @@ class AppViewModel: ObservableObject {
             selectedIncompleteContactIDs.remove(id)
         } else {
             selectedIncompleteContactIDs.insert(id)
+        }
+    }
+
+    func toggleCalendarEventSelection(id: String) {
+        if selectedCalendarEventIDs.contains(id) {
+            selectedCalendarEventIDs.remove(id)
+        } else {
+            selectedCalendarEventIDs.insert(id)
+        }
+    }
+
+    func scanOldCalendarEvents() async {
+        let granted = await ContactsCleaner.requestCalendarAccess()
+        guard granted else { return }
+        let events = await ContactsCleaner.scanOldCalendarEvents(olderThanDays: 365)
+        oldCalendarEvents = events
+        selectedCalendarEventIDs = Set(events.map(\.id))
+    }
+
+    func deleteSelectedCalendarEvents() async {
+        guard !selectedCalendarEventIDs.isEmpty else { return }
+        isWorking = true
+        let ids = Array(selectedCalendarEventIDs)
+        do {
+            let deleted = try await ContactsCleaner.deleteCalendarEvents(identifiers: ids)
+            oldCalendarEvents.removeAll { selectedCalendarEventIDs.contains($0.id) }
+            selectedCalendarEventIDs.removeAll()
+            alertMessage = "Deleted \(deleted) expired calendar events older than 1 year."
+            if deleted > 0 {
+                requestAppStoreReview()
+            }
+        } catch {
+            CrashLogger.recordError("DeleteCalendarEvents", error: error)
+            alertMessage = "Could not delete calendar events: \(error.localizedDescription)"
+        }
+        isWorking = false
+    }
+
+    func optimizePhotos(
+        ids: [String],
+        compressQuality: Bool,
+        stripGps: Bool,
+        deleteOriginals: Bool = false
+    ) async {
+        guard !ids.isEmpty else { return }
+        isWorking = true
+        var savedBytesTotal: Int64 = 0
+        var strippedCount = 0
+        var optimizedCount = 0
+        for id in ids {
+            if let res = try? await PhotoScanner.optimizePhoto(
+                assetId: id,
+                compressQuality: compressQuality,
+                stripGps: stripGps,
+                deleteOriginal: deleteOriginals
+            ) {
+                optimizedCount += 1
+                savedBytesTotal += res.savedBytes
+                if res.gpsStripped {
+                    strippedCount += 1
+                }
+            }
+        }
+        if deleteOriginals {
+            mediaResult = mediaResult.removing(ids: Set(ids))
+        }
+        isWorking = false
+        refreshStorage()
+        if optimizedCount > 0 {
+            let gpsNote = strippedCount > 0 ? " · Stripped GPS from \(strippedCount) photos" : ""
+            alertMessage = "Optimized \(optimizedCount) photos! Saved \(formatByteCount(savedBytesTotal))\(gpsNote)."
+            requestAppStoreReview()
+        } else {
+            alertMessage = "Could not optimize selected photos."
         }
     }
 

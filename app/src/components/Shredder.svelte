@@ -1,13 +1,43 @@
 <script lang="ts">
-  import { api, errorMessage, isPaymentRequired, requestActivation, type LicenseStatus } from "../lib/api";
+  import {
+    api,
+    errorMessage,
+    isPaymentRequired,
+    requestActivation,
+    type DriveMediaInfo,
+    type LicenseStatus,
+  } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
   let { license } = $props<{ license: LicenseStatus | null }>();
   let filePath = $state("");
+  let passes = $state<number>(1);
+  let mediaInfo = $state<DriveMediaInfo | null>(null);
+  let lastDetectedPrefix = $state("");
   let shredding = $state(false);
   let statusMessage = $state("");
   let isError = $state(false);
   let needsPro = $state(false);
+
+  async function detectMedia(pathToCheck: string) {
+    const target = pathToCheck.trim() || "C:\\";
+    try {
+      const info = await api.detectDriveMediaType(target);
+      mediaInfo = info;
+      passes = info.recommended_passes;
+    } catch {
+      // Ignore detection errors
+    }
+  }
+
+  $effect(() => {
+    const trimmed = filePath.trim();
+    const prefix = trimmed.length >= 2 ? trimmed.slice(0, 3).toUpperCase() : "C:\\";
+    if (prefix !== lastDetectedPrefix) {
+      lastDetectedPrefix = prefix;
+      detectMedia(trimmed || "C:\\");
+    }
+  });
 
   async function handleShred() {
     if (!filePath.trim()) {
@@ -16,18 +46,30 @@
       return;
     }
 
-    if (!confirm(`This is IRREVERSIBLE.\n\n"${filePath}" will be overwritten 3 times (zeros, ones, then a fixed 0x55 pattern) and then deleted.\n\nProceed?`)) {
+    const passDesc =
+      passes === 1
+        ? "overwritten with a 1-pass zero-fill (SSD-safe)"
+        : "overwritten 3 times (zeros, ones, then a fixed 0x55 pattern)";
+
+    if (
+      !confirm(
+        `This is IRREVERSIBLE.\n\n"${filePath}" will be ${passDesc} and then permanently deleted.\n\nProceed?`
+      )
+    ) {
       return;
     }
 
     shredding = true;
     needsPro = false;
-    statusMessage = "Overwriting file (pass 1: 0x00, pass 2: 0xFF, pass 3: 0x55)…";
+    statusMessage =
+      passes === 1
+        ? "Overwriting file (1-pass SSD-safe zero-fill)…"
+        : "Overwriting file (pass 1: 0x00, pass 2: 0xFF, pass 3: 0x55)…";
     isError = false;
 
     try {
-      const bytes = await api.shredFile(filePath.trim());
-      statusMessage = `Overwrote ${formatBytes(bytes)} three times and deleted the file.`;
+      const bytes = await api.shredFile(filePath.trim(), passes);
+      statusMessage = `Overwrote ${formatBytes(bytes)} (${passes}-pass) and permanently deleted the file.`;
       filePath = "";
     } catch (e) {
       if (isPaymentRequired(e)) {
@@ -45,13 +87,44 @@
 </script>
 
 <div class="header">
-  <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Secure File Shredder</h1>
-  <p class="muted small" style="margin-top: 4px;">Overwrites a single file three times before deleting it.</p>
+  <h2 style="font-size: 22px; font-weight: 800; letter-spacing: -0.4px; margin: 0;">Secure File Shredder</h2>
+  <p class="muted small" style="margin-top: 4px;">
+    Permanently overwrite sensitive files in place before unlinking them from the filesystem.
+  </p>
 </div>
 
 <div class="card shred-card">
   <div class="shred-badge-row">
-    <span class="muted small">3-pass overwrite</span>
+    {#if mediaInfo}
+      <span class="badge" class:free={mediaInfo.is_ssd} class:pro={!mediaInfo.is_ssd}>
+        {mediaInfo.is_ssd
+          ? "SSD Detected — 1-Pass Zero-Fill Recommended to protect NAND lifespan"
+          : "HDD Detected — 3-Pass Overwrite Recommended"}
+      </span>
+    {:else}
+      <span class="badge free">Smart SSD / HDD Overwrite Protection</span>
+    {/if}
+
+    <div class="spacer"></div>
+
+    <div class="pass-selector" role="radiogroup" aria-label="Overwrite passes">
+      <button
+        type="button"
+        class="pass-btn"
+        class:active={passes === 1}
+        onclick={() => (passes = 1)}
+      >
+        1-Pass (Fast / SSD Safe)
+      </button>
+      <button
+        type="button"
+        class="pass-btn"
+        class:active={passes === 3}
+        onclick={() => (passes = 3)}
+      >
+        3-Pass (HDD Deep Overwrite)
+      </button>
+    </div>
   </div>
 
   <div class="shred-info-box">
@@ -60,17 +133,23 @@
     </div>
     <div>
       <strong>How it works, and its limits</strong>
-      <p class="muted small" style="margin: 4px 0 0 0;">Unlike normal deletion or emptying the Recycle Bin, the file's contents are overwritten in place (zeros, ones, then a 0x55 pattern) before it is deleted. This is best-effort: on SSDs and flash drives, and in cloud-synced folders (OneDrive, Dropbox…), backups or shadow copies, earlier copies of the data may survive. System and program folders are protected and can't be shredded.</p>
+      <p class="muted small" style="margin: 4px 0 0 0;">Unlike normal deletion or emptying the Recycle Bin, the file's contents are overwritten in place before it is deleted. On modern SSDs/NVMe drives, 1-pass zero-fill prevents unnecessary NAND flash wear while clearing file blocks. System and program folders are protected and can't be shredded.</p>
     </div>
   </div>
 
   <div class="input-row">
-    <input type="text" bind:value={filePath} placeholder="Enter full path (e.g. C:\Users\Username\Documents\confidential.pdf)" class="file-input" />
+    <input
+      type="text"
+      bind:value={filePath}
+      onblur={() => detectMedia(filePath)}
+      placeholder="Enter full path (e.g. C:\Users\Username\Documents\confidential.pdf)"
+      class="file-input"
+    />
     <button class="primary shred-btn" onclick={handleShred} disabled={shredding}>
       {#if shredding}
         <span>Shredding…</span>
       {:else}
-        <span>SHRED FILE NOW</span>
+        <span>SHRED FILE ({passes}-PASS)</span>
       {/if}
     </button>
   </div>
@@ -86,16 +165,40 @@
 </div>
 
 <style>
-  .header { margin-bottom: 24px; }
+  .header { margin-bottom: 16px; }
   .shred-card {
-    padding: 28px;
-    max-width: 860px;
+    padding: 24px 28px;
   }
   .shred-badge-row {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .pass-selector {
+    display: flex;
+    gap: 4px;
+    background: var(--panel-2);
+    padding: 3px;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+  }
+  .pass-btn {
+    background: transparent;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .pass-btn.active {
+    background: var(--panel-solid);
+    color: var(--accent);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
   }
   .shred-info-box {
     display: flex;
@@ -121,9 +224,11 @@
     display: flex;
     gap: 14px;
     align-items: center;
+    flex-wrap: wrap;
   }
   .file-input {
     flex: 1;
+    min-width: 240px;
     padding: 12px 18px;
     border-radius: 9999px;
     border: 1.5px solid var(--border);

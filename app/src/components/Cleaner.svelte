@@ -6,7 +6,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { api, errorMessage, isPaymentRequired, requestActivation, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
+  import { api, errorMessage, isPaymentRequired, requestActivation, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RecycleBinInfo, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import Paywall from "./Paywall.svelte";
   import { addLifetimeStats, getLifetimeStats } from "../lib/store";
@@ -27,6 +27,8 @@
   let showExclusions = $state(false);
   let newExclusionPath = $state("");
   let quarantine = $state<QuarantineEntry[]>([]);
+  let recycleBin = $state<RecycleBinInfo | null>(null);
+  let emptyingRecycleBin = $state(false);
   let showQuarantine = $state(false);
   let restoreNotice = $state<string | null>(null);
   let runningConflicts = $state<RunningAppConflict[]>([]);
@@ -116,7 +118,30 @@
   async function toggleQuarantineDrawer() {
     showQuarantine = !showQuarantine;
     if (showQuarantine) {
-      quarantine = await api.listQuarantine().catch(() => []);
+      const [q, rb] = await Promise.all([
+        api.listQuarantine().catch(() => []),
+        api.recycleBinInfo().catch(() => null),
+      ]);
+      quarantine = q;
+      recycleBin = rb;
+    }
+  }
+
+  async function emptyWindowsRecycleBin() {
+    error = null;
+    restoreNotice = null;
+    emptyingRecycleBin = true;
+    try {
+      const freedBytes = await api.emptyRecycleBin();
+      addLifetimeStats(freedBytes, recycleBin?.items ?? 0);
+      lifetimeStats = getLifetimeStats();
+      recycleBin = { bytes: 0, items: 0 };
+      restoreNotice = `Emptied Windows Recycle Bin (${formatBytes(freedBytes)} permanently freed).`;
+    } catch (e) {
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
+    } finally {
+      emptyingRecycleBin = false;
     }
   }
 
@@ -292,15 +317,36 @@
 
 {#if showQuarantine}
   <div class="card" style="padding: 18px 22px; margin-bottom: 18px;">
-    <div class="row" style="margin-bottom: 10px;">
-      <strong>Quarantine / Undo Vault ({quarantine.length})</strong>
+    <div class="row" style="margin-bottom: 12px;">
+      <strong>Quarantine & Recycle Bin Vault</strong>
       <div class="spacer"></div>
-      <span class="muted small">Items retained for 7 days for one-click recovery</span>
+      <span class="muted small">Items retained for 7 days in Quarantine for one-click recovery</span>
       <button class="ghost" style="padding: 4px 10px; font-size: 12px;" onclick={() => (showQuarantine = false)}>Close</button>
     </div>
+
+    <!-- Windows Recycle Bin Summary Bar -->
+    <div class="row" style="background: var(--panel-2); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px; gap: 12px;">
+      <span class="badge free">Windows Recycle Bin</span>
+      <div style="flex: 1;">
+        <strong class="small">
+          {recycleBin ? `${formatBytes(recycleBin.bytes)} (${formatCount(recycleBin.items)} items)` : "Checking Recycle Bin…"}
+        </strong>
+        <div class="muted small">System-wide deleted files across local drives</div>
+      </div>
+      <button
+        class="primary"
+        style="padding: 5px 14px; font-size: 12px;"
+        disabled={emptyingRecycleBin || !recycleBin || (recycleBin.bytes === 0 && recycleBin.items === 0)}
+        onclick={emptyWindowsRecycleBin}
+      >
+        {emptyingRecycleBin ? "Emptying…" : "Empty Recycle Bin"}
+      </button>
+    </div>
+
     {#if restoreNotice}
       <div class="small" style="color: var(--accent); margin-bottom: 8px;">{restoreNotice}</div>
     {/if}
+    <div class="muted small" style="margin-bottom: 6px; font-weight: 600;">SWEEPR 7-Day Quarantine ({quarantine.length})</div>
     {#if quarantine.length === 0}
       <div class="muted small">Quarantine vault is empty.</div>
     {:else}

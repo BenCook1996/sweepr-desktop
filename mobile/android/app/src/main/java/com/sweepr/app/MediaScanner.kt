@@ -50,6 +50,8 @@ data class MediaItem(
     val isTrashed: Boolean = false,
     /** Expiration timestamp (ms) when Android will permanently purge a trashed item. */
     val dateExpiresMs: Long = 0L,
+    /** True when the photo contains EXIF GPS location coordinates (#9). */
+    val hasGps: Boolean = false,
 )
 
 /** Media that look the same. The first item is the "Best Shot" copy we recommend keeping. */
@@ -190,14 +192,15 @@ object MediaScanner {
     }
 
     private fun enrichWithPerceptualMetrics(context: Context, item: MediaItem): MediaItem {
-        val bmp = loadSmallBitmap(context, item.uri) ?: return item
+        val hasGps = PhotoOptimizer.hasGpsMetadata(context, item.uri)
+        val bmp = loadSmallBitmap(context, item.uri) ?: return item.copy(hasGps = hasGps)
         return try {
             val hash = computeDHash(bmp)
             val sharp = computeLaplacianSharpness(bmp)
             val megapixels = ((item.width.toLong().coerceAtLeast(1L) * item.height.toLong().coerceAtLeast(1L)).toDouble()) / 1_000_000.0
             // Combine sharpness with resolution bonus so the sharpest, highest-resolution frame wins Best Shot
             val quality = sharp * (1.0 + (megapixels / 12.0).coerceAtMost(1.5)) + (item.size.toDouble() / (10.0 * 1024 * 1024))
-            item.copy(dHash = hash, sharpness = sharp, qualityScore = quality)
+            item.copy(dHash = hash, sharpness = sharp, qualityScore = quality, hasGps = hasGps)
         } finally {
             bmp.recycle()
         }

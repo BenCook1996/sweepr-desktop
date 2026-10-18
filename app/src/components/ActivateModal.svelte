@@ -205,38 +205,6 @@
     font-weight: 700;
   }
 
-  .plan-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    width: 100%;
-    margin-bottom: 16px;
-  }
-  .plan-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 4px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1.5px solid var(--border);
-    background: var(--panel-2);
-    cursor: pointer;
-    box-shadow: none;
-    white-space: normal;
-  }
-  .plan-card.selected {
-    border-color: var(--accent);
-    background: var(--accent-light);
-  }
-  .plan-price {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--accent);
-    margin-top: 2px;
-  }
-
   .inputs-group {
     width: 100%;
     display: flex;
@@ -259,10 +227,6 @@
     background: #ffffff;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-  }
-
-  .pricing-hint {
-    margin-bottom: 18px;
   }
 
   .action-row {

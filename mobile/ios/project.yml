@@ -19,8 +19,10 @@ targets:
         CFBundleDisplayName: "SWEEPR Cleaner"
         UILaunchStoryboardName: LaunchScreen
         NSPhotoLibraryUsageDescription: "SWEEPR Cleaner analyzes your library on-device to group duplicates, similar shots, screenshots, and large videos so you can reclaim storage space."
-        NSPhotoLibraryAddUsageDescription: "SWEEPR Cleaner saves compressed videos back to your photo library after hardware compression."
+        NSPhotoLibraryAddUsageDescription: "SWEEPR Cleaner saves compressed videos and optimized photos back to your photo library."
         NSContactsUsageDescription: "SWEEPR Cleaner scans your contacts locally on-device to find duplicate and incomplete entries and merge them safely."
+        NSCalendarsUsageDescription: "SWEEPR Cleaner scans your calendar locally on-device to find and remove expired non-recurring events older than 1 year."
+        NSCalendarsFullAccessUsageDescription: "SWEEPR Cleaner scans your calendar locally on-device to find and remove expired non-recurring events older than 1 year."
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

@@ -1,8 +1,11 @@
 import AVFoundation
 import CryptoKit
 import Foundation
+import ImageIO
+import MobileCoreServices
 import Photos
 import UIKit
+import UniformTypeIdentifiers
 
 struct MediaItem: Identifiable, Hashable {
     let id: String // PHAsset.localIdentifier
@@ -17,6 +20,7 @@ struct MediaItem: Identifiable, Hashable {
     let dHash: UInt64
     let sharpness: Double
     let isBlurry: Bool
+    var hasLocation: Bool = false
 
     var resolutionPixels: Int {
         pixelWidth * pixelHeight
@@ -55,6 +59,18 @@ struct VideoCompressionResult {
     }
 }
 
+struct PhotoOptimizationResult {
+    let originalAssetId: String
+    let newAssetId: String?
+    let originalBytes: Int64
+    let optimizedBytes: Int64
+    let gpsStripped: Bool
+
+    var savedBytes: Int64 {
+        max(0, originalBytes - optimizedBytes)
+    }
+}
+
 struct MediaScanResult {
     var duplicateGroups: [MediaGroup] = []
     var similarGroups: [MediaGroup] = []
@@ -62,6 +78,10 @@ struct MediaScanResult {
     var screenshots: [MediaItem] = []
     var largeVideos: [MediaItem] = []
     var allItems: [MediaItem] = []
+
+    var optimizablePhotos: [MediaItem] {
+        allItems.filter { !$0.isVideo && ($0.estimatedBytes >= PhotoScanner.optimizablePhotoThreshold || $0.hasLocation) }
+    }
 
     var totalReclaimableBytes: Int64 {
         let dupBytes = duplicateGroups.reduce(0) { $0 + $1.reclaimableBytes }
@@ -95,6 +115,8 @@ typealias MediaScanner = PhotoScanner
 enum PhotoScanner {
     /// Videos larger than 50 MB are surfaced for hardware compression or deletion (#35).
     static let largeVideoThreshold: Int64 = 50 * 1024 * 1024
+    /// Photos larger than 1.5 MB or with GPS location tags are surfaced for Photo Optimizer & Privacy (#1, #9).
+    static let optimizablePhotoThreshold: Int64 = 1_536 * 1024
     private static let similarWindowSeconds: TimeInterval = 5.0
     private static let similarMaxHammingDistance = 10
     private static let blurThreshold: Double = 28.0
@@ -117,6 +139,136 @@ enum PhotoScanner {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
         try await PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.deleteAssets(fetchResult)
+        }
+    }
+
+    /// #1 Batch Photo Optimizer + #9 EXIF GPS Privacy Stripper.
+    /// Uses `CGImageSource` and `CGImageDestination` with `kCGImagePropertyGPSDictionary: kCFNull`
+    /// and `0.82` JPEG compression quality to strip GPS metadata and shrink oversized photos.
+    static func optimizePhoto(
+        assetId: String,
+        compressQuality: Bool = true,
+        stripGps: Bool = true,
+        deleteOriginal: Bool = false
+    ) async throws -> PhotoOptimizationResult {
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
+        guard let asset = fetchResult.firstObject, asset.mediaType == .image else {
+            throw NSError(
+                domain: "SweeprPhotoScanner",
+                code: 404,
+                userInfo: [NSLocalizedDescriptionKey: "Photo asset not found in Photo Library."]
+            )
+        }
+
+        let imageData = try await requestImageData(for: asset)
+        let originalBytes = Int64(imageData.count)
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else {
+            throw NSError(
+                domain: "SweeprPhotoScanner",
+                code: 500,
+                userInfo: [NSLocalizedDescriptionKey: "Could not read photo metadata stream."]
+            )
+        }
+
+        let rawProps = (CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]) ?? [:]
+        let hadGps = rawProps[kCGImagePropertyGPSDictionary] != nil || asset.location != nil
+
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData,
+            UTType.jpeg.identifier as CFString,
+            1,
+            nil
+        ) else {
+            throw NSError(
+                domain: "SweeprPhotoScanner",
+                code: 501,
+                userInfo: [NSLocalizedDescriptionKey: "Could not initialize JPEG destination encoder."]
+            )
+        }
+
+        var destOptions: [CFString: Any] = rawProps
+        if stripGps {
+            destOptions[kCGImagePropertyGPSDictionary] = kCFNull
+        }
+        if compressQuality {
+            destOptions[kCGImageDestinationLossyCompressionQuality] = 0.82
+            destOptions[kCGImageDestinationImageMaxPixelSize] = 2560
+        } else {
+            destOptions[kCGImageDestinationLossyCompressionQuality] = 0.95
+        }
+
+        if compressQuality {
+            let thumbOpts: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 2560
+            ]
+            if let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbOpts as CFDictionary) {
+                destOptions[kCGImagePropertyOrientation] = 1
+                CGImageDestinationAddImage(destination, cgImage, destOptions as CFDictionary)
+            } else {
+                CGImageDestinationAddImageFromSource(destination, source, 0, destOptions as CFDictionary)
+            }
+        } else {
+            CGImageDestinationAddImageFromSource(destination, source, 0, destOptions as CFDictionary)
+        }
+
+        guard CGImageDestinationFinalize(destination), mutableData.length > 0 else {
+            throw NSError(
+                domain: "SweeprPhotoScanner",
+                code: 502,
+                userInfo: [NSLocalizedDescriptionKey: "Could not finalize optimized photo."]
+            )
+        }
+
+        let outputData = mutableData as Data
+        let optimizedBytes = Int64(outputData.count)
+
+        var createdPlaceholderId: String?
+        try await PHPhotoLibrary.shared().performChanges {
+            let creationRequest = PHAssetCreationRequest.forAsset()
+            creationRequest.addResource(with: .photo, data: outputData, options: nil)
+            creationRequest.creationDate = asset.creationDate
+            if !stripGps {
+                creationRequest.location = asset.location
+            }
+            createdPlaceholderId = creationRequest.placeholderForCreatedAsset?.localIdentifier
+            if deleteOriginal {
+                PHAssetChangeRequest.deleteAssets(fetchResult)
+            }
+        }
+
+        return PhotoOptimizationResult(
+            originalAssetId: assetId,
+            newAssetId: createdPlaceholderId,
+            originalBytes: originalBytes,
+            optimizedBytes: compressQuality ? min(optimizedBytes, originalBytes) : optimizedBytes,
+            gpsStripped: stripGps && hadGps
+        )
+    }
+
+    private static func requestImageData(for asset: PHAsset) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            let options = PHImageRequestOptions()
+            options.isNetworkAccessAllowed = true
+            options.deliveryMode = .highQualityFormat
+            options.version = .current
+            var resumed = false
+            PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { data, _, _, info in
+                guard !resumed else { return }
+                resumed = true
+                if let data = data {
+                    continuation.resume(returning: data)
+                } else {
+                    let err = (info?[PHImageErrorKey] as? Error) ?? NSError(
+                        domain: "SweeprPhotoScanner",
+                        code: 503,
+                        userInfo: [NSLocalizedDescriptionKey: "Unable to load photo data from Photo Library."]
+                    )
+                    continuation.resume(throwing: err)
+                }
+            }
         }
     }
 
@@ -292,7 +444,8 @@ enum PhotoScanner {
                 sha256Hash: "",
                 dHash: dHash,
                 sharpness: sharpness,
-                isBlurry: isBlurry
+                isBlurry: isBlurry,
+                hasLocation: !isVideo && asset.location != nil
             )
             rawItems.append((asset, item))
         }
@@ -333,7 +486,8 @@ enum PhotoScanner {
                     sha256Hash: digest,
                     dHash: candidate.item.dHash,
                     sharpness: candidate.item.sharpness,
-                    isBlurry: candidate.item.isBlurry
+                    isBlurry: candidate.item.isBlurry,
+                    hasLocation: candidate.item.hasLocation
                 )
                 enrichedById[updated.id] = updated
                 hashSubgroups[digest, default: []].append(updated)

@@ -583,6 +583,329 @@ pub async fn upgrade_software(state: State<'_, AppState>, id: String) -> AppResu
     }
 }
 
+pub fn clean_query_from_path_or_name(input: &str) -> String {
+    let trimmed = input.trim().trim_matches('"');
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    let normalized = trimmed.replace('/', "\\");
+    let file_part = normalized.rsplit('\\').next().unwrap_or(trimmed).trim();
+
+    let mut stem = file_part.to_string();
+    for ext in [".lnk", ".exe", ".msi", ".url", ".appref-ms", ".bat", ".cmd"] {
+        if stem.len() > ext.len() && stem[stem.len() - ext.len()..].eq_ignore_ascii_case(ext) {
+            stem.truncate(stem.len() - ext.len());
+            break;
+        }
+    }
+
+    let noise_words = [
+        "setup",
+        "installer",
+        "install",
+        "uninstall",
+        "unins000",
+        "x64",
+        "x86",
+        "win64",
+        "win32",
+        "amd64",
+        "arm64",
+        "shortcut",
+        "launcher",
+    ];
+
+    let spaced = stem.replace(['_', '-', '.', '(', ')', '[', ']'], " ");
+    let filtered: Vec<&str> = spaced
+        .split_whitespace()
+        .filter(|w| {
+            let lower = w.to_ascii_lowercase();
+            if noise_words.contains(&lower.as_str()) {
+                return false;
+            }
+            // Strip pure version tokens like "1", "24", "v2"
+            let without_v = lower.strip_prefix('v').unwrap_or(&lower);
+            if !without_v.is_empty() && without_v.chars().all(|c| c.is_ascii_digit()) {
+                return false;
+            }
+            true
+        })
+        .collect();
+
+    if filtered.is_empty() {
+        stem.trim().to_string()
+    } else {
+        filtered.join(" ")
+    }
+}
+
+#[tauri::command]
+pub async fn resolve_shortcut_or_exe(path: String) -> AppResult<String> {
+    Ok(clean_query_from_path_or_name(&path))
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct BrokenItem {
+    pub path: String,
+    pub name: String,
+    pub kind: String, // "broken_shortcut" | "empty_folder"
+    pub detail: String,
+}
+
+fn find_exe_paths_in_str(s: &str, out: &mut Vec<String>) {
+    let bytes = s.as_bytes();
+    let mut i = 0usize;
+    while i + 6 < bytes.len() {
+        let c = bytes[i];
+        let is_drive = c.is_ascii_alphabetic()
+            && bytes[i + 1] == b':'
+            && bytes[i + 2] == b'\\'
+            && (i == 0 || !bytes[i - 1].is_ascii_alphanumeric());
+        if is_drive {
+            let mut end = i + 3;
+            while end < bytes.len() {
+                let b = bytes[end];
+                if b < 0x20 || b >= 0x7F || matches!(b, b'"' | b'<' | b'>' | b'|' | b'?' | b'*') {
+                    break;
+                }
+                end += 1;
+            }
+            let candidate = &s[i..end];
+            if let Some(pos) = candidate.to_ascii_lowercase().find(".exe") {
+                let exe_path = candidate[..pos + 4].trim().to_string();
+                let lower = exe_path.to_ascii_lowercase();
+                if exe_path.len() > 7
+                    && !exe_path.contains('%')
+                    && !lower.contains("\\windows\\installer\\")
+                    && !lower.contains("\\windows\\system32\\")
+                    && !out.iter().any(|p| p.eq_ignore_ascii_case(&exe_path))
+                {
+                    out.push(exe_path);
+                }
+            }
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn extract_lnk_exe_targets(bytes: &[u8]) -> Vec<String> {
+    let mut out = Vec::new();
+    // 1. Scan ASCII/ANSI segments
+    let ascii: String = bytes
+        .iter()
+        .map(|&b| if (0x20..0x7F).contains(&b) { b as char } else { '\0' })
+        .collect();
+    find_exe_paths_in_str(&ascii, &mut out);
+
+    // 2. Scan UTF-16LE segments (aligned and 1-byte offset)
+    for offset in [0usize, 1usize] {
+        if bytes.len() > offset + 2 {
+            let u16s: Vec<u16> = bytes[offset..]
+                .chunks_exact(2)
+                .map(|c| u16::from_le_bytes([c[0], c[1]]))
+                .map(|u| if (0x20..0x7F).contains(&u) { u } else { 0 })
+                .collect();
+            let utf16_str = String::from_utf16_lossy(&u16s);
+            find_exe_paths_in_str(&utf16_str, &mut out);
+        }
+    }
+    out
+}
+
+pub fn scan_broken_items_in_roots(
+    folder_roots: &[std::path::PathBuf],
+    shortcut_roots: &[std::path::PathBuf],
+) -> Vec<BrokenItem> {
+    let mut items = Vec::new();
+    let mut seen_paths = std::collections::HashSet::new();
+
+    for root in folder_roots {
+        if !root.is_dir() {
+            continue;
+        }
+        for entry in walkdir::WalkDir::new(root)
+            .follow_links(false)
+            .min_depth(1)
+            .max_depth(3)
+            .into_iter()
+            .filter_entry(|e| !crate::safety::is_link_like(e))
+            .flatten()
+        {
+            let p = entry.path();
+            if entry.file_type().is_dir() {
+                let name = entry.file_name().to_string_lossy().into_owned();
+                if name.starts_with('.') {
+                    continue;
+                }
+                let is_empty = std::fs::read_dir(p)
+                    .map(|mut rd| rd.next().is_none())
+                    .unwrap_or(false);
+                if is_empty {
+                    let key = p.to_string_lossy().to_ascii_lowercase();
+                    if seen_paths.insert(key) {
+                        items.push(BrokenItem {
+                            path: p.to_string_lossy().into_owned(),
+                            name,
+                            kind: "empty_folder".into(),
+                            detail: "Empty directory (0 files)".into(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    for root in shortcut_roots {
+        if !root.is_dir() {
+            continue;
+        }
+        for entry in walkdir::WalkDir::new(root)
+            .follow_links(false)
+            .min_depth(1)
+            .max_depth(3)
+            .into_iter()
+            .filter_entry(|e| !crate::safety::is_link_like(e))
+            .flatten()
+        {
+            if !entry.file_type().is_file() {
+                continue;
+            }
+            let p = entry.path();
+            let is_lnk = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.eq_ignore_ascii_case("lnk"))
+                .unwrap_or(false);
+            if !is_lnk {
+                continue;
+            }
+            let Ok(md) = entry.metadata() else { continue };
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if md.len() == 0 {
+                let key = p.to_string_lossy().to_ascii_lowercase();
+                if seen_paths.insert(key) {
+                    items.push(BrokenItem {
+                        path: p.to_string_lossy().into_owned(),
+                        name,
+                        kind: "broken_shortcut".into(),
+                        detail: "Corrupted 0-byte shortcut".into(),
+                    });
+                }
+                continue;
+            }
+            if md.len() > 256 * 1024 {
+                continue;
+            }
+            let Ok(bytes) = std::fs::read(p) else { continue };
+            let targets = extract_lnk_exe_targets(&bytes);
+            if !targets.is_empty() && targets.iter().all(|t| !std::path::Path::new(t).exists()) {
+                let key = p.to_string_lossy().to_ascii_lowercase();
+                if seen_paths.insert(key) {
+                    items.push(BrokenItem {
+                        path: p.to_string_lossy().into_owned(),
+                        name,
+                        kind: "broken_shortcut".into(),
+                        detail: format!("Missing target: {}", targets[0]),
+                    });
+                }
+            }
+        }
+    }
+
+    items
+}
+
+#[tauri::command]
+pub async fn scan_broken_items() -> AppResult<Vec<BrokenItem>> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let mut folder_roots = Vec::new();
+        for d in [dirs::desktop_dir(), dirs::download_dir(), dirs::document_dir()]
+            .into_iter()
+            .flatten()
+        {
+            if d.is_dir() && !folder_roots.contains(&d) {
+                folder_roots.push(d);
+            }
+        }
+        let mut shortcut_roots = folder_roots.clone();
+        if let Some(roaming) = dirs::data_dir() {
+            let start_menu = roaming.join("Microsoft\\Windows\\Start Menu\\Programs");
+            if start_menu.is_dir() {
+                shortcut_roots.push(start_menu);
+            }
+        }
+        scan_broken_items_in_roots(&folder_roots, &shortcut_roots)
+    })
+    .await
+    .map_err(|e| AppError::Other(format!("background task failed: {e}")))
+}
+
+pub fn clean_broken_items_in_roots(
+    paths: &[String],
+    allowed_roots: &[std::path::PathBuf],
+) -> AppResult<u32> {
+    let mut removed = 0u32;
+    for raw in paths {
+        let p = std::path::PathBuf::from(raw.trim());
+        if !p.is_absolute() {
+            continue;
+        }
+        if !allowed_roots.iter().any(|r| crate::safety::is_within(&p, r)) {
+            continue;
+        }
+        let Ok(md) = std::fs::symlink_metadata(&p) else {
+            continue;
+        };
+        if crate::safety::metadata_is_link_like(&md) {
+            continue;
+        }
+        if md.is_dir() {
+            if std::fs::remove_dir(&p).is_ok() {
+                removed += 1;
+            }
+        } else if md.is_file() {
+            let is_lnk = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.eq_ignore_ascii_case("lnk"))
+                .unwrap_or(false);
+            if is_lnk && std::fs::remove_file(&p).is_ok() {
+                removed += 1;
+            }
+        }
+    }
+    Ok(removed)
+}
+
+#[tauri::command]
+pub async fn clean_broken_items(
+    state: State<'_, AppState>,
+    paths: Vec<String>,
+) -> AppResult<u32> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut allowed_roots = Vec::new();
+        for d in [
+            dirs::home_dir(),
+            dirs::data_dir(),
+            dirs::data_local_dir(),
+            dirs::desktop_dir(),
+            dirs::download_dir(),
+            dirs::document_dir(),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            allowed_roots.push(d);
+        }
+        clean_broken_items_in_roots(&paths, &allowed_roots)
+    })
+    .await
+    .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -626,4 +949,32 @@ Mozilla Firefox    Mozilla.Firefox     122.0     124.0.1   winget
         assert!(validate_winget_id("Mozilla.Firefox").is_ok());
         assert!(validate_winget_id("foo & calc.exe").is_err());
     }
+
+    #[test]
+    fn shortcut_and_broken_item_helpers() {
+        assert_eq!(
+            clean_query_from_path_or_name(r"C:\Users\Public\Desktop\Discord.lnk"),
+            "Discord"
+        );
+        assert_eq!(clean_query_from_path_or_name("Spotify_Setup_x64.exe"), "Spotify");
+
+        let dir = std::env::temp_dir().join(format!("sweepr-broken-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let empty_sub = dir.join("EmptySubFolder");
+        std::fs::create_dir_all(&empty_sub).unwrap();
+        let bad_lnk = dir.join("OldGame.lnk");
+        std::fs::write(&bad_lnk, b"L\x00\x00\x00C:\\NonExistentFolder12345\\OldGame.exe\x00").unwrap();
+
+        let found = scan_broken_items_in_roots(std::slice::from_ref(&dir), std::slice::from_ref(&dir));
+        assert_eq!(found.len(), 2);
+
+        let paths: Vec<String> = found.iter().map(|i| i.path.clone()).collect();
+        let cleaned = clean_broken_items_in_roots(&paths, std::slice::from_ref(&dir)).unwrap();
+        assert_eq!(cleaned, 2);
+        assert!(!empty_sub.exists());
+        assert!(!bad_lnk.exists());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
+

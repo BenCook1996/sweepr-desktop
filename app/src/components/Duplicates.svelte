@@ -25,6 +25,8 @@
   let needsPro = $state(false);
   let scanned = $state(false);
   let selectedDir = $state("");
+  let targetMoveDir = $state("");
+  let movingFile = $state<string | null>(null);
 
   const selectedList = $derived(Object.keys(selectedFiles).filter((k) => selectedFiles[k]));
   const selectedBytes = $derived(
@@ -113,6 +115,35 @@
       } else {
         error = errorMessage(e);
       }
+    }
+  }
+
+  async function moveLargeFileToFolder(filePath: string) {
+    let destDir = targetMoveDir.trim();
+    if (!destDir) {
+      const prompted = window.prompt("Enter destination folder path to move this file (e.g. D:\\Archive):");
+      if (!prompted || !prompted.trim()) return;
+      destDir = prompted.trim();
+      targetMoveDir = destDir;
+    }
+    error = "";
+    statusMessage = "";
+    movingFile = filePath;
+    try {
+      const newPath = await api.moveLargeFile(selectedDir.trim(), filePath, destDir);
+      statusMessage = `Moved file to ${newPath}.`;
+      if (largeReport) {
+        largeReport.top_files = largeReport.top_files.filter((f) => f.path !== filePath);
+      }
+    } catch (e) {
+      if (isPaymentRequired(e)) {
+        needsPro = true;
+        requestActivation();
+      } else {
+        error = errorMessage(e);
+      }
+    } finally {
+      movingFile = null;
     }
   }
 </script>
@@ -288,10 +319,17 @@
   </div>
 
   <div class="card" style="padding: 20px 24px; margin-top: 18px;">
-    <div class="row" style="margin-bottom: 12px;">
+    <div class="row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 12px;">
       <strong>Largest Files ({largeReport.top_files.length})</strong>
       <div class="spacer"></div>
-      <span class="muted small">Files deleted here go safely to your Recycle Bin</span>
+      <input
+        type="text"
+        bind:value={targetMoveDir}
+        placeholder="Move destination folder (e.g. D:\Archive)…"
+        aria-label="Destination folder to move large files"
+        style="min-width: 260px; padding: 6px 14px; border-radius: 9999px; border: 1px solid var(--border); background: var(--panel-solid); font-size: 12.5px;"
+      />
+      <span class="muted small">Move to another drive/folder or Recycle Bin</span>
     </div>
     {#if largeReport.top_files.length === 0}
       <div class="muted small">No files larger than {minSizeMb} MB found in this folder.</div>
@@ -307,8 +345,16 @@
               </div>
             </div>
             <strong style="color: var(--accent); font-size: 15px;">{formatBytes(lf.size)}</strong>
+            <button
+              class="ghost"
+              style="padding: 5px 12px; font-size: 12px;"
+              disabled={movingFile === lf.path}
+              onclick={() => moveLargeFileToFolder(lf.path)}
+            >
+              {movingFile === lf.path ? "Moving…" : "Move…"}
+            </button>
             <button class="ghost" style="padding: 5px 12px; font-size: 12px;" onclick={() => trashLargeFile(lf.path)}>
-              Move to Trash
+              Move to Recycle Bin
             </button>
           </div>
         {/each}

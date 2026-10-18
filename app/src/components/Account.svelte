@@ -32,6 +32,7 @@
   // App Update Checker
   let updateInfo = $state<AppUpdateInfo | null>(null);
   let checkingUpdate = $state(false);
+  let installingUpdate = $state(false);
 
   $effect(() => {
     stats = getLifetimeStats();
@@ -44,6 +45,7 @@
     api.getAutostart().then((v) => (autostart = v)).catch(() => {});
     api.getScheduleSettings().then((s) => (schedule = s || "off")).catch(() => {});
     api.getCleaningHistory().then((h) => (history = h)).catch(() => {});
+    api.checkAppUpdate().then((u) => (updateInfo = u)).catch(() => {});
   });
 
   async function startPlanCheckout() {
@@ -147,6 +149,18 @@
       error = errorMessage(e);
     } finally {
       checkingUpdate = false;
+    }
+  }
+
+  async function installUpdate() {
+    if (!updateInfo || installingUpdate) return;
+    error = null;
+    installingUpdate = true;
+    try {
+      await api.installAppUpdate(updateInfo.url || undefined);
+    } catch (e) {
+      error = errorMessage(e);
+      installingUpdate = false;
     }
   }
 
@@ -285,11 +299,16 @@
       <div class="spacer"></div>
       {#if info}<span class="badge free">v{info.version}</span>{/if}
     </div>
-    <p class="muted small" style="margin: 0;">Check for the latest SWEEPR Cleaner release and cleaning rules definition updates.</p>
-    <div class="row">
-      <button class="primary" disabled={checkingUpdate} onclick={checkUpdates}>
+    <p class="muted small" style="margin: 0;">SWEEPR Cleaner automatically checks for updates on launch and in the background.</p>
+    <div class="row" style="gap: 8px; flex-wrap: wrap;">
+      <button class="ghost" disabled={checkingUpdate || installingUpdate} onclick={checkUpdates}>
         {checkingUpdate ? "Checking…" : "Check for Updates"}
       </button>
+      {#if updateInfo?.update_available}
+        <button class="primary" disabled={installingUpdate} onclick={installUpdate}>
+          {installingUpdate ? "Downloading & Updating…" : `Update to v${updateInfo.latest_version} & Restart`}
+        </button>
+      {/if}
     </div>
     {#if updateInfo}
       <div class="update-box small">

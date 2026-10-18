@@ -5,6 +5,7 @@
     isPaymentRequired,
     requestActivation,
     type AppRemnant,
+    type BrokenItem,
     type InstalledApp,
     type LicenseStatus,
     type OutdatedApp,
@@ -15,12 +16,14 @@
   import { addLifetimeStats } from "../lib/store";
 
   let { license } = $props<{ license: LicenseStatus | null }>();
-  let mode = $state<"apps" | "updater" | "remnants" | "registry">("apps");
+  let mode = $state<"apps" | "updater" | "remnants" | "registry" | "broken">("apps");
   let apps = $state<InstalledApp[]>([]);
   let outdated = $state<OutdatedApp[]>([]);
   let remnants = $state<AppRemnant[]>([]);
   let regIssues = $state<RegistryIssue[]>([]);
   let regBackups = $state<RegistryBackupEntry[]>([]);
+  let brokenItems = $state<BrokenItem[]>([]);
+  let selectedBroken = $state<Record<string, boolean>>({});
   let loading = $state(true);
   let updaterLoading = $state(false);
   let updaterLoaded = $state(false);
@@ -30,12 +33,86 @@
   let remnantsLoaded = $state(false);
   let regLoading = $state(false);
   let regLoaded = $state(false);
+  let brokenLoading = $state(false);
+  let brokenLoaded = $state(false);
+  let brokenCleaning = $state(false);
   let proNotice = $state<string | null>(null);
   let error = $state<string | null>(null);
+
+  // Search & Drag-and-Drop Uninstaller filter state
+  let searchQuery = $state("");
+  let dragActive = $state(false);
+  let resolvingTarget = $state(false);
+  let resolvedHint = $state<string | null>(null);
+
+  const filteredApps = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const base = q
+      ? apps.filter(
+          (a) =>
+            a.name.toLowerCase().includes(q) ||
+            (a.publisher && a.publisher.toLowerCase().includes(q))
+        )
+      : apps.filter((a) => a.estimated_size > 0);
+    return [...base].sort((a, b) => b.estimated_size - a.estimated_size);
+  });
+
+  const matchingRemnants = $derived.by(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return remnants.filter(
+      (r) => r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q)
+    );
+  });
+
+  const selectedBrokenPaths = $derived(
+    Object.keys(selectedBroken).filter((p) => selectedBroken[p])
+  );
 
   $effect(() => {
     api.fetchApps().then((a) => { apps = a; loading = false; }).catch(() => { loading = false; });
   });
+
+  async function resolveShortcutPath(rawPath: string) {
+    const trimmed = rawPath.trim().replace(/^"+|"+$/g, "");
+    if (!trimmed) return;
+    resolvingTarget = true;
+    error = null;
+    try {
+      const resolved = await api.resolveShortcutOrExe(trimmed);
+      searchQuery = resolved;
+      resolvedHint = `Isolated target "${resolved}" from ${trimmed.split(/[\\/]/).pop() || trimmed}`;
+      if (!remnantsLoaded && !remnantsLoading) {
+        loadRemnants();
+      }
+    } catch (e) {
+      // Fallback: extract filename stem if backend couldn't resolve path
+      const fileName = trimmed.split(/[\\/]/).pop() ?? trimmed;
+      const stem = fileName.replace(/\.(lnk|exe|msi|url)$/i, "");
+      searchQuery = stem;
+      resolvedHint = `Filtered by "${stem}"`;
+    } finally {
+      resolvingTarget = false;
+    }
+  }
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragActive = false;
+    const file = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
+    if (file?.path) {
+      resolveShortcutPath(file.path);
+      return;
+    }
+    if (file?.name) {
+      resolveShortcutPath(file.name);
+      return;
+    }
+    const textData = e.dataTransfer?.getData("text/plain");
+    if (textData) {
+      resolveShortcutPath(textData);
+    }
+  }
 
   async function loadOutdated() {
     updaterLoading = true;
@@ -96,6 +173,45 @@
     }
   }
 
+  async function loadBroken() {
+    brokenLoading = true;
+    brokenLoaded = true;
+    error = null;
+    try {
+      brokenItems = await api.scanBrokenItems();
+      selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, true]));
+    } catch (e) {
+      error = errorMessage(e);
+      brokenItems = [];
+    } finally {
+      brokenLoading = false;
+    }
+  }
+
+  async function cleanBrokenSelected() {
+    if (!selectedBrokenPaths.length) return;
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Broken shortcut & empty folder cleanup");
+      return;
+    }
+    error = null;
+    proNotice = null;
+    updaterMessage = null;
+    brokenCleaning = true;
+    try {
+      const removed = await api.cleanBrokenItems(selectedBrokenPaths);
+      addLifetimeStats(0, removed);
+      updaterMessage = `Removed ${removed} broken shortcut(s) and empty folder(s).`;
+      const removedSet = new Set(selectedBrokenPaths);
+      brokenItems = brokenItems.filter((i) => !removedSet.has(i.path));
+      selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, true]));
+    } catch (e) {
+      handleError(e, "Broken shortcut & empty folder cleanup");
+    } finally {
+      brokenCleaning = false;
+    }
+  }
+
   $effect(() => {
     if (mode === "updater" && !updaterLoaded && !updaterLoading) {
       loadOutdated();
@@ -105,6 +221,9 @@
     }
     if (mode === "registry" && !regLoaded && !regLoading) {
       loadRegistry();
+    }
+    if (mode === "broken" && !brokenLoaded && !brokenLoading) {
+      loadBroken();
     }
   });
 
@@ -185,7 +304,7 @@
   <div class="row" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
     <div>
       <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Software, Updates & Registry Repair</h1>
-      <p class="muted small" style="margin-top: 4px;">Uninstall software cleanly, update outdated apps via Winget, remove orphaned AppData folders, and repair broken Registry entries.</p>
+      <p class="muted small" style="margin-top: 4px;">Uninstall software cleanly, update outdated apps via Winget, remove orphaned AppData folders, and clean broken shortcuts.</p>
     </div>
 
     <div class="mode-toggle" role="tablist">
@@ -197,6 +316,9 @@
       </button>
       <button class="mode-btn" class:active={mode === "remnants"} onclick={() => (mode = "remnants")} role="tab" aria-selected={mode === "remnants"}>
         Leftover Remnants ({remnants.length})
+      </button>
+      <button class="mode-btn" class:active={mode === "broken"} onclick={() => (mode = "broken")} role="tab" aria-selected={mode === "broken"}>
+        Broken Shortcuts & Folders ({brokenItems.length})
       </button>
       <button class="mode-btn" class:active={mode === "registry"} onclick={() => (mode = "registry")} role="tab" aria-selected={mode === "registry"}>
         Registry Repair ({regIssues.length})
@@ -220,14 +342,79 @@
 {/if}
 
 {#if mode === "apps"}
+  <!-- Search & Drag-and-Drop Uninstaller Bar -->
+  <div
+    class="card drop-filter-bar"
+    class:drag-over={dragActive}
+    ondragover={(e) => {
+      e.preventDefault();
+      dragActive = true;
+    }}
+    ondragleave={() => (dragActive = false)}
+    ondrop={handleDrop}
+    role="region"
+    aria-label="Search installed apps or drop a shortcut to uninstall"
+  >
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); flex-shrink: 0;">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input
+      type="text"
+      bind:value={searchQuery}
+      placeholder="Search apps by name/publisher, or paste/drop a .lnk shortcut or .exe path to isolate…"
+      class="filter-input"
+      onkeydown={(e) => {
+        if (e.key === "Enter" && (/[\\/]|\.(lnk|exe)$/i.test(searchQuery))) {
+          resolveShortcutPath(searchQuery);
+        }
+      }}
+    />
+    {#if /[\\/]|\.(lnk|exe)$/i.test(searchQuery.trim())}
+      <button
+        class="primary small-btn"
+        disabled={resolvingTarget}
+        onclick={() => resolveShortcutPath(searchQuery)}
+      >
+        {resolvingTarget ? "Resolving…" : "Resolve Target"}
+      </button>
+    {/if}
+    {#if searchQuery}
+      <button
+        class="ghost small-btn"
+        onclick={() => {
+          searchQuery = "";
+          resolvedHint = null;
+        }}
+      >
+        Clear
+      </button>
+    {:else}
+      <span class="badge free">Drop .lnk / .exe Here</span>
+    {/if}
+  </div>
+
+  {#if resolvedHint}
+    <div class="card notice" style="border-left: 4px solid var(--accent); padding: 10px 16px;">
+      <span>🎯 {resolvedHint}</span>
+      {#if matchingRemnants.length > 0}
+        <span class="badge pro">{matchingRemnants.length} matching AppData remnant(s) found</span>
+      {/if}
+    </div>
+  {/if}
+
   {#if loading}
     <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
       <div class="spinner"></div>
       <p class="muted" style="margin-top: 16px;">Scanning Windows Registry for installed applications…</p>
     </div>
+  {:else if filteredApps.length === 0}
+    <div class="card" style="padding: 28px; text-align: center; max-width: 520px; margin: 30px auto;">
+      <strong>No matching installed applications found</strong>
+      <p class="muted small" style="margin-top: 6px;">Try clearing the search filter or check Leftover Remnants for orphaned folders.</p>
+    </div>
   {:else}
     <div class="grid">
-      {#each apps.filter((a) => a.estimated_size > 0).sort((a, b) => b.estimated_size - a.estimated_size) as app}
+      {#each filteredApps as app}
         <div class="card item">
           <div class="row" style="align-items: flex-start;">
             <div class="grow">
@@ -331,6 +518,62 @@
     </div>
   {/if}
 
+{:else if mode === "broken"}
+  {#if brokenLoading}
+    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
+      <div class="spinner"></div>
+      <p class="muted" style="margin-top: 16px;">Scanning Desktop, Start Menu, and AppData for dead shortcuts & empty folders…</p>
+    </div>
+  {:else if brokenItems.length === 0}
+    <div class="card" style="padding: 32px; text-align: center; max-width: 560px; margin: 40px auto;">
+      <div class="status-icon-bubble green" style="margin: 0 auto 16px auto;">✓</div>
+      <h3 style="margin: 0 0 6px 0;">No Broken Shortcuts or Empty Folders Found</h3>
+      <p class="muted small">All Desktop and Start Menu shortcuts point to valid targets and no empty AppData directories were detected.</p>
+      <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadBroken}>Rescan Shortcuts & Folders</button>
+    </div>
+  {:else}
+    <div class="card" style="padding: 14px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span class="muted small">{selectedBrokenPaths.length} of {brokenItems.length} items selected</span>
+      <button
+        class="ghost small-btn"
+        onclick={() => {
+          const allSelected = selectedBrokenPaths.length === brokenItems.length;
+          selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, !allSelected]));
+        }}
+      >
+        {selectedBrokenPaths.length === brokenItems.length ? "Deselect All" : "Select All"}
+      </button>
+      <div class="spacer"></div>
+      <button class="ghost small-btn" onclick={loadBroken}>Rescan</button>
+      <button
+        class="primary small-btn"
+        disabled={!selectedBrokenPaths.length || brokenCleaning}
+        onclick={cleanBrokenSelected}
+      >
+        {brokenCleaning ? "Cleaning…" : `Clean Selected (${selectedBrokenPaths.length})`}
+      </button>
+    </div>
+
+    <div class="grid">
+      {#each brokenItems as item}
+        <label class="card item" style="cursor: pointer;">
+          <div>
+            <div class="row" style="margin-bottom: 8px;">
+              <input type="checkbox" bind:checked={selectedBroken[item.path]} />
+              <span class="badge" class:pro={item.kind === "broken_shortcut"} class:free={item.kind !== "broken_shortcut"}>
+                {item.kind === "broken_shortcut" ? "Broken Shortcut (.lnk)" : "Empty Folder"}
+              </span>
+              <div class="spacer"></div>
+            </div>
+            <strong style="font-size: 14.5px; display: block; margin-bottom: 4px;">{item.name}</strong>
+            <div class="muted small" style="margin-bottom: 6px;">{item.detail}</div>
+            <div class="muted small mono" style="word-break: break-all;">{item.path}</div>
+          </div>
+        </label>
+      {/each}
+    </div>
+  {/if}
+
 {:else if mode === "registry"}
   {#if regLoading}
     <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
@@ -396,6 +639,27 @@
   .notice { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 18px; font-size: 13.5px; }
   .pro-notice { background: #fffbeb; border: 1px solid rgba(245, 158, 11, 0.35); color: #92400e; }
   .error-notice { background: #fef2f2; border: 1px solid rgba(239, 68, 68, 0.3); color: #991b1b; }
+  .drop-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    margin-bottom: 18px;
+    border: 1.5px dashed var(--border);
+    transition: all 0.2s;
+  }
+  .drop-filter-bar.drag-over {
+    border-color: var(--accent);
+    background: #ecfdf5;
+  }
+  .filter-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13.5px;
+    color: var(--text);
+    outline: none;
+  }
   .mode-toggle {
     display: flex;
     background: var(--panel-2);

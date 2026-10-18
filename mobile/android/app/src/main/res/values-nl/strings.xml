@@ -393,4 +393,50 @@
     <string name="review_prompt_title">Blij met SWEEPR Cleaner?</string>
     <string name="review_prompt_body">Je hebt zojuist je 2e opschoonbeurt voltooid! Een beoordeling op Google Play helpt ons enorm.</string>
     <string name="review_prompt_later">Niet nu</string>
+
+    <string name="triage_mode_grid">Rasterweergave</string>
+    <string name="triage_mode_swipe">Swipe-modus</string>
+    <string name="triage_progress_status">Foto %1$d van %2$d · %3$s naar prullenbak</string>
+    <string name="triage_done_subtitle">%1$s gemarkeerd voor prullenbak. Tik hieronder op Naar prullenbak.</string>
+    <string name="triage_review_again">Opnieuw bekijken</string>
+    <string name="triage_btn_trash">Prullenbak</string>
+    <string name="triage_btn_keep">Behouden</string>
+    <string name="triage_sharpness_badge">Scherpte %1$s</string>
+    <string name="triage_marked_trash_badge">PRULLENBAK</string>
+
+    <string name="media_opt_tab_video">Videocompressor</string>
+    <string name="media_opt_tab_photo_privacy">Foto-optimalisatie &amp; GPS</string>
+    <string name="photo_opt_toggle_compress">Bestandsgrootte comprimeren (82% JPEG)</string>
+    <string name="photo_opt_toggle_compress_sub">Verkleint &gt;2560px &amp; codeert op 82% kwaliteit</string>
+    <string name="photo_opt_toggle_gps">EXIF GPS-locatiecoördinaten wissen</string>
+    <string name="photo_opt_toggle_gps_sub">Verwijdert verborgen GPS-tags (%1$d foto\'s met GPS)</string>
+    <string name="photo_opt_batch_cta">%1$d foto\'s optimaliseren (Bespaar ~%2$s)</string>
+    <string name="photo_opt_batch_gps_only_cta">EXIF GPS wissen uit %1$d foto\'s</string>
+    <string name="photo_opt_empty">Geen grote foto\'s (&gt;1,5 MB) of GPS-foto\'s gevonden 🎉</string>
+    <string name="photo_opt_badge_action">Optimaliseren</string>
+    <string name="photo_opt_badge_gps">GPS</string>
+    <string name="photo_opt_header_count">%1$d optimaliseerbare foto\'s · %2$s</string>
+    <string name="photo_opt_working_title">Foto\'s optimaliseren…</string>
+    <string name="photo_opt_working_body">Resolutie comprimeren en EXIF GPS-coördinaten wissen…</string>
+    <string name="photo_opt_done_title">Foto\'s geoptimaliseerd!</string>
+    <string name="photo_opt_done_summary">%1$d foto\'s geoptimaliseerd: %2$s → %3$s\nRuimte bespaard: %4$s (%5$d%%)</string>
+    <string name="photo_opt_gps_stripped_summary">EXIF GPS-locatie gewist uit %1$d foto\'s</string>
+    <string name="photo_opt_saved_location">Opgeslagen in Pictures/Sweepr. Originelen blijven behouden tot je ze naar de prullenbak (30 dagen) verplaatst.</string>
+    <string name="photo_opt_trash_original">Origineel naar prullenbak (30 dgn)</string>
+    <string name="photo_opt_failed">Kon geselecteerde foto\'s niet optimaliseren.</string>
+
+    <string name="contacts_tab_cleanup">Contacten opschonen</string>
+    <string name="calendar_tab_old_events">Oude agenda (&gt;1 jr)</string>
+    <string name="calendar_permission_text">SWEEPR Cleaner heeft agendatoegang nodig om verlopen afspraken ouder dan 1 jaar te vinden en te verwijderen.</string>
+    <string name="calendar_permission_button">Agendatoegang toestaan</string>
+    <string name="calendar_none_found">Geen agenda-afspraken ouder dan 1 jaar gevonden 🎉</string>
+    <string name="calendar_header_count">%1$d verlopen afspraken (&gt;1 jaar oud)</string>
+    <string name="calendar_explainer">Niet-herhalende afspraken uit het verleden ouder dan 1 jaar.</string>
+    <string name="calendar_select_to_delete">Selecteer oude afspraken om te verwijderen</string>
+    <string name="calendar_delete_selected">%1$d oude afspraken verwijderen</string>
+    <string name="calendar_untitled_event">Naamloze afspraak</string>
+    <plurals name="msg_calendar_events_deleted">
+        <item quantity="one">%d oude agenda-afspraak verwijderd</item>
+        <item quantity="other">%d oude agenda-afspraken verwijderd</item>
+    </plurals>
 </resources>

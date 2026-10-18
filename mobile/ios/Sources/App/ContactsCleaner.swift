@@ -1,4 +1,5 @@
 import Contacts
+import EventKit
 import Foundation
 
 struct ContactEntry: Identifiable, Hashable {
@@ -34,6 +35,13 @@ struct ContactDuplicateGroup: Identifiable, Hashable {
     let contacts: [ContactEntry]
 }
 
+struct OldCalendarEvent: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let endDate: Date
+    let calendarTitle: String
+}
+
 struct ContactsScanResult {
     var duplicateGroups: [ContactDuplicateGroup] = []
     var incompleteContacts: [ContactEntry] = []
@@ -46,6 +54,67 @@ enum ContactsCleaner {
     static func requestAccess() async -> Bool {
         let store = CNContactStore()
         return (try? await store.requestAccess(for: .contacts)) ?? false
+    }
+
+    static func requestCalendarAccess() async -> Bool {
+        let store = EKEventStore()
+        if #available(iOS 17.0, *) {
+            return (try? await store.requestFullAccessToEvents()) ?? false
+        } else {
+            return (try? await store.requestAccess(to: .event)) ?? false
+        }
+    }
+
+    static func scanOldCalendarEvents(olderThanDays: Int = 365) async -> [OldCalendarEvent] {
+        await Task.detached(priority: .userInitiated) {
+            let store = EKEventStore()
+            let now = Date()
+            let cutoffDate = now.addingTimeInterval(-Double(olderThanDays) * 86_400.0)
+            // EKEventStore predicates support up to a 4-year window per query
+            let startDate = cutoffDate.addingTimeInterval(-3.5 * 365.0 * 86_400.0)
+            let predicate = store.predicateForEvents(withStart: startDate, end: cutoffDate, calendars: nil)
+            let rawEvents = store.events(matching: predicate)
+
+            var seen = Set<String>()
+            var result: [OldCalendarEvent] = []
+            for ev in rawEvents {
+                guard !ev.hasRecurrenceRules,
+                      let eventId = ev.eventIdentifier,
+                      !eventId.isEmpty,
+                      ev.endDate < cutoffDate,
+                      seen.insert(eventId).inserted else {
+                    continue
+                }
+                let rawTitle = (ev.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                result.append(
+                    OldCalendarEvent(
+                        id: eventId,
+                        title: rawTitle.isEmpty ? "Untitled Event" : rawTitle,
+                        endDate: ev.endDate,
+                        calendarTitle: ev.calendar?.title ?? ""
+                    )
+                )
+            }
+            return result.sorted { $0.endDate > $1.endDate }
+        }.value
+    }
+
+    static func deleteCalendarEvents(identifiers: [String]) async throws -> Int {
+        guard !identifiers.isEmpty else { return 0 }
+        return try await Task.detached(priority: .userInitiated) {
+            let store = EKEventStore()
+            var removed = 0
+            for id in identifiers {
+                if let event = store.event(withIdentifier: id) {
+                    try store.remove(event, span: .thisEvent, commit: false)
+                    removed += 1
+                }
+            }
+            if removed > 0 {
+                try store.commit()
+            }
+            return removed
+        }.value
     }
 
     static func scan() async -> [ContactDuplicateGroup] {

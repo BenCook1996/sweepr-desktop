@@ -8,10 +8,49 @@
 use crate::commands::AppState;
 use crate::error::{AppError, AppResult};
 use crate::safety;
+use serde::Serialize;
 use std::fs::OpenOptions;
 use std::io::{Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use tauri::State;
+
+#[derive(Serialize, Clone, Debug)]
+pub struct DriveMediaInfo {
+    pub is_ssd: bool,
+    pub media_label: String,
+    pub recommended_passes: u8,
+}
+
+#[tauri::command]
+pub fn detect_drive_media_type(path: String) -> AppResult<DriveMediaInfo> {
+    let trimmed = path.trim();
+    let target_upper = trimmed.replace('/', "\\").to_ascii_uppercase();
+    let disks = sysinfo::Disks::new_with_refreshed_list();
+
+    let mut matched_hdd = false;
+    let mut best_len = 0usize;
+    for d in disks.list() {
+        let mount = d.mount_point().to_string_lossy().replace('/', "\\").to_ascii_uppercase();
+        if !mount.is_empty() && target_upper.starts_with(&mount) && mount.len() >= best_len {
+            best_len = mount.len();
+            matched_hdd = matches!(d.kind(), sysinfo::DiskKind::HDD);
+        }
+    }
+
+    if matched_hdd {
+        Ok(DriveMediaInfo {
+            is_ssd: false,
+            media_label: "Mechanical Hard Drive (HDD)".into(),
+            recommended_passes: 3,
+        })
+    } else {
+        Ok(DriveMediaInfo {
+            is_ssd: true,
+            media_label: "Solid State Drive (SSD / NVMe)".into(),
+            recommended_passes: 1,
+        })
+    }
+}
 
 fn refuse(msg: impl Into<String>) -> AppError {
     AppError::Other(msg.into())
@@ -66,7 +105,7 @@ pub fn validate_target(path: &str, app_data_dir: &Path) -> AppResult<PathBuf> {
     Ok(canon)
 }
 
-fn overwrite_and_delete(p: &Path) -> AppResult<u64> {
+fn overwrite_and_delete(p: &Path, pass_count: u8) -> AppResult<u64> {
     let pre_md = std::fs::symlink_metadata(p)?;
     if safety::metadata_is_link_like(&pre_md) || !pre_md.is_file() {
         return Err(refuse("Refusing to shred a symlink, junction or non-regular file."));
@@ -87,9 +126,13 @@ fn overwrite_and_delete(p: &Path) -> AppResult<u64> {
             return Err(refuse("Target changed to a symlink or non-regular file before shredding."));
         }
         let chunk_size = 64 * 1024; // 64 KB chunks
-        let passes: [u8; 3] = [0x00, 0xFF, 0x55]; // Pass 1: zeros, Pass 2: ones, Pass 3: 0x55 pattern
+        let patterns: &[u8] = if pass_count == 1 {
+            &[0x00]
+        } else {
+            &[0x00, 0xFF, 0x55]
+        };
 
-        for pattern in passes {
+        for &pattern in patterns {
             file.seek(SeekFrom::Start(0))?;
             let buf = vec![pattern; chunk_size];
             let mut written = 0u64;
@@ -108,10 +151,18 @@ fn overwrite_and_delete(p: &Path) -> AppResult<u64> {
 
 /// Pro feature: requires an active licence (checked here, in Rust).
 #[tauri::command]
-pub async fn shred_file(state: State<'_, AppState>, path: String) -> AppResult<u64> {
+pub async fn shred_file(
+    state: State<'_, AppState>,
+    path: String,
+    passes: Option<u8>,
+) -> AppResult<u64> {
     state.licensing.require_active().await?;
     let canon = validate_target(&path, state.licensing.data_dir())?;
-    tauri::async_runtime::spawn_blocking(move || overwrite_and_delete(&canon))
+    let pass_count = match passes.unwrap_or(3) {
+        1 => 1,
+        _ => 3,
+    };
+    tauri::async_runtime::spawn_blocking(move || overwrite_and_delete(&canon, pass_count))
         .await
         .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
 }
@@ -140,7 +191,7 @@ mod tests {
         // Elsewhere it is accepted and can be shredded.
         let other = std::env::temp_dir().join("sweepr-other-data");
         let canon = validate_target(&f.to_string_lossy(), &other).unwrap();
-        assert_eq!(overwrite_and_delete(&canon).unwrap(), 5);
+        assert_eq!(overwrite_and_delete(&canon, 1).unwrap(), 5);
         assert!(!f.exists());
         let _ = std::fs::remove_dir_all(&dir);
         #[cfg(windows)]
@@ -152,3 +203,4 @@ mod tests {
         }
     }
 }
+

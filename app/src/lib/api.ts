@@ -138,9 +138,28 @@ export const api = {
   ) => invoke<number>("clean_browser_privacy", { browsers, clearCache, clearCookies, clearHistory }),
   checkPasswordBreach: (password: string) => invoke<number>("check_password_breach", { password }),
   checkAppUpdate: () => invoke<AppUpdateInfo>("check_app_update"),
+  installAppUpdate: (downloadUrl?: string) =>
+    invoke<void>("install_app_update", { downloadUrl: downloadUrl ?? null }),
   sendSupportReport: (email: string, subject: string, message: string) =>
     invoke<void>("send_support_report", { email, subject, message }),
-  shredFile: (path: string) => invoke<number>("shred_file", { path }),
+  shredFile: (path: string, passes?: number) => invoke<number>("shred_file", { path, passes: passes ?? null }),
+  killProcess: (name: string) => invoke<number>("kill_process", { name }),
+  boostGamingMode: () => invoke<GamingBoostResult>("boost_gaming_mode"),
+  systemHealthDetails: () => invoke<SystemHealthDetails>("system_health_details"),
+  listContextMenuItems: () => invoke<ContextMenuItem[]>("list_context_menu_items"),
+  toggleContextMenuItem: (id: string, enabled: boolean) => invoke<ContextMenuItem[]>("toggle_context_menu_item", { id, enabled }),
+  moveLargeFile: (dir: string, file: string, targetDir: string) => invoke<string>("move_large_file", { dir, file, targetDir }),
+  resolveShortcutOrExe: (path: string) => invoke<string>("resolve_shortcut_or_exe", { path }),
+  scanBrokenItems: () => invoke<BrokenItem[]>("scan_broken_items"),
+  cleanBrokenItems: (paths: string[]) => invoke<number>("clean_broken_items", { paths }),
+  getCookieAllowlist: () => invoke<string[]>("get_cookie_allowlist"),
+  setCookieAllowlist: (domains: string[]) => invoke<string[]>("set_cookie_allowlist", { domains }),
+  compactBrowserDatabases: () => invoke<number>("compact_browser_databases"),
+  listBrowserExtensions: () => invoke<BrowserExtensionItem[]>("list_browser_extensions"),
+  generateStrongPassword: (length = 20, includeSymbols = true) => invoke<string>("generate_strong_password", { length, includeSymbols }),
+  recycleBinInfo: () => invoke<RecycleBinInfo>("recycle_bin_info"),
+  emptyRecycleBin: () => invoke<number>("empty_recycle_bin"),
+  detectDriveMediaType: (path: string) => invoke<DriveMediaInfo>("detect_drive_media_type", { path }),
   scanRegistry: () => invoke<RegistryIssue[]>("scan_registry"),
   fixRegistryIssue: (key_path: string) => invoke<void>("fix_registry_issue", { keyPath: key_path }),
   listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
@@ -182,3 +201,10 @@ export interface RegistryIssue { key: string; name: string; issue_type: string; 
 export interface RegistryBackupEntry { id: string; key: string; name: string; issue_type: string; value: string; backed_up_at: number; }
 export interface RunningAppConflict { category_id: string; app_name: string; process_count: number; }
 export interface SystemOverview { disk_mount: string; disk_total_bytes: number; disk_available_bytes: number; memory_total_bytes: number; memory_used_bytes: number; cpu_usage_percent: number; }
+export interface GamingBoostResult { processes_closed: number; bytes_freed: number; closed_apps: string[]; }
+export interface SystemHealthDetails { uptime_seconds: number; last_boot_seconds: number | null; battery_percent: number | null; battery_status: string | null; is_ssd: boolean; }
+export interface ContextMenuItem { id: string; name: string; command: string; scope: string; enabled: boolean; }
+export interface BrokenItem { path: string; name: string; kind: "broken_shortcut" | "empty_folder" | string; detail: string; }
+export interface BrowserExtensionItem { id: string; browser: string; name: string; version: string; description: string; permissions_count: number; path: string; }
+export interface RecycleBinInfo { bytes: number; items: number; }
+export interface DriveMediaInfo { is_ssd: boolean; media_label: string; recommended_passes: number; }

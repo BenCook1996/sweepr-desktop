@@ -297,7 +297,11 @@ fun SweeprRoot(
     val handleCompressVideo: (MediaItem, CompressionPreset) -> Unit = { item, preset ->
         premium { vm.compressVideo(item, preset) }
     }
+    val handleOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit = { items, compressRes, stripGps ->
+        premium { vm.optimizePhotos(items, compressRes, stripGps) }
+    }
     val handleMerge: (Set<String>) -> Unit = { groups -> premium { vm.mergeContactGroups(groups) } }
+    val handleDeleteCalendarEvents: (Set<Long>) -> Unit = { ids -> premium { vm.deleteCalendarEvents(ids) } }
     val handleCleanUp: () -> Unit = { premium { vm.cleanUpSelected(AppPermissions.current(context)) } }
 
     BackHandler(enabled = current != Screen.Dashboard) { goBack() }
@@ -356,6 +360,8 @@ fun SweeprRoot(
                     onTrash = handleTrash,
                     onCompressVideo = handleCompressVideo,
                     onClearCompressionResult = vm::clearCompressionResult,
+                    onOptimizePhotos = handleOptimizePhotos,
+                    onClearPhotoOptimizationResult = vm::clearPhotoOptimizationResult,
                     onBack = goBack,
                 )
                 Screen.Screenshots -> ScreenshotsScreen(
@@ -384,6 +390,10 @@ fun SweeprRoot(
                     onToggle = vm::toggleContactGroup,
                     onMerge = handleMerge,
                     onRequestPermission = requestPermissions,
+                    onScanCalendarEvents = vm::scanCalendarEvents,
+                    onToggleCalendarEvent = vm::toggleCalendarEvent,
+                    onSetCalendarEventsSelected = vm::setCalendarEventsSelected,
+                    onDeleteCalendarEvents = handleDeleteCalendarEvents,
                     onBack = goBack,
                 )
             }

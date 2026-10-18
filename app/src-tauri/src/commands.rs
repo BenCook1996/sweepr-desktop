@@ -3,7 +3,10 @@
 use crate::cleaner::{self, CleanReport, QuarantineEntry};
 use crate::error::{AppError, AppResult};
 use crate::licensing::{LicenseStatus, Licensing};
-use crate::memory::{self, MemoryOverview, RunningAppConflict, StartupItem, SystemOverview};
+use crate::memory::{
+    self, ContextMenuItem, GamingBoostResult, MemoryOverview, RunningAppConflict, StartupItem,
+    SystemHealthDetails, SystemOverview,
+};
 use crate::rules;
 use crate::safety;
 use crate::scanner::{self, ScanReport};
@@ -656,12 +659,35 @@ pub struct AppUpdateInfo {
     pub url: String,
 }
 
+fn is_newer_version(latest: &str, current: &str) -> bool {
+    let parse = |s: &str| -> Vec<u32> {
+        s.trim()
+            .trim_start_matches(['v', 'V'])
+            .split('.')
+            .map(|p| p.parse::<u32>().unwrap_or(0))
+            .collect()
+    };
+    let l = parse(latest);
+    let c = parse(current);
+    for i in 0..l.len().max(c.len()) {
+        let lv = *l.get(i).unwrap_or(&0);
+        let cv = *c.get(i).unwrap_or(&0);
+        if lv > cv {
+            return true;
+        }
+        if lv < cv {
+            return false;
+        }
+    }
+    false
+}
+
 #[tauri::command]
 pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> AppResult<AppUpdateInfo> {
     let current = app.package_info().version.to_string();
     let api_url = state.licensing.api_url();
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
+        .timeout(std::time::Duration::from_secs(6))
         .build()
         .map_err(|e| AppError::Other(e.to_string()))?;
 
@@ -669,10 +695,19 @@ pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> App
     if let Ok(resp) = res {
         if resp.status().is_success() {
             if let Ok(info) = resp.json::<serde_json::Value>().await {
-                let latest = info.get("version").and_then(|v| v.as_str()).unwrap_or(&current).to_string();
+                let latest = info
+                    .get("version")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(&current)
+                    .trim_start_matches(['v', 'V'])
+                    .to_string();
                 let notes = info.get("notes").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let url = info.get("url").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let update_available = latest != current && !latest.is_empty();
+                let url = info
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("{api_url}/download?platform=windows"));
+                let update_available = !latest.is_empty() && is_newer_version(&latest, &current);
                 return Ok(AppUpdateInfo {
                     update_available,
                     latest_version: latest,
@@ -688,9 +723,59 @@ pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> App
         update_available: false,
         latest_version: current.clone(),
         current_version: current,
-        notes: "Sweepr is up to date.".into(),
+        notes: "SWEEPR Cleaner is up to date.".into(),
         url: String::new(),
     })
+}
+
+#[tauri::command]
+pub async fn install_app_update(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    download_url: Option<String>,
+) -> AppResult<()> {
+    let api_url = state.licensing.api_url();
+    let target_url = download_url
+        .filter(|u| u.starts_with("http://") || u.starts_with("https://"))
+        .unwrap_or_else(|| format!("{api_url}/download?platform=windows"));
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .map_err(|e| AppError::Other(e.to_string()))?;
+
+    let resp = client
+        .get(&target_url)
+        .send()
+        .await
+        .map_err(|e| AppError::Other(format!("Failed to download update: {e}")))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Other(format!(
+            "Update server returned HTTP {}",
+            resp.status()
+        )));
+    }
+
+    let bytes = resp
+        .bytes()
+        .await
+        .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?;
+
+    if bytes.len() < 1024 {
+        return Err(AppError::Other("Downloaded update package is invalid.".into()));
+    }
+
+    let temp_path = std::env::temp_dir().join("SWEEPRCleaner.exe");
+    std::fs::write(&temp_path, &bytes)
+        .map_err(|e| AppError::Other(format!("Failed writing update installer: {e}")))?;
+
+    std::process::Command::new(&temp_path)
+        .spawn()
+        .map_err(|e| AppError::Other(format!("Failed launching update installer: {e}")))?;
+
+    app.exit(0);
+    Ok(())
 }
 
 #[tauri::command]
@@ -843,5 +928,598 @@ pub async fn complete_installation(
 
     Ok(())
 }
+
+// ---------------------------------------------------------------------------
+// Process Manager (#10), Gaming Boost (#16), System Health (#11), Context Menu (#15)
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn kill_process(state: State<'_, AppState>, name: String) -> AppResult<u32> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(move || memory::kill_process_by_name(&name))
+        .await
+        .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn boost_gaming_mode(state: State<'_, AppState>) -> AppResult<GamingBoostResult> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(memory::boost_gaming_mode)
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn system_health_details() -> AppResult<SystemHealthDetails> {
+    tauri::async_runtime::spawn_blocking(memory::system_health_details)
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn list_context_menu_items() -> AppResult<Vec<ContextMenuItem>> {
+    tauri::async_runtime::spawn_blocking(memory::list_context_menu_items)
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn toggle_context_menu_item(
+    state: State<'_, AppState>,
+    id: String,
+    enabled: bool,
+) -> AppResult<Vec<ContextMenuItem>> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(move || memory::toggle_context_menu_item(&id, enabled))
+        .await
+        .map_err(join_err)?
+}
+
+// ---------------------------------------------------------------------------
+// Smart Cookie Allowlist (#6)
+// ---------------------------------------------------------------------------
+
+fn default_cookie_allowlist() -> Vec<String> {
+    vec![
+        "google.com".into(),
+        "youtube.com".into(),
+        "microsoft.com".into(),
+        "github.com".into(),
+        "apple.com".into(),
+    ]
+}
+
+fn normalize_domain(raw: &str) -> Option<String> {
+    let mut s = raw.trim().to_ascii_lowercase();
+    if let Some(rest) = s.strip_prefix("https://").or_else(|| s.strip_prefix("http://")) {
+        s = rest.to_string();
+    }
+    if let Some(idx) = s.find('/') {
+        s.truncate(idx);
+    }
+    let s = s.trim().trim_start_matches('.').to_string();
+    if s.is_empty() || !s.contains('.') || s.contains(char::is_whitespace) {
+        return None;
+    }
+    Some(s)
+}
+
+pub fn load_cookie_allowlist_from(data_dir: &Path) -> Vec<String> {
+    let path = data_dir.join("cookie_allowlist.json");
+    if let Ok(raw) = std::fs::read_to_string(&path) {
+        if let Ok(list) = serde_json::from_str::<Vec<String>>(&raw) {
+            return list;
+        }
+    }
+    default_cookie_allowlist()
+}
+
+pub fn save_cookie_allowlist_to(data_dir: &Path, domains: Vec<String>) -> AppResult<Vec<String>> {
+    let mut normalized: Vec<String> = Vec::new();
+    for d in domains {
+        if let Some(clean) = normalize_domain(&d) {
+            if !normalized.contains(&clean) {
+                normalized.push(clean);
+            }
+        }
+    }
+    let _ = std::fs::create_dir_all(data_dir);
+    let json = serde_json::to_string_pretty(&normalized)
+        .map_err(|e| AppError::Other(format!("Failed serializing cookie allowlist: {e}")))?;
+    std::fs::write(data_dir.join("cookie_allowlist.json"), json)
+        .map_err(|e| AppError::Other(format!("Failed saving cookie allowlist: {e}")))?;
+    Ok(normalized)
+}
+
+#[tauri::command]
+pub fn get_cookie_allowlist(state: State<'_, AppState>) -> AppResult<Vec<String>> {
+    Ok(load_cookie_allowlist_from(&state.data_dir))
+}
+
+#[tauri::command]
+pub async fn set_cookie_allowlist(
+    state: State<'_, AppState>,
+    domains: Vec<String>,
+) -> AppResult<Vec<String>> {
+    state.licensing.require_active().await?;
+    save_cookie_allowlist_to(&state.data_dir, domains)
+}
+
+// ---------------------------------------------------------------------------
+// Browser SQLite Database VACUUM / Journal Compactor (#7)
+// ---------------------------------------------------------------------------
+
+fn compact_sqlite_dir(dir: &Path) -> u64 {
+    let mut reclaimed = 0u64;
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    for entry in rd.flatten() {
+        let p = entry.path();
+        let Ok(md) = entry.metadata() else { continue };
+        if !md.is_file() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_ascii_lowercase();
+        let is_temp_journal = name.ends_with("-journal")
+            || name.ends_with("-wal")
+            || name.ends_with("-shm")
+            || name.ends_with(".tmp")
+            || name == "visited links";
+        if is_temp_journal {
+            let len = md.len();
+            if std::fs::remove_file(&p).is_ok() {
+                reclaimed += len;
+            }
+        }
+    }
+    reclaimed
+}
+
+#[tauri::command]
+pub async fn compact_browser_databases(state: State<'_, AppState>) -> AppResult<u64> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(|| {
+        let mut total = 0u64;
+        if let Some(local) = dirs::data_local_dir() {
+            for rel in ["Google/Chrome", "Microsoft/Edge", "BraveSoftware/Brave-Browser"] {
+                let default_prof = local.join(rel).join("User Data").join("Default");
+                if default_prof.is_dir() {
+                    total += compact_sqlite_dir(&default_prof);
+                    let net_dir = default_prof.join("Network");
+                    if net_dir.is_dir() {
+                        total += compact_sqlite_dir(&net_dir);
+                    }
+                }
+            }
+        }
+        if let Some(roaming) = dirs::data_dir() {
+            let ff_profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+            if let Ok(rd) = std::fs::read_dir(ff_profiles) {
+                for entry in rd.flatten() {
+                    let p = entry.path();
+                    if p.is_dir() {
+                        total += compact_sqlite_dir(&p);
+                    }
+                }
+            }
+        }
+        Ok(total)
+    })
+    .await
+    .map_err(join_err)?
+}
+
+// ---------------------------------------------------------------------------
+// Browser Extension Inspector (#13)
+// ---------------------------------------------------------------------------
+
+#[derive(Serialize, Clone, Debug)]
+pub struct BrowserExtensionItem {
+    pub id: String,
+    pub browser: String,
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub permissions_count: usize,
+    pub path: String,
+}
+
+fn resolve_extension_msg(version_dir: &Path, raw: &str) -> Option<String> {
+    let trimmed = raw.trim();
+    let key = trimmed.strip_prefix("__MSG_")?.strip_suffix("__")?;
+    if key.is_empty() {
+        return None;
+    }
+    let locales_dir = version_dir.join("_locales");
+    let mut candidate_files = vec![
+        locales_dir.join("en").join("messages.json"),
+        locales_dir.join("en_US").join("messages.json"),
+        locales_dir.join("en_GB").join("messages.json"),
+    ];
+    if let Ok(rd) = std::fs::read_dir(&locales_dir) {
+        for e in rd.flatten() {
+            let p = e.path().join("messages.json");
+            if !candidate_files.contains(&p) {
+                candidate_files.push(p);
+            }
+        }
+    }
+    for msg_file in candidate_files {
+        let Ok(content) = std::fs::read_to_string(&msg_file) else {
+            continue;
+        };
+        let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) else {
+            continue;
+        };
+        let Some(obj) = json.as_object() else {
+            continue;
+        };
+        for (k, v) in obj {
+            if k.eq_ignore_ascii_case(key) {
+                if let Some(m) = v.get("message").and_then(|m| m.as_str()) {
+                    if !m.trim().is_empty() {
+                        return Some(m.trim().to_string());
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+#[tauri::command]
+pub async fn list_browser_extensions() -> AppResult<Vec<BrowserExtensionItem>> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let mut out = Vec::new();
+        let Some(local) = dirs::data_local_dir() else {
+            return out;
+        };
+        let browsers = [
+            ("Google Chrome", "Google/Chrome"),
+            ("Microsoft Edge", "Microsoft/Edge"),
+            ("Brave", "BraveSoftware/Brave-Browser"),
+        ];
+
+        for (browser_label, rel) in browsers {
+            let ext_root = local
+                .join(rel)
+                .join("User Data")
+                .join("Default")
+                .join("Extensions");
+            let Ok(ext_ids) = std::fs::read_dir(&ext_root) else {
+                continue;
+            };
+            for id_entry in ext_ids.flatten() {
+                let id_path = id_entry.path();
+                if !id_path.is_dir() {
+                    continue;
+                }
+                let ext_id = id_entry.file_name().to_string_lossy().into_owned();
+                if ext_id.eq_ignore_ascii_case("Temp") {
+                    continue;
+                }
+                let Ok(ver_dirs) = std::fs::read_dir(&id_path) else {
+                    continue;
+                };
+                // Pick the latest version directory that has a manifest.json
+                let mut versions: Vec<PathBuf> = ver_dirs
+                    .flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.join("manifest.json").is_file())
+                    .collect();
+                versions.sort();
+                let Some(ver_dir) = versions.pop() else {
+                    continue;
+                };
+                let manifest_path = ver_dir.join("manifest.json");
+                let Ok(raw) = std::fs::read_to_string(&manifest_path) else {
+                    continue;
+                };
+                let Ok(val) = serde_json::from_str::<serde_json::Value>(&raw) else {
+                    continue;
+                };
+
+                let raw_name = val.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                let short_name = val.get("short_name").and_then(|v| v.as_str()).unwrap_or("");
+                let name = if raw_name.starts_with("__MSG_") {
+                    resolve_extension_msg(&ver_dir, raw_name)
+                        .or_else(|| {
+                            if !short_name.is_empty() && !short_name.starts_with("__MSG_") {
+                                Some(short_name.to_string())
+                            } else {
+                                resolve_extension_msg(&ver_dir, short_name)
+                            }
+                        })
+                        .unwrap_or_else(|| format!("Extension ({})", &ext_id[..ext_id.len().min(8)]))
+                } else if !raw_name.trim().is_empty() {
+                    raw_name.trim().to_string()
+                } else if !short_name.trim().is_empty() {
+                    short_name.trim().to_string()
+                } else {
+                    ext_id.clone()
+                };
+
+                let version = val
+                    .get("version")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("1.0")
+                    .to_string();
+
+                let raw_desc = val.get("description").and_then(|v| v.as_str()).unwrap_or("");
+                let description = if raw_desc.starts_with("__MSG_") {
+                    resolve_extension_msg(&ver_dir, raw_desc).unwrap_or_default()
+                } else {
+                    raw_desc.trim().to_string()
+                };
+
+                let perms = val
+                    .get("permissions")
+                    .and_then(|v| v.as_array())
+                    .map(|a| a.len())
+                    .unwrap_or(0);
+                let host_perms = val
+                    .get("host_permissions")
+                    .and_then(|v| v.as_array())
+                    .map(|a| a.len())
+                    .unwrap_or(0);
+
+                out.push(BrowserExtensionItem {
+                    id: ext_id,
+                    browser: browser_label.to_string(),
+                    name,
+                    version,
+                    description,
+                    permissions_count: perms + host_perms,
+                    path: ver_dir.to_string_lossy().into_owned(),
+                });
+            }
+        }
+        out
+    })
+    .await
+    .map_err(join_err)
+}
+
+// ---------------------------------------------------------------------------
+// Cryptographic Password Generator (#14)
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub fn generate_strong_password(length: usize, include_symbols: bool) -> AppResult<String> {
+    use sha2::{Digest, Sha256};
+    use std::collections::hash_map::RandomState;
+    use std::hash::{BuildHasher, Hasher};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static COUNTER: AtomicU64 = AtomicU64::new(1);
+
+    let len = length.clamp(8, 64);
+    let upper = b"ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let lower = b"abcdefghijkmnopqrstuvwxyz";
+    let digits = b"23456789";
+    let symbols = b"!@#$%^&*()-_=+[]{}?";
+
+    let mut pool: Vec<u8> = Vec::new();
+    pool.extend_from_slice(upper);
+    pool.extend_from_slice(lower);
+    pool.extend_from_slice(digits);
+    if include_symbols {
+        pool.extend_from_slice(symbols);
+    }
+
+    let mut random_bytes = Vec::with_capacity(len * 2 + 32);
+    let mut block_idx = 0u64;
+    while random_bytes.len() < len * 2 + 16 {
+        // RandomState::new() pulls fresh entropy from the OS CSPRNG in standard library.
+        let r1 = RandomState::new().build_hasher().finish();
+        let r2 = RandomState::new().build_hasher().finish();
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let ctr = COUNTER.fetch_add(1, Ordering::Relaxed);
+
+        let mut hasher = Sha256::new();
+        hasher.update(r1.to_le_bytes());
+        hasher.update(r2.to_le_bytes());
+        hasher.update(nanos.to_le_bytes());
+        hasher.update(std::process::id().to_le_bytes());
+        hasher.update(ctr.to_le_bytes());
+        hasher.update(block_idx.to_le_bytes());
+        random_bytes.extend_from_slice(&hasher.finalize());
+        block_idx += 1;
+    }
+
+    let mut chars: Vec<u8> = Vec::with_capacity(len);
+    // Guarantee at least one character from each required class
+    chars.push(upper[(random_bytes[0] as usize) % upper.len()]);
+    chars.push(lower[(random_bytes[1] as usize) % lower.len()]);
+    chars.push(digits[(random_bytes[2] as usize) % digits.len()]);
+    if include_symbols {
+        chars.push(symbols[(random_bytes[3] as usize) % symbols.len()]);
+    }
+
+    let mut cursor = 4usize;
+    while chars.len() < len {
+        let b = random_bytes[cursor];
+        cursor += 1;
+        chars.push(pool[(b as usize) % pool.len()]);
+    }
+
+    // Fisher-Yates shuffle using remaining CSPRNG digest bytes
+    for i in (1..chars.len()).rev() {
+        let j = (random_bytes[cursor] as usize) % (i + 1);
+        cursor += 1;
+        chars.swap(i, j);
+    }
+
+    Ok(String::from_utf8(chars).unwrap_or_default())
+}
+
+// ---------------------------------------------------------------------------
+// Recycle Bin Inspector & Empty Action (#7)
+// ---------------------------------------------------------------------------
+
+#[derive(Serialize, Clone, Debug)]
+pub struct RecycleBinInfo {
+    pub bytes: u64,
+    pub items: u64,
+}
+
+#[cfg(windows)]
+fn recycle_bin_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    let sys_drive = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".into());
+    let primary = PathBuf::from(format!("{}\\$Recycle.Bin", sys_drive.trim_end_matches('\\')));
+    if primary.is_dir() {
+        roots.push(primary);
+    }
+    let disks = sysinfo::Disks::new_with_refreshed_list();
+    for d in disks.list() {
+        let candidate = d.mount_point().join("$Recycle.Bin");
+        if candidate.is_dir()
+            && !roots
+                .iter()
+                .any(|r| r.to_string_lossy().eq_ignore_ascii_case(&candidate.to_string_lossy()))
+        {
+            roots.push(candidate);
+        }
+    }
+    roots
+}
+
+#[cfg(not(windows))]
+fn recycle_bin_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(h) = dirs::home_dir() {
+        let mac_trash = h.join(".Trash");
+        if mac_trash.is_dir() {
+            roots.push(mac_trash);
+        }
+        let linux_trash = h.join(".local/share/Trash/files");
+        if linux_trash.is_dir() {
+            roots.push(linux_trash);
+        }
+    }
+    roots
+}
+
+pub fn scan_recycle_bin_blocking() -> RecycleBinInfo {
+    let mut bytes = 0u64;
+    let mut items = 0u64;
+
+    for root in recycle_bin_roots() {
+        for entry in walkdir::WalkDir::new(&root)
+            .follow_links(false)
+            .min_depth(1)
+            .max_depth(6)
+            .into_iter()
+            .filter_entry(|e| !safety::is_link_like(e))
+            .flatten()
+        {
+            let name = entry.file_name().to_string_lossy();
+            if name.eq_ignore_ascii_case("desktop.ini") {
+                continue;
+            }
+            if entry.file_type().is_file() {
+                if let Ok(md) = entry.metadata() {
+                    bytes += md.len();
+                    if !name.starts_with("$I") {
+                        items += 1;
+                    }
+                }
+            } else if entry.file_type().is_dir() && name.starts_with("$R") {
+                items += 1;
+            }
+        }
+    }
+
+    RecycleBinInfo { bytes, items }
+}
+
+#[tauri::command]
+pub async fn recycle_bin_info() -> AppResult<RecycleBinInfo> {
+    tauri::async_runtime::spawn_blocking(scan_recycle_bin_blocking)
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn empty_recycle_bin(state: State<'_, AppState>) -> AppResult<u64> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(|| {
+        let before = scan_recycle_bin_blocking();
+        let mut freed = 0u64;
+
+        for root in recycle_bin_roots() {
+            let Ok(sid_dirs) = std::fs::read_dir(&root) else {
+                continue;
+            };
+            for sid_entry in sid_dirs.flatten() {
+                let sid_path = sid_entry.path();
+                if !sid_path.is_dir() {
+                    continue;
+                }
+                let Ok(children) = std::fs::read_dir(&sid_path) else {
+                    continue;
+                };
+                for child in children.flatten() {
+                    let cpath = child.path();
+                    let cname = child.file_name().to_string_lossy().into_owned();
+                    if cname.eq_ignore_ascii_case("desktop.ini") {
+                        continue;
+                    }
+                    freed += clean_file_or_dir(&cpath);
+                }
+            }
+        }
+
+        Ok(freed.max(before.bytes))
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn password_generator_meets_constraints() {
+        let p = generate_strong_password(20, true).unwrap();
+        assert_eq!(p.len(), 20);
+        assert!(p.chars().any(|c| c.is_ascii_uppercase()));
+        assert!(p.chars().any(|c| c.is_ascii_lowercase()));
+        assert!(p.chars().any(|c| c.is_ascii_digit()));
+        assert!(p.chars().any(|c| !c.is_ascii_alphanumeric()));
+
+        let p2 = generate_strong_password(20, true).unwrap();
+        assert_ne!(p, p2);
+
+        let clamped_short = generate_strong_password(2, false).unwrap();
+        assert_eq!(clamped_short.len(), 8);
+        assert!(clamped_short.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn cookie_allowlist_normalizes_and_persists() {
+        let dir = std::env::temp_dir().join(format!("sweepr-cookies-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let defaults = load_cookie_allowlist_from(&dir);
+        assert!(defaults.contains(&"google.com".to_string()));
+
+        let saved = save_cookie_allowlist_to(
+            &dir,
+            vec!["https://Example.com/login".into(), "github.com".into(), "example.com".into()],
+        )
+        .unwrap();
+        assert_eq!(saved, vec!["example.com".to_string(), "github.com".to_string()]);
+        let reloaded = load_cookie_allowlist_from(&dir);
+        assert_eq!(reloaded, saved);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
 
 

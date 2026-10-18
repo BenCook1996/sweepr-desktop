@@ -5,7 +5,7 @@
   import Account from "./components/Account.svelte";
   import ActivateModal from "./components/ActivateModal.svelte";
   import Installer from "./components/Installer.svelte";
-  import { api, ACTIVATE_EVENT, type LicenseStatus, type AppInfo } from "./lib/api";
+  import { api, ACTIVATE_EVENT, type LicenseStatus, type AppInfo, type AppUpdateInfo } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
 
   type Tab = "cleaner" | "schedule" | "optimization" | "account";
@@ -14,6 +14,9 @@
   let info = $state<AppInfo | null>(null);
   let showActivateModal = $state(false);
   let appReady = $state(false);
+  let autoUpdateInfo = $state<AppUpdateInfo | null>(null);
+  let installingUpdate = $state(false);
+  let updateDismissed = $state(false);
   let showStartupInstaller = $state(
     typeof localStorage !== "undefined" && !localStorage.getItem("sweepr_installed_v1")
   );
@@ -23,6 +26,53 @@
 
   let startupInitialized = false;
   let installerCompleted = false;
+
+  async function runAutoUpdateCheck() {
+    try {
+      const u = await api.checkAppUpdate();
+      if (u && u.update_available) {
+        autoUpdateInfo = u;
+      }
+    } catch {
+      // Ignore background update check errors
+    }
+  }
+
+  async function installUpdateNow() {
+    if (!autoUpdateInfo || installingUpdate) return;
+    installingUpdate = true;
+    try {
+      await api.installAppUpdate(autoUpdateInfo.url || undefined);
+    } catch {
+      installingUpdate = false;
+    }
+  }
+
+  async function detectDesktopGeoLanguage() {
+    try {
+      const res = await fetch("https://api.country.is/", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const country = String(data?.country || "").trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(country)) return;
+      const prevCountry = localStorage.getItem("sweepr_detected_country");
+      if (prevCountry !== country) {
+        localStorage.setItem("sweepr_detected_country", country);
+        const map: Record<string, Lang> = {
+          DE: "de", AT: "de", CH: "de", LI: "de",
+          FR: "fr", MC: "fr", BE: "fr", LU: "fr",
+          ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es",
+          IT: "it", SM: "it",
+          PT: "pt", BR: "pt",
+          NL: "nl",
+          JP: "ja",
+        };
+        setLang(map[country] || "en");
+      }
+    } catch {
+      // Ignore offline or blocked GeoIP
+    }
+  }
 
   function completeStartupInstaller() {
     installerCompleted = true;
@@ -66,6 +116,9 @@
     if (startupInitialized) return;
     startupInitialized = true;
     refreshLicense();
+    detectDesktopGeoLanguage();
+    runAutoUpdateCheck();
+    const updateTimer = setInterval(runAutoUpdateCheck, 4 * 60 * 60 * 1000);
     api
       .appInfo()
       .then((i) => {
@@ -84,6 +137,7 @@
       .catch(() => {
         appReady = true;
       });
+    return () => clearInterval(updateTimer);
   });
 
   // Pro features ask for activation when the backend answers `payment_required`.
@@ -276,6 +330,23 @@
       </div>
     </div>
   </header>
+
+  {#if autoUpdateInfo?.update_available && !updateDismissed}
+    <div class="auto-update-banner" role="status">
+      <div class="auto-update-text">
+        <strong>Update Available: SWEEPR Cleaner v{autoUpdateInfo.latest_version}</strong>
+        {#if autoUpdateInfo.notes}
+          <span class="auto-update-notes">— {autoUpdateInfo.notes}</span>
+        {/if}
+      </div>
+      <div class="auto-update-actions">
+        <button class="auto-update-btn" disabled={installingUpdate} onclick={installUpdateNow}>
+          {installingUpdate ? "Downloading & Updating…" : "Update & Restart Now"}
+        </button>
+        <button class="auto-update-dismiss" onclick={() => (updateDismissed = true)} aria-label="Dismiss update notification">✕</button>
+      </div>
+    </div>
+  {/if}
 
   <main class="main-content">
     {#if tab === "cleaner"}
@@ -617,6 +688,60 @@
     background: rgba(16, 185, 129, 0.15);
     color: #047857;
     border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  .auto-update-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 10px 28px 0 28px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: var(--text);
+    font-size: 12.5px;
+    flex-shrink: 0;
+  }
+  .auto-update-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .auto-update-notes {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .auto-update-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .auto-update-btn {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 5px 14px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  }
+  .auto-update-btn:hover {
+    background: #059669;
+  }
+  .auto-update-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: none;
   }
 
   .main-content {

@@ -444,4 +444,53 @@
     <string name="review_prompt_title">Enjoying SWEEPR Cleaner?</string>
     <string name="review_prompt_body">You\'ve just completed your 2nd cleanup! A quick rating on Google Play helps us a lot.</string>
     <string name="review_prompt_later">Not now</string>
+
+    <!-- Swipe-to-Clean Photo Triage Mode (#5) -->
+    <string name="triage_mode_grid">Grid View</string>
+    <string name="triage_mode_swipe">Swipe Triage</string>
+    <string name="triage_progress_status">Photo %1$d of %2$d · %3$s marked for Trash</string>
+    <string name="triage_done_subtitle">%1$s marked for Trash. Tap Move to trash below.</string>
+    <string name="triage_review_again">Review Again</string>
+    <string name="triage_btn_trash">Trash</string>
+    <string name="triage_btn_keep">Keep</string>
+    <string name="triage_sharpness_badge">Sharp %1$s</string>
+    <string name="triage_marked_trash_badge">TRASH</string>
+
+    <!-- Batch Photo Optimizer (#1) & EXIF GPS Privacy Stripper (#9) -->
+    <string name="media_opt_tab_video">Video Compressor</string>
+    <string name="media_opt_tab_photo_privacy">Photo Optimizer &amp; Privacy</string>
+    <string name="photo_opt_toggle_compress">Compress File Size (82% JPEG)</string>
+    <string name="photo_opt_toggle_compress_sub">Scales down &gt;2560px &amp; encodes at 82% quality</string>
+    <string name="photo_opt_toggle_gps">Strip EXIF GPS Location Coordinates</string>
+    <string name="photo_opt_toggle_gps_sub">Removes hidden GPS tags (%1$d photos with GPS)</string>
+    <string name="photo_opt_batch_cta">Optimize %1$d Photos (Save ~%2$s)</string>
+    <string name="photo_opt_batch_gps_only_cta">Strip EXIF GPS from %1$d Photos</string>
+    <string name="photo_opt_empty">No large photos (&gt;1.5 MB) or GPS-tagged photos found 🎉</string>
+    <string name="photo_opt_badge_action">Optimize</string>
+    <string name="photo_opt_badge_gps">GPS</string>
+    <string name="photo_opt_header_count">%1$d optimizable photos · %2$s</string>
+    <string name="photo_opt_working_title">Optimizing photos…</string>
+    <string name="photo_opt_working_body">Compressing resolution and stripping EXIF GPS coordinates…</string>
+    <string name="photo_opt_done_title">Photos Optimized!</string>
+    <string name="photo_opt_done_summary">Optimized %1$d photos: %2$s → %3$s\nSpace saved: %4$s (%5$d%%)</string>
+    <string name="photo_opt_gps_stripped_summary">EXIF GPS location stripped from %1$d photos</string>
+    <string name="photo_opt_saved_location">Saved to Pictures/Sweepr. Originals are kept until moved to 30-Day System Trash.</string>
+    <string name="photo_opt_trash_original">Move Original to 30-Day Trash</string>
+    <string name="photo_opt_failed">Could not optimize selected photos.</string>
+
+    <!-- Old Calendar Events Cleaner (#18) -->
+    <string name="contacts_tab_cleanup">Contacts Cleanup</string>
+    <string name="calendar_tab_old_events">Old Calendar (&gt;1 yr)</string>
+    <string name="calendar_permission_text">SWEEPR Cleaner needs calendar access to find and remove expired events older than 1 year.</string>
+    <string name="calendar_permission_button">Allow calendar access</string>
+    <string name="calendar_none_found">No calendar events older than 1 year found 🎉</string>
+    <string name="calendar_header_count">%1$d expired events (&gt;1 year old)</string>
+    <string name="calendar_explainer">Non-recurring past events older than 1 year.</string>
+    <string name="calendar_select_to_delete">Select old events to delete</string>
+    <string name="calendar_delete_selected">Delete %1$d Old Events</string>
+    <string name="calendar_untitled_event">Untitled Event</string>
+    <plurals name="msg_calendar_events_deleted">
+        <item quantity="one">Deleted %d old calendar event</item>
+        <item quantity="other">Deleted %d old calendar events</item>
+    </plurals>
 </resources>

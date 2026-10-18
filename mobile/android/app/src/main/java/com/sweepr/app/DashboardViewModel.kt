@@ -49,14 +49,18 @@ data class DashboardState(
     val scanStatus: String = "",
     val media: MediaScanResult = MediaScanResult(),
     val contactGroups: List<ContactGroup> = emptyList(),
+    val oldCalendarEvents: List<OldCalendarEvent> = emptyList(),
     val selectedMedia: Set<Uri> = emptySet(),
     val selectedTrash: Set<Uri> = emptySet(),
     val selectedContactGroups: Set<String> = emptySet(),
+    val selectedCalendarEventIds: Set<Long> = emptySet(),
     val isWorking: Boolean = false,
     val pendingTrash: PendingTrash? = null,
     val compressingVideo: MediaItem? = null,
     val compressionProgress: Float = 0f,
     val compressionResult: VideoCompressionResult? = null,
+    val optimizingPhotos: Boolean = false,
+    val photoOptimizationSummary: BatchPhotoOptimizationSummary? = null,
     val promptInAppReview: Boolean = false,
     val message: String? = null,
     val subscription: SubscriptionInfo = SubscriptionInfo(),
@@ -66,7 +70,7 @@ data class DashboardState(
     val selectedItems: List<MediaItem> get() = media.everything.filter { it.uri in selectedMedia }
     val selectedBytes: Long get() = selectedItems.sumOf { it.size }
     val selectedTrashItems: List<MediaItem> get() = media.trashed.filter { it.uri in selectedTrash }
-    val isBusy: Boolean get() = isScanning || isWorking || pendingTrash != null || compressingVideo != null
+    val isBusy: Boolean get() = isScanning || isWorking || pendingTrash != null || compressingVideo != null || optimizingPhotos
 }
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
@@ -353,6 +357,98 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun clearCompressionResult() = _state.update { it.copy(compressionResult = null) }
+
+    fun optimizePhotos(
+        items: List<MediaItem>,
+        compressResolution: Boolean,
+        stripGps: Boolean,
+    ) {
+        if (items.isEmpty() || _state.value.optimizingPhotos) return
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    optimizingPhotos = true,
+                    photoOptimizationSummary = null,
+                )
+            }
+            val results = withContext(Dispatchers.IO) {
+                items.mapNotNull { item ->
+                    runCatching {
+                        PhotoOptimizer.optimizePhoto(app, item, compressResolution, stripGps)
+                    }.getOrNull()
+                }
+            }
+            if (results.isNotEmpty()) {
+                _state.update {
+                    it.copy(
+                        optimizingPhotos = false,
+                        photoOptimizationSummary = BatchPhotoOptimizationSummary(results),
+                    )
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        optimizingPhotos = false,
+                        message = app.getString(R.string.photo_opt_failed),
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearPhotoOptimizationResult() = _state.update { it.copy(photoOptimizationSummary = null) }
+
+    fun scanCalendarEvents() {
+        viewModelScope.launch {
+            val events = withContext(Dispatchers.IO) {
+                runCatching { ContactsCleaner.scanOldCalendarEvents(app) }.getOrDefault(emptyList())
+            }
+            _state.update {
+                it.copy(
+                    oldCalendarEvents = events,
+                    selectedCalendarEventIds = events.map { ev -> ev.id }.toSet(),
+                )
+            }
+        }
+    }
+
+    fun toggleCalendarEvent(id: Long) = _state.update { s ->
+        s.copy(
+            selectedCalendarEventIds = if (id in s.selectedCalendarEventIds) s.selectedCalendarEventIds - id
+            else s.selectedCalendarEventIds + id,
+        )
+    }
+
+    fun setCalendarEventsSelected(ids: Collection<Long>, selected: Boolean) = _state.update { s ->
+        s.copy(
+            selectedCalendarEventIds = if (selected) s.selectedCalendarEventIds + ids
+            else s.selectedCalendarEventIds - ids.toSet(),
+        )
+    }
+
+    fun deleteCalendarEvents(ids: Set<Long>) {
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val deleted = withContext(Dispatchers.IO) {
+                runCatching { ContactsCleaner.deleteCalendarEvents(app, ids) }.getOrDefault(0)
+            }
+            val shouldAskReview = if (deleted > 0) Prefs.recordCleanupForReviewPrompt() else false
+            _state.update { s ->
+                s.copy(
+                    isWorking = false,
+                    oldCalendarEvents = s.oldCalendarEvents.filterNot { it.id in ids },
+                    selectedCalendarEventIds = s.selectedCalendarEventIds - ids,
+                    promptInAppReview = s.promptInAppReview || shouldAskReview,
+                    message = if (deleted > 0) {
+                        app.resources.getQuantityString(R.plurals.msg_calendar_events_deleted, deleted, deleted)
+                    } else {
+                        app.getString(R.string.msg_nothing_deleted)
+                    },
+                )
+            }
+        }
+    }
 
     /**
      * Moves media to the system trash. On Android 11+ (API 30+), uses
