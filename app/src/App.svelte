@@ -1,14 +1,14 @@
 <script lang="ts">
   import Cleaner from "./components/Cleaner.svelte";
+  import Schedule from "./components/Schedule.svelte";
   import Optimization from "./components/Optimization.svelte";
-  import Utilities from "./components/Utilities.svelte";
   import Account from "./components/Account.svelte";
   import ActivateModal from "./components/ActivateModal.svelte";
   import Installer from "./components/Installer.svelte";
   import { api, ACTIVATE_EVENT, type LicenseStatus, type AppInfo } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
 
-  type Tab = "cleaner" | "optimization" | "utilities" | "account";
+  type Tab = "cleaner" | "schedule" | "optimization" | "account";
   let tab = $state<Tab>("cleaner");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
@@ -81,8 +81,7 @@
     }
   });
 
-  // Pro features (uninstaller, registry repair, duplicates, shredder) ask for
-  // activation when the backend answers `payment_required`.
+  // Pro features ask for activation when the backend answers `payment_required`.
   $effect(() => {
     const open = () => (showActivateModal = true);
     window.addEventListener(ACTIVATE_EVENT, open);
@@ -91,8 +90,8 @@
 
   const tabs: { id: Tab; key: string; icon: string }[] = [
     { id: "cleaner", key: "nav.cleaner", icon: "M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6zM4 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2zM14 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2z" },
+    { id: "schedule", key: "nav.schedule", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5v5l3.5 2" },
     { id: "optimization", key: "nav.optimization", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
-    { id: "utilities", key: "nav.utilities", icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" },
     { id: "account", key: "nav.account", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
   ];
 </script>
@@ -187,10 +186,10 @@
   <main class="main-content">
     {#if tab === "cleaner"}
       <Cleaner {license} onLicenseChange={refreshLicense} />
+    {:else if tab === "schedule"}
+      <Schedule {license} />
     {:else if tab === "optimization"}
       <Optimization {license} />
-    {:else if tab === "utilities"}
-      <Utilities {license} />
     {:else if tab === "account"}
       <Account {license} {info} onRefresh={() => refreshLicense(true)} />
     {/if}

@@ -123,6 +123,10 @@ export const api = {
   setAutostart: (enabled: boolean) => invoke<boolean>("set_autostart", { enabled }),
   getScheduleSettings: () => invoke<string>("get_schedule_settings"),
   setScheduleSettings: (schedule: string) => invoke<string>("set_schedule_settings", { schedule }),
+  listRuleDefinitions: () => invoke<RuleDefinitionInfo[]>("list_rule_definitions"),
+  getScheduleConfig: () => invoke<ScheduleConfig>("get_schedule_config"),
+  saveScheduleConfig: (config: ScheduleConfig) => invoke<ScheduleConfig>("save_schedule_config", { config }),
+  runScheduledCleanNow: () => invoke<ScheduleConfig>("run_scheduled_clean_now"),
   systemOverview: () => invoke<SystemOverview>("system_overview"),
   openBreachCheck: () => invoke<void>("open_breach_check"),
   scanBrowserPrivacy: () => invoke<BrowserPrivacyItem[]>("scan_browser_privacy"),
@@ -145,6 +149,21 @@ export const api = {
   quitApp: () => invoke<void>("quit_app"),
 };
 
+export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }
+export interface ScheduleConfig {
+  enabled: boolean;
+  frequency: "daily" | "weekly" | "monthly" | string;
+  time: string;
+  day_of_week: string;
+  day_of_month: number;
+  action: "scan_and_clean" | "scan_only" | string;
+  categories: string[];
+  os_task_registered: boolean;
+  last_run_at: number | null;
+  last_bytes_found: number | null;
+  last_bytes_freed: number | null;
+  last_files_removed: number | null;
+}
 export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }
 export interface AppRemnant { name: string; path: string; location: string; bytes: number; files: number; }
 export interface DuplicateGroup { hash: string; size: number; files: string[]; }

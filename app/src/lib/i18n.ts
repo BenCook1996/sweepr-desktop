@@ -40,8 +40,8 @@ export function getLang(): Lang {
 export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   en: {
     "nav.cleaner": "Dashboard",
+    "nav.schedule": "Schedule",
     "nav.optimization": "Optimization",
-    "nav.utilities": "File Shredder",
     "nav.account": "Account",
     "theme.light": "Light",
     "theme.dark": "Dark",
@@ -58,8 +58,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   es: {
     "nav.cleaner": "Panel",
+    "nav.schedule": "Programación",
     "nav.optimization": "Optimización",
-    "nav.utilities": "Trituradora",
     "nav.account": "Cuenta",
     "theme.light": "Claro",
     "theme.dark": "Oscuro",
@@ -76,8 +76,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   fr: {
     "nav.cleaner": "Tableau de bord",
+    "nav.schedule": "Planification",
     "nav.optimization": "Optimisation",
-    "nav.utilities": "Broyeur",
     "nav.account": "Compte",
     "theme.light": "Clair",
     "theme.dark": "Sombre",
@@ -94,8 +94,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   de: {
     "nav.cleaner": "Übersicht",
+    "nav.schedule": "Zeitplan",
     "nav.optimization": "Optimierung",
-    "nav.utilities": "Schredder",
     "nav.account": "Konto",
     "theme.light": "Hell",
     "theme.dark": "Dunkel",
@@ -112,8 +112,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   it: {
     "nav.cleaner": "Panoramica",
+    "nav.schedule": "Pianificazione",
     "nav.optimization": "Ottimizzazione",
-    "nav.utilities": "Distruggidocumenti",
     "nav.account": "Account",
     "theme.light": "Chiaro",
     "theme.dark": "Scuro",
@@ -130,8 +130,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   pt: {
     "nav.cleaner": "Painel",
+    "nav.schedule": "Agendamento",
     "nav.optimization": "Otimização",
-    "nav.utilities": "Triturador",
     "nav.account": "Conta",
     "theme.light": "Claro",
     "theme.dark": "Escuro",
@@ -148,8 +148,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   nl: {
     "nav.cleaner": "Dashboard",
+    "nav.schedule": "Schema",
     "nav.optimization": "Optimalisatie",
-    "nav.utilities": "Bestandsversnipperaar",
     "nav.account": "Account",
     "theme.light": "Licht",
     "theme.dark": "Donker",

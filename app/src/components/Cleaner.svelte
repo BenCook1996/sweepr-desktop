@@ -1,5 +1,12 @@
+<script lang="ts" module>
+  import type { ScanReport } from "../lib/api";
+  let cachedReport: ScanReport | null = null;
+  let cachedSelected: Record<string, boolean> = {};
+</script>
+
 <script lang="ts">
-  import { api, errorMessage, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type ScanReport, type SystemOverview } from "../lib/api";
+  import { onMount } from "svelte";
+  import { api, errorMessage, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import Paywall from "./Paywall.svelte";
   import { addLifetimeStats, getLifetimeStats } from "../lib/store";
@@ -8,9 +15,10 @@
 
   type Phase = "idle" | "scanning" | "results" | "cleaning" | "done";
   let phase = $state<Phase>("idle");
+  let initialScanning = $state(false);
   let progress = $state<ScanProgress | null>(null);
-  let report = $state<ScanReport | null>(null);
-  let selected = $state<Record<string, boolean>>({});
+  let report = $state<ScanReport | null>(cachedReport);
+  let selected = $state<Record<string, boolean>>(cachedSelected);
   let expanded = $state<string | null>(null);
   let showPaywall = $state(false);
   let error = $state<string | null>(null);
@@ -26,6 +34,8 @@
   let startupCount = $state<number | null>(null);
   let lifetimeStats = $state(getLifetimeStats());
 
+  const SYSTEM_JUNK_IDS = ["thumbnails", "crash_dumps", "delivery_opt", "shader_cache", "logs", "trash"];
+
   const nonEmpty = $derived(report?.categories.filter((c) => c.bytes > 0) ?? []);
   const empty = $derived(report?.categories.filter((c) => c.bytes === 0) ?? []);
   const selectedCats = $derived(nonEmpty.filter((c) => selected[c.id]));
@@ -36,12 +46,36 @@
   const skipped = $derived(results.reduce((s, r) => s + r.files_skipped, 0));
   const removed = $derived(results.reduce((s, r) => s + r.files_removed, 0));
 
+  const systemJunkBytes = $derived(
+    report?.categories
+      .filter((c) => SYSTEM_JUNK_IDS.includes(c.id))
+      .reduce((s, c) => s + c.bytes, 0) ?? 0
+  );
+  const tempFilesBytes = $derived(
+    report?.categories
+      .filter((c) => c.id === "temp")
+      .reduce((s, c) => s + c.bytes, 0) ?? 0
+  );
+  const proCachesBytes = $derived(
+    report?.categories
+      .filter((c) => c.id !== "temp" && !SYSTEM_JUNK_IDS.includes(c.id))
+      .reduce((s, c) => s + c.bytes, 0) ?? 0
+  );
+  const duplicateCat = $derived(
+    report?.categories.find((c) => c.id === "duplicates") ?? null
+  );
+
   const diskUsedBytes = $derived(
     sysOverview ? Math.max(0, sysOverview.disk_total_bytes - sysOverview.disk_available_bytes) : 0
   );
   const diskUsedPct = $derived(
     sysOverview && sysOverview.disk_total_bytes > 0
       ? Math.round((diskUsedBytes / sysOverview.disk_total_bytes) * 100)
+      : 0
+  );
+  const reclaimablePct = $derived(
+    sysOverview && sysOverview.disk_total_bytes > 0 && report
+      ? Math.min(diskUsedPct, Math.max(1, Math.round((report.total_bytes / sysOverview.disk_total_bytes) * 100)))
       : 0
   );
   const diskFreePct = $derived(sysOverview ? Math.max(0, 100 - diskUsedPct) : 0);
@@ -51,11 +85,34 @@
       : 0
   );
 
-  $effect(() => {
+  async function runDashboardScan() {
+    if (initialScanning) return;
+    initialScanning = true;
+    progress = null;
+    const unlisten = await api.onScanProgress((p) => (progress = p));
+    try {
+      const r = await api.scan();
+      report = r;
+      cachedReport = r;
+      const sel = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
+      selected = sel;
+      cachedSelected = sel;
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      unlisten();
+      initialScanning = false;
+    }
+  }
+
+  onMount(() => {
     api.listExclusions().then((list) => (exclusions = list)).catch(() => {});
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
     api.systemOverview().then((o) => (sysOverview = o)).catch(() => {});
     api.startupItems().then((items) => (startupCount = items.length)).catch(() => {});
+    if (!cachedReport) {
+      runDashboardScan();
+    }
   });
 
   async function toggleQuarantineDrawer() {
@@ -98,6 +155,8 @@
       exclusions = await api.addExclusion(path);
       if (phase === "results") {
         await scan();
+      } else {
+        await runDashboardScan();
       }
     } catch (e) {
       error = errorMessage(e);
@@ -110,6 +169,7 @@
       exclusions = await api.addExclusion(newExclusionPath.trim());
       newExclusionPath = "";
       if (phase === "results") await scan();
+      else await runDashboardScan();
     } catch (e) {
       error = errorMessage(e);
     }
@@ -119,6 +179,7 @@
     try {
       exclusions = await api.removeExclusion(path);
       if (phase === "results") await scan();
+      else await runDashboardScan();
     } catch (e) {
       error = errorMessage(e);
     }
@@ -132,7 +193,10 @@
     try {
       const r = await api.scan();
       report = r;
-      selected = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
+      cachedReport = r;
+      const sel = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
+      selected = sel;
+      cachedSelected = sel;
       phase = "results";
     } catch (e) {
       error = errorMessage(e);
@@ -142,7 +206,26 @@
     }
   }
 
+  function reviewDuplicates() {
+    if (report) {
+      expanded = "duplicates";
+      phase = "results";
+    } else {
+      scan();
+    }
+  }
+
+  function backToDashboard() {
+    phase = "idle";
+    api.systemOverview().then((o) => (sysOverview = o)).catch(() => {});
+    runDashboardScan();
+  }
+
   function requestClean() {
+    if (!report) {
+      scan();
+      return;
+    }
     if (needsPro && !license?.active) {
       showPaywall = true;
       return;
@@ -223,9 +306,19 @@
       <div class="welcome-text">
         <h1 class="welcome-title">Welcome back!</h1>
         <div class="welcome-status">
-          <span class="status-badge">PC Status: <strong>Good</strong></span>
-          <span class="dot-separator">•</span>
-          <span class="muted small">Diagnostics & storage analysis ready</span>
+          {#if initialScanning}
+            <span class="status-badge">Scanning PC: <strong>{progress ? `${progress.done}/${progress.total}` : "Starting…"}</strong></span>
+            <span class="dot-separator">•</span>
+            <span class="muted small">{progress ? `Checking ${progress.category_name} (${formatBytes(progress.bytes_so_far)} found)` : "Analyzing storage & caches…"}</span>
+          {:else if report}
+            <span class="status-badge">PC Status: <strong>{report.total_bytes > 500 * 1024 * 1024 ? "Action Recommended" : "Good"}</strong></span>
+            <span class="dot-separator">•</span>
+            <span class="muted small">{formatBytes(report.total_bytes)} reclaimable across {formatCount(report.total_files)} files</span>
+          {:else}
+            <span class="status-badge">PC Status: <strong>Good</strong></span>
+            <span class="dot-separator">•</span>
+            <span class="muted small">Diagnostics & storage analysis ready</span>
+          {/if}
         </div>
       </div>
       <button class="ghost" onclick={toggleQuarantineDrawer}>
@@ -237,7 +330,12 @@
     <div class="dashboard-grid">
       <!-- 1. Left Card: Cleanup Recommendations -->
       <div class="card bento-card recs-card">
-        <div class="card-header-label">CLEANUP AREAS</div>
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <div class="card-header-label">CLEANUP RECOMMENDATIONS</div>
+          {#if report}
+            <button class="ghost" style="padding: 2px 8px; font-size: 11px;" onclick={() => (phase = "results")}>Review →</button>
+          {/if}
+        </div>
         
         <div class="rec-items">
           <div class="rec-item">
@@ -249,6 +347,7 @@
               <div class="muted small">Temp logs, crash dumps</div>
             </div>
             <div class="rec-stat">
+              <div class="rec-size">{report ? formatBytes(systemJunkBytes) : initialScanning ? "…" : "0 B"}</div>
               <span class="badge free">Free</span>
             </div>
           </div>
@@ -262,6 +361,7 @@
               <div class="muted small">24h+ app temporary files</div>
             </div>
             <div class="rec-stat">
+              <div class="rec-size">{report ? formatBytes(tempFilesBytes) : initialScanning ? "…" : "0 B"}</div>
               <span class="badge free">Free</span>
             </div>
           </div>
@@ -275,14 +375,25 @@
               <div class="muted small">Browser caches, dev caches & duplicate files</div>
             </div>
             <div class="rec-stat">
+              <div class="rec-size">{report ? formatBytes(proCachesBytes) : initialScanning ? "…" : "0 B"}</div>
               <span class="badge pro">Pro</span>
             </div>
           </div>
         </div>
 
-        <button class="primary clean-cta-btn" onclick={scan}>
-          SCAN FOR JUNK
-        </button>
+        {#if initialScanning}
+          <button class="primary clean-cta-btn" disabled>
+            SCANNING{progress ? ` (${formatBytes(progress.bytes_so_far)})` : "…"}
+          </button>
+        {:else if report && report.total_bytes > 0}
+          <button class="primary clean-cta-btn" onclick={requestClean}>
+            CLEAN {formatBytes(report.total_bytes)}
+          </button>
+        {:else}
+          <button class="primary clean-cta-btn" onclick={scan}>
+            SCAN FOR JUNK
+          </button>
+        {/if}
       </div>
 
       <!-- 2. Centerpiece Card: System Status Overview (Hero) -->
@@ -312,7 +423,13 @@
           <span>QUICK SCAN NOW</span>
         </button>
 
-        <div class="scan-footnote muted small">Fast, read-only scan · Safe & private</div>
+        <div class="scan-footnote muted small">
+          {#if report}
+            {formatBytes(report.total_bytes)} reclaimable · scanned in {(report.duration_ms / 1000).toFixed(1)}s
+          {:else}
+            Fast, read-only scan · Safe & private
+          {/if}
+        </div>
       </div>
 
       <!-- 3. Right Card: Storage & Performance Overview -->
@@ -332,11 +449,14 @@
           </div>
 
           <div class="segmented-bar">
-            <div class="bar-segment apps" style="width: {diskUsedPct}%;"></div>
+            <div class="bar-segment apps" style="width: {Math.max(0, diskUsedPct - reclaimablePct)}%;"></div>
+            <div class="bar-segment files" style="width: {reclaimablePct}%;"></div>
+            <div class="bar-segment system" style="width: {diskFreePct}%;"></div>
           </div>
 
           <div class="legend-row">
             <span class="legend-chip"><span class="chip-dot emerald"></span> Used ({diskUsedPct}%)</span>
+            <span class="legend-chip"><span class="chip-dot amber"></span> Junk ({report ? formatBytes(report.total_bytes) : "…"})</span>
             <span class="legend-chip"><span class="chip-dot slate"></span> Free ({diskFreePct}%)</span>
           </div>
         </div>
@@ -358,8 +478,8 @@
               <span class="muted small">CPU:</span>
               <strong class="perf-val">{sysOverview ? `${Math.round(sysOverview.cpu_usage_percent)}%` : "—"}</strong>
             </div>
-            <button class="ghost action-pill-btn" onclick={scan}>
-              SCAN
+            <button class="ghost action-pill-btn" onclick={() => (report ? (phase = "results") : scan())}>
+              {report ? "DETAILS" : "SCAN"}
             </button>
           </div>
         </div>
@@ -371,10 +491,13 @@
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7v14H3V7h5zm13 0v14h-5V7h5zM15 3v18H9V3h6z"/></svg>
         </div>
         <div class="tile-content">
-          <div class="tile-label">JUNK & CACHE SCAN</div>
-          <div class="tile-value">Run a scan <span class="tile-sub">to check space</span></div>
+          <div class="tile-label">DUPLICATE FILES</div>
+          <div class="tile-value">
+            {report ? formatBytes(duplicateCat?.bytes ?? 0) : initialScanning ? "Scanning…" : "0 B"}
+            <span class="tile-sub">{report ? `(${formatCount(duplicateCat?.files ?? 0)} files)` : ""}</span>
+          </div>
         </div>
-        <button class="ghost tile-action-btn" onclick={scan}>SCAN</button>
+        <button class="ghost tile-action-btn" onclick={reviewDuplicates}>REVIEW</button>
       </div>
 
       <div class="card status-tile">
@@ -423,6 +546,9 @@
         <div class="muted small" style="margin-top: 2px;">{formatCount(report.total_files)} files across {nonEmpty.length} areas · scanned in {(report.duration_ms / 1000).toFixed(1)}s</div>
       </div>
       <div class="spacer"></div>
+      <button class="ghost rescan-btn" onclick={() => (phase = "idle")}>
+        <span>← Overview</span>
+      </button>
       <button class="ghost rescan-btn" onclick={toggleQuarantineDrawer}>
         <span>Quarantine / Undo ({quarantine.length})</span>
       </button>
@@ -558,7 +684,7 @@
     {#if results.some((r) => r.moved_to_trash)}
       <p class="note" style="margin-bottom: 20px;">Files are safely in your {navigator.userAgent.includes("Windows") ? "Recycle Bin" : "Trash"}. Empty it whenever you want to reclaim space permanently.</p>
     {/if}
-    <button class="primary big" onclick={scan}>Back to Dashboard</button>
+    <button class="primary big" onclick={backToDashboard}>Back to Dashboard</button>
   </section>
 {/if}
 

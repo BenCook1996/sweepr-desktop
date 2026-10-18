@@ -47,6 +47,10 @@ fn load_cleaning_history(data_dir: &Path) -> Vec<CleanHistoryEntry> {
         .unwrap_or_default()
 }
 
+pub fn append_cleaning_history_pub(data_dir: &Path, entry: CleanHistoryEntry) -> std::io::Result<()> {
+    append_cleaning_history(data_dir, entry)
+}
+
 fn append_cleaning_history(data_dir: &Path, entry: CleanHistoryEntry) -> std::io::Result<()> {
     let mut list = load_cleaning_history(data_dir);
     list.insert(0, entry);
@@ -224,20 +228,77 @@ pub fn set_autostart(enabled: bool) -> AppResult<bool> {
 
 #[tauri::command]
 pub fn get_schedule_settings(state: State<'_, AppState>) -> String {
-    let path = state.data_dir.join("schedule.txt");
-    std::fs::read_to_string(path).map(|s| s.trim().to_string()).unwrap_or_else(|_| "off".into())
+    let cfg = crate::scheduler::load_config(&state.data_dir);
+    if !cfg.enabled {
+        "off".into()
+    } else {
+        cfg.frequency
+    }
 }
 
 #[tauri::command]
 pub fn set_schedule_settings(state: State<'_, AppState>, schedule: String) -> AppResult<String> {
-    let val = match schedule.trim().to_ascii_lowercase().as_str() {
-        "daily" => "daily",
-        "weekly" => "weekly",
-        _ => "off",
-    };
-    let path = state.data_dir.join("schedule.txt");
-    std::fs::write(path, val).map_err(|e| AppError::Other(format!("Could not save schedule: {e}")))?;
-    Ok(val.into())
+    let mut cfg = crate::scheduler::load_config(&state.data_dir);
+    match schedule.trim().to_ascii_lowercase().as_str() {
+        "daily" => {
+            cfg.enabled = true;
+            cfg.frequency = "daily".into();
+        }
+        "weekly" => {
+            cfg.enabled = true;
+            cfg.frequency = "weekly".into();
+        }
+        "monthly" => {
+            cfg.enabled = true;
+            cfg.frequency = "monthly".into();
+        }
+        _ => {
+            cfg.enabled = false;
+        }
+    }
+    let saved = crate::scheduler::save_config(&state.data_dir, cfg)?;
+    Ok(if saved.enabled { saved.frequency } else { "off".into() })
+}
+
+#[derive(Serialize, Clone)]
+pub struct RuleDefinitionInfo {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub free: bool,
+}
+
+#[tauri::command]
+pub fn list_rule_definitions() -> Vec<RuleDefinitionInfo> {
+    rules::all()
+        .into_iter()
+        .map(|r| RuleDefinitionInfo {
+            id: r.id.to_string(),
+            name: r.name.into(),
+            description: r.description.into(),
+            free: r.free,
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn get_schedule_config(state: State<'_, AppState>) -> crate::scheduler::ScheduleConfig {
+    crate::scheduler::load_config(&state.data_dir)
+}
+
+#[tauri::command]
+pub fn save_schedule_config(
+    state: State<'_, AppState>,
+    config: crate::scheduler::ScheduleConfig,
+) -> AppResult<crate::scheduler::ScheduleConfig> {
+    crate::scheduler::save_config(&state.data_dir, config)
+}
+
+#[tauri::command]
+pub async fn run_scheduled_clean_now(
+    state: State<'_, AppState>,
+) -> AppResult<crate::scheduler::ScheduleConfig> {
+    crate::scheduler::execute_scheduled_run(&state.data_dir, &state.licensing).await
 }
 
 #[tauri::command]

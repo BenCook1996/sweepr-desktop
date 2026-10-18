@@ -7,6 +7,7 @@ mod memory;
 mod rules;
 mod safety;
 mod scanner;
+mod scheduler;
 mod duplicates;
 mod uninstaller;
 mod shredder;
@@ -16,6 +17,10 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    if scheduler::run_headless_if_requested() {
+        return;
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -73,6 +78,10 @@ pub fn run() {
             commands::set_autostart,
             commands::get_schedule_settings,
             commands::set_schedule_settings,
+            commands::list_rule_definitions,
+            commands::get_schedule_config,
+            commands::save_schedule_config,
+            commands::run_scheduled_clean_now,
             commands::system_overview,
             commands::open_breach_check,
             commands::scan_browser_privacy,
