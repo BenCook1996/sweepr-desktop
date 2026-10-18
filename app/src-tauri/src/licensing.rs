@@ -321,17 +321,30 @@ impl Licensing {
         };
 
         let result: AppResult<EntitlementResponse> = async {
-            let acc = self.ensure_account(&mut st).await?;
-            Ok(self
+            let mut acc = self.ensure_account(&mut st).await?;
+            let resp = self
                 .http
                 .post(format!("{}/v1/entitlement", self.api_base()?))
                 .bearer_auth(&acc.refresh_token)
                 .json(&serde_json::json!({ "device_id": self.device_id }))
                 .send()
-                .await?
-                .error_for_status()?
-                .json()
-                .await?)
+                .await?;
+            if resp.status().as_u16() == 401 {
+                st.account = None;
+                let _ = std::fs::remove_file(self.data_dir.join("account.json"));
+                acc = self.ensure_account(&mut st).await?;
+                return Ok(self
+                    .http
+                    .post(format!("{}/v1/entitlement", self.api_base()?))
+                    .bearer_auth(&acc.refresh_token)
+                    .json(&serde_json::json!({ "device_id": self.device_id }))
+                    .send()
+                    .await?
+                    .error_for_status()?
+                    .json()
+                    .await?);
+            }
+            Ok(resp.error_for_status()?.json().await?)
         }
         .await;
 
@@ -368,17 +381,29 @@ impl Licensing {
 
     async fn post_for_url(&self, path: &str, body: Option<serde_json::Value>) -> AppResult<String> {
         let mut st = self.state.lock().await;
-        let acc = self.ensure_account(&mut st).await?;
+        let mut acc = self.ensure_account(&mut st).await?;
         let mut req = self
             .http
             .post(format!("{}{}", self.api_base()?, path))
             .bearer_auth(&acc.refresh_token);
-        if let Some(b) = body {
-            req = req.json(&b);
+        if let Some(ref b) = body {
+            req = req.json(b);
         }
-        let r: UrlResponse = req
-            .send()
-            .await?
+        let mut resp = req.send().await?;
+        if resp.status().as_u16() == 401 {
+            st.account = None;
+            let _ = std::fs::remove_file(self.data_dir.join("account.json"));
+            acc = self.ensure_account(&mut st).await?;
+            let mut retry_req = self
+                .http
+                .post(format!("{}{}", self.api_base()?, path))
+                .bearer_auth(&acc.refresh_token);
+            if let Some(ref b) = body {
+                retry_req = retry_req.json(b);
+            }
+            resp = retry_req.send().await?;
+        }
+        let r: UrlResponse = resp
             .error_for_status()?
             .json()
             .await?;
@@ -398,7 +423,26 @@ impl Licensing {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
         }
         let body = if map.is_empty() { None } else { Some(serde_json::Value::Object(map)) };
-        self.post_for_url("/v1/checkout", body).await
+        match self.post_for_url("/v1/checkout", body).await {
+            Ok(url) => Ok(url),
+            Err(_) => {
+                let base = self.api_base()?;
+                let mut url = format!("{base}/order");
+                if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
+                    let encoded: String = e
+                        .bytes()
+                        .flat_map(|b| match b {
+                            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                                vec![b as char]
+                            }
+                            _ => format!("%{:02X}", b).chars().collect(),
+                        })
+                        .collect();
+                    url = format!("{url}?email={encoded}");
+                }
+                Ok(url)
+            }
+        }
     }
 
     /// Step 1 of linking an existing email purchase to this desktop device.

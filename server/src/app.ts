@@ -1545,62 +1545,87 @@ export function createApp(deps: AppDeps) {
     const plan: "monthly" | "six_month" | "annual" =
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     if (email && !account.email) {
-      repo.updateAccountProfile(account.id, { email });
+      try {
+        if (!repo.accountByEmail(email)) {
+          repo.updateAccountProfile(account.id, { email });
+        }
+      } catch {
+        // Ignore if email is already associated with another account
+      }
     }
     const isAnnual = plan === "annual";
     const isSixMonth = plan === "six_month";
+    const hasMonthlyPrice = Boolean(config.priceMonthly && !config.priceMonthly.includes("..."));
+    const hasAnnualPrice = Boolean(config.priceAnnual && !config.priceAnnual.includes("..."));
+    const hasSixMonthPrice = Boolean(config.priceSixMonth && !config.priceSixMonth.includes("..."));
     const lineItems = isAnnual
-      ? config.priceAnnual
+      ? hasAnnualPrice
         ? [{ price: config.priceAnnual, quantity: 1 }]
         : [
             {
               price_data: {
                 currency: "gbp",
                 unit_amount: 4999,
-                recurring: { interval: "year" },
+                recurring: { interval: "year" as const },
                 product_data: { name: "SWEEPR Cleaner Pro (Annual)" },
               },
               quantity: 1,
             },
           ]
       : isSixMonth
-      ? config.priceSixMonth
+      ? hasSixMonthPrice
         ? [{ price: config.priceSixMonth, quantity: 1 }]
         : [
             {
               price_data: {
                 currency: "gbp",
                 unit_amount: 3899,
-                recurring: { interval: "month", interval_count: 6 },
+                recurring: { interval: "month" as const, interval_count: 6 },
                 product_data: { name: "SWEEPR Cleaner Pro (6-Month)" },
               },
               quantity: 1,
             },
           ]
-      : [{ price: config.priceMonthly, quantity: 1 }];
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      client_reference_id: account.id,
-      ...(account.stripe_customer_id
-        ? { customer: account.stripe_customer_id }
-        : email
-        ? { customer_email: email }
-        : {}),
-      line_items: lineItems,
-      ...(isAnnual || isSixMonth ? {} : { discounts: [{ coupon: stripeCoupon }] }),
-      subscription_data: {
-        metadata: { account_id: account.id, plan },
-      },
+      : hasMonthlyPrice
+      ? [{ price: config.priceMonthly, quantity: 1 }]
+      : [
+          {
+            price_data: {
+              currency: "gbp",
+              unit_amount: 999,
+              recurring: { interval: "month" as const },
+              product_data: { name: "SWEEPR Cleaner Pro (Monthly)" },
+            },
+            quantity: 1,
+          },
+        ];
 
-      automatic_tax: { enabled: true },
-      // Disable managed payments to avoid the tax_code error on test prices
-      // (not in the Stripe SDK's typings yet, hence the cast below).
-      managed_payments: { enabled: false },
-      allow_promotion_codes: true,
-      success_url: `${config.publicUrl}/checkout/success`,
-      cancel_url: `${config.publicUrl}/checkout/cancel`,
-    } as unknown as Stripe.Checkout.SessionCreateParams);
-    return c.json({ url: session.url });
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        client_reference_id: account.id,
+        ...(account.stripe_customer_id
+          ? { customer: account.stripe_customer_id }
+          : email
+          ? { customer_email: email }
+          : {}),
+        line_items: lineItems,
+        subscription_data: {
+          metadata: { account_id: account.id, plan },
+        },
+        allow_promotion_codes: true,
+        success_url: `${config.publicUrl}/checkout/success`,
+        cancel_url: `${config.publicUrl}/checkout/cancel`,
+      });
+      if (session.url) {
+        return c.json({ url: session.url });
+      }
+    } catch (err) {
+      console.warn("[v1/checkout] Falling back to /order:", err);
+    }
+
+    const fallbackUrl = `${config.publicUrl}/order${email ? `?email=${encodeURIComponent(email)}` : ""}`;
+    return c.json({ url: fallbackUrl });
   });
 
   // Win-back retention offer (+30 days once per account)

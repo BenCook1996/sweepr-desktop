@@ -8,7 +8,6 @@
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
-  let activeInfo = $state<"privacy" | "sales" | "info" | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
 
   function stopPolling() {
@@ -62,7 +61,6 @@
     open = false;
     error = null;
     waitingPayment = false;
-    activeInfo = null;
   }
 </script>
 
@@ -110,27 +108,6 @@
               {busy ? "Opening checkout…" : "Begin activation"}
             </button>
           </div>
-        </div>
-
-        {#if activeInfo === "privacy"}
-          <div class="info-drawer muted small">
-            <strong>Privacy Policy:</strong> SWEEPR Cleaner scans your files locally on your PC—never uploading file names or contents. Your email is used solely for licence activation and billing receipts via Stripe.
-          </div>
-        {:else if activeInfo === "sales"}
-          <div class="info-drawer muted small">
-            <strong>Sales Policy:</strong> Flexible subscription plans are available at checkout. Taxes are calculated automatically based on your region.
-          </div>
-        {:else if activeInfo === "info"}
-          <div class="info-drawer muted small">
-            <strong>More info:</strong> Your SWEEPR Cleaner Pro subscription unlocks deep browser/app cache cleanup, duplicate finder, registry repair, file shredder, and covers up to 3 PCs + 3 mobile devices.
-          </div>
-        {/if}
-
-        <!-- Modal Footer Links -->
-        <div class="modal-footer">
-          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "privacy" ? null : "privacy")}>Privacy Policy</button>
-          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "sales" ? null : "sales")}>Sales Policy</button>
-          <button type="button" class="footer-link" onclick={() => (activeInfo = activeInfo === "info" ? null : "info")}>More info</button>
         </div>
 
       {:else}
@@ -301,41 +278,6 @@
   .begin-btn:hover:not(:disabled) {
     box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
     transform: translateY(-1px);
-  }
-
-  .info-drawer {
-    margin-top: 16px;
-    padding: 10px 14px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    text-align: left;
-    line-height: 1.45;
-  }
-
-  .modal-footer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
-    padding-top: 12px;
-  }
-  .footer-link {
-    background: transparent;
-    border: none;
-    padding: 0;
-    box-shadow: none;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: underline;
-    transition: color 0.15s;
-  }
-  .footer-link:hover {
-    color: var(--text);
-    background: transparent;
   }
 
   .waiting-body {
