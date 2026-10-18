@@ -305,6 +305,7 @@ pub fn list_registry_backups(state: State<'_, AppState>) -> Vec<RegistryBackupEn
 
 #[tauri::command]
 pub async fn restore_registry_backup(state: State<'_, AppState>, backup_id: String) -> AppResult<()> {
+    state.licensing.require_active().await?;
     let data_dir = state.data_dir.clone();
     #[cfg(target_os = "windows")]
     {

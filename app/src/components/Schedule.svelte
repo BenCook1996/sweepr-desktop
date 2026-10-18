@@ -80,7 +80,7 @@
   }
 
   async function saveSchedule() {
-    if (config.enabled && !license?.active) {
+    if (!license?.active) {
       window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
       return;
     }
@@ -149,10 +149,13 @@
         Schedule automatic scans and cleanups that run silently in the background via Windows Task Scheduler—even when SWEEPR Cleaner is closed.
       </p>
     </div>
-    <div class="status-pill-wrap">
-      {#if config.enabled && config.os_task_registered}
+    <div class="status-pill-wrap" style="display: flex; align-items: center; gap: 8px;">
+      {#if !license?.active}
+        <span class="badge pro">Pro</span>
+      {/if}
+      {#if config.enabled && config.os_task_registered && license?.active}
         <span class="badge free">Active in Background</span>
-      {:else if config.enabled}
+      {:else if config.enabled && license?.active}
         <span class="badge pro">Pending Save</span>
       {:else}
         <span class="badge muted-badge">Schedule Off</span>
@@ -183,7 +186,20 @@
           </div>
         </div>
         <label class="switch">
-          <input type="checkbox" bind:checked={config.enabled} />
+          <input
+            type="checkbox"
+            checked={config.enabled && !!license?.active}
+            onchange={(e) => {
+              const target = e.currentTarget as HTMLInputElement;
+              if (!license?.active) {
+                target.checked = false;
+                config.enabled = false;
+                window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+                return;
+              }
+              config.enabled = target.checked;
+            }}
+          />
           <span class="slider"></span>
         </label>
       </div>

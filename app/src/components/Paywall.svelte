@@ -3,10 +3,10 @@
   import { formatBytes } from "../lib/format";
 
   let {
-    open, bytes, freeBytes, onClose, onActivated, onCleanFree,
+    open, bytes, onClose, onActivated,
   }: {
-    open: boolean; bytes: number; freeBytes: number;
-    onClose: () => void; onActivated: () => void; onCleanFree: () => void;
+    open: boolean; bytes: number;
+    onClose: () => void; onActivated: () => void;
   } = $props();
 
   let stage = $state<"offer" | "waiting">("offer");
@@ -91,9 +91,6 @@
           {busy ? "Opening checkout…" : "Activate SWEEPR Cleaner Pro"}
         </button>
         <div class="row" style="justify-content:center">
-          {#if freeBytes > 0}
-            <button class="ghost" onclick={onCleanFree}>Clean free items only ({formatBytes(freeBytes)})</button>
-          {/if}
           <button class="ghost" onclick={close}>Not now</button>
         </div>
       {:else}

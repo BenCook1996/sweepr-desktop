@@ -25,6 +25,10 @@
   }
 
   async function toggleItem(item: StartupItem) {
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     error = null;
     toggling = item.name;
     try {
@@ -105,6 +109,9 @@
       </span>
       <span class="mono cmd" title={s.command}>{s.command}</span>
       {#if canToggle}
+        {#if !license?.active}
+          <span class="badge pro">Pro</span>
+        {/if}
         <button
           class={isEnabled ? "ghost small-btn" : "primary small-btn"}
           disabled={toggling === s.name}

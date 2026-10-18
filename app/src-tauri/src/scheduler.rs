@@ -208,6 +208,7 @@ fn sync_os_task(_cfg: &ScheduleConfig, _data_dir: &Path) -> AppResult<()> {
 }
 
 pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> AppResult<ScheduleConfig> {
+    licensing.require_active().await?;
     let mut cfg = load_config(data_dir);
     let exclusions = safety::load_exclusions(data_dir);
     let all_rules = rules::all();
@@ -233,11 +234,7 @@ pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> Ap
     let mut total_removed = 0u64;
 
     if cfg.action == "scan_and_clean" {
-        let lic_active = licensing.status(false).await.map(|s| s.active).unwrap_or(false);
-        let cleanable_rules: Vec<rules::Rule> = selected_rules
-            .into_iter()
-            .filter(|r| lic_active || r.free)
-            .collect();
+        let cleanable_rules = selected_rules;
 
         let clean_ids: Vec<String> = cleanable_rules.iter().map(|r| r.id.to_string()).collect();
         let data_dir_clean = data_dir.to_path_buf();

@@ -6,7 +6,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { api, errorMessage, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
+  import { api, errorMessage, isPaymentRequired, requestActivation, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import Paywall from "./Paywall.svelte";
   import { addLifetimeStats, getLifetimeStats } from "../lib/store";
@@ -40,8 +40,6 @@
   const empty = $derived(report?.categories.filter((c) => c.bytes === 0) ?? []);
   const selectedCats = $derived(nonEmpty.filter((c) => selected[c.id]));
   const selectedBytes = $derived(selectedCats.reduce((s, c) => s + c.bytes, 0));
-  const needsPro = $derived(selectedCats.some((c) => !c.free));
-  const freeSelected = $derived(selectedCats.filter((c) => c.free));
   const freed = $derived(results.reduce((s, r) => s + r.bytes_freed, 0));
   const skipped = $derived(results.reduce((s, r) => s + r.files_skipped, 0));
   const removed = $derived(results.reduce((s, r) => s + r.files_removed, 0));
@@ -123,6 +121,10 @@
   }
 
   async function restoreQuarantined(item: QuarantineEntry) {
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     error = null;
     restoreNotice = null;
     try {
@@ -130,7 +132,8 @@
       quarantine = quarantine.filter((q) => q.id !== item.id);
       restoreNotice = `Restored ${item.file_name} to ${restoredPath}`;
     } catch (e) {
-      error = errorMessage(e);
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
@@ -151,6 +154,10 @@
   }
 
   async function excludePath(path: string) {
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     try {
       exclusions = await api.addExclusion(path);
       if (phase === "results") {
@@ -159,29 +166,40 @@
         await runDashboardScan();
       }
     } catch (e) {
-      error = errorMessage(e);
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
   async function addCustomExclusion() {
     if (!newExclusionPath.trim()) return;
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     try {
       exclusions = await api.addExclusion(newExclusionPath.trim());
       newExclusionPath = "";
       if (phase === "results") await scan();
       else await runDashboardScan();
     } catch (e) {
-      error = errorMessage(e);
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
   async function removeExcludedPath(path: string) {
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     try {
       exclusions = await api.removeExclusion(path);
       if (phase === "results") await scan();
       else await runDashboardScan();
     } catch (e) {
-      error = errorMessage(e);
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
@@ -226,8 +244,8 @@
       scan();
       return;
     }
-    if (needsPro && !license?.active) {
-      showPaywall = true;
+    if (!license?.active) {
+      requestActivation();
       return;
     }
     runClean(selectedCats);
@@ -235,6 +253,10 @@
 
   async function runClean(cats: CategoryResult[]) {
     if (!cats.length) return;
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
     error = null;
     showPaywall = false;
     phase = "cleaning";
@@ -250,7 +272,7 @@
       phase = "done";
     } catch (e: any) {
       phase = "results";
-      if (e?.kind === "payment_required") showPaywall = true;
+      if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
     }
   }
@@ -613,9 +635,7 @@
           <input type="checkbox" bind:checked={selected[c.id]} aria-label="Select {c.name}" />
           <strong class="item-title">{c.name}</strong>
           <div class="spacer"></div>
-          {#if c.free}
-            <span class="badge free">Free</span>
-          {:else if !license?.active}
+          {#if !license?.active}
             <span class="badge pro">Pro</span>
           {/if}
         </div>
@@ -691,10 +711,8 @@
 <Paywall
   open={showPaywall}
   bytes={selectedBytes}
-  freeBytes={freeSelected.reduce((s, c) => s + c.bytes, 0)}
   onClose={() => (showPaywall = false)}
   onActivated={onActivated}
-  onCleanFree={() => runClean(freeSelected)}
 />
 
 <style>

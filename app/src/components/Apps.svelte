@@ -52,6 +52,10 @@
   }
 
   async function upgradePkg(pkg: OutdatedApp) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "The software updater");
+      return;
+    }
     error = null;
     proNotice = null;
     updaterMessage = null;
@@ -114,6 +118,10 @@
   }
 
   async function uninstall(app: InstalledApp) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "The uninstaller");
+      return;
+    }
     if (!confirm(`Are you sure you want to uninstall ${app.name}?`)) return;
     error = null;
     proNotice = null;
@@ -126,6 +134,10 @@
   }
 
   async function removeRemnant(remnant: AppRemnant) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Leftover remnant cleanup");
+      return;
+    }
     error = null;
     proNotice = null;
     try {
@@ -138,6 +150,10 @@
   }
 
   async function fixIssue(issue: RegistryIssue) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Registry repair");
+      return;
+    }
     error = null;
     proNotice = null;
     try {
@@ -150,13 +166,17 @@
   }
 
   async function restoreBackup(backup: RegistryBackupEntry) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Registry backup restore");
+      return;
+    }
     error = null;
     try {
       await api.restoreRegistryBackup(backup.id);
       regBackups = regBackups.filter((b) => b.id !== backup.id);
       regIssues = await api.scanRegistry();
     } catch (e) {
-      error = errorMessage(e);
+      handleError(e, "Registry backup restore");
     }
   }
 </script>
@@ -214,6 +234,7 @@
               <strong style="font-size: 15px; color: var(--text);">{app.name}</strong>
               <div class="muted small" style="margin-top: 4px;">{app.publisher || "Verified Publisher"} · v{app.version}</div>
             </div>
+            {#if !license?.active}<span class="badge pro">Pro</span>{/if}
           </div>
           <div class="row" style="margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border);">
             <strong style="color: var(--accent); font-size: 18px; font-weight: 800;">{formatBytes(app.estimated_size)}</strong>

@@ -80,14 +80,11 @@ pub async fn clean_categories(
     ids: Vec<String>,
     use_trash: bool,
 ) -> AppResult<Vec<CleanReport>> {
+    state.licensing.require_active().await?;
     let mut selected = Vec::new();
     for id in &ids {
         let rule = rules::find(id).ok_or_else(|| AppError::NotFound(id.clone()))?;
         selected.push(rule);
-    }
-    // Entitlement is enforced here in Rust
-    if selected.iter().any(|r| !r.free) {
-        state.licensing.require_active().await?;
     }
     let exclusions = safety::load_exclusions(&state.data_dir);
     let data_dir_clone = state.data_dir.clone();
@@ -123,7 +120,8 @@ pub fn list_quarantine(state: State<'_, AppState>) -> Vec<QuarantineEntry> {
 }
 
 #[tauri::command]
-pub fn restore_quarantine_item(state: State<'_, AppState>, id: String) -> AppResult<String> {
+pub async fn restore_quarantine_item(state: State<'_, AppState>, id: String) -> AppResult<String> {
+    state.licensing.require_active().await?;
     cleaner::restore_quarantine_entry(&state.data_dir, &id)
 }
 
@@ -141,7 +139,8 @@ pub fn list_exclusions(state: State<'_, AppState>) -> Vec<String> {
 }
 
 #[tauri::command]
-pub fn add_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
+pub async fn add_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
+    state.licensing.require_active().await?;
     let trimmed = path.trim();
     let candidate = PathBuf::from(trimmed);
     if !candidate.is_absolute() {
@@ -157,7 +156,8 @@ pub fn add_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<
 }
 
 #[tauri::command]
-pub fn remove_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
+pub async fn remove_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
+    state.licensing.require_active().await?;
     let target = PathBuf::from(path.trim());
     let mut list = safety::load_exclusions(&state.data_dir);
     list.retain(|p| p != &target && !p.to_string_lossy().eq_ignore_ascii_case(path.trim()));
@@ -215,7 +215,13 @@ pub async fn startup_items() -> AppResult<Vec<StartupItem>> {
 }
 
 #[tauri::command]
-pub async fn toggle_startup_item(name: String, scope: String, enabled: bool) -> AppResult<Vec<StartupItem>> {
+pub async fn toggle_startup_item(
+    state: State<'_, AppState>,
+    name: String,
+    scope: String,
+    enabled: bool,
+) -> AppResult<Vec<StartupItem>> {
+    state.licensing.require_active().await?;
     tauri::async_runtime::spawn_blocking(move || memory::toggle_startup_item(&name, &scope, enabled))
         .await
         .map_err(join_err)?
@@ -227,7 +233,8 @@ pub fn get_autostart() -> AppResult<bool> {
 }
 
 #[tauri::command]
-pub fn set_autostart(enabled: bool) -> AppResult<bool> {
+pub async fn set_autostart(state: State<'_, AppState>, enabled: bool) -> AppResult<bool> {
+    state.licensing.require_active().await?;
     memory::set_autostart_enabled(enabled)
 }
 
@@ -242,7 +249,8 @@ pub fn get_schedule_settings(state: State<'_, AppState>) -> String {
 }
 
 #[tauri::command]
-pub fn set_schedule_settings(state: State<'_, AppState>, schedule: String) -> AppResult<String> {
+pub async fn set_schedule_settings(state: State<'_, AppState>, schedule: String) -> AppResult<String> {
+    state.licensing.require_active().await?;
     let mut cfg = crate::scheduler::load_config(&state.data_dir);
     match schedule.trim().to_ascii_lowercase().as_str() {
         "daily" => {
@@ -292,10 +300,11 @@ pub fn get_schedule_config(state: State<'_, AppState>) -> crate::scheduler::Sche
 }
 
 #[tauri::command]
-pub fn save_schedule_config(
+pub async fn save_schedule_config(
     state: State<'_, AppState>,
     config: crate::scheduler::ScheduleConfig,
 ) -> AppResult<crate::scheduler::ScheduleConfig> {
+    state.licensing.require_active().await?;
     crate::scheduler::save_config(&state.data_dir, config)
 }
 
@@ -303,6 +312,7 @@ pub fn save_schedule_config(
 pub async fn run_scheduled_clean_now(
     state: State<'_, AppState>,
 ) -> AppResult<crate::scheduler::ScheduleConfig> {
+    state.licensing.require_active().await?;
     crate::scheduler::execute_scheduled_run(&state.data_dir, &state.licensing).await
 }
 

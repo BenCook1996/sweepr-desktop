@@ -351,10 +351,9 @@ pub fn delete_duplicates_in(
     Ok(report)
 }
 
-/// Pro feature: requires an active licence (checked here, in Rust).
+/// Scans a directory for duplicate files (read-only insight; deletion requires Pro).
 #[tauri::command]
 pub async fn find_duplicates(state: State<'_, AppState>, dir: String) -> AppResult<Vec<DuplicateGroup>> {
-    state.licensing.require_active().await?;
     let exclusions = safety::load_exclusions(&state.data_dir);
     tauri::async_runtime::spawn_blocking(move || find_duplicates_with_exclusions(&dir, MAX_FILES, &exclusions))
         .await

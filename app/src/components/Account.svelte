@@ -2,6 +2,8 @@
   import {
     api,
     errorMessage,
+    isPaymentRequired,
+    requestActivation,
     type AppInfo,
     type AppUpdateInfo,
     type CleanHistoryEntry,
@@ -102,23 +104,37 @@
     }
   }
 
-  async function toggleAutostart(next: boolean) {
+  async function toggleAutostart(next: boolean, inputEl?: HTMLInputElement) {
+    if (!license?.active) {
+      if (inputEl) inputEl.checked = autostart;
+      requestActivation();
+      return;
+    }
     error = null;
     try {
       autostart = await api.setAutostart(next);
       scheduleSaved = autostart ? "Windows Autostart enabled." : "Windows Autostart disabled.";
     } catch (e) {
-      error = errorMessage(e);
+      if (inputEl) inputEl.checked = autostart;
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
-  async function updateSchedule(next: string) {
+  async function updateSchedule(next: string, selectEl?: HTMLSelectElement) {
+    if (!license?.active) {
+      if (selectEl) selectEl.value = schedule;
+      requestActivation();
+      return;
+    }
     error = null;
     try {
       schedule = await api.setScheduleSettings(next);
       scheduleSaved = `Auto-clean schedule set to ${schedule}.`;
     } catch (e) {
-      error = errorMessage(e);
+      if (selectEl) selectEl.value = schedule;
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
@@ -157,7 +173,7 @@
       </div>
     {:else}
       <div class="row"><strong>Free plan</strong></div>
-      <p class="muted small" style="margin: 0;">Scanning, file review, memory insights and temporary file cleaning are free forever. Activate SWEEPR Cleaner Pro to unlock every cleaning category and optimization tool.</p>
+      <p class="muted small" style="margin: 0;">System scanning and diagnostic insights are free. Activate SWEEPR Cleaner Pro to unlock cleaning, scheduled maintenance, and all optimization tools.</p>
 
       <div class="row" style="gap: 8px; flex-wrap: wrap;">
         <button class="primary" disabled={busy} onclick={startPlanCheckout}>
@@ -198,7 +214,11 @@
     <div class="row">
       <strong>Scheduled Auto-Clean & Startup</strong>
       <div class="spacer"></div>
-      <span class="badge free">Automation</span>
+      {#if !license?.active}
+        <span class="badge pro">Pro</span>
+      {:else}
+        <span class="badge free">Active</span>
+      {/if}
     </div>
     <p class="muted small" style="margin: 0;">Configure SWEEPR Cleaner to launch quietly with Windows and run scheduled background maintenance.</p>
 
@@ -206,8 +226,8 @@
       <span>Launch SWEEPR Cleaner at Windows sign-in (Autostart)</span>
       <input
         type="checkbox"
-        checked={autostart}
-        onchange={(e) => toggleAutostart((e.currentTarget as HTMLInputElement).checked)}
+        checked={autostart && !!license?.active}
+        onchange={(e) => toggleAutostart((e.currentTarget as HTMLInputElement).checked, e.currentTarget as HTMLInputElement)}
         aria-label="Launch SWEEPR Cleaner at Windows sign-in"
       />
     </label>
@@ -215,8 +235,8 @@
     <div class="row" style="justify-content: space-between;">
       <span class="small">Auto-Clean Schedule:</span>
       <select
-        value={schedule}
-        onchange={(e) => updateSchedule((e.currentTarget as HTMLSelectElement).value)}
+        value={license?.active ? schedule : "off"}
+        onchange={(e) => updateSchedule((e.currentTarget as HTMLSelectElement).value, e.currentTarget as HTMLSelectElement)}
         aria-label="Auto-Clean Schedule"
         style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-solid);"
       >
