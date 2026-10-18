@@ -1655,6 +1655,11 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "Please provide your email and message." }, 400);
     }
     const id = repo.createSupportTicket({ email, subject, message, platform, logs });
+    import("./email.js")
+      .then(({ sendSupportNotificationEmail }) =>
+        sendSupportNotificationEmail({ fromEmail: email, subject, message, platform, ticketId: id })
+      )
+      .catch(() => {});
     return c.json({ ok: true, id });
   };
   app.post("/api/support-ticket", handleSupportTicket);

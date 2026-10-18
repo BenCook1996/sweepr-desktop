@@ -234,6 +234,73 @@ export async function sendSubscriptionEmail(
   return { ok: false, provider: "none", error: "No email provider configured", to: recipient, timestamp: new Date().toISOString() };
 }
 
+export async function sendSupportNotificationEmail(opts: {
+  fromEmail: string;
+  subject: string;
+  message: string;
+  platform: string;
+  ticketId: string;
+}): Promise<void> {
+  const notifyTo =
+    process.env.SUPPORT_NOTIFY_EMAIL?.trim() ||
+    process.env.SMTP_GMAIL_USER?.trim().replace(/^["']|["']$/g, "") ||
+    "cookbenjamin1996@gmail.com";
+
+  const emailSubject = `[SWEEPR Support] ${opts.subject} (from ${opts.fromEmail})`;
+  const textBody = `New support message received via SWEEPR Cleaner (${opts.platform}):\n\nFrom: ${opts.fromEmail}\nSubject: ${opts.subject}\nTicket ID: ${opts.ticketId}\n\nMessage:\n${opts.message}\n`;
+
+  const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (resendApiKey) {
+    try {
+      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "SWEEPR Cleaner <onboarding@resend.dev>";
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [notifyTo],
+          reply_to: opts.fromEmail,
+          subject: emailSubject,
+          text: textBody,
+        }),
+      });
+      if (resp.ok) return;
+    } catch {
+      // Fall through to SMTP
+    }
+  }
+
+  const rawUser = process.env.SMTP_GMAIL_USER;
+  const rawPass = process.env.SMTP_GMAIL_PASS;
+  const user = rawUser?.trim().replace(/^["']|["']$/g, "");
+  const pass = rawPass?.trim().replace(/\s+/g, "").replace(/^["']|["']$/g, "");
+  if (user && pass) {
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: { user, pass },
+        connectionTimeout: 8000,
+      });
+      await transporter.sendMail({
+        from: `"SWEEPR Support" <${user}>`,
+        to: notifyTo,
+        replyTo: opts.fromEmail,
+        subject: emailSubject,
+        text: textBody,
+      });
+    } catch (err) {
+      console.error("[EMAIL] Failed to forward support ticket via Gmail SMTP:", err);
+    }
+  }
+}
+
+
 /** Check whether email provider credentials are set and verify connectivity. */
 export async function verifySmtp(): Promise<{ ok: boolean; provider: string; configured: boolean; user?: string; error?: string; last_dispatch?: EmailDispatchResult | null }> {
   const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
