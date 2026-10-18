@@ -284,7 +284,9 @@ export function createApp(deps: AppDeps) {
   // CRM Web Dashboard
   app.get("/crm", (c) => {
     const file = "./public/crm/index.html";
-    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+    if (!existsSync(file)) return c.notFound();
+    c.header("Cache-Control", "no-store, no-cache, must-revalidate");
+    return c.html(readFileSync(file, "utf-8"));
   });
   app.get("/admin", (c) => c.redirect("/crm"));
 

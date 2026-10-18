@@ -108,7 +108,12 @@ test("SEO: in-process site audit crawls pSEO pages and records evidence-backed i
   const home = audit.pages.find((p: any) => p.path === "/");
   assert.equal(home.http_status, 200);
   assert.ok(home.title);
-  for (const p of audit.pages) for (const i of p.issues) assert.ok(i.evidence !== undefined && i.fix, `issue ${i.code} needs evidence + fix`);
+  for (const p of audit.pages) {
+    for (const i of p.issues) {
+      assert.ok(i.evidence !== undefined && i.fix, `issue ${i.code} needs evidence + fix`);
+      assert.notEqual(i.code, "jsonld_invalid", `page ${p.path} must not have invalid JSON-LD: ${i.evidence}`);
+    }
+  }
   assert.ok(typeof audit.run.health_score === "number");
 });
 
@@ -163,3 +168,238 @@ test("SEO: outreach rows import as backlinks; homepages flagged instead of faked
   const bad = await post("/api/crm/seo/backlinks", { source_url: "http://10.0.0.1/admin" });
   assert.equal(bad.status, 400);
 });
+
+test("SEO Phase 3: DataForSEO syncs keywords, domain overview, backlinks, link gap & enforces spend cap", async () => {
+  const repo = openDb(":memory:");
+  const store = new SeoStore(repo.db);
+  store.addKeyword("winsxs folder", "pseo-folder", "/clean/folder/winsxs");
+  store.addKeyword("pc cleaner", "head", "/");
+
+  const mockDfsFetch = async (url: string, init?: RequestInit): Promise<Response> => {
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+    const ok = (cost: number, result: unknown[]) =>
+      new Response(
+        JSON.stringify({
+          status_code: 20000,
+          status_message: "Ok.",
+          cost,
+          tasks: [{ status_code: 20000, status_message: "Ok.", cost, result }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+
+    if (url.endsWith("/v3/appendix/user_data")) {
+      return ok(0, [{ login: "test_user", money: { total: 50, balance: 0.91 } }]);
+    }
+    if (url.endsWith("/v3/keywords_data/google_ads/search_volume/live")) {
+      assert.equal(body[0].location_code, 2840);
+      return ok(0.075, [
+        {
+          keyword: "winsxs folder",
+          search_volume: 5400,
+          cpc: 1.85,
+          competition: "LOW",
+          competition_index: 18,
+          monthly_searches: [{ year: 2026, month: 9, search_volume: 5400 }],
+        },
+        {
+          keyword: "pc cleaner",
+          search_volume: 40500,
+          cpc: 4.2,
+          competition: "HIGH",
+          competition_index: 82,
+          monthly_searches: [{ year: 2026, month: 9, search_volume: 40500 }],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/dataforseo_labs/google/bulk_keyword_difficulty/live")) {
+      return ok(0.011, [
+        {
+          items: [
+            { keyword: "winsxs folder", keyword_difficulty: 22 },
+            { keyword: "pc cleaner", keyword_difficulty: 74 },
+          ],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/dataforseo_labs/google/ranked_keywords/live")) {
+      return ok(0.015, [
+        {
+          metrics: {
+            organic: {
+              pos_1: 1,
+              pos_2_3: 2,
+              pos_4_10: 5,
+              pos_11_20: 9,
+              etv: 680.4,
+              count: 42,
+              estimated_paid_traffic_cost: 1240.5,
+            },
+          },
+          items: [
+            {
+              keyword_data: {
+                keyword: "winsxs folder",
+                keyword_info: { search_volume: 5400, cpc: 1.85, competition_level: "LOW", competition: 0.18 },
+                keyword_properties: { keyword_difficulty: 22 },
+                search_intent_info: { main_intent: "informational" },
+              },
+              ranked_serp_element: {
+                serp_item: {
+                  rank_group: 6,
+                  url: "https://sweeprcleaner.com/clean/folder/winsxs",
+                  etv: 290.5,
+                },
+              },
+            },
+            {
+              keyword_data: {
+                keyword: "delete windows.old safely",
+                keyword_info: { search_volume: 1900, cpc: 0.9, competition_level: "LOW", competition: 0.1 },
+                keyword_properties: { keyword_difficulty: 15 },
+                search_intent_info: { main_intent: "informational" },
+              },
+              ranked_serp_element: {
+                serp_item: {
+                  rank_group: 11,
+                  url: "https://sweeprcleaner.com/clean/folder/windows-old",
+                  etv: 38.0,
+                },
+              },
+            },
+          ],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/dataforseo_labs/google/domain_rank_overview/live")) {
+      return ok(0.0101, [
+        {
+          items: [
+            {
+              metrics: {
+                organic: {
+                  pos_1: 120,
+                  pos_2_3: 240,
+                  pos_4_10: 800,
+                  pos_11_20: 1500,
+                  etv: 185000,
+                  count: 24000,
+                  estimated_paid_traffic_cost: 410000,
+                },
+              },
+            },
+          ],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/backlinks/summary/live")) {
+      return ok(0.02, [
+        {
+          rank: 34,
+          backlinks: 128,
+          referring_domains: 41,
+          referring_domains_nofollow: 11,
+          referring_ips: 38,
+          broken_backlinks: 2,
+          backlinks_spam_score: 4,
+          referring_links_attributes: { nofollow: 28 },
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/backlinks/bulk_ranks/live")) {
+      return ok(0.02, [
+        {
+          items: [
+            { target: "sweeprcleaner.com", rank: 34 },
+            { target: "ccleaner.com", rank: 81 },
+            { target: "bleachbit.org", rank: 68 },
+          ],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/backlinks/backlinks/live")) {
+      return ok(0.022, [
+        {
+          items: [
+            {
+              domain_from: "majorgeeks.com",
+              url_from: "https://www.majorgeeks.com/files/details/sweepr_cleaner.html",
+              url_to: "https://sweeprcleaner.com/",
+              anchor: "Sweepr Cleaner",
+              dofollow: true,
+              domain_from_rank: 72,
+              page_from_rank: 41,
+              first_seen: "2026-09-01 12:00:00 +00:00",
+              last_seen: "2026-10-18 12:00:00 +00:00",
+            },
+          ],
+        },
+      ]);
+    }
+    if (url.endsWith("/v3/backlinks/domain_intersection/live")) {
+      return ok(0.023, [
+        {
+          items: [
+            {
+              domain_intersection: {
+                "1": { target: "majorgeeks.com", backlinks: 18, referring_domains: 1, rank: 77, backlinks_spam_score: 2, first_seen: "2024-01-01" },
+                "2": { target: "majorgeeks.com", backlinks: 6, referring_domains: 1, rank: 77, backlinks_spam_score: 2, first_seen: "2024-03-01" },
+              },
+              summary: { intersections_count: 2 },
+            },
+          ],
+        },
+      ]);
+    }
+    throw new Error(`Unexpected URL in mockDfsFetch: ${url}`);
+  };
+
+  const { syncDfsKeywords, syncDfsDomainOverview, syncDfsBacklinks, syncDfsCompetitorLinkGap, fetchDfsAccountStatus } = await import("../src/seo/dataforseo.js");
+  const cfg = {
+    siteUrl: "https://sweeprcleaner.com",
+    dataForSeoLogin: "test_user",
+    dataForSeoPassword: "test_password",
+    dataForSeoLocationCode: 2840,
+    dataForSeoLanguageCode: "en",
+  };
+  const comps = ["ccleaner.com", "bleachbit.org"];
+
+  const status = await fetchDfsAccountStatus(store, cfg, mockDfsFetch);
+  assert.equal(status.configured, true);
+  assert.equal(status.balance_usd, 0.91);
+
+  const kwRes = await syncDfsKeywords(store, cfg, mockDfsFetch);
+  assert.equal(kwRes.search_volume_updated, 2);
+  assert.equal(kwRes.kd_updated, 2);
+  const winsxs = store.listKeywords().find((k) => k.keyword === "winsxs folder")!;
+  assert.equal(winsxs.search_volume, 5400);
+  assert.equal(winsxs.kd, 22);
+  assert.equal(winsxs.cpc, 1.85);
+
+  const domRes = await syncDfsDomainOverview(store, cfg, comps, true, mockDfsFetch);
+  assert.equal(domRes.ranked_keywords_synced, 2);
+  const winsxsAfter = store.listKeywords().find((k) => k.keyword === "winsxs folder")!;
+  assert.equal(winsxsAfter.serp_position, 6);
+  assert.equal(winsxsAfter.search_intent, "informational");
+
+  const blRes = await syncDfsBacklinks(store, cfg, comps, mockDfsFetch);
+  assert.equal(blRes.discovered_backlinks_added, 1);
+  const ownMetric = store.domainMetrics(["sweeprcleaner.com"])[0];
+  assert.equal(ownMetric.dfs_rank, 34);
+  assert.equal(ownMetric.dfs_referring_domains, 41);
+  assert.equal(ownMetric.dfs_dofollow_rd, 30);
+  assert.equal(ownMetric.dfs_dofollow_backlinks, 100);
+  assert.equal(ownMetric.dfs_organic_etv, 680.4);
+
+  const gapRes = await syncDfsCompetitorLinkGap(store, cfg, comps, 50, mockDfsFetch);
+  assert.equal(gapRes.opportunities_found, 1);
+  const pushed = store.pushLinkGapToOutreach("majorgeeks.com");
+  assert.equal(pushed.already_existed, false);
+  const pushedDup = store.pushLinkGapToOutreach("majorgeeks.com");
+  assert.equal(pushedDup.already_existed, true);
+
+  // Spend cap guard prevents accidental overrun
+  store.setSetting("dfs_spend_cap_usd", 0.05);
+  await assert.rejects(() => syncDfsKeywords(store, cfg, mockDfsFetch), /spend cap reached/i);
+});
+
