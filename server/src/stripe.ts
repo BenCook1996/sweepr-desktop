@@ -37,7 +37,7 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   const intervalCount = price?.recurring?.interval_count ?? 1;
   const currentPeriodEnd = periodEnd(sub);
   const planName = interval === "year" ? "annual" : intervalCount === 6 ? "six_month" : (sub.metadata?.plan || "monthly");
-  const amountCents = price?.unit_amount ?? (interval === "year" ? 4999 : intervalCount === 6 ? 3899 : 999);
+  const amountCents = price?.unit_amount ?? (interval === "year" ? 6499 : intervalCount === 6 ? 4799 : 1199);
 
   repo.upsertEntitlement({
     account_id: account.id,

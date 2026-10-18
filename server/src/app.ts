@@ -1808,14 +1808,14 @@ export function createApp(deps: AppDeps) {
             (s) => s.status === "active" || s.status === "trialing" || s.status === "past_due"
           );
           if (activeSub) {
-            let acc = repo.byStripeCustomer(cust.id) || existing;
+            let acc = repo.accountByCustomer(cust.id) || existing;
             if (!acc) {
               const id = `acc_${randomToken(12)}`;
               repo.createAccount(id, sha256(randomToken(32)), email);
               acc = repo.accountById(id)!;
             }
             if (!acc.stripe_customer_id) {
-              repo.linkStripeCustomer(acc.id, cust.id, email);
+              repo.setCustomer(acc.id, cust.id, email);
             }
             const interval = activeSub.items?.data?.[0]?.price?.recurring?.interval;
             const intervalCount = activeSub.items?.data?.[0]?.price?.recurring?.interval_count;
@@ -1824,7 +1824,7 @@ export function createApp(deps: AppDeps) {
               (interval === "year" ? "annual" : interval === "month" && intervalCount === 6 ? "six_month" : "monthly");
             const periodEnd =
               (activeSub as any).current_period_end ||
-              activeSub.items?.data?.[0]?.current_period_end ||
+              (activeSub.items?.data?.[0] as any)?.current_period_end ||
               now() + 35 * 86400;
             repo.upsertEntitlement({
               account_id: acc.id,
@@ -2173,7 +2173,7 @@ export function createApp(deps: AppDeps) {
     const id = repo.createSupportTicket({ email, subject, message, platform, logs });
     import("./email.js")
       .then(({ sendSupportNotificationEmail }) =>
-        sendSupportNotificationEmail({ fromEmail: email, subject, message, platform, ticketId: id })
+        sendSupportNotificationEmail({ fromEmail: email, subject, message, platform, ticketId: String(id) })
       )
       .catch(() => {});
     return c.json({ ok: true, id });
