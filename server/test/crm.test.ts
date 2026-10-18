@@ -298,7 +298,7 @@ test("CRM: outreach log seeding, filtering, and CRUD", async () => {
 
 test("CRM: lead capture records country, device, and datetime in CRM", async () => {
   const fixedNow = 1760824800; // Fixed unix timestamp
-  const { app, get } = setup(() => fixedNow);
+  const { app, get } = setup(() => fixedNow, { trustProxy: true });
 
   // 1. Capture web order lead via POST /api/lead with Cloudflare country header & iOS User-Agent
   const leadRes = await app.request("/api/lead", {

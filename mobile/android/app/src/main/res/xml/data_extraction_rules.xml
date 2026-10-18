@@ -7,9 +7,9 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <include domain="sharedpref" path="sweepr_prefs.xml" />
+        <exclude domain="sharedpref" path="sweepr_secure_auth.xml" />
     </cloud-backup>
     <device-transfer>
-        <include domain="sharedpref" path="sweepr_prefs.xml" />
+        <exclude domain="sharedpref" path="sweepr_secure_auth.xml" />
     </device-transfer>
 </data-extraction-rules>

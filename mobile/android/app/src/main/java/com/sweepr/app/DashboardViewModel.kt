@@ -66,7 +66,7 @@ data class DashboardState(
     val subscription: SubscriptionInfo = SubscriptionInfo(),
     val linkedAccount: LinkedAccount = LinkedAccount(),
 ) {
-    val hasPremium: Boolean get() = subscription.active || linkedAccount.serverActive
+    val hasPremium: Boolean get() = subscription.active
     val selectedItems: List<MediaItem> get() = media.everything.filter { it.uri in selectedMedia }
     val selectedBytes: Long get() = selectedItems.sumOf { it.size }
     val selectedTrashItems: List<MediaItem> get() = media.trashed.filter { it.uri in selectedTrash }
@@ -74,31 +74,56 @@ data class DashboardState(
 }
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
+    private var rcActive: Boolean = false
+    private var serverActive: Boolean = false
+
     private val _state = MutableStateFlow(DashboardState(linkedAccount = Prefs.account.value))
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
+    private fun isServerAccountCurrentlyEntitled(acc: Prefs.LinkedAccount?): Boolean {
+        return acc != null && acc.serverActive && (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L)
+    }
+
+    private fun serverExpiresAtMillis(acc: Prefs.LinkedAccount?): Long? {
+        val exp = acc?.expiresAt ?: 0L
+        return if (exp > 0L) (if (exp > 10_000_000_000L) exp else exp * 1000L) else null
+    }
+
     init {
+        val linked = Prefs.account.value
+        serverActive = isServerAccountCurrentlyEntitled(linked)
+        _state.update { s ->
+            s.copy(
+                linkedAccount = linked,
+                subscription = s.subscription.copy(
+                    active = rcActive || serverActive,
+                    productId = s.subscription.productId ?: linked.plan,
+                    expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(linked),
+                ),
+            )
+        }
+
         // RevenueCat is configured in SweeprApp.onCreate. Seed the state once, then listen
         // for changes (purchase, restore, renewal, expiry) so the UI unlocks instantly.
         runCatching {
             Purchases.sharedInstance.updatedCustomerInfoListener =
-                UpdatedCustomerInfoListener { info -> applyCustomerInfo(info) }
+                UpdatedCustomerInfoListener { info -> updateCustomerInfo(info) }
             viewModelScope.launch {
-                runCatching { applyCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+                runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
             }
         }
         viewModelScope.launch {
-            val existing = Prefs.account.value
-            if (existing.isSignedIn) {
+            if (linked.isSignedIn) {
                 withContext(Dispatchers.IO) {
-                    runCatching { SweeprAccountApi.refreshEntitlement(existing) }.onSuccess { updated ->
+                    runCatching { SweeprAccountApi.refreshEntitlement(linked) }.onSuccess { updated ->
                         Prefs.setLinkedAccount(updated)
+                        serverActive = isServerAccountCurrentlyEntitled(updated)
                         _state.update { s ->
                             s.copy(
                                 linkedAccount = updated,
                                 subscription = s.subscription.copy(
-                                    active = s.subscription.active || updated.serverActive,
-                                    expiresAt = s.subscription.expiresAt ?: updated.expiresAt,
+                                    active = rcActive || serverActive,
+                                    expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
                                 ),
                             )
                         }
@@ -108,19 +133,55 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun applyCustomerInfo(info: CustomerInfo) {
+    fun updateCustomerInfo(info: CustomerInfo) {
         val ent = info.entitlements.active[PREMIUM_ENTITLEMENT]
+        rcActive = ent != null
         val acct = _state.value.linkedAccount
+        serverActive = isServerAccountCurrentlyEntitled(acct)
+        val active = rcActive || serverActive
         val sub = SubscriptionInfo(
-            active = ent != null || acct.serverActive,
+            active = active,
             productId = ent?.productIdentifier ?: acct.plan,
-            expiresAt = ent?.expirationDate?.time ?: acct.expiresAt,
-            willRenew = ent?.willRenew ?: acct.serverActive,
+            expiresAt = ent?.expirationDate?.time ?: serverExpiresAtMillis(acct),
+            willRenew = ent?.willRenew ?: serverActive,
             isTrial = ent?.periodType == PeriodType.TRIAL || ent?.periodType == PeriodType.INTRO,
             managementUrl = info.managementURL?.toString(),
             appUserId = runCatching { Purchases.sharedInstance.appUserID }.getOrDefault(acct.accountId),
         )
         _state.update { it.copy(subscription = sub) }
+    }
+
+    fun applyCustomerInfo(info: CustomerInfo) = updateCustomerInfo(info)
+
+    private fun onAccountLinked(linked: Prefs.LinkedAccount) {
+        serverActive = isServerAccountCurrentlyEntitled(linked)
+        _state.update { s ->
+            s.copy(
+                isWorking = false,
+                linkedAccount = linked,
+                subscription = s.subscription.copy(
+                    active = rcActive || serverActive,
+                    productId = if (rcActive) s.subscription.productId else linked.plan,
+                    expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(linked),
+                ),
+                message = app.getString(R.string.account_signed_in_as, linked.email),
+            )
+        }
+    }
+
+    private fun onAccountUnlinked(message: String, isWorking: Boolean = false) {
+        val cleared = Prefs.account.value
+        serverActive = isServerAccountCurrentlyEntitled(cleared)
+        _state.update { s ->
+            s.copy(
+                isWorking = isWorking,
+                linkedAccount = cleared,
+                subscription = s.subscription.copy(
+                    active = rcActive || serverActive,
+                ),
+                message = message,
+            )
+        }
     }
 
     fun sendOtp(email: String, onSent: () -> Unit) {
@@ -161,24 +222,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         linked.accountId,
                         object : LogInCallback {
                             override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
-                                applyCustomerInfo(customerInfo)
+                                updateCustomerInfo(customerInfo)
                             }
                             override fun onError(error: PurchasesError) = Unit
                         },
                     )
                 }
-                _state.update { s ->
-                    s.copy(
-                        isWorking = false,
-                        linkedAccount = linked,
-                        subscription = s.subscription.copy(
-                            active = s.subscription.active || linked.serverActive,
-                            productId = s.subscription.productId ?: linked.plan,
-                            expiresAt = s.subscription.expiresAt ?: linked.expiresAt,
-                        ),
-                        message = app.getString(R.string.account_signed_in_as, linked.email),
-                    )
-                }
+                onAccountLinked(linked)
                 onVerified()
             }.onFailure { err ->
                 _state.update { it.copy(isWorking = false) }
@@ -190,16 +240,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun signOutAccount() {
         Prefs.clearLinkedAccount()
         runCatching { Purchases.sharedInstance.logOut(null) }
-        val cleared = Prefs.account.value
-        _state.update { s ->
-            s.copy(
-                linkedAccount = cleared,
-                subscription = s.subscription.copy(active = false),
-                message = app.getString(R.string.account_signed_out_msg),
-            )
-        }
+        onAccountUnlinked(message = app.getString(R.string.account_signed_out_msg))
         viewModelScope.launch {
-            runCatching { applyCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+            runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
         }
     }
 
@@ -214,14 +257,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             res.onSuccess {
                 Prefs.clearLinkedAccount()
                 runCatching { Purchases.sharedInstance.logOut(null) }
-                _state.update { s ->
-                    s.copy(
-                        isWorking = false,
-                        linkedAccount = Prefs.account.value,
-                        subscription = s.subscription.copy(active = false),
-                        message = app.getString(R.string.account_deleted_msg),
-                    )
-                }
+                onAccountUnlinked(message = app.getString(R.string.account_deleted_msg), isWorking = false)
                 onDeleted()
             }.onFailure { err ->
                 _state.update { it.copy(isWorking = false) }

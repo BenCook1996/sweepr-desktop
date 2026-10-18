@@ -69,7 +69,93 @@ pub fn find_duplicates_in(dir: &str, max_files: usize) -> AppResult<Vec<Duplicat
     find_duplicates_with_exclusions(dir, max_files, &[])
 }
 
-fn validate_scan_folder(dir: &str) -> AppResult<&Path> {
+pub fn is_protected_system_path(path: &Path) -> bool {
+    let norm = path
+        .to_string_lossy()
+        .replace('/', "\\")
+        .trim_end_matches('\\')
+        .to_ascii_lowercase();
+
+    if norm.contains(r"\microsoft\windows\start menu\programs\startup")
+        || norm.contains(r"\com.sweepr.app")
+        || norm.ends_with(r"\appdata\roaming\sweepr")
+        || norm.contains(r"\appdata\roaming\sweepr\")
+        || norm.ends_with(r"\appdata\local\sweepr")
+        || norm.contains(r"\appdata\local\sweepr\")
+    {
+        return true;
+    }
+
+    for base in [dirs::data_dir(), dirs::data_local_dir(), dirs::config_dir()]
+        .into_iter()
+        .flatten()
+    {
+        for sub in [
+            "com.sweepr.app",
+            "sweepr",
+            r"Microsoft\Windows\Start Menu\Programs\Startup",
+        ] {
+            if safety::is_within(path, &base.join(sub)) {
+                return true;
+            }
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            let startup = Path::new(&appdata).join(r"Microsoft\Windows\Start Menu\Programs\Startup");
+            if safety::is_within(path, &startup) {
+                return true;
+            }
+        }
+        if let Ok(progdata) = std::env::var("ProgramData") {
+            let startup = Path::new(&progdata).join(r"Microsoft\Windows\Start Menu\Programs\StartUp");
+            if safety::is_within(path, &startup) {
+                return true;
+            }
+        }
+        for var in [
+            "SystemRoot",
+            "windir",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "ProgramW6432",
+            "ProgramData",
+        ] {
+            if let Ok(v) = std::env::var(var) {
+                if !v.trim().is_empty() && safety::is_within(path, Path::new(&v)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    {
+        for p in [
+            "/System",
+            "/usr",
+            "/bin",
+            "/sbin",
+            "/etc",
+            "/boot",
+            "/lib",
+            "/lib64",
+            "/Library",
+            "/Applications",
+            "/private/etc",
+        ] {
+            if safety::is_within(path, Path::new(p)) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn validate_scan_folder(dir: &str) -> AppResult<PathBuf> {
     let root = Path::new(dir.trim());
     if !root.is_absolute() {
         return Err(AppError::Other("Please enter the full (absolute) path to a folder.".into()));
@@ -82,7 +168,9 @@ fn validate_scan_folder(dir: &str) -> AppResult<&Path> {
     if !md.is_dir() {
         return Err(AppError::Other("Path is not a folder.".into()));
     }
-    Ok(root)
+    let canon = std::fs::canonicalize(root)
+        .map_err(|e| AppError::Other(format!("Cannot resolve folder path: {e}")))?;
+    Ok(canon)
 }
 
 pub fn find_duplicates_with_exclusions(
@@ -90,7 +178,8 @@ pub fn find_duplicates_with_exclusions(
     max_files: usize,
     exclusions: &[PathBuf],
 ) -> AppResult<Vec<DuplicateGroup>> {
-    let root = validate_scan_folder(dir)?;
+    let _canon_root = validate_scan_folder(dir)?;
+    let root = Path::new(dir.trim());
 
     let mut by_size: HashMap<u64, Vec<PathBuf>> = HashMap::new();
     let mut seen = 0usize;
@@ -162,7 +251,8 @@ pub fn scan_large_files_in(
     max_files: usize,
     exclusions: &[PathBuf],
 ) -> AppResult<LargeFilesReport> {
-    let root = validate_scan_folder(dir)?;
+    let _canon_root = validate_scan_folder(dir)?;
+    let root = Path::new(dir.trim());
     let mut seen = 0usize;
     let mut total_scanned_bytes = 0u64;
     let mut total_scanned_files = 0u64;
@@ -391,30 +481,40 @@ pub async fn scan_large_files(
 
 /// Safely move a selected large file to the system Recycle Bin / Trash.
 #[tauri::command]
-pub async fn delete_large_file(state: State<'_, AppState>, path: String) -> AppResult<u64> {
+pub async fn delete_large_file(
+    state: State<'_, AppState>,
+    dir: Option<String>,
+    path: Option<String>,
+    file: Option<String>,
+) -> AppResult<u64> {
     state.licensing.require_active().await?;
-    let target = PathBuf::from(path.trim());
+    let root = validate_scan_folder(dir.as_deref().unwrap_or(""))?;
+    let raw_target = path.or(file).unwrap_or_default();
+    let target = PathBuf::from(raw_target.trim());
     if !target.is_absolute() {
         return Err(AppError::Other("File path must be absolute.".into()));
-    }
-    #[cfg(windows)]
-    {
-        for var in ["SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "ProgramData"] {
-            if let Ok(v) = std::env::var(var) {
-                if safety::is_within(&target, Path::new(&v)) {
-                    return Err(AppError::Other("Refusing to delete a protected Windows or Program Files item.".into()));
-                }
-            }
-        }
     }
     let md = std::fs::symlink_metadata(&target)
         .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
     if !md.is_file() || safety::metadata_is_link_like(&md) {
         return Err(AppError::Other("Refusing to remove symlink or non-file.".into()));
     }
-    let size = md.len();
+    let canon_target = std::fs::canonicalize(&target)
+        .map_err(|e| AppError::Other(format!("Cannot resolve file path: {e}")))?;
+    if !canon_target.starts_with(&root) {
+        return Err(AppError::Other("Selected file must be inside the scanned folder.".into()));
+    }
+    if is_protected_system_path(&target) || is_protected_system_path(&canon_target) {
+        return Err(AppError::Other("Refusing to delete a protected Windows or Program Files item.".into()));
+    }
+    let canon_md = std::fs::symlink_metadata(&canon_target)
+        .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
+    if !canon_md.is_file() || safety::metadata_is_link_like(&canon_md) {
+        return Err(AppError::Other("Refusing to remove symlink or non-file.".into()));
+    }
+    let size = canon_md.len();
     tauri::async_runtime::spawn_blocking(move || {
-        trash::delete(&target).map_err(|e| AppError::Other(format!("Could not move file to Recycle Bin: {e}")))?;
+        trash::delete(&canon_target).map_err(|e| AppError::Other(format!("Could not move file to Recycle Bin: {e}")))?;
         Ok(size)
     })
     .await
@@ -422,27 +522,15 @@ pub async fn delete_large_file(state: State<'_, AppState>, path: String) -> AppR
 }
 
 pub fn move_large_file_blocking(dir: &str, file: &str, target_dir: &str) -> AppResult<String> {
+    let canon_root = validate_scan_folder(dir)?;
     let file_path = PathBuf::from(file.trim());
     if !file_path.is_absolute() {
         return Err(AppError::Other("File path must be absolute.".into()));
     }
-    if !dir.trim().is_empty() {
-        let scan_root = validate_scan_folder(dir)?;
-        if !safety::is_within(&file_path, scan_root) {
-            return Err(AppError::Other("Selected file must be inside the scanned folder.".into()));
-        }
-    }
-    #[cfg(windows)]
-    {
-        for var in ["SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "ProgramData"] {
-            if let Ok(v) = std::env::var(var) {
-                if safety::is_within(&file_path, Path::new(&v)) {
-                    return Err(AppError::Other(
-                        "Refusing to move a protected Windows or Program Files item.".into(),
-                    ));
-                }
-            }
-        }
+    if is_protected_system_path(&file_path) {
+        return Err(AppError::Other(
+            "Refusing to move a protected Windows or Program Files item.".into(),
+        ));
     }
     let md = std::fs::symlink_metadata(&file_path)
         .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
@@ -451,6 +539,14 @@ pub fn move_large_file_blocking(dir: &str, file: &str, target_dir: &str) -> AppR
     }
     let canon_file = std::fs::canonicalize(&file_path)
         .map_err(|e| AppError::Other(format!("Cannot resolve file path: {e}")))?;
+    if !canon_file.starts_with(&canon_root) {
+        return Err(AppError::Other("Selected file must be inside the scanned folder.".into()));
+    }
+    if is_protected_system_path(&canon_file) {
+        return Err(AppError::Other(
+            "Refusing to move a protected Windows or Program Files item.".into(),
+        ));
+    }
     let canon_md = std::fs::symlink_metadata(&canon_file)
         .map_err(|_| AppError::NotFound("File no longer exists".into()))?;
     if !canon_md.is_file() || safety::metadata_is_link_like(&canon_md) {
@@ -460,6 +556,11 @@ pub fn move_large_file_blocking(dir: &str, file: &str, target_dir: &str) -> AppR
     let target_root = PathBuf::from(target_dir.trim());
     if !target_root.is_absolute() {
         return Err(AppError::Other("Destination folder must be a full (absolute) path.".into()));
+    }
+    if is_protected_system_path(&target_root) {
+        return Err(AppError::Other(
+            "Refusing to move file into a protected system or startup directory.".into(),
+        ));
     }
     if let Ok(tmd) = std::fs::symlink_metadata(&target_root) {
         if safety::metadata_is_link_like(&tmd) {
@@ -473,6 +574,13 @@ pub fn move_large_file_blocking(dir: &str, file: &str, target_dir: &str) -> AppR
     } else {
         std::fs::create_dir_all(&target_root)
             .map_err(|e| AppError::Other(format!("Could not create destination folder: {e}")))?;
+    }
+    let canon_target_root = std::fs::canonicalize(&target_root)
+        .map_err(|e| AppError::Other(format!("Cannot resolve destination folder: {e}")))?;
+    if is_protected_system_path(&canon_target_root) {
+        return Err(AppError::Other(
+            "Refusing to move file into a protected system or startup directory.".into(),
+        ));
     }
 
     let file_name = canon_file
@@ -556,6 +664,12 @@ mod tests {
         assert!(!rep.by_folder.is_empty());
 
         let dest_dir = dir.join("archive");
+        // Empty dir must be rejected unconditionally
+        assert!(move_large_file_blocking("", &movie.to_string_lossy(), &dest_dir.to_string_lossy()).is_err());
+        //Protected system/startup paths must be recognized
+        assert!(is_protected_system_path(Path::new(r"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\evil.exe")));
+        assert!(is_protected_system_path(Path::new(r"C:\Users\User\AppData\Roaming\com.sweepr.app\account.json")));
+
         let moved_to = move_large_file_blocking(
             &d,
             &movie.to_string_lossy(),

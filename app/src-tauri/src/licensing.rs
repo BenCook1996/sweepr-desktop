@@ -6,14 +6,19 @@
 //! A valid cached token gives an offline grace period until it expires (≤72h).
 
 use crate::error::{AppError, AppResult};
-use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
+use base64::engine::general_purpose::{
+    STANDARD as B64_STD, STANDARD_NO_PAD as B64_STD_NOPAD, URL_SAFE as B64_URL,
+    URL_SAFE_NO_PAD as B64,
+};
 use base64::Engine;
 use ed25519_dalek::{Signature, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
+
+pub type LicenseError = AppError;
 
 const DEFAULT_API: &str = "https://sweeprcleaner.com";
 
@@ -30,6 +35,8 @@ pub struct Claims {
     pub status: String,
     pub plan: String,
     pub exp: u64,
+    #[serde(default)]
+    pub iat: u64,
 }
 
 #[derive(Serialize, Clone)]
@@ -62,8 +69,42 @@ fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
-fn device_id() -> String {
-    let raw = machine_uid::get().unwrap_or_else(|_| "unknown-machine".into());
+fn load_or_create_fallback_device_id(data_dir: &Path) -> String {
+    use std::collections::hash_map::RandomState;
+    use std::hash::{BuildHasher, Hasher};
+
+    let fallback_path = data_dir.join("device_id.txt");
+    if let Ok(existing) = std::fs::read_to_string(&fallback_path) {
+        let trimmed = existing.trim();
+        if trimmed.len() == 64 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+            return trimmed.to_ascii_lowercase();
+        }
+    }
+
+    let r1 = RandomState::new().build_hasher().finish();
+    let r2 = RandomState::new().build_hasher().finish();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let mut h = Sha256::new();
+    h.update(b"sweepr-fallback-device-id-v1:");
+    h.update(r1.to_le_bytes());
+    h.update(r2.to_le_bytes());
+    h.update(nanos.to_le_bytes());
+    h.update(std::process::id().to_le_bytes());
+    let generated: String = h.finalize().iter().map(|b| format!("{b:02x}")).collect();
+
+    let _ = std::fs::create_dir_all(data_dir);
+    let _ = std::fs::write(&fallback_path, &generated);
+    generated
+}
+
+fn hardware_device_id(data_dir: &Path) -> String {
+    let raw = match machine_uid::get() {
+        Ok(uid) if !uid.trim().is_empty() => uid.trim().to_string(),
+        _ => load_or_create_fallback_device_id(data_dir),
+    };
     let mut h = Sha256::new();
     h.update(raw.as_bytes());
     h.update(b"sweepr-device-v1");
@@ -116,6 +157,34 @@ pub fn is_acceptable_api_url(url: &str) -> bool {
     false
 }
 
+pub fn verify_binary_signature_with_key(
+    key: &VerifyingKey,
+    data: &[u8],
+    sig_b64_or_hex: &str,
+) -> Result<(), LicenseError> {
+    let bad = |m: &str| AppError::License(m.to_string());
+    let trimmed = sig_b64_or_hex.trim();
+    if trimmed.is_empty() {
+        return Err(bad("missing binary signature"));
+    }
+    let sig_bytes = if trimmed.len() == 128 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+        (0..64)
+            .map(|i| u8::from_str_radix(&trimmed[i * 2..i * 2 + 2], 16).ok())
+            .collect::<Option<Vec<u8>>>()
+            .ok_or_else(|| bad("invalid hex signature"))?
+    } else {
+        B64_STD
+            .decode(trimmed)
+            .or_else(|_| B64_STD_NOPAD.decode(trimmed))
+            .or_else(|_| B64.decode(trimmed))
+            .or_else(|_| B64_URL.decode(trimmed))
+            .map_err(|_| bad("bad signature encoding"))?
+    };
+    let sig = Signature::from_slice(&sig_bytes).map_err(|_| bad("bad signature length"))?;
+    key.verify_strict(data, &sig)
+        .map_err(|_| bad("binary signature verification failed"))
+}
+
 pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResult<Claims> {
     let bad = |m: &str| AppError::License(m.to_string());
     let mut parts = token.split('.');
@@ -133,8 +202,15 @@ pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResu
         .map_err(|_| bad("signature verification failed"))?;
 
     let claims: Claims = serde_json::from_slice(&B64.decode(p).map_err(|_| bad("bad payload"))?)?;
-    if claims.exp <= now() {
+    let now_ts = now();
+    if claims.exp <= now_ts {
         return Err(bad("token expired"));
+    }
+    if claims.exp > now_ts + 72 * 3600 + 300 {
+        return Err(bad("token lifetime exceeds maximum horizon"));
+    }
+    if claims.iat > now_ts + 300 {
+        return Err(bad("future iat"));
     }
     if claims.device_id != device_id {
         return Err(bad("token issued for another device"));
@@ -240,7 +316,7 @@ impl Licensing {
                 if api_ok { " (allowed in debug build only)" } else { "; licence requests are disabled" }
             );
         }
-        let device_id = device_id();
+        let device_id = hardware_device_id(&data_dir);
         let pubkey = load_pubkey();
 
         let mut state = State::default();
@@ -263,6 +339,18 @@ impl Licensing {
                 .expect("http client"),
             state: Mutex::new(state),
         }
+    }
+
+    pub fn verify_binary_signature(
+        &self,
+        data: &[u8],
+        sig_b64_or_hex: &str,
+    ) -> Result<(), LicenseError> {
+        let key = self
+            .pubkey
+            .as_ref()
+            .ok_or_else(|| AppError::License("app built without SWEEPR_LICENSE_PUBKEY".into()))?;
+        verify_binary_signature_with_key(key, data, sig_b64_or_hex)
     }
 
     pub fn api_url(&self) -> &str {
@@ -624,8 +712,37 @@ mod tests {
         let vk = sk.verifying_key();
         let expired = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": 1}));
         assert!(verify_token(&expired, &vk, "d").is_err());
+        let too_far_future = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 72 * 3600 + 600}));
+        assert!(verify_token(&too_far_future, &vk, "d").is_err());
+        let future_iat = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 3600,"iat": now() + 600}));
+        assert!(verify_token(&future_iat, &vk, "d").is_err());
         let canceled = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"canceled","plan":"m","exp": now() + 60}));
         assert!(matches!(verify_token(&canceled, &vk, "d"), Err(AppError::PaymentRequired)));
+    }
+
+    #[test]
+    fn binary_signature_and_fallback_device_id() {
+        let sk = SigningKey::from_bytes(&[11u8; 32]);
+        let vk = sk.verifying_key();
+        let payload = b"MZ\x90\x00test-installer-binary";
+        let sig = sk.sign(payload);
+        let b64_std = B64_STD.encode(sig.to_bytes());
+        let b64_url = B64.encode(sig.to_bytes());
+        let hex_sig: String = sig.to_bytes().iter().map(|b| format!("{b:02x}")).collect();
+
+        assert!(verify_binary_signature_with_key(&vk, payload, &b64_std).is_ok());
+        assert!(verify_binary_signature_with_key(&vk, payload, &b64_url).is_ok());
+        assert!(verify_binary_signature_with_key(&vk, payload, &hex_sig).is_ok());
+        assert!(verify_binary_signature_with_key(&vk, b"MZtampered", &b64_std).is_err());
+        assert!(verify_binary_signature_with_key(&vk, payload, "").is_err());
+
+        let dir = std::env::temp_dir().join(format!("sweepr-devid-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let id1 = load_or_create_fallback_device_id(&dir);
+        let id2 = load_or_create_fallback_device_id(&dir);
+        assert_eq!(id1.len(), 64);
+        assert_eq!(id1, id2);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

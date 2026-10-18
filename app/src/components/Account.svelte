@@ -152,7 +152,7 @@
     error = null;
     installingUpdate = true;
     try {
-      await api.installAppUpdate(updateInfo.url || undefined);
+      await api.installAppUpdate();
     } catch (e) {
       error = errorMessage(e);
       installingUpdate = false;

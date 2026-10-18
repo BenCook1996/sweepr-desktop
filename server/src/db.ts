@@ -396,49 +396,10 @@ export class Repo {
   }
 
   /**
-   * Verifies a 6-digit code against the current `otps` table or any recent (≤7 days)
-   * Subscription Key / OTP dispatched to `email` in the account's activity log.
+   * Verifies a 6-digit code against the hashed `otps` table with constant-time comparison and attempt lockout.
    */
-  verifyRecentEmailCode(email: string, rawCode: string, codeHash: string, nowSec: number): boolean {
-    if (this.verifyOtp(email, codeHash, nowSec)) return true;
-    const normEmail = email.trim().toLowerCase();
-    const cleanCode = rawCode.trim();
-    if (!/^\d{6}$/.test(cleanCode)) return false;
-
-    const rows = this.db
-      .prepare(
-        `SELECT act.metadata_json, act.description
-         FROM activities act
-         JOIN accounts a ON a.id = act.account_id
-         WHERE a.email = ? COLLATE NOCASE
-           AND act.type IN ('welcome_email_sent', 'otp_requested', 'otp_generated')
-           AND act.created_at >= ?
-         ORDER BY act.created_at DESC
-         LIMIT 10`
-      )
-      .all(normEmail, nowSec - 7 * 86400) as Array<{ metadata_json: string | null; description: string | null }>;
-
-    const targetBuf = Buffer.from(cleanCode, "utf8");
-    for (const row of rows) {
-      let candidate = "";
-      if (row.metadata_json) {
-        try {
-          const parsed = JSON.parse(row.metadata_json);
-          if (typeof parsed?.code === "string") candidate = parsed.code.trim();
-        } catch {}
-      }
-      if (!candidate && row.description) {
-        const m = row.description.match(/\((\d{6})\)/);
-        if (m) candidate = m[1];
-      }
-      if (candidate.length === 6) {
-        const candBuf = Buffer.from(candidate, "utf8");
-        if (candBuf.length === targetBuf.length && timingSafeEqual(candBuf, targetBuf)) {
-          return true;
-        }
-      }
-    }
-    return false;
+  verifyRecentEmailCode(email: string, _rawCode: string, codeHash: string, nowSec: number): boolean {
+    return this.verifyOtp(email, codeHash, nowSec);
   }
 
 
@@ -616,16 +577,20 @@ export class Repo {
     return true;
   }
 
-  revokeDevice(accountId: string, deviceId: string) {
-    this.db.prepare("UPDATE devices SET revoked = 1 WHERE id = ? AND account_id = ?").run(deviceId, accountId);
+  revokeDevice(accountId: string, deviceId: string, actor = "admin") {
+    this.db.prepare("UPDATE devices SET revoked = 1, token_hash = NULL WHERE id = ? AND account_id = ?").run(deviceId, accountId);
     this.addActivity({
       account_id: accountId,
       type: "device_revoked",
       title: "Device Revoked",
-      description: `Hardware device ${deviceId.slice(0, 8)}... access was revoked by admin`,
-      actor: "admin",
+      description: `Hardware device ${deviceId.slice(0, 8)}... access was revoked by ${actor}`,
+      actor,
       metadata: { device_id: deviceId },
     });
+  }
+
+  rotateAccountTokenHash(accountId: string, newTokenHash: string) {
+    this.db.prepare("UPDATE accounts SET refresh_token_hash = ?, updated_at = ? WHERE id = ?").run(newTokenHash, now(), accountId);
   }
 
   restoreDevice(accountId: string, deviceId: string) {

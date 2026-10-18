@@ -31,10 +31,18 @@ class SweeprApp : Application(), ImageLoaderFactory {
         // Initialize RevenueCat SDK.
         // The key comes from REVENUECAT_API_KEY (gradle property / local.properties, see app/build.gradle.kts).
         // IMPORTANT: the release build must use the production "goog_..." key, not the "test_..." Test Store key.
-        Purchases.configure(
-            PurchasesConfiguration.Builder(this, BuildConfig.REVENUECAT_API_KEY)
-                .build()
-        )
+        val apiKey = BuildConfig.REVENUECAT_API_KEY
+        if (!BuildConfig.DEBUG) {
+            require(apiKey.startsWith("goog_")) {
+                "Release builds must configure a production RevenueCat Google Play API key (goog_...)."
+            }
+        }
+        if (apiKey.isNotBlank() && (BuildConfig.DEBUG || apiKey.startsWith("goog_"))) {
+            Purchases.configure(
+                PurchasesConfiguration.Builder(this, apiKey)
+                    .build()
+            )
+        }
     }
 
     /**

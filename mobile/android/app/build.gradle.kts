@@ -79,7 +79,7 @@ gradle.taskGraph.whenReady {
     val isReleaseBuild = allTasks.any { task ->
         task.project == project && task.name.contains("Release", ignoreCase = true)
     }
-    if (isReleaseBuild && (revenueCatApiKey.isBlank() || revenueCatApiKey.startsWith("test_"))) {
+    if (isReleaseBuild && !revenueCatApiKey.startsWith("goog_")) {
         throw GradleException(
             "Release builds must configure a production RevenueCat Google Play API key (goog_...) " +
                 "via REVENUECAT_API_KEY in local.properties or -PREVENUECAT_API_KEY. Found: '$revenueCatApiKey'"

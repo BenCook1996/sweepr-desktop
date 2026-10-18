@@ -181,14 +181,23 @@ class AppViewModel: ObservableObject {
     @Published var storage = StorageInfo.current()
 
     @Published var hasPremium = false
+    @Published var showingPaywall = false
     @Published var subscriptionInfoText = "Free Plan"
     @Published var linkedAccount = AccountService.loadAccount()
     @Published var isWorking = false
     @Published var alertMessage: String? = nil
 
+    private var rcActive: Bool = false
     private static let entitlementIDs = ["premium", "Sweepr Pro", "SWEEPR Cleaner Pro"]
 
+    private func isServerEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
+        guard let acc = acc, acc.serverActive else { return false }
+        let nowSec = Int64(Date().timeIntervalSince1970)
+        return acc.expiresAt == 0 || acc.expiresAt > nowSec
+    }
+
     init() {
+        hasPremium = rcActive || isServerEntitled(linkedAccount)
         refreshStorage()
         checkSubscription()
         if linkedAccount.isSignedIn {
@@ -212,15 +221,16 @@ class AppViewModel: ObservableObject {
     }
 
     private func applyCustomerInfo(_ info: CustomerInfo) {
-        let rcActive = Self.entitlementIDs.contains { info.entitlements[$0]?.isActive == true }
-        let active = rcActive || linkedAccount.serverActive
+        rcActive = Self.entitlementIDs.contains { info.entitlements[$0]?.isActive == true }
+        let serverEntitled = isServerEntitled(linkedAccount)
+        let active = rcActive || serverEntitled
         hasPremium = active
         if active {
             if let exp = info.entitlements.all.values.first(where: { $0.isActive })?.expirationDate {
                 let formatter = DateFormatter()
                 formatter.dateStyle = .medium
                 subscriptionInfoText = "SWEEPR Cleaner Pro (Renews \(formatter.string(from: exp)))"
-            } else if linkedAccount.serverActive {
+            } else if serverEntitled {
                 subscriptionInfoText = "SWEEPR Cleaner Pro (Cross-Platform Account Linked)"
             } else {
                 subscriptionInfoText = "SWEEPR Cleaner Pro (Active)"
@@ -312,6 +322,7 @@ class AppViewModel: ObservableObject {
     }
 
     func deleteSelectedCalendarEvents() async {
+        guard hasPremium else { showingPaywall = true; return }
         guard !selectedCalendarEventIDs.isEmpty else { return }
         isWorking = true
         let ids = Array(selectedCalendarEventIDs)
@@ -336,6 +347,7 @@ class AppViewModel: ObservableObject {
         stripGps: Bool,
         deleteOriginals: Bool = false
     ) async {
+        guard hasPremium else { showingPaywall = true; return }
         guard !ids.isEmpty else { return }
         isWorking = true
         var savedBytesTotal: Int64 = 0
@@ -378,6 +390,7 @@ class AppViewModel: ObservableObject {
     }
 
     func performSmartCleanAll() async {
+        guard hasPremium else { showingPaywall = true; return }
         await deleteSelectedMedia()
         if !selectedContactGroupIDs.isEmpty {
             await mergeSelectedContacts()
@@ -386,6 +399,7 @@ class AppViewModel: ObservableObject {
     }
 
     func deleteSelectedMedia() async {
+        guard hasPremium else { showingPaywall = true; return }
         guard !selectedMediaIDs.isEmpty else { return }
         isWorking = true
         let idsToDelete = Array(selectedMediaIDs)
@@ -404,6 +418,7 @@ class AppViewModel: ObservableObject {
     }
 
     func deleteSingleMedia(id: String) async {
+        guard hasPremium else { showingPaywall = true; return }
         isWorking = true
         do {
             try await PhotoScanner.deleteAssets(identifiers: [id])
@@ -419,6 +434,7 @@ class AppViewModel: ObservableObject {
     }
 
     func compressVideo(id: String) async {
+        guard hasPremium else { showingPaywall = true; return }
         isWorking = true
         do {
             let result = try await PhotoScanner.compressVideo(assetId: id, deleteOriginal: true)
@@ -435,6 +451,7 @@ class AppViewModel: ObservableObject {
     }
 
     func mergeSelectedContacts() async {
+        guard hasPremium else { showingPaywall = true; return }
         guard !selectedContactGroupIDs.isEmpty else { return }
         isWorking = true
         var mergedCount = 0
@@ -458,6 +475,7 @@ class AppViewModel: ObservableObject {
     }
 
     func deleteSelectedIncompleteContacts() async {
+        guard hasPremium else { showingPaywall = true; return }
         guard !selectedIncompleteContactIDs.isEmpty else { return }
         isWorking = true
         let ids = Array(selectedIncompleteContactIDs)
@@ -508,7 +526,7 @@ class AppViewModel: ObservableObject {
             let linked = try await AccountService.verifyOtp(email: email, code: code)
             linkedAccount = linked
             _ = try? await Purchases.shared.logIn(linked.accountId)
-            hasPremium = hasPremium || linked.serverActive
+            hasPremium = rcActive || isServerEntitled(linkedAccount)
             alertMessage = "Signed in as \(linked.email)"
             return true
         } catch {
@@ -522,8 +540,12 @@ class AppViewModel: ObservableObject {
         guard linkedAccount.isSignedIn else { return }
         if let updated = try? await AccountService.refreshEntitlement(current: linkedAccount) {
             linkedAccount = updated
-            hasPremium = hasPremium || updated.serverActive
+            hasPremium = rcActive || isServerEntitled(linkedAccount)
         }
+    }
+
+    func refreshServerEntitlement() async {
+        await refreshLinkedAccount()
     }
 
     func redeemReferralCode(_ code: String) async {
@@ -540,8 +562,12 @@ class AppViewModel: ObservableObject {
     func signOut() {
         linkedAccount = AccountService.clearAccount()
         Task { _ = try? await Purchases.shared.logOut() }
-        hasPremium = false
+        hasPremium = rcActive || isServerEntitled(linkedAccount)
         alertMessage = "Signed out of your SWEEPR Cleaner account."
+    }
+
+    func unlinkSweeprAccount() {
+        signOut()
     }
 
     func deleteAccount() async {
@@ -639,7 +665,13 @@ struct ContentView: View {
             }
         }
         .tint(.sweeprEmerald)
-        .sheet(isPresented: $showPaywall) {
+        .sheet(isPresented: Binding(
+            get: { showPaywall || vm.showingPaywall },
+            set: {
+                showPaywall = $0
+                vm.showingPaywall = $0
+            }
+        )) {
             PaywallView(vm: vm)
         }
         .alert(item: Binding<AlertItem?>(
@@ -654,13 +686,13 @@ struct ContentView: View {
     private func destinationView(for item: SweeprNavigationItem) -> some View {
         switch item {
         case .dashboard:
-            DashboardView(vm: vm, onShowPaywall: { showPaywall = true })
+            DashboardView(vm: vm, onShowPaywall: { vm.showingPaywall = true; showPaywall = true })
         case .smartClean:
-            CategoryDetailView(vm: vm, onShowPaywall: { showPaywall = true })
+            CategoryDetailView(vm: vm, onShowPaywall: { vm.showingPaywall = true; showPaywall = true })
         case .swipeReview:
-            SwipeReviewView(vm: vm, onShowPaywall: { showPaywall = true })
+            SwipeReviewView(vm: vm, onShowPaywall: { vm.showingPaywall = true; showPaywall = true })
         case .account:
-            AccountView(vm: vm, onShowPaywall: { showPaywall = true })
+            AccountView(vm: vm, onShowPaywall: { vm.showingPaywall = true; showPaywall = true })
         }
     }
 }

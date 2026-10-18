@@ -5,5 +5,5 @@
     everything not included – RevenueCat caches, databases, cache dir / log files – is left out.
 -->
 <full-backup-content>
-    <include domain="sharedpref" path="sweepr_prefs.xml" />
+    <exclude domain="sharedpref" path="sweepr_secure_auth.xml" />
 </full-backup-content>

@@ -18,9 +18,14 @@ const idOf = (v: string | { id: string } | null | undefined) => (typeof v === "s
 
 export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountIdHint?: string | null) {
   const customerId = idOf(sub.customer as any);
+  const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
+  const hint = typeof accountIdHint === "string" ? accountIdHint.trim() : "";
+  if (metaAccountId && hint && metaAccountId !== hint) {
+    throw new Error("account_id mismatch");
+  }
   const account =
-    (accountIdHint && repo.accountById(accountIdHint)) ||
-    (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
+    (metaAccountId && repo.accountById(metaAccountId)) ||
+    (hint && repo.accountById(hint)) ||
     (customerId && repo.accountByCustomer(customerId)) ||
     undefined;
   if (!account) {
@@ -61,6 +66,11 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
       current_period_end: currentPeriodEnd,
       cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
     });
+  }
+
+  const refCode = typeof sub.metadata?.ref === "string" ? sub.metadata.ref.trim() : "";
+  if (sub.status === "active" && refCode) {
+    repo.applyReferral(account.id, refCode, Math.floor(Date.now() / 1000));
   }
 
   repo.upsertSubscription({
@@ -124,9 +134,9 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
               account_id: accountId,
               type: "welcome_email_sent",
               title: "Welcome & Subscription Key Sent",
-              description: `6-digit Subscription Key (${activationKey}) sent to ${normEmail}`,
+              description: `6-digit Subscription Key sent to ${normEmail}`,
               actor: "stripe",
-              metadata: { code: activationKey, email: normEmail, plan: "Pro" },
+              metadata: { email: normEmail, plan: "Pro" },
             });
           }
           import("./email.js").then((m) => {

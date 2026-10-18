@@ -520,7 +520,24 @@ export function getPricingForCountryOrCurrency(
   };
 }
 
+const MAX_GEO_CACHE_KEYS = 5_000;
 const ipCountryCache = new Map<string, { country: string; expiresAt: number }>();
+
+function setGeoCache(key: string, country: string, expiresAt: number, nowMs: number) {
+  if (ipCountryCache.size >= MAX_GEO_CACHE_KEYS) {
+    for (const [k, v] of ipCountryCache) {
+      if (v.expiresAt <= nowMs) ipCountryCache.delete(k);
+    }
+    if (ipCountryCache.size >= MAX_GEO_CACHE_KEYS) {
+      let excess = ipCountryCache.size - MAX_GEO_CACHE_KEYS + 1;
+      for (const k of ipCountryCache.keys()) {
+        if (excess-- <= 0) break;
+        ipCountryCache.delete(k);
+      }
+    }
+  }
+  ipCountryCache.set(key, { country, expiresAt });
+}
 
 function isPrivateOrLoopbackIp(ip: string): boolean {
   const clean = ip.replace(/^::ffff:/i, "").trim();
@@ -554,7 +571,7 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
       const data: any = await res.json();
       const c = String(data?.country || "").trim().toUpperCase();
       if (/^[A-Z]{2}$/.test(c)) {
-        ipCountryCache.set(cacheKey, { country: c, expiresAt: nowMs + ttlMs });
+        setGeoCache(cacheKey, c, nowMs + ttlMs, nowMs);
         return c;
       }
     }
@@ -571,7 +588,7 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
       const data: any = await res.json();
       const c = String(data?.country || "").trim().toUpperCase();
       if (/^[A-Z]{2}$/.test(c)) {
-        ipCountryCache.set(cacheKey, { country: c, expiresAt: nowMs + ttlMs });
+        setGeoCache(cacheKey, c, nowMs + ttlMs, nowMs);
         return c;
       }
     }
@@ -584,7 +601,7 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
 
 export async function resolvePricingForRequest(
   c: Context,
-  bodyOverride?: { country?: string; currency?: string }
+  bodyOverride?: { country?: string; currency?: string; trustProxy?: boolean }
 ): Promise<LocalizedPlanPricing> {
   const queryCountry = c.req.query("country") || bodyOverride?.country;
   const queryCurrency = c.req.query("currency") || bodyOverride?.currency;
@@ -593,24 +610,35 @@ export async function resolvePricingForRequest(
     return getPricingForCountryOrCurrency(queryCountry, queryCurrency);
   }
 
-  const headerCountry =
-    c.req.header("cf-ipcountry") ||
-    c.req.header("x-vercel-ip-country") ||
-    c.req.header("x-country-code") ||
-    c.req.header("cloudfront-viewer-country") ||
-    c.req.header("x-appengine-country");
+  const trustProxy = Boolean(bodyOverride?.trustProxy);
+  if (trustProxy) {
+    const headerCountry =
+      c.req.header("cf-ipcountry") ||
+      c.req.header("x-vercel-ip-country") ||
+      c.req.header("x-country-code") ||
+      c.req.header("cloudfront-viewer-country") ||
+      c.req.header("x-appengine-country");
 
-  if (headerCountry && /^[A-Za-z]{2}$/.test(headerCountry.trim()) && headerCountry.trim().toUpperCase() !== "XX") {
-    return getPricingForCountryOrCurrency(headerCountry.trim().toUpperCase(), null);
+    if (headerCountry && /^[A-Za-z]{2}$/.test(headerCountry.trim()) && headerCountry.trim().toUpperCase() !== "XX") {
+      return getPricingForCountryOrCurrency(headerCountry.trim().toUpperCase(), null);
+    }
   }
 
-  // Extract visitor IP from proxy headers or connection info
-  const forwardedIp =
-    c.req.header("cf-connecting-ip") ||
-    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-    c.req.header("x-real-ip")?.trim();
-
-  let ip = forwardedIp || "";
+  // Extract visitor IP from proxy headers only when behind a trusted proxy
+  let ip = "";
+  if (trustProxy) {
+    const trustCloudflare = process.env.TRUST_CLOUDFLARE === "1";
+    const cfIp = trustCloudflare ? c.req.header("cf-connecting-ip")?.trim() : "";
+    const xff = c.req.header("x-forwarded-for");
+    const rightmostXff = xff
+      ? xff
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .at(-1)
+      : "";
+    ip = cfIp || rightmostXff || c.req.header("x-real-ip")?.trim() || "";
+  }
   if (!ip) {
     try {
       ip = getConnInfo(c).remote.address ?? "local";

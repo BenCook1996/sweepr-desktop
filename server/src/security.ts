@@ -90,10 +90,22 @@ export function createRateLimiter(limit: number, windowMs: number, maxKeys = 10_
  * server is explicitly configured to sit behind a trusted proxy (TRUST_PROXY=1).
  */
 export function makeClientIp(trustProxy: boolean) {
+  const trustCloudflare = process.env.TRUST_CLOUDFLARE === "1";
   return (c: Context): string => {
     if (trustProxy) {
-      const fwd = c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
-      if (fwd) return fwd;
+      if (trustCloudflare) {
+        const cfIp = c.req.header("cf-connecting-ip")?.trim();
+        if (cfIp) return cfIp;
+      }
+      const xff = c.req.header("x-forwarded-for");
+      if (xff) {
+        const hops = xff
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const rightmost = hops.at(-1);
+        if (rightmost) return rightmost;
+      }
     }
     try {
       return getConnInfo(c).remote.address ?? "local";

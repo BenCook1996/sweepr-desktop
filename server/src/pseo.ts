@@ -148,34 +148,34 @@ export function renderPseoPage(item: CleanItem): string {
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
 
   <!-- Schema Markup -->
-  <script type="application/ld+json">
-  {
+  <script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "HowTo",
-        "name": "How to Clean ${item.name} Safely",
-        "description": "Step-by-step instructions to reclaim ${item.avgSpace} by cleaning ${item.name}.",
-        "step": [
-          ${item.manualSteps.map((s, idx) => `{"@type": "HowToStep", "position": ${idx + 1}, "text": "${s.replace(/"/g, '\\"')}"}`).join(",\n          ")}
-        ]
+        name: `How to Clean ${item.name} Safely`,
+        description: `Step-by-step instructions to reclaim ${item.avgSpace} by cleaning ${item.name}.`,
+        step: item.manualSteps.map((s, idx) => ({
+          "@type": "HowToStep",
+          position: idx + 1,
+          text: s,
+        })),
       },
       {
         "@type": "FAQPage",
-        "mainEntity": [
+        mainEntity: [
           {
             "@type": "Question",
-            "name": "Is it safe to delete ${item.name}?",
-            "acceptedAnswer": {
+            name: `Is it safe to delete ${item.name}?`,
+            acceptedAnswer: {
               "@type": "Answer",
-              "text": "${(item.warning || item.whatHappens).replace(/"/g, '\\"')}"
-            }
-          }
-        ]
-      }
-    ]
-  }
-  </script>
+              text: item.warning || item.whatHappens,
+            },
+          },
+        ],
+      },
+    ],
+  })}</script>
 
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>

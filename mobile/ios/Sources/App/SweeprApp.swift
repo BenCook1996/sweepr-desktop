@@ -50,7 +50,15 @@ struct SweeprApp: App {
             #endif
             return
         }
+        #if DEBUG
         Purchases.configure(withAPIKey: apiKey)
+        #else
+        guard apiKey.hasPrefix("appl_") else {
+            NSLog("Sweepr: Release build requires a production App Store RevenueCat API key (appl_...) – purchases are disabled.")
+            return
+        }
+        Purchases.configure(withAPIKey: apiKey)
+        #endif
     }
 
     private var activeTheme: SweeprThemeMode {

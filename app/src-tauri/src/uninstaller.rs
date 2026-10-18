@@ -157,11 +157,15 @@ fn resolve_program(uninstall_string: &str) -> AppResult<(std::path::PathBuf, Str
     Ok((path, args))
 }
 
+#[cfg(target_os = "windows")]
+fn system_powershell_path() -> std::path::PathBuf {
+    crate::safety::system_powershell_path()
+}
+
 /// Run the uninstaller without a shell. Falls back to an elevated launch when
 /// Windows reports that the uninstaller requires administrator rights.
 #[cfg(target_os = "windows")]
 fn launch(program: &std::path::Path, args: &str) -> AppResult<()> {
-    use base64::Engine;
     use std::os::windows::process::CommandExt;
 
     let mut cmd = std::process::Command::new(program);
@@ -172,19 +176,21 @@ fn launch(program: &std::path::Path, args: &str) -> AppResult<()> {
         Ok(_) => Ok(()),
         Err(e) if e.raw_os_error() == Some(740) => {
             // ERROR_ELEVATION_REQUIRED: elevate via ProcessStartInfo with Verb='runas'
-            // so `Arguments` is passed verbatim to ShellExecuteExW without Start-Process
-            // re-tokenizing or stripping quotes.
-            let q = |s: &str| format!("'{}'", s.replace('\'', "''"));
-            let script = format!(
-                "$psi = New-Object System.Diagnostics.ProcessStartInfo; $psi.FileName = {}; $psi.Arguments = {}; $psi.Verb = 'runas'; $psi.UseShellExecute = $true; [System.Diagnostics.Process]::Start($psi) | Out-Null",
-                q(&program.to_string_lossy()),
-                q(args)
-            );
-            let utf16: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
-            let encoded = base64::engine::general_purpose::STANDARD.encode(utf16);
+            // passing FileName and Arguments via environment variables so untrusted strings
+            // are never interpolated into PowerShell source code.
             const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-            std::process::Command::new("powershell.exe")
-                .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-EncodedCommand", &encoded])
+            let script = "$psi = New-Object System.Diagnostics.ProcessStartInfo; $psi.FileName = $env:SWEEPR_PS_TARGET; $psi.Arguments = $env:SWEEPR_PS_ARGS; $psi.Verb = 'runas'; $psi.UseShellExecute = $true; [System.Diagnostics.Process]::Start($psi) | Out-Null";
+            std::process::Command::new(system_powershell_path())
+                .env("SWEEPR_PS_TARGET", program.as_os_str())
+                .env("SWEEPR_PS_ARGS", args)
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-Command",
+                    script,
+                ])
                 .creation_flags(CREATE_NO_WINDOW)
                 .spawn()
                 .map(|_| ())
@@ -842,6 +848,26 @@ pub async fn scan_broken_items() -> AppResult<Vec<BrokenItem>> {
     .map_err(|e| AppError::Other(format!("background task failed: {e}")))
 }
 
+fn is_broken_lnk(p: &std::path::Path) -> bool {
+    let Ok(md) = std::fs::symlink_metadata(p) else {
+        return false;
+    };
+    if !md.is_file() || crate::safety::metadata_is_link_like(&md) {
+        return false;
+    }
+    if md.len() == 0 {
+        return true;
+    }
+    if md.len() > 256 * 1024 {
+        return false;
+    }
+    let Ok(bytes) = std::fs::read(p) else {
+        return false;
+    };
+    let targets = extract_lnk_exe_targets(&bytes);
+    !targets.is_empty() && targets.iter().all(|t| !std::path::Path::new(t).exists())
+}
+
 pub fn clean_broken_items_in_roots(
     paths: &[String],
     allowed_roots: &[std::path::PathBuf],
@@ -852,26 +878,29 @@ pub fn clean_broken_items_in_roots(
         if !p.is_absolute() {
             continue;
         }
-        if !allowed_roots.iter().any(|r| crate::safety::is_within(&p, r)) {
-            continue;
-        }
         let Ok(md) = std::fs::symlink_metadata(&p) else {
             continue;
         };
         if crate::safety::metadata_is_link_like(&md) {
             continue;
         }
+        let Ok(canon) = std::fs::canonicalize(&p) else {
+            continue;
+        };
+        if !allowed_roots.iter().any(|r| crate::safety::is_within(&canon, r)) {
+            continue;
+        }
         if md.is_dir() {
-            if std::fs::remove_dir(&p).is_ok() {
+            if std::fs::remove_dir(&canon).is_ok() {
                 removed += 1;
             }
         } else if md.is_file() {
-            let is_lnk = p
+            let is_lnk = canon
                 .extension()
                 .and_then(|e| e.to_str())
                 .map(|e| e.eq_ignore_ascii_case("lnk"))
                 .unwrap_or(false);
-            if is_lnk && std::fs::remove_file(&p).is_ok() {
+            if is_lnk && is_broken_lnk(&canon) && std::fs::remove_file(&canon).is_ok() {
                 removed += 1;
             }
         }
@@ -888,9 +917,6 @@ pub async fn clean_broken_items(
     tauri::async_runtime::spawn_blocking(move || {
         let mut allowed_roots = Vec::new();
         for d in [
-            dirs::home_dir(),
-            dirs::data_dir(),
-            dirs::data_local_dir(),
             dirs::desktop_dir(),
             dirs::download_dir(),
             dirs::document_dir(),
@@ -898,7 +924,15 @@ pub async fn clean_broken_items(
         .into_iter()
         .flatten()
         {
-            allowed_roots.push(d);
+            if d.is_dir() && !allowed_roots.contains(&d) {
+                allowed_roots.push(d);
+            }
+        }
+        if let Some(roaming) = dirs::data_dir() {
+            let start_menu = roaming.join("Microsoft\\Windows\\Start Menu\\Programs");
+            if start_menu.is_dir() {
+                allowed_roots.push(start_menu);
+            }
         }
         clean_broken_items_in_roots(&paths, &allowed_roots)
     })
@@ -965,14 +999,24 @@ Mozilla Firefox    Mozilla.Firefox     122.0     124.0.1   winget
         let bad_lnk = dir.join("OldGame.lnk");
         std::fs::write(&bad_lnk, b"L\x00\x00\x00C:\\NonExistentFolder12345\\OldGame.exe\x00").unwrap();
 
+        let existing_exe = dir.join("ExistingApp.exe");
+        std::fs::write(&existing_exe, b"MZ").unwrap();
+        let good_lnk = dir.join("GoodApp.lnk");
+        let mut good_lnk_bytes = b"L\x00\x00\x00".to_vec();
+        good_lnk_bytes.extend_from_slice(existing_exe.to_string_lossy().as_bytes());
+        good_lnk_bytes.push(0);
+        std::fs::write(&good_lnk, &good_lnk_bytes).unwrap();
+
         let found = scan_broken_items_in_roots(std::slice::from_ref(&dir), std::slice::from_ref(&dir));
         assert_eq!(found.len(), 2);
 
-        let paths: Vec<String> = found.iter().map(|i| i.path.clone()).collect();
+        let mut paths: Vec<String> = found.iter().map(|i| i.path.clone()).collect();
+        paths.push(good_lnk.to_string_lossy().into_owned());
         let cleaned = clean_broken_items_in_roots(&paths, std::slice::from_ref(&dir)).unwrap();
         assert_eq!(cleaned, 2);
         assert!(!empty_sub.exists());
         assert!(!bad_lnk.exists());
+        assert!(good_lnk.exists(), "valid .lnk must not be deleted");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

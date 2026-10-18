@@ -24,6 +24,10 @@ import {
   securityHeaders,
 } from "./security.js";
 import { cleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import { SeoStore } from "./seo/store.js";
+import { createSeoRouter } from "./seo/router.js";
+import { detectBot, isTrackablePath } from "./seo/bots.js";
+import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
   resolvePricingForRequest,
   getPricingForCountryOrCurrency,
@@ -70,6 +74,14 @@ export interface AppDeps {
     gaMeasurementId?: string;
     metaPixelId?: string;
     clarityProjectId?: string;
+    /** SEO Intelligence suite providers (all optional). */
+    seo?: {
+      siteUrl?: string;
+      gscSiteUrl?: string;
+      gscServiceAccountJson?: string;
+      googleApiKey?: string;
+      openPageRankApiKey?: string;
+    };
   };
   now?: () => number;
 }
@@ -193,6 +205,58 @@ export function createApp(deps: AppDeps) {
     if (ADMIN_PATH_RE.test(normalisedPath(c))) return adminAuth(c, next);
     await next();
   });
+
+  // ---------- SEO Intelligence suite ----------
+  const seoStore = new SeoStore(repo.db);
+  seoStore.pruneBotHits(90);
+  let botHitsSincePrune = 0;
+  // Record claimed search-engine / AI-crawler visits (by User-Agent) for the CRM "Crawlers & AI" view.
+  app.use("*", async (c, next) => {
+    await next();
+    const bot = detectBot(c.req.header("user-agent"));
+    if (!bot || !isTrackablePath(c.req.path)) return;
+    try {
+      seoStore.recordBotHit(bot, c.req.path, c.res.status);
+      if (++botHitsSincePrune >= 5000) {
+        botHitsSincePrune = 0;
+        seoStore.pruneBotHits(90);
+      }
+    } catch (e) {
+      console.warn("[seo] bot hit logging failed:", (e as Error).message);
+    }
+  });
+  const seoSiteUrl = config.seo?.siteUrl || "https://sweeprcleaner.com";
+  app.route(
+    "/api/crm/seo",
+    createSeoRouter({
+      store: seoStore,
+      providers: {
+        siteUrl: seoSiteUrl,
+        gscSiteUrl: config.seo?.gscSiteUrl,
+        gscServiceAccountJson: config.seo?.gscServiceAccountJson,
+        googleApiKey: config.seo?.googleApiKey,
+        openPageRankApiKey: config.seo?.openPageRankApiKey,
+        dataForSeoLogin: config.seo?.dataForSeoLogin,
+        dataForSeoPassword: config.seo?.dataForSeoPassword,
+        dataForSeoLocationCode: config.seo?.dataForSeoLocationCode,
+        dataForSeoLanguageCode: config.seo?.dataForSeoLanguageCode,
+      },
+      // Audits the running app in-process (no network), so it works locally and before deploys.
+      localFetcher: async (path) => app.request(path, { headers: { "user-agent": AUDIT_USER_AGENT } }),
+      seedPaths: ["/", "/clean", ...cleanItems.map((i) => `/clean/${i.category}/${i.slug}`)],
+      defaultKeywords: [
+        ["sweepr cleaner", "brand", "/"],
+        ["sweepr", "brand", "/"],
+        ["ccleaner alternative", "competitor", "/alternatives/ccleaner"],
+        ["sweepr vs ccleaner", "competitor", "/vs/ccleaner"],
+        ...cleanItems.map((i): [string, string, string] => [
+          `${i.slug.replace(/-/g, " ")}${i.category === "folder" ? " folder" : ""}`,
+          `pseo-${i.category}`,
+          `/clean/${i.category}/${i.slug}`,
+        ]),
+      ],
+    })
+  );
 
   // Mount CRM Subscriptions & Customers Router
   const crmRouter = createCrmRouter({
@@ -470,6 +534,7 @@ export function createApp(deps: AppDeps) {
     const localizedPricing = await resolvePricingForRequest(c, {
       country: typeof body?.country === "string" ? body.country : undefined,
       currency: typeof body?.currency === "string" ? body.currency : undefined,
+      trustProxy,
     });
     const leadDevice = detectLeadDevice(c, typeof body?.device === "string" ? body.device : "web");
     const country = localizedPricing.country;
@@ -525,6 +590,7 @@ export function createApp(deps: AppDeps) {
     const localizedPricing = await resolvePricingForRequest(c, {
       country: typeof body.country === "string" ? body.country : undefined,
       currency: typeof body.currency === "string" ? body.currency : undefined,
+      trustProxy,
     });
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
@@ -560,9 +626,6 @@ export function createApp(deps: AppDeps) {
         country: localizedPricing.country,
         lead_device: leadDevice,
       });
-    }
-    if (refCode) {
-      repo.applyReferral(accountId, refCode, now());
     }
 
     try {
@@ -668,7 +731,7 @@ export function createApp(deps: AppDeps) {
   app.get("/api/checkout-config", async (c) => {
     const pk = (config.stripePublishableKey ?? "").trim();
     const validPk = pk.startsWith("pk_") && !pk.includes("...") ? pk : "";
-    const localizedPricing = await resolvePricingForRequest(c);
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
     return c.json({
       publishableKey: validPk,
       stripeConfigured: Boolean(stripe),
@@ -728,9 +791,10 @@ export function createApp(deps: AppDeps) {
   async function syncPayPalCustomerEmail(sub: Stripe.Subscription, accountIdHint?: string | null) {
     if (!stripe) return;
     try {
+      const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
       const resolvedAccount =
+        (metaAccountId && repo.accountById(metaAccountId)) ||
         (accountIdHint && repo.accountById(accountIdHint)) ||
-        (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
         undefined;
       if (!resolvedAccount) return;
       const currentEmail = resolvedAccount.email || "";
@@ -792,14 +856,15 @@ export function createApp(deps: AppDeps) {
       account_id: account.id,
       type: "welcome_email_sent",
       title: "Welcome & Subscription Key Sent",
-      description: `6-digit Subscription Key (${activationKey}) sent to ${email}`,
+      description: `6-digit Subscription Key sent to ${email}`,
       actor: "system",
-      metadata: { code: activationKey, email, plan: planLabel, dispatch },
+      metadata: { email, plan: planLabel, dispatch },
     });
   }
 
   // Create a Stripe Subscription for direct on-page card, PayPal, Apple Pay & Google Pay confirmation (no Stripe Hosted Checkout page)
   app.post("/api/create-subscription", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
 
@@ -848,6 +913,7 @@ export function createApp(deps: AppDeps) {
     const localizedPricing = await resolvePricingForRequest(c, {
       country: typeof body.country === "string" ? body.country : undefined,
       currency: typeof body.currency === "string" ? body.currency : undefined,
+      trustProxy,
     });
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
@@ -865,9 +931,6 @@ export function createApp(deps: AppDeps) {
     }
     if (name) {
       repo.updateAccountProfile(accountId, { name, email, country: localizedPricing.country, lead_device: leadDevice });
-    }
-    if (refCode) {
-      repo.applyReferral(accountId, refCode, now());
     }
 
     // Ensure Stripe Customer exists with billing details
@@ -1070,6 +1133,7 @@ export function createApp(deps: AppDeps) {
 
   // Immediately verify & sync an on-page or popup subscription
   app.post("/api/confirm-subscription", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const body = await c.req.json().catch(() => ({}));
     const subscriptionId = typeof body.subscriptionId === "string" ? body.subscriptionId.trim() : "";
@@ -1082,19 +1146,27 @@ export function createApp(deps: AppDeps) {
         expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
       });
 
-      if (checkOnly && sub.status !== "active" && sub.status !== "trialing") {
-        return c.json({
-          ok: false,
-          status: sub.status,
-        });
+      const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
+      if (metaAccountId && accountId && metaAccountId !== accountId) {
+        return c.json({ error: "account_mismatch" }, 403);
       }
 
-      await syncPayPalCustomerEmail(sub, accountId || null);
-      syncSubscription(repo, sub, accountId || null);
+      if (sub.status !== "active" && sub.status !== "trialing") {
+        return c.json(
+          {
+            ok: false,
+            status: sub.status,
+          },
+          checkOnly ? 200 : 402
+        );
+      }
+
+      await syncPayPalCustomerEmail(sub, metaAccountId || accountId || null);
+      syncSubscription(repo, sub, metaAccountId || accountId || null);
 
       const resolvedAccount =
+        (metaAccountId && repo.accountById(metaAccountId)) ||
         (accountId && repo.accountById(accountId)) ||
-        (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
         undefined;
 
       if (resolvedAccount) {
@@ -1106,15 +1178,13 @@ export function createApp(deps: AppDeps) {
           secure: isHttps,
           maxAge: 86400 * 30,
         });
-        if (sub.status === "active" || sub.status === "trialing") {
-          const planLabel =
-            sub.metadata?.plan === "annual"
-              ? "Annual"
-              : sub.metadata?.plan === "six_month"
-              ? "6-Month"
-              : "Pro";
-          await dispatchActivationEmail(resolvedAccount, planLabel);
-        }
+        const planLabel =
+          sub.metadata?.plan === "annual"
+            ? "Annual"
+            : sub.metadata?.plan === "six_month"
+            ? "6-Month"
+            : "Pro";
+        await dispatchActivationEmail(resolvedAccount, planLabel);
       }
 
       return c.json({
@@ -1153,9 +1223,9 @@ export function createApp(deps: AppDeps) {
         account_id: account.id,
         type: "otp_requested",
         title: "Customer Requested Login Code",
-        description: `6-digit code (${code}) requested via /login — ${statusText}`,
+        description: `6-digit code requested via /login — ${statusText}`,
         actor: "customer",
-        metadata: { code, email, dispatch },
+        metadata: { email, dispatch },
       });
     }
 
@@ -1163,6 +1233,7 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/api/verify-otp", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
     if (!limitOtpVerifyIp.hit(clientIp(c))) return c.json({ error: "Too many attempts. Please try again later." }, 429);
     const body = await c.req.json().catch(() => ({}));
     if (!body.email || !body.code) return c.json({ error: "missing_fields" }, 400);
@@ -1436,9 +1507,9 @@ export function createApp(deps: AppDeps) {
       account_id: account.id,
       type: "email_change_requested",
       title: "Customer Requested Email Change",
-      description: `Verification code (${code}) sent to ${newEmail} — ${statusText}`,
+      description: `Verification code sent to ${newEmail} — ${statusText}`,
       actor: "customer",
-      metadata: { new_email: newEmail, code, dispatch },
+      metadata: { new_email: newEmail, dispatch },
     });
 
     return c.json({ ok: true, pendingEmail: newEmail });
@@ -1610,7 +1681,7 @@ export function createApp(deps: AppDeps) {
     });
   });
 
-  // 3c. Claim 50% Off Loyalty Retention Discount (3 Months)
+  // 3c. Claim 50% Off Loyalty Retention Discount (3 Months, once per account)
   app.post("/api/portal/claim-retention-discount", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
@@ -1619,6 +1690,9 @@ export function createApp(deps: AppDeps) {
     if (!accountId) return c.json({ error: "unauthorized" }, 401);
     const account = repo.accountById(accountId);
     if (!account) return c.json({ error: "account_not_found" }, 404);
+    if (account.winback_claimed) {
+      return c.json({ error: "already_claimed" }, 409);
+    }
 
     const ent = repo.entitlement(accountId);
     if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
@@ -1648,6 +1722,7 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    repo.db.prepare("UPDATE accounts SET winback_claimed = 1, updated_at = ? WHERE id = ?").run(now(), account.id);
     repo.upsertEntitlement({
       ...ent,
       cancel_at_period_end: 0,
@@ -1809,7 +1884,7 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // 4. Unlink / Remove a Device
+  // 4. Unlink / Revoke a Device (marks revoked=1, clears device token, and rotates account token so device cannot re-register)
   app.delete("/api/portal/devices/:deviceId", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
@@ -1819,16 +1894,12 @@ export function createApp(deps: AppDeps) {
     const deviceId = c.req.param("deviceId");
     if (!deviceId) return c.json({ error: "missing_device_id" }, 400);
 
-    const r = repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(deviceId, accountId);
-    if (Number(r.changes) > 0) {
-      repo.addActivity({
-        account_id: accountId,
-        type: "device_unlinked",
-        title: "Customer Unlinked Device",
-        description: `Unlinked device ${deviceId.slice(0, 8)}... from customer portal`,
-        actor: "customer",
-        metadata: { device_id: deviceId },
-      });
+    const existingDev = repo.db
+      .prepare("SELECT id FROM devices WHERE id = ? AND account_id = ?")
+      .get(deviceId, accountId) as { id: string } | undefined;
+    if (existingDev) {
+      repo.revokeDevice(accountId, deviceId, "customer");
+      repo.rotateAccountTokenHash(accountId, sha256(randomToken(32)));
     }
 
     return c.json({ ok: true });
@@ -1844,6 +1915,7 @@ export function createApp(deps: AppDeps) {
     const email = normalizeEmail(body.email) || undefined;
     const localizedPricing = await resolvePricingForRequest(c, {
       country: typeof body.country === "string" ? body.country : undefined,
+      trustProxy,
     });
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : deviceType);
     const accountId = `acc_${randomToken(12)}`;
@@ -1866,9 +1938,7 @@ export function createApp(deps: AppDeps) {
       return existing;
     }
 
-    const ownerEmail = normalizeEmail(
-      process.env.OWNER_EMAIL || process.env.SMTP_GMAIL_USER || "cookbenjamin1996@gmail.com"
-    );
+    const ownerEmail = normalizeEmail(process.env.OWNER_EMAIL);
     if (ownerEmail && email === ownerEmail) {
       let acc = existing;
       if (!acc) {
@@ -1962,9 +2032,9 @@ export function createApp(deps: AppDeps) {
         account_id: account.id,
         type: "otp_requested",
         title: "Device Link Login Code Requested",
-        description: `6-digit code (${code}) requested via app — ${statusText}`,
+        description: `6-digit code requested via app — ${statusText}`,
         actor: "customer",
-        metadata: { code, email, dispatch },
+        metadata: { email, dispatch },
       });
     }
     return c.json({ otpSent: true });
@@ -1995,7 +2065,7 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {
-      const localizedPricing = await resolvePricingForRequest(c);
+      const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
       repo.setAccountLeadMeta(account.id, {
         country: localizedPricing.country,
         lead_device: detectLeadDevice(c, deviceType),
@@ -2061,7 +2131,7 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {
-      const localizedPricing = await resolvePricingForRequest(c);
+      const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
       repo.setAccountLeadMeta(account.id, {
         country: localizedPricing.country,
         lead_device: detectLeadDevice(c, deviceType),
@@ -2072,21 +2142,8 @@ export function createApp(deps: AppDeps) {
     const t = now();
     if (!isEntitled(ent, t, config.pastDueGraceDays) && account.email) {
       const synced = await findOrSyncEntitledAccountByEmail(account.email);
-      if (synced) {
-        const syncedEnt = repo.entitlement(synced.id);
-        if (syncedEnt && isEntitled(syncedEnt, t, config.pastDueGraceDays)) {
-          if (synced.id !== account.id) {
-            repo.upsertEntitlement({
-              account_id: account.id,
-              stripe_subscription_id: null,
-              status: syncedEnt.status,
-              plan: syncedEnt.plan ?? "annual",
-              current_period_end: syncedEnt.current_period_end ?? t + 365 * 86400,
-              cancel_at_period_end: syncedEnt.cancel_at_period_end ? 1 : 0,
-            });
-          }
-          ent = repo.entitlement(account.id);
-        }
+      if (synced && synced.id === account.id) {
+        ent = repo.entitlement(account.id);
       }
     }
 
@@ -2094,7 +2151,10 @@ export function createApp(deps: AppDeps) {
     const referralsCount = repo.referralsCount(account.id);
     if (!isEntitled(ent, t, config.pastDueGraceDays)) {
       return c.json({
+        active: false,
         status: ent?.status ?? "none",
+        plan: ent?.plan ?? null,
+        expires_at: 0,
         token: null,
         email: account.email ?? null,
         referral_code: referralCode,
@@ -2118,13 +2178,29 @@ export function createApp(deps: AppDeps) {
       exp,
     });
     return c.json({
+      active: true,
       status: ent!.status,
+      plan: ent!.plan ?? "monthly",
       token,
       expires_at: exp,
       email: account.email ?? null,
       referral_code: referralCode,
       referrals_count: referralsCount,
     });
+  });
+
+  app.post("/v1/referral/apply", auth, async (c) => {
+    const account = c.get("account");
+    const t = now();
+    if (!isEntitled(repo.entitlement(account.id), t, config.pastDueGraceDays)) {
+      return c.json({ error: "payment_required" }, 402);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const code = String(body?.code ?? body?.referral_code ?? "").trim();
+    if (!code) return c.json({ error: "missing_code" }, 400);
+    const applied = repo.applyReferral(account.id, code, t);
+    if (!applied) return c.json({ error: "invalid_or_already_applied" }, 400);
+    return c.json({ ok: true });
   });
 
   app.post("/v1/checkout", auth, async (c) => {
@@ -2139,13 +2215,15 @@ export function createApp(deps: AppDeps) {
     const localizedPricing = await resolvePricingForRequest(c, {
       country: typeof body?.country === "string" ? body.country : undefined,
       currency: typeof body?.currency === "string" ? body.currency : undefined,
+      trustProxy,
     });
     repo.setAccountLeadMeta(account.id, {
       country: localizedPricing.country,
       lead_device: detectLeadDevice(c, body?.device_type || "pc"),
     });
 
-    // If the entered email already has an active subscription, activate this device immediately without opening checkout!
+    // If the entered email already has an active subscription, only auto-activate if the caller is ALREADY
+    // authenticated as that account; otherwise require OTP verification to prevent unverified email takeover.
     if (email) {
       const entitledAcc = await findOrSyncEntitledAccountByEmail(email);
       if (entitledAcc) {
@@ -2153,13 +2231,10 @@ export function createApp(deps: AppDeps) {
         const t = now();
         if (ent && isEntitled(ent, t, config.pastDueGraceDays)) {
           if (entitledAcc.id !== account.id) {
-            repo.upsertEntitlement({
-              account_id: account.id,
-              stripe_subscription_id: null,
-              status: ent.status,
-              plan: ent.plan ?? "annual",
-              current_period_end: ent.current_period_end ?? t + 365 * 86400,
-              cancel_at_period_end: ent.cancel_at_period_end ? 1 : 0,
+            return c.json({
+              activated: false,
+              otp_required: true,
+              message: "Existing subscription found. Please verify via email code.",
             });
           }
           if (DEVICE_RE.test(deviceId) && repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile)) {
@@ -2521,23 +2596,24 @@ export function createApp(deps: AppDeps) {
           }
           return c.redirect("/order?error=payment_cancelled");
         }
-        await syncPayPalCustomerEmail(sub, accountId || null);
-        syncSubscription(repo, sub, accountId || null);
+        const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
+        if (!metaAccountId || !accountId || metaAccountId === accountId) {
+          await syncPayPalCustomerEmail(sub, metaAccountId || accountId || null);
+          syncSubscription(repo, sub, metaAccountId || accountId || null);
 
-        const resolvedAccount =
-          (accountId && repo.accountById(accountId)) ||
-          (sub.metadata?.account_id && repo.accountById(sub.metadata.account_id)) ||
-          undefined;
+          const resolvedAccount =
+            (metaAccountId && repo.accountById(metaAccountId)) ||
+            (accountId && repo.accountById(accountId)) ||
+            undefined;
 
-        if (resolvedAccount) {
-          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "Lax",
-            secure: isHttps,
-            maxAge: 86400 * 30,
-          });
-          if (sub.status === "active" || sub.status === "trialing") {
+          if (resolvedAccount && (sub.status === "active" || sub.status === "trialing")) {
+            await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
+              path: "/",
+              httpOnly: true,
+              sameSite: "Lax",
+              secure: isHttps,
+              maxAge: 86400 * 30,
+            });
             const planLabel =
               sub.metadata?.plan === "annual"
                 ? "Annual"

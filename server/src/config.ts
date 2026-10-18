@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
@@ -8,43 +8,11 @@ const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v))
 const licensePrivateKeyB64 = process.env.LICENSE_PRIVATE_KEY_B64 ?? "";
 const crmAdminPassword = process.env.CRM_ADMIN_PASSWORD ?? "";
 
-const ENCRYPTED_LIVE_SK =
-  "470d39e60a24f3fffe19aec3:ba391bb1c9a2cd9161824d5d93d86df1:bd75ddc8b938da7b5524ee13eb700fdcc95cee8c16b99810ca1a5591e5c3edb3d155dc86ea788f6f5c9016aa6ac93121bde579b374226b9d2be451c73dba1430a9030dd43acf39ce1e49ab27072131a648f1b6ead5ac4996446e1b4dfd36987eb6378ece98caabb2ddba50";
-
-const ENCRYPTED_LIVE_WHSEC =
-  "3d486c5d6548beda3c2cae05:377fd91eff5aca68c778481036adc802:692cac42717a966f754dc1befe79bbdbea910aee31df75012ba8f008eb61111c05405d8957bc";
-
-function decryptWithAdminKey(payload: string): string {
-  if (!crmAdminPassword) return "";
-  try {
-    const [ivHex, tagHex, encHex] = payload.split(":");
-    const key = createHash("sha256").update(crmAdminPassword).digest();
-    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
-    decipher.setAuthTag(Buffer.from(tagHex, "hex"));
-    return Buffer.concat([decipher.update(Buffer.from(encHex, "hex")), decipher.final()]).toString("utf8");
-  } catch {
-    return "";
-  }
-}
-
-function resolveStripeSecretKey(): string {
-  const envKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
-  if (envKey.startsWith("sk_live_")) return envKey;
-  const dec = decryptWithAdminKey(ENCRYPTED_LIVE_SK);
-  if (dec.startsWith("sk_live_")) return dec;
-  return envKey;
-}
-
-const resolvedSecretKey = resolveStripeSecretKey();
+const resolvedSecretKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
 const isLiveStripe = resolvedSecretKey.startsWith("sk_live_");
 
 function resolveStripeWebhookSecret(): string {
-  const envWh = (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim();
-  if (isLiveStripe) {
-    const dec = decryptWithAdminKey(ENCRYPTED_LIVE_WHSEC);
-    if (dec.startsWith("whsec_")) return dec;
-  }
-  return envWh;
+  return (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim();
 }
 
 function resolvePriceId(envVal: string | undefined, liveDefault: string): string {
@@ -106,4 +74,21 @@ export const config = {
   gaMeasurementId: process.env.GA_MEASUREMENT_ID || "G-CM9FPJV4C2",
   metaPixelId: process.env.META_PIXEL_ID ?? "",
   clarityProjectId: process.env.CLARITY_PROJECT_ID ?? "",
+  // SEO Intelligence suite (CRM > SEO). Everything optional; audits, backlink checks and bot telemetry need no keys.
+  seo: {
+    siteUrl: process.env.SEO_SITE_URL || "https://sweeprcleaner.com",
+    // e.g. "sc-domain:sweeprcleaner.com" or "https://sweeprcleaner.com/"
+    gscSiteUrl: process.env.GSC_SITE_URL ?? "",
+    // Service-account JSON: raw JSON, base64 of it, or a file path. Add the account's email as a user on the GSC property.
+    gscServiceAccountJson: process.env.GSC_SERVICE_ACCOUNT_JSON ?? "",
+    // Google Cloud API key with PageSpeed Insights + Chrome UX Report APIs enabled.
+    googleApiKey: process.env.GOOGLE_API_KEY ?? "",
+    // Free key from keywordseverywhere.com/account/openpagerank (domain authority 0-10).
+    openPageRankApiKey: process.env.OPEN_PAGERANK_API_KEY ?? "",
+    // DataForSEO v3 API credentials (0-100 DR, backlink index, competitor link gap, US search volume, KD%, CPC, ETV).
+    dataForSeoLogin: (process.env.DATAFORSEO_LOGIN ?? "").trim(),
+    dataForSeoPassword: (process.env.DATAFORSEO_PASSWORD ?? "").trim(),
+    dataForSeoLocationCode: num(process.env.DATAFORSEO_LOCATION_CODE, 2840), // 2840 = United States, 2826 = United Kingdom
+    dataForSeoLanguageCode: (process.env.DATAFORSEO_LANGUAGE_CODE || "en").trim(),
+  },
 };

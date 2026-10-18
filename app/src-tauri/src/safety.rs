@@ -176,6 +176,16 @@ pub fn save_exclusions(data_dir: &Path, paths: &[std::path::PathBuf]) -> std::io
     std::fs::write(exclusions_file(data_dir), json)
 }
 
+pub fn system_powershell_path() -> std::path::PathBuf {
+    if let Some(root) = std::env::var_os("SystemRoot") {
+        let candidate = std::path::PathBuf::from(root).join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+    std::path::PathBuf::from("powershell.exe")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

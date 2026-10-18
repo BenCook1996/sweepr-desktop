@@ -352,7 +352,10 @@ fn dir_size(dir: &Path) -> u64 {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for e in entries.flatten() {
             let p = e.path();
-            if let Ok(md) = e.metadata() {
+            if let Ok(md) = std::fs::symlink_metadata(&p) {
+                if crate::safety::metadata_is_link_like(&md) {
+                    continue;
+                }
                 if md.is_file() {
                     total += md.len();
                 } else if md.is_dir() {
@@ -461,20 +464,21 @@ pub async fn scan_browser_privacy() -> AppResult<Vec<BrowserPrivacyItem>> {
 }
 
 fn clean_file_or_dir(p: &Path) -> u64 {
-    if !p.exists() {
+    let Ok(meta) = std::fs::symlink_metadata(p) else {
+        return 0;
+    };
+    if crate::safety::metadata_is_link_like(&meta) {
         return 0;
     }
-    if let Ok(md) = p.metadata() {
-        if md.is_file() {
-            let len = md.len();
-            if std::fs::remove_file(p).is_ok() {
-                return len;
-            }
-        } else if md.is_dir() {
-            let size = dir_size(p);
-            if std::fs::remove_dir_all(p).is_ok() {
-                return size;
-            }
+    if meta.is_file() {
+        let len = meta.len();
+        if std::fs::remove_file(p).is_ok() {
+            return len;
+        }
+    } else if meta.is_dir() {
+        let size = dir_size(p);
+        if std::fs::remove_dir_all(p).is_ok() {
+            return size;
         }
     }
     0
@@ -903,36 +907,110 @@ pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> App
     Ok(fetch_latest_update_manifest(&client, &current, &api_url).await)
 }
 
+const MAX_UPDATE_INSTALLER_BYTES: usize = 150 * 1024 * 1024;
+
+fn generate_update_uuid() -> String {
+    use sha2::{Digest, Sha256};
+    use std::collections::hash_map::RandomState;
+    use std::hash::{BuildHasher, Hasher};
+
+    let r1 = RandomState::new().build_hasher().finish();
+    let r2 = RandomState::new().build_hasher().finish();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let mut h = Sha256::new();
+    h.update(b"sweepr-update-uuid-v1:");
+    h.update(r1.to_le_bytes());
+    h.update(r2.to_le_bytes());
+    h.update(nanos.to_le_bytes());
+    h.update(std::process::id().to_le_bytes());
+    let b = h.finalize();
+    format!(
+        "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-4{:01x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        b[0], b[1], b[2], b[3],
+        b[4], b[5],
+        b[6] & 0x0f, b[7],
+        (b[8] & 0x3f) | 0x80, b[9],
+        b[10], b[11], b[12], b[13], b[14], b[15]
+    )
+}
+
 #[tauri::command]
 pub async fn install_app_update(
     app: AppHandle,
     state: State<'_, AppState>,
-    _download_url: Option<String>,
-) -> AppResult<()> {
+) -> AppResult<String> {
     use sha2::{Digest, Sha256};
 
     let current = app.package_info().version.to_string();
-    let api_url = state.licensing.api_url().to_string();
+    let api_url = state.licensing.api_url().trim_end_matches('/').to_string();
+
+    #[cfg(not(debug_assertions))]
+    if !api_url.to_ascii_lowercase().starts_with("https://") {
+        return Err(AppError::Other(
+            "Refusing to fetch update over non-HTTPS connection.".into(),
+        ));
+    }
+    #[cfg(debug_assertions)]
+    if !crate::licensing::is_acceptable_api_url(&api_url) {
+        return Err(AppError::Other(
+            "Refusing to fetch update from untrusted API URL.".into(),
+        ));
+    }
+
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(120))
         .build()
         .map_err(|e| AppError::Other(e.to_string()))?;
 
-    // Always re-query the authoritative update manifest rather than trusting a caller-supplied URL
-    let manifest = fetch_latest_update_manifest(&client, &current, &api_url).await;
-    if !manifest.update_available || manifest.url.is_empty() {
+    let manifest_url = format!("{api_url}/v1/updates/latest.json");
+    let manifest_resp = client
+        .get(&manifest_url)
+        .header("User-Agent", format!("SweeprCleaner/{current}"))
+        .send()
+        .await
+        .map_err(|e| AppError::Other(format!("Failed to fetch update manifest: {e}")))?;
+
+    if !manifest_resp.status().is_success() {
+        return Err(AppError::Other(format!(
+            "Update manifest server returned HTTP {}",
+            manifest_resp.status()
+        )));
+    }
+
+    let manifest: serde_json::Value = manifest_resp
+        .json()
+        .await
+        .map_err(|e| AppError::Other(format!("Invalid update manifest JSON: {e}")))?;
+
+    let latest = manifest
+        .get("version")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim()
+        .trim_start_matches(['v', 'V']);
+    if latest.is_empty() || !is_newer_version(latest, &current) {
         return Err(AppError::Other(
             "No newer verified update is currently available.".into(),
         ));
     }
-    if !is_trusted_update_url(&manifest.url, &api_url) {
+
+    let signature = manifest
+        .get("signature")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+    if signature.is_empty() {
         return Err(AppError::Other(
-            "Refusing to download update from an untrusted URL.".into(),
+            "Update manifest is missing a cryptographic Ed25519 signature.".into(),
         ));
     }
 
-    let resp = client
-        .get(&manifest.url)
+    let download_url = format!("{}/download?platform=windows", state.licensing.api_url().trim_end_matches('/'));
+    let mut resp = client
+        .get(&download_url)
         .header("User-Agent", format!("SweeprCleaner/{current}"))
         .send()
         .await
@@ -945,10 +1023,30 @@ pub async fn install_app_update(
         )));
     }
 
-    let bytes = resp
-        .bytes()
+    if let Some(cl) = resp.content_length() {
+        if cl as usize > MAX_UPDATE_INSTALLER_BYTES {
+            return Err(AppError::Other(
+                "Update package exceeds maximum allowed size (150 MB).".into(),
+            ));
+        }
+    }
+
+    let mut bytes = Vec::new();
+    while let Some(chunk) = resp
+        .chunk()
         .await
-        .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?;
+        .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?
+    {
+        if bytes.len().saturating_add(chunk.len()) > MAX_UPDATE_INSTALLER_BYTES {
+            return Err(AppError::Other(
+                "Update package exceeds maximum allowed size (150 MB).".into(),
+            ));
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+
+    // Verify Ed25519 signature over the installer binary BEFORE writing to disk
+    state.licensing.verify_binary_signature(&bytes, signature)?;
 
     // Verify minimum installer size and Windows PE ('MZ') header
     if bytes.len() < 64 * 1024 || &bytes[0..2] != b"MZ" {
@@ -957,8 +1055,12 @@ pub async fn install_app_update(
         ));
     }
 
-    // Verify SHA-256 digest when provided by GitHub Releases or the update server
-    if let Some(expected_sha256) = &manifest.sha256 {
+    // Verify SHA-256 digest when provided by the update manifest
+    if let Some(expected_sha256) = manifest
+        .get("sha256")
+        .and_then(|v| v.as_str())
+        .and_then(normalize_sha256_hex)
+    {
         let mut hasher = Sha256::new();
         hasher.update(&bytes);
         let actual_hex: String = hasher
@@ -966,7 +1068,7 @@ pub async fn install_app_update(
             .iter()
             .map(|b| format!("{b:02x}"))
             .collect();
-        if !actual_hex.eq_ignore_ascii_case(expected_sha256) {
+        if !actual_hex.eq_ignore_ascii_case(&expected_sha256) {
             return Err(AppError::Other(
                 "Update SHA-256 integrity check failed. Aborting installation.".into(),
             ));
@@ -976,21 +1078,29 @@ pub async fn install_app_update(
     let updates_dir = state.data_dir.join("updates");
     std::fs::create_dir_all(&updates_dir)
         .map_err(|e| AppError::Other(format!("Failed creating updates folder: {e}")))?;
-    let safe_ver: String = manifest
-        .latest_version
-        .chars()
-        .filter(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-')
-        .collect();
-    let installer_path = updates_dir.join(format!("SWEEPRCleaner-setup-v{safe_ver}.exe"));
-    std::fs::write(&installer_path, &bytes)
-        .map_err(|e| AppError::Other(format!("Failed writing update installer: {e}")))?;
+
+    let uuid = generate_update_uuid();
+    let installer_path = updates_dir.join(format!("SWEEPRCleaner-{uuid}.exe"));
+    {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&installer_path)
+            .map_err(|e| AppError::Other(format!("Failed creating update installer file: {e}")))?;
+        file.write_all(&bytes)
+            .map_err(|e| AppError::Other(format!("Failed writing update installer: {e}")))?;
+        file.sync_all()
+            .map_err(|e| AppError::Other(format!("Failed syncing update installer: {e}")))?;
+    }
 
     std::process::Command::new(&installer_path)
         .spawn()
         .map_err(|e| AppError::Other(format!("Failed launching update installer: {e}")))?;
 
+    let installer_str = installer_path.to_string_lossy().into_owned();
     app.exit(0);
-    Ok(())
+    Ok(installer_str)
 }
 
 #[tauri::command]
@@ -1055,12 +1165,23 @@ pub fn quit_app(app: AppHandle) {
 }
 
 #[cfg(target_os = "windows")]
+fn system_powershell_path() -> std::path::PathBuf {
+    if let Some(root) = std::env::var_os("SystemRoot") {
+        let candidate = std::path::PathBuf::from(root).join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+    std::path::PathBuf::from("powershell.exe")
+}
+
+#[cfg(target_os = "windows")]
 fn create_windows_shortcut(lnk_path: &std::path::Path, target_exe: &str, working_dir: &str) {
     use std::os::windows::process::CommandExt;
-    let script = "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:SWEEPR_LNK); $s.TargetPath = $env:SWEEPR_EXE; $s.WorkingDirectory = $env:SWEEPR_DIR; $s.IconLocation = ($env:SWEEPR_EXE + ',0'); $s.Description = 'SWEEPR Cleaner'; $s.Save()";
-    let _ = std::process::Command::new("powershell")
+    let script = "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:SWEEPR_PS_TARGET); $s.TargetPath = $env:SWEEPR_EXE; $s.WorkingDirectory = $env:SWEEPR_DIR; $s.IconLocation = ($env:SWEEPR_EXE + ',0'); $s.Description = 'SWEEPR Cleaner'; $s.Save()";
+    let _ = std::process::Command::new(system_powershell_path())
         .creation_flags(0x08000000)
-        .env("SWEEPR_LNK", lnk_path.as_os_str())
+        .env("SWEEPR_PS_TARGET", lnk_path.as_os_str())
         .env("SWEEPR_EXE", target_exe)
         .env("SWEEPR_DIR", working_dir)
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
@@ -1359,8 +1480,8 @@ fn compact_sqlite_dir(dir: &Path) -> u64 {
     };
     for entry in rd.flatten() {
         let p = entry.path();
-        let Ok(md) = entry.metadata() else { continue };
-        if !md.is_file() {
+        let Ok(md) = std::fs::symlink_metadata(&p) else { continue };
+        if crate::safety::metadata_is_link_like(&md) || !md.is_file() {
             continue;
         }
         let name = entry.file_name().to_string_lossy().to_ascii_lowercase();

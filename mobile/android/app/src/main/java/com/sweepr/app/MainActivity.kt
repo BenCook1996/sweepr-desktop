@@ -78,7 +78,19 @@ class MainActivity : AppCompatActivity() {
                 override fun onActivityResult(result: PaywallResult) {
                     val action = afterPurchase
                     afterPurchase = null
-                    if (result is PaywallResult.Purchased || result is PaywallResult.Restored) action?.invoke()
+                    when (result) {
+                        is PaywallResult.Purchased -> {
+                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null) {
+                                action?.invoke()
+                            }
+                        }
+                        is PaywallResult.Restored -> {
+                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null) {
+                                action?.invoke()
+                            }
+                        }
+                        else -> Unit
+                    }
                 }
             },
         )

@@ -90,19 +90,27 @@ test("checkout returns 503 when Stripe not configured", async () => {
   assert.equal((await post("/v1/checkout", {}, acc.refresh_token)).status, 503);
 });
 
-test("checkout immediately activates device when email already has an active subscription", async () => {
+test("checkout requires OTP when email belongs to a different account, and activates immediately when already authenticated as that account", async () => {
   const { repo, post } = setup();
-  // Create a paid web account for subscriber@example.com
-  repo.createAccount("acc_paid_1", "hash_paid_1", "subscriber@example.com");
-  await post("/dev/grant", { account_id: "acc_paid_1", status: "active", days: 365 });
+  // Create a paid account for subscriber@example.com via /v1/accounts
+  const paidAcc = await (await post("/v1/accounts", { device_id: DEVICE, email: "subscriber@example.com" })).json();
+  await post("/dev/grant", { account_id: paidAcc.account_id, status: "active", days: 365 });
 
-  // New anonymous desktop device calls /v1/accounts then /v1/checkout with subscriber@example.com
-  const desktopAcc = await (await post("/v1/accounts", { device_id: DEVICE })).json();
-  const res = await post("/v1/checkout", { email: "subscriber@example.com", device_id: DEVICE }, desktopAcc.refresh_token);
+  // 1. Different anonymous desktop device attempts to claim subscriber@example.com without OTP -> must require OTP!
+  const otherAcc = await (await post("/v1/accounts", { device_id: "b".repeat(64) })).json();
+  const crossRes = await post("/v1/checkout", { email: "subscriber@example.com", device_id: "b".repeat(64) }, otherAcc.refresh_token);
+  assert.equal(crossRes.status, 200);
+  const crossBody = await crossRes.json();
+  assert.equal(crossBody.activated, false);
+  assert.equal(crossBody.otp_required, true);
+  assert.equal(crossBody.refresh_token, undefined);
+
+  // 2. Caller already authenticated as paidAcc activates immediately
+  const res = await post("/v1/checkout", { email: "subscriber@example.com", device_id: DEVICE }, paidAcc.refresh_token);
   assert.equal(res.status, 200);
   const body = await res.json();
   assert.equal(body.activated, true);
-  assert.equal(body.account_id, "acc_paid_1");
+  assert.equal(body.account_id, paidAcc.account_id);
   assert.ok(body.refresh_token);
   assert.ok(body.token);
 

@@ -97,6 +97,10 @@
         </div>
         <span id="nav-outreach-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30">256</span>
       </button>
+      <button onclick="switchTab('seo')" id="nav-seo" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="line-chart" class="w-4 h-4 text-sky-400"></i>
+        <span>SEO &amp; Search Intel</span>
+      </button>
       <button onclick="switchTab('telemetry')" id="nav-telemetry" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
         <i data-lucide="life-buoy" class="w-4 h-4 text-emerald-400"></i>
         <span>Support & Telemetry</span>
@@ -584,6 +588,28 @@
         </div>
       </section>
 
+      <!-- TAB: SEO & SEARCH INTELLIGENCE (in-CRM SEMrush/Ahrefs-style suite) -->
+      <section id="tab-seo" class="hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div id="seo-subnav" class="flex flex-wrap items-center gap-1 bg-surface-900 border border-slate-800 rounded-xl p-1">
+            <button data-seo-view="overview" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Overview</button>
+            <button data-seo-view="rankings" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Rankings &amp; Traffic</button>
+            <button data-seo-view="audit" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Site Audit</button>
+            <button data-seo-view="backlinks" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Backlinks</button>
+            <button data-seo-view="authority" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Authority</button>
+            <button data-seo-view="cwv" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Core Web Vitals</button>
+            <button data-seo-view="bots" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Crawlers &amp; AI</button>
+            <button data-seo-view="setup" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Data Sources</button>
+          </div>
+          <div id="seo-job-pill" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-300">
+            <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span id="seo-job-text">Working...</span>
+          </div>
+        </div>
+        <div id="seo-view" class="space-y-6">
+          <div class="py-16 text-center text-slate-400 text-sm">Loading SEO data...</div>
+        </div>
+      </section>
+
       <!-- TAB 6: SUPPORT TICKETS, FUNNEL ANALYTICS & CRASH TELEMETRY -->
       <section id="tab-telemetry" class="hidden space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -761,7 +787,7 @@
               </div>
               <div>
                 <span class="text-slate-400 block text-[11px]">Country:</span>
-                <span class="font-bold text-white font-mono text-sm" id="drawer-country">🌐 Unknown</span>
+                <span class="font-bold text-white font-mono text-sm" id="drawer-country">ðŸŒ Unknown</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[11px]">Lead / Primary Device:</span>
@@ -769,7 +795,7 @@
               </div>
               <div class="col-span-2 pt-1 border-t border-slate-800/80">
                 <span class="text-slate-400 block text-[11px]">Lead Recorded (Date &amp; Time):</span>
-                <span class="font-bold text-white font-mono text-xs" id="drawer-created-at">—</span>
+                <span class="font-bold text-white font-mono text-xs" id="drawer-created-at">â€”</span>
               </div>
             </div>
           </div>
@@ -835,9 +861,9 @@
         <div>
           <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
           <select id="grant-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white">
-            <option value="annual" selected>Annual Pro (£49.99 / $64.99/yr)</option>
-            <option value="six_month">6-Month Pro (£38.99 / $47.99/6mo)</option>
-            <option value="monthly">Monthly Pro (£9.99 / $11.99/mo)</option>
+            <option value="annual" selected>Annual Pro (Â£49.99 / $64.99/yr)</option>
+            <option value="six_month">6-Month Pro (Â£38.99 / $47.99/6mo)</option>
+            <option value="monthly">Monthly Pro (Â£9.99 / $11.99/mo)</option>
             <option value="lifetime">Lifetime VIP ($199.00)</option>
           </select>
         </div>
@@ -918,9 +944,9 @@
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
             <select id="create-sub-plan" onchange="handlePlanChange(this.value)" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-500">
-              <option value="annual" selected>Annual Pro (£49.99 / $64.99/yr)</option>
-              <option value="six_month">6-Month Pro (£38.99 / $47.99/6mo)</option>
-              <option value="monthly">Monthly Pro (£9.99 / $11.99/mo)</option>
+              <option value="annual" selected>Annual Pro (Â£49.99 / $64.99/yr)</option>
+              <option value="six_month">6-Month Pro (Â£38.99 / $47.99/6mo)</option>
+              <option value="monthly">Monthly Pro (Â£9.99 / $11.99/mo)</option>
               <option value="lifetime">Lifetime VIP ($199.00 one-time)</option>
             </select>
           </div>
@@ -939,7 +965,7 @@
             <input type="number" id="create-sub-days" value="365" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
           </div>
           <div>
-            <label class="block text-slate-400 mb-1 font-medium">Amount Paid (£ / $)</label>
+            <label class="block text-slate-400 mb-1 font-medium">Amount Paid (Â£ / $)</label>
             <input type="number" step="0.01" id="create-sub-amount" value="49.99" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
           </div>
         </div>
@@ -1008,8 +1034,8 @@
         <div>
           <label class="block text-slate-400 mb-1 font-medium">Plan Level</label>
           <select id="mmp-plan" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-amber-500">
-            <option value="lifetime" selected>👑 Lifetime VIP Access (100 Years • Unrestricted)</option>
-            <option value="annual">Annual Pro (£49.99 / $64.99/yr)</option>
+            <option value="lifetime" selected>ðŸ‘‘ Lifetime VIP Access (100 Years â€¢ Unrestricted)</option>
+            <option value="annual">Annual Pro (Â£49.99 / $64.99/yr)</option>
           </select>
         </div>
       </div>
@@ -1099,7 +1125,7 @@
           <div>
             <label class="block text-slate-400 mb-1 font-medium">How Reached Out</label>
             <select id="outreach-new-how" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-brand-500">
-              <option value="Email (Gmail SMTP — Live Scraped)">Email (Gmail SMTP — Live Scraped)</option>
+              <option value="Email (Gmail SMTP â€” Live Scraped)">Email (Gmail SMTP â€” Live Scraped)</option>
               <option value="Email (Gmail SMTP + PAD XML)">Email (Gmail SMTP + PAD XML)</option>
               <option value="Web Portal Submission">Web Portal Submission</option>
               <option value="Contact Form">Contact Form</option>
@@ -1239,7 +1265,7 @@
               <tr class="hover:bg-surface-850/60">
                 <td class="py-3 px-4">
                   <div class="font-bold text-white">${esc(t.email || 'Anonymous')}</div>
-                  <div class="text-[10px] text-brand-400 uppercase font-mono">${esc(t.platform || 'web')} · ${esc(t.status || 'open')}</div>
+                  <div class="text-[10px] text-brand-400 uppercase font-mono">${esc(t.platform || 'web')} Â· ${esc(t.status || 'open')}</div>
                 </td>
                 <td class="py-3 px-4">
                   <div class="font-semibold text-slate-200">${esc(t.subject || 'Support Request')}</div>
@@ -1301,9 +1327,11 @@
         subscriptions: "Subscriptions & Recurring Revenue",
         activities: "Activity & Audit Log",
         outreach: "Outreach & Directories Log",
-        telemetry: "Support Tickets, Funnel & Crash Telemetry"
+        telemetry: "Support Tickets, Funnel & Crash Telemetry",
+        seo: "SEO & Search Intelligence"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
+      if (tab === 'seo') seoShow(seoState.view);
       safeCreateIcons();
     }
 
@@ -1358,7 +1386,7 @@
     }
 
     function formatCountryFlag(code) {
-      if (!code || typeof code !== 'string') return '🌐 —';
+      if (!code || typeof code !== 'string') return 'ðŸŒ â€”';
       const clean = code.trim().toUpperCase();
       if (!/^[A-Z]{2}$/.test(clean)) return esc(clean);
       const flag = String.fromCodePoint(
@@ -1369,9 +1397,9 @@
     }
 
     function formatDateTime(unixSec) {
-      if (!unixSec) return '—';
+      if (!unixSec) return 'â€”';
       const d = new Date(Number(unixSec) * 1000);
-      if (isNaN(d.getTime())) return '—';
+      if (isNaN(d.getTime())) return 'â€”';
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -1781,7 +1809,7 @@
           return;
         }
 
-        showCredentialsModal(data, `👑 You are now an active paid ${plan.toUpperCase()} user! SWEEPR Cleaner desktop app has been unlocked on your PC.`);
+        showCredentialsModal(data, `ðŸ‘‘ You are now an active paid ${plan.toUpperCase()} user! SWEEPR Cleaner desktop app has been unlocked on your PC.`);
         await refreshData();
       } catch (err) {
         alert('Request failed: ' + err.message);
@@ -1865,7 +1893,7 @@
         const res = await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/otp`, { method: 'POST' });
         const data = await res.json();
         if (data.ok) {
-          alert(`🔑 Login Passcode for ${data.email}:\n\n${data.code}\n\nValid for 15 minutes.\nEmail status: ${data.email_status}`);
+          alert(`ðŸ”‘ Login Passcode for ${data.email}:\n\n${data.code}\n\nValid for 15 minutes.\nEmail status: ${data.email_status}`);
           await openCustomer360(activeCustomer.account.id);
         } else {
           alert('Failed to generate code: ' + (data.error || 'Server error'));
@@ -1911,7 +1939,7 @@
               <div>
                 <div class="font-bold text-white">${esc(act.title)}</div>
                 <div class="text-slate-400 mt-0.5">${esc(act.description || '')}</div>
-                <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${esc(act.account_id)} • Actor: ${esc(act.actor)}</div>
+                <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${esc(act.account_id)} â€¢ Actor: ${esc(act.actor)}</div>
               </div>
             </div>
             <span class="text-[11px] font-mono text-slate-500 whitespace-nowrap">${esc(formatDateTime(act.created_at))}</span>
@@ -1946,7 +1974,7 @@
         const res = await fetch('/api/crm/sync-stripe', { method: 'POST' });
         const data = await res.json();
         if (data.ok) {
-          alert(`Stripe Sync Completed:\n• ${data.synced.customers} customers\n• ${data.synced.subscriptions} subscriptions\n• ${data.synced.invoices} invoices`);
+          alert(`Stripe Sync Completed:\nâ€¢ ${data.synced.customers} customers\nâ€¢ ${data.synced.subscriptions} subscriptions\nâ€¢ ${data.synced.invoices} invoices`);
           refreshData();
         } else {
           alert(`Stripe Sync: ${data.error}`);
@@ -2173,6 +2201,425 @@
       link.download = `sweepr-cleaner-outreach-log-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
     }
+  </script>
+
+  <!-- ===================== SEO & SEARCH INTELLIGENCE ===================== -->
+  <script>
+    const seoState = { view: 'overview', auditPageOpen: null, backlinkFilter: 'all', lastPsi: null };
+    const SEO_API = '/api/crm/seo';
+
+    const fmtNum = (n) => (n === null || n === undefined || Number.isNaN(Number(n))) ? 'â€”' : Number(n).toLocaleString();
+    const fmtPos = (p) => (p === null || p === undefined) ? 'â€”' : Number(p).toFixed(1);
+    const fmtPct = (x) => (x === null || x === undefined) ? 'â€”' : (Number(x) * 100).toFixed(1) + '%';
+    const fmtDate = (s) => s ? new Date(Number(s) * 1000).toLocaleString() : 'â€”';
+    const deltaHtml = (cur, prev, invert = false) => {
+      if (cur === null || cur === undefined || prev === null || prev === undefined || Number(prev) === 0) return '';
+      const d = (Number(cur) - Number(prev)) / Number(prev);
+      const good = invert ? d < 0 : d > 0;
+      return `<span class="text-[11px] font-semibold ${good ? 'text-emerald-400' : 'text-rose-400'}">${d > 0 ? 'â–²' : 'â–¼'} ${Math.abs(d * 100).toFixed(0)}%</span>`;
+    };
+
+    async function seoFetch(path, opts = {}) {
+      const res = await fetch(SEO_API + path, { headers: { 'content-type': 'application/json' }, ...opts });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok && res.status !== 202) {
+        const err = new Error(data.message || data.error || ('HTTP ' + res.status));
+        err.data = data; err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    function seoCard(label, value, sub = '', accent = 'text-white', icon = 'circle') {
+      return `<div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <div class="flex items-center justify-between mb-2"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">${esc(label)}</span>
+        <i data-lucide="${cls(icon)}" class="w-4 h-4 text-slate-500"></i></div>
+        <div class="text-2xl font-extrabold font-mono ${accent}">${value}</div>
+        <div class="mt-1 text-xs text-slate-400">${sub}</div></div>`;
+    }
+    const panel = (title, body, right = '') => `<div class="bg-surface-900 border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between gap-3"><h3 class="text-sm font-bold text-white">${title}</h3><div class="flex items-center gap-2">${right}</div></div>
+      <div class="p-5">${body}</div></div>`;
+    const seoBtn = (label, attrs, kind = 'ghost') => {
+      const k = kind === 'primary' ? 'bg-brand-500 hover:bg-brand-600 text-white' : 'bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700';
+      return `<button ${attrs} class="px-3 py-1.5 rounded-lg text-xs font-semibold ${k} transition-all">${label}</button>`;
+    };
+    const emptyState = (msg) => `<div class="py-10 text-center text-sm text-slate-400">${msg}</div>`;
+    const notConnected = (what, env) => `<span class="text-xs text-amber-300">Not connected</span><div class="text-[11px] text-slate-500 mt-1">Set <code class="text-slate-300">${esc(env)}</code> for ${esc(what)}</div>`;
+
+    // Simple dual-series SVG line chart (no external chart library).
+    function svgLineChart(series, keys, colors, height = 160) {
+      if (!series.length) return emptyState('No data yet.');
+      const w = 800, h = height, pad = 24;
+      const lines = keys.map((k, idx) => {
+        const vals = series.map(s => Number(s[k]) || 0);
+        const max = Math.max(1, ...vals);
+        const pts = vals.map((v, i) => `${pad + (i * (w - 2 * pad)) / Math.max(1, vals.length - 1)},${h - pad - (v / max) * (h - 2 * pad)}`).join(' ');
+        return `<polyline fill="none" stroke="${colors[idx]}" stroke-width="2" points="${pts}" />`;
+      }).join('');
+      const first = esc(series[0].date), last = esc(series[series.length - 1].date);
+      return `<svg viewBox="0 0 ${w} ${h}" class="w-full h-40">${lines}
+        <text x="${pad}" y="${h - 4}" fill="#64748b" font-size="11">${first}</text>
+        <text x="${w - pad}" y="${h - 4}" fill="#64748b" font-size="11" text-anchor="end">${last}</text></svg>`;
+    }
+    // Position sparkline: lower is better, so the axis is inverted.
+    function sparkline(series) {
+      if (!series || series.length < 2) return '<span class="text-slate-600">â€”</span>';
+      const w = 90, h = 24;
+      const vals = series.map(s => Number(s.position));
+      const min = Math.min(...vals), max = Math.max(...vals), span = Math.max(1, max - min);
+      const pts = vals.map((v, i) => `${(i * w) / (vals.length - 1)},${((v - min) / span) * (h - 4) + 2}`).join(' ');
+      return `<svg viewBox="0 0 ${w} ${h}" class="w-24 h-6"><polyline fill="none" stroke="#38bdf8" stroke-width="1.5" points="${pts}"/></svg>`;
+    }
+    function barRows(items) {
+      const max = Math.max(1, ...items.map(i => Number(i.value) || 0));
+      return items.map(i => `<div class="flex items-center gap-3 text-xs">
+        <span class="w-36 truncate text-slate-300" title="${esc(i.label)}">${esc(i.label)}</span>
+        <div class="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${cls(i.color || 'bg-brand-500')}" style="width:${i.value === null ? 0 : (Number(i.value) / max) * 100}%"></div></div>
+        <span class="w-16 text-right font-mono text-slate-200">${i.display ?? fmtNum(i.value)}</span></div>`).join('');
+    }
+
+    // ---------------- Background jobs ----------------
+    function seoJobPill(text) {
+      const pill = document.getElementById('seo-job-pill');
+      if (!text) { pill.classList.add('hidden'); pill.classList.remove('flex'); return; }
+      document.getElementById('seo-job-text').textContent = text;
+      pill.classList.remove('hidden'); pill.classList.add('flex');
+    }
+    async function seoRunJob(path, body, label) {
+      let data;
+      try {
+        data = await seoFetch(path, { method: 'POST', body: JSON.stringify(body || {}) });
+      } catch (e) {
+        if (e.status === 409 && e.data?.job) data = { job: e.data.job };
+        else { alert(`${label} failed: ${e.message}`); return null; }
+      }
+      const id = data.job.id;
+      seoJobPill(`${label}...`);
+      for (;;) {
+        await new Promise(r => setTimeout(r, 1000));
+        const j = (await seoFetch(`/jobs/${encodeURIComponent(id)}`)).job;
+        seoJobPill(`${label}: ${j.message || 'running'}`);
+        if (j.status !== 'running') {
+          seoJobPill(null);
+          if (j.status === 'error') alert(`${label} failed: ${j.error}`);
+          seoShow(seoState.view);
+          return j;
+        }
+      }
+    }
+
+    // ---------------- Router ----------------
+    async function seoShow(view) {
+      seoState.view = view;
+      document.querySelectorAll('.seo-tab').forEach(b => {
+        b.className = 'seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold ' + (b.dataset.seoView === view ? 'bg-brand-500/15 text-brand-400' : 'text-slate-400 hover:text-white');
+      });
+      const el = document.getElementById('seo-view');
+      try {
+        const renderers = { overview: seoOverview, rankings: seoRankings, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
+        el.innerHTML = await (renderers[view] || seoOverview)();
+      } catch (e) {
+        el.innerHTML = panel('Error', `<div class="text-rose-300 text-sm">${esc(e.message)}</div>`);
+      }
+      safeCreateIcons();
+    }
+
+    // ---------------- Overview ----------------
+    async function seoOverview() {
+      const d = await seoFetch('/overview');
+      const t = d.traffic, kw = d.keywords, bl = d.backlinks, au = d.authority;
+      const authVal = au.own && au.own.opr_decimal !== null ? `${Number(au.own.opr_decimal).toFixed(2)}<span class="text-sm text-slate-500">/10</span>` : 'â€”';
+      const authSub = d.providers.open_pagerank.configured ? (au.own ? `Open PageRank Â· global rank ${fmtNum(au.own.opr_rank)}` : 'Click Refresh in Authority tab') : notConnected('domain authority', 'OPEN_PAGERANK_API_KEY');
+      const cards = [
+        seoCard('Domain Authority', authVal, authSub, 'text-sky-300', 'shield'),
+        seoCard('Referring Domains', fmtNum(bl.referring_domains), `${fmtNum(bl.dofollow_referring_domains)} dofollow Â· verified live only`, 'text-white', 'link'),
+        seoCard('Organic Clicks (28d)', t ? fmtNum(t.current.clicks) : 'â€”', t ? `${deltaHtml(t.current.clicks, t.previous.clicks)} vs previous 28d Â· Search Console` : notConnected('real clicks', 'GSC_SERVICE_ACCOUNT_JSON'), 'text-brand-400', 'mouse-pointer-click'),
+        seoCard('Impressions (28d)', t ? fmtNum(t.current.impressions) : 'â€”', t ? `${deltaHtml(t.current.impressions, t.previous.impressions)} Â· CTR ${fmtPct(t.current.ctr)} Â· avg pos ${fmtPos(t.current.position)}` : 'Requires Search Console', 'text-white', 'eye'),
+        seoCard('Keywords Ranking', t ? `${fmtNum(kw.ranked)}<span class="text-sm text-slate-500">/${fmtNum(kw.tracked)}</span>` : `0<span class="text-sm text-slate-500">/${fmtNum(kw.tracked)}</span>`, t ? `avg position ${fmtPos(kw.avg_position)} Â· â–²${kw.improved} â–¼${kw.declined}` : 'tracked Â· positions need Search Console', 'text-white', 'list-ordered'),
+        seoCard('Site Health', d.audit ? `${d.audit.health_score}%` : 'â€”', d.audit ? `${d.audit.errors} errors Â· ${d.audit.warnings} warnings Â· ${d.audit.pages} pages` : 'Run a site audit', d.audit && d.audit.health_score >= 90 ? 'text-emerald-400' : 'text-amber-300', 'stethoscope'),
+        seoCard('AI Crawler Visits (7d)', fmtNum(d.bots.ai_hits), `${fmtNum(d.bots.search_hits)} search-engine bot visits`, 'text-violet-300', 'bot'),
+        seoCard('Backlinks Tracked', fmtNum(bl.tracked), `${fmtNum(bl.live_links)} verified live Â· ${fmtNum(bl.by_status.unverified || 0)} unchecked`, 'text-white', 'external-link'),
+      ].join('');
+
+      const traffic = t
+        ? panel(`Organic traffic Â· last 90 days <span class="text-slate-500 font-normal">(<span class="text-brand-400">clicks</span> / <span class="text-sky-400">impressions</span>, scaled independently)</span>`, svgLineChart(t.series, ['clicks', 'impressions'], ['#10b981', '#38bdf8']))
+        : panel('Organic traffic', emptyState('Connect Google Search Console (Data Sources tab) to see real clicks, impressions and rankings.'));
+      const dist = kw.distribution;
+      const rankPanel = panel('Ranking distribution (tracked keywords)', t ? barRows([
+        { label: 'Positions 1-3', value: dist.top3, color: 'bg-emerald-500' },
+        { label: 'Positions 4-10', value: dist.top10, color: 'bg-brand-500' },
+        { label: 'Positions 11-20', value: dist.top20, color: 'bg-sky-500' },
+        { label: 'Positions 21-100', value: dist.top100, color: 'bg-slate-500' },
+      ]) : emptyState('Needs Search Console data.'));
+      const compRows = [au.own ? { label: 'sweeprcleaner.com (you)', value: au.own.opr_decimal, display: au.own.opr_decimal === null ? 'n/a' : Number(au.own.opr_decimal).toFixed(2), color: 'bg-sky-500' } : null,
+        ...au.competitors.map(c => ({ label: c.domain, value: c.opr_decimal, display: c.opr_decimal === null ? 'â€”' : Number(c.opr_decimal).toFixed(2), color: 'bg-slate-500' }))].filter(Boolean);
+      const authPanel = panel('Authority vs competitors (Open PageRank 0-10)', d.providers.open_pagerank.configured ? barRows(compRows) + `<p class="text-[11px] text-slate-500 mt-3">${esc(au.note)}</p>` : emptyState('Add a free OPEN_PAGERANK_API_KEY to compare domain authority.'));
+      const gaps = panel('Not available yet (needs a paid data provider)', `<ul class="text-xs text-slate-400 space-y-2">
+        <li><b class="text-slate-200">Ahrefs-style DR &amp; competitor backlink discovery</b> â€” ${esc(d.providers.not_available.ahrefs_dr_competitor_backlinks)}</li>
+        <li><b class="text-slate-200">Search volume, keyword difficulty, CPC</b> â€” ${esc(d.providers.not_available.search_volume_kd_cpc)}</li>
+        <li>Until then, Search Console <b class="text-slate-200">impressions</b> are used as the demand signal for your own keywords.</li></ul>`);
+      return `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">${cards}</div>${traffic}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">${rankPanel}${authPanel}${gaps}</div>`;
+    }
+
+    // ---------------- Rankings & traffic ----------------
+    async function seoRankings() {
+      const [k, ins, prov] = await Promise.all([seoFetch('/keywords'), seoFetch('/gsc/insights'), seoFetch('/providers')]);
+      const gscOn = prov.gsc.configured;
+      const head = `<div class="flex flex-wrap items-center gap-2">
+        ${seoBtn('<i data-lucide="refresh-cw" class="w-3.5 h-3.5 inline"></i> Sync Search Console', `data-seo-action="gsc-sync" ${gscOn ? '' : 'disabled title="Configure GSC first"'}`, 'primary')}
+        ${seoBtn('Import top GSC queries', 'data-seo-action="kw-import"')}
+        <span class="text-[11px] text-slate-500">${k.gsc_window ? `Data ${esc(k.gsc_window.from)} â†’ ${esc(k.gsc_window.to)} Â· ${fmtNum(k.gsc_rows)} rows` : (gscOn ? 'No data synced yet' : 'Search Console not connected')}</span></div>`;
+      const addForm = `<form data-seo-form="kw-add" class="flex flex-wrap gap-2 mb-4">
+        <input name="keyword" placeholder="Add keyword(s), comma separated" class="flex-1 min-w-[220px] bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+        <input name="cluster" placeholder="cluster (e.g. head)" class="w-36 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+        <input name="target_path" placeholder="/target-path" class="w-44 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+        ${seoBtn('Track', 'type="submit"', 'primary')}</form>`;
+      const rows = k.keywords.map(r => {
+        const delta = r.delta === null ? '' : (r.delta >= 0.5 ? `<span class="text-emerald-400">â–²${r.delta.toFixed(1)}</span>` : r.delta <= -0.5 ? `<span class="text-rose-400">â–¼${Math.abs(r.delta).toFixed(1)}</span>` : '<span class="text-slate-500">=</span>');
+        const mismatch = r.ranking_url && r.target_path && !String(r.ranking_url).replace(/^https?:\/\/[^/]+/, '').startsWith(r.target_path) ? ' <span class="text-amber-300" title="Ranking URL differs from target page">âš </span>' : '';
+        return `<tr class="hover:bg-surface-850/60">
+          <td class="py-2.5 px-3"><div class="font-semibold text-white">${esc(r.keyword)}</div><div class="text-[10px] text-slate-500 font-mono">${esc(r.cluster)}${r.target_path ? ' Â· ' + esc(r.target_path) : ''}</div></td>
+          <td class="py-2.5 px-3 font-mono text-white">${fmtPos(r.position)}</td>
+          <td class="py-2.5 px-3 font-mono text-xs">${delta}</td>
+          <td class="py-2.5 px-3">${sparkline(r.series)}</td>
+          <td class="py-2.5 px-3 font-mono">${fmtNum(r.clicks)}</td>
+          <td class="py-2.5 px-3 font-mono">${fmtNum(r.impressions)}</td>
+          <td class="py-2.5 px-3 font-mono">${r.impressions ? fmtPct(r.ctr) : 'â€”'}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-300" title="Industry-average CTR at #1 Ã— your impressions (estimate)">${fmtNum(r.potential_clicks_at_1)}</td>
+          <td class="py-2.5 px-3 text-[11px] text-slate-400 max-w-[220px] truncate" title="${esc(r.ranking_url || '')}">${r.ranking_url ? esc(String(r.ranking_url).replace(/^https?:\/\/[^/]+/, '')) : 'â€”'}${mismatch}${r.competing_urls > 1 ? ' <span class="text-amber-300" title="2+ of your URLs got impressions">Ã—2</span>' : ''}</td>
+          <td class="py-2.5 px-3 text-right"><button data-seo-del-kw="${Number(r.id)}" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td></tr>`;
+      }).join('');
+      const table = `${addForm}<div class="overflow-x-auto"><table class="w-full text-left text-xs">
+        <thead><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+        <th class="py-2 px-3">Keyword</th><th class="py-2 px-3">Position</th><th class="py-2 px-3">Î” 28d</th><th class="py-2 px-3">90d trend</th><th class="py-2 px-3">Clicks</th><th class="py-2 px-3">Impr.</th><th class="py-2 px-3">CTR</th><th class="py-2 px-3">Potential @#1*</th><th class="py-2 px-3">Ranking URL</th><th></th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${rows || '<tr><td colspan="10">' + emptyState('No keywords tracked.') + '</td></tr>'}</tbody></table></div>
+        <p class="text-[11px] text-slate-500 mt-3">Positions, clicks and impressions are real Google Search Console values (28-day window, impression-weighted). *Potential = estimate using an industry-average CTR curve; not a measured value. Keywords with no impressions show "â€”" (not ranking in Google's top results, or no searches).</p>`;
+      const opp = ins.opportunities.length ? `<table class="w-full text-xs"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-2 text-left">Query</th><th class="text-left">Pos</th><th class="text-left">Impr.</th><th class="text-left">Clicks</th><th class="text-left">+Clicks if top 3*</th></tr></thead><tbody class="divide-y divide-slate-800/70">
+        ${ins.opportunities.map(o => `<tr><td class="py-2 text-white">${esc(o.query)}</td><td class="font-mono">${fmtPos(o.position)}</td><td class="font-mono">${fmtNum(o.impressions)}</td><td class="font-mono">${fmtNum(o.clicks)}</td><td class="font-mono text-brand-400">+${fmtNum(o.extra_clicks)}</td></tr>`).join('')}</tbody></table>` : emptyState(ins.window ? 'No queries in positions 4-20 with 10+ impressions.' : 'Needs Search Console data.');
+      const cannibal = ins.cannibalisation.length ? ins.cannibalisation.map(c => `<div class="py-2 border-b border-slate-800/70"><div class="text-white text-xs font-semibold">${esc(c.query)} <span class="text-slate-500 font-normal">Â· ${fmtNum(c.total_impressions)} impr.</span></div>
+        ${c.pages.map(p => `<div class="text-[11px] text-slate-400 font-mono">${(p.share * 100).toFixed(0)}% Â· pos ${fmtPos(p.position)} Â· ${esc(p.page.replace(/^https?:\/\/[^/]+/, ''))}</div>`).join('')}</div>`).join('') : emptyState(ins.window ? 'No cannibalisation detected.' : 'Needs Search Console data.');
+      const pages = ins.pages.length ? `<table class="w-full text-xs"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-2 text-left">Page</th><th class="text-left">Clicks</th><th class="text-left">Impr.</th><th class="text-left">Pos</th><th class="text-left">Queries</th></tr></thead><tbody class="divide-y divide-slate-800/70">
+        ${ins.pages.map(p => `<tr><td class="py-2 text-slate-200 font-mono text-[11px] max-w-[260px] truncate">${esc(p.page.replace(/^https?:\/\/[^/]+/, ''))}</td><td class="font-mono">${fmtNum(p.clicks)}</td><td class="font-mono">${fmtNum(p.impressions)}</td><td class="font-mono">${fmtPos(p.position)}</td><td class="font-mono">${fmtNum(p.queries)}</td></tr>`).join('')}</tbody></table>` : emptyState('Needs Search Console data.');
+      return panel('Tracked keyword rankings', table, head)
+        + `<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">${panel('Striking distance (positions 4-20)', opp)}${panel('Keyword cannibalisation', cannibal)}${panel('Top landing pages (organic)', pages)}</div>`;
+    }
+
+    // ---------------- Site audit ----------------
+    const sevBadge = (s) => ({ error: 'bg-rose-500/15 text-rose-300 border-rose-500/30', warning: 'bg-amber-500/15 text-amber-300 border-amber-500/30', notice: 'bg-slate-500/15 text-slate-300 border-slate-500/30' }[s] || '');
+    async function seoAudit() {
+      const a = await seoFetch('/audit');
+      const head = `${seoBtn('<i data-lucide="play" class="w-3.5 h-3.5 inline"></i> Audit (in-process)', 'data-seo-action="audit-local" title="Crawls this running server directly - works locally"', 'primary')}
+        ${seoBtn('Audit live site', 'data-seo-action="audit-live" title="Crawls the public production URL over the internet"')}`;
+      if (!a.run) return panel('Technical site audit', emptyState('No audit yet. Run one to crawl every page, check indexability, on-page SEO, links and structured data.'), head);
+      const r = a.run;
+      const cards = `<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        ${seoCard('Health score', `${r.health_score}%`, `${r.pages} pages Â· ${esc(r.source)}`, r.health_score >= 90 ? 'text-emerald-400' : 'text-amber-300', 'stethoscope')}
+        ${seoCard('Errors', fmtNum(r.errors), 'fix first', 'text-rose-300', 'x-octagon')}
+        ${seoCard('Warnings', fmtNum(r.warnings), '', 'text-amber-300', 'alert-triangle')}
+        ${seoCard('Notices', fmtNum(r.notices), '', 'text-slate-300', 'info')}
+        ${seoCard('Last run', `<span class="text-sm">${esc(fmtDate(r.finished_at))}</span>`, esc(r.base_url), 'text-white', 'clock')}</div>`;
+      const siteIssues = a.site_issues.length ? a.site_issues.map(i => `<div class="text-xs py-1.5"><span class="px-1.5 py-0.5 rounded border text-[10px] uppercase ${sevBadge(i.severity)}">${esc(i.severity)}</span> <b class="text-white">${esc(i.finding)}</b> <span class="text-slate-500">Â· ${esc(i.evidence)}</span><div class="text-slate-400 ml-1">â†’ ${esc(i.fix)}</div></div>`).join('') : '<div class="text-xs text-emerald-400">robots.txt, sitemap.xml and llms.txt look good.</div>';
+      const summary = a.issue_summary.map(i => `<div class="py-2 border-b border-slate-800/70 text-xs">
+        <div class="flex items-center gap-2"><span class="px-1.5 py-0.5 rounded border text-[10px] uppercase ${sevBadge(i.severity)}">${esc(i.severity)}</span>
+        <b class="text-white">${esc(i.code.replace(/_/g, ' '))}</b><span class="text-slate-500">Â· ${i.pages.length} page(s)</span></div>
+        <div class="text-slate-400 mt-1">â†’ ${esc(i.fix)}</div>
+        <div class="text-[11px] text-slate-500 font-mono mt-1 truncate">${esc(i.pages.slice(0, 6).join(', '))}${i.pages.length > 6 ? ' â€¦' : ''}</div></div>`).join('') || '<div class="text-xs text-emerald-400">No page-level issues.</div>';
+      const pageRows = a.pages.map(p => {
+        const open = seoState.auditPageOpen === p.path;
+        const counts = { error: 0, warning: 0, notice: 0 };
+        p.issues.forEach(i => counts[i.severity]++);
+        const detail = open ? `<tr><td colspan="8" class="bg-surface-850/60 px-5 py-3">${p.issues.length ? p.issues.map(i => `<div class="text-xs py-1.5 border-b border-slate-800/60"><span class="px-1.5 py-0.5 rounded border text-[10px] uppercase ${sevBadge(i.severity)}">${esc(i.severity)}</span> <b class="text-white">${esc(i.finding)}</b>
+          <div class="text-slate-500 font-mono text-[11px] mt-0.5">Evidence: ${esc(i.evidence)}</div><div class="text-slate-300 mt-0.5">Fix: ${esc(i.fix)}</div></div>`).join('') : '<div class="text-xs text-emerald-400">No issues.</div>'}
+          <div class="text-[11px] text-slate-500 mt-2">Title: ${esc(p.title || 'â€”')}<br>Description: ${esc(p.meta_description || 'â€”')}<br>Canonical: ${esc(p.canonical || 'â€”')} Â· Schema: ${esc((p.schema_types || []).join(', ') || 'none')}</div></td></tr>` : '';
+        return `<tr data-seo-audit-page="${esc(p.path)}" class="cursor-pointer hover:bg-surface-850/60">
+          <td class="py-2 px-3 font-mono text-[11px] text-white">${esc(p.path)}</td>
+          <td class="py-2 px-3 font-mono ${p.score >= 90 ? 'text-emerald-400' : p.score >= 70 ? 'text-amber-300' : 'text-rose-300'}">${p.score}</td>
+          <td class="py-2 px-3 font-mono">${p.http_status}</td>
+          <td class="py-2 px-3 text-[11px]"><span class="text-rose-300">${counts.error}</span> / <span class="text-amber-300">${counts.warning}</span> / <span class="text-slate-400">${counts.notice}</span></td>
+          <td class="py-2 px-3 font-mono">${fmtNum(p.word_count)}</td>
+          <td class="py-2 px-3 font-mono">${fmtNum(p.links_in)}</td>
+          <td class="py-2 px-3 font-mono">${p.depth === null ? 'â€”' : p.depth}</td>
+          <td class="py-2 px-3">${p.in_sitemap ? '<span class="text-emerald-400">âœ“</span>' : '<span class="text-amber-300">âœ—</span>'}</td></tr>${detail}`;
+      }).join('');
+      const pages = `<div class="overflow-x-auto max-h-[560px] overflow-y-auto"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+        <th class="py-2 px-3">Page</th><th class="py-2 px-3">Score</th><th class="py-2 px-3">HTTP</th><th class="py-2 px-3">Err / Warn / Note</th><th class="py-2 px-3">Words</th><th class="py-2 px-3">Inlinks</th><th class="py-2 px-3">Depth</th><th class="py-2 px-3">Sitemap</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${pageRows}</tbody></table></div><p class="text-[11px] text-slate-500 mt-2">Click a row for evidence and fixes.</p>`;
+      return panel('Technical site audit', cards, head) + panel('Site-level checks', siteIssues)
+        + `<div class="grid grid-cols-1 xl:grid-cols-5 gap-6"><div class="xl:col-span-2">${panel('Issues by type', summary)}</div><div class="xl:col-span-3">${panel('Pages', pages)}</div></div>`;
+    }
+
+    // ---------------- Backlinks ----------------
+    const blBadge = (s) => ({ live: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30', nofollow: 'bg-sky-500/15 text-sky-300 border-sky-500/30', missing: 'bg-rose-500/15 text-rose-300 border-rose-500/30', needs_listing_url: 'bg-amber-500/15 text-amber-300 border-amber-500/30', blocked: 'bg-violet-500/15 text-violet-300 border-violet-500/30', unreachable: 'bg-slate-500/15 text-slate-300 border-slate-500/30', unverified: 'bg-slate-700/30 text-slate-400 border-slate-600/40' }[s] || '');
+    async function seoBacklinks() {
+      const d = await seoFetch(`/backlinks?status=${encodeURIComponent(seoState.backlinkFilter)}`);
+      const s = d.summary;
+      const cards = `<div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+        ${seoCard('Referring domains', fmtNum(s.referring_domains), 'verified live', 'text-white', 'globe')}
+        ${seoCard('Dofollow live', fmtNum(s.by_status.live || 0), '', 'text-emerald-400', 'link')}
+        ${seoCard('Nofollow live', fmtNum(s.by_status.nofollow || 0), '', 'text-sky-300', 'link-2')}
+        ${seoCard('Missing', fmtNum(s.by_status.missing || 0), 'no link found', 'text-rose-300', 'unlink')}
+        ${seoCard('Needs listing URL', fmtNum(s.by_status.needs_listing_url || 0), 'only a homepage known', 'text-amber-300', 'help-circle')}
+        ${seoCard('Blocked / WAF', fmtNum(s.by_status.blocked || 0), 'check manually', 'text-violet-300', 'shield-alert')}
+        ${seoCard('Unchecked', fmtNum(s.by_status.unverified || 0), '', 'text-slate-300', 'circle-dashed')}</div>`;
+      const head = `${seoBtn('Import from Outreach log', 'data-seo-action="bl-import"')}
+        ${seoBtn('Verify unchecked', 'data-seo-action="bl-verify-unchecked"', 'primary')}${seoBtn('Re-verify all', 'data-seo-action="bl-verify-all"')}`;
+      const filters = ['all', 'live', 'nofollow', 'missing', 'needs_listing_url', 'blocked', 'unreachable', 'unverified'].map(f =>
+        `<button data-seo-bl-filter="${f}" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${seoState.backlinkFilter === f ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white bg-surface-800'}">${f.replace(/_/g, ' ')}</button>`).join('');
+      const addForm = `<form data-seo-form="bl-add" class="flex gap-2"><input name="source_url" placeholder="https://site.com/page-that-links-to-you" class="w-80 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">${seoBtn('Add', 'type="submit"', 'primary')}</form>`;
+      const rows = d.backlinks.map(b => `<tr class="hover:bg-surface-850/60">
+        <td class="py-2 px-3"><div class="text-white font-semibold">${esc(b.source_domain)}</div><a href="${esc(b.source_url)}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-500 hover:text-brand-400 font-mono block max-w-[280px] truncate">${esc(b.source_url)}</a></td>
+        <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded border text-[10px] uppercase ${blBadge(b.status)}">${esc(b.status.replace(/_/g, ' '))}</span></td>
+        <td class="py-2 px-3 text-slate-300 max-w-[180px] truncate" title="${esc(b.anchor_text || '')}">${esc(b.anchor_text || 'â€”')}</td>
+        <td class="py-2 px-3 font-mono text-[11px] text-slate-400">${esc(b.rel || (b.status === 'live' ? 'follow' : 'â€”'))}</td>
+        <td class="py-2 px-3 font-mono">${b.http_status ?? 'â€”'}</td>
+        <td class="py-2 px-3 text-[11px] text-slate-400" title="${esc(b.evidence ? JSON.stringify(b.evidence) : '')}">${esc(b.evidence?.note || (b.found_href ? 'â†’ ' + b.found_href : '') || 'â€”')}</td>
+        <td class="py-2 px-3 text-[11px] text-slate-500 whitespace-nowrap">${b.last_checked_at ? esc(new Date(b.last_checked_at * 1000).toLocaleDateString()) : 'never'}</td>
+        <td class="py-2 px-3 text-right whitespace-nowrap">
+          <button data-seo-bl-edit="${Number(b.id)}" data-url="${esc(b.source_url)}" title="Set exact listing URL" class="text-slate-500 hover:text-brand-400 mr-2"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+          <button data-seo-bl-verify="${Number(b.id)}" title="Verify now" class="text-slate-500 hover:text-sky-400 mr-2"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+          <button data-seo-bl-del="${Number(b.id)}" title="Remove" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td></tr>`).join('');
+      const table = `<div class="flex flex-wrap items-center justify-between gap-3 mb-3"><div class="flex flex-wrap gap-1">${filters}</div>${addForm}</div>
+        <div class="overflow-x-auto max-h-[560px] overflow-y-auto"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+        <th class="py-2 px-3">Source</th><th class="py-2 px-3">Status</th><th class="py-2 px-3">Anchor</th><th class="py-2 px-3">Rel</th><th class="py-2 px-3">HTTP</th><th class="py-2 px-3">Evidence</th><th class="py-2 px-3">Checked</th><th></th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${rows || '<tr><td colspan="8">' + emptyState('No backlinks tracked. Import your outreach log or add a URL.') + '</td></tr>'}</tbody></table></div>
+        <p class="text-[11px] text-slate-500 mt-2">Each check fetches the page with browser headers and looks for an &lt;a href&gt; to your domain. Most outreach rows point at a site's homepage â€” use âœŽ to paste the exact listing URL, then verify. Hover the evidence column for the raw check record.</p>`;
+      const anchors = s.top_anchors.length ? barRows(s.top_anchors.map(a => ({ label: a.anchor_text, value: a.c }))) : emptyState('No verified anchors yet.');
+      return panel('Backlink profile (your verified links)', cards, head) + `<div class="grid grid-cols-1 xl:grid-cols-4 gap-6"><div class="xl:col-span-3">${panel('Tracked backlinks', table)}</div>${panel('Top anchor texts', anchors)}</div>`;
+    }
+
+    // ---------------- Authority ----------------
+    async function seoAuthority() {
+      const d = await seoFetch('/authority');
+      const head = seoBtn('<i data-lucide="refresh-cw" class="w-3.5 h-3.5 inline"></i> Refresh scores', `data-seo-action="opr-refresh" ${d.configured ? '' : 'disabled'}`, 'primary');
+      const byDomain = Object.fromEntries(d.metrics.map(m => [m.domain, m]));
+      const list = [d.own_domain, ...d.competitors].map((dom, i) => {
+        const m = byDomain[dom];
+        return { label: i === 0 ? `${dom} (you)` : dom, value: m?.opr_decimal ?? null, display: m ? (m.opr_decimal === null ? 'not found' : Number(m.opr_decimal).toFixed(2)) : 'â€”', color: i === 0 ? 'bg-sky-500' : 'bg-slate-500' };
+      });
+      const referring = d.metrics.filter(m => m.domain !== d.own_domain && !d.competitors.includes(m.domain));
+      const compForm = `<form data-seo-form="competitors" class="flex gap-2 mt-4"><input name="competitors" value="${esc(d.competitors.join(', '))}" class="flex-1 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">${seoBtn('Save competitors', 'type="submit"')}</form>`;
+      const body = d.configured
+        ? barRows(list) + compForm + `<p class="text-[11px] text-slate-500 mt-3">Open PageRank (0-10) is derived from the Common Crawl link graph. It's a real, free authority score on one consistent scale â€” but it is <b>not</b> Ahrefs DR or Moz DA, so don't compare it with numbers from those tools.</p>`
+        : emptyState('Add a free <code>OPEN_PAGERANK_API_KEY</code> (keywordseverywhere.com/account/openpagerank) to score your domain, competitors and referring domains.') + compForm;
+      const refTable = referring.length ? `<table class="w-full text-xs"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-2 text-left">Referring / outreach domain</th><th class="text-left">Authority</th><th class="text-left">Global rank</th></tr></thead><tbody class="divide-y divide-slate-800/70">
+        ${referring.slice(0, 300).map(m => `<tr><td class="py-1.5 text-slate-200">${esc(m.domain)}</td><td class="font-mono">${m.opr_decimal === null ? 'â€”' : Number(m.opr_decimal).toFixed(2)}</td><td class="font-mono text-slate-400">${fmtNum(m.opr_rank)}</td></tr>`).join('')}</tbody></table>` : emptyState('Refresh after importing backlinks to score referring domains.');
+      return `<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">${panel('Domain authority vs competitors', body, head)}${panel('Referring & outreach domain authority', `<div class="max-h-[480px] overflow-y-auto">${refTable}</div>`)}</div>`;
+    }
+
+    // ---------------- Core Web Vitals ----------------
+    const cwvColor = (v, good, poor) => v === null || v === undefined ? 'text-slate-500' : v <= good ? 'text-emerald-400' : v <= poor ? 'text-amber-300' : 'text-rose-300';
+    async function seoCwv() {
+      const d = await seoFetch('/cwv');
+      const form = `<form data-seo-form="psi" class="flex flex-wrap gap-2 items-center">
+        <input name="path" value="/" class="w-56 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono">
+        <select name="strategy" class="bg-surface-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"><option value="mobile">Mobile</option><option value="desktop">Desktop</option></select>
+        ${seoBtn('Run PageSpeed Insights', 'type="submit"', 'primary')}
+        ${seoBtn('CrUX origin (phone)', `data-seo-action="crux" ${d.providers.crux.configured ? '' : 'disabled title="Needs GOOGLE_API_KEY"'}`)}</form>`;
+      const rows = d.cwv.map(c => `<tr>
+        <td class="py-2 px-3 font-mono text-[11px] text-white max-w-[240px] truncate">${esc(String(c.url).replace(/^https?:\/\/[^/]+/, '') || '/')}</td>
+        <td class="py-2 px-3 text-[11px]">${esc(c.source)} Â· ${esc(c.strategy)}</td>
+        <td class="py-2 px-3 font-mono ${cwvColor(c.perf_score === null ? null : 100 - c.perf_score, 10, 50)}">${c.perf_score ?? 'â€”'}</td>
+        <td class="py-2 px-3 font-mono">${c.seo_score ?? 'â€”'}</td>
+        <td class="py-2 px-3 font-mono ${cwvColor(c.field_lcp_ms ?? c.lab_lcp_ms, 2500, 4000)}">${c.field_lcp_ms ?? c.lab_lcp_ms ? Math.round(c.field_lcp_ms ?? c.lab_lcp_ms) + ' ms' : 'â€”'}<span class="text-[10px] text-slate-500"> ${c.field_lcp_ms ? 'field' : c.lab_lcp_ms ? 'lab' : ''}</span></td>
+        <td class="py-2 px-3 font-mono ${cwvColor(c.field_inp_ms, 200, 500)}">${c.field_inp_ms ? Math.round(c.field_inp_ms) + ' ms' : 'â€”'}</td>
+        <td class="py-2 px-3 font-mono ${cwvColor(c.field_cls ?? c.lab_cls, 0.1, 0.25)}">${(c.field_cls ?? c.lab_cls) !== null && (c.field_cls ?? c.lab_cls) !== undefined ? Number(c.field_cls ?? c.lab_cls).toFixed(3) : 'â€”'}</td>
+        <td class="py-2 px-3 font-mono">${c.lab_tbt_ms !== null && c.lab_tbt_ms !== undefined ? Math.round(c.lab_tbt_ms) + ' ms' : 'â€”'}</td>
+        <td class="py-2 px-3 text-[11px] text-slate-500">${esc(fmtDate(c.fetched_at))}</td></tr>`).join('');
+      const table = `<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+        <th class="py-2 px-3">URL</th><th class="py-2 px-3">Source</th><th class="py-2 px-3">Perf</th><th class="py-2 px-3">SEO</th><th class="py-2 px-3">LCP</th><th class="py-2 px-3">INP</th><th class="py-2 px-3">CLS</th><th class="py-2 px-3">TBT</th><th class="py-2 px-3">Fetched</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${rows || '<tr><td colspan="9">' + emptyState('Run PageSpeed Insights on a page to see Lighthouse + real-user Core Web Vitals.') + '</td></tr>'}</tbody></table></div>
+        <p class="text-[11px] text-slate-500 mt-2">Thresholds: LCP â‰¤ 2.5s, INP â‰¤ 200ms, CLS â‰¤ 0.1 (good). "field" = real Chrome users (CrUX, 28 days); "lab" = one Lighthouse run. PSI tests the public URL ${esc(d.providers.site_url)}.</p>`;
+      const opp = seoState.lastPsi?.opportunities?.length ? seoState.lastPsi.opportunities.map(o => `<div class="text-xs py-1.5 border-b border-slate-800/60"><span class="font-mono ${o.score < 0.5 ? 'text-rose-300' : 'text-amber-300'}">${Math.round(o.score * 100)}</span> <span class="text-white">${esc(o.title)}</span> <span class="text-slate-500">${esc(o.display || '')}</span></div>`).join('') : emptyState('Run PageSpeed Insights to list failing Lighthouse audits.');
+      return panel('Core Web Vitals & Lighthouse', table, form) + panel(`Failing Lighthouse audits${seoState.lastPsi ? ' Â· ' + esc(String(seoState.lastPsi.url).replace(/^https?:\/\/[^/]+/, '')) + ' (' + esc(seoState.lastPsi.strategy) + ')' : ''}`, opp);
+    }
+
+    // ---------------- Crawlers & AI ----------------
+    async function seoBots() {
+      const d = await seoFetch('/bots?days=30');
+      const byBot = d.by_bot.length ? `<table class="w-full text-xs"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-2 text-left">Crawler</th><th class="text-left">Type</th><th class="text-left">Visits</th><th class="text-left">Pages</th><th class="text-left">Errors</th><th class="text-left">Last seen</th></tr></thead><tbody class="divide-y divide-slate-800/70">
+        ${d.by_bot.map(b => `<tr><td class="py-2 text-white font-semibold">${esc(b.bot)}</td><td><span class="px-1.5 py-0.5 rounded text-[10px] uppercase ${b.type === 'ai' ? 'bg-violet-500/15 text-violet-300' : 'bg-sky-500/15 text-sky-300'}">${esc(b.type)}</span></td><td class="font-mono">${fmtNum(b.hits)}</td><td class="font-mono">${fmtNum(b.paths)}</td><td class="font-mono ${b.errors ? 'text-rose-300' : ''}">${fmtNum(b.errors)}</td><td class="text-[11px] text-slate-400">${esc(fmtDate(b.last_seen))}</td></tr>`).join('')}</tbody></table>` : emptyState('No crawler visits recorded yet. Visits are logged from the moment this version is deployed.');
+      const paths = d.top_paths.length ? d.top_paths.map(p => `<div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-800/60"><span class="font-mono text-slate-200 truncate max-w-[60%]">${esc(p.path)}</span><span class="text-[11px] text-slate-500 truncate max-w-[30%]">${esc(p.bots)}</span><span class="font-mono text-white">${fmtNum(p.hits)}</span></div>`).join('') : emptyState('â€”');
+      const recent = d.recent.length ? d.recent.map(r => `<div class="text-[11px] py-1 font-mono text-slate-400"><span class="text-slate-500">${esc(fmtDate(r.created_at))}</span> <span class="text-white">${esc(r.bot)}</span> ${esc(r.path)} <span class="${r.status >= 400 ? 'text-rose-300' : 'text-emerald-400'}">${r.status}</span></div>`).join('') : emptyState('â€”');
+      return `${panel('Search & AI crawler visits (last 30 days)', byBot)}
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">${panel('Most-crawled pages', paths)}${panel('Recent visits', `<div class="max-h-[420px] overflow-y-auto">${recent}</div>`)}</div>
+        <p class="text-[11px] text-slate-500">Identified by User-Agent. User-Agents can be spoofed, so treat these as claimed crawler visits. Asset and API requests are not logged; data is kept for 90 days.</p>`;
+    }
+
+    // ---------------- Data sources ----------------
+    async function seoSetup() {
+      const p = await seoFetch('/providers');
+      const row = (name, ok, detail, envs) => `<div class="flex items-start justify-between gap-4 py-3 border-b border-slate-800/70">
+        <div><div class="text-sm font-semibold text-white">${esc(name)}</div><div class="text-xs text-slate-400 mt-0.5">${detail}</div>
+        ${envs ? `<div class="text-[11px] text-slate-500 mt-1 font-mono">${esc(envs)}</div>` : ''}</div>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${ok ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${ok ? 'Connected' : 'Not set'}</span></div>`;
+      return panel('Data sources', `
+        ${row('Site auditor, backlink verifier, crawler log', true, 'Built in. No keys needed.', `SEO_SITE_URL=${p.site_url}`)}
+        ${row('Google Search Console', p.gsc.configured, p.gsc.configured ? `Property ${esc(p.gsc.site_url)} via ${esc(p.gsc.service_account)}` : 'Real rankings, clicks, impressions, CTR. Create a Google Cloud service account, enable the Search Console API, then add the service account email as a user on your GSC property.', 'GSC_SITE_URL=sc-domain:sweeprcleaner.com   GSC_SERVICE_ACCOUNT_JSON=<json | base64 | file path>')}
+        ${row('PageSpeed Insights', true, p.pagespeed.keyed ? 'Using GOOGLE_API_KEY (25k requests/day).' : esc(p.pagespeed.note), 'GOOGLE_API_KEY=<key with PageSpeed Insights API enabled>')}
+        ${row('Chrome UX Report (CrUX)', p.crux.configured, '28-day real-user Core Web Vitals for your origin/URLs.', 'GOOGLE_API_KEY=<key with Chrome UX Report API enabled>')}
+        ${row('Open PageRank', p.open_pagerank.configured, 'Free domain authority (0-10) for you, competitors and referring domains. 30,000 domains/month on the free tier.', 'OPEN_PAGERANK_API_KEY=<from keywordseverywhere.com/account/openpagerank>')}
+        ${row('Commercial link index & keyword data (Phase 3)', false, 'Ahrefs-style DR, competitor backlinks, search volume, KD, CPC. Not built yet â€” would use DataForSEO (pay-as-you-go).', '')}
+        <p class="text-[11px] text-slate-500 mt-4">Set these in <code>server/.env</code> (or your host's environment) and restart the server. Keys are read from the environment only; they're never stored in the database or sent to the browser.</p>`);
+    }
+
+    // ---------------- Event delegation ----------------
+    document.addEventListener('click', async (e) => {
+      const tab = e.target.closest('[data-seo-view]');
+      if (tab) { seoShow(tab.dataset.seoView); return; }
+      const action = e.target.closest('[data-seo-action]');
+      if (action && !action.disabled) {
+        const a = action.dataset.seoAction;
+        try {
+          if (a === 'audit-local') await seoRunJob('/audit/run', { source: 'local' }, 'Site audit');
+          else if (a === 'audit-live') await seoRunJob('/audit/run', { source: 'live' }, 'Live site audit');
+          else if (a === 'gsc-sync') await seoRunJob('/gsc/sync', { days: 90 }, 'Search Console sync');
+          else if (a === 'bl-verify-unchecked') await seoRunJob('/backlinks/verify', { only: 'unchecked' }, 'Verifying backlinks');
+          else if (a === 'bl-verify-all') { if (confirm('Re-check every tracked backlink? This fetches each page.')) await seoRunJob('/backlinks/verify', {}, 'Verifying backlinks'); }
+          else if (a === 'bl-import') { const r = await seoFetch('/backlinks/import-outreach', { method: 'POST' }); alert(`Imported ${r.added} outreach row(s) as backlinks to verify.`); seoShow('backlinks'); }
+          else if (a === 'kw-import') { const r = await seoFetch('/keywords/import-gsc', { method: 'POST', body: JSON.stringify({ limit: 25 }) }); alert(`Added ${r.added} of the top ${r.considered} Search Console queries.`); seoShow('rankings'); }
+          else if (a === 'opr-refresh') { seoJobPill('Refreshing authority scores'); const r = await seoFetch('/authority/refresh', { method: 'POST' }); seoJobPill(null); alert(`Updated ${r.updated} domain(s).`); seoShow('authority'); }
+          else if (a === 'crux') { seoJobPill('Querying CrUX'); const r = await seoFetch('/crux/run', { method: 'POST', body: JSON.stringify({ form_factor: 'PHONE' }) }); seoJobPill(null); if (r.result.insufficient_data) alert(r.result.message); seoShow('cwv'); }
+        } catch (err) { seoJobPill(null); alert(err.message); }
+        return;
+      }
+      const pageRow = e.target.closest('[data-seo-audit-page]');
+      if (pageRow) { const p = pageRow.dataset.seoAuditPage; seoState.auditPageOpen = seoState.auditPageOpen === p ? null : p; seoShow('audit'); return; }
+      const blFilter = e.target.closest('[data-seo-bl-filter]');
+      if (blFilter) { seoState.backlinkFilter = blFilter.dataset.seoBlFilter; seoShow('backlinks'); return; }
+      const delKw = e.target.closest('[data-seo-del-kw]');
+      if (delKw) { await seoFetch(`/keywords/${Number(delKw.dataset.seoDelKw)}`, { method: 'DELETE' }); seoShow('rankings'); return; }
+      const blEdit = e.target.closest('[data-seo-bl-edit]');
+      if (blEdit) {
+        const url = prompt('Exact URL of the page that should link to you (listing / article URL):', blEdit.dataset.url || '');
+        if (url) { try { await seoFetch(`/backlinks/${Number(blEdit.dataset.seoBlEdit)}`, { method: 'PATCH', body: JSON.stringify({ source_url: url }) }); await seoRunJob('/backlinks/verify', { ids: [Number(blEdit.dataset.seoBlEdit)] }, 'Verifying backlink'); } catch (err) { alert(err.message); } }
+        return;
+      }
+      const blVerify = e.target.closest('[data-seo-bl-verify]');
+      if (blVerify) { await seoRunJob('/backlinks/verify', { ids: [Number(blVerify.dataset.seoBlVerify)] }, 'Verifying backlink'); return; }
+      const blDel = e.target.closest('[data-seo-bl-del]');
+      if (blDel && confirm('Stop tracking this backlink?')) { await seoFetch(`/backlinks/${Number(blDel.dataset.seoBlDel)}`, { method: 'DELETE' }); seoShow('backlinks'); }
+    });
+
+    document.addEventListener('submit', async (e) => {
+      const form = e.target.closest('[data-seo-form]');
+      if (!form) return;
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(form).entries());
+      try {
+        if (form.dataset.seoForm === 'kw-add') { await seoFetch('/keywords', { method: 'POST', body: JSON.stringify(f) }); seoShow('rankings'); }
+        else if (form.dataset.seoForm === 'bl-add') { await seoFetch('/backlinks', { method: 'POST', body: JSON.stringify(f) }); seoShow('backlinks'); }
+        else if (form.dataset.seoForm === 'competitors') { await seoFetch('/authority/competitors', { method: 'PUT', body: JSON.stringify(f) }); seoShow('authority'); }
+        else if (form.dataset.seoForm === 'psi') {
+          seoJobPill('Running PageSpeed Insights (up to ~60s)');
+          const r = await seoFetch('/pagespeed/run', { method: 'POST', body: JSON.stringify(f) });
+          seoState.lastPsi = r.result;
+          seoJobPill(null);
+          seoShow('cwv');
+        }
+      } catch (err) { seoJobPill(null); alert(err.message); }
+    });
   </script>
 </body>
 </html>

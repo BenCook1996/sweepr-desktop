@@ -35,7 +35,7 @@ targets:
         # RevenueCat public SDK key (appl_...). Supply REVENUECAT_API_KEY as a build setting
         # (e.g. an uncommitted Secrets.xcconfig); read at launch in SweeprApp.swift.
         REVENUECAT_API_KEY: "$(REVENUECAT_API_KEY)"
-        SWEEPR_WEBSITE_URL: "https://sweepr.app"
-        SWEEPR_SUPPORT_EMAIL: "support@sweepr.app"
-        SWEEPR_API_URL: "https://api.sweepr.app"
+        SWEEPR_WEBSITE_URL: "https://sweeprcleaner.com"
+        SWEEPR_SUPPORT_EMAIL: "support@sweeprcleaner.com"
+        SWEEPR_API_URL: "https://sweeprcleaner.com"
 

@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { escapeHtml } from "./security.js";
 
 export interface EmailDispatchResult {
   ok: boolean;
@@ -62,6 +63,12 @@ export async function sendSubscriptionEmail(
     }
   }
 
+  const safeName = escapeHtml(name || "Customer");
+  const safePlanOrCode = escapeHtml(planOrCode);
+  const safePlanUpper = escapeHtml(planOrCode.toUpperCase());
+  const safeRecipient = escapeHtml(recipient);
+  const safeActivationCode = activationCode ? escapeHtml(activationCode) : "";
+
   const htmlBody = isOtp
     ? `
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
@@ -71,7 +78,7 @@ export async function sendSubscriptionEmail(
     <p style="color: #64748b; font-size: 14px; margin: 0;">Use the 6-digit code below to securely sign in to your SWEEPR Cleaner account.</p>
   </div>
   <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
-    <span style="font-family: monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #059669;">${planOrCode}</span>
+    <span style="font-family: monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #059669;">${safePlanOrCode}</span>
   </div>
   <p style="color: #64748b; font-size: 13px; line-height: 1.5; text-align: center; margin: 0 0 20px 0;">
     This one-time passcode will expire in <strong>15 minutes</strong>.<br>If you did not request this login code, you can safely ignore this email.
@@ -85,16 +92,16 @@ export async function sendSubscriptionEmail(
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
   <div style="text-align: center; margin-bottom: 24px;">
     <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
-    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Welcome to SWEEPR Cleaner ${planOrCode.toUpperCase()}!</h2>
-    <p style="color: #475569; font-size: 14px; margin: 0;">Hi ${name || "Customer"}, your subscription is now active and ready to use across up to 3 PCs.</p>
+    <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Welcome to SWEEPR Cleaner ${safePlanUpper}!</h2>
+    <p style="color: #475569; font-size: 14px; margin: 0;">Hi ${safeName}, your subscription is now active and ready to use across up to 3 PCs.</p>
   </div>
   ${
-    activationCode
+    safeActivationCode
       ? `
   <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
     <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #047857; margin-bottom: 8px;">Your 6-Digit Subscription Activation Key</div>
-    <span style="font-family: monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #059669;">${activationCode}</span>
-    <div style="font-size: 12px; color: #475569; margin-top: 8px;">Registered Email: <strong>${recipient}</strong></div>
+    <span style="font-family: monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #059669;">${safeActivationCode}</span>
+    <div style="font-size: 12px; color: #475569; margin-top: 8px;">Registered Email: <strong>${safeRecipient}</strong></div>
   </div>`
       : ""
   }
@@ -103,7 +110,7 @@ export async function sendSubscriptionEmail(
     <ol style="margin: 0; padding-left: 18px; color: #475569; font-size: 13px; line-height: 1.7;">
       <li>Download and install <strong>SWEEPR Cleaner</strong> using the button below.</li>
       <li>Open the <strong>Account &amp; Settings</strong> tab inside the app.</li>
-      <li>Enter your email (<strong>${recipient}</strong>) and your <strong>6-digit Subscription Key</strong>${activationCode ? ` (<strong>${activationCode}</strong>)` : ""} to unlock all Pro features immediately.</li>
+      <li>Enter your email (<strong>${safeRecipient}</strong>) and your <strong>6-digit Subscription Key</strong>${safeActivationCode ? ` (<strong>${safeActivationCode}</strong>)` : ""} to unlock all Pro features immediately.</li>
     </ol>
   </div>
   <div style="text-align: center; margin: 24px 0 16px 0;">

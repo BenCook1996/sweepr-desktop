@@ -1,4 +1,5 @@
 import Foundation
+import Security
 import UIKit
 
 struct LinkedSweeprAccount: Codable, Equatable {
@@ -8,7 +9,7 @@ struct LinkedSweeprAccount: Codable, Equatable {
     var deviceId: String = ""
     var serverActive: Bool = false
     var plan: String? = nil
-    var expiresAt: Date? = nil
+    var expiresAt: Int64 = 0
     var referralCode: String = ""
     var redeemedReferralCode: String? = nil
 
@@ -19,15 +20,15 @@ struct LinkedSweeprAccount: Codable, Equatable {
 
 enum AppConfig {
     static var websiteURL: String {
-        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_WEBSITE_URL") as? String) ?? "https://sweepr.app"
+        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_WEBSITE_URL") as? String) ?? "https://sweeprcleaner.com"
     }
 
     static var supportEmail: String {
-        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_SUPPORT_EMAIL") as? String) ?? "support@sweepr.app"
+        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_SUPPORT_EMAIL") as? String) ?? "support@sweeprcleaner.com"
     }
 
     static var apiURL: String {
-        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_API_URL") as? String) ?? "https://api.sweepr.app"
+        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_API_URL") as? String) ?? "https://sweeprcleaner.com"
     }
 }
 
@@ -67,7 +68,7 @@ enum CrashLogger {
             _ = try? handle.seekToEnd()
             try? handle.write(contentsOf: data)
         } else {
-            try? data.write(to: url, options: .atomic)
+            try? data.write(to: url, options: [.atomic, .completeFileProtection])
         }
     }
 
@@ -83,6 +84,54 @@ enum CrashLogger {
 enum AccountService {
     private static let storageKey = "sweepr_linked_account_v1"
     private static let deviceKey = "sweepr_device_id_v1"
+    private static let legacyRefreshTokenKey = "sweepr_refresh_token"
+    private static let keychainService = "com.sweepr.app.auth"
+    private static let keychainAccount = "refresh_token"
+
+    private static func saveRefreshTokenToKeychain(_ token: String) {
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+        guard !token.isEmpty, let data = token.data(using: .utf8) else { return }
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    private static func readRefreshTokenFromKeychain() -> String {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let token = String(data: data, encoding: .utf8) else {
+            return ""
+        }
+        return token
+    }
+
+    private static func deleteRefreshTokenFromKeychain() {
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+    }
 
     static func currentDeviceId() -> String {
         if let existing = UserDefaults.standard.string(forKey: deviceKey), !existing.isEmpty {
@@ -102,13 +151,34 @@ enum AccountService {
 
     static func loadAccount() -> LinkedSweeprAccount {
         let devId = currentDeviceId()
+        if let legacyToken = UserDefaults.standard.string(forKey: legacyRefreshTokenKey), !legacyToken.isEmpty {
+            if readRefreshTokenFromKeychain().isEmpty {
+                saveRefreshTokenToKeychain(legacyToken)
+            }
+            UserDefaults.standard.removeObject(forKey: legacyRefreshTokenKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: legacyRefreshTokenKey)
+        }
+
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               var decoded = try? JSONDecoder().decode(LinkedSweeprAccount.self, from: data) else {
             return LinkedSweeprAccount(
+                refreshToken: readRefreshTokenFromKeychain(),
                 deviceId: devId,
                 referralCode: defaultReferralCode(for: devId)
             )
         }
+        if !decoded.refreshToken.isEmpty {
+            if readRefreshTokenFromKeychain().isEmpty {
+                saveRefreshTokenToKeychain(decoded.refreshToken)
+            }
+            var sanitized = decoded
+            sanitized.refreshToken = ""
+            if let cleanData = try? JSONEncoder().encode(sanitized) {
+                UserDefaults.standard.set(cleanData, forKey: storageKey)
+            }
+        }
+        decoded.refreshToken = readRefreshTokenFromKeychain()
         if decoded.deviceId.isEmpty {
             decoded.deviceId = devId
         }
@@ -119,12 +189,18 @@ enum AccountService {
     }
 
     static func saveAccount(_ account: LinkedSweeprAccount) {
-        if let data = try? JSONEncoder().encode(account) {
+        UserDefaults.standard.removeObject(forKey: legacyRefreshTokenKey)
+        saveRefreshTokenToKeychain(account.refreshToken)
+        var sanitized = account
+        sanitized.refreshToken = ""
+        if let data = try? JSONEncoder().encode(sanitized) {
             UserDefaults.standard.set(data, forKey: storageKey)
         }
     }
 
     static func clearAccount() -> LinkedSweeprAccount {
+        UserDefaults.standard.removeObject(forKey: legacyRefreshTokenKey)
+        deleteRefreshTokenFromKeychain()
         let devId = currentDeviceId()
         let cleared = LinkedSweeprAccount(
             deviceId: devId,
@@ -160,7 +236,7 @@ enum AccountService {
               let refreshToken = res["refresh_token"] as? String else {
             throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
         }
-        let expiresSec = (res["expires_at"] as? NSNumber)?.doubleValue ?? 0
+        let expiresSec = (res["expires_at"] as? NSNumber)?.int64Value ?? 0
         let linked = LinkedSweeprAccount(
             accountId: accountId,
             email: (res["email"] as? String) ?? email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
@@ -168,7 +244,7 @@ enum AccountService {
             deviceId: deviceId,
             serverActive: (res["active"] as? Bool) ?? false,
             plan: res["plan"] as? String,
-            expiresAt: expiresSec > 0 ? Date(timeIntervalSince1970: expiresSec) : nil,
+            expiresAt: max(0, expiresSec),
             referralCode: (res["referral_code"] as? String) ?? defaultReferralCode(for: deviceId, accountId: accountId)
         )
         saveAccount(linked)
@@ -177,22 +253,36 @@ enum AccountService {
 
     static func refreshEntitlement(current: LinkedSweeprAccount) async throws -> LinkedSweeprAccount {
         guard current.isSignedIn else { return current }
-        let res = try await requestJSON(
-            path: "/v1/entitlement",
-            method: "POST",
-            body: [
-                "refresh_token": current.refreshToken,
-                "device_id": current.deviceId
-            ]
-        )
-        let expiresSec = (res["expires_at"] as? NSNumber)?.doubleValue ?? 0
+        let res: [String: Any]
+        do {
+            res = try await requestJSON(
+                path: "/v1/entitlement",
+                method: "POST",
+                body: [
+                    "device_id": current.deviceId,
+                    "device_type": "mobile"
+                ],
+                bearerToken: current.refreshToken
+            )
+        } catch let err as NSError where err.domain == "SweeprAccount" && (err.code == 401 || err.code == 403) {
+            var revoked = current
+            revoked.serverActive = false
+            revoked.expiresAt = 0
+            saveAccount(revoked)
+            return revoked
+        }
+        let status = (res["status"] as? String) ?? ""
+        let isActive = (res["active"] as? Bool) ?? (status == "active" || status == "trialing")
+        let expiresSec = (res["expires_at"] as? NSNumber)?.int64Value ?? 0
         var updated = current
         if let email = res["email"] as? String, !email.isEmpty {
             updated.email = email
         }
-        updated.serverActive = (res["active"] as? Bool) ?? false
-        updated.plan = res["plan"] as? String
-        updated.expiresAt = expiresSec > 0 ? Date(timeIntervalSince1970: expiresSec) : nil
+        updated.serverActive = isActive
+        if let plan = res["plan"] as? String, !plan.isEmpty {
+            updated.plan = plan
+        }
+        updated.expiresAt = max(0, expiresSec)
         saveAccount(updated)
         return updated
     }
@@ -206,16 +296,18 @@ enum AccountService {
             throw NSError(domain: "SweeprAccount", code: 400, userInfo: [NSLocalizedDescriptionKey: "You cannot redeem your own referral code."])
         }
 
-        // Attempt server claim if reachable; persist locally either way
-        _ = try? await requestJSON(
-            path: "/v1/referral/claim",
+        _ = try await requestJSON(
+            path: "/v1/referral/apply",
             method: "POST",
             body: [
+                "code": trimmed,
                 "referral_code": trimmed,
                 "device_id": current.deviceId,
                 "account_id": current.accountId
-            ]
+            ],
+            bearerToken: current.refreshToken
         )
+
         var updated = current
         updated.redeemedReferralCode = trimmed
         saveAccount(updated)
@@ -227,14 +319,19 @@ enum AccountService {
             path: "/v1/account",
             method: "DELETE",
             body: [
-                "refresh_token": current.refreshToken,
                 "device_id": current.deviceId
-            ]
+            ],
+            bearerToken: current.refreshToken
         )
         _ = clearAccount()
     }
 
-    private static func requestJSON(path: String, method: String, body: [String: Any]) async throws -> [String: Any] {
+    private static func requestJSON(
+        path: String,
+        method: String,
+        body: [String: Any],
+        bearerToken: String? = nil
+    ) async throws -> [String: Any] {
         let base = AppConfig.apiURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let url = URL(string: "\(base)\(path)") else {
             throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
@@ -244,12 +341,15 @@ enum AccountService {
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = bearerToken, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 500
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
-        guard (200...299).contains(statusCode) else {
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 500
             let message = (json["error"] as? String) ?? "Request failed (\(statusCode))"
             throw NSError(domain: "SweeprAccount", code: statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }

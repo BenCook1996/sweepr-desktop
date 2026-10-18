@@ -415,6 +415,9 @@ const PROTECTED_PROCESSES: &[&str] = &[
     "searchindexer",
     "sweepr",
     "sweepr-cleaner",
+    "sweeprcleaner",
+    "msmpeng",
+    "securityhealthservice",
 ];
 
 /// Terminate all non-protected processes matching `name` (with or without `.exe`).
@@ -575,11 +578,16 @@ fn query_windows_boot_seconds() -> Option<u64> {
 }
 
 #[cfg(windows)]
+fn system_powershell_path() -> std::path::PathBuf {
+    crate::safety::system_powershell_path()
+}
+
+#[cfg(windows)]
 fn query_windows_battery() -> (Option<u8>, Option<String>) {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
-    let Ok(output) = std::process::Command::new("powershell")
+    let Ok(output) = std::process::Command::new(system_powershell_path())
         .args([
             "-NoProfile",
             "-NonInteractive",
@@ -791,6 +799,9 @@ mod tests {
         assert!(kill_process_by_name("explorer.exe").is_err());
         assert!(kill_process_by_name("svchost").is_err());
         assert!(kill_process_by_name("sweepr").is_err());
+        assert!(kill_process_by_name("SWEEPRCleaner.exe").is_err());
+        assert!(kill_process_by_name("MsMpEng.exe").is_err());
+        assert!(kill_process_by_name("SecurityHealthService.exe").is_err());
     }
 }
 

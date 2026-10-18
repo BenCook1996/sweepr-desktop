@@ -705,9 +705,9 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       account_id: id,
       type: "otp_generated",
       title: "Login Code Generated",
-      description: `Generated 6-digit login passcode (${code}) for customer portal — ${emailStatus}`,
+      description: `Generated 6-digit login passcode for customer portal — ${emailStatus}`,
       actor: "admin",
-      metadata: { code, email: normEmail, dispatch },
+      metadata: { email: normEmail, dispatch },
     });
 
     return c.json({

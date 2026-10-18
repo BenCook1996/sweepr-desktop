@@ -42,35 +42,9 @@
     if (!autoUpdateInfo || installingUpdate) return;
     installingUpdate = true;
     try {
-      await api.installAppUpdate(autoUpdateInfo.url || undefined);
+      await api.installAppUpdate();
     } catch {
       installingUpdate = false;
-    }
-  }
-
-  async function detectDesktopGeoLanguage() {
-    try {
-      const res = await fetch("https://api.country.is/", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
-      const country = String(data?.country || "").trim().toUpperCase();
-      if (!/^[A-Z]{2}$/.test(country)) return;
-      const prevCountry = localStorage.getItem("sweepr_detected_country");
-      if (prevCountry !== country) {
-        localStorage.setItem("sweepr_detected_country", country);
-        const map: Record<string, Lang> = {
-          DE: "de", AT: "de", CH: "de", LI: "de",
-          FR: "fr", MC: "fr", BE: "fr", LU: "fr",
-          ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es",
-          IT: "it", SM: "it",
-          PT: "pt", BR: "pt",
-          NL: "nl",
-          JP: "ja",
-        };
-        setLang(map[country] || "en");
-      }
-    } catch {
-      // Ignore offline or blocked GeoIP
     }
   }
 
@@ -121,7 +95,6 @@
     if (startupInitialized) return;
     startupInitialized = true;
     refreshLicense();
-    detectDesktopGeoLanguage();
     runAutoUpdateCheck();
     const updateTimer = setInterval(runAutoUpdateCheck, 4 * 60 * 60 * 1000);
     api

@@ -9,6 +9,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -20,7 +23,12 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.security.KeyStore
 import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 import kotlin.math.roundToInt
 
 enum class ThemeMode(val labelRes: Int) { System(R.string.option_system_default), Light(R.string.theme_light), Dark(R.string.theme_dark) }
@@ -31,26 +39,35 @@ enum class ReminderFrequency(val labelRes: Int, val days: Long) {
     Monthly(R.string.reminder_monthly, 30),
 }
 
-data class LinkedAccount(
-    val accountId: String = "",
-    val email: String = "",
-    val refreshToken: String = "",
-    val deviceId: String = "",
-    val serverActive: Boolean = false,
-    val plan: String? = null,
-    val expiresAt: Long? = null,
-) {
-    val isSignedIn: Boolean get() = accountId.isNotBlank() && refreshToken.isNotBlank()
-}
+typealias LinkedAccount = Prefs.LinkedAccount
 
 /** Small persisted user preferences (theme, reminders, and optional cross-platform account link), observable from Compose. */
 object Prefs {
+    data class LinkedAccount(
+        val accountId: String = "",
+        val email: String = "",
+        val refreshToken: String = "",
+        val deviceId: String = "",
+        val serverActive: Boolean = false,
+        val plan: String? = null,
+        val expiresAt: Long = 0L,
+    ) {
+        val isSignedIn: Boolean get() = accountId.isNotBlank() && refreshToken.isNotBlank()
+    }
+
     private const val FILE = "sweepr_prefs"
+    private const val SECURE_AUTH_FILE = "sweepr_secure_auth"
+    private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
+    private const val MASTER_KEY_ALIAS = "sweepr_token_master_key"
+    private const val AES_GCM_TRANSFORMATION = "AES/GCM/NoPadding"
+
     private const val KEY_THEME = "theme"
     private const val KEY_REMINDER = "reminder"
     private const val KEY_ACCOUNT_ID = "account_id"
     private const val KEY_ACCOUNT_EMAIL = "account_email"
-    private const val KEY_REFRESH_TOKEN = "refresh_token"
+    private const val KEY_LEGACY_REFRESH_TOKEN = "refresh_token"
+    private const val KEY_LEGACY_LINKED_REFRESH_TOKEN = "linked_refresh_token"
+    private const val KEY_ENCRYPTED_REFRESH_TOKEN = "encrypted_refresh_token"
     private const val KEY_DEVICE_ID = "device_id"
     private const val KEY_SERVER_ACTIVE = "server_active"
     private const val KEY_SERVER_PLAN = "server_plan"
@@ -59,6 +76,7 @@ object Prefs {
     private const val KEY_REVIEW_SHOWN = "review_shown"
 
     private lateinit var prefs: SharedPreferences
+    private lateinit var secureAuthPrefs: SharedPreferences
 
     private val _theme = MutableStateFlow(ThemeMode.System)
     val theme: StateFlow<ThemeMode> = _theme.asStateFlow()
@@ -69,27 +87,99 @@ object Prefs {
     private val _account = MutableStateFlow(LinkedAccount())
     val account: StateFlow<LinkedAccount> = _account.asStateFlow()
 
+    private fun getOrCreateMasterKey(): SecretKey {
+        val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
+        val existing = keyStore.getEntry(MASTER_KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
+        if (existing != null) return existing.secretKey
+        val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE_PROVIDER)
+        val spec = KeyGenParameterSpec.Builder(
+            MASTER_KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .build()
+        keyGenerator.init(spec)
+        return keyGenerator.generateKey()
+    }
+
+    private fun encryptRefreshToken(plainText: String): String? = runCatching {
+        if (plainText.isBlank()) return ""
+        val cipher = Cipher.getInstance(AES_GCM_TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateMasterKey())
+        val iv = cipher.iv
+        val cipherBytes = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+        val ivB64 = Base64.encodeToString(iv, Base64.NO_WRAP)
+        val ctB64 = Base64.encodeToString(cipherBytes, Base64.NO_WRAP)
+        "$ivB64:$ctB64"
+    }.getOrNull()
+
+    private fun decryptRefreshToken(encoded: String): String = runCatching {
+        if (encoded.isBlank()) return ""
+        val parts = encoded.split(":", limit = 2)
+        if (parts.size != 2) return ""
+        val iv = Base64.decode(parts[0], Base64.NO_WRAP)
+        val cipherBytes = Base64.decode(parts[1], Base64.NO_WRAP)
+        val cipher = Cipher.getInstance(AES_GCM_TRANSFORMATION)
+        cipher.init(Cipher.DECRYPT_MODE, getOrCreateMasterKey(), GCMParameterSpec(128, iv))
+        String(cipher.doFinal(cipherBytes), Charsets.UTF_8)
+    }.getOrDefault("")
+
+    private fun storeRefreshTokenSecurely(token: String) {
+        if (!::secureAuthPrefs.isInitialized) return
+        if (token.isBlank()) {
+            secureAuthPrefs.edit().remove(KEY_ENCRYPTED_REFRESH_TOKEN).apply()
+        } else {
+            val encrypted = encryptRefreshToken(token)
+            if (!encrypted.isNullOrBlank()) {
+                secureAuthPrefs.edit().putString(KEY_ENCRYPTED_REFRESH_TOKEN, encrypted).apply()
+            }
+        }
+    }
+
+    private fun readRefreshTokenSecurely(): String {
+        if (!::secureAuthPrefs.isInitialized) return ""
+        val stored = secureAuthPrefs.getString(KEY_ENCRYPTED_REFRESH_TOKEN, null).orEmpty()
+        return decryptRefreshToken(stored)
+    }
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        secureAuthPrefs = context.getSharedPreferences(SECURE_AUTH_FILE, Context.MODE_PRIVATE)
         _theme.value = prefs.getString(KEY_THEME, null)
             ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.System
         // Monthly reminders are on by default, like the competition.
         _reminder.value = prefs.getString(KEY_REMINDER, null)
             ?.let { runCatching { ReminderFrequency.valueOf(it) }.getOrNull() } ?: ReminderFrequency.Monthly
 
+        // Migrate and purge any legacy plaintext refresh token keys from sweepr_prefs
+        val legacyToken = prefs.getString(KEY_LEGACY_LINKED_REFRESH_TOKEN, null)
+            ?.takeIf { it.isNotBlank() }
+            ?: prefs.getString(KEY_LEGACY_REFRESH_TOKEN, null)?.takeIf { it.isNotBlank() }
+        if (prefs.contains(KEY_LEGACY_LINKED_REFRESH_TOKEN) || prefs.contains(KEY_LEGACY_REFRESH_TOKEN)) {
+            prefs.edit()
+                .remove(KEY_LEGACY_LINKED_REFRESH_TOKEN)
+                .remove(KEY_LEGACY_REFRESH_TOKEN)
+                .apply()
+        }
+        if (legacyToken != null && readRefreshTokenSecurely().isBlank()) {
+            storeRefreshTokenSecurely(legacyToken)
+        }
+
         val deviceId = prefs.getString(KEY_DEVICE_ID, null)?.takeIf { it.isNotBlank() }
             ?: java.util.UUID.randomUUID().toString().also {
                 prefs.edit().putString(KEY_DEVICE_ID, it).apply()
             }
-        val expires = prefs.getLong(KEY_SERVER_EXPIRES, 0L)
+        val rawExpires = prefs.getLong(KEY_SERVER_EXPIRES, 0L)
+        val expiresSec = if (rawExpires > 10_000_000_000L) rawExpires / 1000L else rawExpires
         _account.value = LinkedAccount(
             accountId = prefs.getString(KEY_ACCOUNT_ID, "") ?: "",
             email = prefs.getString(KEY_ACCOUNT_EMAIL, "") ?: "",
-            refreshToken = prefs.getString(KEY_REFRESH_TOKEN, "") ?: "",
+            refreshToken = readRefreshTokenSecurely(),
             deviceId = deviceId,
             serverActive = prefs.getBoolean(KEY_SERVER_ACTIVE, false),
             plan = prefs.getString(KEY_SERVER_PLAN, null),
-            expiresAt = if (expires > 0L) expires else null,
+            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
         )
     }
 
@@ -106,13 +196,15 @@ object Prefs {
 
     fun setLinkedAccount(account: LinkedAccount) {
         _account.value = account
+        storeRefreshTokenSecurely(account.refreshToken)
         prefs.edit()
             .putString(KEY_ACCOUNT_ID, account.accountId)
             .putString(KEY_ACCOUNT_EMAIL, account.email)
-            .putString(KEY_REFRESH_TOKEN, account.refreshToken)
+            .remove(KEY_LEGACY_LINKED_REFRESH_TOKEN)
+            .remove(KEY_LEGACY_REFRESH_TOKEN)
             .putBoolean(KEY_SERVER_ACTIVE, account.serverActive)
             .putString(KEY_SERVER_PLAN, account.plan)
-            .putLong(KEY_SERVER_EXPIRES, account.expiresAt ?: 0L)
+            .putLong(KEY_SERVER_EXPIRES, account.expiresAt)
             .apply()
     }
 
@@ -140,7 +232,14 @@ object Prefs {
 }
 
 object SweeprAccountApi {
-    private fun postJson(path: String, body: org.json.JSONObject, method: String = "POST"): org.json.JSONObject {
+    class ApiException(val statusCode: Int, message: String) : IllegalStateException(message)
+
+    private fun postJson(
+        path: String,
+        body: org.json.JSONObject,
+        method: String = "POST",
+        bearerToken: String? = null,
+    ): org.json.JSONObject {
         val base = API_URL.trimEnd('/')
         val conn = (java.net.URL("$base$path").openConnection() as java.net.HttpURLConnection).apply {
             requestMethod = method
@@ -148,6 +247,9 @@ object SweeprAccountApi {
             readTimeout = 10_000
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Accept", "application/json")
+            if (!bearerToken.isNullOrBlank()) {
+                setRequestProperty("Authorization", "Bearer $bearerToken")
+            }
             doOutput = true
         }
         try {
@@ -158,7 +260,7 @@ object SweeprAccountApi {
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             val json = runCatching { org.json.JSONObject(text) }.getOrDefault(org.json.JSONObject())
             if (code !in 200..299) {
-                throw IllegalStateException(json.optString("error").ifBlank { "Request failed ($code)" })
+                throw ApiException(code, json.optString("error").ifBlank { "Request failed ($code)" })
             }
             return json
         } finally {
@@ -187,30 +289,38 @@ object SweeprAccountApi {
             deviceId = deviceId,
             serverActive = res.optBoolean("active", false),
             plan = res.optString("plan").takeIf { it.isNotBlank() },
-            expiresAt = if (expiresSec > 0L) expiresSec * 1000L else null,
+            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
         )
     }
 
     fun refreshEntitlement(current: LinkedAccount): LinkedAccount {
         if (!current.isSignedIn) return current
         val body = org.json.JSONObject()
-            .put("refresh_token", current.refreshToken)
             .put("device_id", current.deviceId)
-        val res = postJson("/v1/entitlement", body)
+            .put("device_type", "mobile")
+        val res = try {
+            postJson("/v1/entitlement", body, bearerToken = current.refreshToken)
+        } catch (e: ApiException) {
+            if (e.statusCode == 401 || e.statusCode == 403) {
+                return current.copy(serverActive = false, expiresAt = 0L)
+            }
+            throw e
+        }
+        val status = res.optString("status", "")
+        val isActive = res.optBoolean("active", status == "active" || status == "trialing")
         val expiresSec = res.optLong("expires_at", 0L)
         return current.copy(
             email = res.optString("email", current.email).ifBlank { current.email },
-            serverActive = res.optBoolean("active", false),
-            plan = res.optString("plan").takeIf { it.isNotBlank() },
-            expiresAt = if (expiresSec > 0L) expiresSec * 1000L else null,
+            serverActive = isActive,
+            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
+            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
         )
     }
 
     fun deleteAccount(current: LinkedAccount) {
         val body = org.json.JSONObject()
-            .put("refresh_token", current.refreshToken)
             .put("device_id", current.deviceId)
-        postJson("/v1/account", body, method = "DELETE")
+        postJson("/v1/account", body, method = "DELETE", bearerToken = current.refreshToken)
     }
 }
 

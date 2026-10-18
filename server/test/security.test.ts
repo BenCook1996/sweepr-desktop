@@ -340,6 +340,26 @@ test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and
   assert.equal(badPrefix.status, 400);
   const emailBreach = await post("/v1/breach-check/email", { email: "test@example.com" });
   assert.equal(emailBreach.status, 200);
+
+  // 6. OTP activity logs must never contain plaintext 6-digit OTP codes
+  await post("/api/portal-login", { email: "ref@example.com" });
+  const acts = repo.getActivities("acc_ref", 10);
+  for (const act of acts) {
+    assert.ok(!/\(\d{6}\)/.test(act.description ?? ""), "Activity description must not leak 6-digit OTP");
+    if (act.metadata_json) {
+      const meta = JSON.parse(act.metadata_json);
+      assert.equal(meta.code, undefined, "Activity metadata must not contain plaintext OTP code");
+    }
+  }
+
+  // 7. Referral apply requires active paid entitlement
+  const unpaid = await (await post("/v1/accounts", { device_id: "e".repeat(64) })).json();
+  const refUnpaidRes = await post(
+    "/v1/referral/apply",
+    { code },
+    { authorization: `Bearer ${unpaid.refresh_token}` }
+  );
+  assert.equal(refUnpaidRes.status, 402);
 });
 
 

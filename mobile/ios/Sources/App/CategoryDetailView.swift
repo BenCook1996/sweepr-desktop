@@ -68,6 +68,15 @@ struct CategorySwipeTriageView: View {
                         Text("\(formatByteCount(markedBytes)) marked for Trash.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        if !vm.selectedMediaIDs.isEmpty {
+                            Button("Move Marked to Trash") {
+                                guard vm.hasPremium else { vm.showingPaywall = true; return }
+                                Task { await vm.deleteSelectedMedia() }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.sweeprEmerald)
+                            .disabled(vm.isWorking)
+                        }
                         Button("Review Again") {
                             currentIndex = 0
                         }
@@ -477,6 +486,7 @@ struct DuplicateReviewView: View {
             }
             ToolbarItem(placement: .bottomBar) {
                 Button("Move Selected to Trash") {
+                    guard vm.hasPremium else { vm.showingPaywall = true; return }
                     Task { await vm.deleteSelectedMedia() }
                 }
                 .buttonStyle(.borderedProminent)
@@ -609,6 +619,7 @@ struct SimilarReviewView: View {
             }
             ToolbarItem(placement: .bottomBar) {
                 Button("Move Selected to Trash") {
+                    guard vm.hasPremium else { vm.showingPaywall = true; return }
                     Task { await vm.deleteSelectedMedia() }
                 }
                 .buttonStyle(.borderedProminent)
@@ -915,6 +926,7 @@ struct SingleMediaListView: View {
                     .disabled(items.isEmpty)
                     Spacer()
                     Button("Move Selected to Trash") {
+                        guard vm.hasPremium else { vm.showingPaywall = true; return }
                         Task { await vm.deleteSelectedMedia() }
                     }
                     .buttonStyle(.borderedProminent)
@@ -959,6 +971,7 @@ struct ContactsCleanerView: View {
             ToolbarItem(placement: .bottomBar) {
                 if selectedMode == 0 {
                     Button("Smart Merge Selected (\(vm.selectedContactGroupIDs.count))") {
+                        guard vm.hasPremium else { vm.showingPaywall = true; return }
                         Task { await vm.mergeSelectedContacts() }
                     }
                     .buttonStyle(.borderedProminent)
@@ -967,6 +980,7 @@ struct ContactsCleanerView: View {
                     .accessibilityLabel("Smart merge \(vm.selectedContactGroupIDs.count) duplicate contact groups")
                 } else if selectedMode == 1 {
                     Button("Delete Incomplete (\(vm.selectedIncompleteContactIDs.count))") {
+                        guard vm.hasPremium else { vm.showingPaywall = true; return }
                         Task { await vm.deleteSelectedIncompleteContacts() }
                     }
                     .buttonStyle(.borderedProminent)
@@ -975,6 +989,7 @@ struct ContactsCleanerView: View {
                     .accessibilityLabel("Delete \(vm.selectedIncompleteContactIDs.count) incomplete contacts")
                 } else {
                     Button("Delete Old Events (\(vm.selectedCalendarEventIDs.count))") {
+                        guard vm.hasPremium else { vm.showingPaywall = true; return }
                         Task { await vm.deleteSelectedCalendarEvents() }
                     }
                     .buttonStyle(.borderedProminent)

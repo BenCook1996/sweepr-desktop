@@ -140,8 +140,7 @@ export const api = {
   ) => invoke<number>("clean_browser_privacy", { browsers, clearCache, clearCookies, clearHistory }),
   checkPasswordBreach: (password: string) => invoke<number>("check_password_breach", { password }),
   checkAppUpdate: () => invoke<AppUpdateInfo>("check_app_update"),
-  installAppUpdate: (downloadUrl?: string) =>
-    invoke<void>("install_app_update", { downloadUrl: downloadUrl ?? null }),
+  installAppUpdate: () => invoke<string>("install_app_update"),
   sendSupportReport: (email: string, subject: string, message: string) =>
     invoke<void>("send_support_report", { email, subject, message }),
   shredFile: (path: string, passes?: number) => invoke<number>("shred_file", { path, passes: passes ?? null }),

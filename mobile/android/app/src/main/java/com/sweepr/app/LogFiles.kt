@@ -85,18 +85,26 @@ object LogFiles {
         }
     }.getOrElse { "Couldn't read log: ${it.message}" }
 
-    /** Billing secrets that must never end up in a support email. */
+    /** Billing and auth secrets that must never end up in a support email. */
+    private val SENSITIVE_LOG_PATTERN = Regex(
+        "(\"refresh_token\"\\s*:\\s*\")[^\"]+(\")|(\"token\"\\s*:\\s*\")[^\"]+(\")|(\"code\"\\s*:\\s*\")[^\"]+(\")",
+        RegexOption.IGNORE_CASE,
+    )
     private val SENSITIVE_LINE = Regex(
         "purchase_?token|receipt|signature|originalJson|order_?id|GPA\\.\\d|Bearer\\s|Authorization",
         RegexOption.IGNORE_CASE,
     )
     private val TOKEN_VALUE = Regex(
-        "((?:[A-Za-z_]*token|receipt|signature)\\s*[=:]\\s*\"?)[^\\s\",;}]+",
+        "((?:[A-Za-z_]*token|receipt|signature|code)\\s*[=:]\\s*\"?)[^\\s\",;}]+",
         RegexOption.IGNORE_CASE,
     )
 
     private fun redact(line: String): String {
-        val masked = TOKEN_VALUE.replace(line) { "${it.groupValues[1]}[REDACTED]" }
+        val jsonMasked = SENSITIVE_LOG_PATTERN.replace(line) { match ->
+            val keyPart = match.value.substringBefore(":")
+            "$keyPart:\"[REDACTED]\""
+        }
+        val masked = TOKEN_VALUE.replace(jsonMasked) { "${it.groupValues[1]}[REDACTED]" }
         return if (SENSITIVE_LINE.containsMatchIn(masked)) "[line redacted: billing data]" else masked
     }
 

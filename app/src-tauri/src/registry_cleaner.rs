@@ -195,7 +195,7 @@ fn try_create_restore_point() {
         return;
     }
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    let _ = std::process::Command::new("powershell.exe")
+    let _ = std::process::Command::new(crate::safety::system_powershell_path())
         .args([
             "-NoProfile",
             "-NonInteractive",

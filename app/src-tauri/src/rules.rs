@@ -31,20 +31,20 @@ pub struct Rule {
     pub free: bool,
 }
 
-struct Spec {
-    id: &'static str,
-    name: &'static str,
-    description: &'static str,
-    group: Group,
-    base: Base,
-    patterns: &'static [&'static str],
-    min_age_hours: u64,
-    free: bool,
+pub struct Spec {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub group: Group,
+    pub base: Base,
+    pub patterns: &'static [&'static str],
+    pub min_age_hours: u64,
+    pub free: bool,
 }
 
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
-enum Base {
+pub enum Base {
     Downloads,
     Home,
     Temp,
@@ -54,7 +54,7 @@ enum Base {
 }
 
 impl Base {
-    fn resolve(self) -> Option<PathBuf> {
+    pub fn resolve(self) -> Option<PathBuf> {
         match self {
             Base::Home => dirs::home_dir(),
             Base::Downloads => dirs::download_dir(),
@@ -191,6 +191,10 @@ fn specs() -> Vec<Spec> {
         Spec { id: "duplicates", name: "Duplicate Files", description: "Identical copies of files, photos, documents, and installers across your device. The original copy is always preserved.", group: Group::System, base: UserFolders, patterns: &[""], min_age_hours: 0, free: false },
         Spec { id: "dev_caches", name: "Developer package & build caches", description: "npm, Gradle and Cargo download caches.", group: Group::Developer, base: Home, patterns: &[".npm/_cacache", ".gradle/caches", ".cargo/registry/cache"], min_age_hours: 0, free: false },
     ]
+}
+
+pub fn all_specs() -> Vec<Spec> {
+    specs()
 }
 
 /// Resolve all rules for the current OS. Called per scan so new browser
