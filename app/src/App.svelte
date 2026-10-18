@@ -93,11 +93,28 @@
     return () => window.removeEventListener(ACTIVATE_EVENT, open);
   });
 
+  let showSettingsMenu = $state(false);
+
+  // Close settings dropdown on outside click or Escape
+  $effect(() => {
+    const onDocClick = () => {
+      if (showSettingsMenu) showSettingsMenu = false;
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showSettingsMenu) showSettingsMenu = false;
+    };
+    window.addEventListener("click", onDocClick);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("click", onDocClick);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  });
+
   const tabs: { id: Tab; key: string; icon: string }[] = [
     { id: "cleaner", key: "nav.cleaner", icon: "M4 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zM14 6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V6zM4 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2zM14 16a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2z" },
     { id: "schedule", key: "nav.schedule", icon: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 5v5l3.5 2" },
     { id: "optimization", key: "nav.optimization", icon: "M13 2L3 14h9l-1 8 10-12h-9l1-8z" },
-    { id: "account", key: "nav.account", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
   ];
 </script>
 
@@ -164,27 +181,99 @@
         onchange={(e) => setLang((e.currentTarget as HTMLSelectElement).value as Lang)}
       >
         {#each LANGUAGES as l}
-          <option value={l.code}>{l.code.toUpperCase()} · {l.label}</option>
+          <option value={l.code}>{l.region} - {l.code.toUpperCase()}</option>
         {/each}
       </select>
-
-      <button
-        class="theme-toggle-btn"
-        onclick={toggleTheme}
-        aria-label={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
-        title={`Theme: ${theme === "dark" ? "Dark" : "Light"}`}
-      >
-        {theme === "dark" ? t("theme.dark", $lang) : t("theme.light", $lang)}
-      </button>
 
       {#if license?.active}
         <span class="tier-badge pro">{license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : t("tier.pro", $lang)}</span>
       {:else}
-        <button class="key-icon-btn" onclick={() => (showActivateModal = true)} title="Activate SWEEPR Cleaner License" aria-label="Activate SWEEPR Cleaner License">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9l-1.5-1.5L5 9a7 7 0 1 0 10 10l2-2m-2-2l2-2m-2-2l2-2"/></svg>
-        </button>
         <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>{t("tier.free", $lang)}</button>
       {/if}
+
+      <div class="settings-menu-wrap" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="presentation">
+        <button
+          class="gear-icon-btn"
+          class:active={showSettingsMenu || tab === "account"}
+          onclick={() => (showSettingsMenu = !showSettingsMenu)}
+          title="Settings & Account"
+          aria-label="Settings & Account"
+          aria-expanded={showSettingsMenu}
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+
+        {#if showSettingsMenu}
+          <div class="settings-dropdown" role="menu">
+            <button
+              class="dropdown-item"
+              class:active={tab === "account"}
+              role="menuitem"
+              onclick={() => {
+                tab = "account";
+                showSettingsMenu = false;
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>{t("nav.account", $lang)}</span>
+            </button>
+
+            <div class="dropdown-row">
+              <span class="dropdown-row-label">Theme</span>
+              <button
+                class="theme-icon-switch"
+                onclick={toggleTheme}
+                aria-label={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
+                title={`Switch to ${theme === "dark" ? "Light" : "Dark"} mode`}
+              >
+                <span class="theme-icon-pill" class:active={theme === "light"} aria-hidden="true">
+                  <!-- Sun icon -->
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                </span>
+                <span class="theme-icon-pill" class:active={theme === "dark"} aria-hidden="true">
+                  <!-- Moon icon -->
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+
+            {#if !license?.active}
+              <div class="dropdown-divider"></div>
+              <button
+                class="dropdown-item activate-item"
+                role="menuitem"
+                onclick={() => {
+                  showActivateModal = true;
+                  showSettingsMenu = false;
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9l-1.5-1.5L5 9a7 7 0 1 0 10 10l2-2m-2-2l2-2m-2-2l2-2" />
+                </svg>
+                <span>{t("action.activate", $lang)}</span>
+              </button>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </div>
   </header>
 
@@ -300,6 +389,10 @@
     gap: 2px;
     flex-shrink: 1;
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
   }
 
   button.nav-tab {
@@ -352,15 +445,130 @@
     outline: none;
   }
 
-  .theme-toggle-btn {
-    font-size: 11.5px;
+  .settings-menu-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .gear-icon-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: none;
+    transition: all 0.15s ease-in-out;
+  }
+  .gear-icon-btn:hover,
+  .gear-icon-btn.active {
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.12);
+    transform: none;
+  }
+
+  .settings-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 220px;
+    background: var(--panel-solid, #ffffff);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 120;
+  }
+
+  .dropdown-item {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    padding: 8px 11px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
     font-weight: 600;
-    padding: 4px 12px;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .dropdown-item:hover {
+    background: var(--panel-2);
+    transform: none;
+  }
+  .dropdown-item.active {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857;
+  }
+  .dropdown-item.activate-item {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.1);
+  }
+  .dropdown-item.activate-item:hover {
+    background: rgba(16, 185, 129, 0.18);
+  }
+
+  .dropdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 11px;
+    border-radius: 9px;
+  }
+  .dropdown-row-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .theme-icon-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
     border-radius: 9999px;
     border: 1px solid var(--border);
     background: var(--panel-2);
-    color: var(--text);
+    cursor: pointer;
     box-shadow: none;
+  }
+  .theme-icon-switch:hover {
+    border-color: rgba(16, 185, 129, 0.45);
+    transform: none;
+  }
+  .theme-icon-pill {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    transition: all 0.15s ease;
+  }
+  .theme-icon-pill.active {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  }
+
+  .dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2px 4px;
   }
 
   :global(:root[data-theme="dark"]) .top-nav {
@@ -372,25 +580,16 @@
   :global(:root[data-theme="dark"]) button.nav-tab.active svg {
     stroke: #34d399;
   }
+  :global(:root[data-theme="dark"]) .gear-icon-btn:hover,
+  :global(:root[data-theme="dark"]) .gear-icon-btn.active,
+  :global(:root[data-theme="dark"]) .dropdown-item.active,
+  :global(:root[data-theme="dark"]) .dropdown-item.activate-item {
+    color: #34d399;
+  }
+  :global(:root[data-theme="dark"]) .settings-dropdown {
+    background: #1e293b;
+  }
 
-  .key-icon-btn {
-    background: rgba(241, 245, 249, 0.8);
-    border: 1px solid var(--border);
-    color: #475569;
-    padding: 5px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    box-shadow: none;
-    transition: all 0.2s;
-  }
-  .key-icon-btn:hover {
-    background: #ffffff;
-    color: var(--accent);
-    border-color: var(--accent);
-    transform: scale(1.05);
-  }
   .tier-badge.clickable {
     cursor: pointer;
     border: none;

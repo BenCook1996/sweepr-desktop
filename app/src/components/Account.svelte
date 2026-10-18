@@ -31,13 +31,6 @@
   let updateInfo = $state<AppUpdateInfo | null>(null);
   let checkingUpdate = $state(false);
 
-  // Support Report Form (#6)
-  let supportEmail = $state("");
-  let supportSubject = $state("");
-  let supportMessage = $state("");
-  let sendingSupport = $state(false);
-  let supportSuccess = $state<string | null>(null);
-
   $effect(() => {
     stats = getLifetimeStats();
     const cb = () => (stats = getLifetimeStats());
@@ -138,30 +131,6 @@
       error = errorMessage(e);
     } finally {
       checkingUpdate = false;
-    }
-  }
-
-  async function submitSupportReport() {
-    error = null;
-    supportSuccess = null;
-    if (!supportEmail.trim() || !supportMessage.trim()) {
-      error = "Please enter your email and a description of the issue.";
-      return;
-    }
-    sendingSupport = true;
-    try {
-      await api.sendSupportReport(
-        supportEmail.trim(),
-        supportSubject.trim() || "SWEEPR Cleaner Desktop Support Report",
-        supportMessage.trim()
-      );
-      supportMessage = "";
-      supportSubject = "";
-      supportSuccess = "Support report sent with system diagnostic summary.";
-    } catch (e) {
-      error = errorMessage(e);
-    } finally {
-      sendingSupport = false;
     }
   }
 
@@ -312,46 +281,6 @@
         {/if}
       </div>
     {/if}
-  </div>
-
-  <!-- Support & Diagnostic Report (#6) -->
-  <div class="card box" style="grid-column: 1 / -1;">
-    <div class="row">
-      <strong>Send Support & Diagnostic Report</strong>
-      <div class="spacer"></div>
-      <span class="muted small">Support team response within 24h</span>
-    </div>
-    <div class="row" style="gap: 10px; flex-wrap: wrap;">
-      <input
-        type="email"
-        bind:value={supportEmail}
-        placeholder="Your email address"
-        aria-label="Support email address"
-        style="flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);"
-      />
-      <input
-        type="text"
-        bind:value={supportSubject}
-        placeholder="Subject (optional)"
-        aria-label="Support subject"
-        style="flex: 1; min-width: 200px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);"
-      />
-    </div>
-    <textarea
-      bind:value={supportMessage}
-      rows="3"
-      placeholder="Describe your question or issue…"
-      aria-label="Support message"
-      style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; resize: vertical;"
-    ></textarea>
-    <div class="row">
-      <button class="primary" disabled={sendingSupport} onclick={submitSupportReport}>
-        {sendingSupport ? "Sending…" : "Send Support Report"}
-      </button>
-      {#if supportSuccess}
-        <span class="small" style="color: var(--accent);">{supportSuccess}</span>
-      {/if}
-    </div>
   </div>
 </div>
 
