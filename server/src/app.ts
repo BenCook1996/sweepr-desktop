@@ -81,6 +81,10 @@ export interface AppDeps {
       gscServiceAccountJson?: string;
       googleApiKey?: string;
       openPageRankApiKey?: string;
+      dataForSeoLogin?: string;
+      dataForSeoPassword?: string;
+      dataForSeoLocationCode?: number;
+      dataForSeoLanguageCode?: string;
     };
   };
   now?: () => number;
@@ -365,7 +369,7 @@ export function createApp(deps: AppDeps) {
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
-  type Platform = "android" | "ios" | "windows" | "mac" | "linux";
+  type Platform = "windows" | "mac" | "linux";
 
   const DESKTOP_FILES: Record<"windows" | "mac" | "linux", { file: string; type: string; label: string }> = {
     windows: { file: "SWEEPRCleaner.exe", type: "application/vnd.microsoft.portable-executable", label: "Windows" },
@@ -375,9 +379,7 @@ export function createApp(deps: AppDeps) {
 
   /** Order matters: Android and ChromeOS user agents also contain "Linux". */
   const detectPlatform = (ua: string): Platform | null => {
-    if (/android/.test(ua)) return "android";
-    if (/iphone|ipad|ipod/.test(ua)) return "ios";
-    if (/cros/.test(ua)) return "android"; // Chromebooks run Android apps from Google Play
+    if (/android|iphone|ipad|ipod|cros/.test(ua)) return null;
     if (/windows/.test(ua)) return "windows";
     if (/macintosh|mac os x/.test(ua)) return "mac";
     if (/linux|x11/.test(ua)) return "linux";
@@ -390,9 +392,7 @@ export function createApp(deps: AppDeps) {
     const links =
       btn("/download?platform=windows", "Windows") +
       btn("/download?platform=mac", "Mac") +
-      btn("/download?platform=linux", "Linux") +
-      btn("/download?platform=android", "Android") +
-      btn("/download?platform=ios", "iPhone &amp; iPad");
+      btn("/download?platform=linux", "Linux");
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
@@ -414,29 +414,13 @@ export function createApp(deps: AppDeps) {
   app.get("/download", (c) => {
     const ua = c.req.header("user-agent")?.toLowerCase() || "";
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
-    const requested = c.req.query("platform")?.toLowerCase() as Platform | undefined;
-    const platform = requested && ["android", "ios", "windows", "mac", "linux"].includes(requested)
+    const requested = c.req.query("platform")?.toLowerCase();
+    const platform: Platform | null = requested && (requested === "windows" || requested === "mac" || requested === "linux")
       ? requested
       : detectPlatform(ua);
 
     if (!platform) {
-      return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device:"));
-    }
-
-    // Mobile: send to the store listing once it's live; until then, serve the APK directly on Android.
-    if (platform === "android") {
-      const playUrl = process.env.PLAY_STORE_URL;
-      if (playUrl) return c.redirect(playUrl);
-      const apk = "./public/Sweepr.apk";
-      if (existsSync(apk)) {
-        return streamFile(apk, "application/vnd.android.package-archive", "Sweepr.apk");
-      }
-      return c.html(pickerPage("Android App Coming Soon", "SWEEPR Cleaner for Android will be on Google Play very soon. In the meantime you can get the desktop version:"));
-    }
-    if (platform === "ios") {
-      const appStoreUrl = process.env.APP_STORE_URL;
-      if (appStoreUrl) return c.redirect(appStoreUrl);
-      return c.html(pickerPage("iPhone App Coming Soon", "SWEEPR Cleaner for iPhone and iPad is on the way. In the meantime you can get the desktop version:"));
+      return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your desktop platform:"));
     }
 
     const { file, type, label } = DESKTOP_FILES[platform];

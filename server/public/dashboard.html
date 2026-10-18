@@ -97,7 +97,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="glass-card p-6 bg-white shadow-sm rounded-2xl border border-gray-100">
           <h3 class="font-bold text-lg mb-4">Linked Devices</h3>
-          <p class="text-sm text-gray-500 mb-4">You can link up to 3 PCs and 2 mobile devices.</p>
+          <p class="text-sm text-gray-500 mb-4">You can link up to 3 Desktop PCs on your license.</p>
           <ul id="deviceList" class="space-y-3">
             <!-- Populated by JS -->
           </ul>
@@ -186,7 +186,7 @@
               <div class="flex items-center gap-3">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 <div>
-                  <div class="text-sm font-semibold text-gray-800">${d.type === 'mobile' ? 'Mobile Device' : 'Windows PC'}</div>
+                  <div class="text-sm font-semibold text-gray-800">Windows PC</div>
                   <div class="text-xs text-gray-400 font-mono">${escapeHtml(String(d.id ?? '').substring(0, 12))}...</div>
                 </div>
               </div>

@@ -109,7 +109,7 @@
           <ul>
             <li>DeepClean system, browser &amp; messenger caches + 7-day Quarantine rollback</li>
             <li>RAM Purge, 1-Click Gaming Boost, Context Menu Manager, Winget Updater &amp; SSD Shredder</li>
-            <li>Covers up to 3 Desktop PCs + 2 Mobile devices (14-day money-back guarantee)</li>
+            <li>Covers up to 3 Desktop PCs (14-day money-back guarantee)</li>
           </ul>
         </div>
 
