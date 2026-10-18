@@ -252,3 +252,46 @@ test("CRM: one-click make myself a paid user", async () => {
   assert.equal(data.customer.entitlement.status, "active");
   assert.equal(data.customer.account.lifecycle_stage, "customer");
 });
+
+test("CRM: outreach log seeding, filtering, and CRUD", async () => {
+  const { get, post, patch, app } = setup();
+
+  // 1. Auto-seeds the 256 outreach entries on first GET
+  const listRes = await get("/api/crm/outreach?limit=500");
+  assert.equal(listRes.status, 200);
+  const listData = await listRes.json();
+  assert.equal(listData.counts.total, 256);
+  assert.ok(listData.counts.emailCount >= 245);
+  assert.ok(listData.counts.portalCount >= 4);
+  assert.equal(listData.logs.length, 256);
+
+  // 2. Filter by portal
+  const portalRes = await get("/api/crm/outreach?filter=portal");
+  const portalData = await portalRes.json();
+  assert.equal(portalData.logs.length, listData.counts.portalCount);
+
+  // 3. Add a new outreach entry
+  const addRes = await post("/api/crm/outreach", {
+    who: "editor@techradar.com",
+    website: "techradar.com",
+    url: "https://techradar.com",
+    how: "Email (Gmail SMTP — Live Scraped)",
+    category: "DR 92 Tech Publication",
+    status: "delivered",
+  });
+  assert.equal(addRes.status, 200);
+  const addData = await addRes.json();
+  assert.equal(addData.ok, true);
+  assert.equal(addData.entry.who, "editor@techradar.com");
+
+  // 4. Update status to listed
+  const patchRes = await patch(`/api/crm/outreach/${addData.entry.id}`, { status: "listed" });
+  assert.equal(patchRes.status, 200);
+
+  // 5. Delete entry
+  const delRes = await app.request(`/api/crm/outreach/${addData.entry.id}`, {
+    method: "DELETE",
+    headers: { authorization: ADMIN_AUTH },
+  });
+  assert.equal(delRes.status, 200);
+});

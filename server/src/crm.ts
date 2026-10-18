@@ -1002,5 +1002,81 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     return c.json({ ok: true, message: "Demo CRM data successfully seeded", stats: repo.getCrmStats() });
   });
 
+  // 15. Outreach & Directory Submissions Log
+  let outreachSeedChecked = false;
+  function ensureOutreachSeeded() {
+    if (outreachSeedChecked) return;
+    outreachSeedChecked = true;
+    try {
+      const candidates = [
+        join(process.cwd(), "src", "outreach-seed.json"),
+        join(process.cwd(), "dist", "outreach-seed.json"),
+      ];
+      for (const p of candidates) {
+        if (existsSync(p)) {
+          const data = JSON.parse(readFileSync(p, "utf8"));
+          if (Array.isArray(data) && data.length > 0) {
+            repo.seedOutreachLogs(data);
+          }
+          break;
+        }
+      }
+    } catch (e) {
+      console.warn("[crm] failed to seed outreach logs:", e);
+    }
+  }
+
+  router.get("/outreach", (c) => {
+    ensureOutreachSeeded();
+    const search = c.req.query("search") || undefined;
+    const filter = c.req.query("filter") || undefined;
+    const limit = Math.min(Number(c.req.query("limit") || 500), 1000);
+    const offset = Math.max(Number(c.req.query("offset") || 0), 0);
+    return c.json(repo.listOutreachLogs({ search, filter, limit, offset }));
+  });
+
+  router.post("/outreach", async (c) => {
+    ensureOutreachSeeded();
+    const body = await c.req.json().catch(() => ({}));
+    if (!body.who || !body.website) {
+      return c.json({ error: "Both 'who' (recipient/contact) and 'website' are required" }, 400);
+    }
+    const item = repo.addOutreachLog({
+      who: body.who,
+      website: body.website,
+      url: body.url,
+      how: body.how || "Email (Gmail SMTP)",
+      category: body.category || null,
+      status: body.status || "delivered",
+      message_id: body.message_id || null,
+      reached_out_at: body.reached_out_at ? Number(body.reached_out_at) : now(),
+    });
+    return c.json({ ok: true, item, entry: item });
+  });
+
+  router.patch("/outreach/:id", async (c) => {
+    ensureOutreachSeeded();
+    const id = Number(c.req.param("id"));
+    if (!id) return c.json({ error: "Invalid outreach ID" }, 400);
+    const body = await c.req.json().catch(() => ({}));
+    const updated = repo.updateOutreachLog(id, {
+      status: body.status,
+      category: body.category,
+      who: body.who,
+      how: body.how,
+    });
+    if (!updated) return c.json({ error: "Outreach entry not found" }, 404);
+    return c.json({ ok: true, item: updated });
+  });
+
+  router.delete("/outreach/:id", (c) => {
+    ensureOutreachSeeded();
+    const id = Number(c.req.param("id"));
+    if (!id) return c.json({ error: "Invalid outreach ID" }, 400);
+    const deleted = repo.deleteOutreachLog(id);
+    if (!deleted) return c.json({ error: "Outreach entry not found" }, 404);
+    return c.json({ ok: true });
+  });
+
   return router;
 }

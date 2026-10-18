@@ -54,6 +54,18 @@ export interface SupportTicketRecord {
   created_at: number;
 }
 
+export interface OutreachLogRecord {
+  id: number;
+  who: string;
+  website: string;
+  url: string;
+  how: string;
+  category: string | null;
+  status: string;
+  message_id: string | null;
+  reached_out_at: number;
+}
+
 export interface Entitlement {
   account_id: string;
   stripe_subscription_id: string | null;
@@ -285,6 +297,17 @@ export function openDb(path: string) {
       logs TEXT,
       status TEXT DEFAULT 'open',
       created_at INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS outreach_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      who TEXT NOT NULL,
+      website TEXT NOT NULL,
+      url TEXT NOT NULL,
+      how TEXT NOT NULL,
+      category TEXT,
+      status TEXT NOT NULL DEFAULT 'delivered',
+      message_id TEXT,
+      reached_out_at INTEGER NOT NULL
     );
   `);
 
@@ -546,7 +569,7 @@ export class Repo {
 
     // Also mirror to subscriptions table for CRM subscription history
     const subId = e.stripe_subscription_id || `sub_${e.account_id}`;
-    const amount = e.plan === "annual" ? 4999 : e.plan === "six_month" ? 3899 : 999;
+    const amount = e.plan === "annual" ? 6499 : e.plan === "six_month" ? 4799 : 1199;
     this.upsertSubscription({
       id: subId,
       account_id: e.account_id,
@@ -1090,5 +1113,152 @@ export class Repo {
 
   unmarkEvent(eventId: string) {
     this.db.prepare("DELETE FROM processed_events WHERE id = ?").run(eventId);
+  }
+
+  seedOutreachLogs(seedItems: Array<{
+    who: string;
+    website: string;
+    url: string;
+    how: string;
+    category?: string | null;
+    status?: string;
+    message_id?: string | null;
+    reached_out_at?: number;
+  }>): number {
+    const countRow = this.db.prepare("SELECT COUNT(*) as c FROM outreach_logs").get() as { c: number };
+    if (Number(countRow?.c || 0) > 0) return 0;
+
+    const stmt = this.db.prepare(`
+      INSERT INTO outreach_logs (who, website, url, how, category, status, message_id, reached_out_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    let inserted = 0;
+    const t = now();
+    for (const item of seedItems) {
+      stmt.run(
+        String(item.who || "").trim(),
+        String(item.website || "").trim(),
+        String(item.url || "").trim(),
+        String(item.how || "Email (Gmail SMTP)").trim(),
+        item.category ? String(item.category).trim() : null,
+        String(item.status || "delivered").trim(),
+        item.message_id ? String(item.message_id).trim() : null,
+        item.reached_out_at ? Number(item.reached_out_at) : t
+      );
+      inserted++;
+    }
+    return inserted;
+  }
+
+  listOutreachLogs(opts: { search?: string; filter?: string; limit?: number; offset?: number } = {}) {
+    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 1000);
+    const offset = Math.max(Number(opts.offset || 0), 0);
+    const clauses: string[] = [];
+    const params: any[] = [];
+
+    if (opts.filter && opts.filter !== "all") {
+      if (opts.filter === "email") {
+        clauses.push("LOWER(how) LIKE '%email%'");
+      } else if (opts.filter === "portal") {
+        clauses.push("LOWER(how) LIKE '%portal%'");
+      } else if (opts.filter === "listed") {
+        clauses.push("status IN ('listed', 'replied')");
+      } else {
+        clauses.push("status = ?");
+        params.push(opts.filter);
+      }
+    }
+
+    if (opts.search && opts.search.trim()) {
+      const q = `%${opts.search.trim().toLowerCase()}%`;
+      clauses.push("(LOWER(who) LIKE ? OR LOWER(website) LIKE ? OR LOWER(how) LIKE ? OR LOWER( COALESCE(category, '') ) LIKE ?)");
+      params.push(q, q, q, q);
+    }
+
+    const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const items = this.db
+      .prepare(`SELECT * FROM outreach_logs ${whereSql} ORDER BY reached_out_at DESC, id DESC LIMIT ? OFFSET ?`)
+      .all(...params, limit, offset) as unknown as OutreachLogRecord[];
+
+    const totalRow = this.db
+      .prepare(`SELECT COUNT(*) as c FROM outreach_logs ${whereSql}`)
+      .get(...params) as { c: number };
+
+    const statsRow = this.db
+      .prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN LOWER(how) LIKE '%email%' THEN 1 ELSE 0 END) as emailCount,
+          SUM(CASE WHEN LOWER(how) LIKE '%portal%' THEN 1 ELSE 0 END) as portalCount,
+          SUM(CASE WHEN status IN ('listed', 'replied') THEN 1 ELSE 0 END) as listedCount
+        FROM outreach_logs
+      `)
+      .get() as { total: number; emailCount: number; portalCount: number; listedCount: number };
+
+    const counts = {
+      total: Number(statsRow?.total || 0),
+      emailCount: Number(statsRow?.emailCount || 0),
+      portalCount: Number(statsRow?.portalCount || 0),
+      listedCount: Number(statsRow?.listedCount || 0),
+    };
+
+    return {
+      items,
+      logs: items,
+      total: Number(totalRow?.c || 0),
+      stats: counts,
+      counts,
+    };
+  }
+
+  addOutreachLog(item: {
+    who: string;
+    website: string;
+    url?: string;
+    how: string;
+    category?: string | null;
+    status?: string;
+    message_id?: string | null;
+    reached_out_at?: number;
+  }): OutreachLogRecord {
+    const who = String(item.who || "").trim().slice(0, 250);
+    const website = String(item.website || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "").slice(0, 200);
+    const url = String(item.url || `https://${website}`).trim().slice(0, 300);
+    const how = String(item.how || "Email (Gmail SMTP)").trim().slice(0, 150);
+    const category = item.category ? String(item.category).trim().slice(0, 400) : null;
+    const status = String(item.status || "delivered").trim().slice(0, 40);
+    const message_id = item.message_id ? String(item.message_id).trim().slice(0, 200) : null;
+    const reached_out_at = item.reached_out_at ? Number(item.reached_out_at) : now();
+
+    const res = this.db
+      .prepare(`
+        INSERT INTO outreach_logs (who, website, url, how, category, status, message_id, reached_out_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .run(who, website, url, how, category, status, message_id, reached_out_at);
+
+    return this.db
+      .prepare("SELECT * FROM outreach_logs WHERE id = ?")
+      .get(Number(res.lastInsertRowid)) as unknown as OutreachLogRecord;
+  }
+
+  updateOutreachLog(id: number, patch: { status?: string; category?: string; who?: string; how?: string }): OutreachLogRecord | undefined {
+    const existing = this.db.prepare("SELECT * FROM outreach_logs WHERE id = ?").get(id) as OutreachLogRecord | undefined;
+    if (!existing) return undefined;
+    const status = patch.status !== undefined ? String(patch.status).trim().slice(0, 40) : existing.status;
+    const category = patch.category !== undefined ? String(patch.category).trim().slice(0, 400) : existing.category;
+    const who = patch.who !== undefined ? String(patch.who).trim().slice(0, 250) : existing.who;
+    const how = patch.how !== undefined ? String(patch.how).trim().slice(0, 150) : existing.how;
+
+    this.db
+      .prepare("UPDATE outreach_logs SET status = ?, category = ?, who = ?, how = ? WHERE id = ?")
+      .run(status, category, who, how, id);
+
+    return this.db.prepare("SELECT * FROM outreach_logs WHERE id = ?").get(id) as unknown as OutreachLogRecord;
+  }
+
+  deleteOutreachLog(id: number): boolean {
+    const res = this.db.prepare("DELETE FROM outreach_logs WHERE id = ?").run(id);
+    return Number(res.changes) > 0;
   }
 }

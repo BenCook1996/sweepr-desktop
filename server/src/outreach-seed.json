@@ -1,0 +1,2562 @@
+[
+  {
+    "who": "AlternativeTo Editorial & Directory",
+    "website": "alternativeto.net",
+    "url": "https://alternativeto.net",
+    "how": "Web Portal Submission",
+    "category": "Tagged as alternative to CCleaner, BleachBit, CleanMyPC (DR 88)",
+    "status": "submitted",
+    "message_id": "portal-alternativeto",
+    "reached_out_at": 1792332600
+  },
+  {
+    "who": "SaaSHub Directory (Verified Domain)",
+    "website": "saashub.com",
+    "url": "https://www.saashub.com",
+    "how": "Web Portal + Domain Email Verification",
+    "category": "Verified via support@sweeprcleaner.com + 6 Q&A Answers (DR 78)",
+    "status": "listed",
+    "message_id": "portal-saashub",
+    "reached_out_at": 1792334100
+  },
+  {
+    "who": "SourceForge Vendor Portal",
+    "website": "sourceforge.net",
+    "url": "https://sourceforge.net",
+    "how": "Web Portal Submission",
+    "category": "Registered Vendor & Product Page under System Maintenance (DR 93)",
+    "status": "submitted",
+    "message_id": "portal-sourceforge",
+    "reached_out_at": 1792335120
+  },
+  {
+    "who": "tim@majorgeeks.com, jim@majorgeeks.com",
+    "website": "majorgeeks.com",
+    "url": "https://www.majorgeeks.com",
+    "how": "Email (Direct Editorial + PAD XML)",
+    "category": "Drive Cleaners / All-In-One Suites submission (DR 81)",
+    "status": "delivered",
+    "message_id": "manual-majorgeeks",
+    "reached_out_at": 1792335360
+  },
+  {
+    "who": "Product Hunt Launch Team",
+    "website": "producthunt.com",
+    "url": "https://www.producthunt.com",
+    "how": "Web Portal Submission",
+    "category": "Product Launch: 5MB native Rust PC cleaner (DR 91)",
+    "status": "submitted",
+    "message_id": "portal-producthunt",
+    "reached_out_at": 1792335660
+  },
+  {
+    "who": "Alternative.me Directory Team",
+    "website": "alternative.me",
+    "url": "https://alternative.me",
+    "how": "Web Portal Submission",
+    "category": "Submitted as alternative to CCleaner & BleachBit (DR 74)",
+    "status": "submitted",
+    "message_id": "portal-alternativeme",
+    "reached_out_at": 1792335900
+  },
+  {
+    "who": "editorial@filepuma.com",
+    "website": "filepuma.com",
+    "url": "https://filepuma.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Software Directory & Review Submission (SWEEPR Cleaner v0.1.0)",
+    "status": "delivered",
+    "message_id": "<2df87985-aaa6-c24c-f7e2-8613b9de40bc@gmail.com>",
+    "reached_out_at": 1792336292
+  },
+  {
+    "who": "info@filehorse.com",
+    "website": "filehorse.com",
+    "url": "https://filehorse.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Software Directory & Review Submission (SWEEPR Cleaner v0.1.0)",
+    "status": "delivered",
+    "message_id": "<84d46f7e-9e6b-7741-3518-e65821b2490e@gmail.com>",
+    "reached_out_at": 1792336294
+  },
+  {
+    "who": "webmaster@softpedia.com",
+    "website": "softpedia.com",
+    "url": "https://softpedia.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Software Directory & Review Submission (SWEEPR Cleaner v0.1.0)",
+    "status": "delivered",
+    "message_id": "<fb52a483-86f8-034e-26c4-ce32449985b4@gmail.com>",
+    "reached_out_at": 1792336296
+  },
+  {
+    "who": "submissions@betanews.com",
+    "website": "betanews.com",
+    "url": "https://betanews.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Software Directory & Review Submission (SWEEPR Cleaner v0.1.0)",
+    "status": "delivered",
+    "message_id": "<b8c927d6-558f-2e91-a985-24a487a49217@gmail.com>",
+    "reached_out_at": 1792336358
+  },
+  {
+    "who": "downloads@chip.de",
+    "website": "chip.de",
+    "url": "https://chip.de",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Software Directory & Review Submission (SWEEPR Cleaner v0.1.0)",
+    "status": "delivered",
+    "message_id": "<5bccbb81-ec7b-bf50-ca2c-bc8672b3ddb1@gmail.com>",
+    "reached_out_at": 1792336360
+  },
+  {
+    "who": "software@heise.de",
+    "website": "heise.de",
+    "url": "https://heise.de",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 91) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e4d076d9-7a6c-af47-1774-c6fa125b6fcb@gmail.com>",
+    "reached_out_at": 1792337742
+  },
+  {
+    "who": "redaktion@computerbild.de",
+    "website": "computerbild.de",
+    "url": "https://computerbild.de",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 90) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<db632c1c-6f44-6281-a2df-8f99cefabc02@gmail.com>",
+    "reached_out_at": 1792337744
+  },
+  {
+    "who": "redaktion@netzwelt.de",
+    "website": "netzwelt.de",
+    "url": "https://netzwelt.de",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 84) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<50156ed1-dbea-d5e3-0ede-3fddc3b1fccf@gmail.com>",
+    "reached_out_at": 1792337746
+  },
+  {
+    "who": "info@winfuture.de",
+    "website": "winfuture.de",
+    "url": "https://winfuture.de",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 82) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<001bb50c-04fa-bf73-fc55-e6364106d125@gmail.com>",
+    "reached_out_at": 1792337748
+  },
+  {
+    "who": "redaction@01net.com",
+    "website": "01net.com",
+    "url": "https://01net.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 87) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<81c53fd9-fc97-36e3-3036-00df7e942373@gmail.com>",
+    "reached_out_at": 1792337750
+  },
+  {
+    "who": "contacto@genbeta.com",
+    "website": "genbeta.com",
+    "url": "https://genbeta.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 85) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<c081222b-122b-245d-f806-6c39c41670cb@gmail.com>",
+    "reached_out_at": 1792337752
+  },
+  {
+    "who": "redazione@html.it",
+    "website": "html.it",
+    "url": "https://html.it",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 83) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<23e3f13f-4ea5-3cc0-1a8a-53402133938e@gmail.com>",
+    "reached_out_at": 1792337754
+  },
+  {
+    "who": "redazione@ilsoftware.it",
+    "website": "ilsoftware.it",
+    "url": "https://ilsoftware.it",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 72) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9778071c-f564-f608-59d7-02e1c8aab4f5@gmail.com>",
+    "reached_out_at": 1792337756
+  },
+  {
+    "who": "redakcja@dobreprogramy.pl",
+    "website": "dobreprogramy.pl",
+    "url": "https://dobreprogramy.pl",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 81) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<959c5e62-4680-ec09-0df4-fe784cba8d4f@gmail.com>",
+    "reached_out_at": 1792337758
+  },
+  {
+    "who": "redactie@tweakers.net",
+    "website": "tweakers.net",
+    "url": "https://tweakers.net",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 86) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1e3f9faa-6d07-a142-2b3a-aade15bb9ab5@gmail.com>",
+    "reached_out_at": 1792337760
+  },
+  {
+    "who": "contact@filehippo.com",
+    "website": "filehippo.com",
+    "url": "https://filehippo.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 86) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<97faca51-1120-3793-9a4e-e5e4d8cf4367@gmail.com>",
+    "reached_out_at": 1792337762
+  },
+  {
+    "who": "support@informer.com",
+    "website": "informer.com",
+    "url": "https://informer.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 86) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ebbbb65c-9914-3cef-ebc5-6b83b09cdfed@gmail.com>",
+    "reached_out_at": 1792337764
+  },
+  {
+    "who": "developers@softonic.com",
+    "website": "softonic.com",
+    "url": "https://softonic.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 91) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<91d5458c-80fb-f96c-bb4d-168b48243a02@gmail.com>",
+    "reached_out_at": 1792337766
+  },
+  {
+    "who": "tips@ghacks.net",
+    "website": "ghacks.net",
+    "url": "https://ghacks.net",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 84) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<a08c1e3b-0246-1128-6c06-734fb59822a7@gmail.com>",
+    "reached_out_at": 1792337768
+  },
+  {
+    "who": "tips@bleepingcomputer.com",
+    "website": "bleepingcomputer.com",
+    "url": "https://bleepingcomputer.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 91) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<fa5a3a48-cd2e-46d6-e9ee-6cb914cff459@gmail.com>",
+    "reached_out_at": 1792337770
+  },
+  {
+    "who": "admin@thewindowsclub.com",
+    "website": "thewindowsclub.com",
+    "url": "https://thewindowsclub.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 83) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<75fc20dd-f28a-98e8-e8eb-ec9f3df0b881@gmail.com>",
+    "reached_out_at": 1792337772
+  },
+  {
+    "who": "contact@windowslatest.com",
+    "website": "windowslatest.com",
+    "url": "https://windowslatest.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 82) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ef377cd9-77ff-6109-8070-f3b435aa8c89@gmail.com>",
+    "reached_out_at": 1792337774
+  },
+  {
+    "who": "tips@windowscentral.com",
+    "website": "windowscentral.com",
+    "url": "https://windowscentral.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 90) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9f0dafec-4493-b26a-22d9-03912c86c5ad@gmail.com>",
+    "reached_out_at": 1792337776
+  },
+  {
+    "who": "tips@pcworld.com",
+    "website": "pcworld.com",
+    "url": "https://pcworld.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 91) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ca2c44b8-08e2-3a9a-b6db-96460321cc1c@gmail.com>",
+    "reached_out_at": 1792337778
+  },
+  {
+    "who": "reviews@techradar.com",
+    "website": "techradar.com",
+    "url": "https://techradar.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 92) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b7b0daad-5fe6-c9f6-60ef-26a3009f793d@gmail.com>",
+    "reached_out_at": 1792337780
+  },
+  {
+    "who": "editorial@techadvisor.com",
+    "website": "techadvisor.com",
+    "url": "https://techadvisor.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 88) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e1017e2c-5852-5ccf-9f1f-940d969ed92d@gmail.com>",
+    "reached_out_at": 1792337782
+  },
+  {
+    "who": "tips@howtogeek.com",
+    "website": "howtogeek.com",
+    "url": "https://howtogeek.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 91) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<776f53f6-ec42-1c86-68eb-40bb23744b69@gmail.com>",
+    "reached_out_at": 1792337784
+  },
+  {
+    "who": "contact@groovypost.com",
+    "website": "groovypost.com",
+    "url": "https://groovypost.com",
+    "how": "Email (Gmail SMTP + PAD XML)",
+    "category": "Editorial & Software Review Desk (DR 81) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<f06ea380-d625-fbda-97d4-85a1f9737d18@gmail.com>",
+    "reached_out_at": 1792337936
+  },
+  {
+    "who": "martin@drwindows.de",
+    "website": "drwindows.de",
+    "url": "https://drwindows.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (DrWindows.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<40e7be71-b2a5-a3c6-d4aa-6f557f41e883@gmail.com>",
+    "reached_out_at": 1792338358
+  },
+  {
+    "who": "redaktion@giga.de",
+    "website": "giga.de",
+    "url": "https://giga.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (GIGA.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<2fd19ded-19f6-c8a8-544a-042e9e0fadfd@gmail.com>",
+    "reached_out_at": 1792338360
+  },
+  {
+    "who": "support@t3n.de",
+    "website": "t3n.de",
+    "url": "https://t3n.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (t3n.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<67884f91-7ab1-e9b7-eec7-c546a8495ab8@gmail.com>",
+    "reached_out_at": 1792338362
+  },
+  {
+    "who": "redaktion@golem.de",
+    "website": "golem.de tech & software",
+    "url": "https://golem.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Golem.de Tech & Software) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e53a59a7-d9f7-9066-35cf-90760021cb94@gmail.com>",
+    "reached_out_at": 1792338364
+  },
+  {
+    "who": "dbode@hardwareluxx.com",
+    "website": "hardwareluxx.de",
+    "url": "https://hardwareluxx.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Hardwareluxx.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<87c5218b-a651-1e07-a50b-7fdc8a936c89@gmail.com>",
+    "reached_out_at": 1792338366
+  },
+  {
+    "who": "carsten.knobloch@gmail.com",
+    "website": "stadt-bremerhaven.de (caschys blog)",
+    "url": "https://stadt-bremerhaven.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Stadt-Bremerhaven.de (Caschys Blog)) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7ef370dd-fa77-a191-6733-0e36bc7b150b@gmail.com>",
+    "reached_out_at": 1792338368
+  },
+  {
+    "who": "redaktion@tarnkappe.info",
+    "website": "tarnkappe.info",
+    "url": "https://tarnkappe.info",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Tarnkappe.info) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5c733633-1301-8931-c71c-15a8ae999391@gmail.com>",
+    "reached_out_at": 1792338370
+  },
+  {
+    "who": "redaktion@pctipp.ch",
+    "website": "pctipp.ch downloads (switzerland)",
+    "url": "https://pctipp.ch",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (PCtipp.ch Downloads (Switzerland)) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<53b6cecf-b840-038a-ba3f-405ad1f673be@gmail.com>",
+    "reached_out_at": 1792338372
+  },
+  {
+    "who": "info@hipertextual.com",
+    "website": "hipertextual.com",
+    "url": "https://hipertextual.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Hipertextual Tech) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ae15725c-1d07-4a8f-54f3-e8c7db5720d6@gmail.com>",
+    "reached_out_at": 1792338374
+  },
+  {
+    "who": "contacto@wwwhatsnew.com",
+    "website": "wwwhatsnew.com",
+    "url": "https://wwwhatsnew.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (WWWhatsNew Software & Web Tools) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<746d3993-cd4e-d3b3-8c8e-1a8b7e891cb3@gmail.com>",
+    "reached_out_at": 1792338376
+  },
+  {
+    "who": "redazione@punto-informatico.it",
+    "website": "punto-informatico.it",
+    "url": "https://punto-informatico.it",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Punto-Informatico.it) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<53f558e9-9b00-26df-d000-e070add1bf8c@gmail.com>",
+    "reached_out_at": 1792338378
+  },
+  {
+    "who": "rafal.romanski@purepc.pl",
+    "website": "purepc.pl",
+    "url": "https://purepc.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (PurePC.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<81ff5c44-a8ef-7170-dfae-8c7edd9b3843@gmail.com>",
+    "reached_out_at": 1792338380
+  },
+  {
+    "who": "news@spidersweb.pl",
+    "website": "spidersweb.pl",
+    "url": "https://spidersweb.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Spider's Web Poland) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<608c4463-69ca-c326-a242-8bf4d1810206@gmail.com>",
+    "reached_out_at": 1792338382
+  },
+  {
+    "who": "redacao@olhardigital.com.br",
+    "website": "olhardigital.com.br",
+    "url": "https://olhardigital.com.br",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (OlharDigital.com.br) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<35808c56-ca08-421d-035c-4fab41a7809a@gmail.com>",
+    "reached_out_at": 1792338384
+  },
+  {
+    "who": "info@linuxiac.com",
+    "website": "linuxiac.com",
+    "url": "https://linuxiac.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Linuxiac Desktop Software) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5a8ff770-d1fa-036d-6c78-1ac7d8a01e47@gmail.com>",
+    "reached_out_at": 1792338386
+  },
+  {
+    "who": "admin@fosslinux.com",
+    "website": "fosslinux.com",
+    "url": "https://fosslinux.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (FOSSLinux) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6f274492-52b3-3d2a-257e-f4f30fd389e7@gmail.com>",
+    "reached_out_at": 1792338388
+  },
+  {
+    "who": "hello@bit-tech.net",
+    "website": "bit-tech.net uk",
+    "url": "https://bit-tech.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (Bit-Tech.net UK) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0404f538-b9a9-c79f-dc00-97ac0772533b@gmail.com>",
+    "reached_out_at": 1792338390
+  },
+  {
+    "who": "contact@techpowerup.com",
+    "website": "techpowerup.com",
+    "url": "https://techpowerup.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (TechPowerUp Downloads & Utilities) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9bf4daaf-862e-bf9e-c2a3-2a4307fe3f13@gmail.com>",
+    "reached_out_at": 1792338392
+  },
+  {
+    "who": "admin@tecmint.com",
+    "website": "tecmint.com",
+    "url": "https://tecmint.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tecmint.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<fdb23657-9090-53f4-d251-40d472caf2b9@gmail.com>",
+    "reached_out_at": 1792340794
+  },
+  {
+    "who": "admin@techviral.net",
+    "website": "techviral.net",
+    "url": "https://techviral.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techviral.net) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<cb189c75-7ab8-cbb0-b515-1e62e7251194@gmail.com>",
+    "reached_out_at": 1792340796
+  },
+  {
+    "who": "info@ashampoo.com",
+    "website": "ashampoo.com",
+    "url": "https://ashampoo.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ashampoo.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<20711869-8618-354b-5d1d-47fd2d77394e@gmail.com>",
+    "reached_out_at": 1792340798
+  },
+  {
+    "who": "support@auslogics.com",
+    "website": "auslogics.com",
+    "url": "https://auslogics.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (auslogics.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<23a127a3-1c0f-9723-93ce-6b5d05dabe75@gmail.com>",
+    "reached_out_at": 1792340800
+  },
+  {
+    "who": "corp@minitool.com",
+    "website": "minitool.com",
+    "url": "https://minitool.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (minitool.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3d606099-433e-781c-546f-eeb47e32d48c@gmail.com>",
+    "reached_out_at": 1792340802
+  },
+  {
+    "who": "pr@acronis.com",
+    "website": "acronis.com",
+    "url": "https://acronis.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (acronis.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<f15b9c55-d5a7-c63d-428f-ab0b4052b0b8@gmail.com>",
+    "reached_out_at": 1792340804
+  },
+  {
+    "who": "team@windirstat.net",
+    "website": "windirstat.net",
+    "url": "https://windirstat.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (windirstat.net) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<aad2e316-3947-4c90-f153-bbbd00c98f47@gmail.com>",
+    "reached_out_at": 1792340806
+  },
+  {
+    "who": "support@antibody-software.com",
+    "website": "antibody-software.com",
+    "url": "https://antibody-software.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (antibody-software.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<2e39cf11-431d-4d01-f293-8aa57ec802a9@gmail.com>",
+    "reached_out_at": 1792340808
+  },
+  {
+    "who": "david.carpenter@voidtools.com",
+    "website": "voidtools.com",
+    "url": "https://voidtools.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (voidtools.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<468c5390-7ebb-2156-b500-3e0b3578b392@gmail.com>",
+    "reached_out_at": 1792340810
+  },
+  {
+    "who": "ssum@linuxnews.de",
+    "website": "linuxnews.de",
+    "url": "https://linuxnews.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (linuxnews.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<541b3fba-cb36-f736-9706-c82220841cd4@gmail.com>",
+    "reached_out_at": 1792340812
+  },
+  {
+    "who": "redaktion@computerbase.de",
+    "website": "computerbase.de",
+    "url": "https://computerbase.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (computerbase.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<acc3987c-b5c2-cf98-9114-54231a0a8c60@gmail.com>",
+    "reached_out_at": 1792340814
+  },
+  {
+    "who": "info@borncity.com",
+    "website": "borncity.com",
+    "url": "https://borncity.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (borncity.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<451957b9-7f5a-99ac-46cc-d9886c822587@gmail.com>",
+    "reached_out_at": 1792340816
+  },
+  {
+    "who": "albert.jelica@windowsarea.de",
+    "website": "windowsarea.de",
+    "url": "https://windowsarea.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (windowsarea.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7862f8c3-9677-ac59-11ea-2d3a299a16f1@gmail.com>",
+    "reached_out_at": 1792340818
+  },
+  {
+    "who": "leserpost@pcgameshardware.de",
+    "website": "pcgameshardware.de",
+    "url": "https://pcgameshardware.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pcgameshardware.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<13a10d22-0a9d-6e14-d207-ca21c8bff667@gmail.com>",
+    "reached_out_at": 1792340820
+  },
+  {
+    "who": "info@c-t.de",
+    "website": "c-t.de",
+    "url": "https://c-t.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (c-t.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<fe963cd6-b9e5-0342-b650-ccd970ecad56@gmail.com>",
+    "reached_out_at": 1792340822
+  },
+  {
+    "who": "info@it-administrator.de",
+    "website": "it-administrator.de",
+    "url": "https://it-administrator.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (it-administrator.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<2e181023-cc13-9dab-76d9-cff6561a057e@gmail.com>",
+    "reached_out_at": 1792340824
+  },
+  {
+    "who": "kontakt@gnulinux.ch",
+    "website": "gnulinux.ch",
+    "url": "https://gnulinux.ch",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gnulinux.ch) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<67f6c225-0348-1670-91c3-c1dcc2dedf5a@gmail.com>",
+    "reached_out_at": 1792340826
+  },
+  {
+    "who": "kontakt@netzpolitik.org",
+    "website": "netzpolitik.org",
+    "url": "https://netzpolitik.org",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (netzpolitik.org) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0883a1e1-5ae7-42fa-455c-33c1931e6e87@gmail.com>",
+    "reached_out_at": 1792340828
+  },
+  {
+    "who": "mail@digitalcourage.de",
+    "website": "digitalcourage.de",
+    "url": "https://digitalcourage.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (digitalcourage.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<72cc40de-082e-463e-4520-73f75b696310@gmail.com>",
+    "reached_out_at": 1792340830
+  },
+  {
+    "who": "webmaster@kuketz-blog.de",
+    "website": "kuketz-blog.de",
+    "url": "https://kuketz-blog.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (kuketz-blog.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<47a8e977-7cd5-1cac-beaa-4b43caef5505@gmail.com>",
+    "reached_out_at": 1792340832
+  },
+  {
+    "who": "kontakt@mobiflip.de",
+    "website": "mobiflip.de",
+    "url": "https://mobiflip.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (mobiflip.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4025fa80-1735-f0c9-99b8-2bee4c8d2175@gmail.com>",
+    "reached_out_at": 1792340834
+  },
+  {
+    "who": "redaktion@connect.de",
+    "website": "connect.de",
+    "url": "https://connect.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (connect.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ee9d0bb6-39fd-32ce-ab47-b07ad69af514@gmail.com>",
+    "reached_out_at": 1792340836
+  },
+  {
+    "who": "redaktion@pc-magazin.de",
+    "website": "pc-magazin.de",
+    "url": "https://pc-magazin.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pc-magazin.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6b53f3ba-f33a-6c2c-e935-8a0ce07bf729@gmail.com>",
+    "reached_out_at": 1792340838
+  },
+  {
+    "who": "redaktion@linux-magazin.de",
+    "website": "linux-magazin.de",
+    "url": "https://linux-magazin.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (linux-magazin.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<06873171-19d8-412a-225a-ece32201df63@gmail.com>",
+    "reached_out_at": 1792340840
+  },
+  {
+    "who": "news@eurogamer.de",
+    "website": "eurogamer.de",
+    "url": "https://eurogamer.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (eurogamer.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<72bb8b31-42f4-4414-0aef-8d786d48b033@gmail.com>",
+    "reached_out_at": 1792340842
+  },
+  {
+    "who": "info@spielekauf.de",
+    "website": "spielekauf.de",
+    "url": "https://spielekauf.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (spielekauf.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b1caa284-e695-45b7-a7e1-57d75e6fb195@gmail.com>",
+    "reached_out_at": 1792340844
+  },
+  {
+    "who": "redaktion@pcgames.de",
+    "website": "pcgames.de",
+    "url": "https://pcgames.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pcgames.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ed88986a-1739-4f70-ffe7-c464e953a3df@gmail.com>",
+    "reached_out_at": 1792340846
+  },
+  {
+    "who": "redaktion@buffed.de",
+    "website": "buffed.de",
+    "url": "https://buffed.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (buffed.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<61712b38-35db-cf0c-f2f3-0f4d03b25083@gmail.com>",
+    "reached_out_at": 1792340848
+  },
+  {
+    "who": "impressum@administrator.de",
+    "website": "administrator.de",
+    "url": "https://administrator.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (administrator.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<260c4b08-6133-cdc9-da09-7f1155ed5ff1@gmail.com>",
+    "reached_out_at": 1792340850
+  },
+  {
+    "who": "mail@ocinside.de",
+    "website": "ocinside.de",
+    "url": "https://ocinside.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ocinside.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8f5025bb-4299-8b5d-a546-2aab7f1fc076@gmail.com>",
+    "reached_out_at": 1792340852
+  },
+  {
+    "who": "kontakt@techtest.org",
+    "website": "techtest.org",
+    "url": "https://techtest.org",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techtest.org) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<444b099e-bc66-ccfb-0939-53f03130c89f@gmail.com>",
+    "reached_out_at": 1792340854
+  },
+  {
+    "who": "redaktion@allround-pc.com",
+    "website": "allround-pc.com",
+    "url": "https://allround-pc.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (allround-pc.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b20ec1da-4914-6070-81e7-fbf72cb21b33@gmail.com>",
+    "reached_out_at": 1792340856
+  },
+  {
+    "who": "redaktion@startbase.com",
+    "website": "startbase.de",
+    "url": "https://startbase.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (startbase.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b4d221db-1471-56be-1b1b-add631bd5864@gmail.com>",
+    "reached_out_at": 1792340858
+  },
+  {
+    "who": "jakob.steinschaden@trendingtopics.at",
+    "website": "trendingtopics.eu",
+    "url": "https://trendingtopics.eu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (trendingtopics.eu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<dbdda126-442a-72b9-1e32-2a6b15f2f8ff@gmail.com>",
+    "reached_out_at": 1792340860
+  },
+  {
+    "who": "info@netzwoche.ch",
+    "website": "netzwoche.ch",
+    "url": "https://netzwoche.ch",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (netzwoche.ch) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<186e0e07-2fcc-e412-a571-e404bcedbf78@gmail.com>",
+    "reached_out_at": 1792340862
+  },
+  {
+    "who": "redaktion@inside-it.ch",
+    "website": "inside-it.ch",
+    "url": "https://inside-it.ch",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (inside-it.ch) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<13cf285d-e214-2e3a-3979-a9c66bd70534@gmail.com>",
+    "reached_out_at": 1792340864
+  },
+  {
+    "who": "sven.wagenknecht@btc-echo.de",
+    "website": "btc-echo.de",
+    "url": "https://btc-echo.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (btc-echo.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<a817c3e1-be42-af84-ebbe-5033801d93f2@gmail.com>",
+    "reached_out_at": 1792340866
+  },
+  {
+    "who": "redaktion@gruenderszene.de",
+    "website": "gruenderszene.de",
+    "url": "https://gruenderszene.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gruenderszene.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<aa8b824a-df89-fd5e-a093-3853fa6f7426@gmail.com>",
+    "reached_out_at": 1792340868
+  },
+  {
+    "who": "maciej@videocardz.com",
+    "website": "videocardz.com",
+    "url": "https://videocardz.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (videocardz.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8b5a8bad-bf1e-fb68-eb52-ec47b54cd8ec@gmail.com>",
+    "reached_out_at": 1792340870
+  },
+  {
+    "who": "kyle@hardocp.com",
+    "website": "hardocp.com",
+    "url": "https://hardocp.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (hardocp.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<56252b0a-14e5-9840-ea34-d89d738ea309@gmail.com>",
+    "reached_out_at": 1792340872
+  },
+  {
+    "who": "help@wccftech.com",
+    "website": "wccftech.com",
+    "url": "https://wccftech.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (wccftech.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5cf793ef-5b4d-0327-a510-ac555cc8c3d7@gmail.com>",
+    "reached_out_at": 1792340874
+  },
+  {
+    "who": "speak@pcper.com",
+    "website": "pcper.com",
+    "url": "https://pcper.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pcper.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5637d203-eff1-9e6b-38ea-cafdf82de162@gmail.com>",
+    "reached_out_at": 1792340876
+  },
+  {
+    "who": "contact@eurogamer.net",
+    "website": "eurogamer.net",
+    "url": "https://eurogamer.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (eurogamer.net) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<c287a310-e45c-bd52-c753-0d77ae2cec89@gmail.com>",
+    "reached_out_at": 1792340878
+  },
+  {
+    "who": "contact@vg247.com",
+    "website": "vg247.com",
+    "url": "https://vg247.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (vg247.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<29eb09cb-3a37-25b7-c710-cf60bcce7d90@gmail.com>",
+    "reached_out_at": 1792340880
+  },
+  {
+    "who": "contact@rockpapershotgun.com",
+    "website": "rockpapershotgun.com",
+    "url": "https://rockpapershotgun.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (rockpapershotgun.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b2a4d300-3da3-bab6-1536-d54e2c62051e@gmail.com>",
+    "reached_out_at": 1792340882
+  },
+  {
+    "who": "support@userbenchmark.com",
+    "website": "userbenchmark.com",
+    "url": "https://userbenchmark.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (userbenchmark.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<bdcc84cc-c6ec-2dc4-c53d-a14c1746a446@gmail.com>",
+    "reached_out_at": 1792340884
+  },
+  {
+    "who": "feedback@rtings.com",
+    "website": "rtings.com",
+    "url": "https://rtings.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (rtings.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b0d35ef8-b4ec-30be-baa1-884fd88cc487@gmail.com>",
+    "reached_out_at": 1792340886
+  },
+  {
+    "who": "tips@pcgamer.com",
+    "website": "pcgamer.com",
+    "url": "https://pcgamer.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pcgamer.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<15328764-3ce6-b737-c6e4-0e1373b3e09c@gmail.com>",
+    "reached_out_at": 1792340888
+  },
+  {
+    "who": "theguru@techbuyersguru.com",
+    "website": "techbuyersguru.com",
+    "url": "https://techbuyersguru.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techbuyersguru.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ac38da1b-46f7-8ca6-3a58-fa8a7e4f4c03@gmail.com>",
+    "reached_out_at": 1792340890
+  },
+  {
+    "who": "editorial@dualshockers.com",
+    "website": "dualshockers.com",
+    "url": "https://dualshockers.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dualshockers.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<dcaaceaf-019e-6edb-267b-2631e59f1551@gmail.com>",
+    "reached_out_at": 1792340892
+  },
+  {
+    "who": "news@thefpsreview.com",
+    "website": "thefpsreview.com",
+    "url": "https://thefpsreview.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (thefpsreview.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<01242352-b22a-b3d8-1ebd-a70458641591@gmail.com>",
+    "reached_out_at": 1792340894
+  },
+  {
+    "who": "admin@gamingbolt.com",
+    "website": "gamingbolt.com",
+    "url": "https://gamingbolt.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gamingbolt.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0c3ba980-06f9-462c-dd41-d29496e2dd7b@gmail.com>",
+    "reached_out_at": 1792340896
+  },
+  {
+    "who": "john2@dsogaming.com",
+    "website": "dsogaming.com",
+    "url": "https://dsogaming.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dsogaming.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<c311852a-9441-a17b-6a8b-022438c9b909@gmail.com>",
+    "reached_out_at": 1792340898
+  },
+  {
+    "who": "editor@gematsu.com",
+    "website": "gematsu.com",
+    "url": "https://gematsu.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gematsu.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<db36c130-40e2-2a50-ab40-7b2ef8d53efa@gmail.com>",
+    "reached_out_at": 1792340900
+  },
+  {
+    "who": "editorial@collider.com",
+    "website": "collider.com",
+    "url": "https://collider.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (collider.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<45a039b7-c3e6-e348-f07a-7cc021163ab3@gmail.com>",
+    "reached_out_at": 1792340902
+  },
+  {
+    "who": "editorial@cbr.com",
+    "website": "cbr.com",
+    "url": "https://cbr.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (cbr.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8b622b86-48bc-92ce-eb3f-2f9fb1a813ff@gmail.com>",
+    "reached_out_at": 1792340904
+  },
+  {
+    "who": "ben@expertreviews.co.uk",
+    "website": "expertreviews.co.uk",
+    "url": "https://expertreviews.co.uk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (expertreviews.co.uk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b541bbf6-348a-cc33-97a1-457273ca4207@gmail.com>",
+    "reached_out_at": 1792340906
+  },
+  {
+    "who": "b2b@awd-it.co.uk",
+    "website": "awd-it.co.uk",
+    "url": "https://awd-it.co.uk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (awd-it.co.uk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<bee44f39-16a1-f36d-3769-8c6fcc144944@gmail.com>",
+    "reached_out_at": 1792340908
+  },
+  {
+    "who": "support@cyberpowersystem.co.uk",
+    "website": "cyberpowersystem.co.uk",
+    "url": "https://cyberpowersystem.co.uk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (cyberpowersystem.co.uk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1364ec3e-9259-8e2c-0d4d-a4e50021e0da@gmail.com>",
+    "reached_out_at": 1792340910
+  },
+  {
+    "who": "team@t3.com",
+    "website": "t3.com",
+    "url": "https://t3.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (t3.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<275e4d21-8083-48b5-e010-d981096cab72@gmail.com>",
+    "reached_out_at": 1792340912
+  },
+  {
+    "who": "editor@uktech.news",
+    "website": "uktech.news",
+    "url": "https://uktech.news",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (uktech.news) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8a04f554-990b-39e6-5e4f-0a04f6708f15@gmail.com>",
+    "reached_out_at": 1792340914
+  },
+  {
+    "who": "editorial@siliconrepublic.com",
+    "website": "siliconrepublic.com",
+    "url": "https://siliconrepublic.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (siliconrepublic.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e50ab90f-cb69-88b3-d9c4-5473407c8de0@gmail.com>",
+    "reached_out_at": 1792340916
+  },
+  {
+    "who": "info@techround.co.uk",
+    "website": "techround.co.uk",
+    "url": "https://techround.co.uk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techround.co.uk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7599cb5e-e415-40b6-d7a5-51ef933c7073@gmail.com>",
+    "reached_out_at": 1792340918
+  },
+  {
+    "who": "news@businesscloud.co.uk",
+    "website": "businesscloud.co.uk",
+    "url": "https://businesscloud.co.uk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (businesscloud.co.uk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6a511853-e32a-d86d-57bd-4dbe8cd7dd99@gmail.com>",
+    "reached_out_at": 1792340920
+  },
+  {
+    "who": "troy@troyhunt.com",
+    "website": "troyhunt.com",
+    "url": "https://troyhunt.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (troyhunt.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b4d88b4d-9705-b851-cf16-545f2b4c3bda@gmail.com>",
+    "reached_out_at": 1792340922
+  },
+  {
+    "who": "info@comparitech.com",
+    "website": "comparitech.com",
+    "url": "https://comparitech.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (comparitech.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e039bda3-da58-2dbf-73d7-fb8e6f62197f@gmail.com>",
+    "reached_out_at": 1792340924
+  },
+  {
+    "who": "webmaster@schneier.com",
+    "website": "schneier.com",
+    "url": "https://schneier.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (schneier.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<d228b9d6-4749-c352-55dd-57603c948745@gmail.com>",
+    "reached_out_at": 1792340926
+  },
+  {
+    "who": "press@helpnetsecurity.com",
+    "website": "helpnetsecurity.com",
+    "url": "https://helpnetsecurity.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (helpnetsecurity.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b6e31f86-f6f7-927e-db27-79105bcc6b7c@gmail.com>",
+    "reached_out_at": 1792340928
+  },
+  {
+    "who": "info@vpnmentor.com",
+    "website": "vpnmentor.com",
+    "url": "https://vpnmentor.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (vpnmentor.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<f30f3304-8386-3f63-c3f7-48f4e25db73f@gmail.com>",
+    "reached_out_at": 1792340930
+  },
+  {
+    "who": "contact@wizcase.com",
+    "website": "wizcase.com",
+    "url": "https://wizcase.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (wizcase.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<32bba1b5-8b54-feb7-5e44-b214894ba39b@gmail.com>",
+    "reached_out_at": 1792340932
+  },
+  {
+    "who": "contact@techlore.tech",
+    "website": "techlore.tech",
+    "url": "https://techlore.tech",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techlore.tech) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ea92d18e-2b6b-ec77-70ce-e4654ed9ecc4@gmail.com>",
+    "reached_out_at": 1792340934
+  },
+  {
+    "who": "hello@top10vpn.com",
+    "website": "top10vpn.com",
+    "url": "https://top10vpn.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (top10vpn.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<edeb01cd-0631-a080-655b-724d0fad3f77@gmail.com>",
+    "reached_out_at": 1792340936
+  },
+  {
+    "who": "contact@debugpoint.com",
+    "website": "debugpoint.com",
+    "url": "https://debugpoint.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (debugpoint.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<633d289f-911f-f540-10fb-1bd50f41fcb0@gmail.com>",
+    "reached_out_at": 1792340938
+  },
+  {
+    "who": "info@linuxtechi.com",
+    "website": "linuxtechi.com",
+    "url": "https://linuxtechi.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (linuxtechi.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<057291eb-6120-f0ac-83e5-930f39f69e4a@gmail.com>",
+    "reached_out_at": 1792340940
+  },
+  {
+    "who": "contact@gamingonlinux.com",
+    "website": "gamingonlinux.com",
+    "url": "https://gamingonlinux.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gamingonlinux.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<953519f7-fb99-35e0-e00e-7ab56bdb2fe2@gmail.com>",
+    "reached_out_at": 1792340942
+  },
+  {
+    "who": "support@dev.to",
+    "website": "dev.to",
+    "url": "https://dev.to",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dev.to) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<53d699f0-4778-fac0-8a8e-faaf740e188f@gmail.com>",
+    "reached_out_at": 1792340944
+  },
+  {
+    "who": "hello+support@hashnode.com",
+    "website": "hashnode.com",
+    "url": "https://hashnode.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (hashnode.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3a5b20ee-6268-14fb-3e96-c6581c0443fa@gmail.com>",
+    "reached_out_at": 1792340946
+  },
+  {
+    "who": "press@daily.dev",
+    "website": "daily.dev",
+    "url": "https://daily.dev",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (daily.dev) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<299bb312-ab17-8649-2493-ed1fbb09f0ba@gmail.com>",
+    "reached_out_at": 1792340948
+  },
+  {
+    "who": "geoff@css-tricks.com",
+    "website": "css-tricks.com",
+    "url": "https://css-tricks.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (css-tricks.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<964b4415-4e11-0dc6-ce4f-2eeb94b69600@gmail.com>",
+    "reached_out_at": 1792340950
+  },
+  {
+    "who": "info@webdesignerdepot.com",
+    "website": "webdesignerdepot.com",
+    "url": "https://webdesignerdepot.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (webdesignerdepot.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6b3575c7-a631-20e8-2657-3bbc56ee0a26@gmail.com>",
+    "reached_out_at": 1792340952
+  },
+  {
+    "who": "donors@freecodecamp.org",
+    "website": "freecodecamp.org",
+    "url": "https://freecodecamp.org",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (freecodecamp.org) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<424cad5c-e535-4643-e01b-6f133e415d8f@gmail.com>",
+    "reached_out_at": 1792340954
+  },
+  {
+    "who": "mac@smashingmagazine.com",
+    "website": "smashingmagazine.com",
+    "url": "https://smashingmagazine.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (smashingmagazine.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<78535786-e334-6ee5-6ea4-7eabc69dfeb6@gmail.com>",
+    "reached_out_at": 1792340956
+  },
+  {
+    "who": "celeste@thenewstack.io",
+    "website": "thenewstack.io",
+    "url": "https://thenewstack.io",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (thenewstack.io) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<be796bf2-862a-060b-7ecb-b5ebef4f007c@gmail.com>",
+    "reached_out_at": 1792340958
+  },
+  {
+    "who": "feedback@infoq.com",
+    "website": "infoq.com",
+    "url": "https://infoq.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (infoq.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<31469c10-c85d-2d01-fa86-7ae910a2c760@gmail.com>",
+    "reached_out_at": 1792340960
+  },
+  {
+    "who": "nknell@govtech.com",
+    "website": "govtech.com",
+    "url": "https://govtech.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (govtech.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<53253627-39a9-d867-9bbf-3b91a04814f4@gmail.com>",
+    "reached_out_at": 1792340962
+  },
+  {
+    "who": "hello@manifest.com",
+    "website": "manifest.com",
+    "url": "https://manifest.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (manifest.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9b4acbd4-c7c1-9d64-fcd2-da994d592836@gmail.com>",
+    "reached_out_at": 1792340964
+  },
+  {
+    "who": "info@selectedfirms.co",
+    "website": "selectedfirms.co",
+    "url": "https://selectedfirms.co",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (selectedfirms.co) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<024a2c30-ddd2-8f75-45b5-040a0efdf886@gmail.com>",
+    "reached_out_at": 1792340966
+  },
+  {
+    "who": "nico@failory.com",
+    "website": "failory.com",
+    "url": "https://failory.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (failory.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<08c91412-ec10-78d3-3a6a-1ba02a43276d@gmail.com>",
+    "reached_out_at": 1792340968
+  },
+  {
+    "who": "support@acquire.com",
+    "website": "acquire.com",
+    "url": "https://acquire.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (acquire.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6bf59bf9-0206-a77c-d06b-5ddb166755d0@gmail.com>",
+    "reached_out_at": 1792340970
+  },
+  {
+    "who": "contact@topdevelopers.co",
+    "website": "topdevelopers.co",
+    "url": "https://topdevelopers.co",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (topdevelopers.co) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<393d6449-1358-8c3d-e57c-cd3dd372f627@gmail.com>",
+    "reached_out_at": 1792340972
+  },
+  {
+    "who": "stan@libhunt.com",
+    "website": "libhunt.com",
+    "url": "https://libhunt.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (libhunt.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<045cb0e4-d9e7-d65a-c30c-09df6c228362@gmail.com>",
+    "reached_out_at": 1792340974
+  },
+  {
+    "who": "feedback@slashdot.org",
+    "website": "slashdot.org",
+    "url": "https://slashdot.org",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (slashdot.org) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<24764d23-db1b-ea3d-fa81-b53106d2057f@gmail.com>",
+    "reached_out_at": 1792340976
+  },
+  {
+    "who": "contact@futurepedia.io",
+    "website": "futurepedia.io",
+    "url": "https://futurepedia.io",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (futurepedia.io) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<60d016dc-ef11-4032-8874-a17eeebde8dc@gmail.com>",
+    "reached_out_at": 1792340978
+  },
+  {
+    "who": "hello@startuptracker.io",
+    "website": "startuptracker.io",
+    "url": "https://startuptracker.io",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (startuptracker.io) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<f9f377e0-e5ba-acca-e62a-b6de971ab7a0@gmail.com>",
+    "reached_out_at": 1792340980
+  },
+  {
+    "who": "info@insidr.ai",
+    "website": "insidr.ai",
+    "url": "https://insidr.ai",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (insidr.ai) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9b2243a6-00fa-148b-da6f-581948d0ea0c@gmail.com>",
+    "reached_out_at": 1792340982
+  },
+  {
+    "who": "maya@killerstartups.com",
+    "website": "killerstartups.com",
+    "url": "https://killerstartups.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (killerstartups.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5799295b-c370-e8c0-47c1-2a9d5634f727@gmail.com>",
+    "reached_out_at": 1792340984
+  },
+  {
+    "who": "support@f6s.com",
+    "website": "f6s.com",
+    "url": "https://f6s.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (f6s.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4bee6c66-b701-51b5-fe59-903b2588277e@gmail.com>",
+    "reached_out_at": 1792340986
+  },
+  {
+    "who": "editorial@siliconcanals.com",
+    "website": "siliconcanals.com",
+    "url": "https://siliconcanals.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (siliconcanals.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<31e85930-1aad-0929-cf20-c79ff5b739dc@gmail.com>",
+    "reached_out_at": 1792340988
+  },
+  {
+    "who": "contact@presse-citron.net",
+    "website": "presse-citron.net",
+    "url": "https://presse-citron.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (presse-citron.net) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<d26f83f4-484f-da10-46a9-672666e7f92b@gmail.com>",
+    "reached_out_at": 1792340990
+  },
+  {
+    "who": "nurcin.metingil@arcticstartup.com",
+    "website": "arcticstartup.com",
+    "url": "https://arcticstartup.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (arcticstartup.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0fbbd514-fc9e-7125-19b7-44f1e582d2a2@gmail.com>",
+    "reached_out_at": 1792340992
+  },
+  {
+    "who": "redaction@frenchweb.fr",
+    "website": "frenchweb.fr",
+    "url": "https://frenchweb.fr",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (frenchweb.fr) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<309812cf-1f9d-b424-d4a7-0ee346984b43@gmail.com>",
+    "reached_out_at": 1792340994
+  },
+  {
+    "who": "maxime@universfreebox.com",
+    "website": "universfreebox.com",
+    "url": "https://universfreebox.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (universfreebox.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<55600655-b159-ba7e-d7db-392a257619b5@gmail.com>",
+    "reached_out_at": 1792340996
+  },
+  {
+    "who": "contacto@xatakawindows.com",
+    "website": "xatakawindows.com",
+    "url": "https://xatakawindows.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (xatakawindows.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<63265c03-973f-0fe7-d081-72346ce7c558@gmail.com>",
+    "reached_out_at": 1792340998
+  },
+  {
+    "who": "contacto@xatakandroid.com",
+    "website": "xatakandroid.com",
+    "url": "https://xatakandroid.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (xatakandroid.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<d079f71d-fdd2-cecc-17de-4333c20099f7@gmail.com>",
+    "reached_out_at": 1792341000
+  },
+  {
+    "who": "contacto@xatakamovil.com",
+    "website": "xatakamovil.com",
+    "url": "https://xatakamovil.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (xatakamovil.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3a3db21c-4994-2862-f946-4ddfd5fc9da9@gmail.com>",
+    "reached_out_at": 1792341002
+  },
+  {
+    "who": "contacto@applesfera.com",
+    "website": "applesfera.com",
+    "url": "https://applesfera.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (applesfera.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<38d8d500-ade2-d334-2c24-9949da80fae3@gmail.com>",
+    "reached_out_at": 1792341004
+  },
+  {
+    "who": "contacto@3djuegos.com",
+    "website": "3djuegos.com",
+    "url": "https://3djuegos.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (3djuegos.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e3ad350b-08bb-158b-97ef-865cacd99e8b@gmail.com>",
+    "reached_out_at": 1792341006
+  },
+  {
+    "who": "contacto@vidaextra.com",
+    "website": "vidaextra.com",
+    "url": "https://vidaextra.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (vidaextra.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1a9add8c-7500-b49c-6c74-f362f6efc405@gmail.com>",
+    "reached_out_at": 1792341008
+  },
+  {
+    "who": "direccion@vandal.net",
+    "website": "vandal.elespanol.com",
+    "url": "https://vandal.elespanol.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (vandal.elespanol.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<204930dc-148c-b049-f1d7-f008fdc9550b@gmail.com>",
+    "reached_out_at": 1792341010
+  },
+  {
+    "who": "prensa@movilzona.es",
+    "website": "movilzona.es",
+    "url": "https://movilzona.es",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (movilzona.es) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4620c461-eeb7-6302-28a0-16f726f2efef@gmail.com>",
+    "reached_out_at": 1792341012
+  },
+  {
+    "who": "fabiano@ispazio.net",
+    "website": "ispazio.net",
+    "url": "https://ispazio.net",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ispazio.net) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<a8d8fc24-7c39-a539-72d8-5118020236ab@gmail.com>",
+    "reached_out_at": 1792341014
+  },
+  {
+    "who": "adv@everyeye.it",
+    "website": "everyeye.it",
+    "url": "https://everyeye.it",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (everyeye.it) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<12d48190-321a-0736-f891-468dd13d04b3@gmail.com>",
+    "reached_out_at": 1792341016
+  },
+  {
+    "who": "redazione@multiplayer.it",
+    "website": "multiplayer.it",
+    "url": "https://multiplayer.it",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (multiplayer.it) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8ad59ca4-a5ef-a009-46e9-9e67f50444d1@gmail.com>",
+    "reached_out_at": 1792341018
+  },
+  {
+    "who": "jmartinez@noticias3d.com",
+    "website": "noticias3d.com",
+    "url": "https://noticias3d.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (noticias3d.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<acf8d5e0-d7dd-879b-10df-2ba6fd0195a2@gmail.com>",
+    "reached_out_at": 1792341020
+  },
+  {
+    "who": "info@macitynet.it",
+    "website": "macitynet.it",
+    "url": "https://macitynet.it",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (macitynet.it) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<c50f3a6d-bfd0-b68c-4b6a-0de09cbea95f@gmail.com>",
+    "reached_out_at": 1792341022
+  },
+  {
+    "who": "redakcja@gsmonline.pl",
+    "website": "gsmonline.pl",
+    "url": "https://gsmonline.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gsmonline.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b1039afc-a39e-5cdf-9c02-0733985dd621@gmail.com>",
+    "reached_out_at": 1792341024
+  },
+  {
+    "who": "errori@aranzulla.it",
+    "website": "aranzulla.it",
+    "url": "https://aranzulla.it",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (aranzulla.it) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4900ed31-07de-3d8f-a15a-b7b7dffaf02d@gmail.com>",
+    "reached_out_at": 1792341026
+  },
+  {
+    "who": "redakcja@tabletowo.pl",
+    "website": "tabletowo.pl",
+    "url": "https://tabletowo.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tabletowo.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<d77f2496-dd78-1545-915b-0eef9661b6cf@gmail.com>",
+    "reached_out_at": 1792341028
+  },
+  {
+    "who": "redakcja@telepolis.pl",
+    "website": "telepolis.pl",
+    "url": "https://telepolis.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (telepolis.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<eebc6c84-1f26-7369-4029-d1b220144f1e@gmail.com>",
+    "reached_out_at": 1792341030
+  },
+  {
+    "who": "redakcja@conowego.pl",
+    "website": "conowego.pl",
+    "url": "https://conowego.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (conowego.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<699aefff-8b4b-da2b-26c9-234396da29d8@gmail.com>",
+    "reached_out_at": 1792341032
+  },
+  {
+    "who": "redakcja@komputerswiat.pl",
+    "website": "komputerswiat.pl",
+    "url": "https://komputerswiat.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (komputerswiat.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<d6676be4-b1b0-fe17-7d09-ab82ea2735e8@gmail.com>",
+    "reached_out_at": 1792341034
+  },
+  {
+    "who": "biuro@ppc.pl",
+    "website": "ppc.pl",
+    "url": "https://ppc.pl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ppc.pl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5e53182c-cb4d-642d-558c-94cdd7cef8b4@gmail.com>",
+    "reached_out_at": 1792341036
+  },
+  {
+    "who": "info@security.nl",
+    "website": "security.nl",
+    "url": "https://security.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (security.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<238b2cc3-5f27-a7e7-d3a3-e155c13b3d87@gmail.com>",
+    "reached_out_at": 1792341038
+  },
+  {
+    "who": "redactie@iculture.nl",
+    "website": "iculture.nl",
+    "url": "https://iculture.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (iculture.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e5d82e7d-1f1d-8d6b-1c52-5c2f6d31a533@gmail.com>",
+    "reached_out_at": 1792341040
+  },
+  {
+    "who": "redactie@androidworld.nl",
+    "website": "androidworld.nl",
+    "url": "https://androidworld.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (androidworld.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0f5f9a13-1424-1d4b-5a70-505eb438e6e5@gmail.com>",
+    "reached_out_at": 1792341042
+  },
+  {
+    "who": "redactie@iphoned.nl",
+    "website": "iphoned.nl",
+    "url": "https://iphoned.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (iphoned.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<84dd1fbd-783e-a8e4-0146-a192dff64d80@gmail.com>",
+    "reached_out_at": 1792341044
+  },
+  {
+    "who": "contact@onedirect.nl",
+    "website": "onedirect.nl",
+    "url": "https://onedirect.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (onedirect.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5abcdd00-efb3-1d69-40a7-f63b2993894a@gmail.com>",
+    "reached_out_at": 1792341046
+  },
+  {
+    "who": "redactie@appletips.nl",
+    "website": "appletips.nl",
+    "url": "https://appletips.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (appletips.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<36bb5a25-70bf-1d43-9808-ab3c0c1240db@gmail.com>",
+    "reached_out_at": 1792341048
+  },
+  {
+    "who": "contato@sempreupdate.com.br",
+    "website": "sempreupdate.com.br",
+    "url": "https://sempreupdate.com.br",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (sempreupdate.com.br) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<cb54700c-90d0-60c4-d9bf-7ca64c1aa2dd@gmail.com>",
+    "reached_out_at": 1792341050
+  },
+  {
+    "who": "contato@showmetech.com.br",
+    "website": "showmetech.com.br",
+    "url": "https://showmetech.com.br",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (showmetech.com.br) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e11ed9f9-b990-7bbc-2093-f828f63aa890@gmail.com>",
+    "reached_out_at": 1792341052
+  },
+  {
+    "who": "contact@ninite.com",
+    "website": "ninite.com",
+    "url": "https://ninite.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ninite.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<bca35d85-99f5-446c-7661-c6db5357af5f@gmail.com>",
+    "reached_out_at": 1792341954
+  },
+  {
+    "who": "info@systweak.com",
+    "website": "systweak.com",
+    "url": "https://systweak.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (systweak.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1614e4ab-0d3e-075f-93cb-3c5041b03425@gmail.com>",
+    "reached_out_at": 1792341956
+  },
+  {
+    "who": "editor@technewstoday.com",
+    "website": "technewstoday.com",
+    "url": "https://technewstoday.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (technewstoday.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7a655426-f25c-a500-00d7-04c82544044d@gmail.com>",
+    "reached_out_at": 1792341958
+  },
+  {
+    "who": "contact@winningpc.com",
+    "website": "winningpc.com",
+    "url": "https://winningpc.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (winningpc.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ba46f015-608b-943a-fb92-242a4f7217c5@gmail.com>",
+    "reached_out_at": 1792341960
+  },
+  {
+    "who": "contact@tickcoupon.com",
+    "website": "tickcoupon.com",
+    "url": "https://tickcoupon.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tickcoupon.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<612b3639-b11b-bbff-6271-823c5fa07e7a@gmail.com>",
+    "reached_out_at": 1792341962
+  },
+  {
+    "who": "info@stahuj.cz",
+    "website": "stahuj.cz",
+    "url": "https://stahuj.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (stahuj.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<60542bba-ee08-72b9-861b-7935ec4d9990@gmail.com>",
+    "reached_out_at": 1792341964
+  },
+  {
+    "who": "info@slunecnice.cz",
+    "website": "slunecnice.cz",
+    "url": "https://slunecnice.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (slunecnice.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<fc0be127-f216-566c-b05a-7e203681a78b@gmail.com>",
+    "reached_out_at": 1792341966
+  },
+  {
+    "who": "redakce@lupa.cz",
+    "website": "lupa.cz",
+    "url": "https://lupa.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (lupa.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0aa28e5e-f16b-0920-106d-81255155f788@gmail.com>",
+    "reached_out_at": 1792341968
+  },
+  {
+    "who": "redakce@root.cz",
+    "website": "root.cz",
+    "url": "https://root.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (root.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7871d143-3002-49d8-4a1d-88c3f3139dbb@gmail.com>",
+    "reached_out_at": 1792341970
+  },
+  {
+    "who": "info@ipon.hu",
+    "website": "ipon.hu",
+    "url": "https://ipon.hu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (ipon.hu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4aebc186-2d1e-8fc0-d8de-5e7c6e8a792f@gmail.com>",
+    "reached_out_at": 1792341972
+  },
+  {
+    "who": "info@touchit.sk",
+    "website": "touchit.sk",
+    "url": "https://touchit.sk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (touchit.sk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<299fc30c-e641-fb0a-536c-a6e927c40696@gmail.com>",
+    "reached_out_at": 1792341974
+  },
+  {
+    "who": "bole.gyorgy@hwsw.hu",
+    "website": "hwsw.hu",
+    "url": "https://hwsw.hu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (hwsw.hu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<cc96f6ef-db77-ff0f-3f55-e5cce0e9059f@gmail.com>",
+    "reached_out_at": 1792341976
+  },
+  {
+    "who": "hanker@zive.sk",
+    "website": "zive.aktuality.sk",
+    "url": "https://zive.aktuality.sk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (zive.aktuality.sk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4a9b2697-ee42-6cb7-f38a-6d106f244bdd@gmail.com>",
+    "reached_out_at": 1792341978
+  },
+  {
+    "who": "jiri.filip@letemsvetemapplem.eu",
+    "website": "letemsvetemapplem.eu",
+    "url": "https://letemsvetemapplem.eu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (letemsvetemapplem.eu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<27647170-cefe-b1ea-7d48-bbff9f948931@gmail.com>",
+    "reached_out_at": 1792341980
+  },
+  {
+    "who": "sector@sector.sk",
+    "website": "sector.sk",
+    "url": "https://sector.sk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (sector.sk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<f9b87a63-5100-af4e-1027-33b792e85ced@gmail.com>",
+    "reached_out_at": 1792341982
+  },
+  {
+    "who": "redakce@smartmania.cz",
+    "website": "smartmania.cz",
+    "url": "https://smartmania.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (smartmania.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<161a6d2e-8790-8a97-15a9-a18253865e24@gmail.com>",
+    "reached_out_at": 1792341984
+  },
+  {
+    "who": "redakce@dotekomanie.cz",
+    "website": "dotekomanie.cz",
+    "url": "https://dotekomanie.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dotekomanie.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<9182a32c-6e3e-5114-15c7-877d526cd81d@gmail.com>",
+    "reached_out_at": 1792341986
+  },
+  {
+    "who": "redakcia@techbox.sk",
+    "website": "techbox.sk",
+    "url": "https://techbox.sk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techbox.sk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<30c192df-7e80-4016-5076-0592bc126f2d@gmail.com>",
+    "reached_out_at": 1792341988
+  },
+  {
+    "who": "internet@pctuning.cz",
+    "website": "pctuning.cz",
+    "url": "https://pctuning.cz",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pctuning.cz) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4da48d80-4cde-21bc-9022-37a0ddfd8029@gmail.com>",
+    "reached_out_at": 1792341990
+  },
+  {
+    "who": "csapat@telex.hu",
+    "website": "telex.hu",
+    "url": "https://telex.hu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (telex.hu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<34e803ab-11ec-c24d-c577-b9f9cb5b273d@gmail.com>",
+    "reached_out_at": 1792341992
+  },
+  {
+    "who": "info@24.hu",
+    "website": "24.hu",
+    "url": "https://24.hu",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (24.hu) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4ba209ca-5ca8-563a-28da-ed125db912ce@gmail.com>",
+    "reached_out_at": 1792341994
+  },
+  {
+    "who": "redaktion@20minuten.ch",
+    "website": "20min.ch",
+    "url": "https://20min.ch",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (20min.ch) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ef8b503b-8003-93bd-2734-365ad2f7731d@gmail.com>",
+    "reached_out_at": 1792341996
+  },
+  {
+    "who": "redaktion@sn.at",
+    "website": "sn.at",
+    "url": "https://sn.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (sn.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3eeccd13-9732-dfb0-af7c-6a60d6ab59c0@gmail.com>",
+    "reached_out_at": 1792341998
+  },
+  {
+    "who": "office@krone.at",
+    "website": "krone.at",
+    "url": "https://krone.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (krone.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<a5922e92-87ba-d8a0-468d-ff1082e20176@gmail.com>",
+    "reached_out_at": 1792342000
+  },
+  {
+    "who": "service@tt.com",
+    "website": "tt.com",
+    "url": "https://tt.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tt.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5b6dc70f-53de-99ac-8385-050647377b0b@gmail.com>",
+    "reached_out_at": 1792342002
+  },
+  {
+    "who": "leser@kurier.at",
+    "website": "kurier.at",
+    "url": "https://kurier.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (kurier.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8a92a77e-b73f-eefb-c1c1-3877e5944a14@gmail.com>",
+    "reached_out_at": 1792342004
+  },
+  {
+    "who": "redaktion@kleinezeitung.at",
+    "website": "kleinezeitung.at",
+    "url": "https://kleinezeitung.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (kleinezeitung.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<010c21d7-a731-e015-fe4d-2a5132bcf0ac@gmail.com>",
+    "reached_out_at": 1792342006
+  },
+  {
+    "who": "support@yeebase.com",
+    "website": "yeebase.com",
+    "url": "https://yeebase.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (yeebase.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6825380c-8205-cafa-9558-c5bf8b475dac@gmail.com>",
+    "reached_out_at": 1792342008
+  },
+  {
+    "who": "info@vogel.de",
+    "website": "vogel.de",
+    "url": "https://vogel.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (vogel.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<6137605b-13fb-f505-1bcd-af58f36e4179@gmail.com>",
+    "reached_out_at": 1792342010
+  },
+  {
+    "who": "redaktion@trend.at",
+    "website": "trend.at",
+    "url": "https://trend.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (trend.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<775d2f66-6523-301a-48c0-09aff7103c5a@gmail.com>",
+    "reached_out_at": 1792342012
+  },
+  {
+    "who": "office@leadersnet.com",
+    "website": "leadersnet.at",
+    "url": "https://leadersnet.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (leadersnet.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b97f015f-f90e-034e-8a78-11d0dfa871f1@gmail.com>",
+    "reached_out_at": 1792342014
+  },
+  {
+    "who": "info@nachrichten.at",
+    "website": "nachrichten.at",
+    "url": "https://nachrichten.at",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (nachrichten.at) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3ed648d9-852e-2259-9cff-013dbbba80a1@gmail.com>",
+    "reached_out_at": 1792342016
+  },
+  {
+    "who": "rolf.schroeter@wuv.de",
+    "website": "wuv.de",
+    "url": "https://wuv.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (wuv.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5afa876e-c929-114f-7b1a-d3fa5c8d6133@gmail.com>",
+    "reached_out_at": 1792342018
+  },
+  {
+    "who": "chefredaktion@diepresse.com",
+    "website": "diepresse.com",
+    "url": "https://diepresse.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (diepresse.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8b3ab965-384b-b445-ec68-ee0f919d7ca1@gmail.com>",
+    "reached_out_at": 1792342020
+  },
+  {
+    "who": "redaktion@markenartikel-magazin.de",
+    "website": "markenartikel-magazin.de",
+    "url": "https://markenartikel-magazin.de",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (markenartikel-magazin.de) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<132c7031-f179-3bd1-9702-529f7f653fd9@gmail.com>",
+    "reached_out_at": 1792342022
+  },
+  {
+    "who": "info@dmexco.com",
+    "website": "dmexco.com",
+    "url": "https://dmexco.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dmexco.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1e619e85-7b58-2b06-db41-930f4520d663@gmail.com>",
+    "reached_out_at": 1792342024
+  },
+  {
+    "who": "tips@breakit.se",
+    "website": "breakit.se",
+    "url": "https://breakit.se",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (breakit.se) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<af5449ac-2974-34b0-81c1-e8dc3d79d981@gmail.com>",
+    "reached_out_at": 1792342026
+  },
+  {
+    "who": "redaktion@websiteboosting.com",
+    "website": "websiteboosting.com",
+    "url": "https://websiteboosting.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (websiteboosting.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<2e3c7a7d-841c-4dd1-8654-581d2133b37b@gmail.com>",
+    "reached_out_at": 1792342028
+  },
+  {
+    "who": "hello@bitsandpretzels.com",
+    "website": "bitsandpretzels.com",
+    "url": "https://bitsandpretzels.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (bitsandpretzels.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<88e08038-9f4d-2a0d-12c4-42956452b1bd@gmail.com>",
+    "reached_out_at": 1792342030
+  },
+  {
+    "who": "feedback@di.se",
+    "website": "di.se",
+    "url": "https://di.se",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (di.se) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<043b7a22-6640-e3f4-b6b8-1bd943faa781@gmail.com>",
+    "reached_out_at": 1792342032
+  },
+  {
+    "who": "tips@tek.no",
+    "website": "tek.no",
+    "url": "https://tek.no",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tek.no) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7465a251-0d25-ae4f-3b15-5392f5f56696@gmail.com>",
+    "reached_out_at": 1792342034
+  },
+  {
+    "who": "kontakt@mobilsiden.dk",
+    "website": "mobilsiden.dk",
+    "url": "https://mobilsiden.dk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (mobilsiden.dk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e22f2760-fb85-3c2a-e4bb-7019be7b3fcb@gmail.com>",
+    "reached_out_at": 1792342036
+  },
+  {
+    "who": "redaksjonen@shifter.no",
+    "website": "shifter.no",
+    "url": "https://shifter.no",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (shifter.no) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<c2e2451f-7fb9-bc04-8734-4394a0104369@gmail.com>",
+    "reached_out_at": 1792342038
+  },
+  {
+    "who": "presse@komputer.dk",
+    "website": "komputer.dk",
+    "url": "https://komputer.dk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (komputer.dk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<bb7ff483-37f4-fb66-6a96-c8305c8bec77@gmail.com>",
+    "reached_out_at": 1792342040
+  },
+  {
+    "who": "bca@dinside.no",
+    "website": "dinside.no",
+    "url": "https://dinside.no",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (dinside.no) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<e02efe32-e15f-fdda-eefd-3b14ae61c699@gmail.com>",
+    "reached_out_at": 1792342042
+  },
+  {
+    "who": "redaktion@meremobil.dk",
+    "website": "meremobil.dk",
+    "url": "https://meremobil.dk",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (meremobil.dk) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<88529301-9a4a-b205-8bf8-5279cad0c949@gmail.com>",
+    "reached_out_at": 1792342044
+  },
+  {
+    "who": "tips@digi.no",
+    "website": "digi.no",
+    "url": "https://digi.no",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (digi.no) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3cc6fa04-e903-d8ea-562e-f9eb508129e0@gmail.com>",
+    "reached_out_at": 1792342046
+  },
+  {
+    "who": "redaksjonen@cw.no",
+    "website": "cw.no",
+    "url": "https://cw.no",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (cw.no) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<fa3eda4d-37fc-a1c0-d072-446d6895b977@gmail.com>",
+    "reached_out_at": 1792342048
+  },
+  {
+    "who": "redaktionen@nyteknik.se",
+    "website": "nyteknik.se",
+    "url": "https://nyteknik.se",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (nyteknik.se) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<2e156395-475b-c6c8-1ab1-9b18e1c1d9a8@gmail.com>",
+    "reached_out_at": 1792342050
+  },
+  {
+    "who": "team@bloovi.be",
+    "website": "bloovi.be",
+    "url": "https://bloovi.be",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (bloovi.be) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b707c15f-05a7-10c4-59f9-ba058f27b793@gmail.com>",
+    "reached_out_at": 1792342052
+  },
+  {
+    "who": "redactie@agconnect.nl",
+    "website": "agconnect.nl",
+    "url": "https://agconnect.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (agconnect.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<5714f883-94ab-236a-3a47-22b4f0653059@gmail.com>",
+    "reached_out_at": 1792342054
+  },
+  {
+    "who": "ivandenbroek@fwdmagazine.com",
+    "website": "fwd.nl",
+    "url": "https://fwd.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (fwd.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<175ebd04-bed9-0e8c-1e31-4146d08bc48c@gmail.com>",
+    "reached_out_at": 1792342056
+  },
+  {
+    "who": "toimitus@suomimobiili.fi",
+    "website": "suomimobiili.fi",
+    "url": "https://suomimobiili.fi",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (suomimobiili.fi) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<18ff2c6a-37da-cede-aeeb-9d3349a322c2@gmail.com>",
+    "reached_out_at": 1792342058
+  },
+  {
+    "who": "redactie@computable.nl",
+    "website": "computable.nl",
+    "url": "https://computable.nl",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (computable.nl) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<a34406aa-939d-c4ac-9220-a139ca08390d@gmail.com>",
+    "reached_out_at": 1792342060
+  },
+  {
+    "who": "media@funkykit.com",
+    "website": "funkykit.com",
+    "url": "https://funkykit.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (funkykit.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ee862086-a788-239c-e6a5-a515f7b9c363@gmail.com>",
+    "reached_out_at": 1792342062
+  },
+  {
+    "who": "info@techstory.in",
+    "website": "techstory.in",
+    "url": "https://techstory.in",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techstory.in) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<438aec31-da20-e059-9609-0812bb2ed223@gmail.com>",
+    "reached_out_at": 1792342064
+  },
+  {
+    "who": "info@cashify.in",
+    "website": "cashify.in",
+    "url": "https://cashify.in",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (cashify.in) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1d51c389-06ba-6023-2a93-0eae500ce293@gmail.com>",
+    "reached_out_at": 1792342066
+  },
+  {
+    "who": "contact@beebom.com",
+    "website": "beebom.com",
+    "url": "https://beebom.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (beebom.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ad5e0e93-d30e-fb0e-8c51-56685d7a4300@gmail.com>",
+    "reached_out_at": 1792342068
+  },
+  {
+    "who": "editor@inc42.com",
+    "website": "inc42.com",
+    "url": "https://inc42.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (inc42.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<b064eb0d-0d1e-1524-0f57-8a679ab3857a@gmail.com>",
+    "reached_out_at": 1792342070
+  },
+  {
+    "who": "contact@techpluto.com",
+    "website": "techpluto.com",
+    "url": "https://techpluto.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techpluto.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4db7f50e-9c5c-37bb-6c85-2279ee208218@gmail.com>",
+    "reached_out_at": 1792342072
+  },
+  {
+    "who": "editor@digit.in",
+    "website": "digit.in",
+    "url": "https://digit.in",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (digit.in) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<4aac3709-e056-8e3d-eea9-cca097c6e47a@gmail.com>",
+    "reached_out_at": 1792342074
+  },
+  {
+    "who": "editor@technorms.com",
+    "website": "technorms.com",
+    "url": "https://technorms.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (technorms.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<3bd92c19-5858-e980-7980-5d4f71116dba@gmail.com>",
+    "reached_out_at": 1792342076
+  },
+  {
+    "who": "pr@guidingtechmedia.com",
+    "website": "guidingtech.com",
+    "url": "https://guidingtech.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (guidingtech.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<69c85676-e5e3-db55-78ea-8ea51c7cc120@gmail.com>",
+    "reached_out_at": 1792342078
+  },
+  {
+    "who": "info@gizchina.com",
+    "website": "gizchina.com",
+    "url": "https://gizchina.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (gizchina.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<97aa95a5-91da-6f65-82fe-ad31140969bc@gmail.com>",
+    "reached_out_at": 1792342080
+  },
+  {
+    "who": "contact@techwiser.com",
+    "website": "techwiser.com",
+    "url": "https://techwiser.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (techwiser.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<1bd5a9cc-77eb-19c4-ece0-0a26cf8d0a34@gmail.com>",
+    "reached_out_at": 1792342082
+  },
+  {
+    "who": "info@getdroidtips.com",
+    "website": "getdroidtips.com",
+    "url": "https://getdroidtips.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (getdroidtips.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<8bc342e8-3854-1206-8313-712b79eed45b@gmail.com>",
+    "reached_out_at": 1792342084
+  },
+  {
+    "who": "tips@tomshardware.com",
+    "website": "tomshardware.com",
+    "url": "https://tomshardware.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tomshardware.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<0455e829-b5e4-4afe-01d0-4e214b5cf178@gmail.com>",
+    "reached_out_at": 1792342086
+  },
+  {
+    "who": "mprospero@tomsguide.com",
+    "website": "tomsguide.com",
+    "url": "https://tomsguide.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (tomsguide.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<cf7ec93d-73f7-d948-65e6-b3f5941188bc@gmail.com>",
+    "reached_out_at": 1792342088
+  },
+  {
+    "who": "contact@manofmany.com",
+    "website": "manofmany.com",
+    "url": "https://manofmany.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (manofmany.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<7907067d-0ba2-4c2a-cd54-ac81f9619946@gmail.com>",
+    "reached_out_at": 1792342090
+  },
+  {
+    "who": "info@reviews.org",
+    "website": "reviews.org",
+    "url": "https://reviews.org",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (reviews.org) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ed2870ab-5546-23a3-42bf-2a211c734d0f@gmail.com>",
+    "reached_out_at": 1792342092
+  },
+  {
+    "who": "help-au@finder.com",
+    "website": "finder.com.au",
+    "url": "https://finder.com.au",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (finder.com.au) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<45ad8892-c41e-3e9b-21d7-81334eaf44fe@gmail.com>",
+    "reached_out_at": 1792342094
+  },
+  {
+    "who": "editor@eftm.com",
+    "website": "eftm.com",
+    "url": "https://eftm.com",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (eftm.com) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<ecc88a3f-d579-fbd5-0e15-37c42c1cbc86@gmail.com>",
+    "reached_out_at": 1792342096
+  },
+  {
+    "who": "leigh@pickr.com.au",
+    "website": "pickr.com.au",
+    "url": "https://pickr.com.au",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (pickr.com.au) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<601ae68f-1a02-3329-4f2e-e91cfe8a2cd7@gmail.com>",
+    "reached_out_at": 1792342098
+  },
+  {
+    "who": "enquiries@canstarblue.com.au",
+    "website": "canstarblue.com.au",
+    "url": "https://canstarblue.com.au",
+    "how": "Email (Gmail SMTP — Live Scraped)",
+    "category": "Live-Scraped Contact / Impressum Outreach (canstarblue.com.au) — Signed by The SWEEPR Cleaner Team",
+    "status": "delivered",
+    "message_id": "<47f3e4fd-560a-8540-bfae-c5da89615822@gmail.com>",
+    "reached_out_at": 1792342100
+  }
+]
