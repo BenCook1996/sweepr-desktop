@@ -1838,9 +1838,32 @@
       errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // Capture lead in CRM as soon as visitor enters a valid email on the order page
+    let lastCapturedLeadEmail = '';
+    function captureOrderLead() {
+      const emailEl = document.getElementById('email');
+      const nameEl = document.getElementById('cardName');
+      const email = (emailEl?.value || '').trim().toLowerCase();
+      if (!email || email === lastCapturedLeadEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+      lastCapturedLeadEmail = email;
+      const name = (nameEl?.value || '').trim() || undefined;
+      const country = (typeof activePricing !== 'undefined' && activePricing?.country) ? activePricing.country : undefined;
+      fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, country })
+      }).catch(() => {});
+    }
+    const emailInputEl = document.getElementById('email');
+    if (emailInputEl) {
+      emailInputEl.addEventListener('blur', captureOrderLead);
+      emailInputEl.addEventListener('change', captureOrderLead);
+    }
+
     // Attach form submit listener
     document.getElementById('orderForm').addEventListener('submit', (e) => {
       e.preventDefault();
+      captureOrderLead();
       triggerCheckout('card');
     });
 

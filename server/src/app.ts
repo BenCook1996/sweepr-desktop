@@ -27,6 +27,7 @@ import { cleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
 import {
   resolvePricingForRequest,
   getPricingForCountryOrCurrency,
+  detectLeadDevice,
   PRICING_BY_CURRENCY,
   COUNTRY_TO_CURRENCY,
   COUNTRY_TO_LANG,
@@ -437,6 +438,55 @@ export function createApp(deps: AppDeps) {
     }
   }
 
+  // Capture lead with country, device, and datetime when a visitor enters their email on /order or checkout
+  app.post("/api/lead", async (c) => {
+    if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
+    const body = await c.req.json().catch(() => ({}));
+    const email = normalizeEmail(body?.email);
+    const name = typeof body?.name === "string" ? body.name.trim().slice(0, 120) : "";
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+    });
+    const leadDevice = detectLeadDevice(c, typeof body?.device === "string" ? body.device : "web");
+    const country = localizedPricing.country;
+
+    if (!email) {
+      return c.json({ error: "invalid_email" }, 400);
+    }
+
+    const existing = repo.accountByEmail(email);
+    let accountId: string;
+    if (existing) {
+      accountId = existing.id;
+      repo.setAccountLeadMeta(accountId, { country, lead_device: leadDevice });
+      if (name && !existing.name) {
+        repo.updateAccountProfile(accountId, { name });
+      }
+    } else {
+      accountId = `acc_lead_${randomToken(8)}`;
+      const refreshToken = randomToken(32);
+      repo.createAccount(accountId, sha256(refreshToken), email, null, {
+        country,
+        lead_device: leadDevice,
+        created_at: now(),
+      });
+      if (name) {
+        repo.updateAccountProfile(accountId, { name });
+      }
+    }
+
+    const acc = repo.accountById(accountId);
+    return c.json({
+      ok: true,
+      account_id: accountId,
+      country: acc?.country ?? country,
+      device: acc?.lead_device ?? leadDevice,
+      lead_device: acc?.lead_device ?? leadDevice,
+      created_at: acc?.created_at ?? now(),
+    });
+  });
+
   app.post("/api/web-checkout", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
@@ -448,6 +498,12 @@ export function createApp(deps: AppDeps) {
     const plan: "monthly" | "six_month" | "annual" =
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
+
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body.country === "string" ? body.country : undefined,
+      currency: typeof body.currency === "string" ? body.currency : undefined,
+    });
+    const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     // Reuse an existing account for this email if present (avoids orphaned duplicate rows).
     const existing = repo.accountByEmail(email);
@@ -473,20 +529,20 @@ export function createApp(deps: AppDeps) {
     let accountId: string;
     if (existing) {
       accountId = existing.id;
+      repo.setAccountLeadMeta(accountId, { country: localizedPricing.country, lead_device: leadDevice });
     } else {
       accountId = `acc_web_${randomToken(8)}`;
       const refreshToken = randomToken(32);
-      repo.createAccount(accountId, sha256(refreshToken), email);
+      repo.createAccount(accountId, sha256(refreshToken), email, null, {
+        country: localizedPricing.country,
+        lead_device: leadDevice,
+      });
     }
     if (refCode) {
       repo.applyReferral(accountId, refCode, now());
     }
 
     try {
-      const localizedPricing = await resolvePricingForRequest(c, {
-        country: typeof body.country === "string" ? body.country : undefined,
-        currency: typeof body.currency === "string" ? body.currency : undefined,
-      });
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
       let customerId = existing?.stripe_customer_id ?? null;
       if (customerId) {
@@ -766,16 +822,26 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body.country === "string" ? body.country : undefined,
+      currency: typeof body.currency === "string" ? body.currency : undefined,
+    });
+    const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
+
     let accountId: string;
     if (existing) {
       accountId = existing.id;
+      repo.setAccountLeadMeta(accountId, { country: localizedPricing.country, lead_device: leadDevice });
     } else {
       accountId = `acc_web_${randomToken(8)}`;
       const refreshToken = randomToken(32);
-      repo.createAccount(accountId, sha256(refreshToken), email);
+      repo.createAccount(accountId, sha256(refreshToken), email, null, {
+        country: localizedPricing.country,
+        lead_device: leadDevice,
+      });
     }
     if (name) {
-      repo.updateAccountProfile(accountId, { name, email });
+      repo.updateAccountProfile(accountId, { name, email, country: localizedPricing.country, lead_device: leadDevice });
     }
     if (refCode) {
       repo.applyReferral(accountId, refCode, now());
@@ -815,11 +881,6 @@ export function createApp(deps: AppDeps) {
         customerId = customer.id;
         repo.setCustomer(accountId, customerId, email);
       }
-
-      const localizedPricing = await resolvePricingForRequest(c, {
-        country: typeof body.country === "string" ? body.country : undefined,
-        currency: typeof body.currency === "string" ? body.currency : undefined,
-      });
 
       const isAnnual = plan === "annual";
       const isSixMonth = plan === "six_month";
@@ -1756,9 +1817,18 @@ export function createApp(deps: AppDeps) {
     const deviceId = String(body.device_id ?? "");
     const deviceType = body.device_type === "mobile" ? "mobile" : "pc";
     if (!DEVICE_RE.test(deviceId)) return c.json({ error: "invalid device_id" }, 400);
+    const email = normalizeEmail(body.email) || undefined;
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body.country === "string" ? body.country : undefined,
+    });
+    const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : deviceType);
     const accountId = `acc_${randomToken(12)}`;
     const refreshToken = randomToken(32);
-    repo.createAccount(accountId, sha256(refreshToken));
+    repo.createAccount(accountId, sha256(refreshToken), email, null, {
+      country: localizedPricing.country,
+      lead_device: leadDevice,
+      created_at: now(),
+    });
     repo.touchDevice(accountId, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile);
     return c.json({ account_id: accountId, refresh_token: refreshToken });
   });
@@ -1900,6 +1970,13 @@ export function createApp(deps: AppDeps) {
     if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
+    if (!account.country || !account.lead_device) {
+      const localizedPricing = await resolvePricingForRequest(c);
+      repo.setAccountLeadMeta(account.id, {
+        country: localizedPricing.country,
+        lead_device: detectLeadDevice(c, deviceType),
+      });
+    }
 
     limitOtpVerifyEmail.reset(email);
     limitOtpSendEmail.reset(email);
@@ -1958,6 +2035,13 @@ export function createApp(deps: AppDeps) {
     if (!DEVICE_RE.test(deviceId)) return c.json({ error: "invalid device_id" }, 400);
     if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
+    }
+    if (!account.country || !account.lead_device) {
+      const localizedPricing = await resolvePricingForRequest(c);
+      repo.setAccountLeadMeta(account.id, {
+        country: localizedPricing.country,
+        lead_device: detectLeadDevice(c, deviceType),
+      });
     }
 
     let ent = repo.entitlement(account.id);
@@ -2028,6 +2112,14 @@ export function createApp(deps: AppDeps) {
       .prepare("SELECT id FROM devices WHERE account_id = ? LIMIT 1")
       .get(account.id) as { id: string } | undefined;
     const deviceId = DEVICE_RE.test(rawDeviceId) ? rawDeviceId : fallbackDevice?.id ?? "";
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+    });
+    repo.setAccountLeadMeta(account.id, {
+      country: localizedPricing.country,
+      lead_device: detectLeadDevice(c, body?.device_type || "pc"),
+    });
 
     // If the entered email already has an active subscription, activate this device immediately without opening checkout!
     if (email) {
@@ -2092,10 +2184,6 @@ export function createApp(deps: AppDeps) {
         // Ignore if email is already associated with another account
       }
     }
-    const localizedPricing = await resolvePricingForRequest(c, {
-      country: typeof body?.country === "string" ? body.country : undefined,
-      currency: typeof body?.currency === "string" ? body.currency : undefined,
-    });
     const isAnnual = plan === "annual";
     const isSixMonth = plan === "six_month";
     const lineItems = isAnnual

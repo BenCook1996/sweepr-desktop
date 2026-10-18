@@ -364,6 +364,7 @@
           <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Filter:</span>
             <button onclick="filterStatus('all')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500 text-white shadow-sm" data-status="all">All Accounts</button>
+            <button onclick="filterStatus('lead')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="lead">Leads</button>
             <button onclick="filterStatus('active')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="active">Active</button>
             <button onclick="filterStatus('trialing')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="trialing">Trialing</button>
             <button onclick="filterStatus('past_due')" class="status-filter px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800" data-status="past_due">Past Due (Dunning)</button>
@@ -384,10 +385,12 @@
             <table class="w-full text-left text-xs">
               <thead class="bg-surface-850/80 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
                 <tr>
-                  <th class="py-3.5 px-6">Customer / Account</th>
+                  <th class="py-3.5 px-6">Customer / Lead</th>
+                  <th class="py-3.5 px-4">Country</th>
+                  <th class="py-3.5 px-4">Device</th>
+                  <th class="py-3.5 px-4">Date &amp; Time</th>
                   <th class="py-3.5 px-4">Subscription</th>
                   <th class="py-3.5 px-4">Monthly Value</th>
-                  <th class="py-3.5 px-4">Devices</th>
                   <th class="py-3.5 px-4">Health</th>
                   <th class="py-3.5 px-4">Stage</th>
                   <th class="py-3.5 px-6 text-right">Actions</th>
@@ -395,7 +398,7 @@
               </thead>
               <tbody id="customers-table-body" class="divide-y divide-slate-800/80 text-slate-300">
                 <tr>
-                  <td colspan="7" class="py-12 text-center text-slate-400">Loading customers...</td>
+                  <td colspan="9" class="py-12 text-center text-slate-400">Loading customers...</td>
                 </tr>
               </tbody>
             </table>
@@ -755,6 +758,18 @@
               <div>
                 <span class="text-slate-400 block text-[11px]">Lifecycle Stage:</span>
                 <span class="font-bold text-white capitalize text-sm" id="drawer-stage">Customer</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Country:</span>
+                <span class="font-bold text-white font-mono text-sm" id="drawer-country">🌐 Unknown</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Lead / Primary Device:</span>
+                <span class="font-bold text-white text-sm" id="drawer-lead-device">Windows PC</span>
+              </div>
+              <div class="col-span-2 pt-1 border-t border-slate-800/80">
+                <span class="text-slate-400 block text-[11px]">Lead Recorded (Date &amp; Time):</span>
+                <span class="font-bold text-white font-mono text-xs" id="drawer-created-at">—</span>
               </div>
             </div>
           </div>
@@ -1342,10 +1357,33 @@
       }
     }
 
+    function formatCountryFlag(code) {
+      if (!code || typeof code !== 'string') return '🌐 —';
+      const clean = code.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(clean)) return esc(clean);
+      const flag = String.fromCodePoint(
+        clean.charCodeAt(0) + 127397,
+        clean.charCodeAt(1) + 127397
+      );
+      return `${flag} ${clean}`;
+    }
+
+    function formatDateTime(unixSec) {
+      if (!unixSec) return '—';
+      const d = new Date(Number(unixSec) * 1000);
+      if (isNaN(d.getTime())) return '—';
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
+
     function renderCustomersTable(customers) {
       const tbody = document.getElementById('customers-table-body');
       if (customers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400">No customers found. Click <strong>Load Demo Data</strong> above to seed sample data.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-400">No customers or leads found. Click <strong>Load Demo Data</strong> above to seed sample data.</td></tr>`;
         return;
       }
 
@@ -1353,6 +1391,10 @@
         const initials = esc((c.name || c.email || c.id || '').slice(0, 2).toUpperCase());
         const statusBadgeClass = `badge-${cls(c.subscription_status)}`;
         const healthColor = c.health_score > 70 ? 'text-emerald-400' : c.health_score > 40 ? 'text-amber-400' : 'text-rose-400';
+        const countryDisplay = formatCountryFlag(c.country);
+        const deviceLabel = esc(c.lead_device || (c.device_count > 0 ? 'Windows PC' : 'Web / Unknown'));
+        const dateTimeStr = esc(formatDateTime(c.created_at));
+        const deviceIcon = (c.lead_device || '').toLowerCase().includes('iphone') || (c.lead_device || '').toLowerCase().includes('android') ? 'smartphone' : 'laptop';
 
         return `
           <tr class="hover:bg-surface-850/60 transition-colors cursor-pointer group" data-open-customer="${esc(c.id)}">
@@ -1367,6 +1409,19 @@
                 </div>
               </div>
             </td>
+            <td class="py-4 px-4 font-mono text-xs text-slate-200 whitespace-nowrap">
+              ${countryDisplay}
+            </td>
+            <td class="py-4 px-4 whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5 text-slate-200 text-xs font-medium">
+                <i data-lucide="${deviceIcon}" class="w-3.5 h-3.5 text-brand-400"></i>
+                <span>${deviceLabel}</span>
+                ${Number(c.device_count || 0) > 0 ? `<span class="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">(${Number(c.device_count)})</span>` : ''}
+              </div>
+            </td>
+            <td class="py-4 px-4 font-mono text-[11px] text-slate-300 whitespace-nowrap">
+              ${dateTimeStr}
+            </td>
             <td class="py-4 px-4">
               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${statusBadgeClass} capitalize">
                 ${esc(c.subscription_status)}
@@ -1374,11 +1429,6 @@
             </td>
             <td class="py-4 px-4 font-mono font-bold text-white">
               $${money(c.amount_cents)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${esc(c.billing_interval)}</span>
-            </td>
-            <td class="py-4 px-4">
-              <span class="inline-flex items-center gap-1.5 font-mono text-slate-300">
-                <i data-lucide="laptop" class="w-3.5 h-3.5 text-slate-400"></i> ${Number(c.device_count || 0)}
-              </span>
             </td>
             <td class="py-4 px-4">
               <span class="font-mono font-bold ${healthColor}">${Number(c.health_score || 0)}%</span>
@@ -1471,6 +1521,9 @@
         document.getElementById('drawer-health-bar').style.width = `${acc.health_score || 100}%`;
         document.getElementById('drawer-ltv').textContent = `$${((acc.total_spend_cents || 0) / 100).toFixed(2)}`;
         document.getElementById('drawer-stage').textContent = acc.lifecycle_stage || 'customer';
+        document.getElementById('drawer-country').textContent = formatCountryFlag(acc.country);
+        document.getElementById('drawer-lead-device').textContent = acc.lead_device || (data.devices && data.devices.length > 0 ? 'Windows PC' : 'Web / Unknown');
+        document.getElementById('drawer-created-at').textContent = formatDateTime(acc.created_at);
 
         // Render Devices
         renderDrawerDevices(data.devices);
@@ -1551,7 +1604,7 @@
         <div class="p-3.5 rounded-xl bg-surface-850 border border-slate-800 text-xs space-y-1">
           <div class="flex items-center justify-between">
             <span class="font-bold ${item.type === 'note' ? 'text-brand-400' : 'text-white'}">${esc(item.title)}</span>
-            <span class="text-[11px] text-slate-500 font-mono">${esc(new Date(item.time * 1000).toLocaleTimeString())}</span>
+            <span class="text-[11px] text-slate-500 font-mono">${esc(formatDateTime(item.time))}</span>
           </div>
           <div class="text-slate-300 leading-relaxed">${esc(item.desc || '')}</div>
         </div>
@@ -1861,7 +1914,7 @@
                 <div class="text-[11px] font-mono text-slate-500 mt-1">Account: ${esc(act.account_id)} • Actor: ${esc(act.actor)}</div>
               </div>
             </div>
-            <span class="text-[11px] font-mono text-slate-500">${esc(new Date(act.created_at * 1000).toLocaleTimeString())}</span>
+            <span class="text-[11px] font-mono text-slate-500 whitespace-nowrap">${esc(formatDateTime(act.created_at))}</span>
           </div>
         `).join('');
         safeCreateIcons();

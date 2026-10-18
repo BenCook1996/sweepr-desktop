@@ -624,5 +624,49 @@ export async function resolvePricingForRequest(
     return getPricingForCountryOrCurrency(lookedUp, null);
   }
 
+  const acceptLang = c.req.header("accept-language") || "";
+  const regionMatch = acceptLang.match(/\b[a-z]{2,3}-([A-Z]{2})\b/i);
+  if (regionMatch && regionMatch[1]) {
+    const region = regionMatch[1].toUpperCase();
+    if (region !== "XX") {
+      return getPricingForCountryOrCurrency(region, null);
+    }
+  }
+
   return getPricingForCountryOrCurrency("US", "usd");
 }
+
+export function detectLeadDevice(c: Context, hintDevice?: string | null): string {
+  const hint = String(hintDevice ?? "").trim();
+  const hintLower = hint.toLowerCase();
+  const ua = (c.req.header("user-agent") || "").toLowerCase();
+
+  if (hint && !["pc", "mobile", "web"].includes(hintLower)) {
+    return hint.slice(0, 64);
+  }
+
+  const isApp = hintLower === "pc" || hintLower === "mobile" || /tauri|sweepr|okhttp|cfnetwork/i.test(ua);
+
+  if (hintLower === "mobile") {
+    if (/iphone|ipad|ipod|cfnetwork|darwin/i.test(ua)) return "iPhone / iOS (App)";
+    if (/android|okhttp|dalvik/i.test(ua)) return "Android (App)";
+    return "Mobile App";
+  }
+
+  if (hintLower === "pc") {
+    if (/macintosh|mac os x/i.test(ua)) return "macOS (App)";
+    if (/linux/i.test(ua) && !/android/i.test(ua)) return "Linux (App)";
+    return "Windows PC (App)";
+  }
+
+  if (/ipad/i.test(ua)) return isApp ? "iPad / iOS (App)" : "iPad / iOS";
+  if (/iphone|ipod/i.test(ua)) return isApp ? "iPhone / iOS (App)" : "iPhone / iOS";
+  if (/android/i.test(ua)) return isApp ? "Android (App)" : "Android";
+  if (/cros/i.test(ua)) return "Chromebook";
+  if (/windows/i.test(ua)) return isApp ? "Windows PC (App)" : "Windows PC";
+  if (/macintosh|mac os x/i.test(ua)) return isApp ? "macOS (App)" : "macOS";
+  if (/linux|x11/i.test(ua)) return isApp ? "Linux (App)" : "Linux";
+
+  return hintLower === "web" ? "Web Browser" : "Windows PC";
+}
+

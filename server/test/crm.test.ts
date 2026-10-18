@@ -295,3 +295,72 @@ test("CRM: outreach log seeding, filtering, and CRUD", async () => {
   });
   assert.equal(delRes.status, 200);
 });
+
+test("CRM: lead capture records country, device, and datetime in CRM", async () => {
+  const fixedNow = 1760824800; // Fixed unix timestamp
+  const { app, get } = setup(() => fixedNow);
+
+  // 1. Capture web order lead via POST /api/lead with Cloudflare country header & iOS User-Agent
+  const leadRes = await app.request("/api/lead", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "cf-ipcountry": "GB",
+      "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15",
+    },
+    body: JSON.stringify({
+      email: "lead.visitor@london.co.uk",
+      name: "London Visitor",
+    }),
+  });
+  assert.equal(leadRes.status, 200);
+  const leadData = await leadRes.json();
+  assert.equal(leadData.ok, true);
+  assert.equal(leadData.country, "GB");
+  assert.equal(leadData.lead_device, "iPhone / iOS");
+  assert.equal(leadData.created_at, fixedNow);
+
+  // 2. Capture desktop app lead via POST /v1/accounts with US header & Windows User-Agent
+  const appLeadRes = await app.request("/v1/accounts", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "cf-ipcountry": "US",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Tauri/2.0",
+    },
+    body: JSON.stringify({
+      email: "pc.user@austin.io",
+      device_id: "a".repeat(64),
+      device_type: "pc",
+    }),
+  });
+  assert.equal(appLeadRes.status, 200);
+
+  // 3. Verify both leads appear in CRM filtered by status=lead with country, lead_device, and created_at
+  const crmLeadsRes = await get("/api/crm/customers?status=lead");
+  assert.equal(crmLeadsRes.status, 200);
+  const crmLeads = await crmLeadsRes.json();
+  assert.equal(crmLeads.customers.length, 2);
+
+  const ukLead = crmLeads.customers.find((c: any) => c.email === "lead.visitor@london.co.uk");
+  assert.ok(ukLead);
+  assert.equal(ukLead.country, "GB");
+  assert.equal(ukLead.lead_device, "iPhone / iOS");
+  assert.equal(ukLead.created_at, fixedNow);
+  assert.equal(ukLead.lifecycle_stage, "lead");
+
+  const usLead = crmLeads.customers.find((c: any) => c.email === "pc.user@austin.io");
+  assert.ok(usLead);
+  assert.equal(usLead.country, "US");
+  assert.equal(usLead.lead_device, "Windows PC (App)");
+  assert.equal(usLead.created_at, fixedNow);
+
+  // 4. Verify Customer 360 endpoint returns country, lead_device, and created_at
+  const detailRes = await get(`/api/crm/customers/${ukLead.id}`);
+  assert.equal(detailRes.status, 200);
+  const detail = await detailRes.json();
+  assert.equal(detail.account.country, "GB");
+  assert.equal(detail.account.lead_device, "iPhone / iOS");
+  assert.equal(detail.account.created_at, fixedNow);
+});
+

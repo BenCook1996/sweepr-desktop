@@ -9,6 +9,7 @@ import type { Repo, EntStatus } from "./db.js";
 import { randomToken, sha256, signEntitlement } from "./tokens.js";
 import { periodEnd } from "./stripe.js";
 import { sendSubscriptionEmail, verifySmtp } from "./email.js";
+import { resolvePricingForRequest, detectLeadDevice } from "./pricing.js";
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -149,6 +150,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       notes: body.notes,
       health_score: body.health_score !== undefined ? Number(body.health_score) : undefined,
       lifecycle_stage: body.lifecycle_stage,
+      country: body.country,
+      lead_device: body.lead_device,
     });
 
     return c.json({ ok: true, customer: repo.getCustomer360(id) });
@@ -292,12 +295,16 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     let refreshToken = "";
     let accountId = "";
 
+    const pricing = await resolvePricingForRequest(c);
+    const country = typeof body.country === "string" && body.country.trim() ? body.country.trim().toUpperCase().slice(0, 2) : pricing.country;
+    const leadDevice = typeof body.lead_device === "string" && body.lead_device.trim() ? body.lead_device.trim() : detectLeadDevice(c, body.device_type);
+
     if (acc) {
       accountId = acc.id;
     } else {
       accountId = `acc_${randomToken(10)}`;
       refreshToken = randomToken(32);
-      repo.createAccount(accountId, sha256(refreshToken), email);
+      repo.createAccount(accountId, sha256(refreshToken), email, null, { country, lead_device: leadDevice, created_at: now() });
     }
 
     repo.updateAccountProfile(accountId, {
@@ -306,6 +313,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       notes: body.notes || `Created via CRM as ${status} ${plan} subscription`,
       health_score: 100,
       lifecycle_stage: status === "active" ? "customer" : "trial",
+      country,
+      lead_device: leadDevice,
     });
 
     const subId = `sub_${randomToken(10)}`;
@@ -893,6 +902,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         stage: "customer",
         health: 98,
         spend: 19800,
+        country: "US",
+        lead_device: "Windows PC",
         devices: ["c8f2a91b402e8d7120a45f91e0a293c4b1239857d4e321a0f9b8c7d6e5f4a3b2", "d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2"],
         notes: "Key enterprise account. Requested automated seat billing for upcoming quarter.",
       },
@@ -907,6 +918,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         stage: "customer",
         health: 85,
         spend: 2997,
+        country: "GB",
+        lead_device: "Windows PC (App)",
         devices: ["f0e1d2c3b4a5968778695a4b3c2d1e0f0e1d2c3b4a5968778695a4b3c2d1e0f"],
         notes: "Power user. Upgraded from trial after day 3.",
       },
@@ -921,6 +934,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         stage: "trial",
         health: 92,
         spend: 150,
+        country: "CA",
+        lead_device: "Android",
         devices: ["7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b"],
         notes: "Trial started via web-checkout. Follow up scheduled on Day 5.",
       },
@@ -935,6 +950,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         stage: "past_due",
         health: 35,
         spend: 1998,
+        country: "DE",
+        lead_device: "Windows PC",
         devices: ["1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"],
         notes: "Card expired on last renewal cycle. Dunning email step 2 sent.",
       },
@@ -949,68 +966,112 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         stage: "churned",
         health: 15,
         spend: 999,
+        country: "FR",
+        lead_device: "macOS",
         devices: [],
         notes: "Canceled due to company downsizing.",
+      },
+      {
+        id: "acc_demo_lead_uk",
+        email: "oliver.hughes@londonstudio.co.uk",
+        name: "Oliver Hughes",
+        status: "none" as EntStatus,
+        plan: "none",
+        amount_cents: 0,
+        billing_interval: "month",
+        stage: "lead",
+        health: 80,
+        spend: 0,
+        country: "GB",
+        lead_device: "Windows PC",
+        devices: [],
+        notes: "Visited order page from London on Windows PC.",
+      },
+      {
+        id: "acc_demo_lead_us",
+        email: "maya.lin@pacificmobile.io",
+        name: "Maya Lin",
+        status: "none" as EntStatus,
+        plan: "none",
+        amount_cents: 0,
+        billing_interval: "month",
+        stage: "lead",
+        health: 75,
+        spend: 0,
+        country: "US",
+        lead_device: "iPhone / iOS",
+        devices: [],
+        notes: "Mobile lead captured from iOS Safari.",
       },
     ];
 
     for (const demo of demoAccounts) {
       if (!repo.accountById(demo.id)) {
-        repo.createAccount(demo.id, sha256(`token_${demo.id}`), demo.email);
+        repo.createAccount(demo.id, sha256(`token_${demo.id}`), demo.email, null, {
+          country: demo.country,
+          lead_device: demo.lead_device,
+          created_at: t,
+        });
       }
-      repo.setCustomer(demo.id, `cus_${demo.id.slice(4)}`, demo.email);
+      if (demo.status !== "none") {
+        repo.setCustomer(demo.id, `cus_${demo.id.slice(4)}`, demo.email);
+      }
       repo.updateAccountProfile(demo.id, {
         name: demo.name,
         email: demo.email,
         notes: demo.notes,
         health_score: demo.health,
         lifecycle_stage: demo.stage,
+        country: demo.country,
+        lead_device: demo.lead_device,
       });
 
-      repo.upsertEntitlement({
-        account_id: demo.id,
-        stripe_subscription_id: `sub_${demo.id}`,
-        status: demo.status,
-        plan: demo.plan,
-        current_period_end: demo.status === "active" ? t + 30 * 86400 : demo.status === "past_due" ? t + 2 * 86400 : t + 7 * 86400,
-        cancel_at_period_end: demo.status === "canceled" ? 1 : 0,
-      });
+      if (demo.status !== "none") {
+        repo.upsertEntitlement({
+          account_id: demo.id,
+          stripe_subscription_id: `sub_${demo.id}`,
+          status: demo.status,
+          plan: demo.plan,
+          current_period_end: demo.status === "active" ? t + 30 * 86400 : demo.status === "past_due" ? t + 2 * 86400 : t + 7 * 86400,
+          cancel_at_period_end: demo.status === "canceled" ? 1 : 0,
+        });
 
-      repo.upsertSubscription({
-        id: `sub_${demo.id}`,
-        account_id: demo.id,
-        stripe_subscription_id: `sub_${demo.id}`,
-        status: demo.status,
-        plan: demo.plan,
-        amount_cents: demo.amount_cents,
-        currency: "usd",
-        billing_interval: demo.billing_interval,
-        current_period_start: t - 30 * 86400,
-        current_period_end: demo.status === "active" ? t + 30 * 86400 : t + 7 * 86400,
-        cancel_at_period_end: demo.status === "canceled" ? 1 : 0,
-        canceled_at: demo.status === "canceled" ? t : null,
-        trial_start: demo.status === "trialing" ? t - 3 * 86400 : null,
-        trial_end: demo.status === "trialing" ? t + 4 * 86400 : null,
-      });
+        repo.upsertSubscription({
+          id: `sub_${demo.id}`,
+          account_id: demo.id,
+          stripe_subscription_id: `sub_${demo.id}`,
+          status: demo.status,
+          plan: demo.plan,
+          amount_cents: demo.amount_cents,
+          currency: "usd",
+          billing_interval: demo.billing_interval,
+          current_period_start: t - 30 * 86400,
+          current_period_end: demo.status === "active" ? t + 30 * 86400 : t + 7 * 86400,
+          cancel_at_period_end: demo.status === "canceled" ? 1 : 0,
+          canceled_at: demo.status === "canceled" ? t : null,
+          trial_start: demo.status === "trialing" ? t - 3 * 86400 : null,
+          trial_end: demo.status === "trialing" ? t + 4 * 86400 : null,
+        });
+
+        repo.upsertInvoice({
+          id: `in_demo_${demo.id}`,
+          account_id: demo.id,
+          stripe_invoice_id: `in_demo_${demo.id}`,
+          amount_cents: demo.amount_cents,
+          amount_paid_cents: demo.status === "past_due" ? 0 : demo.amount_cents,
+          currency: "usd",
+          status: demo.status === "past_due" ? "open" : "paid",
+          due_date: t + 7 * 86400,
+          paid_at: demo.status === "past_due" ? null : t - 3 * 86400,
+          hosted_invoice_url: null,
+          pdf_url: null,
+          created_at: t - 3 * 86400,
+        });
+      }
 
       for (const dev of demo.devices) {
         repo.touchDevice(demo.id, dev, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
       }
-
-      repo.upsertInvoice({
-        id: `in_demo_${demo.id}`,
-        account_id: demo.id,
-        stripe_invoice_id: `in_demo_${demo.id}`,
-        amount_cents: demo.amount_cents,
-        amount_paid_cents: demo.status === "past_due" ? 0 : demo.amount_cents,
-        currency: "usd",
-        status: demo.status === "past_due" ? "open" : "paid",
-        due_date: t + 7 * 86400,
-        paid_at: demo.status === "past_due" ? null : t - 3 * 86400,
-        hosted_invoice_url: null,
-        pdf_url: null,
-        created_at: t - 3 * 86400,
-      });
 
       repo.addNote(demo.id, "System", demo.notes);
     }

@@ -14,6 +14,8 @@ export interface Account {
   email: string | null;
   name: string | null;
   notes: string | null;
+  country: string | null;
+  lead_device: string | null;
   health_score: number;
   lifecycle_stage: string;
   total_spend_cents: number;
@@ -143,6 +145,8 @@ export interface CrmCustomerSummary {
   email: string | null;
   name: string | null;
   stripe_customer_id: string | null;
+  country: string | null;
+  lead_device: string | null;
   subscription_status: EntStatus;
   plan: string | null;
   amount_cents: number;
@@ -159,6 +163,7 @@ export interface CrmCustomerSummary {
 
 export interface CrmStats {
   totalCustomers: number;
+  leadsCount?: number;
   activeSubscriptions: number;
   trialingSubscriptions: number;
   pastDueSubscriptions: number;
@@ -315,6 +320,8 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "email", "TEXT");
   ensureColumn(db, "accounts", "name", "TEXT");
   ensureColumn(db, "accounts", "notes", "TEXT");
+  ensureColumn(db, "accounts", "country", "TEXT");
+  ensureColumn(db, "accounts", "lead_device", "TEXT");
   ensureColumn(db, "accounts", "health_score", "INTEGER DEFAULT 100");
   ensureColumn(db, "accounts", "lifecycle_stage", "TEXT DEFAULT 'lead'");
   ensureColumn(db, "accounts", "total_spend_cents", "INTEGER DEFAULT 0");
@@ -435,21 +442,56 @@ export class Repo {
   }
 
 
-  createAccount(id: string, refreshTokenHash: string, email?: string, referredBy?: string | null) {
-    const t = now();
+  createAccount(
+    id: string,
+    refreshTokenHash: string,
+    email?: string,
+    referredBy?: string | null,
+    meta?: { country?: string | null; lead_device?: string | null; created_at?: number }
+  ) {
+    const t = meta?.created_at ?? now();
     const referralCode = generateReferralCode(id);
+    const country = meta?.country ? meta.country.trim().toUpperCase().slice(0, 8) : null;
+    const leadDevice = meta?.lead_device ? meta.lead_device.trim().slice(0, 64) : null;
     this.db.prepare(`
-      INSERT INTO accounts (id, refresh_token_hash, email, health_score, lifecycle_stage, total_spend_cents, referral_code, referred_by, created_at, updated_at)
-      VALUES (?, ?, ?, 100, 'lead', 0, ?, ?, ?, ?)
-    `).run(id, refreshTokenHash, email ?? null, referralCode, referredBy ?? null, t, t);
+      INSERT INTO accounts (id, refresh_token_hash, email, country, lead_device, health_score, lifecycle_stage, total_spend_cents, referral_code, referred_by, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, 100, 'lead', 0, ?, ?, ?, ?)
+    `).run(id, refreshTokenHash, email ?? null, country, leadDevice, referralCode, referredBy ?? null, t, t);
+
+    const metaParts: string[] = [];
+    if (country) metaParts.push(`Country: ${country}`);
+    if (leadDevice) metaParts.push(`Device: ${leadDevice}`);
+    const metaSuffix = metaParts.length > 0 ? ` (${metaParts.join(" • ")})` : "";
 
     this.addActivity({
       account_id: id,
       type: "account_created",
-      title: "Account Created",
-      description: email ? `Account created for ${email}` : `New device-bound account initialized`,
+      title: email ? "Lead Captured" : "Account Created",
+      description: email
+        ? `Lead captured for ${email}${metaSuffix}`
+        : `New device-bound lead initialized${metaSuffix}`,
       actor: "system",
+      metadata: {
+        email: email ?? null,
+        country,
+        device: leadDevice,
+        created_at: t,
+      },
     });
+  }
+
+  setAccountLeadMeta(accountId: string, meta: { country?: string | null; lead_device?: string | null }) {
+    const t = now();
+    const country = meta.country ? meta.country.trim().toUpperCase().slice(0, 8) : null;
+    const leadDevice = meta.lead_device ? meta.lead_device.trim().slice(0, 64) : null;
+    if (!country && !leadDevice) return;
+    this.db.prepare(`
+      UPDATE accounts
+      SET country = COALESCE(?, country),
+          lead_device = COALESCE(?, lead_device),
+          updated_at = ?
+      WHERE id = ?
+    `).run(country, leadDevice, t, accountId);
   }
 
   accountByTokenHash(hash: string): Account | undefined {
@@ -523,21 +565,23 @@ export class Repo {
     return Number(r.changes) > 0;
   }
 
-  updateAccountProfile(accountId: string, updates: { name?: string; email?: string; notes?: string; health_score?: number; lifecycle_stage?: string }) {
+  updateAccountProfile(accountId: string, updates: { name?: string; email?: string; notes?: string; country?: string | null; lead_device?: string | null; health_score?: number; lifecycle_stage?: string }) {
     const t = now();
     const existing = this.accountById(accountId);
     if (!existing) return;
     const name = updates.name !== undefined ? updates.name : existing.name;
     const email = updates.email !== undefined ? updates.email : existing.email;
     const notes = updates.notes !== undefined ? updates.notes : existing.notes;
+    const country = updates.country !== undefined ? (updates.country ? updates.country.trim().toUpperCase().slice(0, 8) : null) : existing.country;
+    const lead_device = updates.lead_device !== undefined ? (updates.lead_device ? updates.lead_device.trim().slice(0, 64) : null) : existing.lead_device;
     const health_score = updates.health_score !== undefined ? updates.health_score : existing.health_score;
     const lifecycle_stage = updates.lifecycle_stage !== undefined ? updates.lifecycle_stage : existing.lifecycle_stage;
 
     this.db.prepare(`
       UPDATE accounts
-      SET name = ?, email = ?, notes = ?, health_score = ?, lifecycle_stage = ?, updated_at = ?
+      SET name = ?, email = ?, notes = ?, country = ?, lead_device = ?, health_score = ?, lifecycle_stage = ?, updated_at = ?
       WHERE id = ?
-    `).run(name, email, notes, health_score, lifecycle_stage, t, accountId);
+    `).run(name, email, notes, country, lead_device, health_score, lifecycle_stage, t, accountId);
 
     this.addActivity({
       account_id: accountId,
@@ -789,17 +833,21 @@ export class Repo {
     const params: (string | number)[] = [];
 
     if (options.status && options.status !== "all") {
-      conditions.push("COALESCE(e.status, 'none') = ?");
-      params.push(options.status);
+      if (options.status === "lead") {
+        conditions.push("(COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead')");
+      } else {
+        conditions.push("COALESCE(e.status, 'none') = ?");
+        params.push(options.status);
+      }
     }
     if (options.stage && options.stage !== "all") {
       conditions.push("a.lifecycle_stage = ?");
       params.push(options.stage);
     }
     if (options.search) {
-      conditions.push("(a.id LIKE ? OR a.email LIKE ? OR a.name LIKE ? OR a.stripe_customer_id LIKE ?)");
+      conditions.push("(a.id LIKE ? OR a.email LIKE ? OR a.name LIKE ? OR a.stripe_customer_id LIKE ? OR a.country LIKE ? OR a.lead_device LIKE ?)");
       const term = `%${options.search}%`;
-      params.push(term, term, term, term);
+      params.push(term, term, term, term, term, term);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -817,6 +865,8 @@ export class Repo {
         a.email,
         a.name,
         a.stripe_customer_id,
+        a.country,
+        COALESCE(a.lead_device, (SELECT CASE WHEN d.type = 'mobile' THEN 'Mobile App' WHEN d.type = 'pc' THEN 'Windows PC' ELSE d.type END FROM devices d WHERE d.account_id = a.id ORDER BY d.last_seen DESC LIMIT 1)) as lead_device,
         COALESCE(e.status, 'none') as subscription_status,
         e.plan,
         COALESCE(s.amount_cents, 999) as amount_cents,
@@ -874,6 +924,7 @@ export class Repo {
     const counts = this.db.prepare(`
       SELECT
         COUNT(DISTINCT a.id) as total_customers,
+        SUM(CASE WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead' THEN 1 ELSE 0 END) as leads_count,
         SUM(CASE WHEN e.status = 'active' THEN 1 ELSE 0 END) as active_subs,
         SUM(CASE WHEN e.status = 'trialing' THEN 1 ELSE 0 END) as trialing_subs,
         SUM(CASE WHEN e.status = 'past_due' THEN 1 ELSE 0 END) as past_due_subs,
@@ -884,6 +935,7 @@ export class Repo {
       LEFT JOIN entitlements e ON a.id = e.account_id
     `).get() as {
       total_customers: number;
+      leads_count: number | null;
       active_subs: number | null;
       trialing_subs: number | null;
       past_due_subs: number | null;
@@ -892,6 +944,7 @@ export class Repo {
       at_risk: number | null;
     };
 
+    const leadsCount = Number(counts.leads_count || 0);
     const activeSubs = Number(counts.active_subs || 0);
     const trialingSubs = Number(counts.trialing_subs || 0);
     const pastDueSubs = Number(counts.past_due_subs || 0);
@@ -924,6 +977,7 @@ export class Repo {
 
     return {
       totalCustomers: Number(counts.total_customers || 0),
+      leadsCount,
       activeSubscriptions: activeSubs,
       trialingSubscriptions: trialingSubs,
       pastDueSubscriptions: pastDueSubs,
