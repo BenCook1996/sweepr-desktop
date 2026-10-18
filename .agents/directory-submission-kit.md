@@ -105,3 +105,72 @@ Tag Sweepr Cleaner as an alternative to the following applications on the submis
 - **License:** Freeware / Demo (Free core cleaner + optional Pro)
 - **Company / Author:** Sweepr Technologies
 - **Pad File:** *(Optional)* Standard executable submission
+
+
+---
+
+## 5. SourceForge Software Directory (DR 93)
+
+- **Submission URL:** [https://sourceforge.net/software/vendors/new](https://sourceforge.net/software/vendors/new)
+- **Product Name:** `SWEEPR Cleaner`
+- **Company Name:** `SWEEPR Technologies`
+- **Work Email:** `support@sweeprcleaner.com`
+- **Website URL:** `https://sweeprcleaner.com`
+- **Category:** `System Administration / System Maintenance / Disk Cleanup`
+- **Download URL:** `https://sweeprcleaner.com/SWEEPRCleaner.exe`
+
+---
+
+## 6. FileHorse Submission (DR 78)
+
+- **Submission URL:** [https://www.filehorse.com/send-software/](https://www.filehorse.com/send-software/)
+- **Software Name:** `SWEEPR Cleaner 0.1.0`
+- **Developer:** `Benjamin Cook / SWEEPR Cleaner`
+- **Homepage URL:** `https://sweeprcleaner.com`
+- **Download URL:** `https://sweeprcleaner.com/SWEEPRCleaner.exe`
+- **Category:** `Cleaning and Tweaking`
+- **License:** `Freemium`
+
+---
+
+## 7. MajorGeeks Editorial Submission (DR 81)
+
+- **Recipients:** `tim@majorgeeks.com`, `jim@majorgeeks.com`
+- **Subject:** `Software Submission: SWEEPR Cleaner v0.1.0 (5.4MB Native Rust PC Cleaner)`
+- **PAD XML URL:** `https://sweeprcleaner.com/pad.xml`
+- **Direct Installer:** `https://sweeprcleaner.com/SWEEPRCleaner.exe`
+
+---
+
+## 8. Uneed.best Submission (DR 76)
+
+- **Submission URL:** [https://www.uneed.best/submit-a-tool](https://www.uneed.best/submit-a-tool)
+- **Tool Name:** `SWEEPR Cleaner`
+- **URL:** `https://sweeprcleaner.com`
+- **Short Description:** `A 5.4MB native Rust PC cleaner and smart uninstaller with zero background bloatware.`
+
+---
+
+## 9. Product Hunt Launch Listing (DR 91)
+
+- **Submission URL:** [https://www.producthunt.com/posts/new](https://www.producthunt.com/posts/new)
+- **Name:** `SWEEPR Cleaner`
+- **Tagline (60 chars max):** `5MB native Rust PC cleaner with zero background bloatware`
+- **Links:** `https://sweeprcleaner.com`
+- **Topics:** `Windows`, `Mac`, `Productivity`, `Privacy`, `Developer Tools`
+
+---
+
+## 10. Alternative.me Listing (DR 74)
+
+- **Submission URL:** [https://alternative.me/](https://alternative.me/) (Footer -> Contact Us)
+- **Message:** Request addition of `SWEEPR Cleaner` (`https://sweeprcleaner.com`) as a native Rust alternative to `CCleaner`, `BleachBit`, and `CleanMyPC`.
+
+---
+
+## 11. G2 Product Listing (DR 92)
+
+- **Submission URL:** [https://www.g2.com/products/new](https://www.g2.com/products/new)
+- **Product Name:** `SWEEPR Cleaner`
+- **Vendor Website:** `https://sweeprcleaner.com`
+- **Category:** `Disk Cleanup Software` / `System Utilities`
