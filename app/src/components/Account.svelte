@@ -55,7 +55,11 @@
     error = null;
     busy = true;
     try {
-      await api.startCheckout(linkEmail.trim() || undefined);
+      const activated = await api.startCheckout(linkEmail.trim() || undefined);
+      if (activated) {
+        linkSuccess = "Device activated with your existing subscription.";
+        await onRefresh();
+      }
     } catch (e) {
       error = errorMessage(e);
     } finally {

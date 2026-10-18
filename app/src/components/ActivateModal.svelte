@@ -41,7 +41,13 @@
 
     busy = true;
     try {
-      await api.startCheckout(email.trim());
+      const activatedImmediately = await api.startCheckout(email.trim());
+      if (activatedImmediately || (await checkLicense())) {
+        stopPolling();
+        open = false;
+        if (onActivated) onActivated();
+        return;
+      }
       waitingPayment = true;
       stopPolling();
       let ticks = 0;

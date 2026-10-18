@@ -184,9 +184,14 @@ pub async fn start_checkout(
     state: State<'_, AppState>,
     email: Option<String>,
     plan: Option<String>,
-) -> AppResult<()> {
-    let url = state.licensing.checkout_url(email.as_deref(), plan.as_deref()).await?;
-    app.opener().open_url(url, None::<&str>).map_err(|e| AppError::Other(e.to_string()))
+) -> AppResult<bool> {
+    match state.licensing.checkout_url(email.as_deref(), plan.as_deref()).await? {
+        None => Ok(true),
+        Some(url) => {
+            app.opener().open_url(url, None::<&str>).map_err(|e| AppError::Other(e.to_string()))?;
+            Ok(false)
+        }
+    }
 }
 
 #[tauri::command]

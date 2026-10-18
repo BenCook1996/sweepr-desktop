@@ -89,3 +89,27 @@ test("checkout returns 503 when Stripe not configured", async () => {
   const acc = await (await post("/v1/accounts", { device_id: DEVICE })).json();
   assert.equal((await post("/v1/checkout", {}, acc.refresh_token)).status, 503);
 });
+
+test("checkout immediately activates device when email already has an active subscription", async () => {
+  const { repo, post } = setup();
+  // Create a paid web account for subscriber@example.com
+  repo.createAccount("acc_paid_1", "hash_paid_1", "subscriber@example.com");
+  await post("/dev/grant", { account_id: "acc_paid_1", status: "active", days: 365 });
+
+  // New anonymous desktop device calls /v1/accounts then /v1/checkout with subscriber@example.com
+  const desktopAcc = await (await post("/v1/accounts", { device_id: DEVICE })).json();
+  const res = await post("/v1/checkout", { email: "subscriber@example.com", device_id: DEVICE }, desktopAcc.refresh_token);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.activated, true);
+  assert.equal(body.account_id, "acc_paid_1");
+  assert.ok(body.refresh_token);
+  assert.ok(body.token);
+
+  const [h, p, s] = body.token.split(".");
+  assert.ok(verify(null, Buffer.from(`${h}.${p}`), publicKey, Buffer.from(s, "base64url")));
+  const claims = JSON.parse(Buffer.from(p, "base64url").toString());
+  assert.equal(claims.device_id, DEVICE);
+  assert.equal(claims.status, "active");
+});
+

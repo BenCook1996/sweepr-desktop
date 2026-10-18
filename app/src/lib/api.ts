@@ -112,7 +112,7 @@ export const api = {
   checkRunningApps: (categoryIds: string[]) => invoke<RunningAppConflict[]>("check_running_apps", { categoryIds }),
   licenseStatus: (force = false) => invoke<LicenseStatus>("license_status", { force }),
   startCheckout: (email?: string, plan: "monthly" | "annual" = "monthly") =>
-    invoke<void>("start_checkout", { email: email ?? null, plan }),
+    invoke<boolean>("start_checkout", { email: email ?? null, plan }),
   requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
   verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
   memory: () => invoke<MemoryOverview>("memory_overview"),

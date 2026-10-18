@@ -1397,6 +1397,88 @@ export function createApp(deps: AppDeps) {
     return c.json({ account_id: accountId, refresh_token: refreshToken });
   });
 
+  async function findOrSyncEntitledAccountByEmail(rawEmail?: string | null): Promise<Account | null> {
+    const email = normalizeEmail(rawEmail);
+    if (!email) return null;
+
+    const existing = repo.accountByEmail(email);
+    if (existing && isEntitled(repo.entitlement(existing.id), now(), config.pastDueGraceDays)) {
+      return existing;
+    }
+
+    const ownerEmail = normalizeEmail(
+      process.env.OWNER_EMAIL || process.env.SMTP_GMAIL_USER || "cookbenjamin1996@gmail.com"
+    );
+    if (ownerEmail && email === ownerEmail) {
+      let acc = existing;
+      if (!acc) {
+        const id = `acc_owner_${randomToken(8)}`;
+        repo.createAccount(id, sha256(randomToken(32)), email);
+        acc = repo.accountById(id)!;
+      }
+      const periodEnd = now() + 3650 * 86400;
+      repo.upsertEntitlement({
+        account_id: acc.id,
+        stripe_subscription_id: "sub_owner_lifetime",
+        status: "active",
+        plan: "annual",
+        current_period_end: periodEnd,
+        cancel_at_period_end: 0,
+      });
+      return repo.accountById(acc.id) ?? acc;
+    }
+
+    if (stripe) {
+      try {
+        const customers = await stripe.customers.list({ email, limit: 5 });
+        for (const cust of customers.data) {
+          if ((cust as any).deleted) continue;
+          const subs = await stripe.subscriptions.list({
+            customer: cust.id,
+            status: "all",
+            limit: 5,
+          });
+          const activeSub = subs.data.find(
+            (s) => s.status === "active" || s.status === "trialing" || s.status === "past_due"
+          );
+          if (activeSub) {
+            let acc = repo.byStripeCustomer(cust.id) || existing;
+            if (!acc) {
+              const id = `acc_${randomToken(12)}`;
+              repo.createAccount(id, sha256(randomToken(32)), email);
+              acc = repo.accountById(id)!;
+            }
+            if (!acc.stripe_customer_id) {
+              repo.linkStripeCustomer(acc.id, cust.id, email);
+            }
+            const interval = activeSub.items?.data?.[0]?.price?.recurring?.interval;
+            const intervalCount = activeSub.items?.data?.[0]?.price?.recurring?.interval_count;
+            const plan =
+              activeSub.metadata?.plan ||
+              (interval === "year" ? "annual" : interval === "month" && intervalCount === 6 ? "six_month" : "monthly");
+            const periodEnd =
+              (activeSub as any).current_period_end ||
+              activeSub.items?.data?.[0]?.current_period_end ||
+              now() + 35 * 86400;
+            repo.upsertEntitlement({
+              account_id: acc.id,
+              stripe_subscription_id: activeSub.id,
+              status: activeSub.status === "trialing" ? "trialing" : "active",
+              plan,
+              current_period_end: periodEnd,
+              cancel_at_period_end: activeSub.cancel_at_period_end ? 1 : 0,
+            });
+            return repo.accountById(acc.id) ?? acc;
+          }
+        }
+      } catch (err) {
+        console.warn("[sync-stripe-email] Failed to lookup Stripe customer by email:", err);
+      }
+    }
+
+    return null;
+  }
+
   // Step 1 of linking an existing web/email purchase to a desktop/mobile device via OTP.
   app.post("/v1/account/send-otp", async (c) => {
     if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
@@ -1405,7 +1487,7 @@ export function createApp(deps: AppDeps) {
     if (!email) return c.json({ error: "invalid_email" }, 400);
     if (!limitOtpSendEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
-    const account = repo.accountByEmail(email);
+    const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
     if (account) {
       const code = randomInt(100000, 1000000).toString();
       const expiresAt = now() + 15 * 60;
@@ -1444,7 +1526,7 @@ export function createApp(deps: AppDeps) {
     if (!repo.verifyOtp(email, sha256(code), now())) {
       return c.json({ error: "invalid_or_expired_code" }, 400);
     }
-    const account = repo.accountByEmail(email);
+    const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
     if (!account) {
       return c.json({ error: "invalid_or_expired_code" }, 400);
     }
@@ -1484,7 +1566,7 @@ export function createApp(deps: AppDeps) {
 
   // The ONLY place an entitlement decision is made.
   app.post("/v1/entitlement", auth, async (c) => {
-    const account = c.get("account");
+    let account = c.get("account");
     if (!limitEntitlement.hit(account.id)) return c.json({ error: "rate_limited" }, 429);
     const body = await c.req.json().catch(() => ({}));
     const deviceId = String(body.device_id ?? "");
@@ -1494,10 +1576,30 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
 
-    const ent = repo.entitlement(account.id);
+    let ent = repo.entitlement(account.id);
+    const t = now();
+    if (!isEntitled(ent, t, config.pastDueGraceDays) && account.email) {
+      const synced = await findOrSyncEntitledAccountByEmail(account.email);
+      if (synced) {
+        const syncedEnt = repo.entitlement(synced.id);
+        if (syncedEnt && isEntitled(syncedEnt, t, config.pastDueGraceDays)) {
+          if (synced.id !== account.id) {
+            repo.upsertEntitlement({
+              account_id: account.id,
+              stripe_subscription_id: null,
+              status: syncedEnt.status,
+              plan: syncedEnt.plan ?? "annual",
+              current_period_end: syncedEnt.current_period_end ?? t + 365 * 86400,
+              cancel_at_period_end: syncedEnt.cancel_at_period_end ? 1 : 0,
+            });
+          }
+          ent = repo.entitlement(account.id);
+        }
+      }
+    }
+
     const referralCode = repo.ensureReferralCode(account.id);
     const referralsCount = repo.referralsCount(account.id);
-    const t = now();
     if (!isEntitled(ent, t, config.pastDueGraceDays)) {
       return c.json({
         status: ent?.status ?? "none",
@@ -1534,13 +1636,66 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/v1/checkout", auth, async (c) => {
-    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const account = c.get("account");
+    const body = await c.req.json().catch(() => ({}));
+    const email = normalizeEmail(body?.email) ?? account.email ?? undefined;
+    const rawDeviceId = String(body?.device_id ?? "");
+    const fallbackDevice = repo.db
+      .prepare("SELECT id FROM devices WHERE account_id = ? LIMIT 1")
+      .get(account.id) as { id: string } | undefined;
+    const deviceId = DEVICE_RE.test(rawDeviceId) ? rawDeviceId : fallbackDevice?.id ?? "";
+
+    // If the entered email already has an active subscription, activate this device immediately without opening checkout!
+    if (email) {
+      const entitledAcc = await findOrSyncEntitledAccountByEmail(email);
+      if (entitledAcc) {
+        const ent = repo.entitlement(entitledAcc.id);
+        const t = now();
+        if (ent && isEntitled(ent, t, config.pastDueGraceDays)) {
+          if (entitledAcc.id !== account.id) {
+            repo.upsertEntitlement({
+              account_id: account.id,
+              stripe_subscription_id: null,
+              status: ent.status,
+              plan: ent.plan ?? "annual",
+              current_period_end: ent.current_period_end ?? t + 365 * 86400,
+              cancel_at_period_end: ent.cancel_at_period_end ? 1 : 0,
+            });
+          }
+          if (DEVICE_RE.test(deviceId) && repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile)) {
+            const refreshToken = randomToken(32);
+            repo.setDeviceTokenHash(entitledAcc.id, deviceId, sha256(refreshToken));
+            let exp = t + config.tokenTtlHours * 3600;
+            if (ent.current_period_end) {
+              exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
+            }
+            exp = Math.max(exp, t + 300);
+            const token = signEntitlement(signingKey, {
+              sub: entitledAcc.id,
+              device_id: deviceId,
+              status: ent.status === "trialing" ? "trialing" : "active",
+              plan: ent.plan ?? "annual",
+              iat: t,
+              exp,
+            });
+            return c.json({
+              activated: true,
+              account_id: entitledAcc.id,
+              refresh_token: refreshToken,
+              token,
+              status: ent.status,
+              plan: ent.plan ?? "annual",
+              expires_at: exp,
+            });
+          }
+        }
+      }
+    }
+
+    if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     if (isEntitled(repo.entitlement(account.id), now(), config.pastDueGraceDays)) {
       return c.json({ error: "already_active" }, 409);
     }
-    const body = await c.req.json().catch(() => ({}));
-    const email = normalizeEmail(body?.email) ?? account.email ?? undefined;
     const rawPlan = typeof body?.plan === "string" ? body.plan.toLowerCase() : "";
     const plan: "monthly" | "six_month" | "annual" =
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";

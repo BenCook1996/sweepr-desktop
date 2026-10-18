@@ -152,8 +152,13 @@ struct EntitlementResponse {
 }
 
 #[derive(Deserialize)]
-struct UrlResponse {
-    url: String,
+struct CheckoutResponse {
+    #[serde(default)]
+    activated: bool,
+    url: Option<String>,
+    account_id: Option<String>,
+    refresh_token: Option<String>,
+    token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -379,52 +384,95 @@ impl Licensing {
         }
     }
 
-    async fn post_for_url(&self, path: &str, body: Option<serde_json::Value>) -> AppResult<String> {
-        let mut st = self.state.lock().await;
-        let mut acc = self.ensure_account(&mut st).await?;
-        let mut req = self
-            .http
-            .post(format!("{}{}", self.api_base()?, path))
-            .bearer_auth(&acc.refresh_token);
-        if let Some(ref b) = body {
-            req = req.json(b);
-        }
-        let mut resp = req.send().await?;
-        if resp.status().as_u16() == 401 {
-            st.account = None;
-            let _ = std::fs::remove_file(self.data_dir.join("account.json"));
-            acc = self.ensure_account(&mut st).await?;
-            let mut retry_req = self
-                .http
-                .post(format!("{}{}", self.api_base()?, path))
-                .bearer_auth(&acc.refresh_token);
-            if let Some(ref b) = body {
-                retry_req = retry_req.json(b);
-            }
-            resp = retry_req.send().await?;
-        }
-        let r: UrlResponse = resp
-            .error_for_status()?
-            .json()
-            .await?;
-        // The URL is handed to the OS opener, so only allow web URLs.
-        if !is_acceptable_api_url(&r.url) {
-            return Err(AppError::License("server returned an unexpected URL".into()));
-        }
-        Ok(r.url)
-    }
-
-    pub async fn checkout_url(&self, email: Option<&str>, plan: Option<&str>) -> AppResult<String> {
+    /// Initiates checkout for `email` / `plan`, or immediately activates this
+    /// device and returns `Ok(None)` when `email` already has an active
+    /// subscription on the server.
+    pub async fn checkout_url(&self, email: Option<&str>, plan: Option<&str>) -> AppResult<Option<String>> {
         let mut map = serde_json::Map::new();
+        map.insert("device_id".into(), serde_json::Value::String(self.device_id.clone()));
         if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
             map.insert("email".into(), serde_json::Value::String(e.to_string()));
         }
         if let Some(p) = plan.map(str::trim).filter(|p| matches!(*p, "monthly" | "annual")) {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
         }
-        let body = if map.is_empty() { None } else { Some(serde_json::Value::Object(map)) };
-        match self.post_for_url("/v1/checkout", body).await {
-            Ok(url) => Ok(url),
+        let body = serde_json::Value::Object(map);
+
+        let mut st = self.state.lock().await;
+        if let Some((_, c)) = &st.token {
+            if c.exp > now() {
+                return Ok(None);
+            }
+        }
+        let send_checkout = async {
+            let mut acc = self.ensure_account(&mut st).await?;
+            let mut resp = self
+                .http
+                .post(format!("{}/v1/checkout", self.api_base()?))
+                .bearer_auth(&acc.refresh_token)
+                .json(&body)
+                .send()
+                .await?;
+            if resp.status().as_u16() == 401 {
+                st.account = None;
+                let _ = std::fs::remove_file(self.data_dir.join("account.json"));
+                acc = self.ensure_account(&mut st).await?;
+                resp = self
+                    .http
+                    .post(format!("{}/v1/checkout", self.api_base()?))
+                    .bearer_auth(&acc.refresh_token)
+                    .json(&body)
+                    .send()
+                    .await?;
+            }
+            if resp.status().as_u16() == 409 {
+                return Ok(CheckoutResponse {
+                    activated: true,
+                    url: None,
+                    account_id: None,
+                    refresh_token: None,
+                    token: None,
+                });
+            }
+            let r: CheckoutResponse = resp.error_for_status()?.json().await?;
+            Ok::<CheckoutResponse, AppError>(r)
+        }
+        .await;
+
+        match send_checkout {
+            Ok(r) if r.activated => {
+                if let (Some(account_id), Some(refresh_token)) = (r.account_id, r.refresh_token) {
+                    let acc = Account { account_id, refresh_token };
+                    save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
+                    st.account = Some(acc);
+                    st.token = None;
+                }
+                if let (Some(tok), Some(key)) = (r.token, self.pubkey.as_ref()) {
+                    if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
+                        let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
+                        st.token = Some((tok, claims));
+                        return Ok(None);
+                    }
+                }
+                drop(st);
+                if let Ok(s) = self.status(true).await {
+                    if s.active {
+                        return Ok(None);
+                    }
+                }
+                let base = self.api_base()?;
+                Ok(Some(format!("{base}/order")))
+            }
+            Ok(r) => {
+                if let Some(url) = r.url {
+                    if !is_acceptable_api_url(&url) {
+                        return Err(AppError::License("server returned an unexpected URL".into()));
+                    }
+                    Ok(Some(url))
+                } else {
+                    Err(AppError::License("server did not return a checkout URL".into()))
+                }
+            }
             Err(_) => {
                 let base = self.api_base()?;
                 let mut url = format!("{base}/order");
@@ -440,7 +488,7 @@ impl Licensing {
                         .collect();
                     url = format!("{url}?email={encoded}");
                 }
-                Ok(url)
+                Ok(Some(url))
             }
         }
     }

@@ -531,6 +531,7 @@ export class Repo {
 
   upsertEntitlement(e: Omit<Entitlement, "updated_at">) {
     const t = now();
+    const cancelFlag = e.cancel_at_period_end ? 1 : 0;
     this.db.prepare(`
       INSERT INTO entitlements (account_id, stripe_subscription_id, status, plan, current_period_end, cancel_at_period_end, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -541,7 +542,7 @@ export class Repo {
         current_period_end = excluded.current_period_end,
         cancel_at_period_end = excluded.cancel_at_period_end,
         updated_at = excluded.updated_at
-    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, e.current_period_end, e.cancel_at_period_end, t);
+    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, e.current_period_end, cancelFlag, t);
 
     // Also mirror to subscriptions table for CRM subscription history
     const subId = e.stripe_subscription_id || `sub_${e.account_id}`;
@@ -557,7 +558,7 @@ export class Repo {
       billing_interval: e.plan === "annual" ? "year" : e.plan === "six_month" ? "6-month" : "month",
       current_period_start: t,
       current_period_end: e.current_period_end,
-      cancel_at_period_end: e.cancel_at_period_end,
+      cancel_at_period_end: cancelFlag,
       canceled_at: e.status === "canceled" ? t : null,
       trial_start: e.status === "trialing" ? t : null,
       trial_end: e.status === "trialing" ? e.current_period_end : null,
