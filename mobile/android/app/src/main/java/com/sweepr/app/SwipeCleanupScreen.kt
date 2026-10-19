@@ -318,7 +318,11 @@ private fun SwipeDeck(
                             textAlign = TextAlign.Center,
                         )
                         Spacer(Modifier.height(16.dp))
-                        OutlinedButton(onClick = { kept.clear(); marked.clear(); history.clear() }) {
+                        OutlinedButton(onClick = {
+                            keptUriStrings = emptyList()
+                            markedUriStrings = emptyList()
+                            historyUriStrings = emptyList()
+                        }) {
                             Text(stringResource(R.string.swipe_start_again))
                         }
                     }
@@ -340,7 +344,7 @@ private fun SwipeDeck(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RoundAction(Icons.Default.Close, stringResource(R.string.swipe_stamp_delete), DangerRed, enabled = deck.isNotEmpty()) { delete(deck.first()) }
-                RoundAction(Icons.Default.Refresh, stringResource(R.string.swipe_undo), Color.Gray, enabled = history.isNotEmpty(), small = true) { undo() }
+                RoundAction(Icons.Default.Refresh, stringResource(R.string.swipe_undo), Color.Gray, enabled = historyUriStrings.isNotEmpty(), small = true) { undo() }
                 RoundAction(Icons.Default.Check, stringResource(R.string.swipe_stamp_keep), SweeprGreen, enabled = deck.isNotEmpty()) { keep(deck.first()) }
             }
             Spacer(Modifier.height(4.dp))
