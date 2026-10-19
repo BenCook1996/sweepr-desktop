@@ -9,7 +9,7 @@
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
-  let { license } = $props<{ license: LicenseStatus | null }>();
+  let { license }: { license: LicenseStatus | null } = $props();
   let filePath = $state("");
   let passes = $state<number>(1);
   let mediaInfo = $state<DriveMediaInfo | null>(null);
@@ -18,6 +18,7 @@
   let statusMessage = $state("");
   let isError = $state(false);
   let needsPro = $state(false);
+  let dragOver = $state(false);
 
   async function detectMedia(pathToCheck: string) {
     const target = pathToCheck.trim() || "C:\\";
@@ -39,9 +40,25 @@
     }
   });
 
+  function onDropFile(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+    const f = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
+    if (f?.path) {
+      filePath = f.path;
+      detectMedia(f.path);
+      return;
+    }
+    const text = e.dataTransfer?.getData("text/plain");
+    if (text) {
+      filePath = text.trim().replace(/^"+|"+$/g, "");
+      detectMedia(filePath);
+    }
+  }
+
   async function handleShred() {
     if (!filePath.trim()) {
-      statusMessage = "Please enter the full path to a file.";
+      statusMessage = "Please enter or drop a file path to shred.";
       isError = true;
       return;
     }
@@ -86,26 +103,35 @@
   }
 </script>
 
-<div class="header">
-  <h2 style="font-size: 22px; font-weight: 800; letter-spacing: -0.4px; margin: 0;">Secure File Shredder</h2>
-  <p class="muted small" style="margin-top: 4px;">
-    Permanently overwrite sensitive files in place before unlinking them from the filesystem.
-  </p>
-</div>
-
-<div class="card shred-card">
-  <div class="shred-badge-row">
-    {#if mediaInfo}
-      <span class="badge" class:free={mediaInfo.is_ssd} class:pro={!mediaInfo.is_ssd}>
-        {mediaInfo.is_ssd
-          ? "SSD Detected — 1-Pass Zero-Fill Recommended to protect NAND lifespan"
-          : "HDD Detected — 3-Pass Overwrite Recommended"}
-      </span>
-    {:else}
-      <span class="badge free">Smart SSD / HDD Overwrite Protection</span>
-    {/if}
-
-    <div class="spacer"></div>
+<div
+  class="card shred-card"
+  class:drag-over={dragOver}
+  ondragover={(e) => {
+    e.preventDefault();
+    dragOver = true;
+  }}
+  ondragleave={() => (dragOver = false)}
+  ondrop={onDropFile}
+  role="region"
+  aria-label="Secure File Shredder"
+>
+  <div class="card-top-row">
+    <div class="title-with-icon">
+      <div class="shred-icon-bubble">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div>
+        <div class="row" style="gap: 8px;">
+          <strong class="card-title">Secure File Shredder</strong>
+          {#if mediaInfo}
+            <span class="badge" class:free={mediaInfo.is_ssd} class:pro={!mediaInfo.is_ssd}>
+              {mediaInfo.is_ssd ? "SSD Safe (1-Pass Recommended)" : "HDD Detected (3-Pass)"}
+            </span>
+          {/if}
+        </div>
+        <div class="muted small">Overwrite sensitive files in place before unlinking them from disk (system folders are protected)</div>
+      </div>
+    </div>
 
     <div class="pass-selector" role="radiogroup" aria-label="Overwrite passes">
       <button
@@ -114,7 +140,7 @@
         class:active={passes === 1}
         onclick={() => (passes = 1)}
       >
-        1-Pass (Fast / SSD Safe)
+        1-Pass (SSD Safe)
       </button>
       <button
         type="button"
@@ -122,18 +148,8 @@
         class:active={passes === 3}
         onclick={() => (passes = 3)}
       >
-        3-Pass (HDD Deep Overwrite)
+        3-Pass (Deep Overwrite)
       </button>
-    </div>
-  </div>
-
-  <div class="shred-info-box">
-    <div class="shred-icon-bubble">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    </div>
-    <div>
-      <strong>How it works, and its limits</strong>
-      <p class="muted small" style="margin: 4px 0 0 0;">Unlike normal deletion or emptying the Recycle Bin, the file's contents are overwritten in place before it is deleted. On modern SSDs/NVMe drives, 1-pass zero-fill prevents unnecessary NAND flash wear while clearing file blocks. System and program folders are protected and can't be shredded.</p>
     </div>
   </div>
 
@@ -142,39 +158,65 @@
       type="text"
       bind:value={filePath}
       onblur={() => detectMedia(filePath)}
-      placeholder="Enter full path (e.g. C:\Users\Username\Documents\confidential.pdf)"
+      placeholder="Drop a file here or paste full file path (e.g. C:\Users\Username\Documents\confidential.pdf)"
       class="file-input"
+      aria-label="File path to shred"
     />
-    <button class="primary shred-btn" onclick={handleShred} disabled={shredding}>
+    <button class="primary shred-btn" onclick={handleShred} disabled={shredding || !filePath.trim()}>
       {#if shredding}
         <span>Shredding…</span>
       {:else}
-        <span>SHRED FILE ({passes}-PASS)</span>
+        <span>Shred File ({passes}-Pass)</span>
       {/if}
     </button>
   </div>
 
   {#if statusMessage}
     <div class="status-box" class:error={isError} class:success={!isError}>
-      {statusMessage}
+      <span>{statusMessage}</span>
       {#if needsPro && !license?.active}
-        <button class="primary" style="margin-left: 10px;" onclick={requestActivation}>Activate</button>
+        <button class="primary" style="padding: 5px 14px; font-size: 12px;" onclick={requestActivation}>Activate</button>
       {/if}
     </div>
   {/if}
 </div>
 
 <style>
-  .header { margin-bottom: 16px; }
   .shred-card {
-    padding: 24px 28px;
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .shred-badge-row {
+  .shred-card.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .title-with-icon {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
+  }
+  .card-title {
+    font-size: 16px;
+  }
+  .shred-icon-bubble {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
   }
   .pass-selector {
     display: flex;
@@ -187,7 +229,7 @@
   .pass-btn {
     background: transparent;
     border: none;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 9999px;
     font-size: 12px;
     font-weight: 600;
@@ -200,36 +242,16 @@
     color: var(--accent);
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
   }
-  .shred-info-box {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px 18px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 20px;
-  }
-  .shred-icon-bubble {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--accent);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-  }
   .input-row {
     display: flex;
-    gap: 14px;
+    gap: 12px;
     align-items: center;
     flex-wrap: wrap;
   }
   .file-input {
     flex: 1;
     min-width: 240px;
-    padding: 12px 18px;
+    padding: 11px 16px;
     border-radius: 9999px;
     border: 1.5px solid var(--border);
     background: var(--panel-solid);
@@ -242,16 +264,19 @@
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
   }
   .shred-btn {
-    padding: 12px 28px;
+    padding: 11px 24px;
     border-radius: 9999px;
     font-weight: 700;
     white-space: nowrap;
   }
   .status-box {
-    margin-top: 18px;
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 16px;
     border-radius: 12px;
-    font-size: 13.5px;
+    font-size: 13px;
   }
   .status-box.success {
     background: var(--accent-light);

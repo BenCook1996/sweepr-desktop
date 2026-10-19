@@ -1,7 +1,7 @@
 <script lang="ts">
   import Cleaner from "./components/Cleaner.svelte";
   import Schedule from "./components/Schedule.svelte";
-  import Optimization from "./components/Optimization.svelte";
+  import Optimization, { type OptimizationSubTab } from "./components/Optimization.svelte";
   import Account from "./components/Account.svelte";
   import ActivateModal from "./components/ActivateModal.svelte";
   import Installer from "./components/Installer.svelte";
@@ -10,6 +10,7 @@
 
   type Tab = "cleaner" | "schedule" | "optimization" | "account";
   let tab = $state<Tab>("cleaner");
+  let optSubTab = $state<OptimizationSubTab>("memory");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
   let showActivateModal = $state(false);
@@ -328,11 +329,18 @@
 
   <main class="main-content">
     {#if tab === "cleaner"}
-      <Cleaner {license} onLicenseChange={refreshLicense} />
+      <Cleaner
+        {license}
+        onLicenseChange={refreshLicense}
+        onOpenTool={(tool) => {
+          optSubTab = tool;
+          tab = "optimization";
+        }}
+      />
     {:else if tab === "schedule"}
       <Schedule {license} />
     {:else if tab === "optimization"}
-      <Optimization {license} />
+      <Optimization {license} bind:subTab={optSubTab} />
     {:else if tab === "account"}
       <Account {license} {info} onRefresh={() => refreshLicense(true)} />
     {/if}

@@ -3,6 +3,8 @@
   import {
     api,
     errorMessage,
+    isPaymentRequired,
+    requestActivation,
     type LicenseStatus,
     type RuleDefinitionInfo,
     type ScheduleConfig,
@@ -15,6 +17,7 @@
   let loading = $state(true);
   let saving = $state(false);
   let runningNow = $state(false);
+  let autostart = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
   let rules = $state<RuleDefinitionInfo[]>([]);
@@ -46,18 +49,39 @@
 
   onMount(async () => {
     try {
-      const [loadedRules, loadedCfg] = await Promise.all([
+      const [loadedRules, loadedCfg, auto] = await Promise.all([
         api.listRuleDefinitions(),
         api.getScheduleConfig(),
+        api.getAutostart().catch(() => false),
       ]);
       rules = loadedRules;
       config = loadedCfg;
+      autostart = auto;
     } catch (e) {
       error = errorMessage(e);
     } finally {
       loading = false;
     }
   });
+
+  async function toggleAutostart(next: boolean, inputEl?: HTMLInputElement) {
+    if (!license?.active) {
+      if (inputEl) inputEl.checked = autostart;
+      requestActivation();
+      return;
+    }
+    error = null;
+    try {
+      autostart = await api.setAutostart(next);
+      notice = autostart
+        ? "SWEEPR Cleaner will now launch automatically at Windows sign-in."
+        : "Windows sign-in autostart disabled.";
+    } catch (e) {
+      if (inputEl) inputEl.checked = autostart;
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
+    }
+  }
 
   function isCatSelected(id: string): boolean {
     return config.categories.includes(id);
@@ -81,7 +105,7 @@
 
   async function saveSchedule() {
     if (!license?.active) {
-      window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+      requestActivation();
       return;
     }
     saving = true;
@@ -91,7 +115,7 @@
       const updated = await api.saveScheduleConfig(config);
       config = updated;
       if (updated.enabled) {
-        notice = "Schedule saved and registered with Windows Task Scheduler. It will run automatically in the background even when SWEEPR Cleaner is closed.";
+        notice = "Schedule saved and registered with Windows Task Scheduler.";
       } else {
         notice = "Scheduled background runs have been disabled.";
       }
@@ -104,14 +128,13 @@
 
   async function triggerNow() {
     if (!license?.active) {
-      window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+      requestActivation();
       return;
     }
     runningNow = true;
     error = null;
     notice = null;
     try {
-      // Save current settings first so the immediate run uses the latest selections
       config = await api.saveScheduleConfig(config);
       const updated = await api.runScheduledCleanNow();
       config = updated;
@@ -124,7 +147,7 @@
         );
       }
       if (config.action === "scan_and_clean") {
-        notice = `Scheduled scan & clean completed: ${formatBytes(updated.last_bytes_freed ?? 0)} cleaned (${formatCount(updated.last_files_removed ?? 0)} files removed).`;
+        notice = `Scheduled clean completed: ${formatBytes(updated.last_bytes_freed ?? 0)} freed (${formatCount(updated.last_files_removed ?? 0)} files removed).`;
       } else {
         notice = `Scheduled scan completed: ${formatBytes(updated.last_bytes_found ?? 0)} found across selected categories.`;
       }
@@ -144,9 +167,9 @@
 <div class="schedule-container">
   <div class="header-row">
     <div>
-      <h1 class="page-title">Scheduled Scan & Auto-Clean</h1>
+      <h1 class="page-title">Auto-Clean & Schedule</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Schedule automatic scans and cleanups that run silently in the background via Windows Task Scheduler—even when SWEEPR Cleaner is closed.
+        Keep your PC clean automatically with background scheduled maintenance and Windows sign-in autostart.
       </p>
     </div>
     <div class="status-pill-wrap" style="display: flex; align-items: center; gap: 8px;">
@@ -156,7 +179,7 @@
       {#if config.enabled && config.os_task_registered && license?.active}
         <span class="badge free">Active in Background</span>
       {:else if config.enabled && license?.active}
-        <span class="badge pro">Pending Save</span>
+        <span class="badge pro">Unsaved Changes</span>
       {:else}
         <span class="badge muted-badge">Schedule Off</span>
       {/if}
@@ -176,13 +199,13 @@
   {/if}
 
   <div class="schedule-grid">
-    <!-- Left Column: Schedule Configuration -->
+    <!-- Left Column: Schedule & Startup Configuration -->
     <div class="card config-card">
       <div class="row enable-row">
         <div>
-          <strong style="font-size: 15px;">Enable Scheduled Background Execution</strong>
+          <strong style="font-size: 14.5px;">Scheduled Background Cleaning</strong>
           <div class="muted small" style="margin-top: 2px;">
-            Runs automatically at your scheduled time without needing the app open
+            Runs automatically via Windows Task Scheduler even when the app is closed
           </div>
         </div>
         <label class="switch">
@@ -194,10 +217,30 @@
               if (!license?.active) {
                 target.checked = false;
                 config.enabled = false;
-                window.dispatchEvent(new CustomEvent("sweepr-open-activate"));
+                requestActivation();
                 return;
               }
               config.enabled = target.checked;
+            }}
+          />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="row enable-row">
+        <div>
+          <strong style="font-size: 14.5px;">Launch at Windows Sign-In</strong>
+          <div class="muted small" style="margin-top: 2px;">
+            Start SWEEPR Cleaner automatically when you log in to Windows
+          </div>
+        </div>
+        <label class="switch">
+          <input
+            type="checkbox"
+            checked={autostart && !!license?.active}
+            onchange={(e) => {
+              const target = e.currentTarget as HTMLInputElement;
+              toggleAutostart(target.checked, target);
             }}
           />
           <span class="slider"></span>
@@ -208,7 +251,7 @@
 
       <!-- Frequency & Time -->
       <div class="field-group">
-        <span class="field-label">FREQUENCY</span>
+        <span class="field-label">SCHEDULE FREQUENCY</span>
         <div class="segmented-pills">
           <button
             type="button"
@@ -275,61 +318,43 @@
       <!-- Action Mode -->
       <div class="field-group">
         <span class="field-label">ACTION WHEN SCHEDULE RUNS</span>
-        <div class="action-cards">
+        <div class="segmented-pills two-col">
           <button
             type="button"
-            class="action-card"
-            class:selected={config.action === "scan_and_clean"}
+            class="pill-btn"
+            class:active={config.action === "scan_and_clean"}
             onclick={() => (config.action = "scan_and_clean")}
           >
-            <div class="row" style="justify-content: space-between; width: 100%;">
-              <strong>Scan & Automatically Clean</strong>
-              <span class="badge free">Recommended</span>
-            </div>
-            <span class="muted small">
-              Scans selected areas and automatically cleans junk files in the background (recoverable for 7 days in Quarantine).
-            </span>
+            Scan &amp; Auto-Clean
           </button>
-
           <button
             type="button"
-            class="action-card"
-            class:selected={config.action === "scan_only"}
+            class="pill-btn"
+            class:active={config.action === "scan_only"}
             onclick={() => (config.action = "scan_only")}
           >
-            <div class="row" style="justify-content: space-between; width: 100%;">
-              <strong>Scan Only</strong>
-            </div>
-            <span class="muted small">
-              Scans your device in the background and records how much space can be reclaimed without deleting files.
-            </span>
+            Scan Only (Report)
           </button>
         </div>
       </div>
 
       <div class="row cta-row">
         <button class="primary save-btn" disabled={saving || loading} onclick={saveSchedule}>
-          {saving ? "Saving Schedule…" : "Save Schedule"}
+          {saving ? "Saving…" : "Save Schedule"}
         </button>
         <button class="ghost run-now-btn" disabled={runningNow || loading} onclick={triggerNow}>
-          {#if runningNow}
-            <span class="spinner" style="width: 14px; height: 14px; border-width: 2px; display: inline-block; vertical-align: middle; margin-right: 6px;"></span>
-            <span>Running…</span>
-          {:else}
-            <span>Run Scheduled Action Now</span>
-          {/if}
+          {runningNow ? "Running…" : "Run Now"}
         </button>
       </div>
 
       {#if config.last_run_at}
         <div class="last-run-box">
-          <div class="field-label">LAST SCHEDULED EXECUTION</div>
-          <div class="row" style="justify-content: space-between; margin-top: 4px;">
+          <div class="field-label">LAST SCHEDULED RUN</div>
+          <div class="row" style="justify-content: space-between; margin-top: 4px; flex-wrap: wrap;">
             <span class="small">{formatTimestamp(config.last_run_at)}</span>
             <span class="small">
               Found: <strong>{formatBytes(config.last_bytes_found ?? 0)}</strong>
               · Cleaned: <strong style="color: var(--accent);">{formatBytes(config.last_bytes_freed ?? 0)}</strong>
-              ({formatCount(config.last_files_removed ?? 0)} files)
             </span>
           </div>
         </div>
@@ -338,10 +363,10 @@
 
     <!-- Right Column: Categories to Include -->
     <div class="card categories-card">
-      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+      <div class="row" style="justify-content: space-between; margin-bottom: 4px;">
         <div>
-          <div class="field-label">AREAS INCLUDED IN SCHEDULE</div>
-          <div class="muted small">Choose which categories to scan and clean</div>
+          <div class="field-label">INCLUDED CLEANUP AREAS ({config.categories.length}/{rules.length})</div>
+          <div class="muted small">Categories cleaned during scheduled runs</div>
         </div>
         <div class="row" style="gap: 6px;">
           <button type="button" class="ghost mini-btn" onclick={selectAllCategories}>All</button>
@@ -358,12 +383,7 @@
               onchange={() => toggleCategory(r.id)}
             />
             <div class="cat-info">
-              <div class="row" style="gap: 8px;">
-                <strong class="small">{r.name}</strong>
-                {#if !license?.active}
-                  <span class="badge pro">Pro</span>
-                {/if}
-              </div>
+              <strong class="small">{r.name}</strong>
               <div class="muted small" style="font-size: 11.5px;">{r.description}</div>
             </div>
           </label>
@@ -379,7 +399,8 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
+    padding-bottom: 36px;
   }
   .header-row {
     display: flex;
@@ -415,16 +436,16 @@
   }
   .schedule-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 22px;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 20px;
     align-items: start;
   }
   .config-card,
   .categories-card {
-    padding: 24px 26px;
+    padding: 22px 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   .enable-row {
     justify-content: space-between;
@@ -437,7 +458,7 @@
   .field-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
   .field-label {
     font-size: 11px;
@@ -448,11 +469,14 @@
   .segmented-pills {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 6px;
     background: var(--panel-2);
     padding: 4px;
     border-radius: 12px;
     border: 1px solid var(--border);
+  }
+  .segmented-pills.two-col {
+    grid-template-columns: repeat(2, 1fr);
   }
   .pill-btn {
     border: none;
@@ -460,7 +484,7 @@
     padding: 8px 12px;
     border-radius: 9px;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--muted);
     cursor: pointer;
     box-shadow: none;
@@ -487,30 +511,8 @@
     font-size: 13.5px;
     font-weight: 600;
   }
-  .action-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .action-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 6px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-    background: var(--panel);
-    cursor: pointer;
-    white-space: normal;
-  }
-  .action-card.selected {
-    border-color: var(--accent);
-    background: rgba(16, 185, 129, 0.06);
-  }
   .cta-row {
-    gap: 12px;
+    gap: 10px;
     margin-top: 4px;
   }
   .save-btn {
@@ -531,7 +533,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 430px;
+    max-height: 410px;
     overflow-y: auto;
     padding-right: 4px;
   }
@@ -539,7 +541,7 @@
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 9px 12px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--panel-2);
@@ -562,8 +564,8 @@
   .switch {
     position: relative;
     display: inline-block;
-    width: 46px;
-    height: 26px;
+    width: 44px;
+    height: 24px;
     flex-shrink: 0;
   }
   .switch input {
@@ -582,8 +584,8 @@
   .slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
+    height: 18px;
+    width: 18px;
     left: 3px;
     bottom: 3px;
     background-color: white;

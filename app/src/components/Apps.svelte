@@ -12,38 +12,40 @@
     type RegistryBackupEntry,
     type RegistryIssue,
   } from "../lib/api";
-  import { formatBytes, formatCount } from "../lib/format";
+  import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
 
-  let { license } = $props<{ license: LicenseStatus | null }>();
-  let mode = $state<"apps" | "updater" | "remnants" | "registry" | "broken">("apps");
-  let apps = $state<InstalledApp[]>([]);
-  let outdated = $state<OutdatedApp[]>([]);
-  let remnants = $state<AppRemnant[]>([]);
-  let regIssues = $state<RegistryIssue[]>([]);
-  let regBackups = $state<RegistryBackupEntry[]>([]);
-  let brokenItems = $state<BrokenItem[]>([]);
-  let selectedBroken = $state<Record<string, boolean>>({});
-  let loading = $state(true);
-  let updaterLoading = $state(false);
-  let updaterLoaded = $state(false);
-  let upgradingId = $state<string | null>(null);
-  let updaterMessage = $state<string | null>(null);
-  let remnantsLoading = $state(false);
-  let remnantsLoaded = $state(false);
-  let regLoading = $state(false);
-  let regLoaded = $state(false);
-  let brokenLoading = $state(false);
-  let brokenLoaded = $state(false);
-  let brokenCleaning = $state(false);
-  let proNotice = $state<string | null>(null);
-  let error = $state<string | null>(null);
+  let { license }: { license: LicenseStatus | null } = $props();
+  let mode = $state<"apps" | "updater" | "orphans">("apps");
 
-  // Search & Drag-and-Drop Uninstaller filter state
+  // Installed Apps
+  let apps = $state<InstalledApp[]>([]);
+  let loading = $state(true);
   let searchQuery = $state("");
   let dragActive = $state(false);
   let resolvingTarget = $state(false);
   let resolvedHint = $state<string | null>(null);
+
+  // Software Updater
+  let outdated = $state<OutdatedApp[]>([]);
+  let updaterLoading = $state(false);
+  let updaterLoaded = $state(false);
+  let upgradingId = $state<string | null>(null);
+
+  // Unified Orphans & Registry Sweep
+  let remnants = $state<AppRemnant[]>([]);
+  let brokenItems = $state<BrokenItem[]>([]);
+  let regIssues = $state<RegistryIssue[]>([]);
+  let regBackups = $state<RegistryBackupEntry[]>([]);
+  let showBackups = $state(false);
+  let orphansLoading = $state(false);
+  let orphansLoaded = $state(false);
+  let cleaningOrphans = $state(false);
+
+  // Feedback banners
+  let statusNotice = $state<string | null>(null);
+  let proNotice = $state<string | null>(null);
+  let error = $state<string | null>(null);
 
   const filteredApps = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -57,21 +59,43 @@
     return [...base].sort((a, b) => b.estimated_size - a.estimated_size);
   });
 
-  const matchingRemnants = $derived.by(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return [];
-    return remnants.filter(
-      (r) => r.name.toLowerCase().includes(q) || r.path.toLowerCase().includes(q)
-    );
-  });
+  const totalOrphanCount = $derived(
+    remnants.length + brokenItems.length + regIssues.length
+  );
 
-  const selectedBrokenPaths = $derived(
-    Object.keys(selectedBroken).filter((p) => selectedBroken[p])
+  const totalRemnantBytes = $derived(
+    remnants.reduce((s, r) => s + r.bytes, 0)
   );
 
   $effect(() => {
-    api.fetchApps().then((a) => { apps = a; loading = false; }).catch(() => { loading = false; });
+    api
+      .fetchApps()
+      .then((a) => {
+        apps = a;
+        loading = false;
+      })
+      .catch(() => {
+        loading = false;
+      });
   });
+
+  $effect(() => {
+    if (mode === "updater" && !updaterLoaded && !updaterLoading) {
+      loadOutdated();
+    }
+    if (mode === "orphans" && !orphansLoaded && !orphansLoading) {
+      scanAllOrphans();
+    }
+  });
+
+  function handleError(e: unknown, feature: string) {
+    if (isPaymentRequired(e)) {
+      proNotice = `${feature} is a Pro feature. Activate your SWEEPR Cleaner licence to use it.`;
+      requestActivation();
+    } else {
+      error = errorMessage(e);
+    }
+  }
 
   async function resolveShortcutPath(rawPath: string) {
     const trimmed = rawPath.trim().replace(/^"+|"+$/g, "");
@@ -81,12 +105,8 @@
     try {
       const resolved = await api.resolveShortcutOrExe(trimmed);
       searchQuery = resolved;
-      resolvedHint = `Isolated target "${resolved}" from ${trimmed.split(/[\\/]/).pop() || trimmed}`;
-      if (!remnantsLoaded && !remnantsLoading) {
-        loadRemnants();
-      }
-    } catch (e) {
-      // Fallback: extract filename stem if backend couldn't resolve path
+      resolvedHint = `Filtered by "${resolved}"`;
+    } catch {
       const fileName = trimmed.split(/[\\/]/).pop() ?? trimmed;
       const stem = fileName.replace(/\.(lnk|exe|msi|url)$/i, "");
       searchQuery = stem;
@@ -114,6 +134,23 @@
     }
   }
 
+  async function uninstall(app: InstalledApp) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "App uninstaller");
+      return;
+    }
+    if (!confirm(`Are you sure you want to uninstall ${app.name}?`)) return;
+    error = null;
+    proNotice = null;
+    try {
+      await api.uninstallApp(app.id);
+      apps = apps.filter((a) => a.id !== app.id);
+      statusNotice = `Launched uninstaller for ${app.name}.`;
+    } catch (e) {
+      handleError(e, "App uninstaller");
+    }
+  }
+
   async function loadOutdated() {
     updaterLoading = true;
     updaterLoaded = true;
@@ -130,155 +167,130 @@
 
   async function upgradePkg(pkg: OutdatedApp) {
     if (!license?.active) {
-      handleError({ kind: "payment_required" }, "The software updater");
+      handleError({ kind: "payment_required" }, "Software updater");
       return;
     }
     error = null;
     proNotice = null;
-    updaterMessage = null;
+    statusNotice = null;
     upgradingId = pkg.id;
     try {
       const msg = await api.upgradeSoftware(pkg.id);
-      updaterMessage = msg;
+      statusNotice = msg;
       outdated = outdated.filter((o) => o.id !== pkg.id);
     } catch (e) {
-      handleError(e, "The software updater");
+      handleError(e, "Software updater");
     } finally {
       upgradingId = null;
     }
   }
 
-  async function loadRemnants() {
-    remnantsLoading = true;
-    remnantsLoaded = true;
-    try {
-      remnants = await api.scanAppRemnants();
-    } catch {
-      remnants = [];
-    } finally {
-      remnantsLoading = false;
-    }
-  }
-
-  async function loadRegistry() {
-    regLoading = true;
-    regLoaded = true;
-    try {
-      regIssues = await api.scanRegistry();
-      regBackups = await api.listRegistryBackups();
-    } catch {
-      regIssues = [];
-    } finally {
-      regLoading = false;
-    }
-  }
-
-  async function loadBroken() {
-    brokenLoading = true;
-    brokenLoaded = true;
+  async function scanAllOrphans() {
+    orphansLoading = true;
+    orphansLoaded = true;
     error = null;
     try {
-      brokenItems = await api.scanBrokenItems();
-      selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, true]));
+      const [rem, brk, reg, bkp] = await Promise.all([
+        api.scanAppRemnants().catch(() => []),
+        api.scanBrokenItems().catch(() => []),
+        api.scanRegistry().catch(() => []),
+        api.listRegistryBackups().catch(() => []),
+      ]);
+      remnants = rem;
+      brokenItems = brk;
+      regIssues = reg;
+      regBackups = bkp;
     } catch (e) {
       error = errorMessage(e);
-      brokenItems = [];
     } finally {
-      brokenLoading = false;
+      orphansLoading = false;
     }
   }
 
-  async function cleanBrokenSelected() {
-    if (!selectedBrokenPaths.length) return;
+  async function cleanAllOrphans() {
     if (!license?.active) {
-      handleError({ kind: "payment_required" }, "Broken shortcut & empty folder cleanup");
+      handleError({ kind: "payment_required" }, "Orphans & Registry cleanup");
       return;
     }
     error = null;
     proNotice = null;
-    updaterMessage = null;
-    brokenCleaning = true;
+    statusNotice = null;
+    cleaningOrphans = true;
+    let cleanedCount = 0;
+    let freedBytes = 0;
     try {
-      const removed = await api.cleanBrokenItems(selectedBrokenPaths);
-      addLifetimeStats(0, removed);
-      updaterMessage = `Removed ${removed} broken shortcut(s) and empty folder(s).`;
-      const removedSet = new Set(selectedBrokenPaths);
-      brokenItems = brokenItems.filter((i) => !removedSet.has(i.path));
-      selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, true]));
+      for (const rem of [...remnants]) {
+        await api.cleanAppRemnant(rem.path);
+        freedBytes += rem.bytes;
+        cleanedCount += 1;
+        remnants = remnants.filter((r) => r.path !== rem.path);
+      }
+      if (brokenItems.length > 0) {
+        const paths = brokenItems.map((b) => b.path);
+        const removed = await api.cleanBrokenItems(paths);
+        cleanedCount += removed;
+        brokenItems = [];
+      }
+      for (const issue of [...regIssues]) {
+        await api.fixRegistryIssue(issue.key);
+        cleanedCount += 1;
+        regIssues = regIssues.filter((i) => i.key !== issue.key);
+      }
+      regBackups = await api.listRegistryBackups().catch(() => regBackups);
+      if (freedBytes > 0 || cleanedCount > 0) {
+        addLifetimeStats(freedBytes, cleanedCount);
+      }
+      statusNotice = `Cleaned ${cleanedCount} orphaned item(s)${freedBytes > 0 ? ` and freed ${formatBytes(freedBytes)}` : ""}.`;
     } catch (e) {
-      handleError(e, "Broken shortcut & empty folder cleanup");
+      handleError(e, "Orphans & Registry cleanup");
     } finally {
-      brokenCleaning = false;
+      cleaningOrphans = false;
     }
   }
 
-  $effect(() => {
-    if (mode === "updater" && !updaterLoaded && !updaterLoading) {
-      loadOutdated();
-    }
-    if (mode === "remnants" && !remnantsLoaded && !remnantsLoading) {
-      loadRemnants();
-    }
-    if (mode === "registry" && !regLoaded && !regLoading) {
-      loadRegistry();
-    }
-    if (mode === "broken" && !brokenLoaded && !brokenLoading) {
-      loadBroken();
-    }
-  });
-
-  function handleError(e: unknown, feature: string) {
-    if (isPaymentRequired(e)) {
-      proNotice = `${feature} is a Pro feature. Activate your SWEEPR Cleaner licence to use it.`;
-      requestActivation();
-    } else {
-      error = errorMessage(e);
-    }
-  }
-
-  async function uninstall(app: InstalledApp) {
+  async function removeSingleRemnant(rem: AppRemnant) {
     if (!license?.active) {
-      handleError({ kind: "payment_required" }, "The uninstaller");
-      return;
-    }
-    if (!confirm(`Are you sure you want to uninstall ${app.name}?`)) return;
-    error = null;
-    proNotice = null;
-    try {
-      await api.uninstallApp(app.id);
-      apps = apps.filter((a) => a.id !== app.id);
-    } catch (e) {
-      handleError(e, "The uninstaller");
-    }
-  }
-
-  async function removeRemnant(remnant: AppRemnant) {
-    if (!license?.active) {
-      handleError({ kind: "payment_required" }, "Leftover remnant cleanup");
+      handleError({ kind: "payment_required" }, "AppData remnant cleanup");
       return;
     }
     error = null;
-    proNotice = null;
     try {
-      await api.cleanAppRemnant(remnant.path);
-      addLifetimeStats(remnant.bytes, remnant.files);
-      remnants = remnants.filter((r) => r.path !== remnant.path);
+      await api.cleanAppRemnant(rem.path);
+      addLifetimeStats(rem.bytes, rem.files);
+      remnants = remnants.filter((r) => r.path !== rem.path);
+      statusNotice = `Moved ${rem.name} (${formatBytes(rem.bytes)}) to Recycle Bin.`;
     } catch (e) {
-      handleError(e, "Leftover remnant cleanup");
+      handleError(e, "AppData remnant cleanup");
     }
   }
 
-  async function fixIssue(issue: RegistryIssue) {
+  async function removeSingleBroken(item: BrokenItem) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Shortcut & folder cleanup");
+      return;
+    }
+    error = null;
+    try {
+      await api.cleanBrokenItems([item.path]);
+      addLifetimeStats(0, 1);
+      brokenItems = brokenItems.filter((b) => b.path !== item.path);
+      statusNotice = `Removed ${item.name}.`;
+    } catch (e) {
+      handleError(e, "Shortcut & folder cleanup");
+    }
+  }
+
+  async function fixSingleRegistry(issue: RegistryIssue) {
     if (!license?.active) {
       handleError({ kind: "payment_required" }, "Registry repair");
       return;
     }
     error = null;
-    proNotice = null;
     try {
       await api.fixRegistryIssue(issue.key);
       regIssues = regIssues.filter((i) => i.key !== issue.key);
-      regBackups = await api.listRegistryBackups();
+      regBackups = await api.listRegistryBackups().catch(() => regBackups);
+      statusNotice = `Cleaned registry entry "${issue.name}" (backup saved).`;
     } catch (e) {
       handleError(e, "Registry repair");
     }
@@ -293,360 +305,351 @@
     try {
       await api.restoreRegistryBackup(backup.id);
       regBackups = regBackups.filter((b) => b.id !== backup.id);
-      regIssues = await api.scanRegistry();
+      regIssues = await api.scanRegistry().catch(() => regIssues);
+      statusNotice = `Restored registry key ${backup.key}.`;
     } catch (e) {
       handleError(e, "Registry backup restore");
     }
   }
 </script>
 
-<div class="header">
-  <div class="row" style="justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+<div class="apps-layout">
+  <div class="header-row">
     <div>
-      <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Software, Updates & Registry Repair</h1>
-      <p class="muted small" style="margin-top: 4px;">Uninstall software cleanly, update outdated apps via Winget, remove orphaned AppData folders, and clean broken shortcuts.</p>
+      <h1 class="page-title">Apps, Updates & Orphans</h1>
+      <p class="muted small" style="margin: 4px 0 0 0;">
+        Uninstall bloated programs, update outdated software, and sweep leftover AppData folders, dead shortcuts, and registry orphans in one place.
+      </p>
     </div>
 
     <div class="mode-toggle" role="tablist">
-      <button class="mode-btn" class:active={mode === "apps"} onclick={() => (mode = "apps")} role="tab" aria-selected={mode === "apps"}>
+      <button
+        class="mode-btn"
+        class:active={mode === "apps"}
+        onclick={() => (mode = "apps")}
+        role="tab"
+        aria-selected={mode === "apps"}
+      >
         Installed Apps ({apps.length})
       </button>
-      <button class="mode-btn" class:active={mode === "updater"} onclick={() => (mode = "updater")} role="tab" aria-selected={mode === "updater"}>
-        App Updater (Winget) ({outdated.length})
+      <button
+        class="mode-btn"
+        class:active={mode === "updater"}
+        onclick={() => (mode = "updater")}
+        role="tab"
+        aria-selected={mode === "updater"}
+      >
+        Software Updates {updaterLoaded ? `(${outdated.length})` : ""}
       </button>
-      <button class="mode-btn" class:active={mode === "remnants"} onclick={() => (mode = "remnants")} role="tab" aria-selected={mode === "remnants"}>
-        Leftover Remnants ({remnants.length})
-      </button>
-      <button class="mode-btn" class:active={mode === "broken"} onclick={() => (mode = "broken")} role="tab" aria-selected={mode === "broken"}>
-        Broken Shortcuts & Folders ({brokenItems.length})
-      </button>
-      <button class="mode-btn" class:active={mode === "registry"} onclick={() => (mode = "registry")} role="tab" aria-selected={mode === "registry"}>
-        Registry Repair ({regIssues.length})
+      <button
+        class="mode-btn"
+        class:active={mode === "orphans"}
+        onclick={() => (mode = "orphans")}
+        role="tab"
+        aria-selected={mode === "orphans"}
+      >
+        Orphans & Registry {orphansLoaded ? `(${totalOrphanCount})` : ""}
       </button>
     </div>
   </div>
-</div>
 
-{#if proNotice && !license?.active}
-  <div class="card notice pro-notice">
-    <span>{proNotice}</span>
-    <div class="spacer"></div>
-    <button class="primary small-btn" onclick={requestActivation}>Activate</button>
-  </div>
-{/if}
-{#if error}
-  <div class="card notice error-notice">{error}</div>
-{/if}
-{#if updaterMessage}
-  <div class="card notice" style="border-left: 4px solid var(--accent);">{updaterMessage}</div>
-{/if}
+  {#if proNotice && !license?.active}
+    <div class="card notice pro-notice">
+      <span>{proNotice}</span>
+      <div class="spacer"></div>
+      <button class="primary small-btn" onclick={requestActivation}>Activate</button>
+    </div>
+  {/if}
+  {#if error}
+    <div class="card notice error-notice">{error}</div>
+  {/if}
+  {#if statusNotice}
+    <div class="card notice success-notice">{statusNotice}</div>
+  {/if}
 
-{#if mode === "apps"}
-  <!-- Search & Drag-and-Drop Uninstaller Bar -->
-  <div
-    class="card drop-filter-bar"
-    class:drag-over={dragActive}
-    ondragover={(e) => {
-      e.preventDefault();
-      dragActive = true;
-    }}
-    ondragleave={() => (dragActive = false)}
-    ondrop={handleDrop}
-    role="region"
-    aria-label="Search installed apps or drop a shortcut to uninstall"
-  >
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); flex-shrink: 0;">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-    <input
-      type="text"
-      bind:value={searchQuery}
-      placeholder="Search apps by name/publisher, or paste/drop a .lnk shortcut or .exe path to isolate…"
-      class="filter-input"
-      onkeydown={(e) => {
-        if (e.key === "Enter" && (/[\\/]|\.(lnk|exe)$/i.test(searchQuery))) {
-          resolveShortcutPath(searchQuery);
-        }
+  {#if mode === "apps"}
+    <!-- Search & Drag-and-Drop Bar -->
+    <div
+      class="card drop-filter-bar"
+      class:drag-over={dragActive}
+      ondragover={(e) => {
+        e.preventDefault();
+        dragActive = true;
       }}
-    />
-    {#if /[\\/]|\.(lnk|exe)$/i.test(searchQuery.trim())}
-      <button
-        class="primary small-btn"
-        disabled={resolvingTarget}
-        onclick={() => resolveShortcutPath(searchQuery)}
-      >
-        {resolvingTarget ? "Resolving…" : "Resolve Target"}
-      </button>
-    {/if}
-    {#if searchQuery}
-      <button
-        class="ghost small-btn"
-        onclick={() => {
-          searchQuery = "";
-          resolvedHint = null;
+      ondragleave={() => (dragActive = false)}
+      ondrop={handleDrop}
+      role="region"
+      aria-label="Search installed apps or drop a shortcut to uninstall"
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); flex-shrink: 0;">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search apps by name or publisher, or drop a desktop shortcut (.lnk / .exe) here…"
+        class="filter-input"
+        onkeydown={(e) => {
+          if (e.key === "Enter" && /[\\/]|\.(lnk|exe)$/i.test(searchQuery)) {
+            resolveShortcutPath(searchQuery);
+          }
         }}
-      >
-        Clear
-      </button>
-    {:else}
-      <span class="badge free">Drop .lnk / .exe Here</span>
-    {/if}
-  </div>
-
-  {#if resolvedHint}
-    <div class="card notice" style="border-left: 4px solid var(--accent); padding: 10px 16px;">
-      <span>🎯 {resolvedHint}</span>
-      {#if matchingRemnants.length > 0}
-        <span class="badge pro">{matchingRemnants.length} matching AppData remnant(s) found</span>
+      />
+      {#if /[\\/]|\.(lnk|exe)$/i.test(searchQuery.trim())}
+        <button
+          class="primary small-btn"
+          disabled={resolvingTarget}
+          onclick={() => resolveShortcutPath(searchQuery)}
+        >
+          {resolvingTarget ? "Resolving…" : "Find App"}
+        </button>
+      {/if}
+      {#if searchQuery}
+        <button
+          class="ghost small-btn"
+          onclick={() => {
+            searchQuery = "";
+            resolvedHint = null;
+          }}
+        >
+          Clear
+        </button>
+      {:else}
+        <span class="badge free">Sorted by Size</span>
       {/if}
     </div>
-  {/if}
 
-  {#if loading}
-    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
-      <div class="spinner"></div>
-      <p class="muted" style="margin-top: 16px;">Scanning Windows Registry for installed applications…</p>
-    </div>
-  {:else if filteredApps.length === 0}
-    <div class="card" style="padding: 28px; text-align: center; max-width: 520px; margin: 30px auto;">
-      <strong>No matching installed applications found</strong>
-      <p class="muted small" style="margin-top: 6px;">Try clearing the search filter or check Leftover Remnants for orphaned folders.</p>
-    </div>
-  {:else}
-    <div class="grid">
-      {#each filteredApps as app}
-        <div class="card item">
-          <div class="row" style="align-items: flex-start;">
-            <div class="grow">
-              <strong style="font-size: 15px; color: var(--text);">{app.name}</strong>
-              <div class="muted small" style="margin-top: 4px;">{app.publisher || "Verified Publisher"} · v{app.version}</div>
+    {#if resolvedHint}
+      <div class="card notice success-notice" style="padding: 10px 16px;">
+        <span>{resolvedHint}</span>
+      </div>
+    {/if}
+
+    {#if loading}
+      <div class="card center-state">
+        <div class="spinner"></div>
+        <p class="muted" style="margin-top: 14px;">Reading installed programs…</p>
+      </div>
+    {:else if filteredApps.length === 0}
+      <div class="card center-state">
+        <strong>No matching applications found</strong>
+        <p class="muted small" style="margin-top: 6px;">Try clearing the search filter or switch to Orphans & Registry to check for leftover files.</p>
+      </div>
+    {:else}
+      <div class="card app-table">
+        {#each filteredApps as app (app.id)}
+          <div class="row app-row">
+            <div class="app-main">
+              <strong class="app-name">{app.name}</strong>
+              <span class="muted small">{app.publisher || "Installed Program"}{app.version ? ` · v${app.version}` : ""}</span>
             </div>
+            <div class="spacer"></div>
+            <strong class="app-size">{formatBytes(app.estimated_size)}</strong>
             {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+            <button class="ghost small-btn" onclick={() => uninstall(app)}>Uninstall</button>
           </div>
-          <div class="row" style="margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border);">
-            <strong style="color: var(--accent); font-size: 18px; font-weight: 800;">{formatBytes(app.estimated_size)}</strong>
-            <div class="spacer"></div>
-            <button class="ghost small-btn" onclick={() => uninstall(app)}>Uninstall App</button>
-          </div>
-        </div>
-      {/each}
-    </div>
-  {/if}
+        {/each}
+      </div>
+    {/if}
 
-{:else if mode === "updater"}
-  {#if updaterLoading}
-    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
-      <div class="spinner"></div>
-      <p class="muted" style="margin-top: 16px;">Querying Windows Package Manager (winget) for outdated software…</p>
-    </div>
-  {:else if outdated.length === 0}
-    <div class="card" style="padding: 32px; text-align: center; max-width: 560px; margin: 40px auto;">
-      <div class="status-icon-bubble green" style="margin: 0 auto 16px auto;">✓</div>
-      <h3 style="margin: 0 0 6px 0;">All Installed Software is Up to Date</h3>
-      <p class="muted small">Winget reported no pending security or version updates for your installed packages.</p>
-      <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadOutdated}>Check Again</button>
-    </div>
-  {:else}
-    <div class="row" style="margin-bottom: 16px;">
-      <span class="muted small">{outdated.length} package updates available via Windows Package Manager</span>
-      <div class="spacer"></div>
-      <button class="ghost small-btn" onclick={loadOutdated}>Refresh List</button>
-    </div>
-    <div class="grid">
-      {#each outdated as pkg}
-        <div class="card item">
-          <div>
-            <div class="row" style="margin-bottom: 6px;">
-              <span class="badge free">{pkg.source}</span>
-              <div class="spacer"></div>
-              <span class="mono muted small">{pkg.id}</span>
+  {:else if mode === "updater"}
+    {#if updaterLoading}
+      <div class="card center-state">
+        <div class="spinner"></div>
+        <p class="muted" style="margin-top: 14px;">Checking Windows Package Manager (winget) for outdated apps…</p>
+      </div>
+    {:else if outdated.length === 0}
+      <div class="card center-state">
+        <div class="status-icon-bubble green">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="margin: 12px 0 6px 0;">All Installed Software is Up to Date</h3>
+        <p class="muted small">No pending updates were reported by Windows Package Manager.</p>
+        <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadOutdated}>Check Again</button>
+      </div>
+    {:else}
+      <div class="card toolbar-card">
+        <span class="small"><strong>{outdated.length}</strong> software update(s) available</span>
+        <div class="spacer"></div>
+        <button class="ghost small-btn" onclick={loadOutdated}>Refresh</button>
+      </div>
+      <div class="card app-table">
+        {#each outdated as pkg (pkg.id)}
+          <div class="row app-row">
+            <div class="app-main">
+              <strong class="app-name">{pkg.name}</strong>
+              <span class="muted small mono">{pkg.current_version} → <strong style="color: var(--accent);">{pkg.available_version}</strong></span>
             </div>
-            <strong style="font-size: 15px; display: block; margin-bottom: 6px;">{pkg.name}</strong>
-            <div class="muted small">
-              Current: <span class="mono">{pkg.current_version}</span> → Latest: <strong style="color: var(--accent);" class="mono">{pkg.available_version}</strong>
-            </div>
-          </div>
-          <div class="row" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
-            <span class="badge pro">Security & Stability</span>
             <div class="spacer"></div>
+            <span class="badge free">{pkg.source}</span>
             <button
               class="primary small-btn"
               disabled={upgradingId === pkg.id}
               onclick={() => upgradePkg(pkg)}
             >
-              {upgradingId === pkg.id ? "Updating…" : "Update Now"}
+              {upgradingId === pkg.id ? "Updating…" : "Update"}
             </button>
-          </div>
-        </div>
-      {/each}
-    </div>
-  {/if}
-
-{:else if mode === "remnants"}
-  {#if remnantsLoading}
-    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
-      <div class="spinner"></div>
-      <p class="muted" style="margin-top: 16px;">Scanning AppData for leftover folders from uninstalled software…</p>
-    </div>
-  {:else if remnants.length === 0}
-    <div class="card" style="padding: 32px; text-align: center; max-width: 560px; margin: 40px auto;">
-      <div class="status-icon-bubble green" style="margin: 0 auto 16px auto;">✓</div>
-      <h3 style="margin: 0 0 6px 0;">No Orphaned AppData Remnants Found</h3>
-      <p class="muted small">All top-level AppData folders match your installed software or protected system components.</p>
-      <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadRemnants}>Rescan AppData</button>
-    </div>
-  {:else}
-    <div class="grid">
-      {#each remnants as rem}
-        <div class="card item">
-          <div>
-            <div class="row" style="margin-bottom: 6px;">
-              <span class="badge pro">{rem.location}</span>
-              <div class="spacer"></div>
-              <span class="muted small">{formatCount(rem.files)} files</span>
-            </div>
-            <strong style="font-size: 15px; display: block; margin-bottom: 4px;">{rem.name}</strong>
-            <div class="muted small mono" style="word-break: break-all;">{rem.path}</div>
-          </div>
-          <div class="row" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
-            <strong style="color: var(--accent); font-size: 17px; font-weight: 800;">{formatBytes(rem.bytes)}</strong>
-            <div class="spacer"></div>
-            <button class="primary small-btn" onclick={() => removeRemnant(rem)}>Move to Recycle Bin</button>
-          </div>
-        </div>
-      {/each}
-    </div>
-  {/if}
-
-{:else if mode === "broken"}
-  {#if brokenLoading}
-    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
-      <div class="spinner"></div>
-      <p class="muted" style="margin-top: 16px;">Scanning Desktop, Start Menu, and AppData for dead shortcuts & empty folders…</p>
-    </div>
-  {:else if brokenItems.length === 0}
-    <div class="card" style="padding: 32px; text-align: center; max-width: 560px; margin: 40px auto;">
-      <div class="status-icon-bubble green" style="margin: 0 auto 16px auto;">✓</div>
-      <h3 style="margin: 0 0 6px 0;">No Broken Shortcuts or Empty Folders Found</h3>
-      <p class="muted small">All Desktop and Start Menu shortcuts point to valid targets and no empty AppData directories were detected.</p>
-      <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadBroken}>Rescan Shortcuts & Folders</button>
-    </div>
-  {:else}
-    <div class="card" style="padding: 14px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-      <span class="muted small">{selectedBrokenPaths.length} of {brokenItems.length} items selected</span>
-      <button
-        class="ghost small-btn"
-        onclick={() => {
-          const allSelected = selectedBrokenPaths.length === brokenItems.length;
-          selectedBroken = Object.fromEntries(brokenItems.map((i) => [i.path, !allSelected]));
-        }}
-      >
-        {selectedBrokenPaths.length === brokenItems.length ? "Deselect All" : "Select All"}
-      </button>
-      <div class="spacer"></div>
-      <button class="ghost small-btn" onclick={loadBroken}>Rescan</button>
-      <button
-        class="primary small-btn"
-        disabled={!selectedBrokenPaths.length || brokenCleaning}
-        onclick={cleanBrokenSelected}
-      >
-        {brokenCleaning ? "Cleaning…" : `Clean Selected (${selectedBrokenPaths.length})`}
-      </button>
-    </div>
-
-    <div class="grid">
-      {#each brokenItems as item}
-        <label class="card item" style="cursor: pointer;">
-          <div>
-            <div class="row" style="margin-bottom: 8px;">
-              <input type="checkbox" bind:checked={selectedBroken[item.path]} />
-              <span class="badge" class:pro={item.kind === "broken_shortcut"} class:free={item.kind !== "broken_shortcut"}>
-                {item.kind === "broken_shortcut" ? "Broken Shortcut (.lnk)" : "Empty Folder"}
-              </span>
-              <div class="spacer"></div>
-            </div>
-            <strong style="font-size: 14.5px; display: block; margin-bottom: 4px;">{item.name}</strong>
-            <div class="muted small" style="margin-bottom: 6px;">{item.detail}</div>
-            <div class="muted small mono" style="word-break: break-all;">{item.path}</div>
-          </div>
-        </label>
-      {/each}
-    </div>
-  {/if}
-
-{:else if mode === "registry"}
-  {#if regLoading}
-    <div class="hero card" style="max-width: 480px; margin: 60px auto; padding: 40px; text-align: center;">
-      <div class="spinner"></div>
-      <p class="muted" style="margin-top: 16px;">Scanning Windows Registry for broken paths and orphans…</p>
-    </div>
-  {:else if regIssues.length === 0}
-    <div class="card" style="padding: 32px; text-align: center; max-width: 560px; margin: 40px auto;">
-      <div class="status-icon-bubble green" style="margin: 0 auto 16px auto;">✓</div>
-      <h3 style="margin: 0 0 6px 0;">Registry is Clean & Optimized</h3>
-      <p class="muted small">No broken App Paths or orphaned startup keys found in the registry.</p>
-      <button class="ghost small-btn" style="margin-top: 14px;" onclick={loadRegistry}>Rescan Registry</button>
-    </div>
-  {:else}
-    <div class="grid">
-      {#each regIssues as issue}
-        <div class="card item">
-          <div>
-            <div class="row" style="margin-bottom: 6px;">
-              <span class="badge pro">{issue.issue_type}</span>
-              <div class="spacer"></div>
-              <strong style="font-size: 14px;">{issue.name}</strong>
-            </div>
-            <div class="muted small" style="word-break: break-all;">{issue.details}</div>
-          </div>
-          <div class="row" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
-            <span class="muted small mono">{issue.key}</span>
-            <div class="spacer"></div>
-            <button class="primary small-btn" onclick={() => fixIssue(issue)}>Clean (Auto-Backup)</button>
-          </div>
-        </div>
-      {/each}
-    </div>
-  {/if}
-
-  {#if regBackups.length > 0}
-    <div class="card" style="padding: 20px 24px; margin-top: 24px;">
-      <div class="row" style="margin-bottom: 12px;">
-        <strong>Automatic Registry Backups ({regBackups.length})</strong>
-        <div class="spacer"></div>
-        <span class="muted small">One-click restore for any previously cleaned registry entry</span>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;">
-        {#each regBackups as b}
-          <div class="row" style="background: var(--panel-2); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); gap: 12px;">
-            <div style="flex: 1; min-width: 0;">
-              <div class="row" style="gap: 8px;">
-                <strong style="font-size: 13px;">{b.key}</strong>
-                <span class="muted small">({b.issue_type})</span>
-              </div>
-              <div class="muted small mono" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{b.value}</div>
-            </div>
-            <button class="ghost small-btn" onclick={() => restoreBackup(b)}>Restore</button>
           </div>
         {/each}
       </div>
-    </div>
+    {/if}
+
+  {:else if mode === "orphans"}
+    {#if orphansLoading}
+      <div class="card center-state">
+        <div class="spinner"></div>
+        <p class="muted" style="margin-top: 14px;">Scanning AppData folders, shortcuts, and Windows Registry for orphans…</p>
+      </div>
+    {:else}
+      <div class="card toolbar-card">
+        <div>
+          <strong>
+            {totalOrphanCount === 0
+              ? "System is clean — 0 orphaned items found"
+              : `${totalOrphanCount} orphaned item(s) found${totalRemnantBytes > 0 ? ` (${formatBytes(totalRemnantBytes)} in leftover folders)` : ""}`}
+          </strong>
+          <div class="muted small">
+            Combines leftover AppData folders ({remnants.length}), broken shortcuts &amp; empty folders ({brokenItems.length}), and broken registry paths ({regIssues.length})
+          </div>
+        </div>
+        <div class="spacer"></div>
+        {#if regBackups.length > 0}
+          <button class="ghost small-btn" onclick={() => (showBackups = !showBackups)}>
+            Registry Backups ({regBackups.length})
+          </button>
+        {/if}
+        <button class="ghost small-btn" onclick={scanAllOrphans}>Rescan</button>
+        {#if totalOrphanCount > 0}
+          <button class="primary small-btn" disabled={cleaningOrphans} onclick={cleanAllOrphans}>
+            {cleaningOrphans ? "Cleaning…" : `Clean All (${totalOrphanCount})`}
+          </button>
+        {/if}
+      </div>
+
+      {#if showBackups && regBackups.length > 0}
+        <div class="card" style="padding: 16px 20px;">
+          <div class="row" style="margin-bottom: 10px;">
+            <strong class="small">Automatic Registry Backups ({regBackups.length})</strong>
+            <div class="spacer"></div>
+            <span class="muted small">One-click restore for any previously cleaned registry key</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+            {#each regBackups as b (b.id)}
+              <div class="row" style="background: var(--panel-2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <div style="flex: 1; min-width: 0;">
+                  <strong class="small">{b.key}</strong>
+                  <div class="muted small mono" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{b.value}</div>
+                </div>
+                <button class="ghost small-btn" onclick={() => restoreBackup(b)}>Restore</button>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
+
+      {#if totalOrphanCount === 0}
+        <div class="card center-state">
+          <div class="status-icon-bubble green">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 style="margin: 12px 0 6px 0;">No Orphans or Broken Registry Keys Found</h3>
+          <p class="muted small">Your AppData directories, shortcuts, and registry references are clean.</p>
+        </div>
+      {:else}
+        <div class="card app-table">
+          {#each remnants as rem (rem.path)}
+            <div class="row app-row">
+              <span class="badge pro">AppData Remnant</span>
+              <div class="app-main">
+                <strong class="app-name">{rem.name}</strong>
+                <span class="muted small mono" title={rem.path}>{shortenPath(rem.path, 72)} ({formatCount(rem.files)} files)</span>
+              </div>
+              <div class="spacer"></div>
+              <strong class="app-size">{formatBytes(rem.bytes)}</strong>
+              <button class="ghost small-btn" onclick={() => removeSingleRemnant(rem)}>Clean</button>
+            </div>
+          {/each}
+
+          {#each brokenItems as item (item.path)}
+            <div class="row app-row">
+              <span class="badge">{item.kind === "broken_shortcut" ? "Broken Shortcut" : "Empty Folder"}</span>
+              <div class="app-main">
+                <strong class="app-name">{item.name}</strong>
+                <span class="muted small mono" title={item.path}>{shortenPath(item.path, 72)} · {item.detail}</span>
+              </div>
+              <div class="spacer"></div>
+              <button class="ghost small-btn" onclick={() => removeSingleBroken(item)}>Remove</button>
+            </div>
+          {/each}
+
+          {#each regIssues as issue (issue.key)}
+            <div class="row app-row">
+              <span class="badge free">Registry · {issue.issue_type}</span>
+              <div class="app-main">
+                <strong class="app-name">{issue.name}</strong>
+                <span class="muted small mono" title={issue.details}>{shortenPath(issue.details, 72)}</span>
+              </div>
+              <div class="spacer"></div>
+              <button class="ghost small-btn" onclick={() => fixSingleRegistry(issue)}>Fix Key</button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    {/if}
   {/if}
-{/if}
+</div>
 
 <style>
-  .header { margin-bottom: 24px; }
-  .notice { display: flex; align-items: center; gap: 12px; padding: 12px 18px; margin-bottom: 18px; font-size: 13.5px; }
-  .pro-notice { background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: var(--text); }
-  .error-notice { background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); }
+  .apps-layout {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 36px;
+  }
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+  .notice {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .pro-notice {
+    background: rgba(245, 158, 11, 0.14);
+    border-left: 4px solid var(--warn);
+    color: var(--text);
+  }
+  .error-notice {
+    background: rgba(239, 68, 68, 0.14);
+    border-left: 4px solid var(--danger);
+    color: var(--danger);
+  }
+  .success-notice {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    color: var(--text);
+  }
   .drop-filter-bar {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 18px;
-    margin-bottom: 18px;
-    border: 1.5px dashed var(--border);
-    transition: all 0.2s;
+    padding: 11px 18px;
+    border: 1.5px solid var(--border);
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
   .drop-filter-bar.drag-over {
     border-color: var(--accent);
@@ -671,7 +674,7 @@
   .mode-btn {
     background: transparent;
     border: none;
-    padding: 7px 14px;
+    padding: 7px 16px;
     border-radius: 9999px;
     font-size: 12.5px;
     font-weight: 600;
@@ -688,12 +691,68 @@
     color: var(--accent);
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
   }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; padding-bottom: 40px; }
-  .item { padding: 20px 22px; display: flex; flex-direction: column; justify-content: space-between; }
-  .grow { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .small-btn { font-size: 12px; padding: 5px 14px; border-radius: 9999px; }
-  .spinner { width: 36px; height: 36px; border: 3.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .status-icon-bubble { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; font-weight: 800; }
-  .status-icon-bubble.green { background: var(--accent-light); color: var(--accent); }
+  .toolbar-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    flex-wrap: wrap;
+  }
+  .app-table {
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .app-row {
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .app-row:last-child {
+    border-bottom: none;
+  }
+  .app-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .app-name {
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .app-size {
+    color: var(--accent);
+    font-size: 14.5px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .small-btn {
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 9999px;
+  }
+  .center-state {
+    max-width: 520px;
+    margin: 30px auto;
+    padding: 34px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .status-icon-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+  }
+  .status-icon-bubble.green {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
 </style>

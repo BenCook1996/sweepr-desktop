@@ -8,14 +8,14 @@
     type BrowserPrivacyItem,
     type LicenseStatus,
   } from "../lib/api";
-  import { formatBytes, formatCount } from "../lib/format";
+  import { formatBytes } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
   import Shredder from "./Shredder.svelte";
 
-  let { license } = $props<{ license: LicenseStatus | null }>();
+  let { license }: { license: LicenseStatus | null } = $props();
   let error = $state<string | null>(null);
 
-  // Browser Privacy Cleaner (#11)
+  // Browser Privacy Cleaner
   let browsers = $state<BrowserPrivacyItem[]>([]);
   let selectedBrowsers = $state<Record<string, boolean>>({});
   let clearCache = $state(true);
@@ -26,23 +26,28 @@
   let compactingDbs = $state(false);
   let browserStatus = $state<string | null>(null);
 
-  // Smart Cookie Allowlist & Browser Extension Inspector
-  let showCookieAllowlist = $state(false);
+  // Sub-drawers: Cookie Allowlist & Extension Inspector
+  let activeDrawer = $state<"none" | "cookies" | "extensions">("none");
   let cookieAllowlist = $state<string[]>([]);
   let newDomain = $state("");
-  let showExtensions = $state(false);
   let extensions = $state<BrowserExtensionItem[]>([]);
   let loadingExtensions = $state(false);
 
-  // k-Anonymity Password Breach Check (#12) & Cryptographic Generator
-  let passwordInput = $state("");
-  let checkingPassword = $state(false);
-  let breachCount = $state<number | null>(null);
-  let genLength = $state(20);
-  let genSymbols = $state(true);
-  let generatedPassword = $state("");
-  let generatingPassword = $state(false);
-  let copiedPassword = $state(false);
+  const selectedBrowserKeys = $derived(
+    Object.keys(selectedBrowsers).filter((k) => selectedBrowsers[k])
+  );
+
+  const totalBrowserBytes = $derived(
+    browsers.reduce((sum, b) => {
+      const key = b.id || b.browser;
+      if (!selectedBrowsers[key]) return sum;
+      let bytes = 0;
+      if (clearCache) bytes += b.cache_bytes;
+      if (clearCookies) bytes += b.cookies_bytes;
+      if (clearHistory) bytes += b.history_bytes;
+      return sum + bytes;
+    }, 0)
+  );
 
   async function scanBrowsers() {
     error = null;
@@ -69,15 +74,19 @@
   }
 
   async function cleanBrowsers() {
-    const chosen = Object.keys(selectedBrowsers).filter((k) => selectedBrowsers[k]);
-    if (!chosen.length) return;
+    if (!selectedBrowserKeys.length) return;
     error = null;
     browserStatus = null;
     cleaningBrowsers = true;
     try {
-      const freed = await api.cleanBrowserPrivacy(chosen, clearCache, clearCookies, clearHistory);
-      addLifetimeStats(freed, chosen.length);
-      browserStatus = `Cleaned ${formatBytes(freed)} of browser privacy traces across ${chosen.length} browser(s).`;
+      const freed = await api.cleanBrowserPrivacy(
+        selectedBrowserKeys,
+        clearCache,
+        clearCookies,
+        clearHistory
+      );
+      addLifetimeStats(freed, selectedBrowserKeys.length);
+      browserStatus = `Cleaned ${formatBytes(freed)} across ${selectedBrowserKeys.length} browser(s).`;
       browsers = await api.scanBrowserPrivacy();
     } catch (e) {
       if (isPaymentRequired(e)) {
@@ -97,7 +106,7 @@
     try {
       const saved = await api.compactBrowserDatabases();
       addLifetimeStats(saved, 1);
-      browserStatus = `Optimized & vacuumed browser SQLite databases (${formatBytes(saved)} reclaimed with zero data loss).`;
+      browserStatus = `Compacted browser SQLite databases (${formatBytes(saved)} reclaimed with zero data loss).`;
       browsers = await api.scanBrowserPrivacy();
     } catch (e) {
       if (isPaymentRequired(e)) {
@@ -133,9 +142,13 @@
     }
   }
 
-  async function toggleExtensionsDrawer() {
-    showExtensions = !showExtensions;
-    if (showExtensions && extensions.length === 0 && !loadingExtensions) {
+  async function toggleDrawer(drawer: "cookies" | "extensions") {
+    if (activeDrawer === drawer) {
+      activeDrawer = "none";
+      return;
+    }
+    activeDrawer = drawer;
+    if (drawer === "extensions" && extensions.length === 0 && !loadingExtensions) {
       loadingExtensions = true;
       try {
         extensions = await api.listBrowserExtensions();
@@ -147,125 +160,88 @@
     }
   }
 
-  async function checkPassword() {
-    if (!passwordInput) return;
-    error = null;
-    breachCount = null;
-    checkingPassword = true;
-    try {
-      breachCount = await api.checkPasswordBreach(passwordInput);
-    } catch (e) {
-      error = errorMessage(e);
-    } finally {
-      checkingPassword = false;
-    }
-  }
-
-  async function generatePassword() {
-    error = null;
-    generatingPassword = true;
-    copiedPassword = false;
-    try {
-      generatedPassword = await api.generateStrongPassword(genLength, genSymbols);
-    } catch (e) {
-      error = errorMessage(e);
-    } finally {
-      generatingPassword = false;
-    }
-  }
-
-  async function copyGeneratedPassword() {
-    if (!generatedPassword) return;
-    try {
-      await navigator.clipboard.writeText(generatedPassword);
-      copiedPassword = true;
-      setTimeout(() => (copiedPassword = false), 2000);
-    } catch {
-      // Ignore clipboard failure
-    }
-  }
-
-  async function openBreachCheck() {
-    error = null;
-    try {
-      await api.openBreachCheck();
-    } catch (e) {
-      error = errorMessage(e);
-    }
-  }
-
   $effect(() => {
     scanBrowsers();
   });
 </script>
 
-<div class="header">
-  <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Privacy, Browser & Shredder</h1>
-  <p class="muted small" style="margin-top: 4px;">
-    Sweep browser tracking cookies, compact SQLite databases, audit browser extensions, check passwords with k-Anonymity, and shred sensitive files.
-  </p>
-</div>
-
-{#if error}
-  <div class="breach-alert card" style="margin-bottom: 18px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;">
-    <span class="small">{error}</span>
+<div class="privacy-layout">
+  <div class="section-header">
+    <div>
+      <h1 class="page-title">Browser Privacy & File Shredder</h1>
+      <p class="muted small" style="margin: 4px 0 0 0;">
+        Sweep browser caches and tracking cookies while keeping your favorite logins intact, or permanently shred sensitive local files.
+      </p>
+    </div>
   </div>
-{/if}
 
-<div class="grid">
-  <!-- 1. Browser Privacy Cleaner (#11) -->
-  <div class="card item" style="grid-column: 1 / -1;">
-    <div class="row" style="margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-      <div class="icon-bubble emerald">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  {#if error}
+    <div class="card alert-banner error">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>{error}</span>
+    </div>
+  {/if}
+
+  {#if browserStatus}
+    <div class="card alert-banner success">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>{browserStatus}</span>
+    </div>
+  {/if}
+
+  <!-- 1. Browser Privacy & SQLite Optimizer -->
+  <div class="card browser-card">
+    <div class="card-top-row">
+      <div class="title-with-icon">
+        <div class="icon-bubble emerald">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div>
+          <strong class="card-title">Browser Privacy Cleaner</strong>
+          <div class="muted small">Clear web caches, tracking cookies, and browsing history across installed browsers</div>
+        </div>
       </div>
-      <div>
-        <strong style="font-size: 16px;">Browser Privacy Cleaner & Optimizer</strong>
-        <div class="muted small">Clear web caches, tracking cookies, and browsing history across installed browsers.</div>
+
+      <div class="toolbar-actions">
+        <button
+          class="ghost small-pill"
+          class:active-pill={activeDrawer === "cookies"}
+          onclick={() => toggleDrawer("cookies")}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Cookie Allowlist ({cookieAllowlist.length})</span>
+        </button>
+        <button
+          class="ghost small-pill"
+          class:active-pill={activeDrawer === "extensions"}
+          onclick={() => toggleDrawer("extensions")}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Extensions {extensions.length ? `(${extensions.length})` : ""}</span>
+        </button>
+        <button class="ghost small-pill" onclick={scanBrowsers} disabled={scanningBrowsers}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <span>{scanningBrowsers ? "Scanning…" : "Rescan"}</span>
+        </button>
       </div>
-      <div class="spacer"></div>
-      <button class="ghost small-pill" onclick={() => (showCookieAllowlist = !showCookieAllowlist)}>
-        🍪 Smart Cookie Allowlist ({cookieAllowlist.length})
-      </button>
-      <button class="ghost small-pill" onclick={toggleExtensionsDrawer}>
-        🧩 Extension Inspector {extensions.length ? `(${extensions.length})` : ""}
-      </button>
-      <button class="ghost small-pill" onclick={scanBrowsers} disabled={scanningBrowsers}>
-        {scanningBrowsers ? "Scanning…" : "Rescan Browsers"}
-      </button>
     </div>
 
-    <div class="row" style="gap: 18px; margin-bottom: 14px; flex-wrap: wrap;">
-      <label class="row small" style="gap: 6px; cursor: pointer;">
-        <input type="checkbox" bind:checked={clearCache} />
-        <span>Clear Cache</span>
-      </label>
-      <label class="row small" style="gap: 6px; cursor: pointer;">
-        <input type="checkbox" bind:checked={clearCookies} />
-        <span>Clear Tracking Cookies (Pro)</span>
-      </label>
-      <label class="row small" style="gap: 6px; cursor: pointer;">
-        <input type="checkbox" bind:checked={clearHistory} />
-        <span>Clear Browsing History (Pro)</span>
-      </label>
-    </div>
-
-    {#if showCookieAllowlist}
+    {#if activeDrawer === "cookies"}
       <div class="sub-panel">
-        <div class="row" style="justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+        <div class="row" style="justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <strong class="small">Smart Cookie Allowlist (Keep Logged In)</strong>
-            <div class="muted small">Domains preserved when cleaning browser cookies so you stay signed in to your favorite accounts.</div>
+            <strong class="small">Protected Login Domains (Cookie Allowlist)</strong>
+            <div class="muted small">These sites stay signed in when you clean tracking cookies.</div>
           </div>
           <div class="row" style="gap: 6px;">
             <input
               type="text"
               bind:value={newDomain}
-              placeholder="e.g. github.com"
+              placeholder="Add domain (e.g. github.com)"
               class="mini-input"
               onkeydown={(e) => e.key === "Enter" && addAllowedDomain()}
             />
-            <button class="primary small-pill" onclick={addAllowedDomain}>Add Domain</button>
+            <button class="primary small-pill" onclick={addAllowedDomain}>Add</button>
           </div>
         </div>
         <div class="domain-pills">
@@ -288,18 +264,18 @@
       </div>
     {/if}
 
-    {#if showExtensions}
+    {#if activeDrawer === "extensions"}
       <div class="sub-panel">
         <div class="row" style="justify-content: space-between; margin-bottom: 8px;">
           <div>
-            <strong class="small">Browser Extension Inspector ({extensions.length})</strong>
-            <div class="muted small">Installed Chromium (Chrome, Edge, Brave) extensions and their requested permission count.</div>
+            <strong class="small">Installed Browser Extensions ({extensions.length})</strong>
+            <div class="muted small">Review third-party Chromium extensions and their permission footprint.</div>
           </div>
         </div>
         {#if loadingExtensions}
           <div class="muted small">Scanning installed browser extensions…</div>
         {:else if extensions.length === 0}
-          <div class="muted small">No third-party browser extensions found.</div>
+          <div class="muted small">No third-party browser extensions detected.</div>
         {:else}
           <div class="ext-list">
             {#each extensions as ext}
@@ -322,20 +298,43 @@
       </div>
     {/if}
 
+    <!-- Clean Options Pills -->
+    <div class="data-type-bar">
+      <span class="field-label">DATA TO CLEAN:</span>
+      <label class="type-chip" class:checked={clearCache}>
+        <input type="checkbox" bind:checked={clearCache} />
+        <span>Web Cache</span>
+      </label>
+      <label class="type-chip" class:checked={clearCookies}>
+        <input type="checkbox" bind:checked={clearCookies} />
+        <span>Tracking Cookies</span>
+        {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+      </label>
+      <label class="type-chip" class:checked={clearHistory}>
+        <input type="checkbox" bind:checked={clearHistory} />
+        <span>Browsing History</span>
+        {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+      </label>
+    </div>
+
     {#if browsers.length === 0}
-      <p class="muted small">No supported browser profiles detected or all browser caches are already clean.</p>
+      <div class="empty-state">
+        <span class="muted small">No supported browser profiles detected or all browser caches are already clean.</span>
+      </div>
     {:else}
       <div class="browser-list">
         {#each browsers as b}
           {@const key = b.id || b.browser}
-          <label class="row browser-row" style="cursor: pointer;">
+          <label class="row browser-row">
             <input type="checkbox" bind:checked={selectedBrowsers[key]} />
-            <strong style="min-width: 140px;">{b.name || b.browser}</strong>
-            <span class="muted small">Cache: {formatBytes(b.cache_bytes)}</span>
-            <span class="muted small">Cookies: {formatBytes(b.cookies_bytes)}</span>
-            <span class="muted small">History: {formatBytes(b.history_bytes)}</span>
+            <strong class="browser-name">{b.name || b.browser}</strong>
+            <div class="browser-metrics">
+              <span class="metric-pill">Cache: <strong>{formatBytes(b.cache_bytes)}</strong></span>
+              <span class="metric-pill">Cookies: <strong>{formatBytes(b.cookies_bytes)}</strong></span>
+              <span class="metric-pill">History: <strong>{formatBytes(b.history_bytes)}</strong></span>
+            </div>
             <div class="spacer"></div>
-            <strong style="color: var(--accent);">
+            <strong class="browser-total">
               {formatBytes(b.total_bytes ?? b.cache_bytes + b.cookies_bytes + b.history_bytes)}
             </strong>
           </label>
@@ -343,149 +342,210 @@
       </div>
     {/if}
 
-    {#if browserStatus}
-      <div class="muted small" style="color: var(--accent); margin-top: 10px;">{browserStatus}</div>
-    {/if}
-
-    <div class="row" style="margin-top: 14px; gap: 10px; flex-wrap: wrap;">
+    <div class="card-footer-row">
       <button
         class="primary"
-        disabled={cleaningBrowsers || (!clearCache && !clearCookies && !clearHistory)}
+        disabled={cleaningBrowsers || !selectedBrowserKeys.length || (!clearCache && !clearCookies && !clearHistory)}
         onclick={cleanBrowsers}
       >
-        {cleaningBrowsers ? "Cleaning Browser Data…" : "Clean Selected Browser Data"}
+        {cleaningBrowsers
+          ? "Cleaning Browser Data…"
+          : totalBrowserBytes > 0
+            ? `Clean Selected Browser Data (${formatBytes(totalBrowserBytes)})`
+            : "Clean Selected Browser Data"}
       </button>
       <button
         class="ghost"
         disabled={compactingDbs}
         onclick={compactDatabases}
+        title="Vacuum and defragment browser SQLite databases without signing you out or deleting history"
       >
-        {compactingDbs ? "Compacting SQLite DBs…" : "Optimize & Compact SQLite DBs (No Data Loss)"}
+        {compactingDbs ? "Compacting SQLite DBs…" : "Compact Databases (No Data Loss)"}
       </button>
     </div>
   </div>
 
-  <!-- 2. k-Anonymity Password Breach Check (#12) + Cryptographic Generator -->
-  <div class="card item">
-    <div class="row" style="margin-bottom: 12px;">
-      <div class="icon-bubble emerald">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-      <div>
-        <strong style="font-size: 16px;">k-Anonymity Password Check</strong>
-        <div class="muted small">Zero-knowledge SHA-1 prefix lookup</div>
-      </div>
-    </div>
-
-    <p class="muted small" style="margin: 0 0 14px 0; line-height: 1.5;">
-      Your password is hashed locally on your PC. Only the first 5 characters of its SHA-1 hash are sent to the Pwned Passwords API—your actual password never leaves your device.
-    </p>
-
-    <div class="row" style="gap: 8px;">
-      <input
-        type="password"
-        bind:value={passwordInput}
-        placeholder="Enter password to test…"
-        aria-label="Password to test for breaches"
-        style="flex: 1; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border); background: var(--panel-solid);"
-      />
-      <button class="primary" disabled={checkingPassword || !passwordInput} onclick={checkPassword}>
-        {checkingPassword ? "Checking…" : "Check Password"}
-      </button>
-    </div>
-
-    {#if breachCount !== null}
-      {#if breachCount === 0}
-        <div class="breach-alert" style="margin-top: 14px; background: rgba(16, 185, 129, 0.12); color: var(--accent);">
-          <strong>Good news!</strong> This password was not found in any known public data breaches.
-        </div>
-      {:else}
-        <div class="breach-alert" style="margin-top: 14px; background: rgba(239, 68, 68, 0.14); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3);">
-          <strong>Warning:</strong> This password has appeared <strong>{formatCount(breachCount)}</strong> times in known data breaches. Avoid using it.
-        </div>
-      {/if}
-    {/if}
-
-    <div class="gen-divider"></div>
-
-    <div class="row" style="justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-      <strong class="small">Cryptographic Password Generator</strong>
-      <div class="row" style="gap: 10px;">
-        <label class="row small" style="gap: 4px;">
-          <span class="muted">Length:</span>
-          <select bind:value={genLength} class="mini-select" aria-label="Password length">
-            <option value={16}>16</option>
-            <option value={20}>20</option>
-            <option value={24}>24</option>
-            <option value={32}>32</option>
-          </select>
-        </label>
-        <label class="row small" style="gap: 4px; cursor: pointer;">
-          <input type="checkbox" bind:checked={genSymbols} />
-          <span>Symbols</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="row" style="gap: 8px; flex-wrap: wrap;">
-      <button class="ghost small-pill" disabled={generatingPassword} onclick={generatePassword}>
-        {generatingPassword ? "Generating…" : "Generate Strong Password"}
-      </button>
-      {#if generatedPassword}
-        <code class="gen-output">{generatedPassword}</code>
-        <button class="primary small-pill" onclick={copyGeneratedPassword}>
-          {copiedPassword ? "Copied ✓" : "Copy"}
-        </button>
-      {/if}
-    </div>
-  </div>
-
-  <!-- 3. Email Breach Check Card -->
-  <div class="card item">
-    <div class="row" style="margin-bottom: 12px;">
-      <div class="icon-bubble amber">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div>
-        <strong style="font-size: 16px;">Have I Been Pwned Email Lookup</strong>
-        <div class="muted small">Check your email directly on haveibeenpwned.com</div>
-      </div>
-    </div>
-
-    <p class="muted small" style="margin: 0 0 16px 0; line-height: 1.5;">
-      SWEEPR Cleaner does not collect, store, or transmit your email address for breach checks. Clicking below opens <strong>haveibeenpwned.com</strong> in your default browser.
-    </p>
-
-    <div class="row">
-      <button class="primary" style="padding: 10px 24px; border-radius: 9999px;" onclick={openBreachCheck}>
-        Check on Have I Been Pwned ↗
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- 4. Embedded Secure File Shredder -->
-<div class="shredder-section">
+  <!-- 2. Secure File Shredder -->
   <Shredder {license} />
 </div>
 
 <style>
-  .header { margin-bottom: 24px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 28px; }
-  .item { padding: 22px 24px; }
-  .icon-bubble { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-right: 12px; flex-shrink: 0; }
-  .icon-bubble.amber { background: rgba(245, 158, 11, 0.15); color: #d97706; }
-  .icon-bubble.emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
-  .browser-list { display: flex; flex-direction: column; gap: 8px; }
-  .browser-row { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); flex-wrap: wrap; }
-  .breach-alert { padding: 12px 16px; border-radius: 12px; font-size: 13px; }
-  .small-pill { padding: 6px 12px; font-size: 12px; border-radius: 9999px; }
+  .privacy-layout {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 36px;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .page-title {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+  .alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .alert-banner.error {
+    border-left: 4px solid var(--danger);
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger);
+  }
+  .alert-banner.success {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+    color: var(--text);
+  }
+  .browser-card {
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-title {
+    font-size: 16px;
+  }
+  .icon-bubble {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .icon-bubble.emerald {
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--accent);
+  }
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .small-pill {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 9999px;
+  }
+  .active-pill {
+    background: var(--accent-light) !important;
+    color: var(--accent) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+  }
+  .data-type-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    background: var(--panel-2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .field-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .type-chip.checked {
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+  .browser-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .browser-row {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    cursor: pointer;
+    flex-wrap: wrap;
+    transition: border-color 0.15s ease;
+  }
+  .browser-row:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+  .browser-name {
+    min-width: 140px;
+    font-size: 14px;
+  }
+  .browser-metrics {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .metric-pill {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .metric-pill strong {
+    color: var(--text);
+  }
+  .browser-total {
+    color: var(--accent);
+    font-size: 15px;
+  }
+  .empty-state {
+    padding: 16px;
+    text-align: center;
+    background: var(--panel-2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .card-footer-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+  }
   .sub-panel {
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 14px 16px;
-    margin-bottom: 14px;
   }
   .mini-input {
     padding: 6px 12px;
@@ -494,13 +554,6 @@
     background: var(--panel-solid);
     font-size: 12.5px;
     outline: none;
-  }
-  .mini-select {
-    padding: 4px 8px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--panel-solid);
-    font-size: 12px;
   }
   .domain-pills {
     display: flex;
@@ -528,7 +581,9 @@
     cursor: pointer;
     box-shadow: none;
   }
-  .chip-remove:hover { color: var(--danger); }
+  .chip-remove:hover {
+    color: var(--danger);
+  }
   .ext-list {
     display: flex;
     flex-direction: column;
@@ -542,23 +597,5 @@
     border-radius: 8px;
     border: 1px solid var(--border);
     gap: 10px;
-  }
-  .gen-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 18px 0 14px;
-  }
-  .gen-output {
-    flex: 1;
-    min-width: 140px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    font-size: 12.5px;
-    word-break: break-all;
-  }
-  .shredder-section {
-    padding-bottom: 40px;
   }
 </style>

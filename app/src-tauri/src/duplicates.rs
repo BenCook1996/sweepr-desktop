@@ -155,8 +155,31 @@ pub fn is_protected_system_path(path: &Path) -> bool {
     false
 }
 
+fn resolve_folder_input(dir: &str) -> PathBuf {
+    let trimmed = dir.trim();
+    match trimmed.to_ascii_lowercase().as_str() {
+        "downloads" | "~/downloads" | "~\\downloads" => dirs::download_dir()
+            .or_else(|| dirs::home_dir().map(|h| h.join("Downloads")))
+            .unwrap_or_else(|| PathBuf::from(trimmed)),
+        "documents" | "~/documents" | "~\\documents" => dirs::document_dir()
+            .or_else(|| dirs::home_dir().map(|h| h.join("Documents")))
+            .unwrap_or_else(|| PathBuf::from(trimmed)),
+        "pictures" | "~/pictures" | "~\\pictures" => dirs::picture_dir()
+            .or_else(|| dirs::home_dir().map(|h| h.join("Pictures")))
+            .unwrap_or_else(|| PathBuf::from(trimmed)),
+        "desktop" | "~/desktop" | "~\\desktop" => dirs::desktop_dir()
+            .or_else(|| dirs::home_dir().map(|h| h.join("Desktop")))
+            .unwrap_or_else(|| PathBuf::from(trimmed)),
+        "videos" | "~/videos" | "~\\videos" => dirs::video_dir()
+            .or_else(|| dirs::home_dir().map(|h| h.join("Videos")))
+            .unwrap_or_else(|| PathBuf::from(trimmed)),
+        _ => PathBuf::from(trimmed),
+    }
+}
+
 fn validate_scan_folder(dir: &str) -> AppResult<PathBuf> {
-    let root = Path::new(dir.trim());
+    let resolved = resolve_folder_input(dir);
+    let root = resolved.as_path();
     if !root.is_absolute() {
         return Err(AppError::Other("Please enter the full (absolute) path to a folder.".into()));
     }
@@ -178,8 +201,9 @@ pub fn find_duplicates_with_exclusions(
     max_files: usize,
     exclusions: &[PathBuf],
 ) -> AppResult<Vec<DuplicateGroup>> {
+    let resolved = resolve_folder_input(dir);
     let _canon_root = validate_scan_folder(dir)?;
-    let root = Path::new(dir.trim());
+    let root = resolved.as_path();
 
     let mut by_size: HashMap<u64, Vec<PathBuf>> = HashMap::new();
     let mut seen = 0usize;
@@ -251,8 +275,9 @@ pub fn scan_large_files_in(
     max_files: usize,
     exclusions: &[PathBuf],
 ) -> AppResult<LargeFilesReport> {
+    let resolved = resolve_folder_input(dir);
     let _canon_root = validate_scan_folder(dir)?;
-    let root = Path::new(dir.trim());
+    let root = resolved.as_path();
     let mut seen = 0usize;
     let mut total_scanned_bytes = 0u64;
     let mut total_scanned_files = 0u64;

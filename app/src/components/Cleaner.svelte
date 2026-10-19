@@ -11,7 +11,15 @@
   import Paywall from "./Paywall.svelte";
   import { addLifetimeStats, getLifetimeStats } from "../lib/store";
 
-  let { license, onLicenseChange }: { license: LicenseStatus | null; onLicenseChange: (force?: boolean) => Promise<void> } = $props();
+  let {
+    license,
+    onLicenseChange,
+    onOpenTool,
+  }: {
+    license: LicenseStatus | null;
+    onLicenseChange: (force?: boolean) => Promise<void>;
+    onOpenTool?: (tool: "memory" | "apps" | "storage" | "privacy") => void;
+  } = $props();
 
   type Phase = "idle" | "scanning" | "results" | "cleaning" | "done";
   let phase = $state<Phase>("idle");
@@ -450,16 +458,16 @@
         </div>
 
         {#if initialScanning}
-          <button class="primary clean-cta-btn" disabled>
-            SCANNING{progress ? ` (${formatBytes(progress.bytes_so_far)})` : "…"}
+          <button class="ghost clean-cta-btn" disabled>
+            Scanning categories{progress ? ` (${formatBytes(progress.bytes_so_far)})` : "…"}
           </button>
-        {:else if report && report.total_bytes > 0}
-          <button class="primary clean-cta-btn" onclick={requestClean}>
-            CLEAN {formatBytes(report.total_bytes)}
+        {:else if report}
+          <button class="ghost clean-cta-btn" style="border: 1px solid var(--border);" onclick={() => (phase = "results")}>
+            Review &amp; Select Categories ({nonEmpty.length}) →
           </button>
         {:else}
-          <button class="primary clean-cta-btn" onclick={scan}>
-            SCAN FOR JUNK
+          <button class="ghost clean-cta-btn" style="border: 1px solid var(--border);" onclick={scan}>
+            Scan Categories
           </button>
         {/if}
       </div>
@@ -486,16 +494,23 @@
           </div>
         </div>
 
-        <button class="primary scan-pill-btn" onclick={scan}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <span>QUICK SCAN NOW</span>
-        </button>
+        {#if report && report.total_bytes > 0 && !initialScanning}
+          <button class="primary scan-pill-btn" onclick={requestClean}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>CLEAN {formatBytes(report.total_bytes)} NOW</span>
+          </button>
+        {:else}
+          <button class="primary scan-pill-btn" disabled={initialScanning} onclick={scan}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span>{initialScanning ? "SCANNING PC…" : "QUICK SCAN NOW"}</span>
+          </button>
+        {/if}
 
         <div class="scan-footnote muted small">
           {#if report}
             {formatBytes(report.total_bytes)} reclaimable · scanned in {(report.duration_ms / 1000).toFixed(1)}s
           {:else}
-            Fast, read-only scan · Safe & private
+            Fast, read-only scan · Safe &amp; private
           {/if}
         </div>
       </div>
@@ -534,7 +549,7 @@
         <!-- RAM & Performance Section -->
         <div class="subcard-section">
           <div class="row section-title-row">
-            <div class="card-header-label">RAM & PERFORMANCE</div>
+            <div class="card-header-label">RAM &amp; PERFORMANCE</div>
           </div>
 
           <div class="perf-metric-row">
@@ -546,8 +561,8 @@
               <span class="muted small">CPU:</span>
               <strong class="perf-val">{sysOverview ? `${Math.round(sysOverview.cpu_usage_percent)}%` : "—"}</strong>
             </div>
-            <button class="ghost action-pill-btn" onclick={() => (report ? (phase = "results") : scan())}>
-              {report ? "DETAILS" : "SCAN"}
+            <button class="ghost action-pill-btn" onclick={() => (onOpenTool ? onOpenTool("memory") : (phase = "results"))}>
+              OPTIMIZE →
             </button>
           </div>
         </div>
@@ -565,7 +580,7 @@
             <span class="tile-sub">{report ? `(${formatCount(duplicateCat?.files ?? 0)} files)` : ""}</span>
           </div>
         </div>
-        <button class="ghost tile-action-btn" onclick={reviewDuplicates}>REVIEW</button>
+        <button class="ghost tile-action-btn" onclick={() => (onOpenTool ? onOpenTool("storage") : reviewDuplicates())}>OPEN →</button>
       </div>
 
       <div class="card status-tile">
@@ -576,7 +591,7 @@
           <div class="tile-label">STARTUP APPS</div>
           <div class="tile-value">{startupCount !== null ? startupCount : "—"} <span class="tile-sub">Registered at login</span></div>
         </div>
-        <span class="badge free">DETECTED</span>
+        <button class="ghost tile-action-btn" onclick={() => onOpenTool?.("memory")}>MANAGE →</button>
       </div>
 
       <div class="card status-tile">
