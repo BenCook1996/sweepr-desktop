@@ -41,7 +41,7 @@ jobs:
         run: npm test
 
   desktop:
-    name: "Desktop App (Tauri v2 + React + Rust)"
+    name: "Desktop App (Tauri v2 + Svelte 5 + Rust)"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -60,10 +60,12 @@ jobs:
           cache-dependency-path: app/package-lock.json
 
       - name: Install Rust stable toolchain
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca002febbe93a
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: stable
 
       - name: Cache Rust cargo artifacts
-        uses: Swatinem/rust-cache@ab0b82ab9fa9d4fb5ec1fc7ea1fa50fde0fb1b06
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           workspaces: "app/src-tauri -> target"
 

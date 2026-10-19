@@ -28,7 +28,9 @@ jobs:
           node-version: lts/*
 
       - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca002febbe93a
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: stable
 
       - name: Install Ubuntu dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -41,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: Build Tauri App
-        uses: tauri-apps/tauri-action@370ad2ceffde5fb4eccf4ca8faf6bd9ceab7af48
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SWEEPR_LICENSE_PUBKEY: ${{ secrets.SWEEPR_LICENSE_PUBKEY }}
