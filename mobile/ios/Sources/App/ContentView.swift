@@ -395,7 +395,6 @@ class AppViewModel: ObservableObject {
         if !selectedContactGroupIDs.isEmpty {
             await mergeSelectedContacts()
         }
-        requestAppStoreReview()
     }
 
     func deleteSelectedMedia() async {
@@ -585,6 +584,10 @@ class AppViewModel: ObservableObject {
     }
 
     func requestAppStoreReview() {
+        let defaults = UserDefaults.standard
+        let count = defaults.integer(forKey: "sweepr_completed_cleanups") + 1
+        defaults.set(count, forKey: "sweepr_completed_cleanups")
+        guard count == 2 else { return }
         if let scene = UIApplication.shared.connectedScenes
             .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
             SKStoreReviewController.requestReview(in: scene)
@@ -702,16 +705,27 @@ struct AlertItem: Identifiable {
     let message: String
 }
 
-// MARK: - Swipe Review View (Tinder-style photo cleaner)
+// MARK: - Swipe Review View (Batch-mark & Undo Tinder-style photo cleaner)
 struct SwipeReviewView: View {
     @ObservedObject var vm: AppViewModel
     let onShowPaywall: () -> Void
-    @State private var currentIndex = 0
+    @SceneStorage("sweepr_swipe_index") private var currentIndex = 0
     @State private var offset: CGSize = .zero
+    @State private var history: [(index: Int, id: String, wasSelected: Bool)] = []
+
+    private var markedCount: Int {
+        vm.selectedMediaIDs.count
+    }
+
+    private var markedBytes: Int64 {
+        vm.mediaResult.allItems
+            .filter { vm.selectedMediaIDs.contains($0.id) }
+            .reduce(0) { $0 + $1.estimatedBytes }
+    }
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 12) {
                 if vm.mediaResult.allItems.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "hand.draw")
@@ -726,24 +740,45 @@ struct SwipeReviewView: View {
                         .tint(.sweeprEmerald)
                         .accessibilityLabel("Start Scan for Swipe Review")
                     }
+                    .frame(maxHeight: .infinity)
                 } else if currentIndex >= vm.mediaResult.allItems.count {
-                    VStack(spacing: 12) {
+                    VStack(spacing: 14) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.sweeprEmerald)
                         Text("You're all caught up!")
                             .font(.title2)
                             .fontWeight(.bold)
+                        if markedCount > 0 {
+                            Button("Move \(markedCount) Marked (\(formatByteCount(markedBytes))) to Trash") {
+                                commitMarkedTrash()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.sweeprEmerald)
+                        }
                         Button("Review Again") {
                             currentIndex = 0
+                            history.removeAll()
                         }
                     }
+                    .frame(maxHeight: .infinity)
                 } else {
                     let item = vm.mediaResult.allItems[currentIndex]
 
+                    HStack {
+                        Text("\(currentIndex + 1) of \(vm.mediaResult.allItems.count)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(formatByteCount(item.estimatedBytes)) · \(item.resolutionLabel)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal)
+
                     ZStack {
                         AssetThumbnailView(localIdentifier: item.id)
-                            .frame(maxWidth: .infinity, maxHeight: 440)
+                            .frame(maxWidth: .infinity, maxHeight: 420)
                             .cornerRadius(20)
                             .shadow(radius: 8)
                             .offset(offset)
@@ -758,12 +793,12 @@ struct SwipeReviewView: View {
                                             withAnimation {
                                                 offset = CGSize(width: 500, height: 0)
                                             }
-                                            advance()
+                                            keepCurrent(item: item)
                                         } else if gesture.translation.width < -120 {
                                             withAnimation {
                                                 offset = CGSize(width: -500, height: 0)
                                             }
-                                            trashCurrent(item: item)
+                                            markForTrash(item: item)
                                         } else {
                                             withAnimation { offset = .zero }
                                         }
@@ -771,71 +806,127 @@ struct SwipeReviewView: View {
                             )
 
                         if offset.width < -50 {
-                            Text("TRASH")
-                                .font(.title)
+                            Text("MARK TRASH")
+                                .font(.title2)
                                 .fontWeight(.black)
                                 .foregroundColor(.red)
-                                .padding()
+                                .padding(10)
                                 .border(Color.red, width: 4)
                                 .cornerRadius(8)
                         } else if offset.width > 50 {
                             Text("KEEP")
-                                .font(.title)
+                                .font(.title2)
                                 .fontWeight(.black)
                                 .foregroundColor(.green)
-                                .padding()
+                                .padding(10)
                                 .border(Color.green, width: 4)
                                 .cornerRadius(8)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal)
 
-                    HStack(spacing: 40) {
+                    HStack(spacing: 32) {
                         Button {
-                            trashCurrent(item: item)
+                            markForTrash(item: item)
                         } label: {
                             Image(systemName: "trash.fill")
-                                .font(.title)
+                                .font(.title2)
                                 .foregroundColor(.red)
-                                .frame(width: 64, height: 64)
+                                .frame(width: 60, height: 60)
                                 .background(Color.cardBackground)
                                 .clipShape(Circle())
                         }
-                        .accessibilityLabel("Move current photo to Trash")
+                        .accessibilityLabel("Mark current photo for Trash")
 
                         Button {
-                            advance()
+                            undoLastSwipe()
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.title3.weight(.bold))
+                                .foregroundColor(history.isEmpty ? .secondary : .primary)
+                                .frame(width: 48, height: 48)
+                                .background(Color.cardBackground)
+                                .clipShape(Circle())
+                        }
+                        .disabled(history.isEmpty)
+                        .accessibilityLabel("Undo last swipe")
+
+                        Button {
+                            keepCurrent(item: item)
                         } label: {
                             Image(systemName: "checkmark")
-                                .font(.title)
+                                .font(.title2)
                                 .foregroundColor(.green)
-                                .frame(width: 64, height: 64)
+                                .frame(width: 60, height: 60)
                                 .background(Color.cardBackground)
                                 .clipShape(Circle())
                         }
                         .accessibilityLabel("Keep current photo")
                     }
-                    .padding(.bottom, 20)
+
+                    if markedCount > 0 {
+                        Button {
+                            commitMarkedTrash()
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Move \(markedCount) Marked (\(formatByteCount(markedBytes))) to Trash")
+                                    .fontWeight(.bold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.sweeprEmerald)
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                        }
+                        .padding(.horizontal)
+                        .disabled(vm.isWorking)
+                    }
                 }
             }
+            .padding(.bottom, 12)
             .navigationTitle("Swipe Clean")
         }
     }
 
-    private func advance() {
+    private func keepCurrent(item: MediaItem) {
+        let prev = vm.selectedMediaIDs.contains(item.id)
+        history.append((index: currentIndex, id: item.id, wasSelected: prev))
+        vm.selectedMediaIDs.remove(item.id)
         offset = .zero
         currentIndex += 1
     }
 
-    private func trashCurrent(item: MediaItem) {
+    private func markForTrash(item: MediaItem) {
+        let prev = vm.selectedMediaIDs.contains(item.id)
+        history.append((index: currentIndex, id: item.id, wasSelected: prev))
+        vm.selectedMediaIDs.insert(item.id)
+        offset = .zero
+        currentIndex += 1
+    }
+
+    private func undoLastSwipe() {
+        guard let last = history.popLast() else { return }
+        if last.wasSelected {
+            vm.selectedMediaIDs.insert(last.id)
+        } else {
+            vm.selectedMediaIDs.remove(last.id)
+        }
+        offset = .zero
+        currentIndex = last.index
+    }
+
+    private func commitMarkedTrash() {
         if vm.hasPremium {
             Task {
-                await vm.deleteSingleMedia(id: item.id)
-                advance()
+                await vm.deleteSelectedMedia()
+                if currentIndex >= vm.mediaResult.allItems.count {
+                    currentIndex = 0
+                }
+                history.removeAll()
             }
         } else {
             onShowPaywall()
-            withAnimation { offset = .zero }
         }
     }
 }

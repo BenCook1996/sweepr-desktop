@@ -134,6 +134,28 @@ pub fn get_cleaning_history(state: State<'_, AppState>) -> Vec<CleanHistoryEntry
 }
 
 #[tauri::command]
+pub fn record_cleaning_history(
+    state: State<'_, AppState>,
+    bytes_freed: u64,
+    files_removed: u64,
+    categories: Vec<String>,
+    mode: String,
+) -> AppResult<Vec<CleanHistoryEntry>> {
+    if bytes_freed > 0 || files_removed > 0 {
+        let entry = CleanHistoryEntry {
+            id: format!("h_{}", now_secs()),
+            timestamp: now_secs(),
+            bytes_freed,
+            files_removed,
+            categories,
+            mode,
+        };
+        let _ = append_cleaning_history(&state.data_dir, entry);
+    }
+    Ok(load_cleaning_history(&state.data_dir))
+}
+
+#[tauri::command]
 pub fn list_exclusions(state: State<'_, AppState>) -> Vec<String> {
     safety::load_exclusions(&state.data_dir)
         .into_iter()
@@ -1900,6 +1922,122 @@ pub async fn empty_recycle_bin(state: State<'_, AppState>) -> AppResult<u64> {
         }
 
         Ok(freed.max(before.bytes))
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn pick_folder(title: Option<String>) -> AppResult<Option<String>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let prompt = title.unwrap_or_else(|| "Select a folder".to_string());
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            let safe_prompt = prompt.replace('\'', "''");
+            let script = format!(
+                "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = '{}'; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.SelectedPath) }}",
+                safe_prompt
+            );
+            let out = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-STA", "-Command", &script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let safe_prompt = prompt.replace('"', "\\\"");
+            let script = format!("POSIX path of (choose folder with prompt \"{}\")", safe_prompt);
+            let out = std::process::Command::new("osascript")
+                .args(["-e", &script])
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
+        #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+        {
+            let out = std::process::Command::new("zenity")
+                .args(["--file-selection", "--directory", "--title", &prompt])
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let prompt = title.unwrap_or_else(|| "Select a file".to_string());
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            let safe_prompt = prompt.replace('\'', "''");
+            let script = format!(
+                "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = '{}'; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.FileName) }}",
+                safe_prompt
+            );
+            let out = std::process::Command::new("powershell")
+                .args(["-NoProfile", "-STA", "-Command", &script])
+                .creation_flags(CREATE_NO_WINDOW)
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let safe_prompt = prompt.replace('"', "\\\"");
+            let script = format!("POSIX path of (choose file with prompt \"{}\")", safe_prompt);
+            let out = std::process::Command::new("osascript")
+                .args(["-e", &script])
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
+        #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+        {
+            let out = std::process::Command::new("zenity")
+                .args(["--file-selection", "--title", &prompt])
+                .output();
+            if let Ok(o) = out {
+                let path = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return Ok(Some(path));
+                }
+            }
+            Ok(None)
+        }
     })
     .await
     .map_err(join_err)?

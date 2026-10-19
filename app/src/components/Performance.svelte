@@ -1,30 +1,46 @@
+<script lang="ts" module>
+  import type {
+    ContextMenuItem,
+    MemoryOverview,
+    StartupItem,
+    SystemHealthDetails,
+  } from "../lib/api";
+
+  let cachedMem: MemoryOverview | null = null;
+  let cachedHealth: SystemHealthDetails | null = null;
+  let cachedStartup: StartupItem[] = [];
+  let cachedContextItems: ContextMenuItem[] = [];
+  let cachedActiveTab: "startup" | "processes" | "context" = "startup";
+</script>
+
 <script lang="ts">
   import {
     api,
     errorMessage,
     isPaymentRequired,
     requestActivation,
-    type ContextMenuItem,
     type GamingBoostResult,
     type LicenseStatus,
-    type MemoryOverview,
-    type StartupItem,
-    type SystemHealthDetails,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
   let { license = null }: { license?: LicenseStatus | null } = $props();
-  let mem = $state<MemoryOverview | null>(null);
-  let health = $state<SystemHealthDetails | null>(null);
-  let startup = $state<StartupItem[]>([]);
-  let contextItems = $state<ContextMenuItem[]>([]);
-  let activeTab = $state<"startup" | "processes" | "context">("startup");
+  let mem = $state<MemoryOverview | null>(cachedMem);
+  let health = $state<SystemHealthDetails | null>(cachedHealth);
+  let startup = $state<StartupItem[]>(cachedStartup);
+  let contextItems = $state<ContextMenuItem[]>(cachedContextItems);
+  let activeTab = $state<"startup" | "processes" | "context">(cachedActiveTab);
+  let listInteracting = $state(false);
   let toggling = $state<string | null>(null);
   let killingProc = $state<string | null>(null);
   let procNotice = $state<string | null>(null);
   let boosting = $state(false);
   let boostResult = $state<GamingBoostResult | null>(null);
   let error = $state<string | null>(null);
+
+  $effect(() => {
+    cachedActiveTab = activeTab;
+  });
 
   function formatUptime(sec: number): string {
     const d = Math.floor(sec / 86400);
@@ -47,6 +63,10 @@
       startup = s;
       health = h;
       contextItems = c;
+      cachedMem = m;
+      cachedStartup = s;
+      cachedHealth = h;
+      cachedContextItems = c;
     } catch (e) {
       error = errorMessage(e);
     }
@@ -58,6 +78,7 @@
     try {
       boostResult = await api.boostGamingMode();
       mem = await api.memory();
+      cachedMem = mem;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -70,6 +91,13 @@
   }
 
   async function killProc(name: string) {
+    if (
+      !confirm(
+        `End all running instances of "${name}"?\n\nAny unsaved work in ${name} may be lost.`
+      )
+    ) {
+      return;
+    }
     error = null;
     procNotice = null;
     killingProc = name;
@@ -77,6 +105,7 @@
       const killed = await api.killProcess(name);
       procNotice = `Ended ${killed} process instance(s) for ${name}.`;
       mem = await api.memory();
+      cachedMem = mem;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -98,6 +127,7 @@
     try {
       const nextEnabled = !(item.enabled ?? true);
       startup = await api.toggleStartupItem(item.name, item.scope, nextEnabled);
+      cachedStartup = startup;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -118,6 +148,7 @@
     toggling = item.id;
     try {
       contextItems = await api.toggleContextMenuItem(item.id, !item.enabled);
+      cachedContextItems = contextItems;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -131,14 +162,18 @@
 
   $effect(() => {
     load();
-    const timer = setInterval(
-      () =>
-        api
-          .memory()
-          .then((m) => (mem = m))
-          .catch(() => {}),
-      3000
-    );
+    const timer = setInterval(() => {
+      if (activeTab === "processes" && listInteracting) {
+        return;
+      }
+      api
+        .memory()
+        .then((m) => {
+          mem = m;
+          cachedMem = m;
+        })
+        .catch(() => {});
+    }, 3000);
     return () => clearInterval(timer);
   });
 
@@ -274,14 +309,22 @@
         {#if activeTab === "startup"}
           Apps that launch automatically at Windows sign-in
         {:else if activeTab === "processes"}
-          Top applications currently using RAM (refreshes every 3s)
+          Top applications currently using RAM ({listInteracting ? "paused while hovering" : "refreshes every 3s"})
         {:else}
           Third-party items added to the Windows Explorer right-click menu
         {/if}
       </span>
     </div>
 
-    <div class="table-body">
+    <div
+      class="table-body"
+      role="region"
+      aria-label="Optimization items list"
+      onmouseenter={() => (listInteracting = true)}
+      onmouseleave={() => (listInteracting = false)}
+      onfocusin={() => (listInteracting = true)}
+      onfocusout={() => (listInteracting = false)}
+    >
       {#if activeTab === "startup"}
         {#each startup as s (s.name + s.scope)}
           {@const isEnabled = s.enabled ?? true}
@@ -400,6 +443,11 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
+  }
+  @media (max-width: 960px) {
+    .top-stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
   }
   .stat {
     padding: 18px 20px;

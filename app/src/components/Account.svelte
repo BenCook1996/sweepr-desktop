@@ -1,3 +1,8 @@
+<script lang="ts" module>
+  let cachedLinkEmail = "";
+  let cachedOtpSent = false;
+</script>
+
 <script lang="ts">
   import {
     api,
@@ -18,10 +23,18 @@
   } = $props();
   let error = $state<string | null>(null);
   let busy = $state(false);
-  let linkEmail = $state("");
+  let linkEmail = $state(cachedLinkEmail);
   let otpCode = $state("");
-  let otpSent = $state(false);
+  let otpSent = $state(cachedOtpSent);
   let linkSuccess = $state<string | null>(null);
+
+  // Help & Diagnostic Support
+  let showSupportForm = $state(false);
+  let supportEmail = $state(cachedLinkEmail);
+  let supportSubject = $state("Diagnostic & Support Request");
+  let supportMessage = $state("");
+  let sendingSupport = $state(false);
+  let supportSentNotice = $state<string | null>(null);
 
   // Uninstall SWEEPR Cleaner
   let removeAppData = $state(false);
@@ -34,8 +47,41 @@
   let installingUpdate = $state(false);
 
   $effect(() => {
+    cachedLinkEmail = linkEmail;
+    cachedOtpSent = otpSent;
+  });
+
+  $effect(() => {
     api.checkAppUpdate().then((u) => (updateInfo = u)).catch(() => {});
   });
+
+  async function submitSupportReport() {
+    error = null;
+    supportSentNotice = null;
+    if (!supportEmail.trim() || !supportEmail.includes("@")) {
+      error = "Please enter your email address so our support team can reply.";
+      return;
+    }
+    if (!supportMessage.trim()) {
+      error = "Please describe the issue or question before sending.";
+      return;
+    }
+    sendingSupport = true;
+    try {
+      const msg = await api.sendSupportReport(
+        supportEmail.trim(),
+        supportSubject.trim() || "Diagnostic & Support Request",
+        supportMessage.trim()
+      );
+      supportSentNotice = msg || "Diagnostic report sent! We will reply to your email shortly.";
+      supportMessage = "";
+      showSupportForm = false;
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      sendingSupport = false;
+    }
+  }
 
   async function startPlanCheckout() {
     error = null;
@@ -144,15 +190,16 @@
 <div class="account-layout">
   <div class="header-row">
     <div>
-      <h1 class="page-title">Account & Settings</h1>
+      <h1 class="page-title">Account &amp; Settings</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Manage your SWEEPR Cleaner subscription, check for software updates, or uninstall the application.
+        Manage your SWEEPR Cleaner subscription, check for software updates, send diagnostic support reports, or uninstall the application.
       </p>
     </div>
   </div>
 
   {#if error}<div class="card box error-banner">{error}</div>{/if}
   {#if linkSuccess}<div class="card box" style="border-color: var(--accent); color: var(--accent);">{linkSuccess}</div>{/if}
+  {#if supportSentNotice}<div class="card box" style="border-color: var(--accent); color: var(--accent);">{supportSentNotice}</div>{/if}
 
   <!-- 1. Subscription & Licence Status (Full Width) -->
   <div class="card box">
@@ -228,7 +275,7 @@
     {/if}
   </div>
 
-  <!-- 2. Software Updates & Uninstall (2-Column Grid) -->
+  <!-- 2. Software Updates, Help & Diagnostic Support, and Uninstall -->
   <div class="account-grid">
     <!-- Software Update Checker -->
     <div class="card box">
@@ -261,6 +308,57 @@
               <div class="muted" style="margin-top: 2px;">{updateInfo.notes}</div>
             {/if}
           {/if}
+        </div>
+      {/if}
+    </div>
+
+    <!-- Help & Diagnostic Support (WCAG 3.2.6 Consistent Help) -->
+    <div class="card box">
+      <div class="row">
+        <strong>Help &amp; Diagnostic Support</strong>
+        <div class="spacer"></div>
+        <span class="badge free">Support</span>
+      </div>
+      <p class="muted small" style="margin: 0;">
+        Need help with a scan, licence activation, or system cleanup? Send a diagnostic report with anonymous app telemetry to our support team.
+      </p>
+      {#if !showSupportForm}
+        <div class="row" style="margin-top: auto;">
+          <button class="ghost" onclick={() => (showSupportForm = true)}>
+            Contact Support / Send Diagnostics…
+          </button>
+        </div>
+      {:else}
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <input
+            type="email"
+            bind:value={supportEmail}
+            placeholder="Your email address for reply"
+            aria-label="Your email address for reply"
+            style="padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--border); font-size: 13px;"
+          />
+          <input
+            type="text"
+            bind:value={supportSubject}
+            placeholder="Subject"
+            aria-label="Support subject"
+            style="padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--border); font-size: 13px;"
+          />
+          <textarea
+            rows="3"
+            bind:value={supportMessage}
+            placeholder="Describe what happened or what you need help with…"
+            aria-label="Support message"
+            style="padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); font-family: inherit; font-size: 13px; resize: vertical;"
+          ></textarea>
+          <div class="row" style="gap: 8px;">
+            <button class="primary" disabled={sendingSupport} onclick={submitSupportReport}>
+              {sendingSupport ? "Sending…" : "Send Diagnostic Report"}
+            </button>
+            <button class="ghost" disabled={sendingSupport} onclick={() => (showSupportForm = false)}>
+              Cancel
+            </button>
+          </div>
         </div>
       {/if}
     </div>
@@ -308,7 +406,7 @@
   </div>
 
   {#if info}
-    <p class="muted small">SWEEPR Cleaner v{info.version} · {info.platform} · licence server {info.api_url}</p>
+    <p class="muted small selectable">SWEEPR Cleaner v{info.version} · {info.platform} · licence server {info.api_url}</p>
   {/if}
 </div>
 

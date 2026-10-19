@@ -8,8 +8,7 @@
   import { onMount } from "svelte";
   import { api, errorMessage, isPaymentRequired, requestActivation, type CategoryResult, type CleanReport, type LicenseStatus, type QuarantineEntry, type RecycleBinInfo, type RunningAppConflict, type ScanProgress, type SystemOverview } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
-  import Paywall from "./Paywall.svelte";
-  import { addLifetimeStats, getLifetimeStats } from "../lib/store";
+  import { addLifetimeStats, getLifetimeStats, syncLifetimeStatsFromBackend } from "../lib/store";
 
   let {
     license,
@@ -18,7 +17,7 @@
   }: {
     license: LicenseStatus | null;
     onLicenseChange: (force?: boolean) => Promise<void>;
-    onOpenTool?: (tool: "memory" | "apps" | "storage" | "privacy") => void;
+    onOpenTool?: (tool: "memory" | "apps" | "storage" | "privacy" | "shredder") => void;
   } = $props();
 
   type Phase = "idle" | "scanning" | "results" | "cleaning" | "done";
@@ -28,7 +27,6 @@
   let report = $state<ScanReport | null>(cachedReport);
   let selected = $state<Record<string, boolean>>(cachedSelected);
   let expanded = $state<string | null>(null);
-  let showPaywall = $state(false);
   let error = $state<string | null>(null);
   let results = $state<CleanReport[]>([]);
   let exclusions = $state<string[]>([]);
@@ -118,6 +116,7 @@
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
     api.systemOverview().then((o) => (sysOverview = o)).catch(() => {});
     api.startupItems().then((items) => (startupCount = items.length)).catch(() => {});
+    syncLifetimeStatsFromBackend().then((s) => (lifetimeStats = s)).catch(() => {});
     if (!cachedReport) {
       runDashboardScan();
     }
@@ -136,12 +135,16 @@
   }
 
   async function emptyWindowsRecycleBin() {
+    const countLabel = recycleBin ? `${formatCount(recycleBin.items)} item(s) (${formatBytes(recycleBin.bytes)})` : "all items";
+    if (!confirm(`Permanently delete ${countLabel} in the Windows Recycle Bin?\n\nThis action cannot be undone.`)) {
+      return;
+    }
     error = null;
     restoreNotice = null;
     emptyingRecycleBin = true;
     try {
       const freedBytes = await api.emptyRecycleBin();
-      addLifetimeStats(freedBytes, recycleBin?.items ?? 0);
+      addLifetimeStats(freedBytes, recycleBin?.items ?? 0, ["recycle_bin"], "Empty Recycle Bin");
       lifetimeStats = getLifetimeStats();
       recycleBin = { bytes: 0, items: 0 };
       restoreNotice = `Emptied Windows Recycle Bin (${formatBytes(freedBytes)} permanently freed).`;
@@ -201,6 +204,17 @@
     } catch (e) {
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
+    }
+  }
+
+  async function browseExclusionFolder() {
+    try {
+      const picked = await api.pickFolder("Select a folder to exclude from SWEEPR Cleaner");
+      if (picked && picked.trim()) {
+        newExclusionPath = picked.trim();
+      }
+    } catch {
+      // Ignore cancel or dialog error
     }
   }
 
@@ -291,15 +305,14 @@
       return;
     }
     error = null;
-    showPaywall = false;
     phase = "cleaning";
     try {
       results = await api.clean(cats.map((c) => c.id), false);
       
       const totalFreed = results.reduce((s, r) => s + r.bytes_freed, 0);
       const totalRemoved = results.reduce((s, r) => s + r.files_removed, 0);
-      addLifetimeStats(totalFreed, totalRemoved);
-      lifetimeStats = getLifetimeStats();
+      addLifetimeStats(totalFreed, totalRemoved, cats.map((c) => c.id), "Sweepr Quarantine (7d undo)", false);
+      lifetimeStats = await syncLifetimeStatsFromBackend();
       api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
 
       phase = "done";
@@ -457,19 +470,15 @@
           </div>
         </div>
 
-        {#if initialScanning}
-          <button class="ghost clean-cta-btn" disabled>
+        <div class="muted small" style="margin-top: auto; padding-top: 8px;">
+          {#if initialScanning}
             Scanning categories{progress ? ` (${formatBytes(progress.bytes_so_far)})` : "…"}
-          </button>
-        {:else if report}
-          <button class="ghost clean-cta-btn" style="border: 1px solid var(--border);" onclick={() => (phase = "results")}>
-            Review &amp; Select Categories ({nonEmpty.length}) →
-          </button>
-        {:else}
-          <button class="ghost clean-cta-btn" style="border: 1px solid var(--border);" onclick={scan}>
-            Scan Categories
-          </button>
-        {/if}
+          {:else if report}
+            {nonEmpty.length} categories ready · Click <strong>Review →</strong> above to customize
+          {:else}
+            Run a quick scan to inspect reclaimable categories
+          {/if}
+        </div>
       </div>
 
       <!-- 2. Centerpiece Card: System Status Overview (Hero) -->
@@ -659,6 +668,7 @@
           placeholder="Add full folder or file path to exclude (e.g. C:\Users\me\Downloads\Keep)"
           style="flex: 1; padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--border); font-size: 13px;"
         />
+        <button type="button" class="ghost" style="padding: 8px 14px; font-size: 12.5px;" onclick={browseExclusionFolder}>Browse Folder…</button>
         <button class="primary" style="padding: 8px 16px; font-size: 12.5px;" onclick={addCustomExclusion}>Add Exclusion</button>
       </div>
       {#if exclusions.length === 0}
@@ -769,13 +779,6 @@
   </section>
 {/if}
 
-<Paywall
-  open={showPaywall}
-  bytes={selectedBytes}
-  onClose={() => (showPaywall = false)}
-  onActivated={onActivated}
-/>
-
 <style>
   /* Dashboard Container */
   .dashboard-container {
@@ -817,12 +820,21 @@
     font-size: 12px;
   }
 
-  /* Unified Dashboard Bento Grid: 3 Exactly Identical Columns across both rows */
+  /* Unified Dashboard Bento Grid: 3 Columns on wide screens, responsive on compact windows */
   .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
     align-items: stretch;
+  }
+  @media (max-width: 980px) {
+    .dashboard-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .hero-status-card {
+      grid-column: 1 / -1;
+      order: -1;
+    }
   }
   .bento-card {
     padding: 26px 28px;
@@ -887,14 +899,6 @@
     font-weight: 700;
     color: var(--text);
     white-space: nowrap;
-  }
-  .clean-cta-btn {
-    width: 100%;
-    padding: 11px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    border-radius: 9999px;
   }
 
   /* 2. Hero Centerpiece Status Card */

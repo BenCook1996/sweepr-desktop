@@ -375,18 +375,40 @@
       </div>
 
       <div class="cat-list">
-        {#each rules as r (r.id)}
-          <label class="cat-row">
-            <input
-              type="checkbox"
-              checked={isCatSelected(r.id)}
-              onchange={() => toggleCategory(r.id)}
-            />
-            <div class="cat-info">
-              <strong class="small">{r.name}</strong>
-              <div class="muted small" style="font-size: 11.5px;">{r.description}</div>
-            </div>
-          </label>
+        {#each [
+          {
+            group: "System & OS",
+            filter: (id: string) =>
+              ["temp", "logs", "thumbnails", "crash_dumps", "delivery_opt", "shader_cache", "trash", "downloads"].includes(id),
+          },
+          {
+            group: "Web Browsers",
+            filter: (id: string) => id.includes("browser") || ["chrome", "edge", "firefox", "brave", "opera"].some((b) => id.includes(b)),
+          },
+          {
+            group: "Developer, Creative & Apps",
+            filter: (id: string) =>
+              !["temp", "logs", "thumbnails", "crash_dumps", "delivery_opt", "shader_cache", "trash", "downloads"].includes(id) &&
+              !(id.includes("browser") || ["chrome", "edge", "firefox", "brave", "opera"].some((b) => id.includes(b))),
+          },
+        ] as section}
+          {@const groupRules = rules.filter((r) => section.filter(r.id))}
+          {#if groupRules.length > 0}
+            <div class="cat-group-header">{section.group}</div>
+            {#each groupRules as r (r.id)}
+              <label class="cat-row">
+                <input
+                  type="checkbox"
+                  checked={isCatSelected(r.id)}
+                  onchange={() => toggleCategory(r.id)}
+                />
+                <div class="cat-info">
+                  <strong class="small">{r.name}</strong>
+                  <div class="muted small" style="font-size: 11.5px;">{r.description}</div>
+                </div>
+              </label>
+            {/each}
+          {/if}
         {/each}
       </div>
     </div>
@@ -394,6 +416,14 @@
 </div>
 
 <style>
+  .cat-group-header {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 6px 0 2px 2px;
+  }
   .schedule-container {
     max-width: 1240px;
     margin: 0 auto;

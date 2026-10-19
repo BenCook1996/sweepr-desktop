@@ -8,6 +8,7 @@
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
+  import { addLifetimeStats } from "../lib/store";
 
   let { license }: { license: LicenseStatus | null } = $props();
   let filePath = $state("");
@@ -28,6 +29,18 @@
       passes = info.recommended_passes;
     } catch {
       // Ignore detection errors
+    }
+  }
+
+  async function browseFileToShred() {
+    try {
+      const picked = await api.pickFile("Select file to securely shred");
+      if (picked && picked.trim()) {
+        filePath = picked.trim();
+        await detectMedia(filePath);
+      }
+    } catch {
+      // Ignore cancel or dialog error
     }
   }
 
@@ -86,6 +99,7 @@
 
     try {
       const bytes = await api.shredFile(filePath.trim(), passes);
+      addLifetimeStats(bytes, 1, ["shredder"], `${passes}-Pass Shredder`);
       statusMessage = `Overwrote ${formatBytes(bytes)} (${passes}-pass) and permanently deleted the file.`;
       filePath = "";
     } catch (e) {
@@ -158,10 +172,13 @@
       type="text"
       bind:value={filePath}
       onblur={() => detectMedia(filePath)}
-      placeholder="Drop a file here or paste full file path (e.g. C:\Users\Username\Documents\confidential.pdf)"
+      placeholder="Drop a file here, browse, or paste full file path (e.g. C:\Users\Username\Documents\confidential.pdf)"
       class="file-input"
       aria-label="File path to shred"
     />
+    <button type="button" class="ghost" onclick={browseFileToShred} disabled={shredding}>
+      Browse File…
+    </button>
     <button class="primary shred-btn" onclick={handleShred} disabled={shredding || !filePath.trim()}>
       {#if shredding}
         <span>Shredding…</span>

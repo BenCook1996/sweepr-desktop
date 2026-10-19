@@ -1,51 +1,81 @@
+<script lang="ts" module>
+  import type {
+    AppRemnant,
+    BrokenItem,
+    InstalledApp,
+    OutdatedApp,
+    RegistryBackupEntry,
+    RegistryIssue,
+  } from "../lib/api";
+
+  let cachedMode: "apps" | "updater" | "orphans" = "apps";
+  let cachedApps: InstalledApp[] = [];
+  let cachedAppsLoaded = false;
+  let cachedSearchQuery = "";
+  let cachedOutdated: OutdatedApp[] = [];
+  let cachedUpdaterLoaded = false;
+  let cachedRemnants: AppRemnant[] = [];
+  let cachedBrokenItems: BrokenItem[] = [];
+  let cachedRegIssues: RegistryIssue[] = [];
+  let cachedRegBackups: RegistryBackupEntry[] = [];
+  let cachedOrphansLoaded = false;
+</script>
+
 <script lang="ts">
   import {
     api,
     errorMessage,
     isPaymentRequired,
     requestActivation,
-    type AppRemnant,
-    type BrokenItem,
-    type InstalledApp,
     type LicenseStatus,
-    type OutdatedApp,
-    type RegistryBackupEntry,
-    type RegistryIssue,
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
 
   let { license }: { license: LicenseStatus | null } = $props();
-  let mode = $state<"apps" | "updater" | "orphans">("apps");
+  let mode = $state<"apps" | "updater" | "orphans">(cachedMode);
 
   // Installed Apps
-  let apps = $state<InstalledApp[]>([]);
-  let loading = $state(true);
-  let searchQuery = $state("");
+  let apps = $state<InstalledApp[]>(cachedApps);
+  let loading = $state(!cachedAppsLoaded);
+  let searchQuery = $state(cachedSearchQuery);
   let dragActive = $state(false);
   let resolvingTarget = $state(false);
   let resolvedHint = $state<string | null>(null);
 
   // Software Updater
-  let outdated = $state<OutdatedApp[]>([]);
+  let outdated = $state<OutdatedApp[]>(cachedOutdated);
   let updaterLoading = $state(false);
-  let updaterLoaded = $state(false);
+  let updaterLoaded = $state(cachedUpdaterLoaded);
   let upgradingId = $state<string | null>(null);
 
   // Unified Orphans & Registry Sweep
-  let remnants = $state<AppRemnant[]>([]);
-  let brokenItems = $state<BrokenItem[]>([]);
-  let regIssues = $state<RegistryIssue[]>([]);
-  let regBackups = $state<RegistryBackupEntry[]>([]);
+  let remnants = $state<AppRemnant[]>(cachedRemnants);
+  let brokenItems = $state<BrokenItem[]>(cachedBrokenItems);
+  let regIssues = $state<RegistryIssue[]>(cachedRegIssues);
+  let regBackups = $state<RegistryBackupEntry[]>(cachedRegBackups);
   let showBackups = $state(false);
   let orphansLoading = $state(false);
-  let orphansLoaded = $state(false);
+  let orphansLoaded = $state(cachedOrphansLoaded);
   let cleaningOrphans = $state(false);
 
   // Feedback banners
   let statusNotice = $state<string | null>(null);
   let proNotice = $state<string | null>(null);
   let error = $state<string | null>(null);
+
+  $effect(() => {
+    cachedMode = mode;
+    cachedSearchQuery = searchQuery;
+    cachedApps = apps;
+    cachedOutdated = outdated;
+    cachedUpdaterLoaded = updaterLoaded;
+    cachedRemnants = remnants;
+    cachedBrokenItems = brokenItems;
+    cachedRegIssues = regIssues;
+    cachedRegBackups = regBackups;
+    cachedOrphansLoaded = orphansLoaded;
+  });
 
   const filteredApps = $derived.by(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -68,10 +98,13 @@
   );
 
   $effect(() => {
+    if (cachedAppsLoaded) return;
     api
       .fetchApps()
       .then((a) => {
         apps = a;
+        cachedApps = a;
+        cachedAppsLoaded = true;
         loading = false;
       })
       .catch(() => {

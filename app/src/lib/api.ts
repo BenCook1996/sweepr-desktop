@@ -108,6 +108,8 @@ export const api = {
   listQuarantine: () => invoke<QuarantineEntry[]>("list_quarantine"),
   restoreQuarantineItem: (id: string) => invoke<string>("restore_quarantine_item", { id }),
   getCleaningHistory: () => invoke<CleanHistoryEntry[]>("get_cleaning_history"),
+  recordCleaningHistory: (bytesFreed: number, filesRemoved: number, categories: string[] = [], mode = "Manual") =>
+    invoke<CleanHistoryEntry[]>("record_cleaning_history", { bytesFreed, filesRemoved, categories, mode }),
   listExclusions: () => invoke<string[]>("list_exclusions"),
   addExclusion: (path: string) => invoke<string[]>("add_exclusion", { path }),
   removeExclusion: (path: string) => invoke<string[]>("remove_exclusion", { path }),
@@ -160,6 +162,8 @@ export const api = {
   generateStrongPassword: (length = 20, includeSymbols = true) => invoke<string>("generate_strong_password", { length, includeSymbols }),
   recycleBinInfo: () => invoke<RecycleBinInfo>("recycle_bin_info"),
   emptyRecycleBin: () => invoke<number>("empty_recycle_bin"),
+  pickFolder: (title?: string) => invoke<string | null>("pick_folder", { title: title ?? null }),
+  pickFile: (title?: string) => invoke<string | null>("pick_file", { title: title ?? null }),
   detectDriveMediaType: (path: string) => invoke<DriveMediaInfo>("detect_drive_media_type", { path }),
   scanRegistry: () => invoke<RegistryIssue[]>("scan_registry"),
   fixRegistryIssue: (key_path: string) => invoke<void>("fix_registry_issue", { keyPath: key_path }),

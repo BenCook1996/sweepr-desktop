@@ -141,10 +141,9 @@ object AppPermissions {
         else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 
-    /** Also asks for notifications (Android 13+) so the monthly reminder can be shown. */
+    /** Requests media and contacts permissions needed for scanning. Notification permission is requested contextually in Settings. */
     fun all(): Array<String> {
-        val notifications = if (Build.VERSION.SDK_INT >= 33) arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
-        return mediaPermissions() + arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS) + notifications
+        return mediaPermissions() + arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
     }
 
     fun current(context: Context): PermissionState {
@@ -214,11 +213,6 @@ fun SweeprRoot(
     val requestPermissions: () -> Unit = {
         scanAfterGrant = true
         permissionLauncher.launch(AppPermissions.all())
-    }
-
-    // Ask for access as soon as the app opens.
-    LaunchedEffect(Unit) {
-        if (!permissions.media || !permissions.contactsRead) permissionLauncher.launch(AppPermissions.all())
     }
 
     // Re-check permissions when coming back from the system Settings app.

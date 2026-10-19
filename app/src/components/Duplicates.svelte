@@ -1,21 +1,31 @@
+<script lang="ts" module>
+  import type { DuplicateGroup, LargeFilesReport } from "../lib/api";
+
+  let cachedMode: "duplicates" | "large" = "duplicates";
+  let cachedGroups: DuplicateGroup[] = [];
+  let cachedSelectedFiles: Record<string, boolean> = {};
+  let cachedLargeReport: LargeFilesReport | null = null;
+  let cachedScanned = false;
+  let cachedSelectedDir = "Downloads";
+  let cachedTargetMoveDir = "";
+</script>
+
 <script lang="ts">
   import {
     api,
     errorMessage,
     isPaymentRequired,
     requestActivation,
-    type DuplicateGroup,
-    type LargeFilesReport,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
 
   let { license }: { license: LicenseStatus | null } = $props();
-  let mode = $state<"duplicates" | "large">("duplicates");
-  let groups = $state<DuplicateGroup[]>([]);
-  let selectedFiles = $state<Record<string, boolean>>({});
-  let largeReport = $state<LargeFilesReport | null>(null);
+  let mode = $state<"duplicates" | "large">(cachedMode);
+  let groups = $state<DuplicateGroup[]>(cachedGroups);
+  let selectedFiles = $state<Record<string, boolean>>(cachedSelectedFiles);
+  let largeReport = $state<LargeFilesReport | null>(cachedLargeReport);
   let minSizeMb = $state(25);
   let useTrash = $state(true);
   let loading = $state(false);
@@ -23,10 +33,20 @@
   let error = $state("");
   let statusMessage = $state("");
   let needsPro = $state(false);
-  let scanned = $state(false);
-  let selectedDir = $state("Downloads");
-  let targetMoveDir = $state("");
+  let scanned = $state(cachedScanned);
+  let selectedDir = $state(cachedSelectedDir);
+  let targetMoveDir = $state(cachedTargetMoveDir);
   let movingFile = $state<string | null>(null);
+
+  $effect(() => {
+    cachedMode = mode;
+    cachedGroups = groups;
+    cachedSelectedFiles = selectedFiles;
+    cachedLargeReport = largeReport;
+    cachedScanned = scanned;
+    cachedSelectedDir = selectedDir;
+    cachedTargetMoveDir = targetMoveDir;
+  });
 
   const QUICK_FOLDERS = ["Downloads", "Documents", "Pictures", "Desktop", "Videos"];
 
@@ -51,6 +71,29 @@
   function pickFolder(folder: string) {
     selectedDir = folder;
     scan();
+  }
+
+  async function browseScanFolder() {
+    try {
+      const picked = await api.pickFolder("Select folder to scan");
+      if (picked && picked.trim()) {
+        selectedDir = picked.trim();
+        await scan();
+      }
+    } catch {
+      // Ignore cancel or dialog error
+    }
+  }
+
+  async function browseMoveDestination() {
+    try {
+      const picked = await api.pickFolder("Select destination folder to move large files");
+      if (picked && picked.trim()) {
+        targetMoveDir = picked.trim();
+      }
+    } catch {
+      // Ignore cancel or dialog error
+    }
   }
 
   async function scan() {
@@ -89,7 +132,7 @@
     statusMessage = "";
     try {
       const rep = await api.deleteDuplicates(selectedDir.trim(), selectedList, useTrash);
-      addLifetimeStats(rep.bytes_freed, rep.files_removed);
+      addLifetimeStats(rep.bytes_freed, rep.files_removed, ["duplicates"], useTrash ? "Recycle Bin" : "Duplicates");
       statusMessage = `Removed ${rep.files_removed} duplicate copies (${formatBytes(rep.bytes_freed)} freed)${useTrash ? " to Recycle Bin" : ""}.`;
       groups = await api.findDuplicates(selectedDir.trim());
       smartSelectExtras();
@@ -110,7 +153,7 @@
     statusMessage = "";
     try {
       const freed = await api.deleteLargeFile(selectedDir.trim(), filePath, true);
-      addLifetimeStats(freed, 1);
+      addLifetimeStats(freed, 1, ["large_files"], "Recycle Bin");
       statusMessage = `Moved file (${formatBytes(freed)}) to Recycle Bin.`;
       if (largeReport) {
         largeReport.top_files = largeReport.top_files.filter((f) => f.path !== filePath);
@@ -128,10 +171,14 @@
   async function moveLargeFileToFolder(filePath: string) {
     let destDir = targetMoveDir.trim();
     if (!destDir) {
-      const prompted = window.prompt("Enter destination folder path to move this file (e.g. D:\\Archive):");
-      if (!prompted || !prompted.trim()) return;
-      destDir = prompted.trim();
-      targetMoveDir = destDir;
+      try {
+        const picked = await api.pickFolder("Select destination folder to move this file");
+        if (!picked || !picked.trim()) return;
+        destDir = picked.trim();
+        targetMoveDir = destDir;
+      } catch {
+        return;
+      }
     }
     error = "";
     statusMessage = "";
@@ -212,6 +259,9 @@
         class="folder-input"
         onkeydown={(e) => e.key === "Enter" && scan()}
       />
+      <button type="button" class="ghost small-btn" onclick={browseScanFolder} disabled={loading || cleaning}>
+        Browse Folder…
+      </button>
       {#if mode === "large"}
         <label class="row small" style="gap: 6px;">
           <span class="muted">Min size:</span>
@@ -355,6 +405,9 @@
           aria-label="Destination folder to move large files"
           class="move-dest-input"
         />
+        <button type="button" class="ghost small-btn" onclick={browseMoveDestination}>
+          Browse…
+        </button>
       </div>
       {#if largeReport.top_files.length === 0}
         <div class="muted small">No files larger than {minSizeMb} MB found in this folder.</div>

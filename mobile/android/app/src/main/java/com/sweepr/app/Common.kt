@@ -330,18 +330,22 @@ fun MediaThumb(
             Surface(
                 onClick = onActionClick,
                 color = SweeprGreenDark.copy(alpha = 0.92f),
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(4.dp),
             ) {
-                Text(
-                    text = actionLabel,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                )
+                Box(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = actionLabel,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
         SelectionDot(selected, Modifier.align(Alignment.TopEnd).padding(6.dp))
@@ -367,13 +371,13 @@ fun MediaThumb(
 fun SelectionDot(selected: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .size(22.dp)
+            .size(26.dp)
             .clip(CircleShape)
-            .background(if (selected) SweeprGreen else Color.Black.copy(alpha = 0.3f))
+            .background(if (selected) SweeprGreen else Color.Black.copy(alpha = 0.35f))
             .border(2.dp, Color.White, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (selected) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(14.dp))
+        if (selected) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(15.dp))
     }
 }
 

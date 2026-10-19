@@ -287,6 +287,7 @@ private fun ResultCards(
     val photoExtras = (media.duplicateGroups + media.similarGroups).flatMap { it.extras }
     val contactDupes = state.contactGroups.sumOf { it.contacts.size - 1 }
     val scanned = state.hasScanned
+    var showMoreTools by remember { mutableStateOf(false) }
     fun open(screen: Screen) = if (scanned) onOpen(screen) else onScan()
     fun openTab(tab: Int) = if (scanned) onOpenPhotosTab(tab) else onScan()
 
@@ -343,34 +344,49 @@ private fun ResultCards(
             onClick = { open(Screen.Contacts) },
         )
     }
-    Spacer(Modifier.height(16.dp))
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            title = stringResource(R.string.category_messenger_media),
-            subtitle = when {
-                !permissions.media -> stringResource(R.string.status_no_permission)
-                !scanned -> stringResource(R.string.status_tap_to_scan)
-                else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
-            },
-            icon = Icons.Default.Email,
-            color = Color(0xFF22C55E),
-            badge = if (scanned) media.messengerMedia.size else 0,
-            onClick = { openTab(5) },
+    Spacer(Modifier.height(12.dp))
+    TextButton(
+        onClick = { showMoreTools = !showMoreTools },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            if (showMoreTools) "Hide Additional Tools"
+            else "More Cleanup Tools (${stringResource(R.string.category_messenger_media)}, ${stringResource(R.string.category_trash)})",
+            color = SweeprGreen,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
         )
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            title = stringResource(R.string.category_trash),
-            subtitle = when {
-                !permissions.media -> stringResource(R.string.status_no_permission)
-                !scanned -> stringResource(R.string.status_tap_to_scan)
-                else -> "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}"
-            },
-            icon = Icons.Default.Refresh,
-            color = Color(0xFF14B8A6),
-            badge = if (scanned) media.trashed.size else 0,
-            onClick = { open(Screen.Trash) },
-        )
+    }
+    if (showMoreTools) {
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ActionCard(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                title = stringResource(R.string.category_messenger_media),
+                subtitle = when {
+                    !permissions.media -> stringResource(R.string.status_no_permission)
+                    !scanned -> stringResource(R.string.status_tap_to_scan)
+                    else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
+                },
+                icon = Icons.Default.Email,
+                color = Color(0xFF22C55E),
+                badge = if (scanned) media.messengerMedia.size else 0,
+                onClick = { openTab(5) },
+            )
+            ActionCard(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                title = stringResource(R.string.category_trash),
+                subtitle = when {
+                    !permissions.media -> stringResource(R.string.status_no_permission)
+                    !scanned -> stringResource(R.string.status_tap_to_scan)
+                    else -> "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}"
+                },
+                icon = Icons.Default.Refresh,
+                color = Color(0xFF14B8A6),
+                badge = if (scanned) media.trashed.size else 0,
+                onClick = { open(Screen.Trash) },
+            )
+        }
     }
 }
 

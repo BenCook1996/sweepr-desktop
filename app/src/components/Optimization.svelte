@@ -3,9 +3,10 @@
   import Apps from "./Apps.svelte";
   import Duplicates from "./Duplicates.svelte";
   import Privacy from "./Privacy.svelte";
+  import Shredder from "./Shredder.svelte";
   import type { LicenseStatus } from "../lib/api";
 
-  export type OptimizationSubTab = "memory" | "apps" | "storage" | "privacy";
+  export type OptimizationSubTab = "memory" | "apps" | "storage" | "privacy" | "shredder";
 
   let {
     license,
@@ -56,8 +57,18 @@
         role="tab"
         aria-selected={subTab === "privacy"}
       >
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>Browser Privacy</span>
+      </button>
+      <button
+        class="subnav-btn"
+        class:active={subTab === "shredder"}
+        onclick={() => (subTab = "shredder")}
+        role="tab"
+        aria-selected={subTab === "shredder"}
+      >
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Browser &amp; Shredder</span>
+        <span>File Shredder</span>
       </button>
     </div>
   </div>
@@ -69,8 +80,10 @@
       <Apps {license} />
     {:else if subTab === "storage"}
       <Duplicates {license} />
-    {:else}
+    {:else if subTab === "privacy"}
       <Privacy {license} />
+    {:else}
+      <Shredder {license} />
     {/if}
   </div>
 </div>

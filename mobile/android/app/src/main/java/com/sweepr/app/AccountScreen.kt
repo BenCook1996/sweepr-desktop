@@ -104,12 +104,12 @@ fun AccountScreen(
     val linked = state.linkedAccount
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
-    var showSignInDialog by remember { mutableStateOf(false) }
-    var otpSent by remember { mutableStateOf(false) }
-    var emailInput by remember { mutableStateOf("") }
-    var codeInput by remember { mutableStateOf("") }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-    var showRetentionDialog by remember { mutableStateOf(false) }
+    var showSignInDialog by rememberSaveable { mutableStateOf(false) }
+    var otpSent by rememberSaveable { mutableStateOf(false) }
+    var emailInput by rememberSaveable { mutableStateOf("") }
+    var codeInput by rememberSaveable { mutableStateOf("") }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
+    var showRetentionDialog by rememberSaveable { mutableStateOf(false) }
 
     val playSubscriptionsUrl = sub.managementUrl
         ?: "$GOOGLE_PLAY_SUBSCRIPTIONS_URL?package=${context.packageName}"

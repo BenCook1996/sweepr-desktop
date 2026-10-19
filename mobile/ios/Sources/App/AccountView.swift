@@ -9,12 +9,12 @@ struct AccountView: View {
     let onShowPaywall: () -> Void
 
     @AppStorage("sweepr_theme_mode") private var themeModeRaw: String = SweeprThemeMode.system.rawValue
-    @State private var showSignInSheet = false
+    @SceneStorage("sweepr_otp_sheet") private var showSignInSheet = false
     @State private var showDeleteConfirm = false
     @State private var showCrashLogSheet = false
-    @State private var otpEmail = ""
+    @SceneStorage("sweepr_otp_email") private var otpEmail = ""
     @State private var otpCode = ""
-    @State private var otpSent = false
+    @SceneStorage("sweepr_otp_sent") private var otpSent = false
     @State private var friendReferralInput = ""
     @State private var crashLogText = ""
 

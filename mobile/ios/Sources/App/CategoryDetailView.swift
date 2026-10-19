@@ -445,11 +445,15 @@ struct DuplicateReviewView: View {
                                                                 .font(.title3)
                                                                 .foregroundColor(isSelected ? .sweeprEmerald : .white)
                                                                 .background(Circle().fill(Color.black.opacity(0.45)))
-                                                                .padding(6)
+                                                                .frame(width: 44, height: 44)
                                                         }
                                                         .accessibilityLabel(isSelected ? "Selected for deletion" : "Keep item")
                                                     }
                                                     .frame(width: 132, height: 132)
+                                                    .contentShape(Rectangle())
+                                                    .onTapGesture {
+                                                        vm.toggleMediaSelection(id: item.id)
+                                                    }
 
                                                     HStack {
                                                         Text(formatByteCount(item.estimatedBytes))
@@ -574,7 +578,7 @@ struct SimilarReviewView: View {
                                                                 .font(.title3)
                                                                 .foregroundColor(isSelected ? .sweeprEmerald : .white)
                                                                 .background(Circle().fill(Color.black.opacity(0.45)))
-                                                                .padding(6)
+                                                                .frame(width: 44, height: 44)
                                                         }
                                                         .accessibilityLabel(
                                                             index == 0
@@ -583,13 +587,17 @@ struct SimilarReviewView: View {
                                                         )
                                                     }
                                                     .frame(width: 140, height: 140)
+                                                    .contentShape(Rectangle())
+                                                    .onTapGesture {
+                                                        vm.toggleMediaSelection(id: item.id)
+                                                    }
 
                                                     HStack {
                                                         Text(formatByteCount(item.estimatedBytes))
                                                             .font(.caption2)
                                                             .foregroundColor(.secondary)
                                                         Spacer()
-                                                        Text("Sharp \(Int(item.sharpness))")
+                                                        Text(item.resolutionLabel)
                                                             .font(.caption2)
                                                             .foregroundColor(index == 0 ? .sweeprEmerald : .secondary)
                                                     }
@@ -895,11 +903,15 @@ struct SingleMediaListView: View {
                                             .font(.subheadline)
                                             .foregroundColor(isSelected ? .sweeprEmerald : .white)
                                             .background(Circle().fill(Color.black.opacity(0.45)))
-                                            .padding(4)
+                                            .frame(width: 44, height: 44)
                                     }
                                     .accessibilityLabel(
                                         "\(title) item, \(formatByteCount(item.estimatedBytes)), \(isSelected ? "selected" : "not selected")"
                                     )
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    vm.toggleMediaSelection(id: item.id)
                                 }
                             }
                         }
@@ -942,6 +954,9 @@ struct SingleMediaListView: View {
 struct ContactsCleanerView: View {
     @ObservedObject var vm: AppViewModel
     @State private var selectedMode = 0 // 0 = Duplicates, 1 = Incomplete, 2 = Old Calendar Events (>1 yr)
+    @State private var showMergeConfirm = false
+    @State private var showIncompleteDeleteConfirm = false
+    @State private var showCalendarDeleteConfirm = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -967,12 +982,48 @@ struct ContactsCleanerView: View {
             }
         }
         .navigationTitle("Contacts & Calendar")
+        .confirmationDialog(
+            "Smart Merge \(vm.selectedContactGroupIDs.count) Contact Group(s)?",
+            isPresented: $showMergeConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Merge Selected Contacts") {
+                Task { await vm.mergeSelectedContacts() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Combines phone numbers and emails into a single primary contact per group and removes duplicate entries.")
+        }
+        .confirmationDialog(
+            "Delete \(vm.selectedIncompleteContactIDs.count) Incomplete Contact(s)?",
+            isPresented: $showIncompleteDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Incomplete Contacts", role: .destructive) {
+                Task { await vm.deleteSelectedIncompleteContacts() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Permanently removes selected contacts that are missing names, phone numbers, or email addresses.")
+        }
+        .confirmationDialog(
+            "Delete \(vm.selectedCalendarEventIDs.count) Old Calendar Event(s)?",
+            isPresented: $showCalendarDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Old Events", role: .destructive) {
+                Task { await vm.deleteSelectedCalendarEvents() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Permanently removes selected past calendar events older than 1 year.")
+        }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
                 if selectedMode == 0 {
                     Button("Smart Merge Selected (\(vm.selectedContactGroupIDs.count))") {
                         guard vm.hasPremium else { vm.showingPaywall = true; return }
-                        Task { await vm.mergeSelectedContacts() }
+                        showMergeConfirm = true
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.sweeprEmerald)
@@ -981,7 +1032,7 @@ struct ContactsCleanerView: View {
                 } else if selectedMode == 1 {
                     Button("Delete Incomplete (\(vm.selectedIncompleteContactIDs.count))") {
                         guard vm.hasPremium else { vm.showingPaywall = true; return }
-                        Task { await vm.deleteSelectedIncompleteContacts() }
+                        showIncompleteDeleteConfirm = true
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
@@ -990,7 +1041,7 @@ struct ContactsCleanerView: View {
                 } else {
                     Button("Delete Old Events (\(vm.selectedCalendarEventIDs.count))") {
                         guard vm.hasPremium else { vm.showingPaywall = true; return }
-                        Task { await vm.deleteSelectedCalendarEvents() }
+                        showCalendarDeleteConfirm = true
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)

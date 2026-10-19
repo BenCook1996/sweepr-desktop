@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,6 +76,8 @@ fun ContactsScreen(
 ) {
     val context = LocalContext.current
     var activeSegment by rememberSaveable { mutableIntStateOf(0) } // 0 = Contacts Cleanup, 1 = Old Calendar Events (>1 yr)
+    var showMergeConfirm by rememberSaveable { mutableStateOf(false) }
+    var showCalendarDeleteConfirm by rememberSaveable { mutableStateOf(false) }
 
     fun hasCalendarPerm(): Boolean {
         val readOk = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
@@ -109,6 +112,56 @@ fun ContactsScreen(
         if (permissions.contactsWrite) onMerge(keys) else onRequestPermission()
     }
 
+    if (showMergeConfirm && selectedHere.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showMergeConfirm = false },
+            title = { Text(pluralStringResource(R.plurals.contacts_merge_n, selectedHere.size, selectedHere.size)) },
+            text = {
+                Text("This will combine phone numbers and emails into a single contact per group and remove the duplicate entries. Continue?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showMergeConfirm = false
+                        merge(selectedHere)
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMergeConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showCalendarDeleteConfirm && selectedEventsHere.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showCalendarDeleteConfirm = false },
+            title = { Text(stringResource(R.string.calendar_delete_selected, selectedEventsHere.size)) },
+            text = {
+                Text("Permanently remove ${selectedEventsHere.size} past calendar event(s) older than 1 year? This cannot be undone.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCalendarDeleteConfirm = false
+                        onDeleteCalendarEvents(selectedEventsHere)
+                    },
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCalendarDeleteConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
     Scaffold(
         topBar = { SweeprTopBar(stringResource(R.string.category_contacts), onBack) },
         bottomBar = {
@@ -116,7 +169,7 @@ fun ContactsScreen(
                 if (permissions.contactsRead && state.contactGroups.isNotEmpty()) {
                     Surface(shadowElevation = 8.dp) {
                         Button(
-                            onClick = { merge(selectedHere) },
+                            onClick = { showMergeConfirm = true },
                             enabled = selectedHere.isNotEmpty() && !state.isBusy,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier
@@ -137,7 +190,7 @@ fun ContactsScreen(
                 if (calendarGranted && state.oldCalendarEvents.isNotEmpty()) {
                     Surface(shadowElevation = 8.dp) {
                         Button(
-                            onClick = { onDeleteCalendarEvents(selectedEventsHere) },
+                            onClick = { showCalendarDeleteConfirm = true },
                             enabled = selectedEventsHere.isNotEmpty() && !state.isBusy,
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier

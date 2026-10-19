@@ -1,23 +1,29 @@
+<script lang="ts" module>
+  import type { BrowserExtensionItem, BrowserPrivacyItem } from "../lib/api";
+
+  let cachedBrowsers: BrowserPrivacyItem[] = [];
+  let cachedSelectedBrowsers: Record<string, boolean> = {};
+  let cachedAllowlist: string[] = [];
+  let cachedExtensions: BrowserExtensionItem[] = [];
+</script>
+
 <script lang="ts">
   import {
     api,
     errorMessage,
     isPaymentRequired,
     requestActivation,
-    type BrowserExtensionItem,
-    type BrowserPrivacyItem,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
-  import Shredder from "./Shredder.svelte";
 
   let { license }: { license: LicenseStatus | null } = $props();
   let error = $state<string | null>(null);
 
   // Browser Privacy Cleaner
-  let browsers = $state<BrowserPrivacyItem[]>([]);
-  let selectedBrowsers = $state<Record<string, boolean>>({});
+  let browsers = $state<BrowserPrivacyItem[]>(cachedBrowsers);
+  let selectedBrowsers = $state<Record<string, boolean>>(cachedSelectedBrowsers);
   let clearCache = $state(true);
   let clearCookies = $state(false);
   let clearHistory = $state(false);
@@ -28,9 +34,9 @@
 
   // Sub-drawers: Cookie Allowlist & Extension Inspector
   let activeDrawer = $state<"none" | "cookies" | "extensions">("none");
-  let cookieAllowlist = $state<string[]>([]);
+  let cookieAllowlist = $state<string[]>(cachedAllowlist);
   let newDomain = $state("");
-  let extensions = $state<BrowserExtensionItem[]>([]);
+  let extensions = $state<BrowserExtensionItem[]>(cachedExtensions);
   let loadingExtensions = $state(false);
 
   const selectedBrowserKeys = $derived(
@@ -60,12 +66,15 @@
       ]);
       browsers = bList;
       cookieAllowlist = allow;
+      cachedBrowsers = bList;
+      cachedAllowlist = allow;
       const sel: Record<string, boolean> = {};
       for (const b of browsers) {
         const key = b.id || b.browser;
         sel[key] = true;
       }
       selectedBrowsers = sel;
+      cachedSelectedBrowsers = sel;
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -75,6 +84,19 @@
 
   async function cleanBrowsers() {
     if (!selectedBrowserKeys.length) return;
+    if (clearCookies || clearHistory) {
+      const items: string[] = [];
+      if (clearCache) items.push("web caches");
+      if (clearCookies) items.push("tracking cookies (non-allowlisted logins)");
+      if (clearHistory) items.push("browsing history");
+      if (
+        !confirm(
+          `Permanently clear ${items.join(", ")} across ${selectedBrowserKeys.length} selected browser(s)?\n\nClose your browsers first for best results. This action cannot be undone.`
+        )
+      ) {
+        return;
+      }
+    }
     error = null;
     browserStatus = null;
     cleaningBrowsers = true;
@@ -85,9 +107,10 @@
         clearCookies,
         clearHistory
       );
-      addLifetimeStats(freed, selectedBrowserKeys.length);
+      addLifetimeStats(freed, selectedBrowserKeys.length, ["browsers"], "Browser Privacy Clean");
       browserStatus = `Cleaned ${formatBytes(freed)} across ${selectedBrowserKeys.length} browser(s).`;
       browsers = await api.scanBrowserPrivacy();
+      cachedBrowsers = browsers;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -105,9 +128,10 @@
     compactingDbs = true;
     try {
       const saved = await api.compactBrowserDatabases();
-      addLifetimeStats(saved, 1);
+      addLifetimeStats(saved, 1, ["browsers"], "SQLite Database Compaction");
       browserStatus = `Compacted browser SQLite databases (${formatBytes(saved)} reclaimed with zero data loss).`;
       browsers = await api.scanBrowserPrivacy();
+      cachedBrowsers = browsers;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -128,6 +152,7 @@
     }
     try {
       cookieAllowlist = await api.setCookieAllowlist([...cookieAllowlist, d]);
+      cachedAllowlist = cookieAllowlist;
       newDomain = "";
     } catch (e) {
       error = errorMessage(e);
@@ -137,6 +162,7 @@
   async function removeAllowedDomain(domain: string) {
     try {
       cookieAllowlist = await api.setCookieAllowlist(cookieAllowlist.filter((d) => d !== domain));
+      cachedAllowlist = cookieAllowlist;
     } catch (e) {
       error = errorMessage(e);
     }
@@ -152,6 +178,7 @@
       loadingExtensions = true;
       try {
         extensions = await api.listBrowserExtensions();
+        cachedExtensions = extensions;
       } catch (e) {
         error = errorMessage(e);
       } finally {
@@ -161,16 +188,18 @@
   }
 
   $effect(() => {
-    scanBrowsers();
+    if (cachedBrowsers.length === 0) {
+      scanBrowsers();
+    }
   });
 </script>
 
 <div class="privacy-layout">
   <div class="section-header">
     <div>
-      <h1 class="page-title">Browser Privacy & File Shredder</h1>
+      <h1 class="page-title">Browser Privacy &amp; SQLite Optimizer</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Sweep browser caches and tracking cookies while keeping your favorite logins intact, or permanently shred sensitive local files.
+        Sweep browser caches, tracking cookies, and history while keeping your allowlisted logins intact.
       </p>
     </div>
   </div>
@@ -364,9 +393,6 @@
       </button>
     </div>
   </div>
-
-  <!-- 2. Secure File Shredder -->
-  <Shredder {license} />
 </div>
 
 <style>

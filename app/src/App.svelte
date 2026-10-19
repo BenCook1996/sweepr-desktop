@@ -18,9 +18,7 @@
   let autoUpdateInfo = $state<AppUpdateInfo | null>(null);
   let installingUpdate = $state(false);
   let updateDismissed = $state(false);
-  let showStartupInstaller = $state(
-    typeof localStorage !== "undefined" && !localStorage.getItem("sweepr_installed_v1")
-  );
+  let showStartupInstaller = $state(false);
   let theme = $state<"light" | "dark">(
     (typeof localStorage !== "undefined" && (localStorage.getItem("sweepr_theme") as "light" | "dark")) || "light"
   );
@@ -56,9 +54,6 @@
       localStorage.setItem("sweepr_first_open", "1");
     }
     showStartupInstaller = false;
-    setTimeout(() => {
-      if (!license?.active) showActivateModal = true;
-    }, 450);
   }
 
   function applyThemeToDom(current: "light" | "dark") {
@@ -106,12 +101,6 @@
           showStartupInstaller = true;
         }
         appReady = true;
-        if (!showStartupInstaller && !localStorage.getItem("sweepr_first_open")) {
-          localStorage.setItem("sweepr_first_open", "1");
-          setTimeout(() => {
-            if (!showStartupInstaller && !license?.active) showActivateModal = true;
-          }, 400);
-        }
       })
       .catch(() => {
         appReady = true;
@@ -207,17 +196,6 @@
     </nav>
 
     <div class="header-right sidebar-footer">
-      <select
-        class="lang-picker"
-        aria-label="Select language"
-        value={$lang}
-        onchange={(e) => setLang((e.currentTarget as HTMLSelectElement).value as Lang)}
-      >
-        {#each LANGUAGES as l}
-          <option value={l.code}>{l.region} - {l.code.toUpperCase()}</option>
-        {/each}
-      </select>
-
       {#if license?.active}
         <span class="tier-badge pro">{license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : t("tier.pro", $lang)}</span>
       {:else}
@@ -286,6 +264,20 @@
                   </svg>
                 </span>
               </button>
+            </div>
+
+            <div class="dropdown-row">
+              <span class="dropdown-row-label">Language</span>
+              <select
+                class="lang-picker"
+                aria-label="Select language"
+                value={$lang}
+                onchange={(e) => setLang((e.currentTarget as HTMLSelectElement).value as Lang)}
+              >
+                {#each LANGUAGES as l}
+                  <option value={l.code}>{l.region} - {l.label}</option>
+                {/each}
+              </select>
             </div>
 
             {#if !license?.active}

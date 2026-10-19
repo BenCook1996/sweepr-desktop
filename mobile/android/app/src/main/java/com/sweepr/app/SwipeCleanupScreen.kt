@@ -153,19 +153,21 @@ fun SwipeCleanupScreen(
     val months = remember(items) {
         items.groupBy { it.yearMonth() }.toList().sortedByDescending { it.first }
     }
-    var month by remember { mutableStateOf<YearMonth?>(null) }
+    var monthKey by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val selectedMonth = month
+    val selectedMonth = remember(monthKey) {
+        monthKey?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
+    }
     if (selectedMonth == null) {
-        MonthPicker(months, onPick = { month = it }, onBack = onBack)
+        MonthPicker(months, onPick = { monthKey = it.toString() }, onBack = onBack)
     } else {
-        BackHandler { month = null }
+        BackHandler { monthKey = null }
         SwipeDeck(
             title = selectedMonth.format(monthFormatter),
             monthItems = months.firstOrNull { it.first == selectedMonth }?.second.orEmpty(),
             busy = busy,
             onTrash = onTrash,
-            onBack = { month = null },
+            onBack = { monthKey = null },
         )
     }
 }
@@ -240,35 +242,40 @@ private fun SwipeDeck(
     onTrash: (List<MediaItem>) -> Unit,
     onBack: () -> Unit,
 ) {
-    val kept = remember(title) { mutableStateListOf<Uri>() }
-    val marked = remember(title) { mutableStateListOf<MediaItem>() }
-    val history = remember(title) { mutableStateListOf<Uri>() }
+    var keptUriStrings by rememberSaveable(title) { mutableStateOf(emptyList<String>()) }
+    var markedUriStrings by rememberSaveable(title) { mutableStateOf(emptyList<String>()) }
+    var historyUriStrings by rememberSaveable(title) { mutableStateOf(emptyList<String>()) }
 
     // Once items are actually deleted they disappear from monthItems – forget them here too.
     LaunchedEffect(monthItems) {
-        val existing = monthItems.map { it.uri }.toSet()
-        marked.removeAll { it.uri !in existing }
-        history.removeAll { it !in existing }
+        val existing = monthItems.map { it.uri.toString() }.toSet()
+        markedUriStrings = markedUriStrings.filter { it in existing }
+        historyUriStrings = historyUriStrings.filter { it in existing }
     }
 
-    val markedUris = marked.map { it.uri }.toSet()
-    val deck = monthItems.filter { it.uri !in markedUris && it.uri !in kept }
+    val keptSet = keptUriStrings.toSet()
+    val markedSet = markedUriStrings.toSet()
+    val marked = monthItems.filter { it.uri.toString() in markedSet }
+    val deck = monthItems.filter { it.uri.toString() !in markedSet && it.uri.toString() !in keptSet }
     val reviewed = monthItems.size - deck.size
 
     fun keep(item: MediaItem) {
-        kept += item.uri
-        history += item.uri
+        val u = item.uri.toString()
+        keptUriStrings = keptUriStrings + u
+        historyUriStrings = historyUriStrings + u
     }
 
     fun delete(item: MediaItem) {
-        marked += item
-        history += item.uri
+        val u = item.uri.toString()
+        markedUriStrings = markedUriStrings + u
+        historyUriStrings = historyUriStrings + u
     }
 
     fun undo() {
-        val last = history.removeLastOrNull() ?: return
-        kept.remove(last)
-        marked.removeAll { it.uri == last }
+        val last = historyUriStrings.lastOrNull() ?: return
+        historyUriStrings = historyUriStrings.dropLast(1)
+        keptUriStrings = keptUriStrings - last
+        markedUriStrings = markedUriStrings - last
     }
 
     Scaffold(
