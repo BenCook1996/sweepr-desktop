@@ -28,6 +28,7 @@ import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
+import { syncToCentralCrm } from "./crm-sync.js";
 import {
   resolvePricingForRequest,
   getPricingForCountryOrCurrency,
@@ -109,12 +110,54 @@ function sanitizeTelemetryText(v: unknown, maxLen: number): string {
     .slice(0, maxLen);
 }
 
+function hasBatteryCareAddon(body: any): boolean {
+  if (!body || typeof body !== "object") return false;
+  if (body.batteryCareAddon === true || body.battery_care === true || body.battery_care === "1") return true;
+  if (Array.isArray(body.addons)) {
+    return body.addons.some((a: any) => String(a).trim().toLowerCase() === "battery_care");
+  }
+  if (typeof body.addons === "string") {
+    return body.addons
+      .split(",")
+      .map((s: string) => s.trim().toLowerCase())
+      .includes("battery_care");
+  }
+  return false;
+}
+
+function hasCloudVaultAddon(body: any): boolean {
+  if (!body || typeof body !== "object") return false;
+  if (body.cloudVaultAddon === true || body.cloud_vault === true || body.cloud_vault === "1") return true;
+  if (Array.isArray(body.addons)) {
+    return body.addons.some((a: any) => String(a).trim().toLowerCase() === "cloud_vault");
+  }
+  if (typeof body.addons === "string") {
+    return body.addons
+      .split(",")
+      .map((s: string) => s.trim().toLowerCase())
+      .includes("cloud_vault");
+  }
+  return false;
+}
+
 function extractAttributionMeta(body: any, accountId: string, plan: string, refCode?: string): Record<string, string> {
   const attr = typeof body?.attribution === "object" && body?.attribution !== null ? body.attribution : {};
   const meta: Record<string, string> = {
     account_id: accountId,
     plan,
   };
+  const addons: string[] = [];
+  if (hasBatteryCareAddon(body)) {
+    addons.push("battery_care");
+    meta.battery_care = "1";
+  }
+  if (hasCloudVaultAddon(body)) {
+    addons.push("cloud_vault");
+    meta.cloud_vault = "1";
+  }
+  if (addons.length > 0) {
+    meta.addons = addons.join(",");
+  }
   if (refCode) meta.ref = refCode.slice(0, 50);
   const fields = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid", "msclkid", "irclickid"];
   for (const f of fields) {
@@ -221,6 +264,11 @@ export function createApp(deps: AppDeps) {
     if (!bot || !isTrackablePath(c.req.path)) return;
     try {
       seoStore.recordBotHit(bot, c.req.path, c.res.status);
+      syncToCentralCrm("/api/crm/seo/bot-hit?project=cleaner", {
+        user_agent: c.req.header("user-agent") || "",
+        path: c.req.path,
+        status: c.res.status,
+      });
       if (++botHitsSincePrune >= 5000) {
         botHitsSincePrune = 0;
         seoStore.pruneBotHits(90);
@@ -481,6 +529,50 @@ export function createApp(deps: AppDeps) {
     return created.id;
   }
 
+  let cachedStripeBatteryProductId: string | null = null;
+  async function getStripeBatteryProductId(): Promise<string> {
+    if (cachedStripeBatteryProductId) return cachedStripeBatteryProductId;
+    if (!stripe) throw new Error("Stripe not configured");
+    try {
+      const existingProducts = await stripe.products.list({ active: true, limit: 20 });
+      const match = existingProducts.data.find((p) => /battery.*care/i.test(p.name));
+      if (match) {
+        cachedStripeBatteryProductId = match.id;
+        return match.id;
+      }
+      const created = await stripe.products.create({
+        name: "Total Battery & Mac/Phone Care — Device Lifespan Extender",
+        description: "Smart 80% Charge-Limiter, Automatic Thermal Throttling & Browser Tab Hibernate Add-on",
+      });
+      cachedStripeBatteryProductId = created.id;
+      return created.id;
+    } catch {
+      return getStripeProductId();
+    }
+  }
+
+  let cachedStripeCloudVaultProductId: string | null = null;
+  async function getStripeCloudVaultProductId(): Promise<string> {
+    if (cachedStripeCloudVaultProductId) return cachedStripeCloudVaultProductId;
+    if (!stripe) throw new Error("Stripe not configured");
+    try {
+      const existingProducts = await stripe.products.list({ active: true, limit: 20 });
+      const match = existingProducts.data.find((p) => /cloud.*(vault|protection)/i.test(p.name));
+      if (match) {
+        cachedStripeCloudVaultProductId = match.id;
+        return match.id;
+      }
+      const created = await stripe.products.create({
+        name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync",
+        description: "AES-256 Argon2id Encrypted Photo & Document Vault + Automated Multi-Cloud Backup Sync Add-on",
+      });
+      cachedStripeCloudVaultProductId = created.id;
+      return created.id;
+    } catch {
+      return getStripeProductId();
+    }
+  }
+
   const cachedIntroCoupons = new Map<string, string>();
   async function getOrCreateIntroCoupon(currency: string, discountAmount: number): Promise<string> {
     if (!stripe) return stripeCoupon;
@@ -636,6 +728,8 @@ export function createApp(deps: AppDeps) {
 
       const isAnnual = plan === "annual";
       const isSixMonth = plan === "six_month";
+      const includeBatteryCare = hasBatteryCareAddon(body);
+      const includeCloudVault = hasCloudVaultAddon(body);
       const productId = await getStripeProductId();
       const unitAmount = isAnnual
         ? localizedPricing.annualAmount
@@ -643,18 +737,54 @@ export function createApp(deps: AppDeps) {
         ? localizedPricing.sixMonthAmount
         : localizedPricing.monthlyAmount;
 
+      const recurringConfig = isAnnual
+        ? { interval: "year" as const }
+        : isSixMonth
+        ? { interval: "month" as const, interval_count: 6 }
+        : { interval: "month" as const };
+
       const itemConfig = {
         price_data: {
           currency: localizedPricing.currency,
           product: productId,
           unit_amount: unitAmount,
-          recurring: isAnnual
-            ? { interval: "year" as const }
-            : isSixMonth
-            ? { interval: "month" as const, interval_count: 6 }
-            : { interval: "month" as const },
+          recurring: recurringConfig,
         },
       };
+
+      const subItems: any[] = [itemConfig];
+      if (includeBatteryCare) {
+        const batteryProductId = await getStripeBatteryProductId();
+        const addonUnitAmount = isAnnual
+          ? localizedPricing.batteryCareAnnualAmount
+          : isSixMonth
+          ? localizedPricing.batteryCareSixMonthAmount
+          : localizedPricing.batteryCareMonthlyAmount;
+        subItems.push({
+          price_data: {
+            currency: localizedPricing.currency,
+            product: batteryProductId,
+            unit_amount: addonUnitAmount,
+            recurring: recurringConfig,
+          },
+        });
+      }
+      if (includeCloudVault) {
+        const cloudVaultProductId = await getStripeCloudVaultProductId();
+        const addonUnitAmount = isAnnual
+          ? localizedPricing.cloudVaultAnnualAmount
+          : isSixMonth
+          ? localizedPricing.cloudVaultSixMonthAmount
+          : localizedPricing.cloudVaultMonthlyAmount;
+        subItems.push({
+          price_data: {
+            currency: localizedPricing.currency,
+            product: cloudVaultProductId,
+            unit_amount: addonUnitAmount,
+            recurring: recurringConfig,
+          },
+        });
+      }
 
       const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
       const introCouponId =
@@ -663,7 +793,7 @@ export function createApp(deps: AppDeps) {
           : "";
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
-        items: [itemConfig],
+        items: subItems,
         payment_behavior: "default_incomplete",
         payment_settings: {
           save_default_payment_method: "on_subscription",
@@ -759,6 +889,32 @@ export function createApp(deps: AppDeps) {
           introSavingsFormatted: localizedPricing.introSavingsFormatted,
           interval: "month",
           name: "SWEEPR Cleaner Pro (Monthly)",
+        },
+      },
+      addons: {
+        battery_care: {
+          id: "battery_care",
+          name: "Total Battery & Mac/Phone Care — Device Lifespan Extender",
+          annualAmountPence: localizedPricing.batteryCareAnnualAmount,
+          annualFormatted: localizedPricing.batteryCareAnnualFormatted,
+          annualMonthlyEqFormatted: localizedPricing.batteryCareAnnualMonthlyEqFormatted,
+          sixMonthAmountPence: localizedPricing.batteryCareSixMonthAmount,
+          sixMonthFormatted: localizedPricing.batteryCareSixMonthFormatted,
+          sixMonthMonthlyEqFormatted: localizedPricing.batteryCareSixMonthMonthlyEqFormatted,
+          monthlyAmountPence: localizedPricing.batteryCareMonthlyAmount,
+          monthlyFormatted: localizedPricing.batteryCareMonthlyFormatted,
+        },
+        cloud_vault: {
+          id: "cloud_vault",
+          name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync",
+          annualAmountPence: localizedPricing.cloudVaultAnnualAmount,
+          annualFormatted: localizedPricing.cloudVaultAnnualFormatted,
+          annualMonthlyEqFormatted: localizedPricing.cloudVaultAnnualMonthlyEqFormatted,
+          sixMonthAmountPence: localizedPricing.cloudVaultSixMonthAmount,
+          sixMonthFormatted: localizedPricing.cloudVaultSixMonthFormatted,
+          sixMonthMonthlyEqFormatted: localizedPricing.cloudVaultSixMonthMonthlyEqFormatted,
+          monthlyAmountPence: localizedPricing.cloudVaultMonthlyAmount,
+          monthlyFormatted: localizedPricing.cloudVaultMonthlyFormatted,
         },
       },
     });
@@ -956,6 +1112,8 @@ export function createApp(deps: AppDeps) {
 
       const isAnnual = plan === "annual";
       const isSixMonth = plan === "six_month";
+      const includeBatteryCare = hasBatteryCareAddon(body);
+      const includeCloudVault = hasCloudVaultAddon(body);
       const productId = await getStripeProductId();
       const unitAmount = isAnnual
         ? localizedPricing.annualAmount
@@ -963,18 +1121,54 @@ export function createApp(deps: AppDeps) {
         ? localizedPricing.sixMonthAmount
         : localizedPricing.monthlyAmount;
 
+      const recurringConfig = isAnnual
+        ? { interval: "year" as const }
+        : isSixMonth
+        ? { interval: "month" as const, interval_count: 6 }
+        : { interval: "month" as const };
+
       const itemConfig = {
         price_data: {
           currency: localizedPricing.currency,
           product: productId,
           unit_amount: unitAmount,
-          recurring: isAnnual
-            ? { interval: "year" as const }
-            : isSixMonth
-            ? { interval: "month" as const, interval_count: 6 }
-            : { interval: "month" as const },
+          recurring: recurringConfig,
         },
       };
+
+      const subItems: any[] = [itemConfig];
+      if (includeBatteryCare) {
+        const batteryProductId = await getStripeBatteryProductId();
+        const addonUnitAmount = isAnnual
+          ? localizedPricing.batteryCareAnnualAmount
+          : isSixMonth
+          ? localizedPricing.batteryCareSixMonthAmount
+          : localizedPricing.batteryCareMonthlyAmount;
+        subItems.push({
+          price_data: {
+            currency: localizedPricing.currency,
+            product: batteryProductId,
+            unit_amount: addonUnitAmount,
+            recurring: recurringConfig,
+          },
+        });
+      }
+      if (includeCloudVault) {
+        const cloudVaultProductId = await getStripeCloudVaultProductId();
+        const addonUnitAmount = isAnnual
+          ? localizedPricing.cloudVaultAnnualAmount
+          : isSixMonth
+          ? localizedPricing.cloudVaultSixMonthAmount
+          : localizedPricing.cloudVaultMonthlyAmount;
+        subItems.push({
+          price_data: {
+            currency: localizedPricing.currency,
+            product: cloudVaultProductId,
+            unit_amount: addonUnitAmount,
+            recurring: recurringConfig,
+          },
+        });
+      }
 
       const introCouponId =
         !isAnnual && !isSixMonth && applyDiscount
@@ -983,7 +1177,7 @@ export function createApp(deps: AppDeps) {
 
       const subParams: any = {
         customer: customerId,
-        items: [itemConfig],
+        items: subItems,
         payment_behavior: "default_incomplete",
         payment_settings: {
           save_default_payment_method: "on_subscription",
@@ -1376,12 +1570,33 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: account.country ?? undefined,
+      trustProxy,
+    });
+    const addons = repo.addonsForAccount(accountId);
+
     return c.json({
       account_id: account.id,
       email: account.email,
       name: account.name || "",
       plan: ent?.plan || "None",
       status: ent?.status || "none",
+      addons,
+      addon_pricing: {
+        battery_care: {
+          annualFormatted: localizedPricing.batteryCareAnnualFormatted,
+          annualMonthlyEqFormatted: localizedPricing.batteryCareAnnualMonthlyEqFormatted,
+          sixMonthFormatted: localizedPricing.batteryCareSixMonthFormatted,
+          monthlyFormatted: localizedPricing.batteryCareMonthlyFormatted,
+        },
+        cloud_vault: {
+          annualFormatted: localizedPricing.cloudVaultAnnualFormatted,
+          annualMonthlyEqFormatted: localizedPricing.cloudVaultAnnualMonthlyEqFormatted,
+          sixMonthFormatted: localizedPricing.cloudVaultSixMonthFormatted,
+          monthlyFormatted: localizedPricing.cloudVaultMonthlyFormatted,
+        },
+      },
       current_period_end: ent?.current_period_end ?? null,
       cancel_at_period_end: Boolean(ent?.cancel_at_period_end),
       has_stripe: !!account.stripe_customer_id,
@@ -1396,6 +1611,104 @@ export function createApp(deps: AppDeps) {
       devices,
       invoices,
     });
+  });
+
+  // 1-Click Add-on Upgrade for existing active subscribers ("battery_care" | "cloud_vault")
+  app.post("/api/portal/purchase-addon", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account) return c.json({ error: "account_not_found" }, 404);
+
+    const body = await c.req.json().catch(() => ({}));
+    const addon = String(body?.addon ?? "battery_care").trim().toLowerCase();
+    if (addon !== "battery_care" && addon !== "cloud_vault") {
+      return c.json({ error: "unsupported_addon" }, 400);
+    }
+
+    const ent = repo.entitlement(accountId);
+    if (!ent || !isEntitled(ent, now(), config.pastDueGraceDays)) {
+      return c.json({ error: "Active SWEEPR Cleaner Pro subscription required to attach an add-on." }, 402);
+    }
+
+    const existingAddons = repo.addonsForAccount(accountId);
+    if (existingAddons.includes(addon)) {
+      return c.json({ ok: true, addons: existingAddons, already_active: true });
+    }
+
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: account.country ?? undefined,
+      trustProxy,
+    });
+
+    if (stripe && ent.stripe_subscription_id && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(ent.stripe_subscription_id);
+        const firstPrice = sub.items?.data?.[0]?.price;
+        const interval = firstPrice?.recurring?.interval ?? (ent.plan === "annual" ? "year" : "month");
+        const intervalCount = firstPrice?.recurring?.interval_count ?? (ent.plan === "six_month" ? 6 : 1);
+        const currency = firstPrice?.currency || localizedPricing.currency;
+        const tierPricing = getPricingForCountryOrCurrency(account.country, currency);
+        const unitAmount =
+          addon === "cloud_vault"
+            ? interval === "year"
+              ? tierPricing.cloudVaultAnnualAmount
+              : intervalCount === 6
+              ? tierPricing.cloudVaultSixMonthAmount
+              : tierPricing.cloudVaultMonthlyAmount
+            : interval === "year"
+            ? tierPricing.batteryCareAnnualAmount
+            : intervalCount === 6
+            ? tierPricing.batteryCareSixMonthAmount
+            : tierPricing.batteryCareMonthlyAmount;
+
+        const addonProductId =
+          addon === "cloud_vault" ? await getStripeCloudVaultProductId() : await getStripeBatteryProductId();
+        await stripe.subscriptions.update(sub.id, {
+          items: [
+            ...sub.items.data.map((it) => ({ id: it.id })),
+            {
+              price_data: {
+                currency,
+                product: addonProductId,
+                unit_amount: unitAmount,
+                recurring: {
+                  interval: interval as "month" | "year",
+                  ...(intervalCount > 1 ? { interval_count: intervalCount } : {}),
+                },
+              },
+            } as any,
+          ],
+          metadata: {
+            ...(sub.metadata || {}),
+            addons: Array.from(new Set([...existingAddons, addon])).join(","),
+            ...(addon === "cloud_vault" ? { cloud_vault: "1" } : { battery_care: "1" }),
+          },
+          proration_behavior: "create_prorations",
+        });
+      } catch (err: any) {
+        console.warn("[portal] purchase-addon Stripe update warning:", err?.message || err);
+      }
+    }
+
+    const updatedAddons = repo.grantAddon(accountId, addon);
+    const addonTitle =
+      addon === "cloud_vault"
+        ? "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync"
+        : "Total Battery & Mac/Phone Care";
+    repo.addActivity({
+      account_id: accountId,
+      type: "addon_purchased",
+      title: `Add-on Activated: ${addonTitle}`,
+      description: `Customer activated ${addonTitle} add-on`,
+      actor: "customer",
+      metadata: { addon, addons: updatedAddons },
+    });
+
+    return c.json({ ok: true, addons: updatedAddons });
   });
 
   const createBillingPortalSession = async (c: Context) => {
@@ -2064,6 +2377,7 @@ export function createApp(deps: AppDeps) {
     repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
     const ent = repo.entitlement(account.id);
     const active = isEntitled(ent, t, config.pastDueGraceDays);
+    const addons = repo.addonsForAccount(account.id);
     let token: string | null = null;
     if (active && ent) {
       let exp = t + config.tokenTtlHours * 3600;
@@ -2076,6 +2390,7 @@ export function createApp(deps: AppDeps) {
         device_id: deviceId,
         status: ent.status === "trialing" ? "trialing" : "active",
         plan: ent.plan ?? "monthly",
+        addons,
         iat: t,
         exp,
       });
@@ -2088,6 +2403,7 @@ export function createApp(deps: AppDeps) {
       active,
       status: ent?.status ?? "none",
       plan: ent?.plan ?? null,
+      addons,
       expires_at: ent?.current_period_end ?? null,
     });
   });
@@ -2135,11 +2451,13 @@ export function createApp(deps: AppDeps) {
 
     const referralCode = repo.ensureReferralCode(account.id);
     const referralsCount = repo.referralsCount(account.id);
+    const addons = repo.addonsForAccount(account.id);
     if (!isEntitled(ent, t, config.pastDueGraceDays)) {
       return c.json({
         active: false,
         status: ent?.status ?? "none",
         plan: ent?.plan ?? null,
+        addons: [],
         expires_at: 0,
         token: null,
         email: account.email ?? null,
@@ -2160,6 +2478,7 @@ export function createApp(deps: AppDeps) {
       device_id: deviceId,
       status: ent!.status === "trialing" ? "trialing" : "active",
       plan: ent!.plan ?? "monthly",
+      addons,
       iat: t,
       exp,
     });
@@ -2167,6 +2486,7 @@ export function createApp(deps: AppDeps) {
       active: true,
       status: ent!.status,
       plan: ent!.plan ?? "monthly",
+      addons,
       token,
       expires_at: exp,
       email: account.email ?? null,
@@ -2231,11 +2551,13 @@ export function createApp(deps: AppDeps) {
               exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
             }
             exp = Math.max(exp, t + 300);
+            const addons = repo.addonsForAccount(entitledAcc.id);
             const token = signEntitlement(signingKey, {
               sub: entitledAcc.id,
               device_id: deviceId,
               status: ent.status === "trialing" ? "trialing" : "active",
               plan: ent.plan ?? "annual",
+              addons,
               iat: t,
               exp,
             });
@@ -2246,6 +2568,7 @@ export function createApp(deps: AppDeps) {
               token,
               status: ent.status,
               plan: ent.plan ?? "annual",
+              addons,
               expires_at: exp,
             });
           }
@@ -2254,7 +2577,15 @@ export function createApp(deps: AppDeps) {
     }
 
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
-    if (isEntitled(repo.entitlement(account.id), now(), config.pastDueGraceDays)) {
+    const existingEnt = repo.entitlement(account.id);
+    const alreadyPro = isEntitled(existingEnt, now(), config.pastDueGraceDays);
+    const wantBatteryAddon = hasBatteryCareAddon(body);
+    const wantCloudVaultAddon = hasCloudVaultAddon(body);
+    const currentAddons = repo.addonsForAccount(account.id);
+    const missingWantedAddon =
+      (wantBatteryAddon && !currentAddons.includes("battery_care")) ||
+      (wantCloudVaultAddon && !currentAddons.includes("cloud_vault"));
+    if (alreadyPro && !missingWantedAddon) {
       return c.json({ error: "already_active" }, 409);
     }
     const rawPlan = typeof body?.plan === "string" ? body.plan.toLowerCase() : "";
@@ -2271,7 +2602,11 @@ export function createApp(deps: AppDeps) {
     }
     const isAnnual = plan === "annual";
     const isSixMonth = plan === "six_month";
-    const lineItems = isAnnual
+    const includeBatteryCare = wantBatteryAddon && (!alreadyPro || !currentAddons.includes("battery_care"));
+    const includeCloudVault = wantCloudVaultAddon && (!alreadyPro || !currentAddons.includes("cloud_vault"));
+    const lineItems: any[] = alreadyPro && (includeBatteryCare || includeCloudVault)
+      ? []
+      : isAnnual
       ? [
           {
             price_data: {
@@ -2307,6 +2642,50 @@ export function createApp(deps: AppDeps) {
           },
         ];
 
+    if (includeBatteryCare) {
+      lineItems.push({
+        price_data: {
+          currency: localizedPricing.currency,
+          unit_amount: isAnnual
+            ? localizedPricing.batteryCareAnnualAmount
+            : isSixMonth
+            ? localizedPricing.batteryCareSixMonthAmount
+            : localizedPricing.batteryCareMonthlyAmount,
+          recurring: isAnnual
+            ? { interval: "year" as const }
+            : isSixMonth
+            ? { interval: "month" as const, interval_count: 6 }
+            : { interval: "month" as const },
+          product_data: { name: "Total Battery & Mac/Phone Care — Device Lifespan Extender" },
+        },
+        quantity: 1,
+      });
+    }
+    if (includeCloudVault) {
+      lineItems.push({
+        price_data: {
+          currency: localizedPricing.currency,
+          unit_amount: isAnnual
+            ? localizedPricing.cloudVaultAnnualAmount
+            : isSixMonth
+            ? localizedPricing.cloudVaultSixMonthAmount
+            : localizedPricing.cloudVaultMonthlyAmount,
+          recurring: isAnnual
+            ? { interval: "year" as const }
+            : isSixMonth
+            ? { interval: "month" as const, interval_count: 6 }
+            : { interval: "month" as const },
+          product_data: { name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync" },
+        },
+        quantity: 1,
+      });
+    }
+
+    const chosenAddons = [
+      ...(includeBatteryCare ? ["battery_care"] : []),
+      ...(includeCloudVault ? ["cloud_vault"] : []),
+    ];
+
     try {
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
@@ -2318,7 +2697,13 @@ export function createApp(deps: AppDeps) {
           : {}),
         line_items: lineItems,
         subscription_data: {
-          metadata: { account_id: account.id, plan },
+          metadata: {
+            account_id: account.id,
+            plan,
+            ...(chosenAddons.length > 0 ? { addons: chosenAddons.join(",") } : {}),
+            ...(includeBatteryCare ? { battery_care: "1" } : {}),
+            ...(includeCloudVault ? { cloud_vault: "1" } : {}),
+          },
         },
         allow_promotion_codes: true,
         success_url: `${config.publicUrl}/checkout/success`,
@@ -2331,7 +2716,12 @@ export function createApp(deps: AppDeps) {
       console.warn("[v1/checkout] Falling back to /order:", err);
     }
 
-    const fallbackUrl = `${config.publicUrl}/order${email ? `?email=${encodeURIComponent(email)}` : ""}`;
+    const params = new URLSearchParams();
+    if (email) params.set("email", email);
+    if (includeCloudVault) params.set("addon", "cloud_vault");
+    else if (includeBatteryCare) params.set("addon", "battery_care");
+    const qs = params.toString();
+    const fallbackUrl = `${config.publicUrl}/order${qs ? `?${qs}` : ""}`;
     return c.json({ url: fallbackUrl });
   });
 
@@ -2362,6 +2752,13 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "Please provide your email and message." }, 400);
     }
     const id = repo.createSupportTicket({ email, subject, message, platform, logs });
+    syncToCentralCrm("/api/support/contact", {
+      email,
+      subject,
+      message,
+      os: platform,
+      diagnostics: logs ? { logs } : undefined,
+    });
     import("./email.js")
       .then(({ sendSupportNotificationEmail }) =>
         sendSupportNotificationEmail({ fromEmail: email, subject, message, platform, ticketId: String(id) })
@@ -2408,6 +2805,13 @@ export function createApp(deps: AppDeps) {
       message: body.message,
       stack: body.stack,
     });
+    syncToCentralCrm("/v1/telemetry/crash", {
+      os: body.platform || "windows",
+      app_version: body.app_version || "0.1.0",
+      error_type: body.error_type || "panic",
+      message: body.message || body.error_type || "crash",
+      stack_trace: body.stack || null,
+    });
     return c.json({ ok: true, id });
   });
   app.post("/v1/telemetry/event", async (c) => {
@@ -2422,6 +2826,13 @@ export function createApp(deps: AppDeps) {
       platform: body.platform,
       account_id: typeof body.account_id === "string" ? body.account_id.slice(0, 64) : null,
       metadata: body.metadata,
+    });
+    syncToCentralCrm("/v1/telemetry/event", {
+      event_name: eventName,
+      category: "funnel",
+      os: body.platform || "windows",
+      account_id: typeof body.account_id === "string" ? body.account_id.slice(0, 64) : null,
+      properties: body.metadata || null,
     });
     return c.json({ ok: true, id });
   });

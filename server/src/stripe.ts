@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import type { EntStatus, Repo } from "./db.js";
+import { syncToCentralCrm } from "./crm-sync.js";
 
 // Stripe moved some fields between API versions (e.g. current_period_end moved
 // onto subscription items; invoice.subscription moved under invoice.parent).
@@ -43,7 +44,27 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   const intervalCount = price?.recurring?.interval_count ?? 1;
   const currentPeriodEnd = periodEnd(sub);
   const planName = interval === "year" ? "annual" : intervalCount === 6 ? "six_month" : (sub.metadata?.plan || "monthly");
-  const amountCents = price?.unit_amount ?? (interval === "year" ? 6499 : intervalCount === 6 ? 4799 : 1199);
+  const totalAmountCents = Array.isArray(sub.items?.data) && sub.items.data.length > 0
+    ? sub.items.data.reduce((sum, item) => sum + ((item.price?.unit_amount ?? 0) * (item.quantity ?? 1)), 0)
+    : 0;
+  const amountCents = totalAmountCents > 0 ? totalAmountCents : (price?.unit_amount ?? (interval === "year" ? 6499 : intervalCount === 6 ? 4799 : 1199));
+
+  // Extract purchased add-ons from subscription metadata or multi-item subscription lines
+  const detectedAddons = new Set<string>();
+  const metaAddonsRaw = typeof sub.metadata?.addons === "string" ? sub.metadata.addons : "";
+  for (const part of metaAddonsRaw.split(",")) {
+    const clean = part.trim().toLowerCase();
+    if (clean) detectedAddons.add(clean);
+  }
+  if (sub.metadata?.battery_care === "1" || sub.metadata?.battery_care === "true") {
+    detectedAddons.add("battery_care");
+  }
+  if (sub.metadata?.cloud_vault === "1" || sub.metadata?.cloud_vault === "true") {
+    detectedAddons.add("cloud_vault");
+  }
+  if (Array.isArray(sub.items?.data) && sub.items.data.length > 1 && detectedAddons.size === 0) {
+    detectedAddons.add("battery_care");
+  }
 
   // Never let an abandoned checkout (incomplete / incomplete_expired) or a non-active webhook
   // for a different subscription ID overwrite an already active/trialing or lifetime entitlement.
@@ -63,6 +84,7 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
       stripe_subscription_id: sub.id,
       status: sub.status as EntStatus,
       plan: planName,
+      addons_list: Array.from(detectedAddons),
       current_period_end: currentPeriodEnd,
       cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
     });
@@ -98,6 +120,19 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     actor: "stripe",
     metadata: { subscription_id: sub.id, status: sub.status },
   });
+
+  if (account.email) {
+    syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+      email: account.email,
+      name: account.name,
+      country: account.country,
+      plan: `pro_${planName}`,
+      status: sub.status === "active" || sub.status === "trialing" || sub.status === "past_due" ? sub.status : "canceled",
+      amount_cents: amountCents,
+      addons: Array.from(detectedAddons),
+      notes: `Synced from SWEEPR Cleaner Stripe (${sub.id})`,
+    });
+  }
 }
 
 export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Stripe.Event) {
