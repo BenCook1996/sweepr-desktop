@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { generateKeyPairSync } from "node:crypto";
 import Stripe from "stripe";
 import { config } from "./config.js";
 import { openDb } from "./db.js";
@@ -6,7 +7,9 @@ import { loadSigningKey } from "./tokens.js";
 import { createApp } from "./app.js";
 
 const repo = openDb(config.databasePath);
-const signingKey = loadSigningKey(config.licensePrivateKeyB64);
+const signingKey = config.licensePrivateKeyB64
+  ? loadSigningKey(config.licensePrivateKeyB64)
+  : generateKeyPairSync("ed25519").privateKey;
 const stripe = config.stripeSecretKey.startsWith("sk_") && !config.stripeSecretKey.includes("...")
   ? new Stripe(config.stripeSecretKey)
   : null;
