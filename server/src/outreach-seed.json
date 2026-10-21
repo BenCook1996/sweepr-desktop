@@ -9508,5 +9508,875 @@
     "status": "listed",
     "message_id": "extra150-149-1792540872909",
     "reached_out_at": 1792540872
+  },
+  {
+    "who": "Telegraph Daily Drip (JA)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/JA-Windows-11-ストレージ最適化ガイド-Obsidian-Electron-Cache--GPUCache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Obsidian Electron Cache & GPUCache (2026-10-21) -> https://sweeprcleaner.com/clean/app/obsidian-gpu-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-0-1792573213615",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "Catbox Daily Drip (EN)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/udof8h.html",
+    "how": "Daily Drip Dofollow HTML (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Microsoft Outlook SecureTemp Attachments Cache (Content.Outlook) (1.0 GB – 8.0 GB) -> https://sweeprcleaner.com/clean/app/outlook-securetemp-olk (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-1-1792573213617",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "DPaste Daily Drip (DE)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/q9ErV",
+    "how": "Daily Drip Dofollow Markdown (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Microsoft OneDrive Setup & Telemetry Log Bloat (2026-10-21) -> https://sweeprcleaner.com/clean/app/onedrive-logs-setup-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-2-1792573213618",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "Telegraph Daily Drip (FR)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/FR-Optimisation-du-stockage-Windows-11--Dropbox-Hidden-dropboxcache-Staging-Folder-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Dropbox Hidden .dropbox.cache Staging Folder (2026-10-21) -> https://sweeprcleaner.com/clean/app/dropbox-staging-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-3-1792573213618",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "Catbox Daily Drip (ES)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/7ratw9.html",
+    "how": "Daily Drip Dofollow HTML (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Apple Devices & iTunes Old iOS Firmware (.ipsw) Cache (6.0 GB – 25.0 GB) -> https://sweeprcleaner.com/clean/app/itunes-apple-mobile-backups (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-4-1792573213619",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "DPaste Daily Drip (IT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/1hFHD",
+    "how": "Daily Drip Dofollow Markdown (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Signal Desktop Electron Cache & Temp Logs (2026-10-21) -> https://sweeprcleaner.com/clean/app/signal-desktop-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-5-1792573213620",
+    "reached_out_at": 1792573213
+  },
+  {
+    "who": "Telegraph Daily Drip (PT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/PT-Otimização-de-armazenamento-no-Windows-11-Mozilla-Thunderbird-Mail-Cache-cache2-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Mozilla Thunderbird Mail Cache (cache2) (2026-10-21) -> https://sweeprcleaner.com/clean/app/thunderbird-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-6-1792573214770",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "Catbox Daily Drip (NL)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/704x6t.html",
+    "how": "Daily Drip Dofollow HTML (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Visual Studio Code CachedData, CachedExtensionVSIXs & Logs (1.5 GB – 10.0 GB) -> https://sweeprcleaner.com/clean/app/vscode-cacheddata (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-7-1792573214771",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "DPaste Daily Drip (JA)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/ahQox",
+    "how": "Daily Drip Dofollow Markdown (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Node.js npm _cacache & npx Temp Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/npm-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-8-1792573214772",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "Telegraph Daily Drip (EN)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/EN-Windows-11-Storage-Optimization-Guide-pnpm-Content-Addressable-Store--Metadata-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: pnpm Content-Addressable Store & Metadata Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/pnpm-store-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-9-1792573214774",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "Catbox Daily Drip (DE)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/hhpjjd.html",
+    "how": "Daily Drip Dofollow HTML (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Yarn Global Package Cache (%LocalAppData%\\Yarn\\Cache) (2.0 GB – 15.0 GB) -> https://sweeprcleaner.com/clean/app/yarn-berry-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-10-1792573214774",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "DPaste Daily Drip (FR)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/GyQ9C",
+    "how": "Daily Drip Dofollow Markdown (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Rust Cargo Registry Crate & Git Cache (.cargo\\registry) (2026-10-21) -> https://sweeprcleaner.com/clean/app/cargo-registry-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-11-1792573214775",
+    "reached_out_at": 1792573214
+  },
+  {
+    "who": "Telegraph Daily Drip (ES)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/ES-Optimización-de-almacenamiento-en-Windows-11-Python-pip-Wheel--HTTP-Download-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Python pip Wheel & HTTP Download Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/pip-http-wheels-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-12-1792573215417",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "Catbox Daily Drip (IT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/h1dm1v.html",
+    "how": "Daily Drip Dofollow HTML (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: .NET NuGet HTTP & Temp Cache (2.0 GB – 16.0 GB) -> https://sweeprcleaner.com/clean/app/nuget-packages-http-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-13-1792573215418",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "DPaste Daily Drip (PT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/j11ot",
+    "how": "Daily Drip Dofollow Markdown (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Gradle Build Cache & Wrapper Distributions (.gradle\\caches) (2026-10-21) -> https://sweeprcleaner.com/clean/app/gradle-wrapper-caches (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-14-1792573215419",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "Telegraph Daily Drip (NL)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/NL-Windows-11-schijfruimte-optimaliseren-JetBrains-IDE-IntelliJ-PyCharm-WebStorm-RustRover-Caches-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: JetBrains IDE (IntelliJ, PyCharm, WebStorm, RustRover) Caches (2026-10-21) -> https://sweeprcleaner.com/clean/app/jetbrains-system-caches (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-15-1792573215420",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "Catbox Daily Drip (JA)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/4tt7iz.html",
+    "how": "Daily Drip Dofollow HTML (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Android SDK System Image Download Intermediates (3.0 GB – 20.0 GB) -> https://sweeprcleaner.com/clean/app/android-studio-avd-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-16-1792573215421",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "DPaste Daily Drip (EN)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/H8HYF",
+    "how": "Daily Drip Dofollow Markdown (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Docker Desktop CrashDumps, Log Bloat & Dangling Build Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/docker-desktop-build-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-17-1792573215422",
+    "reached_out_at": 1792573215
+  },
+  {
+    "who": "Telegraph Daily Drip (DE)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/DE-Windows-11-Speicherplatz-sicher-bereinigen-PHP-Composer-Package-Archive-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: PHP Composer Package Archive Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/composer-php-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-18-1792573216485",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "Catbox Daily Drip (FR)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/3x80th.html",
+    "how": "Daily Drip Dofollow HTML (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Go Compiler Build Cache (%LocalAppData%\\go-build) (2.0 GB – 15.0 GB) -> https://sweeprcleaner.com/clean/app/go-build-mod-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-19-1792573216486",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "DPaste Daily Drip (ES)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/epHOo",
+    "how": "Daily Drip Dofollow Markdown (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Apache Maven Corrupted .lastUpdated & Temp Artifacts (2026-10-21) -> https://sweeprcleaner.com/clean/app/maven-m2-temp-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-20-1792573216486",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "Telegraph Daily Drip (IT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/IT-Ottimizzazione-spazio-disco-Windows-11-Postman-Desktop-Logs--Chromium-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Postman Desktop Logs & Chromium Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/postman-desktop-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-21-1792573216487",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "Catbox Daily Drip (PT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/lgnwc2.html",
+    "how": "Daily Drip Dofollow HTML (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Cursor & AI Code Editor CachedData & VSIX Bloat (1.5 GB – 9.0 GB) -> https://sweeprcleaner.com/clean/app/cursor-windsurf-ide-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-22-1792573216487",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "DPaste Daily Drip (NL)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/arKWP",
+    "how": "Daily Drip Dofollow Markdown (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: 7-Zip & WinRAR Orphaned Archive Extraction Temp (7zO* / Rar$*) (2026-10-21) -> https://sweeprcleaner.com/clean/app/7zip-winrar-temp-extractions (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-23-1792573216487",
+    "reached_out_at": 1792573216
+  },
+  {
+    "who": "Catbox Daily Drip (EN)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/x0946t.html",
+    "how": "Daily Drip Dofollow HTML (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Grammarly for Windows Logs & WebView Cache (0.5 GB – 3.0 GB) -> https://sweeprcleaner.com/clean/app/grammarly-desktop-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-24-1792573217917",
+    "reached_out_at": 1792573217
+  },
+  {
+    "who": "DPaste Daily Drip (DE)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/Z63e1",
+    "how": "Daily Drip Dofollow Markdown (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Evernote Electron Cache & Temp Attachments (2026-10-21) -> https://sweeprcleaner.com/clean/app/evernote-desktop-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-25-1792573217917",
+    "reached_out_at": 1792573217
+  },
+  {
+    "who": "Telegraph Daily Drip (FR)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/FR-Optimisation-du-stockage-Windows-11--Logitech-G-HUB-Update-Cache--CrashDumps-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Logitech G HUB Update Cache & CrashDumps (2026-10-21) -> https://sweeprcleaner.com/clean/app/logitech-ghub-installer-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-26-1792573217918",
+    "reached_out_at": 1792573217
+  },
+  {
+    "who": "Catbox Daily Drip (ES)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/da8ixc.html",
+    "how": "Daily Drip Dofollow HTML (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Elgato Stream Deck & Wave Link Cache & Logs (0.5 GB – 3.5 GB) -> https://sweeprcleaner.com/clean/app/elgato-streamdeck-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-27-1792573217919",
+    "reached_out_at": 1792573217
+  },
+  {
+    "who": "DPaste Daily Drip (IT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/CKTFG",
+    "how": "Daily Drip Dofollow Markdown (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Adobe Acrobat Reader Setup Files & ARM Update Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/acrobat-reader-arm-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-28-1792573217919",
+    "reached_out_at": 1792573217
+  },
+  {
+    "who": "Telegraph Daily Drip (PT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/PT-Otimização-de-armazenamento-no-Windows-11-Google-Drive-for-Desktop-DriveFS-Logs--Crashpad-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Google Drive for Desktop (DriveFS) Logs & Crashpad (2026-10-21) -> https://sweeprcleaner.com/clean/app/google-drive-desktop-logs (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-30-1792573219179",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "Catbox Daily Drip (NL)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/u8c7u4.html",
+    "how": "Daily Drip Dofollow HTML (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Skype for Windows Media & WebView Cache (0.8 GB – 4.0 GB) -> https://sweeprcleaner.com/clean/app/skype-media-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-31-1792573219180",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "DPaste Daily Drip (JA)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/jEKh5",
+    "how": "Daily Drip Dofollow Markdown (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： TIDAL HiFi Lossless Audio Streaming Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/tidal-desktop-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-32-1792573219181",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "Telegraph Daily Drip (EN)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/EN-Windows-11-Storage-Optimization-Guide-qBittorrent-GeoIP--Orphaned-torrent-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: qBittorrent GeoIP & Orphaned .torrent Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/qBittorrent-itunes-logs (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-33-1792573219182",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "Catbox Daily Drip (DE)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/cxoszk.html",
+    "how": "Daily Drip Dofollow HTML (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Anki Flashcard Backup & Media Trash Cache (0.5 GB – 4.0 GB) -> https://sweeprcleaner.com/clean/app/anki-media-trash-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-34-1792573219182",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "DPaste Daily Drip (FR)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/AYA5b",
+    "how": "Daily Drip Dofollow Markdown (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Windows Update Download Cache (SoftwareDistribution\\Download) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/software-distribution-download (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-35-1792573219183",
+    "reached_out_at": 1792573219
+  },
+  {
+    "who": "Telegraph Daily Drip (ES)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/ES-Optimización-de-almacenamiento-en-Windows-11-Windows-Delivery-Optimization-P2P-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Windows Delivery Optimization P2P Cache (2026-10-21) -> https://sweeprcleaner.com/clean/folder/delivery-optimization-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-36-1792573220312",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "Catbox Daily Drip (IT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/gsjjkn.html",
+    "how": "Daily Drip Dofollow HTML (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Windows Prefetch Application Launch Cache (0.2 GB – 1.5 GB) -> https://sweeprcleaner.com/clean/folder/windows-prefetch (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-37-1792573220313",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "DPaste Daily Drip (PT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/5sx3E",
+    "how": "Daily Drip Dofollow Markdown (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Windows Installer Orphaned Patch Cache (C:\\Windows\\Installer) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-installer-patch-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-38-1792573220314",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "Telegraph Daily Drip (NL)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/NL-Windows-11-schijfruimte-optimaliseren-Windows-Hibernation-File-Chiberfilsys-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Windows Hibernation File (C:\\hiberfil.sys) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/hiberfil-sys (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-39-1792573220314",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "Catbox Daily Drip (JA)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/e5ymc8.html",
+    "how": "Daily Drip Dofollow HTML (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Windows Virtual Memory Pagefile (C:\\pagefile.sys) (4.0 GB – 32.0 GB) -> https://sweeprcleaner.com/clean/folder/pagefile-sys (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-40-1792573220315",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "DPaste Daily Drip (EN)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/T9Bq0",
+    "how": "Daily Drip Dofollow Markdown (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Windows Modern UWP Swapfile (C:\\swapfile.sys) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/swapfile-sys (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-41-1792573220316",
+    "reached_out_at": 1792573220
+  },
+  {
+    "who": "Telegraph Daily Drip (DE)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/DE-Windows-11-Speicherplatz-sicher-bereinigen-System-Volume-Information-VSS-Shadow-Copies--Restore-Points-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: System Volume Information (VSS Shadow Copies & Restore Points) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/system-volume-information (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-42-1792573221115",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "Catbox Daily Drip (FR)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/rjwxwj.html",
+    "how": "Daily Drip Dofollow HTML (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : $Windows.~BT & $Windows.~WS Hidden Upgrade Staging Folders (4.0 GB – 18.0 GB) -> https://sweeprcleaner.com/clean/folder/windows-bt-upgrade-folder (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-43-1792573221116",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "DPaste Daily Drip (ES)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/iNyD7",
+    "how": "Daily Drip Dofollow Markdown (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Windows Error Reporting (WER) ReportArchive & ReportQueue (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-error-reporting-wer (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-44-1792573221117",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "Telegraph Daily Drip (IT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/IT-Ottimizzazione-spazio-disco-Windows-11-User-Application-CrashDumps-LocalAppDataCrashDumps-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: User Application CrashDumps (%LocalAppData%\\CrashDumps) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/localappdata-crashdumps (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-45-1792573221117",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "Catbox Daily Drip (PT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/w9tfni.html",
+    "how": "Daily Drip Dofollow HTML (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Kernel Memory Dump & Minidump (C:\\Windows\\MEMORY.DMP & Minidump) (1.5 GB – 16.0 GB) -> https://sweeprcleaner.com/clean/folder/windows-memory-dmp-minidump (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-46-1792573221117",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "DPaste Daily Drip (NL)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/yjzjp",
+    "how": "Daily Drip Dofollow Markdown (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Windows File Explorer Thumbnail & Icon Cache (thumbcache_*.db) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/explorer-thumbnail-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-47-1792573221118",
+    "reached_out_at": 1792573221
+  },
+  {
+    "who": "Telegraph Daily Drip (JA)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/JA-Windows-11-ストレージ最適化ガイド-Microsoft-DirectX-D3DSCache-Shader-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Microsoft DirectX D3DSCache Shader Cache (2026-10-21) -> https://sweeprcleaner.com/clean/folder/directx-d3dscache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-48-1792573222001",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "Catbox Daily Drip (EN)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/qghokp.html",
+    "how": "Daily Drip Dofollow HTML (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Component-Based Servicing Logs (C:\\Windows\\Logs\\CBS) (1.0 GB – 8.0 GB) -> https://sweeprcleaner.com/clean/folder/windows-cbs-logs (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-49-1792573222002",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "DPaste Daily Drip (DE)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/iF32g",
+    "how": "Daily Drip Dofollow Markdown (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: DISM & SetupAPI Diagnostic Logs (C:\\Windows\\Logs\\DISM) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-dism-logs (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-50-1792573222003",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "Telegraph Daily Drip (FR)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/FR-Optimisation-du-stockage-Windows-11--Windows-Setup-Panther-Upgrade-Logs-CWindowsPanther-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Windows Setup Panther Upgrade Logs (C:\\Windows\\Panther) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-panther-setup-logs (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-51-1792573222003",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "Catbox Daily Drip (ES)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/6b0dfm.html",
+    "how": "Daily Drip Dofollow HTML (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Windows LiveKernelReports Watchdog Dumps (1.0 GB – 8.0 GB) -> https://sweeprcleaner.com/clean/folder/windows-livekernelreports (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-52-1792573222004",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "DPaste Daily Drip (IT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/P2pOY",
+    "how": "Daily Drip Dofollow Markdown (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Microsoft Defender Antivirus Scan History & Support Logs (2026-10-21) -> https://sweeprcleaner.com/clean/folder/defender-scan-history-mplog (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-53-1792573222005",
+    "reached_out_at": 1792573222
+  },
+  {
+    "who": "Telegraph Daily Drip (PT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/PT-Otimização-de-armazenamento-no-Windows-11-Burn-Bootstrapper-Package-Cache-CProgramDataPackage-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Burn Bootstrapper Package Cache (C:\\ProgramData\\Package Cache) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/package-cache-programdata (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-54-1792573223139",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Catbox Daily Drip (NL)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/9f4omd.html",
+    "how": "Daily Drip Dofollow HTML (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Microsoft Office Legacy Local Installation Source (C:\\MSOCache) (1.5 GB – 6.0 GB) -> https://sweeprcleaner.com/clean/folder/msocache-office-setup (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-55-1792573223140",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "DPaste Daily Drip (JA)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/fxxki",
+    "how": "Daily Drip Dofollow Markdown (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Windows INetCache (Legacy Temporary Internet Files & WebView Cache) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/inetcache-temporary-internet-files (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-56-1792573223141",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Catbox Daily Drip (DE)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/8f2hve.html",
+    "how": "Daily Drip Dofollow HTML (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Windows Certificate CRL & OCSP URL Cache (CryptnetUrlCache) (0.1 GB – 1.0 GB) -> https://sweeprcleaner.com/clean/folder/cryptneturlcache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-57-1792573223142",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "DPaste Daily Drip (FR)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/Z7P2c",
+    "how": "Daily Drip Dofollow Markdown (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Windows System Resource Usage Monitor (C:\\Windows\\System32\\sru) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-srum-telemetry-db (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-58-1792573223143",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Telegraph Daily Drip (ES)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/ES-Optimización-de-almacenamiento-en-Windows-11-Windows-DriverStore-Superseded-GPU--Audio-Driver-Packages-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Windows DriverStore Superseded GPU & Audio Driver Packages (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-driverstore-old-drivers (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-60-1792573223906",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Catbox Daily Drip (IT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/cwz7k9.html",
+    "how": "Daily Drip Dofollow HTML (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Hidden $Recycle.Bin Corrupted & Per-Drive Trash (2.0 GB – 50.0 GB) -> https://sweeprcleaner.com/clean/folder/recycle-bin-hidden- folder (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-61-1792573223907",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "DPaste Daily Drip (PT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/mf7Fc",
+    "how": "Daily Drip Dofollow Markdown (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Windows Store UWP Apps TempState & AC\\Temp (%LocalAppData%\\Packages) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/uwp-packages-tempstate (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-62-1792573223908",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Telegraph Daily Drip (NL)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/NL-Windows-11-schijfruimte-optimaliseren-Microsoft-Clipchamp-Video-Editor-EBWebView--Media-Cache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Microsoft Clipchamp Video Editor EBWebView & Media Cache (2026-10-21) -> https://sweeprcleaner.com/clean/folder/clipchamp-uwp-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-63-1792573223908",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Catbox Daily Drip (JA)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/ukvqlw.html",
+    "how": "Daily Drip Dofollow HTML (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Windows RetailDemo Offline Content Bloat (0.3 GB – 1.5 GB) -> https://sweeprcleaner.com/clean/folder/windows-retaildemo-offline-content (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-64-1792573223909",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "DPaste Daily Drip (EN)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/tTqfo",
+    "how": "Daily Drip Dofollow Markdown (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Windows Downloaded Program Files & Legacy ActiveX Cache (2026-10-21) -> https://sweeprcleaner.com/clean/folder/downloaded-program-files-legacy (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-65-1792573223910",
+    "reached_out_at": 1792573223
+  },
+  {
+    "who": "Telegraph Daily Drip (DE)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/DE-Windows-11-Speicherplatz-sicher-bereinigen-Windows-BranchCache-Peer-Caching-Directory-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Windows BranchCache Peer Caching Directory (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-branchcache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-66-1792573224665",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "Catbox Daily Drip (FR)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/qz6h6e.html",
+    "how": "Daily Drip Dofollow HTML (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : Microsoft Defender Expired Quarantine Items (0.5 GB – 5.0 GB) -> https://sweeprcleaner.com/clean/folder/windows-defender-quarantine-old (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-67-1792573224666",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "DPaste Daily Drip (ES)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/pN4yn",
+    "how": "Daily Drip Dofollow Markdown (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Bloated Windows Search Index Database (Windows.edb) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-search-index-edb (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-68-1792573224666",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "Telegraph Daily Drip (IT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/IT-Ottimizzazione-spazio-disco-Windows-11-WSL2-Linux-Virtual-Disk-Bloat-ext4vhdx-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: WSL2 Linux Virtual Disk Bloat (ext4.vhdx) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/wsl2-temp-vhdx-compaction (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-69-1792573224667",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "Catbox Daily Drip (PT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/14246t.html",
+    "how": "Daily Drip Dofollow HTML (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Leftover NVIDIA Driver Unpack Directory (C:\\NVIDIA) (1.5 GB – 8.0 GB) -> https://sweeprcleaner.com/clean/folder/nvidia-driver-extraction-c-nvidia (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-70-1792573224667",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "DPaste Daily Drip (NL)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/vFttC",
+    "how": "Daily Drip Dofollow Markdown (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Leftover AMD Radeon Driver Unpack Directory (C:\\AMD) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/amd-driver-extraction-c-amd (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-71-1792573224668",
+    "reached_out_at": 1792573224
+  },
+  {
+    "who": "Telegraph Daily Drip (JA)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/JA-Windows-11-ストレージ最適化ガイド-Windows-SleepStudy--Energy-Diagnostic-ETL-Traces-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Windows SleepStudy & Energy Diagnostic ETL Traces (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-logs-etw-sleepstudy (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-72-1792573225554",
+    "reached_out_at": 1792573225
+  },
+  {
+    "who": "Catbox Daily Drip (EN)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/sm1acr.html",
+    "how": "Daily Drip Dofollow HTML (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: Discord Cache & Code Cache (1.5 GB – 6.0 GB) -> https://sweeprcleaner.com/clean/app/discord-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-73-1792573225555",
+    "reached_out_at": 1792573225
+  },
+  {
+    "who": "DPaste Daily Drip (DE)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/oD6sp",
+    "how": "Daily Drip Dofollow Markdown (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: Spotify Offline Storage & Streaming Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/spotify-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-74-1792573225556",
+    "reached_out_at": 1792573225
+  },
+  {
+    "who": "Catbox Daily Drip (ES)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/6tl351.html",
+    "how": "Daily Drip Dofollow HTML (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: Google Chrome Service Worker & CacheStorage (1.0 GB – 5.0 GB) -> https://sweeprcleaner.com/clean/app/chrome-service-worker-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-75-1792573225557",
+    "reached_out_at": 1792573225
+  },
+  {
+    "who": "DPaste Daily Drip (IT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/CaaU6",
+    "how": "Daily Drip Dofollow Markdown (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Windows WinSxS (Side-by-Side Component Store) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/winsxs (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-76-1792573225558",
+    "reached_out_at": 1792573225
+  },
+  {
+    "who": "Telegraph Daily Drip (PT)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/PT-Otimização-de-armazenamento-no-Windows-11-Windows-System-Temp-Folder-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Windows System Temp Folder (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-temp (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-78-1792573226416",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "Catbox Daily Drip (NL)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/ir7ffg.html",
+    "how": "Daily Drip Dofollow HTML (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: User AppData Local Temp Directory (2.0 GB – 12.0 GB) -> https://sweeprcleaner.com/clean/folder/appdata-temp (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-79-1792573226416",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "DPaste Daily Drip (JA)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/MWTqC",
+    "how": "Daily Drip Dofollow Markdown (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Windows.old (Previous Windows Installation) (2026-10-21) -> https://sweeprcleaner.com/clean/folder/windows-old (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-80-1792573226417",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "Telegraph Daily Drip (EN)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/EN-Windows-11-Storage-Optimization-Guide-NVIDIA-DirectX-Shader-Cache-DXCache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: NVIDIA DirectX Shader Cache (DXCache) (2026-10-21) -> https://sweeprcleaner.com/clean/app/nvidia-dxcache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-81-1792573226417",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "Catbox Daily Drip (DE)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/4egh0f.html",
+    "how": "Daily Drip Dofollow HTML (DE)",
+    "category": "[DE] Windows 11 Speicherplatz sicher bereinigen: NVIDIA OpenGL & Vulkan Shader Cache (GLCache) (1.0 GB – 6.0 GB) -> https://sweeprcleaner.com/clean/app/nvidia-glcache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-82-1792573226417",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "DPaste Daily Drip (FR)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/04vMk",
+    "how": "Daily Drip Dofollow Markdown (FR)",
+    "category": "[FR] Optimisation du stockage Windows 11 : NVIDIA ProgramData NV_Cache & Installer Leftovers (2026-10-21) -> https://sweeprcleaner.com/clean/app/nvidia-nv-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-83-1792573226418",
+    "reached_out_at": 1792573226
+  },
+  {
+    "who": "Telegraph Daily Drip (ES)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/ES-Optimización-de-almacenamiento-en-Windows-11-AMD-Radeon-Adrenalin-DXCache--VkCache-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (ES)",
+    "category": "[ES] Optimización de almacenamiento en Windows 11: AMD Radeon Adrenalin DXCache & VkCache (2026-10-21) -> https://sweeprcleaner.com/clean/app/amd-shader-cache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-84-1792573227301",
+    "reached_out_at": 1792573227
+  },
+  {
+    "who": "Catbox Daily Drip (IT)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/oc0vc8.html",
+    "how": "Daily Drip Dofollow HTML (IT)",
+    "category": "[IT] Ottimizzazione spazio disco Windows 11: Intel Arc & Iris Xe Graphics Shader Cache (1.0 GB – 5.0 GB) -> https://sweeprcleaner.com/clean/app/intel-arc-shader-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-85-1792573227302",
+    "reached_out_at": 1792573227
+  },
+  {
+    "who": "DPaste Daily Drip (PT)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/gAwpD",
+    "how": "Daily Drip Dofollow Markdown (PT)",
+    "category": "[PT] Otimização de armazenamento no Windows 11: Epic Games Launcher Webcache & Crash Logs (2026-10-21) -> https://sweeprcleaner.com/clean/app/epic-games-webcache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-86-1792573227303",
+    "reached_out_at": 1792573227
+  },
+  {
+    "who": "Telegraph Daily Drip (NL)",
+    "website": "telegra.ph",
+    "url": "https://telegra.ph/NL-Windows-11-schijfruimte-optimaliseren-Steam-Depotcache--Downloading-Staging-Bloat-2026-10-21-10-21",
+    "how": "Daily Drip Dofollow Article (NL)",
+    "category": "[NL] Windows 11 schijfruimte optimaliseren: Steam Depotcache & Downloading Staging Bloat (2026-10-21) -> https://sweeprcleaner.com/clean/app/steam-depotcache (DR 89)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-87-1792573227303",
+    "reached_out_at": 1792573227
+  },
+  {
+    "who": "Catbox Daily Drip (JA)",
+    "website": "files.catbox.moe",
+    "url": "https://files.catbox.moe/cgbira.html",
+    "how": "Daily Drip Dofollow HTML (JA)",
+    "category": "[JA] Windows 11 ストレージ最適化ガイド： Blizzard Battle.net Agent & Blizzard Entertainment Cache (1.5 GB – 7.0 GB) -> https://sweeprcleaner.com/clean/app/battlenet-cache (DR 79)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-88-1792573227304",
+    "reached_out_at": 1792573227
+  },
+  {
+    "who": "DPaste Daily Drip (EN)",
+    "website": "dpaste.org",
+    "url": "https://dpaste.org/hiXBP",
+    "how": "Daily Drip Dofollow Markdown (EN)",
+    "category": "[EN] Windows 11 Storage Optimization Guide: EA App & Origin Legacy Installer Cache (2026-10-21) -> https://sweeprcleaner.com/clean/app/ea-app-cache (DR 74)",
+    "status": "listed",
+    "message_id": "drip-2026-10-21-89-1792573227305",
+    "reached_out_at": 1792573227
   }
 ]

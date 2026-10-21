@@ -17,6 +17,8 @@
     <string name="action_back">Back</string>
     <string name="action_close">Close</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_delete">Delete</string>
     <string name="option_system_default">System default</string>
     <string name="error_no_browser">No browser available</string>
     <string name="error_no_email_app">No email app installed</string>
@@ -34,10 +36,12 @@
     </plurals>
 
     <!-- Bottom navigation -->
-    <string name="nav_home">Home</string>
+    <string name="nav_home">Clean</string>
     <string name="nav_clean">Clean</string>
+    <string name="nav_swipe">Swipe</string>
+    <string name="nav_battery_vault">Battery &amp; Vault</string>
     <string name="nav_tips">Tips</string>
-    <string name="nav_settings">Settings</string>
+    <string name="nav_settings">Account</string>
 
     <!-- Categories -->
     <string name="category_photos">Photos</string>
@@ -165,8 +169,8 @@
     <string name="contact_reason_same_number">Same phone number</string>
 
     <!-- Swipe cleanup -->
-    <string name="swipe_empty">No photos or videos to review</string>
-    <string name="swipe_intro">Pick a month, then swipe left to delete or right to keep.</string>
+    <string name="swipe_empty">Scan your phone first to review photos and videos month by month</string>
+    <string name="swipe_intro">Pick a month, then swipe right to Keep or left to Delete. Nothing is erased until you confirm at the end.</string>
     <plurals name="swipe_month_items">
         <item quantity="one">%1$d item · %2$s</item>
         <item quantity="other">%1$d items · %2$s</item>
@@ -348,46 +352,46 @@
 
     <!-- New Categories, Tabs & Best Shot -->
     <string name="category_large_files">Large Files (&gt;50 MB)</string>
-    <string name="category_messenger_media">Messenger Media</string>
-    <string name="category_trash">Recently Deleted (Trash)</string>
+    <string name="category_messenger_media">Chat &amp; Messenger Media</string>
+    <string name="category_trash">Trash Bin (Restore Deleted)</string>
     <string name="tab_blurry">Blurry (%1$d)</string>
-    <string name="tab_large_files">Large &gt;50MB (%1$d)</string>
-    <string name="tab_messenger">Messenger (%1$d)</string>
-    <string name="kind_identical_copies">identical copies</string>
-    <string name="kind_similar_shots">similar shots</string>
-    <string name="badge_best_shot">BEST SHOT</string>
+    <string name="tab_large_files">Large Files (%1$d)</string>
+    <string name="tab_messenger">Chat Media (%1$d)</string>
+    <string name="kind_identical_copies">exact copies</string>
+    <string name="kind_similar_shots">similar photos</string>
+    <string name="badge_best_shot">✓ Best Photo (Kept)</string>
     <string name="header_blurry_count">%1$d blurry / out-of-focus photos · %2$s</string>
     <string name="empty_no_blurry">No blurry photos detected 🎉</string>
     <string name="header_large_files">%1$d large media files (&gt;50 MB) · %2$s</string>
     <string name="empty_no_large_files">No media files over 50 MB found 🎉</string>
-    <string name="header_messenger_media">%1$d WhatsApp &amp; Telegram items · %2$s</string>
-    <string name="empty_no_messenger">No WhatsApp or Telegram media found 🎉</string>
+    <string name="header_messenger_media">%1$d saved chat photos &amp; videos · %2$s</string>
+    <string name="empty_no_messenger">No saved chat photos or videos found 🎉</string>
 
     <!-- Video Compressor (#17) -->
-    <string name="compressor_badge">Compress</string>
-    <string name="compressor_title">Video Compressor</string>
+    <string name="compressor_badge">Shrink Size</string>
+    <string name="compressor_title">Shrink Video Size</string>
     <string name="compressor_subtitle">Estimated space saved: ~%1$s</string>
-    <string name="compressor_preset_720p">720p Compact (Save ~60%%)</string>
-    <string name="compressor_preset_1080p">1080p Balanced (Save ~40%%)</string>
-    <string name="compressor_preset_480p">480p Max Saver (Save ~72%%)</string>
-    <string name="compressor_action_start">Compress Video</string>
-    <string name="compressor_working_title">Compressing video…</string>
-    <string name="compressor_done_title">Video Compressed!</string>
-    <string name="compressor_done_summary">Original: %1$s → Compressed: %2$s\nSpace saved: %3$s (%4$d%%)</string>
-    <string name="compressor_saved_location">Saved to Movies/Sweepr/%1$s. The original is kept until you move it to System Trash.</string>
+    <string name="compressor_preset_720p">Recommended — Save ~60%% Space (Great for phone &amp; sharing)</string>
+    <string name="compressor_preset_1080p">High Quality — Save ~40%% Space (Keeps full HD detail)</string>
+    <string name="compressor_preset_480p">Maximum Space Saver — Save ~72%% Space (Best for old clips)</string>
+    <string name="compressor_action_start">Shrink Video Now</string>
+    <string name="compressor_working_title">Shrinking video size…</string>
+    <string name="compressor_done_title">Video Size Reduced!</string>
+    <string name="compressor_done_summary">Original: %1$s → Smaller copy: %2$s\nSpace saved: %3$s (%4$d%%)</string>
+    <string name="compressor_saved_location">Saved to Movies/Sweepr/%1$s. The original is kept until you move it to the Trash bin.</string>
     <string name="compressor_trash_original">Move Original to Trash</string>
     <string name="compressor_keep_both">Keep Both</string>
-    <string name="compressor_failed">Could not compress video: %1$s</string>
+    <string name="compressor_failed">Could not shrink video: %1$s</string>
 
     <!-- System Trash Undo (#20) -->
-    <string name="trash_explainer">Items moved to Android System Trash stay recoverable for 30 days.</string>
-    <string name="trash_header_count">%1$d items in System Trash · %2$s</string>
-    <string name="trash_restore_action">Restore from Trash</string>
-    <string name="empty_trash">System Trash is empty</string>
+    <string name="trash_explainer">Deleted items stay in your Trash bin for 30 days so you can restore them anytime.</string>
+    <string name="trash_header_count">%1$d items in Trash bin · %2$s</string>
+    <string name="trash_restore_action">Restore Selected Items</string>
+    <string name="empty_trash">Your Trash bin is empty</string>
     <string name="msg_restore_trash_failed">Couldn\'t restore items: %1$s</string>
     <plurals name="msg_restored_from_trash">
-        <item quantity="one">Restored %d item from System Trash</item>
-        <item quantity="other">Restored %d items from System Trash</item>
+        <item quantity="one">Restored %d item from Trash</item>
+        <item quantity="other">Restored %d items from Trash</item>
     </plurals>
 
     <!-- Home-Screen Storage Widget (#21) -->
@@ -414,83 +418,239 @@
     <string name="retention_offer_annual">Switch to Annual Plan (Save 58%% vs Monthly)</string>
     <string name="retention_switch_annual">View Annual Offer</string>
     <string name="retention_continue_google_play">Open Google Play</string>
-    <string name="account_sign_in_title">Sign in with SWEEPR Cleaner Account</string>
-    <string name="account_sign_in_subtitle">Sync an existing SWEEPR Cleaner subscription via email code</string>
-    <string name="account_sign_in_desc">Enter your SWEEPR Cleaner account email to sync your existing subscription across devices.</string>
-    <string name="account_otp_enter_code_title">Enter verification code</string>
-    <string name="account_otp_code_sent_desc">Enter the 6-digit code sent to %1$s.</string>
+    <string name="account_sign_in_title">Already have SWEEPR Pro? Sign in</string>
+    <string name="account_sign_in_subtitle">Unlock your existing Pro plan with your email</string>
+    <string name="account_sign_in_desc">Enter your email address and we\'ll send you a 6-digit code to unlock SWEEPR Pro on this phone.</string>
+    <string name="account_otp_enter_code_title">Enter 6-digit code</string>
+    <string name="account_otp_code_sent_desc">Enter the 6-digit code we emailed to %1$s.</string>
     <string name="account_email_label">Email address</string>
     <string name="account_otp_code_label">6-digit code</string>
-    <string name="account_otp_send_btn">Send Code</string>
-    <string name="account_otp_verify_btn">Verify</string>
+    <string name="account_otp_send_btn">Email Me a Code</string>
+    <string name="account_otp_verify_btn">Unlock Pro</string>
     <string name="account_otp_invalid_email">Please enter a valid email address.</string>
-    <string name="account_otp_sent_to">Verification code sent to %1$s</string>
-    <string name="account_otp_send_failed">Could not send verification code.</string>
-    <string name="account_otp_enter_6_digits">Please enter the 6-digit verification code.</string>
-    <string name="account_otp_invalid_code">Invalid or expired verification code.</string>
+    <string name="account_otp_sent_to">6-digit code sent to %1$s</string>
+    <string name="account_otp_send_failed">Could not send email code.</string>
+    <string name="account_otp_enter_6_digits">Please enter the 6-digit code from your email.</string>
+    <string name="account_otp_invalid_code">That code didn\'t match or has expired.</string>
     <string name="account_signed_in_as">Signed in as %1$s</string>
-    <string name="account_cross_platform_active">Cross-platform plan active</string>
-    <string name="account_linked_status">Linked to SWEEPR Cleaner account</string>
+    <string name="account_cross_platform_active">SWEEPR Pro active across devices</string>
+    <string name="account_linked_status">Linked to your SWEEPR account</string>
     <string name="account_sign_out">Sign Out</string>
-    <string name="account_sign_out_detail">Unlink this device from %1$s</string>
-    <string name="account_signed_out_msg">Signed out of your SWEEPR Cleaner account.</string>
+    <string name="account_sign_out_detail">Unlink this phone from %1$s</string>
+    <string name="account_signed_out_msg">Signed out of your SWEEPR account.</string>
     <string name="account_delete_title">Delete Account &amp; Data</string>
-    <string name="account_delete_subtitle">Permanently delete your SWEEPR Cleaner account</string>
-    <string name="account_delete_confirm_title">Delete SWEEPR Cleaner Account?</string>
-    <string name="account_delete_confirm_body">This permanently deletes your SWEEPR Cleaner account (%1$s), linked devices, and account data. If you have a Google Play subscription, manage or cancel its renewal in Google Play.</string>
+    <string name="account_delete_subtitle">Permanently delete your SWEEPR account</string>
+    <string name="account_delete_confirm_title">Delete Your SWEEPR Account?</string>
+    <string name="account_delete_confirm_body">This permanently deletes your SWEEPR account (%1$s) and sign-in details. If you have an active subscription in Google Play, please cancel it in Google Play settings as well.</string>
     <string name="account_delete_permanently">Delete Permanently</string>
-    <string name="account_deleted_msg">Your SWEEPR Cleaner account and associated data have been permanently deleted.</string>
+    <string name="account_deleted_msg">Your SWEEPR account has been permanently deleted.</string>
     <string name="account_delete_failed_msg">Could not delete account. Please try again.</string>
     <string name="review_prompt_title">Enjoying SWEEPR Cleaner?</string>
     <string name="review_prompt_body">You\'ve just completed your 2nd cleanup! A quick rating on Google Play helps us a lot.</string>
     <string name="review_prompt_later">Not now</string>
 
     <!-- Swipe-to-Clean Photo Triage Mode (#5) -->
-    <string name="triage_mode_grid">Grid View</string>
-    <string name="triage_mode_swipe">Swipe Triage</string>
-    <string name="triage_progress_status">Photo %1$d of %2$d · %3$s marked for Trash</string>
-    <string name="triage_done_subtitle">%1$s marked for Trash. Tap Move to trash below.</string>
+    <string name="triage_mode_grid">Back to Grid</string>
+    <string name="triage_mode_swipe">Swipe One-by-One</string>
+    <string name="triage_progress_status">Photo %1$d of %2$d · %3$s selected to remove</string>
+    <string name="triage_done_subtitle">%1$s selected to remove. Tap Move to trash below.</string>
     <string name="triage_review_again">Review Again</string>
-    <string name="triage_btn_trash">Trash</string>
+    <string name="triage_btn_trash">Remove</string>
     <string name="triage_btn_keep">Keep</string>
-    <string name="triage_sharpness_badge">Sharp %1$s</string>
-    <string name="triage_marked_trash_badge">TRASH</string>
+    <string name="triage_sharpness_badge">Clear Photo</string>
+    <string name="triage_marked_trash_badge">SELECTED TO REMOVE</string>
 
     <!-- Batch Photo Optimizer (#1) & EXIF GPS Privacy Stripper (#9) -->
-    <string name="media_opt_tab_video">Video Compressor</string>
-    <string name="media_opt_tab_photo_privacy">Photo Optimizer &amp; Privacy</string>
-    <string name="photo_opt_toggle_compress">Compress File Size (82% JPEG)</string>
-    <string name="photo_opt_toggle_compress_sub">Scales down &gt;2560px &amp; encodes at 82% quality</string>
-    <string name="photo_opt_toggle_gps">Strip EXIF GPS Location Coordinates</string>
-    <string name="photo_opt_toggle_gps_sub">Removes hidden GPS tags (%1$d photos with GPS)</string>
-    <string name="photo_opt_batch_cta">Optimize %1$d Photos (Save ~%2$s)</string>
-    <string name="photo_opt_batch_gps_only_cta">Strip EXIF GPS from %1$d Photos</string>
-    <string name="photo_opt_empty">No large photos (&gt;1.5 MB) or GPS-tagged photos found 🎉</string>
-    <string name="photo_opt_badge_action">Optimize</string>
-    <string name="photo_opt_badge_gps">GPS</string>
-    <string name="photo_opt_header_count">%1$d optimizable photos · %2$s</string>
-    <string name="photo_opt_working_title">Optimizing photos…</string>
-    <string name="photo_opt_working_body">Compressing resolution and stripping EXIF GPS coordinates…</string>
-    <string name="photo_opt_done_title">Photos Optimized!</string>
-    <string name="photo_opt_done_summary">Optimized %1$d photos: %2$s → %3$s\nSpace saved: %4$s (%5$d%%)</string>
-    <string name="photo_opt_gps_stripped_summary">EXIF GPS location stripped from %1$d photos</string>
-    <string name="photo_opt_saved_location">Saved to Pictures/Sweepr. Originals are kept until moved to 30-Day System Trash.</string>
-    <string name="photo_opt_trash_original">Move Original to 30-Day Trash</string>
-    <string name="photo_opt_failed">Could not optimize selected photos.</string>
+    <string name="media_opt_tab_video">Shrink Large Videos</string>
+    <string name="media_opt_tab_photo_privacy">Shrink Photos &amp; Privacy</string>
+    <string name="photo_opt_toggle_compress">Shrink Photo File Size</string>
+    <string name="photo_opt_toggle_compress_sub">Makes photos take up ~65%% less space while looking just as sharp</string>
+    <string name="photo_opt_toggle_gps">Remove Hidden Location Info</string>
+    <string name="photo_opt_toggle_gps_sub">Erases the map location saved inside your photos (%1$d photos have location tags)</string>
+    <string name="photo_opt_batch_cta">Shrink %1$d Photos (Save ~%2$s)</string>
+    <string name="photo_opt_batch_gps_only_cta">Remove Location Info from %1$d Photos</string>
+    <string name="photo_opt_empty">No large photos or location-tagged photos found 🎉</string>
+    <string name="photo_opt_badge_action">Shrink</string>
+    <string name="photo_opt_badge_gps">Location</string>
+    <string name="photo_opt_header_count">%1$d photos can be shrunk · %2$s</string>
+    <string name="photo_opt_working_title">Shrinking photos…</string>
+    <string name="photo_opt_working_body">Reducing file sizes and removing hidden location tags…</string>
+    <string name="photo_opt_done_title">Photos Shrunk!</string>
+    <string name="photo_opt_done_summary">Shrunk %1$d photos: %2$s → %3$s\nSpace saved: %4$s (%5$d%%)</string>
+    <string name="photo_opt_gps_stripped_summary">Hidden map location removed from %1$d photos</string>
+    <string name="photo_opt_saved_location">Saved to Pictures/Sweepr. Originals are kept until moved to the Trash bin.</string>
+    <string name="photo_opt_trash_original">Move Original to Trash</string>
+    <string name="photo_opt_failed">Could not shrink selected photos.</string>
 
     <!-- Old Calendar Events Cleaner (#18) -->
-    <string name="contacts_tab_cleanup">Contacts Cleanup</string>
-    <string name="calendar_tab_old_events">Old Calendar (&gt;1 yr)</string>
-    <string name="calendar_permission_text">SWEEPR Cleaner needs calendar access to find and remove expired events older than 1 year.</string>
+    <string name="contacts_tab_cleanup">Duplicate Contacts</string>
+    <string name="calendar_tab_old_events">Old Calendar Events</string>
+    <string name="calendar_permission_text">SWEEPR Cleaner needs calendar access to find and remove past events older than 1 year.</string>
     <string name="calendar_permission_button">Allow calendar access</string>
     <string name="calendar_none_found">No calendar events older than 1 year found 🎉</string>
-    <string name="calendar_header_count">%1$d expired events (&gt;1 year old)</string>
-    <string name="calendar_explainer">Non-recurring past events older than 1 year.</string>
-    <string name="calendar_select_to_delete">Select old events to delete</string>
-    <string name="calendar_delete_selected">Delete %1$d Old Events</string>
+    <string name="calendar_header_count">%1$d past events (over 1 year old)</string>
+    <string name="calendar_explainer">Past one-off events from more than a year ago.</string>
+    <string name="calendar_select_to_delete">Select old events to remove</string>
+    <string name="calendar_delete_selected">Remove %1$d Old Events</string>
     <string name="calendar_untitled_event">Untitled Event</string>
     <plurals name="msg_calendar_events_deleted">
-        <item quantity="one">Deleted %d old calendar event</item>
-        <item quantity="other">Deleted %d old calendar events</item>
+        <item quantity="one">Removed %d old calendar event</item>
+        <item quantity="other">Removed %d old calendar events</item>
     </plurals>
+    <!-- CloudClean & Photo Vault -->
+    <string name="cloud_provider_google" translatable="false">Google One</string>
+    <string name="cloud_provider_icloud" translatable="false">iCloud+</string>
+    <string name="cloud_provider_onedrive" translatable="false">OneDrive</string>
+    <string name="cloud_provider_dropbox" translatable="false">Dropbox</string>
+    <string name="cloud_title">Private Vault &amp; Cloud Space</string>
+    <string name="cloud_eyebrow">CLOUD SPACE FINDER</string>
+    <string name="cloud_banner_title">%1$s of cloud space can be freed</string>
+    <string name="cloud_banner_body">%1$s of duplicates, screenshots, and large videos are taking up room in %2$s. Tap to free up cloud space or lock private files.</string>
+    <string name="cloud_headline">Free up %1$s of Cloud Space</string>
+    <string name="cloud_headline_body">Duplicates, screenshots, and large videos on your phone also fill up your cloud backup. Clean them here to free up cloud space without upgrading your storage plan.</string>
+    <string name="cloud_which_service">Which cloud backup do you use?</string>
+    <string name="cloud_row_junk">Duplicate photos, blurry shots &amp; screenshots</string>
+    <string name="cloud_row_videos">Space saved by shrinking large videos</string>
+    <string name="cloud_row_attachments">Saved chat photos &amp; videos</string>
+    <string name="cloud_row_total_reclaimable">Total cloud space you can free up</string>
+    <string name="cloud_estimate_note">Checked privately on your phone — SWEEPR never asks for your cloud login.</string>
+    <string name="cloud_action_duplicates">Clean duplicate &amp; similar photos</string>
+    <string name="cloud_action_videos">Shrink large videos</string>
+    <string name="cloud_action_screenshots">Clear old screenshots</string>
+    <string name="cloud_action_attachments">Clean saved chat media</string>
+    <string name="cloud_action_manage">Open %1$s storage settings</string>
+    <string name="cloud_sync_note">When cloud backup is turned on, deleting duplicates on your phone also frees up that space in your cloud backup.</string>
+    <string name="vault_eyebrow">PRIVATE FILE VAULT</string>
+    <string name="vault_title">Private Photo &amp; Document Vault</string>
+    <string name="vault_subtitle">Lock sensitive photos, IDs, and personal documents with a password so nobody else using your phone can open them.</string>
+    <string name="vault_password_label">Your vault password (at least 8 characters)</string>
+    <string name="vault_show">Show</string>
+    <string name="vault_hide">Hide</string>
+    <string name="vault_btn_encrypt">+ Lock Photo or File…</string>
+    <string name="vault_btn_unlock">Unlock My Vault</string>
+    <string name="vault_btn_restore">Save to Phone</string>
+    <string name="vault_locked_file">Locked Private File</string>
+    <string name="vault_empty">No files locked in your Private Vault yet.</string>
+    <string name="vault_msg_short_pw">Please enter a password of at least 8 characters.</string>
+    <string name="vault_msg_encrypted">Locked %1$d file(s) in your Private Vault.</string>
+    <string name="vault_msg_unlocked">Vault unlocked — showing your files.</string>
+    <string name="vault_msg_wrong_pw">That password didn\'t match these vault files.</string>
+    <string name="vault_msg_restored">Saved %1$s back to your phone.</string>
+    <string name="vault_msg_error">Could not lock selected file.</string>
+
+    <!-- Mockups v2: Home (#6) -->
+    <string name="home_quick_clean">QUICK CLEAN</string>
+    <string name="home_scan">SCAN</string>
+    <string name="home_scanning">SCANNING</string>
+    <string name="home_tap_to_review">tap to review</string>
+    <string name="home_tap_to_scan">tap to scan your phone</string>
+    <string name="home_storage_used">Storage used</string>
+    <string name="home_free_space">Free space</string>
+    <string name="home_tile_photos">Photos</string>
+    <string name="home_tile_videos">Videos</string>
+    <string name="home_tile_contacts">Contacts</string>
+    <string name="home_tile_battery">Battery</string>
+    <string name="home_tile_battery_hint">Health &amp; charging</string>
+    <string name="home_tile_needs_permission">Needs permission</string>
+    <string name="home_tile_not_scanned">Tap to scan</string>
+    <string name="home_tile_nothing">All clean</string>
+    <plurals name="home_tile_contacts_dupes">
+        <item quantity="one">%1$d duplicate</item>
+        <item quantity="other">%1$d duplicates</item>
+    </plurals>
+    <string name="home_swipe_title">Swipe to Clean</string>
+    <string name="home_swipe_body">Keep or remove photos one by one</string>
+    <string name="home_more_tools">More tools</string>
+    <string name="home_storage_details">Storage details</string>
+    <string name="home_rescan">↻ Scan again</string>
+
+    <!-- Mockups v2: Quick Clean review (#7) -->
+    <string name="review_title">Quick Clean review</string>
+    <string name="review_safe_to_clean">Safe to clean</string>
+    <string name="review_other_selected">Also selected</string>
+    <string name="review_row_duplicates">Identical copies</string>
+    <string name="review_row_duplicates_note">keeps one of each</string>
+    <string name="review_row_similar">Similar photos</string>
+    <string name="review_row_similar_note">keeps the best one</string>
+    <string name="review_row_screenshots">Screenshots</string>
+    <string name="review_row_blurry">Blurry photos</string>
+    <string name="review_row_other">Picked by you</string>
+    <string name="review_row_contacts">Duplicate contacts</string>
+    <string name="review_row_contacts_note">merged, not deleted</string>
+    <string name="review_size_items">%1$s • %2$d items</string>
+    <plurals name="review_groups">
+        <item quantity="one">%1$d group</item>
+        <item quantity="other">%1$d groups</item>
+    </plurals>
+    <string name="review_more_items">+%1$d more</string>
+    <string name="review_open_all">See all</string>
+    <string name="review_selected">Selected (%1$s)</string>
+    <string name="review_finish">Finish Cleaning</string>
+    <string name="review_undo_note">🛡️ Moved to Trash bin – restore within 30 days</string>
+    <string name="review_nothing_found">Nothing to clean right now. Your phone looks tidy!</string>
+
+    <!-- Mockups v2: Photos & media overview (#8) -->
+    <string name="overview_used_by_media">used by media</string>
+    <string name="overview_cleanup_header">Photos you can clean up</string>
+    <plurals name="overview_videos">
+        <item quantity="one">%1$d Video</item>
+        <item quantity="other">%1$d Videos</item>
+    </plurals>
+    <plurals name="overview_photos">
+        <item quantity="one">%1$d Photo</item>
+        <item quantity="other">%1$d Photos</item>
+    </plurals>
+    <plurals name="overview_screenshots">
+        <item quantity="one">%1$d Screenshot</item>
+        <item quantity="other">%1$d Screenshots</item>
+    </plurals>
+    <string name="overview_card_similar">Similar photos</string>
+    <string name="overview_card_similar_note">Keeps the best one</string>
+    <string name="overview_card_duplicates">Duplicates</string>
+    <string name="overview_card_duplicates_note">Exact copies</string>
+    <string name="overview_card_blurry">Blurry photos</string>
+    <string name="overview_card_blurry_note">Out of focus or shaky</string>
+    <string name="overview_card_screenshots">Screenshots</string>
+    <string name="overview_card_screenshots_note">Usually safe to clear</string>
+    <string name="overview_card_big_videos">Big videos</string>
+    <string name="overview_card_big_videos_note">Shrink or remove</string>
+    <string name="overview_card_chat">Chat media</string>
+    <string name="overview_card_chat_note">WhatsApp &amp; Telegram</string>
+    <string name="overview_card_shrink">Shrink photos &amp; videos</string>
+    <string name="overview_card_shrink_note">Save space, keep everything</string>
+    <string name="overview_all_tabs">Overview</string>
+
+    <!-- Mockups v2: Shrink (#9) -->
+    <string name="shrink_before">Before · %1$s</string>
+    <string name="shrink_after">After · ~%1$s</string>
+    <string name="shrink_looks_same">Looks the same on your phone screen</string>
+    <string name="shrink_screen_size">screen size</string>
+    <string name="shrink_smaller">smaller</string>
+    <string name="shrink_total_saved">total saved</string>
+    <string name="shrink_gentle">Gentle</string>
+    <string name="shrink_balanced">Balanced</string>
+    <string name="shrink_maximum">Maximum</string>
+    <string name="shrink_photo_gentle_desc">Removes hidden location info only – photos aren\'t re-compressed.</string>
+    <string name="shrink_photo_balanced_desc">Smart shrink, keeps location info.</string>
+    <string name="shrink_photo_maximum_desc">Smart shrink and removes hidden location info.</string>
+    <string name="shrink_safety_note">Originals are kept until you choose to move them to the Trash bin, where they can be restored for 30 days.</string>
+    <string name="shrink_n_photos">Shrink %1$d Photos</string>
+    <string name="shrink_clean_n_photos">Remove Location from %1$d Photos</string>
+    <string name="shrink_select_photos">Select photos to shrink</string>
+    <string name="shrink_n_videos">videos</string>
+    <string name="shrink_video_hint">Tap Shrink on a video to compress it with this strength.</string>
+
+    <!-- Mockups v2: Cleaning complete (#10) -->
+    <string name="done_all_clean">ALL CLEAN</string>
+    <string name="done_freed">%1$s freed!</string>
+    <string name="done_storage_went">Storage went from %1$d%% to %2$d%% used.</string>
+    <string name="done_files_removed">files removed</string>
+    <string name="done_days_to_restore">to restore</string>
+    <string name="done_30_days">30 days</string>
+    <string name="done_left_to_clean">left to clean</string>
+    <string name="done_keep_clean_title">Keep it clean automatically?</string>
+    <string name="done_keep_clean_body">We\'ll remind you every week</string>
+    <string name="done_keep_clean_on">Turn On</string>
+    <string name="done_keep_clean_enabled">On ✓</string>
+    <string name="done_button">Done</string>
 </resources>

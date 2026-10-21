@@ -108,4 +108,8 @@ dependencies {
     // RevenueCat
     implementation("com.revenuecat.purchases:purchases:8.2.1")
     implementation("com.revenuecat.purchases:purchases-ui:8.2.1") // Paywalls UI
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
+    testImplementation("org.mockito:mockito-core:5.11.0")
 }

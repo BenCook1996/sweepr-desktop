@@ -33,6 +33,7 @@ data class PendingTrash(
 /** What the My Account screen shows about the in-app subscription. */
 data class SubscriptionInfo(
     val active: Boolean = false,
+    val batteryCareActive: Boolean = false,
     val productId: String? = null,
     val expiresAt: Long? = null,
     val willRenew: Boolean = false,
@@ -42,6 +43,18 @@ data class SubscriptionInfo(
 )
 
 const val PREMIUM_ENTITLEMENT = "premium"
+
+/**
+ * Real result of the most recent media cleanup, shown on the Cleaning Complete screen.
+ * Storage fractions are StatFs readings taken just before and after the clean.
+ */
+data class CleanupSummary(
+    val fileCount: Int,
+    val bytes: Long,
+    val movedToTrash: Boolean,
+    val storageBefore: Float?,
+    val storageAfter: Float?,
+)
 
 data class DashboardState(
     val isScanning: Boolean = false,
@@ -65,8 +78,10 @@ data class DashboardState(
     val message: String? = null,
     val subscription: SubscriptionInfo = SubscriptionInfo(),
     val linkedAccount: LinkedAccount = LinkedAccount(),
+    val lastCleanup: CleanupSummary? = null,
 ) {
     val hasPremium: Boolean get() = subscription.active
+    val hasBatteryCare: Boolean get() = subscription.batteryCareActive
     val selectedItems: List<MediaItem> get() = media.everything.filter { it.uri in selectedMedia }
     val selectedBytes: Long get() = selectedItems.sumOf { it.size }
     val selectedTrashItems: List<MediaItem> get() = media.trashed.filter { it.uri in selectedTrash }
@@ -75,13 +90,21 @@ data class DashboardState(
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private var rcActive: Boolean = false
+    private var rcBatteryCare: Boolean = false
     private var serverActive: Boolean = false
+
+    /** StatFs storage-used fraction captured when a trash request starts (for the Cleaning Complete screen). */
+    private var storageBeforeClean: Float? = null
 
     private val _state = MutableStateFlow(DashboardState(linkedAccount = Prefs.account.value))
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
     private fun isServerAccountCurrentlyEntitled(acc: Prefs.LinkedAccount?): Boolean {
         return acc != null && acc.serverActive && (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L)
+    }
+
+    private fun isServerBatteryCareEntitled(acc: Prefs.LinkedAccount?): Boolean {
+        return isServerAccountCurrentlyEntitled(acc) && acc?.addons?.any { it.equals("battery_care", ignoreCase = true) } == true
     }
 
     private fun serverExpiresAtMillis(acc: Prefs.LinkedAccount?): Long? {
@@ -97,6 +120,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 linkedAccount = linked,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
+                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(linked),
                     productId = s.subscription.productId ?: linked.plan,
                     expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(linked),
                 ),
@@ -123,6 +147,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                                 linkedAccount = updated,
                                 subscription = s.subscription.copy(
                                     active = rcActive || serverActive,
+                                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(updated),
                                     expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
                                 ),
                             )
@@ -135,12 +160,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun updateCustomerInfo(info: CustomerInfo) {
         val ent = info.entitlements.active[PREMIUM_ENTITLEMENT]
+        val batEnt = info.entitlements.active[BATTERY_CARE_ENTITLEMENT]
         rcActive = ent != null
+        rcBatteryCare = batEnt != null
         val acct = _state.value.linkedAccount
         serverActive = isServerAccountCurrentlyEntitled(acct)
         val active = rcActive || serverActive
         val sub = SubscriptionInfo(
             active = active,
+            batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(acct),
             productId = ent?.productIdentifier ?: acct.plan,
             expiresAt = ent?.expirationDate?.time ?: serverExpiresAtMillis(acct),
             willRenew = ent?.willRenew ?: serverActive,
@@ -161,6 +189,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 linkedAccount = linked,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
+                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(linked),
                     productId = if (rcActive) s.subscription.productId else linked.plan,
                     expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(linked),
                 ),
@@ -178,6 +207,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 linkedAccount = cleared,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
+                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(cleared),
                 ),
                 message = message,
             )
@@ -493,6 +523,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
      */
     fun requestTrash(items: List<MediaItem>) {
         if (items.isEmpty() || _state.value.pendingTrash != null) return
+        storageBeforeClean = readStorage().takeIf { it.total > 0 }?.fraction
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {
                 val request = MediaStore.createTrashRequest(app.contentResolver, items.map { it.uri }, true)
@@ -570,6 +601,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val uris = items.map { it.uri }.toSet()
         val bytes = items.sumOf { it.size }
         val shouldAskReview = Prefs.recordCleanupForReviewPrompt()
+        val summary = CleanupSummary(
+            fileCount = items.size,
+            bytes = bytes,
+            movedToTrash = isTrash,
+            storageBefore = storageBeforeClean,
+            storageAfter = readStorage().takeIf { it.total > 0 }?.fraction,
+        )
+        storageBeforeClean = null
         _state.update { s ->
             val formattedBytes = formatBytes(bytes)
             val msg = if (isTrash) {
@@ -582,9 +621,19 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 selectedMedia = s.selectedMedia - uris,
                 promptInAppReview = s.promptInAppReview || shouldAskReview,
                 message = msg,
+                lastCleanup = summary,
             )
         }
         StorageWidgetProvider.refreshAll(app)
+    }
+
+    fun clearCleanupSummary() = _state.update { it.copy(lastCleanup = null) }
+
+    /** Selects / deselects every given contact group (used by the Quick Clean review checkbox). */
+    fun setContactGroupsSelected(keys: Collection<String>, selected: Boolean) = _state.update { s ->
+        s.copy(
+            selectedContactGroups = if (selected) s.selectedContactGroups + keys else s.selectedContactGroups - keys.toSet(),
+        )
     }
 
     fun mergeContactGroups(keys: Set<String>) {

@@ -12,101 +12,53 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.size
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.AlertDialog
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.RadioButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,6 +78,7 @@ fun SettingsScreen(
     var showTheme by remember { mutableStateOf(false) }
     var showReminders by remember { mutableStateOf(false) }
     var generatingLog by remember { mutableStateOf(false) }
+    var showSupportTools by remember { mutableStateOf(false) }
 
     var showLanguage by remember { mutableStateOf(false) }
 
@@ -211,40 +164,6 @@ fun SettingsScreen(
                 onClick = { onOpen(Screen.Account) },
             )
             SettingsItem(
-                icon = Icons.Default.Place,
-                title = stringResource(R.string.settings_language),
-                value = stringResource(AppLanguage.current().labelRes),
-                onClick = { showLanguage = true },
-            )
-            SettingsItem(
-                icon = Icons.Default.Star,
-                title = stringResource(R.string.settings_theme),
-                value = stringResource(theme.labelRes),
-                onClick = { showTheme = true },
-            )
-            SettingsItem(
-                icon = Icons.Default.Build,
-                title = stringResource(R.string.settings_logs),
-                value = if (generatingLog) stringResource(R.string.settings_logs_collecting) else stringResource(R.string.settings_logs_detail),
-                onClick = {
-                    if (!generatingLog) {
-                        generatingLog = true
-                        scope.launch {
-                            val file = withContext(Dispatchers.IO) {
-                                runCatching { LogFiles.generate(context, state, permissions) }.getOrNull()
-                            }
-                            generatingLog = false
-                            if (file != null) {
-                                runCatching { LogFiles.share(context, file) }
-                                    .onFailure { Toast.makeText(context, context.getString(R.string.toast_no_share_app), Toast.LENGTH_SHORT).show() }
-                            } else {
-                                Toast.makeText(context, context.getString(R.string.toast_log_failed), Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                },
-            )
-            SettingsItem(
                 icon = Icons.Default.Notifications,
                 title = stringResource(R.string.settings_reminders),
                 value = if (reminder != ReminderFrequency.Off && !Reminders.canNotify(context)) {
@@ -253,6 +172,30 @@ fun SettingsScreen(
                     stringResource(reminder.labelRes)
                 },
                 onClick = { showReminders = true },
+            )
+            SettingsItem(
+                icon = Icons.Default.Refresh,
+                title = stringResource(R.string.category_trash),
+                value = stringResource(R.string.trash_explainer),
+                onClick = { onOpen(Screen.Trash) },
+            )
+            SettingsItem(
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.tips_title),
+                value = stringResource(R.string.tips_subheading),
+                onClick = { onOpen(Screen.Tips) },
+            )
+            SettingsItem(
+                icon = Icons.Default.Star,
+                title = stringResource(R.string.settings_theme),
+                value = stringResource(theme.labelRes),
+                onClick = { showTheme = true },
+            )
+            SettingsItem(
+                icon = Icons.Default.Place,
+                title = stringResource(R.string.settings_language),
+                value = stringResource(AppLanguage.current().labelRes),
+                onClick = { showLanguage = true },
             )
             SettingsItem(
                 icon = Icons.Default.Lock,
@@ -278,12 +221,6 @@ fun SettingsScreen(
             )
             SettingsItem(
                 icon = Icons.Default.Refresh,
-                title = stringResource(R.string.category_trash),
-                value = stringResource(R.string.trash_explainer),
-                onClick = { onOpen(Screen.Trash) },
-            )
-            SettingsItem(
-                icon = Icons.Default.Refresh,
                 title = stringResource(R.string.settings_rescan),
                 value = stringResource(R.string.settings_rescan_detail),
                 onClick = onRescan,
@@ -294,6 +231,36 @@ fun SettingsScreen(
                 value = stringResource(R.string.settings_about_detail),
                 onClick = { onOpen(Screen.About) },
             )
+            SettingsItem(
+                icon = Icons.Default.Build,
+                title = "Need Help? Support & Diagnostics",
+                value = if (showSupportTools) "Tap to hide support tools" else "Share app log with customer support",
+                onClick = { showSupportTools = !showSupportTools },
+            )
+            if (showSupportTools) {
+                SettingsItem(
+                    icon = Icons.Default.Build,
+                    title = stringResource(R.string.settings_logs),
+                    value = if (generatingLog) stringResource(R.string.settings_logs_collecting) else stringResource(R.string.settings_logs_detail),
+                    onClick = {
+                        if (!generatingLog) {
+                            generatingLog = true
+                            scope.launch {
+                                val file = withContext(Dispatchers.IO) {
+                                    runCatching { LogFiles.generate(context, state, permissions) }.getOrNull()
+                                }
+                                generatingLog = false
+                                if (file != null) {
+                                    runCatching { LogFiles.share(context, file) }
+                                        .onFailure { Toast.makeText(context, context.getString(R.string.toast_no_share_app), Toast.LENGTH_SHORT).show() }
+                                } else {
+                                    Toast.makeText(context, context.getString(R.string.toast_log_failed), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    },
+                )
+            }
         }
     }
 }

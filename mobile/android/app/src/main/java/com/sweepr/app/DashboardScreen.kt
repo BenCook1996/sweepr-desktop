@@ -3,9 +3,11 @@
 package com.sweepr.app
 
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,23 +26,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,11 +49,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
@@ -81,7 +79,11 @@ fun storageColor(fraction: Float): Color = when {
     else -> SweeprGreen
 }
 
-/** Home tab: storage gauge, scan button and the Clean feature cards (with responsive 2-column tablet/landscape layout). */
+/**
+ * Home tab (mockup #6): Quick Clean button nested inside the storage-used ring, two big stats,
+ * a 2×2 tile grid with each area's potential saving, the Swipe to Clean card and the remaining
+ * cleanup tools (with responsive 2-column tablet/landscape layout).
+ */
 @Composable
 fun DashboardScreen(
     state: DashboardState,
@@ -90,6 +92,7 @@ fun DashboardScreen(
     onOpen: (Screen) -> Unit,
     onOpenPhotosTab: (Int) -> Unit = { onOpen(Screen.PhotosVideos) },
     onCleanUp: () -> Unit,
+    onOpenReview: () -> Unit = onCleanUp,
 ) {
     val storage = remember(state.media, state.isScanning) { readStorage() }
     var showStorageDialog by remember { mutableStateOf(false) }
@@ -101,17 +104,14 @@ fun DashboardScreen(
     }
 
     Scaffold(
-        topBar = { SweeprTopBar(stringResource(R.string.app_name), onBack = null) },
-        bottomBar = {
-            if (state.hasScanned) CleanUpNowBar(state, onCleanUp)
-        },
+        topBar = { SweeprWordmarkBar(isPro = state.hasPremium) },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (isWideLayout) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.Top,
@@ -122,27 +122,22 @@ fun DashboardScreen(
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    StorageGaugeBlock(
+                    QuickCleanBlock(
                         storage = storage,
                         state = state,
                         permissions = permissions,
-                        onGaugeClick = { showStorageDialog = true },
+                        onStatsClick = { showStorageDialog = true },
                         onScan = onScan,
+                        onOpenReview = onOpenReview,
                     )
                 }
                 Column(
                     modifier = Modifier
                         .weight(0.58f)
                         .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        stringResource(R.string.dashboard_clean_header),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    ResultCards(state, permissions, onOpen, onOpenPhotosTab, onScan)
+                    HomeTiles(state, permissions, onOpen, onOpenPhotosTab, onScan)
                 }
             }
         } else {
@@ -150,75 +145,119 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                StorageGaugeBlock(
+                QuickCleanBlock(
                     storage = storage,
                     state = state,
                     permissions = permissions,
-                    onGaugeClick = { showStorageDialog = true },
+                    onStatsClick = { showStorageDialog = true },
                     onScan = onScan,
+                    onOpenReview = onOpenReview,
                 )
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.dashboard_clean_header),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(12.dp))
-                ResultCards(state, permissions, onOpen, onOpenPhotosTab, onScan)
+                HomeTiles(state, permissions, onOpen, onOpenPhotosTab, onScan)
             }
         }
     }
 }
 
+/** Storage ring with the Quick Clean core + the "X% Storage used / Y GB Free space" stats. */
 @Composable
-private fun StorageGaugeBlock(
+private fun QuickCleanBlock(
     storage: StorageInfo,
     state: DashboardState,
     permissions: PermissionState,
-    onGaugeClick: () -> Unit,
+    onStatsClick: () -> Unit,
     onScan: () -> Unit,
+    onOpenReview: () -> Unit,
 ) {
-    val color = storageColor(storage.fraction)
     val pct = (storage.fraction * 100).roundToInt()
-    val gaugeA11y = stringResource(
-        R.string.dashboard_used_of,
-        formatBytes(storage.used),
-        formatBytes(storage.total),
-    )
-    ArcGauge(
+    val gaugeA11y = stringResource(R.string.dashboard_used_of, formatBytes(storage.used), formatBytes(storage.total))
+    val reclaimable = state.media.reclaimableBytes
+    val ringAction: (() -> Unit)? = when {
+        state.isBusy -> null
+        state.hasScanned -> onOpenReview
+        else -> onScan
+    }
+    val actionLabel = if (state.hasScanned) stringResource(R.string.review_title) else stringResource(R.string.scan_my_phone)
+
+    QuickCleanRing(
         progress = storage.fraction,
-        color = color,
-        modifier = Modifier.semantics { contentDescription = "$pct% · $gaugeA11y" },
-        onClick = onGaugeClick,
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .semantics { contentDescription = "$pct% · $gaugeA11y. $actionLabel" },
+        onClick = ringAction,
+        onClickLabel = actionLabel,
     ) {
-        Text(
-            stringResource(R.string.dashboard_percent, pct),
-            color = color,
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            gaugeA11y,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-        )
-        Text(stringResource(R.string.dashboard_used_tap), color = Color.Gray, fontSize = 12.sp)
+        when {
+            state.isScanning -> {
+                CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp, modifier = Modifier.size(26.dp))
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.home_scanning), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
+                if (state.scanStatus.isNotBlank()) {
+                    Text(
+                        state.scanStatus,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 18.dp),
+                    )
+                }
+            }
+            state.hasScanned -> {
+                Text(stringResource(R.string.home_quick_clean), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
+                Text("+${formatBytes(reclaimable)}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
+                Text(stringResource(R.string.home_tap_to_review), color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
+            }
+            else -> {
+                Text(stringResource(R.string.home_quick_clean), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
+                Text(stringResource(R.string.home_scan), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = 2.sp)
+                Text(stringResource(R.string.home_tap_to_scan), color = Color.White.copy(alpha = 0.85f), fontSize = 10.sp)
+            }
+        }
     }
 
-    Spacer(Modifier.height(8.dp))
-    ScanButton(state, onScan)
+    // Two big stats; tapping them opens the existing storage breakdown dialog.
+    val emerald = emeraldText()
+    val (freeNum, freeUnit) = splitSize(formatBytes(storage.free))
+    val detailsLabel = stringResource(R.string.home_storage_details)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClickLabel = detailsLabel, onClick = onStatsClick)
+            .padding(vertical = 6.dp),
+    ) {
+        BigStat(
+            number = "$pct",
+            unit = "%",
+            label = stringResource(R.string.home_storage_used),
+            color = emerald,
+            modifier = Modifier.weight(1f),
+        )
+        BigStat(
+            number = freeNum,
+            unit = " $freeUnit",
+            label = stringResource(R.string.home_free_space),
+            color = MaterialTheme.colorScheme.onBackground,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+    }
+
+    if (state.hasScanned && !state.isBusy) {
+        TextButton(onClick = onScan) {
+            Text(stringResource(R.string.home_rescan), color = emerald, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        }
+    }
 
     if (permissions.mediaLimited) {
-        Spacer(Modifier.height(12.dp))
         Text(
             stringResource(R.string.dashboard_limited_access),
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             textAlign = TextAlign.Center,
         )
@@ -226,24 +265,25 @@ private fun StorageGaugeBlock(
 }
 
 @Composable
-private fun ScanButton(state: DashboardState, onScan: () -> Unit) {
-    val label = when {
-        state.isScanning -> state.scanStatus.ifBlank { stringResource(R.string.scan_scanning) }
-        state.hasScanned -> stringResource(R.string.scan_rescan, formatBytes(state.media.reclaimableBytes))
-        else -> stringResource(R.string.scan_my_phone)
-    }
-    Button(
-        onClick = onScan,
-        enabled = !state.isBusy,
-        shape = RoundedCornerShape(28.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .semantics { contentDescription = label },
-    ) {
-        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.scan_my_phone))
-        Spacer(Modifier.width(8.dp))
-        Text(label, fontWeight = FontWeight.Bold)
+private fun BigStat(
+    number: String,
+    unit: String,
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+    labelColor: Color = color,
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            buildAnnotatedString {
+                append(number)
+                withStyle(SpanStyle(fontSize = 13.sp)) { append(unit) }
+            },
+            color = color,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        Text(label, color = labelColor, fontSize = 12.sp)
     }
 }
 
@@ -275,8 +315,14 @@ fun StorageBreakdownDialog(storage: StorageInfo, media: MediaScanResult, onDismi
     )
 }
 
+/** What a home tile shows under its title: a saving (emerald), a neutral hint, or a warning. */
+private data class TileValue(val text: String, val kind: Kind) {
+    enum class Kind { Saving, Hint, Warning }
+}
+
+/** 2×2 tiles (Photos / Videos / Contacts / Battery), Swipe to Clean card and the other tools. */
 @Composable
-private fun ResultCards(
+private fun HomeTiles(
     state: DashboardState,
     permissions: PermissionState,
     onOpen: (Screen) -> Unit,
@@ -284,109 +330,158 @@ private fun ResultCards(
     onScan: () -> Unit,
 ) {
     val media = state.media
-    val photoExtras = (media.duplicateGroups + media.similarGroups).flatMap { it.extras }
     val contactDupes = state.contactGroups.sumOf { it.contacts.size - 1 }
     val scanned = state.hasScanned
-    var showMoreTools by remember { mutableStateOf(false) }
     fun open(screen: Screen) = if (scanned) onOpen(screen) else onScan()
     fun openTab(tab: Int) = if (scanned) onOpenPhotosTab(tab) else onScan()
 
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            title = stringResource(R.string.category_photos_videos),
-            subtitle = when {
-                !permissions.media -> stringResource(R.string.status_no_permission)
-                !scanned -> stringResource(R.string.status_tap_to_scan)
-                else -> "${photoExtras.size} · ${formatBytes(photoExtras.sumOf { it.size })}\n" +
-                    "${media.videos.size} ${stringResource(R.string.category_videos).lowercase()}"
-            },
-            icon = Icons.Default.PlayArrow,
-            color = Color(0xFF3B82F6),
-            badge = if (scanned) photoExtras.size else 0,
-            onClick = { openTab(0) },
-        )
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            title = stringResource(R.string.category_swipe_cleanup),
-            subtitle = if (scanned) "${media.everything.size} · ${formatBytes(media.everything.sumOf { it.size })}" else stringResource(R.string.status_tap_to_scan),
-            icon = Icons.Default.ThumbUp,
-            color = Color(0xFF8B5CF6),
-            onClick = { open(Screen.Swipe) },
-        )
+    val needsPermission = TileValue(stringResource(R.string.home_tile_needs_permission), TileValue.Kind.Warning)
+    val notScanned = TileValue(stringResource(R.string.home_tile_not_scanned), TileValue.Kind.Hint)
+    val allClean = TileValue(stringResource(R.string.home_tile_nothing), TileValue.Kind.Hint)
+
+    val photosValue = when {
+        !permissions.media -> needsPermission
+        !scanned -> notScanned
+        media.reclaimableBytes > 0 -> TileValue("+${formatBytes(media.reclaimableBytes)}", TileValue.Kind.Saving)
+        else -> allClean
     }
-    Spacer(Modifier.height(16.dp))
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+    // Video saving = the app's existing re-encode estimate for large clips (CloudSavings breakdown).
+    val videoSaving = remember(media) { CloudSavings.breakdown(media).compressibleBytes }
+    val videosValue = when {
+        !permissions.media -> needsPermission
+        !scanned -> notScanned
+        videoSaving > 0 -> TileValue("+${formatBytes(videoSaving)}", TileValue.Kind.Saving)
+        media.videos.isNotEmpty() -> TileValue("${media.videos.size} · ${formatBytes(media.videos.sumOf { it.size })}", TileValue.Kind.Hint)
+        else -> allClean
+    }
+    val contactsValue = when {
+        !permissions.contactsRead -> needsPermission
+        !scanned -> notScanned
+        contactDupes > 0 -> TileValue(pluralStringResource(R.plurals.home_tile_contacts_dupes, contactDupes, contactDupes), TileValue.Kind.Saving)
+        else -> allClean
+    }
+    val batteryValue = TileValue(stringResource(R.string.home_tile_battery_hint), TileValue.Kind.Hint)
+
+    val lineColor = MaterialTheme.colorScheme.outline
+    SweeprPanel(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            HomeTile("🖼️", stringResource(R.string.home_tile_photos), photosValue, Modifier.weight(1f)) {
+                if (scanned) onOpenPhotosTab(PHOTOS_OVERVIEW_TAB) else onScan()
+            }
+            Box(Modifier.width(1.dp).fillMaxHeight().background(lineColor))
+            HomeTile("🎬", stringResource(R.string.home_tile_videos), videosValue, Modifier.weight(1f)) { openTab(3) }
+        }
+        HorizontalDivider(color = lineColor)
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            HomeTile("👥", stringResource(R.string.home_tile_contacts), contactsValue, Modifier.weight(1f)) { open(Screen.Contacts) }
+            Box(Modifier.width(1.dp).fillMaxHeight().background(lineColor))
+            HomeTile("🔋", stringResource(R.string.home_tile_battery), batteryValue, Modifier.weight(1f)) { onOpen(Screen.BatteryCare) }
+        }
+    }
+
+    // Swipe to Clean promoted as a friendly card.
+    SweeprPanel(Modifier.fillMaxWidth(), onClick = { onOpen(Screen.Swipe) }) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("👆", fontSize = 22.sp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_swipe_title), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.home_swipe_body), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+
+    // Remaining cleanup tools from the previous card grid (nothing removed, just re-laid out).
+    SectionEyebrow(stringResource(R.string.home_more_tools), Modifier.fillMaxWidth().padding(top = 4.dp))
+    SweeprPanel(Modifier.fillMaxWidth()) {
+        ToolRow(
+            emoji = "📸",
             title = stringResource(R.string.category_screenshots),
-            subtitle = when {
-                !permissions.media -> stringResource(R.string.status_no_permission)
-                !scanned -> stringResource(R.string.status_tap_to_scan)
-                else -> "${media.screenshots.size}\n${formatBytes(media.screenshots.sumOf { it.size })}"
+            value = when {
+                !permissions.media -> needsPermission.text
+                !scanned -> null
+                else -> "${media.screenshots.size} · ${formatBytes(media.screenshots.sumOf { it.size })}"
             },
-            icon = Icons.Default.Create,
-            color = DangerRed,
-            badge = if (scanned) media.screenshots.size else 0,
             onClick = { open(Screen.Screenshots) },
         )
-        ActionCard(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            title = stringResource(R.string.category_contacts),
-            subtitle = when {
-                !permissions.contactsRead -> stringResource(R.string.status_no_permission)
-                !scanned -> stringResource(R.string.status_tap_to_scan)
-                else -> "$contactDupes · ${state.contactGroups.size}"
+        HorizontalDivider(color = lineColor)
+        ToolRow(
+            emoji = "💬",
+            title = stringResource(R.string.category_messenger_media),
+            value = when {
+                !permissions.media -> needsPermission.text
+                !scanned -> null
+                else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
             },
-            icon = Icons.Default.Person,
-            color = Color(0xFFF59E0B),
-            badge = if (scanned) contactDupes else 0,
-            onClick = { open(Screen.Contacts) },
+            onClick = { openTab(5) },
+        )
+        HorizontalDivider(color = lineColor)
+        ToolRow(
+            emoji = "♻️",
+            title = stringResource(R.string.category_trash),
+            value = when {
+                !permissions.media -> needsPermission.text
+                !scanned -> null
+                else -> "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}"
+            },
+            onClick = { open(Screen.Trash) },
         )
     }
-    Spacer(Modifier.height(12.dp))
-    TextButton(
-        onClick = { showMoreTools = !showMoreTools },
-        modifier = Modifier.fillMaxWidth(),
+    Spacer(Modifier.height(8.dp))
+}
+
+@Composable
+private fun HomeTile(
+    emoji: String,
+    title: String,
+    value: TileValue,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val valueColor = when (value.kind) {
+        TileValue.Kind.Saving -> emeraldText()
+        TileValue.Kind.Hint -> MaterialTheme.colorScheme.onSurfaceVariant
+        TileValue.Kind.Warning -> SweeprRose
+    }
+    Column(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "$title, ${value.text}" }
+            .padding(vertical = 14.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            if (showMoreTools) "Hide Additional Tools"
-            else "More Cleanup Tools (${stringResource(R.string.category_messenger_media)}, ${stringResource(R.string.category_trash)})",
-            color = SweeprGreen,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-        )
-    }
-    if (showMoreTools) {
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ActionCard(
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                title = stringResource(R.string.category_messenger_media),
-                subtitle = when {
-                    !permissions.media -> stringResource(R.string.status_no_permission)
-                    !scanned -> stringResource(R.string.status_tap_to_scan)
-                    else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
-                },
-                icon = Icons.Default.Email,
-                color = Color(0xFF22C55E),
-                badge = if (scanned) media.messengerMedia.size else 0,
-                onClick = { openTab(5) },
-            )
-            ActionCard(
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                title = stringResource(R.string.category_trash),
-                subtitle = when {
-                    !permissions.media -> stringResource(R.string.status_no_permission)
-                    !scanned -> stringResource(R.string.status_tap_to_scan)
-                    else -> "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}"
-                },
-                icon = Icons.Default.Refresh,
-                color = Color(0xFF14B8A6),
-                badge = if (scanned) media.trashed.size else 0,
-                onClick = { open(Screen.Trash) },
-            )
+        Box(
+            Modifier.size(38.dp).clip(CircleShape).background(SweeprGreen.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(emoji, fontSize = 17.sp)
         }
+        Text(title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+        Text(value.text, color = valueColor, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun ToolRow(emoji: String, title: String, value: String?, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = listOfNotNull(title, value).joinToString(", ") }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(emoji, fontSize = 18.sp)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            if (value != null) {
+                Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+            }
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -441,39 +536,27 @@ fun ActionCard(
     }
 }
 
+/** Sticky "SELECTED (X GB)" dock with the single Finish Cleaning / Clean Up Now action (mockup #7). */
 @Composable
-fun CleanUpNowBar(state: DashboardState, onCleanUp: () -> Unit) {
+fun CleanUpNowBar(state: DashboardState, onCleanUp: () -> Unit, buttonText: String? = null) {
     val mediaCount = state.selectedMedia.size
     val contactCount = state.selectedContactGroups.size
-    val cleanLabel = if (state.isWorking) stringResource(R.string.cleanup_working) else stringResource(R.string.cleanup_now)
-    Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
-        Button(
-            onClick = onCleanUp,
-            enabled = !state.isBusy && (mediaCount > 0 || contactCount > 0),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(16.dp)
-                .height(56.dp)
-                .semantics { contentDescription = cleanLabel },
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = cleanLabel)
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    cleanLabel,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                if (mediaCount > 0 || contactCount > 0) {
-                    val parts = buildList {
-                        if (mediaCount > 0) add("$mediaCount (${formatBytes(state.selectedBytes)})")
-                        if (contactCount > 0) add("$contactCount ${stringResource(R.string.category_contacts).lowercase()}")
-                    }
-                    Text(parts.joinToString(" · "), fontSize = 11.sp)
-                }
-            }
-        }
+    val cleanLabel = when {
+        state.isWorking -> stringResource(R.string.cleanup_working)
+        buttonText != null -> buttonText
+        else -> stringResource(R.string.cleanup_now)
     }
+    val parts = buildList {
+        add(stringResource(R.string.review_selected, formatBytes(state.selectedBytes)))
+        if (contactCount > 0) add("$contactCount ${stringResource(R.string.category_contacts).lowercase()}")
+    }
+    StickyDock(
+        buttonText = cleanLabel,
+        onClick = onCleanUp,
+        enabled = !state.isBusy && (mediaCount > 0 || contactCount > 0),
+        label = parts.joinToString(" · "),
+        // Android 11+ moves items to the 30-day System Trash; older versions delete permanently.
+        note = if (mediaCount > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.review_undo_note) else null,
+        leading = "🧹",
+    )
 }

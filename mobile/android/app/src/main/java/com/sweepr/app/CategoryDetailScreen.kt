@@ -407,20 +407,6 @@ private fun TriagePhotoCard(
                             )
                         }
                     }
-                    if (item.sharpness > 0.1) {
-                        Text(
-                            text = stringResource(
-                                R.string.triage_sharpness_badge,
-                                String.format(Locale.getDefault(), "%.0f", item.sharpness),
-                            ),
-                            color = Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
                 }
 
                 if (isSelectedForTrash) {

@@ -22,7 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -80,12 +83,16 @@ class MainActivity : AppCompatActivity() {
                     afterPurchase = null
                     when (result) {
                         is PaywallResult.Purchased -> {
-                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null) {
+                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null ||
+                                result.customerInfo.entitlements.active[BATTERY_CARE_ENTITLEMENT] != null
+                            ) {
                                 action?.invoke()
                             }
                         }
                         is PaywallResult.Restored -> {
-                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null) {
+                            if (result.customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] != null ||
+                                result.customerInfo.entitlements.active[BATTERY_CARE_ENTITLEMENT] != null
+                            ) {
                                 action?.invoke()
                             }
                         }
@@ -113,11 +120,12 @@ enum class Screen {
     Dashboard, SmartClean, Tips, Settings,
 
     // Detail screens
-    PhotosVideos, Swipe, Screenshots, Contacts, Trash, Account, About,
+    PhotosVideos, Swipe, Screenshots, Contacts, Trash, CloudSavings, BatteryCare, Account, About,
+    QuickCleanReview, CleaningComplete,
 }
 
-private val TABS = listOf(Screen.Dashboard, Screen.SmartClean, Screen.Tips, Screen.Settings)
-private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Swipe, Screen.Screenshots, Screen.Contacts, Screen.Trash)
+private val TABS = listOf(Screen.Dashboard, Screen.Swipe, Screen.BatteryCare, Screen.CloudSavings, Screen.Settings)
+private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Screenshots, Screen.Contacts, Screen.Trash, Screen.QuickCleanReview)
 
 data class PermissionState(
     val media: Boolean = false,
@@ -270,8 +278,17 @@ fun SweeprRoot(
     }
 
     // Results screens need a scan first (e.g. after the process was restarted).
-    val current = if (!state.hasScanned && screen in RESULT_SCREENS) lastTab else screen
+    val current = when {
+        !state.hasScanned && screen in RESULT_SCREENS -> lastTab
+        screen == Screen.CleaningComplete && state.lastCleanup == null -> lastTab
+        else -> screen
+    }
     val isTab = current in TABS
+
+    // A media clean finished while the Quick Clean review was open → celebrate (mockup #10).
+    LaunchedEffect(state.lastCleanup) {
+        if (state.lastCleanup != null && screen == Screen.QuickCleanReview) screen = Screen.CleaningComplete
+    }
 
     val selectTab: (Screen) -> Unit = { tab ->
         lastTab = tab
@@ -326,6 +343,28 @@ fun SweeprRoot(
                     onOpen = open,
                     onOpenPhotosTab = openPhotosTab,
                     onCleanUp = handleCleanUp,
+                    onOpenReview = {
+                        vm.clearCleanupSummary()
+                        screen = Screen.QuickCleanReview
+                    },
+                )
+                Screen.QuickCleanReview -> QuickCleanReviewScreen(
+                    state = state,
+                    onToggle = vm::toggleMedia,
+                    onSetSelected = vm::setMediaSelected,
+                    onSetContactGroupsSelected = vm::setContactGroupsSelected,
+                    onOpenPhotosTab = openPhotosTab,
+                    onOpen = open,
+                    onCleanUp = handleCleanUp,
+                    onBack = goBack,
+                )
+                Screen.CleaningComplete -> CleaningCompleteScreen(
+                    summary = state.lastCleanup,
+                    state = state,
+                    onDone = {
+                        vm.clearCleanupSummary()
+                        selectTab(Screen.Dashboard)
+                    },
                 )
                 Screen.SmartClean -> SmartCleanScreen(
                     state = state,
@@ -358,6 +397,20 @@ fun SweeprRoot(
                     onBack = goBack,
                 )
                 Screen.About -> AboutScreen(onBack = goBack)
+                Screen.CloudSavings -> CloudSavingsScreen(
+                    state = state,
+                    onOpenPhotosTab = openPhotosTab,
+                    onOpen = open,
+                    onShowPaywall = onShowPaywall,
+                    onOpenBattery = { open(Screen.BatteryCare) },
+                    onBack = null,
+                )
+                Screen.BatteryCare -> BatteryCareScreen(
+                    state = state,
+                    onUnlockAddon = onShowPaywall,
+                    onOpenVault = { open(Screen.CloudSavings) },
+                    onBack = null,
+                )
                 Screen.PhotosVideos -> PhotosVideosScreen(
                     state = state,
                     initialTab = photosInitialTab,
@@ -368,6 +421,7 @@ fun SweeprRoot(
                     onClearCompressionResult = vm::clearCompressionResult,
                     onOptimizePhotos = handleOptimizePhotos,
                     onClearPhotoOptimizationResult = vm::clearPhotoOptimizationResult,
+                    onOpenScreenshots = { open(Screen.Screenshots) },
                     onBack = goBack,
                 )
                 Screen.Screenshots -> ScreenshotsScreen(
@@ -388,7 +442,8 @@ fun SweeprRoot(
                     items = state.media.everything,
                     busy = state.isBusy,
                     onTrash = handleTrash,
-                    onBack = goBack,
+                    onScan = requestAccessAndScan,
+                    onBack = null,
                 )
                 Screen.Contacts -> ContactsScreen(
                     state = state,
@@ -420,17 +475,19 @@ private data class NavTab(val screen: Screen, val labelRes: Int, val icon: Image
 
 private val NAV_TABS = listOf(
     NavTab(Screen.Dashboard, R.string.nav_home, Icons.Default.Home),
-    NavTab(Screen.SmartClean, R.string.nav_clean, Icons.Default.Delete),
-    NavTab(Screen.Tips, R.string.nav_tips, Icons.Default.Info),
-    NavTab(Screen.Settings, R.string.nav_settings, Icons.Default.Settings),
+    NavTab(Screen.Swipe, R.string.nav_swipe, Icons.Default.ThumbUp),
+    NavTab(Screen.BatteryCare, R.string.nav_battery_vault, Icons.Default.Lock),
+    NavTab(Screen.Settings, R.string.nav_settings, Icons.Default.Person),
 )
 
 @Composable
 private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NAV_TABS.forEach { tab ->
+            val isSelected = current == tab.screen ||
+                (tab.screen == Screen.BatteryCare && current == Screen.CloudSavings)
             NavigationBarItem(
-                selected = current == tab.screen,
+                selected = isSelected,
                 onClick = { onSelect(tab.screen) },
                 icon = { Icon(tab.icon, contentDescription = stringResource(tab.labelRes)) },
                 label = { Text(stringResource(tab.labelRes)) },

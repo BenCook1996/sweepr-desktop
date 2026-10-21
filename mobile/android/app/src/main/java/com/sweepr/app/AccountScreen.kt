@@ -300,6 +300,57 @@ fun AccountScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // Total Battery & Mac/Phone Care Add-on Card (+20% charm pricing)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (state.hasBatteryCare) SweeprGreen.copy(alpha = 0.12f)
+                    else Color(0xFFF59E0B).copy(alpha = 0.08f),
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    if (state.hasBatteryCare) SweeprGreen.copy(alpha = 0.45f) else Color(0xFFF59E0B).copy(alpha = 0.55f),
+                ),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Total Battery & Mac/Phone Care",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                        )
+                        Text(
+                            if (state.hasBatteryCare) "ACTIVE" else "+£17.99/yr · £2.99/mo",
+                            color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    Text(
+                        "Device Lifespan Extender: smart 80% charge-limit unplug alert, thermal guard, and background cache trim across Phone, Mac & PC.",
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                    )
+                    if (!state.hasBatteryCare) {
+                        Spacer(Modifier.height(4.dp))
+                        Button(
+                            onClick = onUpgrade,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text("Add Battery Care (£17.99/yr)", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             if (!state.hasPremium) {
                 Text(stringResource(R.string.account_premium_includes), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Spacer(Modifier.height(8.dp))

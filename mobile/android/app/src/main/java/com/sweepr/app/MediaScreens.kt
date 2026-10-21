@@ -3,17 +3,49 @@
 package com.sweepr.app
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import coil.compose.AsyncImage
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -57,6 +89,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
+/** Pass as `initialTab` to open Photos & Videos on the media overview (mockup #8) instead of a tab. */
+const val PHOTOS_OVERVIEW_TAB = -1
+
 @Composable
 fun PhotosVideosScreen(
     state: DashboardState,
@@ -68,19 +103,28 @@ fun PhotosVideosScreen(
     onClearCompressionResult: () -> Unit = {},
     onOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit = { _, _, _ -> },
     onClearPhotoOptimizationResult: () -> Unit = {},
+    onOpenScreenshots: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     var tab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
     var isSwipeMode by rememberSaveable { mutableStateOf(false) }
     var preview by remember { mutableStateOf<MediaItem?>(null) }
     var compressTarget by remember { mutableStateOf<MediaItem?>(null) }
+    // Hoisted so the sticky dock / strength slider survive switching between sub-tabs.
+    var optimizerTab by rememberSaveable { mutableIntStateOf(0) }
+    var videoPreset by rememberSaveable { mutableStateOf(CompressionPreset.COMPACT_720P) }
     val media = state.media
+    val isOverview = tab == PHOTOS_OVERVIEW_TAB
+    val backToOverview = !isOverview && initialTab == PHOTOS_OVERVIEW_TAB
+
+    BackHandler(enabled = backToOverview) { tab = PHOTOS_OVERVIEW_TAB }
 
     val bestShotUris = remember(media.duplicateGroups, media.similarGroups) {
         (media.duplicateGroups + media.similarGroups).map { it.keep.uri }.toSet()
     }
 
     val tabItems = when (tab) {
+        PHOTOS_OVERVIEW_TAB -> emptyList()
         0 -> media.duplicateGroups.flatMap { it.items }
         1 -> media.similarGroups.flatMap { it.items }
         2 -> media.blurry
@@ -89,13 +133,13 @@ fun PhotosVideosScreen(
         else -> media.messengerMedia
     }
     val selectedHere = tabItems.filter { it.uri in state.selectedMedia }
-    val supportsSwipeTriage = tab != 3
+    val supportsSwipeTriage = tab != 3 && !isOverview
 
     Scaffold(
         topBar = {
             SweeprTopBar(
                 title = stringResource(R.string.category_photos_videos),
-                onBack = onBack,
+                onBack = { if (backToOverview) tab = PHOTOS_OVERVIEW_TAB else onBack() },
                 actions = {
                     if (supportsSwipeTriage) {
                         TriageModeToggleChip(
@@ -107,14 +151,31 @@ fun PhotosVideosScreen(
             )
         },
         bottomBar = {
-            CleanupBar(
-                count = selectedHere.size,
-                bytes = selectedHere.sumOf { it.size },
-                enabled = !state.isBusy,
-                onClick = { onTrash(selectedHere) },
-            )
+            // The overview has no selection, and Shrink Photos has its own sticky dock.
+            if (!isOverview && !(tab == 3 && optimizerTab == 1)) {
+                CleanupBar(
+                    count = selectedHere.size,
+                    bytes = selectedHere.sumOf { it.size },
+                    enabled = !state.isBusy,
+                    onClick = { onTrash(selectedHere) },
+                )
+            }
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
+        if (isOverview) {
+            MediaOverviewContent(
+                state = state,
+                onOpenTab = { tab = it },
+                onOpenShrinkPhotos = {
+                    optimizerTab = 1
+                    tab = 3
+                },
+                onOpenScreenshots = onOpenScreenshots,
+                modifier = Modifier.padding(padding),
+            )
+            return@Scaffold
+        }
         Column(Modifier.padding(padding).fillMaxSize()) {
             ScrollableTabRow(selectedTabIndex = tab, edgePadding = 8.dp) {
                 listOf(
@@ -186,6 +247,10 @@ fun PhotosVideosScreen(
                         onCompressVideo = { compressTarget = it },
                         onOptimizePhotos = onOptimizePhotos,
                         modifier = Modifier.weight(1f),
+                        optimizerTab = optimizerTab,
+                        onOptimizerTabChange = { optimizerTab = it },
+                        videoPreset = videoPreset,
+                        onVideoPresetChange = { videoPreset = it },
                     )
                     4 -> FlatGrid(
                         mediaItems = media.largeFiles,
@@ -216,6 +281,7 @@ fun PhotosVideosScreen(
     compressTarget?.let { target ->
         VideoCompressorOptionDialog(
             item = target,
+            initialPreset = videoPreset,
             onDismiss = { compressTarget = null },
             onStart = { preset ->
                 compressTarget = null
@@ -374,8 +440,11 @@ fun VideoCompressorScreen(
     onCompressVideo: (MediaItem) -> Unit,
     onOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    optimizerTab: Int = 0, // 0 = Video Compressor, 1 = Photo Optimizer & EXIF GPS Privacy
+    onOptimizerTabChange: (Int) -> Unit = {},
+    videoPreset: CompressionPreset = CompressionPreset.COMPACT_720P,
+    onVideoPresetChange: (CompressionPreset) -> Unit = {},
 ) {
-    var optimizerTab by rememberSaveable { mutableIntStateOf(0) } // 0 = Video Compressor, 1 = Photo Optimizer & EXIF GPS Privacy
     var compressFileSize by rememberSaveable { mutableStateOf(true) }
     var stripGpsTags by rememberSaveable { mutableStateOf(true) }
 
@@ -392,7 +461,7 @@ fun VideoCompressorScreen(
         // 2-tab segmented pill at the top
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+            color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
@@ -408,7 +477,7 @@ fun VideoCompressorScreen(
                 tabs.forEachIndexed { index, label ->
                     val selected = optimizerTab == index
                     Surface(
-                        onClick = { optimizerTab = index },
+                        onClick = { onOptimizerTabChange(index) },
                         shape = RoundedCornerShape(20.dp),
                         color = if (selected) SweeprGreen else Color.Transparent,
                         modifier = Modifier.weight(1f),
@@ -427,6 +496,12 @@ fun VideoCompressorScreen(
         }
 
         if (optimizerTab == 0) {
+            VideoShrinkHeader(
+                videos = state.media.videos,
+                selected = state.selectedMedia,
+                preset = videoPreset,
+                onPresetChange = onVideoPresetChange,
+            )
             FlatGrid(
                 mediaItems = state.media.videos,
                 header = stringResource(R.string.videos_largest_first),
@@ -439,19 +514,20 @@ fun VideoCompressorScreen(
                 modifier = Modifier.weight(1f),
             )
         } else {
+            // Gentle / Balanced / Maximum map onto the optimizer's existing two switches.
+            val strength = when {
+                !compressFileSize -> 0
+                !stripGpsTags -> 1
+                else -> 2
+            }
             PhotoOptimizerTabContent(
                 candidates = candidatePhotos,
                 selectedUris = selectedOptPhotoUris,
-                compressFileSize = compressFileSize,
-                stripGpsTags = stripGpsTags,
+                strength = strength,
                 busy = state.isBusy,
-                onToggleCompressSize = {
-                    compressFileSize = it
-                    if (!compressFileSize && !stripGpsTags) stripGpsTags = true
-                },
-                onToggleStripGps = {
-                    stripGpsTags = it
-                    if (!compressFileSize && !stripGpsTags) compressFileSize = true
+                onStrengthChange = { s ->
+                    compressFileSize = s >= 1
+                    stripGpsTags = s != 1
                 },
                 onTogglePhoto = { uri ->
                     selectedOptPhotoUris = if (uri in selectedOptPhotoUris) {
@@ -477,15 +553,100 @@ fun VideoCompressorScreen(
     }
 }
 
+/** Video presets ordered Gentle → Maximum for the strength slider. */
+private val VIDEO_STRENGTHS = listOf(
+    CompressionPreset.BALANCED_1080P,
+    CompressionPreset.COMPACT_720P,
+    CompressionPreset.MAX_SAVER_480P,
+)
+
+/** Compact Shrink header for videos: 3 stats + 3-stop strength slider mapped to the compressor presets. */
+@Composable
+private fun VideoShrinkHeader(
+    videos: List<MediaItem>,
+    selected: Set<Uri>,
+    preset: CompressionPreset,
+    onPresetChange: (CompressionPreset) -> Unit,
+) {
+    if (videos.isEmpty()) return
+    val selectedVideos = videos.filter { it.uri in selected }
+    val basis = selectedVideos.ifEmpty { videos }
+    val estSaved = (basis.sumOf { it.size } * preset.estSavingFraction).toLong()
+    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatRow(
+            listOf(
+                StatCell("${basis.size}", stringResource(R.string.shrink_n_videos)),
+                StatCell("${(preset.estSavingFraction * 100).roundToInt()}%", stringResource(R.string.shrink_smaller)),
+                StatCell("~${formatBytes(estSaved)}", stringResource(R.string.shrink_total_saved), highlight = true),
+            ),
+        )
+        StrengthSlider(
+            selected = VIDEO_STRENGTHS.indexOf(preset).coerceAtLeast(0),
+            onSelect = { onPresetChange(VIDEO_STRENGTHS[it]) },
+        )
+        Text(
+            stringResource(preset.labelRes) + " · " + stringResource(R.string.shrink_video_hint),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 11.sp,
+        )
+    }
+}
+
+/** 3-stop Gentle / Balanced / Maximum slider (mockup #9). */
+@Composable
+fun StrengthSlider(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val labels = listOf(
+        stringResource(R.string.shrink_gentle),
+        stringResource(R.string.shrink_balanced),
+        stringResource(R.string.shrink_maximum),
+    )
+    Column(modifier.fillMaxWidth()) {
+        Slider(
+            value = selected.toFloat(),
+            onValueChange = { onSelect(it.roundToInt().coerceIn(0, 2)) },
+            valueRange = 0f..2f,
+            steps = 1,
+            colors = SliderDefaults.colors(
+                thumbColor = Color.White,
+                activeTrackColor = SweeprGreen,
+                inactiveTrackColor = Slate400.copy(alpha = 0.25f),
+                activeTickColor = Color.White.copy(alpha = 0.6f),
+                inactiveTickColor = Slate400.copy(alpha = 0.6f),
+            ),
+            modifier = Modifier.semantics { contentDescription = labels[selected.coerceIn(0, 2)] },
+        )
+        Row(Modifier.fillMaxWidth()) {
+            labels.forEachIndexed { i, label ->
+                Text(
+                    label,
+                    fontSize = 11.sp,
+                    fontWeight = if (i == selected) FontWeight.ExtraBold else FontWeight.Normal,
+                    color = if (i == selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = when (i) {
+                        0 -> TextAlign.Start
+                        1 -> TextAlign.Center
+                        else -> TextAlign.End
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelect(i) },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Shrink Photos (mockup #9): drag-to-compare before/after preview, 3 stats, the 3-stop
+ * strength slider, a safety note and a sticky "Shrink N Photos" dock, above the photo grid.
+ */
 @Composable
 private fun PhotoOptimizerTabContent(
     candidates: List<MediaItem>,
     selectedUris: Set<Uri>,
-    compressFileSize: Boolean,
-    stripGpsTags: Boolean,
+    strength: Int,
     busy: Boolean,
-    onToggleCompressSize: (Boolean) -> Unit,
-    onToggleStripGps: (Boolean) -> Unit,
+    onStrengthChange: (Int) -> Unit,
     onTogglePhoto: (Uri) -> Unit,
     onSelectAll: (Boolean) -> Unit,
     onPreview: (MediaItem) -> Unit,
@@ -493,135 +654,444 @@ private fun PhotoOptimizerTabContent(
     onOptimizeBatch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val compressFileSize = strength >= 1
     val selectedPhotos = candidates.filter { it.uri in selectedUris }
     val estSavedBytes = if (compressFileSize) {
-        (selectedPhotos.sumOf { it.size } * 0.58).toLong()
+        (selectedPhotos.sumOf { it.size } * PhotoOptimizer.EST_SAVING_FRACTION).toLong()
     } else 0L
-    val gpsCount = candidates.count { it.hasGps }
+    val previewItem = selectedPhotos.maxByOrNull { it.size } ?: candidates.maxByOrNull { it.size }
+    val metrics = LocalContext.current.resources.displayMetrics
+    val screenLongEdge = maxOf(metrics.widthPixels, metrics.heightPixels).coerceAtLeast(1)
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Settings card for Smart JPEG Compression & EXIF GPS Stripping
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        if (candidates.isEmpty()) {
+            EmptyState(stringResource(R.string.photo_opt_empty), Modifier.weight(1f))
+            return@Column
+        }
+        val allSelected = candidates.all { it.uri in selectedUris }
+        val optBadgeLabel = stringResource(R.string.photo_opt_badge_action)
+        val gpsBadgeLabel = stringResource(R.string.photo_opt_badge_gps)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
         ) {
-            Column(Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column(
+                    Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    if (previewItem != null) {
+                        val after = if (compressFileSize) {
+                            (previewItem.size * (1 - PhotoOptimizer.EST_SAVING_FRACTION)).toLong()
+                        } else previewItem.size
+                        BeforeAfterPreview(previewItem, previewItem.size, after)
                         Text(
-                            stringResource(R.string.photo_opt_toggle_compress),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                        )
-                        Text(
-                            stringResource(R.string.photo_opt_toggle_compress_sub),
-                            color = Color.Gray,
-                            fontSize = 11.sp,
+                            stringResource(R.string.shrink_looks_same),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    Switch(
-                        checked = compressFileSize,
-                        onCheckedChange = onToggleCompressSize,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.photo_opt_toggle_gps),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
+                    val stats = buildList {
+                        if (compressFileSize) {
+                            val ratio = PhotoOptimizer.MAX_LONG_EDGE_PX.toFloat() / screenLongEdge
+                            add(StatCell(String.format(java.util.Locale.getDefault(), "%.1f×", ratio), stringResource(R.string.shrink_screen_size)))
+                        }
+                        add(
+                            StatCell(
+                                "${if (compressFileSize) (PhotoOptimizer.EST_SAVING_FRACTION * 100).roundToInt() else 0}%",
+                                stringResource(R.string.shrink_smaller),
+                            ),
                         )
-                        Text(
-                            stringResource(R.string.photo_opt_toggle_gps_sub, gpsCount),
-                            color = Color.Gray,
-                            fontSize = 11.sp,
-                        )
+                        add(StatCell(formatBytes(estSavedBytes), stringResource(R.string.shrink_total_saved), highlight = true))
                     }
-                    Switch(
-                        checked = stripGpsTags,
-                        onCheckedChange = onToggleStripGps,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onOptimizeBatch,
-                    enabled = selectedPhotos.isNotEmpty() && !busy,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                    StatRow(stats)
+                    StrengthSlider(selected = strength, onSelect = onStrengthChange)
                     Text(
-                        text = if (compressFileSize) {
-                            stringResource(
-                                R.string.photo_opt_batch_cta,
-                                selectedPhotos.size,
-                                formatBytes(estSavedBytes),
-                            )
-                        } else {
-                            stringResource(R.string.photo_opt_batch_gps_only_cta, selectedPhotos.size)
-                        },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        stringResource(
+                            when (strength) {
+                                0 -> R.string.shrink_photo_gentle_desc
+                                1 -> R.string.shrink_photo_balanced_desc
+                                else -> R.string.shrink_photo_maximum_desc
+                            },
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.5.sp,
                     )
+                    SweeprPanel(Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            SizeBadge("🛡️")
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.shrink_safety_note), fontSize = 11.5.sp)
+                        }
+                    }
                 }
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(
+                                R.string.photo_opt_header_count,
+                                candidates.size,
+                                formatBytes(candidates.sumOf { it.size }),
+                            ),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                        )
+                    }
+                    TextButton(onClick = { onSelectAll(!allSelected) }) {
+                        Text(
+                            if (allSelected) stringResource(R.string.action_deselect_all)
+                            else stringResource(R.string.action_select_all),
+                        )
+                    }
+                }
+            }
+            items(candidates, key = { it.uri.toString() }) { item ->
+                MediaThumb(
+                    item = item,
+                    selected = item.uri in selectedUris,
+                    onToggle = { onTogglePhoto(item.uri) },
+                    onPreview = { onPreview(item) },
+                    badge = if (item.hasGps) gpsBadgeLabel else null,
+                    actionLabel = optBadgeLabel,
+                    onActionClick = { onOptimizeSingle(item) },
+                )
             }
         }
 
-        if (candidates.isEmpty()) {
-            EmptyState(stringResource(R.string.photo_opt_empty), Modifier.weight(1f))
-        } else {
-            val allSelected = candidates.all { it.uri in selectedUris }
-            val optBadgeLabel = stringResource(R.string.photo_opt_badge_action)
-            val gpsBadgeLabel = stringResource(R.string.photo_opt_badge_gps)
+        StickyDock(
+            buttonText = when {
+                selectedPhotos.isEmpty() -> stringResource(R.string.shrink_select_photos)
+                compressFileSize -> stringResource(R.string.shrink_n_photos, selectedPhotos.size)
+                else -> stringResource(R.string.shrink_clean_n_photos, selectedPhotos.size)
+            },
+            onClick = onOptimizeBatch,
+            enabled = selectedPhotos.isNotEmpty() && !busy,
+        )
+    }
+}
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(8.dp),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-            ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                stringResource(
-                                    R.string.photo_opt_header_count,
-                                    candidates.size,
-                                    formatBytes(candidates.sumOf { it.size }),
-                                ),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                            )
-                        }
-                        TextButton(onClick = { onSelectAll(!allSelected) }) {
-                            Text(
-                                if (allSelected) stringResource(R.string.action_deselect_all)
-                                else stringResource(R.string.action_select_all),
-                            )
-                        }
+/**
+ * Drag-to-compare preview. Both halves show the real photo; the tags give the original size
+ * and the optimizer's estimated size, since the shrunk copy is only created when the user confirms.
+ */
+@Composable
+private fun BeforeAfterPreview(item: MediaItem, beforeBytes: Long, afterBytes: Long) {
+    var split by remember { mutableFloatStateOf(0.5f) }
+    var widthPx by remember { mutableFloatStateOf(1f) }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Slate800)
+            .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { change, dragAmount ->
+                    change.consume()
+                    split = (split + dragAmount / widthPx).coerceIn(0.05f, 0.95f)
+                }
+            },
+    ) {
+        AsyncImage(
+            model = item.uri,
+            contentDescription = item.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+        // "After" half: same photo, slightly brighter emerald wash so the split is visible.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .drawWithContent {
+                    clipRect(left = size.width * split) { this@drawWithContent.drawContent() }
+                },
+        ) {
+            AsyncImage(
+                model = item.uri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            Box(Modifier.fillMaxSize().background(SweeprGreen.copy(alpha = 0.08f)))
+        }
+        // Divider + knob
+        Canvas(Modifier.fillMaxSize()) {
+            val x = size.width * split
+            drawLine(Color.White, Offset(x, 0f), Offset(x, size.height), strokeWidth = 2.dp.toPx())
+            drawCircle(Color.White, radius = 15.dp.toPx(), center = Offset(x, size.height / 2))
+        }
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            Text(
+                "⇆",
+                color = SweeprGreenDark,
+                fontWeight = FontWeight.Black,
+                fontSize = 13.sp,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = maxWidth * split - 7.dp),
+            )
+        }
+        Text(
+            stringResource(R.string.shrink_before, formatBytes(beforeBytes)),
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(8.dp)
+                .background(Color(0xA6020617), RoundedCornerShape(7.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+        Text(
+            stringResource(R.string.shrink_after, formatBytes(afterBytes)),
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+                .background(Color(0xA6020617), RoundedCornerShape(7.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+    }
+}
+
+/** One "Photos you can clean up" card on the media overview. */
+private data class OverviewCard(
+    val title: String,
+    val note: String,
+    val thumbs: List<MediaItem>,
+    val bytes: Long,
+    val onClick: () -> Unit,
+)
+
+/**
+ * Photos & Media overview (mockup #8): donut of what media uses on the phone with callout
+ * chips, then cards for each cleanup area with real thumbnails and size badges
+ * (the largest saving gets a rose badge).
+ */
+@Composable
+private fun MediaOverviewContent(
+    state: DashboardState,
+    onOpenTab: (Int) -> Unit,
+    onOpenShrinkPhotos: () -> Unit,
+    onOpenScreenshots: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val media = state.media
+    val storage = remember(media) { readStorage() }
+    val videoBytes = media.videos.sumOf { it.size }
+    val screenshotBytes = media.screenshots.sumOf { it.size }
+    val allImages = media.everything.filter { !it.isVideo }
+    val photoBytes = (allImages.sumOf { it.size } - screenshotBytes).coerceAtLeast(0L)
+    val photoCount = (allImages.size - media.screenshots.size).coerceAtLeast(0)
+    val mediaBytes = photoBytes + videoBytes + screenshotBytes
+    val base = storage.used.takeIf { it > 0 } ?: mediaBytes.coerceAtLeast(1L)
+
+    val similarExtras = media.similarGroups.flatMap { it.extras }
+    val dupExtras = media.duplicateGroups.flatMap { it.extras }
+    val bigVideos = media.videos.filter { it.size >= MediaScanner.LARGE_FILE_THRESHOLD_BYTES }
+    val shrinkable = allImages.filter { it.size >= PhotoOptimizer.OPTIMIZABLE_PHOTO_THRESHOLD_BYTES }
+    val cards = listOf(
+        OverviewCard(
+            stringResource(R.string.overview_card_similar),
+            stringResource(R.string.overview_card_similar_note),
+            media.similarGroups.flatMap { it.items }, similarExtras.sumOf { it.size },
+        ) { onOpenTab(1) },
+        OverviewCard(
+            stringResource(R.string.overview_card_duplicates),
+            stringResource(R.string.overview_card_duplicates_note),
+            dupExtras, dupExtras.sumOf { it.size },
+        ) { onOpenTab(0) },
+        OverviewCard(
+            stringResource(R.string.overview_card_blurry),
+            stringResource(R.string.overview_card_blurry_note),
+            media.blurry, media.blurry.sumOf { it.size },
+        ) { onOpenTab(2) },
+        OverviewCard(
+            stringResource(R.string.overview_card_screenshots),
+            stringResource(R.string.overview_card_screenshots_note),
+            media.screenshots, screenshotBytes,
+        ) { onOpenScreenshots() },
+        OverviewCard(
+            stringResource(R.string.overview_card_big_videos),
+            stringResource(R.string.overview_card_big_videos_note),
+            bigVideos, bigVideos.sumOf { it.size },
+        ) { onOpenTab(3) },
+        OverviewCard(
+            stringResource(R.string.category_large_files),
+            stringResource(R.string.empty_no_large_files).takeIf { media.largeFiles.isEmpty() }
+                ?: stringResource(R.string.overview_card_big_videos_note),
+            media.largeFiles, media.largeFiles.sumOf { it.size },
+        ) { onOpenTab(4) },
+        OverviewCard(
+            stringResource(R.string.overview_card_chat),
+            stringResource(R.string.overview_card_chat_note),
+            media.messengerMedia, media.messengerMedia.sumOf { it.size },
+        ) { onOpenTab(5) },
+        OverviewCard(
+            stringResource(R.string.overview_card_shrink),
+            stringResource(R.string.overview_card_shrink_note),
+            shrinkable, 0L,
+        ) { onOpenShrinkPhotos() },
+    )
+    val largest = cards.maxByOrNull { it.bytes }?.takeIf { it.bytes > 0 }
+
+    Column(
+        modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        MediaDonut(
+            photoFraction = photoBytes.toFloat() / base,
+            videoFraction = videoBytes.toFloat() / base,
+            screenshotFraction = screenshotBytes.toFloat() / base,
+            centerPct = ((mediaBytes.toFloat() / base) * 100).roundToInt().coerceIn(0, 100),
+            centerBytes = mediaBytes,
+            videoLabel = pluralStringResource(R.plurals.overview_videos, media.videos.size, media.videos.size),
+            screenshotLabel = pluralStringResource(R.plurals.overview_screenshots, media.screenshots.size, media.screenshots.size),
+            photoLabel = pluralStringResource(R.plurals.overview_photos, photoCount, photoCount),
+        )
+        Text(
+            stringResource(R.string.overview_cleanup_header),
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        cards.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                row.forEach { card ->
+                    OverviewCardView(card, rose = card === largest, modifier = Modifier.weight(1f).fillMaxHeight())
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun MediaDonut(
+    photoFraction: Float,
+    videoFraction: Float,
+    screenshotFraction: Float,
+    centerPct: Int,
+    centerBytes: Long,
+    videoLabel: String,
+    screenshotLabel: String,
+    photoLabel: String,
+) {
+    val track = Slate400.copy(alpha = 0.18f)
+    Box(Modifier.fillMaxWidth().height(230.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(180.dp), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = 16.dp.toPx()
+                val inset = stroke / 2
+                val arcSize = Size(size.width - stroke, size.height - stroke)
+                val topLeft = Offset(inset, inset)
+                drawArc(track, -90f, 360f, false, topLeft, arcSize, style = Stroke(stroke))
+                var start = -90f
+                listOf(
+                    photoFraction to SweeprGreen,
+                    videoFraction to SweeprTeal,
+                    screenshotFraction to Emerald400,
+                ).forEach { (fraction, color) ->
+                    val sweep = 360f * fraction.coerceIn(0f, 1f)
+                    if (sweep > 0.5f) {
+                        drawArc(color, start, sweep, false, topLeft, arcSize, style = Stroke(stroke))
+                        start += sweep
                     }
                 }
-                items(candidates, key = { it.uri.toString() }) { item ->
-                    MediaThumb(
-                        item = item,
-                        selected = item.uri in selectedUris,
-                        onToggle = { onTogglePhoto(item.uri) },
-                        onPreview = { onPreview(item) },
-                        badge = if (item.hasGps) gpsBadgeLabel else null,
-                        actionLabel = optBadgeLabel,
-                        onActionClick = { onOptimizeSingle(item) },
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$centerPct%", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                Text(stringResource(R.string.overview_used_by_media), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(formatBytes(centerBytes), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+        CalloutChip("🎬 $videoLabel", SweeprTeal, Color.White, Modifier.align(Alignment.TopStart).padding(top = 6.dp, start = 8.dp))
+        CalloutChip("📸 $screenshotLabel", Emerald400, Color(0xFF064E3B), Modifier.align(Alignment.TopEnd).padding(top = 30.dp, end = 4.dp))
+        CalloutChip("🖼️ $photoLabel", Emerald600, Color.White, Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun CalloutChip(text: String, bg: Color, fg: Color, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        color = fg,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.ExtraBold,
+        modifier = modifier
+            .shadow(6.dp, RoundedCornerShape(9.dp))
+            .background(bg, RoundedCornerShape(9.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
+}
+
+@Composable
+private fun OverviewCardView(card: OverviewCard, rose: Boolean, modifier: Modifier = Modifier) {
+    SweeprPanel(modifier, onClick = card.onClick) {
+        Box(Modifier.fillMaxWidth().padding(10.dp)) {
+            Column {
+                ThumbStack(card.thumbs.take(3))
+                Spacer(Modifier.height(4.dp))
+                Text(card.title, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                Text(card.note, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (card.bytes > 0) {
+                SizeBadge(formatBytes(card.bytes), rose = rose, modifier = Modifier.align(Alignment.TopEnd))
+            } else if (card.thumbs.isNotEmpty() && card.bytes == 0L) {
+                SizeBadge("${card.thumbs.size}", modifier = Modifier.align(Alignment.TopEnd))
+            }
+        }
+    }
+}
+
+/** Up to three real thumbnails fanned out like a photo stack (gradient placeholders when empty). */
+@Composable
+private fun ThumbStack(items: List<MediaItem>) {
+    val placeholders = listOf(
+        listOf(SweeprTeal, Color(0xFF064E3B)),
+        listOf(Emerald400, Color(0xFF065F46)),
+        listOf(Color(0xFFF59E0B), SweeprGreenDark),
+    )
+    val panel = MaterialTheme.colorScheme.surface
+    Box(Modifier.height(70.dp).width(96.dp)) {
+        for (i in 0 until 3) {
+            val offsetX = (22 - i * 8).dp
+            val offsetY = (i * 8).dp
+            val alpha = if (items.isEmpty()) listOf(0.55f, 0.8f, 1f)[i] else 1f
+            Box(
+                Modifier
+                    .offset(x = offsetX, y = offsetY)
+                    .size(width = 64.dp, height = 52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Brush.linearGradient(placeholders[i]), RoundedCornerShape(8.dp))
+                    .border(2.dp, panel, RoundedCornerShape(8.dp)),
+            ) {
+                val item = items.getOrNull(items.size - 1 - (2 - i))
+                if (item != null) {
+                    AsyncImage(
+                        model = item.uri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
                     )
+                } else if (items.isEmpty()) {
+                    Box(Modifier.fillMaxSize().background(panel.copy(alpha = 1f - alpha)))
                 }
             }
         }
@@ -633,8 +1103,9 @@ fun VideoCompressorOptionDialog(
     item: MediaItem,
     onDismiss: () -> Unit,
     onStart: (CompressionPreset) -> Unit,
+    initialPreset: CompressionPreset = CompressionPreset.COMPACT_720P,
 ) {
-    var preset by remember { mutableStateOf(CompressionPreset.COMPACT_720P) }
+    var preset by remember(initialPreset) { mutableStateOf(initialPreset) }
     val estSaved = (item.size * preset.estSavingFraction).toLong()
 
     AlertDialog(

@@ -49,7 +49,10 @@ data class BatchPhotoOptimizationSummary(
 object PhotoOptimizer {
     /** Photos larger than 1.5 MB are surfaced for smart JPEG optimization. */
     const val OPTIMIZABLE_PHOTO_THRESHOLD_BYTES = 1_536L * 1024L
-    private const val MAX_LONG_EDGE_PX = 2560
+    /** Long edge (px) optimized photos are scaled down to; also shown on the Shrink screen. */
+    const val MAX_LONG_EDGE_PX = 2560
+    /** Typical size reduction used for the Shrink screen's estimates. */
+    const val EST_SAVING_FRACTION = 0.58
     private const val JPEG_QUALITY = 82
 
     private val SAFE_NON_GPS_TAGS = arrayOf(

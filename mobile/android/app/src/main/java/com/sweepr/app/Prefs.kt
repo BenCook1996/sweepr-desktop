@@ -51,6 +51,7 @@ object Prefs {
         val serverActive: Boolean = false,
         val plan: String? = null,
         val expiresAt: Long = 0L,
+        val addons: List<String> = emptyList(),
     ) {
         val isSignedIn: Boolean get() = accountId.isNotBlank() && refreshToken.isNotBlank()
     }
@@ -72,6 +73,7 @@ object Prefs {
     private const val KEY_SERVER_ACTIVE = "server_active"
     private const val KEY_SERVER_PLAN = "server_plan"
     private const val KEY_SERVER_EXPIRES = "server_expires"
+    private const val KEY_SERVER_ADDONS = "server_addons"
     private const val KEY_CLEANUP_COUNT = "cleanup_count"
     private const val KEY_REVIEW_SHOWN = "review_shown"
 
@@ -180,6 +182,11 @@ object Prefs {
             serverActive = prefs.getBoolean(KEY_SERVER_ACTIVE, false),
             plan = prefs.getString(KEY_SERVER_PLAN, null),
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
+            addons = prefs.getString(KEY_SERVER_ADDONS, "")
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?: emptyList(),
         )
     }
 
@@ -205,6 +212,7 @@ object Prefs {
             .putBoolean(KEY_SERVER_ACTIVE, account.serverActive)
             .putString(KEY_SERVER_PLAN, account.plan)
             .putLong(KEY_SERVER_EXPIRES, account.expiresAt)
+            .putString(KEY_SERVER_ADDONS, account.addons.joinToString(","))
             .apply()
     }
 
@@ -268,6 +276,16 @@ object SweeprAccountApi {
         }
     }
 
+    private fun parseAddons(res: org.json.JSONObject, fallback: List<String> = emptyList()): List<String> {
+        val arr = res.optJSONArray("addons") ?: return fallback
+        return buildList {
+            for (i in 0 until arr.length()) {
+                val item = arr.optString(i).trim()
+                if (item.isNotEmpty()) add(item)
+            }
+        }
+    }
+
     fun sendOtp(email: String) {
         val body = org.json.JSONObject().put("email", email.trim())
         postJson("/v1/account/send-otp", body)
@@ -290,6 +308,7 @@ object SweeprAccountApi {
             serverActive = res.optBoolean("active", false),
             plan = res.optString("plan").takeIf { it.isNotBlank() },
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
+            addons = parseAddons(res),
         )
     }
 
@@ -302,7 +321,7 @@ object SweeprAccountApi {
             postJson("/v1/entitlement", body, bearerToken = current.refreshToken)
         } catch (e: ApiException) {
             if (e.statusCode == 401 || e.statusCode == 403) {
-                return current.copy(serverActive = false, expiresAt = 0L)
+                return current.copy(serverActive = false, expiresAt = 0L, addons = emptyList())
             }
             throw e
         }
@@ -314,6 +333,7 @@ object SweeprAccountApi {
             serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
+            addons = parseAddons(res, current.addons),
         )
     }
 

@@ -7,129 +7,68 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.spring
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.tween
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.height
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.size
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Button
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Card
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.key
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.saveable.rememberSaveable
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -148,7 +87,8 @@ fun SwipeCleanupScreen(
     items: List<MediaItem>,
     busy: Boolean,
     onTrash: (List<MediaItem>) -> Unit,
-    onBack: () -> Unit,
+    onScan: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
 ) {
     val months = remember(items) {
         items.groupBy { it.yearMonth() }.toList().sortedByDescending { it.first }
@@ -159,7 +99,7 @@ fun SwipeCleanupScreen(
         monthKey?.let { runCatching { YearMonth.parse(it) }.getOrNull() }
     }
     if (selectedMonth == null) {
-        MonthPicker(months, onPick = { monthKey = it.toString() }, onBack = onBack)
+        MonthPicker(months, onPick = { monthKey = it.toString() }, onScan = onScan, onBack = onBack)
     } else {
         BackHandler { monthKey = null }
         SwipeDeck(
@@ -176,11 +116,21 @@ fun SwipeCleanupScreen(
 private fun MonthPicker(
     months: List<Pair<YearMonth, List<MediaItem>>>,
     onPick: (YearMonth) -> Unit,
-    onBack: () -> Unit,
+    onScan: (() -> Unit)?,
+    onBack: (() -> Unit)?,
 ) {
     Scaffold(topBar = { SweeprTopBar(stringResource(R.string.category_swipe_cleanup), onBack) }) { padding ->
         if (months.isEmpty()) {
-            EmptyState(stringResource(R.string.swipe_empty), Modifier.padding(padding))
+            if (onScan != null) {
+                PermissionPrompt(
+                    text = stringResource(R.string.swipe_empty),
+                    buttonText = stringResource(R.string.scan_my_phone),
+                    onClick = onScan,
+                    modifier = Modifier.padding(padding),
+                )
+            } else {
+                EmptyState(stringResource(R.string.swipe_empty), Modifier.padding(padding))
+            }
             return@Scaffold
         }
         LazyColumn(
@@ -246,7 +196,7 @@ private fun SwipeDeck(
     var markedUriStrings by rememberSaveable(title) { mutableStateOf(emptyList<String>()) }
     var historyUriStrings by rememberSaveable(title) { mutableStateOf(emptyList<String>()) }
 
-    // Once items are actually deleted they disappear from monthItems – forget them here too.
+    // Once items are actually deleted they disappear from monthItems â€“ forget them here too.
     LaunchedEffect(monthItems) {
         val existing = monthItems.map { it.uri.toString() }.toSet()
         markedUriStrings = markedUriStrings.filter { it in existing }

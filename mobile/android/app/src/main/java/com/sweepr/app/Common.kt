@@ -6,111 +6,58 @@ import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.border
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.height
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.size
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Button
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Icon
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.IconButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Surface
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import java.text.DateFormat
 import java.util.Date
@@ -122,6 +69,32 @@ val SweeprGreen = Color(0xFF10B981)
 val SweeprGreenDark = Color(0xFF047857)
 val DangerRed = Color(0xFFEF4444)
 
+// Mockup palette (Emerald / Teal / Mint / Slate / Rose).
+val Emerald400 = Color(0xFF34D399)
+val Emerald600 = Color(0xFF059669)
+val SweeprTeal = Color(0xFF0D9488)
+val SweeprMint = Color(0xFFECFDF5)
+val SweeprRose = Color(0xFFF43F5E)
+val Slate900 = Color(0xFF0F172A)
+val Slate800 = Color(0xFF1E293B)
+val Slate700 = Color(0xFF334155)
+val Slate400 = Color(0xFF94A3B8)
+
+/** True when the app is currently rendering its dark theme (respects the in-app Theme setting). */
+@Composable
+fun isSweeprDark(): Boolean {
+    val mode by Prefs.theme.collectAsState()
+    return when (mode) {
+        ThemeMode.System -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+    }
+}
+
+/** Emerald accent for text on the current background: emerald-400 in dark, emerald-700 in light. */
+@Composable
+fun emeraldText(): Color = if (isSweeprDark()) Emerald400 else SweeprGreenDark
+
 @Composable
 fun SweeprTheme(content: @Composable () -> Unit) {
     val mode by Prefs.theme.collectAsState()
@@ -130,24 +103,37 @@ fun SweeprTheme(content: @Composable () -> Unit) {
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
+    // Emerald / Slate palette from the approved mockups: deep navy-slate panels in dark mode,
+    // airy slate-50 background with white cards in light mode.
     val colorScheme = if (dark) {
         darkColorScheme(
             primary = SweeprGreen,
             onPrimary = Color.White,
-            secondary = SweeprGreen,
-            background = Color(0xFF111827),
-            onBackground = Color(0xFFF9FAFB),
-            surface = Color(0xFF1F2937),
-            onSurface = Color(0xFFF9FAFB),
-            surfaceVariant = Color(0xFF374151),
+            secondary = Emerald400,
+            tertiary = SweeprTeal,
+            background = Color(0xFF0B1220),
+            onBackground = Color(0xFFF8FAFC),
+            surface = Color(0xFF111A2E),
+            onSurface = Color(0xFFF8FAFC),
+            surfaceVariant = Color(0xFF172238),
+            onSurfaceVariant = Slate400,
+            outline = Color(0x2494A3B8),
+            outlineVariant = Color(0x2494A3B8),
         )
     } else {
         lightColorScheme(
             primary = SweeprGreen,
             onPrimary = Color.White,
             secondary = SweeprGreenDark,
-            background = Color(0xFFF3F4F6),
+            tertiary = SweeprTeal,
+            background = Color(0xFFF8FAFC),
+            onBackground = Slate900,
             surface = Color.White,
+            onSurface = Slate900,
+            surfaceVariant = Color(0xFFF1F5F9),
+            onSurfaceVariant = Color(0xFF64748B),
+            outline = Color(0xFFE2E8F0),
+            outlineVariant = Color(0xFFE2E8F0),
         )
     }
     MaterialTheme(colorScheme = colorScheme, content = content)
