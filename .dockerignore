@@ -1,0 +1,10 @@
+.git
+**/.env
+**/.env.*
+**/data
+**/*.db
+**/*.db-*
+**/*.log
+**/node_modules
+app
+mobile

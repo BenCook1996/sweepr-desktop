@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim
 WORKDIR /app/server
 
 COPY server/package.json server/package-lock.json* ./
-RUN npm install --omit=dev && npm install tsx
+RUN npm install --omit=dev --ignore-scripts && npm install --ignore-scripts tsx
 
 COPY server/ ./
 
