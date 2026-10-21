@@ -338,32 +338,15 @@ export function createApp(deps: AppDeps) {
   });
   app.get("/admin", (c) => c.redirect("/crm"));
 
-  // Explicit HTML page routes for clean URLs
-  const ORDER_VISITED_COOKIE = "sweepr_visited_order";
+  // Explicit HTML page routes for clean URLs (no conditional cookie or User-Agent redirects)
   const handleHomeRoute = async (c: Context) => {
-    const visitedOrder = getCookie(c, ORDER_VISITED_COOKIE) === "1";
-    const bypass = c.req.query("home") === "1" || c.req.query("noredirect") === "1";
-    const referer = c.req.header("referer") || "";
-    const fromOrderPage = /\/(order|checkout)(\b|\/|\?|$)/i.test(referer);
-    if (visitedOrder && !bypass && !fromOrderPage) {
-      const loggedInAccountId = await sessionAccountId(c);
-      if (!loggedInAccountId) {
-        return c.redirect("/order", 302);
-      }
-    }
     const file = "./public/index.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   };
   app.get("/", handleHomeRoute);
-  app.get("/index.html", handleHomeRoute);
+  app.get("/index.html", (c) => c.redirect("/", 301));
 
   const handleOrderRoute = (c: Context) => {
-    setCookie(c, ORDER_VISITED_COOKIE, "1", {
-      path: "/",
-      sameSite: "Lax",
-      secure: isHttps,
-      maxAge: 86400 * 30,
-    });
     const file = "./public/order.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   };
@@ -374,33 +357,49 @@ export function createApp(deps: AppDeps) {
     const file = "./public/pricing.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/pricing.html", (c) => c.redirect("/pricing", 301));
   app.get("/login", (c) => {
     const file = "./public/login.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/login.html", (c) => c.redirect("/login", 301));
   app.get("/terms", (c) => {
     const file = "./public/terms.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/terms.html", (c) => c.redirect("/terms", 301));
   app.get("/privacy", (c) => {
     const file = "./public/privacy.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/privacy.html", (c) => c.redirect("/privacy", 301));
   app.get("/support", (c) => {
     const file = "./public/support.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/support.html", (c) => c.redirect("/support", 301));
   app.get("/refund", (c) => {
     const file = "./public/refund.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
+  app.get("/refund.html", (c) => c.redirect("/refund", 301));
   app.get("/vs/:competitor", (c) => {
-    const competitor = String(c.req.param("competitor") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const raw = String(c.req.param("competitor") ?? "");
+    if (raw.toLowerCase().endsWith(".html")) {
+      const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return c.redirect(`/vs/${clean}`, 301);
+    }
+    const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const file = `./public/vs/${competitor}.html`;
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/alternatives/:competitor", (c) => {
-    const competitor = String(c.req.param("competitor") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const raw = String(c.req.param("competitor") ?? "");
+    if (raw.toLowerCase().endsWith(".html")) {
+      const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return c.redirect(`/alternatives/${clean}`, 301);
+    }
+    const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const file = `./public/alternatives/${competitor}.html`;
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
@@ -462,6 +461,7 @@ export function createApp(deps: AppDeps) {
   app.get("/Sweepr_Setup.exe", (c) => c.redirect("/download?platform=windows", 302));
 
   app.get("/download", (c) => {
+    c.header("X-Robots-Tag", "noindex, nofollow");
     const ua = c.req.header("user-agent")?.toLowerCase() || "";
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
@@ -1350,7 +1350,6 @@ export function createApp(deps: AppDeps) {
         undefined;
 
       if (resolvedAccount) {
-        deleteCookie(c, ORDER_VISITED_COOKIE, { path: "/" });
         await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
           path: "/",
           httpOnly: true,
@@ -3025,7 +3024,6 @@ export function createApp(deps: AppDeps) {
       }
     }
 
-    deleteCookie(c, ORDER_VISITED_COOKIE, { path: "/" });
     if (isPopup) {
       return c.html(popupClosePage("success", "/checkout/success?web=1"));
     }
@@ -3034,7 +3032,7 @@ export function createApp(deps: AppDeps) {
       return c.html(
         page(
           "You're Activated 🎉",
-          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.<script>try{localStorage.removeItem('sweepr_visited_order');document.cookie='sweepr_visited_order=; path=/; max-age=0';}catch(e){}</script>",
+          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.",
           true
         )
       );

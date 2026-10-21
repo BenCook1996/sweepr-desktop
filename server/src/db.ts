@@ -73,6 +73,7 @@ export interface Entitlement {
   stripe_subscription_id: string | null;
   status: EntStatus;
   plan: string | null;
+  addons?: string | null;
   current_period_end: number | null;
   cancel_at_period_end: number;
   updated_at: number;
@@ -331,6 +332,8 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
   ensureColumn(db, "devices", "token_hash", "TEXT");
+  ensureColumn(db, "entitlements", "addons", "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn(db, "subscriptions", "addons", "TEXT NOT NULL DEFAULT '[]'");
   // OTPs are now stored hashed with a failed-attempt counter. Any pre-existing (plaintext) codes are dropped.
   const otpCols = db.prepare(`PRAGMA table_info(otps)`).all() as Array<{ name: string }>;
   if (!otpCols.some((c) => c.name === "attempts")) db.exec(`DELETE FROM otps`);
@@ -613,20 +616,65 @@ export class Repo {
     return this.db.prepare("SELECT * FROM entitlements WHERE account_id = ?").get(accountId) as Entitlement | undefined;
   }
 
-  upsertEntitlement(e: Omit<Entitlement, "updated_at">) {
+  addonsForAccount(accountId: string): string[] {
+    const ent = this.entitlement(accountId);
+    if (!ent?.addons) return [];
+    try {
+      const parsed = JSON.parse(ent.addons);
+      return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string" && x.length > 0) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  setAddons(accountId: string, addons: string[]) {
+    const clean = Array.from(new Set(addons.map((a) => String(a).trim().toLowerCase()).filter(Boolean)));
+    const json = JSON.stringify(clean);
+    const t = now();
+    this.db.prepare("UPDATE entitlements SET addons = ?, updated_at = ? WHERE account_id = ?").run(json, t, accountId);
+    this.db.prepare("UPDATE subscriptions SET addons = ?, updated_at = ? WHERE account_id = ?").run(json, t, accountId);
+  }
+
+  grantAddon(accountId: string, addon: string): string[] {
+    const existing = this.addonsForAccount(accountId);
+    const norm = addon.trim().toLowerCase();
+    if (norm && !existing.includes(norm)) {
+      existing.push(norm);
+      this.setAddons(accountId, existing);
+    }
+    return existing;
+  }
+
+  upsertEntitlement(e: Omit<Entitlement, "updated_at"> & { addons_list?: string[] }) {
     const t = now();
     const cancelFlag = e.cancel_at_period_end ? 1 : 0;
+    const existingAddons = this.addonsForAccount(e.account_id);
+    let mergedAddons = existingAddons;
+    if (Array.isArray(e.addons_list)) {
+      mergedAddons = Array.from(new Set([...existingAddons, ...e.addons_list.map((a) => a.trim().toLowerCase()).filter(Boolean)]));
+    } else if (typeof e.addons === "string" && e.addons.trim().startsWith("[")) {
+      try {
+        const parsed = JSON.parse(e.addons);
+        if (Array.isArray(parsed)) {
+          mergedAddons = Array.from(new Set([...existingAddons, ...parsed.map((a: any) => String(a).trim().toLowerCase()).filter(Boolean)]));
+        }
+      } catch {
+        // ignore
+      }
+    }
+    const addonsJson = JSON.stringify(mergedAddons);
     this.db.prepare(`
-      INSERT INTO entitlements (account_id, stripe_subscription_id, status, plan, current_period_end, cancel_at_period_end, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO entitlements (account_id, stripe_subscription_id, status, plan, addons, current_period_end, cancel_at_period_end, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET
         stripe_subscription_id = excluded.stripe_subscription_id,
         status = excluded.status,
         plan = excluded.plan,
+        addons = excluded.addons,
         current_period_end = excluded.current_period_end,
         cancel_at_period_end = excluded.cancel_at_period_end,
         updated_at = excluded.updated_at
-    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, e.current_period_end, cancelFlag, t);
+    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, addonsJson, e.current_period_end, cancelFlag, t);
 
     // Also mirror to subscriptions table for CRM subscription history
     const subId = e.stripe_subscription_id || `sub_${e.account_id}`;

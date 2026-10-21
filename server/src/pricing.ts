@@ -11,6 +11,9 @@ export interface RawCurrencyTier {
   sixMonthAmount: number;
   monthlyAmount: number;
   introMonthlyAmount: number;
+  batteryCareAnnualAmount: number;
+  batteryCareSixMonthAmount: number;
+  batteryCareMonthlyAmount: number;
 }
 
 export interface LocalizedPlanPricing {
@@ -40,6 +43,22 @@ export interface LocalizedPlanPricing {
   introMonthlyFormatted: string;
   introSavingsAmount: number;
   introSavingsFormatted: string;
+  batteryCareAnnualAmount: number;
+  batteryCareAnnualFormatted: string;
+  batteryCareAnnualMonthlyEqFormatted: string;
+  batteryCareSixMonthAmount: number;
+  batteryCareSixMonthFormatted: string;
+  batteryCareSixMonthMonthlyEqFormatted: string;
+  batteryCareMonthlyAmount: number;
+  batteryCareMonthlyFormatted: string;
+  cloudVaultAnnualAmount: number;
+  cloudVaultAnnualFormatted: string;
+  cloudVaultAnnualMonthlyEqFormatted: string;
+  cloudVaultSixMonthAmount: number;
+  cloudVaultSixMonthFormatted: string;
+  cloudVaultSixMonthMonthlyEqFormatted: string;
+  cloudVaultMonthlyAmount: number;
+  cloudVaultMonthlyFormatted: string;
 }
 
 export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
@@ -53,6 +72,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 4799,
     monthlyAmount: 1199,
     introMonthlyAmount: 199,
+    batteryCareAnnualAmount: 2399,
+    batteryCareSixMonthAmount: 1499,
+    batteryCareMonthlyAmount: 399,
   },
   gbp: {
     currency: "gbp",
@@ -64,6 +86,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 3899,
     monthlyAmount: 999,
     introMonthlyAmount: 199,
+    batteryCareAnnualAmount: 1799,
+    batteryCareSixMonthAmount: 1199,
+    batteryCareMonthlyAmount: 299,
   },
   eur: {
     currency: "eur",
@@ -75,6 +100,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 4499,
     monthlyAmount: 1099,
     introMonthlyAmount: 199,
+    batteryCareAnnualAmount: 2199,
+    batteryCareSixMonthAmount: 1399,
+    batteryCareMonthlyAmount: 399,
   },
   cad: {
     currency: "cad",
@@ -86,6 +114,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 6499,
     monthlyAmount: 1599,
     introMonthlyAmount: 299,
+    batteryCareAnnualAmount: 3299,
+    batteryCareSixMonthAmount: 2099,
+    batteryCareMonthlyAmount: 499,
   },
   aud: {
     currency: "aud",
@@ -97,6 +128,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 7499,
     monthlyAmount: 1799,
     introMonthlyAmount: 299,
+    batteryCareAnnualAmount: 3599,
+    batteryCareSixMonthAmount: 2299,
+    batteryCareMonthlyAmount: 599,
   },
   nzd: {
     currency: "nzd",
@@ -108,6 +142,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 7999,
     monthlyAmount: 1999,
     introMonthlyAmount: 299,
+    batteryCareAnnualAmount: 3999,
+    batteryCareSixMonthAmount: 2499,
+    batteryCareMonthlyAmount: 699,
   },
   chf: {
     currency: "chf",
@@ -119,6 +156,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 4499,
     monthlyAmount: 1099,
     introMonthlyAmount: 199,
+    batteryCareAnnualAmount: 2199,
+    batteryCareSixMonthAmount: 1399,
+    batteryCareMonthlyAmount: 399,
   },
   sek: {
     currency: "sek",
@@ -130,6 +170,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 51999,
     monthlyAmount: 12999,
     introMonthlyAmount: 1999,
+    batteryCareAnnualAmount: 24999,
+    batteryCareSixMonthAmount: 15999,
+    batteryCareMonthlyAmount: 3999,
   },
   nok: {
     currency: "nok",
@@ -141,6 +184,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 51999,
     monthlyAmount: 12999,
     introMonthlyAmount: 1999,
+    batteryCareAnnualAmount: 24999,
+    batteryCareSixMonthAmount: 15999,
+    batteryCareMonthlyAmount: 3999,
   },
   dkk: {
     currency: "dkk",
@@ -152,6 +198,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 32999,
     monthlyAmount: 8499,
     introMonthlyAmount: 1499,
+    batteryCareAnnualAmount: 15999,
+    batteryCareSixMonthAmount: 9999,
+    batteryCareMonthlyAmount: 2999,
   },
   pln: {
     currency: "pln",
@@ -163,6 +212,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 18999,
     monthlyAmount: 4799,
     introMonthlyAmount: 799,
+    batteryCareAnnualAmount: 9499,
+    batteryCareSixMonthAmount: 5999,
+    batteryCareMonthlyAmount: 1599,
   },
   czk: {
     currency: "czk",
@@ -174,6 +226,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 109999,
     monthlyAmount: 27999,
     introMonthlyAmount: 4999,
+    batteryCareAnnualAmount: 54999,
+    batteryCareSixMonthAmount: 34999,
+    batteryCareMonthlyAmount: 8999,
   },
   ron: {
     currency: "ron",
@@ -185,6 +240,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 21999,
     monthlyAmount: 5499,
     introMonthlyAmount: 999,
+    batteryCareAnnualAmount: 10999,
+    batteryCareSixMonthAmount: 6999,
+    batteryCareMonthlyAmount: 1799,
   },
   bgn: {
     currency: "bgn",
@@ -196,6 +254,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 8999,
     monthlyAmount: 2199,
     introMonthlyAmount: 399,
+    batteryCareAnnualAmount: 4299,
+    batteryCareSixMonthAmount: 2699,
+    batteryCareMonthlyAmount: 699,
   },
   try: {
     currency: "try",
@@ -207,6 +268,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 164999,
     monthlyAmount: 39999,
     introMonthlyAmount: 6999,
+    batteryCareAnnualAmount: 79999,
+    batteryCareSixMonthAmount: 49999,
+    batteryCareMonthlyAmount: 12999,
   },
   jpy: {
     currency: "jpy",
@@ -218,6 +282,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 7480,
     monthlyAmount: 1880,
     introMonthlyAmount: 290,
+    batteryCareAnnualAmount: 3580,
+    batteryCareSixMonthAmount: 2280,
+    batteryCareMonthlyAmount: 580,
   },
   krw: {
     currency: "krw",
@@ -229,6 +296,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 65900,
     monthlyAmount: 16900,
     introMonthlyAmount: 2900,
+    batteryCareAnnualAmount: 32900,
+    batteryCareSixMonthAmount: 20900,
+    batteryCareMonthlyAmount: 5500,
   },
   sgd: {
     currency: "sgd",
@@ -240,6 +310,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 6299,
     monthlyAmount: 1599,
     introMonthlyAmount: 299,
+    batteryCareAnnualAmount: 2999,
+    batteryCareSixMonthAmount: 1899,
+    batteryCareMonthlyAmount: 499,
   },
   hkd: {
     currency: "hkd",
@@ -251,6 +324,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 36999,
     monthlyAmount: 9499,
     introMonthlyAmount: 1599,
+    batteryCareAnnualAmount: 17999,
+    batteryCareSixMonthAmount: 11499,
+    batteryCareMonthlyAmount: 2999,
   },
   twd: {
     currency: "twd",
@@ -262,6 +338,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 154999,
     monthlyAmount: 38999,
     introMonthlyAmount: 6499,
+    batteryCareAnnualAmount: 74999,
+    batteryCareSixMonthAmount: 47999,
+    batteryCareMonthlyAmount: 12999,
   },
   inr: {
     currency: "inr",
@@ -273,6 +352,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 399999,
     monthlyAmount: 99999,
     introMonthlyAmount: 16999,
+    batteryCareAnnualAmount: 199999,
+    batteryCareSixMonthAmount: 124999,
+    batteryCareMonthlyAmount: 32999,
   },
   brl: {
     currency: "brl",
@@ -284,6 +366,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 25999,
     monthlyAmount: 6499,
     introMonthlyAmount: 999,
+    batteryCareAnnualAmount: 12499,
+    batteryCareSixMonthAmount: 7999,
+    batteryCareMonthlyAmount: 2099,
   },
   mxn: {
     currency: "mxn",
@@ -295,6 +380,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 94999,
     monthlyAmount: 23999,
     introMonthlyAmount: 3999,
+    batteryCareAnnualAmount: 46999,
+    batteryCareSixMonthAmount: 29999,
+    batteryCareMonthlyAmount: 7999,
   },
   zar: {
     currency: "zar",
@@ -306,6 +394,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 84999,
     monthlyAmount: 20999,
     introMonthlyAmount: 3499,
+    batteryCareAnnualAmount: 41999,
+    batteryCareSixMonthAmount: 26999,
+    batteryCareMonthlyAmount: 6999,
   },
   aed: {
     currency: "aed",
@@ -317,6 +408,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 17999,
     monthlyAmount: 4499,
     introMonthlyAmount: 799,
+    batteryCareAnnualAmount: 8999,
+    batteryCareSixMonthAmount: 5699,
+    batteryCareMonthlyAmount: 1499,
   },
   sar: {
     currency: "sar",
@@ -328,6 +422,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 17999,
     monthlyAmount: 4499,
     introMonthlyAmount: 799,
+    batteryCareAnnualAmount: 8999,
+    batteryCareSixMonthAmount: 5699,
+    batteryCareMonthlyAmount: 1499,
   },
   ils: {
     currency: "ils",
@@ -339,6 +436,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 17999,
     monthlyAmount: 4499,
     introMonthlyAmount: 799,
+    batteryCareAnnualAmount: 8999,
+    batteryCareSixMonthAmount: 5699,
+    batteryCareMonthlyAmount: 1499,
   },
   myr: {
     currency: "myr",
@@ -350,6 +450,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 20999,
     monthlyAmount: 5199,
     introMonthlyAmount: 899,
+    batteryCareAnnualAmount: 9999,
+    batteryCareSixMonthAmount: 6499,
+    batteryCareMonthlyAmount: 1699,
   },
   thb: {
     currency: "thb",
@@ -361,6 +464,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 159999,
     monthlyAmount: 39999,
     introMonthlyAmount: 6999,
+    batteryCareAnnualAmount: 79999,
+    batteryCareSixMonthAmount: 49999,
+    batteryCareMonthlyAmount: 12999,
   },
   php: {
     currency: "php",
@@ -372,6 +478,9 @@ export const PRICING_BY_CURRENCY: Record<string, RawCurrencyTier> = {
     sixMonthAmount: 274999,
     monthlyAmount: 68999,
     introMonthlyAmount: 11999,
+    batteryCareAnnualAmount: 134999,
+    batteryCareSixMonthAmount: 84999,
+    batteryCareMonthlyAmount: 21999,
   },
 };
 
@@ -490,6 +599,9 @@ export function getPricingForCountryOrCurrency(
 
   const introSavingsAmount = tier.monthlyAmount - tier.introMonthlyAmount;
 
+  const batteryCareAnnualMonthlyEq = Math.floor(tier.batteryCareAnnualAmount / 12);
+  const batteryCareSixMonthMonthlyEq = Math.floor(tier.batteryCareSixMonthAmount / 6);
+
   return {
     country: normCountry,
     countryFlag,
@@ -517,6 +629,22 @@ export function getPricingForCountryOrCurrency(
     introMonthlyFormatted: formatCurrencyAmount(tier, tier.introMonthlyAmount),
     introSavingsAmount,
     introSavingsFormatted: formatCurrencyAmount(tier, introSavingsAmount),
+    batteryCareAnnualAmount: tier.batteryCareAnnualAmount,
+    batteryCareAnnualFormatted: formatCurrencyAmount(tier, tier.batteryCareAnnualAmount),
+    batteryCareAnnualMonthlyEqFormatted: formatCurrencyAmount(tier, batteryCareAnnualMonthlyEq),
+    batteryCareSixMonthAmount: tier.batteryCareSixMonthAmount,
+    batteryCareSixMonthFormatted: formatCurrencyAmount(tier, tier.batteryCareSixMonthAmount),
+    batteryCareSixMonthMonthlyEqFormatted: formatCurrencyAmount(tier, batteryCareSixMonthMonthlyEq),
+    batteryCareMonthlyAmount: tier.batteryCareMonthlyAmount,
+    batteryCareMonthlyFormatted: formatCurrencyAmount(tier, tier.batteryCareMonthlyAmount),
+    cloudVaultAnnualAmount: tier.batteryCareAnnualAmount,
+    cloudVaultAnnualFormatted: formatCurrencyAmount(tier, tier.batteryCareAnnualAmount),
+    cloudVaultAnnualMonthlyEqFormatted: formatCurrencyAmount(tier, batteryCareAnnualMonthlyEq),
+    cloudVaultSixMonthAmount: tier.batteryCareSixMonthAmount,
+    cloudVaultSixMonthFormatted: formatCurrencyAmount(tier, tier.batteryCareSixMonthAmount),
+    cloudVaultSixMonthMonthlyEqFormatted: formatCurrencyAmount(tier, batteryCareSixMonthMonthlyEq),
+    cloudVaultMonthlyAmount: tier.batteryCareMonthlyAmount,
+    cloudVaultMonthlyFormatted: formatCurrencyAmount(tier, tier.batteryCareMonthlyAmount),
   };
 }
 

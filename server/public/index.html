@@ -4,41 +4,29 @@
     <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SWEEPR Cleaner: Fast PC Cleaner & Optimizer for Windows 11 & Mac</title>
-  <script>
-    (function() {
-      try {
-        var params = new URLSearchParams(window.location.search);
-        if (params.get('home') === '1' || params.get('noredirect') === '1') return;
-        var ref = document.referrer || '';
-        var fromOrder = false;
-        try {
-          if (ref && new URL(ref).origin === window.location.origin && /^\/(order|checkout)(\b|\/|$)/i.test(new URL(ref).pathname)) {
-            fromOrder = true;
-          }
-        } catch (e) {}
-        var visitedOrder = localStorage.getItem('sweepr_visited_order') === '1' || /(?:^|;\s*)sweepr_visited_order=1(?:;|$)/.test(document.cookie);
-        if (visitedOrder && !fromOrder) {
-          window.location.replace('/order' + (window.location.search || ''));
-        }
-      } catch (e) {}
-    })();
-  </script>
-  <meta name="description" content="Reclaim 20+ GB of hidden disk space, purge bloated RAM, uninstall stubborn apps, and shred sensitive files in 60 seconds. Lightweight Rust engine with zero bloatware.">
+  <title>SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster</title>
+  <meta name="description" content="Free up gigabytes of wasted space, remove stubborn apps, and speed up a slow PC in 60 seconds. Tiny &lt;15MB download, 7-day undo, and zero popups. Try it free.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
   <!-- Open Graph / Social Meta -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SWEEPR Cleaner">
+  <meta property="og:locale" content="en_GB">
   <meta property="og:url" content="https://sweeprcleaner.com/">
-  <meta property="og:title" content="SWEEPR Cleaner: Fast PC Cleaner & Optimizer for Windows 11 & Mac">
-  <meta property="og:description" content="Reclaim lost gigabytes and boost startup speed without slow background daemons or popups.">
+  <meta property="og:title" content="SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster">
+  <meta property="og:description" content="Free up wasted storage and make your PC start faster—without annoying popups or background slowdowns.">
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+  <meta property="og:image:alt" content="SWEEPR Cleaner PC scan showing 12.4 GB of removable junk">
 
   <!-- Twitter Meta -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://sweeprcleaner.com/">
-  <meta name="twitter:title" content="SWEEPR Cleaner: Fast PC Cleaner & Optimizer for Windows 11 & Mac">
-  <meta name="twitter:description" content="Reclaim lost gigabytes in under 60 seconds with native Rust performance. Zero bloatware.">
+  <meta name="twitter:title" content="SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster">
+  <meta name="twitter:description" content="Free up wasted storage and speed up your PC in under 60 seconds. Simple, fast, and no junkware.">
   <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
 
   <!-- Structured Data (JSON-LD) for Search Rich Snippets -->
@@ -47,24 +35,44 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        "name": "SWEEPR Cleaner Inc.",
+        "url": "https://sweeprcleaner.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://sweeprcleaner.com/logo-emerald.svg"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "url": "https://sweeprcleaner.com/support",
+          "availableLanguage": ["en", "de", "fr", "es", "it", "pt", "nl", "ja"]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://sweeprcleaner.com/#website",
+        "url": "https://sweeprcleaner.com/",
+        "name": "SWEEPR Cleaner",
+        "publisher": {
+          "@id": "https://sweeprcleaner.com/#organization"
+        }
+      },
+      {
         "@type": "SoftwareApplication",
         "name": "SWEEPR Cleaner",
+        "softwareVersion": "0.1.0",
         "operatingSystem": "Windows 10, Windows 11, macOS, Linux",
         "applicationCategory": "UtilitiesApplication",
-        "fileSize": "14MB",
+        "fileSize": "5.4MB",
+        "downloadUrl": "https://sweeprcleaner.com/download",
         "offers": {
           "@type": "Offer",
           "price": "1.99",
           "priceCurrency": "GBP",
           "priceValidUntil": "2027-12-31",
-          "description": "1st month full Pro access for £1.99, then £9.99/month. Cancel anytime."
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.8",
-          "ratingCount": "12400",
-          "bestRating": "5",
-          "worstRating": "1"
+          "description": "Free full system diagnostic scan. Optional Pro access: 1st month £1.99, then £9.99/month, or £49.99/year (Save 58%). Cancel anytime."
         }
       },
       {
@@ -72,10 +80,10 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How is SWEEPR Cleaner different from CCleaner or legacy cleaners?",
+            "name": "How is SWEEPR Cleaner different from CCleaner or other cleaners?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "SWEEPR Cleaner is built in native Rust (<15MB installer) instead of heavy legacy code. It runs zero background telemetry daemons, bundles zero third-party adware, and shows exact file paths and byte counts before deleting anything."
+              "text": "SWEEPR Cleaner is tiny (under 15 MB) and super fast. It never slows down your computer in the background, never bundles unwanted extra apps, and always shows you exactly what will be cleaned before deleting anything."
             }
           },
           {
@@ -91,7 +99,7 @@
             "name": "Can I cancel my subscription anytime?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, you can cancel in one click from your self-service dashboard with no dark patterns, backed by a 14-day money-back guarantee."
+              "text": "Yes, you can cancel in one click from your online account at any time—no hoops to jump through, plus a 14-day money-back guarantee."
             }
           }
         ]
@@ -145,7 +153,7 @@
                     <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">SWEEPR Cleaner vs CCleaner</span>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Comparison</span>
                   </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Head-to-head speed, memory footprint, and background telemetry comparison.</p>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">See how SWEEPR Cleaner compares on speed, ease of use, and privacy.</p>
                 </div>
               </a>
 
@@ -161,7 +169,7 @@
                     <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">CCleaner Alternatives</span>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">2026 Guide</span>
                   </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Top 5 tested lightweight cleaner utilities and privacy tools for Windows.</p>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">The 5 best easy-to-use PC cleaners for Windows in 2026.</p>
                 </div>
               </a>
 
@@ -177,7 +185,7 @@
                     <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Storage &amp; Cache Directory</span>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">40+ Guides</span>
                   </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Directory of hidden Windows caches, AppData bloat, and safe manual cleanup steps.</p>
+                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Simple guides showing which hidden Windows folders and app files are safe to delete.</p>
                 </div>
               </a>
             </div>
@@ -245,12 +253,12 @@
   <!-- Hero Section -->
   <main class="flex-1 pt-32 pb-20 px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
     <div class="flex-1">
-      <h1 class="text-4xl sm:text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight text-gray-900">
-        Revive your PC. <br>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 leading-tight tracking-tight text-gray-900">
+        <span class="whitespace-nowrap" style="white-space: nowrap;">Revive your PC</span> <br>
         <span style="color: var(--accent);">In seconds.</span>
       </h1>
       <p class="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto md:mx-0">
-        Reclaim gigabytes of lost storage, uninstall stubborn apps, and optimize your memory. Experience the sleekest, fastest desktop cleaner ever built.
+        Free up gigabytes of wasted space, remove stubborn apps, and speed up a slow computer in one click. Simple, safe, and built for everyday PC users.
       </p>
       <div class="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
         <a href="/download" id="downloadBtn" class="btn btn-go btn-big pulse-glow gap-2.5">
@@ -264,25 +272,32 @@
         <span>•</span>
         <span>🛡️ 14-Day Money-Back Guarantee</span>
         <span>•</span>
-        <span>🔒 Zero Bloatware</span>
+        <span>🔒 No Junkware or Popups</span>
       </div>
+      <p class="mt-3 text-[11px] text-gray-500 leading-relaxed max-w-xl mx-auto md:mx-0">
+        <strong>Software Disclosure:</strong> Version 0.1.0 &bull; Installer: <code class="text-gray-700">SWEEPRCleaner.exe</code> (5.4 MB) &bull; Windows 10 &amp; 11 (64-bit) &bull; Publisher: SWEEPR Cleaner Inc. Free download includes full system cache &amp; storage scan; automated 1-click cleanup requires an optional Pro plan (&pound;1.99 1st month, then &pound;9.99/mo, or &pound;49.99/yr). Uninstall anytime via Windows Settings &gt; Apps &gt; Installed Apps. By downloading, you agree to our <a href="/terms" class="underline hover:text-emerald-600">EULA / Terms</a> and <a href="/privacy" class="underline hover:text-emerald-600">Privacy Policy</a>.
+      </p>
     </div>
     <div class="flex-1 relative w-full max-w-lg">
       <div class="glass-card p-6 flex flex-col gap-4 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+          <span>Desktop App Interface Preview</span>
+          <span>Sample Scan Output</span>
+        </div>
         <div class="flex items-center gap-3 mb-2">
           <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </div>
           <div>
-            <h3 class="font-bold text-gray-800">Scan Complete</h3>
-            <p class="text-sm text-gray-500">Found 12.4 GB of junk</p>
+            <h3 class="font-bold text-gray-800">Example Scan Summary</h3>
+            <p class="text-sm text-gray-500">Sample result: 12.4 GB of removable cache</p>
           </div>
         </div>
         <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
           <div class="h-full bg-green-500 w-3/4 rounded-full"></div>
         </div>
-        <a href="/order" class="btn btn-go w-full mt-2 gap-2">
-          <span>Clean my Device Now</span>
+        <a href="/download" class="btn btn-go w-full mt-2 gap-2">
+          <span>Download Free Scanner</span>
           <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
       </div>
@@ -292,31 +307,32 @@
   <!-- Features & Purchase section -->
   <section id="purchase" class="py-16 px-6">
     <div class="max-w-6xl mx-auto text-center">
+      <h2 class="sr-only">Everything You Need to Safely Clean, Speed Up, and Protect Your Windows PC</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-14 text-left">
         <div class="glass-card p-6">
           <div class="text-2xl mb-4" style="color: var(--accent);">⚡</div>
           <h3 class="font-bold mb-2 text-gray-900">Deep Clean</h3>
-          <p class="text-sm text-gray-600">Wipe system temp, browser caches, and Slack, Teams, Zoom &amp; Discord bloat with a 7-day Quarantine rollback.</p>
+          <p class="text-sm text-gray-600">Safely clear out old temporary files, browser clutter, and leftover files from apps like Teams, Zoom, Slack, and Discord—with a 7-day undo safety net.</p>
         </div>
         <div class="glass-card p-6">
           <div class="text-2xl mb-4" style="color: var(--accent);">🔍</div>
           <h3 class="font-bold mb-2 text-gray-900">Duplicate Finder</h3>
-          <p class="text-sm text-gray-600">Find SHA-256 exact duplicates, visualize folder &amp; extension disk maps, and relocate 50 MB+ files in one click.</p>
+          <p class="text-sm text-gray-600">Spot identical duplicate photos and files, see a clear map of what is filling up your hard drive, and move huge files out of the way in one click.</p>
         </div>
         <div class="glass-card p-6">
           <div class="text-2xl mb-4" style="color: var(--accent);">🚀</div>
           <h3 class="font-bold mb-2 text-gray-900">App Uninstaller</h3>
-          <p class="text-sm text-gray-600">Drag-and-drop apps to wipe leftovers &amp; registry keys, clean broken shortcuts, and update software via Winget.</p>
+          <p class="text-sm text-gray-600">Completely remove unwanted programs and the hidden leftover files they leave behind, fix broken shortcuts, and keep your apps up to date.</p>
         </div>
         <div class="glass-card p-6">
           <div class="text-2xl mb-4" style="color: var(--accent);">⏱️</div>
-          <h3 class="font-bold mb-2 text-gray-900">RAM & Boot Booster</h3>
-          <p class="text-sm text-gray-600">Purge active RAM, trigger 1-click Gaming Boost, end heavy processes, and manage startup &amp; right-click menus.</p>
+          <h3 class="font-bold mb-2 text-gray-900">Speed &amp; Startup Booster</h3>
+          <p class="text-sm text-gray-600">Free up memory instantly, boost your PC for smoother gaming, stop apps that slow down startup, and tidy up your right-click menu.</p>
         </div>
         <div class="glass-card p-6">
           <div class="text-2xl mb-4" style="color: var(--accent);">🛡️</div>
-          <h3 class="font-bold mb-2 text-gray-900">SSD-Aware Shredder &amp; Privacy</h3>
-          <p class="text-sm text-gray-600">Erase files with 1-pass SSD zero-fill or 3-pass HDD overwrite, plus Cookie Allowlist, SQLite Compactor &amp; Breach Check.</p>
+          <h3 class="font-bold mb-2 text-gray-900">Private File Shredder &amp; Privacy</h3>
+          <p class="text-sm text-gray-600">Permanently erase sensitive files so they can never be recovered, clear tracking cookies without logging you out, and check if your email was leaked in a breach.</p>
         </div>
       </div>
 
@@ -328,10 +344,13 @@
   <footer class="mt-auto py-8 text-center text-gray-500 text-sm border-t border-gray-100">
     <div class="flex justify-center gap-6 mb-4">
       <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
-      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
+      <a href="/terms" class="hover:text-emerald-600 transition-colors">EULA &amp; Terms of Service</a>
       <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
+      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Uninstall Help</a>
     </div>
+    <p class="text-xs text-gray-400 max-w-2xl mx-auto mb-2 px-4">
+      Publisher: SWEEPR Cleaner Inc. (Benjamin Cook) &bull; Software Version: 0.1.0 &bull; Installer: SWEEPRCleaner.exe (5.4 MB, Windows 10/11 64-bit) &bull; Free diagnostic scan (Pro &pound;1.99 1st mo, then &pound;9.99/mo or &pound;49.99/yr for automated 1-click cleaning) &bull; Support: <a href="mailto:support@sweeprcleaner.com" class="underline hover:text-gray-600">support@sweeprcleaner.com</a> &bull; Uninstall anytime via Windows Settings &gt; Apps &gt; Installed Apps &gt; SWEEPR Cleaner &gt; Uninstall.
+    </p>
     <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
   </footer>
 

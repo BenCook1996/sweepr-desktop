@@ -75,11 +75,27 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
     existing?.status === "disputed" ? "disputed" : isTrial && mapped === "active" ? "trialing" : mapped;
 
   // Upsert the entitlement based on RevenueCat state
+  const rcAddons: string[] = [];
+  if (productId.toLowerCase().includes("battery") || (Array.isArray(event.entitlement_ids) && event.entitlement_ids.some((id: any) => String(id).toLowerCase().includes("battery")))) {
+    rcAddons.push("battery_care");
+  }
+  if (
+    productId.toLowerCase().includes("cloud") ||
+    productId.toLowerCase().includes("vault") ||
+    (Array.isArray(event.entitlement_ids) &&
+      event.entitlement_ids.some((id: any) => {
+        const lower = String(id).toLowerCase();
+        return lower.includes("cloud") || lower.includes("vault");
+      }))
+  ) {
+    rcAddons.push("cloud_vault");
+  }
   repo.upsertEntitlement({
     account_id: account.id,
     stripe_subscription_id: typeof event.original_transaction_id === "string" ? event.original_transaction_id : null, // Map RC transaction ID here
     status: newStatus,
     plan: productId.includes("annual") ? "annual" : "monthly",
+    addons_list: rcAddons,
     current_period_end: expirationAt,
     cancel_at_period_end: event.type === "CANCELLATION" ? 1 : 0,
   });

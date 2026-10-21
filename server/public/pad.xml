@@ -45,31 +45,31 @@
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>
     </Expire_Info>
-    <Program_Change_Info>2026 release with native Rust DeepClean &amp; Messenger Cache engine, Drag-and-Drop App Uninstaller, Winget Software Updater, RAM &amp; Gaming Boost, Context Menu Manager, SHA-256 Duplicate &amp; Large File Mover, Browser SQLite Compactor, SSD-Aware File Shredder, and 7-day Quarantine Rollback.</Program_Change_Info>
+    <Program_Change_Info>2026 release with Deep PC &amp; Chat App Cleanup, Drag-and-Drop App Uninstaller, 1-Click Software Updater, Memory &amp; Gaming Booster, Duplicate &amp; Large File Mover, Cloud Storage Cleaner, Private File Shredder, and 7-day Undo Safety Net.</Program_Change_Info>
     <Program_Category_Class>System Utilities::System Maintenance</Program_Category_Class>
     <Program_Specific_Category>System Utilities</Program_Specific_Category>
     <Program_System_Requirements>Windows 10 or Windows 11 (64-bit), 50 MB RAM, 20 MB free disk space</Program_System_Requirements>
   </Program_Info>
   <Program_Descriptions>
     <English>
-      <Keywords>pc cleaner, disk cleaner, system optimizer, ccleaner alternative, uninstaller, duplicate file finder, file shredder, registry cleaner, winget updater</Keywords>
-      <Char_Desc_45>Ultra-lightweight Rust PC &amp; disk cleaner.</Char_Desc_45>
-      <Char_Desc_80>Native Rust PC cleaner, smart uninstaller, RAM optimizer &amp; SSD file shredder.</Char_Desc_80>
-      <Char_Desc_250>SWEEPR Cleaner is an ultra-lightweight native Rust PC cleaner and privacy optimizer for Windows 10 and 11. Features 60-second deep cache cleanup, Drag-and-Drop Uninstaller, Winget App Updater, RAM &amp; Gaming Boost, SHA-256 Duplicate Finder, and 7-day Quarantine rollback.</Char_Desc_250>
-      <Char_Desc_450>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust. Designed as a clean, bloatware-free alternative to legacy PC cleaners, SWEEPR runs strictly on-demand with zero background daemons or telemetry. Includes DeepClean system &amp; messenger cache cleanup, Drag-and-Drop Uninstaller, Winget Updater, RAM &amp; Gaming Boost, SHA-256 Duplicate &amp; Large File Mover, SSD-Aware File Shredder, and 7-day Quarantine rollback.</Char_Desc_450>
-      <Char_Desc_2000>SWEEPR Cleaner is a modern, ultra-lightweight PC cleaner and privacy optimization utility built in native Rust for Windows 10 and Windows 11.
+      <Keywords>pc cleaner, disk cleaner, system optimizer, ccleaner alternative, uninstaller, duplicate file finder, file shredder, startup manager, software updater</Keywords>
+      <Char_Desc_45>Fast, lightweight PC &amp; storage cleaner.</Char_Desc_45>
+      <Char_Desc_80>Fast PC cleaner, complete app uninstaller, speed booster &amp; file shredder.</Char_Desc_80>
+      <Char_Desc_250>SWEEPR Cleaner is a fast, lightweight PC cleaner and speed booster for Windows 10 and 11. Features 60-second junk cleanup, complete app uninstaller, 1-click software updater, memory &amp; gaming booster, duplicate finder, and 7-day undo.</Char_Desc_250>
+      <Char_Desc_450>SWEEPR Cleaner is a modern, easy-to-use PC cleaner and speed booster for Windows 10 and 11. Built as a clean, popup-free alternative to bloated PC cleaners, SWEEPR runs only when you open it—never slowing down your PC in the background. Includes deep Windows, browser &amp; chat app cleanup, complete app uninstaller, 1-click software updater, Gaming Mode, duplicate &amp; large file mover, private file shredder, and a 7-day undo safety net.</Char_Desc_450>
+      <Char_Desc_2000>SWEEPR Cleaner is a modern, easy-to-use PC cleaner and speed booster for Windows 10 and Windows 11.
 
-Designed specifically as an alternative to legacy PC cleaners that have become bloated with background daemons, telemetry, and popup ads, SWEEPR Cleaner delivers maximum disk recovery with zero system overhead.
+Designed for everyday users who are tired of old PC cleaners filled with popup ads, bundled junkware, and slow background programs, SWEEPR Cleaner frees up gigabytes of storage and speeds up your computer in under 60 seconds.
 
 Key Features:
-- Native Rust Engine (5.4 MB): Starts instantly, consumes under 40 MB of RAM during execution, and finishes deep system scans in under 60 seconds.
-- Zero Background Processes: SWEEPR runs strictly on-demand with no startup services or background CPU usage.
-- 7-Day Quarantine &amp; Recycle Bin Inspector: Isolates removed caches into a secure quarantine so you can restore files with one click.
-- DeepClean Cache Engine: Cleans Windows Temp, AppData, browser caches (Chrome, Edge, Firefox, Brave), Messenger caches (Slack, Teams, Zoom, Telegram, Discord), GPU shader caches, and Windows Installer &amp; INet caches.
-- Performance, Gaming Boost &amp; Context Menu Manager: Real-time RAM purge, interactive Process Manager, 1-click Gaming Boost, Startup Apps optimizer, and Windows Right-Click Context Menu manager.
-- Smart App Uninstaller &amp; Winget Updater: Drag-and-drop shortcut resolver, leftover file &amp; registry scanner, broken shortcuts (.lnk) cleaner, and 1-click Winget software updates.
-- Duplicate Finder &amp; Large File Mover: Cryptographic SHA-256 duplicate detection, visual disk breakdown, and 1-click large file relocation to secondary drives.
-- Privacy Hub &amp; SSD-Aware File Shredder: Smart Cookie Allowlist, Browser SQLite Compactor, Extension Inspector, k-Anonymity Password Breach Check, and SSD-aware 1-pass zero-fill / 3-pass HDD overwrite file shredder.</Char_Desc_2000>
+- Fast &amp; Lightweight (5.4 MB): Opens instantly and finishes full PC scans in under 60 seconds.
+- No Background Slowdowns: Runs only when you open it, with zero popup ads or unwanted extra software.
+- 7-Day Undo Safety Net: Keeps cleaned files in a safe recovery folder for 7 days so you can restore anything with one click.
+- Deep PC &amp; App Cleanup: Safely clears old Windows temporary files, browser clutter (Chrome, Edge, Firefox, Brave), and leftover files from chat apps (Teams, Zoom, Slack, Telegram, Discord).
+- Speed &amp; Startup Booster: Frees up memory instantly, includes a 1-click Gaming Mode, stops unnecessary startup programs, and tidies up your right-click menu.
+- Complete App Uninstaller &amp; Updater: Drag and drop any app to remove it along with all its hidden leftover files, fix broken shortcuts, and update your apps in one click.
+- Duplicate Finder &amp; Large File Mover: Finds identical duplicate photos and files, shows a clear map of what is filling up your drive, and moves huge files to another drive in one click.
+- Privacy &amp; File Shredder: Clears tracking cookies without logging you out of your favourite websites, checks if your email was leaked in a data breach, and permanently shreds private files so they can never be recovered.</Char_Desc_2000>
     </English>
   </Program_Descriptions>
   <Web_Info>

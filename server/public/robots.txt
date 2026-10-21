@@ -4,6 +4,10 @@ Disallow: /dashboard
 Disallow: /admin
 Disallow: /crm
 Disallow: /checkout/
+Disallow: /order
+Disallow: /login
+Disallow: /download
+Disallow: /r/
 Disallow: /api/
 Disallow: /dev/
 

@@ -1,32 +1,32 @@
 # Sweepr Cleaner
 
-> Sweepr Cleaner is an ultra-lightweight, memory-safe desktop and mobile cleaner built in Rust and Tauri. It reclaims storage space, optimizes RAM & gaming performance, cleans browser & messenger caches, updates outdated software via Winget, and provides SSD-aware secure file shredding (1-pass zero-fill for SSDs and 3-pass overwrite for HDDs) with zero bloatware or background telemetry daemons.
+> Sweepr Cleaner is a fast, lightweight PC and phone cleaner (<15MB download) that frees up wasted storage space, speeds up slow computers, removes unwanted apps with all their leftovers, cleans up duplicate files and photos, and permanently shreds private files—with zero junkware, popups, or background slowdowns.
 
-## Architecture & Platform Support
-- Desktop App: Built in Rust + Tauri (<15MB installer size). Supported on Windows 10, Windows 11, macOS, and Linux.
-- Mobile App: Android & iOS companion cleaner with unified cross-platform licensing.
-- Core Desktop Modules:
-  - DeepClean: System temp, browser caches, Messenger & Collaboration caches (Slack, Teams, Zoom, Telegram, Discord), Windows Installer & INet cache slimmer, Activity & JumpList traces, and unified 7-day Quarantine + Recycle Bin inspector.
-  - Optimization (RAM, Processes & Boot): Real-time RAM purge, interactive Process Manager (End Task), 1-click Gaming & Focus Boost, Startup Apps optimizer, Windows Right-Click Context Menu manager, and real Boot Time & Battery Health diagnostics.
-  - Software & Shortcuts: Drag-and-Drop App Uninstaller with leftover file/registry scanner, Winget Software Updater, Registry Repair, and Broken Shortcuts (.lnk) & Empty Folder cleaner.
-  - Storage & Duplicates: Cryptographic SHA-256 Duplicate Finder, Visual Disk Map, Large File Finder (>50MB), and 1-click Large File Mover across drives.
-  - Privacy, Browser & Shredder: Browser Privacy Cleaner, Smart Cookie Allowlist, Browser SQLite Database VACUUM Compactor, Browser Extension Inspector, k-Anonymity Password Breach Check, Cryptographic Password Generator, and SSD-Aware Secure File Shredder (1-pass & 3-pass).
-- Core Mobile Modules: Duplicate & Similar Photo Cleaner with Best Shot AI, Blurry Photo Detector, Swipe-to-Clean Photo Triage Mode, Hardware Video Compressor, Batch Photo Optimizer & EXIF GPS Location Privacy Stripper, WhatsApp & Telegram Media Cleaner, Safe Contact Merger & Old Calendar Events (>1 yr) Cleaner, 30-Day System Trash Undo, and Live Home-Screen Storage Widget.
+## Platform Support & Features
+- Desktop App: Lightweight installer (<15MB). Supported on Windows 10, Windows 11, macOS, and Linux.
+- Mobile App: Android & iOS companion cleaner with cross-platform account linking.
+- Core Desktop Features:
+  - Deep Clean: Safely clears Windows temporary files, browser clutter, and leftover files from chat apps (Slack, Teams, Zoom, Telegram, Discord) with a 7-day undo safety net.
+  - Speed & Startup Booster: Instant memory boost, 1-click Gaming Mode, Startup apps manager, and Right-Click menu tidy-up.
+  - Complete App Uninstaller & Updater: Drag-and-drop app uninstaller that removes hidden leftover files, fixes broken shortcuts, and updates your apps in one click.
+  - Storage & Duplicate Finder: Finds identical duplicate files and photos, maps out what is filling up your hard drive, and moves huge files (50MB+) to another drive in one click.
+  - Cloud Clean & Protection: Cleans duplicate files, screenshots, large videos, and saved email attachments across OneDrive, Google Drive, Dropbox, and iCloud Drive, plus an optional password-protected Cloud Vault and automatic multi-cloud folder backup.
+  - Privacy & File Shredder: Clears tracking cookies without logging you out of your favourite websites, checks if your email was exposed in a data breach, and permanently shreds sensitive files so they cannot be recovered.
+- Core Mobile Features: Duplicate & Similar Photo Cleaner (automatically keeps your best shot), Blurry Photo & Screenshot Cleaner, Swipe-to-Clean Photo Review, Video Size Reducer, Contact Merger, Battery Care, and Password-Protected Photo & Document Vault.
 
 ## Pricing & Licensing
-- Free Tier: Unlimited system & storage scanning and previewing.
-- Annual Pro (Most Popular): £49.99/year (£4.16/mo equivalent — Save 58%, no free trial).
+- Free Tier: Unlimited PC and storage scanning and previewing.
+- Annual Pro (Most Popular): £49.99/year (£4.16/mo equivalent — Save 58%).
 - 6-Month Pro: £38.99 every 6 months (£6.50/mo equivalent — Save 35%).
 - Monthly Pro: £9.99/month (cancel anytime in 1 click).
-- Pro Introductory Offer: £1.99 for the 1st month of full Pro access across 3 Desktop PCs + 2 Mobile devices, auto-renewing at £9.99/month.
+- Pro Introductory Offer: £1.99 for the 1st month of full Pro access across up to 3 Desktop PCs, auto-renewing at £9.99/month.
 - Guarantee: 14-day money-back guarantee.
 
-## Key Differentiators vs Legacy Cleaners (CCleaner, Avast)
-- No background adware or telemetry daemons.
-- Under 15MB installer vs 100MB+ legacy bloatware.
-- Memory-safe Rust engine for high-speed scanning and deletion.
-- Exact file paths and byte sizes shown before anything is deleted, backed by a 7-day Quarantine rollback.
-- Single license covers up to 3 Desktop PCs + 2 Mobile devices.
+## Why Users Switch to SWEEPR Cleaner (vs CCleaner & Legacy Cleaners)
+- Runs only when you open it—no hidden background programs slowing down your PC.
+- Tiny download under 15MB with zero bundled extra software or popup ads.
+- Shows you every file before deleting anything, backed by a 7-day undo safety net.
+- Single license covers up to 3 Desktop PCs.
 
 ## Official Links
 - Homepage: https://sweeprcleaner.com/

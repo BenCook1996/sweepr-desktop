@@ -413,7 +413,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     } else if (body.only === "unchecked") {
       rows = rows.filter((r) => r.status === "unverified");
     }
-    rows = rows.slice(0, Math.min(Math.max(Number(body.limit) || 500, 1), 1000));
+    rows = rows.slice(0, Math.min(Math.max(Number(body.limit) || 2000, 1), 10000));
     if (!rows.length) return c.json({ error: "nothing_to_verify" }, 400);
     return jobResponse(
       c,

@@ -4,7 +4,8 @@
     <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - SWEEPR Cleaner</title>
+  <title>Customer Portal Dashboard | SWEEPR Cleaner</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
@@ -94,6 +95,62 @@
         </div>
       </div>
 
+      <!-- Total Battery & Mac/Phone Care Add-on Card -->
+      <div id="batteryCarePortalCard" class="glass-card p-6 sm:p-8 bg-gradient-to-br from-amber-50/70 via-white to-emerald-50/60 shadow-sm rounded-2xl border border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+        <div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span id="batteryCarePortalBadge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+              ⚡ Paid Add-on Available
+            </span>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Total Battery &amp; Mac/Phone Care — Device Lifespan Extender</h3>
+          <p class="text-sm text-gray-600 mt-1 max-w-xl leading-relaxed">
+            Stops charging at 80% while plugged in at your desk, prevents overheating, and puts power-hungry browser tabs to sleep—helping your laptop and phone battery last twice as long and saving you from £100–£250 battery replacements.
+          </p>
+        </div>
+        <div class="shrink-0 w-full sm:w-auto">
+          <button
+            type="button"
+            id="activateBatteryAddonBtn"
+            onclick="purchaseAddon('battery_care', 'activateBatteryAddonBtn')"
+            class="w-full sm:w-auto px-5 py-3 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer"
+          >
+            Add for <span id="portalBatteryAddonPrice">£17.99/yr</span>
+          </button>
+          <div id="batteryAddonActivePill" class="hidden inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <span>✓</span> Active on Your Account
+          </div>
+        </div>
+      </div>
+
+      <!-- SWEEPR Cloud Protection Add-on Card -->
+      <div id="cloudVaultPortalCard" class="glass-card p-6 sm:p-8 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/60 shadow-sm rounded-2xl border border-teal-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5">
+        <div>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span id="cloudVaultPortalBadge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-teal-100 text-teal-900 border border-teal-300">
+              🔒 Paid Add-on Available
+            </span>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">SWEEPR Cloud Protection — Encrypted Photo Vault &amp; Multi-Cloud Backup Sync</h3>
+          <p class="text-sm text-gray-600 mt-1 max-w-xl leading-relaxed">
+            Lock private photos, passport scans, and tax documents inside a password-protected vault in your cloud drive, and automatically back up your most important folders between Google Drive, OneDrive, Dropbox, and iCloud.
+          </p>
+        </div>
+        <div class="shrink-0 w-full sm:w-auto">
+          <button
+            type="button"
+            id="activateCloudVaultAddonBtn"
+            onclick="purchaseAddon('cloud_vault', 'activateCloudVaultAddonBtn')"
+            class="w-full sm:w-auto px-5 py-3 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer"
+          >
+            Add for <span id="portalCloudVaultAddonPrice">£17.99/yr</span>
+          </button>
+          <div id="cloudVaultAddonActivePill" class="hidden inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <span>✓</span> Active on Your Account
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="glass-card p-6 bg-white shadow-sm rounded-2xl border border-gray-100">
           <h3 class="font-bold text-lg mb-4">Linked Devices</h3>
@@ -179,6 +236,50 @@
           statusBadge.className = "inline-block px-3 py-1 rounded-full text-sm font-semibold tracking-wide bg-gray-100 text-gray-800 uppercase";
         }
 
+        const hasBatteryCare = Array.isArray(data.addons) && data.addons.includes('battery_care');
+        const activateBtn = document.getElementById('activateBatteryAddonBtn');
+        const activePill = document.getElementById('batteryAddonActivePill');
+        const portalBadge = document.getElementById('batteryCarePortalBadge');
+        const priceSpan = document.getElementById('portalBatteryAddonPrice');
+        if (data.addon_pricing?.battery_care && priceSpan) {
+          const bp = data.addon_pricing.battery_care;
+          priceSpan.textContent = data.plan === 'monthly'
+            ? `${bp.monthlyFormatted}/mo`
+            : data.plan === 'six_month'
+            ? `${bp.sixMonthFormatted}/6mo`
+            : `${bp.annualFormatted}/yr`;
+        }
+        if (hasBatteryCare) {
+          if (activateBtn) activateBtn.classList.add('hidden');
+          if (activePill) activePill.classList.remove('hidden');
+          if (portalBadge) {
+            portalBadge.textContent = '✓ Add-on Unlocked';
+            portalBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300';
+          }
+        }
+
+        const hasCloudVault = Array.isArray(data.addons) && data.addons.includes('cloud_vault');
+        const cloudBtn = document.getElementById('activateCloudVaultAddonBtn');
+        const cloudPill = document.getElementById('cloudVaultAddonActivePill');
+        const cloudBadge = document.getElementById('cloudVaultPortalBadge');
+        const cloudPriceSpan = document.getElementById('portalCloudVaultAddonPrice');
+        if (data.addon_pricing?.cloud_vault && cloudPriceSpan) {
+          const cp = data.addon_pricing.cloud_vault;
+          cloudPriceSpan.textContent = data.plan === 'monthly'
+            ? `${cp.monthlyFormatted}/mo`
+            : data.plan === 'six_month'
+            ? `${cp.sixMonthFormatted}/6mo`
+            : `${cp.annualFormatted}/yr`;
+        }
+        if (hasCloudVault) {
+          if (cloudBtn) cloudBtn.classList.add('hidden');
+          if (cloudPill) cloudPill.classList.remove('hidden');
+          if (cloudBadge) {
+            cloudBadge.textContent = '✓ Add-on Unlocked';
+            cloudBadge.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300';
+          }
+        }
+
         const deviceList = document.getElementById('deviceList');
         if (data.devices && data.devices.length > 0) {
           deviceList.innerHTML = data.devices.map(d => `
@@ -204,6 +305,31 @@
         } catch (e) {}
       } catch (err) {
         console.error(err);
+      }
+    }
+    async function purchaseAddon(addonId, btnId) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.textContent = 'Activating...';
+      try {
+        const res = await fetch('/api/portal/purchase-addon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addon: addonId })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          await load();
+        } else {
+          alert(data.error || 'Could not activate add-on. Please ensure your subscription is active.');
+          btn.disabled = false;
+          btn.innerHTML = orig;
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
       }
     }
     load();

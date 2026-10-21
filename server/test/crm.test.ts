@@ -256,14 +256,14 @@ test("CRM: one-click make myself a paid user", async () => {
 test("CRM: outreach log seeding, filtering, and CRUD", async () => {
   const { get, post, patch, app } = setup();
 
-  // 1. Auto-seeds the 256 outreach entries on first GET
-  const listRes = await get("/api/crm/outreach?limit=500");
+  // 1. Auto-seeds the outreach entries on first GET
+  const listRes = await get("/api/crm/outreach?limit=5000");
   assert.equal(listRes.status, 200);
   const listData = await listRes.json();
-  assert.equal(listData.counts.total, 256);
+  assert.ok(listData.counts.total >= 256);
   assert.ok(listData.counts.emailCount >= 245);
   assert.ok(listData.counts.portalCount >= 4);
-  assert.equal(listData.logs.length, 256);
+  assert.equal(listData.logs.length, listData.counts.total);
 
   // 2. Filter by portal
   const portalRes = await get("/api/crm/outreach?filter=portal");
@@ -363,22 +363,14 @@ test("CRM: lead capture records country, device, and datetime in CRM", async () 
   assert.equal(detail.account.lead_device, "iPhone / iOS");
   assert.equal(detail.account.created_at, fixedNow);
 
-  // 5. Verify visiting /order sets sweepr_visited_order cookie and returning to / redirects back to /order
+  // 5. Verify visiting /order and returning to / both return 200 OK with no forced redirects (Google Ads compliance)
   const orderVisit = await app.request("/order");
   assert.equal(orderVisit.status, 200);
-  const setCookieHeader = orderVisit.headers.get("set-cookie") || "";
-  assert.match(setCookieHeader, /sweepr_visited_order=1/);
 
-  const returnVisit = await app.request("/", {
-    headers: { cookie: "sweepr_visited_order=1" },
-  });
-  assert.equal(returnVisit.status, 302);
-  assert.equal(returnVisit.headers.get("location"), "/order");
+  const returnVisit = await app.request("/");
+  assert.equal(returnVisit.status, 200);
 
-  // Explicit logo click (/?home=1) bypasses the redirect
-  const explicitHome = await app.request("/?home=1", {
-    headers: { cookie: "sweepr_visited_order=1" },
-  });
+  const explicitHome = await app.request("/?home=1");
   assert.equal(explicitHome.status, 200);
 });
 

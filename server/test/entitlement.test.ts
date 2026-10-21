@@ -121,3 +121,39 @@ test("checkout requires OTP when email belongs to a different account, and activ
   assert.equal(claims.status, "active");
 });
 
+test("battery_care add-on pricing (+20% charm pricing) and Ed25519 signed JWS claims", async () => {
+  const { repo, app, post } = setup();
+  const cfgUs = await (await app.request("/api/checkout-config?country=US")).json();
+  assert.equal(cfgUs.addons.battery_care.annualAmountPence, 2399);
+  assert.equal(cfgUs.addons.battery_care.annualFormatted, "$23.99");
+  assert.equal(cfgUs.addons.battery_care.annualMonthlyEqFormatted, "$1.99");
+  assert.equal(cfgUs.addons.battery_care.monthlyAmountPence, 399);
+  assert.equal(cfgUs.addons.battery_care.monthlyFormatted, "$3.99");
+
+  const cfgGb = await (await app.request("/api/checkout-config?country=GB")).json();
+  assert.equal(cfgGb.addons.battery_care.annualAmountPence, 1799);
+  assert.equal(cfgGb.addons.battery_care.annualFormatted, "£17.99");
+  assert.equal(cfgGb.addons.battery_care.monthlyAmountPence, 299);
+  assert.equal(cfgGb.addons.battery_care.monthlyFormatted, "£2.99");
+
+  const cfgEu = await (await app.request("/api/checkout-config?country=DE")).json();
+  assert.equal(cfgEu.addons.battery_care.annualAmountPence, 2199);
+  assert.equal(cfgEu.addons.battery_care.annualFormatted, "€21.99");
+  assert.equal(cfgEu.addons.battery_care.monthlyAmountPence, 399);
+  assert.equal(cfgEu.addons.battery_care.monthlyFormatted, "€3.99");
+
+  const acc = await (await post("/v1/accounts", { device_id: DEVICE, email: "battery@example.com" })).json();
+  await post("/dev/grant", { account_id: acc.account_id, status: "active", days: 365 });
+  repo.grantAddon(acc.account_id, "battery_care");
+
+  const entRes = await (await post("/v1/entitlement", { device_id: DEVICE }, acc.refresh_token)).json();
+  assert.deepEqual(entRes.addons, ["battery_care"]);
+  assert.ok(entRes.token);
+
+  const [h, p, s] = entRes.token.split(".");
+  assert.ok(verify(null, Buffer.from(`${h}.${p}`), publicKey, Buffer.from(s, "base64url")));
+  const claims = JSON.parse(Buffer.from(p, "base64url").toString());
+  assert.deepEqual(claims.addons, ["battery_care"]);
+});
+
+

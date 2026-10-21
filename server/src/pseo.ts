@@ -17,6 +17,26 @@ export interface CleanItem {
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
 
+function buildPseoTitle(item: CleanItem): string {
+  const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
+  const concise = withoutParens.length > 24 ? withoutParens.split("&")[0].trim() : withoutParens;
+  const candidate = `How to Clean ${concise} Safely | SWEEPR Cleaner`;
+  if (candidate.length >= 50 && candidate.length <= 60) return candidate;
+  if (candidate.length < 50) {
+    const withYear = `How to Clean ${concise} Safely (2026) | SWEEPR`;
+    if (withYear.length <= 60) return withYear;
+  }
+  return candidate.slice(0, 60).trim();
+}
+
+function buildPseoDescription(item: CleanItem): string {
+  const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
+  const base = `Step-by-step guide to cleaning ${withoutParens} to reclaim ${item.avgSpace}. Learn whether it is safe to delete and how to clean it safely in 1 click.`;
+  if (base.length <= 158) return base;
+  const shorter = `How to clean ${withoutParens} and reclaim ${item.avgSpace} safely. Verified Windows cleanup guide with manual steps and 1-click automatic cleaning.`;
+  return shorter.slice(0, 158).trim();
+}
+
 export function renderPseoDirectory(): string {
   const appItems = cleanItems.filter((i) => i.category === "app");
   const folderItems = cleanItems.filter((i) => i.category === "folder");
@@ -40,11 +60,73 @@ export function renderPseoDirectory(): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Windows Cache & Storage Cleanup Directory | SWEEPR Cleaner</title>
-  <meta name="description" content="Browse verified guides to cleaning hidden Windows folders, app caches, and temporary files safely without breaking your operating system.">
+  <title>Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner</title>
+  <meta name="description" content="Wondering what is filling up your hard drive? Browse verified guides to safely cleaning hidden Windows folders, app caches, and temp files in minutes.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SWEEPR Cleaner">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:url" content="https://sweeprcleaner.com/clean">
+  <meta property="og:title" content="Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner">
+  <meta property="og:description" content="Verified guides to safely cleaning hidden Windows folders, app caches, and temporary files.">
+  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+  <meta property="og:image:alt" content="SWEEPR Cleaner Windows Storage &amp; Cache Directory">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://sweeprcleaner.com/clean">
+  <meta name="twitter:title" content="Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner">
+  <meta name="twitter:description" content="Browse verified guides to cleaning hidden Windows folders, app caches, and temporary files safely.">
+  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://sweeprcleaner.com/clean#collection",
+        url: "https://sweeprcleaner.com/clean",
+        name: "Windows Cache & Storage Cleanup Directory",
+        description: "Verified guides to safely cleaning hidden Windows folders, app caches, and temporary files.",
+      },
+      {
+        "@type": "ItemList",
+        name: "Windows Cache & Folder Cleanup Guides",
+        numberOfItems: cleanItems.length,
+        itemListElement: cleanItems.map((i, idx) => ({
+          "@type": "ListItem",
+          position: idx + 1,
+          name: i.name,
+          url: `https://sweeprcleaner.com/clean/${i.category}/${i.slug}`,
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://sweeprcleaner.com/",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Storage & Cache Directory",
+            item: "https://sweeprcleaner.com/clean",
+          },
+        ],
+      },
+    ],
+  })}</script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
+  <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
   <script src="/analytics.js" defer></script>
@@ -87,13 +169,13 @@ export function renderPseoDirectory(): string {
     <div class="text-center mb-12">
       <h1 class="text-3xl md:text-5xl font-black text-gray-900 mb-4">Windows Storage & Cache Directory</h1>
       <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-        Wondering what is eating your C: drive? Click any app cache or system folder to see exact file paths, safety verdicts, and how to safely reclaim gigabytes.
+        Wondering what is filling up your hard drive? Click any app or Windows folder below to see what it does, whether it is safe to delete, and how much space you can get back.
       </p>
     </div>
 
     <div class="mb-12">
       <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-        <span>📦 Popular Application Caches</span>
+        <span>📦 Popular App Leftovers &amp; Caches</span>
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         ${appItems.map(renderCard).join("")}
@@ -102,7 +184,7 @@ export function renderPseoDirectory(): string {
 
     <div class="mb-12">
       <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-        <span>🗂️ Hidden Windows System Folders</span>
+        <span>🗂️ Hidden Windows Folders</span>
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         ${folderItems.map(renderCard).join("")}
@@ -112,7 +194,7 @@ export function renderPseoDirectory(): string {
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center mt-12">
       <h3 class="text-2xl font-bold mb-2">Want to clean all of these in 60 seconds?</h3>
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        SWEEPR Cleaner checks all 40+ hidden locations simultaneously and safely frees space without you having to run manual commands.
+        SWEEPR Cleaner checks all 40+ hidden folders at once and safely frees up your storage in one click—no manual steps required.
       </p>
       <a href="/download" class="btn btn-go btn-big">Download Free Scan</a>
     </div>
@@ -132,20 +214,40 @@ export function renderPseoPage(item: CleanItem): string {
     </li>
   `).join("");
 
+  const pageTitle = buildPseoTitle(item);
+  const pageDesc = buildPseoDescription(item);
+  const canonicalUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="color-scheme" content="light">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How to Clean ${item.name} | Is It Safe to Delete? | SWEEPR Cleaner</title>
-  <meta name="description" content="Step-by-step guide to cleaning ${item.name} (${item.path}). Reclaim ${item.avgSpace}. Learn whether it's safe to delete and how to clean it safely.">
-  <link rel="canonical" href="https://sweeprcleaner.com/clean/${item.category}/${item.slug}">
+  <title>${pageTitle}</title>
+  <meta name="description" content="${pageDesc}">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="${canonicalUrl}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
   
   <!-- Open Graph -->
   <meta property="og:type" content="article">
-  <meta property="og:title" content="How to Clean ${item.name} Safely">
+  <meta property="og:site_name" content="SWEEPR Cleaner">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:url" content="${canonicalUrl}">
+  <meta property="og:title" content="${pageTitle}">
   <meta property="og:description" content="Reclaim ${item.avgSpace} from ${item.name}. Detailed safety guide and manual steps.">
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+  <meta property="og:image:alt" content="How to clean ${item.name} safely">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="${canonicalUrl}">
+  <meta name="twitter:title" content="${pageTitle}">
+  <meta name="twitter:description" content="${pageDesc}">
+  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
 
   <!-- Schema Markup -->
   <script type="application/ld+json">${JSON.stringify({
@@ -174,9 +276,36 @@ export function renderPseoPage(item: CleanItem): string {
           },
         ],
       },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://sweeprcleaner.com/",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Storage & Cache Directory",
+            item: "https://sweeprcleaner.com/clean",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: item.name,
+            item: canonicalUrl,
+          },
+        ],
+      },
     ],
   })}</script>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
+  <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
   <script src="/analytics.js" defer></script>
@@ -260,7 +389,7 @@ export function renderPseoPage(item: CleanItem): string {
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center shadow-lg">
       <h3 class="text-2xl font-bold mb-2">Clean ${item.name} Automatically</h3>
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        SWEEPR Cleaner safely purges ${item.name} plus 40+ other hidden application caches and orphaned files with a single click. Zero risk of breaking Windows.
+        SWEEPR Cleaner safely clears ${item.name} along with 40+ other hidden app folders and leftover files in one click—with a 7-day undo safety net.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
         <a href="/download" class="btn btn-go gap-2">

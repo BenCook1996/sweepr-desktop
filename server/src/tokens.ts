@@ -18,6 +18,7 @@ export interface EntitlementClaims {
   device_id: string;
   status: "active" | "trialing";
   plan: string;
+  addons?: string[];
   iat: number;
   exp: number;
 }
