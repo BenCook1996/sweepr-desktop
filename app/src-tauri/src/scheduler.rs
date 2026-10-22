@@ -31,6 +31,9 @@ pub struct ScheduleConfig {
     pub action: String,
     /// Category IDs to include in scheduled runs
     pub categories: Vec<String>,
+    /// Also run configured Cloud Backup Sync folder pairs during scheduled runs
+    #[serde(default)]
+    pub sync_cloud_backups: bool,
     /// Whether the native OS scheduled task is currently active
     #[serde(default)]
     pub os_task_registered: bool,
@@ -38,6 +41,10 @@ pub struct ScheduleConfig {
     pub last_bytes_found: Option<u64>,
     pub last_bytes_freed: Option<u64>,
     pub last_files_removed: Option<u64>,
+    #[serde(default)]
+    pub last_cloud_files_synced: Option<u64>,
+    #[serde(default)]
+    pub last_cloud_bytes_synced: Option<u64>,
 }
 
 impl Default for ScheduleConfig {
@@ -51,11 +58,14 @@ impl Default for ScheduleConfig {
             day_of_month: 1,
             action: "scan_and_clean".into(),
             categories,
+            sync_cloud_backups: false,
             os_task_registered: false,
             last_run_at: None,
             last_bytes_found: None,
             last_bytes_freed: None,
             last_files_removed: None,
+            last_cloud_files_synced: None,
+            last_cloud_bytes_synced: None,
         }
     }
 }
@@ -135,7 +145,7 @@ pub fn save_config(data_dir: &Path, mut cfg: ScheduleConfig) -> AppResult<Schedu
 fn is_os_task_registered() -> bool {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
-    std::process::Command::new("schtasks")
+    std::process::Command::new(crate::safety::system32_binary("schtasks"))
         .args(["/Query", "/TN", TASK_NAME])
         .creation_flags(CREATE_NO_WINDOW)
         .output()
@@ -154,22 +164,29 @@ fn sync_os_task(cfg: &ScheduleConfig, data_dir: &Path) -> AppResult<()> {
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
     if !cfg.enabled {
-        let _ = std::process::Command::new("schtasks")
+        let _ = std::process::Command::new(crate::safety::system32_binary("schtasks"))
             .args(["/Delete", "/F", "/TN", TASK_NAME])
             .creation_flags(CREATE_NO_WINDOW)
             .output();
         return Ok(());
     }
 
+    if data_dir.to_string_lossy().contains('"') {
+        return Err(AppError::Other("Invalid data_dir path".into()));
+    }
+
     let exe = std::env::current_exe()
         .map_err(|e| AppError::Other(format!("Could not determine application executable path: {e}")))?;
+    if exe.to_string_lossy().contains('"') {
+        return Err(AppError::Other("Invalid executable path".into()));
+    }
     let tr = format!(
         "\"{}\" --scheduled-clean --data-dir \"{}\"",
         exe.display(),
         data_dir.display()
     );
 
-    let mut cmd = std::process::Command::new("schtasks");
+    let mut cmd = std::process::Command::new(crate::safety::system32_binary("schtasks"));
     cmd.creation_flags(CREATE_NO_WINDOW);
     cmd.args(["/Create", "/F", "/TN", TASK_NAME, "/TR", &tr]);
 
@@ -278,6 +295,20 @@ pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> Ap
         let _ = append_cleaning_history_pub(data_dir, entry);
     }
 
+    if cfg.sync_cloud_backups && licensing.require_addon(crate::cloud_commands::CLOUD_BUNDLE_ADDON).await.is_ok() {
+        let data_dir_sync = data_dir.to_path_buf();
+        if let Ok(Ok(reps)) = tokio::task::spawn_blocking(move || {
+            crate::cloud_sync::run_pairs(&data_dir_sync, None, false)
+        })
+        .await
+        {
+            let copied: u64 = reps.iter().map(|r| r.files_copied).sum();
+            let bytes: u64 = reps.iter().map(|r| r.bytes_copied).sum();
+            cfg.last_cloud_files_synced = Some(copied);
+            cfg.last_cloud_bytes_synced = Some(bytes);
+        }
+    }
+
     cfg.last_run_at = Some(now_secs());
     cfg.last_bytes_found = Some(report.total_bytes);
     cfg.last_bytes_freed = Some(total_freed);
@@ -307,7 +338,24 @@ pub fn run_headless_if_requested() -> bool {
     for i in 0..args.len() {
         if args[i] == "--data-dir" {
             if let Some(custom) = args.get(i + 1) {
-                data_dir = PathBuf::from(custom);
+                let candidate = PathBuf::from(custom.trim());
+                let is_symlink = std::fs::symlink_metadata(&candidate)
+                    .map(|m| m.file_type().is_symlink() || safety::metadata_is_link_like(&m))
+                    .unwrap_or(false);
+                let ends_with_valid = candidate
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|n| {
+                        n.eq_ignore_ascii_case("com.sweepr.app")
+                            || n.eq_ignore_ascii_case("sweepr")
+                    })
+                    .unwrap_or(false)
+                    || dirs::config_dir()
+                        .map(|cfg| safety::is_within(&candidate, &cfg))
+                        .unwrap_or(false);
+                if candidate.is_absolute() && !is_symlink && ends_with_valid {
+                    data_dir = candidate;
+                }
             }
         }
     }
@@ -324,4 +372,48 @@ pub fn run_headless_if_requested() -> bool {
     }
 
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn schedule_config_normalizes_and_loads() {
+        assert_eq!(normalize_time("9:5"), "09:05");
+        assert_eq!(normalize_time("29:99"), "23:59");
+        assert_eq!(normalize_time("invalid"), "12:00");
+        assert_eq!(normalize_day_of_week("fri"), "FRI");
+        assert_eq!(normalize_day_of_week("invalid"), "MON");
+
+        let dir = std::env::temp_dir().join(format!("sweepr-sched-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let defaults = load_config(&dir);
+        assert!(!defaults.enabled);
+        assert_eq!(defaults.frequency, "daily");
+        assert!(!defaults.categories.is_empty());
+
+        // Write a custom config with out-of-range fields and verify load_config normalizes them
+        let raw = serde_json::json!({
+            "enabled": false,
+            "frequency": "weekly",
+            "time": "7:3",
+            "day_of_week": "wed",
+            "day_of_month": 99,
+            "action": "scan_and_clean",
+            "categories": ["system_temp"],
+            "sync_cloud_backups": true
+        });
+        std::fs::write(config_path(&dir), serde_json::to_string_pretty(&raw).unwrap()).unwrap();
+        let loaded = load_config(&dir);
+        assert_eq!(loaded.time, "07:03");
+        assert_eq!(loaded.day_of_week, "WED");
+        assert_eq!(loaded.day_of_month, 28);
+        assert_eq!(loaded.categories, vec!["system_temp".to_string()]);
+        assert!(loaded.sync_cloud_backups);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

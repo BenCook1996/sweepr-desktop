@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 import Security
 import UIKit
@@ -10,8 +11,10 @@ struct LinkedSweeprAccount: Codable, Equatable {
     var serverActive: Bool = false
     var plan: String? = nil
     var expiresAt: Int64 = 0
+    var addons: [String] = []
     var referralCode: String = ""
     var redeemedReferralCode: String? = nil
+    var signedToken: String? = nil
 
     var isSignedIn: Bool {
         !accountId.isEmpty && !refreshToken.isEmpty
@@ -19,6 +22,8 @@ struct LinkedSweeprAccount: Codable, Equatable {
 }
 
 enum AppConfig {
+    static let projectId = "cleaner"
+
     static var websiteURL: String {
         (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_WEBSITE_URL") as? String) ?? "https://sweeprcleaner.com"
     }
@@ -28,7 +33,11 @@ enum AppConfig {
     }
 
     static var apiURL: String {
-        (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_API_URL") as? String) ?? "https://sweeprcleaner.com"
+        if let crmUrl = Bundle.main.object(forInfoDictionaryKey: "SWEEPR_CRM_URL") as? String,
+           !crmUrl.isEmpty, !crmUrl.hasPrefix("$(") {
+            return crmUrl
+        }
+        return (Bundle.main.object(forInfoDictionaryKey: "SWEEPR_API_URL") as? String) ?? "https://sweeprcleaner.com"
     }
 }
 
@@ -82,6 +91,8 @@ enum CrashLogger {
 }
 
 enum AccountService {
+    static let projectId = AppConfig.projectId
+    private static let licensePubKeyB64 = "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8"
     private static let storageKey = "sweepr_linked_account_v1"
     private static let deviceKey = "sweepr_device_id_v1"
     private static let legacyRefreshTokenKey = "sweepr_refresh_token"
@@ -185,7 +196,21 @@ enum AccountService {
         if decoded.referralCode.isEmpty {
             decoded.referralCode = defaultReferralCode(for: decoded.deviceId, accountId: decoded.accountId)
         }
+        let tokenValid = verifyTokenClaimsForProject(
+            decoded.signedToken ?? "",
+            expectedProject: AccountService.projectId,
+            expectedDeviceId: decoded.deviceId
+        )
+        if !tokenValid {
+            decoded.serverActive = false
+            decoded.addons = []
+            decoded.signedToken = nil
+        }
         return decoded
+    }
+
+    static func loadPersisted() -> LinkedSweeprAccount {
+        loadAccount()
     }
 
     static func saveAccount(_ account: LinkedSweeprAccount) {
@@ -210,11 +235,85 @@ enum AccountService {
         return cleared
     }
 
+    private static func expandBundleAddons(_ raw: [String]) -> [String] {
+        var result = raw
+        if result.contains(where: { $0.caseInsensitiveCompare("sweepr_secure_bundle") == .orderedSame }) {
+            if !result.contains(where: { $0.caseInsensitiveCompare("battery_care") == .orderedSame }) {
+                result.append("battery_care")
+            }
+            if !result.contains(where: { $0.caseInsensitiveCompare("cloud_vault") == .orderedSame }) {
+                result.append("cloud_vault")
+            }
+        }
+        return result
+    }
+
+    private static func decodeBase64Url(_ raw: String) -> Data? {
+        var base64 = raw
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        let rem = base64.count % 4
+        if rem > 0 {
+            base64 += String(repeating: "=", count: 4 - rem)
+        }
+        return Data(base64Encoded: base64)
+    }
+
+    static func verifyTokenClaimsForProject(
+        _ token: String,
+        expectedProject: String = AccountService.projectId,
+        expectedDeviceId: String? = nil
+    ) -> Bool {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let parts = trimmed.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else { return false }
+
+        guard let sigData = decodeBase64Url(String(parts[2])),
+              let pubKeyData = decodeBase64Url(licensePubKeyB64),
+              let pubKey = try? Curve25519.Signing.PublicKey(rawRepresentation: pubKeyData) else {
+            return false
+        }
+        let messageData = Data("\(parts[0]).\(parts[1])".utf8)
+        guard pubKey.isValidSignature(sigData, for: messageData) else {
+            return false
+        }
+
+        guard let payloadData = decodeBase64Url(String(parts[1])),
+              let claims = (try? JSONSerialization.jsonObject(with: payloadData)) as? [String: Any] else {
+            return false
+        }
+        let exp = (claims["exp"] as? NSNumber)?.doubleValue ?? 0
+        guard exp > Date().timeIntervalSince1970 else {
+            return false
+        }
+        let status = (claims["status"] as? String) ?? ""
+        guard status == "active" || status == "trialing" else {
+            return false
+        }
+        let targetDevice = expectedDeviceId ?? currentDeviceId()
+        if let tokenDevice = claims["device_id"] as? String, !tokenDevice.isEmpty {
+            if !targetDevice.isEmpty && tokenDevice != targetDevice {
+                return false
+            }
+        }
+        let proj = (claims["project_id"] as? String) ?? expectedProject
+        let addons = (claims["addons"] as? [String]) ?? []
+        let hasBundle = addons.contains { $0.caseInsensitiveCompare("sweepr_secure_bundle") == .orderedSame }
+        if !proj.isEmpty && proj != expectedProject && proj != "all" && !hasBundle {
+            return false
+        }
+        return true
+    }
+
     static func sendOtp(email: String) async throws {
         _ = try await requestJSON(
             path: "/v1/account/send-otp",
             method: "POST",
-            body: ["email": email.trimmingCharacters(in: .whitespacesAndNewlines)]
+            body: [
+                "email": email.trimmingCharacters(in: .whitespacesAndNewlines),
+                "project_id": AppConfig.projectId
+            ]
         )
     }
 
@@ -229,6 +328,7 @@ enum AccountService {
                 "code": code.trimmingCharacters(in: .whitespacesAndNewlines),
                 "device_id": deviceId,
                 "platform": "ios",
+                "project_id": AppConfig.projectId,
                 "device_label": deviceLabel
             ]
         )
@@ -237,15 +337,24 @@ enum AccountService {
             throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid server response"])
         }
         let expiresSec = (res["expires_at"] as? NSNumber)?.int64Value ?? 0
+        let rawToken = (res["token"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let isActive = !rawToken.isEmpty && verifyTokenClaimsForProject(
+            rawToken,
+            expectedProject: AccountService.projectId,
+            expectedDeviceId: deviceId
+        )
+        let addons = isActive ? expandBundleAddons((res["addons"] as? [String]) ?? []) : []
         let linked = LinkedSweeprAccount(
             accountId: accountId,
             email: (res["email"] as? String) ?? email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
             refreshToken: refreshToken,
             deviceId: deviceId,
-            serverActive: (res["active"] as? Bool) ?? false,
+            serverActive: isActive,
             plan: res["plan"] as? String,
             expiresAt: max(0, expiresSec),
-            referralCode: (res["referral_code"] as? String) ?? defaultReferralCode(for: deviceId, accountId: accountId)
+            addons: addons,
+            referralCode: (res["referral_code"] as? String) ?? defaultReferralCode(for: deviceId, accountId: accountId),
+            signedToken: isActive ? rawToken : nil
         )
         saveAccount(linked)
         return linked
@@ -260,7 +369,8 @@ enum AccountService {
                 method: "POST",
                 body: [
                     "device_id": current.deviceId,
-                    "device_type": "mobile"
+                    "device_type": "mobile",
+                    "project_id": AppConfig.projectId
                 ],
                 bearerToken: current.refreshToken
             )
@@ -268,19 +378,33 @@ enum AccountService {
             var revoked = current
             revoked.serverActive = false
             revoked.expiresAt = 0
+            revoked.addons = []
+            revoked.signedToken = nil
             saveAccount(revoked)
             return revoked
         }
-        let status = (res["status"] as? String) ?? ""
-        let isActive = (res["active"] as? Bool) ?? (status == "active" || status == "trialing")
+        let rawToken = (res["token"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let isActive = !rawToken.isEmpty && verifyTokenClaimsForProject(
+            rawToken,
+            expectedProject: AccountService.projectId,
+            expectedDeviceId: current.deviceId
+        )
         let expiresSec = (res["expires_at"] as? NSNumber)?.int64Value ?? 0
         var updated = current
         if let email = res["email"] as? String, !email.isEmpty {
             updated.email = email
         }
         updated.serverActive = isActive
+        updated.signedToken = isActive ? rawToken : nil
         if let plan = res["plan"] as? String, !plan.isEmpty {
             updated.plan = plan
+        }
+        if isActive {
+            if let addons = res["addons"] as? [String] {
+                updated.addons = expandBundleAddons(addons)
+            }
+        } else {
+            updated.addons = []
         }
         updated.expiresAt = max(0, expiresSec)
         saveAccount(updated)
@@ -341,10 +465,15 @@ enum AccountService {
         request.timeoutInterval = 10
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(AppConfig.projectId, forHTTPHeaderField: "X-Sweepr-Project")
         if let token = bearerToken, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        var payload = body
+        if payload["project_id"] == nil {
+            payload["project_id"] = AppConfig.projectId
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]

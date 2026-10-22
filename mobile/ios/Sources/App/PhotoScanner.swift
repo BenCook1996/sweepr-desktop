@@ -48,6 +48,122 @@ struct MediaGroup: Identifiable {
     var reclaimableBytes: Int64 { extras.reduce(0) { $0 + $1.estimatedBytes } }
 }
 
+/// Real 3-level photo compression presets controlled by the Shrink strength slider.
+enum PhotoCompressionPreset: Int, CaseIterable, Identifiable {
+    case gentle = 0
+    case balanced = 1
+    case maximum = 2
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .gentle: return "Gentle"
+        case .balanced: return "Balanced"
+        case .maximum: return "Maximum"
+        }
+    }
+
+    var maxPixelSize: Int {
+        switch self {
+        case .gentle: return 3200
+        case .balanced: return 2560
+        case .maximum: return 1920
+        }
+    }
+
+    var jpegQuality: Double {
+        switch self {
+        case .gentle: return 0.88
+        case .balanced: return 0.80
+        case .maximum: return 0.70
+        }
+    }
+
+    var estimatedSavingsRatio: Double {
+        switch self {
+        case .gentle: return 0.35
+        case .balanced: return 0.58
+        case .maximum: return 0.75
+        }
+    }
+
+    var savedPercentEstimate: Int {
+        Int((estimatedSavingsRatio * 100.0).rounded())
+    }
+
+    var specBadge: String {
+        "≤\(maxPixelSize) px · \(Int((jpegQuality * 100.0).rounded()))%"
+    }
+
+    var summaryDescription: String {
+        switch self {
+        case .gentle:
+            return "~35% smaller (≤3200 px, 88% quality) — best for printing & big screens."
+        case .balanced:
+            return "~58% smaller (≤2560 px, 80% quality) — looks identical on phone screens."
+        case .maximum:
+            return "~75% smaller (≤1920 px, 70% quality) — frees up the most storage space."
+        }
+    }
+}
+
+/// Real 3-level hardware video compression presets controlled by the Shrink strength slider.
+enum VideoCompressionPreset: Int, CaseIterable, Identifiable {
+    case gentle = 0
+    case balanced = 1
+    case maximum = 2
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .gentle: return "Gentle"
+        case .balanced: return "Balanced"
+        case .maximum: return "Maximum"
+        }
+    }
+
+    var avExportPresetName: String {
+        switch self {
+        case .gentle: return AVAssetExportPreset1920x1080
+        case .balanced: return AVAssetExportPreset1280x720
+        case .maximum: return AVAssetExportPresetMediumQuality
+        }
+    }
+
+    var estimatedSavingsRatio: Double {
+        switch self {
+        case .gentle: return 0.38
+        case .balanced: return 0.58
+        case .maximum: return 0.72
+        }
+    }
+
+    var savedPercentEstimate: Int {
+        Int((estimatedSavingsRatio * 100.0).rounded())
+    }
+
+    var specBadge: String {
+        switch self {
+        case .gentle: return "1080p HD"
+        case .balanced: return "720p HD"
+        case .maximum: return "Compact MP4"
+        }
+    }
+
+    var summaryDescription: String {
+        switch self {
+        case .gentle:
+            return "1080p Full HD (~38% smaller) — sharp for TVs & large displays."
+        case .balanced:
+            return "720p HD (~58% smaller) — crisp on iPhone screens, great space savings."
+        case .maximum:
+            return "Compact MP4 (~72% smaller) — frees up the maximum storage space."
+        }
+    }
+}
+
 struct VideoCompressionResult {
     let originalAssetId: String
     let newAssetId: String?
@@ -144,12 +260,14 @@ enum PhotoScanner {
 
     /// #1 Batch Photo Optimizer + #9 EXIF GPS Privacy Stripper.
     /// Uses `CGImageSource` and `CGImageDestination` with `kCGImagePropertyGPSDictionary: kCFNull`
-    /// and `0.82` JPEG compression quality to strip GPS metadata and shrink oversized photos.
+    /// and a 3-level `PhotoCompressionPreset` (Gentle 3200px 88%, Balanced 2560px 80%, Maximum 1920px 70%)
+    /// to strip GPS metadata and shrink oversized photos.
     static func optimizePhoto(
         assetId: String,
         compressQuality: Bool = true,
         stripGps: Bool = true,
-        deleteOriginal: Bool = false
+        deleteOriginal: Bool = false,
+        preset: PhotoCompressionPreset = .balanced
     ) async throws -> PhotoOptimizationResult {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
         guard let asset = fetchResult.firstObject, asset.mediaType == .image else {
@@ -192,8 +310,8 @@ enum PhotoScanner {
             destOptions[kCGImagePropertyGPSDictionary] = kCFNull
         }
         if compressQuality {
-            destOptions[kCGImageDestinationLossyCompressionQuality] = 0.82
-            destOptions[kCGImageDestinationImageMaxPixelSize] = 2560
+            destOptions[kCGImageDestinationLossyCompressionQuality] = preset.jpegQuality
+            destOptions[kCGImageDestinationImageMaxPixelSize] = preset.maxPixelSize
         } else {
             destOptions[kCGImageDestinationLossyCompressionQuality] = 0.95
         }
@@ -202,7 +320,7 @@ enum PhotoScanner {
             let thumbOpts: [CFString: Any] = [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceThumbnailMaxPixelSize: 2560
+                kCGImageSourceThumbnailMaxPixelSize: preset.maxPixelSize
             ]
             if let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, thumbOpts as CFDictionary) {
                 destOptions[kCGImagePropertyOrientation] = 1
@@ -273,9 +391,13 @@ enum PhotoScanner {
     }
 
     /// Compresses a large video (>50 MB) using hardware-accelerated `AVAssetExportSession`
-    /// (`AVAssetExportPresetMediumQuality`), saves the smaller video back to `PHPhotoLibrary`,
-    /// and optionally moves the original large video to Recently Deleted.
-    static func compressVideo(assetId: String, deleteOriginal: Bool = true) async throws -> VideoCompressionResult {
+    /// with the chosen 3-level `VideoCompressionPreset` (Gentle 1080p, Balanced 720p, Maximum Compact MP4),
+    /// saves the smaller video back to `PHPhotoLibrary`, and optionally moves the original to Recently Deleted.
+    static func compressVideo(
+        assetId: String,
+        deleteOriginal: Bool = true,
+        preset: VideoCompressionPreset = .balanced
+    ) async throws -> VideoCompressionResult {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
         guard let asset = fetchResult.firstObject, asset.mediaType == .video else {
             throw NSError(
@@ -291,10 +413,9 @@ enum PhotoScanner {
         } ?? 0
 
         let avAsset = try await requestAVAsset(for: asset)
-        guard let exportSession = AVAssetExportSession(
-            asset: avAsset,
-            presetName: AVAssetExportPresetMediumQuality
-        ) else {
+        let exportSession = AVAssetExportSession(asset: avAsset, presetName: preset.avExportPresetName)
+            ?? AVAssetExportSession(asset: avAsset, presetName: AVAssetExportPresetMediumQuality)
+        guard let exportSession = exportSession else {
             throw NSError(
                 domain: "SweeprPhotoScanner",
                 code: 500,

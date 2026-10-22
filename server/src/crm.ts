@@ -10,6 +10,7 @@ import { randomToken, sha256, signEntitlement } from "./tokens.js";
 import { periodEnd } from "./stripe.js";
 import { sendSubscriptionEmail, verifySmtp } from "./email.js";
 import { resolvePricingForRequest, detectLeadDevice } from "./pricing.js";
+import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -252,7 +253,31 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     if (customer.email && status === "active") {
       const activationKey = randomInt(100000, 1000000).toString();
       repo.setOtp(customer.email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      syncSubscriptionToCentralCrm({
+        email: customer.email,
+        name: customer.name,
+        country: customer.country,
+        plan,
+        status,
+        days,
+        amountCents: amount_cents,
+        currency,
+        activationCode: activationKey,
+        notes: `Manual grant from SWEEPR Cleaner CRM (${days} days)`,
+      });
       sendSubscriptionEmail(customer.email, "activated", plan, customer.name || undefined, activationKey).catch(console.error);
+    } else if (customer.email) {
+      syncSubscriptionToCentralCrm({
+        email: customer.email,
+        name: customer.name,
+        country: customer.country,
+        plan,
+        status,
+        days,
+        amountCents: amount_cents,
+        currency,
+        notes: `Manual grant from SWEEPR Cleaner CRM (${days} days)`,
+      });
     }
 
     return c.json({ ok: true, customer: repo.getCustomer360(id) });
@@ -369,6 +394,17 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       description: `Created ${status} ${plan} subscription (${currency.toUpperCase()} ${(amount_cents / 100).toFixed(2)}) for ${name}`,
       actor: "admin",
       metadata: { plan, status, amount_cents, days, periodEnd },
+    });
+    syncSubscriptionToCentralCrm({
+      email,
+      name,
+      country,
+      plan,
+      status,
+      days,
+      amountCents: amount_cents,
+      currency,
+      notes: body.notes || `Created via SWEEPR Cleaner CRM`,
     });
 
     // Device connection
@@ -753,6 +789,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     const id = c.req.param("id");
     const deviceId = c.req.param("deviceId");
     repo.revokeDevice(id, deviceId);
+    repo.db.prepare("UPDATE accounts SET refresh_token_hash = ?, updated_at = ? WHERE id = ?").run(sha256(randomToken(32)), now(), id);
     return c.json({ ok: true, customer: repo.getCustomer360(id) });
   });
 

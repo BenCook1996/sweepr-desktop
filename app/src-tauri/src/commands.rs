@@ -1,11 +1,13 @@
 //! IPC command layer. All decisions (paths, entitlement) live in Rust modules.
 
+use crate::battery::{self, BatteryCareConfig, BatteryDiagnostics, HibernateTabsResult, ThermalThrottleResult};
 use crate::cleaner::{self, CleanReport, QuarantineEntry};
 use crate::error::{AppError, AppResult};
 use crate::licensing::{LicenseStatus, Licensing};
 use crate::memory::{
-    self, ContextMenuItem, GamingBoostResult, MemoryOverview, RunningAppConflict, StartupItem,
-    SystemHealthDetails, SystemOverview,
+    self, BrowserMemoryReport, BrowserTameResult, ContextMenuItem, GamingBoostResult,
+    MemoryOverview, RunningAppConflict, StartupItem, SystemHealthDetails, SystemOverview,
+    TabSessionSnapshot,
 };
 use crate::rules;
 use crate::safety;
@@ -217,6 +219,89 @@ pub async fn start_checkout(
             Ok(false)
         }
     }
+}
+
+#[tauri::command]
+pub async fn start_addon_checkout(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    addon: String,
+    email: Option<String>,
+    plan: Option<String>,
+) -> AppResult<bool> {
+    match state
+        .licensing
+        .checkout_url_with_addon(email.as_deref(), plan.as_deref(), Some(addon.as_str()))
+        .await?
+    {
+        None => Ok(true),
+        Some(url) => {
+            app.opener().open_url(url, None::<&str>).map_err(|e| AppError::Other(e.to_string()))?;
+            Ok(false)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Total Battery & Mac/Phone Care add-on
+// ---------------------------------------------------------------------------
+
+const BATTERY_CARE_ADDON: &str = "battery_care";
+
+/// Free diagnostic hook — available to every user.
+#[tauri::command]
+pub async fn battery_diagnostics(state: State<'_, AppState>) -> AppResult<BatteryDiagnostics> {
+    let dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || battery::battery_diagnostics(&dir))
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn set_battery_charge_limit(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
+    limit_percent: u8,
+) -> AppResult<BatteryCareConfig> {
+    if enabled {
+        state.licensing.require_addon(BATTERY_CARE_ADDON).await?;
+    }
+    let dir = state.data_dir.clone();
+    let cfg = tauri::async_runtime::spawn_blocking(move || battery::set_charge_limit(&dir, enabled, limit_percent))
+        .await
+        .map_err(join_err)??;
+    battery::refresh_tray(&app, &state.data_dir);
+    Ok(cfg)
+}
+
+#[tauri::command]
+pub async fn set_battery_thermal_throttling(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
+) -> AppResult<ThermalThrottleResult> {
+    if enabled {
+        state.licensing.require_addon(BATTERY_CARE_ADDON).await?;
+    }
+    let dir = state.data_dir.clone();
+    let res = tauri::async_runtime::spawn_blocking(move || battery::set_thermal_throttling(&dir, enabled))
+        .await
+        .map_err(join_err)??;
+    battery::refresh_tray(&app, &state.data_dir);
+    Ok(res)
+}
+
+#[tauri::command]
+pub async fn hibernate_browser_tabs(
+    state: State<'_, AppState>,
+    auto_enabled: Option<bool>,
+) -> AppResult<HibernateTabsResult> {
+    state.licensing.require_addon(BATTERY_CARE_ADDON).await?;
+    let dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || battery::hibernate_browser_tabs(&dir, auto_enabled))
+        .await
+        .map_err(join_err)?
 }
 
 #[tauri::command]
@@ -932,10 +1017,13 @@ pub async fn check_app_update(app: AppHandle, state: State<'_, AppState>) -> App
 const MAX_UPDATE_INSTALLER_BYTES: usize = 150 * 1024 * 1024;
 
 fn generate_update_uuid() -> String {
+    use rand::RngCore;
     use sha2::{Digest, Sha256};
     use std::collections::hash_map::RandomState;
     use std::hash::{BuildHasher, Hasher};
 
+    let mut rand_bytes = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut rand_bytes);
     let r1 = RandomState::new().build_hasher().finish();
     let r2 = RandomState::new().build_hasher().finish();
     let nanos = SystemTime::now()
@@ -944,6 +1032,7 @@ fn generate_update_uuid() -> String {
         .unwrap_or(0);
     let mut h = Sha256::new();
     h.update(b"sweepr-update-uuid-v1:");
+    h.update(rand_bytes);
     h.update(r1.to_le_bytes());
     h.update(r2.to_le_bytes());
     h.update(nanos.to_le_bytes());
@@ -1116,7 +1205,13 @@ pub async fn install_app_update(
             .map_err(|e| AppError::Other(format!("Failed syncing update installer: {e}")))?;
     }
 
+    let _lock_guard = std::fs::OpenOptions::new()
+        .read(true)
+        .open(&installer_path)
+        .map_err(|e| AppError::Other(format!("Failed locking update installer: {e}")))?;
+
     std::process::Command::new(&installer_path)
+        .args(["/S"])
         .spawn()
         .map_err(|e| AppError::Other(format!("Failed launching update installer: {e}")))?;
 
@@ -1359,7 +1454,7 @@ pub async fn uninstall_self(
 
             if !launched_uninstaller {
                 // Schedule removal of the standalone executable once this process exits
-                let _ = std::process::Command::new("cmd")
+                let _ = std::process::Command::new(crate::safety::system32_binary("cmd"))
                     .creation_flags(0x08000000)
                     .env("SWEEPR_SELF_EXE", exe_path.as_os_str())
                     .args([
@@ -1419,6 +1514,102 @@ pub async fn toggle_context_menu_item(
     tauri::async_runtime::spawn_blocking(move || memory::toggle_context_menu_item(&id, enabled))
         .await
         .map_err(join_err)?
+}
+
+// ---------------------------------------------------------------------------
+// Total Tab & RAM Tamer — Browser Memory Optimizer & Session Crash Guard
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn browser_memory_report() -> AppResult<BrowserMemoryReport> {
+    tauri::async_runtime::spawn_blocking(memory::browser_memory_report)
+        .await
+        .map_err(join_err)
+}
+
+#[tauri::command]
+pub async fn tame_browser_memory(
+    state: State<'_, AppState>,
+    target_browser: Option<String>,
+    enable_persistent_saver: Option<bool>,
+) -> AppResult<BrowserTameResult> {
+    state.licensing.require_active().await?;
+    let data_dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        // Auto-snapshot open tab sessions before taming if no recent backup exists (< 30 mins)
+        let existing = memory::list_tab_sessions(&data_dir);
+        let now = now_secs();
+        let has_recent = existing
+            .first()
+            .map(|s| now.saturating_sub(s.created_at) < 1800)
+            .unwrap_or(false);
+        if !has_recent {
+            let _ = memory::backup_tab_sessions(&data_dir, Some("Auto-Saved Before RAM Tame"));
+        }
+
+        memory::tame_browser_memory(
+            target_browser.as_deref(),
+            enable_persistent_saver.unwrap_or(false),
+        )
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn set_browser_memory_policy(
+    state: State<'_, AppState>,
+    browser_id: String,
+    enabled: bool,
+) -> AppResult<bool> {
+    state.licensing.require_active().await?;
+    tauri::async_runtime::spawn_blocking(move || {
+        memory::set_browser_memory_policy(&browser_id, enabled)
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub fn list_tab_sessions(state: State<'_, AppState>) -> Vec<TabSessionSnapshot> {
+    memory::list_tab_sessions(&state.data_dir)
+}
+
+#[tauri::command]
+pub async fn backup_tab_sessions(
+    state: State<'_, AppState>,
+    label: Option<String>,
+) -> AppResult<TabSessionSnapshot> {
+    state.licensing.require_active().await?;
+    let data_dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        memory::backup_tab_sessions(&data_dir, label.as_deref())
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn restore_tab_session(
+    state: State<'_, AppState>,
+    snapshot_id: String,
+) -> AppResult<u32> {
+    state.licensing.require_active().await?;
+    let data_dir = state.data_dir.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        memory::restore_tab_session(&data_dir, &snapshot_id)
+    })
+    .await
+    .map_err(join_err)?
+}
+
+#[tauri::command]
+pub async fn delete_tab_session(
+    state: State<'_, AppState>,
+    snapshot_id: String,
+) -> AppResult<Vec<TabSessionSnapshot>> {
+    state.licensing.require_active().await?;
+    memory::delete_tab_session(&state.data_dir, &snapshot_id)
 }
 
 // ---------------------------------------------------------------------------
@@ -1940,7 +2131,7 @@ pub async fn pick_folder(title: Option<String>) -> AppResult<Option<String>> {
                 "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = '{}'; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.SelectedPath) }}",
                 safe_prompt
             );
-            let out = std::process::Command::new("powershell")
+            let out = std::process::Command::new(crate::safety::system_powershell_path())
                 .args(["-NoProfile", "-STA", "-Command", &script])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output();
@@ -1998,7 +2189,7 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
                 "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = '{}'; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.FileName) }}",
                 safe_prompt
             );
-            let out = std::process::Command::new("powershell")
+            let out = std::process::Command::new(crate::safety::system_powershell_path())
                 .args(["-NoProfile", "-STA", "-Command", &script])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output();
@@ -2080,6 +2271,82 @@ mod tests {
         let reloaded = load_cookie_allowlist_from(&dir);
         assert_eq!(reloaded, saved);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn cleaning_history_and_sqlite_compactor_work() {
+        let dir = std::env::temp_dir().join(format!("sweepr-cmd-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        append_cleaning_history_pub(
+            &dir,
+            CleanHistoryEntry {
+                id: "h_1".into(),
+                timestamp: 1700000000,
+                bytes_freed: 10240,
+                files_removed: 4,
+                categories: vec!["system_temp".into()],
+                mode: "Sweepr Quarantine (7d undo)".into(),
+            },
+        )
+        .unwrap();
+        let history = load_cleaning_history(&dir);
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].bytes_freed, 10240);
+
+        // Test SQLite temporary journal compactor
+        let prof = dir.join("browser_profile");
+        std::fs::create_dir_all(&prof).unwrap();
+        std::fs::write(prof.join("History"), vec![b'1'; 500]).unwrap();
+        std::fs::write(prof.join("History-journal"), vec![b'2'; 300]).unwrap();
+        std::fs::write(prof.join("Cookies-wal"), vec![b'3'; 200]).unwrap();
+        let reclaimed = compact_sqlite_dir(&prof);
+        assert_eq!(reclaimed, 500);
+        assert!(prof.join("History").exists());
+        assert!(!prof.join("History-journal").exists());
+        assert!(!prof.join("Cookies-wal").exists());
+
+        // Test browser extension i18n message resolution
+        let ext_ver = dir.join("ext_1.0");
+        std::fs::create_dir_all(ext_ver.join("_locales").join("en")).unwrap();
+        std::fs::write(
+            ext_ver.join("_locales").join("en").join("messages.json"),
+            r#"{"extName": {"message": "uBlock Origin"}}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            resolve_extension_msg(&ext_ver, "__MSG_extName__"),
+            Some("uBlock Origin".to_string())
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sha1_digest_and_version_helpers_are_accurate() {
+        let digest = sha1_digest(b"password");
+        let hex: String = digest.iter().map(|b| format!("{b:02X}")).collect();
+        assert_eq!(hex, "5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8");
+
+        assert!(is_newer_version("0.2.0", "0.1.0"));
+        assert!(is_newer_version("v1.0.1", "1.0.0"));
+        assert!(!is_newer_version("0.1.0", "0.1.0"));
+        assert!(!is_newer_version("0.0.9", "0.1.0"));
+
+        assert_eq!(
+            normalize_sha256_hex("SHA256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
+            Some("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string())
+        );
+        assert!(normalize_sha256_hex("invalid").is_none());
+        assert!(is_trusted_update_url(
+            "https://sweeprcleaner.com/download?platform=windows",
+            "https://sweeprcleaner.com"
+        ));
+        assert!(!is_trusted_update_url(
+            "https://evil.example.com/setup.exe",
+            "https://sweeprcleaner.com"
+        ));
     }
 }
 

@@ -82,6 +82,9 @@ test("SEO: bot detection, SSRF guard and CTR curve", async () => {
   assert.equal(detectBot("Mozilla/5.0 (Windows NT 10.0) Chrome/128"), null);
   assert.equal(isPublicHttpUrl("http://localhost:8787/"), false);
   assert.equal(isPublicHttpUrl("http://192.168.1.10/"), false);
+  assert.equal(isPublicHttpUrl("http://[::ffff:7f00:1]/"), false);
+  assert.equal(isPublicHttpUrl("http://[::]/"), false);
+  assert.equal(isPublicHttpUrl("http://0.0.0.0/"), false);
   assert.equal(isPublicHttpUrl("file:///etc/passwd"), false);
   assert.equal(isPublicHttpUrl("https://www.majorgeeks.com/"), true);
   const blocked = await checkBacklink("http://127.0.0.1/", "sweeprcleaner.com");

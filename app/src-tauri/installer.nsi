@@ -357,11 +357,20 @@ Function PageLeaveReinstall
       ExecWait '$R1' $0
     ${Else}
       ReadRegStr $4 SHCTX "${MANUPRODUCTKEY}" ""
-      ReadRegStr $R1 SHCTX "${UNINSTKEY}" "UninstallString"
-      ${IfThen} $UpdateMode = 1 ${|} StrCpy $R1 "$R1 /UPDATE" ${|} ; append /UPDATE
-      ${IfThen} $PassiveMode = 1 ${|} StrCpy $R1 "$R1 /P" ${|} ; append /P
-      StrCpy $R1 "$R1 _?=$4" ; append uninstall directory
-      ExecWait '$R1' $0
+      ${If} $4 != ""
+        IfFileExists "$4\uninstall.exe" 0 reinst_missing_uninst
+          StrCpy $R1 '"$4\uninstall.exe"'
+          ${IfThen} $UpdateMode = 1 ${|} StrCpy $R1 "$R1 /UPDATE" ${|} ; append /UPDATE
+          ${IfThen} $PassiveMode = 1 ${|} StrCpy $R1 "$R1 /P" ${|} ; append /P
+          StrCpy $R1 "$R1 _?=$4" ; append uninstall directory
+          ExecWait '$R1' $0
+          Goto reinst_uninst_ran
+        reinst_missing_uninst:
+          StrCpy $0 2
+        reinst_uninst_ran:
+      ${Else}
+        StrCpy $0 2
+      ${EndIf}
     ${EndIf}
 
     BringToFront

@@ -1,3 +1,4 @@
+mod battery;
 mod cleaner;
 mod cmdline;
 mod commands;
@@ -12,6 +13,10 @@ mod duplicates;
 mod uninstaller;
 mod shredder;
 mod registry_cleaner;
+mod cloud;
+mod cloud_commands;
+mod cloud_sync;
+mod vault;
 
 use tauri::Manager;
 
@@ -53,8 +58,9 @@ pub fn run() {
 
             app.manage(commands::AppState {
                 data_dir: data_dir.clone(),
-                licensing: licensing::Licensing::new(data_dir),
+                licensing: licensing::Licensing::new(data_dir.clone()),
             });
+            battery::setup_tray_and_monitor(app.handle(), data_dir);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -70,6 +76,11 @@ pub fn run() {
             commands::check_running_apps,
             commands::license_status,
             commands::start_checkout,
+            commands::start_addon_checkout,
+            commands::battery_diagnostics,
+            commands::set_battery_charge_limit,
+            commands::set_battery_thermal_throttling,
+            commands::hibernate_browser_tabs,
             commands::request_login_otp,
             commands::verify_login_otp,
             commands::memory_overview,
@@ -100,6 +111,13 @@ pub fn run() {
             commands::system_health_details,
             commands::list_context_menu_items,
             commands::toggle_context_menu_item,
+            commands::browser_memory_report,
+            commands::tame_browser_memory,
+            commands::set_browser_memory_policy,
+            commands::list_tab_sessions,
+            commands::backup_tab_sessions,
+            commands::restore_tab_session,
+            commands::delete_tab_session,
             commands::get_cookie_allowlist,
             commands::set_cookie_allowlist,
             commands::compact_browser_databases,
@@ -129,6 +147,17 @@ pub fn run() {
             registry_cleaner::fix_registry_issue,
             registry_cleaner::list_registry_backups,
             registry_cleaner::restore_registry_backup,
+            cloud_commands::cloud_detect_roots,
+            cloud_commands::cloud_scan,
+            cloud_commands::cloud_delete_files,
+            cloud_commands::cloud_offload_files,
+            cloud_commands::vault_encrypt,
+            cloud_commands::vault_decrypt,
+            cloud_commands::vault_list,
+            cloud_commands::cloud_sync_list,
+            cloud_commands::cloud_sync_add,
+            cloud_commands::cloud_sync_remove,
+            cloud_commands::cloud_sync_run,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Sweepr");

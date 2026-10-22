@@ -162,6 +162,7 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
       if (header) failures.hit(ip); // only count actual attempts, not the browser's first unauthenticated probe
       return c.text("Authentication required", 401, challenge);
     }
+    failures.reset(ip);
 
     // CSRF: browsers replay Basic credentials on cross-site requests, so reject foreign origins on writes.
     const method = c.req.method.toUpperCase();
@@ -231,6 +232,6 @@ export function securityHeaders(opts: { hsts: boolean }): MiddlewareHandler {
       "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://js.stripe.com https://pay.google.com https://translate.google.com https://translate.googleapis.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://pay.google.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://r.stripe.com https://q.stripe.com https://m.stripe.com https://pay.google.com https://www.google.com https://translate.googleapis.com https://www.google-analytics.com https://www.clarity.ms https://api.country.is https://get.geojs.io https://ipapi.co; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://pay.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
     );
     set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-    if (opts.hsts) set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    if (opts.hsts) set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
   };
 }

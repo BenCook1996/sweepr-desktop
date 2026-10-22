@@ -1,5 +1,21 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+
+/**
+ * Wrapper around Tauri's `invoke` that automatically opens the subscription
+ * activation modal whenever the Rust backend rejects a command with
+ * `AppError::PaymentRequired`.
+ */
+async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  try {
+    return await tauriInvoke<T>(cmd, args);
+  } catch (e) {
+    if (isPaymentRequired(e)) {
+      requestActivation();
+    }
+    throw e;
+  }
+}
 
 export type Group = "system" | "browsers" | "apps" | "developer";
 
@@ -11,7 +27,56 @@ export interface CategoryResult {
 export interface ScanReport { categories: CategoryResult[]; total_bytes: number; total_files: number; duration_ms: number }
 export interface ScanProgress { done: number; total: number; category_id: string; category_name: string; bytes_so_far: number }
 export interface CleanReport { category_id: string; bytes_freed: number; files_removed: number; files_skipped: number; moved_to_trash: boolean }
-export interface LicenseStatus { active: boolean; status: string; plan: string | null; expires_at: number | null; offline: boolean; dev_unlock: boolean }
+export interface LicenseStatus { active: boolean; status: string; plan: string | null; expires_at: number | null; offline: boolean; dev_unlock: boolean; addons?: string[] }
+
+export interface BatteryCareConfig {
+  charge_limit_enabled: boolean;
+  charge_limit_percent: number;
+  charge_limit_hardware_applied: boolean;
+  charge_limit_method: string;
+  charge_limit_message: string;
+  thermal_throttling_enabled: boolean;
+  auto_hibernate_tabs: boolean;
+}
+export interface RunawayApp {
+  name: string; pid: number; processes: number; cpu_percent: number;
+  memory_bytes: number; blocks_sleep: boolean; drain_share_percent: number;
+}
+export interface BatteryDiagnostics {
+  has_battery: boolean;
+  platform: string;
+  health_percent: number | null;
+  degradation_multiplier: number | null;
+  design_capacity_mwh: number | null;
+  full_charge_capacity_mwh: number | null;
+  cycle_count: number | null;
+  charge_percent: number | null;
+  ac_connected: boolean;
+  charging: boolean;
+  power_draw_watts: number | null;
+  temperature_c: number | null;
+  estimated_replacement_cost_usd: number;
+  sleep_drain_percent: number;
+  hook_headline: string;
+  runaway_apps: RunawayApp[];
+  inactive_browser_tabs_count: number;
+  config: BatteryCareConfig;
+}
+export interface ThermalThrottleResult {
+  enabled: boolean; processes_throttled: number; throttled_apps: string[]; turbo_capped: boolean; message: string;
+}
+export interface HibernateTabsResult {
+  tabs_hibernated: number; bytes_freed: number; browsers: string[];
+  memory_saver_policy_applied: boolean; estimated_extra_minutes: number; auto_enabled: boolean;
+}
+export interface UnplugAlert {
+  charge_percent: number;
+  limit_percent: number;
+  hardware_applied: boolean;
+  title: string;
+  message: string;
+  timestamp: number;
+}
 export interface AppMemory { name: string; bytes: number; processes: number }
 export interface MemoryOverview { total_bytes: number; used_bytes: number; available_bytes: number; top_apps: AppMemory[] }
 export interface StartupItem { name: string; command: string; scope: string; enabled?: boolean; impact?: string }
@@ -86,6 +151,9 @@ export const isPaymentRequired = (e: unknown) => isAppError(e) && e.kind === "pa
 export const ACTIVATE_EVENT = "sweepr-open-activate";
 export const requestActivation = () => window.dispatchEvent(new CustomEvent(ACTIVATE_EVENT));
 
+/** Ask the Home screen to open its "Recently Cleaned / Undo" drawer (used by the quick rail). */
+export const OPEN_UNDO_EVENT = "sweepr-open-undo";
+
 export const api = {
   fetchApps: () => invoke<InstalledApp[]>("fetch_apps"),
   /** Only the app id is sent; Rust looks up the uninstaller in the registry. */
@@ -117,6 +185,19 @@ export const api = {
   licenseStatus: (force = false) => invoke<LicenseStatus>("license_status", { force }),
   startCheckout: (email?: string, plan: "monthly" | "annual" = "monthly") =>
     invoke<boolean>("start_checkout", { email: email ?? null, plan }),
+  startAddonCheckout: (addon: string, email?: string, plan: "monthly" | "annual" = "annual") =>
+    invoke<boolean>("start_addon_checkout", { addon, email: email ?? null, plan }),
+  batteryDiagnostics: () => invoke<BatteryDiagnostics>("battery_diagnostics"),
+  setBatteryChargeLimit: (enabled: boolean, limitPercent: number) =>
+    invoke<BatteryCareConfig>("set_battery_charge_limit", { enabled, limitPercent }),
+  setBatteryThermalThrottling: (enabled: boolean) =>
+    invoke<ThermalThrottleResult>("set_battery_thermal_throttling", { enabled }),
+  hibernateBrowserTabs: (autoEnabled: boolean | null = null) =>
+    invoke<HibernateTabsResult>("hibernate_browser_tabs", { autoEnabled }),
+  onUnplugAlert: (cb: (alert: UnplugAlert) => void): Promise<UnlistenFn> =>
+    listen<UnplugAlert>("battery://unplug-alert", (e) => cb(e.payload)),
+  onTrayNavigate: (cb: (target: string) => void): Promise<UnlistenFn> =>
+    listen<string>("tray://navigate", (e) => cb(e.payload)),
   requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
   verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
   memory: () => invoke<MemoryOverview>("memory_overview"),
@@ -151,6 +232,21 @@ export const api = {
   systemHealthDetails: () => invoke<SystemHealthDetails>("system_health_details"),
   listContextMenuItems: () => invoke<ContextMenuItem[]>("list_context_menu_items"),
   toggleContextMenuItem: (id: string, enabled: boolean) => invoke<ContextMenuItem[]>("toggle_context_menu_item", { id, enabled }),
+  browserMemoryReport: () => invoke<BrowserMemoryReport>("browser_memory_report"),
+  tameBrowserMemory: (targetBrowser?: string | null, enablePersistentSaver = false) =>
+    invoke<BrowserTameResult>("tame_browser_memory", {
+      targetBrowser: targetBrowser ?? null,
+      enablePersistentSaver,
+    }),
+  setBrowserMemoryPolicy: (browserId: string, enabled: boolean) =>
+    invoke<boolean>("set_browser_memory_policy", { browserId, enabled }),
+  listTabSessions: () => invoke<TabSessionSnapshot[]>("list_tab_sessions"),
+  backupTabSessions: (label?: string) =>
+    invoke<TabSessionSnapshot>("backup_tab_sessions", { label: label ?? null }),
+  restoreTabSession: (snapshotId: string) =>
+    invoke<number>("restore_tab_session", { snapshotId }),
+  deleteTabSession: (snapshotId: string) =>
+    invoke<TabSessionSnapshot[]>("delete_tab_session", { snapshotId }),
   moveLargeFile: (dir: string, file: string, targetDir: string) => invoke<string>("move_large_file", { dir, file, targetDir }),
   resolveShortcutOrExe: (path: string) => invoke<string>("resolve_shortcut_or_exe", { path }),
   scanBrokenItems: () => invoke<BrokenItem[]>("scan_broken_items"),
@@ -194,11 +290,14 @@ export interface ScheduleConfig {
   day_of_month: number;
   action: "scan_and_clean" | "scan_only" | string;
   categories: string[];
+  sync_cloud_backups?: boolean;
   os_task_registered: boolean;
   last_run_at: number | null;
   last_bytes_found: number | null;
   last_bytes_freed: number | null;
   last_files_removed: number | null;
+  last_cloud_files_synced?: number | null;
+  last_cloud_bytes_synced?: number | null;
 }
 export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }
 export interface AppRemnant { name: string; path: string; location: string; bytes: number; files: number; }
@@ -215,3 +314,128 @@ export interface BrokenItem { path: string; name: string; kind: "broken_shortcut
 export interface BrowserExtensionItem { id: string; browser: string; name: string; version: string; description: string; permissions_count: number; path: string; }
 export interface RecycleBinInfo { bytes: number; items: number; }
 export interface DriveMediaInfo { is_ssd: boolean; media_label: string; recommended_passes: number; }
+
+export interface BrowserAppRam {
+  id: string;
+  name: string;
+  total_bytes: number;
+  process_count: number;
+  tab_processes: number;
+  tab_bytes: number;
+  extension_processes: number;
+  extension_bytes: number;
+  gpu_utility_bytes: number;
+  heavy_tabs_count: number;
+  reclaimable_bytes: number;
+  memory_saver_policy: boolean;
+}
+
+export interface BrowserMemoryReport {
+  total_browser_bytes: number;
+  total_system_bytes: number;
+  total_tab_processes: number;
+  total_extension_processes: number;
+  total_extension_bytes: number;
+  heavy_tabs_count: number;
+  estimated_reclaimable_bytes: number;
+  slowdown_percent: number;
+  browsers: BrowserAppRam[];
+}
+
+export interface BrowserTameResult {
+  tabs_tamed: number;
+  bytes_freed: number;
+  browsers_optimized: string[];
+  policy_applied: boolean;
+}
+
+export interface TabSessionSnapshot {
+  id: string;
+  label: string;
+  created_at: number;
+  browsers: string[];
+  estimated_tabs: number;
+  bytes: number;
+}
+
+// ---------------------------------------------------------------------------
+// CloudClean · Photo & Document Vault · Cloud Backup Sync
+// ---------------------------------------------------------------------------
+
+export type CloudProviderId = "onedrive" | "google_drive" | "dropbox" | "icloud";
+
+export interface CloudRoot { provider_id: CloudProviderId; label: string; path: string; streamed: boolean; }
+export interface CloudFile { path: string; name: string; size: number; modified_at: number; provider_id: CloudProviderId; online_only: boolean; }
+export interface CloudDuplicateGroup {
+  key: string;
+  size: number;
+  confidence: "verified" | "likely";
+  cross_cloud: boolean;
+  files: CloudFile[];
+}
+export interface ProviderUsage {
+  provider_id: CloudProviderId;
+  label: string;
+  roots: string[];
+  used_bytes: number;
+  files: number;
+  online_only_bytes: number;
+  reclaimable_bytes: number;
+  offloadable_bytes: number;
+}
+export interface CloudScanReport {
+  roots: CloudRoot[];
+  providers: ProviderUsage[];
+  duplicates: CloudDuplicateGroup[];
+  screenshots: CloudFile[];
+  large_videos: CloudFile[];
+  installers: CloudFile[];
+  old_large_files: CloudFile[];
+  email_attachments: CloudFile[];
+  total_bytes: number;
+  total_files: number;
+  online_only_bytes: number;
+  reclaimable_bytes: number;
+  truncated: boolean;
+  duration_ms: number;
+}
+export interface CloudActionReport { files_processed: number; bytes: number; skipped: string[]; }
+export interface VaultEntry { vault_path: string; original_name: string; size: number; modified_at: number; }
+export interface VaultReport { processed: VaultEntry[]; originals_removed: number; bytes: number; skipped: string[]; }
+export interface SyncPair {
+  id: string;
+  source: string;
+  destination: string;
+  last_run_at: number | null;
+  last_copied: number;
+  last_bytes: number;
+  last_error: string | null;
+}
+export interface SyncRunReport {
+  pair_id: string;
+  files_copied: number;
+  files_up_to_date: number;
+  bytes_copied: number;
+  online_only_skipped: number;
+  errors: string[];
+}
+
+export const cloudApi = {
+  detectRoots: () => invoke<CloudRoot[]>("cloud_detect_roots"),
+  scan: (extraRoots: { provider_id: CloudProviderId; path: string }[] = []) =>
+    invoke<CloudScanReport>("cloud_scan", { extraRoots }),
+  deleteFiles: (paths: string[]) => invoke<CloudActionReport>("cloud_delete_files", { paths }),
+  offloadFiles: (paths: string[], targetDir: string) =>
+    invoke<CloudActionReport>("cloud_offload_files", { paths, targetDir }),
+  vaultEncrypt: (paths: string[], password: string, destDir: string | null, removeOriginals: boolean) =>
+    invoke<VaultReport>("vault_encrypt", { paths, password, destDir, removeOriginals }),
+  vaultDecrypt: (paths: string[], password: string, destDir: string | null, removeVaultFiles: boolean) =>
+    invoke<VaultReport>("vault_decrypt", { paths, password, destDir, removeVaultFiles }),
+  vaultList: (dir: string, password?: string) =>
+    invoke<VaultEntry[]>("vault_list", { dir, password: password ?? null }),
+  syncList: () => invoke<SyncPair[]>("cloud_sync_list"),
+  syncAdd: (source: string, destination: string) => invoke<SyncPair[]>("cloud_sync_add", { source, destination }),
+  syncRemove: (id: string) => invoke<SyncPair[]>("cloud_sync_remove", { id }),
+  syncRun: (id?: string, includeOnlineOnly = false) =>
+    invoke<SyncRunReport[]>("cloud_sync_run", { id: id ?? null, includeOnlineOnly }),
+};

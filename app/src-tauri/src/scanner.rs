@@ -476,3 +476,102 @@ pub fn scan_all_with_exclusions(
         duration_ms: started.elapsed().as_millis() as u64,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cleaner;
+
+    #[test]
+    fn scan_clean_and_quarantine_restore_pipeline() {
+        let dir = std::env::temp_dir().join(format!("sweepr-scan-pipeline-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let cache_root = dir.join("cache_root");
+        let excluded_sub = cache_root.join("keep_me");
+        let data_dir = dir.join("data");
+        std::fs::create_dir_all(&excluded_sub).unwrap();
+        std::fs::create_dir_all(&data_dir).unwrap();
+
+        let f1 = cache_root.join("junk1.tmp");
+        let f2 = cache_root.join("junk2.log");
+        let f_excl = excluded_sub.join("protected.dat");
+        std::fs::write(&f1, vec![b'a'; 1500]).unwrap();
+        std::fs::write(&f2, vec![b'b'; 2500]).unwrap();
+        std::fs::write(&f_excl, vec![b'c'; 4000]).unwrap();
+
+        let rule = Rule {
+            id: "test_cache",
+            name: "Test Cache",
+            description: "Temporary test cache",
+            group: Group::System,
+            free: true,
+            min_age_hours: 0,
+            roots: vec![cache_root.clone()],
+        };
+        let exclusions = vec![excluded_sub.clone()];
+
+        let report = scan_all_with_exclusions(std::slice::from_ref(&rule), &exclusions, |_| {});
+        assert_eq!(report.total_files, 2);
+        assert_eq!(report.total_bytes, 4000);
+        assert_eq!(report.categories[0].top_files.len(), 2);
+
+        let clean_rep = cleaner::clean_with_exclusions_and_quarantine(
+            &rule,
+            false,
+            &exclusions,
+            Some(&data_dir),
+        );
+        assert_eq!(clean_rep.files_removed, 2);
+        assert_eq!(clean_rep.bytes_freed, 4000);
+        assert!(!f1.exists());
+        assert!(!f2.exists());
+        assert!(f_excl.exists(), "Excluded file must never be touched");
+
+        let q_entries = cleaner::list_quarantine_entries(&data_dir);
+        assert_eq!(q_entries.len(), 2);
+        for qe in &q_entries {
+            cleaner::restore_quarantine_entry(&data_dir, &qe.id).unwrap();
+        }
+        assert!(f1.exists());
+        assert!(f2.exists());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn device_duplicate_rule_prefers_removing_copy_filenames() {
+        let dir = std::env::temp_dir().join(format!("sweepr-devdup-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let orig = dir.join("invoice.pdf");
+        let copy = dir.join("invoice - Copy.pdf");
+        let tiny1 = dir.join("tiny1.txt");
+        let tiny2 = dir.join("tiny2.txt");
+
+        let payload = vec![b'Z'; 4096];
+        std::fs::write(&orig, &payload).unwrap();
+        std::fs::write(&copy, &payload).unwrap();
+        std::fs::write(&tiny1, b"small").unwrap();
+        std::fs::write(&tiny2, b"small").unwrap();
+
+        let dup_rule = Rule {
+            id: "duplicates",
+            name: "Duplicate Files",
+            description: "Device duplicates",
+            group: Group::System,
+            free: false,
+            min_age_hours: 0,
+            roots: vec![dir.clone()],
+        };
+
+        let report = scan_all_with_exclusions(&[dup_rule], &[], |_| {});
+        assert_eq!(report.total_files, 1);
+        assert_eq!(report.total_bytes, 4096);
+        assert!(report.categories[0].top_files[0]
+            .path
+            .ends_with("invoice - Copy.pdf"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

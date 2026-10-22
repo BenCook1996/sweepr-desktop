@@ -109,6 +109,7 @@ object BatteryCareManager {
     private const val KEY_LIMIT_ENABLED = "charge_limit_enabled"
     private const val KEY_LIMIT_PERCENT = "charge_limit_percent"
     private const val KEY_THERMAL_GUARD = "thermal_guard_enabled"
+    private const val KEY_ENTITLED = "battery_care_entitled"
     private const val KEY_LAST_ALERT_MS = "last_unplug_alert_ms"
     private const val ALERT_COOLDOWN_MS = 30L * 60L * 1000L
     private const val WORK_NAME = "sweepr_battery_unplug_monitor"
@@ -119,6 +120,22 @@ object BatteryCareManager {
         context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
 
     fun clampLimit(percent: Int): Int = percent.coerceIn(50, 100)
+
+    /**
+     * Synchronizes subscription entitlement state with Battery Care preferences and
+     * background workers. When the subscription expires or is unlinked, active
+     * charge-limit and thermal-guard monitors are disabled.
+     */
+    fun enforceEntitlement(context: Context, entitled: Boolean) {
+        val sp = prefs(context)
+        val editor = sp.edit().putBoolean(KEY_ENTITLED, entitled)
+        if (!entitled) {
+            editor.putBoolean(KEY_LIMIT_ENABLED, false)
+                .putBoolean(KEY_THERMAL_GUARD, false)
+            scheduleOrCancelWorker(context, false)
+        }
+        editor.apply()
+    }
 
     fun readSnapshot(context: Context): BatteryCareSnapshot {
         val sp = prefs(context)
@@ -276,6 +293,10 @@ object BatteryCareManager {
 
     fun maybeNotifyUnplug(context: Context, snap: BatteryCareSnapshot = readSnapshot(context)) {
         val sp = prefs(context)
+        if (!sp.getBoolean(KEY_ENTITLED, false)) {
+            scheduleOrCancelWorker(context, false)
+            return
+        }
         if (!snap.chargeLimitEnabled || !snap.isPluggedIn || (snap.chargePercent ?: 0) < snap.chargeLimitPercent) {
             if (!snap.isPluggedIn || (snap.chargePercent ?: 0) < snap.chargeLimitPercent) {
                 sp.edit().putLong(KEY_LAST_ALERT_MS, 0L).apply()
@@ -610,7 +631,11 @@ fun BatteryCareScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Slider(
                             value = sliderLimit.toFloat(),
-                            onValueChange = { sliderLimit = (it / 5f).roundToInt() * 5 },
+                            onValueChange = { next ->
+                                requireBatteryCare {
+                                    sliderLimit = (next / 5f).roundToInt() * 5
+                                }
+                            },
                             valueRange = 50f..100f,
                             steps = 9,
                             modifier = Modifier.weight(1f),

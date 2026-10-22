@@ -59,6 +59,7 @@ struct SweeprApp: App {
         }
         Purchases.configure(withAPIKey: apiKey)
         #endif
+        Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])
     }
 
     private var activeTheme: SweeprThemeMode {

@@ -11,6 +11,7 @@
 
   let stage = $state<"offer" | "waiting">("offer");
   let selectedPlan = $state<"annual" | "monthly">("annual");
+  let batteryCare = $state(false);
   let busy = $state(false);
   let error = $state<string | null>(null);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -37,7 +38,11 @@
     error = null;
     busy = true;
     try {
-      await api.startCheckout(undefined, selectedPlan); // opens Stripe Checkout in the system browser
+      if (batteryCare) {
+        await api.startAddonCheckout("battery_care", undefined, selectedPlan);
+      } else {
+        await api.startCheckout(undefined, selectedPlan); // opens Stripe Checkout in the system browser
+      }
       stage = "waiting";
       let ticks = 0;
       stopPolling();
@@ -107,16 +112,31 @@
         <div class="price card">
           <div class="row"><strong>Included with SWEEPR Cleaner Pro</strong></div>
           <ul>
-            <li>DeepClean system, browser &amp; messenger caches + 7-day Quarantine rollback</li>
-            <li>RAM Purge, 1-Click Gaming Boost, Context Menu Manager, Winget Updater &amp; SSD Shredder</li>
-            <li>Covers up to 3 Desktop PCs (14-day money-back guarantee)</li>
+            <li>Clean all system junk, browser clutter &amp; app caches (with 7-day Undo)</li>
+            <li>1-Click Speed Boost, Duplicate File Finder, Cloud Cleaner &amp; App Updater</li>
+            <li>Covers up to 3 PCs (14-day money-back guarantee)</li>
           </ul>
         </div>
 
         {#if error}<div class="error-banner">{error}</div>{/if}
 
+        <label class="order-bump" class:checked={batteryCare}>
+          <input type="checkbox" bind:checked={batteryCare} />
+          <div class="bump-body">
+            <div class="bump-title">
+              <strong>Add Laptop Battery Care</strong>
+              <span class="bump-price">+{selectedPlan === "annual" ? "£17.99/yr" : "£2.99/mo"}</span>
+            </div>
+            <div class="bump-sub">
+              Extend your laptop battery's lifespan: stops charging at 80% when plugged in, keeps your laptop cool, and puts idle browser tabs to sleep.
+            </div>
+          </div>
+        </label>
+
         <button class="primary big" disabled={busy} onclick={activate}>
-          {busy ? "Opening checkout…" : selectedPlan === "annual" ? "Continue with Annual Pro (£49.99/yr)" : "Continue with Monthly Pro (£9.99/mo)"}
+          {busy ? "Opening checkout…" : selectedPlan === "annual"
+            ? `Continue with Annual Pro (${batteryCare ? "£67.98" : "£49.99"}/yr)`
+            : `Continue with Monthly Pro (${batteryCare ? "£12.98" : "£9.99"}/mo)`}
         </button>
         <div class="row" style="justify-content:center">
           <button class="ghost" onclick={close}>Not now</button>
@@ -148,6 +168,13 @@
   .plan-sub { font-size: 11px; color: var(--muted); }
   .price { padding: 14px 16px; text-align: left; background: var(--panel-2); display: flex; flex-direction: column; gap: 4px; }
   ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.65; }
+  .order-bump { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1.5px dashed #f59e0b; background: rgba(245, 158, 11, 0.07); cursor: pointer; }
+  .order-bump.checked { border-style: solid; background: rgba(245, 158, 11, 0.14); }
+  .order-bump input { margin-top: 3px; accent-color: #f59e0b; }
+  .bump-body { display: flex; flex-direction: column; gap: 3px; }
+  .bump-title { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .bump-price { font-weight: 800; color: #b45309; white-space: nowrap; }
+  .bump-sub { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
   .spinner { align-self: center; width: 36px; height: 36px; border: 4px solid var(--panel-2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>

@@ -41,6 +41,43 @@ data class BatchPhotoOptimizationSummary(
         } else 0
 }
 
+enum class PhotoCompressionPreset(
+    val maxLongEdgePx: Int,
+    val jpegQuality: Int,
+    val estSavingFraction: Double,
+    val suffix: String,
+    val labelRes: Int,
+    val descRes: Int,
+) {
+    GENTLE(
+        maxLongEdgePx = 3200,
+        jpegQuality = 88,
+        estSavingFraction = 0.35,
+        suffix = "gentle",
+        labelRes = R.string.shrink_gentle,
+        descRes = R.string.shrink_photo_gentle_desc,
+    ),
+    BALANCED(
+        maxLongEdgePx = 2560,
+        jpegQuality = 80,
+        estSavingFraction = 0.58,
+        suffix = "balanced",
+        labelRes = R.string.shrink_balanced,
+        descRes = R.string.shrink_photo_balanced_desc,
+    ),
+    MAXIMUM(
+        maxLongEdgePx = 1920,
+        jpegQuality = 70,
+        estSavingFraction = 0.75,
+        suffix = "max",
+        labelRes = R.string.shrink_maximum,
+        descRes = R.string.shrink_photo_maximum_desc,
+    );
+
+    val savedPercentEstimate: Int get() = (estSavingFraction * 100).roundToInt()
+    val resolutionBadge: String get() = "≤${maxLongEdgePx}px · ${jpegQuality}%"
+}
+
 /**
  * On-device Smart Photo Optimizer (#1) & EXIF GPS Privacy Stripper (#9).
  * Uses Android's built-in [BitmapFactory], [ExifInterface], and [MediaStore.Images.Media]
@@ -49,11 +86,10 @@ data class BatchPhotoOptimizationSummary(
 object PhotoOptimizer {
     /** Photos larger than 1.5 MB are surfaced for smart JPEG optimization. */
     const val OPTIMIZABLE_PHOTO_THRESHOLD_BYTES = 1_536L * 1024L
-    /** Long edge (px) optimized photos are scaled down to; also shown on the Shrink screen. */
+    /** Default long edge (px) optimized photos are scaled down to; also shown on the Shrink screen. */
     const val MAX_LONG_EDGE_PX = 2560
-    /** Typical size reduction used for the Shrink screen's estimates. */
+    /** Default typical size reduction used for the Shrink screen's estimates. */
     const val EST_SAVING_FRACTION = 0.58
-    private const val JPEG_QUALITY = 82
 
     private val SAFE_NON_GPS_TAGS = arrayOf(
         ExifInterface.TAG_ORIENTATION,
@@ -123,6 +159,7 @@ object PhotoOptimizer {
         item: MediaItem,
         compressResolution: Boolean,
         stripGps: Boolean,
+        preset: PhotoCompressionPreset = PhotoCompressionPreset.BALANCED,
     ): PhotoOptimizationResult {
         val tempFile = File(context.cacheDir, "photo_opt_${item.id}_${System.currentTimeMillis()}.jpg")
         try {
@@ -145,11 +182,11 @@ object PhotoOptimizer {
             }
 
             if (compressResolution) {
-                val decoded = decodeScaledBitmap(context, item.uri)
+                val decoded = decodeScaledBitmap(context, item.uri, preset.maxLongEdgePx)
                     ?: throw IllegalStateException("Could not decode image for optimization.")
                 try {
                     FileOutputStream(tempFile).use { out ->
-                        if (!decoded.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+                        if (!decoded.compress(Bitmap.CompressFormat.JPEG, preset.jpegQuality, out)) {
                             throw IllegalStateException("Failed to encode optimized JPEG.")
                         }
                     }
@@ -199,8 +236,8 @@ object PhotoOptimizer {
 
             val baseName = item.name.substringBeforeLast('.')
             val suffix = when {
-                compressResolution && stripGps -> "sweepr_opt_nogps"
-                compressResolution -> "sweepr_opt"
+                compressResolution && stripGps -> "sweepr_${preset.suffix}_nogps"
+                compressResolution -> "sweepr_${preset.suffix}"
                 else -> "sweepr_nogps"
             }
             val outputName = "${baseName}_${suffix}.jpg"
@@ -224,7 +261,11 @@ object PhotoOptimizer {
         }
     }
 
-    private fun decodeScaledBitmap(context: Context, uri: Uri): Bitmap? {
+    private fun decodeScaledBitmap(
+        context: Context,
+        uri: Uri,
+        maxLongEdgePx: Int = MAX_LONG_EDGE_PX,
+    ): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         openPhotoStream(context, uri)?.use { stream ->
             BitmapFactory.decodeStream(stream, null, bounds)
@@ -235,7 +276,7 @@ object PhotoOptimizer {
 
         var sampleSize = 1
         val longEdge = max(srcW, srcH)
-        while (longEdge / (sampleSize * 2) >= MAX_LONG_EDGE_PX) {
+        while (longEdge / (sampleSize * 2) >= maxLongEdgePx) {
             sampleSize *= 2
         }
 
@@ -248,9 +289,9 @@ object PhotoOptimizer {
         } ?: return null
 
         val curLong = max(decoded.width, decoded.height)
-        if (curLong <= MAX_LONG_EDGE_PX) return decoded
+        if (curLong <= maxLongEdgePx) return decoded
 
-        val scale = MAX_LONG_EDGE_PX.toFloat() / curLong.toFloat()
+        val scale = maxLongEdgePx.toFloat() / curLong.toFloat()
         val targetW = (decoded.width * scale).roundToInt().coerceAtLeast(1)
         val targetH = (decoded.height * scale).roundToInt().coerceAtLeast(1)
         val scaled = Bitmap.createScaledBitmap(decoded, targetW, targetH, true)

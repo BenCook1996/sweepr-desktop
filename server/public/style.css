@@ -22,12 +22,32 @@ body {
   color: var(--text);
   background: var(--bg);
   background-image: var(--bg-gradient);
-  background-attachment: fixed;
+  background-attachment: scroll;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  body {
+    background-attachment: fixed;
+  }
+}
+
+/* Prevent iOS Safari forced viewport auto-zoom when focusing inputs on mobile */
+@media (max-width: 639px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 .glass-nav {

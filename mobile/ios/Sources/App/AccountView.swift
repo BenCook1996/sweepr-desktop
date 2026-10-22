@@ -62,7 +62,7 @@ struct AccountView: View {
                 // 2. Cross-Platform SWEEPR Cleaner Account (Store-compliant Guidelines 3.1.2 & 5.1.1(v))
                 Section(
                     header: Text("SWEEPR Cleaner Account"),
-                    footer: Text("Link your email with a 6-digit OTP to sync your SWEEPR Cleaner Pro entitlement across Windows, macOS, Linux, iOS, and Android.")
+                    footer: Text("Sign in with your email to use your SWEEPR Pro plan across your computer, iPhone, and Android.")
                 ) {
                     if vm.linkedAccount.isSignedIn {
                         HStack {
@@ -90,9 +90,9 @@ struct AccountView: View {
                             otpSent = false
                             showSignInSheet = true
                         } label: {
-                            Label("Link SWEEPR Cleaner Account (6-Digit Email OTP)", systemImage: "envelope.badge.shield.half.filled")
+                            Label("Already have SWEEPR Pro? Sign in", systemImage: "envelope.badge.shield.half.filled")
                         }
-                        .accessibilityLabel("Link SWEEPR Cleaner Account via 6-digit Email OTP")
+                        .accessibilityLabel("Already have SWEEPR Pro? Sign in with email")
                     }
                 }
 
@@ -182,7 +182,7 @@ struct AccountView: View {
                 }
 
                 // 5. Legal, Diagnostics & Support
-                Section(header: Text("About, Diagnostics & Legal")) {
+                Section(header: Text("About & Support")) {
                     if let website = URL(string: AppConfig.websiteURL) {
                         Link("Official Website", destination: website)
                         Link("Privacy Policy", destination: website.appendingPathComponent("privacy"))
@@ -193,11 +193,13 @@ struct AccountView: View {
                         Link("Contact Support", destination: emailURL)
                     }
 
-                    Button {
-                        crashLogText = CrashLogger.readLogs()
-                        showCrashLogSheet = true
-                    } label: {
-                        Label("On-Device Crash & Diagnostic Logs", systemImage: "doc.text.magnifyingglass")
+                    DisclosureGroup("Need Help? Support & Diagnostics") {
+                        Button {
+                            crashLogText = CrashLogger.readLogs()
+                            showCrashLogSheet = true
+                        } label: {
+                            Label("View Diagnostic Logs", systemImage: "doc.text.magnifyingglass")
+                        }
                     }
 
                     HStack {
@@ -230,7 +232,7 @@ struct AccountView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This permanently deletes your SWEEPR Cleaner account, linked devices, and server records via DELETE /v1/account. Active Apple StoreKit subscriptions are managed in your Apple ID settings.")
+                Text("This permanently deletes your SWEEPR Cleaner account and linked devices. Active App Store subscriptions are managed in your Apple ID settings.")
             }
         }
     }

@@ -43,6 +43,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var packages: [Package] = []
     @State private var selectedPlan: SubscriptionPlanOption = .annual
+    @State private var includeBatteryCare: Bool = false
     @State private var isLoadingPackages = true
     @State private var isPurchasing = false
 
@@ -86,10 +87,10 @@ struct PaywallView: View {
                     // Benefits Checklist
                     VStack(alignment: .leading, spacing: 12) {
                         BenefitRow(icon: "checkmark.circle.fill", text: "1-Click Full Storage Clean Up")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "SHA-256 Exact Duplicate & 8×8 dHash Best Shot Finder")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Hardware Video Compression for Videos >50 MB")
+                        BenefitRow(icon: "checkmark.circle.fill", text: "Duplicate & Similar Photo Finder (Keeps Your Best Photo)")
+                        BenefitRow(icon: "checkmark.circle.fill", text: "Shrink Large Videos Without Losing Quality")
                         BenefitRow(icon: "checkmark.circle.fill", text: "Smart Contact Duplicate Merger & Incomplete Cleaner")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Cross-Platform SWEEPR Cleaner Account Sync (Desktop, iOS, Android)")
+                        BenefitRow(icon: "checkmark.circle.fill", text: "Use Your Account Across Computer, iPhone & Android")
                     }
                     .padding()
                     .background(Color.cardBackground)
@@ -102,6 +103,42 @@ struct PaywallView: View {
                             planSelectorCard(option: option)
                         }
                     }
+                    .padding(.horizontal)
+
+                    // Optional Battery Care Add-on Order Bump (+20% charm pricing)
+                    Button {
+                        includeBatteryCare.toggle()
+                    } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: includeBatteryCare ? "checkmark.square.fill" : "square")
+                                .font(.title3)
+                                .foregroundColor(.orange)
+                                .padding(.top, 2)
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text("Add Total Battery & Mac/Phone Care")
+                                        .font(.subheadline.weight(.bold))
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    Text(selectedPlan == .annual ? "+£17.99/yr" : "+£2.99/mo")
+                                        .font(.subheadline.weight(.heavy))
+                                        .foregroundColor(.orange)
+                                }
+                                Text("Helps your battery last longer with an 80% unplug reminder, overheat warnings, and background junk cleanup.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                        }
+                        .padding(14)
+                        .background(Color.orange.opacity(includeBatteryCare ? 0.14 : 0.07))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.orange.opacity(0.65), style: StrokeStyle(lineWidth: 1.5, dash: includeBatteryCare ? [] : [5]))
+                        )
+                    }
+                    .buttonStyle(.plain)
                     .padding(.horizontal)
 
                     // Primary Subscribe CTA
@@ -273,6 +310,10 @@ struct PaywallView: View {
         do {
             let res = try await Purchases.shared.purchase(package: pkg)
             if !res.userCancelled {
+                if includeBatteryCare,
+                   let addonPkg = packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("battery") }) {
+                    _ = try? await Purchases.shared.purchase(package: addonPkg)
+                }
                 vm.checkSubscription()
                 dismiss()
             }

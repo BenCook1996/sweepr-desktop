@@ -16,6 +16,7 @@ export function loadSigningKey(b64Pem: string): KeyObject {
 export interface EntitlementClaims {
   sub: string;
   device_id: string;
+  project_id?: string;
   status: "active" | "trialing";
   plan: string;
   addons?: string[];
@@ -26,7 +27,7 @@ export interface EntitlementClaims {
 /** Compact JWS (alg=EdDSA). Verified in Rust by `licensing::verify_token`. */
 export function signEntitlement(key: KeyObject, claims: EntitlementClaims): string {
   const header = b64url(JSON.stringify({ alg: "EdDSA", typ: "JWT" }));
-  const payload = b64url(JSON.stringify(claims));
+  const payload = b64url(JSON.stringify({ project_id: "cleaner", ...claims }));
   const signingInput = `${header}.${payload}`;
   const sig = sign(null, Buffer.from(signingInput), key);
   return `${signingInput}.${b64url(sig)}`;

@@ -60,8 +60,11 @@
 </head>
 <body class="bg-surface-950 text-slate-100 min-h-screen flex antialiased selection:bg-brand-500 selection:text-white">
 
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="crm-mobile-backdrop" onclick="toggleCrmSidebar(false)" class="hidden lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-30"></div>
+
   <!-- Sidebar -->
-  <aside class="w-64 border-r border-slate-800 bg-surface-900/90 backdrop-blur-xl flex flex-col fixed inset-y-0 z-30">
+  <aside id="crm-sidebar" class="w-64 border-r border-slate-800 bg-surface-900/95 backdrop-blur-xl flex flex-col fixed inset-y-0 z-40 -translate-x-full lg:translate-x-0 transition-transform duration-200">
     <div class="p-6 border-b border-slate-800/80 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" class="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20" />
@@ -70,6 +73,9 @@
           <span class="text-xs text-brand-400 font-mono font-medium">Subscription Engine</span>
         </div>
       </div>
+      <button type="button" onclick="toggleCrmSidebar(false)" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
 
     <!-- Navigation links -->
@@ -138,40 +144,43 @@
   </aside>
 
   <!-- Main Content Area -->
-  <main class="ml-64 flex-1 flex flex-col min-h-screen">
+  <main class="lg:ml-64 flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden">
 
     <!-- Top Navbar -->
-    <header class="h-16 border-b border-slate-800 bg-surface-900/50 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-20">
-      <div class="flex items-center gap-4">
-        <h1 id="page-title" class="text-lg font-bold text-white tracking-tight">Overview & Metrics</h1>
-        <div class="h-4 w-px bg-slate-800"></div>
-        <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700/50">
+    <header class="min-h-16 py-2 border-b border-slate-800 bg-surface-900/50 backdrop-blur-md px-4 sm:px-8 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <button type="button" onclick="toggleCrmSidebar()" class="lg:hidden p-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-300 hover:text-white shrink-0" aria-label="Toggle CRM Menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 id="page-title" class="text-base sm:text-lg font-bold text-white tracking-tight truncate">Overview & Metrics</h1>
+        <div class="hidden sm:block h-4 w-px bg-slate-800"></div>
+        <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700/50">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Engine Online</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <div class="relative">
+      <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+        <div class="relative flex-1 sm:flex-initial">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-          <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Search accounts, emails, IDs..." class="bg-surface-800/80 border border-slate-700 text-xs rounded-lg pl-9 pr-4 py-2 w-64 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-colors">
+          <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Search accounts, emails, IDs..." class="bg-surface-800/80 border border-slate-700 text-xs rounded-lg pl-9 pr-3 py-2 w-full sm:w-64 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-colors">
         </div>
-        <button onclick="openMakeMePaidModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-brand-500/20 border border-amber-500/30 text-amber-300 hover:border-amber-400 hover:text-white text-xs font-bold transition-all shadow-sm">
+        <button onclick="openMakeMePaidModal()" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-brand-500/20 border border-amber-500/30 text-amber-300 hover:border-amber-400 hover:text-white text-xs font-bold transition-all shadow-sm shrink-0">
           <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
-          <span>Make Myself Paid</span>
+          <span class="hidden md:inline">Make Myself Paid</span>
         </button>
-        <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md shadow-brand-500/20">
+        <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md shadow-brand-500/20 shrink-0">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
-          <span>Create Subscription</span>
+          <span class="hidden md:inline">Create Subscription</span>
         </button>
-        <button onclick="refreshData()" class="p-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 transition-all">
+        <button onclick="refreshData()" class="p-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 transition-all shrink-0">
           <i data-lucide="rotate-cw" class="w-4 h-4"></i>
         </button>
       </div>
     </header>
 
     <!-- Content Pages Container -->
-    <div class="p-8 flex-1">
+    <div class="p-4 sm:p-6 lg:p-8 flex-1">
 
       <!-- TAB 1: DASHBOARD / OVERVIEW -->
       <section id="tab-dashboard" class="space-y-8">
@@ -1303,8 +1312,23 @@
       }
     }
 
+    function toggleCrmSidebar(forceOpen) {
+      const sb = document.getElementById('crm-sidebar');
+      const bd = document.getElementById('crm-mobile-backdrop');
+      if (!sb) return;
+      const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : sb.classList.contains('-translate-x-full');
+      if (shouldOpen) {
+        sb.classList.remove('-translate-x-full');
+        if (bd) bd.classList.remove('hidden');
+      } else {
+        sb.classList.add('-translate-x-full');
+        if (bd) bd.classList.add('hidden');
+      }
+    }
+
     // Switch Main Menu Tabs
     function switchTab(tab) {
+      toggleCrmSidebar(false);
       document.querySelectorAll('main > div > section').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
@@ -2551,8 +2575,10 @@
       const filters = ['all', 'live', 'nofollow', 'missing', 'needs_listing_url', 'blocked', 'unreachable', 'unverified'].map(f =>
         `<button data-seo-bl-filter="${f}" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold ${seoState.backlinkFilter === f ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white bg-surface-800'}">${f.replace(/_/g, ' ')}</button>`).join('');
       const addForm = `<form data-seo-form="bl-add" class="flex gap-2"><input name="source_url" placeholder="https://site.com/page-that-links-to-you" class="w-80 bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">${seoBtn('Add', 'type="submit"', 'primary')}</form>`;
-      const rows = d.backlinks.map(b => `<tr class="hover:bg-surface-850/60">
-        <td class="py-2 px-3"><div class="text-white font-semibold">${esc(b.source_domain)}${b.evidence?.source === 'dataforseo_backlinks_index' ? ' <span class="text-[9px] uppercase px-1 py-0.5 rounded bg-sky-500/15 text-sky-300">dfs</span>' : ''}</div><a href="${esc(b.source_url)}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-500 hover:text-brand-400 font-mono block max-w-[280px] truncate">${esc(b.source_url)}</a></td>
+      const rows = d.backlinks.map(b => {
+        const safeHref = /^https?:\/\//i.test(String(b.source_url || '').trim()) ? esc(b.source_url) : '#';
+        return `<tr class="hover:bg-surface-850/60">
+        <td class="py-2 px-3"><div class="text-white font-semibold">${esc(b.source_domain)}${b.evidence?.source === 'dataforseo_backlinks_index' ? ' <span class="text-[9px] uppercase px-1 py-0.5 rounded bg-sky-500/15 text-sky-300">dfs</span>' : ''}</div><a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-500 hover:text-brand-400 font-mono block max-w-[280px] truncate">${esc(b.source_url)}</a></td>
         <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded border text-[10px] uppercase ${blBadge(b.status)}">${esc(b.status.replace(/_/g, ' '))}</span></td>
         <td class="py-2 px-3 text-slate-300 max-w-[180px] truncate" title="${esc(b.anchor_text || '')}">${esc(b.anchor_text || '\u2014')}</td>
         <td class="py-2 px-3 font-mono text-[11px] text-slate-400">${esc(b.rel || (b.status === 'live' ? 'follow' : '\u2014'))}</td>
@@ -2562,7 +2588,8 @@
         <td class="py-2 px-3 text-right whitespace-nowrap">
           <button data-seo-bl-edit="${Number(b.id)}" data-url="${esc(b.source_url)}" title="Set exact listing URL" class="text-slate-500 hover:text-brand-400 mr-2"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
           <button data-seo-bl-verify="${Number(b.id)}" title="Verify now" class="text-slate-500 hover:text-sky-400 mr-2"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
-          <button data-seo-bl-del="${Number(b.id)}" title="Remove" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td></tr>`).join('');
+          <button data-seo-bl-del="${Number(b.id)}" title="Remove" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td></tr>`;
+      }).join('');
       const table = `<div class="flex flex-wrap items-center justify-between gap-3 mb-3"><div class="flex flex-wrap gap-1">${filters}</div>${addForm}</div>
         <div class="overflow-x-auto max-h-[560px] overflow-y-auto"><table class="w-full text-left text-xs"><thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
         <th class="py-2 px-3">Source</th><th class="py-2 px-3">Status</th><th class="py-2 px-3">Anchor</th><th class="py-2 px-3">Rel</th><th class="py-2 px-3">HTTP</th><th class="py-2 px-3">Evidence</th><th class="py-2 px-3">Checked</th><th></th></tr></thead>

@@ -1,6 +1,7 @@
 import type { EntStatus, Repo } from "./db.js";
 import { randomToken, sha256 } from "./tokens.js";
 import { normalizeEmail } from "./security.js";
+import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
 
 /** RevenueCat event types we act on, mapped to the entitlement status they imply. */
 const STATUS_MAP: Record<string, EntStatus> = {
@@ -116,4 +117,15 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
   });
 
   console.log(`[revenuecat] Processed ${event.type} for account ${account.id}. Status: ${newStatus}`);
+  if (account.email) {
+    syncSubscriptionToCentralCrm({
+      email: account.email,
+      name: account.name,
+      country: account.country,
+      plan: productId.includes("annual") ? "annual" : "monthly",
+      status: newStatus,
+      addons: rcAddons,
+      notes: `Synced from SWEEPR Cleaner RevenueCat (${store}: ${event.type})`,
+    });
+  }
 }

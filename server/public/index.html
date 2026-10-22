@@ -251,21 +251,21 @@
   </nav>
 
   <!-- Hero Section -->
-  <main class="flex-1 pt-32 pb-20 px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
-    <div class="flex-1">
+  <main class="flex-1 pt-28 md:pt-32 pb-16 md:pb-20 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-12 text-center md:text-left">
+    <div class="flex-1 w-full">
       <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 leading-tight tracking-tight text-gray-900">
         <span class="whitespace-nowrap" style="white-space: nowrap;">Revive your PC</span> <br>
         <span style="color: var(--accent);">In seconds.</span>
       </h1>
-      <p class="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto md:mx-0">
+      <p class="text-base sm:text-lg md:text-xl text-gray-600 mb-8 md:mb-10 max-w-2xl mx-auto md:mx-0">
         Free up gigabytes of wasted space, remove stubborn apps, and speed up a slow computer in one click. Simple, safe, and built for everyday PC users.
       </p>
-      <div class="flex flex-col sm:flex-row items-center gap-4 justify-center md:justify-start">
-        <a href="/download" id="downloadBtn" class="btn btn-go btn-big pulse-glow gap-2.5">
+      <div class="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4 justify-center md:justify-start">
+        <a href="/download" id="downloadBtn" class="btn btn-go btn-big pulse-glow gap-2.5 w-full sm:w-auto justify-center">
           <span>Free Download</span>
           <svg class="arrow-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big bg-white border border-gray-300 hover:border-gray-400 text-gray-800">Get Pro Now</a>
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big bg-white border border-gray-300 hover:border-gray-400 text-gray-800 w-full sm:w-auto justify-center">Get Pro Now</a>
       </div>
       <div class="flex flex-wrap items-center gap-3 justify-center md:justify-start mt-4 text-xs text-gray-500 font-medium">
         <span>⚡ 60-Second Scan</span>
@@ -342,7 +342,7 @@
 
   <!-- Footer -->
   <footer class="mt-auto py-8 text-center text-gray-500 text-sm border-t border-gray-100">
-    <div class="flex justify-center gap-6 mb-4">
+    <div class="flex flex-wrap justify-center gap-4 sm:gap-6 px-4 mb-4">
       <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
       <a href="/terms" class="hover:text-emerald-600 transition-colors">EULA &amp; Terms of Service</a>
       <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>

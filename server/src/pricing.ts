@@ -729,10 +729,13 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
 
 export async function resolvePricingForRequest(
   c: Context,
-  bodyOverride?: { country?: string; currency?: string; trustProxy?: boolean }
+  bodyOverride?: { country?: string; currency?: string; trustProxy?: boolean; allowQueryOverride?: boolean }
 ): Promise<LocalizedPlanPricing> {
-  const queryCountry = c.req.query("country") || bodyOverride?.country;
-  const queryCurrency = c.req.query("currency") || bodyOverride?.currency;
+  const allowQuery =
+    bodyOverride?.allowQueryOverride ??
+    (c.req.method === "GET" && c.req.path === "/api/checkout-config");
+  const queryCountry = (allowQuery ? c.req.query("country") : undefined) || bodyOverride?.country;
+  const queryCurrency = (allowQuery ? c.req.query("currency") : undefined) || bodyOverride?.currency;
 
   if (queryCountry || queryCurrency) {
     return getPricingForCountryOrCurrency(queryCountry, queryCurrency);
@@ -743,7 +746,6 @@ export async function resolvePricingForRequest(
     const headerCountry =
       c.req.header("cf-ipcountry") ||
       c.req.header("x-vercel-ip-country") ||
-      c.req.header("x-country-code") ||
       c.req.header("cloudfront-viewer-country") ||
       c.req.header("x-appengine-country");
 

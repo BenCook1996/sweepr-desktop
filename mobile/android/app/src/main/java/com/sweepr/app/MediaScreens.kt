@@ -101,7 +101,7 @@ fun PhotosVideosScreen(
     onTrash: (List<MediaItem>) -> Unit,
     onCompressVideo: (MediaItem, CompressionPreset) -> Unit = { _, _ -> },
     onClearCompressionResult: () -> Unit = {},
-    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit = { _, _, _ -> },
+    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean, PhotoCompressionPreset) -> Unit = { _, _, _, _ -> },
     onClearPhotoOptimizationResult: () -> Unit = {},
     onOpenScreenshots: () -> Unit = {},
     onBack: () -> Unit,
@@ -438,14 +438,14 @@ fun VideoCompressorScreen(
     onSetSelected: (Collection<Uri>, Boolean) -> Unit,
     onPreview: (MediaItem) -> Unit,
     onCompressVideo: (MediaItem) -> Unit,
-    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit,
+    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean, PhotoCompressionPreset) -> Unit,
     modifier: Modifier = Modifier,
     optimizerTab: Int = 0, // 0 = Video Compressor, 1 = Photo Optimizer & EXIF GPS Privacy
     onOptimizerTabChange: (Int) -> Unit = {},
     videoPreset: CompressionPreset = CompressionPreset.COMPACT_720P,
     onVideoPresetChange: (CompressionPreset) -> Unit = {},
 ) {
-    var compressFileSize by rememberSaveable { mutableStateOf(true) }
+    var photoPreset by rememberSaveable { mutableStateOf(PhotoCompressionPreset.BALANCED) }
     var stripGpsTags by rememberSaveable { mutableStateOf(true) }
 
     val candidatePhotos = remember(state.media.everything) {
@@ -514,21 +514,14 @@ fun VideoCompressorScreen(
                 modifier = Modifier.weight(1f),
             )
         } else {
-            // Gentle / Balanced / Maximum map onto the optimizer's existing two switches.
-            val strength = when {
-                !compressFileSize -> 0
-                !stripGpsTags -> 1
-                else -> 2
-            }
             PhotoOptimizerTabContent(
                 candidates = candidatePhotos,
                 selectedUris = selectedOptPhotoUris,
-                strength = strength,
+                preset = photoPreset,
+                stripGps = stripGpsTags,
                 busy = state.isBusy,
-                onStrengthChange = { s ->
-                    compressFileSize = s >= 1
-                    stripGpsTags = s != 1
-                },
+                onPresetChange = { photoPreset = it },
+                onStripGpsChange = { stripGpsTags = it },
                 onTogglePhoto = { uri ->
                     selectedOptPhotoUris = if (uri in selectedOptPhotoUris) {
                         selectedOptPhotoUris - uri
@@ -541,11 +534,11 @@ fun VideoCompressorScreen(
                 },
                 onPreview = onPreview,
                 onOptimizeSingle = { item ->
-                    onOptimizePhotos(listOf(item), compressFileSize, stripGpsTags)
+                    onOptimizePhotos(listOf(item), true, stripGpsTags, photoPreset)
                 },
                 onOptimizeBatch = {
                     val targets = candidatePhotos.filter { it.uri in selectedOptPhotoUris }
-                    onOptimizePhotos(targets, compressFileSize, stripGpsTags)
+                    onOptimizePhotos(targets, true, stripGpsTags, photoPreset)
                 },
                 modifier = Modifier.weight(1f),
             )
@@ -572,6 +565,7 @@ private fun VideoShrinkHeader(
     val selectedVideos = videos.filter { it.uri in selected }
     val basis = selectedVideos.ifEmpty { videos }
     val estSaved = (basis.sumOf { it.size } * preset.estSavingFraction).toLong()
+    val stopReductions = VIDEO_STRENGTHS.map { (it.estSavingFraction * 100).roundToInt() }
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         StatRow(
             listOf(
@@ -583,53 +577,162 @@ private fun VideoShrinkHeader(
         StrengthSlider(
             selected = VIDEO_STRENGTHS.indexOf(preset).coerceAtLeast(0),
             onSelect = { onPresetChange(VIDEO_STRENGTHS[it]) },
-        )
-        Text(
-            stringResource(preset.labelRes) + " · " + stringResource(R.string.shrink_video_hint),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 11.sp,
+            stopReductionPercents = stopReductions,
+            specBadge = "≤${preset.maxLongSide}px H.264",
+            description = stringResource(preset.labelRes) + " · " + stringResource(R.string.shrink_video_hint),
         )
     }
 }
 
-/** 3-stop Gentle / Balanced / Maximum slider (mockup #9). */
+/**
+ * Sleek 3-stop Gentle / Balanced / Maximum interactive slider card (mockup #9):
+ * - Header with active strength pill ("Balanced · Recommended") + live savings & resolution badge
+ * - Smooth draggable emerald Slider
+ * - Interactive stop pills ("Gentle -35%", "Balanced -58%", "Maximum -75%") users can tap directly
+ * - Plain-English description underneath
+ */
 @Composable
-fun StrengthSlider(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun StrengthSlider(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    stopReductionPercents: List<Int> = PhotoCompressionPreset.entries.map { it.savedPercentEstimate },
+    specBadge: String? = null,
+    description: String? = null,
+) {
+    val clamped = selected.coerceIn(0, 2)
     val labels = listOf(
         stringResource(R.string.shrink_gentle),
         stringResource(R.string.shrink_balanced),
         stringResource(R.string.shrink_maximum),
     )
-    Column(modifier.fillMaxWidth()) {
-        Slider(
-            value = selected.toFloat(),
-            onValueChange = { onSelect(it.roundToInt().coerceIn(0, 2)) },
-            valueRange = 0f..2f,
-            steps = 1,
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = SweeprGreen,
-                inactiveTrackColor = Slate400.copy(alpha = 0.25f),
-                activeTickColor = Color.White.copy(alpha = 0.6f),
-                inactiveTickColor = Slate400.copy(alpha = 0.6f),
-            ),
-            modifier = Modifier.semantics { contentDescription = labels[selected.coerceIn(0, 2)] },
-        )
-        Row(Modifier.fillMaxWidth()) {
-            labels.forEachIndexed { i, label ->
+    val activeReduction = stopReductionPercents.getOrElse(clamped) { 58 }
+
+    SweeprPanel(modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Top bar: eyebrow + active mode pill on left, savings & spec badge on right
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = stringResource(R.string.shrink_strength_label),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.8.sp,
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = labels[clamped],
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (clamped == 1) {
+                            Text(
+                                text = stringResource(R.string.shrink_recommended),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = SweeprGreenDark,
+                                modifier = Modifier
+                                    .background(SweeprGreen.copy(alpha = 0.16f), RoundedCornerShape(999.dp))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (specBadge != null) {
+                        Text(
+                            text = specBadge,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                                    RoundedCornerShape(7.dp),
+                                )
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                        )
+                    }
+                    SizeBadge("-$activeReduction%")
+                }
+            }
+
+            // Smooth draggable slider
+            Slider(
+                value = clamped.toFloat(),
+                onValueChange = { onSelect(it.roundToInt().coerceIn(0, 2)) },
+                valueRange = 0f..2f,
+                steps = 1,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = SweeprGreen,
+                    inactiveTrackColor = Slate400.copy(alpha = 0.25f),
+                    activeTickColor = Color.White.copy(alpha = 0.85f),
+                    inactiveTickColor = Slate400.copy(alpha = 0.65f),
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = labels[clamped] },
+            )
+
+            // Interactive 3-stop pills underneath (tap or slide!)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                labels.forEachIndexed { i, label ->
+                    val isSelected = i == clamped
+                    val pct = stopReductionPercents.getOrElse(i) { 50 }
+                    val bg = if (isSelected) SweeprGreen.copy(alpha = 0.16f) else Color.Transparent
+                    val borderCol = if (isSelected) SweeprGreen else Slate400.copy(alpha = 0.25f)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(bg, RoundedCornerShape(10.dp))
+                            .border(1.dp, borderCol, RoundedCornerShape(10.dp))
+                            .clickable { onSelect(i) }
+                            .padding(vertical = 6.dp, horizontal = 4.dp),
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 11.5.sp,
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                            color = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = "-$pct%",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+
+            if (!description.isNullOrBlank()) {
                 Text(
-                    label,
-                    fontSize = 11.sp,
-                    fontWeight = if (i == selected) FontWeight.ExtraBold else FontWeight.Normal,
-                    color = if (i == selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = when (i) {
-                        0 -> TextAlign.Start
-                        1 -> TextAlign.Center
-                        else -> TextAlign.End
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onSelect(i) },
+                    text = description,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.5.sp,
                 )
             }
         }
@@ -638,15 +741,18 @@ fun StrengthSlider(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = 
 
 /**
  * Shrink Photos (mockup #9): drag-to-compare before/after preview, 3 stats, the 3-stop
- * strength slider, a safety note and a sticky "Shrink N Photos" dock, above the photo grid.
+ * real compression strength slider (Gentle 3200px 88%, Balanced 2560px 80%, Maximum 1920px 70%),
+ * GPS location tag privacy toggle, a safety note, and a sticky "Shrink N Photos" dock.
  */
 @Composable
 private fun PhotoOptimizerTabContent(
     candidates: List<MediaItem>,
     selectedUris: Set<Uri>,
-    strength: Int,
+    preset: PhotoCompressionPreset,
+    stripGps: Boolean,
     busy: Boolean,
-    onStrengthChange: (Int) -> Unit,
+    onPresetChange: (PhotoCompressionPreset) -> Unit,
+    onStripGpsChange: (Boolean) -> Unit,
     onTogglePhoto: (Uri) -> Unit,
     onSelectAll: (Boolean) -> Unit,
     onPreview: (MediaItem) -> Unit,
@@ -654,14 +760,12 @@ private fun PhotoOptimizerTabContent(
     onOptimizeBatch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val compressFileSize = strength >= 1
     val selectedPhotos = candidates.filter { it.uri in selectedUris }
-    val estSavedBytes = if (compressFileSize) {
-        (selectedPhotos.sumOf { it.size } * PhotoOptimizer.EST_SAVING_FRACTION).toLong()
-    } else 0L
+    val estSavedBytes = (selectedPhotos.sumOf { it.size } * preset.estSavingFraction).toLong()
     val previewItem = selectedPhotos.maxByOrNull { it.size } ?: candidates.maxByOrNull { it.size }
     val metrics = LocalContext.current.resources.displayMetrics
     val screenLongEdge = maxOf(metrics.widthPixels, metrics.heightPixels).coerceAtLeast(1)
+    val presets = PhotoCompressionPreset.entries
 
     Column(modifier = modifier.fillMaxSize()) {
         if (candidates.isEmpty()) {
@@ -683,9 +787,7 @@ private fun PhotoOptimizerTabContent(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     if (previewItem != null) {
-                        val after = if (compressFileSize) {
-                            (previewItem.size * (1 - PhotoOptimizer.EST_SAVING_FRACTION)).toLong()
-                        } else previewItem.size
+                        val after = (previewItem.size * (1.0 - preset.estSavingFraction)).toLong().coerceAtLeast(1L)
                         BeforeAfterPreview(previewItem, previewItem.size, after)
                         Text(
                             stringResource(R.string.shrink_looks_same),
@@ -695,32 +797,55 @@ private fun PhotoOptimizerTabContent(
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
-                    val stats = buildList {
-                        if (compressFileSize) {
-                            val ratio = PhotoOptimizer.MAX_LONG_EDGE_PX.toFloat() / screenLongEdge
-                            add(StatCell(String.format(java.util.Locale.getDefault(), "%.1f×", ratio), stringResource(R.string.shrink_screen_size)))
-                        }
-                        add(
-                            StatCell(
-                                "${if (compressFileSize) (PhotoOptimizer.EST_SAVING_FRACTION * 100).roundToInt() else 0}%",
-                                stringResource(R.string.shrink_smaller),
-                            ),
-                        )
-                        add(StatCell(formatBytes(estSavedBytes), stringResource(R.string.shrink_total_saved), highlight = true))
-                    }
-                    StatRow(stats)
-                    StrengthSlider(selected = strength, onSelect = onStrengthChange)
-                    Text(
-                        stringResource(
-                            when (strength) {
-                                0 -> R.string.shrink_photo_gentle_desc
-                                1 -> R.string.shrink_photo_balanced_desc
-                                else -> R.string.shrink_photo_maximum_desc
-                            },
+                    val ratio = preset.maxLongEdgePx.toFloat() / screenLongEdge
+                    val stats = listOf(
+                        StatCell(
+                            String.format(java.util.Locale.getDefault(), "%.1f×", ratio),
+                            stringResource(R.string.shrink_screen_size),
                         ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.5.sp,
+                        StatCell(
+                            "${preset.savedPercentEstimate}%",
+                            stringResource(R.string.shrink_smaller),
+                        ),
+                        StatCell(
+                            "~${formatBytes(estSavedBytes)}",
+                            stringResource(R.string.shrink_total_saved),
+                            highlight = true,
+                        ),
                     )
+                    StatRow(stats)
+                    StrengthSlider(
+                        selected = presets.indexOf(preset).coerceAtLeast(0),
+                        onSelect = { idx -> onPresetChange(presets[idx.coerceIn(0, presets.lastIndex)]) },
+                        stopReductionPercents = presets.map { it.savedPercentEstimate },
+                        specBadge = preset.resolutionBadge,
+                        description = stringResource(preset.descRes),
+                    )
+                    // GPS location privacy toggle card
+                    SweeprPanel(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onStripGpsChange(!stripGps) },
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SizeBadge("📍")
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = stringResource(R.string.shrink_gps_toggle_chip),
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Switch(
+                                checked = stripGps,
+                                onCheckedChange = onStripGpsChange,
+                            )
+                        }
+                    }
                     SweeprPanel(Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                             SizeBadge("🛡️")
@@ -768,10 +893,10 @@ private fun PhotoOptimizerTabContent(
         }
 
         StickyDock(
-            buttonText = when {
-                selectedPhotos.isEmpty() -> stringResource(R.string.shrink_select_photos)
-                compressFileSize -> stringResource(R.string.shrink_n_photos, selectedPhotos.size)
-                else -> stringResource(R.string.shrink_clean_n_photos, selectedPhotos.size)
+            buttonText = if (selectedPhotos.isEmpty()) {
+                stringResource(R.string.shrink_select_photos)
+            } else {
+                stringResource(R.string.shrink_n_photos, selectedPhotos.size, formatBytes(estSavedBytes))
             },
             onClick = onOptimizeBatch,
             enabled = selectedPhotos.isNotEmpty() && !busy,

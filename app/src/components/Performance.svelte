@@ -1,84 +1,121 @@
 <script lang="ts" module>
   import type {
-    ContextMenuItem,
+    BrowserMemoryReport,
     MemoryOverview,
     StartupItem,
-    SystemHealthDetails,
+    TabSessionSnapshot,
   } from "../lib/api";
 
   let cachedMem: MemoryOverview | null = null;
-  let cachedHealth: SystemHealthDetails | null = null;
+  let cachedBrowserReport: BrowserMemoryReport | null = null;
+  let cachedTabSessions: TabSessionSnapshot[] = [];
   let cachedStartup: StartupItem[] = [];
-  let cachedContextItems: ContextMenuItem[] = [];
-  let cachedActiveTab: "startup" | "processes" | "context" = "startup";
 </script>
 
 <script lang="ts">
+  import BatteryCare from "./BatteryCare.svelte";
   import {
     api,
     errorMessage,
     isPaymentRequired,
     requestActivation,
-    type GamingBoostResult,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
-  let { license = null }: { license?: LicenseStatus | null } = $props();
+  let {
+    license = null,
+    viewMode = $bindable<"pc" | "battery">("pc"),
+  }: {
+    license?: LicenseStatus | null;
+    viewMode?: "pc" | "battery";
+  } = $props();
+
   let mem = $state<MemoryOverview | null>(cachedMem);
-  let health = $state<SystemHealthDetails | null>(cachedHealth);
+  let browserReport = $state<BrowserMemoryReport | null>(cachedBrowserReport);
+  let tabSessions = $state<TabSessionSnapshot[]>(cachedTabSessions);
   let startup = $state<StartupItem[]>(cachedStartup);
-  let contextItems = $state<ContextMenuItem[]>(cachedContextItems);
-  let activeTab = $state<"startup" | "processes" | "context">(cachedActiveTab);
-  let listInteracting = $state(false);
+
+  let boosting = $state(false);
+  let boostNotice = $state<string | null>(null);
   let toggling = $state<string | null>(null);
   let killingProc = $state<string | null>(null);
-  let procNotice = $state<string | null>(null);
-  let boosting = $state(false);
-  let boostResult = $state<GamingBoostResult | null>(null);
+  let restoringSession = $state<string | null>(null);
+  let showSavedTabs = $state(false);
+  let listInteracting = $state(false);
   let error = $state<string | null>(null);
 
-  $effect(() => {
-    cachedActiveTab = activeTab;
-  });
-
-  function formatUptime(sec: number): string {
-    const d = Math.floor(sec / 86400);
-    const h = Math.floor((sec % 86400) / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    if (d > 0) return `${d}d ${h}h ${m}m`;
-    if (h > 0) return `${h}h ${m}m`;
-    return `${Math.max(1, m)}m`;
+  function formatSnapshotTime(ts: number): string {
+    if (!ts) return "Just now";
+    const d = new Date(ts * 1000);
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   async function load() {
     try {
-      const [m, s, h, c] = await Promise.all([
+      const [m, b, ts, s] = await Promise.all([
         api.memory(),
+        api.browserMemoryReport().catch(() => null),
+        api.listTabSessions().catch(() => []),
         api.startupItems(),
-        api.systemHealthDetails().catch(() => null),
-        api.listContextMenuItems().catch(() => []),
       ]);
       mem = m;
+      browserReport = b;
+      tabSessions = ts;
       startup = s;
-      health = h;
-      contextItems = c;
       cachedMem = m;
+      cachedBrowserReport = b;
+      cachedTabSessions = ts;
       cachedStartup = s;
-      cachedHealth = h;
-      cachedContextItems = c;
     } catch (e) {
       error = errorMessage(e);
     }
   }
 
-  async function runGamingBoost() {
+  async function runOneClickSpeedBoost() {
     error = null;
+    boostNotice = null;
     boosting = true;
     try {
-      boostResult = await api.boostGamingMode();
-      mem = await api.memory();
-      cachedMem = mem;
+      const boostRes = await api.boostGamingMode();
+      let totalFreed = boostRes.bytes_freed;
+      let tabsSlept = 0;
+
+      if (license?.active && browserReport && browserReport.total_browser_bytes > 0) {
+        try {
+          const tameRes = await api.tameBrowserMemory(null, true);
+          totalFreed += tameRes.bytes_freed;
+          tabsSlept = tameRes.tabs_tamed;
+        } catch {
+          // Ignore optional browser tame error if no browsers open
+        }
+      }
+
+      const [m, b, ts] = await Promise.all([
+        api.memory(),
+        api.browserMemoryReport().catch(() => browserReport),
+        api.listTabSessions().catch(() => tabSessions),
+      ]);
+      mem = m;
+      browserReport = b;
+      tabSessions = ts;
+      cachedMem = m;
+      cachedBrowserReport = b;
+      cachedTabSessions = ts;
+
+      const parts: string[] = [];
+      if (totalFreed > 0) parts.push(`freed ${formatBytes(totalFreed)} of memory`);
+      if (tabsSlept > 0) parts.push(`put ${tabsSlept} inactive browser tab(s) to sleep`);
+      if (boostRes.processes_closed > 0) parts.push(`paused ${boostRes.processes_closed} idle background helper(s)`);
+      boostNotice =
+        parts.length > 0
+          ? `Speed Boost complete: ${parts.join(" and ")}.`
+          : "Your PC memory and browser tabs are already running smoothly!";
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -90,34 +127,7 @@
     }
   }
 
-  async function killProc(name: string) {
-    if (
-      !confirm(
-        `End all running instances of "${name}"?\n\nAny unsaved work in ${name} may be lost.`
-      )
-    ) {
-      return;
-    }
-    error = null;
-    procNotice = null;
-    killingProc = name;
-    try {
-      const killed = await api.killProcess(name);
-      procNotice = `Ended ${killed} process instance(s) for ${name}.`;
-      mem = await api.memory();
-      cachedMem = mem;
-    } catch (e) {
-      if (isPaymentRequired(e)) {
-        requestActivation();
-      } else {
-        error = errorMessage(e);
-      }
-    } finally {
-      killingProc = null;
-    }
-  }
-
-  async function toggleItem(item: StartupItem) {
+  async function toggleStartupApp(item: StartupItem) {
     if (!license?.active) {
       requestActivation();
       return;
@@ -139,16 +149,22 @@
     }
   }
 
-  async function toggleContext(item: ContextMenuItem) {
-    if (!license?.active) {
-      requestActivation();
+  async function closeHeavyApp(name: string) {
+    if (
+      !confirm(
+        `Close "${name}" now?\n\nMake sure you have saved any open work in ${name} first.`
+      )
+    ) {
       return;
     }
     error = null;
-    toggling = item.id;
+    boostNotice = null;
+    killingProc = name;
     try {
-      contextItems = await api.toggleContextMenuItem(item.id, !item.enabled);
-      cachedContextItems = contextItems;
+      await api.killProcess(name);
+      boostNotice = `Closed ${name} and freed up its memory.`;
+      mem = await api.memory();
+      cachedMem = mem;
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -156,451 +172,567 @@
         error = errorMessage(e);
       }
     } finally {
-      toggling = null;
+      killingProc = null;
+    }
+  }
+
+  async function restoreSession(snap: TabSessionSnapshot) {
+    if (!license?.active) {
+      requestActivation();
+      return;
+    }
+    if (
+      !confirm(
+        `Restore saved browser tabs (${snap.browsers.join(", ")})?\n\nPlease close your browser first so it opens with these tabs.`
+      )
+    ) {
+      return;
+    }
+    error = null;
+    restoringSession = snap.id;
+    try {
+      await api.restoreTabSession(snap.id);
+      boostNotice = `Restored your saved browser tabs. Open your browser to view them.`;
+    } catch (e) {
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
+    } finally {
+      restoringSession = null;
     }
   }
 
   $effect(() => {
     load();
     const timer = setInterval(() => {
-      if (activeTab === "processes" && listInteracting) {
-        return;
-      }
-      api
-        .memory()
-        .then((m) => {
+      if (listInteracting || viewMode === "battery") return;
+      Promise.all([
+        api.memory(),
+        api.browserMemoryReport().catch(() => browserReport),
+      ])
+        .then(([m, b]) => {
           mem = m;
           cachedMem = m;
+          if (b) {
+            browserReport = b;
+            cachedBrowserReport = b;
+          }
         })
         .catch(() => {});
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   });
 
   const usedPct = $derived(mem ? Math.round((mem.used_bytes / mem.total_bytes) * 100) : 0);
-  const maxApp = $derived(mem?.top_apps[0]?.bytes ?? 1);
+  const topFiveApps = $derived(mem ? mem.top_apps.slice(0, 5) : []);
+  const maxApp = $derived(topFiveApps[0]?.bytes ?? 1);
+  const toggleableStartup = $derived(
+    startup.filter((s) => s.scope === "Current user" || s.scope.includes("HKCU"))
+  );
 </script>
 
-<div class="perf-layout">
+<div class="speed-layout">
   <div class="header-row">
     <div>
-      <h1 class="page-title">Speed, Startup & Processes</h1>
+      <h1 class="page-title">Speed Up Your PC</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Free up active memory in one click, manage apps that launch when Windows starts, and close heavy background tasks.
+        Free up memory in one click, stop slow startup apps, and extend laptop battery life.
       </p>
+    </div>
+
+    <div class="mode-pills" role="tablist">
+      <button
+        class="mode-btn"
+        class:active={viewMode === "pc"}
+        onclick={() => (viewMode = "pc")}
+        role="tab"
+        aria-selected={viewMode === "pc"}
+      >
+        PC Speed &amp; Startup
+      </button>
+      <button
+        class="mode-btn"
+        class:active={viewMode === "battery"}
+        onclick={() => (viewMode = "battery")}
+        role="tab"
+        aria-selected={viewMode === "battery"}
+      >
+        Laptop Battery Care
+      </button>
     </div>
   </div>
 
-  {#if error}<div class="card error-banner">{error}</div>{/if}
-  {#if procNotice}<div class="card emerald-banner">{procNotice}</div>{/if}
-  {#if boostResult}
-    <div class="card emerald-banner">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <strong>Speed Boost Complete:</strong>
-      <span>Closed {boostResult.processes_closed} background process(es) · Freed {formatBytes(boostResult.bytes_freed)}</span>
-      {#if boostResult.closed_apps.length > 0}
-        <span class="muted small">({boostResult.closed_apps.join(", ")})</span>
-      {/if}
-    </div>
-  {/if}
-
-  {#if mem}
-    <div class="top-stats-grid">
-      <!-- 1. RAM In Use -->
-      <div class="card stat">
-        <div class="row" style="justify-content: space-between;">
-          <span class="field-label">LIVE MEMORY</span>
-          {#if usedPct > 85}
-            <span class="badge pro">High Load ({usedPct}%)</span>
-          {:else}
-            <span class="badge free">Healthy ({usedPct}%)</span>
-          {/if}
-        </div>
-        <div class="value">
-          {formatBytes(mem.used_bytes)}
-          <span class="muted small" style="font-weight: 500;">/ {formatBytes(mem.total_bytes)}</span>
-        </div>
-        <div class="bar"><div class:hot={usedPct > 85} style="width:{usedPct}%"></div></div>
-        <div class="muted small">{formatBytes(mem.available_bytes)} available right now</div>
+  {#if viewMode === "battery"}
+    <BatteryCare {license} />
+  {:else}
+    {#if error}<div class="card error-banner">{error}</div>{/if}
+    {#if boostNotice}
+      <div class="card emerald-banner">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>{boostNotice}</span>
       </div>
+    {/if}
 
-      <!-- 2. Boot & System Uptime -->
-      <div class="card stat">
-        <div class="row" style="justify-content: space-between;">
-          <span class="field-label">BOOT & SYSTEM HEALTH</span>
-          <div class="row" style="gap: 6px;">
-            {#if health?.battery_percent !== null && health?.battery_percent !== undefined}
-              <span class="badge free" title="Laptop Battery Status">
-                {health.battery_percent}% {health.battery_status ? `· ${health.battery_status}` : ""}
+    <!-- 1. One-Click Speed Boost Hero Card -->
+    <section class="card boost-hero-card">
+      <div class="gauge-wrap" role="img" aria-label={mem ? `${usedPct}% memory in use` : "Checking memory"}>
+        <div class="gauge" class:busy={usedPct > 80} style="--pct: {Math.round(usedPct * 0.75)}%"></div>
+        <div class="gauge-lbl">
+          <strong>{mem ? `${usedPct}%` : "—"}</strong>
+          <small>memory in use</small>
+        </div>
+      </div>
+      <div class="boost-hero-left">
+        <span class="eyebrow">1-Click Speed Boost</span>
+        <h2>
+          {!mem
+            ? "Checking how busy your PC is…"
+            : usedPct > 80
+              ? "Your PC is very busy right now"
+              : usedPct > 55
+                ? "Your PC is a little busy"
+                : "Your PC is running smoothly"}
+        </h2>
+        <p class="muted">
+          Frees up memory from idle background apps and puts inactive browser tabs to sleep without closing your open tabs or losing your work.
+        </p>
+
+        <div class="live-metrics-row">
+          <div class="metric-box">
+            <span class="metric-label">PC Memory in Use</span>
+            <strong class="metric-value">
+              {mem ? `${usedPct}%` : "—"}
+              <span class="muted small" style="font-weight: 500;">
+                {mem ? `(${formatBytes(mem.used_bytes)} of ${formatBytes(mem.total_bytes)})` : ""}
               </span>
-            {/if}
-            <span class="badge free">{health?.is_ssd !== false ? "SSD / NVMe" : "HDD"}</span>
+            </strong>
           </div>
-        </div>
-        <div class="value">
-          {#if health?.last_boot_seconds}
-            {health.last_boot_seconds.toFixed(1)}s <span class="muted small" style="font-weight: 500;">boot time</span>
-          {:else}
-            {health ? formatUptime(health.uptime_seconds) : "—"} <span class="muted small" style="font-weight: 500;">uptime</span>
-          {/if}
-        </div>
-        <div class="muted small">
-          {#if health}
-            Uptime: <strong>{formatUptime(health.uptime_seconds)}</strong> · {startup.filter((s) => s.enabled !== false).length} active startup apps
-          {:else}
-            Reading system telemetry…
-          {/if}
-        </div>
-      </div>
 
-      <!-- 3. 1-Click Speed & Gaming Boost -->
-      <div class="card stat boost-card">
-        <div class="row" style="justify-content: space-between;">
-          <span class="field-label">1-CLICK RAM OPTIMIZER</span>
-          <span class="badge free">Instant</span>
-        </div>
-        <div class="muted small" style="line-height: 1.45;">
-          Suspends idle background updaters, tray helpers, and telemetry services to free memory immediately.
-        </div>
-        <div style="margin-top: auto; padding-top: 6px;">
-          <button class="primary boost-btn" disabled={boosting} onclick={runGamingBoost}>
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>{boosting ? "Boosting Memory…" : "Boost RAM & Gaming Mode"}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Unified Segmented Workspace -->
-  <div class="card workspace-card">
-    <div class="workspace-header">
-      <div class="pill-bar" role="tablist">
-        <button
-          class="pill-btn"
-          class:active={activeTab === "startup"}
-          onclick={() => (activeTab = "startup")}
-          role="tab"
-          aria-selected={activeTab === "startup"}
-        >
-          Startup Apps ({startup.length})
-        </button>
-        <button
-          class="pill-btn"
-          class:active={activeTab === "processes"}
-          onclick={() => (activeTab = "processes")}
-          role="tab"
-          aria-selected={activeTab === "processes"}
-        >
-          Active Memory Processes ({mem?.top_apps.length ?? 0})
-        </button>
-        <button
-          class="pill-btn"
-          class:active={activeTab === "context"}
-          onclick={() => (activeTab = "context")}
-          role="tab"
-          aria-selected={activeTab === "context"}
-        >
-          Right-Click Menu ({contextItems.length})
-        </button>
-      </div>
-
-      <span class="muted small">
-        {#if activeTab === "startup"}
-          Apps that launch automatically at Windows sign-in
-        {:else if activeTab === "processes"}
-          Top applications currently using RAM ({listInteracting ? "paused while hovering" : "refreshes every 3s"})
-        {:else}
-          Third-party items added to the Windows Explorer right-click menu
-        {/if}
-      </span>
-    </div>
-
-    <div
-      class="table-body"
-      role="region"
-      aria-label="Optimization items list"
-      onmouseenter={() => (listInteracting = true)}
-      onmouseleave={() => (listInteracting = false)}
-      onfocusin={() => (listInteracting = true)}
-      onfocusout={() => (listInteracting = false)}
-    >
-      {#if activeTab === "startup"}
-        {#each startup as s (s.name + s.scope)}
-          {@const isEnabled = s.enabled ?? true}
-          {@const impact = s.impact ?? "Low"}
-          {@const canToggle = s.scope === "Current user" || s.scope.includes("HKCU")}
-          <div class="row line" class:disabled-row={!isEnabled}>
-            <div class="item-primary">
-              <strong class="item-name" title={s.name}>{s.name}</strong>
-              <span class="mono muted small cmd" title={s.command}>{s.command}</span>
-            </div>
-            <span class="badge">{s.scope}</span>
-            <span
-              class="badge"
-              class:pro={impact === "High" || impact === "Medium"}
-              class:free={impact === "Low"}
-              title="Estimated boot impact"
-            >
-              {impact} Impact
-            </span>
-            {#if canToggle}
-              {#if !license?.active}
-                <span class="badge pro">Pro</span>
+          <div class="metric-box">
+            <span class="metric-label">Open Browser Memory</span>
+            <strong class="metric-value">
+              {browserReport && browserReport.total_browser_bytes > 0
+                ? formatBytes(browserReport.total_browser_bytes)
+                : "Low / Clean"}
+              {#if browserReport && browserReport.estimated_reclaimable_bytes > 0}
+                <span class="muted small" style="font-weight: 500;">
+                  (~{formatBytes(browserReport.estimated_reclaimable_bytes)} can be freed)
+                </span>
               {/if}
-              <button
-                class={isEnabled ? "ghost small-btn" : "primary small-btn"}
-                disabled={toggling === s.name}
-                onclick={() => toggleItem(s)}
-                aria-label={`${isEnabled ? "Disable" : "Enable"} ${s.name} at startup`}
-              >
-                {toggling === s.name ? "…" : isEnabled ? "Disable" : "Enable"}
-              </button>
-            {:else}
-              <span class="muted small" style="min-width: 74px; text-align: right;">System</span>
-            {/if}
+            </strong>
           </div>
-        {:else}
-          <div class="muted empty-row">No startup items found.</div>
-        {/each}
+        </div>
+      </div>
 
-      {:else if activeTab === "processes"}
-        {#if mem && mem.top_apps.length > 0}
-          {#each mem.top_apps as a (a.name)}
-            <div class="row line">
-              <span class="proc-name" title={a.name}><strong>{a.name}</strong></span>
-              <span class="muted small" style="min-width: 64px;">{a.processes} {a.processes === 1 ? "process" : "processes"}</span>
-              <div class="mini"><div style="width:{(a.bytes / maxApp) * 100}%"></div></div>
-              <strong class="mono" style="min-width: 84px; text-align: right; color: var(--accent);">{formatBytes(a.bytes)}</strong>
+      <div class="boost-hero-right">
+        <button class="primary boost-cta-btn" disabled={boosting} onclick={runOneClickSpeedBoost}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>{boosting ? "Boosting Speed…" : "Boost Speed Now"}</span>
+        </button>
+        {#if !boosting && browserReport && browserReport.estimated_reclaimable_bytes > 0}
+          <span class="muted small" style="text-align: center;">
+            Can free about <strong style="color: var(--accent);">{formatBytes(browserReport.estimated_reclaimable_bytes)}</strong> without closing your work
+          </span>
+        {/if}
+        {#if tabSessions.length > 0}
+          <button class="ghost small-btn" onclick={() => (showSavedTabs = !showSavedTabs)}>
+            {showSavedTabs ? "Hide Saved Tab Backups" : `Saved Tab Backups (${tabSessions.length})`}
+          </button>
+        {/if}
+      </div>
+    </section>
+
+    {#if showSavedTabs && tabSessions.length > 0}
+      <div class="card" style="padding: 18px 22px;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <strong>Saved Browser Tab Backups</strong>
+            <div class="muted small">SWEEPR automatically backs up your open browser tabs so you can restore them anytime.</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          {#each tabSessions as snap (snap.id)}
+            <div class="row sub-row">
+              <div style="flex: 1;">
+                <strong class="small">{snap.browsers.join(", ")} (~{snap.estimated_tabs} tabs)</strong>
+                <div class="muted small">{formatSnapshotTime(snap.created_at)}</div>
+              </div>
               <button
                 class="ghost small-btn"
-                disabled={killingProc === a.name}
-                onclick={() => killProc(a.name)}
-                title={`End ${a.name}`}
+                disabled={restoringSession === snap.id}
+                onclick={() => restoreSession(snap)}
               >
-                {killingProc === a.name ? "Ending…" : "End Task"}
+                {restoringSession === snap.id ? "Restoring…" : "Restore Tabs"}
               </button>
             </div>
           {/each}
-        {:else}
-          <div class="muted empty-row">Loading active processes…</div>
-        {/if}
+        </div>
+      </div>
+    {/if}
 
-      {:else}
-        {#each contextItems as item (item.id)}
-          <div class="row line" class:disabled-row={!item.enabled}>
-            <div class="item-primary">
-              <strong class="item-name" title={item.name}>{item.name}</strong>
-              <span class="mono muted small cmd" title={item.command}>{item.command}</span>
-            </div>
-            <span class="badge">{item.scope}</span>
-            {#if !license?.active}
-              <span class="badge pro">Pro</span>
-            {/if}
-            <button
-              class={item.enabled ? "ghost small-btn" : "primary small-btn"}
-              disabled={toggling === item.id}
-              onclick={() => toggleContext(item)}
-            >
-              {toggling === item.id ? "…" : item.enabled ? "Disable" : "Enable"}
-            </button>
+    <!-- 2. Two-Column Layout: Startup Apps + Heavy Running Apps -->
+    <div
+      class="two-col-grid"
+      role="region"
+      aria-label="Startup and running apps"
+      onmouseenter={() => (listInteracting = true)}
+      onmouseleave={() => (listInteracting = false)}
+    >
+      <!-- Left Card: Startup Apps -->
+      <section class="card section-card">
+        <div class="section-head">
+          <div>
+            <h3>Apps That Start With Windows</h3>
+            <p class="muted small">Turn off apps you don't need right away so your PC starts up faster.</p>
           </div>
+          <span class="badge free">{toggleableStartup.filter((s) => s.enabled !== false).length} On</span>
+        </div>
+
+        {#if toggleableStartup.length === 0}
+          <div class="muted small empty-box">No extra startup apps found.</div>
         {:else}
-          <div class="muted empty-row">No custom right-click context menu extensions detected.</div>
-        {/each}
-      {/if}
+          <div class="item-list">
+            {#each toggleableStartup as s (s.name + s.scope)}
+              {@const isEnabled = s.enabled ?? true}
+              {@const impact = s.impact ?? "Low"}
+              <div class="row item-row" class:dimmed={!isEnabled}>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="row" style="gap: 8px; flex-wrap: wrap;">
+                    <strong class="app-title">{s.name}</strong>
+                    <span class="badge free" style="font-size: 10px; padding: 2px 7px;">Safe to Turn Off</span>
+                  </div>
+                  <div class="muted small">
+                    {impact === "High"
+                      ? "Slows down startup noticeably"
+                      : impact === "Medium"
+                        ? "Moderate startup slowdown"
+                        : "Light startup impact"}
+                  </div>
+                </div>
+                {#if !license?.active}
+                  <span class="badge pro">Pro</span>
+                {/if}
+                <button
+                  class={isEnabled ? "ghost small-btn" : "primary small-btn"}
+                  disabled={toggling === s.name}
+                  onclick={() => toggleStartupApp(s)}
+                >
+                  {toggling === s.name ? "…" : isEnabled ? "Turn Off" : "Turn On"}
+                </button>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </section>
+
+      <!-- Right Card: Heavy Running Apps -->
+      <section class="card section-card">
+        <div class="section-head">
+          <div>
+            <h3>Apps Using the Most Memory Right Now</h3>
+            <p class="muted small">Close heavy apps you aren't currently using to free up memory immediately.</p>
+          </div>
+        </div>
+
+        {#if topFiveApps.length === 0}
+          <div class="muted small empty-box">Checking running apps…</div>
+        {:else}
+          <div class="item-list">
+            {#each topFiveApps as a (a.name)}
+              <div class="row item-row">
+                <div style="flex: 1; min-width: 0;">
+                  <div class="row" style="justify-content: space-between; margin-bottom: 4px;">
+                    <strong class="app-title">{a.name}</strong>
+                    <strong class="small" style="color: var(--accent);">{formatBytes(a.bytes)}</strong>
+                  </div>
+                  <div class="mini-bar">
+                    <div class="mini-bar-fill" style="width: {(a.bytes / maxApp) * 100}%"></div>
+                  </div>
+                </div>
+                <button
+                  class="ghost small-btn"
+                  disabled={killingProc === a.name}
+                  onclick={() => closeHeavyApp(a.name)}
+                >
+                  {killingProc === a.name ? "Closing…" : "Close App"}
+                </button>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </section>
     </div>
-  </div>
+  {/if}
 </div>
 
 <style>
-  .perf-layout {
-    max-width: 1240px;
+  .speed-layout {
+    max-width: 1120px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
     padding-bottom: 36px;
   }
   .header-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
   }
   .page-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
     margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
   }
-  .field-label {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    color: var(--muted);
-  }
-  .top-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-  @media (max-width: 960px) {
-    .top-stats-grid {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
-  }
-  .stat {
-    padding: 18px 20px;
+
+  .mode-pills {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .boost-card {
-    background: linear-gradient(180deg, var(--panel-solid) 0%, var(--accent-light) 100%);
-    border-color: rgba(16, 185, 129, 0.28);
-  }
-  .boost-btn {
-    width: 100%;
-    padding: 9px 14px;
-    font-size: 13px;
-    border-radius: 9999px;
-  }
-  .value {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.5px;
-  }
-  .bar {
-    height: 8px;
     background: var(--panel-2);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .bar > div {
-    height: 100%;
-    background: var(--accent);
-  }
-  .bar > div.hot {
-    background: var(--warn);
-  }
-  .workspace-card {
-    padding: 0;
-    overflow: hidden;
-  }
-  .workspace-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel-2);
-  }
-  .pill-bar {
-    display: flex;
-    gap: 4px;
-    background: var(--panel-solid);
     padding: 4px;
     border-radius: 9999px;
     border: 1px solid var(--border);
   }
-  .pill-btn {
+  .mode-btn {
     background: transparent;
     border: none;
-    padding: 6px 16px;
+    padding: 7px 16px;
     border-radius: 9999px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
     box-shadow: none;
   }
-  .pill-btn:hover {
-    color: var(--text);
-    background: transparent;
-  }
-  .pill-btn.active {
-    background: var(--accent-light);
+  .mode-btn.active {
+    background: var(--panel-solid);
     color: var(--accent);
-    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
   }
-  .table-body {
+
+  .boost-hero-card {
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .boost-hero-left {
+    flex: 1 1 400px;
     display: flex;
     flex-direction: column;
+    gap: 8px;
   }
-  .line {
-    padding: 11px 20px;
-    border-bottom: 1px solid var(--border);
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .boost-hero-left h2 {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+  }
+  .boost-hero-left p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 62ch;
+  }
+  .live-metrics-row {
+    display: flex;
     gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 8px;
   }
-  .line:last-child {
-    border-bottom: none;
-  }
-  .disabled-row {
-    opacity: 0.6;
-  }
-  .item-primary {
-    flex: 1;
-    min-width: 0;
+  .metric-box {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
-  .item-name {
-    font-size: 14px;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .metric-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
   }
-  .proc-name {
-    width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text);
+  .metric-value {
+    font-size: 16px;
+    font-weight: 800;
   }
-  .mini {
-    flex: 1;
-    height: 6px;
+
+  .boost-hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .boost-cta-btn {
+    padding: 14px 28px;
+    border-radius: 9999px;
+    font-size: 15px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 8px 22px rgba(16, 185, 129, 0.32);
+  }
+
+  .two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    .two-col-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .section-card {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .section-head h3 {
+    margin: 0;
+    font-size: 16.5px;
+    font-weight: 800;
+  }
+  .section-head p {
+    margin: 4px 0 0 0;
+  }
+  .item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .item-row {
+    padding: 10px 14px;
+    border-radius: 10px;
     background: var(--panel-2);
-    border-radius: 99px;
-    overflow: hidden;
+    border: 1px solid var(--border);
+    gap: 12px;
   }
-  .mini > div {
-    height: 100%;
-    background: var(--accent);
+  .item-row.dimmed {
+    opacity: 0.65;
   }
-  .cmd {
+  .app-title {
+    font-size: 13.5px;
+    display: block;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  .empty-row {
-    padding: 28px 20px;
+  .mini-bar {
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .mini-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 9999px;
+  }
+  .sub-row {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+  }
+  .empty-box {
+    padding: 18px;
     text-align: center;
+    background: var(--panel-2);
+    border-radius: 10px;
   }
   .small-btn {
-    padding: 5px 14px;
-    font-size: 12px;
+    padding: 6px 14px;
+    font-size: 12.5px;
     border-radius: 9999px;
   }
   .error-banner {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-left: 4px solid var(--danger);
+    background: rgba(239, 68, 68, 0.12);
     color: var(--danger);
+    font-size: 13.5px;
+  }
+  .gauge-wrap {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+  }
+  .gauge {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 225deg,
+      #10b981 0 var(--pct),
+      rgba(148, 163, 184, 0.22) var(--pct) 75%,
+      transparent 75%
+    );
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.35));
+    transition: background 0.4s ease;
+  }
+  .gauge.busy {
+    background: conic-gradient(
+      from 225deg,
+      #f59e0b 0 var(--pct),
+      rgba(148, 163, 184, 0.22) var(--pct) 75%,
+      transparent 75%
+    );
+  }
+  .gauge-lbl {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .gauge-lbl strong {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .gauge-lbl small {
+    font-size: 11px;
+    color: var(--muted);
   }
   .emerald-banner {
-    padding: 11px 16px;
+    padding: 12px 16px;
     border-left: 4px solid var(--accent);
     background: var(--accent-light);
     color: var(--text);
-    font-size: 13px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
   }
 </style>

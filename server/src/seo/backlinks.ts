@@ -32,13 +32,25 @@ export function isPublicHttpUrl(raw: string): boolean {
   }
   if (!/^https?:$/.test(u.protocol)) return false;
   const h = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return false;
+  if (
+    !h ||
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h.endsWith(".local") ||
+    h.endsWith(".internal") ||
+    h === "0.0.0.0" ||
+    h === "::" ||
+    h === "::1" ||
+    h.startsWith("::ffff:")
+  ) {
+    return false;
+  }
   const ipv = isIP(h);
   if (ipv === 4) {
     const [a, b] = h.split(".").map(Number);
     if (a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127)) return false;
   } else if (ipv === 6) {
-    if (h === "::1" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80")) return false;
+    if (h === "::" || h === "::1" || h.startsWith("::ffff:") || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80")) return false;
   }
   return true;
 }
@@ -76,11 +88,47 @@ export async function checkBacklink(sourceUrl: string, targetDomain: string, tim
   if (!isPublicHttpUrl(sourceUrl)) {
     return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: "URL is not a public http(s) address" } };
   }
-  let res: Response;
+  let currentUrl = sourceUrl;
+  let res: Response | null = null;
   try {
-    res = await fetch(sourceUrl, { headers: BROWSER_HEADERS, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
+    for (let hop = 0; hop <= 5; hop++) {
+      if (!isPublicHttpUrl(currentUrl)) {
+        return {
+          status: "unreachable",
+          anchor_text: null,
+          rel: null,
+          found_href: null,
+          http_status: null,
+          evidence: { checked_at: checkedAt, error: "Redirect target is not a public http(s) address" },
+        };
+      }
+      res = await fetch(currentUrl, { headers: BROWSER_HEADERS, redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get("location");
+        if (!loc || hop === 5) {
+          return {
+            status: "unreachable",
+            anchor_text: null,
+            rel: null,
+            found_href: null,
+            http_status: res.status,
+            evidence: { checked_at: checkedAt, error: "Too many redirects or missing Location header" },
+          };
+        }
+        currentUrl = new URL(loc, currentUrl).toString();
+        continue;
+      }
+      break;
+    }
   } catch (e) {
     return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: (e as Error).message } };
+  }
+  if (!res) {
+    return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: "No response" } };
+  }
+  const finalUrl = res.url || currentUrl;
+  if (!isPublicHttpUrl(finalUrl)) {
+    return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: res.status, evidence: { checked_at: checkedAt, error: "Final URL is not a public http(s) address" } };
   }
   const html = await readCapped(res).catch(() => "");
   const cfRay = res.headers.get("cf-ray");
@@ -88,7 +136,7 @@ export async function checkBacklink(sourceUrl: string, targetDomain: string, tim
   const evidence: Record<string, unknown> = {
     checked_at: checkedAt,
     request_url: sourceUrl,
-    final_url: res.url,
+    final_url: finalUrl,
     http_status: res.status,
     server: res.headers.get("server"),
     cf_ray: cfRay,
@@ -112,7 +160,7 @@ export async function checkBacklink(sourceUrl: string, targetDomain: string, tim
     const href = attr(tag, "href");
     if (!href) continue;
     try {
-      const u = new URL(href, res.url || sourceUrl);
+      const u = new URL(href, finalUrl);
       const host = u.hostname.toLowerCase().replace(/^www\./, "");
       if (host === target || host.endsWith("." + target)) {
         const text = m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -140,7 +188,7 @@ export async function checkBacklink(sourceUrl: string, targetDomain: string, tim
     };
   }
 
-  const path = new URL(res.url || sourceUrl).pathname;
+  const path = new URL(finalUrl).pathname;
   const isHomepage = path === "/" || path === "";
   return {
     status: isHomepage ? "needs_listing_url" : "missing",

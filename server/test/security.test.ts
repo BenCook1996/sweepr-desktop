@@ -15,7 +15,7 @@ function setup(overrides: Record<string, unknown> = {}) {
   const app = createApp({
     repo,
     signingKey: privateKey,
-    stripe: null,
+    stripe: (overrides.stripe as any) ?? null,
     config: {
       publicUrl: "http://test",
       stripeWebhookSecret: "",
@@ -360,7 +360,133 @@ test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and
     { authorization: `Bearer ${unpaid.refresh_token}` }
   );
   assert.equal(refUnpaidRes.status, 402);
+
+  // 8. Unpaid referrer cannot be upgraded to active via applyReferral, and past_due cannot claimWinback
+  repo.createAccount("acc_unpaid_ref", sha256("tok_unpaid_ref"), "unpaid-ref@example.com");
+  const unpaidRefCode = repo.ensureReferralCode("acc_unpaid_ref");
+  assert.equal(repo.applyReferral("acc_ref", unpaidRefCode, nowSec), false);
+  assert.equal(repo.entitlement("acc_unpaid_ref"), undefined);
+
+  repo.createAccount("acc_pd", sha256("tok_pd"), "pastdue@example.com");
+  repo.upsertEntitlement({
+    account_id: "acc_pd",
+    stripe_subscription_id: "sub_pd",
+    status: "past_due",
+    plan: "monthly",
+    current_period_end: nowSec + 86400,
+    cancel_at_period_end: 0,
+  });
+  assert.equal(repo.claimWinback("acc_pd", 30, nowSec).ok, false);
 });
+
+test("Security audit regression: reactivate, purchase-addon, confirm-subscription, charge.refunded, and deleteAccount cleanup", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  let shouldFailStripeUpdate = true;
+  const mockStripe: any = {
+    subscriptions: {
+      retrieve: async (id: string) => ({
+        id,
+        status: "active",
+        customer: "cus_test_1",
+        created: nowSec,
+        metadata: id === "sub_unbound" ? {} : { account_id: "acc_sec_1", plan: "annual" },
+        items: { data: [{ id: "si_1", price: { currency: "usd", unit_amount: 6499, recurring: { interval: "year", interval_count: 1 } } }] },
+      }),
+      update: async () => {
+        if (shouldFailStripeUpdate) throw new Error("Card declined");
+        return { id: "sub_sec_1", status: "active" };
+      },
+    },
+    products: {
+      list: async () => ({ data: [{ id: "prod_vault", name: "SWEEPR Cloud Protection" }, { id: "prod_batt", name: "Total Battery Care" }] }),
+    },
+    charges: {
+      retrieve: async (id: string) => ({ id, customer: "cus_test_1", refunded: true, amount: 6499, amount_refunded: 6499 }),
+    },
+  };
+
+  const { post, repo, app } = setup({ stripe: mockStripe });
+  repo.createAccount("acc_sec_1", sha256("tok_sec_1"), "sec1@example.com");
+  repo.setCustomer("acc_sec_1", "cus_test_1", "sec1@example.com");
+  repo.upsertEntitlement({
+    account_id: "acc_sec_1",
+    stripe_subscription_id: "sub_sec_1",
+    status: "canceled",
+    plan: "annual",
+    current_period_end: nowSec + 86400 * 30,
+    cancel_at_period_end: 0,
+  });
+
+  // Sign in to portal
+  repo.setOtp("sec1@example.com", sha256("112233"), nowSec + 600);
+  const loginRes = await post("/api/verify-otp", { email: "sec1@example.com", code: "112233" });
+  const sessionCookie = (loginRes.headers.get("set-cookie") ?? "").split(";")[0];
+
+  // 1. Canceled subscription cannot self-reactivate for free
+  const reactivateCanceled = await app.request("/api/portal/reactivate-subscription", {
+    method: "POST",
+    headers: { cookie: sessionCookie, "content-type": "application/json" },
+  });
+  assert.equal(reactivateCanceled.status, 400);
+  assert.equal(repo.entitlement("acc_sec_1")?.status, "canceled");
+
+  // 2. Active subscription with cancel_at_period_end=1 fails if Stripe update throws
+  repo.upsertEntitlement({
+    account_id: "acc_sec_1",
+    stripe_subscription_id: "sub_sec_1",
+    status: "active",
+    plan: "annual",
+    current_period_end: nowSec + 86400 * 30,
+    cancel_at_period_end: 1,
+  });
+  const reactivateFail = await app.request("/api/portal/reactivate-subscription", {
+    method: "POST",
+    headers: { cookie: sessionCookie, "content-type": "application/json" },
+  });
+  assert.equal(reactivateFail.status, 400);
+  assert.equal(repo.entitlement("acc_sec_1")?.cancel_at_period_end, 1);
+
+  // 3. Purchase add-on fails with 402 when Stripe update throws and does NOT grant add-on
+  const addonFail = await app.request("/api/portal/purchase-addon", {
+    method: "POST",
+    headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ addon: "battery_care" }),
+  });
+  assert.equal(addonFail.status, 402);
+  assert.deepEqual(repo.addonsForAccount("acc_sec_1"), []);
+
+  // When Stripe update succeeds, add-on is granted
+  shouldFailStripeUpdate = false;
+  const addonOk = await app.request("/api/portal/purchase-addon", {
+    method: "POST",
+    headers: { cookie: sessionCookie, "content-type": "application/json" },
+    body: JSON.stringify({ addon: "battery_care" }),
+  });
+  assert.equal(addonOk.status, 200);
+  assert.deepEqual(repo.addonsForAccount("acc_sec_1"), ["battery_care"]);
+
+  // 4. confirm-subscription requires matching accountId and metadata.account_id
+  const confirmNoAcct = await post("/api/confirm-subscription", { subscriptionId: "sub_sec_1" });
+  assert.equal(confirmNoAcct.status, 403);
+  const confirmUnbound = await post("/api/confirm-subscription", { subscriptionId: "sub_unbound", accountId: "acc_sec_1" });
+  assert.equal(confirmUnbound.status, 403);
+
+  // 5. Full charge.refunded revokes entitlement to canceled
+  const { handleStripeEvent } = await import("../src/stripe.js");
+  await handleStripeEvent(mockStripe, repo, {
+    id: "evt_refund_1",
+    type: "charge.refunded",
+    data: { object: { id: "ch_1", customer: "cus_test_1", refunded: true, amount: 6499, amount_refunded: 6499 } },
+  } as any);
+  assert.equal(repo.entitlement("acc_sec_1")?.status, "canceled");
+
+  // 6. deleteAccount cleans up support_tickets and analytics_events
+  repo.createSupportTicket({ email: "sec1@example.com", subject: "Test", message: "Msg" });
+  repo.recordAnalyticsEvent({ event_name: "scan_started", account_id: "acc_sec_1" });
+  repo.deleteAccount("acc_sec_1");
+  assert.equal(repo.listSupportTickets().filter((t) => t.email === "sec1@example.com").length, 0);
+});
+
 
 
 

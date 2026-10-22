@@ -223,11 +223,14 @@ fun SweeprRoot(
         permissionLauncher.launch(AppPermissions.all())
     }
 
-    // Re-check permissions when coming back from the system Settings app.
+    // Re-check permissions and subscription entitlements when coming back to the app.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) permissions = AppPermissions.current(context)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                permissions = AppPermissions.current(context)
+                vm.refreshSubscriptionStatus()
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -320,9 +323,10 @@ fun SweeprRoot(
     val handleCompressVideo: (MediaItem, CompressionPreset) -> Unit = { item, preset ->
         premium { vm.compressVideo(item, preset) }
     }
-    val handleOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit = { items, compressRes, stripGps ->
-        premium { vm.optimizePhotos(items, compressRes, stripGps) }
-    }
+    val handleOptimizePhotos: (List<MediaItem>, Boolean, Boolean, PhotoCompressionPreset) -> Unit =
+        { items, compressRes, stripGps, preset ->
+            premium { vm.optimizePhotos(items, compressRes, stripGps, preset) }
+        }
     val handleMerge: (Set<String>) -> Unit = { groups -> premium { vm.mergeContactGroups(groups) } }
     val handleDeleteCalendarEvents: (Set<Long>) -> Unit = { ids -> premium { vm.deleteCalendarEvents(ids) } }
     val handleCleanUp: () -> Unit = { premium { vm.cleanUpSelected(AppPermissions.current(context)) } }

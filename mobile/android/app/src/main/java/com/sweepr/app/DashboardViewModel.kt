@@ -100,11 +100,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
     private fun isServerAccountCurrentlyEntitled(acc: Prefs.LinkedAccount?): Boolean {
-        return acc != null && acc.serverActive && (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L)
+        return acc != null && acc.isSignedIn && acc.serverActive && (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L)
     }
 
     private fun isServerBatteryCareEntitled(acc: Prefs.LinkedAccount?): Boolean {
-        return isServerAccountCurrentlyEntitled(acc) && acc?.addons?.any { it.equals("battery_care", ignoreCase = true) } == true
+        return isServerAccountCurrentlyEntitled(acc) && acc?.addons?.any {
+            it.equals("battery_care", ignoreCase = true) || it.equals("sweepr_secure_bundle", ignoreCase = true)
+        } == true
     }
 
     private fun serverExpiresAtMillis(acc: Prefs.LinkedAccount?): Long? {
@@ -115,12 +117,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         val linked = Prefs.account.value
         serverActive = isServerAccountCurrentlyEntitled(linked)
+        val initialBatteryCare = rcBatteryCare || isServerBatteryCareEntitled(linked)
+        BatteryCareManager.enforceEntitlement(application, initialBatteryCare)
         _state.update { s ->
             s.copy(
                 linkedAccount = linked,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
-                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(linked),
+                    batteryCareActive = initialBatteryCare,
                     productId = s.subscription.productId ?: linked.plan,
                     expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(linked),
                 ),
@@ -132,28 +136,37 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         runCatching {
             Purchases.sharedInstance.updatedCustomerInfoListener =
                 UpdatedCustomerInfoListener { info -> updateCustomerInfo(info) }
-            viewModelScope.launch {
-                runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
-            }
         }
+        refreshSubscriptionStatus()
+    }
+
+    /** Re-verifies both RevenueCat and cross-platform server entitlements (called on launch and on resume). */
+    fun refreshSubscriptionStatus() {
         viewModelScope.launch {
+            runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+            val linked = _state.value.linkedAccount
             if (linked.isSignedIn) {
                 withContext(Dispatchers.IO) {
                     runCatching { SweeprAccountApi.refreshEntitlement(linked) }.onSuccess { updated ->
                         Prefs.setLinkedAccount(updated)
                         serverActive = isServerAccountCurrentlyEntitled(updated)
+                        val batActive = rcBatteryCare || isServerBatteryCareEntitled(updated)
+                        BatteryCareManager.enforceEntitlement(app, batActive)
                         _state.update { s ->
                             s.copy(
                                 linkedAccount = updated,
                                 subscription = s.subscription.copy(
                                     active = rcActive || serverActive,
-                                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(updated),
+                                    batteryCareActive = batActive,
                                     expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
                                 ),
                             )
                         }
                     }
                 }
+            } else {
+                val batActive = rcBatteryCare || isServerBatteryCareEntitled(linked)
+                BatteryCareManager.enforceEntitlement(app, batActive)
             }
         }
     }
@@ -166,9 +179,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val acct = _state.value.linkedAccount
         serverActive = isServerAccountCurrentlyEntitled(acct)
         val active = rcActive || serverActive
+        val batActive = rcBatteryCare || isServerBatteryCareEntitled(acct)
+        BatteryCareManager.enforceEntitlement(app, batActive)
         val sub = SubscriptionInfo(
             active = active,
-            batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(acct),
+            batteryCareActive = batActive,
             productId = ent?.productIdentifier ?: acct.plan,
             expiresAt = ent?.expirationDate?.time ?: serverExpiresAtMillis(acct),
             willRenew = ent?.willRenew ?: serverActive,
@@ -183,13 +198,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun onAccountLinked(linked: Prefs.LinkedAccount) {
         serverActive = isServerAccountCurrentlyEntitled(linked)
+        val batActive = rcBatteryCare || isServerBatteryCareEntitled(linked)
+        BatteryCareManager.enforceEntitlement(app, batActive)
         _state.update { s ->
             s.copy(
                 isWorking = false,
                 linkedAccount = linked,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
-                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(linked),
+                    batteryCareActive = batActive,
                     productId = if (rcActive) s.subscription.productId else linked.plan,
                     expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(linked),
                 ),
@@ -201,13 +218,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private fun onAccountUnlinked(message: String, isWorking: Boolean = false) {
         val cleared = Prefs.account.value
         serverActive = isServerAccountCurrentlyEntitled(cleared)
+        val batActive = rcBatteryCare || isServerBatteryCareEntitled(cleared)
+        BatteryCareManager.enforceEntitlement(app, batActive)
         _state.update { s ->
             s.copy(
                 isWorking = isWorking,
                 linkedAccount = cleared,
                 subscription = s.subscription.copy(
                     active = rcActive || serverActive,
-                    batteryCareActive = rcBatteryCare || isServerBatteryCareEntitled(cleared),
+                    batteryCareActive = batActive,
                 ),
                 message = message,
             )
@@ -252,6 +271,10 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         linked.accountId,
                         object : LogInCallback {
                             override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
+                                runCatching {
+                                    Purchases.sharedInstance.setEmail(linked.email)
+                                    Purchases.sharedInstance.setAttributes(mapOf("project_id" to BuildConfig.SWEEPR_PROJECT_ID))
+                                }
                                 updateCustomerInfo(customerInfo)
                             }
                             override fun onError(error: PurchasesError) = Unit
@@ -386,7 +409,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
      * until the user explicitly confirms moving the original to System Trash.
      */
     fun compressVideo(item: MediaItem, preset: CompressionPreset = CompressionPreset.COMPACT_720P) {
-        if (_state.value.compressingVideo != null) return
+        if (!_state.value.hasPremium || _state.value.compressingVideo != null) return
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -428,8 +451,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         items: List<MediaItem>,
         compressResolution: Boolean,
         stripGps: Boolean,
+        preset: PhotoCompressionPreset = PhotoCompressionPreset.BALANCED,
     ) {
-        if (items.isEmpty() || _state.value.optimizingPhotos) return
+        if (!_state.value.hasPremium || items.isEmpty() || _state.value.optimizingPhotos) return
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -440,7 +464,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             val results = withContext(Dispatchers.IO) {
                 items.mapNotNull { item ->
                     runCatching {
-                        PhotoOptimizer.optimizePhoto(app, item, compressResolution, stripGps)
+                        PhotoOptimizer.optimizePhoto(app, item, compressResolution, stripGps, preset)
                     }.getOrNull()
                 }
             }
@@ -493,7 +517,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun deleteCalendarEvents(ids: Set<Long>) {
-        if (ids.isEmpty()) return
+        if (!_state.value.hasPremium || ids.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(isWorking = true) }
             val deleted = withContext(Dispatchers.IO) {
@@ -522,7 +546,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
      * instead of permanent deletion.
      */
     fun requestTrash(items: List<MediaItem>) {
-        if (items.isEmpty() || _state.value.pendingTrash != null) return
+        if (!_state.value.hasPremium || items.isEmpty() || _state.value.pendingTrash != null) return
         storageBeforeClean = readStorage().takeIf { it.total > 0 }?.fraction
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {
@@ -637,6 +661,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun mergeContactGroups(keys: Set<String>) {
+        if (!_state.value.hasPremium) return
         val groups = _state.value.contactGroups.filter { it.key in keys }
         if (groups.isEmpty()) return
         viewModelScope.launch {
@@ -661,6 +686,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     /** "Clean Up Now": merges the selected contacts and trashes all selected media. */
     fun cleanUpSelected(permissions: PermissionState) {
         val s = _state.value
+        if (!s.hasPremium) return
         if (s.selectedContactGroups.isNotEmpty()) {
             if (permissions.contactsWrite) mergeContactGroups(s.selectedContactGroups)
             else showMessage(app.getString(R.string.msg_allow_contacts_merge))

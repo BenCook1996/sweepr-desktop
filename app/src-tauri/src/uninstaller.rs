@@ -519,10 +519,21 @@ pub fn parse_winget_upgrade_output(raw: &str) -> Vec<OutdatedApp> {
 }
 
 #[cfg(target_os = "windows")]
+fn winget_binary() -> std::path::PathBuf {
+    if let Some(local) = dirs::data_local_dir() {
+        let candidate = local.join(r"Microsoft\WindowsApps\winget.exe");
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+    crate::safety::system32_binary("winget")
+}
+
+#[cfg(target_os = "windows")]
 fn check_outdated_blocking() -> Vec<OutdatedApp> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-    let Ok(output) = std::process::Command::new("winget")
+    let Ok(output) = std::process::Command::new(winget_binary())
         .args(["upgrade", "--accept-source-agreements"])
         .creation_flags(CREATE_NO_WINDOW)
         .output()
@@ -555,7 +566,7 @@ pub async fn upgrade_software(state: State<'_, AppState>, id: String) -> AppResu
         tauri::async_runtime::spawn_blocking(move || {
             use std::os::windows::process::CommandExt;
             const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-            let output = std::process::Command::new("winget")
+            let output = std::process::Command::new(winget_binary())
                 .args([
                     "upgrade",
                     "--id",

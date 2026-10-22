@@ -1,5 +1,6 @@
 import type { SeoProviderConfig } from "./google.js";
 import type { SeoStore } from "./store.js";
+import { isPublicHttpUrl } from "./backlinks.js";
 
 /**
  * Phase 3: DataForSEO v3 API integration (US market default: location_code 2840, language_code "en").
@@ -470,7 +471,7 @@ export async function syncDfsBacklinks(
     totalCost += blRes.cost;
     for (const item of blRes.taskResult[0]?.items ?? []) {
       const urlFrom = typeof item?.url_from === "string" ? item.url_from : null;
-      if (!urlFrom) continue;
+      if (!urlFrom || !isPublicHttpUrl(urlFrom)) continue;
       const before = store.backlinkSummary().tracked;
       const row = store.addBacklink(urlFrom, siteHost, null);
       const after = store.backlinkSummary().tracked;

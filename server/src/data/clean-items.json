@@ -1883,5 +1883,751 @@
       "Navigate to C:\\Windows\\System32\\SleepStudy as Administrator.",
       "Remove old archived .etl trace files."
     ]
+  },
+  {
+    "slug": "ollama-models-blob-cache",
+    "category": "app",
+    "name": "Ollama Local LLM Models & Orphaned Blob Cache",
+    "path": "%UserProfile%\\.ollama\\models\\blobs",
+    "safeToDelete": true,
+    "avgSpace": "8.0 GB – 65.0 GB",
+    "whatIsIt": "Ollama stores quantized GGUF large language model weights and orphaned layer blobs from interrupted pulls or old model versions on your C: drive.",
+    "whatHappens": "Removing unused model blobs frees massive SSD space immediately. Models you still use can be re-pulled anytime with 'ollama pull'.",
+    "manualSteps": [
+      "Open Windows Terminal and run 'ollama list' to inspect installed local models.",
+      "Remove unused models with 'ollama rm <model-name>', or quit the Ollama tray app.",
+      "Press Windows Key + R, type %userprofile%\\.ollama\\models\\blobs, and delete orphaned blob files."
+    ]
+  },
+  {
+    "slug": "lm-studio-models-cache",
+    "category": "app",
+    "name": "LM Studio GGUF Model Cache & Temp Downloads",
+    "path": "%UserProfile%\\.cache\\lm-studio\\models",
+    "safeToDelete": true,
+    "avgSpace": "10.0 GB – 80.0 GB",
+    "whatIsIt": "LM Studio downloads multi-gigabyte HuggingFace GGUF model checkpoints and temporary partial downloads into your user cache folder.",
+    "whatHappens": "Deleting unused model folders reclaims tens of gigabytes of SSD space without affecting your LM Studio presets or chat history.",
+    "manualSteps": [
+      "Close LM Studio completely.",
+      "Press Windows Key + R, type %userprofile%\\.cache\\lm-studio\\models, and press Enter.",
+      "Delete any publisher/model folders you no longer actively run."
+    ]
+  },
+  {
+    "slug": "huggingface-hub-cache",
+    "category": "app",
+    "name": "HuggingFace Hub Transformers & Diffusers Cache",
+    "path": "%UserProfile%\\.cache\\huggingface\\hub",
+    "safeToDelete": true,
+    "avgSpace": "5.0 GB – 50.0 GB",
+    "whatIsIt": "Python AI tools, Diffusers, and Transformers cache every downloaded safetensors checkpoint and tokenizer snapshot inside .cache\\huggingface\\hub.",
+    "whatHappens": "Safely reclaims disk space from old model revisions and unused AI weights. Active Python scripts will automatically re-download only what they need.",
+    "manualSteps": [
+      "Close any running Python or AI generation terminals.",
+      "Press Windows Key + R, type %userprofile%\\.cache\\huggingface\\hub, and press Enter.",
+      "Delete old 'models--*' directories or temp download lock files."
+    ]
+  },
+  {
+    "slug": "comfyui-temp-output-cache",
+    "category": "app",
+    "name": "ComfyUI Temporary Preview & Latent Cache",
+    "path": "C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 18.0 GB",
+    "whatIsIt": "ComfyUI writes uncompressed PNG step previews, intermediate workflow latents, and video frame sequences during image and video generation.",
+    "whatHappens": "Clears temporary generation clutter without touching your saved workflows, custom nodes, or final output images.",
+    "manualSteps": [
+      "Stop the ComfyUI server process.",
+      "Open your ComfyUI installation folder and navigate to the 'temp' subfolder.",
+      "Select all temporary preview files (Ctrl+A) and delete them."
+    ]
+  },
+  {
+    "slug": "pytorch-torch-hub-cache",
+    "category": "app",
+    "name": "PyTorch Torch Hub & CUDA Inductors Cache",
+    "path": "%LocalAppData%\\Temp\\torchinductor_%USERNAME% and %UserProfile%\\.cache\\torch",
+    "safeToDelete": true,
+    "avgSpace": "2.5 GB – 16.0 GB",
+    "whatIsIt": "PyTorch caches compiled Triton/CUDA kernels, TorchVision pretrained weights, and C++ extension build artifacts.",
+    "whatHappens": "Reclaims gigabytes of SSD space. PyTorch simply recompiles active kernels on the next run.",
+    "manualSteps": [
+      "Close active Python processes.",
+      "Open %userprofile%\\.cache\\torch\\hub\\checkpoints in File Explorer.",
+      "Delete old .pth and .pt weight files that are no longer needed."
+    ]
+  },
+  {
+    "slug": "cursor-ai-editor-cache",
+    "category": "app",
+    "name": "Cursor AI Code Editor Cache & Codebase Index Bloat",
+    "path": "%AppData%\\Cursor\\Cache and %AppData%\\Cursor\\CachedData",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 9.0 GB",
+    "whatIsIt": "Cursor stores Chromium GPU caches, V8 bytecode snapshots, and old VSIX extension installers in your Roaming AppData folder.",
+    "whatHappens": "Frees up several gigabytes of C: drive space while keeping all your extensions, keybindings, and AI settings intact.",
+    "manualSteps": [
+      "Close Cursor completely.",
+      "Press Windows Key + R, type %appdata%\\Cursor, and press Enter.",
+      "Delete the 'Cache', 'CachedData', 'CachedExtensionVSIXs', and 'GPUCache' folders."
+    ]
+  },
+  {
+    "slug": "unity-gi-package-cache",
+    "category": "app",
+    "name": "Unity Global Illumination (GI) & Asset Store Cache",
+    "path": "%LocalAppData%\\Unity\\cache and %AppData%\\Unity\\Asset Store-5.x",
+    "safeToDelete": true,
+    "avgSpace": "4.0 GB – 25.0 GB",
+    "whatIsIt": "Unity Editor caches baked Global Illumination lighting data, UPM package tarballs, and downloaded Asset Store packages on your system drive.",
+    "whatHappens": "Reclaims gigabytes of SSD space without modifying your Unity project scenes, scripts, or prefabs.",
+    "manualSteps": [
+      "Close Unity Editor and Unity Hub.",
+      "Navigate to %localappdata%\\Unity\\cache\\packages and %localappdata%\\Unity\\cache\\npm.",
+      "Delete old cached package folders to reclaim space."
+    ]
+  },
+  {
+    "slug": "call-of-duty-hq-shader-cache",
+    "category": "app",
+    "name": "Call of Duty HQ & Warzone Pre-Compiled Shader Cache",
+    "path": "%LocalAppData%\\Activision\\Call of Duty\\shadercache",
+    "safeToDelete": true,
+    "avgSpace": "3.0 GB – 14.0 GB",
+    "whatIsIt": "Call of Duty HQ and Warzone store multi-gigabyte DirectX 12 shader packs that grow after every seasonal update and GPU driver change.",
+    "whatHappens": "Frees disk space and fixes post-update stuttering or packet-burst hitching by forcing a clean shader optimization on next launch.",
+    "manualSteps": [
+      "Exit Call of Duty completely.",
+      "Press Windows Key + R, type %localappdata%\\Activision\\Call of Duty\\shadercache, and hit Enter.",
+      "Delete all files inside the shadercache directory."
+    ]
+  },
+  {
+    "slug": "fortnite-d3d12-shader-cache",
+    "category": "app",
+    "name": "Fortnite DirectX 12 Pipeline & Cosmetics Stream Cache",
+    "path": "%LocalAppData%\\FortniteGame\\Saved\\Cloud and %LocalAppData%\\FortniteGame\\Saved\\Logs",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 11.0 GB",
+    "whatIsIt": "Fortnite caches streamed high-resolution cosmetic textures, replay recordings, crash dumps, and DirectX 12 PSO shader caches.",
+    "whatHappens": "Reclaims wasted C: drive space and resolves DX12 shader stutter without affecting your Epic account or keybinds.",
+    "manualSteps": [
+      "Close Fortnite and Epic Games Launcher.",
+      "Press Windows Key + R, type %localappdata%\\FortniteGame\\Saved, and press Enter.",
+      "Clear the 'Logs', 'Crashes', and old 'Demos' replay files."
+    ]
+  },
+  {
+    "slug": "vrchat-avatar-world-cache",
+    "category": "app",
+    "name": "VRChat Downloaded World & Avatar Cache",
+    "path": "%AppData%\\..\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer",
+    "safeToDelete": true,
+    "avgSpace": "10.0 GB – 30.0 GB",
+    "whatIsIt": "VRChat downloads every custom 3D world and user avatar you encounter into LocalLow\\VRChat, rapidly consuming 20GB+ on your C: drive.",
+    "whatHappens": "Immediately frees 10–30 GB of SSD space. VRChat will only re-download worlds and avatars you visit in future sessions.",
+    "manualSteps": [
+      "Exit VRChat.",
+      "Press Windows Key + R, type %userprofile%\\AppData\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer, and hit Enter.",
+      "Select all cached folders and delete them."
+    ]
+  },
+  {
+    "slug": "fivem-citizenfx-priv-cache",
+    "category": "app",
+    "name": "FiveM GTA V Server Asset & Priv Cache",
+    "path": "%LocalAppData%\\FiveM\\FiveM.app\\data\\server-cache-priv",
+    "safeToDelete": true,
+    "avgSpace": "6.0 GB – 35.0 GB",
+    "whatIsIt": "FiveM caches custom vehicles, MLO interiors, clothing packs, and scripts from every RP server you have ever joined.",
+    "whatHappens": "Frees tens of gigabytes of SSD space and fixes FiveM texture loss or crash-on-join issues.",
+    "manualSteps": [
+      "Close FiveM.",
+      "Open %localappdata%\\FiveM\\FiveM.app\\data in File Explorer.",
+      "Delete the 'cache', 'server-cache', and 'server-cache-priv' folders (do NOT delete 'game-storage')."
+    ]
+  },
+  {
+    "slug": "windows-11-24h2-checkpoint-cache",
+    "category": "folder",
+    "name": "Windows 11 24H2 Cumulative Checkpoint Update Cache",
+    "path": "C:\\Windows\\SoftwareDistribution\\Download",
+    "safeToDelete": true,
+    "avgSpace": "4.0 GB – 16.0 GB",
+    "whatIsIt": "Windows 11 24H2 stores differential checkpoint update payloads and uncompressed cab/msu staging files in SoftwareDistribution\\Download.",
+    "whatHappens": "Safely reclaims gigabytes of C: drive space after updates finish installing and resolves stuck Windows Update error codes.",
+    "manualSteps": [
+      "Open Terminal (Admin) and run: net stop wuauserv",
+      "Open C:\\Windows\\SoftwareDistribution\\Download and delete all files inside.",
+      "Restart the Windows Update service with: net start wuauserv"
+    ]
+  },
+  {
+    "slug": "programdata-package-cache",
+    "category": "folder",
+    "name": "Windows ProgramData Package Cache (Visual C++ & MSI Duplicates)",
+    "path": "C:\\ProgramData\\Package Cache",
+    "safeToDelete": false,
+    "warning": "Deleting active installer caches manually can prevent Visual Studio or WiX MSI apps from repairing or uninstalling cleanly. Use SWEEPR Cleaner to target only orphaned caches.",
+    "avgSpace": "3.0 GB – 18.0 GB",
+    "whatIsIt": "Burn/WiX installers (Visual C++ Redistributables, Visual Studio, Python, Node.js) keep duplicate .msi and .cab copies inside C:\\ProgramData\\Package Cache.",
+    "whatHappens": "Removing orphaned caches from already-uninstalled software reclaims gigabytes while preserving active uninstaller metadata.",
+    "manualSteps": [
+      "Open Settings > Apps > Installed Apps and uninstall old SDKs or redistributables first.",
+      "Inspect C:\\ProgramData\\Package Cache sorted by Date Modified.",
+      "Use SWEEPR Cleaner's Uninstaller Leftovers scan to safely remove only orphaned package folders."
+    ]
+  },
+  {
+    "slug": "windows-search-edb-index",
+    "category": "folder",
+    "name": "Windows Search Index Database (Windows.edb / Windows.db)",
+    "path": "C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows",
+    "safeToDelete": true,
+    "avgSpace": "2.5 GB – 25.0 GB",
+    "whatIsIt": "The Windows Search service maintains an indexed database (Windows.edb or Windows.db) that can balloon to 20GB+ due to file churn and Outlook mail indexing.",
+    "whatHappens": "Stopping the WSearch service and rebuilding the index shrinks the database by up to 85% without losing a single personal file.",
+    "manualSteps": [
+      "Open Terminal (Admin) and run: net stop WSearch",
+      "Delete Windows.edb / Windows.db inside C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows.",
+      "Run: net start WSearch to rebuild a compact, fast search index."
+    ]
+  },
+  {
+    "slug": "windows-system32-driverstore-temp",
+    "name": "Windows DriverStore Temp & Superseded OEM Packages",
+    "path": "C:\\Windows\\System32\\DriverStore\\Temp",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 9.5 GB",
+    "whatIsIt": "Windows stages extracted GPU, chipset, and audio driver packages in DriverStore\\Temp during device installation and Windows Update.",
+    "whatHappens": "Deleting leftover staging files in DriverStore\\Temp frees C: drive space without affecting your currently active hardware drivers.",
+    "manualSteps": [
+      "Open Windows Terminal as Administrator.",
+      "Run 'pnputil /enum-drivers' to inspect installed third-party OEM driver packages.",
+      "Clear C:\\Windows\\System32\\DriverStore\\Temp or use SWEEPR Cleaner to safely purge superseded driver staging files."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "windows-logs-cbs-persist",
+    "name": "Windows CBS (Component-Based Servicing) Persist Logs",
+    "path": "C:\\Windows\\Logs\\CBS",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 7.5 GB",
+    "whatIsIt": "The Windows Modules Installer (TrustedInstaller) writes multi-gigabyte CBS.log and CbsPersist_*.log archives during cumulative updates.",
+    "whatHappens": "Safely reclaims gigabytes of SSD space when CbsPersist log archives grow bloated.",
+    "manualSteps": [
+      "Press Windows Key + X and select Terminal (Admin).",
+      "Stop the Windows Modules Installer service with: net stop TrustedInstaller",
+      "Open C:\\Windows\\Logs\\CBS and delete old CbsPersist_*.log and .cab files."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "localappdata-d3dscache-directx",
+    "name": "DirectX D3DSCache Shader Cache (%LocalAppData%\\D3DSCache)",
+    "path": "%LocalAppData%\\D3DSCache",
+    "safeToDelete": true,
+    "avgSpace": "1.2 GB – 8.0 GB",
+    "whatIsIt": "Windows DirectX 11 and DirectX 12 compile and store hardware shader bytecode in %LocalAppData%\\D3DSCache for games and desktop apps.",
+    "whatHappens": "Safely frees disk space and fixes corrupted shader stuttering after a GPU driver update.",
+    "manualSteps": [
+      "Close all running games and 3D applications.",
+      "Press Windows Key + R, type %localappdata%\\D3DSCache, and press Enter.",
+      "Select all folders (Ctrl+A) and delete them."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "localappdata-crashdumps-wer",
+    "name": "Windows Application User-Mode CrashDumps (%LocalAppData%\\CrashDumps)",
+    "path": "%LocalAppData%\\CrashDumps",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 14.0 GB",
+    "whatIsIt": "Windows Error Reporting saves full or mini memory dumps (.dmp) in %LocalAppData%\\CrashDumps whenever an app or game crashes.",
+    "whatHappens": "Immediately frees gigabytes of wasted SSD space with zero impact on your installed programs.",
+    "manualSteps": [
+      "Press Windows Key + R, type %localappdata%\\CrashDumps, and press Enter.",
+      "Select all .dmp crash dump files (Ctrl+A) and press Shift + Delete."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "localappdata-squirreltemp-installers",
+    "name": "SquirrelTemp Leftover App Update Packages (%LocalAppData%\\SquirrelTemp)",
+    "path": "%LocalAppData%\\SquirrelTemp",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 6.5 GB",
+    "whatIsIt": "Desktop apps built with Squirrel (Discord, Slack, Postman, Teams, WhatsApp) leave behind full .nupkg installer packages in SquirrelTemp.",
+    "whatHappens": "Safely deletes leftover update installers without affecting the installed applications.",
+    "manualSteps": [
+      "Press Windows Key + R, type %localappdata%\\SquirrelTemp, and press Enter.",
+      "Delete all temporary .nupkg packages and staging folders."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "localappdata-webview2-ebwebview-cache",
+    "name": "Microsoft Edge WebView2 Shared Runtime Cache (EBWebView)",
+    "path": "%LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 9.0 GB",
+    "whatIsIt": "Windows 11 widgets, Microsoft 365 apps, and modern desktop utilities embed Edge WebView2, accumulating gigabytes of cached web data.",
+    "whatHappens": "Reclaims hidden SSD space while keeping Windows Widgets and Office add-ins working normally.",
+    "manualSteps": [
+      "Close Widgets and Office apps.",
+      "Navigate to %localappdata%\\Microsoft\\EdgeWebView\\User Data\\Default.",
+      "Delete the 'Cache', 'Code Cache', and 'GPUCache' folders."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "programdata-windows-defender-scans-history",
+    "name": "Microsoft Defender Protection & Scan History Cache",
+    "path": "C:\\ProgramData\\Microsoft\\Windows Defender\\Scans\\History\\Service",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Microsoft Defender Antivirus logs historical scan results and quarantined detection metadata inside ProgramData\\Microsoft\\Windows Defender.",
+    "whatHappens": "Clears old detection history logs and reclaims disk space while keeping real-time antivirus protection active.",
+    "manualSteps": [
+      "Open Windows Security > Virus & threat protection > Protection history.",
+      "Or use SWEEPR Cleaner to clear expired scan log caches older than 30 days."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "windows-livekernelreports-watchdog-dumps",
+    "name": "Windows LiveKernelReports & GPU Watchdog Dumps",
+    "path": "C:\\Windows\\LiveKernelReports",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 12.0 GB",
+    "whatIsIt": "When a display driver or USB controller resets without a full blue screen, Windows writes huge kernel memory dumps into C:\\Windows\\LiveKernelReports.",
+    "whatHappens": "Safely frees gigabytes of C: drive space from old TDR (Timeout Detection and Recovery) GPU dump files.",
+    "manualSteps": [
+      "Open File Explorer as Administrator and navigate to C:\\Windows\\LiveKernelReports.",
+      "Open the WATCHDOG subfolder and delete old .dmp files."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "localappdata-explorer-thumbcache-db",
+    "name": "Windows File Explorer Thumbnail & Icon Cache (thumbcache_*.db)",
+    "path": "%LocalAppData%\\Microsoft\\Windows\\Explorer",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 4.0 GB",
+    "whatIsIt": "File Explorer caches image, video, and document thumbnails inside thumbcache_256.db, thumbcache_1024.db, and iconcache_*.db.",
+    "whatHappens": "Frees disk space and fixes blank or corrupted desktop/folder icons. Windows automatically regenerates thumbnails for folders you open.",
+    "manualSteps": [
+      "Open Disk Cleanup (cleanmgr.exe) and check 'Thumbnails', or press Win + R and open %localappdata%\\Microsoft\\Windows\\Explorer.",
+      "Delete unlocked thumbcache_*.db files to refresh File Explorer thumbnails."
+    ],
+    "category": "folder"
+  },
+  {
+    "slug": "chrome-gpu-shader-cache",
+    "category": "app",
+    "name": "Google Chrome GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Google Chrome stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Google Chrome's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Google Chrome (verify chrome.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Google\\Chrome\\User Data\\Default and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "chrome-code-bytecode-cache",
+    "category": "app",
+    "name": "Google Chrome Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Google Chrome compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Google Chrome's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Google Chrome (verify chrome.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Google\\Chrome\\User Data\\Default and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "chrome-service-worker-cachestorage",
+    "category": "app",
+    "name": "Google Chrome Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Google Chrome quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Google Chrome's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Google Chrome (verify chrome.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Google\\Chrome\\User Data\\Default and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "chrome-crashpad-dump-logs",
+    "category": "app",
+    "name": "Google Chrome Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Google Chrome writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Google Chrome's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Google Chrome (verify chrome.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Google\\Chrome\\User Data\\Default and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "chrome-media-blob-storage",
+    "category": "app",
+    "name": "Google Chrome Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Google Chrome stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Google Chrome's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Google Chrome (verify chrome.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Google\\Chrome\\User Data\\Default and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "edge-gpu-shader-cache",
+    "category": "app",
+    "name": "Microsoft Edge GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Microsoft Edge stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Microsoft Edge's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Microsoft Edge (verify msedge.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "edge-code-bytecode-cache",
+    "category": "app",
+    "name": "Microsoft Edge Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Microsoft Edge compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Microsoft Edge's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Microsoft Edge (verify msedge.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "edge-service-worker-cachestorage",
+    "category": "app",
+    "name": "Microsoft Edge Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Microsoft Edge quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Microsoft Edge's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Microsoft Edge (verify msedge.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "edge-crashpad-dump-logs",
+    "category": "app",
+    "name": "Microsoft Edge Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Microsoft Edge writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Microsoft Edge's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Microsoft Edge (verify msedge.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "edge-media-blob-storage",
+    "category": "app",
+    "name": "Microsoft Edge Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Microsoft Edge stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Microsoft Edge's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Microsoft Edge (verify msedge.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "brave-gpu-shader-cache",
+    "category": "app",
+    "name": "Brave Browser GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Brave Browser stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Brave Browser's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Brave Browser (verify brave.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "brave-code-bytecode-cache",
+    "category": "app",
+    "name": "Brave Browser Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Brave Browser compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Brave Browser's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Brave Browser (verify brave.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "brave-service-worker-cachestorage",
+    "category": "app",
+    "name": "Brave Browser Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Brave Browser quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Brave Browser's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Brave Browser (verify brave.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "brave-crashpad-dump-logs",
+    "category": "app",
+    "name": "Brave Browser Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Brave Browser writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Brave Browser's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Brave Browser (verify brave.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "brave-media-blob-storage",
+    "category": "app",
+    "name": "Brave Browser Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Brave Browser stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Brave Browser's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Brave Browser (verify brave.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "opera-gx-gpu-shader-cache",
+    "category": "app",
+    "name": "Opera GX Gaming Browser GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Opera Software\\Opera GX Stable\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Opera GX Gaming Browser stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Opera GX Gaming Browser's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Opera GX Gaming Browser (verify opera.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "opera-gx-code-bytecode-cache",
+    "category": "app",
+    "name": "Opera GX Gaming Browser Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Opera Software\\Opera GX Stable\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Opera GX Gaming Browser compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Opera GX Gaming Browser's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Opera GX Gaming Browser (verify opera.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "opera-gx-service-worker-cachestorage",
+    "category": "app",
+    "name": "Opera GX Gaming Browser Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Opera GX Gaming Browser quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Opera GX Gaming Browser's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Opera GX Gaming Browser (verify opera.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "opera-gx-crashpad-dump-logs",
+    "category": "app",
+    "name": "Opera GX Gaming Browser Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Opera Software\\Opera GX Stable\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Opera GX Gaming Browser writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Opera GX Gaming Browser's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Opera GX Gaming Browser (verify opera.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "opera-gx-media-blob-storage",
+    "category": "app",
+    "name": "Opera GX Gaming Browser Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Opera GX Gaming Browser stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Opera GX Gaming Browser's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Opera GX Gaming Browser (verify opera.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vivaldi-gpu-shader-cache",
+    "category": "app",
+    "name": "Vivaldi Browser GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Vivaldi\\User Data\\Default\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Vivaldi Browser stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Vivaldi Browser's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Vivaldi Browser (verify vivaldi.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Vivaldi\\User Data\\Default and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vivaldi-code-bytecode-cache",
+    "category": "app",
+    "name": "Vivaldi Browser Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Vivaldi\\User Data\\Default\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Vivaldi Browser compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Vivaldi Browser's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Vivaldi Browser (verify vivaldi.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Vivaldi\\User Data\\Default and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vivaldi-service-worker-cachestorage",
+    "category": "app",
+    "name": "Vivaldi Browser Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Vivaldi\\User Data\\Default\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Vivaldi Browser quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Vivaldi Browser's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Vivaldi Browser (verify vivaldi.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Vivaldi\\User Data\\Default and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vivaldi-crashpad-dump-logs",
+    "category": "app",
+    "name": "Vivaldi Browser Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Vivaldi\\User Data\\Default\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Vivaldi Browser writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Vivaldi Browser's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Vivaldi Browser (verify vivaldi.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Vivaldi\\User Data\\Default and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vivaldi-media-blob-storage",
+    "category": "app",
+    "name": "Vivaldi Browser Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Vivaldi\\User Data\\Default\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Vivaldi Browser stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Vivaldi Browser's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Vivaldi Browser (verify vivaldi.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Vivaldi\\User Data\\Default and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "arc-browser-gpu-shader-cache",
+    "category": "app",
+    "name": "Arc Browser for Windows GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Arc Browser for Windows stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Arc Browser for Windows's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "arc-browser-code-bytecode-cache",
+    "category": "app",
+    "name": "Arc Browser for Windows Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Arc Browser for Windows compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Arc Browser for Windows's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

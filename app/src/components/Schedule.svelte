@@ -18,6 +18,7 @@
   let saving = $state(false);
   let runningNow = $state(false);
   let autostart = $state(false);
+  let showCustomCategories = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
   let rules = $state<RuleDefinitionInfo[]>([]);
@@ -30,11 +31,14 @@
     day_of_month: 1,
     action: "scan_and_clean",
     categories: [],
+    sync_cloud_backups: false,
     os_task_registered: false,
     last_run_at: null,
     last_bytes_found: null,
     last_bytes_freed: null,
     last_files_removed: null,
+    last_cloud_files_synced: null,
+    last_cloud_bytes_synced: null,
   });
 
   const DAYS_OF_WEEK = [
@@ -55,6 +59,9 @@
         api.getAutostart().catch(() => false),
       ]);
       rules = loadedRules;
+      if (loadedCfg.categories.length === 0 && loadedRules.length > 0) {
+        loadedCfg.categories = loadedRules.map((r) => r.id);
+      }
       config = loadedCfg;
       autostart = auto;
     } catch (e) {
@@ -74,8 +81,8 @@
     try {
       autostart = await api.setAutostart(next);
       notice = autostart
-        ? "SWEEPR Cleaner will now launch automatically at Windows sign-in."
-        : "Windows sign-in autostart disabled.";
+        ? "SWEEPR will now start automatically when you sign in to Windows."
+        : "Automatic startup at Windows sign-in turned off.";
     } catch (e) {
       if (inputEl) inputEl.checked = autostart;
       if (isPaymentRequired(e)) requestActivation();
@@ -83,24 +90,64 @@
     }
   }
 
-  function isCatSelected(id: string): boolean {
-    return config.categories.includes(id);
+  type SimpleGroupId = "system" | "browsers" | "apps" | "recycle";
+
+  const SIMPLE_GROUPS: {
+    id: SimpleGroupId;
+    title: string;
+    description: string;
+    match: (r: RuleDefinitionInfo) => boolean;
+  }[] = [
+    {
+      id: "system",
+      title: "Windows & System Temp Files",
+      description: "Old update leftovers, crash logs, and Windows temporary files",
+      match: (r) =>
+        /temp|log|crash|update|prefetch|thumb|font|dns|shader|memory_dump|windows/i.test(r.id) &&
+        !/recycle|download/i.test(r.id),
+    },
+    {
+      id: "browsers",
+      title: "Web Browser Caches",
+      description: "Temporary web files from Chrome, Edge, Brave, and Firefox (keeps your passwords & history)",
+      match: (r) => /chrome|edge|brave|firefox|opera|vivaldi|safari|browser/i.test(r.id),
+    },
+    {
+      id: "apps",
+      title: "App & Game Temporary Files",
+      description: "Leftover caches from Discord, Teams, Steam, Spotify, and everyday apps",
+      match: (r) =>
+        !/temp|log|crash|update|prefetch|thumb|font|dns|shader|memory_dump|windows|chrome|edge|brave|firefox|opera|vivaldi|safari|browser|recycle|download/i.test(
+          r.id
+        ),
+    },
+    {
+      id: "recycle",
+      title: "Recycle Bin & Old Downloads",
+      description: "Empties the Recycle Bin and clears leftover installer files",
+      match: (r) => /recycle|download|installer/i.test(r.id),
+    },
+  ];
+
+  function groupRuleIds(group: (typeof SIMPLE_GROUPS)[number]): string[] {
+    const matched = rules.filter(group.match).map((r) => r.id);
+    return matched;
   }
 
-  function toggleCategory(id: string) {
-    if (config.categories.includes(id)) {
-      config.categories = config.categories.filter((c) => c !== id);
+  function isGroupSelected(group: (typeof SIMPLE_GROUPS)[number]): boolean {
+    const ids = groupRuleIds(group);
+    if (ids.length === 0) return false;
+    return ids.some((id) => config.categories.includes(id));
+  }
+
+  function toggleGroup(group: (typeof SIMPLE_GROUPS)[number]) {
+    const ids = groupRuleIds(group);
+    if (isGroupSelected(group)) {
+      config.categories = config.categories.filter((id) => !ids.includes(id));
     } else {
-      config.categories = [...config.categories, id];
+      const set = new Set([...config.categories, ...ids]);
+      config.categories = Array.from(set);
     }
-  }
-
-  function selectAllCategories() {
-    config.categories = rules.map((r) => r.id);
-  }
-
-  function clearAllCategories() {
-    config.categories = [];
   }
 
   async function saveSchedule() {
@@ -115,9 +162,9 @@
       const updated = await api.saveScheduleConfig(config);
       config = updated;
       if (updated.enabled) {
-        notice = "Schedule saved and registered with Windows Task Scheduler.";
+        notice = "Auto-Clean schedule saved! Your PC will be cleaned automatically in the background.";
       } else {
-        notice = "Scheduled background runs have been disabled.";
+        notice = "Auto-Clean schedule turned off.";
       }
     } catch (e) {
       error = errorMessage(e);
@@ -143,14 +190,10 @@
           updated.last_bytes_freed ?? 0,
           updated.last_files_removed ?? 0,
           updated.categories,
-          "Scheduled Auto-Clean"
+          "Auto-Clean"
         );
       }
-      if (config.action === "scan_and_clean") {
-        notice = `Scheduled clean completed: ${formatBytes(updated.last_bytes_freed ?? 0)} freed (${formatCount(updated.last_files_removed ?? 0)} files removed).`;
-      } else {
-        notice = `Scheduled scan completed: ${formatBytes(updated.last_bytes_found ?? 0)} found across selected categories.`;
-      }
+      notice = `Auto-Clean finished: ${formatBytes(updated.last_bytes_freed ?? 0)} freed (${formatCount(updated.last_files_removed ?? 0)} files removed).`;
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -165,27 +208,6 @@
 </script>
 
 <div class="schedule-container">
-  <div class="header-row">
-    <div>
-      <h1 class="page-title">Auto-Clean & Schedule</h1>
-      <p class="muted small" style="margin: 4px 0 0 0;">
-        Keep your PC clean automatically with background scheduled maintenance and Windows sign-in autostart.
-      </p>
-    </div>
-    <div class="status-pill-wrap" style="display: flex; align-items: center; gap: 8px;">
-      {#if !license?.active}
-        <span class="badge pro">Pro</span>
-      {/if}
-      {#if config.enabled && config.os_task_registered && license?.active}
-        <span class="badge free">Active in Background</span>
-      {:else if config.enabled && license?.active}
-        <span class="badge pro">Unsaved Changes</span>
-      {:else}
-        <span class="badge muted-badge">Schedule Off</span>
-      {/if}
-    </div>
-  </div>
-
   {#if error}
     <div class="card banner error-banner">
       <span>{error}</span>
@@ -198,60 +220,112 @@
     </div>
   {/if}
 
-  <div class="schedule-grid">
-    <!-- Left Column: Schedule & Startup Configuration -->
-    <div class="card config-card">
-      <div class="row enable-row">
-        <div>
-          <strong style="font-size: 14.5px;">Scheduled Background Cleaning</strong>
-          <div class="muted small" style="margin-top: 2px;">
-            Runs automatically via Windows Task Scheduler even when the app is closed
-          </div>
+  <div class="card config-card">
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="margin: 0; font-size: 19px;">Automatic Background Cleaning</h2>
+        <p class="muted small" style="margin: 4px 0 0 0;">
+          Let SWEEPR keep your PC clean and backed up automatically without you lifting a finger.
+        </p>
+      </div>
+      {#if config.enabled && config.os_task_registered && license?.active}
+        <span class="badge free">Auto-Clean On</span>
+      {:else}
+        <span class="badge muted-badge">Auto-Clean Off</span>
+      {/if}
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 1. Clean automatically -->
+    <div class="row enable-row">
+      <div>
+        <strong style="font-size: 14.5px;">Clean my PC automatically in the background</strong>
+        <div class="muted small" style="margin-top: 2px;">
+          Safely clears unneeded temporary files and caches on your schedule, even when SWEEPR is closed
         </div>
-        <label class="switch">
-          <input
-            type="checkbox"
-            checked={config.enabled && !!license?.active}
-            onchange={(e) => {
-              const target = e.currentTarget as HTMLInputElement;
-              if (!license?.active) {
-                target.checked = false;
-                config.enabled = false;
+      </div>
+      <label class="switch">
+        <input
+          type="checkbox"
+          checked={config.enabled && !!license?.active}
+          onchange={(e) => {
+            const target = e.currentTarget as HTMLInputElement;
+            if (!license?.active) {
+              target.checked = false;
+              config.enabled = false;
+              requestActivation();
+              return;
+            }
+            config.enabled = target.checked;
+          }}
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- 2. Start with Windows -->
+    <div class="row enable-row">
+      <div>
+        <strong style="font-size: 14.5px;">Open SWEEPR when I sign in to Windows</strong>
+        <div class="muted small" style="margin-top: 2px;">
+          Starts SWEEPR automatically whenever you turn on your PC
+        </div>
+      </div>
+      <label class="switch">
+        <input
+          type="checkbox"
+          checked={autostart && !!license?.active}
+          onchange={(e) => {
+            const target = e.currentTarget as HTMLInputElement;
+            toggleAutostart(target.checked, target);
+          }}
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- 3. Automatic Cloud Backup -->
+    <div class="row enable-row">
+      <div>
+        <strong style="font-size: 14.5px;">Back up my protected cloud folders automatically</strong>
+        <div class="muted small" style="margin-top: 2px;">
+          Copies new files in your Cloud Backup folders whenever this schedule runs
+        </div>
+      </div>
+      <label class="switch">
+        <input
+          type="checkbox"
+          checked={Boolean(config.sync_cloud_backups) &&
+            Boolean(license?.dev_unlock || (license?.active && license?.addons?.includes("cloud_vault")))}
+          onchange={(e) => {
+            const target = e.currentTarget as HTMLInputElement;
+            const hasCloudAddon = Boolean(
+              license?.dev_unlock || (license?.active && license?.addons?.includes("cloud_vault"))
+            );
+            if (!hasCloudAddon) {
+              target.checked = false;
+              config.sync_cloud_backups = false;
+              if (license?.active) {
+                api.startAddonCheckout("cloud_vault").catch(() => requestActivation());
+              } else {
                 requestActivation();
-                return;
               }
-              config.enabled = target.checked;
-            }}
-          />
-          <span class="slider"></span>
-        </label>
-      </div>
+              return;
+            }
+            config.sync_cloud_backups = target.checked;
+          }}
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
 
-      <div class="row enable-row">
-        <div>
-          <strong style="font-size: 14.5px;">Launch at Windows Sign-In</strong>
-          <div class="muted small" style="margin-top: 2px;">
-            Start SWEEPR Cleaner automatically when you log in to Windows
-          </div>
-        </div>
-        <label class="switch">
-          <input
-            type="checkbox"
-            checked={autostart && !!license?.active}
-            onchange={(e) => {
-              const target = e.currentTarget as HTMLInputElement;
-              toggleAutostart(target.checked, target);
-            }}
-          />
-          <span class="slider"></span>
-        </label>
-      </div>
+    <div class="divider"></div>
 
-      <div class="divider"></div>
-
-      <!-- Frequency & Time -->
-      <div class="field-group">
-        <span class="field-label">SCHEDULE FREQUENCY</span>
+    <!-- Frequency & Time -->
+    <div class="row time-row">
+      <div class="field-group" style="flex: 1.4;">
+        <span class="field-label">HOW OFTEN?</span>
         <div class="segmented-pills">
           <button
             type="button"
@@ -259,7 +333,7 @@
             class:active={config.frequency === "daily"}
             onclick={() => (config.frequency = "daily")}
           >
-            Daily
+            Every Day
           </button>
           <button
             type="button"
@@ -267,7 +341,7 @@
             class:active={config.frequency === "weekly"}
             onclick={() => (config.frequency = "weekly")}
           >
-            Weekly
+            Every Week
           </button>
           <button
             type="button"
@@ -275,174 +349,120 @@
             class:active={config.frequency === "monthly"}
             onclick={() => (config.frequency = "monthly")}
           >
-            Monthly
+            Every Month
           </button>
         </div>
       </div>
 
-      <div class="row time-row">
-        <div class="field-group" style="flex: 1;">
-          <label class="field-label" for="sched-time">TIME OF DAY</label>
+      <div class="field-group" style="flex: 0.8;">
+        <label class="field-label" for="sched-time">TIME OF DAY</label>
+        <input id="sched-time" type="time" class="input-control" bind:value={config.time} />
+      </div>
+
+      {#if config.frequency === "weekly"}
+        <div class="field-group" style="flex: 0.8;">
+          <label class="field-label" for="sched-dow">DAY OF WEEK</label>
+          <select id="sched-dow" class="input-control" bind:value={config.day_of_week}>
+            {#each DAYS_OF_WEEK as d}
+              <option value={d.code}>{d.label}</option>
+            {/each}
+          </select>
+        </div>
+      {:else if config.frequency === "monthly"}
+        <div class="field-group" style="flex: 0.8;">
+          <label class="field-label" for="sched-dom">DAY OF MONTH (1–28)</label>
           <input
-            id="sched-time"
-            type="time"
+            id="sched-dom"
+            type="number"
+            min="1"
+            max="28"
             class="input-control"
-            bind:value={config.time}
+            bind:value={config.day_of_month}
           />
-        </div>
-
-        {#if config.frequency === "weekly"}
-          <div class="field-group" style="flex: 1;">
-            <label class="field-label" for="sched-dow">DAY OF WEEK</label>
-            <select id="sched-dow" class="input-control" bind:value={config.day_of_week}>
-              {#each DAYS_OF_WEEK as d}
-                <option value={d.code}>{d.label}</option>
-              {/each}
-            </select>
-          </div>
-        {:else if config.frequency === "monthly"}
-          <div class="field-group" style="flex: 1;">
-            <label class="field-label" for="sched-dom">DAY OF MONTH (1–28)</label>
-            <input
-              id="sched-dom"
-              type="number"
-              min="1"
-              max="28"
-              class="input-control"
-              bind:value={config.day_of_month}
-            />
-          </div>
-        {/if}
-      </div>
-
-      <!-- Action Mode -->
-      <div class="field-group">
-        <span class="field-label">ACTION WHEN SCHEDULE RUNS</span>
-        <div class="segmented-pills two-col">
-          <button
-            type="button"
-            class="pill-btn"
-            class:active={config.action === "scan_and_clean"}
-            onclick={() => (config.action = "scan_and_clean")}
-          >
-            Scan &amp; Auto-Clean
-          </button>
-          <button
-            type="button"
-            class="pill-btn"
-            class:active={config.action === "scan_only"}
-            onclick={() => (config.action = "scan_only")}
-          >
-            Scan Only (Report)
-          </button>
-        </div>
-      </div>
-
-      <div class="row cta-row">
-        <button class="primary save-btn" disabled={saving || loading} onclick={saveSchedule}>
-          {saving ? "Saving…" : "Save Schedule"}
-        </button>
-        <button class="ghost run-now-btn" disabled={runningNow || loading} onclick={triggerNow}>
-          {runningNow ? "Running…" : "Run Now"}
-        </button>
-      </div>
-
-      {#if config.last_run_at}
-        <div class="last-run-box">
-          <div class="field-label">LAST SCHEDULED RUN</div>
-          <div class="row" style="justify-content: space-between; margin-top: 4px; flex-wrap: wrap;">
-            <span class="small">{formatTimestamp(config.last_run_at)}</span>
-            <span class="small">
-              Found: <strong>{formatBytes(config.last_bytes_found ?? 0)}</strong>
-              · Cleaned: <strong style="color: var(--accent);">{formatBytes(config.last_bytes_freed ?? 0)}</strong>
-            </span>
-          </div>
         </div>
       {/if}
     </div>
 
-    <!-- Right Column: Categories to Include -->
-    <div class="card categories-card">
-      <div class="row" style="justify-content: space-between; margin-bottom: 4px;">
-        <div>
-          <div class="field-label">INCLUDED CLEANUP AREAS ({config.categories.length}/{rules.length})</div>
-          <div class="muted small">Categories cleaned during scheduled runs</div>
-        </div>
-        <div class="row" style="gap: 6px;">
-          <button type="button" class="ghost mini-btn" onclick={selectAllCategories}>All</button>
-          <button type="button" class="ghost mini-btn" onclick={clearAllCategories}>None</button>
-        </div>
-      </div>
-
-      <div class="cat-list">
-        {#each [
-          {
-            group: "System & OS",
-            filter: (id: string) =>
-              ["temp", "logs", "thumbnails", "crash_dumps", "delivery_opt", "shader_cache", "trash", "downloads"].includes(id),
-          },
-          {
-            group: "Web Browsers",
-            filter: (id: string) => id.includes("browser") || ["chrome", "edge", "firefox", "brave", "opera"].some((b) => id.includes(b)),
-          },
-          {
-            group: "Developer, Creative & Apps",
-            filter: (id: string) =>
-              !["temp", "logs", "thumbnails", "crash_dumps", "delivery_opt", "shader_cache", "trash", "downloads"].includes(id) &&
-              !(id.includes("browser") || ["chrome", "edge", "firefox", "brave", "opera"].some((b) => id.includes(b))),
-          },
-        ] as section}
-          {@const groupRules = rules.filter((r) => section.filter(r.id))}
-          {#if groupRules.length > 0}
-            <div class="cat-group-header">{section.group}</div>
-            {#each groupRules as r (r.id)}
-              <label class="cat-row">
-                <input
-                  type="checkbox"
-                  checked={isCatSelected(r.id)}
-                  onchange={() => toggleCategory(r.id)}
-                />
-                <div class="cat-info">
-                  <strong class="small">{r.name}</strong>
-                  <div class="muted small" style="font-size: 11.5px;">{r.description}</div>
-                </div>
-              </label>
-            {/each}
-          {/if}
-        {/each}
-      </div>
+    <div class="row cta-row">
+      <button class="primary save-btn" disabled={saving || loading} onclick={saveSchedule}>
+        {saving ? "Saving…" : "Save Auto-Clean Settings"}
+      </button>
+      <button class="ghost run-now-btn" disabled={runningNow || loading} onclick={triggerNow}>
+        {runningNow ? "Cleaning Now…" : "Run Auto-Clean Right Now"}
+      </button>
+      <div class="spacer"></div>
+      <button
+        type="button"
+        class="ghost small-btn"
+        onclick={() => (showCustomCategories = !showCustomCategories)}
+      >
+        {showCustomCategories
+          ? "Hide cleanup areas"
+          : `Customize what gets cleaned (${config.categories.length} areas)`}
+      </button>
     </div>
+
+    {#if showCustomCategories}
+      <div class="custom-cats-box">
+        <div class="row" style="justify-content: space-between; margin-bottom: 8px;">
+          <strong class="small">Choose what Auto-Clean should clean</strong>
+          <div class="row" style="gap: 6px;">
+            <button
+              type="button"
+              class="ghost small-btn"
+              onclick={() => (config.categories = rules.map((r) => r.id))}
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              class="ghost small-btn"
+              onclick={() => (config.categories = [])}
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+        <div class="cat-grid">
+          {#each SIMPLE_GROUPS as g (g.id)}
+            <label class="cat-row">
+              <input
+                type="checkbox"
+                checked={isGroupSelected(g)}
+                onchange={() => toggleGroup(g)}
+              />
+              <div>
+                <strong class="small">{g.title}</strong>
+                <div class="muted small" style="font-size: 11.5px;">{g.description}</div>
+              </div>
+            </label>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
+    {#if config.last_run_at}
+      <div class="last-run-box">
+        <div class="field-label">LAST AUTOMATIC CLEAN</div>
+        <div class="row" style="justify-content: space-between; margin-top: 4px; flex-wrap: wrap;">
+          <span class="small">{formatTimestamp(config.last_run_at)}</span>
+          <span class="small">
+            Cleaned: <strong style="color: var(--accent);">{formatBytes(config.last_bytes_freed ?? 0)}</strong>
+            {#if (config.last_cloud_files_synced ?? 0) > 0}
+              · Cloud files backed up: <strong>{formatCount(config.last_cloud_files_synced ?? 0)} ({formatBytes(config.last_cloud_bytes_synced ?? 0)})</strong>
+            {/if}
+          </span>
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
 
 <style>
-  .cat-group-header {
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 6px 0 2px 2px;
-  }
   .schedule-container {
-    max-width: 1240px;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding-bottom: 36px;
-  }
-  .header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 16px;
-  }
-  .page-title {
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -0.5px;
   }
   .muted-badge {
     background: var(--panel-2);
@@ -451,8 +471,8 @@
   }
   .banner {
     padding: 12px 18px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 600;
   }
   .error-banner {
     border-left: 4px solid var(--danger);
@@ -464,22 +484,16 @@
     background: var(--accent-light);
     color: var(--text);
   }
-  .schedule-grid {
-    display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 20px;
-    align-items: start;
-  }
-  .config-card,
-  .categories-card {
-    padding: 22px 24px;
+  .config-card {
+    padding: 24px 28px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
   }
   .enable-row {
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
   }
   .divider {
     height: 1px;
@@ -505,23 +519,16 @@
     border-radius: 12px;
     border: 1px solid var(--border);
   }
-  .segmented-pills.two-col {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .pill-btn {
     border: none;
     background: transparent;
     padding: 8px 12px;
     border-radius: 9px;
     font-weight: 600;
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--muted);
     cursor: pointer;
     box-shadow: none;
-  }
-  .pill-btn:hover {
-    color: var(--text);
-    background: transparent;
   }
   .pill-btn.active {
     background: var(--panel-solid);
@@ -529,14 +536,15 @@
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
   .time-row {
-    gap: 14px;
+    gap: 16px;
     align-items: flex-end;
+    flex-wrap: wrap;
   }
   .input-control {
     padding: 9px 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: var(--panel-solid);
     color: var(--text);
     font-size: 13.5px;
     font-weight: 600;
@@ -544,28 +552,36 @@
   .cta-row {
     gap: 10px;
     margin-top: 4px;
+    flex-wrap: wrap;
   }
   .save-btn {
-    padding: 10px 22px;
-    font-size: 13.5px;
+    padding: 11px 24px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 700;
   }
   .run-now-btn {
-    padding: 10px 18px;
-    font-size: 13px;
+    padding: 11px 20px;
+    border-radius: 9999px;
+    font-size: 13.5px;
   }
-  .last-run-box {
-    padding: 12px 16px;
-    border-radius: 10px;
+  .small-btn {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12.5px;
+  }
+  .custom-cats-box {
+    padding: 16px;
+    border-radius: 12px;
     background: var(--panel-2);
     border: 1px solid var(--border);
   }
-  .cat-list {
-    display: flex;
-    flex-direction: column;
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 8px;
-    max-height: 410px;
+    max-height: 260px;
     overflow-y: auto;
-    padding-right: 4px;
   }
   .cat-row {
     display: flex;
@@ -574,22 +590,14 @@
     padding: 9px 12px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: var(--panel-2);
+    background: var(--panel-solid);
     cursor: pointer;
   }
-  .cat-row input[type="checkbox"] {
-    margin-top: 2px;
-  }
-  .cat-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-  }
-  .mini-btn {
-    padding: 4px 10px;
-    font-size: 11.5px;
+  .last-run-box {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
   }
   .switch {
     position: relative;

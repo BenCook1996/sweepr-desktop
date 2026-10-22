@@ -1,5 +1,11 @@
 import { createRequire } from "node:module";
+import { readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
 const require = createRequire(import.meta.url);
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CLEAN_ITEMS_FILE = join(__dirname, "data", "clean-items.json");
 const cleanItemsData = require("./data/clean-items.json");
 
 export interface CleanItem {
@@ -16,6 +22,23 @@ export interface CleanItem {
 }
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
+let lastMtimeMs = 0;
+
+export function getCleanItems(): CleanItem[] {
+  try {
+    const st = statSync(CLEAN_ITEMS_FILE);
+    if (st.mtimeMs > lastMtimeMs) {
+      const fresh = JSON.parse(readFileSync(CLEAN_ITEMS_FILE, "utf8")) as CleanItem[];
+      if (Array.isArray(fresh) && fresh.length > 0) {
+        cleanItems.splice(0, cleanItems.length, ...fresh);
+        lastMtimeMs = st.mtimeMs;
+      }
+    }
+  } catch {
+    /* keep existing in-memory array */
+  }
+  return cleanItems;
+}
 
 function buildPseoTitle(item: CleanItem): string {
   const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
@@ -38,8 +61,9 @@ function buildPseoDescription(item: CleanItem): string {
 }
 
 export function renderPseoDirectory(): string {
-  const appItems = cleanItems.filter((i) => i.category === "app");
-  const folderItems = cleanItems.filter((i) => i.category === "folder");
+  const items = getCleanItems();
+  const appItems = items.filter((i) => i.category === "app");
+  const folderItems = items.filter((i) => i.category === "folder");
 
   const renderCard = (i: CleanItem) => `
     <a href="/clean/${i.category}/${i.slug}" class="block bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md hover:border-emerald-400 transition-all text-inherit no-underline">
@@ -130,6 +154,7 @@ export function renderPseoDirectory(): string {
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
   <script src="/analytics.js" defer></script>
+  <script src="/nav.js" defer></script>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="bg-[#fafafa] text-gray-800">
@@ -138,7 +163,7 @@ export function renderPseoDirectory(): string {
       <div class="logo-box">S</div>
       <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
     </a>
-    <div class="flex gap-3 items-center">
+    <div class="flex gap-2 md:gap-3 items-center">
       <div class="relative inline-block text-left" id="langDropdownContainer">
         <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
           <span class="text-base" id="currentLangFlag">🌐</span>
@@ -160,8 +185,8 @@ export function renderPseoDirectory(): string {
           </div>
         </div>
       </div>
-      <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-      <a href="/download" class="btn btn-go text-sm">Get SWEEPR Cleaner</a>
+      <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
+      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Get SWEEPR Cleaner</a>
     </div>
   </nav>
 
@@ -309,18 +334,19 @@ export function renderPseoPage(item: CleanItem): string {
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js"></script>
   <script src="/analytics.js" defer></script>
+  <script src="/nav.js" defer></script>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="bg-[#fafafa] text-gray-800">
   <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 md:gap-4">
       <a href="/" class="flex items-center gap-3 text-inherit no-underline">
         <div class="logo-box">S</div>
         <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
       </a>
-      <a href="/clean" class="text-xs font-semibold text-gray-500 hover:text-gray-900">Directory &rarr;</a>
+      <a href="/clean" class="hidden sm:inline-block text-xs font-semibold text-gray-500 hover:text-gray-900">Directory &rarr;</a>
     </div>
-    <div class="flex gap-3 items-center">
+    <div class="flex gap-2 md:gap-3 items-center">
       <div class="relative inline-block text-left" id="langDropdownContainer">
         <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
           <span class="text-base" id="currentLangFlag">🌐</span>
@@ -342,8 +368,8 @@ export function renderPseoPage(item: CleanItem): string {
           </div>
         </div>
       </div>
-      <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-      <a href="/download" class="btn btn-go text-sm">Get SWEEPR Cleaner</a>
+      <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
+      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Get SWEEPR Cleaner</a>
     </div>
   </nav>
 

@@ -21,6 +21,8 @@ use tokio::sync::Mutex;
 pub type LicenseError = AppError;
 
 const DEFAULT_API: &str = "https://sweeprcleaner.com";
+const DEFAULT_PUBKEY_B64: &str = "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8";
+pub const PROJECT_ID: &str = "cleaner";
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Account {
@@ -32,8 +34,12 @@ struct Account {
 pub struct Claims {
     pub sub: String,
     pub device_id: String,
+    #[serde(default)]
+    pub project_id: Option<String>,
     pub status: String,
     pub plan: String,
+    #[serde(default)]
+    pub addons: Vec<String>,
     pub exp: u64,
     #[serde(default)]
     pub iat: u64,
@@ -44,6 +50,7 @@ pub struct LicenseStatus {
     pub active: bool,
     pub status: String,
     pub plan: Option<String>,
+    pub addons: Vec<String>,
     pub expires_at: Option<u64>,
     pub offline: bool,
     pub dev_unlock: bool,
@@ -118,21 +125,30 @@ fn load_pubkey() -> Option<VerifyingKey> {
     #[cfg(debug_assertions)]
     let b64 = option_env!("SWEEPR_LICENSE_PUBKEY")
         .map(str::to_string)
-        .or_else(|| std::env::var("SWEEPR_LICENSE_PUBKEY").ok())?;
+        .or_else(|| std::env::var("SWEEPR_LICENSE_PUBKEY").ok())
+        .unwrap_or_else(|| DEFAULT_PUBKEY_B64.to_string());
     #[cfg(not(debug_assertions))]
-    let b64 = option_env!("SWEEPR_LICENSE_PUBKEY")?.to_string();
+    let b64 = option_env!("SWEEPR_LICENSE_PUBKEY")
+        .unwrap_or(DEFAULT_PUBKEY_B64)
+        .to_string();
     let bytes: [u8; 32] = B64.decode(b64.trim()).ok()?.try_into().ok()?;
     VerifyingKey::from_bytes(&bytes).ok()
 }
 
 /// Licence server URL. Runtime override only in debug builds (see `load_pubkey`).
+/// Checks `SWEEPR_CRM_URL` first (centralized multi-project CRM hub), then `SWEEPR_API_URL`.
 fn load_api_url() -> String {
     #[cfg(debug_assertions)]
-    let api = std::env::var("SWEEPR_API_URL")
+    let api = std::env::var("SWEEPR_CRM_URL")
         .ok()
+        .filter(|s| !s.trim().is_empty())
+        .or_else(|| std::env::var("SWEEPR_API_URL").ok().filter(|s| !s.trim().is_empty()))
+        .or_else(|| option_env!("SWEEPR_CRM_URL").map(str::to_string))
         .or_else(|| option_env!("SWEEPR_API_URL").map(str::to_string));
     #[cfg(not(debug_assertions))]
-    let api = option_env!("SWEEPR_API_URL").map(str::to_string);
+    let api = option_env!("SWEEPR_CRM_URL")
+        .or(option_env!("SWEEPR_API_URL"))
+        .map(str::to_string);
     api.unwrap_or_else(|| DEFAULT_API.to_string()).trim_end_matches('/').to_string()
 }
 
@@ -214,6 +230,18 @@ pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResu
     }
     if claims.device_id != device_id {
         return Err(bad("token issued for another device"));
+    }
+    if let Some(ref pid) = claims.project_id {
+        let norm = pid.trim().to_ascii_lowercase();
+        if !norm.is_empty() && norm != PROJECT_ID && norm != "all" {
+            let has_bundle = claims
+                .addons
+                .iter()
+                .any(|a| a.eq_ignore_ascii_case("sweepr_secure_bundle"));
+            if !has_bundle {
+                return Err(bad("token issued for a different SWEEPR product"));
+            }
+        }
     }
     if !matches!(claims.status.as_str(), "active" | "trialing") {
         return Err(AppError::PaymentRequired);
@@ -382,7 +410,12 @@ impl Licensing {
         let acc: Account = self
             .http
             .post(format!("{}/v1/accounts", self.api_base()?))
-            .json(&serde_json::json!({ "device_id": self.device_id }))
+            .header("x-sweepr-project", PROJECT_ID)
+            .json(&serde_json::json!({
+                "device_id": self.device_id,
+                "project_id": PROJECT_ID,
+                "device_type": "pc"
+            }))
             .send()
             .await?
             .error_for_status()?
@@ -397,7 +430,15 @@ impl Licensing {
     /// is set or it has expired. Falls back to the cached token when offline.
     pub async fn status(&self, force: bool) -> AppResult<LicenseStatus> {
         if Self::dev_unlock() {
-            return Ok(LicenseStatus { active: true, status: "dev".into(), plan: Some("dev".into()), expires_at: None, offline: false, dev_unlock: true });
+            return Ok(LicenseStatus {
+                active: true,
+                status: "dev".into(),
+                plan: Some("dev".into()),
+                addons: vec!["battery_care".into(), "cloud_vault".into()],
+                expires_at: None,
+                offline: false,
+                dev_unlock: true,
+            });
         }
         let mut st = self.state.lock().await;
 
@@ -418,8 +459,13 @@ impl Licensing {
             let resp = self
                 .http
                 .post(format!("{}/v1/entitlement", self.api_base()?))
+                .header("x-sweepr-project", PROJECT_ID)
                 .bearer_auth(&acc.refresh_token)
-                .json(&serde_json::json!({ "device_id": self.device_id }))
+                .json(&serde_json::json!({
+                    "device_id": self.device_id,
+                    "project_id": PROJECT_ID,
+                    "device_type": "pc"
+                }))
                 .send()
                 .await?;
             if resp.status().as_u16() == 401 {
@@ -429,8 +475,13 @@ impl Licensing {
                 return Ok(self
                     .http
                     .post(format!("{}/v1/entitlement", self.api_base()?))
+                    .header("x-sweepr-project", PROJECT_ID)
                     .bearer_auth(&acc.refresh_token)
-                    .json(&serde_json::json!({ "device_id": self.device_id }))
+                    .json(&serde_json::json!({
+                        "device_id": self.device_id,
+                        "project_id": PROJECT_ID,
+                        "device_type": "pc"
+                    }))
                     .send()
                     .await?
                     .error_for_status()?
@@ -453,7 +504,15 @@ impl Licensing {
                 None => {
                     st.token = None;
                     let _ = std::fs::remove_file(self.data_dir.join("entitlement.jws"));
-                    Ok(LicenseStatus { active: false, status: resp.status, plan: None, expires_at: None, offline: false, dev_unlock: false })
+                    Ok(LicenseStatus {
+                        active: false,
+                        status: resp.status,
+                        plan: None,
+                        addons: Vec::new(),
+                        expires_at: None,
+                        offline: false,
+                        dev_unlock: false,
+                    })
                 }
             },
             Err(AppError::Network(e)) => match &st.token {
@@ -472,24 +531,64 @@ impl Licensing {
         }
     }
 
+    pub async fn require_addon(&self, addon: &str) -> AppResult<()> {
+        let st = self.status(false).await?;
+        if st.dev_unlock
+            || (st.active
+                && st.addons.iter().any(|a| {
+                    a.eq_ignore_ascii_case(addon)
+                        || a.eq_ignore_ascii_case("sweepr_secure_bundle")
+                }))
+        {
+            Ok(())
+        } else {
+            Err(AppError::PaymentRequired)
+        }
+    }
+
     /// Initiates checkout for `email` / `plan`, or immediately activates this
     /// device and returns `Ok(None)` when `email` already has an active
     /// subscription on the server.
     pub async fn checkout_url(&self, email: Option<&str>, plan: Option<&str>) -> AppResult<Option<String>> {
+        self.checkout_url_with_addon(email, plan, None).await
+    }
+
+    pub async fn checkout_url_with_addon(
+        &self,
+        email: Option<&str>,
+        plan: Option<&str>,
+        addon: Option<&str>,
+    ) -> AppResult<Option<String>> {
         let mut map = serde_json::Map::new();
         map.insert("device_id".into(), serde_json::Value::String(self.device_id.clone()));
+        map.insert("project_id".into(), serde_json::Value::String(PROJECT_ID.to_string()));
         if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
             map.insert("email".into(), serde_json::Value::String(e.to_string()));
         }
         if let Some(p) = plan.map(str::trim).filter(|p| matches!(*p, "monthly" | "annual")) {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
         }
+        let wanted_addon = addon.map(str::trim).filter(|a| !a.is_empty());
+        if let Some(a) = wanted_addon {
+            map.insert("addons".into(), serde_json::json!([a]));
+            if a.eq_ignore_ascii_case("battery_care") {
+                map.insert("batteryCareAddon".into(), serde_json::Value::Bool(true));
+            } else if a.eq_ignore_ascii_case("cloud_vault") {
+                map.insert("cloudVaultAddon".into(), serde_json::Value::Bool(true));
+            }
+        }
         let body = serde_json::Value::Object(map);
 
         let mut st = self.state.lock().await;
         if let Some((_, c)) = &st.token {
             if c.exp > now() {
-                return Ok(None);
+                if let Some(req_addon) = wanted_addon {
+                    if c.addons.iter().any(|a| a.eq_ignore_ascii_case(req_addon)) {
+                        return Ok(None);
+                    }
+                } else {
+                    return Ok(None);
+                }
             }
         }
         let send_checkout = async {
@@ -497,6 +596,7 @@ impl Licensing {
             let mut resp = self
                 .http
                 .post(format!("{}/v1/checkout", self.api_base()?))
+                .header("x-sweepr-project", PROJECT_ID)
                 .bearer_auth(&acc.refresh_token)
                 .json(&body)
                 .send()
@@ -508,6 +608,7 @@ impl Licensing {
                 resp = self
                     .http
                     .post(format!("{}/v1/checkout", self.api_base()?))
+                    .header("x-sweepr-project", PROJECT_ID)
                     .bearer_auth(&acc.refresh_token)
                     .json(&body)
                     .send()
@@ -564,6 +665,7 @@ impl Licensing {
             Err(_) => {
                 let base = self.api_base()?;
                 let mut url = format!("{base}/order");
+                let mut sep = '?';
                 if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
                     let encoded: String = e
                         .bytes()
@@ -574,7 +676,11 @@ impl Licensing {
                             _ => format!("%{:02X}", b).chars().collect(),
                         })
                         .collect();
-                    url = format!("{url}?email={encoded}");
+                    url = format!("{url}{sep}email={encoded}");
+                    sep = '&';
+                }
+                if let Some(a) = wanted_addon {
+                    url = format!("{url}{sep}addon={a}");
                 }
                 Ok(Some(url))
             }
@@ -589,7 +695,8 @@ impl Licensing {
         }
         self.http
             .post(format!("{}/v1/account/send-otp", self.api_base()?))
-            .json(&serde_json::json!({ "email": email }))
+            .header("x-sweepr-project", PROJECT_ID)
+            .json(&serde_json::json!({ "email": email, "project_id": PROJECT_ID }))
             .send()
             .await?
             .error_for_status()?;
@@ -603,63 +710,53 @@ impl Licensing {
         if email.is_empty() || !email.contains('@') {
             return Err(AppError::License("Please enter a valid email address.".into()));
         }
-        if !code.is_empty() && (code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit())) {
+        if code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
             return Err(AppError::License("Please enter a valid 6-digit Subscription Key.".into()));
         }
 
-        if code.len() == 6 {
-            let resp = self
-                .http
-                .post(format!("{}/v1/account/verify-otp", self.api_base()?))
-                .json(&serde_json::json!({
-                    "email": email,
-                    "code": code,
-                    "device_id": self.device_id,
-                    "device_type": "pc",
-                }))
-                .send()
-                .await?;
-            if resp.status().as_u16() == 403 {
-                return Err(AppError::License("Device limit reached for this subscription.".into()));
+        let resp = self
+            .http
+            .post(format!("{}/v1/account/verify-otp", self.api_base()?))
+            .header("x-sweepr-project", PROJECT_ID)
+            .json(&serde_json::json!({
+                "email": email,
+                "code": code,
+                "device_id": self.device_id,
+                "device_type": "pc",
+                "project_id": PROJECT_ID,
+            }))
+            .send()
+            .await?;
+        if resp.status().as_u16() == 403 {
+            return Err(AppError::License("Device limit reached for this subscription.".into()));
+        }
+        if resp.status().is_success() {
+            #[derive(Deserialize)]
+            struct VerifyOtpResponse {
+                account_id: String,
+                refresh_token: String,
+                token: Option<String>,
             }
-            if resp.status().is_success() {
-                #[derive(Deserialize)]
-                struct VerifyOtpResponse {
-                    account_id: String,
-                    refresh_token: String,
-                    token: Option<String>,
-                }
-                let parsed: VerifyOtpResponse = resp.json().await?;
-                {
-                    let mut st = self.state.lock().await;
-                    let acc = Account {
-                        account_id: parsed.account_id,
-                        refresh_token: parsed.refresh_token,
-                    };
-                    save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
-                    st.account = Some(acc);
-                    st.token = None;
-                    if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
-                        if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
-                            let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
-                            let status = active_status(&claims, false);
-                            st.token = Some((tok, claims));
-                            return Ok(status);
-                        }
+            let parsed: VerifyOtpResponse = resp.json().await?;
+            {
+                let mut st = self.state.lock().await;
+                let acc = Account {
+                    account_id: parsed.account_id,
+                    refresh_token: parsed.refresh_token,
+                };
+                save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
+                st.account = Some(acc);
+                st.token = None;
+                if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
+                    if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
+                        let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
+                        let status = active_status(&claims, false);
+                        st.token = Some((tok, claims));
+                        return Ok(status);
                     }
                 }
-                return self.status(true).await;
             }
-        }
-
-        // Fallback: If the 6-digit Subscription Key from the customer's Welcome Email was already
-        // consumed on the web portal or another device, check if the server confirms an active
-        // subscription for this email and issues a signed device token.
-        if let Ok(None) = self.checkout_url(Some(email), None).await {
-            let st = self.status(false).await?;
-            if st.active {
-                return Ok(st);
-            }
+            return self.status(true).await;
         }
 
         Err(AppError::License(
@@ -669,10 +766,20 @@ impl Licensing {
 }
 
 fn active_status(c: &Claims, offline: bool) -> LicenseStatus {
+    let mut addons = c.addons.clone();
+    if addons.iter().any(|a| a.eq_ignore_ascii_case("sweepr_secure_bundle")) {
+        if !addons.iter().any(|a| a.eq_ignore_ascii_case("battery_care")) {
+            addons.push("battery_care".to_string());
+        }
+        if !addons.iter().any(|a| a.eq_ignore_ascii_case("cloud_vault")) {
+            addons.push("cloud_vault".to_string());
+        }
+    }
     LicenseStatus {
         active: true,
         status: c.status.clone(),
         plan: Some(c.plan.clone()),
+        addons,
         expires_at: Some(c.exp),
         offline,
         dev_unlock: false,
@@ -756,5 +863,58 @@ mod tests {
         assert!(!is_acceptable_api_url("http://localhost:1@evil.com"));
         assert!(!is_acceptable_api_url("file:///C:/Windows/System32/calc.exe"));
         assert!(!is_acceptable_api_url("https://"));
+    }
+
+    #[test]
+    fn enforces_multi_project_crm_scoping_and_bundle_unlock() {
+        let sk = SigningKey::from_bytes(&[13u8; 32]);
+        let vk = sk.verifying_key();
+
+        // 1. Token scoped to "cleaner" is accepted
+        let cleaner_tok = make_token(
+            &sk,
+            serde_json::json!({
+                "sub": "acc_1",
+                "device_id": "d",
+                "project_id": "cleaner",
+                "status": "active",
+                "plan": "pro_annual",
+                "exp": now() + 3600
+            }),
+        );
+        assert!(verify_token(&cleaner_tok, &vk, "d").is_ok());
+
+        // 2. Token scoped to another SWEEPR product ("vpn") without bundle is rejected
+        let vpn_tok = make_token(
+            &sk,
+            serde_json::json!({
+                "sub": "acc_1",
+                "device_id": "d",
+                "project_id": "vpn",
+                "status": "active",
+                "plan": "pro_annual",
+                "exp": now() + 3600
+            }),
+        );
+        assert!(verify_token(&vpn_tok, &vk, "d").is_err());
+
+        // 3. Token with cross-project `sweepr_secure_bundle` is accepted and unlocks addons
+        let bundle_tok = make_token(
+            &sk,
+            serde_json::json!({
+                "sub": "acc_1",
+                "device_id": "d",
+                "project_id": "shopsafe",
+                "status": "active",
+                "plan": "pro_annual",
+                "addons": ["sweepr_secure_bundle"],
+                "exp": now() + 3600
+            }),
+        );
+        let bundle_claims = verify_token(&bundle_tok, &vk, "d").expect("bundle token valid");
+        let status = active_status(&bundle_claims, false);
+        assert!(status.active);
+        assert!(status.addons.contains(&"battery_care".to_string()));
+        assert!(status.addons.contains(&"cloud_vault".to_string()));
     }
 }

@@ -105,7 +105,7 @@ pub fn validate_target(path: &str, app_data_dir: &Path) -> AppResult<PathBuf> {
     Ok(canon)
 }
 
-fn overwrite_and_delete(p: &Path, pass_count: u8) -> AppResult<u64> {
+pub(crate) fn overwrite_and_delete(p: &Path, pass_count: u8) -> AppResult<u64> {
     let pre_md = std::fs::symlink_metadata(p)?;
     if safety::metadata_is_link_like(&pre_md) || !pre_md.is_file() {
         return Err(refuse("Refusing to shred a symlink, junction or non-regular file."));
@@ -144,6 +144,12 @@ fn overwrite_and_delete(p: &Path, pass_count: u8) -> AppResult<u64> {
             file.sync_data()?;
         }
         drop(file);
+    }
+    if !std::fs::symlink_metadata(p)
+        .map(|m| !m.file_type().is_symlink() && !safety::metadata_is_link_like(&m) && m.is_file())
+        .unwrap_or(false)
+    {
+        return Err(refuse("Refusing to remove symlink or non-regular file after overwrite."));
     }
     std::fs::remove_file(p)?;
     Ok(len)

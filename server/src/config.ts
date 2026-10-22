@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
 
-if (existsSync(".env")) process.loadEnvFile(".env");
+if (process.env.NODE_ENV !== "production" && existsSync(".env")) process.loadEnvFile(".env");
 
 const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v)) ? Number(v) : d);
 

@@ -42,6 +42,9 @@ class SweeprApp : Application(), ImageLoaderFactory {
                 PurchasesConfiguration.Builder(this, apiKey)
                     .build()
             )
+            runCatching {
+                Purchases.sharedInstance.setAttributes(mapOf("project_id" to BuildConfig.SWEEPR_PROJECT_ID))
+            }
         }
     }
 

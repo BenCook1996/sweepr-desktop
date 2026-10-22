@@ -183,7 +183,33 @@ pub fn system_powershell_path() -> std::path::PathBuf {
             return candidate;
         }
     }
+    let fallback = std::path::PathBuf::from(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe");
+    if fallback.exists() {
+        return fallback;
+    }
     std::path::PathBuf::from("powershell.exe")
+}
+
+pub fn system32_binary(name: &str) -> std::path::PathBuf {
+    #[cfg(windows)]
+    {
+        let exe_name = if name.to_ascii_lowercase().ends_with(".exe") {
+            name.to_string()
+        } else {
+            format!("{name}.exe")
+        };
+        if let Some(root) = std::env::var_os("SystemRoot") {
+            let candidate = std::path::PathBuf::from(root).join("System32").join(&exe_name);
+            if candidate.exists() {
+                return candidate;
+            }
+        }
+        let fallback = std::path::PathBuf::from(r"C:\Windows\System32").join(&exe_name);
+        if fallback.exists() {
+            return fallback;
+        }
+    }
+    std::path::PathBuf::from(name)
 }
 
 #[cfg(test)]

@@ -23,12 +23,17 @@ import {
   safeEqual,
   securityHeaders,
 } from "./security.js";
-import { cleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import { cleanItems, getCleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
-import { syncToCentralCrm } from "./crm-sync.js";
+import {
+  syncToCentralCrm,
+  syncSubscriptionToCentralCrm,
+  verifyCentralEntitlement,
+  verifyCentralOtp,
+} from "./crm-sync.js";
 import {
   resolvePricingForRequest,
   getPricingForCountryOrCurrency,
@@ -91,7 +96,7 @@ export interface AppDeps {
   now?: () => number;
 }
 
-const DEVICE_RE = /^[a-f0-9]{64}$/;
+const DEVICE_RE = /^([a-f0-9]{64}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
 const SESSION_COOKIE = "sweepr_session";
 const ALLOWED_FUNNEL_EVENTS = new Set([
   "scan_started",
@@ -170,7 +175,9 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
 /** Server-side source of truth: is this entitlement currently usable? */
 export function isEntitled(e: Entitlement | undefined, now: number, graceDays: number): boolean {
   if (!e) return false;
-  if (e.status === "active" || e.status === "trialing") return true;
+  if (e.status === "active" || e.status === "trialing") {
+    return !e.current_period_end || now < e.current_period_end + graceDays * 86400;
+  }
   if (e.status === "past_due" && e.current_period_end) {
     return now < e.current_period_end + graceDays * 86400; // dunning grace period
   }
@@ -407,14 +414,14 @@ export function createApp(deps: AppDeps) {
   app.get("/clean/:category/:slug", (c) => {
     const category = String(c.req.param("category") ?? "").toLowerCase();
     const slug = String(c.req.param("slug") ?? "").toLowerCase();
-    const item = cleanItems.find((i) => i.category === category && i.slug === slug);
+    const item = getCleanItems().find((i) => i.category === category && i.slug === slug);
     if (!item) return c.notFound();
     return c.html(renderPseoPage(item));
   });
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.
   const page = (rawTitle: string, msg: string, downloadLink = false) => {
     const title = escapeHtml(rawTitle);
-    return `<!doctype html><head><meta charset="utf-8"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate icon" type="image/png" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"></head><body style="font-family:system-ui, sans-serif;background:#ffffff;background-image:radial-gradient(circle at 10% 20%, rgba(220, 255, 230, 0.4) 0%, rgba(255, 255, 255, 1) 40%),radial-gradient(circle at 90% 80%, rgba(240, 255, 250, 0.5) 0%, rgba(255, 255, 255, 1) 40%);color:#1f2937;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center;padding:40px;background:rgba(255,255,255,0.7);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.05);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.05);max-width:400px;"><h1 style="margin-top:0">${title}</h1><p style="color:#6b7280;line-height:1.5">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate icon" type="image/png" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#ffffff;background-image:radial-gradient(circle at 10% 20%, rgba(220, 255, 230, 0.4) 0%, rgba(255, 255, 255, 1) 40%),radial-gradient(circle at 90% 80%, rgba(240, 255, 250, 0.5) 0%, rgba(255, 255, 255, 1) 40%);color:#1f2937;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.06);border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#6b7280;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
@@ -437,11 +444,12 @@ export function createApp(deps: AppDeps) {
 
   const pickerPage = (heading: string, msg: string) => {
     const btn = (href: string, text: string) =>
-      `<a href="${href}" style="display:block;margin-top:10px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold">${text}</a>`;
+      `<a href="${href}" style="display:block;margin-top:10px;background:#10b981;color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
     const links =
-      btn("/download?platform=windows", "Windows") +
-      btn("/download?platform=mac", "Mac") +
-      btn("/download?platform=linux", "Linux");
+      btn("/download?platform=windows", "Windows (Windows 10 & 11)") +
+      btn("/download?platform=mac", "Mac (macOS)") +
+      btn("/download?platform=linux", "Linux (AppImage)") +
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Browsing on your phone? You can activate Pro right now and receive your 6-digit key + PC download link by email:<a href="/order?plan=annual" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Get Pro Now (Instant Email Delivery)</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
@@ -643,6 +651,13 @@ export function createApp(deps: AppDeps) {
     }
 
     const acc = repo.accountById(accountId);
+    syncToCentralCrm("/v1/leads/capture", {
+      email,
+      name: name || undefined,
+      country: acc?.country ?? country,
+      device: acc?.lead_device ?? leadDevice,
+      source: "cleaner_checkout_lead",
+    });
     return c.json({
       ok: true,
       account_id: accountId,
@@ -665,11 +680,7 @@ export function createApp(deps: AppDeps) {
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
-    const localizedPricing = await resolvePricingForRequest(c, {
-      country: typeof body.country === "string" ? body.country : undefined,
-      currency: typeof body.currency === "string" ? body.currency : undefined,
-      trustProxy,
-    });
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     // Reuse an existing account for this email if present (avoids orphaned duplicate rows).
@@ -847,7 +858,7 @@ export function createApp(deps: AppDeps) {
   app.get("/api/checkout-config", async (c) => {
     const pk = (config.stripePublishableKey ?? "").trim();
     const validPk = pk.startsWith("pk_") && !pk.includes("...") ? pk : "";
-    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy, allowQueryOverride: true });
     return c.json({
       publishableKey: validPk,
       stripeConfigured: Boolean(stripe),
@@ -1052,11 +1063,7 @@ export function createApp(deps: AppDeps) {
       }
     }
 
-    const localizedPricing = await resolvePricingForRequest(c, {
-      country: typeof body.country === "string" ? body.country : undefined,
-      currency: typeof body.currency === "string" ? body.currency : undefined,
-      trustProxy,
-    });
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     let accountId: string;
@@ -1327,7 +1334,7 @@ export function createApp(deps: AppDeps) {
       });
 
       const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
-      if (metaAccountId && accountId && metaAccountId !== accountId) {
+      if (!metaAccountId || !accountId || metaAccountId !== accountId) {
         return c.json({ error: "account_mismatch" }, 403);
       }
 
@@ -1341,22 +1348,22 @@ export function createApp(deps: AppDeps) {
         );
       }
 
-      await syncPayPalCustomerEmail(sub, metaAccountId || accountId || null);
-      syncSubscription(repo, sub, metaAccountId || accountId || null);
+      await syncPayPalCustomerEmail(sub, metaAccountId);
+      syncSubscription(repo, sub, metaAccountId);
 
-      const resolvedAccount =
-        (metaAccountId && repo.accountById(metaAccountId)) ||
-        (accountId && repo.accountById(accountId)) ||
-        undefined;
+      const resolvedAccount = repo.accountById(metaAccountId);
 
       if (resolvedAccount) {
-        await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-          path: "/",
-          httpOnly: true,
-          sameSite: "Lax",
-          secure: isHttps,
-          maxAge: 86400 * 30,
-        });
+        const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
+        if (isFreshSub) {
+          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
+            path: "/",
+            httpOnly: true,
+            sameSite: "Lax",
+            secure: isHttps,
+            maxAge: 86400 * 30,
+          });
+        }
         const planLabel =
           sub.metadata?.plan === "annual"
             ? "Annual"
@@ -1423,7 +1430,13 @@ export function createApp(deps: AppDeps) {
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "Too many attempts. Please try again later." }, 429);
     if (!/^\d{6}$/.test(code)) return invalid();
 
-    const valid = repo.verifyRecentEmailCode(email, code, sha256(code), Math.floor(Date.now() / 1000));
+    let valid = repo.verifyRecentEmailCode(email, code, sha256(code), Math.floor(Date.now() / 1000));
+    if (!valid) {
+      const centralOtp = await verifyCentralOtp({ email, code, deviceType: "pc" });
+      if (centralOtp?.valid) {
+        valid = true;
+      }
+    }
     if (!valid) return invalid();
 
     const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
@@ -1643,7 +1656,10 @@ export function createApp(deps: AppDeps) {
       trustProxy,
     });
 
-    if (stripe && ent.stripe_subscription_id && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+    if (stripe && ent.stripe_subscription_id !== "sub_owner_lifetime") {
+      if (!ent.stripe_subscription_id || !ent.stripe_subscription_id.startsWith("sub_")) {
+        return c.json({ error: "Active paid Stripe subscription required to attach an add-on." }, 402);
+      }
       try {
         const sub = await stripe.subscriptions.retrieve(ent.stripe_subscription_id);
         const firstPrice = sub.items?.data?.[0]?.price;
@@ -1686,14 +1702,25 @@ export function createApp(deps: AppDeps) {
             addons: Array.from(new Set([...existingAddons, addon])).join(","),
             ...(addon === "cloud_vault" ? { cloud_vault: "1" } : { battery_care: "1" }),
           },
-          proration_behavior: "create_prorations",
+          proration_behavior: "always_invoice",
+          payment_behavior: "error_if_incomplete",
         });
       } catch (err: any) {
-        console.warn("[portal] purchase-addon Stripe update warning:", err?.message || err);
+        console.warn("[portal] purchase-addon Stripe update error:", err?.message || err);
+        return c.json({ error: (err as Error)?.message || "Payment failed for add-on upgrade." }, 402);
       }
     }
 
     const updatedAddons = repo.grantAddon(accountId, addon);
+    syncSubscriptionToCentralCrm({
+      email: account.email,
+      name: account.name,
+      country: account.country,
+      plan: ent.plan || "annual",
+      status: ent.status,
+      addons: updatedAddons,
+      notes: `Add-on activated: ${addon}`,
+    });
     const addonTitle =
       addon === "cloud_vault"
         ? "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync"
@@ -1906,6 +1933,15 @@ export function createApp(deps: AppDeps) {
       current_period_end: periodEnd,
       cancel_at_period_end: 1,
     });
+    syncSubscriptionToCentralCrm({
+      email: account.email,
+      name: account.name,
+      country: account.country,
+      plan: ent.plan || "annual",
+      status: ent.status,
+      addons: repo.addonsForAccount(accountId),
+      notes: `Scheduled cancellation at period end (${reason})`,
+    });
 
     repo.addActivity({
       account_id: account.id,
@@ -1945,22 +1981,35 @@ export function createApp(deps: AppDeps) {
     if (!ent) {
       return c.json({ error: "No subscription found." }, 400);
     }
+    if ((ent.status !== "active" && ent.status !== "trialing") || !ent.cancel_at_period_end || (ent.current_period_end && ent.current_period_end <= now())) {
+      return c.json({ error: "Subscription cannot be reactivated without a new payment." }, 400);
+    }
 
-    if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+    if (stripe && ent.stripe_subscription_id && ent.stripe_subscription_id.startsWith("sub_") && !ent.stripe_subscription_id.startsWith("sub_owner")) {
       try {
         await stripe.subscriptions.update(ent.stripe_subscription_id, {
           cancel_at_period_end: false,
         });
       } catch (err: any) {
         console.error("[portal] stripe reactivate error:", err);
+        return c.json({ error: err?.message || "Failed to reactivate subscription with billing provider." }, 400);
       }
     }
 
-    const newStatus = ent.status === "canceled" ? "active" : ent.status;
+    const newStatus = ent.status;
     repo.upsertEntitlement({
       ...ent,
       status: newStatus,
       cancel_at_period_end: 0,
+    });
+    syncSubscriptionToCentralCrm({
+      email: account.email,
+      name: account.name,
+      country: account.country,
+      plan: ent.plan || "annual",
+      status: newStatus,
+      addons: repo.addonsForAccount(accountId),
+      notes: "Customer reactivated subscription",
     });
 
     repo.addActivity({
@@ -1993,7 +2042,7 @@ export function createApp(deps: AppDeps) {
     }
 
     const ent = repo.entitlement(accountId);
-    if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
+    if (!ent || ent.status !== "active" || !isEntitled(ent, now(), config.pastDueGraceDays)) {
       return c.json({ error: "No active subscription found." }, 400);
     }
 
@@ -2017,6 +2066,7 @@ export function createApp(deps: AppDeps) {
         });
       } catch (err: any) {
         console.warn("[portal] stripe retention coupon warning:", err?.message || err);
+        return c.json({ error: err?.message || "Failed to apply retention discount." }, 400);
       }
     }
 
@@ -2256,6 +2306,34 @@ export function createApp(deps: AppDeps) {
       return repo.accountById(acc.id) ?? acc;
     }
 
+    // Check Centralized SWEEPR Multi-Project CRM Hub (`sweepr-crm`) for active Cleaner or cross-project Bundle (`sweepr_secure_bundle`) entitlements
+    const central = await verifyCentralEntitlement(email);
+    if (central && central.valid) {
+      let acc = existing;
+      if (!acc) {
+        const id = central.account_id || `acc_${randomToken(12)}`;
+        repo.createAccount(id, sha256(randomToken(32)), email);
+        acc = repo.accountById(id)!;
+      }
+      const periodEnd = central.current_period_end || now() + 35 * 86400;
+      const addonsList = Array.from(
+        new Set([
+          ...(central.addons || []),
+          ...(central.addons?.includes("sweepr_secure_bundle") ? ["battery_care", "cloud_vault"] : []),
+        ])
+      );
+      repo.upsertEntitlement({
+        account_id: acc.id,
+        stripe_subscription_id: null,
+        status: central.status === "trialing" ? "trialing" : "active",
+        plan: central.plan || "annual",
+        addons_list: addonsList,
+        current_period_end: periodEnd,
+        cancel_at_period_end: central.cancel_at_period_end ? 1 : 0,
+      });
+      return repo.accountById(acc.id) ?? acc;
+    }
+
     if (stripe) {
       try {
         const customers = await stripe.customers.list({ email, limit: 5 });
@@ -2315,7 +2393,7 @@ export function createApp(deps: AppDeps) {
     if (!email) return c.json({ error: "invalid_email" }, 400);
     if (!limitOtpSendEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
-    const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
+    const account = repo.accountByEmail(email) ?? (await findOrSyncEntitledAccountByEmail(email));
     if (account) {
       const code = randomInt(100000, 1000000).toString();
       const expiresAt = now() + 7 * 86400;
@@ -2352,7 +2430,21 @@ export function createApp(deps: AppDeps) {
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
     const t = now();
-    if (!repo.verifyRecentEmailCode(email, code, sha256(code), t)) {
+    let localOtpValid = repo.verifyRecentEmailCode(email, code, sha256(code), t);
+    if (!localOtpValid) {
+      const centralOtp = await verifyCentralOtp({
+        email,
+        code,
+        deviceId,
+        deviceType,
+        platform: typeof body.platform === "string" ? body.platform : undefined,
+        deviceLabel: typeof body.device_label === "string" ? body.device_label : undefined,
+      });
+      if (centralOtp?.valid) {
+        localOtpValid = true;
+      }
+    }
+    if (!localOtpValid) {
       return c.json({ error: "invalid_or_expired_code" }, 400);
     }
     const account = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email);
@@ -2441,9 +2533,23 @@ export function createApp(deps: AppDeps) {
 
     let ent = repo.entitlement(account.id);
     const t = now();
-    if (!isEntitled(ent, t, config.pastDueGraceDays) && account.email) {
+    if (account.email) {
       const synced = await findOrSyncEntitledAccountByEmail(account.email);
       if (synced && synced.id === account.id) {
+        ent = repo.entitlement(account.id);
+      }
+    } else if (!isEntitled(ent, t, config.pastDueGraceDays)) {
+      const centralById = await verifyCentralEntitlement(account.id, deviceId);
+      if (centralById && centralById.valid) {
+        repo.upsertEntitlement({
+          account_id: account.id,
+          stripe_subscription_id: null,
+          status: centralById.status === "trialing" ? "trialing" : "active",
+          plan: centralById.plan || "annual",
+          addons_list: centralById.addons || [],
+          current_period_end: centralById.current_period_end || t + 35 * 86400,
+          cancel_at_period_end: centralById.cancel_at_period_end ? 1 : 0,
+        });
         ent = repo.entitlement(account.id);
       }
     }
@@ -2497,7 +2603,8 @@ export function createApp(deps: AppDeps) {
   app.post("/v1/referral/apply", auth, async (c) => {
     const account = c.get("account");
     const t = now();
-    if (!isEntitled(repo.entitlement(account.id), t, config.pastDueGraceDays)) {
+    const ent = repo.entitlement(account.id);
+    if (!ent || ent.status !== "active" || !isEntitled(ent, t, config.pastDueGraceDays)) {
       return c.json({ error: "payment_required" }, 402);
     }
     const body = await c.req.json().catch(() => ({}));
@@ -2517,11 +2624,7 @@ export function createApp(deps: AppDeps) {
       .prepare("SELECT id FROM devices WHERE account_id = ? LIMIT 1")
       .get(account.id) as { id: string } | undefined;
     const deviceId = DEVICE_RE.test(rawDeviceId) ? rawDeviceId : fallbackDevice?.id ?? "";
-    const localizedPricing = await resolvePricingForRequest(c, {
-      country: typeof body?.country === "string" ? body.country : undefined,
-      currency: typeof body?.currency === "string" ? body.currency : undefined,
-      trustProxy,
-    });
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
     repo.setAccountLeadMeta(account.id, {
       country: localizedPricing.country,
       lead_device: detectLeadDevice(c, body?.device_type || "pc"),
@@ -2775,6 +2878,7 @@ export function createApp(deps: AppDeps) {
     pub_date: new Date().toISOString(),
     url: `${config.publicUrl}/download?platform=windows`,
     signature: config.latestAppSignature || "",
+    sha256: process.env.LATEST_APP_SHA256 || "",
   });
   app.get("/v1/updates/latest.json", (c) => c.json(buildUpdateManifest()));
   app.get("/v1/updates/:target/:arch/:current_version", (c) => {
@@ -2993,23 +3097,23 @@ export function createApp(deps: AppDeps) {
           return c.redirect("/order?error=payment_cancelled");
         }
         const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
-        if (!metaAccountId || !accountId || metaAccountId === accountId) {
-          await syncPayPalCustomerEmail(sub, metaAccountId || accountId || null);
-          syncSubscription(repo, sub, metaAccountId || accountId || null);
+        if (metaAccountId && accountId && metaAccountId === accountId) {
+          await syncPayPalCustomerEmail(sub, metaAccountId);
+          syncSubscription(repo, sub, metaAccountId);
 
-          const resolvedAccount =
-            (metaAccountId && repo.accountById(metaAccountId)) ||
-            (accountId && repo.accountById(accountId)) ||
-            undefined;
+          const resolvedAccount = repo.accountById(metaAccountId);
 
           if (resolvedAccount && (sub.status === "active" || sub.status === "trialing")) {
-            await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-              path: "/",
-              httpOnly: true,
-              sameSite: "Lax",
-              secure: isHttps,
-              maxAge: 86400 * 30,
-            });
+            const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
+            if (isFreshSub) {
+              await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
+                path: "/",
+                httpOnly: true,
+                sameSite: "Lax",
+                secure: isHttps,
+                maxAge: 86400 * 30,
+              });
+            }
             const planLabel =
               sub.metadata?.plan === "annual"
                 ? "Annual"

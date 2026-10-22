@@ -323,6 +323,10 @@ fun CloudSavingsScreen(
         ActivityResultContracts.OpenMultipleDocuments(),
     ) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        if (!state.hasPremium) {
+            onShowPaywall {}
+            return@rememberLauncherForActivityResult
+        }
         vaultBusy = true
         vaultStatus = null
         scope.launch {

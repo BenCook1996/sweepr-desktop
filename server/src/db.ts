@@ -518,7 +518,9 @@ export class Repo {
     if (!acc) return false;
     if (acc.email) {
       this.db.prepare("DELETE FROM otps WHERE email = ? COLLATE NOCASE").run(acc.email);
+      this.db.prepare("DELETE FROM support_tickets WHERE email = ? COLLATE NOCASE").run(acc.email);
     }
+    this.db.prepare("DELETE FROM analytics_events WHERE account_id = ?").run(accountId);
     this.db.prepare("DELETE FROM admin_notes WHERE account_id = ?").run(accountId);
     this.db.prepare("DELETE FROM activities WHERE account_id = ?").run(accountId);
     this.db.prepare("DELETE FROM invoices WHERE account_id = ?").run(accountId);
@@ -1141,20 +1143,23 @@ export class Repo {
     const referrer = this.accountByReferralCode(code);
     if (!referrer || referrer.id === referredAccountId) return false;
 
+    const refEnt = this.entitlement(referrer.id);
+    if (!refEnt || (refEnt.status !== "active" && refEnt.status !== "trialing")) return false;
+    if (this.referralsCount(referrer.id) >= 12) return false;
+
     const referrerCode = this.ensureReferralCode(referrer.id);
     this.db.prepare(`UPDATE accounts SET referred_by = ?, updated_at = ? WHERE id = ?`).run(referrerCode, nowSec, referredAccountId);
 
-    // Reward referrer with +30 days on their entitlement if they have one, or grant 30 days active
-    const refEnt = this.entitlement(referrer.id);
-    const baseEnd = refEnt?.current_period_end && refEnt.current_period_end > nowSec ? refEnt.current_period_end : nowSec;
+    // Reward referrer with +30 days on their active/trialing entitlement
+    const baseEnd = refEnt.current_period_end && refEnt.current_period_end > nowSec ? refEnt.current_period_end : nowSec;
     const newEnd = baseEnd + 30 * 86400;
     this.upsertEntitlement({
       account_id: referrer.id,
-      stripe_subscription_id: refEnt?.stripe_subscription_id ?? null,
-      status: refEnt?.status === "trialing" ? "trialing" : "active",
-      plan: refEnt?.plan ?? "monthly",
+      stripe_subscription_id: refEnt.stripe_subscription_id ?? null,
+      status: refEnt.status === "trialing" ? "trialing" : "active",
+      plan: refEnt.plan ?? "monthly",
       current_period_end: newEnd,
-      cancel_at_period_end: refEnt?.cancel_at_period_end ?? 0,
+      cancel_at_period_end: refEnt.cancel_at_period_end ?? 0,
     });
 
     this.addActivity({
@@ -1197,7 +1202,7 @@ export class Repo {
       return { ok: false, error: "already_claimed" };
     }
     const ent = this.entitlement(accountId);
-    if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
+    if (!ent || (ent.status !== "active" && ent.status !== "trialing")) {
       return { ok: false, error: "no_active_subscription" };
     }
 
@@ -1270,7 +1275,7 @@ export class Repo {
   }
 
   listOutreachLogs(opts: { search?: string; filter?: string; limit?: number; offset?: number } = {}) {
-    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 1000);
+    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 10000);
     const offset = Math.max(Number(opts.offset || 0), 0);
     const clauses: string[] = [];
     const params: any[] = [];

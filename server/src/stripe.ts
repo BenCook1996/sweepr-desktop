@@ -263,6 +263,35 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       await sendRenewalReminder(sub);
       break;
     }
+    case "charge.refunded": {
+      const ch = event.data.object as Stripe.Charge;
+      const charge = ch.id && typeof (stripe.charges as any)?.retrieve === "function" && ch.customer === undefined
+        ? await stripe.charges.retrieve(ch.id).catch(() => ch)
+        : ch;
+      const customerId = idOf(charge.customer as any);
+      const account = customerId ? repo.accountByCustomer(customerId) : undefined;
+      if (account && charge.refunded && (charge.amount_refunded ?? 0) >= (charge.amount ?? 0)) {
+        repo.setStatus(account.id, "canceled");
+        repo.addActivity({
+          account_id: account.id,
+          type: "charge_refunded",
+          title: "Charge Refunded",
+          description: `Full refund processed on charge ${charge.id}. Subscription canceled.`,
+          actor: "stripe",
+          metadata: { charge_id: charge.id, amount_refunded: charge.amount_refunded },
+        });
+        if (account.email) {
+          syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+            email: account.email,
+            name: account.name,
+            country: account.country,
+            status: "canceled",
+            notes: `Charge refunded in SWEEPR Cleaner Stripe (${charge.id})`,
+          });
+        }
+      }
+      break;
+    }
     case "charge.dispute.created": {
       const d = event.data.object as Stripe.Dispute;
       const charge = await stripe.charges.retrieve(idOf(d.charge as any)!);
@@ -278,6 +307,15 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
           actor: "stripe",
           metadata: { dispute_id: d.id, charge_id: charge.id },
         });
+        if (account.email) {
+          syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+            email: account.email,
+            name: account.name,
+            country: account.country,
+            status: "canceled",
+            notes: `Charge disputed in SWEEPR Cleaner Stripe (${charge.id})`,
+          });
+        }
       }
       break;
     }

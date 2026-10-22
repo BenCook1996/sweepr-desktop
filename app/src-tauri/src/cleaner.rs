@@ -110,6 +110,12 @@ pub fn move_to_quarantine(
     category_id: &str,
     entries: &mut Vec<QuarantineEntry>,
 ) -> bool {
+    if std::fs::symlink_metadata(path)
+        .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+        .unwrap_or(true)
+    {
+        return false;
+    }
     if size > QUARANTINE_MAX_FILE_BYTES || entries.len() >= QUARANTINE_MAX_ITEMS {
         return trash::delete(path).is_ok();
     }
@@ -257,14 +263,29 @@ pub fn clean_with_quarantine(
     if use_trash {
         let ctx = trash_context();
         for chunk in targets.chunks(TRASH_BATCH) {
-            let paths: Vec<&PathBuf> = chunk.iter().map(|(p, _)| p).collect();
-            if ctx.delete_all(&paths).is_ok() {
+            let paths: Vec<&PathBuf> = chunk
+                .iter()
+                .map(|(p, _)| p)
+                .filter(|p| {
+                    !std::fs::symlink_metadata(p)
+                        .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+                        .unwrap_or(true)
+                })
+                .collect();
+            if !paths.is_empty() && paths.len() == chunk.len() && ctx.delete_all(&paths).is_ok() {
                 report.files_removed += chunk.len() as u64;
                 report.bytes_freed += chunk.iter().map(|(_, s)| s).sum::<u64>();
             } else {
                 // A locked file fails the whole batch; retry one by one.
-                for (p, s) in chunk {
-                    if ctx.delete(p).is_ok() {
+                for (path, s) in chunk {
+                    if std::fs::symlink_metadata(&path)
+                        .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+                        .unwrap_or(true)
+                    {
+                        report.files_skipped += 1;
+                        continue;
+                    }
+                    if ctx.delete(path).is_ok() {
                         report.files_removed += 1;
                         report.bytes_freed += s;
                     } else {
@@ -275,8 +296,15 @@ pub fn clean_with_quarantine(
         }
     } else if let Some(data_dir) = quarantine_data_dir {
         let mut entries = list_quarantine_entries(data_dir);
-        for (p, s) in &targets {
-            if move_to_quarantine(data_dir, p, *s, rule.id, &mut entries) {
+        for (path, s) in &targets {
+            if std::fs::symlink_metadata(&path)
+                .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+                .unwrap_or(true)
+            {
+                report.files_skipped += 1;
+                continue;
+            }
+            if move_to_quarantine(data_dir, path, *s, rule.id, &mut entries) {
                 report.files_removed += 1;
                 report.bytes_freed += s;
             } else {
@@ -287,8 +315,15 @@ pub fn clean_with_quarantine(
         let _ = save_quarantine_entries(data_dir, &entries);
         remove_empty_dirs(rule);
     } else {
-        for (p, s) in &targets {
-            match std::fs::remove_file(p) {
+        for (path, s) in &targets {
+            if std::fs::symlink_metadata(&path)
+                .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+                .unwrap_or(true)
+            {
+                report.files_skipped += 1;
+                continue;
+            }
+            match std::fs::remove_file(path) {
                 Ok(()) => {
                     report.files_removed += 1;
                     report.bytes_freed += s;

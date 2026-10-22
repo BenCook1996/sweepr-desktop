@@ -39,11 +39,11 @@
     const interval = setInterval(() => {
       progress += Math.floor(Math.random() * 8) + 4;
       if (progress >= 25 && progress < 50) {
-        statusText = "Unpacking high-performance Rust cleaning engine…";
+        statusText = "Setting up SWEEPR Cleaner on your PC…";
       } else if (progress >= 50 && progress < 75) {
-        statusText = "Setting up registry and cache diagnostic modules…";
+        statusText = "Getting your cleaning and speed tools ready…";
       } else if (progress >= 75 && progress < 100) {
-        statusText = "Applying shortcut preferences and finalizing setup…";
+        statusText = "Creating your shortcuts and finishing up…";
       } else if (progress >= 100) {
         progress = 100;
         statusText = "Installation complete! Opening SWEEPR Cleaner…";

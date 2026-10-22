@@ -76,7 +76,7 @@ fun CategoryDetailScreen(
     onTrash: (List<MediaItem>) -> Unit,
     onCompressVideo: (MediaItem, CompressionPreset) -> Unit = { _, _ -> },
     onClearCompressionResult: () -> Unit = {},
-    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean) -> Unit = { _, _, _ -> },
+    onOptimizePhotos: (List<MediaItem>, Boolean, Boolean, PhotoCompressionPreset) -> Unit = { _, _, _, _ -> },
     onClearPhotoOptimizationResult: () -> Unit = {},
     onToggleTrash: (Uri) -> Unit = {},
     onSetTrashSelected: (Collection<Uri>, Boolean) -> Unit = { _, _ -> },

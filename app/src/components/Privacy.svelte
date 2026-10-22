@@ -1,13 +1,15 @@
 <script lang="ts" module>
-  import type { BrowserExtensionItem, BrowserPrivacyItem } from "../lib/api";
+  import type { BrowserPrivacyItem } from "../lib/api";
 
+  let cachedSubView: "browser" | "vault" | "eraser" = "browser";
   let cachedBrowsers: BrowserPrivacyItem[] = [];
   let cachedSelectedBrowsers: Record<string, boolean> = {};
   let cachedAllowlist: string[] = [];
-  let cachedExtensions: BrowserExtensionItem[] = [];
 </script>
 
 <script lang="ts">
+  import CloudProtection from "./CloudProtection.svelte";
+  import Shredder from "./Shredder.svelte";
   import {
     api,
     errorMessage,
@@ -19,6 +21,7 @@
   import { addLifetimeStats } from "../lib/store";
 
   let { license }: { license: LicenseStatus | null } = $props();
+  let subView = $state<"browser" | "vault" | "eraser">(cachedSubView);
   let error = $state<string | null>(null);
 
   // Browser Privacy Cleaner
@@ -29,15 +32,16 @@
   let clearHistory = $state(false);
   let scanningBrowsers = $state(false);
   let cleaningBrowsers = $state(false);
-  let compactingDbs = $state(false);
   let browserStatus = $state<string | null>(null);
 
-  // Sub-drawers: Cookie Allowlist & Extension Inspector
-  let activeDrawer = $state<"none" | "cookies" | "extensions">("none");
+  // Websites to Keep Signed In
+  let showKeepSignedIn = $state(false);
   let cookieAllowlist = $state<string[]>(cachedAllowlist);
   let newDomain = $state("");
-  let extensions = $state<BrowserExtensionItem[]>(cachedExtensions);
-  let loadingExtensions = $state(false);
+
+  $effect(() => {
+    cachedSubView = subView;
+  });
 
   const selectedBrowserKeys = $derived(
     Object.keys(selectedBrowsers).filter((k) => selectedBrowsers[k])
@@ -86,12 +90,12 @@
     if (!selectedBrowserKeys.length) return;
     if (clearCookies || clearHistory) {
       const items: string[] = [];
-      if (clearCache) items.push("web caches");
-      if (clearCookies) items.push("tracking cookies (non-allowlisted logins)");
+      if (clearCache) items.push("temporary web files");
+      if (clearCookies) items.push("tracking cookies");
       if (clearHistory) items.push("browsing history");
       if (
         !confirm(
-          `Permanently clear ${items.join(", ")} across ${selectedBrowserKeys.length} selected browser(s)?\n\nClose your browsers first for best results. This action cannot be undone.`
+          `Clear ${items.join(", ")} across ${selectedBrowserKeys.length} selected browser(s)?\n\nPlease close your browsers first for the best results.`
         )
       ) {
         return;
@@ -107,8 +111,10 @@
         clearCookies,
         clearHistory
       );
-      addLifetimeStats(freed, selectedBrowserKeys.length, ["browsers"], "Browser Privacy Clean");
-      browserStatus = `Cleaned ${formatBytes(freed)} across ${selectedBrowserKeys.length} browser(s).`;
+      const compacted = await api.compactBrowserDatabases().catch(() => 0);
+      const totalFreed = freed + compacted;
+      addLifetimeStats(totalFreed, selectedBrowserKeys.length, ["browsers"], "Browser Privacy Clean");
+      browserStatus = `Cleaned ${formatBytes(totalFreed)} across ${selectedBrowserKeys.length} browser(s).`;
       browsers = await api.scanBrowserPrivacy();
       cachedBrowsers = browsers;
     } catch (e) {
@@ -122,29 +128,12 @@
     }
   }
 
-  async function compactDatabases() {
-    error = null;
-    browserStatus = null;
-    compactingDbs = true;
-    try {
-      const saved = await api.compactBrowserDatabases();
-      addLifetimeStats(saved, 1, ["browsers"], "SQLite Database Compaction");
-      browserStatus = `Compacted browser SQLite databases (${formatBytes(saved)} reclaimed with zero data loss).`;
-      browsers = await api.scanBrowserPrivacy();
-      cachedBrowsers = browsers;
-    } catch (e) {
-      if (isPaymentRequired(e)) {
-        requestActivation();
-      } else {
-        error = errorMessage(e);
-      }
-    } finally {
-      compactingDbs = false;
-    }
-  }
-
   async function addAllowedDomain() {
-    const d = newDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    const d = newDomain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/.*$/, "");
     if (!d) return;
     if (cookieAllowlist.includes(d)) {
       newDomain = "";
@@ -161,29 +150,12 @@
 
   async function removeAllowedDomain(domain: string) {
     try {
-      cookieAllowlist = await api.setCookieAllowlist(cookieAllowlist.filter((d) => d !== domain));
+      cookieAllowlist = await api.setCookieAllowlist(
+        cookieAllowlist.filter((d) => d !== domain)
+      );
       cachedAllowlist = cookieAllowlist;
     } catch (e) {
       error = errorMessage(e);
-    }
-  }
-
-  async function toggleDrawer(drawer: "cookies" | "extensions") {
-    if (activeDrawer === drawer) {
-      activeDrawer = "none";
-      return;
-    }
-    activeDrawer = drawer;
-    if (drawer === "extensions" && extensions.length === 0 && !loadingExtensions) {
-      loadingExtensions = true;
-      try {
-        extensions = await api.listBrowserExtensions();
-        cachedExtensions = extensions;
-      } catch (e) {
-        error = errorMessage(e);
-      } finally {
-        loadingExtensions = false;
-      }
     }
   }
 
@@ -197,231 +169,242 @@
 <div class="privacy-layout">
   <div class="section-header">
     <div>
-      <h1 class="page-title">Browser Privacy &amp; SQLite Optimizer</h1>
+      <h1 class="page-title">Privacy &amp; Safety</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Sweep browser caches, tracking cookies, and history while keeping your allowlisted logins intact.
+        Clear browser tracking, lock private files with a password, or permanently erase sensitive documents.
       </p>
     </div>
+
+    <div class="mode-toggle" role="tablist">
+      <button
+        class="mode-btn"
+        class:active={subView === "browser"}
+        onclick={() => (subView = "browser")}
+        role="tab"
+        aria-selected={subView === "browser"}
+      >
+        Browser Privacy
+      </button>
+      <button
+        class="mode-btn"
+        class:active={subView === "vault"}
+        onclick={() => (subView = "vault")}
+        role="tab"
+        aria-selected={subView === "vault"}
+      >
+        Private Vault &amp; Backup
+      </button>
+      <button
+        class="mode-btn"
+        class:active={subView === "eraser"}
+        onclick={() => (subView = "eraser")}
+        role="tab"
+        aria-selected={subView === "eraser"}
+      >
+        Permanent File Eraser
+      </button>
+    </div>
   </div>
 
-  {#if error}
-    <div class="card alert-banner error">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>{error}</span>
-    </div>
-  {/if}
-
-  {#if browserStatus}
-    <div class="card alert-banner success">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span>{browserStatus}</span>
-    </div>
-  {/if}
-
-  <!-- 1. Browser Privacy & SQLite Optimizer -->
-  <div class="card browser-card">
-    <div class="card-top-row">
-      <div class="title-with-icon">
-        <div class="icon-bubble emerald">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        </div>
-        <div>
-          <strong class="card-title">Browser Privacy Cleaner</strong>
-          <div class="muted small">Clear web caches, tracking cookies, and browsing history across installed browsers</div>
-        </div>
-      </div>
-
-      <div class="toolbar-actions">
-        <button
-          class="ghost small-pill"
-          class:active-pill={activeDrawer === "cookies"}
-          onclick={() => toggleDrawer("cookies")}
-        >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>Cookie Allowlist ({cookieAllowlist.length})</span>
-        </button>
-        <button
-          class="ghost small-pill"
-          class:active-pill={activeDrawer === "extensions"}
-          onclick={() => toggleDrawer("extensions")}
-        >
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-          <span>Extensions {extensions.length ? `(${extensions.length})` : ""}</span>
-        </button>
-        <button class="ghost small-pill" onclick={scanBrowsers} disabled={scanningBrowsers}>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          <span>{scanningBrowsers ? "Scanning…" : "Rescan"}</span>
-        </button>
-      </div>
-    </div>
-
-    {#if activeDrawer === "cookies"}
-      <div class="sub-panel">
-        <div class="row" style="justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <strong class="small">Protected Login Domains (Cookie Allowlist)</strong>
-            <div class="muted small">These sites stay signed in when you clean tracking cookies.</div>
-          </div>
-          <div class="row" style="gap: 6px;">
-            <input
-              type="text"
-              bind:value={newDomain}
-              placeholder="Add domain (e.g. github.com)"
-              class="mini-input"
-              onkeydown={(e) => e.key === "Enter" && addAllowedDomain()}
-            />
-            <button class="primary small-pill" onclick={addAllowedDomain}>Add</button>
-          </div>
-        </div>
-        <div class="domain-pills">
-          {#each cookieAllowlist as dom}
-            <span class="domain-chip">
-              <span>{dom}</span>
-              <button
-                type="button"
-                class="chip-remove"
-                onclick={() => removeAllowedDomain(dom)}
-                aria-label={`Remove ${dom} from cookie allowlist`}
-              >
-                ×
-              </button>
-            </span>
-          {:else}
-            <span class="muted small">No domains in allowlist.</span>
-          {/each}
-        </div>
+  {#if subView === "vault"}
+    <CloudProtection {license} />
+  {:else if subView === "eraser"}
+    <Shredder {license} />
+  {:else}
+    {#if error}
+      <div class="card alert-banner error">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>{error}</span>
       </div>
     {/if}
 
-    {#if activeDrawer === "extensions"}
-      <div class="sub-panel">
-        <div class="row" style="justify-content: space-between; margin-bottom: 8px;">
+    {#if browserStatus}
+      <div class="card alert-banner success">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>{browserStatus}</span>
+      </div>
+    {/if}
+
+    <div class="card browser-card">
+      <div class="card-top-row">
+        <div class="title-with-icon">
+          <div class="icon-bubble emerald">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
           <div>
-            <strong class="small">Installed Browser Extensions ({extensions.length})</strong>
-            <div class="muted small">Review third-party Chromium extensions and their permission footprint.</div>
+            <strong class="card-title">Clear Browser Tracking &amp; Clutter</strong>
+            <div class="muted small">
+              Clear temporary web files, tracking cookies, and browsing history while keeping your favorite websites signed in.
+            </div>
           </div>
         </div>
-        {#if loadingExtensions}
-          <div class="muted small">Scanning installed browser extensions…</div>
-        {:else if extensions.length === 0}
-          <div class="muted small">No third-party browser extensions detected.</div>
-        {:else}
-          <div class="ext-list">
-            {#each extensions as ext}
-              <div class="row ext-row">
-                <span class="badge free">{ext.browser}</span>
-                <div style="flex: 1; min-width: 0;">
-                  <strong class="small">{ext.name}</strong>
-                  <span class="muted small mono">v{ext.version}</span>
-                  {#if ext.description}
-                    <div class="muted small" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{ext.description}</div>
-                  {/if}
-                </div>
-                <span class="badge" class:pro={ext.permissions_count >= 5} class:free={ext.permissions_count < 5}>
-                  {ext.permissions_count} permissions
-                </span>
-              </div>
+
+        <div class="toolbar-actions">
+          <button
+            class="ghost small-pill"
+            class:active-pill={showKeepSignedIn}
+            onclick={() => (showKeepSignedIn = !showKeepSignedIn)}
+          >
+            <span>Websites to Keep Signed In ({cookieAllowlist.length})</span>
+          </button>
+          <button class="ghost small-pill" onclick={scanBrowsers} disabled={scanningBrowsers}>
+            <span>{scanningBrowsers ? "Checking…" : "Check Again"}</span>
+          </button>
+        </div>
+      </div>
+
+      {#if showKeepSignedIn}
+        <div class="sub-panel">
+          <div class="row" style="justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <strong class="small">Websites to Keep Signed In</strong>
+              <div class="muted small">These websites will stay signed in even when you clear tracking cookies.</div>
+            </div>
+            <div class="row" style="gap: 6px;">
+              <input
+                type="text"
+                bind:value={newDomain}
+                placeholder="Add website (e.g. google.com)"
+                class="mini-input"
+                onkeydown={(e) => e.key === "Enter" && addAllowedDomain()}
+              />
+              <button class="primary small-pill" onclick={addAllowedDomain}>Add Website</button>
+            </div>
+          </div>
+          <div class="domain-pills">
+            {#each cookieAllowlist as dom}
+              <span class="domain-chip">
+                <span>{dom}</span>
+                <button
+                  type="button"
+                  class="chip-remove"
+                  onclick={() => removeAllowedDomain(dom)}
+                  aria-label={`Remove ${dom}`}
+                >
+                  ×
+                </button>
+              </span>
+            {:else}
+              <span class="muted small">No websites added yet.</span>
             {/each}
           </div>
-        {/if}
-      </div>
-    {/if}
+        </div>
+      {/if}
 
-    <!-- Clean Options Pills -->
-    <div class="data-type-bar">
-      <span class="field-label">DATA TO CLEAN:</span>
-      <label class="type-chip" class:checked={clearCache}>
-        <input type="checkbox" bind:checked={clearCache} />
-        <span>Web Cache</span>
-      </label>
-      <label class="type-chip" class:checked={clearCookies}>
-        <input type="checkbox" bind:checked={clearCookies} />
-        <span>Tracking Cookies</span>
-        {#if !license?.active}<span class="badge pro">Pro</span>{/if}
-      </label>
-      <label class="type-chip" class:checked={clearHistory}>
-        <input type="checkbox" bind:checked={clearHistory} />
-        <span>Browsing History</span>
-        {#if !license?.active}<span class="badge pro">Pro</span>{/if}
-      </label>
+      <!-- What to Clear -->
+      <div class="data-type-bar">
+        <span class="field-label">WHAT TO CLEAR:</span>
+        <label class="type-chip" class:checked={clearCache}>
+          <input type="checkbox" bind:checked={clearCache} />
+          <span>Temporary Web Files (Cache)</span>
+        </label>
+        <label class="type-chip" class:checked={clearCookies}>
+          <input type="checkbox" bind:checked={clearCookies} />
+          <span>Tracking Cookies</span>
+          {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+        </label>
+        <label class="type-chip" class:checked={clearHistory}>
+          <input type="checkbox" bind:checked={clearHistory} />
+          <span>Browsing History</span>
+          {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+        </label>
+      </div>
+
+      {#if browsers.length === 0}
+        <div class="empty-state">
+          <span class="muted small">All your browsers are already clean!</span>
+        </div>
+      {:else}
+        <div class="browser-list">
+          {#each browsers as b}
+            {@const key = b.id || b.browser}
+            <label class="row browser-row">
+              <input type="checkbox" bind:checked={selectedBrowsers[key]} />
+              <strong class="browser-name">{b.name || b.browser}</strong>
+              <div class="browser-metrics">
+                <span class="metric-pill">Temp files: <strong>{formatBytes(b.cache_bytes)}</strong></span>
+                <span class="metric-pill">Cookies: <strong>{formatBytes(b.cookies_bytes)}</strong></span>
+                <span class="metric-pill">History: <strong>{formatBytes(b.history_bytes)}</strong></span>
+              </div>
+              <div class="spacer"></div>
+              <strong class="browser-total">
+                {formatBytes(b.total_bytes ?? b.cache_bytes + b.cookies_bytes + b.history_bytes)}
+              </strong>
+            </label>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="card-footer-row">
+        <button
+          class="primary clean-btn"
+          disabled={cleaningBrowsers || !selectedBrowserKeys.length || (!clearCache && !clearCookies && !clearHistory)}
+          onclick={cleanBrowsers}
+        >
+          {cleaningBrowsers
+            ? "Clearing Browser Data…"
+            : totalBrowserBytes > 0
+              ? `Clear Selected Browser Data (${formatBytes(totalBrowserBytes)})`
+              : "Clear Selected Browser Data"}
+        </button>
+      </div>
     </div>
-
-    {#if browsers.length === 0}
-      <div class="empty-state">
-        <span class="muted small">No supported browser profiles detected or all browser caches are already clean.</span>
-      </div>
-    {:else}
-      <div class="browser-list">
-        {#each browsers as b}
-          {@const key = b.id || b.browser}
-          <label class="row browser-row">
-            <input type="checkbox" bind:checked={selectedBrowsers[key]} />
-            <strong class="browser-name">{b.name || b.browser}</strong>
-            <div class="browser-metrics">
-              <span class="metric-pill">Cache: <strong>{formatBytes(b.cache_bytes)}</strong></span>
-              <span class="metric-pill">Cookies: <strong>{formatBytes(b.cookies_bytes)}</strong></span>
-              <span class="metric-pill">History: <strong>{formatBytes(b.history_bytes)}</strong></span>
-            </div>
-            <div class="spacer"></div>
-            <strong class="browser-total">
-              {formatBytes(b.total_bytes ?? b.cache_bytes + b.cookies_bytes + b.history_bytes)}
-            </strong>
-          </label>
-        {/each}
-      </div>
-    {/if}
-
-    <div class="card-footer-row">
-      <button
-        class="primary"
-        disabled={cleaningBrowsers || !selectedBrowserKeys.length || (!clearCache && !clearCookies && !clearHistory)}
-        onclick={cleanBrowsers}
-      >
-        {cleaningBrowsers
-          ? "Cleaning Browser Data…"
-          : totalBrowserBytes > 0
-            ? `Clean Selected Browser Data (${formatBytes(totalBrowserBytes)})`
-            : "Clean Selected Browser Data"}
-      </button>
-      <button
-        class="ghost"
-        disabled={compactingDbs}
-        onclick={compactDatabases}
-        title="Vacuum and defragment browser SQLite databases without signing you out or deleting history"
-      >
-        {compactingDbs ? "Compacting SQLite DBs…" : "Compact Databases (No Data Loss)"}
-      </button>
-    </div>
-  </div>
+  {/if}
 </div>
 
 <style>
   .privacy-layout {
-    max-width: 1240px;
+    max-width: 1120px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     padding-bottom: 36px;
   }
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
   }
   .page-title {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     letter-spacing: -0.5px;
     margin: 0;
+  }
+  .mode-toggle {
+    display: flex;
+    background: var(--panel-2);
+    padding: 4px;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .mode-btn {
+    background: transparent;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    box-shadow: none;
+  }
+  .mode-btn.active {
+    background: var(--panel-solid);
+    color: var(--accent);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
   }
   .alert-banner {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 600;
   }
   .alert-banner.error {
     border-left: 4px solid var(--danger);
@@ -434,7 +417,7 @@
     color: var(--text);
   }
   .browser-card {
-    padding: 24px 26px;
+    padding: 24px 28px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -452,12 +435,12 @@
     gap: 12px;
   }
   .card-title {
-    font-size: 16px;
+    font-size: 17px;
   }
   .icon-bubble {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -473,8 +456,8 @@
     flex-wrap: wrap;
   }
   .small-pill {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 6px 14px;
+    font-size: 12.5px;
     border-radius: 9999px;
   }
   .active-pill {
@@ -487,7 +470,7 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    padding: 10px 14px;
+    padding: 12px 16px;
     background: var(--panel-2);
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -503,14 +486,13 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 9999px;
     background: var(--panel-solid);
     border: 1px solid var(--border);
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: border-color 0.15s ease;
   }
   .type-chip.checked {
     border-color: rgba(16, 185, 129, 0.45);
@@ -527,14 +509,10 @@
     background: var(--panel-2);
     cursor: pointer;
     flex-wrap: wrap;
-    transition: border-color 0.15s ease;
-  }
-  .browser-row:hover {
-    border-color: rgba(16, 185, 129, 0.4);
   }
   .browser-name {
     min-width: 140px;
-    font-size: 14px;
+    font-size: 14.5px;
   }
   .browser-metrics {
     display: flex;
@@ -543,7 +521,7 @@
     flex-wrap: wrap;
   }
   .metric-pill {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--muted);
   }
   .metric-pill strong {
@@ -554,7 +532,7 @@
     font-size: 15px;
   }
   .empty-state {
-    padding: 16px;
+    padding: 18px;
     text-align: center;
     background: var(--panel-2);
     border-radius: 12px;
@@ -567,6 +545,11 @@
     flex-wrap: wrap;
     padding-top: 4px;
   }
+  .clean-btn {
+    padding: 11px 24px;
+    border-radius: 9999px;
+    font-weight: 700;
+  }
   .sub-panel {
     background: var(--panel-2);
     border: 1px solid var(--border);
@@ -574,11 +557,12 @@
     padding: 14px 16px;
   }
   .mini-input {
-    padding: 6px 12px;
+    padding: 7px 14px;
     border-radius: 9999px;
     border: 1px solid var(--border);
     background: var(--panel-solid);
-    font-size: 12.5px;
+    color: var(--text);
+    font-size: 13px;
     outline: none;
   }
   .domain-pills {
@@ -594,7 +578,7 @@
     border-radius: 9999px;
     background: var(--panel-solid);
     border: 1px solid var(--border);
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
   }
   .chip-remove {
@@ -606,22 +590,5 @@
     color: var(--muted);
     cursor: pointer;
     box-shadow: none;
-  }
-  .chip-remove:hover {
-    color: var(--danger);
-  }
-  .ext-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-  .ext-row {
-    background: var(--panel-solid);
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    gap: 10px;
   }
 </style>

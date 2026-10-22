@@ -1,0 +1,17 @@
+{
+  "lastRunAt": "2026-10-21T21:45:49.063Z",
+  "lastCount": 50,
+  "totalCleanItems": 178,
+  "sampleUrls": [
+    "https://sweeprcleaner.com/clean/app/ollama-models-blob-cache",
+    "https://sweeprcleaner.com/clean/app/lm-studio-models-cache",
+    "https://sweeprcleaner.com/clean/app/huggingface-hub-cache",
+    "https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache",
+    "https://sweeprcleaner.com/clean/app/pytorch-torch-hub-cache",
+    "https://sweeprcleaner.com/clean/app/cursor-ai-editor-cache",
+    "https://sweeprcleaner.com/clean/app/unity-gi-package-cache",
+    "https://sweeprcleaner.com/clean/app/call-of-duty-hq-shader-cache",
+    "https://sweeprcleaner.com/clean/app/fortnite-d3d12-shader-cache",
+    "https://sweeprcleaner.com/clean/app/vrchat-avatar-world-cache"
+  ]
+}

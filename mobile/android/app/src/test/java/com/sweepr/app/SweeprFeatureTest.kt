@@ -195,4 +195,77 @@ class SweeprFeatureTest {
         assertEquals("0 B", formatBytes(0))
         assertEquals("1:05", formatDuration(65_000L))
     }
+
+    @Test
+    fun ed25519JwsVerification_acceptsValidSignatureAndRejectsTamperedOrWrongProject() {
+        val kpGen = java.security.KeyPairGenerator.getInstance("Ed25519")
+        val kp = kpGen.generateKeyPair()
+        val spki = kp.public.encoded
+        // Last 32 bytes of X.509 SPKI for Ed25519 are the raw 32-byte public key
+        val rawPub = spki.copyOfRange(spki.size - 32, spki.size)
+        val pubB64Url = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rawPub)
+
+        fun signJws(claimsJson: String): String {
+            val headerB64 = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("""{"alg":"EdDSA","typ":"JWT"}""".toByteArray(Charsets.UTF_8))
+            val payloadB64 = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(claimsJson.toByteArray(Charsets.UTF_8))
+            val signingInput = "$headerB64.$payloadB64"
+            val sig = java.security.Signature.getInstance("Ed25519")
+            sig.initSign(kp.private)
+            sig.update(signingInput.toByteArray(Charsets.UTF_8))
+            val sigB64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign())
+            return "$signingInput.$sigB64"
+        }
+
+        val futureExp = (System.currentTimeMillis() / 1000L) + 3600L
+        val validToken = signJws(
+            """{"sub":"acc_1","device_id":"dev_1","project_id":"cleaner","status":"active","exp":$futureExp}"""
+        )
+        assertTrue(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = validToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+
+        // Tampered payload with valid signature from original payload must be rejected
+        val parts = validToken.split(".")
+        val forgedPayload = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("""{"sub":"acc_1","device_id":"dev_1","project_id":"cleaner","status":"active","exp":${futureExp + 9999}}""".toByteArray(Charsets.UTF_8))
+        val forgedToken = "${parts[0]}.$forgedPayload.${parts[2]}"
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = forgedToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+
+        // Wrong device_id must be rejected
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = validToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "other_device",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+
+        // Wrong project_id without bundle must be rejected
+        val vpnToken = signJws(
+            """{"sub":"acc_1","device_id":"dev_1","project_id":"vpn","status":"active","exp":$futureExp}"""
+        )
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = vpnToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+    }
 }

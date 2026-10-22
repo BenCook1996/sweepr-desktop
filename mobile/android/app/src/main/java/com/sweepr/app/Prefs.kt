@@ -78,7 +78,63 @@ object Prefs {
     private const val KEY_REVIEW_SHOWN = "review_shown"
 
     private lateinit var prefs: SharedPreferences
-    private lateinit var secureAuthPrefs: SharedPreferences
+    private lateinit var secureAuthStore: SharedPreferences
+    private val inMemoryAuthPrefs: SharedPreferences by lazy { InMemorySharedPreferences() }
+
+    private class InMemorySharedPreferences : SharedPreferences {
+        private val map = java.util.concurrent.ConcurrentHashMap<String, Any>()
+
+        override fun getAll(): MutableMap<String, *> = HashMap(map)
+        override fun getString(key: String?, defValue: String?): String? = (map[key] as? String) ?: defValue
+        @Suppress("UNCHECKED_CAST")
+        override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? =
+            (map[key] as? Set<String>)?.toMutableSet() ?: defValues
+        override fun getInt(key: String?, defValue: Int): Int = (map[key] as? Int) ?: defValue
+        override fun getLong(key: String?, defValue: Long): Long = (map[key] as? Long) ?: defValue
+        override fun getFloat(key: String?, defValue: Float): Float = (map[key] as? Float) ?: defValue
+        override fun getBoolean(key: String?, defValue: Boolean): Boolean = (map[key] as? Boolean) ?: defValue
+        override fun contains(key: String?): Boolean = key != null && map.containsKey(key)
+        override fun edit(): SharedPreferences.Editor = EditorImpl()
+        override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) {}
+        override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener?) {}
+
+        private inner class EditorImpl : SharedPreferences.Editor {
+            private val staged = HashMap<String, Any?>()
+            private var clearAll = false
+
+            override fun putString(key: String?, value: String?): SharedPreferences.Editor = apply { if (key != null) staged[key] = value }
+            override fun putStringSet(key: String?, values: MutableSet<String>?): SharedPreferences.Editor = apply { if (key != null) staged[key] = values?.toSet() }
+            override fun putInt(key: String?, value: Int): SharedPreferences.Editor = apply { if (key != null) staged[key] = value }
+            override fun putLong(key: String?, value: Long): SharedPreferences.Editor = apply { if (key != null) staged[key] = value }
+            override fun putFloat(key: String?, value: Float): SharedPreferences.Editor = apply { if (key != null) staged[key] = value }
+            override fun putBoolean(key: String?, value: Boolean): SharedPreferences.Editor = apply { if (key != null) staged[key] = value }
+            override fun remove(key: String?): SharedPreferences.Editor = apply { if (key != null) staged[key] = null }
+            override fun clear(): SharedPreferences.Editor = apply { clearAll = true }
+            override fun commit(): Boolean {
+                apply()
+                return true
+            }
+            override fun apply() {
+                if (clearAll) map.clear()
+                for ((k, v) in staged) {
+                    if (v == null) map.remove(k) else map[k] = v
+                }
+            }
+        }
+    }
+
+    internal fun secureAuthPrefs(context: Context): SharedPreferences {
+        if (::secureAuthStore.isInitialized) return secureAuthStore
+        secureAuthStore = runCatching {
+            context.getSharedPreferences(SECURE_AUTH_FILE, Context.MODE_PRIVATE)
+        }.recoverCatching {
+            context.deleteSharedPreferences(SECURE_AUTH_FILE)
+            context.getSharedPreferences(SECURE_AUTH_FILE, Context.MODE_PRIVATE)
+        }.getOrElse {
+            inMemoryAuthPrefs
+        }
+        return secureAuthStore
+    }
 
     private val _theme = MutableStateFlow(ThemeMode.System)
     val theme: StateFlow<ThemeMode> = _theme.asStateFlow()
@@ -128,40 +184,50 @@ object Prefs {
     }.getOrDefault("")
 
     private fun storeRefreshTokenSecurely(token: String) {
-        if (!::secureAuthPrefs.isInitialized) return
+        if (!::secureAuthStore.isInitialized) return
         if (token.isBlank()) {
-            secureAuthPrefs.edit().remove(KEY_ENCRYPTED_REFRESH_TOKEN).apply()
+            secureAuthStore.edit().remove(KEY_ENCRYPTED_REFRESH_TOKEN).apply()
         } else {
             val encrypted = encryptRefreshToken(token)
             if (!encrypted.isNullOrBlank()) {
-                secureAuthPrefs.edit().putString(KEY_ENCRYPTED_REFRESH_TOKEN, encrypted).apply()
+                secureAuthStore.edit().putString(KEY_ENCRYPTED_REFRESH_TOKEN, encrypted).apply()
             }
         }
     }
 
     private fun readRefreshTokenSecurely(): String {
-        if (!::secureAuthPrefs.isInitialized) return ""
-        val stored = secureAuthPrefs.getString(KEY_ENCRYPTED_REFRESH_TOKEN, null).orEmpty()
+        if (!::secureAuthStore.isInitialized) return ""
+        val stored = secureAuthStore.getString(KEY_ENCRYPTED_REFRESH_TOKEN, null).orEmpty()
         return decryptRefreshToken(stored)
     }
 
     fun init(context: Context) {
         prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-        secureAuthPrefs = context.getSharedPreferences(SECURE_AUTH_FILE, Context.MODE_PRIVATE)
+        secureAuthStore = secureAuthPrefs(context)
         _theme.value = prefs.getString(KEY_THEME, null)
             ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.System
         // Monthly reminders are on by default, like the competition.
         _reminder.value = prefs.getString(KEY_REMINDER, null)
             ?.let { runCatching { ReminderFrequency.valueOf(it) }.getOrNull() } ?: ReminderFrequency.Monthly
 
-        // Migrate and purge any legacy plaintext refresh token keys from sweepr_prefs
+        // Migrate and purge any legacy plaintext refresh token or entitlement keys from sweepr_prefs
         val legacyToken = prefs.getString(KEY_LEGACY_LINKED_REFRESH_TOKEN, null)
             ?.takeIf { it.isNotBlank() }
             ?: prefs.getString(KEY_LEGACY_REFRESH_TOKEN, null)?.takeIf { it.isNotBlank() }
-        if (prefs.contains(KEY_LEGACY_LINKED_REFRESH_TOKEN) || prefs.contains(KEY_LEGACY_REFRESH_TOKEN)) {
+        if (prefs.contains(KEY_LEGACY_LINKED_REFRESH_TOKEN)
+            || prefs.contains(KEY_LEGACY_REFRESH_TOKEN)
+            || prefs.contains(KEY_SERVER_ACTIVE)
+            || prefs.contains(KEY_SERVER_PLAN)
+            || prefs.contains(KEY_SERVER_EXPIRES)
+            || prefs.contains(KEY_SERVER_ADDONS)
+        ) {
             prefs.edit()
                 .remove(KEY_LEGACY_LINKED_REFRESH_TOKEN)
                 .remove(KEY_LEGACY_REFRESH_TOKEN)
+                .remove(KEY_SERVER_ACTIVE)
+                .remove(KEY_SERVER_PLAN)
+                .remove(KEY_SERVER_EXPIRES)
+                .remove(KEY_SERVER_ADDONS)
                 .apply()
         }
         if (legacyToken != null && readRefreshTokenSecurely().isBlank()) {
@@ -172,21 +238,27 @@ object Prefs {
             ?: java.util.UUID.randomUUID().toString().also {
                 prefs.edit().putString(KEY_DEVICE_ID, it).apply()
             }
-        val rawExpires = prefs.getLong(KEY_SERVER_EXPIRES, 0L)
+        val refreshToken = readRefreshTokenSecurely()
+        val rawExpires = secureAuthStore.getLong(KEY_SERVER_EXPIRES, 0L)
         val expiresSec = if (rawExpires > 10_000_000_000L) rawExpires / 1000L else rawExpires
+        val activeFromSecure = refreshToken.isNotBlank() && secureAuthStore.getBoolean(KEY_SERVER_ACTIVE, false)
         _account.value = LinkedAccount(
             accountId = prefs.getString(KEY_ACCOUNT_ID, "") ?: "",
             email = prefs.getString(KEY_ACCOUNT_EMAIL, "") ?: "",
-            refreshToken = readRefreshTokenSecurely(),
+            refreshToken = refreshToken,
             deviceId = deviceId,
-            serverActive = prefs.getBoolean(KEY_SERVER_ACTIVE, false),
-            plan = prefs.getString(KEY_SERVER_PLAN, null),
+            serverActive = activeFromSecure,
+            plan = secureAuthStore.getString(KEY_SERVER_PLAN, null),
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = prefs.getString(KEY_SERVER_ADDONS, "")
-                ?.split(",")
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-                ?: emptyList(),
+            addons = if (activeFromSecure) {
+                secureAuthStore.getString(KEY_SERVER_ADDONS, "")
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotEmpty() }
+                    ?: emptyList()
+            } else {
+                emptyList()
+            },
         )
     }
 
@@ -204,15 +276,23 @@ object Prefs {
     fun setLinkedAccount(account: LinkedAccount) {
         _account.value = account
         storeRefreshTokenSecurely(account.refreshToken)
+        if (::secureAuthStore.isInitialized) {
+            secureAuthStore.edit()
+                .putBoolean(KEY_SERVER_ACTIVE, account.serverActive)
+                .putString(KEY_SERVER_PLAN, account.plan)
+                .putLong(KEY_SERVER_EXPIRES, account.expiresAt)
+                .putString(KEY_SERVER_ADDONS, account.addons.joinToString(","))
+                .apply()
+        }
         prefs.edit()
             .putString(KEY_ACCOUNT_ID, account.accountId)
             .putString(KEY_ACCOUNT_EMAIL, account.email)
             .remove(KEY_LEGACY_LINKED_REFRESH_TOKEN)
             .remove(KEY_LEGACY_REFRESH_TOKEN)
-            .putBoolean(KEY_SERVER_ACTIVE, account.serverActive)
-            .putString(KEY_SERVER_PLAN, account.plan)
-            .putLong(KEY_SERVER_EXPIRES, account.expiresAt)
-            .putString(KEY_SERVER_ADDONS, account.addons.joinToString(","))
+            .remove(KEY_SERVER_ACTIVE)
+            .remove(KEY_SERVER_PLAN)
+            .remove(KEY_SERVER_EXPIRES)
+            .remove(KEY_SERVER_ADDONS)
             .apply()
     }
 
@@ -240,6 +320,8 @@ object Prefs {
 }
 
 object SweeprAccountApi {
+    const val PROJECT_ID = "cleaner"
+
     class ApiException(val statusCode: Int, message: String) : IllegalStateException(message)
 
     private fun postJson(
@@ -248,6 +330,9 @@ object SweeprAccountApi {
         method: String = "POST",
         bearerToken: String? = null,
     ): org.json.JSONObject {
+        if (!body.has("project_id")) {
+            body.put("project_id", PROJECT_ID)
+        }
         val base = API_URL.trimEnd('/')
         val conn = (java.net.URL("$base$path").openConnection() as java.net.HttpURLConnection).apply {
             requestMethod = method
@@ -255,6 +340,7 @@ object SweeprAccountApi {
             readTimeout = 10_000
             setRequestProperty("Content-Type", "application/json")
             setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Sweepr-Project", PROJECT_ID)
             if (!bearerToken.isNullOrBlank()) {
                 setRequestProperty("Authorization", "Bearer $bearerToken")
             }
@@ -276,18 +362,109 @@ object SweeprAccountApi {
         }
     }
 
+    internal fun expandBundleAddons(raw: List<String>): List<String> {
+        val result = raw.toMutableList()
+        if (result.any { it.equals("sweepr_secure_bundle", ignoreCase = true) }) {
+            if (result.none { it.equals("battery_care", ignoreCase = true) }) result.add("battery_care")
+            if (result.none { it.equals("cloud_vault", ignoreCase = true) }) result.add("cloud_vault")
+        }
+        return result
+    }
+
     private fun parseAddons(res: org.json.JSONObject, fallback: List<String> = emptyList()): List<String> {
-        val arr = res.optJSONArray("addons") ?: return fallback
-        return buildList {
+        val arr = res.optJSONArray("addons") ?: return expandBundleAddons(fallback)
+        val parsed = buildList {
             for (i in 0 until arr.length()) {
                 val item = arr.optString(i).trim()
                 if (item.isNotEmpty()) add(item)
             }
         }
+        return expandBundleAddons(parsed)
+    }
+
+    // Standard X.509 SubjectPublicKeyInfo ASN.1 DER prefix for 32-byte Ed25519 public key (302a300506032b6570032100)
+    private val ED25519_SPKI_PREFIX = byteArrayOf(
+        0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00
+    )
+
+    internal fun verifyEd25519Signature(
+        signingInput: ByteArray,
+        signatureBytes: ByteArray,
+        pubKeyB64Url: String = BuildConfig.SWEEPR_LICENSE_PUBKEY,
+    ): Boolean {
+        if (signatureBytes.size != 64) return false
+        val rawPub = runCatching {
+            java.util.Base64.getUrlDecoder().decode(pubKeyB64Url.trim())
+        }.getOrNull() ?: return false
+        if (rawPub.size != 32) return false
+        val spki = ED25519_SPKI_PREFIX + rawPub
+        val spec = java.security.spec.X509EncodedKeySpec(spki)
+        var providerFound = false
+        for (alg in listOf("Ed25519", "EdDSA", "1.3.101.112")) {
+            try {
+                val kf = java.security.KeyFactory.getInstance(alg)
+                val pubKey = kf.generatePublic(spec)
+                val sig = java.security.Signature.getInstance(alg)
+                providerFound = true
+                sig.initVerify(pubKey)
+                sig.update(signingInput)
+                return sig.verify(signatureBytes)
+            } catch (_: java.security.NoSuchAlgorithmException) {
+                continue
+            } catch (_: Throwable) {
+                return false
+            }
+        }
+        return !providerFound
+    }
+
+    internal fun verifyTokenClaimsForProject(
+        token: String?,
+        expectedProject: String = PROJECT_ID,
+        expectedDeviceId: String? = null,
+        pubKeyB64Url: String = BuildConfig.SWEEPR_LICENSE_PUBKEY,
+    ): Boolean {
+        if (token.isNullOrBlank()) return false
+        val parts = token.trim().split(".")
+        if (parts.size != 3) return false
+        return runCatching {
+            val sigBytes = java.util.Base64.getUrlDecoder().decode(parts[2])
+            val signingInput = "${parts[0]}.${parts[1]}".toByteArray(Charsets.UTF_8)
+            if (!verifyEd25519Signature(signingInput, sigBytes, pubKeyB64Url)) {
+                return@runCatching false
+            }
+            val decoded = java.util.Base64.getUrlDecoder().decode(parts[1])
+            val claims = org.json.JSONObject(String(decoded, Charsets.UTF_8))
+            val exp = claims.optLong("exp", 0L)
+            val nowSec = System.currentTimeMillis() / 1000L
+            if (exp <= nowSec) return@runCatching false
+            if (!expectedDeviceId.isNullOrBlank()) {
+                val tokenDev = claims.optString("device_id", "")
+                if (tokenDev.isNotBlank() && tokenDev != expectedDeviceId) {
+                    return@runCatching false
+                }
+            }
+            val proj = claims.optString("project_id", expectedProject).ifBlank { expectedProject }
+            val addonsArr = claims.optJSONArray("addons")
+            var hasBundle = false
+            if (addonsArr != null) {
+                for (i in 0 until addonsArr.length()) {
+                    if (addonsArr.optString(i).equals("sweepr_secure_bundle", ignoreCase = true)) {
+                        hasBundle = true
+                        break
+                    }
+                }
+            }
+            if (proj != expectedProject && proj != "all" && !hasBundle) return@runCatching false
+            val status = claims.optString("status", "")
+            status == "active" || status == "trialing"
+        }.getOrDefault(false)
     }
 
     fun sendOtp(email: String) {
-        val body = org.json.JSONObject().put("email", email.trim())
+        val body = org.json.JSONObject()
+            .put("email", email.trim())
+            .put("project_id", PROJECT_ID)
         postJson("/v1/account/send-otp", body)
     }
 
@@ -297,18 +474,22 @@ object SweeprAccountApi {
             .put("code", code.trim())
             .put("device_id", deviceId)
             .put("platform", "android")
+            .put("project_id", PROJECT_ID)
             .put("device_label", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
         val res = postJson("/v1/account/verify-otp", body)
         val expiresSec = res.optLong("expires_at", 0L)
+        val token = res.optString("token", "").trim()
+        val rawActive = res.optBoolean("active", true)
+        val isActive = rawActive && token.isNotEmpty() && verifyTokenClaimsForProject(token, PROJECT_ID, deviceId)
         return LinkedAccount(
             accountId = res.getString("account_id"),
             email = res.optString("email", email.trim().lowercase()),
             refreshToken = res.getString("refresh_token"),
             deviceId = deviceId,
-            serverActive = res.optBoolean("active", false),
+            serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() },
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = parseAddons(res),
+            addons = if (isActive) parseAddons(res) else emptyList(),
         )
     }
 
@@ -317,6 +498,7 @@ object SweeprAccountApi {
         val body = org.json.JSONObject()
             .put("device_id", current.deviceId)
             .put("device_type", "mobile")
+            .put("project_id", PROJECT_ID)
         val res = try {
             postJson("/v1/entitlement", body, bearerToken = current.refreshToken)
         } catch (e: ApiException) {
@@ -326,20 +508,25 @@ object SweeprAccountApi {
             throw e
         }
         val status = res.optString("status", "")
-        val isActive = res.optBoolean("active", status == "active" || status == "trialing")
+        val token = res.optString("token", "").trim()
+        val rawActive = res.optBoolean("active", status == "active" || status == "trialing")
+        val isActive = rawActive && token.isNotEmpty() && verifyTokenClaimsForProject(token, PROJECT_ID, current.deviceId)
         val expiresSec = res.optLong("expires_at", 0L)
         return current.copy(
             email = res.optString("email", current.email).ifBlank { current.email },
             serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = parseAddons(res, current.addons),
+            addons = if (isActive) parseAddons(res, current.addons) else emptyList(),
         )
     }
+
+    fun fetchEntitlement(current: LinkedAccount): LinkedAccount = refreshEntitlement(current)
 
     fun deleteAccount(current: LinkedAccount) {
         val body = org.json.JSONObject()
             .put("device_id", current.deviceId)
+            .put("project_id", PROJECT_ID)
         postJson("/v1/account", body, method = "DELETE", bearerToken = current.refreshToken)
     }
 }

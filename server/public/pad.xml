@@ -29,7 +29,7 @@
     <Program_Name>SWEEPR Cleaner</Program_Name>
     <Program_Version>0.1.0</Program_Version>
     <Program_Release_Month>10</Program_Release_Month>
-    <Program_Release_Day>18</Program_Release_Day>
+    <Program_Release_Day>22</Program_Release_Day>
     <Program_Release_Year>2026</Program_Release_Year>
     <Program_Cost_Dollars>11.99</Program_Cost_Dollars>
     <Program_Type>Freemium</Program_Type>
@@ -38,9 +38,9 @@
     <Program_OS_Support>Win10,Win10 x64,Win11</Program_OS_Support>
     <Program_Language>English,French,German,Spanish,Italian,Portuguese,Dutch,Japanese</Program_Language>
     <File_Info>
-      <File_Size_Bytes>5387776</File_Size_Bytes>
-      <File_Size_K>5261</File_Size_K>
-      <File_Size_MB>5.39</File_Size_MB>
+      <File_Size_Bytes>5630464</File_Size_Bytes>
+      <File_Size_K>5498</File_Size_K>
+      <File_Size_MB>5.37</File_Size_MB>
     </File_Info>
     <Expire_Info>
       <Has_Expire_Info>N</Has_Expire_Info>

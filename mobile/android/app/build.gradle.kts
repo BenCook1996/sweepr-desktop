@@ -29,9 +29,16 @@ val sweeprSupportEmail: String =
         ?: "support@sweeprcleaner.com"
 
 val sweeprApiUrl: String =
-    (findProperty("SWEEPR_API_URL") as String?)?.takeIf { it.isNotBlank() }
+    (findProperty("SWEEPR_CRM_URL") as String?)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty("SWEEPR_CRM_URL")?.takeIf { it.isNotBlank() }
+        ?: (findProperty("SWEEPR_API_URL") as String?)?.takeIf { it.isNotBlank() }
         ?: localProps.getProperty("SWEEPR_API_URL")?.takeIf { it.isNotBlank() }
         ?: sweeprWebsiteUrl
+
+val sweeprLicensePubkey: String =
+    (findProperty("SWEEPR_LICENSE_PUBKEY") as String?)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty("SWEEPR_LICENSE_PUBKEY")?.takeIf { it.isNotBlank() }
+        ?: "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8"
 
 android {
     namespace = "com.sweepr.app"
@@ -59,6 +66,8 @@ android {
         buildConfigField("String", "SWEEPR_WEBSITE_URL", "\"$sweeprWebsiteUrl\"")
         buildConfigField("String", "SWEEPR_SUPPORT_EMAIL", "\"$sweeprSupportEmail\"")
         buildConfigField("String", "SWEEPR_API_URL", "\"$sweeprApiUrl\"")
+        buildConfigField("String", "SWEEPR_PROJECT_ID", "\"cleaner\"")
+        buildConfigField("String", "SWEEPR_LICENSE_PUBKEY", "\"$sweeprLicensePubkey\"")
     }
 
     buildTypes {
@@ -72,6 +81,10 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    lint {
+        warning += setOf("MissingTranslation", "ExtraTranslation")
     }
 }
 

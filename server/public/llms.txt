@@ -34,3 +34,31 @@
 - Order: https://sweeprcleaner.com/order
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
+
+## Programmatic Windows Storage & App Cache Guides (178 Verified Guides)
+- Full Directory: https://sweeprcleaner.com/clean
+- [Arc Browser for Windows Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Packages\TheBrowserCompany.Arc_ttt1ap7aakyb4\LocalCache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/arc-browser-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Arc Browser for Windows GPUCache & Dawn WebGPU Cache (%LocalAppData%\Packages\TheBrowserCompany.Arc_ttt1ap7aakyb4\LocalCache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/arc-browser-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Vivaldi Browser Media Cache & IndexedDB Blob Storage (%LocalAppData%\Vivaldi\User Data\Default\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/vivaldi-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Vivaldi Browser Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Vivaldi\User Data\Default\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/vivaldi-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Vivaldi Browser Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Vivaldi\User Data\Default\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/vivaldi-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Vivaldi Browser Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Vivaldi\User Data\Default\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/vivaldi-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Vivaldi Browser GPUCache & Dawn WebGPU Cache (%LocalAppData%\Vivaldi\User Data\Default\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/vivaldi-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Opera GX Gaming Browser Media Cache & IndexedDB Blob Storage (%LocalAppData%\Opera Software\Opera GX Stable\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/opera-gx-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Opera GX Gaming Browser Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Opera Software\Opera GX Stable\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/opera-gx-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Opera GX Gaming Browser Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Opera Software\Opera GX Stable\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/opera-gx-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Opera GX Gaming Browser Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Opera Software\Opera GX Stable\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/opera-gx-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Opera GX Gaming Browser GPUCache & Dawn WebGPU Cache (%LocalAppData%\Opera Software\Opera GX Stable\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/opera-gx-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Brave Browser Media Cache & IndexedDB Blob Storage (%LocalAppData%\BraveSoftware\Brave-Browser\User Data\Default\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/brave-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Brave Browser Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\BraveSoftware\Brave-Browser\User Data\Default\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/brave-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Brave Browser Service Worker CacheStorage & Offline Blobs (%LocalAppData%\BraveSoftware\Brave-Browser\User Data\Default\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/brave-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Brave Browser Code Cache & V8 JavaScript Bytecode (%LocalAppData%\BraveSoftware\Brave-Browser\User Data\Default\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/brave-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Brave Browser GPUCache & Dawn WebGPU Cache (%LocalAppData%\BraveSoftware\Brave-Browser\User Data\Default\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/brave-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Microsoft Edge Media Cache & IndexedDB Blob Storage (%LocalAppData%\Microsoft\Edge\User Data\Default\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/edge-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Microsoft Edge Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Microsoft\Edge\User Data\Default\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/edge-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Microsoft Edge Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Microsoft\Edge\User Data\Default\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/edge-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Microsoft Edge Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Microsoft\Edge\User Data\Default\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/edge-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Microsoft Edge GPUCache & Dawn WebGPU Cache (%LocalAppData%\Microsoft\Edge\User Data\Default\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/edge-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Google Chrome Media Cache & IndexedDB Blob Storage (%LocalAppData%\Google\Chrome\User Data\Default\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/chrome-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Google Chrome Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Google\Chrome\User Data\Default\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/chrome-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Google Chrome Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Google\Chrome\User Data\Default\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/chrome-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
