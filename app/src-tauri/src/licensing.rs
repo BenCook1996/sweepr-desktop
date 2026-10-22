@@ -693,13 +693,19 @@ impl Licensing {
         if email.is_empty() || !email.contains('@') {
             return Err(AppError::License("Please enter a valid email address.".into()));
         }
-        self.http
+        let resp = self
+            .http
             .post(format!("{}/v1/account/send-otp", self.api_base()?))
             .header("x-sweepr-project", PROJECT_ID)
             .json(&serde_json::json!({ "email": email, "project_id": PROJECT_ID }))
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
+        if resp.status().as_u16() == 404 {
+            return Err(AppError::License(
+                "No account found for this email address. Please sign up first.".into(),
+            ));
+        }
+        resp.error_for_status()?;
         Ok(())
     }
 

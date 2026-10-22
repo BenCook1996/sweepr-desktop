@@ -1423,7 +1423,7 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // Same response whether or not the account exists, so this can't be used to enumerate customers.
+  // Checks that the email is already signed up before sending a 6-digit OTP email.
   app.post("/api/portal-login", async (c) => {
     if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "Too many requests. Please try again later." }, 429);
     const body = await c.req.json().catch(() => ({}));
@@ -1432,29 +1432,38 @@ export function createApp(deps: AppDeps) {
     if (!email) return c.json({ error: "Please enter a valid email address." }, 400);
     if (!limitOtpSendEmail.hit(email)) return c.json({ error: "Too many requests. Please try again later." }, 429);
 
-    const account = repo.accountByEmail(email);
-    if (account) {
-      const code = randomInt(100000, 1000000).toString();
-      const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60; // 15 mins
-      repo.setOtp(email, sha256(code), expiresAt);
-
-      const { sendSubscriptionEmail } = await import("./email.js");
-      const dispatch = await sendSubscriptionEmail(email, "otp", code);
-      const statusText = dispatch.ok
-        ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
-        : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
-
-      repo.addActivity({
-        account_id: account.id,
-        type: "otp_requested",
-        title: "Customer Requested Login Code",
-        description: `6-digit code requested via /login — ${statusText}`,
-        actor: "customer",
-        metadata: { email, dispatch },
-      });
+    const account = await findSignedUpAccountByEmail(email);
+    if (!account) {
+      return c.json(
+        {
+          ok: false,
+          otpSent: false,
+          error: "No account found for this email address. Please sign up first or check your email.",
+        },
+        404
+      );
     }
 
-    return c.json({ otpSent: true });
+    const code = randomInt(100000, 1000000).toString();
+    const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60; // 15 mins
+    repo.setOtp(email, sha256(code), expiresAt);
+
+    const { sendSubscriptionEmail } = await import("./email.js");
+    const dispatch = await sendSubscriptionEmail(email, "otp", code);
+    const statusText = dispatch.ok
+      ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
+      : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "otp_requested",
+      title: "Customer Requested Login Code",
+      description: `6-digit code requested via /login — ${statusText}`,
+      actor: "customer",
+      metadata: { email, dispatch },
+    });
+
+    return c.json({ ok: true, otpSent: true });
   });
 
   app.post("/api/verify-otp", async (c) => {
@@ -2424,6 +2433,21 @@ export function createApp(deps: AppDeps) {
     return null;
   }
 
+  async function findSignedUpAccountByEmail(email: string): Promise<Account | null> {
+    const existing = repo.accountByEmail(email);
+    const isUnpaidCheckoutDraft =
+      existing &&
+      (existing.id.startsWith("acc_lead_") || existing.id.startsWith("acc_web_")) &&
+      !repo.entitlement(existing.id) &&
+      repo.subscriptionsForAccount(existing.id).length === 0;
+    if (existing && !isUnpaidCheckoutDraft) {
+      return existing;
+    }
+    const synced = await findOrSyncEntitledAccountByEmail(email);
+    if (synced) return synced;
+    return null;
+  }
+
   // Step 1 of linking an existing web/email purchase to a desktop/mobile device via OTP.
   app.post("/v1/account/send-otp", async (c) => {
     if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
@@ -2432,27 +2456,37 @@ export function createApp(deps: AppDeps) {
     if (!email) return c.json({ error: "invalid_email" }, 400);
     if (!limitOtpSendEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
-    const account = repo.accountByEmail(email) ?? (await findOrSyncEntitledAccountByEmail(email));
-    if (account) {
-      const code = randomInt(100000, 1000000).toString();
-      const expiresAt = now() + 7 * 86400;
-      repo.setOtp(email, sha256(code), expiresAt);
-      const { sendSubscriptionEmail } = await import("./email.js");
-      const dispatch = await sendSubscriptionEmail(email, "otp", code);
-      const statusText = dispatch.ok
-        ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
-        : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
-
-      repo.addActivity({
-        account_id: account.id,
-        type: "otp_requested",
-        title: "Device Link Login Code Requested",
-        description: `6-digit code requested via app — ${statusText}`,
-        actor: "customer",
-        metadata: { email, dispatch },
-      });
+    const account = await findSignedUpAccountByEmail(email);
+    if (!account) {
+      return c.json(
+        {
+          ok: false,
+          otpSent: false,
+          error: "No account found for this email address. Please sign up first or check your email.",
+        },
+        404
+      );
     }
-    return c.json({ otpSent: true });
+
+    const code = randomInt(100000, 1000000).toString();
+    const expiresAt = now() + 7 * 86400;
+    repo.setOtp(email, sha256(code), expiresAt);
+    const { sendSubscriptionEmail } = await import("./email.js");
+    const dispatch = await sendSubscriptionEmail(email, "otp", code);
+    const statusText = dispatch.ok
+      ? `Sent via ${dispatch.provider}${dispatch.id ? ` (id: ${dispatch.id})` : ""}`
+      : `Failed (${dispatch.provider}): ${dispatch.error || "Unknown error"}`;
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "otp_requested",
+      title: "Device Link Login Code Requested",
+      description: `6-digit code requested via app — ${statusText}`,
+      actor: "customer",
+      metadata: { email, dispatch },
+    });
+
+    return c.json({ ok: true, otpSent: true });
   });
 
   // Step 2 of linking an existing web/email purchase to a device: verifies OTP and issues a device-scoped refresh token.

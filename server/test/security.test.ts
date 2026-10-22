@@ -91,20 +91,36 @@ test("RevenueCat webhook: EXPIRATION does not overwrite disputed", async () => {
   assert.equal(repo.entitlement("rc_user_1")?.status, "disputed");
 });
 
-test("OTP: no account enumeration, hashed storage, lockout after 5 failures, secure cookie + logout", async () => {
+test("OTP: checks email is signed up before sending 6-digit OTP, hashed storage, lockout after 5 failures, secure cookie + logout", async () => {
   const { post, repo, app } = setup({ publicUrl: "https://sweepr.example" });
   repo.createAccount("acc_1", sha256("tok"), "user@example.com");
+  repo.createAccount("acc_lead_unpaid1", sha256("tok_lead"), "leadonly@example.com");
 
-  const exists = await (await post("/api/portal-login", { email: " User@Example.com " })).json();
-  const missing = await (await post("/api/portal-login", { email: "nobody@example.com" })).json();
-  assert.deepEqual(exists, { otpSent: true });
-  assert.deepEqual(missing, { otpSent: true });
+  const existsRes = await post("/api/portal-login", { email: " User@Example.com " });
+  assert.equal(existsRes.status, 200);
+  const exists = await existsRes.json();
+  assert.equal(exists.otpSent, true);
+
+  const missingRes = await post("/api/portal-login", { email: "nobody@example.com" });
+  assert.equal(missingRes.status, 404);
+  const missing = await missingRes.json();
+  assert.equal(missing.otpSent, false);
+
+  const unpaidLeadRes = await post("/api/portal-login", { email: "leadonly@example.com" });
+  assert.equal(unpaidLeadRes.status, 404);
+  const unpaidLead = await unpaidLeadRes.json();
+  assert.equal(unpaidLead.otpSent, false);
+
+  const missingDeviceOtpRes = await post("/v1/account/send-otp", { email: "nobody@example.com" });
+  assert.equal(missingDeviceOtpRes.status, 404);
+
   assert.equal((await post("/api/portal-login", { email: "not-an-email" })).status, 400);
 
   const row = repo.db.prepare("SELECT * FROM otps WHERE email = ?").get("user@example.com") as any;
   assert.ok(row);
   assert.match(row.code, /^[a-f0-9]{64}$/, "OTP must be stored hashed");
   assert.equal(repo.db.prepare("SELECT * FROM otps WHERE email = ?").get("nobody@example.com"), undefined);
+  assert.equal(repo.db.prepare("SELECT * FROM otps WHERE email = ?").get("leadonly@example.com"), undefined);
 
   // Replace with a known code and brute-force it 5 times -> burned.
   repo.setOtp("user@example.com", sha256("123456"), Math.floor(Date.now() / 1000) + 600);
