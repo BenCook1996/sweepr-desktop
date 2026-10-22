@@ -1275,7 +1275,7 @@ export class Repo {
   }
 
   listOutreachLogs(opts: { search?: string; filter?: string; limit?: number; offset?: number } = {}) {
-    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 10000);
+    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 50000);
     const offset = Math.max(Number(opts.offset || 0), 0);
     const clauses: string[] = [];
     const params: any[] = [];

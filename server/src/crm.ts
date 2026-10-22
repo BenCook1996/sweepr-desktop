@@ -1144,7 +1144,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     ensureOutreachSeeded();
     const search = c.req.query("search") || undefined;
     const filter = c.req.query("filter") || undefined;
-    const limit = Math.min(Number(c.req.query("limit") || 2000), 10000);
+    const limit = Math.min(Number(c.req.query("limit") || 2000), 50000);
     const offset = Math.max(Number(c.req.query("offset") || 0), 0);
     return c.json(repo.listOutreachLogs({ search, filter, limit, offset }));
   });

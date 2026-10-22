@@ -257,7 +257,7 @@ test("CRM: outreach log seeding, filtering, and CRUD", async () => {
   const { get, post, patch, app } = setup();
 
   // 1. Auto-seeds the outreach entries on first GET
-  const listRes = await get("/api/crm/outreach?limit=5000");
+  const listRes = await get("/api/crm/outreach?limit=50000");
   assert.equal(listRes.status, 200);
   const listData = await listRes.json();
   assert.ok(listData.counts.total >= 256);

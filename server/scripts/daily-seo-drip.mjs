@@ -18,9 +18,11 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(__dirname, "../..");
 
 // Auto-load server/.env if available
 const envPath = path.resolve(__dirname, "../.env");
@@ -431,6 +433,25 @@ async function main() {
   console.log(`✓ CRM Sync: Synced to outreach & backlinks log with automatic verification.`);
   console.log(`✓ STRICT RULE: 0 emails sent. SMTP completely disabled.`);
   console.log("==========================================================================\n");
+
+  if (!process.argv.includes("--no-push") && backlinkResult.completed > 0) {
+    try {
+      execFileSync(
+        "git",
+        ["add", "server/src/outreach-seed.json", "server/src/data/indexing-queue.json"],
+        { cwd: REPO_ROOT, stdio: "inherit" }
+      );
+      execFileSync(
+        "git",
+        ["commit", "-m", `chore(seo): sync ${backlinkResult.completed} syndication links & indexing queue`],
+        { cwd: REPO_ROOT, stdio: "inherit" }
+      );
+      execFileSync("git", ["push", "origin", "main"], { cwd: REPO_ROOT, stdio: "inherit" });
+      console.log("[6-Hourly Workflow] Committed and pushed to GitHub (origin/main) -> Railway auto-deploy triggered.");
+    } catch (gitErr) {
+      console.warn("[6-Hourly Workflow] Git auto-push skipped or failed:", gitErr?.message || gitErr);
+    }
+  }
 }
 
 main().catch((err) => {

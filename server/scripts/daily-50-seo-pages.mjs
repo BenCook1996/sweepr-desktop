@@ -21,10 +21,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_ROOT = path.resolve(__dirname, "..");
+const REPO_ROOT = path.resolve(SERVER_ROOT, "..");
 const CLEAN_ITEMS_PATH = path.join(SERVER_ROOT, "src", "data", "clean-items.json");
 const INDEXING_QUEUE_PATH = path.join(SERVER_ROOT, "src", "data", "indexing-queue.json");
 const DAILY_STATE_PATH = path.join(SERVER_ROOT, "src", "data", "daily-seo-pages-state.json");
@@ -732,6 +734,32 @@ async function main() {
   console.log(`[Daily 50 SEO Pages] Generated ${selected.length} new keyword-researched SEO pages (Total: ${updatedItems.length} pages, +${sitemapAdded} in sitemap.xml).`);
   await pingIndexNow(newUrls);
   await syncKeywordsToCrm(selected);
+
+  if (!process.argv.includes("--no-push")) {
+    try {
+      execFileSync(
+        "git",
+        [
+          "add",
+          "server/src/data/clean-items.json",
+          "server/src/data/indexing-queue.json",
+          "server/src/data/daily-seo-pages-state.json",
+          "server/public/sitemap.xml",
+          "server/public/llms.txt"
+        ],
+        { cwd: REPO_ROOT, stdio: "inherit" }
+      );
+      execFileSync(
+        "git",
+        ["commit", "-m", `chore(seo): publish ${selected.length} daily keyword-researched SEO pages (total ${updatedItems.length})`],
+        { cwd: REPO_ROOT, stdio: "inherit" }
+      );
+      execFileSync("git", ["push", "origin", "main"], { cwd: REPO_ROOT, stdio: "inherit" });
+      console.log("[Daily 50 SEO Pages] Committed and pushed to GitHub (origin/main) -> Railway auto-deploy triggered.");
+    } catch (gitErr) {
+      console.warn("[Daily 50 SEO Pages] Git auto-push skipped or failed:", gitErr?.message || gitErr);
+    }
+  }
 }
 
 main().catch((err) => {
