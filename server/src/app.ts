@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { compress } from "hono/compress";
+import { etag } from "hono/etag";
 import { getCookie, setCookie, getSignedCookie, setSignedCookie, deleteCookie } from "hono/cookie";
 import { bodyLimit } from "hono/body-limit";
 import { readFileSync, existsSync, statSync, createReadStream } from "node:fs";
@@ -223,7 +225,27 @@ export function createApp(deps: AppDeps) {
     await next();
   };
 
+  app.use("*", compress());
+  app.use("*", etag());
   app.use("*", securityHeaders({ hsts: isHttps }));
+
+  // Static asset caching & performance headers (strictly non-visual / non-functional)
+  app.use("*", async (c, next) => {
+    await next();
+    const p = c.req.path.toLowerCase();
+    if (/^\/+(api|crm|admin|v1|webhooks|dev)(\/|$)/.test(p)) return;
+    if (c.res.headers.has("Cache-Control")) return;
+
+    if (p.endsWith(".css") || p.endsWith(".js")) {
+      c.res.headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+    } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf)$/.test(p)) {
+      c.res.headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
+    } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml") {
+      c.res.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    } else if (c.res.headers.get("content-type")?.includes("text/html")) {
+      c.res.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+    }
+  });
   // Nothing we accept legitimately needs more than this; protects JSON parsing from huge bodies.
   app.use("/api/*", bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
   app.use("/v1/*", bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
@@ -413,8 +435,25 @@ export function createApp(deps: AppDeps) {
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
   app.get("/clean/:category/:slug", (c) => {
     const category = String(c.req.param("category") ?? "").toLowerCase();
-    const slug = String(c.req.param("slug") ?? "").toLowerCase();
-    const item = getCleanItems().find((i) => i.category === category && i.slug === slug);
+    const rawSlug = String(c.req.param("slug") ?? "");
+    let cleanSlug = rawSlug.toLowerCase().replace(/%20|\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+    // Legacy / historical redirect aliases
+    if (category === "folder" && cleanSlug === "localappdata-explorer-thumbcache-db") {
+      return c.redirect("/clean/folder/windows-iconcache-db", 301);
+    }
+    if (category === "app" && (cleanSlug === "qbittorrent-itunes-logs" || rawSlug.includes("qBittorrent"))) {
+      cleanSlug = "qbittorrent-itunes-logs";
+    }
+    if (category === "folder" && cleanSlug.startsWith("recycle-bin-hidden")) {
+      cleanSlug = "recycle-bin-hidden-folder";
+    }
+
+    if (rawSlug !== cleanSlug) {
+      return c.redirect(`/clean/${category}/${cleanSlug}`, 301);
+    }
+
+    const item = getCleanItems().find((i) => i.category === category && i.slug === cleanSlug);
     if (!item) return c.notFound();
     return c.html(renderPseoPage(item));
   });

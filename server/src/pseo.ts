@@ -91,8 +91,6 @@ export function renderPseoDirectory(): string {
   <meta name="description" content="Wondering what is filling up your hard drive? Browse verified guides to safely cleaning hidden Windows folders, app caches, and temp files in minutes.">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SWEEPR Cleaner">
@@ -101,6 +99,8 @@ export function renderPseoDirectory(): string {
   <meta property="og:title" content="Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner">
   <meta property="og:description" content="Verified guides to safely cleaning hidden Windows folders, app caches, and temporary files.">
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="SWEEPR Cleaner Windows Storage &amp; Cache Directory">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://sweeprcleaner.com/clean">
@@ -152,7 +152,7 @@ export function renderPseoDirectory(): string {
   <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
-  <script src="/attribution.js"></script>
+  <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
   <link rel="stylesheet" href="/style.css">
@@ -243,6 +243,29 @@ export function renderPseoPage(item: CleanItem): string {
   const pageDesc = buildPseoDescription(item);
   const canonicalUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
 
+  const faqItems = [
+    {
+      q: `Is it safe to delete ${item.name}?`,
+      a: item.warning
+        ? `Exercise caution: ${item.warning}`
+        : `Yes, 100% safe. ${item.whatHappens} It cleans only temporary cache files, compiled scratch buffers, or stale update artifacts without modifying your personal documents.`,
+    },
+    {
+      q: `How much storage space will cleaning ${item.name} free up?`,
+      a: `Users typically reclaim between ${item.avgSpace} on Windows 10 and Windows 11 systems. On high-churn systems with frequent updates or heavy usage, savings can be significantly higher.`,
+    },
+    {
+      q: `Will deleting this cache remove my personal accounts, saved games, or logins?`,
+      a: item.safeToDelete
+        ? `No. Personal documents, desktop shortcuts, account credentials, and game saves are stored in dedicated profile directories and remain completely untouched.`
+        : (item.warning || `Personal files remain safe, but be sure to follow the manual instructions closely or use SWEEPR Cleaner's verified safe cleaning rules.`),
+    },
+    {
+      q: `Where is ${item.name} located on Windows?`,
+      a: `It is stored at ${item.path}. Windows marks many of these directories as hidden system folders by default, requiring hidden files to be visible in File Explorer to inspect manually.`,
+    },
+  ];
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -253,8 +276,6 @@ export function renderPseoPage(item: CleanItem): string {
   <meta name="description" content="${pageDesc}">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="${canonicalUrl}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   
   <!-- Open Graph -->
@@ -265,6 +286,8 @@ export function renderPseoPage(item: CleanItem): string {
   <meta property="og:title" content="${pageTitle}">
   <meta property="og:description" content="Reclaim ${item.avgSpace} from ${item.name}. Detailed safety guide and manual steps.">
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="How to clean ${item.name} safely">
 
   <!-- Twitter -->
@@ -290,16 +313,14 @@ export function renderPseoPage(item: CleanItem): string {
       },
       {
         "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: `Is it safe to delete ${item.name}?`,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: item.warning || item.whatHappens,
-            },
+        mainEntity: faqItems.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: f.a,
           },
-        ],
+        })),
       },
       {
         "@type": "BreadcrumbList",
@@ -332,7 +353,7 @@ export function renderPseoPage(item: CleanItem): string {
   <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
-  <script src="/attribution.js"></script>
+  <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
   <link rel="stylesheet" href="/style.css">
@@ -403,12 +424,91 @@ export function renderPseoPage(item: CleanItem): string {
       }
     </div>
 
+    <!-- Technical Architecture & Cache Mechanics -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+      <h2 class="text-xl font-bold text-gray-900 mb-3">Why Does This Storage Cache Balloon Over Time?</h2>
+      <p class="text-gray-600 text-sm leading-relaxed mb-4">
+        On modern Windows 10 and Windows 11 systems, modern desktop applications, GPU graphics drivers, and system update components continuously generate temporary compilation artifacts, pre-rendered frame caches, and diagnostic logs to accelerate repeat operations. However, most software lacks an automated background pruning routine. As applications update or configurations change, superseded files remain orphaned on disk indefinitely.
+      </p>
+      <p class="text-gray-600 text-sm leading-relaxed mb-4">
+        When drive capacity exceeds 80% utilization, Solid State Drives (SSDs and NVMe drives) experience increased write amplification, slower random I/O throughput, and elevated wear. Safely purging ${item.name} restores essential drive headroom, accelerates File Explorer search indexing, and frees up <strong>${item.avgSpace}</strong> of disk capacity.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100 text-xs">
+        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <span class="font-bold text-gray-900 block mb-1">🛡️ What Stays 100% Protected</span>
+          <span class="text-gray-600">Personal files, documents, saved game progress, browser bookmarks, and application licenses are stored in separate directories and are never touched.</span>
+        </div>
+        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <span class="font-bold text-gray-900 block mb-1">⚡ What Gets Safely Removed</span>
+          <span class="text-gray-600">Stale compilation bytecode, old error minidumps, downloaded patch staging files, and orphaned thumbnail indexes.</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Manual Steps -->
     <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
       <h2 class="text-xl font-bold text-gray-900 mb-4">Manual Cleaning Instructions</h2>
       <ol class="space-y-4 mb-6">
         ${stepsList}
       </ol>
+      <p class="text-xs text-gray-500 italic mt-4 pt-4 border-t border-gray-100">
+        Note: If Windows alerts that a file is in use or locked by a background process, close the associated task in Task Manager before deleting, or use SWEEPR Cleaner to release locked handles safely.
+      </p>
+    </div>
+
+    <!-- Frequently Asked Questions -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+      <div class="space-y-4">
+        ${faqItems
+          .map(
+            (f) => `
+          <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+            <h3 class="text-sm font-bold text-gray-900 mb-1.5">${f.q}</h3>
+            <p class="text-xs text-gray-600 leading-relaxed">${f.a}</p>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+    </div>
+
+    <!-- Comparison Table: Manual vs Automated -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">Manual File Explorer vs. 1-Click SWEEPR Cleanup</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-gray-200">
+              <th class="py-2.5 font-bold text-gray-700">Feature</th>
+              <th class="py-2.5 font-bold text-gray-500">Manual Deletion</th>
+              <th class="py-2.5 font-bold text-emerald-700">SWEEPR Cleaner</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-gray-600">
+            <tr>
+              <td class="py-2 font-medium text-gray-800">Locked File Handling</td>
+              <td class="py-2 text-red-600">Fails on locked processes</td>
+              <td class="py-2 text-emerald-700 font-semibold">Safe background release</td>
+            </tr>
+            <tr>
+              <td class="py-2 font-medium text-gray-800">Accidental Deletion Risk</td>
+              <td class="py-2 text-amber-600">Moderate (easy to delete wrong folder)</td>
+              <td class="py-2 text-emerald-700 font-semibold">Zero (strict rules &amp; hashes)</td>
+            </tr>
+            <tr>
+              <td class="py-2 font-medium text-gray-800">Safety Undo Rollback</td>
+              <td class="py-2 text-gray-400">None (Shift+Del is permanent)</td>
+              <td class="py-2 text-emerald-700 font-semibold">7-Day Automatic Rollback</td>
+            </tr>
+            <tr>
+              <td class="py-2 font-medium text-gray-800">Time Required</td>
+              <td class="py-2">10–20 minutes per app</td>
+              <td class="py-2 text-emerald-700 font-semibold">&lt; 60 seconds across 40+ areas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Automated 1-Click Callout -->

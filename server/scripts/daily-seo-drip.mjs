@@ -88,13 +88,26 @@ async function verifyAndProbePadXml() {
   return { version, sizeBytes, sizeMb, specUrl, primaryDl };
 }
 
-async function publishTelegraph(item, lang, dateTag) {
+let cachedTelegraphToken = null;
+async function getTelegraphToken() {
+  if (cachedTelegraphToken) return cachedTelegraphToken;
   const accRes = await fetch("https://api.telegra.ph/createAccount?short_name=SWEEPR&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com", {
     signal: AbortSignal.timeout(10000)
   });
   const acc = await accRes.json();
-  const token = acc.result?.access_token;
-  if (!token) throw new Error("Telegraph auth err");
+  cachedTelegraphToken = acc.result?.access_token;
+  if (!cachedTelegraphToken) throw new Error("Telegraph auth err");
+  return cachedTelegraphToken;
+}
+
+async function publishTelegraph(item, lang, dateTag) {
+  let token;
+  try {
+    token = await getTelegraphToken();
+  } catch {
+    cachedTelegraphToken = null;
+    token = await getTelegraphToken();
+  }
 
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
@@ -246,9 +259,16 @@ async function runBacklinksWorkflow(targetCount = 300) {
   let completed = 0;
   const newLinks = [];
   const BATCH_SIZE = 6;
+  let attempts = 0;
+  const maxAttempts = targetCount * 2;
 
-  for (let i = 0; i < targetCount; i += BATCH_SIZE) {
-    const indices = Array.from({ length: Math.min(BATCH_SIZE, targetCount - i) }, (_, o) => i + o);
+  while (completed < targetCount && attempts < maxAttempts) {
+    const batchRemaining = targetCount - completed;
+    const currentBatchSize = Math.min(BATCH_SIZE, batchRemaining);
+    const indices = Array.from({ length: currentBatchSize }, (_, o) => attempts + o);
+    const currentAttemptStart = attempts;
+    attempts += currentBatchSize;
+
     const results = await Promise.all(
       indices.map(async (idx) => {
         const item = cleanItems[(startOffset + idx) % cleanItems.length];
@@ -269,7 +289,7 @@ async function runBacklinksWorkflow(targetCount = 300) {
         how: res.how,
         category: res.category,
         status: "listed",
-        message_id: `drip-${dateTag}-${i + j}-${Date.now()}`,
+        message_id: `drip-${dateTag}-${currentAttemptStart + j}-${Date.now()}`,
         reached_out_at: Math.floor(Date.now() / 1000)
       };
       seed.push(entry);
@@ -296,10 +316,14 @@ async function runBacklinksWorkflow(targetCount = 300) {
       }
     }
 
-    const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
-    const totalBatches = Math.ceil(targetCount / BATCH_SIZE);
-    if (currentBatch % 5 === 0 || currentBatch === totalBatches) {
-      console.log(`[Batch ${currentBatch}/${totalBatches}] Progress: ${completed}/${targetCount} published (${((completed / targetCount) * 100).toFixed(1)}%)`);
+    const currentBatch = Math.floor(attempts / BATCH_SIZE);
+    const estTotalBatches = Math.ceil(targetCount / BATCH_SIZE);
+    if (currentBatch % 5 === 0 || completed >= targetCount) {
+      console.log(`[Batch ${currentBatch}/${estTotalBatches}] Progress: ${completed}/${targetCount} published (${((completed / targetCount) * 100).toFixed(1)}%)`);
+    }
+
+    if (completed < targetCount) {
+      await new Promise((r) => setTimeout(r, 150));
     }
   }
 

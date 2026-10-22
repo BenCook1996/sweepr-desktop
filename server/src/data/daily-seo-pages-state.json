@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-21T21:45:49.063Z",
+  "lastRunAt": "2026-10-22T05:27:11.970Z",
   "lastCount": 50,
-  "totalCleanItems": 178,
+  "totalCleanItems": 228,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/ollama-models-blob-cache",
-    "https://sweeprcleaner.com/clean/app/lm-studio-models-cache",
-    "https://sweeprcleaner.com/clean/app/huggingface-hub-cache",
-    "https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache",
-    "https://sweeprcleaner.com/clean/app/pytorch-torch-hub-cache",
-    "https://sweeprcleaner.com/clean/app/cursor-ai-editor-cache",
-    "https://sweeprcleaner.com/clean/app/unity-gi-package-cache",
-    "https://sweeprcleaner.com/clean/app/call-of-duty-hq-shader-cache",
-    "https://sweeprcleaner.com/clean/app/fortnite-d3d12-shader-cache",
-    "https://sweeprcleaner.com/clean/app/vrchat-avatar-world-cache"
+    "https://sweeprcleaner.com/clean/app/arc-browser-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/arc-browser-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/arc-browser-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/discord-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/discord-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/discord-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/discord-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/discord-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/slack-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/slack-code-bytecode-cache"
   ]
 }

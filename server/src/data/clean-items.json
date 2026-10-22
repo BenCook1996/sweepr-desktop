@@ -1306,7 +1306,7 @@
     ]
   },
   {
-    "slug": "qBittorrent-itunes-logs",
+    "slug": "qbittorrent-itunes-logs",
     "category": "app",
     "name": "qBittorrent GeoIP & Orphaned .torrent Cache",
     "path": "%LocalAppData%\\qBittorrent\\logs",
@@ -1714,7 +1714,7 @@
     ]
   },
   {
-    "slug": "recycle-bin-hidden- folder",
+    "slug": "recycle-bin-hidden-folder",
     "category": "folder",
     "name": "Hidden $Recycle.Bin Corrupted & Per-Drive Trash",
     "path": "C:\\$Recycle.Bin",
@@ -2212,16 +2212,18 @@
     "category": "folder"
   },
   {
-    "slug": "localappdata-explorer-thumbcache-db",
-    "name": "Windows File Explorer Thumbnail & Icon Cache (thumbcache_*.db)",
-    "path": "%LocalAppData%\\Microsoft\\Windows\\Explorer",
+    "slug": "windows-iconcache-db",
+    "name": "Windows Desktop Icon Cache Database (IconCache.db)",
+    "path": "%LocalAppData%\\IconCache.db",
     "safeToDelete": true,
-    "avgSpace": "0.5 GB – 4.0 GB",
-    "whatIsIt": "File Explorer caches image, video, and document thumbnails inside thumbcache_256.db, thumbcache_1024.db, and iconcache_*.db.",
-    "whatHappens": "Frees disk space and fixes blank or corrupted desktop/folder icons. Windows automatically regenerates thumbnails for folders you open.",
+    "avgSpace": "0.2 GB – 1.8 GB",
+    "whatIsIt": "Windows caches desktop, Start Menu, and taskbar shortcut icons inside the hidden IconCache.db file in %LocalAppData%.",
+    "whatHappens": "Safe to delete. Frees disk space and forces Windows Explorer to rebuild a fresh icon cache, fixing corrupted, generic blank sheet, or missing desktop icons.",
     "manualSteps": [
-      "Open Disk Cleanup (cleanmgr.exe) and check 'Thumbnails', or press Win + R and open %localappdata%\\Microsoft\\Windows\\Explorer.",
-      "Delete unlocked thumbcache_*.db files to refresh File Explorer thumbnails."
+      "Close open applications and open Terminal as Administrator.",
+      "Stop Windows Explorer with: taskkill /f /im explorer.exe",
+      "Delete the icon cache database: del /f /q %LocalAppData%\\IconCache.db",
+      "Restart Windows Explorer: start explorer.exe"
     ],
     "category": "folder"
   },
@@ -2627,6 +2629,756 @@
     "manualSteps": [
       "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "arc-browser-service-worker-cachestorage",
+    "category": "app",
+    "name": "Arc Browser for Windows Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Arc Browser for Windows quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Arc Browser for Windows's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "arc-browser-crashpad-dump-logs",
+    "category": "app",
+    "name": "Arc Browser for Windows Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Arc Browser for Windows writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Arc Browser for Windows's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "arc-browser-media-blob-storage",
+    "category": "app",
+    "name": "Arc Browser for Windows Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Arc Browser for Windows stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Arc Browser for Windows's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Arc Browser for Windows (verify Arc.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "discord-gpu-shader-cache",
+    "category": "app",
+    "name": "Discord Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\discord\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Discord Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Discord Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Discord Desktop (verify Discord.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\discord and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "discord-code-bytecode-cache",
+    "category": "app",
+    "name": "Discord Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\discord\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Discord Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Discord Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Discord Desktop (verify Discord.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\discord and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "discord-service-worker-cachestorage",
+    "category": "app",
+    "name": "Discord Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\discord\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Discord Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Discord Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Discord Desktop (verify Discord.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\discord and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "discord-crashpad-dump-logs",
+    "category": "app",
+    "name": "Discord Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\discord\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Discord Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Discord Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Discord Desktop (verify Discord.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\discord and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "discord-media-blob-storage",
+    "category": "app",
+    "name": "Discord Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\discord\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Discord Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Discord Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Discord Desktop (verify Discord.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\discord and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "slack-gpu-shader-cache",
+    "category": "app",
+    "name": "Slack Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Slack\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Slack Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Slack Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Slack Desktop (verify slack.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Slack and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "slack-code-bytecode-cache",
+    "category": "app",
+    "name": "Slack Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Slack\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Slack Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Slack Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Slack Desktop (verify slack.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Slack and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "slack-service-worker-cachestorage",
+    "category": "app",
+    "name": "Slack Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Slack\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Slack Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Slack Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Slack Desktop (verify slack.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Slack and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "slack-crashpad-dump-logs",
+    "category": "app",
+    "name": "Slack Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Slack\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Slack Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Slack Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Slack Desktop (verify slack.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Slack and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "slack-media-blob-storage",
+    "category": "app",
+    "name": "Slack Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Slack\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Slack Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Slack Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Slack Desktop (verify slack.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Slack and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "teams-work-gpu-shader-cache",
+    "category": "app",
+    "name": "Microsoft Teams (New Work/School) GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Microsoft Teams (New Work/School) stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Microsoft Teams (New Work/School)'s GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Microsoft Teams (New Work/School) (verify ms-teams.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "teams-work-code-bytecode-cache",
+    "category": "app",
+    "name": "Microsoft Teams (New Work/School) Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Microsoft Teams (New Work/School) compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Microsoft Teams (New Work/School)'s Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Microsoft Teams (New Work/School) (verify ms-teams.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "teams-work-service-worker-cachestorage",
+    "category": "app",
+    "name": "Microsoft Teams (New Work/School) Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Microsoft Teams (New Work/School) quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Microsoft Teams (New Work/School)'s Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Microsoft Teams (New Work/School) (verify ms-teams.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "teams-work-crashpad-dump-logs",
+    "category": "app",
+    "name": "Microsoft Teams (New Work/School) Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Microsoft Teams (New Work/School) writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Microsoft Teams (New Work/School)'s Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Microsoft Teams (New Work/School) (verify ms-teams.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "teams-work-media-blob-storage",
+    "category": "app",
+    "name": "Microsoft Teams (New Work/School) Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Microsoft Teams (New Work/School) stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Microsoft Teams (New Work/School)'s Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Microsoft Teams (New Work/School) (verify ms-teams.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-gpu-shader-cache",
+    "category": "app",
+    "name": "Visual Studio Code GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Code\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Visual Studio Code stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Visual Studio Code's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Visual Studio Code (verify Code.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-code-bytecode-cache",
+    "category": "app",
+    "name": "Visual Studio Code Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Code\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Visual Studio Code compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Visual Studio Code's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Visual Studio Code (verify Code.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-service-worker-cachestorage",
+    "category": "app",
+    "name": "Visual Studio Code Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Code\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Visual Studio Code quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Visual Studio Code's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Visual Studio Code (verify Code.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-crashpad-dump-logs",
+    "category": "app",
+    "name": "Visual Studio Code Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Code\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Visual Studio Code writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Visual Studio Code's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Visual Studio Code (verify Code.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-media-blob-storage",
+    "category": "app",
+    "name": "Visual Studio Code Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Code\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Visual Studio Code stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Visual Studio Code's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Visual Studio Code (verify Code.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-insiders-gpu-shader-cache",
+    "category": "app",
+    "name": "VS Code Insiders GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Code - Insiders\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "VS Code Insiders stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning VS Code Insiders's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit VS Code Insiders (verify Code - Insiders.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code - Insiders and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-insiders-code-bytecode-cache",
+    "category": "app",
+    "name": "VS Code Insiders Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Code - Insiders\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "VS Code Insiders compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning VS Code Insiders's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit VS Code Insiders (verify Code - Insiders.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code - Insiders and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-insiders-service-worker-cachestorage",
+    "category": "app",
+    "name": "VS Code Insiders Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Code - Insiders\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "VS Code Insiders quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning VS Code Insiders's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit VS Code Insiders (verify Code - Insiders.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code - Insiders and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-insiders-crashpad-dump-logs",
+    "category": "app",
+    "name": "VS Code Insiders Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Code - Insiders\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "VS Code Insiders writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning VS Code Insiders's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit VS Code Insiders (verify Code - Insiders.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code - Insiders and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "vscode-insiders-media-blob-storage",
+    "category": "app",
+    "name": "VS Code Insiders Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Code - Insiders\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "VS Code Insiders stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning VS Code Insiders's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit VS Code Insiders (verify Code - Insiders.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Code - Insiders and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "cursor-editor-gpu-shader-cache",
+    "category": "app",
+    "name": "Cursor AI IDE GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Cursor\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Cursor AI IDE stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Cursor AI IDE's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Cursor AI IDE (verify Cursor.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Cursor and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "cursor-editor-code-bytecode-cache",
+    "category": "app",
+    "name": "Cursor AI IDE Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Cursor\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Cursor AI IDE compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Cursor AI IDE's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Cursor AI IDE (verify Cursor.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Cursor and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "cursor-editor-service-worker-cachestorage",
+    "category": "app",
+    "name": "Cursor AI IDE Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Cursor\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Cursor AI IDE quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Cursor AI IDE's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Cursor AI IDE (verify Cursor.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Cursor and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "cursor-editor-crashpad-dump-logs",
+    "category": "app",
+    "name": "Cursor AI IDE Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Cursor\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Cursor AI IDE writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Cursor AI IDE's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Cursor AI IDE (verify Cursor.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Cursor and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "cursor-editor-media-blob-storage",
+    "category": "app",
+    "name": "Cursor AI IDE Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Cursor\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Cursor AI IDE stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Cursor AI IDE's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Cursor AI IDE (verify Cursor.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Cursor and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "windsurf-ide-gpu-shader-cache",
+    "category": "app",
+    "name": "Windsurf AI Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Windsurf\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Windsurf AI Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Windsurf AI Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Windsurf AI Editor (verify Windsurf.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Windsurf and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "windsurf-ide-code-bytecode-cache",
+    "category": "app",
+    "name": "Windsurf AI Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Windsurf\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Windsurf AI Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Windsurf AI Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Windsurf AI Editor (verify Windsurf.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Windsurf and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "windsurf-ide-service-worker-cachestorage",
+    "category": "app",
+    "name": "Windsurf AI Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Windsurf\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Windsurf AI Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Windsurf AI Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Windsurf AI Editor (verify Windsurf.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Windsurf and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "windsurf-ide-crashpad-dump-logs",
+    "category": "app",
+    "name": "Windsurf AI Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Windsurf\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Windsurf AI Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Windsurf AI Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Windsurf AI Editor (verify Windsurf.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Windsurf and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "windsurf-ide-media-blob-storage",
+    "category": "app",
+    "name": "Windsurf AI Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Windsurf\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Windsurf AI Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Windsurf AI Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Windsurf AI Editor (verify Windsurf.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Windsurf and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "notion-app-gpu-shader-cache",
+    "category": "app",
+    "name": "Notion Desktop App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Notion\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Notion Desktop App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Notion Desktop App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Notion Desktop App (verify Notion.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Notion and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "notion-app-code-bytecode-cache",
+    "category": "app",
+    "name": "Notion Desktop App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Notion\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Notion Desktop App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Notion Desktop App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Notion Desktop App (verify Notion.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Notion and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "notion-app-service-worker-cachestorage",
+    "category": "app",
+    "name": "Notion Desktop App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Notion\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Notion Desktop App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Notion Desktop App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Notion Desktop App (verify Notion.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Notion and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "notion-app-crashpad-dump-logs",
+    "category": "app",
+    "name": "Notion Desktop App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Notion\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Notion Desktop App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Notion Desktop App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Notion Desktop App (verify Notion.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Notion and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "notion-app-media-blob-storage",
+    "category": "app",
+    "name": "Notion Desktop App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Notion\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Notion Desktop App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Notion Desktop App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Notion Desktop App (verify Notion.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Notion and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "obsidian-app-gpu-shader-cache",
+    "category": "app",
+    "name": "Obsidian Markdown App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\obsidian\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Obsidian Markdown App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Obsidian Markdown App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Obsidian Markdown App (verify Obsidian.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\obsidian and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "obsidian-app-code-bytecode-cache",
+    "category": "app",
+    "name": "Obsidian Markdown App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\obsidian\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Obsidian Markdown App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Obsidian Markdown App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Obsidian Markdown App (verify Obsidian.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\obsidian and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "obsidian-app-service-worker-cachestorage",
+    "category": "app",
+    "name": "Obsidian Markdown App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\obsidian\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Obsidian Markdown App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Obsidian Markdown App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Obsidian Markdown App (verify Obsidian.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\obsidian and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "obsidian-app-crashpad-dump-logs",
+    "category": "app",
+    "name": "Obsidian Markdown App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\obsidian\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Obsidian Markdown App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Obsidian Markdown App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Obsidian Markdown App (verify Obsidian.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\obsidian and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "obsidian-app-media-blob-storage",
+    "category": "app",
+    "name": "Obsidian Markdown App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\obsidian\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Obsidian Markdown App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Obsidian Markdown App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Obsidian Markdown App (verify Obsidian.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\obsidian and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "figma-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Figma Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Figma\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Figma Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Figma Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Figma Desktop (verify Figma.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "figma-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Figma Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Figma\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Figma Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Figma Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Figma Desktop (verify Figma.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
       "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
   }

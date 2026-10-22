@@ -499,16 +499,18 @@ const WINDOWS_FOLDER_MATRIX = [
     ]
   },
   {
-    slug: "localappdata-explorer-thumbcache-db",
-    name: "Windows File Explorer Thumbnail & Icon Cache (thumbcache_*.db)",
-    path: "%LocalAppData%\\Microsoft\\Windows\\Explorer",
+    slug: "windows-iconcache-db",
+    name: "Windows Desktop Icon Cache Database (IconCache.db)",
+    path: "%LocalAppData%\\IconCache.db",
     safeToDelete: true,
-    avgSpace: "0.5 GB – 4.0 GB",
-    whatIsIt: "File Explorer caches image, video, and document thumbnails inside thumbcache_256.db, thumbcache_1024.db, and iconcache_*.db.",
-    whatHappens: "Frees disk space and fixes blank or corrupted desktop/folder icons. Windows automatically regenerates thumbnails for folders you open.",
+    avgSpace: "0.2 GB – 1.8 GB",
+    whatIsIt: "Windows caches desktop, Start Menu, and taskbar shortcut icons inside the hidden IconCache.db file in %LocalAppData%.",
+    whatHappens: "Safe to delete. Frees disk space and forces Windows Explorer to rebuild a fresh icon cache, fixing corrupted, generic blank sheet, or missing desktop icons.",
     manualSteps: [
-      "Open Disk Cleanup (cleanmgr.exe) and check 'Thumbnails', or press Win + R and open %localappdata%\\Microsoft\\Windows\\Explorer.",
-      "Delete unlocked thumbcache_*.db files to refresh File Explorer thumbnails."
+      "Close open applications and open Terminal as Administrator.",
+      "Stop Windows Explorer with: taskkill /f /im explorer.exe",
+      "Delete the icon cache database: del /f /q %LocalAppData%\\IconCache.db",
+      "Restart Windows Explorer: start explorer.exe"
     ]
   }
 ];

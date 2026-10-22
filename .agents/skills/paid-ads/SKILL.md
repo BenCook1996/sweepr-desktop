@@ -40,7 +40,8 @@ Before running this skill, read `.agents/product-marketing.md` and `server/src/p
     - Keywords: `[c drive full windows 11 nothing installed]`, `[clean appdata folder safely]`, `[windows 11 junk file cleaner]`, `[delete winsxs temp files tool]`, `[free up ssd space windows 11]`.
   - **Ad Group 3 — Gaming & Developer Cache Cleanup (Direct to `/clean/app/nvidia-shader-cache` or `/`):**
     - Keywords: `[clear directx shader cache tool]`, `[windows 11 ram cleaner for gaming]`, `[clean nvidia cache windows 11]`.
-- **Bidding Strategy:** Start with **Manual CPC (Enhanced CPC enabled)** capped at `£0.85–£1.10` max CPC so a single click never consumes more than 10% of the `£10` daily budget. Switch to **Maximize Conversions (Target CPA)** only after recording 30+ conversions/month.
+- **Bidding Strategy (2026 Microsoft Ads Rule):** Microsoft phased out standalone Max CPC caps on non-portfolio automated campaigns. Always use either **Manual CPC (Enhanced CPC enabled)** or a **Portfolio Bid Strategy** (which retains the **Max CPC bid ceiling of `£0.85–£1.10`**) so a single click never consumes more than 10% of the `£10` daily budget. Switch to **Maximize Conversions (Target CPA)** only after recording 30+ conversions/month.
+- **UET + `msclkid` Attribution:** SWEEPR's `server/public/attribution.js` automatically captures `msclkid` for 90 days and injects it into Stripe checkout metadata (`server/src/app.ts`) on embedded `/order` checkouts.
 
 ### Channel B: Google Search Ads — Exact-Match Problem & Switcher Sniper
 *Why:* Largest search volume, but requires strict CPC caps and long-tail exact match to survive on a small budget until reinvested revenue scales daily spend to `£25–£50+/day`.
@@ -51,9 +52,23 @@ Before running this skill, read `.agents/product-marketing.md` and `server/src/p
 - **Format:** Promoted Text/Image Post with comments enabled (or Conversation Placement), Desktop-only targeting, CPC bidding (`£0.20–£0.50` clicks).
 - **Hook:** Founder-led technical transparency (*"I got tired of 150MB PC cleaners acting like adware, so I built a <15MB native Rust cleaner that shows exact file paths before deleting anything"*).
 
-### Channel D: Retargeting (Meta Pixel / Google Display / Microsoft Audience)
-*Why:* Captures users who visited `/`, `/clean/*`, or `/pricing` or downloaded the free scanner without purchasing Pro.
-- **Trigger:** Activate once site traffic exceeds 1,000 monthly visitors (Stage 2+ of budget scaling) at `£2–£3/day`.
+### Channel D: Meta Ads (Facebook & Instagram) — Retargeting First, Desktop Video Second
+*Why:* Unmatched algorithmic retargeting and visual demo reach, but carries two critical traps for desktop utilities on a micro-budget:
+1. **Trap 1 — Advantage+ Mobile Leakage:** Default Advantage+ Placements send 90%+ of spend to mobile feeds where users cannot install `SWEEPRCleaner.exe`.
+   - **Rule for Install Funnel (`/download`):** Use **Manual Placements -> Desktop Only (Facebook Feed & Right Column)** and uncheck all "expand delivery" opt-ins.
+   - **Rule for Direct Checkout Funnel (`/order`):** If allowing mobile placements, send traffic strictly to `/order` (where Apple Pay / Google Pay converts the `£1.99` intro offer in 1 click and emails the PC installer link) or promote the mobile companion app.
+2. **Trap 2 — The 50-Conversions/Week Learning Phase:** On `£5–£10/day`, an ad set optimizing for `Purchase` will stay "Learning Limited." Optimize cold Meta ad sets for **`InitiateCheckout` or `DownloadClick`** first, and reserve `Purchase` optimization for **Stage 2+ Retargeting (`£3–£5/day`)** across a single consolidated 30-day Custom Audience (`PageView` + `DownloadClick` + `InitiateCheckout` minus `Purchase`).
+3. **Meta Ad Policy Compliance:** Never use "Personal Attributes" scareware (*"Does your PC have 14 critical errors?"*) or fake Windows system alert graphics. Use 15-second native UI screen recordings showing SWEEPR reclaiming 20+ GB of real cache folders (`NVIDIA DXCache`, `AppData`, `Discord`).
+
+### Channel E: Conversational AI Advertising (ChatGPT Ads, Microsoft Copilot Ads & Claude Policy)
+1. **Microsoft Copilot Ads (via Microsoft Advertising — Stage 1 Viable at `£10/day`):**
+   - Standard Microsoft Search & Multimedia campaigns automatically serve contextual **Sponsored Citations** inside Windows 11 Copilot, Bing Copilot, and Edge sidebar chats with **no extra minimum spend** and low CPCs (`£0.40–£0.85`). Always attach Logo and Image extensions in Microsoft Ads to unlock Copilot chat card placements.
+2. **OpenAI / ChatGPT Ads Manager (Stage 3+ Viable once Daily Spend reaches `£35+/day`):**
+   - **Mechanics:** OpenAI offers a self-serve **Ads Manager** serving labeled `"Sponsored"` cards directly beneath ChatGPT responses for **Free and Go tier users** (Plus/Pro/Team/Enterprise are ad-free). Targeting is based on **conversational context hints** (e.g., users prompting *"why is my C drive full on Windows 11"* or *"safe CCleaner alternative"*) rather than legacy keywords.
+   - **Unit Economics & Budget Gate:** Self-serve ChatGPT Ads require a **`~$25 USD/day` (`~£20 GBP/day`) minimum daily campaign budget** and average **`$2.50–$5.00` (`£1.95–£3.90`) CPC** (`$25–$60` CPM). Do **not** run on Day 1 with a `£10/day` total budget; unlock in **Stage 3 (Days 61–90)** once reinvested Stripe revenue supports a dedicated `£20/day` conversational troubleshooting test.
+3. **Anthropic / Claude (Strictly Ad-Free — Zero-Cost GEO Only):**
+   - Anthropic enforces a strict corporate **No-Ads Policy** for Claude (*"Ads are coming to AI. But not to Claude."*). There is **no** paid ad platform or sponsored placement inventory in Claude.
+   - **Capture Mechanism:** Capture Claude user recommendations for `£0` via **Generative Engine Optimization (GEO)** — keeping `ClaudeBot` / `Claude-User` unblocked (`server/src/seo/bots.ts`), maintaining `server/public/llms.txt`, and earning citations on high-authority directories (AlternativeTo, MajorGeeks, Softpedia, Reddit).
 
 ---
 
