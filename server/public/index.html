@@ -275,28 +275,163 @@
         <span>🔒 No Junkware or Popups</span>
       </div>
     </div>
-    <div class="flex-1 relative w-full max-w-lg">
-      <div class="glass-card p-6 flex flex-col gap-4 transform rotate-1 hover:rotate-0 transition-transform duration-500">
-        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-          <span>Desktop App Interface Preview</span>
-          <span>Sample Scan Output</span>
-        </div>
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <div class="flex-1 relative w-full max-w-xl text-left">
+      <div class="glass-card p-0 overflow-hidden transform rotate-1 hover:rotate-0 hover:-translate-y-1 transition-all duration-500 border border-emerald-500/25 shadow-2xl">
+        <!-- Desktop App Window Titlebar -->
+        <div class="px-4 py-2.5 bg-slate-900 text-white border-b border-slate-800 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="2" y="2" width="96" height="96" rx="24" fill="url(#sweeprEmeraldGrad)" stroke="rgba(255,255,255,0.25)" stroke-width="2" />
+              <line x1="76" y1="24" x2="53" y2="47" stroke="#a7f3d0" stroke-width="8" stroke-linecap="round" />
+              <path d="M 42 40 L 60 58 L 55 64 L 36 45 Z" fill="#ffffff" />
+              <path d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" fill="#ffffff" />
+              <line x1="34" y1="76" x2="43" y2="63" stroke="#047857" stroke-width="3" stroke-linecap="round" />
+              <line x1="27" y1="69" x2="36" y2="56" stroke="#047857" stroke-width="3" stroke-linecap="round" />
+              <path d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" fill="#ffffff" />
+              <circle cx="62" cy="79" r="3.5" fill="#a7f3d0" />
+            </svg>
+            <span class="text-xs font-extrabold tracking-tight truncate">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
+            <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              ✨ Smart Mode
+            </span>
           </div>
-          <div>
-            <h3 class="font-bold text-gray-800">Example Scan Summary</h3>
-            <p class="text-sm text-gray-500">Sample result: 12.4 GB of removable cache</p>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-emerald-300 border border-slate-700">
+              🛡️ 7-Day Safety Undo
+            </span>
+            <div class="hidden sm:flex items-center gap-1.5 pl-1" aria-hidden="true">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-700"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+            </div>
           </div>
         </div>
-        <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-          <div class="h-full bg-green-500 w-3/4 rounded-full"></div>
+
+        <!-- Desktop App Split Layout: Mini Sidebar + Smart Scan Workspace -->
+        <div class="flex bg-gradient-to-br from-white via-slate-50/90 to-emerald-50/40">
+          <!-- Mini App Sidebar (matches App.svelte) -->
+          <div class="hidden sm:flex flex-col justify-between w-36 bg-slate-50/95 border-r border-slate-200/80 p-2.5 text-[11px] font-semibold text-slate-600 select-none">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-emerald-500/12 text-emerald-700 font-bold border-l-[3px] border-emerald-500">
+                <span>🧹</span>
+                <span>Smart Scan</span>
+              </div>
+              <div class="px-2.5 pt-2 pb-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400">Tools</div>
+              <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100/80">
+                <span class="flex items-center gap-1.5"><span>⚡</span><span>Speed Up</span></span>
+                <span class="text-[9px] font-bold text-emerald-600">+1.9G</span>
+              </div>
+              <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100/80">
+                <span class="flex items-center gap-1.5"><span>📑</span><span>Duplicates</span></span>
+                <span class="text-[9px] font-bold text-slate-400">2.2G</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100/80">
+                <span>🚀</span><span>Apps</span>
+              </div>
+              <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100/80">
+                <span>🔒</span><span>Privacy</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-200/70">
+              <div class="px-2 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[10px] font-bold text-emerald-700 text-center">
+                ✓ Personal Files Safe
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Cleaner Workspace (matches Cleaner.svelte) -->
+          <div class="flex-1 p-4 sm:p-5 flex flex-col gap-3.5">
+            <!-- Top Row: Glowing Scan Ring + Headline & Segmented Bar -->
+            <div class="flex items-center gap-4">
+              <!-- Signature Desktop Scan Ring -->
+              <div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                <div class="absolute -inset-1 rounded-full bg-emerald-400/20 blur-md"></div>
+                <svg class="w-24 h-24 -rotate-90 relative" viewBox="0 0 96 96" aria-hidden="true">
+                  <circle cx="48" cy="48" r="40" fill="none" stroke="#e2e8f0" stroke-width="7" />
+                  <circle cx="48" cy="48" r="40" fill="none" stroke="url(#sweeprEmeraldGrad)" stroke-width="7" stroke-dasharray="251" stroke-dashoffset="52" stroke-linecap="round" />
+                  <circle cx="48" cy="48" r="32" fill="none" stroke="#10b981" stroke-opacity="0.25" stroke-width="1.5" stroke-dasharray="3 3" />
+                </svg>
+                <div class="absolute inset-3.5 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md flex flex-col items-center justify-center text-center">
+                  <span class="text-[9px] font-extrabold uppercase tracking-widest text-emerald-100">CLEAN</span>
+                  <span class="text-sm font-black leading-tight">12.4 GB</span>
+                  <span class="text-[8px] text-emerald-100/90 font-medium">selected</span>
+                </div>
+              </div>
+
+              <!-- Scan Status + Breakdown Bar -->
+              <div class="flex-1 min-w-0">
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold mb-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Ready to clean &middot; 3 areas found</span>
+                </div>
+                <h3 class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+                  Found <span class="text-emerald-600">12.4 GB</span> of safe junk
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  Passwords, bookmarks &amp; personal documents are never touched.
+                </p>
+
+                <!-- 3-Segment Storage Breakdown Bar -->
+                <div class="mt-2.5 h-2 w-full bg-slate-200/80 rounded-full overflow-hidden flex gap-0.5" aria-hidden="true">
+                  <div class="h-full bg-emerald-600 w-[55%] rounded-l-full" title="Windows &amp; System Temp (6.8 GB)"></div>
+                  <div class="h-full bg-teal-500 w-[27%]" title="Browser Caches (3.4 GB)"></div>
+                  <div class="h-full bg-emerald-400 w-[18%] rounded-r-full" title="App Clutter &amp; Duplicates (2.2 GB)"></div>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5 text-[10px] font-semibold text-slate-500">
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>System 6.8 GB</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-teal-500"></span>Browsers 3.4 GB</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Apps &amp; Dupes 2.2 GB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Checkable Category Review Rows (matches Cleaner.svelte results list) -->
+            <div class="bg-white/95 rounded-xl border border-slate-200/80 divide-y divide-slate-100 text-xs shadow-sm">
+              <div class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="w-4 h-4 rounded bg-emerald-500 text-white inline-flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                  <div class="truncate">
+                    <span class="font-bold text-slate-800">Windows &amp; System Temp</span>
+                    <span class="text-[10px] text-slate-400 ml-1.5 hidden sm:inline">Update cache, crash dumps, logs</span>
+                  </div>
+                </div>
+                <span class="font-extrabold text-emerald-700 shrink-0 ml-2">6.8 GB</span>
+              </div>
+              <div class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="w-4 h-4 rounded bg-emerald-500 text-white inline-flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                  <div class="truncate">
+                    <span class="font-bold text-slate-800">Browser Caches &amp; Trackers</span>
+                    <span class="text-[10px] text-slate-400 ml-1.5 hidden sm:inline">Chrome, Edge &amp; Brave cache</span>
+                  </div>
+                </div>
+                <span class="font-extrabold text-emerald-700 shrink-0 ml-2">3.4 GB</span>
+              </div>
+              <div class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <span class="w-4 h-4 rounded bg-emerald-500 text-white inline-flex items-center justify-center text-[10px] font-black shrink-0">✓</span>
+                  <div class="truncate">
+                    <span class="font-bold text-slate-800">App Clutter &amp; Duplicates</span>
+                    <span class="text-[10px] text-slate-400 ml-1.5 hidden sm:inline">Discord, Teams, Zoom, extra copies</span>
+                  </div>
+                </div>
+                <span class="font-extrabold text-emerald-700 shrink-0 ml-2">2.2 GB</span>
+              </div>
+            </div>
+
+            <!-- Bottom Action Dock (matches Desktop Results sticky footer) -->
+            <div class="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div class="hidden sm:block">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">SELECTED (12.4 GB)</div>
+                <div class="text-[11px] text-slate-500 font-medium">2,622 items &middot; 7-day undo</div>
+              </div>
+              <a href="/download" class="btn btn-go flex-1 sm:flex-initial justify-center gap-2 py-2.5 px-5 text-sm shadow-md">
+                <span>Download Free Scanner</span>
+                <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </a>
+            </div>
+          </div>
         </div>
-        <a href="/download" class="btn btn-go w-full mt-2 gap-2">
-          <span>Download Free Scanner</span>
-          <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </a>
       </div>
     </div>
   </main>
