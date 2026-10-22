@@ -312,8 +312,8 @@ fn is_cloud_email_attachment(path: &Path, name: &str, size: u64) -> bool {
     if !ATTACHMENT_DOC_EXTS.contains(&ext.as_str()) {
         return false;
     }
-    path.components().any(|c| {
-        let s = c.as_os_str().to_string_lossy().to_lowercase();
+    path.to_string_lossy().split(&['/', '\\'][..]).any(|c| {
+        let s = c.to_lowercase();
         s == "attachments"
             || s == "email attachments"
             || s == "mail attachments"
