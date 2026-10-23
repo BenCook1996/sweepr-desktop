@@ -3381,5 +3381,755 @@
       "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
       "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "figma-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Figma Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Figma\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Figma Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Figma Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Figma Desktop (verify Figma.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "figma-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Figma Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Figma\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Figma Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Figma Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Figma Desktop (verify Figma.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "figma-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Figma Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Figma\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Figma Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Figma Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Figma Desktop (verify Figma.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Figma and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "canva-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Canva Desktop App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Canva\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Canva Desktop App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Canva Desktop App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Canva Desktop App (verify Canva.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Canva and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "canva-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Canva Desktop App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Canva\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Canva Desktop App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Canva Desktop App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Canva Desktop App (verify Canva.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Canva and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "canva-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Canva Desktop App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Canva\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Canva Desktop App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Canva Desktop App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Canva Desktop App (verify Canva.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Canva and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "canva-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Canva Desktop App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Canva\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Canva Desktop App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Canva Desktop App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Canva Desktop App (verify Canva.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Canva and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "canva-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Canva Desktop App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Canva\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Canva Desktop App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Canva Desktop App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Canva Desktop App (verify Canva.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Canva and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "postman-app-gpu-shader-cache",
+    "category": "app",
+    "name": "Postman API Client GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Postman\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Postman API Client stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Postman API Client's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Postman API Client (verify Postman.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Postman and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "postman-app-code-bytecode-cache",
+    "category": "app",
+    "name": "Postman API Client Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Postman\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Postman API Client compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Postman API Client's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Postman API Client (verify Postman.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Postman and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "postman-app-service-worker-cachestorage",
+    "category": "app",
+    "name": "Postman API Client Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Postman\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Postman API Client quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Postman API Client's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Postman API Client (verify Postman.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Postman and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "postman-app-crashpad-dump-logs",
+    "category": "app",
+    "name": "Postman API Client Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Postman\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Postman API Client writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Postman API Client's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Postman API Client (verify Postman.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Postman and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "postman-app-media-blob-storage",
+    "category": "app",
+    "name": "Postman API Client Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Postman\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Postman API Client stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Postman API Client's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Postman API Client (verify Postman.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Postman and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "whatsapp-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "WhatsApp Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "WhatsApp Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning WhatsApp Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit WhatsApp Desktop (verify WhatsApp.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "whatsapp-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "WhatsApp Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "WhatsApp Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning WhatsApp Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit WhatsApp Desktop (verify WhatsApp.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "whatsapp-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "WhatsApp Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "WhatsApp Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning WhatsApp Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit WhatsApp Desktop (verify WhatsApp.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "whatsapp-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "WhatsApp Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "WhatsApp Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning WhatsApp Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit WhatsApp Desktop (verify WhatsApp.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "whatsapp-desktop-media-blob-storage",
+    "category": "app",
+    "name": "WhatsApp Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "WhatsApp Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning WhatsApp Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit WhatsApp Desktop (verify WhatsApp.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "signal-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Signal Private Messenger GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Signal\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Signal Private Messenger stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Signal Private Messenger's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Signal Private Messenger (verify Signal.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Signal and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "signal-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Signal Private Messenger Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Signal\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Signal Private Messenger compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Signal Private Messenger's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Signal Private Messenger (verify Signal.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Signal and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "signal-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Signal Private Messenger Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Signal\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Signal Private Messenger quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Signal Private Messenger's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Signal Private Messenger (verify Signal.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Signal and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "signal-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Signal Private Messenger Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Signal\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Signal Private Messenger writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Signal Private Messenger's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Signal Private Messenger (verify Signal.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Signal and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "signal-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Signal Private Messenger Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Signal\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Signal Private Messenger stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Signal Private Messenger's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Signal Private Messenger (verify Signal.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Signal and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "telegram-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Telegram Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Telegram Desktop\\tdata\\user_data\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Telegram Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Telegram Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Telegram Desktop (verify Telegram.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Telegram Desktop\\tdata\\user_data and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "telegram-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Telegram Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Telegram Desktop\\tdata\\user_data\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Telegram Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Telegram Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Telegram Desktop (verify Telegram.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Telegram Desktop\\tdata\\user_data and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "telegram-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Telegram Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Telegram Desktop\\tdata\\user_data\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Telegram Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Telegram Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Telegram Desktop (verify Telegram.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Telegram Desktop\\tdata\\user_data and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "telegram-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Telegram Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Telegram Desktop\\tdata\\user_data\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Telegram Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Telegram Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Telegram Desktop (verify Telegram.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Telegram Desktop\\tdata\\user_data and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "telegram-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Telegram Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Telegram Desktop\\tdata\\user_data\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Telegram Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Telegram Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Telegram Desktop (verify Telegram.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Telegram Desktop\\tdata\\user_data and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "spotify-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Spotify Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Spotify\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Spotify Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Spotify Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Spotify Desktop (verify Spotify.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Spotify and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "spotify-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Spotify Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Spotify\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Spotify Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Spotify Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Spotify Desktop (verify Spotify.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Spotify and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "spotify-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Spotify Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Spotify\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Spotify Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Spotify Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Spotify Desktop (verify Spotify.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Spotify and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "spotify-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Spotify Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Spotify\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Spotify Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Spotify Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Spotify Desktop (verify Spotify.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Spotify and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "spotify-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Spotify Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Spotify\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Spotify Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Spotify Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Spotify Desktop (verify Spotify.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Spotify and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tidal-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "TIDAL HiFi Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\TIDAL\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "TIDAL HiFi Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning TIDAL HiFi Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit TIDAL HiFi Desktop (verify TIDAL.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TIDAL and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tidal-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "TIDAL HiFi Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\TIDAL\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "TIDAL HiFi Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning TIDAL HiFi Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit TIDAL HiFi Desktop (verify TIDAL.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TIDAL and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tidal-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "TIDAL HiFi Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\TIDAL\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "TIDAL HiFi Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning TIDAL HiFi Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit TIDAL HiFi Desktop (verify TIDAL.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TIDAL and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tidal-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "TIDAL HiFi Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\TIDAL\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "TIDAL HiFi Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning TIDAL HiFi Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit TIDAL HiFi Desktop (verify TIDAL.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TIDAL and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tidal-desktop-media-blob-storage",
+    "category": "app",
+    "name": "TIDAL HiFi Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\TIDAL\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "TIDAL HiFi Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning TIDAL HiFi Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit TIDAL HiFi Desktop (verify TIDAL.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TIDAL and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "steam-client-gpu-shader-cache",
+    "category": "app",
+    "name": "Steam Client HTML & WebHelper GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Steam\\htmlcache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Steam Client HTML & WebHelper stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Steam Client HTML & WebHelper's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "steam-client-code-bytecode-cache",
+    "category": "app",
+    "name": "Steam Client HTML & WebHelper Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Steam\\htmlcache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Steam Client HTML & WebHelper compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "steam-client-service-worker-cachestorage",
+    "category": "app",
+    "name": "Steam Client HTML & WebHelper Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Steam\\htmlcache\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Steam Client HTML & WebHelper quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "steam-client-crashpad-dump-logs",
+    "category": "app",
+    "name": "Steam Client HTML & WebHelper Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Steam\\htmlcache\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Steam Client HTML & WebHelper writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "steam-client-media-blob-storage",
+    "category": "app",
+    "name": "Steam Client HTML & WebHelper Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Steam\\htmlcache\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Steam Client HTML & WebHelper stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "epic-games-gpu-shader-cache",
+    "category": "app",
+    "name": "Epic Games Launcher GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Epic Games Launcher stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Epic Games Launcher's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Epic Games Launcher (verify EpicGamesLauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "epic-games-code-bytecode-cache",
+    "category": "app",
+    "name": "Epic Games Launcher Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Epic Games Launcher compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Epic Games Launcher's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Epic Games Launcher (verify EpicGamesLauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "epic-games-service-worker-cachestorage",
+    "category": "app",
+    "name": "Epic Games Launcher Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Epic Games Launcher quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Epic Games Launcher's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Epic Games Launcher (verify EpicGamesLauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "epic-games-crashpad-dump-logs",
+    "category": "app",
+    "name": "Epic Games Launcher Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Epic Games Launcher writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Epic Games Launcher's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Epic Games Launcher (verify EpicGamesLauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "epic-games-media-blob-storage",
+    "category": "app",
+    "name": "Epic Games Launcher Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Epic Games Launcher stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Epic Games Launcher's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Epic Games Launcher (verify EpicGamesLauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ea-desktop-app-gpu-shader-cache",
+    "category": "app",
+    "name": "EA App Launcher GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Electronic Arts\\EA Desktop\\cache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "EA App Launcher stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning EA App Launcher's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit EA App Launcher (verify EADesktop.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Electronic Arts\\EA Desktop\\cache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ea-desktop-app-code-bytecode-cache",
+    "category": "app",
+    "name": "EA App Launcher Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Electronic Arts\\EA Desktop\\cache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "EA App Launcher compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning EA App Launcher's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit EA App Launcher (verify EADesktop.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Electronic Arts\\EA Desktop\\cache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

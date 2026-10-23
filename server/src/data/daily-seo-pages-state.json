@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-22T05:27:11.970Z",
+  "lastRunAt": "2026-10-23T03:27:06.870Z",
   "lastCount": 50,
-  "totalCleanItems": 228,
+  "totalCleanItems": 278,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/arc-browser-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/arc-browser-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/arc-browser-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/discord-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/discord-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/discord-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/discord-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/discord-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/slack-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/slack-code-bytecode-cache"
+    "https://sweeprcleaner.com/clean/app/figma-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/figma-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/figma-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/canva-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/canva-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/canva-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/canva-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/canva-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/postman-app-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/postman-app-code-bytecode-cache"
   ]
 }

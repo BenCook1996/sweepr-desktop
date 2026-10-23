@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (228 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (278 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Figma Desktop Code Cache & V8 JavaScript Bytecode (%AppData%\Figma\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/figma-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Figma Desktop GPUCache & Dawn WebGPU Cache (%AppData%\Figma\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/figma-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Obsidian Markdown App Media Cache & IndexedDB Blob Storage (%AppData%\obsidian\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/obsidian-app-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Obsidian Markdown App Crashpad Reports & Diagnostic DMP Logs (%AppData%\obsidian\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/obsidian-app-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Obsidian Markdown App Service Worker CacheStorage & Offline Blobs (%AppData%\obsidian\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/obsidian-app-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Obsidian Markdown App Code Cache & V8 JavaScript Bytecode (%AppData%\obsidian\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/obsidian-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Obsidian Markdown App GPUCache & Dawn WebGPU Cache (%AppData%\obsidian\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/obsidian-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Notion Desktop App Media Cache & IndexedDB Blob Storage (%AppData%\Notion\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/notion-app-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Notion Desktop App Crashpad Reports & Diagnostic DMP Logs (%AppData%\Notion\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/notion-app-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Notion Desktop App Service Worker CacheStorage & Offline Blobs (%AppData%\Notion\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/notion-app-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Notion Desktop App Code Cache & V8 JavaScript Bytecode (%AppData%\Notion\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/notion-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Notion Desktop App GPUCache & Dawn WebGPU Cache (%AppData%\Notion\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/notion-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Windsurf AI Editor Media Cache & IndexedDB Blob Storage (%AppData%\Windsurf\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/windsurf-ide-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Windsurf AI Editor Crashpad Reports & Diagnostic DMP Logs (%AppData%\Windsurf\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/windsurf-ide-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Windsurf AI Editor Service Worker CacheStorage & Offline Blobs (%AppData%\Windsurf\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/windsurf-ide-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Windsurf AI Editor Code Cache & V8 JavaScript Bytecode (%AppData%\Windsurf\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/windsurf-ide-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Windsurf AI Editor GPUCache & Dawn WebGPU Cache (%AppData%\Windsurf\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/windsurf-ide-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Cursor AI IDE Media Cache & IndexedDB Blob Storage (%AppData%\Cursor\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/cursor-editor-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Cursor AI IDE Crashpad Reports & Diagnostic DMP Logs (%AppData%\Cursor\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/cursor-editor-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Cursor AI IDE Service Worker CacheStorage & Offline Blobs (%AppData%\Cursor\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/cursor-editor-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Cursor AI IDE Code Cache & V8 JavaScript Bytecode (%AppData%\Cursor\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/cursor-editor-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Cursor AI IDE GPUCache & Dawn WebGPU Cache (%AppData%\Cursor\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/cursor-editor-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [VS Code Insiders Media Cache & IndexedDB Blob Storage (%AppData%\Code - Insiders\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/vscode-insiders-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [VS Code Insiders Crashpad Reports & Diagnostic DMP Logs (%AppData%\Code - Insiders\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/vscode-insiders-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [VS Code Insiders Service Worker CacheStorage & Offline Blobs (%AppData%\Code - Insiders\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/vscode-insiders-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [EA App Launcher Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Electronic Arts\EA Desktop\cache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/ea-desktop-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [EA App Launcher GPUCache & Dawn WebGPU Cache (%LocalAppData%\Electronic Arts\EA Desktop\cache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/ea-desktop-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Epic Games Launcher Media Cache & IndexedDB Blob Storage (%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/epic-games-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Epic Games Launcher Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/epic-games-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Epic Games Launcher Service Worker CacheStorage & Offline Blobs (%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/epic-games-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Epic Games Launcher Code Cache & V8 JavaScript Bytecode (%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/epic-games-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Epic Games Launcher GPUCache & Dawn WebGPU Cache (%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/epic-games-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Steam Client HTML & WebHelper Media Cache & IndexedDB Blob Storage (%LocalAppData%\Steam\htmlcache\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/steam-client-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Steam Client HTML & WebHelper Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Steam\htmlcache\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/steam-client-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Steam Client HTML & WebHelper Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Steam\htmlcache\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/steam-client-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Steam Client HTML & WebHelper Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Steam\htmlcache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/steam-client-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Steam Client HTML & WebHelper GPUCache & Dawn WebGPU Cache (%LocalAppData%\Steam\htmlcache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/steam-client-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [TIDAL HiFi Desktop Media Cache & IndexedDB Blob Storage (%AppData%\TIDAL\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/tidal-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [TIDAL HiFi Desktop Crashpad Reports & Diagnostic DMP Logs (%AppData%\TIDAL\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/tidal-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [TIDAL HiFi Desktop Service Worker CacheStorage & Offline Blobs (%AppData%\TIDAL\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/tidal-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [TIDAL HiFi Desktop Code Cache & V8 JavaScript Bytecode (%AppData%\TIDAL\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/tidal-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [TIDAL HiFi Desktop GPUCache & Dawn WebGPU Cache (%AppData%\TIDAL\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/tidal-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Spotify Desktop Media Cache & IndexedDB Blob Storage (%LocalAppData%\Spotify\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/spotify-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Spotify Desktop Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Spotify\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/spotify-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Spotify Desktop Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Spotify\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/spotify-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Spotify Desktop Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Spotify\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/spotify-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Spotify Desktop GPUCache & Dawn WebGPU Cache (%LocalAppData%\Spotify\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/spotify-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Telegram Desktop Media Cache & IndexedDB Blob Storage (%AppData%\Telegram Desktop\tdata\user_data\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/telegram-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Telegram Desktop Crashpad Reports & Diagnostic DMP Logs (%AppData%\Telegram Desktop\tdata\user_data\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/telegram-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Telegram Desktop Service Worker CacheStorage & Offline Blobs (%AppData%\Telegram Desktop\tdata\user_data\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/telegram-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
