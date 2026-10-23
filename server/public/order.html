@@ -330,189 +330,167 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-9 items-start">
       
-      <!-- LEFT COLUMN: Product Overview, Included Bundles & Pricing Breakdown -->
-      <div class="lg:col-span-6 space-y-6">
+      <!-- LEFT COLUMN (Option A): Inline Plan Switcher + 1 Unified Product Card + Compact Bumps & Breakdown -->
+      <div class="lg:col-span-5 space-y-4">
+
+        <!-- 3-Way Inline Plan Switcher -->
+        <div class="bg-white p-1.5 rounded-2xl border border-gray-200/90 shadow-xs grid grid-cols-3 gap-1.5 text-xs font-bold">
+          <button type="button" id="planCardAnnual" onclick="selectOrderPlan('annual')" class="py-2 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-950 text-center transition-all cursor-pointer">
+            <input type="radio" id="radioPlanAnnual" name="orderPlan" class="hidden" checked />
+            <div class="font-extrabold">Annual</div>
+            <div class="text-[10px] text-emerald-700 font-bold">Save 58%</div>
+          </button>
+          <button type="button" id="planCardSixMonth" onclick="selectOrderPlan('six_month')" class="py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer">
+            <input type="radio" id="radioPlanSixMonth" name="orderPlan" class="hidden" />
+            <div class="font-extrabold">6-Month</div>
+            <div class="text-[10px] text-gray-500 font-semibold">Save 35%</div>
+          </button>
+          <button type="button" id="planCardMonthly" onclick="selectOrderPlan('monthly')" class="py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer">
+            <input type="radio" id="radioPlanMonthly" name="orderPlan" class="hidden" />
+            <div class="font-extrabold">Monthly</div>
+            <div id="monthlySubDisplay" class="text-[10px] text-emerald-600 font-semibold">Flexible</div>
+          </button>
+        </div>
         
-        <!-- Main Product Item Card -->
-        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/80 shadow-sm flex flex-col sm:flex-row items-start justify-between gap-4">
-          <div class="flex items-start gap-4">
-            <!-- 3D Box Mockup -->
-            <div class="software-box shrink-0 mt-0.5">
-              <div class="box-spine"></div>
-              <div class="box-face">
-                <div class="flex items-center justify-between w-full">
-                  <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px;" />
-                  <div class="box-badge">2026</div>
-                </div>
-                <div>
-                  <div class="box-title">SWEEPR CLEANER</div>
-                  <div class="box-year">PRO EDITION</div>
-                </div>
-                <div style="font-size: 6.5px; color: #a7f3d0; font-weight: 700;">ALL-IN-ONE</div>
-              </div>
-            </div>
-
-            <!-- Product Details -->
-            <div>
-              <!-- Discount / Savings Badge -->
-              <div id="productTag" class="mb-1.5">
-                <span id="productTagContent" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
-                  <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-                  Save 58% vs monthly billing
-                </span>
-              </div>
-
-              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">SWEEPR Cleaner Pro All-Access</h2>
-              <p id="productSubtitle" class="text-xs text-gray-500 mt-1">
-                Complete PC cleaner, speed booster &amp; privacy protection
-              </p>
-              <div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-600">
-                <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                  Covers Up to 3 PCs
-                </span>
-                <span>•</span>
-                <span>Instant License Key</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Product Price -->
-          <div class="text-left sm:text-right shrink-0 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 flex sm:block items-baseline justify-between">
-            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
-            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per year (£4.16/mo)</div>
-          </div>
-        </div>
-
-        <!-- Included Bundle Item 1 -->
-        <div class="bg-white rounded-xl p-4 border border-gray-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div class="flex items-start gap-3.5">
-            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50">
-              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </div>
-            <div>
-              <h3 class="font-bold text-gray-900 text-sm">Deep PC Cleaner &amp; Speed Booster</h3>
-              <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Safely clear hidden Windows junk, browser clutter, and chat app files (with 7-day undo), plus free up memory and speed up startup in one click
-              </p>
-            </div>
-          </div>
-          <div class="shrink-0 pl-12 sm:pl-0">
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 uppercase tracking-wide">
-              <span>🎁</span> INCLUDED FREE
-            </span>
-          </div>
-        </div>
-
-        <!-- Included Bundle Item 2 -->
-        <div class="bg-white rounded-xl p-4 border border-gray-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div class="flex items-start gap-3.5">
-            <div class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-gray-600 bg-gray-50">
-              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            </div>
-            <div>
-              <h3 class="font-bold text-gray-900 text-sm">Complete App Uninstaller, Duplicate Finder &amp; File Shredder</h3>
-              <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                Remove stubborn apps with all their leftovers, find and clean duplicate photos and files, update your software, and permanently shred private files
-              </p>
-            </div>
-          </div>
-          <div class="shrink-0 pl-12 sm:pl-0">
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 uppercase tracking-wide">
-              <span>🎁</span> INCLUDED FREE
-            </span>
-          </div>
-        </div>
-
-        <!-- Paid Add-on Order Bump: Total Battery & Mac/Phone Care -->
-        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-4 sm:p-5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-sm cursor-pointer transition-all select-none">
+        <!-- 1 Unified Product Summary Card (Consolidates Product + Included Pro Features) -->
+        <div class="bg-white rounded-2xl p-5 border border-gray-200/90 shadow-sm space-y-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3.5">
-              <input
-                type="checkbox"
-                id="batteryCareCheckbox"
-                onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
-                class="mt-1 w-5 h-5 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
+              <!-- 3D Box Mockup -->
+              <div class="software-box shrink-0 mt-0.5">
+                <div class="box-spine"></div>
+                <div class="box-face">
+                  <div class="flex items-center justify-between w-full">
+                    <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px;" />
+                    <div class="box-badge">2026</div>
+                  </div>
+                  <div>
+                    <div class="box-title">SWEEPR CLEANER</div>
+                    <div class="box-year">PRO EDITION</div>
+                  </div>
+                  <div style="font-size: 6.5px; color: #a7f3d0; font-weight: 700;">ALL-IN-ONE</div>
+                </div>
+              </div>
+
+              <!-- Product Details -->
               <div>
-                <div class="flex flex-wrap items-center gap-2 mb-1">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                    ⚡ 2X DEVICE LIFESPAN ADD-ON
-                  </span>
-                  <span id="batteryAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
-                    + £17.99/yr (£1.49/mo eq.)
+                <div id="productTag" class="mb-1">
+                  <span id="productTagContent" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
+                    <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                    Save 58% vs monthly billing
                   </span>
                 </div>
-                <h3 class="font-extrabold text-gray-900 text-sm sm:text-base leading-snug">
-                  Add “Total Battery &amp; Mac/Phone Care” — Device Lifespan Extender
-                </h3>
-                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                  Replacing a worn-out laptop or phone battery costs <strong>£100–£250</strong>. Automatically stops charging at <strong>80%</strong> while plugged in at your desk to double your battery's lifespan, prevents overheating, and puts power-hungry background tabs and apps to sleep across your computer and phone.
+
+                <h2 class="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-snug">SWEEPR Cleaner Pro</h2>
+                <p id="productSubtitle" class="text-xs text-gray-500 mt-0.5">
+                  Covers up to 3 devices &bull; Instant license key
                 </p>
               </div>
             </div>
+
+            <!-- Product Price -->
+            <div class="text-right shrink-0">
+              <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
+              <div id="productPriceSub" class="text-[11px] text-emerald-700 font-bold">per year (£4.16/mo)</div>
+            </div>
+          </div>
+
+          <!-- 3 Consolidated Included Feature Checkmarks (Replaces 2 Separate Faux-Gift Cards) -->
+          <ul class="pt-3 border-t border-gray-100 space-y-2 text-xs text-gray-700">
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span><strong class="text-gray-900">Unlimited Deep PC Cleanup:</strong> Windows Update cache, AppData, browser &amp; chat leftovers (with 7-day Quarantine undo)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span><strong class="text-gray-900">Startup &amp; Speed Booster:</strong> 1-click RAM optimizer, boot accelerator &amp; automatic background smart schedule</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              <span><strong class="text-gray-900">Complete Suite Included:</strong> Leftover-free App Uninstaller, Duplicate Finder &amp; Private File Shredder</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Compact Paid Add-on Order Bump 1: Total Battery & Mac/Phone Care -->
+        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none">
+          <div class="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="batteryCareCheckbox"
+              onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
+              class="mt-0.5 w-4 h-4 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm truncate">
+                  + Total Battery &amp; Mac/Phone Care
+                </h3>
+                <span id="batteryAddonPriceBadge" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 shrink-0">
+                  + £17.99/yr (£1.49/mo eq.)
+                </span>
+              </div>
+              <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                Caps desk charging at 80% &amp; sleeps background drainers to double laptop and phone battery lifespan.
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Paid Add-on Order Bump: SWEEPR Cloud Protection (Vault + Backup Sync) -->
-        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-4 sm:p-5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-sm cursor-pointer transition-all select-none">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3.5">
-              <input
-                type="checkbox"
-                id="cloudVaultCheckbox"
-                onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
-                class="mt-1 w-5 h-5 rounded border-teal-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
-              <div>
-                <div class="flex flex-wrap items-center gap-2 mb-1">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-teal-100 text-teal-900 border border-teal-300">
-                    🔒 CLOUD VAULT &amp; MULTI-CLOUD BACKUP
-                  </span>
-                  <span id="cloudVaultAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
-                    + £17.99/yr (£1.49/mo eq.)
-                  </span>
-                </div>
-                <h3 class="font-extrabold text-gray-900 text-sm sm:text-base leading-snug">
-                  Add “SWEEPR Cloud Protection” — Encrypted Photo Vault &amp; Multi-Cloud Backup Sync
+        <!-- Compact Paid Add-on Order Bump 2: SWEEPR Cloud Protection -->
+        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none">
+          <div class="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="cloudVaultCheckbox"
+              onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
+              class="mt-0.5 w-4 h-4 rounded border-teal-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm truncate">
+                  + SWEEPR Cloud Protection &amp; Photo Vault
                 </h3>
-                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                  Lock your private photos, passport scans, and tax documents inside a <strong>password-protected vault</strong> in your cloud drive, and automatically keep a backup copy of your most important folders across Google Drive, OneDrive, Dropbox, and iCloud in case you ever get locked out of an account.
-                </p>
+                <span id="cloudVaultAddonPriceBadge" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 shrink-0">
+                  + £17.99/yr (£1.49/mo eq.)
+                </span>
               </div>
+              <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                AES-256 encrypted vault for private photos/IDs + automatic multi-cloud folder backup sync.
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Order Breakdown Card -->
-        <div class="bg-white rounded-xl p-5 border border-gray-200/80 shadow-sm space-y-3 text-sm">
-          <div class="flex items-center justify-between text-gray-700">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-sm space-y-2.5 text-sm">
+          <div class="flex items-center justify-between text-gray-700 text-xs sm:text-sm">
             <span id="summaryPlanTitle">SWEEPR Cleaner Pro (Annual Plan)</span>
             <span id="summaryPlanPrice" class="font-semibold text-gray-900">£49.99/year</span>
           </div>
 
           <!-- Add-on Line Item (Shows when Total Battery & Mac/Phone Care is checked) -->
           <div id="addonSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/70 px-3 py-2 rounded-lg border border-emerald-200/80">
-            <span class="flex items-center gap-1.5 font-semibold text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔋</span>
               <span id="addonSummaryTitle">Total Battery &amp; Mac/Phone Care Add-on</span>
             </span>
-            <span id="addonSummaryPrice" class="font-bold text-gray-900">+ £17.99/year</span>
+            <span id="addonSummaryPrice" class="font-bold text-gray-900 text-xs">+ £17.99/year</span>
           </div>
 
           <!-- Cloud Vault Add-on Line Item -->
           <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/70 px-3 py-2 rounded-lg border border-emerald-200/80">
-            <span class="flex items-center gap-1.5 font-semibold text-xs sm:text-sm">
+            <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔒</span>
               <span id="cloudVaultSummaryTitle">SWEEPR Cloud Protection Add-on</span>
             </span>
-            <span id="cloudVaultSummaryPrice" class="font-bold text-gray-900">+ £17.99/year</span>
+            <span id="cloudVaultSummaryPrice" class="font-bold text-gray-900 text-xs">+ £17.99/year</span>
           </div>
 
           <!-- Savings Line (Annual / 6-Month) -->
-          <div id="savingsSummaryRow" class="flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
+          <div id="savingsSummaryRow" class="flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2 text-xs sm:text-sm">
             <div class="flex items-center justify-between">
               <span class="flex items-center gap-1.5">
                 <span id="savingsSummaryLabel">Annual Plan Savings (Save 58%)</span>
@@ -525,7 +503,7 @@
           </div>
 
           <!-- Discount Line (Shows when 1st month discount is applied) -->
-          <div id="discountSummaryRow" class="hidden flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
+          <div id="discountSummaryRow" class="hidden flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2 text-xs sm:text-sm">
             <div class="flex items-center justify-between">
               <span class="flex items-center gap-1.5">
                 <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong" class="font-bold">Save £8.00</strong>)</span>
@@ -537,26 +515,24 @@
             </div>
           </div>
 
-          <div class="pt-3 border-t border-gray-200 flex items-center justify-between">
+          <div class="pt-2.5 border-t border-gray-200 flex items-center justify-between">
             <span id="totalTodayLabel" class="font-bold text-gray-900 text-base">Total Today (GBP)</span>
             <span id="totalTodayText" class="font-black text-2xl text-gray-900">£49.99</span>
           </div>
         </div>
 
         <!-- Authentic Trust Badges -->
-        <div class="pt-2 flex flex-wrap items-center justify-center gap-6 opacity-90 py-2">
-          <!-- 14-Day Guarantee Badge -->
-          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3.5 py-2 rounded-lg shadow-xs">
-            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <div class="flex flex-wrap items-center justify-center gap-4 opacity-95 py-1">
+          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 rounded-lg shadow-2xs">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             <div class="text-left">
               <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">14-DAY REFUND</div>
               <div class="text-[10px] font-extrabold text-gray-900 leading-tight">100% RISK-FREE</div>
             </div>
           </div>
 
-          <!-- 256-Bit SSL Encrypted Badge -->
-          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3.5 py-2 rounded-lg shadow-xs">
-            <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 rounded-lg shadow-2xs">
+            <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
             <div class="text-left">
               <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">BANK-GRADE SECURITY</div>
               <div class="text-[10px] font-extrabold text-gray-900 leading-tight">256-BIT SSL ENCRYPTED</div>
@@ -566,11 +542,11 @@
 
       </div>
 
-      <!-- RIGHT COLUMN: Payment Form (Total Cleaner Layout & Features) -->
-      <div id="checkoutBox" class="lg:col-span-6 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/90 shadow-md">
+      <!-- RIGHT COLUMN (Option A): 2-Step Checkout Form (Step 1 Email -> Step 2 Express / Card) -->
+      <div id="checkoutBox" class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/90 shadow-md">
         
         <!-- Green Guarantee Box (With direct link to Refund Policy) -->
-        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-4 mb-6 text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
+        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-3.5 mb-5 text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
           <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <div>
             You are eligible for a full refund within 14 days of any charges under our <a href="/refund" target="_blank" class="text-emerald-700 font-bold underline hover:text-emerald-800">Refund Policy</a>. You can cancel anytime in 1 click via your online portal. Here are simple cancel <a href="/refund#cancel" target="_blank" class="text-emerald-700 font-semibold underline hover:text-emerald-800">instructions</a>.
@@ -580,8 +556,117 @@
         <!-- Order Form -->
         <form id="orderForm" class="space-y-4" novalidate>
 
-          <!-- Consent Checkboxes (Matching Competitor Layout) -->
-          <div class="space-y-2.5 text-xs text-gray-700 pb-1">
+          <!-- STEP 1: Email Address First (For Instant License Key Delivery & Lead Recovery) -->
+          <div>
+            <label for="email" class="block text-xs font-extrabold text-gray-800 mb-1.5">
+              1. Where should we send your instant Pro license key?
+            </label>
+            <input type="email" id="email" required placeholder="you@example.com" autocomplete="email"
+              class="w-full p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+          </div>
+
+          <!-- STEP 2: Express Payment Buttons (PayPal & Apple Pay / Google Pay) -->
+          <div class="space-y-2.5 pt-1">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-extrabold text-gray-800">2. Choose payment method</label>
+              <div class="flex items-center gap-1.5" role="group" aria-label="Accepted payment cards: Visa, Mastercard, American Express">
+                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-label="Visa">
+                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+                  <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
+                </svg>
+                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-label="Mastercard">
+                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+                  <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
+                  <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
+                </svg>
+                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none" aria-label="American Express">
+                  <rect width="48" height="32" rx="4" fill="#016FD0"/>
+                  <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6Z" fill="#FFFFFF"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- PayPal Button -->
+            <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="hidden w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl items-center justify-center transition-all shadow-xs cursor-pointer">
+              <span class="italic font-black text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
+            </button>
+
+            <!-- Official Dynamic Google Pay Button Container -->
+            <div id="googlePayButtonContainer" class="hidden w-full h-11 overflow-hidden rounded-xl"></div>
+
+            <!-- Native Stripe PaymentRequest Container (Apple Pay on Safari) -->
+            <div id="stripePaymentRequestContainer" class="hidden w-full">
+              <div id="paymentRequestBtn"></div>
+            </div>
+
+            <!-- Styled GPay Express Button -->
+            <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-[#202124] hover:bg-black text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-sm">
+              <span class="font-semibold text-base inline-flex items-center tracking-tight">
+                <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span>&nbsp;<span class="text-white font-semibold">Pay</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- Divider OR PAY WITH CARD -->
+          <div class="relative flex py-1 items-center">
+            <div class="flex-grow border-t border-gray-200"></div>
+            <span class="flex-shrink mx-3 text-[11px] uppercase font-bold text-gray-400 tracking-wider">OR PAY WITH CARD</span>
+            <div class="flex-grow border-t border-gray-200"></div>
+          </div>
+
+          <!-- STREAMLINED CARD INPUT FIELDS (Option A: Card + 3-Col Expiry/CVV/Postcode) -->
+          <div class="space-y-3">
+            <!-- Hidden optional fields preserved for backward compatibility -->
+            <input type="hidden" id="cardName" value="" />
+            <input type="hidden" id="billingAddress" value="" />
+
+            <!-- Card Number -->
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Card Number</label>
+              <div class="relative">
+                <div id="stripeCardNumber" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="4000 1234 5678 9010" maxlength="19"
+                  class="w-full p-2.5 sm:p-3 pr-10 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expiry Date, CVV & Post Code (3 Columns on Desktop, 2+1 on Small Mobile) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Expiry (MM/YY)</label>
+                <div id="stripeCardExpiry" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5"
+                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-gray-700">CVV</label>
+                  <div class="tooltip-wrapper cursor-help">
+                    <span class="w-3.5 h-3.5 rounded-full border border-gray-400 text-gray-500 flex items-center justify-center text-[10px] font-bold">i</span>
+                    <div class="tooltip-box">
+                      3 digits on the back of your card<br>(4 digits on front for AMEX)
+                    </div>
+                  </div>
+                </div>
+                <div id="stripeCardCvc" class="stripe-input-box hidden"></div>
+                <input type="text" id="fallbackCardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4"
+                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+              </div>
+
+              <div class="col-span-2 sm:col-span-1">
+                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Postcode / ZIP</label>
+                <input type="text" id="billingPostcode" required placeholder="Postcode / ZIP" autocomplete="postal-code"
+                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
+              </div>
+            </div>
+          </div>
+
+          <!-- Consent Checkboxes -->
+          <div class="space-y-2 text-xs text-gray-700 pt-1">
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
               <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span id="termsConsentLabel" class="leading-snug">
@@ -597,145 +682,16 @@
             </label>
           </div>
 
-          <!-- Express Payment Buttons (PayPal & Apple Pay / Google Pay) -->
-          <div class="space-y-2.5 pt-2">
-            <!-- PayPal Button (Hidden while Stripe live PayPal merchant verification is in progress) -->
-            <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="hidden w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl items-center justify-center transition-all shadow-xs cursor-pointer">
-              <span class="italic font-black text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
-            </button>
-
-            <!-- Official Dynamic Google Pay Button Container (Shows stored card art + last 4 digits e.g. G Pay | •••• 4040) -->
-            <div id="googlePayButtonContainer" class="hidden w-full h-11 overflow-hidden rounded-xl"></div>
-
-            <!-- Native Stripe PaymentRequest Container (Apple Pay on Safari) -->
-            <div id="stripePaymentRequestContainer" class="hidden w-full">
-              <div id="paymentRequestBtn"></div>
-            </div>
-
-            <!-- Styled GPay Express Button (Remains visible until dynamic Google Pay card button mounts) -->
-            <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-[#202124] hover:bg-black text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-sm">
-              <span class="font-semibold text-base inline-flex items-center tracking-tight">
-                <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span>&nbsp;<span class="text-white font-semibold">Pay</span>
-              </span>
-            </button>
-          </div>
-
-          <!-- Divider OR & Card Logos -->
-          <div class="relative flex py-2 items-center">
-            <div class="flex-grow border-t border-gray-200"></div>
-            <span class="flex-shrink mx-4 text-xs uppercase font-bold text-gray-400 tracking-wider">OR</span>
-            <div class="flex-grow border-t border-gray-200"></div>
-          </div>
-
-          <!-- Card Logos Banner (Self-contained crisp inline SVGs — no external CDN dependency) -->
-          <div class="flex justify-center gap-2.5 pb-1 items-center" role="group" aria-label="Accepted payment cards: Visa, Mastercard, American Express">
-            <!-- Visa -->
-            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
-              <title>Visa</title>
-              <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
-              <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
-              <path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/>
-            </svg>
-            <!-- Mastercard -->
-            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
-              <title>Mastercard</title>
-              <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
-              <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
-              <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
-              <path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/>
-            </svg>
-            <!-- American Express -->
-            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0] shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="American Express">
-              <title>American Express</title>
-              <rect width="48" height="32" rx="4" fill="#016FD0"/>
-              <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/>
-            </svg>
-          </div>
-
-          <!-- CARD INPUT FIELDS (Total Cleaner Layout) -->
-          <div class="space-y-3 pt-1">
-            
-            <!-- 1. Name On Card -->
-            <div>
-              <label for="cardName" class="block text-xs font-bold text-gray-700 mb-1">Name On Card</label>
-              <input type="text" id="cardName" required placeholder="John Doe" autocomplete="cc-name"
-                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-            </div>
-
-            <!-- 2. Card Number (With Padlock Vector Icon on the right) -->
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Card Number</label>
-              <div class="relative">
-                <!-- Native Stripe Element container or fallback input -->
-                <div id="stripeCardNumber" class="stripe-input-box hidden"></div>
-                <input type="text" id="fallbackCardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="4000 1234 5678 9010" maxlength="19"
-                  class="w-full p-2.5 sm:p-3 pr-10 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
-                <!-- Padlock Icon inside input -->
-                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. Expiry Date & CVV (2 Columns) -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Expiry Date (MM/YY)</label>
-                <div id="stripeCardExpiry" class="stripe-input-box hidden"></div>
-                <input type="text" id="fallbackCardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5"
-                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="block text-xs font-bold text-gray-700">CVV</label>
-                  <div class="tooltip-wrapper cursor-help">
-                    <span class="w-3.5 h-3.5 rounded-full border border-gray-400 text-gray-500 flex items-center justify-center text-[10px] font-bold">i</span>
-                    <div class="tooltip-box">
-                      3 digits on the back of your card<br>(4 digits on front for AMEX)
-                    </div>
-                  </div>
-                </div>
-                <div id="stripeCardCvc" class="stripe-input-box hidden"></div>
-                <input type="text" id="fallbackCardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4"
-                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
-              </div>
-            </div>
-
-            <!-- 4. Address & Post Code (2 Columns) -->
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label for="billingAddress" class="block text-xs font-bold text-gray-700 mb-1">Address</label>
-                <input type="text" id="billingAddress" required placeholder="Street address" autocomplete="address-line1"
-                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-              </div>
-              <div>
-                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code</label>
-                <input type="text" id="billingPostcode" required placeholder="Postcode / ZIP" autocomplete="postal-code"
-                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
-              </div>
-            </div>
-
-            <!-- 5. Email Address -->
-            <div>
-              <label for="email" class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
-              <input type="email" id="email" required placeholder="you@example.com" autocomplete="email"
-                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-            </div>
-
-          </div>
-
           <!-- Validation Error Alert Box -->
           <div id="checkoutError" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg"></div>
 
-          <!-- COMPLETE ORDER GREEN BUTTON WITH PADLOCK VECTOR ICON -->
-          <div class="pt-3">
-            <button type="submit" id="submitBtn" class="btn-purchase w-full h-13 py-3.5 px-6 rounded-full text-white font-black text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer shadow-lg">
-              <!-- Padlock Vector Icon -->
+          <!-- COMPLETE ORDER GREEN BUTTON WITH DYNAMIC PRICE -->
+          <div class="pt-2">
+            <button type="submit" id="submitBtn" class="btn-purchase w-full h-13 py-3.5 px-6 rounded-xl text-white font-black text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer shadow-lg">
               <svg class="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
               </svg>
-              <span id="submitBtnText" class="uppercase">PURCHASE SECURELY</span>
+              <span id="submitBtnText" class="uppercase">COMPLETE SECURE ORDER — £49.99</span>
             </button>
           </div>
 
@@ -977,8 +933,8 @@
       const card = document.getElementById('batteryCareBumpCard');
       if (card) {
         card.className = isBatteryAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-4 sm:p-5 border-2 border-emerald-500 shadow-md cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-4 sm:p-5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-sm cursor-pointer transition-all select-none';
+          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
+          : 'bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -994,8 +950,8 @@
       const card = document.getElementById('cloudVaultBumpCard');
       if (card) {
         card.className = isCloudVaultAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-4 sm:p-5 border-2 border-emerald-500 shadow-md cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-4 sm:p-5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-sm cursor-pointer transition-all select-none';
+          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
+          : 'bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -1027,8 +983,8 @@
       const radioSixMonth = document.getElementById('radioPlanSixMonth');
       const radioMonthly = document.getElementById('radioPlanMonthly');
 
-      const selectedClass = 'relative flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 shadow-xs cursor-pointer transition-all';
-      const normalClass = 'relative flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 shadow-xs cursor-pointer transition-all';
+      const selectedClass = 'py-2 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-950 text-center transition-all cursor-pointer';
+      const normalClass = 'py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer';
 
       if (cardAnnual) cardAnnual.className = plan === 'annual' ? selectedClass : normalClass;
       if (cardSixMonth) cardSixMonth.className = plan === 'six_month' ? selectedClass : normalClass;
@@ -1154,6 +1110,11 @@
       const mobileQuickTotalText = document.getElementById('mobileQuickTotalText');
       if (mobileQuickTotalText && totalTodayText) {
         mobileQuickTotalText.textContent = totalTodayText.textContent;
+      }
+
+      const submitBtnText = document.getElementById('submitBtnText');
+      if (submitBtnText && totalTodayText) {
+        submitBtnText.textContent = `COMPLETE SECURE ORDER — ${totalTodayText.textContent}`;
       }
 
       updatePaymentRequestTotal();
@@ -1587,20 +1548,24 @@
       });
     }
 
-    // 5. Inactivity Timer (30 Seconds) & Exit Intent Popup
+    // 5. Exit Intent Popup (Inactivity timer disabled for active Annual/6-Month buyers so checkout isn't interrupted)
     function startInactivityTimer() {
       clearTimeout(inactivityTimer);
       inactivityTimer = setTimeout(() => {
-        showDiscountModal();
-      }, 30000); // 30 seconds
+        if (selectedPlan === 'monthly') {
+          showDiscountModal();
+        }
+      }, 90000);
     }
 
     function resetInactivityTimer() {
       if (!discountModalShown && !isDiscountApplied) {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => {
-          showDiscountModal();
-        }, 30000);
+          if (selectedPlan === 'monthly') {
+            showDiscountModal();
+          }
+        }, 90000);
       }
     }
 
@@ -1700,9 +1665,10 @@
         if (legalConsent) legalConsent.checked = true;
       }
 
-      const cardName = document.getElementById('cardName').value.trim();
-      const billingAddress = document.getElementById('billingAddress').value.trim();
-      const billingPostcode = document.getElementById('billingPostcode').value.trim();
+      const rawCardName = (document.getElementById('cardName')?.value || '').trim();
+      const cardName = rawCardName || (email ? email.split('@')[0] : 'Customer');
+      const billingAddress = (document.getElementById('billingAddress')?.value || '').trim();
+      const billingPostcode = (document.getElementById('billingPostcode')?.value || '').trim();
 
       const btn = document.getElementById('submitBtn');
       const paypalBtn = document.getElementById('paypalBtn');
