@@ -225,6 +225,7 @@ export function securityHeaders(opts: { hsts: boolean }): MiddlewareHandler {
     };
     set("X-Frame-Options", "DENY");
     set("X-Content-Type-Options", "nosniff");
+    set("X-DNS-Prefetch-Control", "on");
     set("Referrer-Policy", "strict-origin-when-cross-origin");
     set("Permissions-Policy", 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://pay.google.com"), shared-autofill=(self "https://js.stripe.com"), usb=()');
     set(

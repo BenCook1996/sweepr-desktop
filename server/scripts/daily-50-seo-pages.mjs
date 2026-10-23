@@ -304,7 +304,7 @@ const APP_MATRIX_APPS = [
   { key: "telegram-desktop", label: "Telegram Desktop", baseDir: "%AppData%\\Telegram Desktop\\tdata\\user_data", proc: "Telegram.exe" },
   { key: "spotify-desktop", label: "Spotify Desktop", baseDir: "%LocalAppData%\\Spotify", proc: "Spotify.exe" },
   { key: "tidal-desktop", label: "TIDAL HiFi Desktop", baseDir: "%AppData%\\TIDAL", proc: "TIDAL.exe" },
-  { key: "steam-client", label: "Steam Client HTML & WebHelper", baseDir: "%LocalAppData%\\Steam\\htmlcache", proc: "steam.exe" },
+  { key: "steam-client", label: "Steam Client", baseDir: "%LocalAppData%\\Steam\\htmlcache", proc: "steam.exe" },
   { key: "epic-games", label: "Epic Games Launcher", baseDir: "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430", proc: "EpicGamesLauncher.exe" },
   { key: "ea-desktop-app", label: "EA App Launcher", baseDir: "%LocalAppData%\\Electronic Arts\\EA Desktop\\cache", proc: "EADesktop.exe" },
   { key: "ubisoft-connect", label: "Ubisoft Connect PC", baseDir: "%LocalAppData%\\Ubisoft Game Launcher\\spool", proc: "upc.exe" },

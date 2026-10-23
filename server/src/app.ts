@@ -243,7 +243,7 @@ export function createApp(deps: AppDeps) {
     } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml") {
       c.res.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     } else if (c.res.headers.get("content-type")?.includes("text/html")) {
-      c.res.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+      c.res.headers.set("Cache-Control", "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400");
     }
   });
   // Nothing we accept legitimately needs more than this; protects JSON parsing from huge bodies.
@@ -333,13 +333,13 @@ export function createApp(deps: AppDeps) {
       },
       // Audits the running app in-process (no network), so it works locally and before deploys.
       localFetcher: async (path) => app.request(path, { headers: { "user-agent": AUDIT_USER_AGENT } }),
-      seedPaths: ["/", "/clean", ...cleanItems.map((i) => `/clean/${i.category}/${i.slug}`)],
+      seedPaths: ["/", "/clean", ...getCleanItems().map((i) => `/clean/${i.category}/${i.slug}`)],
       defaultKeywords: [
         ["sweepr cleaner", "brand", "/"],
         ["sweepr", "brand", "/"],
         ["ccleaner alternative", "competitor", "/alternatives/ccleaner"],
         ["sweepr vs ccleaner", "competitor", "/vs/ccleaner"],
-        ...cleanItems.map((i): [string, string, string] => [
+        ...getCleanItems().map((i): [string, string, string] => [
           `${i.slug.replace(/-/g, " ")}${i.category === "folder" ? " folder" : ""}`,
           `pseo-${i.category}`,
           `/clean/${i.category}/${i.slug}`,

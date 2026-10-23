@@ -3955,14 +3955,14 @@
   {
     "slug": "steam-client-gpu-shader-cache",
     "category": "app",
-    "name": "Steam Client HTML & WebHelper GPUCache & Dawn WebGPU Cache",
+    "name": "Steam Client GPUCache & Dawn WebGPU Cache",
     "path": "%LocalAppData%\\Steam\\htmlcache\\GPUCache and DawnCache",
     "safeToDelete": true,
     "avgSpace": "0.8 GB – 4.5 GB",
-    "whatIsIt": "Steam Client HTML & WebHelper stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
-    "whatHappens": "Cleaning Steam Client HTML & WebHelper's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "whatIsIt": "Steam Client stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Steam Client's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
     "manualSteps": [
-      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Completely quit Steam Client (verify steam.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
       "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
@@ -3970,14 +3970,14 @@
   {
     "slug": "steam-client-code-bytecode-cache",
     "category": "app",
-    "name": "Steam Client HTML & WebHelper Code Cache & V8 JavaScript Bytecode",
+    "name": "Steam Client Code Cache & V8 JavaScript Bytecode",
     "path": "%LocalAppData%\\Steam\\htmlcache\\Code Cache\\js and Code Cache\\wasm",
     "safeToDelete": true,
     "avgSpace": "1.0 GB – 5.2 GB",
-    "whatIsIt": "Steam Client HTML & WebHelper compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
-    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "whatIsIt": "Steam Client compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Steam Client's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
     "manualSteps": [
-      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Completely quit Steam Client (verify steam.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
       "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
@@ -3985,14 +3985,14 @@
   {
     "slug": "steam-client-service-worker-cachestorage",
     "category": "app",
-    "name": "Steam Client HTML & WebHelper Service Worker CacheStorage & Offline Blobs",
+    "name": "Steam Client Service Worker CacheStorage & Offline Blobs",
     "path": "%LocalAppData%\\Steam\\htmlcache\\Service Worker\\CacheStorage",
     "safeToDelete": true,
     "avgSpace": "1.5 GB – 8.5 GB",
-    "whatIsIt": "Steam Client HTML & WebHelper quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
-    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "whatIsIt": "Steam Client quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Steam Client's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
     "manualSteps": [
-      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Completely quit Steam Client (verify steam.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
       "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
@@ -4000,14 +4000,14 @@
   {
     "slug": "steam-client-crashpad-dump-logs",
     "category": "app",
-    "name": "Steam Client HTML & WebHelper Crashpad Reports & Diagnostic DMP Logs",
+    "name": "Steam Client Crashpad Reports & Diagnostic DMP Logs",
     "path": "%LocalAppData%\\Steam\\htmlcache\\Crashpad\\reports and logs",
     "safeToDelete": true,
     "avgSpace": "0.6 GB – 3.8 GB",
-    "whatIsIt": "Steam Client HTML & WebHelper writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
-    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "whatIsIt": "Steam Client writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Steam Client's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
     "manualSteps": [
-      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Completely quit Steam Client (verify steam.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
       "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
@@ -4015,14 +4015,14 @@
   {
     "slug": "steam-client-media-blob-storage",
     "category": "app",
-    "name": "Steam Client HTML & WebHelper Media Cache & IndexedDB Blob Storage",
+    "name": "Steam Client Media Cache & IndexedDB Blob Storage",
     "path": "%LocalAppData%\\Steam\\htmlcache\\Cache\\Cache_Data and IndexedDB",
     "safeToDelete": true,
     "avgSpace": "2.0 GB – 12.0 GB",
-    "whatIsIt": "Steam Client HTML & WebHelper stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
-    "whatHappens": "Cleaning Steam Client HTML & WebHelper's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "whatIsIt": "Steam Client stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Steam Client's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
     "manualSteps": [
-      "Completely quit Steam Client HTML & WebHelper (verify steam.exe is closed in Task Manager).",
+      "Completely quit Steam Client (verify steam.exe is closed in Task Manager).",
       "Press Windows Key + R, type %LocalAppData%\\Steam\\htmlcache and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]

@@ -43,13 +43,16 @@ export function getCleanItems(): CleanItem[] {
 function buildPseoTitle(item: CleanItem): string {
   const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
   const concise = withoutParens.length > 24 ? withoutParens.split("&")[0].trim() : withoutParens;
-  const candidate = `How to Clean ${concise} Safely | SWEEPR Cleaner`;
-  if (candidate.length >= 50 && candidate.length <= 60) return candidate;
-  if (candidate.length < 50) {
+  const longBrand = `How to Clean ${concise} Safely | SWEEPR Cleaner`;
+  if (longBrand.length >= 50 && longBrand.length <= 60) return longBrand;
+  const shortBrand = `How to Clean ${concise} Safely | SWEEPR`;
+  if (shortBrand.length >= 50 && shortBrand.length <= 60) return shortBrand;
+  if (longBrand.length < 50) {
     const withYear = `How to Clean ${concise} Safely (2026) | SWEEPR`;
     if (withYear.length <= 60) return withYear;
   }
-  return candidate.slice(0, 60).trim();
+  if (shortBrand.length <= 60) return shortBrand;
+  return shortBrand.slice(0, 60).trim();
 }
 
 function buildPseoDescription(item: CleanItem): string {
@@ -92,6 +95,8 @@ export function renderPseoDirectory(): string {
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://translate.google.com">
+  <link rel="dns-prefetch" href="https://translate.googleapis.com">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SWEEPR Cleaner">
   <meta property="og:locale" content="en_GB">
@@ -273,6 +278,8 @@ export function renderPseoPage(item: CleanItem): string {
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="${canonicalUrl}">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="dns-prefetch" href="https://translate.google.com">
+  <link rel="dns-prefetch" href="https://translate.googleapis.com">
   
   <!-- Open Graph -->
   <meta property="og:type" content="article">
