@@ -860,13 +860,23 @@ export function createApp(deps: AppDeps) {
         },
         ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
-        expand: ["latest_invoice.payment_intent"],
+        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments.data.payment.payment_intent"],
       } as any);
 
       const latestInvoice: any = subscription.latest_invoice;
-      let paymentIntent: any = latestInvoice?.payment_intent ?? null;
+      let paymentIntent: any =
+        latestInvoice?.payment_intent ??
+        latestInvoice?.payments?.data?.[0]?.payment?.payment_intent ??
+        null;
       if (typeof paymentIntent === "string") {
         paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+      }
+      if (!paymentIntent?.id && typeof latestInvoice?.confirmation_secret?.client_secret === "string") {
+        const cs: string = latestInvoice.confirmation_secret.client_secret;
+        const piId = cs.split("_secret_")[0];
+        if (piId) {
+          paymentIntent = { id: piId, client_secret: cs, livemode: subscription.livemode };
+        }
       }
 
       const rawIp = clientIp(c);
@@ -1007,9 +1017,14 @@ export function createApp(deps: AppDeps) {
           : null;
       if (!pm) {
         const latestInv: any = sub.latest_invoice;
-        const pi: any = latestInv?.payment_intent;
+        const pi: any =
+          latestInv?.payment_intent ??
+          latestInv?.payments?.data?.[0]?.payment?.payment_intent ??
+          null;
         if (pi && typeof pi.payment_method === "object" && pi.payment_method) {
           pm = pi.payment_method;
+        } else if (pi && typeof pi.payment_method === "string") {
+          pm = await stripe.paymentMethods.retrieve(pi.payment_method).catch(() => null);
         } else if (typeof sub.default_payment_method === "string") {
           pm = await stripe.paymentMethods.retrieve(sub.default_payment_method).catch(() => null);
         }
@@ -1240,16 +1255,26 @@ export function createApp(deps: AppDeps) {
         },
         ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
-        expand: ["latest_invoice.payment_intent"],
+        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments.data.payment.payment_intent"],
       };
 
       const subscription = await stripe.subscriptions.create(subParams);
       const latestInvoice: any = subscription.latest_invoice;
-      let paymentIntent: any = latestInvoice?.payment_intent ?? null;
+      let paymentIntent: any =
+        latestInvoice?.payment_intent ??
+        latestInvoice?.payments?.data?.[0]?.payment?.payment_intent ??
+        null;
 
-      // Fallback for newer Stripe API versions if payment_intent isn't directly embedded on latest_invoice
+      // Fallback for newer Stripe API versions if payment_intent is a string or exposed via confirmation_secret
       if (typeof paymentIntent === "string") {
         paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+      }
+      if (!paymentIntent?.id && typeof latestInvoice?.confirmation_secret?.client_secret === "string") {
+        const cs: string = latestInvoice.confirmation_secret.client_secret;
+        const piId = cs.split("_secret_")[0];
+        if (piId) {
+          paymentIntent = { id: piId, client_secret: cs, livemode: subscription.livemode };
+        }
       }
 
       if (!paymentIntent?.id) {
@@ -1378,7 +1403,7 @@ export function createApp(deps: AppDeps) {
 
     try {
       const sub = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
+        expand: ["default_payment_method", "latest_invoice.payments.data.payment.payment_intent"],
       });
 
       const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
@@ -2225,7 +2250,7 @@ export function createApp(deps: AppDeps) {
 
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
-      payment_method_types: ["card"],
+      allowed_payment_method_types: ["card"],
       usage: "off_session",
     });
 
