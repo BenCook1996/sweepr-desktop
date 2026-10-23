@@ -438,7 +438,7 @@ async function main() {
     try {
       execFileSync(
         "git",
-        ["add", "server/src/outreach-seed.json", "server/src/data/indexing-queue.json"],
+        ["add", "server/src/outreach-seed.json", "server/src/data/indexing-queue.json", "server/public/pad.xml", "server/scripts/daily-seo-drip.mjs"],
         { cwd: REPO_ROOT, stdio: "inherit" }
       );
       execFileSync(
