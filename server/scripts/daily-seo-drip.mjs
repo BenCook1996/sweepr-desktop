@@ -194,17 +194,18 @@ ${item.whatHappens}
 
 async function publishGuide(item, lang, idx, dateTag) {
   // Alternate between Telegraph (DR 89) and DPaste (DR 74), with immediate fallback to the other
+  const itemTag = `${dateTag}-${String(idx).padStart(3, "0")}`;
   if (idx % 2 === 0) {
     try {
-      return await publishTelegraph(item, lang, dateTag);
+      return await publishTelegraph(item, lang, itemTag);
     } catch {
-      return await publishDpaste(item, lang, `${dateTag}-r${idx}`);
+      return await publishDpaste(item, lang, `${itemTag}-r`);
     }
   } else {
     try {
-      return await publishDpaste(item, lang, dateTag);
+      return await publishDpaste(item, lang, itemTag);
     } catch {
-      return await publishTelegraph(item, lang, `${dateTag}-r${idx}`);
+      return await publishTelegraph(item, lang, `${itemTag}-r`);
     }
   }
 }
@@ -256,7 +257,8 @@ async function runBacklinksWorkflow(targetCount = 300) {
     `[CRM Deduplication Check] Local CRM Rows: ${crmState.localCrmCount} | Seed Entries: ${seed.length} | Unique URLs: ${crmState.postedUrls.size} | Unique Combos: ${crmState.postedCombos.size}`
   );
 
-  const dateTag = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const dateTag = `${now.toISOString().slice(0, 10)}-${String(now.getUTCHours()).padStart(2, "0")}`;
   const startOffset = seed.length;
   let completed = 0;
   const newLinks = [];
