@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-23T03:27:06.870Z",
+  "lastRunAt": "2026-10-23T05:26:06.301Z",
   "lastCount": 50,
-  "totalCleanItems": 278,
+  "totalCleanItems": 328,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/figma-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/figma-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/figma-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/canva-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/canva-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/canva-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/canva-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/canva-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/postman-app-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/postman-app-code-bytecode-cache"
+    "https://sweeprcleaner.com/clean/app/ea-desktop-app-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/ea-desktop-app-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/ea-desktop-app-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/ubisoft-connect-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/ubisoft-connect-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/ubisoft-connect-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/ubisoft-connect-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/ubisoft-connect-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/gog-galaxy-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/gog-galaxy-code-bytecode-cache"
   ]
 }
