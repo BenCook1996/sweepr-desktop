@@ -314,165 +314,184 @@
     </div>
   </header>
 
-  <!-- MAIN 2-COLUMN CHECKOUT LAYOUT -->
-  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12 w-full flex-1">
-    <!-- Mobile Express Jump Bar (Visible on <1024px so mobile buyers can jump straight to Apple Pay / Google Pay / Card) -->
-    <div class="lg:hidden mb-5 bg-white rounded-2xl p-3.5 border border-emerald-200 shadow-sm flex items-center justify-between gap-3">
-      <div class="min-w-0">
-        <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Order Total Today</div>
-        <div class="flex items-baseline gap-1.5">
-          <span id="mobileQuickTotalText" class="text-xl font-black text-gray-900">£49.99</span>
-          <span class="text-xs text-gray-500 truncate">• 3 PCs + 14-Day Guarantee</span>
-        </div>
-      </div>
-      <button type="button" onclick="document.getElementById('checkoutBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="shrink-0 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wide shadow-sm cursor-pointer">
-        Jump to Payment &darr;
+  <!-- MAIN 2-COLUMN CHECKOUT LAYOUT — Concept C: 1-Screen Express Checkout -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 w-full flex-1">
+    <!-- Top Segmented Plan Switcher Bar (Instant 1-Click Plan Switching on /order) -->
+    <div class="bg-white rounded-2xl p-1.5 sm:p-2 border border-gray-200/90 shadow-xs mb-5 grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+      <button type="button" id="planCardAnnual" onclick="selectOrderPlan('annual')" class="py-2 sm:py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-extrabold text-xs sm:text-sm shadow-xs cursor-pointer transition-all">
+        <input type="radio" id="radioPlanAnnual" name="orderPlan" class="hidden" checked />
+        <span id="planTabAnnualText">★ Annual — £4.16/mo (Save 58%)</span>
+      </button>
+      <button type="button" id="planCardSixMonth" onclick="selectOrderPlan('six_month')" class="py-2 sm:py-2.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm cursor-pointer transition-all">
+        <input type="radio" id="radioPlanSixMonth" name="orderPlan" class="hidden" />
+        <span id="planTabSixMonthText">6-Month — £6.50/mo (Save 35%)</span>
+      </button>
+      <button type="button" id="planCardMonthly" onclick="selectOrderPlan('monthly')" class="py-2 sm:py-2.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm cursor-pointer transition-all">
+        <input type="radio" id="radioPlanMonthly" name="orderPlan" class="hidden" />
+        <span id="planTabMonthlyText">Monthly — £9.99/mo</span>
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-9 items-start">
-      
-      <!-- LEFT COLUMN (Option A): Inline Plan Switcher + 1 Unified Product Card + Compact Bumps & Breakdown -->
-      <div class="lg:col-span-5 space-y-4">
+    <!-- Mobile Quick-Jump Bar (Visible on phones/tablets so users can jump straight to payment) -->
+    <div class="lg:hidden mb-4 bg-white rounded-xl p-3 border border-emerald-200 shadow-xs flex items-center justify-between gap-3">
+      <div>
+        <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">SWEEPR Cleaner Pro</div>
+        <div class="text-xs text-gray-600"><span id="mobileQuickTotalText" class="font-bold text-gray-900">£49.99</span> • 3 Devices • 14-Day Refund Guarantee</div>
+      </div>
+      <a href="#checkoutBox" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 shadow-xs transition-colors">
+        Jump to Payment &darr;
+      </a>
+    </div>
 
-        <!-- 3-Way Inline Plan Switcher -->
-        <div class="bg-white p-1.5 rounded-2xl border border-gray-200/90 shadow-xs grid grid-cols-3 gap-1.5 text-xs font-bold">
-          <button type="button" id="planCardAnnual" onclick="selectOrderPlan('annual')" class="py-2 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-950 text-center transition-all cursor-pointer">
-            <input type="radio" id="radioPlanAnnual" name="orderPlan" class="hidden" checked />
-            <div class="font-extrabold">Annual</div>
-            <div class="text-[10px] text-emerald-700 font-bold">Save 58%</div>
-          </button>
-          <button type="button" id="planCardSixMonth" onclick="selectOrderPlan('six_month')" class="py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer">
-            <input type="radio" id="radioPlanSixMonth" name="orderPlan" class="hidden" />
-            <div class="font-extrabold">6-Month</div>
-            <div class="text-[10px] text-gray-500 font-semibold">Save 35%</div>
-          </button>
-          <button type="button" id="planCardMonthly" onclick="selectOrderPlan('monthly')" class="py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer">
-            <input type="radio" id="radioPlanMonthly" name="orderPlan" class="hidden" />
-            <div class="font-extrabold">Monthly</div>
-            <div id="monthlySubDisplay" class="text-[10px] text-emerald-600 font-semibold">Flexible</div>
-          </button>
-        </div>
-        
-        <!-- 1 Unified Product Summary Card (Consolidates Product + Included Pro Features) -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-200/90 shadow-sm space-y-4">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3.5">
-              <!-- 3D Box Mockup -->
-              <div class="software-box shrink-0 mt-0.5">
-                <div class="box-spine"></div>
-                <div class="box-face">
-                  <div class="flex items-center justify-between w-full">
-                    <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px;" />
-                    <div class="box-badge">2026</div>
-                  </div>
-                  <div>
-                    <div class="box-title">SWEEPR CLEANER</div>
-                    <div class="box-year">PRO EDITION</div>
-                  </div>
-                  <div style="font-size: 6.5px; color: #a7f3d0; font-weight: 700;">ALL-IN-ONE</div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      
+      <!-- LEFT COLUMN: Unified 1-Screen Order Summary Card -->
+      <div class="lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/90 shadow-md space-y-4">
+
+        <!-- 1. Main Product Header -->
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5 border-b border-gray-100 pb-4">
+          <div class="flex items-start gap-3.5">
+            <!-- 3D Box Mockup -->
+            <div class="software-box shrink-0 mt-0.5 ml-1 sm:ml-0">
+              <div class="box-spine"></div>
+              <div class="box-face">
+                <div class="flex items-center justify-between w-full">
+                  <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="18" height="18" style="width: 18px; height: 18px; border-radius: 4px;" />
+                  <div class="box-badge">2026</div>
                 </div>
+                <div>
+                  <div class="box-title">SWEEPR CLEANER</div>
+                  <div class="box-year">PRO EDITION</div>
+                </div>
+                <div style="font-size: 6.5px; color: #a7f3d0; font-weight: 700;">ALL-IN-ONE</div>
+              </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="min-w-0 flex-1">
+              <div id="productTag" class="mb-1">
+                <span id="productTagContent" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
+                  <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                  Save 58% vs monthly billing
+                </span>
               </div>
 
-              <!-- Product Details -->
+              <h2 class="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-snug">SWEEPR Cleaner Pro All-Access</h2>
+              <p id="productSubtitle" class="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                Clears hidden system junk, speeds up slow startups &amp; reclaims gigabytes of storage safely
+              </p>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-gray-600">
+                <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  Covers Up to 3 Devices (Windows, Mac &amp; Linux)
+                </span>
+                <span>•</span>
+                <span>Instant License Key</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Price -->
+          <div class="flex sm:block items-baseline justify-between pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 text-left sm:text-right shrink-0">
+            <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
+            <div id="productPriceSub" class="text-[11px] text-gray-500 font-medium">per year (£4.16/mo)</div>
+          </div>
+        </div>
+
+        <!-- 2. Included Free Bonuses (Full-Width Compact Rows — Zero Text Truncation) -->
+        <div class="grid grid-cols-1 gap-2">
+          <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base shrink-0">🎁</span>
               <div>
-                <div id="productTag" class="mb-1">
-                  <span id="productTagContent" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300">
-                    <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
-                    Save 58% vs monthly billing
+                <div class="font-bold text-gray-900 text-xs sm:text-sm">DeepClean System Cache &amp; Speed Optimizer</div>
+                <div class="text-[11px] text-gray-500">Clears hidden junk caches, speeds up slow startups &amp; frees memory safely</div>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold text-emerald-800 bg-white border border-emerald-200 uppercase shrink-0">INCLUDED FREE</span>
+          </div>
+
+          <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base shrink-0">🎁</span>
+              <div>
+                <div class="font-bold text-gray-900 text-xs sm:text-sm">Duplicate Matcher, Clean Uninstaller &amp; File Shredder</div>
+                <div class="text-[11px] text-gray-500">Finds duplicate photos/files, wipes stubborn apps &amp; shreds private files</div>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold text-emerald-800 bg-white border border-emerald-200 uppercase shrink-0">INCLUDED FREE</span>
+          </div>
+        </div>
+
+        <!-- 3. 1-CLICK PAID ORDER BUMP 1: Total Battery & Mac/Phone Care -->
+        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-amber-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="batteryCareCheckbox"
+                onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
+                class="mt-0.5 w-5 h-5 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+              />
+              <div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                    ⚡ 1-CLICK BATTERY &amp; DEVICE ADD-ON
+                  </span>
+                  <span id="batteryAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
+                    + £17.99/yr (£1.49/mo eq.)
                   </span>
                 </div>
-
-                <h2 class="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-snug">SWEEPR Cleaner Pro</h2>
-                <p id="productSubtitle" class="text-xs text-gray-500 mt-0.5">
-                  Covers up to 3 devices (Windows, Mac &amp; Linux) &bull; Instant license key
+                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm leading-snug">
+                  Add “Total Battery &amp; Mac/Phone Care” — 2x Device Lifespan
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5 leading-relaxed">
+                  Caps desk charging at 80% &amp; sleeps background drainers to double laptop and phone battery lifespan.
                 </p>
               </div>
             </div>
-
-            <!-- Product Price -->
-            <div class="text-right shrink-0">
-              <div id="productPriceTop" class="text-2xl font-black text-gray-900 tracking-tight">£49.99</div>
-              <div id="productPriceSub" class="text-[11px] text-emerald-700 font-bold">per year (£4.16/mo)</div>
-            </div>
           </div>
-
-          <!-- 3 Consolidated Included Feature Checkmarks (Simple, Plain-English Copy) -->
-          <ul class="pt-3 border-t border-gray-100 space-y-2 text-xs text-gray-700">
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              <span><strong class="text-gray-900">Unlimited Deep Cleanup:</strong> Safely clear hidden system junk, browser clutter &amp; app leftovers (with 7-day safety undo)</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              <span><strong class="text-gray-900">Faster Startup &amp; Speed Booster:</strong> 1-click memory boost, faster startup times &amp; automatic smart cleaning schedule</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              <span><strong class="text-gray-900">Complete All-in-One Suite:</strong> Complete App Uninstaller, Duplicate Photo/File Finder &amp; Private File Shredder</span>
-            </li>
-          </ul>
         </div>
 
-        <!-- Compact Paid Add-on Order Bump 1: Total Battery & Mac/Phone Care -->
-        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none">
-          <div class="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="batteryCareCheckbox"
-              onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
-              class="mt-0.5 w-4 h-4 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm truncate">
-                  + Total Battery &amp; Mac/Phone Care
+        <!-- 3b. 1-CLICK PAID ORDER BUMP 2: SWEEPR Cloud Protection -->
+        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-teal-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="cloudVaultCheckbox"
+                onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
+                class="mt-0.5 w-5 h-5 rounded border-teal-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+              />
+              <div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-teal-100 text-teal-900 border border-teal-300">
+                    🔒 1-CLICK CLOUD &amp; VAULT ADD-ON
+                  </span>
+                  <span id="cloudVaultAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
+                    + £17.99/yr (£1.49/mo eq.)
+                  </span>
+                </div>
+                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm leading-snug">
+                  Add “SWEEPR Cloud Protection” — Encrypted Photo Vault &amp; Cloud Sync
                 </h3>
-                <span id="batteryAddonPriceBadge" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 shrink-0">
-                  + £17.99/yr (£1.49/mo eq.)
-                </span>
+                <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5 leading-relaxed">
+                  Locks private photos &amp; IDs inside an AES-256 encrypted vault + automatic multi-cloud folder backup sync.
+                </p>
               </div>
-              <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                Caps desk charging at 80% &amp; sleeps background drainers to double laptop and phone battery lifespan.
-              </p>
             </div>
           </div>
         </div>
 
-        <!-- Compact Paid Add-on Order Bump 2: SWEEPR Cloud Protection -->
-        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none">
-          <div class="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="cloudVaultCheckbox"
-              onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
-              class="mt-0.5 w-4 h-4 rounded border-teal-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-            />
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm truncate">
-                  + SWEEPR Cloud Protection &amp; Photo Vault
-                </h3>
-                <span id="cloudVaultAddonPriceBadge" class="text-[11px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 shrink-0">
-                  + £17.99/yr (£1.49/mo eq.)
-                </span>
-              </div>
-              <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                AES-256 encrypted vault for private photos/IDs + automatic multi-cloud folder backup sync.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Order Breakdown Card -->
-        <div class="bg-white rounded-xl p-4 sm:p-5 border border-gray-200/80 shadow-sm space-y-2.5 text-sm">
-          <div class="flex items-center justify-between text-gray-700 text-xs sm:text-sm">
+        <!-- 4. Itemized Breakdown & Total Today -->
+        <div class="bg-gray-50/80 rounded-xl p-4 border border-gray-200/80 space-y-2.5 text-xs sm:text-sm">
+          <div class="flex items-center justify-between text-gray-700">
             <span id="summaryPlanTitle">SWEEPR Cleaner Pro (Annual Plan)</span>
             <span id="summaryPlanPrice" class="font-semibold text-gray-900">£49.99/year</span>
           </div>
 
           <!-- Add-on Line Item (Shows when Total Battery & Mac/Phone Care is checked) -->
-          <div id="addonSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/70 px-3 py-2 rounded-lg border border-emerald-200/80">
+          <div id="addonSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
             <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔋</span>
               <span id="addonSummaryTitle">Total Battery &amp; Mac/Phone Care Add-on</span>
@@ -481,7 +500,7 @@
           </div>
 
           <!-- Cloud Vault Add-on Line Item -->
-          <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/70 px-3 py-2 rounded-lg border border-emerald-200/80">
+          <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
             <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔒</span>
               <span id="cloudVaultSummaryTitle">SWEEPR Cloud Protection Add-on</span>
@@ -490,49 +509,45 @@
           </div>
 
           <!-- Savings Line (Annual / 6-Month) -->
-          <div id="savingsSummaryRow" class="flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2 text-xs sm:text-sm">
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <span id="savingsSummaryLabel">Annual Plan Savings (Save 58%)</span>
-              </span>
+          <div id="savingsSummaryRow" class="flex flex-col gap-0.5 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
+            <div class="flex items-center justify-between text-xs">
+              <span id="savingsSummaryLabel">Annual Plan Savings (Save 58%)</span>
               <span id="savingsSummaryAmount" class="font-bold">- £69.89</span>
             </div>
-            <div id="savingsSummaryNote" class="text-[11px] text-gray-500 font-normal">
+            <div id="savingsSummaryNote" class="text-[10px] text-gray-500 font-normal">
               Billed annually at £49.99/year (£4.16/month equivalent) instead of standard £119.88/year.
             </div>
           </div>
 
           <!-- Discount Line (Shows when 1st month discount is applied) -->
-          <div id="discountSummaryRow" class="hidden flex flex-col gap-1 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2 text-xs sm:text-sm">
-            <div class="flex items-center justify-between">
-              <span class="flex items-center gap-1.5">
-                <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong" class="font-bold">Save £8.00</strong>)</span>
-              </span>
+          <div id="discountSummaryRow" class="hidden flex flex-col gap-0.5 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
+            <div class="flex items-center justify-between text-xs">
+              <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong">Save £8.00</strong>)</span>
               <span id="discountAmountMinus" class="font-bold">- £8.00</span>
             </div>
-            <div id="discountNoteText" class="text-[11px] text-gray-500 font-normal">
+            <div id="discountNoteText" class="text-[10px] text-gray-500 font-normal">
               Discount applies strictly to month 1. All future monthly renewals are billed at the standard rate of £9.99/month unless cancelled.
             </div>
           </div>
 
           <div class="pt-2.5 border-t border-gray-200 flex items-center justify-between">
-            <span id="totalTodayLabel" class="font-bold text-gray-900 text-base">Total Today (GBP)</span>
-            <span id="totalTodayText" class="font-black text-2xl text-gray-900">£49.99</span>
+            <span id="totalTodayLabel" class="font-bold text-gray-900 text-sm sm:text-base">Total Today (GBP)</span>
+            <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900">£49.99</span>
           </div>
         </div>
 
-        <!-- Authentic Trust Badges -->
-        <div class="flex flex-wrap items-center justify-center gap-4 opacity-95 py-1">
-          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 rounded-lg shadow-2xs">
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <!-- 5. Compact Trust Badges Row -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="flex items-center gap-2 border border-gray-200 bg-gray-50/60 px-3 py-2 rounded-xl">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             <div class="text-left">
               <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">14-DAY REFUND</div>
               <div class="text-[10px] font-extrabold text-gray-900 leading-tight">100% RISK-FREE</div>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 border border-gray-200 bg-white px-3 py-2 rounded-lg shadow-2xs">
-            <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+          <div class="flex items-center gap-2 border border-gray-200 bg-gray-50/60 px-3 py-2 rounded-xl">
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
             <div class="text-left">
               <div class="text-[9px] font-bold text-gray-500 uppercase leading-none">BANK-GRADE SECURITY</div>
               <div class="text-[10px] font-extrabold text-gray-900 leading-tight">256-BIT SSL ENCRYPTED</div>
@@ -542,11 +557,11 @@
 
       </div>
 
-      <!-- RIGHT COLUMN (Option A): 2-Step Checkout Form (Step 1 Email -> Step 2 Express / Card) -->
-      <div id="checkoutBox" class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/90 shadow-md">
+      <!-- RIGHT COLUMN: Express Payment Form -->
+      <div id="checkoutBox" class="lg:col-span-6 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/90 shadow-md">
         
         <!-- Green Guarantee Box (With direct link to Refund Policy) -->
-        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-3.5 mb-5 text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
+        <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-3.5 mb-4 text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
           <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <div>
             You are eligible for a full refund within 14 days of any charges under our <a href="/refund" target="_blank" class="text-emerald-700 font-bold underline hover:text-emerald-800">Refund Policy</a>. You can cancel anytime in 1 click via your online portal. Here are simple cancel <a href="/refund#cancel" target="_blank" class="text-emerald-700 font-semibold underline hover:text-emerald-800">instructions</a>.
@@ -556,36 +571,25 @@
         <!-- Order Form -->
         <form id="orderForm" class="space-y-4" novalidate>
 
-          <!-- STEP 1: Email Address First (For Instant License Key Delivery & Lead Recovery) -->
-          <div>
-            <label for="email" class="block text-xs font-extrabold text-gray-800 mb-1.5">
-              1. Where should we send your instant Pro license key?
+          <!-- Consent Checkboxes -->
+          <div class="space-y-2.5 text-xs text-gray-700 pb-1">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <span id="termsConsentLabel" class="leading-snug">
+                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
+              </span>
             </label>
-            <input type="email" id="email" required placeholder="you@example.com" autocomplete="email"
-              class="w-full p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <span class="leading-snug">
+                I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
+              </span>
+            </label>
           </div>
 
-          <!-- STEP 2: Express Payment Buttons (PayPal & Apple Pay / Google Pay) -->
-          <div class="space-y-2.5 pt-1">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-extrabold text-gray-800">2. Choose payment method</label>
-              <div class="flex items-center gap-1.5" role="group" aria-label="Accepted payment cards: Visa, Mastercard, American Express">
-                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-label="Visa">
-                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
-                  <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
-                </svg>
-                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-label="Mastercard">
-                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
-                  <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
-                  <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
-                </svg>
-                <svg width="34" height="22" class="h-5 w-[34px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none" aria-label="American Express">
-                  <rect width="48" height="32" rx="4" fill="#016FD0"/>
-                  <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6Z" fill="#FFFFFF"/>
-                </svg>
-              </div>
-            </div>
-
+          <!-- Express Payment Buttons (PayPal, Official Dynamic Google Pay & Apple Pay) -->
+          <div class="space-y-2.5 pt-2">
             <!-- PayPal Button -->
             <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal')" class="hidden w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl items-center justify-center transition-all shadow-xs cursor-pointer">
               <span class="italic font-black text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
@@ -607,39 +611,67 @@
             </button>
           </div>
 
-          <!-- Divider OR PAY WITH CARD -->
-          <div class="relative flex py-1 items-center">
+          <!-- Divider OR & Card Logos -->
+          <div class="relative flex py-2 items-center">
             <div class="flex-grow border-t border-gray-200"></div>
-            <span class="flex-shrink mx-3 text-[11px] uppercase font-bold text-gray-400 tracking-wider">OR PAY WITH CARD</span>
+            <span class="flex-shrink mx-4 text-xs uppercase font-bold text-gray-400 tracking-wider">OR</span>
             <div class="flex-grow border-t border-gray-200"></div>
           </div>
 
-          <!-- STREAMLINED CARD INPUT FIELDS (Option A: Card + 3-Col Expiry/CVV/Postcode) -->
-          <div class="space-y-3">
-            <!-- Hidden optional fields preserved for backward compatibility -->
-            <input type="hidden" id="cardName" value="" />
-            <input type="hidden" id="billingAddress" value="" />
+          <!-- Card Logos Banner (Self-contained crisp inline SVGs) -->
+          <div class="flex justify-center gap-2.5 pb-1 items-center" role="group" aria-label="Accepted payment cards: Visa, Mastercard, American Express">
+            <!-- Visa -->
+            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
+              <title>Visa</title>
+              <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+              <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
+              <path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/>
+            </svg>
+            <!-- Mastercard -->
+            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
+              <title>Mastercard</title>
+              <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+              <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
+              <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
+              <path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/>
+            </svg>
+            <!-- American Express -->
+            <svg width="42" height="28" class="h-7 w-[42px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0] shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="American Express">
+              <title>American Express</title>
+              <rect width="48" height="32" rx="4" fill="#016FD0"/>
+              <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/>
+            </svg>
+          </div>
 
-            <!-- Card Number -->
+          <!-- CARD INPUT FIELDS -->
+          <div class="space-y-3 pt-1">
+            <!-- 1. Name On Card -->
+            <div>
+              <label for="cardName" class="block text-xs font-bold text-gray-700 mb-1">Name On Card</label>
+              <input type="text" id="cardName" required placeholder="John Doe" autocomplete="cc-name"
+                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+            </div>
+
+            <!-- 2. Card Number -->
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">Card Number</label>
               <div class="relative">
                 <div id="stripeCardNumber" class="stripe-input-box hidden"></div>
                 <input type="text" id="fallbackCardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="4000 1234 5678 9010" maxlength="19"
-                  class="w-full p-2.5 sm:p-3 pr-10 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+                  class="w-full p-2.5 sm:p-3 pr-10 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
                 </div>
               </div>
             </div>
 
-            <!-- Expiry Date, CVV & Post Code (3 Columns on Desktop, 2+1 on Small Mobile) -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <!-- 3. Expiry Date & CVV (2 Columns) -->
+            <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Expiry (MM/YY)</label>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Expiry Date (MM/YY)</label>
                 <div id="stripeCardExpiry" class="stripe-input-box hidden"></div>
                 <input type="text" id="fallbackCardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5"
-                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
               </div>
 
               <div>
@@ -654,56 +686,54 @@
                 </div>
                 <div id="stripeCardCvc" class="stripe-input-box hidden"></div>
                 <input type="text" id="fallbackCardCvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4"
-                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
-              </div>
-
-              <div class="col-span-2 sm:col-span-1">
-                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Postcode / ZIP</label>
-                <input type="text" id="billingPostcode" required placeholder="Postcode / ZIP" autocomplete="postal-code"
-                  class="w-full p-2.5 sm:p-3 rounded-xl border border-gray-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
               </div>
             </div>
-          </div>
 
-          <!-- Consent Checkboxes -->
-          <div class="space-y-2 text-xs text-gray-700 pt-1">
-            <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-              <span id="termsConsentLabel" class="leading-snug">
-                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
-              </span>
-            </label>
+            <!-- 4. Address & Post Code (2 Columns) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="billingAddress" class="block text-xs font-bold text-gray-700 mb-1">Address</label>
+                <input type="text" id="billingAddress" required placeholder="Street address" autocomplete="address-line1"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+              </div>
+              <div>
+                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code</label>
+                <input type="text" id="billingPostcode" required placeholder="Postcode / ZIP" autocomplete="postal-code"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
+              </div>
+            </div>
 
-            <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-              <span class="leading-snug">
-                I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
-              </span>
-            </label>
+            <!-- 5. Email Address -->
+            <div>
+              <label for="email" class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
+              <input type="email" id="email" required placeholder="you@example.com" autocomplete="email"
+                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+            </div>
           </div>
 
           <!-- Validation Error Alert Box -->
           <div id="checkoutError" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg"></div>
 
-          <!-- COMPLETE ORDER GREEN BUTTON WITH DYNAMIC PRICE -->
-          <div class="pt-2">
-            <button type="submit" id="submitBtn" class="btn-purchase w-full h-13 py-3.5 px-6 rounded-xl text-white font-black text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer shadow-lg">
+          <!-- COMPLETE ORDER GREEN BUTTON WITH PADLOCK VECTOR ICON -->
+          <div class="pt-3">
+            <button type="submit" id="submitBtn" class="btn-purchase w-full h-13 py-3.5 px-6 rounded-full text-white font-black text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer shadow-lg">
               <svg class="w-5 h-5 text-white fill-current shrink-0" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
               </svg>
-              <span id="submitBtnText" class="uppercase">COMPLETE SECURE ORDER — £49.99</span>
+              <span id="submitBtnText" class="uppercase">PURCHASE SECURELY</span>
             </button>
           </div>
 
           <!-- Trust Subtext -->
-          <div class="flex items-center justify-center gap-3 text-[11px] text-gray-500 pt-1 font-medium">
+          <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-500 pt-1 font-medium">
             <span class="inline-flex items-center gap-1">
-              <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+              <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
               256-Bit Bank-Grade SSL
             </span>
-            <span>•</span>
-            <span>Instant Download</span>
-            <span>•</span>
+            <span class="hidden sm:inline">•</span>
+            <span>Instant Activation</span>
+            <span class="hidden sm:inline">•</span>
             <span>Cancel in 1-Click</span>
           </div>
 
@@ -933,8 +963,8 @@
       const card = document.getElementById('batteryCareBumpCard');
       if (card) {
         card.className = isBatteryAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 border-2 border-amber-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none';
+          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 sm:p-4 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
+          : 'bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-amber-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -950,8 +980,8 @@
       const card = document.getElementById('cloudVaultBumpCard');
       if (card) {
         card.className = isCloudVaultAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 border-2 border-teal-300/90 hover:border-emerald-500 shadow-xs cursor-pointer transition-all select-none';
+          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 sm:p-4 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
+          : 'bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-teal-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -983,8 +1013,8 @@
       const radioSixMonth = document.getElementById('radioPlanSixMonth');
       const radioMonthly = document.getElementById('radioPlanMonthly');
 
-      const selectedClass = 'py-2 px-2 rounded-xl border-2 border-emerald-500 bg-emerald-50/60 text-emerald-950 text-center transition-all cursor-pointer';
-      const normalClass = 'py-2 px-2 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 text-gray-700 text-center transition-all cursor-pointer';
+      const selectedClass = 'py-2 sm:py-2.5 px-3 rounded-xl bg-emerald-600 text-white font-extrabold text-xs sm:text-sm shadow-xs cursor-pointer transition-all';
+      const normalClass = 'py-2 sm:py-2.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm cursor-pointer transition-all';
 
       if (cardAnnual) cardAnnual.className = plan === 'annual' ? selectedClass : normalClass;
       if (cardSixMonth) cardSixMonth.className = plan === 'six_month' ? selectedClass : normalClass;
@@ -993,6 +1023,23 @@
       if (radioAnnual) radioAnnual.checked = (plan === 'annual');
       if (radioSixMonth) radioSixMonth.checked = (plan === 'six_month');
       if (radioMonthly) radioMonthly.checked = (plan === 'monthly');
+
+      const p = checkoutConfig && checkoutConfig.pricing;
+      const annualMoEq = p?.annualMonthlyEqFormatted ?? '£4.16';
+      const sixMoEq = p?.sixMonthMonthlyEqFormatted ?? '£6.50';
+      const monthlyFmt = p?.monthlyFormatted ?? '£9.99';
+      const introFmt = p?.introMonthlyFormatted ?? '£1.99';
+
+      const tabAnnualText = document.getElementById('planTabAnnualText');
+      const tabSixText = document.getElementById('planTabSixMonthText');
+      const tabMonthlyText = document.getElementById('planTabMonthlyText');
+      if (tabAnnualText) tabAnnualText.textContent = `★ Annual — ${annualMoEq}/mo (Save 58%)`;
+      if (tabSixText) tabSixText.textContent = `6-Month — ${sixMoEq}/mo (Save 35%)`;
+      if (tabMonthlyText) {
+        tabMonthlyText.textContent = isDiscountApplied && plan === 'monthly'
+          ? `Monthly — ${introFmt} 1st mo`
+          : `Monthly — ${monthlyFmt}/mo`;
+      }
 
       const productPriceTop = document.getElementById('productPriceTop');
       const productPriceSub = document.getElementById('productPriceSub');
@@ -1014,7 +1061,7 @@
         if (productTag) productTag.classList.remove('hidden');
         if (productTagContent) {
           productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
-          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 58% vs monthly billing`;
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 58% vs monthly billing`;
         }
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Annual Plan)';
         if (summaryPlanPrice) summaryPlanPrice.textContent = '£49.99/year';
@@ -1031,7 +1078,7 @@
         if (productTag) productTag.classList.remove('hidden');
         if (productTagContent) {
           productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-teal-800 bg-teal-100 border border-teal-300';
-          productTagContent.innerHTML = `<svg class="w-3 h-3 text-teal-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 35% vs monthly billing`;
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-teal-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 35% vs monthly billing`;
         }
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (6-Month Plan)';
         if (summaryPlanPrice) summaryPlanPrice.textContent = '£38.99/6 months';
@@ -1052,7 +1099,7 @@
           if (productTag) productTag.classList.remove('hidden');
           if (productTagContent) {
             productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
-            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £8.00 off 1st month`;
+            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £8.00 off 1st month`;
           }
           if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
           if (discountSummaryRow) discountSummaryRow.classList.remove('hidden');
@@ -1070,7 +1117,6 @@
       }
 
       // Update Battery Care Add-on price badge & order breakdown line item
-      const p = checkoutConfig && checkoutConfig.pricing;
       const addonBadge = document.getElementById('batteryAddonPriceBadge');
       const addonSummaryRow = document.getElementById('addonSummaryRow');
       const addonSummaryPrice = document.getElementById('addonSummaryPrice');
@@ -1110,11 +1156,6 @@
       const mobileQuickTotalText = document.getElementById('mobileQuickTotalText');
       if (mobileQuickTotalText && totalTodayText) {
         mobileQuickTotalText.textContent = totalTodayText.textContent;
-      }
-
-      const submitBtnText = document.getElementById('submitBtnText');
-      if (submitBtnText && totalTodayText) {
-        submitBtnText.textContent = `COMPLETE SECURE ORDER — ${totalTodayText.textContent}`;
       }
 
       updatePaymentRequestTotal();
