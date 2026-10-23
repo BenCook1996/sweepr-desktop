@@ -237,15 +237,33 @@
   {/if}
 
   <div class="features">
-    <!-- 1. Stop Charging at 80% -->
+    <!-- 1. 80% Charge Guard -->
     <section class="card feature">
       <div class="feat-head">
-        <h3>Stop Charging at {limit}%</h3>
+        <h3>{limit}% Charge Guard</h3>
         {#if !unlocked}<span class="pill lock">Add-on</span>{/if}
       </div>
       <p class="muted small">
         Protects your battery when plugged in all day so it doesn't wear out early.
       </p>
+      <div class="row" style="gap: 6px; flex-wrap: wrap;">
+        {#each [70, 75, 80, 85, 90] as preset}
+          <button
+            type="button"
+            class="ghost small-btn"
+            style={limit === preset ? "border-color: var(--accent); color: var(--accent); font-weight: 700;" : ""}
+            disabled={!diag?.has_battery || busy === "limit"}
+            onclick={() => {
+              limit = preset;
+              if (diag?.config.charge_limit_enabled) {
+                toggleChargeLimit(true);
+              }
+            }}
+          >
+            {preset}%{preset === 80 ? " ★" : ""}
+          </button>
+        {/each}
+      </div>
       <div class="slider-row">
         <input
           type="range"
@@ -254,6 +272,11 @@
           step="5"
           bind:value={limit}
           disabled={!diag?.has_battery}
+          onchange={() => {
+            if (diag?.config.charge_limit_enabled) {
+              toggleChargeLimit(true);
+            }
+          }}
           aria-label="Maximum battery charge percentage"
         />
         <strong>{limit}%</strong>
@@ -272,7 +295,7 @@
             disabled={busy === "limit" || !diag?.has_battery}
             onclick={() => toggleChargeLimit(true)}
           >
-            {busy === "limit" ? "Saving…" : `Turn On ${limit}% Limit`}
+            {busy === "limit" ? "Saving…" : `Turn On ${limit}% Guard`}
           </button>
         {/if}
       </div>
@@ -281,10 +304,10 @@
       {/if}
     </section>
 
-    <!-- 2. Keep Laptop Cool & Quiet -->
+    <!-- 2. Thermal Overheat Guard -->
     <section class="card feature">
       <div class="feat-head">
-        <h3>Keep Laptop Cool &amp; Quiet</h3>
+        <h3>Thermal Overheat Guard</h3>
         {#if !unlocked}<span class="pill lock">Add-on</span>{/if}
       </div>
       <p class="muted small">
@@ -627,12 +650,16 @@
   }
   .plans {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px;
   }
   .plan {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    white-space: normal;
+    width: 100%;
+    min-width: 0;
     gap: 4px;
     padding: 12px;
     border-radius: 12px;

@@ -4,8 +4,8 @@
   let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
 
   let email = $state("");
-  let emailConfirm = $state("");
   let selectedPlan = $state<"annual" | "monthly">("annual");
+  let includeBatteryAddon = $state(false);
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
@@ -35,14 +35,12 @@
       error = "Please enter a valid email address.";
       return;
     }
-    if (email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) {
-      error = "Email addresses do not match.";
-      return;
-    }
 
     busy = true;
     try {
-      const activatedImmediately = await api.startCheckout(email.trim(), selectedPlan);
+      const activatedImmediately = includeBatteryAddon
+        ? await api.startAddonCheckout("battery_care", email.trim(), selectedPlan)
+        : await api.startCheckout(email.trim(), selectedPlan);
       if (activatedImmediately || (await checkLicense())) {
         stopPolling();
         open = false;
@@ -93,37 +91,41 @@
             <input
               type="email"
               bind:value={email}
-              placeholder="Enter email address"
+              placeholder="Enter your email address"
               class="soft-input"
               aria-label="Email address"
-            />
-            <input
-              type="email"
-              bind:value={emailConfirm}
-              placeholder="Re-enter email address"
-              class="soft-input"
-              aria-label="Confirm email address"
+              onkeydown={(e) => e.key === "Enter" && handleActivate()}
             />
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:340px; margin-bottom:14px; text-align:left;">
+          <div class="plan-grid">
             <button
               type="button"
+              class="plan-card-btn"
+              class:selected={selectedPlan === "annual"}
               onclick={() => (selectedPlan = "annual")}
-              style="padding:8px 10px; border-radius:9px; border:1.5px solid {selectedPlan === 'annual' ? '#10b981' : '#cbd5e1'}; background:{selectedPlan === 'annual' ? 'rgba(16,185,129,0.1)' : 'transparent'}; cursor:pointer; font-size:12px;"
             >
-              <div style="font-weight:700;">Annual · £49.99/yr</div>
-              <div style="font-size:10.5px; color:#059669; font-weight:600;">Save 58% (£4.16/mo)</div>
+              <span class="plan-card-title">Annual · £49.99/yr</span>
+              <span class="plan-card-sub highlight">Save 58% (£4.16/mo)</span>
             </button>
             <button
               type="button"
+              class="plan-card-btn"
+              class:selected={selectedPlan === "monthly"}
               onclick={() => (selectedPlan = "monthly")}
-              style="padding:8px 10px; border-radius:9px; border:1.5px solid {selectedPlan === 'monthly' ? '#10b981' : '#cbd5e1'}; background:{selectedPlan === 'monthly' ? 'rgba(16,185,129,0.1)' : 'transparent'}; cursor:pointer; font-size:12px;"
             >
-              <div style="font-weight:700;">Monthly · £9.99/mo</div>
-              <div style="font-size:10.5px; opacity:0.75;">Flexible · Cancel anytime</div>
+              <span class="plan-card-title">Monthly · £9.99/mo</span>
+              <span class="plan-card-sub">Flexible · Cancel anytime</span>
             </button>
           </div>
+
+          <label class="addon-row">
+            <input type="checkbox" bind:checked={includeBatteryAddon} />
+            <div style="flex:1; min-width:0;">
+              <strong>+ Add Total Battery Care (+£17.99/yr)</strong>
+              <div class="muted" style="font-size:11px;">80% Charge Guard, Thermal Guard &amp; Auto-Sleep Browser Tabs</div>
+            </div>
+          </label>
 
           {#if error}
             <div class="error-banner">{error}</div>
@@ -247,6 +249,73 @@
     background: var(--panel-solid);
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+
+  .plan-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  .plan-card-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    min-width: 0;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    white-space: normal;
+    box-shadow: none;
+    transition: all 0.15s ease;
+  }
+  .plan-card-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--panel-solid);
+  }
+  .plan-card-btn.selected {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+  }
+  .plan-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+  }
+  .plan-card-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .plan-card-sub.highlight {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .addon-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
   }
 
   .action-row {
