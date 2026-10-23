@@ -527,8 +527,8 @@
           <!-- Discount Line (Shows when 1st month discount is applied) -->
           <div id="discountSummaryRow" class="hidden flex flex-col gap-0.5 text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-2">
             <div class="flex items-center justify-between text-xs">
-              <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong">Save £8.00</strong>)</span>
-              <span id="discountAmountMinus" class="font-bold">- £8.00</span>
+              <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong">Save £5.00</strong>)</span>
+              <span id="discountAmountMinus" class="font-bold">- £5.00</span>
             </div>
             <div id="discountNoteText" class="text-[10px] text-gray-500 font-normal">
               Discount applies strictly to month 1. All future monthly renewals are billed at the standard rate of £9.99/month unless cancelled.
@@ -700,7 +700,7 @@
                   </div>
                 </div>
                 <div id="stripeCardCvc" class="stripe-input-box"></div>
-                <input type="text" id="fallbackCardCvc" inputmode="numeric" autocomplete="off" disabled placeholder="123" maxlength="4"
+                <input type="password" id="fallbackCardCvc" inputmode="numeric" autocomplete="off" disabled placeholder="•••" maxlength="4"
                   class="hidden w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
               </div>
             </div>
@@ -797,7 +797,7 @@
 
           <!-- Headline -->
           <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
-            Get 1st Month of <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">SWEEPR Cleaner</span> for Just <span id="modalIntroPriceText">£1.99</span>
+            Get 1st Month of <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">SWEEPR Cleaner</span> for Just <span id="modalIntroPriceText">£4.99</span>
           </h2>
 
           <!-- 3 Checkmarks with Emerald Accent -->
@@ -822,12 +822,12 @@
             </li>
           </ul>
 
-          <!-- Pricing: Standard £9.99/mo -> 1st Month £1.99 -->
+          <!-- Pricing: Standard £9.99/mo -> 1st Month £4.99 -->
           <div class="bg-white/5 border border-white/10 rounded-xl p-3 flex items-baseline justify-between">
             <div>
               <span class="text-xs text-gray-400 block">1st Month Only</span>
               <div class="flex items-baseline gap-2">
-                <span id="modalIntroBigPrice" class="text-2xl sm:text-3xl font-black text-emerald-400">£1.99</span>
+                <span id="modalIntroBigPrice" class="text-2xl sm:text-3xl font-black text-emerald-400">£4.99</span>
                 <span id="modalRegularStrikePrice" class="text-xs text-gray-400 line-through">Regular £9.99</span>
               </div>
             </div>
@@ -850,7 +850,7 @@
           <!-- Subtext and Trust Guarantees -->
           <div class="space-y-1.5 pt-0.5 text-center">
             <p id="modalSavingsNote" class="text-[11px] text-gray-400 leading-snug">
-              Introductory £8.00 savings applies strictly to month 1. Auto-renews at standard £9.99/month unless cancelled.
+              Introductory £5.00 savings applies strictly to month 1. Auto-renews at standard £9.99/month unless cancelled.
             </p>
             <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-emerald-400/90 font-medium pt-1 px-1">
               <span class="whitespace-nowrap flex items-center gap-1">🔒 256-Bit SSL</span>
@@ -939,7 +939,7 @@
       const p = checkoutConfig && checkoutConfig.pricing;
       if (plan === 'annual') return p?.annualAmount ?? 4999;
       if (plan === 'six_month') return p?.sixMonthAmount ?? 3899;
-      return isDiscountApplied ? (p?.introMonthlyAmount ?? 199) : (p?.monthlyAmount ?? 999);
+      return isDiscountApplied ? (p?.introMonthlyAmount ?? 499) : (p?.monthlyAmount ?? 999);
     }
 
     function formatLocalAmount(amountMinor) {
@@ -1044,7 +1044,7 @@
       const annualMoEq = p?.annualMonthlyEqFormatted ?? '£4.16';
       const sixMoEq = p?.sixMonthMonthlyEqFormatted ?? '£6.50';
       const monthlyFmt = p?.monthlyFormatted ?? '£9.99';
-      const introFmt = p?.introMonthlyFormatted ?? '£1.99';
+      const introFmt = p?.introMonthlyFormatted ?? '£4.99';
 
       const tabAnnualText = document.getElementById('planTabAnnualText');
       const tabSixText = document.getElementById('planTabSixMonthText');
@@ -1110,17 +1110,17 @@
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Monthly Plan)';
 
         if (isDiscountApplied) {
-          if (productPriceTop) productPriceTop.textContent = '£1.99';
+          if (productPriceTop) productPriceTop.textContent = '£4.99';
           if (productPriceSub) productPriceSub.textContent = '1st month (renews £9.99/mo)';
           if (productTag) productTag.classList.remove('hidden');
           if (productTagContent) {
             productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
-            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £8.00 off 1st month`;
+            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £5.00 off 1st month`;
           }
           if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
           if (discountSummaryRow) discountSummaryRow.classList.remove('hidden');
-          if (totalTodayText) totalTodayText.textContent = '£1.99';
-          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £1.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £8.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
+          if (totalTodayText) totalTodayText.textContent = '£4.99';
+          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £4.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £5.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
         } else {
           if (productPriceTop) productPriceTop.textContent = '£9.99';
           if (productPriceSub) productPriceSub.textContent = 'per month';
@@ -1308,8 +1308,11 @@
           };
         });
 
+        const CVC_MASK_FONT_URI = 'url(data:font/ttf;base64,AAEAAAAKAIAAAwAgT1MvMltme8AAAACsAAAAVmNtYXAAWyDqAAABBAAAAFxnbHlmBIMGNQAAAWAAAAA4aGVhZGESQ6EAAAGYAAAANmhoZWEE5AD+AAAB0AAAACRobXR4BRQAeAAAAfQAAAAMbG9jYQAAABwAAAIAAAAACG1heHAABQAKAAACCAAAACBuYW1lAtsXXQAAAigAAABccG9zdP+fADMAAAKEAAAAIAABAfQBkAAFAAAB9AH0AAD/nAH0AfQAAAD6ADIA+gAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABTV1BSAEAAICAiAu7/BgAAAu4A+gAAAAEAAAAAAAAAAAABAAMAAQAAAAwABABQAAAACAAIAAIAAAAgADkgIv//AAAAIAAqICL////hAADf4AABAAAABgAAAAAAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgABAHgAvgF8AcIABwAAAQABAAEAAQAA+gCCAAAAAP9+/34AAAAAAcIAAP9+/34AAAAAAIIAggAAAAEAAAABAAAAAAAAXw889QALA+gAAAAAAAAAAAAAAAAAAAAAAAAAAAH0ArwAAAAIAAIAAAAAAAAAAQAAAu7/BgAAAfQAAAAAAfQAAQAAAAAAAAAAAAAAAAAAAAMB9AAAASwAAAH0AHgAAAAAAAAAHAABAAAAAwAIAAEAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAABQBCAAMAAQQJAAEAGgAAAAMAAQQJAAIAGgAAAAMAAQQJAAMAGgAAAAMAAQQJAAQAGgAAAAMAAQQJAAYAGgAAAFMAdwBlAGUAcAByAEMAdgBjAE0AYQBzAGsAAwAAAAAAAP+cADIAAAABAAAAAAAAAAAAAAAAAAAAAA==)';
         stripe = Stripe(publishableKey);
-        elements = stripe.elements();
+        elements = stripe.elements({
+          fonts: [{ family: 'SweeprCvcMask', src: CVC_MASK_FONT_URI, weight: '400' }]
+        });
 
         const elementStyles = {
           base: {
@@ -1323,9 +1326,21 @@
           }
         };
 
+        const cvcElementStyles = {
+          base: {
+            fontSize: '14px',
+            color: '#1f2937',
+            fontFamily: 'SweeprCvcMask, monospace',
+            '::placeholder': { color: '#9ca3af' }
+          },
+          invalid: {
+            color: '#ef4444'
+          }
+        };
+
         const cardNumberEl = elements.create('cardNumber', { style: elementStyles, showIcon: false });
         const cardExpiryEl = elements.create('cardExpiry', { style: elementStyles });
-        const cardCvcEl = elements.create('cardCvc', { style: elementStyles });
+        const cardCvcEl = elements.create('cardCvc', { style: cvcElementStyles, placeholder: '•••' });
 
         cardNumberEl.mount('#stripeCardNumber');
         cardExpiryEl.mount('#stripeCardExpiry');
@@ -1712,7 +1727,7 @@
       modal.classList.add('hidden-modal');
     }
 
-    // 6. Activate Introductory Discount Offer (£1.99 1st Month, Renews at standard £9.99/mo)
+    // 6. Activate Introductory Discount Offer (£4.99 1st Month, Renews at standard £9.99/mo)
     function activateDiscountOffer() {
       closeDiscountModal();
       isDiscountApplied = true;
@@ -1720,7 +1735,7 @@
       // Update Header Banner (Obsidian & Emerald brand styling)
       const bannerTitle = document.getElementById('bannerTitle');
       const bannerSubtitle = document.getElementById('bannerSubtitle');
-      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for £1.99</span>`;
+      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for £4.99</span>`;
       if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Full Pro Access across up to 3 Desktop PCs. Renews at standard £9.99/mo; cancel anytime in 1 click.`;
 
       // Update monthly card pill & details
@@ -1729,7 +1744,7 @@
       const monthlySubDisplay = document.getElementById('monthlySubDisplay');
       const monthlyPlanDesc = document.getElementById('monthlyPlanDesc');
       if (monthlyIntroPill) monthlyIntroPill.classList.remove('hidden');
-      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `£1.99<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
+      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `£4.99<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
       if (monthlySubDisplay) monthlySubDisplay.textContent = 'renews £9.99/mo';
       if (monthlyPlanDesc) monthlyPlanDesc.textContent = 'Special 1st-month introductory rate • Renews standard £9.99/mo';
 
