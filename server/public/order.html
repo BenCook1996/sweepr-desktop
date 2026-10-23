@@ -27,8 +27,31 @@
     #googlePayButtonContainer > div,
     #googlePayButtonContainer button {
       width: 100% !important;
+      min-width: 0 !important;
       height: 44px !important;
       min-height: 44px !important;
+      position: relative !important;
+      overflow: hidden !important;
+      border-radius: 12px !important;
+      background-color: #000 !important;
+    }
+    #googlePayButtonContainer .gpay-card-info-container.black,
+    #googlePayButtonContainer .gpay-card-info-container.black.hover,
+    #googlePayButtonContainer .gpay-card-info-container.black.active {
+      background-color: #000 !important;
+    }
+    /* Crop Google Pay dynamic iframe after the 1st card (x=38..127 in 240x40 SVG) and center G Pay | [1 Card] */
+    #googlePayButtonContainer iframe.gpay-card-info-iframe {
+      width: 240px !important;
+      min-width: 240px !important;
+      max-width: none !important;
+      height: 40px !important;
+      position: absolute !important;
+      top: 50% !important;
+      left: 50% !important;
+      margin: 0 !important;
+      transform: translate(calc(-50% + 37.5px), -50%) !important;
+      clip-path: inset(0 110px 0 0) !important;
     }
     /* 3D Box Mockup */
     .software-box {
