@@ -1021,6 +1021,7 @@
       if (!paymentRequestInstance) return;
       try {
         paymentRequestInstance.update({
+          currency: (checkoutConfig?.currency || 'gbp').toLowerCase(),
           total: {
             label: selectedPlan === 'annual'
               ? 'SWEEPR Cleaner Pro (Annual)'
@@ -1495,7 +1496,7 @@
       try {
         paymentRequestInstance = stripe.paymentRequest({
           country: 'GB',
-          currency: 'gbp',
+          currency: (checkoutConfig?.currency || 'gbp').toLowerCase(),
           total: {
             label: selectedPlan === 'annual'
               ? 'SWEEPR Cleaner Pro (Annual)'

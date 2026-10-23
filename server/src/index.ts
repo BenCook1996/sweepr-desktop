@@ -20,4 +20,34 @@ const app = createApp({ repo, signingKey, stripe, config });
 
 serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   console.log(`Sweepr licence server listening on http://${info.address}:${info.port}`);
+
+  // Automatically register Apple Pay domain(s) in Stripe once server is listening
+  if (stripe && config.stripeSecretKey.startsWith("sk_live_")) {
+    setTimeout(async () => {
+      const domains = new Set<string>(["sweeprcleaner.com", "www.sweeprcleaner.com"]);
+      try {
+        const host = new URL(config.publicUrl).hostname;
+        if (host && host !== "localhost" && !/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+          domains.add(host);
+        }
+      } catch {}
+
+      try {
+        const existing = await stripe.applePayDomains.list({ limit: 100 });
+        const registered = new Set(existing.data.map((d) => d.domain_name.toLowerCase()));
+        for (const domain of domains) {
+          if (!registered.has(domain.toLowerCase())) {
+            try {
+              await stripe.applePayDomains.create({ domain_name: domain });
+              console.log(`[stripe] Registered Apple Pay domain: ${domain}`);
+            } catch (err: any) {
+              console.warn(`[stripe] Apple Pay domain registration skipped for ${domain}: ${err?.message || err}`);
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[stripe] Could not list Apple Pay domains: ${err?.message || err}`);
+      }
+    }, 3000);
+  }
 });

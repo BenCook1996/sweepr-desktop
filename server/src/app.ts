@@ -253,6 +253,15 @@ export function createApp(deps: AppDeps) {
 
   app.get("/health", (c) => c.json({ ok: true }));
 
+  // Apple Pay Web Domain Verification File (Required by Stripe & Apple for Safari Apple Pay)
+  app.get("/.well-known/apple-developer-merchantid-domain-association", (c) => {
+    const file = "./public/.well-known/apple-developer-merchantid-domain-association";
+    if (!existsSync(file)) return c.notFound();
+    c.header("Content-Type", "text/plain; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.body(readFileSync(file, "utf-8"));
+  });
+
   // Admin-only surface: CRM API, dashboard HTML (including the static copy under /crm/*) and /admin.
   const adminAuth = adminBasicAuth({
     user: config.crmAdminUser || "admin",
