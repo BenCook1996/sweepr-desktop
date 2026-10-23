@@ -423,62 +423,60 @@
           </div>
         </div>
 
-        <!-- 3. 1-CLICK PAID ORDER BUMP 1: Total Battery & Mac/Phone Care -->
-        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-amber-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="batteryCareCheckbox"
-                onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
-                class="mt-0.5 w-5 h-5 rounded border-amber-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
-              <div>
-                <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                    ⚡ 1-CLICK BATTERY &amp; DEVICE ADD-ON
-                  </span>
-                  <span id="batteryAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
-                    + £17.99/yr (£1.49/mo eq.)
+        <!-- 3. Subtle 1-Click Paid Order Bump 1: Total Battery & Mac/Phone Care (Ticked by default) -->
+        <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-emerald-50/40 rounded-xl px-3.5 py-2.5 border border-emerald-200/90 hover:border-emerald-400 cursor-pointer transition-all select-none">
+          <div class="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="batteryCareCheckbox"
+              checked
+              onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
+              class="mt-0.5 w-4 h-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-bold text-gray-900 text-xs sm:text-sm">Total Battery &amp; Mac/Phone Care</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100/80 text-emerald-800 border border-emerald-200/80">
+                    2x Device Lifespan
                   </span>
                 </div>
-                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm leading-snug">
-                  Add “Total Battery &amp; Mac/Phone Care” — 2x Device Lifespan
-                </h3>
-                <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5 leading-relaxed">
-                  Caps desk charging at 80% &amp; sleeps background drainers to double laptop and phone battery lifespan.
-                </p>
+                <span id="batteryAddonPriceBadge" class="text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                  + £17.99/yr (£1.49/mo eq.)
+                </span>
               </div>
+              <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                Caps desk charging at 80% &amp; sleeps background drainers to double laptop and phone battery life.
+              </p>
             </div>
           </div>
         </div>
 
-        <!-- 3b. 1-CLICK PAID ORDER BUMP 2: SWEEPR Cloud Protection -->
-        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-teal-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="cloudVaultCheckbox"
-                onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
-                class="mt-0.5 w-5 h-5 rounded border-teal-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
-              />
-              <div>
-                <div class="flex flex-wrap items-center gap-1.5 mb-1">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-teal-100 text-teal-900 border border-teal-300">
-                    🔒 1-CLICK CLOUD &amp; VAULT ADD-ON
-                  </span>
-                  <span id="cloudVaultAddonPriceBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
-                    + £17.99/yr (£1.49/mo eq.)
+        <!-- 3b. Subtle 1-Click Paid Order Bump 2: SWEEPR Cloud Protection (Ticked by default) -->
+        <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-emerald-50/40 rounded-xl px-3.5 py-2.5 border border-emerald-200/90 hover:border-emerald-400 cursor-pointer transition-all select-none">
+          <div class="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="cloudVaultCheckbox"
+              checked
+              onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
+              class="mt-0.5 w-4 h-4 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-bold text-gray-900 text-xs sm:text-sm">SWEEPR Cloud Protection</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100/80 text-emerald-800 border border-emerald-200/80">
+                    Photo Vault &amp; Sync
                   </span>
                 </div>
-                <h3 class="font-extrabold text-gray-900 text-xs sm:text-sm leading-snug">
-                  Add “SWEEPR Cloud Protection” — Encrypted Photo Vault &amp; Cloud Sync
-                </h3>
-                <p class="text-[11px] sm:text-xs text-gray-600 mt-0.5 leading-relaxed">
-                  Locks private photos &amp; IDs inside an AES-256 encrypted vault + automatic multi-cloud folder backup sync.
-                </p>
+                <span id="cloudVaultAddonPriceBadge" class="text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                  + £17.99/yr (£1.49/mo eq.)
+                </span>
               </div>
+              <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                Locks private photos &amp; IDs inside an AES-256 encrypted vault + automatic multi-cloud folder sync.
+              </p>
             </div>
           </div>
         </div>
@@ -491,7 +489,7 @@
           </div>
 
           <!-- Add-on Line Item (Shows when Total Battery & Mac/Phone Care is checked) -->
-          <div id="addonSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
+          <div id="addonSummaryRow" class="flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
             <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔋</span>
               <span id="addonSummaryTitle">Total Battery &amp; Mac/Phone Care Add-on</span>
@@ -500,7 +498,7 @@
           </div>
 
           <!-- Cloud Vault Add-on Line Item -->
-          <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
+          <div id="cloudVaultSummaryRow" class="flex items-center justify-between text-emerald-800 bg-emerald-50/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/80">
             <span class="flex items-center gap-1.5 font-semibold text-xs">
               <span>🔒</span>
               <span id="cloudVaultSummaryTitle">SWEEPR Cloud Protection Add-on</span>
@@ -532,7 +530,7 @@
 
           <div class="pt-2.5 border-t border-gray-200 flex items-center justify-between">
             <span id="totalTodayLabel" class="font-bold text-gray-900 text-sm sm:text-base">Total Today (GBP)</span>
-            <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900">£49.99</span>
+            <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900">£85.97</span>
           </div>
         </div>
 
@@ -908,8 +906,8 @@
     // State
     let selectedPlan = 'annual'; // 'annual' | 'six_month' | 'monthly'
     let isDiscountApplied = false;
-    let isBatteryAddonSelected = false;
-    let isCloudVaultAddonSelected = false;
+    let isBatteryAddonSelected = true;
+    let isCloudVaultAddonSelected = true;
     let stripe = null;
     let elements = null;
     let cardElements = null;
@@ -973,8 +971,8 @@
       const card = document.getElementById('batteryCareBumpCard');
       if (card) {
         card.className = isBatteryAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 sm:p-4 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-amber-50/90 via-white to-emerald-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-amber-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none';
+          ? 'bg-emerald-50/40 rounded-xl px-3.5 py-2.5 border border-emerald-200/90 hover:border-emerald-400 cursor-pointer transition-all select-none'
+          : 'bg-gray-50/50 rounded-xl px-3.5 py-2.5 border border-gray-200 hover:border-emerald-300 cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -990,8 +988,8 @@
       const card = document.getElementById('cloudVaultBumpCard');
       if (card) {
         card.className = isCloudVaultAddonSelected
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/80 rounded-xl p-3.5 sm:p-4 border-2 border-emerald-500 shadow-sm cursor-pointer transition-all select-none ring-2 ring-emerald-500/20'
-          : 'bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/60 rounded-xl p-3.5 sm:p-4 border-2 border-teal-300/90 hover:border-emerald-500 shadow-2xs cursor-pointer transition-all select-none';
+          ? 'bg-emerald-50/40 rounded-xl px-3.5 py-2.5 border border-emerald-200/90 hover:border-emerald-400 cursor-pointer transition-all select-none'
+          : 'bg-gray-50/50 rounded-xl px-3.5 py-2.5 border border-gray-200 hover:border-emerald-300 cursor-pointer transition-all select-none';
       }
       selectOrderPlan(selectedPlan);
     }
@@ -1161,6 +1159,18 @@
       if (isBatteryAddonSelected || isCloudVaultAddonSelected) {
         const combinedTodayFormatted = formatLocalAmount(getAmountTodayPence());
         if (totalTodayText) totalTodayText.textContent = combinedTodayFormatted;
+        if (termsConsentLabel) {
+          if (plan === 'annual') {
+            termsConsentLabel.textContent = `I agree to pay ${combinedTodayFormatted} today which will auto renew at ${combinedTodayFormatted} annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
+          } else if (plan === 'six_month') {
+            termsConsentLabel.textContent = `I agree to pay ${combinedTodayFormatted} today which will auto renew at ${combinedTodayFormatted} every 6 months unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
+          } else if (isDiscountApplied) {
+            const regularMoTotal = formatLocalAmount((p?.monthlyAmount ?? 999) + (isBatteryAddonSelected ? getBatteryAddonPence('monthly') : 0) + (isCloudVaultAddonSelected ? getBatteryAddonPence('monthly') : 0));
+            termsConsentLabel.textContent = `I agree to pay ${combinedTodayFormatted} today for my 1st month. My subscription will automatically renew at the standard price of ${regularMoTotal} monthly thereafter unless cancelled. I can cancel anytime via my online portal.`;
+          } else {
+            termsConsentLabel.textContent = `I agree to pay ${combinedTodayFormatted} today which will auto renew at ${combinedTodayFormatted} monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
+          }
+        }
       }
 
       const mobileQuickTotalText = document.getElementById('mobileQuickTotalText');
@@ -1210,10 +1220,14 @@
       }
 
       const addonParam = urlParams.get('addon');
-      if (addonParam === 'battery_care' || urlParams.get('battery_care') === '1') {
+      if (addonParam === 'none' || urlParams.get('battery_care') === '0') {
+        toggleBatteryCareAddon(false);
+      } else if (addonParam === 'battery_care' || urlParams.get('battery_care') === '1') {
         toggleBatteryCareAddon(true);
       }
-      if (addonParam === 'cloud_vault' || urlParams.get('cloud_vault') === '1') {
+      if (addonParam === 'none' || urlParams.get('cloud_vault') === '0') {
+        toggleCloudVaultAddon(false);
+      } else if (addonParam === 'cloud_vault' || urlParams.get('cloud_vault') === '1') {
         toggleCloudVaultAddon(true);
       }
 
