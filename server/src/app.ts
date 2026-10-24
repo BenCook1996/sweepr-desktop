@@ -716,6 +716,69 @@ export function createApp(deps: AppDeps) {
     }
   }
 
+  // Currencies supported by Stripe's recurring PayPal integration
+  const SUPPORTED_PAYPAL_CURRENCIES = new Set([
+    "gbp", "eur", "usd", "aud", "cad", "chf", "czk", "dkk", "hkd",
+    "huf", "ils", "jpy", "mxn", "nok", "nzd", "php", "pln", "sek", "sgd",
+  ]);
+
+  function resolvePayPalPricing(pricing: ReturnType<typeof getPricingForCountryOrCurrency>) {
+    if (SUPPORTED_PAYPAL_CURRENCIES.has(pricing.currency.toLowerCase())) {
+      return pricing;
+    }
+    return getPricingForCountryOrCurrency(pricing.country, "gbp");
+  }
+
+  async function createPayPalCheckoutSessionFallback(opts: {
+    customerId: string;
+    accountId: string;
+    subItems: any[];
+    introCouponId: string;
+    attributionMeta: Record<string, string>;
+    isPopup?: boolean;
+  }) {
+    if (!stripe) return null;
+    const baseSessionParams: any = {
+      mode: "subscription",
+      customer: opts.customerId,
+      client_reference_id: opts.accountId,
+      line_items: opts.subItems.map((it: any) => ({
+        price_data: it.price_data,
+        quantity: 1,
+      })),
+      ...(opts.introCouponId ? { discounts: [{ coupon: opts.introCouponId }] } : {}),
+      subscription_data: { metadata: opts.attributionMeta },
+      metadata: opts.attributionMeta,
+      success_url: `${config.publicUrl}/checkout/success?web=1&session_id={CHECKOUT_SESSION_ID}&account_id=${encodeURIComponent(opts.accountId)}${opts.isPopup ? "&popup=1" : ""}`,
+      cancel_url: `${config.publicUrl}/order?error=payment_cancelled`,
+    };
+    try {
+      return await stripe.checkout.sessions.create({
+        ...baseSessionParams,
+        payment_method_types: ["paypal"],
+      } as any);
+    } catch {
+      return await stripe.checkout.sessions.create(baseSessionParams);
+    }
+  }
+
+  async function retrieveSubscriptionSafe(subscriptionId: string): Promise<Stripe.Subscription> {
+    if (!stripe) throw new Error("Stripe not configured");
+    try {
+      return await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ["default_payment_method", "latest_invoice.payments.data.payment.payment_intent"],
+      });
+    } catch {
+      try {
+        return await stripe.subscriptions.retrieve(subscriptionId, {
+          expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
+        });
+      } catch {
+        return await stripe.subscriptions.retrieve(subscriptionId);
+      }
+    }
+  }
+
   // Capture lead with country, device, and datetime when a visitor enters their email on /order or checkout
   app.post("/api/lead", async (c) => {
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
@@ -785,7 +848,8 @@ export function createApp(deps: AppDeps) {
       rawPlan === "annual" ? "annual" : rawPlan === "six_month" || rawPlan === "6month" || rawPlan === "sixmonth" ? "six_month" : "monthly";
     const refCode = typeof body.ref === "string" ? body.ref.trim() : typeof body.referral_code === "string" ? body.referral_code.trim() : "";
 
-    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+    const rawPricing = await resolvePricingForRequest(c, { trustProxy });
+    const localizedPricing = resolvePayPalPricing(rawPricing);
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     // Reuse an existing account for this email if present (avoids orphaned duplicate rows).
@@ -921,79 +985,101 @@ export function createApp(deps: AppDeps) {
           metadata: attributionMeta,
           expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
         } as any);
-      } catch (subErr: any) {
-        if (String(subErr?.message || "").toLowerCase().includes("paypal")) {
-          const checkoutSession = await stripe.checkout.sessions.create({
-            mode: "subscription",
-            customer: customerId,
-            managed_payments: { enabled: false },
-            line_items: subItems.map((it: any) => ({
-              price_data: it.price_data,
-              quantity: 1,
-            })),
-            ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
-            subscription_data: { metadata: attributionMeta },
-            metadata: attributionMeta,
-            success_url: `${config.publicUrl}/checkout/success?web=1&session_id={CHECKOUT_SESSION_ID}&account_id=${encodeURIComponent(accountId)}`,
-            cancel_url: `${config.publicUrl}/order?error=payment_cancelled`,
-          } as any);
-          if (checkoutSession?.url) {
-            return c.json({
-              url: checkoutSession.url,
-              redirectUrl: checkoutSession.url,
-              subscriptionId: checkoutSession.id,
-              accountId,
-              plan,
-              currency: localizedPricing.currency,
-            });
+
+        const latestInvoice: any = subscription.latest_invoice;
+        let paymentIntent: any =
+          latestInvoice?.payment_intent ??
+          latestInvoice?.payments?.data?.[0]?.payment?.payment_intent ??
+          null;
+        if (typeof paymentIntent === "string") {
+          paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+        }
+        if (!paymentIntent?.id && typeof latestInvoice?.confirmation_secret?.client_secret === "string") {
+          const cs: string = latestInvoice.confirmation_secret.client_secret;
+          const piId = cs.split("_secret_")[0];
+          if (piId) {
+            paymentIntent = { id: piId, client_secret: cs, livemode: subscription.livemode };
           }
+        }
+
+        const rawIp = clientIp(c);
+        const validIp =
+          !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
+            ? "127.0.0.1"
+            : rawIp;
+        const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
+        const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`;
+
+        const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
+          payment_method_data: {
+            type: "paypal",
+            billing_details: { email },
+          },
+          mandate_data: {
+            customer_acceptance: {
+              type: "online",
+              online: {
+                ip_address: validIp,
+                user_agent: userAgent,
+              },
+            },
+          },
+          return_url: returnUrl,
+        });
+
+        const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
+        if (redirectUrl) {
+          return c.json({
+            url: redirectUrl,
+            redirectUrl,
+            subscriptionId: subscription.id,
+            accountId,
+            plan,
+            currency: localizedPricing.currency,
+          });
+        }
+      } catch (subErr: any) {
+        if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
+          await stripe.subscriptions.cancel(subscription.id).catch(() => {});
+        }
+        const checkoutSession = await createPayPalCheckoutSessionFallback({
+          customerId,
+          accountId,
+          subItems,
+          introCouponId,
+          attributionMeta,
+        }).catch(() => null);
+        if (checkoutSession?.url) {
+          return c.json({
+            url: checkoutSession.url,
+            redirectUrl: checkoutSession.url,
+            subscriptionId: checkoutSession.id,
+            accountId,
+            plan,
+            currency: localizedPricing.currency,
+          });
         }
         throw subErr;
       }
 
-      const latestInvoice: any = subscription.latest_invoice;
-      let paymentIntent: any =
-        latestInvoice?.payment_intent ??
-        latestInvoice?.payments?.data?.[0]?.payment?.payment_intent ??
-        null;
-      if (typeof paymentIntent === "string") {
-        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
-      }
-      if (!paymentIntent?.id && typeof latestInvoice?.confirmation_secret?.client_secret === "string") {
-        const cs: string = latestInvoice.confirmation_secret.client_secret;
-        const piId = cs.split("_secret_")[0];
-        if (piId) {
-          paymentIntent = { id: piId, client_secret: cs, livemode: subscription.livemode };
-        }
-      }
-
-      const rawIp = clientIp(c);
-      const validIp =
-        !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
-          ? "127.0.0.1"
-          : rawIp;
-      const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
-      const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`;
-
-      const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
-        payment_method_data: {
-          type: "paypal",
-          billing_details: { email },
-        },
-        mandate_data: {
-          customer_acceptance: {
-            type: "online",
-            online: {
-              ip_address: validIp,
-              user_agent: userAgent,
-            },
-          },
-        },
-        return_url: returnUrl,
+      const fallbackSession = await createPayPalCheckoutSessionFallback({
+        customerId,
+        accountId,
+        subItems,
+        introCouponId,
+        attributionMeta,
       });
-
-      const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
-      return c.json({ url: redirectUrl, redirectUrl, plan, currency: localizedPricing.currency });
+      if (fallbackSession?.url) {
+        return c.json({
+          url: fallbackSession.url,
+          redirectUrl: fallbackSession.url,
+          subscriptionId: fallbackSession.id,
+          accountId,
+          plan,
+          currency: localizedPricing.currency,
+        });
+      }
+      return c.json({ error: "Could not initialize PayPal authorization redirect." }, 500);
     } catch (err: any) {
       console.error("[web-checkout] Stripe error:", err);
       return c.json({ error: err?.message || "Payment initialization failed." }, 400);
@@ -1090,10 +1176,12 @@ export function createApp(deps: AppDeps) {
   async function syncPayPalCustomerEmail(sub: Stripe.Subscription, accountIdHint?: string | null) {
     if (!stripe) return;
     try {
+      const customerId = typeof sub.customer === "string" ? sub.customer : (sub.customer as any)?.id ?? null;
       const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
       const resolvedAccount =
         (metaAccountId && repo.accountById(metaAccountId)) ||
         (accountIdHint && repo.accountById(accountIdHint)) ||
+        (customerId && repo.accountByCustomer(customerId)) ||
         undefined;
       if (!resolvedAccount) return;
       const currentEmail = resolvedAccount.email || "";
@@ -1105,24 +1193,33 @@ export function createApp(deps: AppDeps) {
           : null;
       if (!pm) {
         const latestInv: any = sub.latest_invoice;
-        const pi: any =
+        let pi: any =
           latestInv?.payment_intent ??
           latestInv?.payments?.data?.[0]?.payment?.payment_intent ??
           null;
+        if (typeof pi === "string" && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
+          pi = await stripe.paymentIntents.retrieve(pi, { expand: ["payment_method"] }).catch(() => null);
+        }
         if (pi && typeof pi.payment_method === "object" && pi.payment_method) {
           pm = pi.payment_method;
-        } else if (pi && typeof pi.payment_method === "string") {
+        } else if (pi && typeof pi.payment_method === "string" && typeof (stripe.paymentMethods as any)?.retrieve === "function") {
           pm = await stripe.paymentMethods.retrieve(pi.payment_method).catch(() => null);
-        } else if (typeof sub.default_payment_method === "string") {
+        } else if (typeof sub.default_payment_method === "string" && typeof (stripe.paymentMethods as any)?.retrieve === "function") {
           pm = await stripe.paymentMethods.retrieve(sub.default_payment_method).catch(() => null);
         }
+      }
+      if (!pm && (customerId || resolvedAccount.stripe_customer_id) && typeof (stripe.paymentMethods as any)?.list === "function") {
+        const pms = await stripe.paymentMethods
+          .list({ customer: (customerId || resolvedAccount.stripe_customer_id)!, type: "paypal", limit: 1 })
+          .catch(() => null);
+        if (pms?.data?.[0]) pm = pms.data[0];
       }
       const payerEmail = normalizeEmail(pm?.paypal?.payer_email || pm?.billing_details?.email);
       if (payerEmail && !payerEmail.endsWith("@pending.sweeprcleaner.com")) {
         const existingWithEmail = repo.accountByEmail(payerEmail);
         if (!existingWithEmail || existingWithEmail.id === resolvedAccount.id) {
           repo.updateAccountProfile(resolvedAccount.id, { email: payerEmail });
-          if (resolvedAccount.stripe_customer_id) {
+          if (resolvedAccount.stripe_customer_id && typeof (stripe.customers as any)?.update === "function") {
             await stripe.customers.update(resolvedAccount.stripe_customer_id, { email: payerEmail }).catch(() => {});
           }
         }
@@ -1214,7 +1311,8 @@ export function createApp(deps: AppDeps) {
       }
     }
 
-    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+    const rawPricing = await resolvePricingForRequest(c, { trustProxy });
+    const localizedPricing = isPayPal ? resolvePayPalPricing(rawPricing) : rawPricing;
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     let accountId: string;
@@ -1350,21 +1448,15 @@ export function createApp(deps: AppDeps) {
       try {
         subscription = await stripe.subscriptions.create(subParams);
       } catch (subErr: any) {
-        if (isPayPal && String(subErr?.message || "").toLowerCase().includes("paypal")) {
-          const checkoutSession = await stripe.checkout.sessions.create({
-            mode: "subscription",
-            customer: customerId,
-            managed_payments: { enabled: false },
-            line_items: subItems.map((it: any) => ({
-              price_data: it.price_data,
-              quantity: 1,
-            })),
-            ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
-            subscription_data: { metadata: attributionMeta },
-            metadata: attributionMeta,
-            success_url: `${config.publicUrl}/checkout/success?web=1&session_id={CHECKOUT_SESSION_ID}&account_id=${encodeURIComponent(accountId)}${isPopup ? "&popup=1" : ""}`,
-            cancel_url: `${config.publicUrl}/order?error=payment_cancelled`,
-          } as any);
+        if (isPayPal) {
+          const checkoutSession = await createPayPalCheckoutSessionFallback({
+            customerId,
+            accountId,
+            subItems,
+            introCouponId,
+            attributionMeta,
+            isPopup,
+          }).catch(() => null);
           if (checkoutSession?.url) {
             return c.json({
               redirectUrl: checkoutSession.url,
@@ -1396,6 +1488,28 @@ export function createApp(deps: AppDeps) {
       }
 
       if (!paymentIntent?.id) {
+        if (isPayPal) {
+          if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
+            await stripe.subscriptions.cancel(subscription.id).catch(() => {});
+          }
+          const checkoutSession = await createPayPalCheckoutSessionFallback({
+            customerId,
+            accountId,
+            subItems,
+            introCouponId,
+            attributionMeta,
+            isPopup,
+          }).catch(() => null);
+          if (checkoutSession?.url) {
+            return c.json({
+              redirectUrl: checkoutSession.url,
+              subscriptionId: checkoutSession.id,
+              accountId,
+              plan,
+              livemode: Boolean(checkoutSession.livemode),
+            });
+          }
+        }
         return c.json({ error: "Could not initialize payment intent." }, 500);
       }
 
@@ -1410,32 +1524,77 @@ export function createApp(deps: AppDeps) {
             : rawIp;
         const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
 
-        const confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
-          payment_method_data: {
-            type: "paypal",
-            ...(providedEmail || name
-              ? {
-                  billing_details: {
-                    ...(providedEmail ? { email: providedEmail } : {}),
-                    ...(name ? { name } : {}),
-                  },
-                }
-              : {}),
-          },
-          mandate_data: {
-            customer_acceptance: {
-              type: "online",
-              online: {
-                ip_address: validIp,
-                user_agent: userAgent,
+        let confirmedPi: any = null;
+        try {
+          confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
+            payment_method_data: {
+              type: "paypal",
+              ...(providedEmail || name
+                ? {
+                    billing_details: {
+                      ...(providedEmail ? { email: providedEmail } : {}),
+                      ...(name ? { name } : {}),
+                    },
+                  }
+                : {}),
+            },
+            mandate_data: {
+              customer_acceptance: {
+                type: "online",
+                online: {
+                  ip_address: validIp,
+                  user_agent: userAgent,
+                },
               },
             },
-          },
-          return_url: returnUrl,
-        });
+            return_url: returnUrl,
+          });
+        } catch (piErr: any) {
+          if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
+            await stripe.subscriptions.cancel(subscription.id).catch(() => {});
+          }
+          const checkoutSession = await createPayPalCheckoutSessionFallback({
+            customerId,
+            accountId,
+            subItems,
+            introCouponId,
+            attributionMeta,
+            isPopup,
+          }).catch(() => null);
+          if (checkoutSession?.url) {
+            return c.json({
+              redirectUrl: checkoutSession.url,
+              subscriptionId: checkoutSession.id,
+              accountId,
+              plan,
+              livemode: Boolean(checkoutSession.livemode),
+            });
+          }
+          throw piErr;
+        }
 
-        const redirectUrl = confirmedPi.next_action?.redirect_to_url?.url ?? null;
+        const redirectUrl = confirmedPi?.next_action?.redirect_to_url?.url ?? null;
         if (!redirectUrl) {
+          if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
+            await stripe.subscriptions.cancel(subscription.id).catch(() => {});
+          }
+          const checkoutSession = await createPayPalCheckoutSessionFallback({
+            customerId,
+            accountId,
+            subItems,
+            introCouponId,
+            attributionMeta,
+            isPopup,
+          }).catch(() => null);
+          if (checkoutSession?.url) {
+            return c.json({
+              redirectUrl: checkoutSession.url,
+              subscriptionId: checkoutSession.id,
+              accountId,
+              plan,
+              livemode: Boolean(checkoutSession.livemode),
+            });
+          }
           return c.json({ error: "Could not initialize PayPal authorization redirect." }, 500);
         }
 
@@ -1514,15 +1673,34 @@ export function createApp(deps: AppDeps) {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const body = await c.req.json().catch(() => ({}));
-    const subscriptionId = typeof body.subscriptionId === "string" ? body.subscriptionId.trim() : "";
-    const accountId = typeof body.accountId === "string" ? body.accountId.trim() : "";
+    let subscriptionId = typeof body.subscriptionId === "string" ? body.subscriptionId.trim() : "";
+    let accountId = typeof body.accountId === "string" ? body.accountId.trim() : "";
     const checkOnly = Boolean(body.checkOnly);
     if (!subscriptionId) return c.json({ error: "missing_subscription_id" }, 400);
 
     try {
-      const sub = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ["default_payment_method", "latest_invoice.payments.data.payment.payment_intent"],
-      });
+      if (subscriptionId.startsWith("cs_")) {
+        const session = await stripe.checkout.sessions.retrieve(subscriptionId);
+        const sessionSubId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : (session.subscription as any)?.id ?? "";
+        if (!accountId && typeof session.metadata?.account_id === "string") {
+          accountId = session.metadata.account_id.trim();
+        }
+        if (!sessionSubId) {
+          return c.json(
+            {
+              ok: false,
+              status: session.status || "open",
+            },
+            checkOnly ? 200 : 402
+          );
+        }
+        subscriptionId = sessionSubId;
+      }
+
+      const sub = await retrieveSubscriptionSafe(subscriptionId);
 
       const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
       if (!metaAccountId || !accountId || metaAccountId !== accountId) {
@@ -1738,6 +1916,15 @@ export function createApp(deps: AppDeps) {
               exp_month: pm.card!.exp_month || 0,
               exp_year: pm.card!.exp_year || 0,
             };
+          } else if (defPm && typeof defPm === "object" && ((defPm as any).type === "paypal" || (defPm as any).paypal)) {
+            const pm = defPm as any;
+            paymentMethod = {
+              id: pm.id,
+              brand: "paypal",
+              last4: pm.paypal?.payer_email || pm.billing_details?.email || "PayPal",
+              exp_month: 0,
+              exp_year: 0,
+            };
           } else {
             const pms = await stripe.paymentMethods.list({
               customer: account.stripe_customer_id,
@@ -1753,6 +1940,24 @@ export function createApp(deps: AppDeps) {
                 exp_month: firstPm.card.exp_month || 0,
                 exp_year: firstPm.card.exp_year || 0,
               };
+            } else {
+              const paypalPms = await stripe.paymentMethods
+                .list({
+                  customer: account.stripe_customer_id,
+                  type: "paypal",
+                  limit: 1,
+                })
+                .catch(() => null);
+              const firstPaypalPm = paypalPms?.data?.[0] as any;
+              if (firstPaypalPm) {
+                paymentMethod = {
+                  id: firstPaypalPm.id,
+                  brand: "paypal",
+                  last4: firstPaypalPm.paypal?.payer_email || firstPaypalPm.billing_details?.email || "PayPal",
+                  exp_month: 0,
+                  exp_year: 0,
+                };
+              }
             }
           }
         }
@@ -3339,6 +3544,7 @@ export function createApp(deps: AppDeps) {
     let subscriptionId = c.req.query("subscription_id")?.trim() || "";
     let accountId = c.req.query("account_id")?.trim() || "";
     const redirectStatus = c.req.query("redirect_status")?.trim() || "";
+    const paymentIntentId = c.req.query("payment_intent")?.trim() || "";
 
     if (redirectStatus === "failed" || redirectStatus === "canceled") {
       if (isPopup) {
@@ -3347,9 +3553,10 @@ export function createApp(deps: AppDeps) {
       return c.redirect("/order?error=payment_cancelled");
     }
 
-    if (sessionId && stripe && !subscriptionId) {
+    if ((sessionId || subscriptionId.startsWith("cs_")) && stripe) {
+      const targetSessionId = sessionId || subscriptionId;
       try {
-        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        const session = await stripe.checkout.sessions.retrieve(targetSessionId);
         if (session?.subscription) {
           subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
         }
@@ -3361,12 +3568,26 @@ export function createApp(deps: AppDeps) {
       }
     }
 
-    if (subscriptionId && stripe) {
+    if (subscriptionId && !subscriptionId.startsWith("cs_") && stripe) {
       try {
-        const sub = await stripe.subscriptions.retrieve(subscriptionId, {
-          expand: ["default_payment_method", "latest_invoice.payment_intent.payment_method"],
-        });
-        if (sub.status === "incomplete" || sub.status === "incomplete_expired" || sub.status === "canceled") {
+        let sub = await retrieveSubscriptionSafe(subscriptionId);
+        let piSucceeded = redirectStatus === "succeeded";
+        if (!piSucceeded && paymentIntentId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
+          const piObj = await stripe.paymentIntents.retrieve(paymentIntentId).catch(() => null);
+          if (piObj && (piObj.status === "succeeded" || piObj.status === "processing")) {
+            piSucceeded = true;
+          }
+        }
+        // If PayPal redirect just succeeded, Stripe may take a brief moment to settle the invoice status from incomplete -> active
+        if (sub.status === "incomplete" && piSucceeded) {
+          await new Promise((r) => setTimeout(r, 800));
+          sub = await retrieveSubscriptionSafe(subscriptionId).catch(() => sub);
+        }
+        if (
+          (sub.status === "incomplete" && !piSucceeded) ||
+          sub.status === "incomplete_expired" ||
+          sub.status === "canceled"
+        ) {
           if (isPopup) {
             return c.html(popupClosePage("cancelled", "/order?error=payment_cancelled"));
           }
@@ -3375,11 +3596,13 @@ export function createApp(deps: AppDeps) {
         const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
         if (metaAccountId && accountId && metaAccountId === accountId) {
           await syncPayPalCustomerEmail(sub, metaAccountId);
-          syncSubscription(repo, sub, metaAccountId);
+          const effectiveSub =
+            sub.status === "incomplete" && piSucceeded ? ({ ...sub, status: "active" } as Stripe.Subscription) : sub;
+          syncSubscription(repo, effectiveSub, metaAccountId);
 
           const resolvedAccount = repo.accountById(metaAccountId);
 
-          if (resolvedAccount && (sub.status === "active" || sub.status === "trialing")) {
+          if (resolvedAccount && (effectiveSub.status === "active" || effectiveSub.status === "trialing")) {
             const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
             if (isFreshSub) {
               await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
@@ -3407,7 +3630,8 @@ export function createApp(deps: AppDeps) {
     deleteCookie(c, "sweepr_order_draft", { path: "/" });
 
     if (isPopup) {
-      return c.html(popupClosePage("success", "/checkout/success?web=1"));
+      const successTargetUrl = `/checkout/success?web=1${subscriptionId ? `&subscription_id=${encodeURIComponent(subscriptionId)}` : ""}${accountId ? `&account_id=${encodeURIComponent(accountId)}` : ""}`;
+      return c.html(popupClosePage("success", successTargetUrl));
     }
 
     const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';}catch(e){}</script>`;

@@ -121,7 +121,7 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     metadata: { subscription_id: sub.id, status: sub.status },
   });
 
-  if (account.email) {
+  if (account.email && !account.email.endsWith("@pending.sweeprcleaner.com")) {
     syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
       email: account.email,
       name: account.name,
@@ -137,19 +137,88 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   }
 }
 
+export async function syncPayPalEmailFromSubscription(
+  stripe: Stripe,
+  repo: Repo,
+  sub: Stripe.Subscription,
+  accountIdHint?: string | null
+) {
+  try {
+    const customerId = idOf(sub.customer as any);
+    const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
+    const hint = typeof accountIdHint === "string" ? accountIdHint.trim() : "";
+    const resolvedAccount =
+      (metaAccountId && repo.accountById(metaAccountId)) ||
+      (hint && repo.accountById(hint)) ||
+      (customerId && repo.accountByCustomer(customerId)) ||
+      undefined;
+    if (!resolvedAccount) return;
+    const currentEmail = resolvedAccount.email || "";
+    if (currentEmail && !currentEmail.endsWith("@pending.sweeprcleaner.com")) return;
+
+    let pm: any =
+      typeof sub.default_payment_method === "object" && sub.default_payment_method
+        ? sub.default_payment_method
+        : null;
+    if (!pm) {
+      const latestInv: any = sub.latest_invoice;
+      let pi: any =
+        latestInv?.payment_intent ??
+        latestInv?.payments?.data?.[0]?.payment?.payment_intent ??
+        null;
+      if (typeof pi === "string" && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
+        pi = await stripe.paymentIntents.retrieve(pi, { expand: ["payment_method"] }).catch(() => null);
+      }
+      if (pi && typeof pi.payment_method === "object" && pi.payment_method) {
+        pm = pi.payment_method;
+      } else if (pi && typeof pi.payment_method === "string" && typeof (stripe.paymentMethods as any)?.retrieve === "function") {
+        pm = await stripe.paymentMethods.retrieve(pi.payment_method).catch(() => null);
+      } else if (typeof sub.default_payment_method === "string" && typeof (stripe.paymentMethods as any)?.retrieve === "function") {
+        pm = await stripe.paymentMethods.retrieve(sub.default_payment_method).catch(() => null);
+      }
+    }
+    if (!pm && customerId && typeof (stripe.paymentMethods as any)?.list === "function") {
+      const pms = await stripe.paymentMethods.list({ customer: customerId, type: "paypal", limit: 1 }).catch(() => null);
+      if (pms?.data?.[0]) pm = pms.data[0];
+    }
+
+    const rawPayerEmail = String(pm?.paypal?.payer_email || pm?.billing_details?.email || "").trim().toLowerCase();
+    if (rawPayerEmail && rawPayerEmail.includes("@") && !rawPayerEmail.endsWith("@pending.sweeprcleaner.com")) {
+      const existingWithEmail = repo.accountByEmail(rawPayerEmail);
+      if (!existingWithEmail || existingWithEmail.id === resolvedAccount.id) {
+        repo.updateAccountProfile(resolvedAccount.id, { email: rawPayerEmail });
+        if (resolvedAccount.stripe_customer_id && typeof (stripe.customers as any)?.update === "function") {
+          await stripe.customers.update(resolvedAccount.stripe_customer_id, { email: rawPayerEmail }).catch(() => {});
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[paypal-sync] Failed to sync PayPal payer email:", e);
+  }
+}
+
 export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed": {
       const s = event.data.object as Stripe.Checkout.Session;
-      const accountId = s.client_reference_id;
+      const accountId =
+        s.client_reference_id ||
+        (typeof s.metadata?.account_id === "string" ? s.metadata.account_id.trim() : null);
       const customerId = idOf(s.customer as any);
       const email = s.customer_details?.email ?? (s.customer_email || undefined);
       if (accountId && customerId) repo.setCustomer(accountId, customerId, email);
-      if (accountId && s.customer_details?.name) {
-        repo.updateAccountProfile(accountId, { name: s.customer_details.name, email });
+      if (accountId && (s.customer_details?.name || email)) {
+        repo.updateAccountProfile(accountId, {
+          ...(s.customer_details?.name ? { name: s.customer_details.name } : {}),
+          ...(email ? { email } : {}),
+        });
       }
       const subId = idOf(s.subscription as any);
-      if (subId) syncSubscription(repo, await stripe.subscriptions.retrieve(subId), accountId);
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId);
+        await syncPayPalEmailFromSubscription(stripe, repo, sub, accountId);
+        syncSubscription(repo, sub, accountId);
+      }
       
       if (email) {
         const normEmail = email.trim().toLowerCase();
@@ -193,13 +262,18 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       // Re-fetch so out-of-order delivery can't apply a stale state.
       const sub = event.data.object as Stripe.Subscription;
       const fresh = await stripe.subscriptions.retrieve(sub.id).catch(() => sub);
+      await syncPayPalEmailFromSubscription(stripe, repo, fresh);
       syncSubscription(repo, fresh);
       break;
     }
     case "invoice.paid": {
       const inv = event.data.object as Stripe.Invoice;
       const subId = invoiceSubscriptionId(inv);
-      if (subId) syncSubscription(repo, await stripe.subscriptions.retrieve(subId));
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId);
+        await syncPayPalEmailFromSubscription(stripe, repo, sub);
+        syncSubscription(repo, sub);
+      }
       const custId = idOf(inv.customer as any);
       const account = custId ? repo.accountByCustomer(custId) : undefined;
       if (account) {

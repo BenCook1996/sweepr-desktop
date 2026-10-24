@@ -2013,13 +2013,20 @@
             } catch (e) {}
 
             let ticks = 0;
+            let closedTicks = 0;
+            let buttonsRestored = false;
             pollTimer = setInterval(async () => {
               if (completed) return;
               ticks++;
               const isClosed = !paypalPopup || paypalPopup.closed;
+              if (isClosed) {
+                closedTicks++;
+              } else {
+                closedTicks = 0;
+              }
 
-              // Check subscription status on server every 2s or immediately when popup closes
-              if (isClosed || ticks % 4 === 0) {
+              // Check subscription status on server every 2s
+              if (ticks % 4 === 0 || closedTicks === 1) {
                 try {
                   const verifyRes = await fetch('/api/confirm-subscription', {
                     method: 'POST',
@@ -2037,17 +2044,33 @@
                       cleanup();
                       clearOrderDraft();
                       try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
-                      window.location.href = verifyData.redirect || '/checkout/success?web=1';
+                      window.location.href = verifyData.redirect || `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`;
+                      return;
+                    }
+                    if (verifyData.status === 'canceled' || verifyData.status === 'incomplete_expired') {
+                      completed = true;
+                      cleanup();
+                      restoreButtons();
                       return;
                     }
                   }
                 } catch (e) {}
               }
 
-              if (isClosed && !completed) {
+              // Note: PayPal sets Cross-Origin-Opener-Policy (COOP), which can cause browsers to report
+              // paypalPopup.closed === true while the user is still authorizing on paypal.com.
+              // Restore button state so the page remains interactive if the user did close the window,
+              // but keep BroadcastChannel, localStorage listener, and polling active.
+              if (closedTicks >= 6 && !buttonsRestored && !completed) {
+                buttonsRestored = true;
+                restoreButtons();
+              }
+
+              // Stop polling after 15 minutes
+              if (ticks >= 1800 && !completed) {
                 completed = true;
                 cleanup();
-                restoreButtons();
+                if (!buttonsRestored) restoreButtons();
               }
             }, 500);
 
@@ -2077,7 +2100,10 @@
               applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
               plan: selectedPlan,
               batteryCareAddon: isBatteryAddonSelected,
-              addons: isBatteryAddonSelected ? ['battery_care'] : [],
+              cloudVaultAddon: isCloudVaultAddonSelected,
+              addons: getSelectedAddonsList(),
+              attribution: getAttributionPayload(),
+              ref: getAttributionPayload().ref,
               paymentMethod: 'card'
             })
           });

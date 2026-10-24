@@ -527,6 +527,132 @@ test("Security audit regression: reactivate, purchase-addon, confirm-subscriptio
   assert.equal(repo.listSupportTickets().filter((t) => t.email === "sec1@example.com").length, 0);
 });
 
+test("PayPal subscription flow: /api/create-subscription, /api/confirm-subscription, /checkout/success, and payer_email sync", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  let createdSubMetadata: Record<string, string> = {};
+  let subStatus = "incomplete";
+
+  const mockStripe: any = {
+    products: {
+      list: async () => ({ data: [{ id: "prod_sweepr", name: "SWEEPR Cleaner Pro" }] }),
+    },
+    prices: {
+      retrieve: async () => ({ id: "price_monthly_test", product: "prod_sweepr" }),
+    },
+    coupons: {
+      retrieve: async (id: string) => ({ id }),
+    },
+    customers: {
+      create: async (params: any) => ({ id: "cus_paypal_1", email: params.email }),
+      update: async (id: string, params: any) => ({ id, ...params }),
+    },
+    subscriptions: {
+      create: async (params: any) => {
+        assert.deepEqual(params.payment_settings?.payment_method_types, ["paypal"]);
+        createdSubMetadata = params.metadata || {};
+        return {
+          id: "sub_paypal_1",
+          status: "incomplete",
+          livemode: false,
+          metadata: createdSubMetadata,
+          latest_invoice: {
+            confirmation_secret: { client_secret: "pi_paypal_1_secret_abc" },
+          },
+        };
+      },
+      retrieve: async (id: string) => ({
+        id,
+        customer: "cus_paypal_1",
+        status: subStatus,
+        created: nowSec,
+        current_period_end: nowSec + 86400 * 30,
+        cancel_at_period_end: false,
+        currency: "gbp",
+        metadata: createdSubMetadata,
+        default_payment_method: {
+          id: "pm_paypal_1",
+          type: "paypal",
+          paypal: { payer_email: "verified-paypal@example.com", payer_id: "PAYER123" },
+        },
+        items: {
+          data: [
+            {
+              price: {
+                unit_amount: 999,
+                currency: "gbp",
+                recurring: { interval: "month", interval_count: 1 },
+              },
+              quantity: 1,
+            },
+          ],
+        },
+      }),
+      cancel: async () => ({ id: "sub_paypal_1", status: "canceled" }),
+    },
+    paymentIntents: {
+      confirm: async (id: string, params: any) => {
+        assert.equal(id, "pi_paypal_1");
+        assert.equal(params.payment_method_data?.type, "paypal");
+        assert.equal(params.mandate_data?.customer_acceptance?.type, "online");
+        return {
+          id,
+          livemode: false,
+          status: "requires_action",
+          next_action: {
+            redirect_to_url: {
+              url: "https://www.paypal.com/checkoutnow?token=EC-TEST123",
+            },
+          },
+        };
+      },
+      retrieve: async (id: string) => ({
+        id,
+        status: "succeeded",
+      }),
+    },
+  };
+
+  const { post, repo, app } = setup({ stripe: mockStripe });
+
+  // 1. Express PayPal popup without upfront email creates pending account & returns PayPal redirectUrl
+  const createRes = await post("/api/create-subscription", {
+    paymentMethod: "paypal",
+    popup: true,
+    plan: "monthly",
+    applyDiscount: true,
+  });
+  assert.equal(createRes.status, 200);
+  const createData = await createRes.json();
+  assert.equal(createData.subscriptionId, "sub_paypal_1");
+  assert.equal(createData.redirectUrl, "https://www.paypal.com/checkoutnow?token=EC-TEST123");
+  assert.ok(createData.accountId);
+
+  // 2. While still incomplete on PayPal, checkOnly confirm-subscription returns 200 with ok: false
+  const checkPending = await post("/api/confirm-subscription", {
+    subscriptionId: "sub_paypal_1",
+    accountId: createData.accountId,
+    checkOnly: true,
+  });
+  assert.equal(checkPending.status, 200);
+  const checkPendingData = await checkPending.json();
+  assert.equal(checkPendingData.ok, false);
+
+  // 3. Once PayPal authorization completes (or /checkout/success with redirect_status=succeeded runs),
+  // entitlement is activated and PayPal payer_email replaces the @pending.sweeprcleaner.com placeholder
+  subStatus = "active";
+  const successRes = await app.request(
+    `/checkout/success?web=1&popup=1&subscription_id=sub_paypal_1&account_id=${encodeURIComponent(createData.accountId)}&redirect_status=succeeded`
+  );
+  assert.equal(successRes.status, 200);
+  const html = await successRes.text();
+  assert.ok(html.includes("paypal_success"));
+
+  const updatedAccount = repo.accountById(createData.accountId);
+  assert.equal(updatedAccount?.email, "verified-paypal@example.com");
+  const ent = repo.entitlement(createData.accountId);
+  assert.equal(ent?.status, "active");
+});
+
 
 
 
