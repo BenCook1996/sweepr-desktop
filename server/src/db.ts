@@ -177,6 +177,13 @@ export interface CrmStats {
   currency: string;
   crashes_7d: number;
   funnel: Record<string, number>;
+  downloadsTotal?: number;
+  downloads30d?: number;
+  downloads7d?: number;
+  installsTotal?: number;
+  installs30d?: number;
+  installs7d?: number;
+  installConversionPct?: number;
 }
 
 export function generateReferralCode(seed: string): string {
@@ -570,6 +577,13 @@ export class Repo {
     const limit = deviceType === "mobile" ? maxMobile : maxPc;
     if (n >= limit) return false;
     this.db.prepare("INSERT INTO devices (id, account_id, type, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)").run(deviceId, accountId, deviceType, now(), now());
+
+    this.addAnalyticsEvent({
+      event_name: "app_installed",
+      platform: deviceType === "mobile" ? "android" : "windows",
+      account_id: accountId,
+      metadata: { device_id: deviceId, device_type: deviceType, source: "device_registration" },
+    });
 
     this.addActivity({
       account_id: accountId,
@@ -989,6 +1003,43 @@ export class Repo {
     `).get(now() - 7 * 86400) as { count: number };
 
     const funnel = this.getFunnelSummary();
+    const nowSec = now();
+    const cutoff30d = nowSec - 30 * 86400;
+    const cutoff7d = nowSec - 7 * 86400;
+
+    const dlRow = this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
+        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
+      FROM analytics_events
+      WHERE event_name IN ('installer_downloaded', 'download_completed', 'download_started')
+    `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
+
+    const instRow = this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
+        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
+      FROM analytics_events
+      WHERE event_name IN ('app_installed', 'extension_installed', 'first_launch')
+    `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
+
+    const devInstallRow = this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN first_seen >= ? THEN 1 ELSE 0 END) as d30,
+        SUM(CASE WHEN first_seen >= ? THEN 1 ELSE 0 END) as d7
+      FROM devices
+    `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
+
+    const downloadsTotal = Number(dlRow?.total || 0);
+    const downloads30d = Number(dlRow?.d30 || 0);
+    const downloads7d = Number(dlRow?.d7 || 0);
+    const installsTotal = Math.max(Number(instRow?.total || 0), Number(devInstallRow?.total || 0));
+    const installs30d = Math.max(Number(instRow?.d30 || 0), Number(devInstallRow?.d30 || 0));
+    const installs7d = Math.max(Number(instRow?.d7 || 0), Number(devInstallRow?.d7 || 0));
+    const installConversionPct = downloadsTotal > 0 ? Math.min(100, Math.round((installsTotal / downloadsTotal) * 1000) / 10) : 0;
 
     return {
       totalCustomers: Number(counts.total_customers || 0),
@@ -1005,6 +1056,13 @@ export class Repo {
       currency: "USD",
       crashes_7d: Number(crashesRow?.count || 0),
       funnel,
+      downloadsTotal,
+      downloads30d,
+      downloads7d,
+      installsTotal,
+      installs30d,
+      installs7d,
+      installConversionPct,
     };
   }
 
@@ -1045,6 +1103,9 @@ export class Repo {
 
   getFunnelSummary(): Record<string, number> {
     const base: Record<string, number> = {
+      installer_downloaded: 0,
+      app_installed: 0,
+      extension_installed: 0,
       scan_started: 0,
       scan_completed: 0,
       paywall_viewed: 0,
@@ -1069,11 +1130,106 @@ export class Repo {
     const crashes = this.getCrashReports(limit);
     const events = this.db.prepare(`SELECT * FROM analytics_events ORDER BY created_at DESC LIMIT ?`).all(limit) as unknown as AnalyticsEventRecord[];
     const funnel = this.getFunnelSummary();
-    const crashes7dRow = this.db.prepare(`SELECT COUNT(*) as count FROM crash_reports WHERE created_at >= ?`).get(now() - 7 * 86400) as { count: number };
+    const nowSec = now();
+    const cutoff30d = nowSec - 30 * 86400;
+    const cutoff7d = nowSec - 7 * 86400;
+    const crashes7dRow = this.db.prepare(`SELECT COUNT(*) as count FROM crash_reports WHERE created_at >= ?`).get(cutoff7d) as { count: number };
     const tickets = this.getSupportTickets(limit);
+
+    const dlRows = this.db.prepare(`
+      SELECT COALESCE(platform, 'windows') as os, COUNT(*) as total,
+             SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
+             SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
+      FROM analytics_events
+      WHERE event_name IN ('installer_downloaded', 'download_completed', 'download_started')
+      GROUP BY COALESCE(platform, 'windows')
+    `).all(cutoff30d, cutoff7d) as Array<{ os: string; total: number; d30: number; d7: number }>;
+
+    const downloadsByOs: Record<string, number> = {};
+    let downloadsTotal = 0;
+    let downloads30d = 0;
+    let downloads7d = 0;
+    for (const r of dlRows) {
+      const k = (r.os || "windows").toLowerCase();
+      const cnt = Number(r.total || 0);
+      downloadsByOs[k] = (downloadsByOs[k] || 0) + cnt;
+      downloadsTotal += cnt;
+      downloads30d += Number(r.d30 || 0);
+      downloads7d += Number(r.d7 || 0);
+    }
+
+    const instRows = this.db.prepare(`
+      SELECT COALESCE(platform, 'windows') as os, COUNT(*) as total,
+             SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
+             SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
+      FROM analytics_events
+      WHERE event_name IN ('app_installed', 'extension_installed', 'first_launch')
+      GROUP BY COALESCE(platform, 'windows')
+    `).all(cutoff30d, cutoff7d) as Array<{ os: string; total: number; d30: number; d7: number }>;
+
+    const installsByOs: Record<string, number> = {};
+    let installEventTotal = 0;
+    let installEvent30d = 0;
+    let installEvent7d = 0;
+    for (const r of instRows) {
+      const k = (r.os || "windows").toLowerCase();
+      const cnt = Number(r.total || 0);
+      installsByOs[k] = (installsByOs[k] || 0) + cnt;
+      installEventTotal += cnt;
+      installEvent30d += Number(r.d30 || 0);
+      installEvent7d += Number(r.d7 || 0);
+    }
+
+    const devRows = this.db.prepare(`
+      SELECT CASE WHEN type = 'mobile' THEN 'android' ELSE 'windows' END as os,
+             COUNT(*) as total,
+             SUM(CASE WHEN first_seen >= ? THEN 1 ELSE 0 END) as d30,
+             SUM(CASE WHEN first_seen >= ? THEN 1 ELSE 0 END) as d7
+      FROM devices
+      GROUP BY CASE WHEN type = 'mobile' THEN 'android' ELSE 'windows' END
+    `).all(cutoff30d, cutoff7d) as Array<{ os: string; total: number; d30: number; d7: number }>;
+
+    let deviceTotal = 0;
+    let device30d = 0;
+    let device7d = 0;
+    for (const r of devRows) {
+      const k = (r.os || "windows").toLowerCase();
+      const cnt = Number(r.total || 0);
+      installsByOs[k] = Math.max(installsByOs[k] || 0, cnt);
+      deviceTotal += cnt;
+      device30d += Number(r.d30 || 0);
+      device7d += Number(r.d7 || 0);
+    }
+
+    const installsTotal = Math.max(installEventTotal, deviceTotal);
+    const installs30d = Math.max(installEvent30d, device30d);
+    const installs7d = Math.max(installEvent7d, device7d);
+    const conversionRatePct = downloadsTotal > 0 ? Math.min(100, Math.round((installsTotal / downloadsTotal) * 1000) / 10) : 0;
+
+    const recentDownloadsAndInstalls = this.db.prepare(`
+      SELECT id, 'cleaner' as project_id, event_name, platform as os, account_id, metadata as properties_json, created_at
+      FROM analytics_events
+      WHERE event_name IN ('installer_downloaded', 'download_completed', 'download_started', 'app_installed', 'extension_installed', 'first_launch')
+      ORDER BY created_at DESC LIMIT 30
+    `).all();
+
     return {
       crashes_7d: Number(crashes7dRow?.count || 0),
       funnel,
+      downloads: {
+        total: downloadsTotal,
+        d30: downloads30d,
+        d7: downloads7d,
+        by_os: downloadsByOs,
+      },
+      installs: {
+        total: installsTotal,
+        d30: installs30d,
+        d7: installs7d,
+        by_os: installsByOs,
+        conversion_rate_pct: conversionRatePct,
+      },
+      recent_downloads_and_installs: recentDownloadsAndInstalls,
       crashes,
       events,
       support_tickets: tickets,

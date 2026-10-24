@@ -544,7 +544,23 @@ export function createApp(deps: AppDeps) {
 
     const { file, type, label } = DESKTOP_FILES[platform];
     const installerPath = `./public/${file}`;
-    if (!existsSync(installerPath)) {
+    const hasFile = existsSync(installerPath);
+
+    try {
+      repo.recordAnalyticsEvent({
+        event_name: "installer_downloaded",
+        platform,
+        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+      });
+      syncToCentralCrm("/v1/telemetry/event", {
+        event_name: "installer_downloaded",
+        category: "funnel",
+        os: platform,
+        properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+      });
+    } catch {}
+
+    if (!hasFile) {
       return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`));
     }
 
@@ -2369,6 +2385,14 @@ export function createApp(deps: AppDeps) {
       created_at: now(),
     });
     repo.touchDevice(accountId, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile);
+    syncToCentralCrm("/v1/telemetry/event", {
+      event_name: "app_installed",
+      category: "funnel",
+      os: deviceType === "mobile" ? "android" : "windows",
+      device_id: deviceId,
+      account_id: accountId,
+      properties: { device_type: deviceType, country: localizedPricing.country, source: "v1_accounts" },
+    });
     return c.json({ account_id: accountId, refresh_token: refreshToken });
   });
 
@@ -3010,6 +3034,12 @@ export function createApp(deps: AppDeps) {
 
   // Crash reporting & privacy-friendly funnel analytics
   const ALLOWED_FUNNEL_EVENTS = new Set([
+    "installer_downloaded",
+    "download_completed",
+    "download_started",
+    "app_installed",
+    "extension_installed",
+    "first_launch",
     "scan_started",
     "scan_completed",
     "paywall_viewed",
