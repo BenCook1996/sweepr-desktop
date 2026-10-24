@@ -271,47 +271,30 @@
 </head>
 <body class="bg-[#f8fafc] text-gray-800 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- TOP DARK BANNER (Matching Competitor Header Layout) -->
-  <header class="bg-[#232931] text-white py-5 px-6 sm:px-8 border-b border-gray-800/80 shadow-md">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <!-- Left Logo: The Sparkle Brush Mint Glass version for dark background -->
-      <a href="/?home=1" class="inline-flex items-center gap-2.5 text-inherit no-underline group">
-        <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="32" height="32" class="w-8 h-8 rounded-lg drop-shadow transition-transform group-hover:scale-105" />
-        <div class="flex items-baseline gap-1.5">
-          <span class="font-black text-xl tracking-tight text-white">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
-        </div>
-      </a>
-
-      <!-- Right Language Selector Dropdown -->
-      <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 cursor-pointer font-medium text-white transition-colors" aria-expanded="false" aria-label="Select Language">
-          <span class="text-sm" id="currentLangFlag">🇬🇧</span>
-          <span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
-          <svg id="langDropdownChevron" class="w-3 h-3 text-gray-300 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-
-        <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all text-gray-800">
-          <div class="space-y-0.5 text-xs">
-            <button type="button" onclick="setLanguage('en')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">EN</span>
-            </button>
-            <button type="button" onclick="setLanguage('de')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇩🇪</span> <span>Deutsch</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">DE</span>
-            </button>
-            <button type="button" onclick="setLanguage('fr')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇫🇷</span> <span>Français</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">FR</span>
-            </button>
-            <button type="button" onclick="setLanguage('es')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇪🇸</span> <span>Español</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">ES</span>
-            </button>
+  <!-- TOP DARK BANNER (Locked Tunnel-Vision Checkout Header — CHK-05) -->
+  <header class="bg-[#232931] text-white py-4 sm:py-5 px-4 sm:px-8 border-b border-gray-800/80 shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+      <!-- Left: Subtle Back Link + Locked Brand Mark (Zero homepage escape trap) -->
+      <div class="inline-flex items-center gap-2.5 sm:gap-3">
+        <a href="javascript:history.back()" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-white transition-colors no-underline" aria-label="Go back">
+          <span>&larr;</span>
+          <span>Back</span>
+        </a>
+        <span class="text-gray-700 select-none">|</span>
+        <div class="inline-flex items-center gap-2.5 select-none">
+          <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="32" height="32" class="w-8 h-8 rounded-lg drop-shadow" />
+          <div class="flex items-baseline gap-1.5">
+            <span class="font-black text-lg sm:text-xl tracking-tight text-white">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
           </div>
         </div>
+      </div>
+
+      <!-- Right: Locked 256-Bit SSL Secure Checkout Badge -->
+      <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] sm:text-xs font-bold shadow-2xs">
+        <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+        </svg>
+        <span>256-Bit SSL Secure Checkout</span>
       </div>
     </div>
 
@@ -344,21 +327,27 @@
       </button>
     </div>
 
-    <!-- Mobile Quick-Jump Bar (Visible on phones/tablets so users can jump straight to payment) -->
-    <div class="lg:hidden mb-4 bg-white rounded-xl p-3 border border-emerald-200 shadow-xs flex items-center justify-between gap-3">
-      <div>
-        <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">SWEEPR Cleaner Pro</div>
-        <div class="text-xs text-gray-600"><span id="mobileQuickTotalText" class="font-bold text-gray-900">£49.99</span> • 3 Devices • 14-Day Refund Guarantee</div>
+    <!-- 1-Line Collapsible Mobile Order Summary Accordion (CHK-10: Keeps Express Wallets & Card inputs above mobile keyboard) -->
+    <button type="button" id="mobileSummaryToggleBtn" onclick="toggleMobileOrderSummary()" aria-expanded="false" class="lg:hidden w-full mb-4 bg-emerald-50/90 hover:bg-emerald-100/80 rounded-xl px-4 py-3 border border-emerald-300 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all text-left">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="text-base shrink-0">🛒</span>
+        <div class="min-w-0">
+          <div class="text-xs font-black text-gray-900 tracking-tight truncate">SWEEPR Cleaner Pro Order Summary</div>
+          <div id="mobileAccordionHint" class="text-[11px] text-emerald-800 font-semibold truncate">
+            Tap to view 2 free bonuses &amp; included items ▾
+          </div>
+        </div>
       </div>
-      <a href="#checkoutBox" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 shadow-xs transition-colors">
-        Jump to Payment &darr;
-      </a>
-    </div>
+      <div class="text-right shrink-0">
+        <div class="text-sm font-black text-emerald-800 tabular-nums"><span id="mobileQuickTotalText">£69.97</span> Today</div>
+        <div class="text-[10px] text-gray-500 font-medium">3 Devices • 14-Day Refund</div>
+      </div>
+    </button>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
       
-      <!-- LEFT COLUMN: Unified 1-Screen Order Summary Card -->
-      <div class="lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/90 shadow-md space-y-4">
+      <!-- LEFT COLUMN: Unified 1-Screen Order Summary Card (Collapsed by default on <1024px mobile via CHK-10) -->
+      <div id="orderSummaryColumn" class="hidden lg:block lg:col-span-6 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200/90 shadow-md space-y-4">
 
         <!-- 1. Main Product Header -->
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5 border-b border-gray-100 pb-4">
@@ -581,106 +570,103 @@
         <!-- Order Form -->
         <form id="orderForm" class="space-y-4" novalidate>
 
-          <!-- Consent Checkboxes -->
-          <div class="space-y-2.5 text-xs text-gray-700 pb-1">
-            <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-              <span id="termsConsentLabel" class="leading-snug">
-                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
-              </span>
-            </label>
-
-            <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-              <span class="leading-snug">
-                I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
-              </span>
-            </label>
-          </div>
-
-          <!-- 1-Row 3-Button Express Bar (OS- & Country-Aware — Alternative D) -->
-          <div id="expressPaymentRow" class="grid grid-cols-3 gap-2 sm:gap-2.5 pt-2">
-            <!-- PayPal Express Slot -->
-            <div id="expressSlot_paypal" class="min-w-0">
-              <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal', true)" class="w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer px-2" aria-label="PayPal">
-                <span class="italic font-black text-lg sm:text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
-              </button>
+          <!-- 1-Row 3-Button Express Bar Elevated Directly to Top (OS- & Country-Aware — CHK-02) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              <span>⚡ 1-Click Express Checkout</span>
+              <span class="text-emerald-600 font-semibold normal-case tracking-normal">Instant Activation</span>
             </div>
-
-            <!-- Google Pay Express Slot -->
-            <div id="expressSlot_google_pay" class="min-w-0">
-              <div id="googlePayButtonContainer" class="hidden w-full h-11 overflow-hidden rounded-xl"></div>
-              <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-[#202124] hover:bg-black text-white font-medium rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Google Pay">
-                <span class="font-semibold text-sm sm:text-base inline-flex items-center tracking-tight whitespace-nowrap">
-                  <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span>&nbsp;<span class="text-white font-semibold">Pay</span>
-                </span>
-              </button>
-            </div>
-
-            <!-- Revolut Pay Express Slot (Default #3 on Windows/Android in UK & Europe) -->
-            <div id="expressSlot_revolut_pay" class="min-w-0">
-              <button type="button" id="expressRevolutBtn" onclick="triggerCheckout('revolut_pay', true)" class="w-full h-11 bg-[#0666eb] hover:bg-[#0557c7] text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Revolut Pay">
-                <span class="font-black tracking-tight">Revolut</span>
-                <span class="bg-white/20 px-1.5 py-0.5 rounded text-[11px] font-extrabold">Pay</span>
-              </button>
-            </div>
-
-            <!-- Apple Pay Express Slot (Promoted to #1 on macOS/iOS) -->
-            <div id="expressSlot_apple_pay" class="hidden min-w-0">
-              <div id="stripePaymentRequestContainer" class="hidden w-full h-11 overflow-hidden rounded-xl">
-                <div id="paymentRequestBtn"></div>
+            <div id="expressPaymentRow" class="grid grid-cols-2 gap-2 sm:gap-2.5">
+              <!-- PayPal Express Slot -->
+              <div id="expressSlot_paypal" class="min-w-0">
+                <button type="button" id="paypalBtn" onclick="triggerCheckout('paypal', true)" class="w-full h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-bold rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer px-2" aria-label="PayPal">
+                  <span class="italic font-black text-lg sm:text-xl tracking-tighter text-[#003087]">Pay<span class="text-[#0079c1]">Pal</span></span>
+                </button>
               </div>
-              <button type="button" id="expressApplePayBtn" onclick="triggerApplePay()" class="w-full h-11 bg-black hover:bg-[#1a1a1a] text-white font-medium rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Apple Pay">
-                <svg class="w-4 h-4 fill-current shrink-0 -mt-0.5" viewBox="0 0 170 170" aria-hidden="true">
-                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.13-1.9-14.34-6.08-3.69-3.03-7.61-7.82-11.77-14.37-5.67-8.9-10.31-19.22-13.92-30.97-3.61-11.75-5.42-22.71-5.42-32.89 0-12.42 3.1-22.62 9.3-30.6 6.2-7.98 14.08-12.12 23.63-12.42 4.69 0 9.89 1.38 15.6 4.14 5.7 2.76 9.36 4.19 10.98 4.3 1.23 0 5.19-1.65 11.88-4.96 6.37-3.03 11.96-4.3 16.77-3.82 12.63 1.02 22.13 6.01 28.5 14.97-11.29 6.84-16.82 16.36-16.6 28.56.19 9.53 3.74 17.46 10.65 23.79 4.78 4.42 10.37 7.05 16.77 7.89-1.35 4.17-2.85 8.06-4.5 11.67zM119.22 31.01c0 7.47-2.73 14.44-8.19 20.9-6.58 7.69-14.54 12.13-23.16 11.45-.11-.9-.17-1.85-.17-2.85 0-7.17 3.12-14.84 8.66-21.12 2.77-3.18 6.29-5.82 10.56-7.92 4.27-2.09 8.31-3.25 12.13-3.48.11 1.03.17 2.04.17 3.02z"/>
-                </svg>
-                <span class="font-semibold text-sm sm:text-base tracking-tight whitespace-nowrap">Pay</span>
-              </button>
-            </div>
 
-            <!-- Amazon Pay Express Slot (US / CA / AU / NZ) -->
-            <div id="expressSlot_amazon_pay" class="hidden min-w-0">
-              <button type="button" id="expressAmazonBtn" onclick="triggerCheckout('amazon_pay', true)" class="w-full h-11 bg-[#333e48] hover:bg-[#232f3e] text-white font-bold rounded-xl flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Amazon Pay">
-                <span class="font-black text-amber-400 tracking-tight">amazon</span><span class="font-medium text-white">pay</span>
-              </button>
-            </div>
+              <!-- Google Pay Express Slot -->
+              <div id="expressSlot_google_pay" class="min-w-0">
+                <div id="googlePayButtonContainer" class="hidden w-full h-11 overflow-hidden rounded-xl"></div>
+                <button type="button" id="expressGPayBtn" onclick="triggerExpressWallet()" class="w-full h-11 bg-[#202124] hover:bg-black text-white font-medium rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Google Pay">
+                  <span class="font-semibold text-sm sm:text-base inline-flex items-center tracking-tight whitespace-nowrap">
+                    <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span>&nbsp;<span class="text-white font-semibold">Pay</span>
+                  </span>
+                </button>
+              </div>
 
-            <!-- iDEAL Express Slot (#1 in Netherlands) -->
-            <div id="expressSlot_ideal" class="hidden min-w-0">
-              <button type="button" id="expressIdealBtn" onclick="triggerCheckout('ideal', true)" class="w-full h-11 bg-[#cc0066] hover:bg-[#ad0057] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="iDEAL">
-                <span class="bg-white text-[#cc0066] font-black px-1.5 py-0.5 rounded text-[11px]">iDEAL</span>
-                <span class="truncate">Bank</span>
-              </button>
-            </div>
+              <!-- Revolut Pay Express Slot (Hidden when already shown in Logo-Bar Switcher below) -->
+              <div id="expressSlot_revolut_pay" class="hidden min-w-0">
+                <button type="button" id="expressRevolutBtn" onclick="triggerCheckout('revolut_pay', true)" class="w-full h-11 bg-[#0666eb] hover:bg-[#0557c7] text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Revolut Pay">
+                  <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 4.5h8.2c3.1 0 5.3 1.8 5.3 4.6 0 2.1-1.2 3.7-3.1 4.3l3.6 6.1h-3.9l-3.2-5.6H8.5v5.6H5V4.5zm3.5 3v3.5h4.3c1.3 0 2.1-.7 2.1-1.75S14.1 7.5 12.8 7.5H8.5z" fill="#FFFFFF"/>
+                  </svg>
+                  <span class="font-black tracking-tight">Revolut</span>
+                  <span class="bg-white text-[#0666eb] px-1.5 py-0.5 rounded text-[11px] font-black leading-none">Pay</span>
+                </button>
+              </div>
 
-            <!-- Bancontact Express Slot (#1 in Belgium) -->
-            <div id="expressSlot_bancontact" class="hidden min-w-0">
-              <button type="button" id="expressBancontactBtn" onclick="triggerCheckout('bancontact', true)" class="w-full h-11 bg-[#005498] hover:bg-[#00437a] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Bancontact">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#FFD800] shrink-0"></span>
-                <span class="truncate">Bancontact</span>
-              </button>
-            </div>
+              <!-- Apple Pay Express Slot (Promoted to #1 on macOS/iOS) -->
+              <div id="expressSlot_apple_pay" class="hidden min-w-0">
+                <div id="stripePaymentRequestContainer" class="hidden w-full h-11 overflow-hidden rounded-xl">
+                  <div id="paymentRequestBtn"></div>
+                </div>
+                <button type="button" id="expressApplePayBtn" onclick="triggerApplePay()" class="w-full h-11 bg-black hover:bg-[#1a1a1a] text-white font-medium rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Apple Pay">
+                  <svg class="w-4 h-4 fill-current shrink-0 -mt-0.5" viewBox="0 0 170 170" aria-hidden="true">
+                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.13-1.9-14.34-6.08-3.69-3.03-7.61-7.82-11.77-14.37-5.67-8.9-10.31-19.22-13.92-30.97-3.61-11.75-5.42-22.71-5.42-32.89 0-12.42 3.1-22.62 9.3-30.6 6.2-7.98 14.08-12.12 23.63-12.42 4.69 0 9.89 1.38 15.6 4.14 5.7 2.76 9.36 4.19 10.98 4.3 1.23 0 5.19-1.65 11.88-4.96 6.37-3.03 11.96-4.3 16.77-3.82 12.63 1.02 22.13 6.01 28.5 14.97-11.29 6.84-16.82 16.36-16.6 28.56.19 9.53 3.74 17.46 10.65 23.79 4.78 4.42 10.37 7.05 16.77 7.89-1.35 4.17-2.85 8.06-4.5 11.67zM119.22 31.01c0 7.47-2.73 14.44-8.19 20.9-6.58 7.69-14.54 12.13-23.16 11.45-.11-.9-.17-1.85-.17-2.85 0-7.17 3.12-14.84 8.66-21.12 2.77-3.18 6.29-5.82 10.56-7.92 4.27-2.09 8.31-3.25 12.13-3.48.11 1.03.17 2.04.17 3.02z"/>
+                  </svg>
+                  <span class="font-semibold text-sm sm:text-base tracking-tight whitespace-nowrap">Pay</span>
+                </button>
+              </div>
 
-            <!-- SEPA Direct Debit Express Slot (Germany & Austria) -->
-            <div id="expressSlot_sepa_debit" class="hidden min-w-0">
-              <button type="button" id="expressSepaBtn" onclick="selectPaymentLogoMethod('sepa_debit', true)" class="w-full h-11 bg-[#1e3a8a] hover:bg-[#172554] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="SEPA Direct Debit">
-                <span class="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">IBAN</span>
-                <span class="truncate">SEPA</span>
-              </button>
-            </div>
+              <!-- Amazon Pay Express Slot (US / CA / AU / NZ) -->
+              <div id="expressSlot_amazon_pay" class="hidden min-w-0">
+                <button type="button" id="expressAmazonBtn" onclick="triggerCheckout('amazon_pay', true)" class="w-full h-11 bg-[#232f3e] hover:bg-[#19222d] text-white font-bold rounded-xl flex items-center justify-center transition-all shadow-xs cursor-pointer px-2" aria-label="Amazon Pay">
+                  <svg class="h-6 w-auto" viewBox="0 0 112 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <text x="6" y="16" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="15" letter-spacing="-0.4">amazon</text>
+                    <text x="68" y="16" fill="#FF9900" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="14" letter-spacing="-0.2">pay</text>
+                    <path d="M14 20.5C27 26.2 46 26.2 59.5 20.2" stroke="#FF9900" stroke-width="2.3" stroke-linecap="round"/>
+                    <path d="M56.2 18.2L61.2 19.6L58.8 24.1" stroke="#FF9900" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
 
-            <!-- Kakao Pay Express Slot (#1 in South Korea) -->
-            <div id="expressSlot_kakao_pay" class="hidden min-w-0">
-              <button type="button" id="expressKakaoBtn" onclick="triggerCheckout('kakao_pay', true)" class="w-full h-11 bg-[#FEE500] hover:bg-[#f2da00] text-[#191919] font-extrabold rounded-xl flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Kakao Pay">
-                <span>💬</span><span class="truncate">KakaoPay</span>
-              </button>
-            </div>
+              <!-- iDEAL Express Slot (#1 in Netherlands) -->
+              <div id="expressSlot_ideal" class="hidden min-w-0">
+                <button type="button" id="expressIdealBtn" onclick="triggerCheckout('ideal', true)" class="w-full h-11 bg-[#cc0066] hover:bg-[#ad0057] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="iDEAL">
+                  <span class="bg-white text-[#cc0066] font-black px-1.5 py-0.5 rounded text-[11px]">iDEAL</span>
+                  <span class="truncate">Bank</span>
+                </button>
+              </div>
 
-            <!-- Naver Pay Express Slot (#2 in South Korea) -->
-            <div id="expressSlot_naver_pay" class="hidden min-w-0">
-              <button type="button" id="expressNaverBtn" onclick="triggerCheckout('naver_pay', true)" class="w-full h-11 bg-[#03C75A] hover:bg-[#02b150] text-white font-extrabold rounded-xl flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Naver Pay">
-                <span class="font-black">N</span><span class="truncate">Naver Pay</span>
-              </button>
+              <!-- Bancontact Express Slot (#1 in Belgium) -->
+              <div id="expressSlot_bancontact" class="hidden min-w-0">
+                <button type="button" id="expressBancontactBtn" onclick="triggerCheckout('bancontact', true)" class="w-full h-11 bg-[#005498] hover:bg-[#00437a] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Bancontact">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#FFD800] shrink-0"></span>
+                  <span class="truncate">Bancontact</span>
+                </button>
+              </div>
+
+              <!-- SEPA Direct Debit Express Slot (Germany & Austria) -->
+              <div id="expressSlot_sepa_debit" class="hidden min-w-0">
+                <button type="button" id="expressSepaBtn" onclick="selectPaymentLogoMethod('sepa_debit', true)" class="w-full h-11 bg-[#1e3a8a] hover:bg-[#172554] text-white font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="SEPA Direct Debit">
+                  <span class="bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-mono">IBAN</span>
+                  <span class="truncate">SEPA</span>
+                </button>
+              </div>
+
+              <!-- Kakao Pay Express Slot (#1 in South Korea) -->
+              <div id="expressSlot_kakao_pay" class="hidden min-w-0">
+                <button type="button" id="expressKakaoBtn" onclick="triggerCheckout('kakao_pay', true)" class="w-full h-11 bg-[#FEE500] hover:bg-[#f2da00] text-[#191919] font-extrabold rounded-xl flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Kakao Pay">
+                  <span>💬</span><span class="truncate">KakaoPay</span>
+                </button>
+              </div>
+
+              <!-- Naver Pay Express Slot (#2 in South Korea) -->
+              <div id="expressSlot_naver_pay" class="hidden min-w-0">
+                <button type="button" id="expressNaverBtn" onclick="triggerCheckout('naver_pay', true)" class="w-full h-11 bg-[#03C75A] hover:bg-[#02b150] text-white font-extrabold rounded-xl flex items-center justify-center gap-1 transition-all shadow-xs cursor-pointer text-xs sm:text-sm px-2" aria-label="Naver Pay">
+                  <span class="font-black">N</span><span class="truncate">Naver Pay</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -691,53 +677,57 @@
             <div class="flex-grow border-t border-gray-200"></div>
           </div>
 
-          <!-- Interactive 3-Option Payment Logo-Bar Switcher (Alternative D) -->
-          <div id="paymentLogoStripBar" class="grid grid-cols-3 gap-1.5 bg-gray-100/90 p-1 rounded-xl border border-gray-200" role="tablist" aria-label="Select payment method">
-            <button type="button" data-logo-method="card" onclick="selectPaymentLogoMethod('card')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500 font-extrabold">
-              <div class="text-xs truncate">Card</div>
-              <div class="text-[10px] text-emerald-700 font-bold truncate">+ Stripe Link</div>
-            </button>
-            <button type="button" data-logo-method="revolut_pay" onclick="selectPaymentLogoMethod('revolut_pay')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-gray-900 font-semibold">
-              <div class="text-xs truncate">Revolut Pay</div>
-              <div class="text-[10px] text-gray-400 truncate">1-Click App</div>
-            </button>
-            <button type="button" data-logo-method="amazon_pay" onclick="selectPaymentLogoMethod('amazon_pay')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-gray-900 font-semibold">
-              <div class="text-xs truncate">Amazon Pay</div>
-              <div class="text-[10px] text-gray-400 truncate">Use Amazon</div>
-            </button>
-          </div>
-
-          <!-- DYNAMIC PAYMENT INPUT FIELDS -->
-          <div class="space-y-3 pt-1">
-            <!-- Card Brand Logos & Stripe Link Strip (Shown when Card is selected) -->
-            <div id="cardMethodBadges" class="flex items-center justify-between gap-2 pb-0.5" role="group" aria-label="Accepted payment cards: Visa, Mastercard, American Express, Stripe Link">
-              <div class="flex items-center gap-1.5">
-                <!-- Visa -->
-                <svg width="38" height="24" class="h-6 w-[38px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Visa">
-                  <title>Visa</title>
+          <!-- Interactive 3-Option Payment Logo-Bar Switcher (Branded Vector Icons) -->
+          <div id="paymentLogoStripBar" class="grid grid-cols-3 gap-1.5 bg-gray-100/90 p-1.5 rounded-xl border border-gray-200" role="tablist" aria-label="Select payment method">
+            <!-- 1. Card: Visa, Mastercard, Amex & Stripe Logos -->
+            <button type="button" data-logo-method="card" onclick="selectPaymentLogoMethod('card')" class="h-12 px-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border-2 border-emerald-500" aria-label="Pay by Card (Visa, Mastercard, Amex, Stripe)">
+              <div class="flex items-center justify-center gap-1 flex-wrap">
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-hidden="true">
                   <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
                   <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
                   <path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/>
                 </svg>
-                <!-- Mastercard -->
-                <svg width="38" height="24" class="h-6 w-[38px] shrink-0 rounded border border-gray-200 bg-white shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mastercard">
-                  <title>Mastercard</title>
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-hidden="true">
                   <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
                   <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
                   <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
                   <path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/>
                 </svg>
-                <!-- American Express -->
-                <svg width="38" height="24" class="h-6 w-[38px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0] shadow-2xs" viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="American Express">
-                  <title>American Express</title>
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none" aria-hidden="true">
                   <rect width="48" height="32" rx="4" fill="#016FD0"/>
                   <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/>
                 </svg>
-                <span class="px-2 py-0.5 rounded bg-[#00D66F]/15 border border-[#00D66F]/40 text-emerald-900 text-[11px] font-extrabold">⚡ Stripe link</span>
+                <svg class="h-5 w-[34px] shrink-0 rounded bg-[#635BFF]" viewBox="0 0 54 32" fill="none" aria-hidden="true">
+                  <rect width="54" height="32" rx="4" fill="#635BFF"/>
+                  <text x="27" y="20" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="12.5" letter-spacing="-0.4">stripe</text>
+                </svg>
               </div>
-              <span class="text-[11px] font-semibold text-gray-400">256-Bit Encrypted</span>
-            </div>
+            </button>
+            <!-- 2. Revolut Pay Logo -->
+            <button type="button" data-logo-method="revolut_pay" onclick="selectPaymentLogoMethod('revolut_pay')" class="h-12 px-2 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white/60 hover:bg-white text-gray-800 border border-transparent" aria-label="Revolut Pay">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-5 h-5 rounded-md bg-[#0666eb] text-white inline-flex items-center justify-center shrink-0 shadow-2xs">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5.5 4.5h8c3 0 5 1.8 5 4.5 0 2-1.1 3.6-3 4.2l3.5 6.3h-3.8l-3.1-5.7H9v5.7H5.5V4.5zm3.5 3v3.4h4.1c1.2 0 2-.7 2-1.7S14.3 7.5 13.1 7.5H9z" fill="#FFFFFF"/>
+                  </svg>
+                </span>
+                <span class="font-black text-xs sm:text-sm tracking-tight text-gray-900">Revolut</span>
+                <span class="bg-[#0666eb] text-white px-1.5 py-0.5 rounded text-[10px] font-extrabold leading-none">Pay</span>
+              </span>
+            </button>
+            <!-- 3. Amazon Pay Logo -->
+            <button type="button" data-logo-method="amazon_pay" onclick="selectPaymentLogoMethod('amazon_pay')" class="h-12 px-2 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white/60 hover:bg-white text-gray-800 border border-transparent" aria-label="Amazon Pay">
+              <svg class="h-7 w-auto max-w-full" viewBox="0 0 132 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <text x="5" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="800" font-size="18.5" letter-spacing="-0.6">amazon</text>
+                <text x="79" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="400" font-size="18.5" letter-spacing="-0.3">pay</text>
+                <path d="M13.5 23.8C25.2 29.8 43.8 30.1 56.4 24.1" stroke="#FF9900" stroke-width="2.6" stroke-linecap="round"/>
+                <path d="M51.8 22.1C54.6 21.8 57.6 22.4 58.3 23.4C59.0 24.4 57.7 27.2 55.8 29.1" stroke="#FF9900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
 
+          <!-- DYNAMIC PAYMENT INPUT FIELDS -->
+          <div class="space-y-3 pt-1">
             <!-- Local Redirect / Wallet Method Header Banner (Shown when Revolut / Amazon / iDEAL / Bancontact / Cash App / Kakao / Naver is selected) -->
             <div id="localMethodCallout" class="hidden bg-emerald-50/50 border border-emerald-200 rounded-xl p-3 space-y-1">
               <div class="flex items-center justify-between gap-2">
@@ -747,29 +737,17 @@
               <p id="localMethodDesc" class="text-xs text-gray-600 leading-relaxed">Approve in 1 tap inside your Revolut app — no card number entry needed.</p>
             </div>
 
-            <!-- 1. Name On Card / Account Holder Name -->
+            <!-- 1. Email Address (Elevated to Field #1 for Instant License Delivery, Early Lead Capture & Stripe Link Autofill — CHK-02) -->
             <div>
-              <label id="cardNameLabel" for="cardName" class="block text-xs font-bold text-gray-700 mb-1">Name On Card</label>
-              <input type="text" id="cardName" name="ccname" required placeholder="John Doe" autocomplete="cc-name"
+              <div class="flex items-center justify-between mb-1">
+                <label for="email" class="block text-xs font-bold text-gray-700">Email Address <span class="text-gray-400 font-normal">(For instant license key)</span></label>
+                <span class="px-1.5 py-0.5 rounded bg-[#00D66F]/15 border border-[#00D66F]/40 text-emerald-900 text-[10px] font-extrabold">⚡ Stripe Link Autofill</span>
+              </div>
+              <input type="email" id="email" name="email" required inputmode="email" placeholder="you@example.com" autocomplete="email"
                 class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
             </div>
 
-            <!-- SEPA Direct Debit IBAN Fields (Shown when sepa_debit is selected) -->
-            <div id="sepaOnlyFields" class="hidden space-y-2.5">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label for="ibanInput" class="block text-xs font-bold text-gray-700">IBAN (Bank Account Number)</label>
-                  <span class="text-[11px] font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">🏦 SEPA Mandate</span>
-                </div>
-                <input type="text" id="ibanInput" name="iban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="38"
-                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-              </div>
-              <p class="text-[11px] text-gray-500 leading-snug">
-                By providing your IBAN, you authorize SWEEPR Cleaner and Stripe to send instructions to your bank to debit your account for automatic subscription renewals. Protected by the 14-day refund guarantee &amp; SEPA Direct Debit Guarantee.
-              </p>
-            </div>
-
-            <!-- Card-Only Fields (Card Number, Expiry, CVV, Billing Address & Post Code) -->
+            <!-- Card-Only Fields (Card Number, Expiry & CVV) -->
             <div id="cardOnlyFields" class="space-y-3">
               <!-- 2. Card Number -->
               <div>
@@ -808,28 +786,53 @@
                     class="hidden w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-mono">
                 </div>
               </div>
+            </div>
 
-              <!-- 4. Address & Post Code (2 Columns) -->
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label for="billingAddress" class="block text-xs font-bold text-gray-700 mb-1">Address</label>
-                  <input type="text" id="billingAddress" name="address-line1" required placeholder="Street address" autocomplete="billing address-line1"
-                    class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
-                </div>
-                <div>
-                  <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code</label>
-                  <input type="text" id="billingPostcode" name="postal-code" required placeholder="Postcode / ZIP" autocomplete="billing postal-code"
-                    class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
-                </div>
+            <!-- 4. Name On Card & Post Code / ZIP on 1 Compact Row (Zero Street Address Friction — CHK-01) -->
+            <div id="nameAndPostcodeRow" class="grid grid-cols-12 gap-3">
+              <div id="cardNameCol" class="col-span-7">
+                <label id="cardNameLabel" for="cardName" class="block text-xs font-bold text-gray-700 mb-1">Name On Card</label>
+                <input type="text" id="cardName" name="ccname" required placeholder="John Doe" autocomplete="cc-name"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+              </div>
+              <div id="postcodeCol" class="col-span-5">
+                <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code / ZIP</label>
+                <input type="text" id="billingPostcode" name="postal-code" required placeholder="Postcode / ZIP" autocomplete="billing postal-code"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
               </div>
             </div>
 
-            <!-- 5. Email Address -->
-            <div>
-              <label for="email" class="block text-xs font-bold text-gray-700 mb-1">Email Address</label>
-              <input type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="billing email"
-                class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+            <!-- SEPA Direct Debit IBAN Fields (Shown when sepa_debit is selected) -->
+            <div id="sepaOnlyFields" class="hidden space-y-2.5">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label for="ibanInput" class="block text-xs font-bold text-gray-700">IBAN (Bank Account Number)</label>
+                  <span class="text-[11px] font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">🏦 SEPA Mandate</span>
+                </div>
+                <input type="text" id="ibanInput" name="iban" placeholder="DE89 3704 0044 0532 0130 00" maxlength="38"
+                  class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+              </div>
+              <p class="text-[11px] text-gray-500 leading-snug">
+                By providing your IBAN, you authorize SWEEPR Cleaner and Stripe to send instructions to your bank to debit your account for automatic subscription renewals. Protected by the 14-day refund guarantee &amp; SEPA Direct Debit Guarantee.
+              </p>
             </div>
+          </div>
+
+          <!-- Consent Checkboxes (Positioned above Submit so Express Wallets sit at the top of the box — CHK-02) -->
+          <div class="space-y-2.5 text-xs text-gray-700 pt-1">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <span id="termsConsentLabel" class="leading-snug">
+                I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
+              </span>
+            </label>
+
+            <label class="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <span class="leading-snug">
+                I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
+              </span>
+            </label>
           </div>
 
           <!-- Validation Error Alert Box -->
@@ -845,16 +848,22 @@
             </button>
           </div>
 
-          <!-- Trust Subtext -->
-          <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-500 pt-1 font-medium">
-            <span class="inline-flex items-center gap-1">
-              <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
-              256-Bit Bank-Grade SSL
+          <!-- Point-of-Anxiety Micro-Trust Badge Strip (Within 35px of Submit CTA — CHK-09) -->
+          <div class="bg-[#f0fdf4] border border-emerald-200/90 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-700 shadow-2xs">
+            <span class="inline-flex items-center gap-1.5 font-extrabold text-emerald-900">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              14-Day 100% Money-Back Guarantee
             </span>
-            <span class="hidden sm:inline">•</span>
-            <span>Instant Activation</span>
-            <span class="hidden sm:inline">•</span>
-            <span>Cancel in 1-Click</span>
+            <span class="inline-flex items-center gap-2 text-emerald-800 font-semibold">
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                256-Bit SSL
+              </span>
+              <span>•</span>
+              <span>Instant Activation</span>
+              <span>•</span>
+              <span>⚡ Cancel in 1-Click</span>
+            </span>
           </div>
 
         </form>
@@ -1406,23 +1415,6 @@
         defaultLogoMethod: 'card'
       };
 
-      // 1. Update Top 1-Row 3-Button Express Bar (OS- & Country-Aware)
-      const expressRow = document.getElementById('expressPaymentRow');
-      if (expressRow) {
-        const appleOS = isAppleDevice();
-        const express3 = ((appleOS ? profile.expressApple : profile.expressWindows) || ['paypal', 'google_pay', 'revolut_pay']).slice(0, 3);
-        const allSlots = expressRow.querySelectorAll('[id^="expressSlot_"]');
-        allSlots.forEach((slot) => slot.classList.add('hidden'));
-        express3.forEach((methodId) => {
-          const slot = document.getElementById(`expressSlot_${methodId}`);
-          if (slot) {
-            slot.classList.remove('hidden');
-            expressRow.appendChild(slot);
-          }
-        });
-      }
-
-      // 2. Render Interactive 3-Option Logo-Bar Switcher Below "OR"
       const logoBar = document.getElementById('paymentLogoStripBar');
       const logoMethods = Array.isArray(profile.logoStripMethods) && profile.logoStripMethods.length > 0
         ? profile.logoStripMethods
@@ -1431,14 +1423,138 @@
             { id: 'revolut_pay', label: 'Revolut Pay', tag: '1-Click App' },
             { id: 'amazon_pay', label: 'Amazon Pay', tag: 'Use Amazon' }
           ];
+      const logoIdSet = new Set(logoMethods.map((m) => m.id));
+
+      // 1. Update Top Express Bar (OS- & Country-Aware, deduplicated against Logo-Bar Switcher)
+      const expressRow = document.getElementById('expressPaymentRow');
+      if (expressRow) {
+        const appleOS = isAppleDevice();
+        const rawExpress = (appleOS ? profile.expressApple : profile.expressWindows) || ['paypal', 'google_pay'];
+        const expressList = rawExpress.filter((id) => !logoIdSet.has(id)).slice(0, 3);
+        const visibleExpress = expressList.length > 0 ? expressList : ['paypal', 'google_pay'];
+        const allSlots = expressRow.querySelectorAll('[id^="expressSlot_"]');
+        allSlots.forEach((slot) => slot.classList.add('hidden'));
+        let shownCount = 0;
+        visibleExpress.forEach((methodId) => {
+          const slot = document.getElementById(`expressSlot_${methodId}`);
+          if (slot) {
+            slot.classList.remove('hidden');
+            expressRow.appendChild(slot);
+            shownCount += 1;
+          }
+        });
+        expressRow.className = shownCount === 3
+          ? 'grid grid-cols-3 gap-2 sm:gap-2.5'
+          : shownCount === 1
+            ? 'grid grid-cols-1 gap-2 sm:gap-2.5'
+            : 'grid grid-cols-2 gap-2 sm:gap-2.5';
+      }
+
+      // 2. Render Interactive 3-Option Logo-Bar Switcher Below "OR"
+
+      function renderPaymentLogoStripInner(methodId, fallbackLabel) {
+        switch (methodId) {
+          case 'card':
+            return `
+              <div class="flex items-center justify-center gap-1 flex-wrap" title="Visa, Mastercard, American Express & Stripe">
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-hidden="true">
+                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+                  <path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/>
+                  <path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/>
+                </svg>
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none" aria-hidden="true">
+                  <rect width="48" height="32" rx="4" fill="#FFFFFF"/>
+                  <circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/>
+                  <circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/>
+                  <path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/>
+                </svg>
+                <svg class="h-5 w-[30px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none" aria-hidden="true">
+                  <rect width="48" height="32" rx="4" fill="#016FD0"/>
+                  <path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/>
+                </svg>
+                <svg class="h-5 w-[34px] shrink-0 rounded bg-[#635BFF]" viewBox="0 0 54 32" fill="none" aria-hidden="true">
+                  <rect width="54" height="32" rx="4" fill="#635BFF"/>
+                  <text x="27" y="20" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="12.5" letter-spacing="-0.4">stripe</text>
+                </svg>
+              </div>
+            `;
+          case 'revolut_pay':
+            return `
+              <span class="inline-flex items-center gap-1.5" title="Revolut Pay">
+                <span class="w-5 h-5 rounded-md bg-[#0666eb] text-white inline-flex items-center justify-center shrink-0 shadow-2xs">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5.5 4.5h8c3 0 5 1.8 5 4.5 0 2-1.1 3.6-3 4.2l3.5 6.3h-3.8l-3.1-5.7H9v5.7H5.5V4.5zm3.5 3v3.4h4.1c1.2 0 2-.7 2-1.7S14.3 7.5 13.1 7.5H9z" fill="#FFFFFF"/>
+                  </svg>
+                </span>
+                <span class="font-black text-xs sm:text-sm tracking-tight text-gray-900">Revolut</span>
+                <span class="bg-[#0666eb] text-white px-1.5 py-0.5 rounded text-[10px] font-extrabold leading-none">Pay</span>
+              </span>
+            `;
+          case 'amazon_pay':
+            return `
+              <svg class="h-7 w-auto max-w-full" viewBox="0 0 132 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <text x="5" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="800" font-size="18.5" letter-spacing="-0.6">amazon</text>
+                <text x="79" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="400" font-size="18.5" letter-spacing="-0.3">pay</text>
+                <path d="M13.5 23.8C25.2 29.8 43.8 30.1 56.4 24.1" stroke="#FF9900" stroke-width="2.6" stroke-linecap="round"/>
+                <path d="M51.8 22.1C54.6 21.8 57.6 22.4 58.3 23.4C59.0 24.4 57.7 27.2 55.8 29.1" stroke="#FF9900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            `;
+          case 'sepa_debit':
+            return `
+              <span class="inline-flex items-center gap-1.5" title="SEPA Direct Debit (IBAN)">
+                <span class="bg-[#003399] text-[#FFCC00] font-black px-2 py-0.5 rounded text-[11px] tracking-tight border border-[#002266]">SEPA</span>
+                <span class="font-bold text-xs text-gray-800">IBAN</span>
+              </span>
+            `;
+          case 'ideal':
+            return `
+              <span class="inline-flex items-center gap-1.5" title="iDEAL">
+                <span class="bg-[#CC0066] text-white font-black px-2 py-0.5 rounded text-[11px]">iDEAL</span>
+                <span class="font-bold text-xs text-gray-800">Bank</span>
+              </span>
+            `;
+          case 'bancontact':
+            return `
+              <span class="inline-flex items-center gap-1.5" title="Bancontact">
+                <span class="inline-flex items-center rounded overflow-hidden border border-gray-200">
+                  <span class="w-3 h-4 bg-[#005498]"></span>
+                  <span class="w-3 h-4 bg-[#FFD800]"></span>
+                </span>
+                <span class="font-extrabold text-xs text-[#005498]">Bancontact</span>
+              </span>
+            `;
+          case 'cashapp':
+            return `
+              <span class="inline-flex items-center gap-1.5" title="Cash App Pay">
+                <span class="w-5 h-5 rounded-md bg-[#00D632] text-white font-black text-xs inline-flex items-center justify-center shrink-0">$</span>
+                <span class="font-extrabold text-xs sm:text-sm text-gray-900 tracking-tight">Cash App</span>
+              </span>
+            `;
+          case 'kakao_pay':
+            return `
+              <span class="inline-flex items-center gap-1" title="Kakao Pay">
+                <span class="bg-[#FEE500] text-[#191919] font-black px-2 py-0.5 rounded-full text-[11px]">💬 Kakao</span>
+                <span class="font-extrabold text-xs text-gray-900">pay</span>
+              </span>
+            `;
+          case 'naver_pay':
+            return `
+              <span class="inline-flex items-center gap-1" title="Naver Pay">
+                <span class="w-5 h-5 rounded bg-[#03C75A] text-white font-black text-xs inline-flex items-center justify-center shrink-0">N</span>
+                <span class="font-extrabold text-xs text-gray-900">Naver Pay</span>
+              </span>
+            `;
+          default:
+            return `<span class="font-bold text-xs text-gray-800 truncate">${fallbackLabel || methodId}</span>`;
+        }
+      }
 
       if (logoBar) {
         logoBar.innerHTML = logoMethods.map((m) => {
           const safeId = String(m.id || 'card').replace(/[^a-z0-9_]/gi, '');
           return `
-            <button type="button" data-logo-method="${safeId}" onclick="selectPaymentLogoMethod('${safeId}')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer">
-              <div class="text-xs truncate">${m.label || safeId}</div>
-              <div data-logo-tag="${safeId}" class="text-[10px] truncate">${m.tag || ''}</div>
+            <button type="button" data-logo-method="${safeId}" onclick="selectPaymentLogoMethod('${safeId}')" class="h-12 px-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer" aria-label="${m.label || safeId}">
+              ${renderPaymentLogoStripInner(safeId, m.label)}
             </button>
           `;
         }).join('');
@@ -1459,48 +1575,45 @@
       if (logoBar) {
         logoBar.querySelectorAll('button[data-logo-method]').forEach((btn) => {
           const id = btn.getAttribute('data-logo-method');
-          const tagEl = btn.querySelector('[data-logo-tag]');
           const isActive = id === selectedLogoMethod;
           btn.className = isActive
-            ? 'py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500 font-extrabold'
-            : 'py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-gray-900 font-semibold';
-          if (tagEl) {
-            tagEl.className = isActive
-              ? 'text-[10px] text-emerald-700 font-bold truncate'
-              : 'text-[10px] text-gray-400 truncate';
-          }
+            ? 'h-12 px-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border-2 border-emerald-500'
+            : 'h-12 px-1.5 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white/60 hover:bg-white text-gray-700 border border-transparent opacity-80 hover:opacity-100';
         });
       }
 
-      const cardBadges = document.getElementById('cardMethodBadges');
       const cardOnlyFields = document.getElementById('cardOnlyFields');
       const sepaOnlyFields = document.getElementById('sepaOnlyFields');
       const localCallout = document.getElementById('localMethodCallout');
       const cardNameLabel = document.getElementById('cardNameLabel');
       const cardNameInput = document.getElementById('cardName');
+      const cardNameCol = document.getElementById('cardNameCol');
+      const postcodeCol = document.getElementById('postcodeCol');
       const addressInput = document.getElementById('billingAddress');
       const postcodeInput = document.getElementById('billingPostcode');
       const ibanInput = document.getElementById('ibanInput');
       const submitBtnText = document.getElementById('submitBtnText');
 
       if (selectedLogoMethod === 'card') {
-        if (cardBadges) cardBadges.classList.remove('hidden');
         if (cardOnlyFields) cardOnlyFields.classList.remove('hidden');
         if (sepaOnlyFields) sepaOnlyFields.classList.add('hidden');
         if (localCallout) localCallout.classList.add('hidden');
         if (cardNameLabel) cardNameLabel.textContent = 'Name On Card';
         if (cardNameInput) cardNameInput.placeholder = 'John Doe';
+        if (cardNameCol) cardNameCol.className = 'col-span-7';
+        if (postcodeCol) postcodeCol.classList.remove('hidden');
         if (addressInput) addressInput.required = true;
         if (postcodeInput) postcodeInput.required = true;
         if (ibanInput) ibanInput.required = false;
         if (submitBtnText) submitBtnText.textContent = 'PURCHASE SECURELY';
       } else if (selectedLogoMethod === 'sepa_debit') {
-        if (cardBadges) cardBadges.classList.add('hidden');
         if (cardOnlyFields) cardOnlyFields.classList.add('hidden');
         if (sepaOnlyFields) sepaOnlyFields.classList.remove('hidden');
         if (localCallout) localCallout.classList.add('hidden');
         if (cardNameLabel) cardNameLabel.textContent = 'Account Holder Name (IBAN)';
         if (cardNameInput) cardNameInput.placeholder = 'Max Mustermann';
+        if (cardNameCol) cardNameCol.className = 'col-span-12';
+        if (postcodeCol) postcodeCol.classList.add('hidden');
         if (addressInput) addressInput.required = false;
         if (postcodeInput) postcodeInput.required = false;
         if (ibanInput) ibanInput.required = true;
@@ -1510,7 +1623,6 @@
         }
       } else {
         const meta = PAYMENT_METHOD_META[selectedLogoMethod] || PAYMENT_METHOD_META.revolut_pay;
-        if (cardBadges) cardBadges.classList.add('hidden');
         if (cardOnlyFields) cardOnlyFields.classList.add('hidden');
         if (sepaOnlyFields) sepaOnlyFields.classList.add('hidden');
         if (localCallout) {
@@ -1524,6 +1636,8 @@
         }
         if (cardNameLabel) cardNameLabel.textContent = 'Account Holder Name';
         if (cardNameInput) cardNameInput.placeholder = 'Full Name';
+        if (cardNameCol) cardNameCol.className = 'col-span-12';
+        if (postcodeCol) postcodeCol.classList.add('hidden');
         if (addressInput) addressInput.required = false;
         if (postcodeInput) postcodeInput.required = false;
         if (ibanInput) ibanInput.required = false;
@@ -1532,6 +1646,24 @@
           const emailEl = document.getElementById('email');
           if (emailEl) setTimeout(() => emailEl.focus(), 50);
         }
+      }
+    }
+
+    // 1a. Collapsible Mobile Order Summary Accordion (CHK-10)
+    function toggleMobileOrderSummary() {
+      const col = document.getElementById('orderSummaryColumn');
+      const btn = document.getElementById('mobileSummaryToggleBtn');
+      const hint = document.getElementById('mobileAccordionHint');
+      if (!col) return;
+      const isHidden = col.classList.contains('hidden');
+      if (isHidden) {
+        col.classList.remove('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (hint) hint.innerHTML = 'Tap to collapse summary &uarr;';
+      } else {
+        col.classList.add('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (hint) hint.innerHTML = 'Tap to view 2 free bonuses &amp; included items &darr;';
       }
     }
 
