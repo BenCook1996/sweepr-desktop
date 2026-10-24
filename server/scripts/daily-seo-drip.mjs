@@ -90,26 +90,34 @@ async function verifyAndProbePadXml() {
   return { version, sizeBytes, sizeMb, specUrl, primaryDl };
 }
 
-let cachedTelegraphToken = null;
+const tokenPool = [];
+let tokenIdx = 0;
 async function getTelegraphToken() {
-  if (cachedTelegraphToken) return cachedTelegraphToken;
-  const accRes = await fetch("https://api.telegra.ph/createAccount?short_name=SWEEPR&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com", {
-    signal: AbortSignal.timeout(10000)
-  });
-  const acc = await accRes.json();
-  cachedTelegraphToken = acc.result?.access_token;
-  if (!cachedTelegraphToken) throw new Error("Telegraph auth err");
-  return cachedTelegraphToken;
+  if (tokenPool.length >= 6) {
+    const token = tokenPool[tokenIdx % tokenPool.length];
+    tokenIdx++;
+    return token;
+  }
+  try {
+    const accRes = await fetch(`https://api.telegra.ph/createAccount?short_name=SWEEPR_${tokenPool.length}_${Date.now().toString().slice(-4)}&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com`, {
+      signal: AbortSignal.timeout(10000)
+    });
+    const acc = await accRes.json();
+    if (acc.result?.access_token) {
+      tokenPool.push(acc.result.access_token);
+      return acc.result.access_token;
+    }
+  } catch {}
+  if (tokenPool.length > 0) {
+    const token = tokenPool[tokenIdx % tokenPool.length];
+    tokenIdx++;
+    return token;
+  }
+  throw new Error("Telegraph auth err");
 }
 
-async function publishTelegraph(item, lang, dateTag) {
-  let token;
-  try {
-    token = await getTelegraphToken();
-  } catch {
-    cachedTelegraphToken = null;
-    token = await getTelegraphToken();
-  }
+async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
+  const token = await getTelegraphToken();
 
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
@@ -150,7 +158,13 @@ async function publishTelegraph(item, lang, dateTag) {
     signal: AbortSignal.timeout(12000)
   });
   const j = await r.json();
-  if (!j.ok || !j.result?.url) throw new Error("Telegraph createPage err");
+  if (!j.ok || !j.result?.url) {
+    if (retryCount < 2) {
+      await new Promise(res => setTimeout(res, 400));
+      return await publishTelegraph(item, lang, `${dateTag}-retry`, retryCount + 1);
+    }
+    throw new Error(`Telegraph createPage err: ${j.error || "unknown"}`);
+  }
   return {
     url: j.result.url,
     who: `Telegraph 6-Hourly Drip (${lang.code})`,
@@ -180,9 +194,10 @@ ${item.whatHappens}
     format: "url",
     expires: "31536000"
   });
-  const r = await fetch("https://dpaste.org/api/", { method: "POST", body, signal: AbortSignal.timeout(10000) });
+  const r = await fetch("https://dpaste.org/api/", { method: "POST", body, signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error(`dpaste HTTP ${r.status}`);
   const url = (await r.text()).trim();
-  if (!url.startsWith("https://dpaste.org/")) throw new Error("dpaste err: " + url);
+  if (!url.startsWith("https://dpaste.org/")) throw new Error("dpaste err: " + url.slice(0, 40));
   return {
     url,
     who: `DPaste 6-Hourly Drip (${lang.code})`,
@@ -262,9 +277,9 @@ async function runBacklinksWorkflow(targetCount = 300) {
   const startOffset = seed.length;
   let completed = 0;
   const newLinks = [];
-  const BATCH_SIZE = 6;
+  const BATCH_SIZE = 4;
   let attempts = 0;
-  const maxAttempts = targetCount * 2;
+  const maxAttempts = Math.max(targetCount * 3, 600);
 
   while (completed < targetCount && attempts < maxAttempts) {
     const batchRemaining = targetCount - completed;
@@ -327,7 +342,7 @@ async function runBacklinksWorkflow(targetCount = 300) {
     }
 
     if (completed < targetCount) {
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 200));
     }
   }
 
