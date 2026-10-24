@@ -67,8 +67,15 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   const jobs = new Map<string, Job>();
 
   if (store.listKeywords().length === 0 && !store.getSetting("keywords_seeded", false)) {
-    for (const [k, c, p] of deps.defaultKeywords) store.addKeyword(k, c, p);
-    store.setSetting("keywords_seeded", true);
+    store.db.exec("BEGIN");
+    try {
+      for (const [k, c, p] of deps.defaultKeywords) store.addKeyword(k, c, p);
+      store.setSetting("keywords_seeded", true);
+      store.db.exec("COMMIT");
+    } catch (e) {
+      store.db.exec("ROLLBACK");
+      throw e;
+    }
   }
 
   const startJob = (type: string, run: (job: Job) => Promise<unknown>): Job | { conflict: Job } => {

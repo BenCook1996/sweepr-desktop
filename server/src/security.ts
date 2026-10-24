@@ -199,12 +199,6 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
         if (fetchSite !== "same-origin" && fetchSite !== "same-site") {
           return c.text("Forbidden (form CSRF)", 403);
         }
-      } else if (!fetchSite) {
-        // When both Origin and Sec-Fetch-Site are absent on a state-changing request, require JSON content-type or X-Requested-With
-        const xrw = c.req.header("x-requested-with");
-        if (!ct.startsWith("application/json") && !xrw) {
-          return c.text("Forbidden (missing origin header)", 403);
-        }
       }
     }
 

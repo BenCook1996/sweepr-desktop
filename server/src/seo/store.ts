@@ -703,13 +703,20 @@ export class SeoStore {
   importOutreachAsBacklinks(targetDomain: string): number {
     const rows = this.db.prepare("SELECT id, url FROM outreach_logs").all() as Array<{ id: number; url: string }>;
     let added = 0;
-    for (const r of rows) {
-      const exists = this.db.prepare("SELECT 1 FROM seo_backlinks WHERE outreach_id = ?").get(r.id);
-      if (exists) continue;
-      const before = this.db.prepare("SELECT COUNT(*) AS c FROM seo_backlinks").get() as { c: number };
-      this.addBacklink(r.url, targetDomain, r.id);
-      const after = this.db.prepare("SELECT COUNT(*) AS c FROM seo_backlinks").get() as { c: number };
-      if (after.c > before.c) added++;
+    this.db.exec("BEGIN");
+    try {
+      for (const r of rows) {
+        const exists = this.db.prepare("SELECT 1 FROM seo_backlinks WHERE outreach_id = ?").get(r.id);
+        if (exists) continue;
+        const before = this.db.prepare("SELECT COUNT(*) AS c FROM seo_backlinks").get() as { c: number };
+        this.addBacklink(r.url, targetDomain, r.id);
+        const after = this.db.prepare("SELECT COUNT(*) AS c FROM seo_backlinks").get() as { c: number };
+        if (after.c > before.c) added++;
+      }
+      this.db.exec("COMMIT");
+    } catch (e) {
+      this.db.exec("ROLLBACK");
+      throw e;
     }
     return added;
   }

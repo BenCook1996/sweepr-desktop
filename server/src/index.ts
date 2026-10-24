@@ -6,10 +6,23 @@ import { openDb } from "./db.js";
 import { loadSigningKey } from "./tokens.js";
 import { createApp } from "./app.js";
 
+process.on("uncaughtException", (err) => {
+  console.error("[fatal-guard] Uncaught exception:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[fatal-guard] Unhandled rejection:", reason);
+});
+
 const repo = openDb(config.databasePath);
-const signingKey = config.licensePrivateKeyB64
-  ? loadSigningKey(config.licensePrivateKeyB64)
-  : generateKeyPairSync("ed25519").privateKey;
+let signingKey;
+try {
+  signingKey = config.licensePrivateKeyB64
+    ? loadSigningKey(config.licensePrivateKeyB64)
+    : generateKeyPairSync("ed25519").privateKey;
+} catch (err: any) {
+  console.warn(`[config] LICENSE_PRIVATE_KEY_B64 invalid (${err?.message || err}); falling back to ephemeral Ed25519 signing key.`);
+  signingKey = generateKeyPairSync("ed25519").privateKey;
+}
 const stripe = config.stripeSecretKey.startsWith("sk_") && !config.stripeSecretKey.includes("...")
   ? new Stripe(config.stripeSecretKey)
   : null;

@@ -143,7 +143,10 @@ test("OTP: checks email is signed up before sending 6-digit OTP, hashed storage,
   const dash = await app.request("/api/dashboard-data", { headers: { cookie: sessionCookie } });
   assert.equal(dash.status, 200);
 
-  const out = await app.request("/api/logout", { method: "POST" });
+  const out = await app.request("/api/logout", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+  });
   assert.equal(out.status, 200);
   assert.match(out.headers.get("set-cookie") ?? "", /sweepr_session=;.*Max-Age=0/i);
 });

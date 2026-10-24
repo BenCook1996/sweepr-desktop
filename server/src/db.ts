@@ -1258,18 +1258,25 @@ export class Repo {
     `);
     let inserted = 0;
     const t = now();
-    for (const item of seedItems) {
-      stmt.run(
-        String(item.who || "").trim(),
-        String(item.website || "").trim(),
-        String(item.url || "").trim(),
-        String(item.how || "Email (Gmail SMTP)").trim(),
-        item.category ? String(item.category).trim() : null,
-        String(item.status || "delivered").trim(),
-        item.message_id ? String(item.message_id).trim() : null,
-        item.reached_out_at ? Number(item.reached_out_at) : t
-      );
-      inserted++;
+    this.db.exec("BEGIN");
+    try {
+      for (const item of seedItems) {
+        stmt.run(
+          String(item.who || "").trim(),
+          String(item.website || "").trim(),
+          String(item.url || "").trim(),
+          String(item.how || "Email (Gmail SMTP)").trim(),
+          item.category ? String(item.category).trim() : null,
+          String(item.status || "delivered").trim(),
+          item.message_id ? String(item.message_id).trim() : null,
+          item.reached_out_at ? Number(item.reached_out_at) : t
+        );
+        inserted++;
+      }
+      this.db.exec("COMMIT");
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
     }
     return inserted;
   }
