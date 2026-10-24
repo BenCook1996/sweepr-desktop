@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { api } from "./api";
 
 export type Lang = "en" | "es" | "fr" | "de" | "it" | "pt" | "nl";
 
@@ -26,11 +27,14 @@ function loadInitialLang(): Lang {
 
 export const lang = writable<Lang>(loadInitialLang());
 
-export function setLang(next: Lang) {
+export function setLang(next: Lang, persistToDisk = true) {
   if (typeof localStorage !== "undefined") {
     localStorage.setItem(STORAGE_KEY, next);
   }
   lang.set(next);
+  if (persistToDisk) {
+    api.saveUiPreferences({ language: next }).catch(() => {});
+  }
 }
 
 export function getLang(): Lang {

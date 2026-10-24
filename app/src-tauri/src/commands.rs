@@ -126,7 +126,6 @@ pub fn list_quarantine(state: State<'_, AppState>) -> Vec<QuarantineEntry> {
 
 #[tauri::command]
 pub async fn restore_quarantine_item(state: State<'_, AppState>, id: String) -> AppResult<String> {
-    state.licensing.require_active().await?;
     cleaner::restore_quarantine_entry(&state.data_dir, &id)
 }
 
@@ -167,7 +166,6 @@ pub fn list_exclusions(state: State<'_, AppState>) -> Vec<String> {
 
 #[tauri::command]
 pub async fn add_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
-    state.licensing.require_active().await?;
     let trimmed = path.trim();
     let candidate = PathBuf::from(trimmed);
     if !candidate.is_absolute() {
@@ -184,7 +182,6 @@ pub async fn add_exclusion(state: State<'_, AppState>, path: String) -> AppResul
 
 #[tauri::command]
 pub async fn remove_exclusion(state: State<'_, AppState>, path: String) -> AppResult<Vec<String>> {
-    state.licensing.require_active().await?;
     let target = PathBuf::from(path.trim());
     let mut list = safety::load_exclusions(&state.data_dir);
     list.retain(|p| p != &target && !p.to_string_lossy().eq_ignore_ascii_case(path.trim()));
@@ -1257,22 +1254,128 @@ pub async fn send_support_report(
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct UiPreferences {
+    #[serde(default = "default_theme_light")]
+    pub theme: String,
+    #[serde(default = "default_lang_en")]
+    pub language: String,
+    #[serde(default)]
+    pub sidebar_collapsed: bool,
+}
+
+fn default_theme_light() -> String {
+    "light".to_string()
+}
+
+fn default_lang_en() -> String {
+    "en".to_string()
+}
+
+impl Default for UiPreferences {
+    fn default() -> Self {
+        Self {
+            theme: default_theme_light(),
+            language: default_lang_en(),
+            sidebar_collapsed: false,
+        }
+    }
+}
+
+fn ui_preferences_file(data_dir: &Path) -> PathBuf {
+    data_dir.join("ui_preferences.json")
+}
+
+pub fn load_ui_preferences(data_dir: &Path) -> UiPreferences {
+    let file = ui_preferences_file(data_dir);
+    let Ok(raw) = std::fs::read_to_string(&file) else {
+        return UiPreferences::default();
+    };
+    let mut prefs: UiPreferences = serde_json::from_str(&raw).unwrap_or_default();
+    prefs.theme = if prefs.theme.trim().eq_ignore_ascii_case("dark") {
+        "dark".to_string()
+    } else {
+        "light".to_string()
+    };
+    let lang = prefs.language.trim().to_ascii_lowercase();
+    prefs.language = if matches!(lang.as_str(), "en" | "de" | "fr" | "es" | "it" | "pt" | "nl") {
+        lang
+    } else {
+        "en".to_string()
+    };
+    prefs
+}
+
+pub fn save_ui_preferences_to(data_dir: &Path, prefs: &UiPreferences) -> AppResult<UiPreferences> {
+    std::fs::create_dir_all(data_dir).map_err(|e| AppError::Other(e.to_string()))?;
+    let normalized = UiPreferences {
+        theme: if prefs.theme.trim().eq_ignore_ascii_case("dark") {
+            "dark".to_string()
+        } else {
+            "light".to_string()
+        },
+        language: {
+            let lang = prefs.language.trim().to_ascii_lowercase();
+            if matches!(lang.as_str(), "en" | "de" | "fr" | "es" | "it" | "pt" | "nl") {
+                lang
+            } else {
+                "en".to_string()
+            }
+        },
+        sidebar_collapsed: prefs.sidebar_collapsed,
+    };
+    let json = serde_json::to_string_pretty(&normalized).map_err(|e| AppError::Other(e.to_string()))?;
+    std::fs::write(ui_preferences_file(data_dir), json).map_err(|e| AppError::Other(e.to_string()))?;
+    Ok(normalized)
+}
+
+#[tauri::command]
+pub fn get_ui_preferences(state: State<'_, AppState>) -> UiPreferences {
+    load_ui_preferences(&state.data_dir)
+}
+
+#[tauri::command]
+pub fn save_ui_preferences(
+    state: State<'_, AppState>,
+    theme: Option<String>,
+    language: Option<String>,
+    sidebar_collapsed: Option<bool>,
+) -> AppResult<UiPreferences> {
+    let mut current = load_ui_preferences(&state.data_dir);
+    if let Some(t) = theme {
+        current.theme = t;
+    }
+    if let Some(l) = language {
+        current.language = l;
+    }
+    if let Some(sc) = sidebar_collapsed {
+        current.sidebar_collapsed = sc;
+    }
+    save_ui_preferences_to(&state.data_dir, &current)
+}
+
 #[derive(Serialize)]
 pub struct AppInfo {
     pub version: String,
     pub platform: String,
     pub api_url: String,
     pub installer_mode: bool,
+    pub preferences: UiPreferences,
 }
 
 #[tauri::command]
 pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
     let installer_mode = std::env::args().any(|a| a == "--installer");
+    if installer_mode && !ui_preferences_file(&state.data_dir).exists() {
+        let _ = save_ui_preferences_to(&state.data_dir, &UiPreferences::default());
+    }
+    let preferences = load_ui_preferences(&state.data_dir);
     AppInfo {
         version: app.package_info().version.to_string(),
         platform: std::env::consts::OS.to_string(),
         api_url: state.licensing.api_url().to_string(),
         installer_mode,
+        preferences,
     }
 }
 
@@ -2358,6 +2461,38 @@ mod tests {
             "https://evil.example.com/setup.exe",
             "https://sweeprcleaner.com"
         ));
+    }
+
+    #[test]
+    fn ui_preferences_default_to_light_and_persist_changes() {
+        let dir = std::env::temp_dir().join(format!("sweepr-prefs-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+
+        // Fresh install defaults to light mode, English, expanded sidebar
+        let initial = load_ui_preferences(&dir);
+        assert_eq!(initial.theme, "light");
+        assert_eq!(initial.language, "en");
+        assert!(!initial.sidebar_collapsed);
+
+        // User switches to dark mode, German, collapsed sidebar -> persisted on disk
+        let updated = save_ui_preferences_to(
+            &dir,
+            &UiPreferences {
+                theme: "dark".into(),
+                language: "de".into(),
+                sidebar_collapsed: true,
+            },
+        )
+        .unwrap();
+        assert_eq!(updated.theme, "dark");
+        assert_eq!(updated.language, "de");
+        assert!(updated.sidebar_collapsed);
+
+        // Re-opening the app loads the saved preferences from disk
+        let reopened = load_ui_preferences(&dir);
+        assert_eq!(reopened, updated);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 

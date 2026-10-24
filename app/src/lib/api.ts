@@ -81,7 +81,18 @@ export interface UnplugAlert {
 export interface AppMemory { name: string; bytes: number; processes: number }
 export interface MemoryOverview { total_bytes: number; used_bytes: number; available_bytes: number; top_apps: AppMemory[] }
 export interface StartupItem { name: string; command: string; scope: string; enabled?: boolean; impact?: string }
-export interface AppInfo { version: string; platform: string; api_url: string; installer_mode?: boolean }
+export interface UiPreferences {
+  theme: "light" | "dark";
+  language: string;
+  sidebar_collapsed: boolean;
+}
+export interface AppInfo {
+  version: string;
+  platform: string;
+  api_url: string;
+  installer_mode?: boolean;
+  preferences?: UiPreferences;
+}
 export interface AppError { kind: "payment_required" | "network" | "license" | "not_found" | "other"; message: string }
 
 export interface LargeFileEntry { path: string; name: string; ext: string; size: number; modified_at: number }
@@ -267,6 +278,13 @@ export const api = {
   listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
   restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
   appInfo: () => invoke<AppInfo>("app_info"),
+  getUiPreferences: () => invoke<UiPreferences>("get_ui_preferences"),
+  saveUiPreferences: (prefs: { theme?: "light" | "dark"; language?: string; sidebarCollapsed?: boolean }) =>
+    invoke<UiPreferences>("save_ui_preferences", {
+      theme: prefs.theme ?? null,
+      language: prefs.language ?? null,
+      sidebarCollapsed: prefs.sidebarCollapsed ?? null,
+    }),
   quitApp: () => invoke<void>("quit_app"),
   completeInstallation: (
     desktopShortcut: boolean,

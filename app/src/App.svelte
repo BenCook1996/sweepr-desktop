@@ -21,6 +21,7 @@
   type Tab = "cleaner" | "speed" | "space" | "apps" | "privacy" | "account";
   let tab = $state<Tab>("cleaner");
   let speedMode = $state<"pc" | "battery">("pc");
+  let toolsMode = $state<"privacy" | "apps" | "space">("privacy");
   let accountSection = $state<"schedule" | "account">("account");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
@@ -35,15 +36,14 @@
     typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
   const modKeyLabel = isMac ? "⌘" : "Ctrl+";
 
+  const THEME_STORAGE_KEY = "sweepr_theme_v2";
+
   function detectInitialTheme(): "light" | "dark" {
     if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem("sweepr_theme");
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
       if (saved === "light" || saved === "dark") return saved;
     }
-    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "dark";
+    return "light";
   }
 
   let theme = $state<"light" | "dark">(detectInitialTheme());
@@ -60,6 +60,7 @@
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("sweepr_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
     }
+    api.saveUiPreferences({ sidebarCollapsed }).catch(() => {});
   }
 
   let startupInitialized = false;
@@ -88,10 +89,14 @@
 
   function completeStartupInstaller() {
     installerCompleted = true;
+    theme = "light";
+    applyThemeToDom("light");
     if (typeof localStorage !== "undefined") {
+      localStorage.setItem(THEME_STORAGE_KEY, "light");
       localStorage.setItem("sweepr_installed_v1", "1");
       localStorage.setItem("sweepr_first_open", "1");
     }
+    api.saveUiPreferences({ theme: "light" }).catch(() => {});
     showStartupInstaller = false;
   }
 
@@ -109,9 +114,10 @@
   function toggleTheme() {
     theme = theme === "dark" ? "light" : "dark";
     if (typeof localStorage !== "undefined") {
-      localStorage.setItem("sweepr_theme", theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
     }
     applyThemeToDom(theme);
+    api.saveUiPreferences({ theme }).catch(() => {});
   }
 
   $effect(() => {
@@ -140,6 +146,23 @@
       .appInfo()
       .then((i) => {
         info = i;
+        if (i.preferences) {
+          const diskTheme: "light" | "dark" = i.preferences.theme === "dark" ? "dark" : "light";
+          theme = diskTheme;
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem(THEME_STORAGE_KEY, diskTheme);
+          }
+          applyThemeToDom(diskTheme);
+
+          sidebarCollapsed = Boolean(i.preferences.sidebar_collapsed);
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem("sweepr_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
+          }
+
+          if (i.preferences.language && LANGUAGES.some((l) => l.code === i.preferences!.language)) {
+            setLang(i.preferences.language as Lang, false);
+          }
+        }
         if (i.installer_mode && !installerCompleted) {
           showStartupInstaller = true;
         }
@@ -521,146 +544,125 @@
   <div class="app-layout">
     <!-- Grouped left sidebar (collapsible via Ctrl/Cmd+B) -->
     <aside class="side-nav" class:collapsed={sidebarCollapsed}>
-      <div class="brand">
-        <div class="logo" aria-label="SWEEPR Cleaner">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
-            <defs>
-              <linearGradient id="appEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#10b981" />
-                <stop offset="100%" stop-color="#047857" />
-              </linearGradient>
-              <linearGradient id="appMintBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ecfdf5" />
-                <stop offset="100%" stop-color="#d1fae5" />
-              </linearGradient>
-            </defs>
-            <rect class="logo-bg-rect" x="2" y="2" width="96" height="96" rx="24" stroke-width="2" />
-            <line class="logo-handle" x1="76" y1="24" x2="53" y2="47" stroke-width="8" stroke-linecap="round" />
-            <path class="logo-primary" d="M 42 40 L 60 58 L 55 64 L 36 45 Z" />
-            <path class="logo-primary" d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" />
-            <line class="logo-slit" x1="34" y1="76" x2="43" y2="63" stroke-width="3" stroke-linecap="round" />
-            <line class="logo-slit" x1="27" y1="69" x2="36" y2="56" stroke-width="3" stroke-linecap="round" />
-            <path class="logo-sparkle" d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" />
-            <circle class="logo-dot" cx="62" cy="79" r="3.5" />
-          </svg>
-        </div>
-        {#if !sidebarCollapsed}
-          <div class="brand-text">
-            <span class="brand-name">SWEEPR <span class="brand-accent">Cleaner</span></span>
-          </div>
-        {/if}
-        <button
-          class="ghost collapse-btn"
-          onclick={toggleSidebar}
-          title={sidebarCollapsed ? `Expand sidebar (${modKeyLabel}B)` : `Collapse sidebar (${modKeyLabel}B)`}
-          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {sidebarCollapsed ? "»" : "«"}
-        </button>
-      </div>
-
       {#if !sidebarCollapsed}
-        <button class="cmd-trigger-btn" onclick={openCommandPalette} title={`Command Palette (${modKeyLabel}K)`}>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <span>Quick Jump…</span>
-          <kbd>{modKeyLabel}K</kbd>
-        </button>
+        <div class="brand">
+          <div class="logo" aria-label="SWEEPR">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+              <defs>
+                <linearGradient id="appEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#10b981" />
+                  <stop offset="100%" stop-color="#047857" />
+                </linearGradient>
+                <linearGradient id="appMintBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ecfdf5" />
+                  <stop offset="100%" stop-color="#d1fae5" />
+                </linearGradient>
+              </defs>
+              <rect class="logo-bg-rect" x="2" y="2" width="96" height="96" rx="24" stroke-width="2" />
+              <line class="logo-handle" x1="76" y1="24" x2="53" y2="47" stroke-width="8" stroke-linecap="round" />
+              <path class="logo-primary" d="M 42 40 L 60 58 L 55 64 L 36 45 Z" />
+              <path class="logo-primary" d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" />
+              <line class="logo-slit" x1="34" y1="76" x2="43" y2="63" stroke-width="3" stroke-linecap="round" />
+              <line class="logo-slit" x1="27" y1="69" x2="36" y2="56" stroke-width="3" stroke-linecap="round" />
+              <path class="logo-sparkle" d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" />
+              <circle class="logo-dot" cx="62" cy="79" r="3.5" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">SWEEPR</span>
+          </div>
+        </div>
       {/if}
 
       <nav class="side-groups" aria-label="Main navigation">
         <button
           class="nav-tab"
-          class:active={homeItem.isActive()}
-          aria-current={homeItem.isActive() ? "page" : undefined}
-          title={`${t(homeItem.key, $lang)} (${modKeyLabel}1)`}
-          onclick={homeItem.go}
+          class:active={tab === "cleaner"}
+          aria-current={tab === "cleaner" ? "page" : undefined}
+          onclick={() => (tab = "cleaner")}
         >
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d={homeItem.icon} />
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d={ICONS.scan} />
           </svg>
           {#if !sidebarCollapsed}
-            <span>{t(homeItem.key, $lang)}</span>
+            <span>Clean</span>
           {/if}
         </button>
 
-        {#each navGroups as group (group.key)}
+        <button
+          class="nav-tab"
+          class:active={tab === "speed"}
+          aria-current={tab === "speed" ? "page" : undefined}
+          onclick={() => (tab = "speed")}
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d={ICONS.speed} />
+          </svg>
           {#if !sidebarCollapsed}
-            <div class="side-group-label">{t(group.key, $lang)}</div>
-          {:else}
-            <div class="side-group-divider"></div>
+            <span>Speed</span>
           {/if}
-          {#each group.items as item (item.id)}
-            <button
-              class="nav-tab"
-              class:active={item.isActive()}
-              aria-current={item.isActive() ? "page" : undefined}
-              title={t(item.key, $lang)}
-              onclick={item.go}
-            >
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d={item.icon} />
-              </svg>
-              {#if !sidebarCollapsed}
-                <span>{t(item.key, $lang)}</span>
-              {/if}
-            </button>
-          {/each}
-        {/each}
+        </button>
+
+        <button
+          class="nav-tab"
+          class:active={tab === "space" || tab === "apps" || tab === "privacy"}
+          aria-current={tab === "space" || tab === "apps" || tab === "privacy" ? "page" : undefined}
+          onclick={() => (tab = toolsMode)}
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d={ICONS.apps} />
+          </svg>
+          {#if !sidebarCollapsed}
+            <span>Tools</span>
+          {/if}
+        </button>
       </nav>
 
       <div class="sidebar-footer">
         <button
           class="nav-tab"
-          title={`7-Day Safety Undo (${modKeyLabel}Z)`}
+          title={`Undo (${modKeyLabel}Z)`}
           onclick={openUndoDrawer}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
           </svg>
           {#if !sidebarCollapsed}
-            <span>7-Day Undo</span>
+            <span>Undo</span>
           {/if}
         </button>
 
         <div class="footer-row">
           <button
             class="nav-tab account-pill"
-            class:active={tab === "account" && accountSection === "account"}
-            title={t("nav.accountOnly", $lang)}
+            class:active={tab === "account"}
             onclick={() => {
-              accountSection = "account";
               tab = "account";
             }}
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M20 21a8 8 0 1 0-16 0" />
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
             {#if !sidebarCollapsed}
-              <span>{t("nav.accountOnly", $lang)}</span>
+              <span>Settings</span>
             {/if}
           </button>
 
           <button
             class="ghost theme-icon-btn"
             onclick={toggleTheme}
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={theme === "dark" ? "Light mode" : "Dark mode"}
             aria-label="Toggle color theme"
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
         </div>
 
-        {#if !sidebarCollapsed}
-          {#if license?.active}
-            <span class="tier-badge pro">
-              ✓ {license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : `${t("tier.pro", $lang)} Active`}
-            </span>
-          {:else}
-            <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
-              {t("tier.free", $lang)} · Upgrade
-            </button>
-          {/if}
+        {#if !sidebarCollapsed && !license?.active}
+          <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
+            Unlock Pro
+          </button>
         {/if}
       </div>
     </aside>
@@ -721,6 +723,32 @@
     {/if}
 
     <main class="main-content">
+      {#if tab === "space" || tab === "apps" || tab === "privacy"}
+        <div class="tools-subbar">
+          <button
+            class="tools-pill"
+            class:active={tab === "privacy"}
+            onclick={() => { toolsMode = "privacy"; tab = "privacy"; }}
+          >
+            Vault &amp; Privacy
+          </button>
+          <button
+            class="tools-pill"
+            class:active={tab === "apps"}
+            onclick={() => { toolsMode = "apps"; tab = "apps"; }}
+          >
+            Uninstaller
+          </button>
+          <button
+            class="tools-pill"
+            class:active={tab === "space"}
+            onclick={() => { toolsMode = "space"; tab = "space"; }}
+          >
+            Duplicates &amp; Files
+          </button>
+        </div>
+      {/if}
+
       {#if tab === "cleaner"}
         <Cleaner
           {license}
@@ -734,10 +762,13 @@
               speedMode = "battery";
               tab = "speed";
             } else if (tool === "storage") {
+              toolsMode = "space";
               tab = "space";
             } else if (tool === "apps") {
+              toolsMode = "apps";
               tab = "apps";
             } else if (tool === "privacy" || tool === "shredder") {
+              toolsMode = "privacy";
               tab = "privacy";
             } else if (tool === "schedule") {
               accountSection = "schedule";
@@ -764,29 +795,6 @@
         />
       {/if}
     </main>
-
-    <!-- Native Desktop Status Bar -->
-    <footer class="desktop-status-bar" aria-label="Status bar">
-      <div class="status-left">
-        <span class="status-dot"></span>
-        <span>7-Day Quarantine Protection Active</span>
-        {#if info?.version}
-          <span class="status-sep">·</span>
-          <span>v{info.version}</span>
-        {/if}
-      </div>
-      <div class="status-right">
-        <button class="status-link" onclick={openCommandPalette}>
-          <span>Command Palette</span>
-          <kbd>{modKeyLabel}K</kbd>
-        </button>
-        <span class="status-sep">·</span>
-        <button class="status-link" onclick={openUndoDrawer}>
-          <span>Undo</span>
-          <kbd>{modKeyLabel}Z</kbd>
-        </button>
-      </div>
-    </footer>
     </div>
 
     {#if showCommandPalette}
@@ -864,13 +872,13 @@
   }
 
   .side-nav {
-    width: 214px;
+    width: 164px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     margin: 10px 0 10px 10px;
-    padding: 12px 10px;
+    padding: 14px 10px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-top: 1px solid var(--border-highlight);
@@ -880,6 +888,32 @@
     overflow-y: auto;
     overflow-x: hidden;
     transition: width 0.16s ease, padding 0.16s ease;
+  }
+  .tools-subbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  button.tools-pill {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  button.tools-pill.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent);
+    font-weight: 700;
   }
   .side-nav.collapsed {
     width: 58px;
@@ -1026,27 +1060,6 @@
     fill: #a7f3d0;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .logo-bg-rect {
-      fill: url(#appMintBg);
-      stroke: rgba(5, 150, 105, 0.25);
-    }
-    .logo-primary {
-      fill: #059669;
-    }
-    .logo-handle {
-      stroke: #10b981;
-    }
-    .logo-slit {
-      stroke: #d1fae5;
-    }
-    .logo-sparkle {
-      fill: #047857;
-    }
-    .logo-dot {
-      fill: #10b981;
-    }
-  }
   :global(.dark) .logo-bg-rect {
     fill: url(#appMintBg);
     stroke: rgba(5, 150, 105, 0.25);

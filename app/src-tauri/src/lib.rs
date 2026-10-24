@@ -119,6 +119,8 @@ pub fn run() {
             commands::install_app_update,
             commands::send_support_report,
             commands::app_info,
+            commands::get_ui_preferences,
+            commands::save_ui_preferences,
             commands::quit_app,
             commands::complete_installation,
             commands::uninstall_self,
