@@ -653,6 +653,154 @@ test("PayPal subscription flow: /api/create-subscription, /api/confirm-subscript
   assert.equal(ent?.status, "active");
 });
 
+test("Alternative D geo-targeted payment profiles & auto-renewing SEPA / iDEAL / Revolut Pay subscriptions", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  let lastSubPaymentMethodTypes: string[] = [];
+  let lastConfirmedPmType = "";
+  let lastConfirmedIban = "";
+
+  const mockStripe: any = {
+    products: {
+      list: async () => ({ data: [{ id: "prod_sweepr", name: "SWEEPR Cleaner Pro" }] }),
+    },
+    prices: {
+      retrieve: async () => ({ id: "price_monthly_test", product: "prod_sweepr" }),
+    },
+    coupons: {
+      retrieve: async (id: string) => ({ id }),
+    },
+    customers: {
+      create: async (params: any) => ({ id: "cus_geo_1", email: params.email }),
+      update: async (id: string, params: any) => ({ id, ...params }),
+    },
+    subscriptions: {
+      create: async (params: any) => {
+        lastSubPaymentMethodTypes = params.payment_settings?.payment_method_types || [];
+        return {
+          id: "sub_geo_1",
+          status: "incomplete",
+          livemode: false,
+          metadata: params.metadata || {},
+          latest_invoice: {
+            confirmation_secret: { client_secret: "pi_geo_1_secret_xyz" },
+          },
+        };
+      },
+      retrieve: async (id: string) => ({
+        id,
+        customer: "cus_geo_1",
+        status: "incomplete",
+        created: nowSec,
+        current_period_end: nowSec + 86400 * 365,
+        cancel_at_period_end: false,
+        currency: "eur",
+        metadata: {},
+        items: {
+          data: [
+            {
+              price: {
+                unit_amount: 5999,
+                currency: "eur",
+                recurring: { interval: "year", interval_count: 1 },
+              },
+              quantity: 1,
+            },
+          ],
+        },
+      }),
+      cancel: async () => ({ id: "sub_geo_1", status: "canceled" }),
+    },
+    paymentIntents: {
+      confirm: async (id: string, params: any) => {
+        lastConfirmedPmType = params.payment_method_data?.type || "";
+        lastConfirmedIban = params.payment_method_data?.sepa_debit?.iban || "";
+        assert.equal(params.mandate_data?.customer_acceptance?.type, "online");
+        if (lastConfirmedPmType === "sepa_debit") {
+          return {
+            id,
+            livemode: false,
+            status: "processing",
+          };
+        }
+        return {
+          id,
+          livemode: false,
+          status: "requires_action",
+          next_action: {
+            redirect_to_url: {
+              url: `https://hooks.stripe.com/redirect/${lastConfirmedPmType}`,
+            },
+          },
+        };
+      },
+    },
+  };
+
+  const { post, repo, app } = setup({ stripe: mockStripe });
+
+  // 1. Geo paymentProfile on /api/checkout-config adapts to NL, DE, BE, US, KR, and GB
+  const nlCfg = await (await app.request("/api/checkout-config?country=NL")).json();
+  assert.deepEqual(nlCfg.paymentProfile.expressWindows, ["ideal", "paypal", "google_pay"]);
+  assert.deepEqual(nlCfg.paymentProfile.expressApple, ["ideal", "apple_pay", "paypal"]);
+  assert.equal(nlCfg.paymentProfile.defaultLogoMethod, "ideal");
+
+  const deCfg = await (await app.request("/api/checkout-config?country=DE")).json();
+  assert.deepEqual(deCfg.paymentProfile.expressWindows, ["paypal", "sepa_debit", "google_pay"]);
+  assert.equal(deCfg.paymentProfile.defaultLogoMethod, "sepa_debit");
+
+  const beCfg = await (await app.request("/api/checkout-config?country=BE")).json();
+  assert.equal(beCfg.paymentProfile.defaultLogoMethod, "bancontact");
+
+  const usCfg = await (await app.request("/api/checkout-config?country=US")).json();
+  assert.deepEqual(usCfg.paymentProfile.expressWindows, ["paypal", "google_pay", "amazon_pay"]);
+  assert.equal(usCfg.paymentProfile.logoStripMethods[1].id, "cashapp");
+
+  const krCfg = await (await app.request("/api/checkout-config?country=KR")).json();
+  assert.deepEqual(krCfg.paymentProfile.expressWindows, ["kakao_pay", "naver_pay", "paypal"]);
+  assert.equal(krCfg.paymentProfile.defaultLogoMethod, "kakao_pay");
+
+  // 2. SEPA Direct Debit (IBAN) validates IBAN, confirms with sepa_debit online mandate, and activates entitlement on 'processing'
+  const sepaRes = await post("/api/create-subscription", {
+    email: "max.mustermann@example.de",
+    name: "Max Mustermann",
+    iban: "de89 3704 0044 0532 0130 00",
+    paymentMethod: "sepa_debit",
+    plan: "annual",
+  });
+  assert.equal(sepaRes.status, 200);
+  const sepaData = await sepaRes.json();
+  assert.deepEqual(lastSubPaymentMethodTypes, ["sepa_debit"]);
+  assert.equal(lastConfirmedPmType, "sepa_debit");
+  assert.equal(lastConfirmedIban, "DE89370400440532013000");
+  assert.ok(sepaData.redirectUrl.startsWith("/checkout/success?web=1"));
+  assert.equal(repo.entitlement(sepaData.accountId)?.status, "active");
+
+  // 3. iDEAL recurring mandate creates ["ideal", "sepa_debit"] subscription and returns bank redirect URL
+  const idealRes = await post("/api/create-subscription", {
+    email: "jan@example.nl",
+    name: "Jan Jansen",
+    paymentMethod: "ideal",
+    plan: "annual",
+  });
+  assert.equal(idealRes.status, 200);
+  const idealData = await idealRes.json();
+  assert.deepEqual(lastSubPaymentMethodTypes, ["ideal", "sepa_debit"]);
+  assert.equal(lastConfirmedPmType, "ideal");
+  assert.equal(idealData.redirectUrl, "https://hooks.stripe.com/redirect/ideal");
+
+  // 4. Revolut Pay Express click (without upfront email) creates pending account and returns Revolut redirect URL
+  const revRes = await post("/api/create-subscription", {
+    paymentMethod: "revolut_pay",
+    plan: "annual",
+  });
+  assert.equal(revRes.status, 200);
+  const revData = await revRes.json();
+  assert.deepEqual(lastSubPaymentMethodTypes, ["revolut_pay"]);
+  assert.equal(lastConfirmedPmType, "revolut_pay");
+  assert.equal(revData.redirectUrl, "https://hooks.stripe.com/redirect/revolut_pay");
+});
+
+
 
 
 

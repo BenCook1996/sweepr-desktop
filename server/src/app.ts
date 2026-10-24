@@ -722,6 +722,14 @@ export function createApp(deps: AppDeps) {
     "huf", "ils", "jpy", "mxn", "nok", "nzd", "php", "pln", "sek", "sgd",
   ]);
 
+  const SUPPORTED_REVOLUT_CURRENCIES = new Set([
+    "gbp", "eur", "usd", "pln", "ron", "czk", "chf", "sek", "nok", "dkk", "bgn", "huf",
+  ]);
+
+  const SUPPORTED_AMAZON_PAY_CURRENCIES = new Set([
+    "gbp", "eur", "usd", "chf", "sek", "dkk", "nok", "jpy", "aud", "hkd", "nzd",
+  ]);
+
   function resolvePayPalPricing(pricing: ReturnType<typeof getPricingForCountryOrCurrency>) {
     if (SUPPORTED_PAYPAL_CURRENCIES.has(pricing.currency.toLowerCase())) {
       return pricing;
@@ -729,15 +737,178 @@ export function createApp(deps: AppDeps) {
     return getPricingForCountryOrCurrency(pricing.country, "gbp");
   }
 
-  async function createPayPalCheckoutSessionFallback(opts: {
+  function resolvePaymentMethodPricing(
+    pricing: ReturnType<typeof getPricingForCountryOrCurrency>,
+    paymentMethod: string
+  ) {
+    const pm = paymentMethod.toLowerCase();
+    const curr = pricing.currency.toLowerCase();
+    if (pm === "paypal") {
+      return resolvePayPalPricing(pricing);
+    }
+    if (pm === "ideal" || pm === "bancontact" || pm === "sepa_debit") {
+      return curr === "eur" ? pricing : getPricingForCountryOrCurrency(pricing.country, "eur");
+    }
+    if (pm === "revolut_pay") {
+      return SUPPORTED_REVOLUT_CURRENCIES.has(curr)
+        ? pricing
+        : getPricingForCountryOrCurrency(pricing.country, "gbp");
+    }
+    if (pm === "amazon_pay") {
+      return SUPPORTED_AMAZON_PAY_CURRENCIES.has(curr)
+        ? pricing
+        : getPricingForCountryOrCurrency(pricing.country, "gbp");
+    }
+    if (pm === "cashapp") {
+      return curr === "usd" ? pricing : getPricingForCountryOrCurrency(pricing.country, "usd");
+    }
+    if (pm === "kakao_pay" || pm === "naver_pay" || pm === "kr_card") {
+      return curr === "krw" ? pricing : getPricingForCountryOrCurrency(pricing.country, "krw");
+    }
+    return pricing;
+  }
+
+  function getGeoPaymentProfile(countryCode: string, currencyCode: string) {
+    const c = (countryCode || "GB").toUpperCase();
+    const curr = (currencyCode || "gbp").toLowerCase();
+
+    if (c === "NL") {
+      return {
+        country: c,
+        expressWindows: ["ideal", "paypal", "google_pay"],
+        expressApple: ["ideal", "apple_pay", "paypal"],
+        logoStripMethods: [
+          { id: "ideal", label: "iDEAL (Dutch Bank)", tag: "70% NL Share" },
+          { id: "card", label: "Card (Visa / MC)", tag: "Instant" },
+          { id: "sepa_debit", label: "SEPA Incasso", tag: "IBAN" },
+        ],
+        defaultLogoMethod: "ideal",
+      };
+    }
+
+    if (c === "BE") {
+      return {
+        country: c,
+        expressWindows: ["bancontact", "paypal", "google_pay"],
+        expressApple: ["bancontact", "apple_pay", "paypal"],
+        logoStripMethods: [
+          { id: "bancontact", label: "Bancontact", tag: "#1 in Belgium" },
+          { id: "card", label: "Card (Visa / MC)", tag: "Instant" },
+          { id: "sepa_debit", label: "SEPA Domiciliëring", tag: "IBAN" },
+        ],
+        defaultLogoMethod: "bancontact",
+      };
+    }
+
+    if (c === "DE" || c === "AT") {
+      return {
+        country: c,
+        expressWindows: ["paypal", "sepa_debit", "google_pay"],
+        expressApple: ["paypal", "apple_pay", "sepa_debit"],
+        logoStripMethods: [
+          { id: "sepa_debit", label: "SEPA-Lastschrift (IBAN)", tag: "Top in DE" },
+          { id: "card", label: "Kreditkarte (Visa / MC)", tag: "Instant" },
+          { id: "amazon_pay", label: "Amazon Pay", tag: "1-Click" },
+        ],
+        defaultLogoMethod: "sepa_debit",
+      };
+    }
+
+    if (c === "KR" || curr === "krw") {
+      return {
+        country: c,
+        expressWindows: ["kakao_pay", "naver_pay", "paypal"],
+        expressApple: ["kakao_pay", "naver_pay", "apple_pay"],
+        logoStripMethods: [
+          { id: "kakao_pay", label: "Kakao Pay (카카오페이)", tag: "#1 in Korea" },
+          { id: "naver_pay", label: "Naver Pay (네이버페이)", tag: "1-Click" },
+          { id: "card", label: "Korean / Intl Card", tag: "kr_card" },
+        ],
+        defaultLogoMethod: "kakao_pay",
+      };
+    }
+
+    if (["FR", "ES", "IT", "IE", "PT", "FI", "LU", "GR"].includes(c) || curr === "eur") {
+      return {
+        country: c,
+        expressWindows: ["paypal", "google_pay", "revolut_pay"],
+        expressApple: ["apple_pay", "paypal", "revolut_pay"],
+        logoStripMethods: [
+          {
+            id: "card",
+            label: c === "FR" ? "Carte Bancaire / Visa / MC" : "Card (Visa / MC / Amex)",
+            tag: "+ Stripe Link",
+          },
+          { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
+          {
+            id: "sepa_debit",
+            label: c === "FR" ? "Prélèvement SEPA" : "SEPA Direct Debit",
+            tag: "IBAN Debit",
+          },
+        ],
+        defaultLogoMethod: "card",
+      };
+    }
+
+    if (c === "US") {
+      return {
+        country: c,
+        expressWindows: ["paypal", "google_pay", "amazon_pay"],
+        expressApple: ["apple_pay", "paypal", "google_pay"],
+        logoStripMethods: [
+          { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
+          { id: "cashapp", label: "Cash App Pay", tag: "Instant Mobile" },
+          { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
+        ],
+        defaultLogoMethod: "card",
+      };
+    }
+
+    if (c === "CA" || c === "AU" || c === "NZ") {
+      return {
+        country: c,
+        expressWindows: ["paypal", "google_pay", "amazon_pay"],
+        expressApple: ["apple_pay", "paypal", "google_pay"],
+        logoStripMethods: [
+          { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
+          { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
+          { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
+        ],
+        defaultLogoMethod: "card",
+      };
+    }
+
+    // Default: UK (GB), Poland, Nordics, Switzerland, Rest of World
+    return {
+      country: c,
+      expressWindows: ["paypal", "google_pay", "revolut_pay"],
+      expressApple: ["apple_pay", "paypal", "google_pay"],
+      logoStripMethods: [
+        { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
+        { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
+        { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
+      ],
+      defaultLogoMethod: "card",
+    };
+  }
+
+  async function createRedirectCheckoutSessionFallback(opts: {
     customerId: string;
     accountId: string;
     subItems: any[];
     introCouponId: string;
     attributionMeta: Record<string, string>;
     isPopup?: boolean;
+    paymentMethod?: string;
   }) {
     if (!stripe) return null;
+    const pm = (opts.paymentMethod || "paypal").toLowerCase();
+    const pmTypes =
+      pm === "ideal"
+        ? ["ideal"]
+        : pm === "bancontact"
+        ? ["bancontact"]
+        : [pm];
     const baseSessionParams: any = {
       mode: "subscription",
       customer: opts.customerId,
@@ -756,7 +927,7 @@ export function createApp(deps: AppDeps) {
       return await stripe.checkout.sessions.create({
         ...baseSessionParams,
         managed_payments: { enabled: false },
-        payment_method_types: ["paypal"],
+        payment_method_types: pmTypes,
       } as any);
     } catch {
       try {
@@ -769,6 +940,8 @@ export function createApp(deps: AppDeps) {
       }
     }
   }
+
+  const createPayPalCheckoutSessionFallback = createRedirectCheckoutSessionFallback;
 
   async function retrieveSubscriptionSafe(subscriptionId: string): Promise<Stripe.Subscription> {
     if (!stripe) throw new Error("Stripe not configured");
@@ -1112,6 +1285,7 @@ export function createApp(deps: AppDeps) {
       symbolPosition: localizedPricing.symbolPosition,
       zeroDecimal: localizedPricing.zeroDecimal,
       pricing: localizedPricing,
+      paymentProfile: getGeoPaymentProfile(localizedPricing.country, localizedPricing.currency),
       amountTodayPence: localizedPricing.annualAmount,
       amountRegularPence: localizedPricing.annualAmount,
       amountRecurringPence: localizedPricing.annualAmount,
@@ -1280,13 +1454,31 @@ export function createApp(deps: AppDeps) {
     const body = await c.req.json().catch(() => ({}));
     const paymentMethod = typeof body.paymentMethod === "string" ? body.paymentMethod.toLowerCase() : "card";
     const isPayPal = paymentMethod === "paypal";
-    const isWallet = paymentMethod === "wallet" || paymentMethod === "google_pay";
+    const isSepaDebit = paymentMethod === "sepa_debit";
+    const isRedirectMethod = [
+      "paypal",
+      "revolut_pay",
+      "amazon_pay",
+      "ideal",
+      "bancontact",
+      "cashapp",
+      "kakao_pay",
+      "naver_pay",
+    ].includes(paymentMethod);
+    const isWallet = paymentMethod === "wallet" || paymentMethod === "google_pay" || paymentMethod === "apple_pay";
     const isPopup = Boolean(body.popup);
     const providedEmail = normalizeEmail(body.email);
     const email =
       providedEmail ||
-      (isPayPal || isWallet ? `${isPayPal ? "paypal" : "wallet"}_${randomToken(6).toLowerCase()}@pending.sweeprcleaner.com` : null);
+      (isRedirectMethod || isWallet
+        ? `${paymentMethod}_${randomToken(6).toLowerCase()}@pending.sweeprcleaner.com`
+        : null);
     if (!email) return c.json({ error: "Please enter a valid email address." }, 400);
+
+    const rawIban = typeof body.iban === "string" ? body.iban.replace(/\s+/g, "").toUpperCase() : "";
+    if (isSepaDebit && (!rawIban || rawIban.length < 14 || !/^[A-Z]{2}[0-9A-Z]{12,32}$/.test(rawIban))) {
+      return c.json({ error: "Please enter a valid IBAN (e.g. DE89 3704 0044 0532 0130 00)." }, 400);
+    }
 
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";
     const addressLine1 = typeof body.address === "string" ? body.address.trim().slice(0, 200) : "";
@@ -1320,7 +1512,7 @@ export function createApp(deps: AppDeps) {
     }
 
     const rawPricing = await resolvePricingForRequest(c, { trustProxy });
-    const localizedPricing = isPayPal ? resolvePayPalPricing(rawPricing) : rawPricing;
+    const localizedPricing = resolvePaymentMethodPricing(rawPricing, paymentMethod);
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     let accountId: string;
@@ -1439,13 +1631,24 @@ export function createApp(deps: AppDeps) {
           ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
           : "";
 
+      const subscriptionPaymentMethodTypes =
+        paymentMethod === "ideal"
+          ? ["ideal", "sepa_debit"]
+          : paymentMethod === "bancontact"
+          ? ["bancontact", "sepa_debit"]
+          : isSepaDebit
+          ? ["sepa_debit"]
+          : isRedirectMethod
+          ? [paymentMethod]
+          : ["card"];
+
       const subParams: any = {
         customer: customerId,
         items: subItems,
         payment_behavior: "default_incomplete",
         payment_settings: {
           save_default_payment_method: "on_subscription",
-          payment_method_types: isPayPal ? ["paypal"] : ["card"],
+          payment_method_types: subscriptionPaymentMethodTypes,
         },
         ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
@@ -1456,14 +1659,28 @@ export function createApp(deps: AppDeps) {
       try {
         subscription = await stripe.subscriptions.create(subParams);
       } catch (subErr: any) {
-        if (isPayPal) {
-          const checkoutSession = await createPayPalCheckoutSessionFallback({
+        if (subscriptionPaymentMethodTypes.length > 1) {
+          try {
+            subscription = await stripe.subscriptions.create({
+              ...subParams,
+              payment_settings: {
+                save_default_payment_method: "on_subscription",
+                payment_method_types: [paymentMethod],
+              },
+            });
+          } catch {
+            // Fall through to checkout session fallback
+          }
+        }
+        if (!subscription && (isRedirectMethod || isSepaDebit)) {
+          const checkoutSession = await createRedirectCheckoutSessionFallback({
             customerId,
             accountId,
             subItems,
             introCouponId,
             attributionMeta,
             isPopup,
+            paymentMethod,
           }).catch(() => null);
           if (checkoutSession?.url) {
             return c.json({
@@ -1475,7 +1692,9 @@ export function createApp(deps: AppDeps) {
             });
           }
         }
-        throw subErr;
+        if (!subscription) {
+          throw subErr;
+        }
       }
       const latestInvoice: any = subscription.latest_invoice;
       let paymentIntent: any =
@@ -1496,17 +1715,18 @@ export function createApp(deps: AppDeps) {
       }
 
       if (!paymentIntent?.id) {
-        if (isPayPal) {
+        if (isRedirectMethod || isSepaDebit) {
           if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
             await stripe.subscriptions.cancel(subscription.id).catch(() => {});
           }
-          const checkoutSession = await createPayPalCheckoutSessionFallback({
+          const checkoutSession = await createRedirectCheckoutSessionFallback({
             customerId,
             accountId,
             subItems,
             introCouponId,
             attributionMeta,
             isPopup,
+            paymentMethod,
           }).catch(() => null);
           if (checkoutSession?.url) {
             return c.json({
@@ -1522,26 +1742,96 @@ export function createApp(deps: AppDeps) {
       }
 
       const returnUrl = `${config.publicUrl}/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}${isPopup ? "&popup=1" : ""}`;
+      const rawIp = clientIp(c);
+      const validIp =
+        !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
+          ? "127.0.0.1"
+          : rawIp;
+      const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
 
-      // Direct PayPal flow: confirm PaymentIntent with PayPal and return the direct PayPal authorization URL
-      if (isPayPal) {
-        const rawIp = clientIp(c);
-        const validIp =
-          !rawIp || rawIp === "local" || rawIp === "::1" || rawIp === "::ffff:127.0.0.1"
-            ? "127.0.0.1"
-            : rawIp;
-        const userAgent = c.req.header("user-agent") || "Mozilla/5.0";
+      // Direct SEPA Direct Debit (IBAN) confirmation with online recurring mandate
+      if (isSepaDebit) {
+        const confirmedPi: any = await stripe.paymentIntents.confirm(paymentIntent.id, {
+          payment_method_data: {
+            type: "sepa_debit",
+            sepa_debit: { iban: rawIban },
+            billing_details: {
+              name: name || (providedEmail ? providedEmail.split("@")[0] : "Account Holder"),
+              email: providedEmail || email,
+              ...(addressLine1 || postalCode
+                ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
+                : {}),
+            },
+          },
+          mandate_data: {
+            customer_acceptance: {
+              type: "online",
+              online: {
+                ip_address: validIp,
+                user_agent: userAgent,
+              },
+            },
+          },
+          return_url: returnUrl,
+        } as any);
+
+        if (confirmedPi?.status === "requires_action" && confirmedPi?.next_action?.redirect_to_url?.url) {
+          return c.json({
+            redirectUrl: confirmedPi.next_action.redirect_to_url.url,
+            subscriptionId: subscription.id,
+            accountId,
+            plan,
+            livemode: Boolean(confirmedPi.livemode),
+          });
+        }
+
+        const updatedSub = await retrieveSubscriptionSafe(subscription.id).catch(() => subscription);
+        const effectiveSub =
+          updatedSub.status === "incomplete" &&
+          (confirmedPi?.status === "processing" || confirmedPi?.status === "succeeded")
+            ? ({ ...updatedSub, status: "active" } as Stripe.Subscription)
+            : updatedSub;
+        syncSubscription(repo, effectiveSub, accountId);
+
+        const resolvedAccount = repo.accountById(accountId);
+        if (resolvedAccount) {
+          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
+            path: "/",
+            httpOnly: true,
+            sameSite: "Lax",
+            secure: isHttps,
+            maxAge: 86400 * 30,
+          });
+          const planLabel =
+            plan === "annual" ? "Annual" : plan === "six_month" ? "6-Month" : "Pro";
+          await dispatchActivationEmail(resolvedAccount, planLabel);
+        }
+
+        return c.json({
+          redirectUrl: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`,
+          subscriptionId: subscription.id,
+          accountId,
+          plan,
+          livemode: Boolean(confirmedPi?.livemode),
+        });
+      }
+
+      // Direct Redirect / Popup Mandate flow: PayPal, Revolut Pay, Amazon Pay, iDEAL, Bancontact, Cash App, Kakao Pay, Naver Pay
+      if (isRedirectMethod) {
+        const requiresBillingName = paymentMethod === "ideal" || paymentMethod === "bancontact";
+        const effectiveName =
+          name || (requiresBillingName ? (providedEmail ? providedEmail.split("@")[0] : "Customer") : "");
 
         let confirmedPi: any = null;
         try {
           confirmedPi = await stripe.paymentIntents.confirm(paymentIntent.id, {
             payment_method_data: {
-              type: "paypal",
-              ...(providedEmail || name
+              type: paymentMethod as any,
+              ...(providedEmail || effectiveName
                 ? {
                     billing_details: {
                       ...(providedEmail ? { email: providedEmail } : {}),
-                      ...(name ? { name } : {}),
+                      ...(effectiveName ? { name: effectiveName } : {}),
                     },
                   }
                 : {}),
@@ -1556,18 +1846,19 @@ export function createApp(deps: AppDeps) {
               },
             },
             return_url: returnUrl,
-          });
+          } as any);
         } catch (piErr: any) {
           if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
             await stripe.subscriptions.cancel(subscription.id).catch(() => {});
           }
-          const checkoutSession = await createPayPalCheckoutSessionFallback({
+          const checkoutSession = await createRedirectCheckoutSessionFallback({
             customerId,
             accountId,
             subItems,
             introCouponId,
             attributionMeta,
             isPopup,
+            paymentMethod,
           }).catch(() => null);
           if (checkoutSession?.url) {
             return c.json({
@@ -1581,18 +1872,40 @@ export function createApp(deps: AppDeps) {
           throw piErr;
         }
 
-        const redirectUrl = confirmedPi?.next_action?.redirect_to_url?.url ?? null;
+        const redirectUrl =
+          confirmedPi?.next_action?.redirect_to_url?.url ??
+          confirmedPi?.next_action?.cashapp_handle_redirect_or_display_qr_code?.hosted_instructions_url ??
+          null;
         if (!redirectUrl) {
+          if (confirmedPi?.status === "succeeded" || confirmedPi?.status === "processing") {
+            const updatedSub = await retrieveSubscriptionSafe(subscription.id).catch(() => subscription);
+            syncSubscription(repo, { ...updatedSub, status: "active" } as Stripe.Subscription, accountId);
+            await setSignedCookie(c, SESSION_COOKIE, accountId, sessionSecret, {
+              path: "/",
+              httpOnly: true,
+              sameSite: "Lax",
+              secure: isHttps,
+              maxAge: 86400 * 30,
+            });
+            return c.json({
+              redirectUrl: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`,
+              subscriptionId: subscription.id,
+              accountId,
+              plan,
+              livemode: Boolean(confirmedPi.livemode),
+            });
+          }
           if (subscription?.id && typeof (stripe.subscriptions as any)?.cancel === "function") {
             await stripe.subscriptions.cancel(subscription.id).catch(() => {});
           }
-          const checkoutSession = await createPayPalCheckoutSessionFallback({
+          const checkoutSession = await createRedirectCheckoutSessionFallback({
             customerId,
             accountId,
             subItems,
             introCouponId,
             attributionMeta,
             isPopup,
+            paymentMethod,
           }).catch(() => null);
           if (checkoutSession?.url) {
             return c.json({
@@ -1603,7 +1916,7 @@ export function createApp(deps: AppDeps) {
               livemode: Boolean(checkoutSession.livemode),
             });
           }
-          return c.json({ error: "Could not initialize PayPal authorization redirect." }, 500);
+          return c.json({ error: `Could not initialize ${paymentMethod} authorization redirect.` }, 500);
         }
 
         return c.json({
@@ -1930,6 +2243,24 @@ export function createApp(deps: AppDeps) {
               id: pm.id,
               brand: "paypal",
               last4: pm.paypal?.payer_email || pm.billing_details?.email || "PayPal",
+              exp_month: 0,
+              exp_year: 0,
+            };
+          } else if (defPm && typeof defPm === "object" && ((defPm as any).type === "sepa_debit" || (defPm as any).sepa_debit)) {
+            const pm = defPm as any;
+            paymentMethod = {
+              id: pm.id,
+              brand: "sepa_debit",
+              last4: pm.sepa_debit?.last4 || "IBAN",
+              exp_month: 0,
+              exp_year: 0,
+            };
+          } else if (defPm && typeof defPm === "object" && (defPm as any).type) {
+            const pm = defPm as any;
+            paymentMethod = {
+              id: pm.id,
+              brand: String(pm.type),
+              last4: pm.billing_details?.email || String(pm.type).toUpperCase(),
               exp_month: 0,
               exp_year: 0,
             };

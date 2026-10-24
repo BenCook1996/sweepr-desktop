@@ -34,54 +34,60 @@ const app = createApp({ repo, signingKey, stripe, config });
 serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   console.log(`Sweepr licence server listening on http://${info.address}:${info.port}`);
 
-  // Automatically ensure PayPal, Apple Pay, Google Pay & Link are enabled in Stripe Payment Method Configurations,
-  // and register Apple Pay domain(s) in Stripe once server is listening.
+  // Automatically ensure all supported auto-renewing payment methods (PayPal, Apple Pay, Google Pay, Link,
+  // Revolut Pay, Amazon Pay, iDEAL, Bancontact, SEPA Direct Debit, Cash App Pay, Kakao Pay, Naver Pay, Korean Cards)
+  // are enabled in Stripe Payment Method Configurations, and register Apple Pay domain(s) once server is listening.
   if (stripe) {
     setTimeout(async () => {
+      const desiredAutoRenewMethods = [
+        "paypal",
+        "apple_pay",
+        "google_pay",
+        "link",
+        "revolut_pay",
+        "amazon_pay",
+        "ideal",
+        "bancontact",
+        "sepa_debit",
+        "cashapp",
+        "kakao_pay",
+        "naver_pay",
+        "kr_card",
+      ];
       try {
         const configs = await stripe.paymentMethodConfigurations.list({ limit: 10 });
         for (const pmc of configs.data) {
           if (!pmc.active || pmc.application) continue;
-          const paypalPref = (pmc as any).paypal?.display_preference?.preference;
-          const applePayPref = (pmc as any).apple_pay?.display_preference?.preference;
-          const googlePayPref = (pmc as any).google_pay?.display_preference?.preference;
-          const linkPref = (pmc as any).link?.display_preference?.preference;
-
           const updatePayload: Record<string, any> = {};
-          if (paypalPref && paypalPref !== "on") {
-            updatePayload.paypal = { display_preference: { preference: "on" } };
-          }
-          if (applePayPref && applePayPref !== "on") {
-            updatePayload.apple_pay = { display_preference: { preference: "on" } };
-          }
-          if (googlePayPref && googlePayPref !== "on") {
-            updatePayload.google_pay = { display_preference: { preference: "on" } };
-          }
-          if (linkPref && linkPref !== "on") {
-            updatePayload.link = { display_preference: { preference: "on" } };
+          for (const methodKey of desiredAutoRenewMethods) {
+            const pref = (pmc as any)[methodKey]?.display_preference?.preference;
+            if (pref && pref !== "on") {
+              updatePayload[methodKey] = { display_preference: { preference: "on" } };
+            }
           }
 
           if (Object.keys(updatePayload).length > 0) {
             try {
               await stripe.paymentMethodConfigurations.update(pmc.id, updatePayload as any);
               console.log(`[stripe] Enabled payment methods on configuration ${pmc.id}:`, Object.keys(updatePayload).join(", "));
-            } catch (pmErr: any) {
-              // If one method fails (e.g. Link), still try enabling PayPal specifically
-              if (updatePayload.paypal) {
+            } catch {
+              // If bulk update fails because one regional method isn't activated on the merchant account yet,
+              // enable each supported method individually so every eligible method is turned on.
+              const enabledIndividually: string[] = [];
+              for (const methodKey of Object.keys(updatePayload)) {
                 try {
                   await stripe.paymentMethodConfigurations.update(pmc.id, {
-                    paypal: { display_preference: { preference: "on" } },
+                    [methodKey]: { display_preference: { preference: "on" } },
                   } as any);
-                  console.log(`[stripe] Enabled PayPal on configuration ${pmc.id}`);
-                } catch (ppErr: any) {
-                  console.warn(`[stripe] Could not enable PayPal on configuration ${pmc.id}: ${ppErr?.message || ppErr}`);
-                }
-              } else {
-                console.warn(`[stripe] Payment method config update skipped for ${pmc.id}: ${pmErr?.message || pmErr}`);
+                  enabledIndividually.push(methodKey);
+                } catch {}
+              }
+              if (enabledIndividually.length > 0) {
+                console.log(`[stripe] Enabled payment methods individually on ${pmc.id}:`, enabledIndividually.join(", "));
               }
             }
           } else {
-            console.log(`[stripe] Payment method configuration ${pmc.id} already has PayPal=${paypalPref ?? "default"} enabled.`);
+            console.log(`[stripe] Payment method configuration ${pmc.id} already has all eligible auto-renewing methods enabled.`);
           }
         }
       } catch (err: any) {
