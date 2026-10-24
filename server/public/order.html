@@ -694,7 +694,7 @@
           <!-- Interactive 3-Option Payment Logo-Bar Switcher (Alternative D) -->
           <div id="paymentLogoStripBar" class="grid grid-cols-3 gap-1.5 bg-gray-100/90 p-1 rounded-xl border border-gray-200" role="tablist" aria-label="Select payment method">
             <button type="button" data-logo-method="card" onclick="selectPaymentLogoMethod('card')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border border-emerald-500 font-extrabold">
-              <div class="text-xs truncate">Card (Visa / MC / Amex)</div>
+              <div class="text-xs truncate">Card</div>
               <div class="text-[10px] text-emerald-700 font-bold truncate">+ Stripe Link</div>
             </button>
             <button type="button" data-logo-method="revolut_pay" onclick="selectPaymentLogoMethod('revolut_pay')" class="py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer text-gray-600 hover:text-gray-900 font-semibold">
@@ -1399,7 +1399,7 @@
         expressWindows: ['paypal', 'google_pay', 'revolut_pay'],
         expressApple: ['apple_pay', 'paypal', 'google_pay'],
         logoStripMethods: [
-          { id: 'card', label: 'Card (Visa / MC / Amex)', tag: '+ Stripe Link' },
+          { id: 'card', label: 'Card', tag: '+ Stripe Link' },
           { id: 'revolut_pay', label: 'Revolut Pay', tag: '1-Click App' },
           { id: 'amazon_pay', label: 'Amazon Pay', tag: 'Use Amazon' }
         ],
@@ -1427,7 +1427,7 @@
       const logoMethods = Array.isArray(profile.logoStripMethods) && profile.logoStripMethods.length > 0
         ? profile.logoStripMethods
         : [
-            { id: 'card', label: 'Card (Visa / MC / Amex)', tag: '+ Stripe Link' },
+            { id: 'card', label: 'Card', tag: '+ Stripe Link' },
             { id: 'revolut_pay', label: 'Revolut Pay', tag: '1-Click App' },
             { id: 'amazon_pay', label: 'Amazon Pay', tag: 'Use Amazon' }
           ];

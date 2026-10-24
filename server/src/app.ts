@@ -778,8 +778,8 @@ export function createApp(deps: AppDeps) {
         expressWindows: ["ideal", "paypal", "google_pay"],
         expressApple: ["ideal", "apple_pay", "paypal"],
         logoStripMethods: [
-          { id: "ideal", label: "iDEAL (Dutch Bank)", tag: "70% NL Share" },
-          { id: "card", label: "Card (Visa / MC)", tag: "Instant" },
+          { id: "ideal", label: "iDEAL", tag: "Dutch Bank" },
+          { id: "card", label: "Card", tag: "+ Stripe Link" },
           { id: "sepa_debit", label: "SEPA Incasso", tag: "IBAN" },
         ],
         defaultLogoMethod: "ideal",
@@ -793,8 +793,8 @@ export function createApp(deps: AppDeps) {
         expressApple: ["bancontact", "apple_pay", "paypal"],
         logoStripMethods: [
           { id: "bancontact", label: "Bancontact", tag: "#1 in Belgium" },
-          { id: "card", label: "Card (Visa / MC)", tag: "Instant" },
-          { id: "sepa_debit", label: "SEPA Domiciliëring", tag: "IBAN" },
+          { id: "card", label: "Card", tag: "+ Stripe Link" },
+          { id: "sepa_debit", label: "SEPA IBAN", tag: "Domiciliëring" },
         ],
         defaultLogoMethod: "bancontact",
       };
@@ -806,8 +806,8 @@ export function createApp(deps: AppDeps) {
         expressWindows: ["paypal", "sepa_debit", "google_pay"],
         expressApple: ["paypal", "apple_pay", "sepa_debit"],
         logoStripMethods: [
-          { id: "sepa_debit", label: "SEPA-Lastschrift (IBAN)", tag: "Top in DE" },
-          { id: "card", label: "Kreditkarte (Visa / MC)", tag: "Instant" },
+          { id: "sepa_debit", label: "SEPA IBAN", tag: "Lastschrift" },
+          { id: "card", label: "Card", tag: "+ Stripe Link" },
           { id: "amazon_pay", label: "Amazon Pay", tag: "1-Click" },
         ],
         defaultLogoMethod: "sepa_debit",
@@ -820,9 +820,9 @@ export function createApp(deps: AppDeps) {
         expressWindows: ["kakao_pay", "naver_pay", "paypal"],
         expressApple: ["kakao_pay", "naver_pay", "apple_pay"],
         logoStripMethods: [
-          { id: "kakao_pay", label: "Kakao Pay (카카오페이)", tag: "#1 in Korea" },
-          { id: "naver_pay", label: "Naver Pay (네이버페이)", tag: "1-Click" },
-          { id: "card", label: "Korean / Intl Card", tag: "kr_card" },
+          { id: "kakao_pay", label: "Kakao Pay", tag: "#1 in Korea" },
+          { id: "naver_pay", label: "Naver Pay", tag: "1-Click" },
+          { id: "card", label: "Card", tag: "kr_card" },
         ],
         defaultLogoMethod: "kakao_pay",
       };
@@ -836,14 +836,14 @@ export function createApp(deps: AppDeps) {
         logoStripMethods: [
           {
             id: "card",
-            label: c === "FR" ? "Carte Bancaire / Visa / MC" : "Card (Visa / MC / Amex)",
+            label: "Card",
             tag: "+ Stripe Link",
           },
           { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
           {
             id: "sepa_debit",
-            label: c === "FR" ? "Prélèvement SEPA" : "SEPA Direct Debit",
-            tag: "IBAN Debit",
+            label: "SEPA IBAN",
+            tag: "Direct Debit",
           },
         ],
         defaultLogoMethod: "card",
@@ -856,8 +856,8 @@ export function createApp(deps: AppDeps) {
         expressWindows: ["paypal", "google_pay", "amazon_pay"],
         expressApple: ["apple_pay", "paypal", "google_pay"],
         logoStripMethods: [
-          { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
-          { id: "cashapp", label: "Cash App Pay", tag: "Instant Mobile" },
+          { id: "card", label: "Card", tag: "+ Stripe Link" },
+          { id: "cashapp", label: "Cash App", tag: "Instant Mobile" },
           { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
         ],
         defaultLogoMethod: "card",
@@ -870,7 +870,7 @@ export function createApp(deps: AppDeps) {
         expressWindows: ["paypal", "google_pay", "amazon_pay"],
         expressApple: ["apple_pay", "paypal", "google_pay"],
         logoStripMethods: [
-          { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
+          { id: "card", label: "Card", tag: "+ Stripe Link" },
           { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
           { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
         ],
@@ -884,7 +884,7 @@ export function createApp(deps: AppDeps) {
       expressWindows: ["paypal", "google_pay", "revolut_pay"],
       expressApple: ["apple_pay", "paypal", "google_pay"],
       logoStripMethods: [
-        { id: "card", label: "Card (Visa / MC / Amex)", tag: "+ Stripe Link" },
+        { id: "card", label: "Card", tag: "+ Stripe Link" },
         { id: "revolut_pay", label: "Revolut Pay", tag: "1-Click App" },
         { id: "amazon_pay", label: "Amazon Pay", tag: "Use Amazon" },
       ],
