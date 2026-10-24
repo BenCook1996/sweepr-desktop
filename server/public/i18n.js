@@ -3469,7 +3469,7 @@ function applyDictionary(lang) {
 window.applyDictionary = applyDictionary;
 
 /**
- * Changes language, updates dropdown UI, sets cookie & triggers Google Translate
+ * Changes language, updates dropdown UI & applies native dictionary
  */
 window.setLanguage = function(lang) {
   if (!LANGS[lang]) lang = 'en';
@@ -3477,6 +3477,8 @@ window.setLanguage = function(lang) {
   try {
     localStorage.setItem('sweepr_lang', lang);
   } catch (e) {}
+
+  document.documentElement.lang = lang;
 
   // Update UI selector
   const flagEl = document.getElementById('currentLangFlag');
@@ -3492,48 +3494,13 @@ window.setLanguage = function(lang) {
   if (btn) btn.setAttribute('aria-expanded', 'false');
   if (chevron) chevron.classList.remove('rotate-180');
 
-  // Set Google Translate cookie
-  const host = window.location.hostname;
-  const cookieVal = `/en/${lang}`;
-  if (lang === 'en') {
+  // Clear any legacy Google Translate cookies
+  try {
     document.cookie = 'googtrans=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    if (host && host !== 'localhost') {
-      document.cookie = `googtrans=; Path=/; domain=${host}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-      document.cookie = `googtrans=; Path=/; domain=.${host}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-    }
-  } else {
-    document.cookie = `googtrans=${cookieVal}; path=/;`;
-    if (host && host !== 'localhost') {
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=${host};`;
-      document.cookie = `googtrans=${cookieVal}; path=/; domain=.${host};`;
-    }
-  }
+  } catch (e) {}
 
-  // 1. Instant client-side dictionary translation
+  // Instant native dictionary translation
   applyDictionary(lang);
-
-  // 2. Trigger Google Translate combo if available
-  const combo = document.querySelector('.goog-te-combo');
-  if (combo) {
-    if (combo.value !== lang) {
-      combo.value = lang;
-      combo.dispatchEvent(new Event('change'));
-    }
-  } else if (lang !== 'en') {
-    // If google translate hasn't initialized yet, poll briefly
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      const c = document.querySelector('.goog-te-combo');
-      if (c) {
-        c.value = lang;
-        c.dispatchEvent(new Event('change'));
-        clearInterval(interval);
-      } else if (attempts > 10) {
-        clearInterval(interval);
-      }
-    }, 300);
-  }
 };
 
 // Setup dropdown toggling and init on DOM load
@@ -3574,10 +3541,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Restore saved language
+  // Detect URL locale prefix (/de, /fr, /es) or restore saved language
   try {
-    const saved = localStorage.getItem('sweepr_lang');
+    const pathMatch = window.location.pathname.match(/^\/(de|fr|es)(\/|$)/i);
+    const urlLang = pathMatch ? pathMatch[1].toLowerCase() : null;
+    const saved = urlLang || localStorage.getItem('sweepr_lang');
     if (saved && LANGS[saved]) {
+      if (urlLang) localStorage.setItem('sweepr_lang', saved);
+      document.documentElement.lang = saved;
       const flagEl = document.getElementById('currentLangFlag');
       const codeEl = document.getElementById('currentLangCode');
       if (flagEl) flagEl.textContent = LANGS[saved].flag;
@@ -3589,27 +3560,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {}
 });
-
-// Google Translate Element callback
-window.googleTranslateElementInit = function() {
-  if (window.google && window.google.translate) {
-    new window.google.translate.TranslateElement({
-      pageLanguage: 'en',
-      includedLanguages: 'en,de,fr,es,it,pt,nl,ja',
-      autoDisplay: false
-    }, 'google_translate_element');
-
-    try {
-      const saved = localStorage.getItem('sweepr_lang');
-      if (saved && saved !== 'en') {
-        setTimeout(() => {
-          const combo = document.querySelector('.goog-te-combo');
-          if (combo && combo.value !== saved) {
-            combo.value = saved;
-            combo.dispatchEvent(new Event('change'));
-          }
-        }, 300);
-      }
-    } catch (e) {}
-  }
-};

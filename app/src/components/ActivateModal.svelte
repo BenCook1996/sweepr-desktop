@@ -31,16 +31,18 @@
 
   async function handleActivate() {
     error = null;
-    if (!email.trim() || !email.includes("@")) {
-      error = "Please enter a valid email address.";
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !trimmedEmail.includes("@")) {
+      error = "Please enter a valid email address or leave blank to continue to checkout.";
       return;
     }
 
     busy = true;
     try {
+      const emailArg = trimmedEmail ? trimmedEmail : undefined;
       const activatedImmediately = includeBatteryAddon
-        ? await api.startAddonCheckout("battery_care", email.trim(), selectedPlan)
-        : await api.startCheckout(email.trim(), selectedPlan);
+        ? await api.startAddonCheckout("battery_care", emailArg, selectedPlan)
+        : await api.startCheckout(emailArg, selectedPlan);
       if (activatedImmediately || (await checkLicense())) {
         stopPolling();
         open = false;
@@ -51,9 +53,9 @@
       stopPolling();
       let ticks = 0;
       pollTimer = setInterval(async () => {
-        if (++ticks > 150) stopPolling();
+        if (++ticks > 240) stopPolling();
         await checkLicense();
-      }, 4000);
+      }, 2500);
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -84,48 +86,48 @@
       {#if !waitingPayment}
         <div class="modal-body">
           <p class="prompt-text">
-            Please enter your <strong>Email address</strong> (existing subscribers unlock immediately; new users continue to checkout)
+            Unlock 1-click cleaning, speed boost, and duplicate removal across up to 3 PCs—backed by our <strong>7-Day Safety Undo</strong> and <strong>14-Day Money-Back Guarantee</strong>.
           </p>
 
-          <div class="inputs-group">
-            <input
-              type="email"
-              bind:value={email}
-              placeholder="Enter your email address"
-              class="soft-input"
-              aria-label="Email address"
-              onkeydown={(e) => e.key === "Enter" && handleActivate()}
-            />
-          </div>
-
           <div class="plan-grid">
-            <button
-              type="button"
-              class="plan-card-btn"
-              class:selected={selectedPlan === "annual"}
-              onclick={() => (selectedPlan = "annual")}
-            >
-              <span class="plan-card-title">Annual · £49.99/yr</span>
-              <span class="plan-card-sub highlight">Save 58% (£4.16/mo)</span>
-            </button>
             <button
               type="button"
               class="plan-card-btn"
               class:selected={selectedPlan === "monthly"}
               onclick={() => (selectedPlan = "monthly")}
             >
-              <span class="plan-card-title">Monthly · £9.99/mo</span>
-              <span class="plan-card-sub">Flexible · Cancel anytime</span>
+              <span class="plan-card-title">1st-Month Intro · £1.99</span>
+              <span class="plan-card-sub highlight">Save 80% today (then £9.99/mo)</span>
+            </button>
+            <button
+              type="button"
+              class="plan-card-btn"
+              class:selected={selectedPlan === "annual"}
+              onclick={() => (selectedPlan = "annual")}
+            >
+              <span class="plan-card-title">Annual Pro · £49.99/yr</span>
+              <span class="plan-card-sub highlight">Save 58% (£4.16/mo eq.)</span>
             </button>
           </div>
 
           <label class="addon-row">
             <input type="checkbox" bind:checked={includeBatteryAddon} />
             <div style="flex:1; min-width:0;">
-              <strong>+ Add Total Battery Care (+£17.99/yr)</strong>
+              <strong>+ Add Total Battery Care ({selectedPlan === "annual" ? "+£17.99/yr" : "+£2.99/mo"})</strong>
               <div class="muted" style="font-size:11px;">80% Charge Guard, Thermal Guard &amp; Auto-Sleep Browser Tabs</div>
             </div>
           </label>
+
+          <div class="inputs-group">
+            <input
+              type="email"
+              bind:value={email}
+              placeholder="Email address (optional — existing Pro users unlock immediately)"
+              class="soft-input"
+              aria-label="Email address"
+              onkeydown={(e) => e.key === "Enter" && handleActivate()}
+            />
+          </div>
 
           {#if error}
             <div class="error-banner">{error}</div>
@@ -133,7 +135,11 @@
 
           <div class="action-row">
             <button class="primary begin-btn" disabled={busy} onclick={handleActivate}>
-              {busy ? "Opening checkout…" : "Begin activation"}
+              {busy
+                ? "Opening secure checkout…"
+                : selectedPlan === "monthly"
+                ? `Unlock Pro Now — ${includeBatteryAddon ? "£4.98" : "£1.99"} 1st Month`
+                : `Unlock Annual Pro — ${includeBatteryAddon ? "£67.98" : "£49.99"}/yr`}
             </button>
           </div>
         </div>

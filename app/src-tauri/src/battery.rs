@@ -222,6 +222,7 @@ fn estimate_extra_minutes(tabs: u32, battery_wh: f32, draw_watts: f32) -> u32 {
 }
 
 /// Parse `ioreg -rn AppleSmartBattery` output.
+#[cfg(any(target_os = "macos", test))]
 fn parse_ioreg(out: &str) -> RawBattery {
     let mut kv: HashMap<String, String> = HashMap::new();
     for line in out.lines() {

@@ -84,6 +84,19 @@
         <div class="plan-picker">
           <button
             type="button"
+            class="plan-option {selectedPlan === 'monthly' ? 'selected' : ''}"
+            onclick={() => (selectedPlan = "monthly")}
+          >
+            <div class="plan-top">
+              <strong>1st-Month Intro</strong>
+              <span class="save-badge">Save 80%</span>
+            </div>
+            <div class="plan-price">£1.99<span class="per"> 1st mo</span></div>
+            <div class="plan-sub">Then £9.99/mo · Cancel in 1 click</div>
+          </button>
+
+          <button
+            type="button"
             class="plan-option {selectedPlan === 'annual' ? 'selected' : ''}"
             onclick={() => (selectedPlan = "annual")}
           >
@@ -93,19 +106,6 @@
             </div>
             <div class="plan-price">£49.99<span class="per">/yr</span></div>
             <div class="plan-sub">£4.16/mo eq. · Best Value</div>
-          </button>
-
-          <button
-            type="button"
-            class="plan-option {selectedPlan === 'monthly' ? 'selected' : ''}"
-            onclick={() => (selectedPlan = "monthly")}
-          >
-            <div class="plan-top">
-              <strong>Monthly Pro</strong>
-              <span class="flex-badge">Flexible</span>
-            </div>
-            <div class="plan-price">£9.99<span class="per">/mo</span></div>
-            <div class="plan-sub">Cancel anytime in 1 click</div>
           </button>
         </div>
 
@@ -136,7 +136,7 @@
         <button class="primary big" disabled={busy} onclick={activate}>
           {busy ? "Opening checkout…" : selectedPlan === "annual"
             ? `Continue with Annual Pro (${batteryCare ? "£67.98" : "£49.99"}/yr)`
-            : `Continue with Monthly Pro (${batteryCare ? "£12.98" : "£9.99"}/mo)`}
+            : `Unlock 1st Month for ${batteryCare ? "£4.98" : "£1.99"}`}
         </button>
         <div class="row" style="justify-content:center">
           <button class="ghost" onclick={close}>Not now</button>
@@ -157,8 +157,8 @@
   .backdrop { position: fixed; inset: 0; background: #0009; display: grid; place-items: center; z-index: 50; backdrop-filter: blur(3px); }
   .sheet { width: 500px; max-width: 94vw; padding: 26px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
   h2 { margin: 0; }
-  .plan-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
-  .plan-option { padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border, #e2e8f0); background: var(--panel, #fff); cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.15s ease; color: inherit; }
+  .plan-picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; text-align: left; }
+  .plan-option { padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border, #e2e8f0); background: var(--panel, #fff); cursor: pointer; display: flex; flex-direction: column; align-items: stretch; white-space: normal; width: 100%; min-width: 0; gap: 4px; transition: all 0.15s ease; color: inherit; }
   .plan-option.selected { border-color: var(--accent, #10b981); background: rgba(16, 185, 129, 0.08); box-shadow: 0 0 0 1px var(--accent, #10b981); }
   .plan-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; }
   .save-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; background: #10b981; color: #fff; }

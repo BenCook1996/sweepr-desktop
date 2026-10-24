@@ -222,7 +222,7 @@
     api.systemOverview().then((o) => (sysOverview = o)).catch(() => {});
     syncLifetimeStatsFromBackend().then((s) => (lifetimeStats = s)).catch(() => {});
     api.listRuleDefinitions().then((r) => (rules = r)).catch(() => {});
-    if (!cachedReport && !showWelcome) {
+    if (!cachedReport) {
       runDashboardScan();
     }
     const openUndo = () => {

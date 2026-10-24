@@ -390,12 +390,24 @@ export function createApp(deps: AppDeps) {
   app.get("/admin", (c) => c.redirect("/crm"));
 
   // Explicit HTML page routes for clean URLs (no conditional cookie or User-Agent redirects)
-  const handleHomeRoute = async (c: Context) => {
-    const file = "./public/index.html";
-    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+  const renderHtmlFileWithLocale = (c: Context, file: string, lang = "en") => {
+    if (!existsSync(file)) return c.notFound();
+    let html = readFileSync(file, "utf-8");
+    if (lang !== "en") {
+      html = html.replace(/<html\s+lang="en"/i, `<html lang="${escapeHtml(lang)}"`);
+    }
+    return c.html(html);
   };
+
+  const handleHomeRoute = async (c: Context) => renderHtmlFileWithLocale(c, "./public/index.html", "en");
   app.get("/", handleHomeRoute);
   app.get("/index.html", (c) => c.redirect("/", 301));
+
+  for (const loc of ["de", "fr", "es"] as const) {
+    app.get(`/${loc}`, (c) => renderHtmlFileWithLocale(c, "./public/index.html", loc));
+    app.get(`/${loc}/pricing`, (c) => renderHtmlFileWithLocale(c, "./public/pricing.html", loc));
+    app.get(`/${loc}/order`, (c) => renderHtmlFileWithLocale(c, "./public/order.html", loc));
+  }
 
   const handleOrderRoute = (c: Context) => {
     const file = "./public/order.html";
@@ -506,11 +518,13 @@ export function createApp(deps: AppDeps) {
   const pickerPage = (heading: string, msg: string) => {
     const btn = (href: string, text: string) =>
       `<a href="${href}" style="display:block;margin-top:10px;background:#10b981;color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
+    const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
+    const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const links =
-      btn("/download?platform=windows", "Windows (Windows 10 & 11)") +
-      btn("/download?platform=mac", "Mac (macOS)") +
-      btn("/download?platform=linux", "Linux (AppImage)") +
-      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Browsing on your phone? You can activate Pro right now and receive your 6-digit key + PC download link by email:<a href="/order?plan=annual" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Get Pro Now (Instant Email Delivery)</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
+      btn("/download?platform=windows", "Download for Windows 10 & 11 (.exe)") +
+      (hasMac ? btn("/download?platform=mac", "Download for Mac (macOS .dmg)") : "") +
+      (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)") : "") +
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Visiting from Mac, Linux, or Mobile? Lock in the <strong>&pound;1.99 1st-Month Intro Offer</strong> right now and receive your 6-digit activation key + Windows PC download link by email:<a href="/order?plan=monthly&amp;intro=1" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Unlock Pro — &pound;1.99 1st Month (Instant Email Delivery)</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
@@ -2933,6 +2947,10 @@ export function createApp(deps: AppDeps) {
     ];
 
     try {
+      const applyMonthlyIntro = plan === "monthly" && !alreadyPro;
+      const introCouponId = applyMonthlyIntro
+        ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
+        : null;
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: account.id,
@@ -2951,7 +2969,9 @@ export function createApp(deps: AppDeps) {
             ...(includeCloudVault ? { cloud_vault: "1" } : {}),
           },
         },
-        allow_promotion_codes: true,
+        ...(introCouponId
+          ? { discounts: [{ coupon: introCouponId }] }
+          : { allow_promotion_codes: true }),
         success_url: `${config.publicUrl}/checkout/success`,
         cancel_url: `${config.publicUrl}/checkout/cancel`,
       });
@@ -2963,6 +2983,8 @@ export function createApp(deps: AppDeps) {
     }
 
     const params = new URLSearchParams();
+    params.set("plan", plan);
+    if (plan === "monthly" && !alreadyPro) params.set("intro", "1");
     if (email) params.set("email", email);
     if (includeCloudVault) params.set("addon", "cloud_vault");
     else if (includeBatteryCare) params.set("addon", "battery_care");
