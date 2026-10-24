@@ -755,10 +755,18 @@ export function createApp(deps: AppDeps) {
     try {
       return await stripe.checkout.sessions.create({
         ...baseSessionParams,
+        managed_payments: { enabled: false },
         payment_method_types: ["paypal"],
       } as any);
     } catch {
-      return await stripe.checkout.sessions.create(baseSessionParams);
+      try {
+        return await stripe.checkout.sessions.create({
+          ...baseSessionParams,
+          managed_payments: { enabled: false },
+        } as any);
+      } catch {
+        return await stripe.checkout.sessions.create(baseSessionParams);
+      }
     }
   }
 
