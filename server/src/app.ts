@@ -907,18 +907,49 @@ export function createApp(deps: AppDeps) {
         !isAnnual && !isSixMonth && applyDiscount
           ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
           : "";
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: subItems,
-        payment_behavior: "default_incomplete",
-        payment_settings: {
-          save_default_payment_method: "on_subscription",
-          payment_method_types: ["paypal"],
-        },
-        ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
-        metadata: attributionMeta,
-        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
-      } as any);
+      let subscription: any = null;
+      try {
+        subscription = await stripe.subscriptions.create({
+          customer: customerId,
+          items: subItems,
+          payment_behavior: "default_incomplete",
+          payment_settings: {
+            save_default_payment_method: "on_subscription",
+            payment_method_types: ["paypal"],
+          },
+          ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
+          metadata: attributionMeta,
+          expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
+        } as any);
+      } catch (subErr: any) {
+        if (String(subErr?.message || "").toLowerCase().includes("paypal")) {
+          const checkoutSession = await stripe.checkout.sessions.create({
+            mode: "subscription",
+            customer: customerId,
+            managed_payments: { enabled: false },
+            line_items: subItems.map((it: any) => ({
+              price_data: it.price_data,
+              quantity: 1,
+            })),
+            ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
+            subscription_data: { metadata: attributionMeta },
+            metadata: attributionMeta,
+            success_url: `${config.publicUrl}/checkout/success?web=1&session_id={CHECKOUT_SESSION_ID}&account_id=${encodeURIComponent(accountId)}`,
+            cancel_url: `${config.publicUrl}/order?error=payment_cancelled`,
+          } as any);
+          if (checkoutSession?.url) {
+            return c.json({
+              url: checkoutSession.url,
+              redirectUrl: checkoutSession.url,
+              subscriptionId: checkoutSession.id,
+              accountId,
+              plan,
+              currency: localizedPricing.currency,
+            });
+          }
+        }
+        throw subErr;
+      }
 
       const latestInvoice: any = subscription.latest_invoice;
       let paymentIntent: any =
@@ -1315,7 +1346,37 @@ export function createApp(deps: AppDeps) {
         expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
       };
 
-      const subscription = await stripe.subscriptions.create(subParams);
+      let subscription: any = null;
+      try {
+        subscription = await stripe.subscriptions.create(subParams);
+      } catch (subErr: any) {
+        if (isPayPal && String(subErr?.message || "").toLowerCase().includes("paypal")) {
+          const checkoutSession = await stripe.checkout.sessions.create({
+            mode: "subscription",
+            customer: customerId,
+            managed_payments: { enabled: false },
+            line_items: subItems.map((it: any) => ({
+              price_data: it.price_data,
+              quantity: 1,
+            })),
+            ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
+            subscription_data: { metadata: attributionMeta },
+            metadata: attributionMeta,
+            success_url: `${config.publicUrl}/checkout/success?web=1&session_id={CHECKOUT_SESSION_ID}&account_id=${encodeURIComponent(accountId)}${isPopup ? "&popup=1" : ""}`,
+            cancel_url: `${config.publicUrl}/order?error=payment_cancelled`,
+          } as any);
+          if (checkoutSession?.url) {
+            return c.json({
+              redirectUrl: checkoutSession.url,
+              subscriptionId: checkoutSession.id,
+              accountId,
+              plan,
+              livemode: Boolean(checkoutSession.livemode),
+            });
+          }
+        }
+        throw subErr;
+      }
       const latestInvoice: any = subscription.latest_invoice;
       let paymentIntent: any =
         latestInvoice?.payment_intent ??
@@ -3274,8 +3335,9 @@ export function createApp(deps: AppDeps) {
   app.get("/checkout/success", async (c) => {
     const isWeb = c.req.query("web") === "1";
     const isPopup = c.req.query("popup") === "1";
-    const subscriptionId = c.req.query("subscription_id")?.trim() || "";
-    const accountId = c.req.query("account_id")?.trim() || "";
+    const sessionId = c.req.query("session_id")?.trim() || "";
+    let subscriptionId = c.req.query("subscription_id")?.trim() || "";
+    let accountId = c.req.query("account_id")?.trim() || "";
     const redirectStatus = c.req.query("redirect_status")?.trim() || "";
 
     if (redirectStatus === "failed" || redirectStatus === "canceled") {
@@ -3283,6 +3345,20 @@ export function createApp(deps: AppDeps) {
         return c.html(popupClosePage("cancelled", "/order?error=payment_cancelled"));
       }
       return c.redirect("/order?error=payment_cancelled");
+    }
+
+    if (sessionId && stripe && !subscriptionId) {
+      try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session?.subscription) {
+          subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
+        }
+        if (!accountId && typeof session?.metadata?.account_id === "string") {
+          accountId = session.metadata.account_id.trim();
+        }
+      } catch (err) {
+        console.error("[checkout/success] session lookup error:", err);
+      }
     }
 
     if (subscriptionId && stripe) {
