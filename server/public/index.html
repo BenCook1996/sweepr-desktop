@@ -258,27 +258,87 @@
 
     <!-- Unified Bento Dock: Left = Sample Scan Result Card | Right = 3 Metric Badges -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-left items-stretch">
-      <div class="md:col-span-7 glass-card p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 shadow-lg border-emerald-500/25">
+      <div class="md:col-span-7 glass-card p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 shadow-lg border-emerald-500/25 cursor-pointer select-none" onclick="replayHeroScanPreview()" title="Click to replay 60-sec scan preview">
         <div class="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex flex-col items-center justify-center shrink-0 shadow-md ring-4 ring-emerald-500/15">
-          <span class="text-xl font-black leading-none">12.4 GB</span>
+          <span class="text-xl font-black leading-none tabular-nums" id="heroScanTotalGb">12.4 GB</span>
           <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-100 mt-1">Found</span>
         </div>
         <div class="space-y-2 text-sm flex-1 w-full">
-          <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 mb-1">Sample 60-Sec Scan Result</div>
-          <div class="flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Sample 60-Sec Scan Result</div>
+            <span class="text-[10px] font-bold text-emerald-600/80">↻ Replay</span>
+          </div>
+          <div class="w-full h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+            <div id="heroScanBarFill" class="scan-bar-fill"></div>
+          </div>
+          <div class="scan-row-item flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700" id="heroScanRow1">
             <span>&#10003; System &amp; Update Junk</span>
-            <span class="font-extrabold text-emerald-700">6.8 GB</span>
+            <span class="font-extrabold text-emerald-700 tabular-nums">6.8 GB</span>
           </div>
-          <div class="flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700">
+          <div class="scan-row-item flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700" id="heroScanRow2">
             <span>&#10003; Browser Cache</span>
-            <span class="font-extrabold text-emerald-700">3.4 GB</span>
+            <span class="font-extrabold text-emerald-700 tabular-nums">3.4 GB</span>
           </div>
-          <div class="flex items-center justify-between py-1 font-semibold text-gray-700">
+          <div class="scan-row-item flex items-center justify-between py-1 font-semibold text-gray-700" id="heroScanRow3">
             <span>&#10003; Duplicate Files</span>
-            <span class="font-extrabold text-emerald-700">2.2 GB</span>
+            <span class="font-extrabold text-emerald-700 tabular-nums">2.2 GB</span>
           </div>
         </div>
       </div>
+      <script>
+        function replayHeroScanPreview() {
+          if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          var numEl = document.getElementById('heroScanTotalGb');
+          var barEl = document.getElementById('heroScanBarFill');
+          var rows = [
+            document.getElementById('heroScanRow1'),
+            document.getElementById('heroScanRow2'),
+            document.getElementById('heroScanRow3')
+          ];
+          if (barEl) {
+            barEl.style.transition = 'none';
+            barEl.style.transform = 'scaleX(0)';
+          }
+          rows.forEach(function(r) {
+            if (r) {
+              r.style.transition = 'none';
+              r.style.opacity = '0';
+              r.style.transform = 'translateY(4px)';
+            }
+          });
+          requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+              if (barEl) {
+                barEl.style.transition = 'transform 180ms cubic-bezier(0.16, 1, 0.3, 1)';
+                barEl.style.transform = 'scaleX(1)';
+              }
+              rows.forEach(function(r, idx) {
+                setTimeout(function() {
+                  if (r) {
+                    r.style.transition = 'opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1)';
+                    r.style.opacity = '1';
+                    r.style.transform = 'translateY(0)';
+                  }
+                }, idx * 20);
+              });
+            });
+          });
+          if (numEl) {
+            var start = performance.now();
+            var duration = 180;
+            function tick(now) {
+              var t = Math.min(1, (now - start) / duration);
+              var eased = 1 - Math.pow(1 - t, 4);
+              numEl.textContent = (12.4 * eased).toFixed(1) + ' GB';
+              if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+          }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(replayHeroScanPreview, 80);
+        });
+      </script>
 
       <div class="md:col-span-5 grid grid-rows-3 gap-3">
         <div class="bg-white/95 px-5 py-3.5 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">

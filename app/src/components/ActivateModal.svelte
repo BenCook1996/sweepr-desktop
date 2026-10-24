@@ -1,28 +1,51 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { api, errorMessage } from "../lib/api";
 
   let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
 
+  type PlanId = "monthly" | "six_month" | "annual";
+
   let email = $state("");
-  let selectedPlan = $state<"annual" | "monthly">("annual");
-  let includeBatteryAddon = $state(false);
+  let selectedPlan = $state<PlanId>("monthly");
+  let showSignIn = $state(false);
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
+  let unlockedSuccess = $state(false);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+  const ctaPriceLabel = $derived(
+    selectedPlan === "monthly"
+      ? "£1.99"
+      : selectedPlan === "six_month"
+      ? "£38.99"
+      : "£49.99"
+  );
 
   function stopPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = null;
   }
 
+  function notifyActivated() {
+    stopPolling();
+    waitingPayment = false;
+    unlockedSuccess = true;
+    setTimeout(() => {
+      open = false;
+      unlockedSuccess = false;
+      showSignIn = false;
+      if (onActivated) onActivated();
+      window.dispatchEvent(new CustomEvent("sweepr-license-activated"));
+    }, 420);
+  }
+
   async function checkLicense(): Promise<boolean> {
     try {
       const s = await api.licenseStatus(true);
       if (s.active) {
-        stopPolling();
-        open = false;
-        if (onActivated) onActivated();
+        notifyActivated();
         return true;
       }
     } catch { /* polling */ }
@@ -32,21 +55,21 @@
   async function handleActivate() {
     error = null;
     const trimmedEmail = email.trim();
+    if (showSignIn && (!trimmedEmail || !trimmedEmail.includes("@"))) {
+      error = "Enter the email address used for your Pro subscription.";
+      return;
+    }
     if (trimmedEmail && !trimmedEmail.includes("@")) {
-      error = "Please enter a valid email address or leave blank to continue to checkout.";
+      error = "Enter a valid email address.";
       return;
     }
 
     busy = true;
     try {
       const emailArg = trimmedEmail ? trimmedEmail : undefined;
-      const activatedImmediately = includeBatteryAddon
-        ? await api.startAddonCheckout("battery_care", emailArg, selectedPlan)
-        : await api.startCheckout(emailArg, selectedPlan);
+      const activatedImmediately = await api.startCheckout(emailArg, selectedPlan);
       if (activatedImmediately || (await checkLicense())) {
-        stopPolling();
-        open = false;
-        if (onActivated) onActivated();
+        notifyActivated();
         return;
       }
       waitingPayment = true;
@@ -68,26 +91,49 @@
     open = false;
     error = null;
     waitingPayment = false;
+    showSignIn = false;
   }
+
+  function onWindowKeydown(e: KeyboardEvent) {
+    if (!open) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  }
+
+  onDestroy(stopPolling);
 </script>
+
+<svelte:window onkeydown={onWindowKeydown} />
 
 {#if open}
   <div class="modal-backdrop" onclick={close} role="presentation">
-    <div class="modal-sheet card" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.key === "Escape" && close()} role="dialog" aria-modal="true" tabindex="-1">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <h2 class="modal-title">Activate now</h2>
-        <button class="close-btn" onclick={close} aria-label="Close">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-sheet card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
+      <button class="close-btn" onclick={close} aria-label="Close">✕</button>
 
-      <!-- Modal Body -->
-      {#if !waitingPayment}
+      {#if unlockedSuccess}
+        <div class="modal-body waiting-body">
+          <div class="unlock-morph-badge" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+              <path class="unlock-shackle" d="M8 11V7a4 4 0 017.4-2" />
+              <path class="unlock-check" d="M9.5 16l1.8 1.8 3.6-3.6" />
+            </svg>
+          </div>
+          <h3 class="waiting-title">Pro Activated ✓</h3>
+          <p class="prompt-text">Resuming cleanup automatically…</p>
+        </div>
+      {:else if !waitingPayment}
         <div class="modal-body">
-          <p class="prompt-text">
-            Unlock 1-click cleaning, speed boost, and duplicate removal across up to 3 PCs—backed by our <strong>7-Day Safety Undo</strong> and <strong>14-Day Money-Back Guarantee</strong>.
-          </p>
+          <div class="brand-pill">
+            <span class="brand-dot"></span>
+            <span>SWEEPR Pro</span>
+          </div>
+
+          <h2 class="modal-title">Clean &amp; speed up in 1 click</h2>
+          <p class="prompt-text">Try your first month for £1.99. Cancel anytime.</p>
 
           <div class="plan-grid">
             <button
@@ -96,67 +142,96 @@
               class:selected={selectedPlan === "monthly"}
               onclick={() => (selectedPlan = "monthly")}
             >
-              <span class="plan-card-title">1st-Month Intro · £1.99</span>
-              <span class="plan-card-sub highlight">Save 80% today (then £9.99/mo)</span>
+              <div class="plan-card-top">
+                <span class="plan-label">Monthly</span>
+                <span class="radio-dot" aria-hidden="true"></span>
+              </div>
+              <span class="plan-price">£1.99</span>
+              <span class="plan-sub">1st mo, then £9.99</span>
             </button>
+
+            <button
+              type="button"
+              class="plan-card-btn"
+              class:selected={selectedPlan === "six_month"}
+              onclick={() => (selectedPlan = "six_month")}
+            >
+              <div class="plan-card-top">
+                <span class="plan-label">6 Months</span>
+                <span class="radio-dot" aria-hidden="true"></span>
+              </div>
+              <span class="plan-price">£38.99</span>
+              <span class="plan-sub highlight">Save 35% (£6.50/mo)</span>
+            </button>
+
             <button
               type="button"
               class="plan-card-btn"
               class:selected={selectedPlan === "annual"}
               onclick={() => (selectedPlan = "annual")}
             >
-              <span class="plan-card-title">Annual Pro · £49.99/yr</span>
-              <span class="plan-card-sub highlight">Save 58% (£4.16/mo eq.)</span>
+              <div class="plan-card-top">
+                <span class="plan-label">Yearly</span>
+                <span class="radio-dot" aria-hidden="true"></span>
+              </div>
+              <span class="plan-price">£49.99</span>
+              <span class="plan-sub highlight">Save 58% (£4.16/mo)</span>
             </button>
           </div>
 
-          <label class="addon-row">
-            <input type="checkbox" bind:checked={includeBatteryAddon} />
-            <div style="flex:1; min-width:0;">
-              <strong>+ Add Total Battery Care ({selectedPlan === "annual" ? "+£17.99/yr" : "+£2.99/mo"})</strong>
-              <div class="muted" style="font-size:11px;">80% Charge Guard, Thermal Guard &amp; Auto-Sleep Browser Tabs</div>
+          {#if showSignIn}
+            <div class="signin-drawer">
+              <input
+                type="email"
+                bind:value={email}
+                placeholder="Enter your Pro email address"
+                class="neutral-input"
+                aria-label="Email address"
+                onkeydown={(e) => e.key === "Enter" && handleActivate()}
+              />
             </div>
-          </label>
-
-          <div class="inputs-group">
-            <input
-              type="email"
-              bind:value={email}
-              placeholder="Email address (optional — existing Pro users unlock immediately)"
-              class="soft-input"
-              aria-label="Email address"
-              onkeydown={(e) => e.key === "Enter" && handleActivate()}
-            />
-          </div>
+          {/if}
 
           {#if error}
             <div class="error-banner">{error}</div>
           {/if}
 
-          <div class="action-row">
-            <button class="primary begin-btn" disabled={busy} onclick={handleActivate}>
-              {busy
-                ? "Opening secure checkout…"
-                : selectedPlan === "monthly"
-                ? `Unlock Pro Now — ${includeBatteryAddon ? "£4.98" : "£1.99"} 1st Month`
-                : `Unlock Annual Pro — ${includeBatteryAddon ? "£67.98" : "£49.99"}/yr`}
+          <button class="begin-btn" disabled={busy} onclick={handleActivate}>
+            {#if busy}
+              <span>Opening…</span>
+            {:else if showSignIn && email.trim()}
+              <span>Activate Existing Pro</span>
+              <span class="btn-arrow">→</span>
+            {:else}
+              <span>Continue for {ctaPriceLabel}</span>
+              <span class="btn-arrow">→</span>
+            {/if}
+          </button>
+
+          <div class="footer-links">
+            <span class="secure-label">🔒 Stripe Secure Checkout</span>
+            <button
+              type="button"
+              class="link-btn"
+              onclick={() => {
+                showSignIn = !showSignIn;
+                error = null;
+              }}
+            >
+              {showSignIn ? "Hide sign in" : "Already have Pro? Sign in"}
             </button>
           </div>
         </div>
-
       {:else}
-        <!-- Waiting on Checkout Completion -->
         <div class="modal-body waiting-body">
           <div class="spinner"></div>
-          <h3>Checkout opened in browser</h3>
-          <p class="muted small">Please complete payment in the secure Stripe window. SWEEPR Cleaner will activate automatically once confirmed.</p>
+          <h3 class="waiting-title">Waiting for payment…</h3>
+          <p class="prompt-text">Cleanup resumes automatically once confirmed.</p>
           {#if error}
             <div class="error-banner">{error}</div>
           {/if}
-          <button class="primary begin-btn" style="margin-top: 16px;" onclick={checkLicense}>
-            Check activation status
-          </button>
-          <button class="ghost" style="margin-top: 6px;" onclick={close}>Cancel</button>
+          <button class="begin-btn" onclick={checkLicense}>Check Status</button>
+          <button class="ghost cancel-btn" onclick={close}>Cancel</button>
         </div>
       {/if}
     </div>
@@ -167,8 +242,8 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(6px);
+    background: rgba(7, 10, 13, 0.72);
+    backdrop-filter: blur(8px);
     display: grid;
     place-items: center;
     z-index: 200;
@@ -176,201 +251,313 @@
   }
 
   .modal-sheet {
+    position: relative;
     width: 100%;
-    max-width: 540px;
+    max-width: 440px;
     background: var(--panel-solid, #ffffff);
-    border-radius: 16px;
+    border-radius: 22px;
     border: 1px solid var(--border);
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
-    padding: 28px 36px 20px 36px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    padding: 24px 24px 20px 24px;
     display: flex;
     flex-direction: column;
-    animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: popIn 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-  .modal-title {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text);
-    letter-spacing: -0.4px;
-  }
   .close-btn {
-    background: transparent;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: var(--panel-2);
     border: none;
     color: var(--muted);
     cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    padding: 0;
     box-shadow: none;
+    transition: background-color 140ms ease, color 140ms ease;
   }
   .close-btn:hover {
-    background: var(--panel-2);
+    background: var(--border);
     color: var(--text);
   }
 
   .modal-body {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .prompt-text {
-    font-size: 14.5px;
-    color: var(--text-secondary);
-    margin: 0 0 14px 0;
-  }
-  .prompt-text strong {
-    color: var(--text);
-    font-weight: 700;
+    align-items: flex-start;
+    text-align: left;
   }
 
-  .inputs-group {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .soft-input {
-    width: 100%;
-    padding: 12px 18px;
+  .brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
     border-radius: 9999px;
-    background: var(--panel-2);
-    border: 1.5px solid var(--border);
-    font-size: 14px;
-    color: var(--text);
-    outline: none;
-    transition: all 0.2s ease;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #059669;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 10px;
   }
-  .soft-input:focus {
-    background: var(--panel-solid);
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  :global(.dark) .brand-pill {
+    color: #34d399;
+  }
+  .brand-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #10b981;
+  }
+
+  .modal-title {
+    font-size: 21px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.4px;
+    line-height: 1.25;
+  }
+  .prompt-text {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 4px 0 18px 0;
   }
 
   .plan-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
     width: 100%;
-    margin-bottom: 12px;
+    margin-bottom: 18px;
   }
   .plan-card-btn {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
-    gap: 3px;
-    width: 100%;
-    min-width: 0;
-    padding: 11px 14px;
-    border-radius: 12px;
-    border: 1.5px solid var(--border);
-    background: var(--panel-2);
+    padding: 12px 11px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: var(--panel);
     color: var(--text);
     cursor: pointer;
     text-align: left;
-    white-space: normal;
     box-shadow: none;
-    transition: all 0.15s ease;
+    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms ease, background-color 140ms ease;
   }
-  .plan-card-btn:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--panel-solid);
+  .plan-card-btn:active {
+    transform: scale(0.985);
+  }
+  .plan-card-btn:hover {
+    border-color: rgba(16, 185, 129, 0.55);
   }
   .plan-card-btn.selected {
     border-color: #10b981;
-    background: rgba(16, 185, 129, 0.12);
-    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
-  }
-  .plan-card-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.25;
-  }
-  .plan-card-sub {
-    font-size: 11.5px;
-    color: var(--muted);
-    font-weight: 500;
-    line-height: 1.25;
-  }
-  .plan-card-sub.highlight {
-    color: var(--accent);
-    font-weight: 600;
+    background: rgba(16, 185, 129, 0.08);
   }
 
-  .addon-row {
+  .plan-card-top {
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 10px 14px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--panel-2);
-    font-size: 12px;
-    text-align: left;
-    cursor: pointer;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .plan-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text);
+    opacity: 0.85;
+  }
+  .radio-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 9999px;
+    border: 2px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 140ms ease, background-color 140ms ease;
+  }
+  .plan-card-btn.selected .radio-dot {
+    border-color: #10b981;
+    background: #10b981;
+    box-shadow: inset 0 0 0 2.5px var(--panel-solid, #ffffff);
   }
 
-  .action-row {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  .plan-price {
+    font-size: 21px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.05;
   }
-  .begin-btn {
-    padding: 12px 42px;
-    border-radius: 10px;
+  .plan-sub {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.25;
+  }
+  .plan-sub.highlight {
+    color: #059669;
     font-weight: 700;
-    font-size: 14px;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  }
+  :global(.dark) .plan-sub.highlight {
+    color: #34d399;
+  }
+
+  .signin-drawer {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  .neutral-input {
+    width: 100%;
+    padding: 10px 13px;
+    border-radius: 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .neutral-input:focus {
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
+  }
+
+  .begin-btn {
+    width: 100%;
+    padding: 13px 20px;
+    border-radius: 13px;
+    font-weight: 700;
+    font-size: 14.5px;
+    background: linear-gradient(90deg, #059669 0%, #10b981 100%);
     color: #ffffff;
     border: none;
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
-    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.28);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), filter 140ms ease;
   }
   .begin-btn:hover:not(:disabled) {
-    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
-    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+  .begin-btn:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+  .btn-arrow {
+    color: #d1fae5;
+    font-weight: 700;
+  }
+
+  .footer-links {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .secure-label {
+    opacity: 0.85;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: color 140ms ease;
+  }
+  .link-btn:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+  :global(.dark) .link-btn:hover {
+    color: #34d399;
   }
 
   .waiting-body {
-    padding: 20px 0;
+    align-items: center;
+    text-align: center;
+    padding: 12px 0 4px 0;
+    gap: 12px;
+  }
+  .waiting-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .cancel-btn {
+    width: 100%;
+    font-size: 12px;
   }
   .spinner {
-    width: 38px;
-    height: 38px;
-    border: 3.5px solid var(--border);
-    border-top-color: var(--accent);
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: #10b981;
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
-    margin-bottom: 16px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes popIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+
+  .unlock-morph-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    display: grid;
+    place-items: center;
+    animation: popIn 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .unlock-shackle {
+    transform-origin: 16px 11px;
+    animation: shackleLift 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .unlock-check {
+    stroke-dasharray: 14;
+    stroke-dashoffset: 14;
+    animation: checkDraw 140ms cubic-bezier(0.16, 1, 0.3, 1) 50ms forwards;
+  }
+  @keyframes shackleLift {
+    from { transform: translateY(0) rotate(0deg); }
+    to   { transform: translateY(-2px) rotate(12deg); }
+  }
+  @keyframes checkDraw {
+    to { stroke-dashoffset: 0; }
   }
 
   .error-banner {
-    padding: 8px 14px;
-    margin-bottom: 14px;
-    background: rgba(239, 68, 68, 0.14);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: var(--danger);
-    border-radius: 8px;
-    font-size: 12.5px;
     width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: var(--danger, #ef4444);
+    font-size: 12px;
+    margin-bottom: 12px;
   }
 </style>
