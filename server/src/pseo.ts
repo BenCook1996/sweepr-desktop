@@ -41,18 +41,73 @@ export function getCleanItems(): CleanItem[] {
 }
 
 function buildPseoTitle(item: CleanItem): string {
-  const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
-  const concise = withoutParens.length > 24 ? withoutParens.split("&")[0].trim() : withoutParens;
-  const longBrand = `How to Clean ${concise} Safely | SWEEPR Cleaner`;
-  if (longBrand.length >= 50 && longBrand.length <= 60) return longBrand;
-  const shortBrand = `How to Clean ${concise} Safely | SWEEPR`;
-  if (shortBrand.length >= 50 && shortBrand.length <= 60) return shortBrand;
-  if (longBrand.length < 50) {
-    const withYear = `How to Clean ${concise} Safely (2026) | SWEEPR`;
-    if (withYear.length <= 60) return withYear;
+  const cleanName = item.name.replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+
+  const candidates: string[] = [cleanName];
+  if (cleanName.includes("&")) {
+    const parts = cleanName.split("&").map((s) => s.trim());
+    if (parts[0] && parts[0].length >= 10) candidates.push(parts[0]);
   }
-  if (shortBrand.length <= 60) return shortBrand;
-  return shortBrand.slice(0, 60).trim();
+
+  const brands = [
+    " | SWEEPR Cleaner", // 17
+    " (2026) | SWEEPR",  // 16
+    " | SWEEPR",         // 9
+  ];
+
+  const templates = [
+    (target: string, brand: string) => `How to Clean ${target} Safely${brand}`,
+    (target: string, brand: string) => `How to Clean ${target} (2026)${brand}`,
+    (target: string, brand: string) => `How to Clean ${target}${brand}`,
+    (target: string, brand: string) => `How to Safely Delete ${target} on Windows 11${brand}`,
+    (target: string, brand: string) => `How to Clean ${target} on Windows 11${brand}`,
+    (target: string, brand: string) => `How to Clean ${target} Cache Safely${brand}`,
+    (target: string, brand: string) => `Clean ${target} Safely${brand}`,
+    (target: string, brand: string) => `Clean ${target}${brand}`,
+  ];
+
+  for (const cand of candidates) {
+    for (const brand of brands) {
+      for (const tmpl of templates) {
+        const title = tmpl(cand, brand);
+        if (title.length >= 50 && title.length <= 60) {
+          return title;
+        }
+      }
+    }
+  }
+
+  const shortTemplates = [
+    `How to Clean ${cleanName} Safely on Windows 11 | SWEEPR`,
+    `How to Clean ${cleanName} Safely (2026) | SWEEPR Cleaner`,
+    `How to Safely Clean ${cleanName} on Windows 11 | SWEEPR`,
+    `How to Clean ${cleanName} Cache Safely (2026) | SWEEPR`,
+  ];
+  for (const st of shortTemplates) {
+    if (st.length >= 50 && st.length <= 60) return st;
+  }
+
+  const words = cleanName.split(" ");
+  let target = "";
+  for (const w of words) {
+    if ((target + " " + w).trim().length <= 26) {
+      target = (target + " " + w).trim();
+    } else {
+      break;
+    }
+  }
+
+  const fallbacks = [
+    `How to Clean ${target} Safely | SWEEPR`,
+    `How to Clean ${target} (2026) | SWEEPR`,
+    `How to Clean ${target} Safely | SWEEPR Cleaner`,
+    `How to Clean ${target} | SWEEPR Cleaner`,
+  ];
+  for (const fb of fallbacks) {
+    if (fb.length >= 50 && fb.length <= 60) return fb;
+  }
+
+  return `How to Clean ${target} | SWEEPR Cleaner`.slice(0, 60);
 }
 
 function buildPseoDescription(item: CleanItem): string {
@@ -226,7 +281,7 @@ export function renderPseoDirectory(): string {
     </div>
   </main>
   <div id="google_translate_element" style="display:none !important;"></div>
-  <script src="/i18n.js"></script>
+  <script src="/i18n.js" defer></script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>`;
@@ -528,7 +583,7 @@ export function renderPseoPage(item: CleanItem): string {
     </div>
   </main>
   <div id="google_translate_element" style="display:none !important;"></div>
-  <script src="/i18n.js"></script>
+  <script src="/i18n.js" defer></script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>`;

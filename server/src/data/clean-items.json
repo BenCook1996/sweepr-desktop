@@ -5380,7 +5380,7 @@
   {
     "slug": "blender-3d-gpu-shader-cache",
     "category": "app",
-    "name": "Blender 3D Bake & Render GPUCache & Dawn WebGPU Cache",
+    "name": "Blender 3D GPUCache & Dawn WebGPU Cache",
     "path": "%LocalAppData%\\Temp\\blender_temp\\GPUCache and DawnCache",
     "safeToDelete": true,
     "avgSpace": "0.8 GB – 4.5 GB",
@@ -5395,7 +5395,7 @@
   {
     "slug": "blender-3d-code-bytecode-cache",
     "category": "app",
-    "name": "Blender 3D Bake & Render Code Cache & V8 JavaScript Bytecode",
+    "name": "Blender 3D Code Cache & V8 JavaScript Bytecode",
     "path": "%LocalAppData%\\Temp\\blender_temp\\Code Cache\\js and Code Cache\\wasm",
     "safeToDelete": true,
     "avgSpace": "1.0 GB – 5.2 GB",
@@ -5410,7 +5410,7 @@
   {
     "slug": "blender-3d-service-worker-cachestorage",
     "category": "app",
-    "name": "Blender 3D Bake & Render Service Worker CacheStorage & Offline Blobs",
+    "name": "Blender 3D Service Worker CacheStorage & Offline Blobs",
     "path": "%LocalAppData%\\Temp\\blender_temp\\Service Worker\\CacheStorage",
     "safeToDelete": true,
     "avgSpace": "1.5 GB – 8.5 GB",
@@ -5425,7 +5425,7 @@
   {
     "slug": "blender-3d-crashpad-dump-logs",
     "category": "app",
-    "name": "Blender 3D Bake & Render Crashpad Reports & Diagnostic DMP Logs",
+    "name": "Blender 3D Crashpad Reports & Diagnostic DMP Logs",
     "path": "%LocalAppData%\\Temp\\blender_temp\\Crashpad\\reports and logs",
     "safeToDelete": true,
     "avgSpace": "0.6 GB – 3.8 GB",
@@ -5440,7 +5440,7 @@
   {
     "slug": "blender-3d-media-blob-storage",
     "category": "app",
-    "name": "Blender 3D Bake & Render Media Cache & IndexedDB Blob Storage",
+    "name": "Blender 3D Media Cache & IndexedDB Blob Storage",
     "path": "%LocalAppData%\\Temp\\blender_temp\\Cache\\Cache_Data and IndexedDB",
     "safeToDelete": true,
     "avgSpace": "2.0 GB – 12.0 GB",
