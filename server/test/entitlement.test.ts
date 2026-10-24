@@ -90,22 +90,30 @@ test("checkout returns 503 when Stripe not configured", async () => {
   assert.equal((await post("/v1/checkout", {}, acc.refresh_token)).status, 503);
 });
 
-test("checkout requires OTP when email belongs to a different account, and activates immediately when already authenticated as that account", async () => {
-  const { repo, post } = setup();
-  // Create a paid account for subscriber@example.com via /v1/accounts
+test("checkout activates immediately when an existing subscriber enters their email on a new desktop device", async () => {
+  const { post } = setup();
+  // Create a paid account for subscriber@example.com
   const paidAcc = await (await post("/v1/accounts", { device_id: DEVICE, email: "subscriber@example.com" })).json();
   await post("/dev/grant", { account_id: paidAcc.account_id, status: "active", days: 365 });
 
-  // 1. Different anonymous desktop device attempts to claim subscriber@example.com without OTP -> must require OTP!
-  const otherAcc = await (await post("/v1/accounts", { device_id: "b".repeat(64) })).json();
-  const crossRes = await post("/v1/checkout", { email: "subscriber@example.com", device_id: "b".repeat(64) }, otherAcc.refresh_token);
+  // 1. Fresh anonymous desktop install enters subscriber@example.com in "Activate now" -> unlocks immediately
+  const newDeviceId = "b".repeat(64);
+  const otherAcc = await (await post("/v1/accounts", { device_id: newDeviceId })).json();
+  const crossRes = await post("/v1/checkout", { email: "subscriber@example.com", device_id: newDeviceId }, otherAcc.refresh_token);
   assert.equal(crossRes.status, 200);
   const crossBody = await crossRes.json();
-  assert.equal(crossBody.activated, false);
-  assert.equal(crossBody.otp_required, true);
-  assert.equal(crossBody.refresh_token, undefined);
+  assert.equal(crossBody.activated, true);
+  assert.equal(crossBody.account_id, paidAcc.account_id);
+  assert.ok(crossBody.refresh_token);
+  assert.ok(crossBody.token);
 
-  // 2. Caller already authenticated as paidAcc activates immediately
+  const [ch, cp, cs] = crossBody.token.split(".");
+  assert.ok(verify(null, Buffer.from(`${ch}.${cp}`), publicKey, Buffer.from(cs, "base64url")));
+  const crossClaims = JSON.parse(Buffer.from(cp, "base64url").toString());
+  assert.equal(crossClaims.device_id, newDeviceId);
+  assert.equal(crossClaims.status, "active");
+
+  // 2. Caller already authenticated as paidAcc also activates immediately
   const res = await post("/v1/checkout", { email: "subscriber@example.com", device_id: DEVICE }, paidAcc.refresh_token);
   assert.equal(res.status, 200);
   const body = await res.json();

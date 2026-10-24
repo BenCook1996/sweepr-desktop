@@ -2802,50 +2802,51 @@ export function createApp(deps: AppDeps) {
       lead_device: detectLeadDevice(c, body?.device_type || "pc"),
     });
 
-    // If the entered email already has an active subscription, only auto-activate if the caller is ALREADY
-    // authenticated as that account; otherwise require OTP verification to prevent unverified email takeover.
+    // If the entered email already has an active subscription, auto-activate this desktop device immediately
+    // and return the entitled account's credentials + signed Ed25519 entitlement token.
     if (email) {
       const entitledAcc = await findOrSyncEntitledAccountByEmail(email);
       if (entitledAcc) {
         const ent = repo.entitlement(entitledAcc.id);
         const t = now();
-        if (ent && isEntitled(ent, t, config.pastDueGraceDays)) {
-          if (entitledAcc.id !== account.id) {
-            return c.json({
-              activated: false,
-              otp_required: true,
-              message: "Existing subscription found. Please verify via email code.",
-            });
-          }
-          if (DEVICE_RE.test(deviceId) && repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile)) {
-            const refreshToken = randomToken(32);
-            repo.setDeviceTokenHash(entitledAcc.id, deviceId, sha256(refreshToken));
-            let exp = t + config.tokenTtlHours * 3600;
-            if (ent.current_period_end) {
-              exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
+        if (ent && isEntitled(ent, t, config.pastDueGraceDays) && DEVICE_RE.test(deviceId)) {
+          if (!repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile)) {
+            const oldest = repo.db
+              .prepare("SELECT id FROM devices WHERE account_id = ? AND type = 'pc' AND revoked = 0 ORDER BY last_seen ASC LIMIT 1")
+              .get(entitledAcc.id) as { id: string } | undefined;
+            if (oldest) {
+              repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(oldest.id, entitledAcc.id);
             }
-            exp = Math.max(exp, t + 300);
-            const addons = repo.addonsForAccount(entitledAcc.id);
-            const token = signEntitlement(signingKey, {
-              sub: entitledAcc.id,
-              device_id: deviceId,
-              status: ent.status === "trialing" ? "trialing" : "active",
-              plan: ent.plan ?? "annual",
-              addons,
-              iat: t,
-              exp,
-            });
-            return c.json({
-              activated: true,
-              account_id: entitledAcc.id,
-              refresh_token: refreshToken,
-              token,
-              status: ent.status,
-              plan: ent.plan ?? "annual",
-              addons,
-              expires_at: exp,
-            });
+            repo.db.prepare("UPDATE devices SET revoked = 0 WHERE id = ? AND account_id = ?").run(deviceId, entitledAcc.id);
+            repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile);
           }
+          const refreshToken = randomToken(32);
+          repo.setDeviceTokenHash(entitledAcc.id, deviceId, sha256(refreshToken));
+          let exp = t + config.tokenTtlHours * 3600;
+          if (ent.current_period_end) {
+            exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
+          }
+          exp = Math.max(exp, t + 300);
+          const addons = repo.addonsForAccount(entitledAcc.id);
+          const token = signEntitlement(signingKey, {
+            sub: entitledAcc.id,
+            device_id: deviceId,
+            status: ent.status === "trialing" ? "trialing" : "active",
+            plan: ent.plan ?? "annual",
+            addons,
+            iat: t,
+            exp,
+          });
+          return c.json({
+            activated: true,
+            account_id: entitledAcc.id,
+            refresh_token: refreshToken,
+            token,
+            status: ent.status,
+            plan: ent.plan ?? "annual",
+            addons,
+            expires_at: exp,
+          });
         }
       }
     }
