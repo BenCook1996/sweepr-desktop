@@ -917,7 +917,7 @@ export function createApp(deps: AppDeps) {
         },
         ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
-        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments.data.payment.payment_intent"],
+        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
       } as any);
 
       const latestInvoice: any = subscription.latest_invoice;
@@ -1312,7 +1312,7 @@ export function createApp(deps: AppDeps) {
         },
         ...(introCouponId ? { discounts: [{ coupon: introCouponId }] } : {}),
         metadata: attributionMeta,
-        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments.data.payment.payment_intent"],
+        expand: ["latest_invoice.confirmation_secret", "latest_invoice.payments"],
       };
 
       const subscription = await stripe.subscriptions.create(subParams);
