@@ -2,6 +2,13 @@ name: "Build Sweepr Installers"
 
 on:
   workflow_dispatch: # Allows you to click a button in GitHub to manually trigger the build
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'scripts/build-mac-dmg.mjs'
+      - '.github/workflows/build-apps.yml'
 
 jobs:
   build-tauri:
@@ -68,6 +75,28 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Package signed macOS UDIF DMG with custom Volume Icon & commit to server/public
+        if: matrix.platform == 'macos-latest'
+        run: |
+          APP_BUNDLE=$(find app/src-tauri/target -name "*.app" -type d | head -n 1)
+          if [ -n "$APP_BUNDLE" ]; then
+            codesign --force --deep --sign - "$APP_BUNDLE"
+            STAGE_DIR=$(mktemp -d)
+            cp -R "$APP_BUNDLE" "$STAGE_DIR/"
+            ln -s /Applications "$STAGE_DIR/Applications"
+            cp app/src-tauri/icons/icon.icns "$STAGE_DIR/.VolumeIcon.icns"
+            SetFile -c icnC "$STAGE_DIR/.VolumeIcon.icns" || true
+            SetFile -a C "$STAGE_DIR" || true
+            hdiutil create -volname "SWEEPR Cleaner" -srcfolder "$STAGE_DIR" -ov -format UDZO server/public/SWEEPRCleaner.dmg
+            if [ "${{ github.ref_name }}" = "main" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git pull --rebase origin main || true
+              git add server/public/SWEEPRCleaner.dmg
+              git diff --staged --quiet || (git commit -m "chore(mac): update native Universal UDIF SWEEPRCleaner.dmg with icon [skip ci]" && git push origin HEAD:main)
+            fi
+          fi
 
       - name: Sign Windows Binaries with Azure Artifact Signing (Authenticode + SmartScreen)
         if: matrix.platform == 'windows-latest' && env.AZURE_CLIENT_ID != ''

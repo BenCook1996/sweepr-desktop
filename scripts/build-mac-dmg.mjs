@@ -31,6 +31,8 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
   <string>sweepr-cleaner</string>
   <key>CFBundleIconFile</key>
   <string>icon.icns</string>
+  <key>CFBundleIconName</key>
+  <string>icon</string>
   <key>CFBundleIdentifier</key>
   <string>com.sweepr.cleaner</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -51,6 +53,40 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
+const macosCocoaWindowJxa = `ObjC.import('Cocoa');
+ObjC.import('WebKit');
+
+function run(argv) {
+  var urlStr = argv.length > 0 ? argv[0] : 'https://sweeprcleaner.com/dashboard';
+  var iconStr = argv.length > 1 ? argv[1] : '';
+  var app = $.NSApplication.sharedApplication;
+  app.setActivationPolicy($.NSApplicationActivationPolicyRegular);
+
+  if (iconStr) {
+    var img = $.NSImage.alloc.initWithContentsOfFile($(iconStr));
+    if (img) app.setApplicationIconImage(img);
+  }
+
+  var style = $.NSTitledWindowMask | $.NSClosableWindowMask | $.NSMiniaturizableWindowMask | $.NSResizableWindowMask;
+  var rect = $.NSMakeRect(0, 0, 1180, 780);
+  var win = $.NSWindow.alloc.initWithContentRectStyleMaskBackingDefer(rect, style, $.NSBackingStoreBuffered, false);
+  win.center;
+  win.setTitle($('SWEEPR Cleaner'));
+
+  var cfg = $.WKWebViewConfiguration.alloc.init;
+  var wv = $.WKWebView.alloc.initWithFrameConfiguration(rect, cfg);
+  wv.setAutoresizingMask(18);
+  var nsUrl = $.NSURL.URLWithString($(urlStr));
+  var req = $.NSURLRequest.requestWithURL(nsUrl);
+  wv.loadRequest(req);
+
+  win.setContentView(wv);
+  win.makeKeyAndOrderFront(null);
+  app.activateIgnoringOtherApps(true);
+  app.run;
+}
+`;
+
 const macosRuntimePy = `#!/usr/bin/env python3
 import os, sys, json, time, shutil, socket, struct, hashlib, subprocess, threading, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -59,6 +95,8 @@ from pathlib import Path
 APP_DIR = Path(__file__).resolve().parent.parent
 RES_DIR = APP_DIR / "Resources"
 DIST_DIR = RES_DIR / "dist"
+ICON_PATH = RES_DIR / "icon.icns"
+JXA_PATH = RES_DIR / "window.jxa"
 DATA_DIR = Path.home() / "Library" / "Application Support" / "com.sweepr.cleaner"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 QUARANTINE_DIR = DATA_DIR / "quarantine"
@@ -197,6 +235,10 @@ def main():
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     url = f"http://127.0.0.1:{port}/index.html"
+    if JXA_PATH.exists():
+        ret = subprocess.call(["/usr/bin/osascript", "-l", "JavaScript", str(JXA_PATH), url, str(ICON_PATH)])
+        if ret == 0:
+            return
     subprocess.Popen(["open", url])
     try:
         while True:
@@ -214,7 +256,10 @@ RES="$DIR/../Resources"
 if [ -x "$DIR/sweepr-cleaner-native" ]; then
   exec "$DIR/sweepr-cleaner-native" "$@"
 fi
-exec /usr/bin/python3 "$RES/runtime.py" "$@"
+if [ -x "/usr/bin/python3" ]; then
+  exec /usr/bin/python3 "$RES/runtime.py" "$@"
+fi
+exec /usr/bin/osascript -l JavaScript "$RES/window.jxa" "https://sweeprcleaner.com/dashboard" "$RES/icon.icns"
 `;
 
 const installCommandSh = `#!/bin/bash
@@ -303,8 +348,26 @@ function buildIso9660Dmg(tree, volumeLabel) {
   function makeRockRidge(realName, isDir, mode, isRootSelf = false) {
     const parts = [];
     if (isRootSelf) {
-      // SP (System Use Sharing Protocol indicator)
+      // 1. SP (System Use Sharing Protocol indicator)
       parts.push(Buffer.from([0x53, 0x50, 7, 1, 0xbe, 0xef, 0]));
+      // 2. ER (Extensions Reference for RRIP_1991A - required by macOS cd9660.kext!)
+      const id = Buffer.from("RRIP_1991A", "ascii");
+      const des = Buffer.from("ROCK RIDGE", "ascii");
+      const src = Buffer.from("RRIP", "ascii");
+      const erLen = 8 + id.length + des.length + src.length;
+      const er = Buffer.alloc(erLen);
+      er[0] = 0x45; // 'E'
+      er[1] = 0x52; // 'R'
+      er[2] = erLen;
+      er[3] = 1; // version 1
+      er[4] = id.length;
+      er[5] = des.length;
+      er[6] = src.length;
+      er[7] = 1; // ext_ver 1
+      id.copy(er, 8);
+      des.copy(er, 8 + id.length);
+      src.copy(er, 8 + id.length + des.length);
+      parts.push(er);
     }
     // PX (POSIX file attributes: mode, nlink, uid, gid)
     const px = Buffer.alloc(36);
@@ -500,12 +563,21 @@ for (const f of fs.readdirSync(assetsDir)) {
   }
 }
 
+const iconBytes = fs.readFileSync(iconPath);
+
 const tree = {
   type: "dir",
   name: "",
   isoName: "",
   mode: 0o755,
   children: [
+    {
+      type: "file",
+      name: ".VolumeIcon.icns",
+      isoName: "VOLICON.ICN",
+      data: iconBytes,
+      mode: 0o644,
+    },
     {
       type: "dir",
       name: "SWEEPR Cleaner.app",
@@ -557,7 +629,14 @@ const tree = {
                   type: "file",
                   name: "icon.icns",
                   isoName: "ICON.ICN",
-                  data: fs.readFileSync(iconPath),
+                  data: iconBytes,
+                  mode: 0o644,
+                },
+                {
+                  type: "file",
+                  name: "window.jxa",
+                  isoName: "WINDOW.JXA",
+                  data: Buffer.from(macosCocoaWindowJxa.replace(/\r\n/g, "\n"), "utf8"),
                   mode: 0o644,
                 },
                 {

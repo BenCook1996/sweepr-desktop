@@ -9,6 +9,27 @@
 
 export const PROJECT_ID = "cleaner";
 
+let crmConsecutiveFailures = 0;
+let crmCircuitOpenUntil = 0;
+const CRM_CIRCUIT_THRESHOLD = 3;
+const CRM_CIRCUIT_COOLDOWN_MS = 60_000;
+
+function isCrmCircuitOpen(): boolean {
+  return Date.now() < crmCircuitOpenUntil;
+}
+
+function recordCrmSuccess(): void {
+  crmConsecutiveFailures = 0;
+  crmCircuitOpenUntil = 0;
+}
+
+function recordCrmFailure(): void {
+  crmConsecutiveFailures += 1;
+  if (crmConsecutiveFailures >= CRM_CIRCUIT_THRESHOLD) {
+    crmCircuitOpenUntil = Date.now() + CRM_CIRCUIT_COOLDOWN_MS;
+  }
+}
+
 function getCrmUrl(): string {
   return (process.env.SWEEPR_CRM_URL || "").trim().replace(/\/+$/, "");
 }
@@ -76,7 +97,7 @@ export async function verifyCentralEntitlement(
 ): Promise<CentralEntitlementResult | null> {
   const crmUrl = getCrmUrl();
   const cleanLookup = String(lookup || "").trim();
-  if (!crmUrl || !cleanLookup) return null;
+  if (!crmUrl || !cleanLookup || isCrmCircuitOpen()) return null;
 
   try {
     const res = await fetch(`${crmUrl}/v1/license/verify-key`, {
@@ -89,7 +110,11 @@ export async function verifyCentralEntitlement(
       }),
       signal: AbortSignal.timeout(4500),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (res.status >= 500) recordCrmFailure();
+      return null;
+    }
+    recordCrmSuccess();
     const data = (await res.json()) as Record<string, any>;
     return {
       valid: Boolean(data.valid || data.ok),
@@ -106,6 +131,7 @@ export async function verifyCentralEntitlement(
       token: typeof data.token === "string" ? data.token : undefined,
     };
   } catch {
+    recordCrmFailure();
     return null;
   }
 }

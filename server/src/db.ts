@@ -136,6 +136,8 @@ export interface DeviceRecord {
   id: string;
   account_id: string;
   type: string;
+  device_name?: string | null;
+  platform?: string | null;
   first_seen: number;
   last_seen: number;
   revoked: number;
@@ -322,6 +324,36 @@ export function openDb(path: string) {
       message_id TEXT,
       reached_out_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS webhook_dlq (
+      id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      error TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS qr_pairing_tokens (
+      token_hash TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      consumed INTEGER NOT NULL DEFAULT 0,
+      created_by_ip TEXT
+    );
+    CREATE TABLE IF NOT EXISTS qr_pairing_challenges (
+      challenge_id TEXT PRIMARY KEY,
+      poll_secret_hash TEXT NOT NULL,
+      device_id TEXT NOT NULL,
+      device_type TEXT NOT NULL DEFAULT 'pc',
+      device_name TEXT,
+      platform TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      account_id TEXT,
+      issued_refresh_token TEXT,
+      issued_jws TEXT,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
   `);
 
   // Ensure extended CRM columns on accounts table
@@ -339,6 +371,8 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
   ensureColumn(db, "devices", "token_hash", "TEXT");
+  ensureColumn(db, "devices", "device_name", "TEXT");
+  ensureColumn(db, "devices", "platform", "TEXT");
   ensureColumn(db, "entitlements", "addons", "TEXT NOT NULL DEFAULT '[]'");
   ensureColumn(db, "subscriptions", "addons", "TEXT NOT NULL DEFAULT '[]'");
   // OTPs are now stored hashed with a failed-attempt counter. Any pre-existing (plaintext) codes are dropped.
@@ -351,6 +385,24 @@ export function openDb(path: string) {
   for (const row of missingRef) {
     db.prepare(`UPDATE accounts SET referral_code = ? WHERE id = ?`).run(generateReferralCode(row.id), row.id);
   }
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_accounts_email_lower ON accounts(lower(email));`);
+
+  // Periodic TTL cleanup for high-append tables (#63 Partitioning)
+  const runTtlCleanup = () => {
+    try {
+      const ts = Math.floor(Date.now() / 1000);
+      db.prepare(`DELETE FROM otps WHERE expires_at < ?`).run(ts - 86400);
+      db.prepare(`DELETE FROM qr_pairing_tokens WHERE expires_at < ?`).run(ts - 600);
+      db.prepare(`DELETE FROM qr_pairing_challenges WHERE expires_at < ?`).run(ts - 600);
+      db.prepare(`DELETE FROM processed_events WHERE processed_at < ?`).run(ts - 90 * 86400);
+      db.prepare(`DELETE FROM analytics_events WHERE created_at < ?`).run(ts - 90 * 86400);
+    } catch {
+      /* ignore if db closed */
+    }
+  };
+  runTtlCleanup();
+  setInterval(runTtlCleanup, 6 * 3600 * 1000).unref();
 
   return new Repo(db);
 }
@@ -565,33 +617,51 @@ export class Repo {
     });
   }
 
-  /** Registers the device if there's room. Returns false if the device limit is reached or the device is revoked. */
-  touchDevice(accountId: string, deviceId: string, deviceType: "pc" | "mobile", maxPc: number, maxMobile: number): boolean {
-    const existing = this.db.prepare("SELECT revoked, type FROM devices WHERE id = ? AND account_id = ?").get(deviceId, accountId) as { revoked: number, type: string } | undefined;
+  /**
+   * Registers the device if there's room under the unified 3-device limit
+   * (any combination of desktop or mobile). Returns false if the device limit is reached or the device is revoked.
+   */
+  touchDevice(
+    accountId: string,
+    deviceId: string,
+    deviceType: "pc" | "mobile",
+    maxPc: number,
+    _maxMobile: number,
+    meta?: { deviceName?: string | null; platform?: string | null }
+  ): boolean {
+    const cleanName = meta?.deviceName ? String(meta.deviceName).trim().slice(0, 80) : null;
+    const cleanPlatform = meta?.platform ? String(meta.platform).trim().slice(0, 40) : null;
+    const existing = this.db.prepare("SELECT revoked, type FROM devices WHERE id = ? AND account_id = ?").get(deviceId, accountId) as { revoked: number; type: string } | undefined;
     if (existing) {
       if (existing.revoked) return false;
-      this.db.prepare("UPDATE devices SET last_seen = ?, type = ? WHERE id = ? AND account_id = ?").run(now(), deviceType, deviceId, accountId);
+      this.db
+        .prepare("UPDATE devices SET last_seen = ?, type = ?, device_name = COALESCE(?, device_name), platform = COALESCE(?, platform) WHERE id = ? AND account_id = ?")
+        .run(now(), deviceType, cleanName, cleanPlatform, deviceId, accountId);
       return true;
     }
-    const { n } = this.db.prepare("SELECT COUNT(*) AS n FROM devices WHERE account_id = ? AND revoked = 0 AND type = ?").get(accountId, deviceType) as { n: number };
-    const limit = deviceType === "mobile" ? maxMobile : maxPc;
+    const { n } = this.db
+      .prepare("SELECT COUNT(*) AS n FROM devices WHERE account_id = ? AND revoked = 0")
+      .get(accountId) as { n: number };
+    const limit = Math.max(1, maxPc || 3);
     if (n >= limit) return false;
-    this.db.prepare("INSERT INTO devices (id, account_id, type, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)").run(deviceId, accountId, deviceType, now(), now());
+    this.db
+      .prepare("INSERT INTO devices (id, account_id, type, device_name, platform, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run(deviceId, accountId, deviceType, cleanName, cleanPlatform, now(), now());
 
     this.addAnalyticsEvent({
       event_name: "app_installed",
-      platform: deviceType === "mobile" ? "android" : "windows",
+      platform: cleanPlatform || (deviceType === "mobile" ? "android" : "windows"),
       account_id: accountId,
-      metadata: { device_id: deviceId, device_type: deviceType, source: "device_registration" },
+      metadata: { device_id: deviceId, device_type: deviceType, device_name: cleanName, source: "device_registration" },
     });
 
     this.addActivity({
       account_id: accountId,
       type: "device_connected",
       title: "Device Connected",
-      description: `Hardware device ${deviceId.slice(0, 8)}... (${deviceType.toUpperCase()}) connected`,
+      description: `Hardware device ${cleanName || deviceId.slice(0, 8) + "..."} (${deviceType.toUpperCase()}) connected`,
       actor: "system",
-      metadata: { device_id: deviceId, device_type: deviceType },
+      metadata: { device_id: deviceId, device_type: deviceType, device_name: cleanName, platform: cleanPlatform },
     });
     return true;
   }
@@ -1547,5 +1617,24 @@ export class Repo {
   deleteOutreachLog(id: number): boolean {
     const res = this.db.prepare("DELETE FROM outreach_logs WHERE id = ?").run(id);
     return Number(res.changes) > 0;
+  }
+
+  recordWebhookDlq(id: string, provider: string, eventType: string, payload: string, error: string): void {
+    try {
+      this.db
+        .prepare(
+          `INSERT OR REPLACE INTO webhook_dlq (id, provider, event_type, payload, error, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          String(id).slice(0, 200),
+          String(provider).slice(0, 40),
+          String(eventType).slice(0, 120),
+          String(payload).slice(0, 65536),
+          String(error).slice(0, 4000),
+          now()
+        );
+    } catch {
+      /* ignore DLQ write errors */
+    }
   }
 }

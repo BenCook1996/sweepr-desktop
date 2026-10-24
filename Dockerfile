@@ -5,11 +5,11 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/
 WORKDIR /app/server
 
 COPY server/package.json server/package-lock.json* ./
-RUN npm install --omit=dev && npm install tsx
+RUN npm ci --omit=dev
 
 COPY server/ ./
 
-RUN mkdir -p /app/server/data
+RUN mkdir -p /app/server/data && chown -R node:node /app/server
 
 ENV NODE_ENV=production
 ENV PORT=8787
