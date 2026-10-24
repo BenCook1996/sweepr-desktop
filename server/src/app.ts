@@ -389,7 +389,21 @@ export function createApp(deps: AppDeps) {
   });
   app.get("/admin", (c) => c.redirect("/crm"));
 
-  // Explicit HTML page routes for clean URLs (no conditional cookie or User-Agent redirects)
+  // If a visitor filled out checkout details on /order in the last 30 minutes (sweepr_order_draft=1 cookie),
+  // redirect any public HTML page revisit straight back to /order with their prefilled details.
+  const ORDER_DRAFT_REDIRECT_PATHS = /^\/+(?:|(?:de|fr|es)(?:\/+pricing)?|pricing(?:\.html)?|login(?:\.html)?|terms(?:\.html)?|privacy(?:\.html)?|support(?:\.html)?|refund(?:\.html)?|vs\/+[^/]+|alternatives\/+[^/]+|clean(?:\/+[^/]+\/+[^/]+)?)$/i;
+  app.use("*", async (c, next) => {
+    if (c.req.method === "GET" && ORDER_DRAFT_REDIRECT_PATHS.test(c.req.path)) {
+      const ua = c.req.header("user-agent");
+      if (!detectBot(ua) && ua !== AUDIT_USER_AGENT && getCookie(c, "sweepr_order_draft") === "1") {
+        c.header("Cache-Control", "private, no-store, no-cache, must-revalidate");
+        return c.redirect("/order", 302);
+      }
+    }
+    await next();
+  });
+
+  // Explicit HTML page routes for clean URLs
   const renderHtmlFileWithLocale = (c: Context, file: string, lang = "en") => {
     if (!existsSync(file)) return c.notFound();
     let html = readFileSync(file, "utf-8");
@@ -3313,20 +3327,23 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    deleteCookie(c, "sweepr_order_draft", { path: "/" });
+
     if (isPopup) {
       return c.html(popupClosePage("success", "/checkout/success?web=1"));
     }
 
+    const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';}catch(e){}</script>`;
     if (isWeb) {
       return c.html(
         page(
           "You're Activated 🎉",
-          "Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.",
+          `Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.${clearDraftScript}`,
           true
         )
       );
     }
-    return c.html(page("You're Activated 🎉", "Return to SWEEPR Cleaner. It will unlock automatically within a few seconds."));
+    return c.html(page("You're Activated 🎉", `Return to SWEEPR Cleaner. It will unlock automatically within a few seconds.${clearDraftScript}`));
   });
   app.get("/checkout/cancel", (c) => c.html(page("Checkout Cancelled", "No charge was made. You can safely close this tab.")));
   app.get("/checkout/portal-return", (c) => c.html(page("All Set", "You can close this tab and return to SWEEPR Cleaner.")));

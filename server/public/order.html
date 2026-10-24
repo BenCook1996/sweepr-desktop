@@ -1199,6 +1199,10 @@
           window.applyDictionary(savedLang);
         }
       } catch (e) {}
+
+      if (typeof saveOrderDraft === 'function') {
+        saveOrderDraft(false);
+      }
     }
 
     // Enable fallback card inputs only when Stripe Elements is not active
@@ -1237,6 +1241,9 @@
       startInactivityTimer();
       setupExitIntent();
 
+      // Restore any saved checkout details from the last 30 minutes
+      const restoredDraft = restoreOrderDraft();
+
       // Check URL parameters for intro offer / discount flags or selected plan
       const urlParams = new URLSearchParams(window.location.search);
       const planParam = urlParams.get('plan');
@@ -1268,9 +1275,15 @@
 
       let storedPlan = null;
       try { storedPlan = sessionStorage.getItem('sweepr_selected_plan'); } catch (e) {}
-      const effectivePlan = planParam || storedPlan;
+      const effectivePlan = planParam || (restoredDraft && restoredDraft.plan) || storedPlan;
 
-      if (offerParam === 'intro' || discountParam === '1' || urlParams.get('intro') === '1' || planParam === 'intro') {
+      if (
+        offerParam === 'intro' ||
+        discountParam === '1' ||
+        urlParams.get('intro') === '1' ||
+        planParam === 'intro' ||
+        (restoredDraft && restoredDraft.isDiscountApplied && !planParam)
+      ) {
         activateDiscountOffer();
       } else if (effectivePlan === 'six_month' || effectivePlan === '6month' || effectivePlan === 'sixmonth') {
         selectOrderPlan('six_month');
@@ -1279,6 +1292,13 @@
       } else {
         // Default to Annual Plan (£49.99/year — £4.16/mo, Save 58%) with "Most Popular / Best Value" badge
         selectOrderPlan('annual');
+      }
+
+      // Sync draft if ?email= prefilled the form or restoredDraft was loaded
+      if (emailParam) {
+        saveOrderDraft(true);
+      } else if (restoredDraft) {
+        saveOrderDraft(false);
       }
     }
 
@@ -1527,6 +1547,7 @@
           })
         });
         const verifyData = await verifyRes.json();
+        clearOrderDraft();
         window.location.href = verifyData.redirect || '/checkout/success?web=1';
       } catch (err) {
         if (err && err.statusCode === 'CANCELED') return;
@@ -1635,6 +1656,7 @@
                 })
               });
               const verifyData = await verifyRes.json();
+              clearOrderDraft();
               window.location.href = verifyData.redirect || '/checkout/success?web=1';
             } catch (err) {
               ev.complete('fail');
@@ -1959,6 +1981,7 @@
               if (payload.type === 'paypal_success') {
                 completed = true;
                 cleanup();
+                clearOrderDraft();
                 try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
                 window.location.href = payload.redirectUrl || `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`;
               } else if (payload.type === 'paypal_cancelled') {
@@ -2012,6 +2035,7 @@
                     if (verifyData.ok && (verifyData.status === 'active' || verifyData.status === 'trialing')) {
                       completed = true;
                       cleanup();
+                      clearOrderDraft();
                       try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
                       window.location.href = verifyData.redirect || '/checkout/success?web=1';
                       return;
@@ -2092,6 +2116,7 @@
             })
           });
           const confirmData = await confirmRes.json();
+          clearOrderDraft();
           window.location.href = confirmData.redirect || '/checkout/success?web=1';
           return;
         }
@@ -2142,6 +2167,9 @@
 
         const subData = await subRes.json();
         if (subRes.ok && subData.redirectUrl) {
+          if (subData.redirectUrl.includes('/checkout/success')) {
+            clearOrderDraft();
+          }
           window.location.href = subData.redirectUrl;
           return;
         } else {
@@ -2160,6 +2188,131 @@
       errBox.classList.remove('hidden');
       errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    // 30-Minute Order Draft Persistence & Auto-Prefill
+    const ORDER_DRAFT_KEY = 'sweepr_order_draft';
+    const ORDER_DRAFT_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+    function clearOrderDraft() {
+      try { localStorage.removeItem(ORDER_DRAFT_KEY); } catch (e) {}
+      try { document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
+    }
+
+    function getOrderDraft() {
+      try {
+        const raw = localStorage.getItem(ORDER_DRAFT_KEY);
+        if (!raw) return null;
+        const draft = JSON.parse(raw);
+        if (!draft || !draft.updatedAt) {
+          clearOrderDraft();
+          return null;
+        }
+        if (Date.now() - Number(draft.updatedAt) >= ORDER_DRAFT_TTL_MS) {
+          clearOrderDraft();
+          return null;
+        }
+        const hasDetails = Boolean(
+          (draft.cardName && String(draft.cardName).trim()) ||
+          (draft.billingAddress && String(draft.billingAddress).trim()) ||
+          (draft.billingPostcode && String(draft.billingPostcode).trim()) ||
+          (draft.email && String(draft.email).trim())
+        );
+        if (!hasDetails) {
+          clearOrderDraft();
+          return null;
+        }
+        return draft;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveOrderDraft(refreshTimestamp = true) {
+      try {
+        const cardName = (document.getElementById('cardName')?.value || '').trim();
+        const billingAddress = (document.getElementById('billingAddress')?.value || '').trim();
+        const billingPostcode = (document.getElementById('billingPostcode')?.value || '').trim();
+        const email = (document.getElementById('email')?.value || '').trim();
+        const hasDetails = Boolean(cardName || billingAddress || billingPostcode || email);
+
+        if (!hasDetails) {
+          clearOrderDraft();
+          return;
+        }
+
+        const existing = getOrderDraft();
+        const updatedAt = refreshTimestamp ? Date.now() : (existing?.updatedAt || Date.now());
+        const remainingSec = Math.max(1, Math.floor((ORDER_DRAFT_TTL_MS - (Date.now() - updatedAt)) / 1000));
+
+        const payload = {
+          cardName,
+          billingAddress,
+          billingPostcode,
+          email,
+          plan: selectedPlan,
+          isDiscountApplied: Boolean(isDiscountApplied),
+          batteryCareAddon: Boolean(isBatteryAddonSelected),
+          cloudVaultAddon: Boolean(isCloudVaultAddonSelected),
+          updatedAt
+        };
+        localStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify(payload));
+        document.cookie = `sweepr_order_draft=1; path=/; max-age=${remainingSec}; SameSite=Lax`;
+      } catch (e) {}
+    }
+
+    function restoreOrderDraft() {
+      const draft = getOrderDraft();
+      if (!draft) return null;
+
+      const cardNameEl = document.getElementById('cardName');
+      const billingAddressEl = document.getElementById('billingAddress');
+      const billingPostcodeEl = document.getElementById('billingPostcode');
+      const emailEl = document.getElementById('email');
+
+      if (cardNameEl && draft.cardName) cardNameEl.value = draft.cardName;
+      if (billingAddressEl && draft.billingAddress) billingAddressEl.value = draft.billingAddress;
+      if (billingPostcodeEl && draft.billingPostcode) billingPostcodeEl.value = draft.billingPostcode;
+      if (emailEl && draft.email) emailEl.value = draft.email;
+
+      if (typeof draft.batteryCareAddon === 'boolean') {
+        isBatteryAddonSelected = draft.batteryCareAddon;
+        const cb = document.getElementById('batteryCareCheckbox');
+        if (cb) cb.checked = isBatteryAddonSelected;
+      }
+      if (typeof draft.cloudVaultAddon === 'boolean') {
+        isCloudVaultAddonSelected = draft.cloudVaultAddon;
+        const cb = document.getElementById('cloudVaultCheckbox');
+        if (cb) cb.checked = isCloudVaultAddonSelected;
+      }
+      return draft;
+    }
+
+    ['cardName', 'billingAddress', 'billingPostcode', 'email'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      ['input', 'change', 'blur'].forEach((evName) => {
+        el.addEventListener(evName, () => saveOrderDraft(true));
+      });
+    });
+
+    // Catch silent browser autofill before leaving or hiding the page
+    let lastKnownConcat = '';
+    setInterval(() => {
+      const curr = [
+        document.getElementById('cardName')?.value || '',
+        document.getElementById('billingAddress')?.value || '',
+        document.getElementById('billingPostcode')?.value || '',
+        document.getElementById('email')?.value || ''
+      ].join('|');
+      if (curr !== lastKnownConcat) {
+        lastKnownConcat = curr;
+        if (curr.replace(/\|/g, '').trim().length > 0) {
+          saveOrderDraft(true);
+        }
+      }
+    }, 800);
+    window.addEventListener('pagehide', () => saveOrderDraft(false));
+    window.addEventListener('beforeunload', () => saveOrderDraft(false));
 
     // Capture lead in CRM as soon as visitor enters a valid email on the order page
     let lastCapturedLeadEmail = '';

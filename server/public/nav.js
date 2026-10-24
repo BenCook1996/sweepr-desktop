@@ -3,6 +3,47 @@
  * Handles desktop dropdown flyout menus, automatic mobile hamburger drawer injection,
  * mobile responsiveness, and click-outside / Escape dismissal.
  */
+(function () {
+  function checkOrderDraftRedirect() {
+    try {
+      var path = (window.location.pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
+      if (
+        path === '/order' ||
+        path === '/order.html' ||
+        path === '/checkout' ||
+        path === '/de/order' ||
+        path === '/fr/order' ||
+        path === '/es/order' ||
+        path.indexOf('/checkout/') === 0 ||
+        path === '/dashboard' ||
+        path.indexOf('/crm') === 0 ||
+        path.indexOf('/admin') === 0
+      ) {
+        return;
+      }
+      var raw = localStorage.getItem('sweepr_order_draft');
+      if (!raw) return;
+      var draft = JSON.parse(raw);
+      var ttl = 30 * 60 * 1000; // 30 minutes
+      var hasDetails = Boolean(
+        draft &&
+          ((draft.cardName && String(draft.cardName).trim()) ||
+            (draft.billingAddress && String(draft.billingAddress).trim()) ||
+            (draft.billingPostcode && String(draft.billingPostcode).trim()) ||
+            (draft.email && String(draft.email).trim()))
+      );
+      if (!draft || !draft.updatedAt || Date.now() - Number(draft.updatedAt) >= ttl || !hasDetails) {
+        localStorage.removeItem('sweepr_order_draft');
+        document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';
+        return;
+      }
+      window.location.replace('/order');
+    } catch (e) {}
+  }
+  checkOrderDraftRedirect();
+  window.addEventListener('pageshow', checkOrderDraftRedirect);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('navDropdownBtn');
   const menu = document.getElementById('navDropdownMenu');
