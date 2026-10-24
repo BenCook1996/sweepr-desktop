@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-23T05:26:06.301Z",
+  "lastRunAt": "2026-10-24T05:26:41.653Z",
   "lastCount": 50,
-  "totalCleanItems": 328,
+  "totalCleanItems": 378,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/ea-desktop-app-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/ea-desktop-app-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/ea-desktop-app-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/ubisoft-connect-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/ubisoft-connect-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/ubisoft-connect-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/ubisoft-connect-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/ubisoft-connect-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/gog-galaxy-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/gog-galaxy-code-bytecode-cache"
+    "https://sweeprcleaner.com/clean/app/logitech-ghub-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/logitech-ghub-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/logitech-ghub-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/premiere-pro-2026-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/premiere-pro-2026-code-bytecode-cache"
   ]
 }
