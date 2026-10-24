@@ -68,6 +68,9 @@ fun ContactsScreen(
     onToggle: (String) -> Unit,
     onMerge: (Set<String>) -> Unit,
     onRequestPermission: () -> Unit,
+    onToggleIncompleteContact: (Long) -> Unit = {},
+    onSetIncompleteContactsSelected: (Collection<Long>, Boolean) -> Unit = { _, _ -> },
+    onDeleteIncompleteContacts: (Set<Long>) -> Unit = {},
     onScanCalendarEvents: () -> Unit = {},
     onToggleCalendarEvent: (Long) -> Unit = {},
     onSetCalendarEventsSelected: (Collection<Long>, Boolean) -> Unit = { _, _ -> },
@@ -75,8 +78,9 @@ fun ContactsScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
-    var activeSegment by rememberSaveable { mutableIntStateOf(0) } // 0 = Contacts Cleanup, 1 = Old Calendar Events (>1 yr)
+    var activeSegment by rememberSaveable { mutableIntStateOf(0) } // 0 = Duplicates, 1 = Incomplete, 2 = Old Calendar (>1 yr)
     var showMergeConfirm by rememberSaveable { mutableStateOf(false) }
+    var showIncompleteDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     var showCalendarDeleteConfirm by rememberSaveable { mutableStateOf(false) }
 
     fun hasCalendarPerm(): Boolean {
@@ -97,13 +101,16 @@ fun ContactsScreen(
     }
 
     LaunchedEffect(activeSegment, calendarGranted) {
-        if (activeSegment == 1 && calendarGranted) {
+        if (activeSegment == 2 && calendarGranted) {
             onScanCalendarEvents()
         }
     }
 
     val existingKeys = state.contactGroups.map { it.key }.toSet()
     val selectedHere = state.selectedContactGroups.filter { it in existingKeys }.toSet()
+
+    val existingIncompleteIds = state.incompleteContacts.map { it.contactId }.toSet()
+    val selectedIncompleteHere = state.selectedIncompleteContactIds.filter { it in existingIncompleteIds }.toSet()
 
     val existingEventIds = state.oldCalendarEvents.map { it.id }.toSet()
     val selectedEventsHere = state.selectedCalendarEventIds.filter { it in existingEventIds }.toSet()
@@ -131,6 +138,31 @@ fun ContactsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showMergeConfirm = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showIncompleteDeleteConfirm && selectedIncompleteHere.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showIncompleteDeleteConfirm = false },
+            title = { Text("Delete ${selectedIncompleteHere.size} Incomplete Contact(s)?") },
+            text = {
+                Text("Permanently remove ${selectedIncompleteHere.size} incomplete contact(s) (missing name, phone, or email) from your address book?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showIncompleteDeleteConfirm = false
+                        if (permissions.contactsWrite) onDeleteIncompleteContacts(selectedIncompleteHere) else onRequestPermission()
+                    },
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showIncompleteDeleteConfirm = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -165,47 +197,74 @@ fun ContactsScreen(
     Scaffold(
         topBar = { SweeprTopBar(stringResource(R.string.category_contacts), onBack) },
         bottomBar = {
-            if (activeSegment == 0) {
-                if (permissions.contactsRead && state.contactGroups.isNotEmpty()) {
-                    Surface(shadowElevation = 8.dp) {
-                        Button(
-                            onClick = { showMergeConfirm = true },
-                            enabled = selectedHere.isNotEmpty() && !state.isBusy,
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .padding(16.dp)
-                                .height(52.dp),
-                        ) {
-                            Text(
-                                if (selectedHere.isEmpty()) stringResource(R.string.contacts_select_to_merge)
-                                else pluralStringResource(R.plurals.contacts_merge_n, selectedHere.size, selectedHere.size),
-                                fontWeight = FontWeight.Bold,
-                            )
+            when (activeSegment) {
+                0 -> {
+                    if (permissions.contactsRead && state.contactGroups.isNotEmpty()) {
+                        Surface(shadowElevation = 8.dp) {
+                            Button(
+                                onClick = { showMergeConfirm = true },
+                                enabled = selectedHere.isNotEmpty() && !state.isBusy,
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .navigationBarsPadding()
+                                    .padding(16.dp)
+                                    .height(52.dp),
+                            ) {
+                                Text(
+                                    if (selectedHere.isEmpty()) stringResource(R.string.contacts_select_to_merge)
+                                    else pluralStringResource(R.plurals.contacts_merge_n, selectedHere.size, selectedHere.size),
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
                     }
                 }
-            } else {
-                if (calendarGranted && state.oldCalendarEvents.isNotEmpty()) {
-                    Surface(shadowElevation = 8.dp) {
-                        Button(
-                            onClick = { showCalendarDeleteConfirm = true },
-                            enabled = selectedEventsHere.isNotEmpty() && !state.isBusy,
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .navigationBarsPadding()
-                                .padding(16.dp)
-                                .height(52.dp),
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                if (selectedEventsHere.isEmpty()) stringResource(R.string.calendar_select_to_delete)
-                                else stringResource(R.string.calendar_delete_selected, selectedEventsHere.size),
-                                fontWeight = FontWeight.Bold,
-                            )
+                1 -> {
+                    if (permissions.contactsRead && state.incompleteContacts.isNotEmpty()) {
+                        Surface(shadowElevation = 8.dp) {
+                            Button(
+                                onClick = { showIncompleteDeleteConfirm = true },
+                                enabled = selectedIncompleteHere.isNotEmpty() && !state.isBusy,
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .navigationBarsPadding()
+                                    .padding(16.dp)
+                                    .height(52.dp),
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    if (selectedIncompleteHere.isEmpty()) "Select contacts to delete"
+                                    else "Delete ${selectedIncompleteHere.size} Incomplete Contact(s)",
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    if (calendarGranted && state.oldCalendarEvents.isNotEmpty()) {
+                        Surface(shadowElevation = 8.dp) {
+                            Button(
+                                onClick = { showCalendarDeleteConfirm = true },
+                                enabled = selectedEventsHere.isNotEmpty() && !state.isBusy,
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .navigationBarsPadding()
+                                    .padding(16.dp)
+                                    .height(52.dp),
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    if (selectedEventsHere.isEmpty()) stringResource(R.string.calendar_select_to_delete)
+                                    else stringResource(R.string.calendar_delete_selected, selectedEventsHere.size),
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
                     }
                 }
@@ -213,7 +272,7 @@ fun ContactsScreen(
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            // Sleek top segmented pill switching between Contacts Cleanup & Old Calendar Events (>1 yr)
+            // 3-Way Segmented Pill: Duplicates | Incomplete | Old Calendar (>1 yr) (matching iOS)
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
@@ -223,18 +282,19 @@ fun ContactsScreen(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     val tabs = listOf(
-                        stringResource(R.string.contacts_tab_cleanup),
-                        stringResource(R.string.calendar_tab_old_events),
+                        "Dupes (${state.contactGroups.size})",
+                        "Incomplete (${state.incompleteContacts.size})",
+                        "Calendar",
                     )
                     tabs.forEachIndexed { index, label ->
                         val selected = activeSegment == index
                         Surface(
                             onClick = {
                                 activeSegment = index
-                                if (index == 1 && !calendarGranted) {
+                                if (index == 2 && !calendarGranted) {
                                     calendarPermissionLauncher.launch(
                                         arrayOf(
                                             Manifest.permission.READ_CALENDAR,
@@ -251,114 +311,233 @@ fun ContactsScreen(
                                 text = label,
                                 color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
+                                fontSize = 11.5.sp,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
                             )
                         }
                     }
                 }
             }
 
-            if (activeSegment == 0) {
-                when {
-                    !permissions.contactsRead -> PermissionPrompt(
-                        text = stringResource(R.string.contacts_permission_text),
-                        buttonText = stringResource(R.string.contacts_permission_button),
-                        onClick = onRequestPermission,
-                        modifier = Modifier.weight(1f),
-                    )
-                    state.contactGroups.isEmpty() -> EmptyState(
-                        stringResource(R.string.contacts_none_found),
-                        Modifier.weight(1f),
-                    )
-                    else -> LazyColumn(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        item {
-                            Text(
-                                stringResource(R.string.contacts_merge_explainer),
-                                color = Color.Gray,
-                                fontSize = 12.sp,
-                            )
-                        }
-                        items(state.contactGroups, key = { it.key }) { group ->
-                            ContactGroupCard(
-                                group = group,
-                                selected = group.key in state.selectedContactGroups,
-                                enabled = !state.isBusy,
-                                onToggle = { onToggle(group.key) },
-                                onMerge = { merge(setOf(group.key)) },
-                            )
-                        }
-                    }
-                }
-            } else {
-                when {
-                    !calendarGranted -> PermissionPrompt(
-                        text = stringResource(R.string.calendar_permission_text),
-                        buttonText = stringResource(R.string.calendar_permission_button),
-                        onClick = {
-                            calendarPermissionLauncher.launch(
-                                arrayOf(
-                                    Manifest.permission.READ_CALENDAR,
-                                    Manifest.permission.WRITE_CALENDAR,
-                                ),
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    state.oldCalendarEvents.isEmpty() -> EmptyState(
-                        stringResource(R.string.calendar_none_found),
-                        Modifier.weight(1f),
-                    )
-                    else -> {
-                        val allIds = state.oldCalendarEvents.map { it.id }
-                        val allSelected = allIds.all { it in selectedEventsHere }
-                        LazyColumn(
+            when (activeSegment) {
+                0 -> {
+                    when {
+                        !permissions.contactsRead -> PermissionPrompt(
+                            text = stringResource(R.string.contacts_permission_text),
+                            buttonText = stringResource(R.string.contacts_permission_button),
+                            onClick = onRequestPermission,
+                            modifier = Modifier.weight(1f),
+                        )
+                        state.contactGroups.isEmpty() -> EmptyState(
+                            stringResource(R.string.contacts_none_found),
+                            Modifier.weight(1f),
+                        )
+                        else -> LazyColumn(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             item {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(
-                                            stringResource(R.string.calendar_header_count, state.oldCalendarEvents.size),
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                        Text(
-                                            stringResource(R.string.calendar_explainer),
-                                            color = Color.Gray,
-                                            fontSize = 12.sp,
-                                        )
-                                    }
+                                    Text(
+                                        stringResource(R.string.contacts_merge_explainer),
+                                        color = Color.Gray,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.weight(1f),
+                                    )
                                     TextButton(
-                                        onClick = { onSetCalendarEventsSelected(allIds, !allSelected) },
+                                        onClick = { merge(existingKeys) },
+                                        enabled = !state.isBusy,
                                     ) {
                                         Text(
-                                            if (allSelected) stringResource(R.string.action_deselect_all)
-                                            else stringResource(R.string.action_select_all),
+                                            text = "Merge All (${state.contactGroups.size})",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = emeraldText(),
                                         )
                                     }
                                 }
                             }
-                            items(state.oldCalendarEvents, key = { it.id }) { event ->
-                                CalendarEventRowCard(
-                                    event = event,
-                                    selected = event.id in selectedEventsHere,
-                                    onToggle = { onToggleCalendarEvent(event.id) },
+                            items(state.contactGroups, key = { it.key }) { group ->
+                                ContactGroupCard(
+                                    group = group,
+                                    selected = group.key in state.selectedContactGroups,
+                                    enabled = !state.isBusy,
+                                    onToggle = { onToggle(group.key) },
+                                    onMerge = { merge(setOf(group.key)) },
                                 )
                             }
                         }
                     }
                 }
+                1 -> {
+                    when {
+                        !permissions.contactsRead -> PermissionPrompt(
+                            text = stringResource(R.string.contacts_permission_text),
+                            buttonText = stringResource(R.string.contacts_permission_button),
+                            onClick = onRequestPermission,
+                            modifier = Modifier.weight(1f),
+                        )
+                        state.incompleteContacts.isEmpty() -> EmptyState(
+                            "No incomplete contacts found — every contact has a name and phone or email!",
+                            Modifier.weight(1f),
+                        )
+                        else -> {
+                            val allIds = state.incompleteContacts.map { it.contactId }
+                            val allSelected = allIds.all { it in selectedIncompleteHere }
+                            LazyColumn(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                item {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                "${state.incompleteContacts.size} Incomplete Contacts",
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            Text(
+                                                "Contacts missing a name or both phone and email.",
+                                                color = Color.Gray,
+                                                fontSize = 12.sp,
+                                            )
+                                        }
+                                        TextButton(
+                                            onClick = { onSetIncompleteContactsSelected(allIds, !allSelected) },
+                                        ) {
+                                            Text(
+                                                if (allSelected) stringResource(R.string.action_deselect_all)
+                                                else stringResource(R.string.action_select_all),
+                                            )
+                                        }
+                                    }
+                                }
+                                items(state.incompleteContacts, key = { it.contactId }) { item ->
+                                    IncompleteContactRowCard(
+                                        contact = item,
+                                        selected = item.contactId in selectedIncompleteHere,
+                                        onToggle = { onToggleIncompleteContact(item.contactId) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    when {
+                        !calendarGranted -> PermissionPrompt(
+                            text = stringResource(R.string.calendar_permission_text),
+                            buttonText = stringResource(R.string.calendar_permission_button),
+                            onClick = {
+                                calendarPermissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.READ_CALENDAR,
+                                        Manifest.permission.WRITE_CALENDAR,
+                                    ),
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        state.oldCalendarEvents.isEmpty() -> EmptyState(
+                            stringResource(R.string.calendar_none_found),
+                            Modifier.weight(1f),
+                        )
+                        else -> {
+                            val allIds = state.oldCalendarEvents.map { it.id }
+                            val allSelected = allIds.all { it in selectedEventsHere }
+                            LazyColumn(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                item {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                stringResource(R.string.calendar_header_count, state.oldCalendarEvents.size),
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                            Text(
+                                                stringResource(R.string.calendar_explainer),
+                                                color = Color.Gray,
+                                                fontSize = 12.sp,
+                                            )
+                                        }
+                                        TextButton(
+                                            onClick = { onSetCalendarEventsSelected(allIds, !allSelected) },
+                                        ) {
+                                            Text(
+                                                if (allSelected) stringResource(R.string.action_deselect_all)
+                                                else stringResource(R.string.action_select_all),
+                                            )
+                                        }
+                                    }
+                                }
+                                items(state.oldCalendarEvents, key = { it.id }) { event ->
+                                    CalendarEventRowCard(
+                                        event = event,
+                                        selected = event.id in selectedEventsHere,
+                                        onToggle = { onToggleCalendarEvent(event.id) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun IncompleteContactRowCard(
+    contact: IncompleteContact,
+    selected: Boolean,
+    onToggle: () -> Unit,
+) {
+    Card(
+        onClick = onToggle,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFF59E0B).copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    tint = Color(0xFFF59E0B),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(contact.displayName, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(contact.reason, color = Color.Gray, fontSize = 12.sp)
+            }
+            Checkbox(checked = selected, onCheckedChange = { onToggle() })
         }
     }
 }
@@ -437,6 +616,35 @@ private fun ContactGroupCard(
                 )
                 Spacer(Modifier.weight(1f))
                 Checkbox(checked = selected, onCheckedChange = { onToggle() })
+            }
+            val mergedName = group.contacts.firstOrNull { it.name.isNotBlank() }?.name ?: "Merged Contact"
+            val mergedPhones = group.contacts.flatMap { it.phones }.distinct()
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = SweeprGreen.copy(alpha = 0.10f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SweeprGreen.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            ) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "✓ MERGED CONTACT PREVIEW",
+                        color = emeraldText(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.6.sp,
+                    )
+                    Text(
+                        text = mergedName,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = mergedPhones.joinToString(" · ").ifEmpty { stringResource(R.string.contacts_no_phone) },
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             group.contacts.forEach { contact ->
                 Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {

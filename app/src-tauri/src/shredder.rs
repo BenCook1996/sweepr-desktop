@@ -97,6 +97,13 @@ pub fn validate_target(path: &str, app_data_dir: &Path) -> AppResult<PathBuf> {
     if safety::metadata_is_link_like(&md2) || !md2.is_file() {
         return Err(refuse("Target is not a regular file."));
     }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Ok(canon_exe) = std::fs::canonicalize(&exe) {
+            if canon == canon_exe {
+                return Err(refuse("Refusing to shred running executable."));
+            }
+        }
+    }
     for root in protected_roots(app_data_dir) {
         if safety::is_within(&canon, &root) {
             return Err(refuse(format!("Refusing to shred files inside a protected folder ({}).", root.display())));
@@ -184,6 +191,9 @@ mod tests {
         assert!(validate_target(&std::env::temp_dir().to_string_lossy(), &data).is_err());
         let missing = std::env::temp_dir().join("sweepr-definitely-missing.bin");
         assert!(validate_target(&missing.to_string_lossy(), &data).is_err());
+        if let Ok(exe) = std::env::current_exe() {
+            assert!(validate_target(&exe.to_string_lossy(), &data).is_err());
+        }
     }
 
     #[test]

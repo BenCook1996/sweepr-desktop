@@ -148,6 +148,9 @@
       const set = new Set([...config.categories, ...ids]);
       config.categories = Array.from(set);
     }
+    if (license?.active) {
+      void saveSchedule();
+    }
   }
 
   async function saveSchedule() {
@@ -258,6 +261,7 @@
               return;
             }
             config.enabled = target.checked;
+            void saveSchedule();
           }}
         />
         <span class="slider"></span>
@@ -314,6 +318,7 @@
               return;
             }
             config.sync_cloud_backups = target.checked;
+            if (license?.active) void saveSchedule();
           }}
         />
         <span class="slider"></span>
@@ -331,7 +336,10 @@
             type="button"
             class="pill-btn"
             class:active={config.frequency === "daily"}
-            onclick={() => (config.frequency = "daily")}
+            onclick={() => {
+              config.frequency = "daily";
+              if (license?.active) void saveSchedule();
+            }}
           >
             Every Day
           </button>
@@ -339,7 +347,10 @@
             type="button"
             class="pill-btn"
             class:active={config.frequency === "weekly"}
-            onclick={() => (config.frequency = "weekly")}
+            onclick={() => {
+              config.frequency = "weekly";
+              if (license?.active) void saveSchedule();
+            }}
           >
             Every Week
           </button>
@@ -347,7 +358,10 @@
             type="button"
             class="pill-btn"
             class:active={config.frequency === "monthly"}
-            onclick={() => (config.frequency = "monthly")}
+            onclick={() => {
+              config.frequency = "monthly";
+              if (license?.active) void saveSchedule();
+            }}
           >
             Every Month
           </button>
@@ -356,13 +370,28 @@
 
       <div class="field-group" style="flex: 0.8;">
         <label class="field-label" for="sched-time">TIME OF DAY</label>
-        <input id="sched-time" type="time" class="input-control" bind:value={config.time} />
+        <input
+          id="sched-time"
+          type="time"
+          class="input-control"
+          bind:value={config.time}
+          onchange={() => {
+            if (license?.active) void saveSchedule();
+          }}
+        />
       </div>
 
       {#if config.frequency === "weekly"}
         <div class="field-group" style="flex: 0.8;">
           <label class="field-label" for="sched-dow">DAY OF WEEK</label>
-          <select id="sched-dow" class="input-control" bind:value={config.day_of_week}>
+          <select
+            id="sched-dow"
+            class="input-control"
+            bind:value={config.day_of_week}
+            onchange={() => {
+              if (license?.active) void saveSchedule();
+            }}
+          >
             {#each DAYS_OF_WEEK as d}
               <option value={d.code}>{d.label}</option>
             {/each}
@@ -378,6 +407,9 @@
             max="28"
             class="input-control"
             bind:value={config.day_of_month}
+            onchange={() => {
+              if (license?.active) void saveSchedule();
+            }}
           />
         </div>
       {/if}

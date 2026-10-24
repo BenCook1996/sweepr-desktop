@@ -88,19 +88,6 @@
 
   async function cleanBrowsers() {
     if (!selectedBrowserKeys.length) return;
-    if (clearCookies || clearHistory) {
-      const items: string[] = [];
-      if (clearCache) items.push("temporary web files");
-      if (clearCookies) items.push("tracking cookies");
-      if (clearHistory) items.push("browsing history");
-      if (
-        !confirm(
-          `Clear ${items.join(", ")} across ${selectedBrowserKeys.length} selected browser(s)?\n\nPlease close your browsers first for the best results.`
-        )
-      ) {
-        return;
-      }
-    }
     error = null;
     browserStatus = null;
     cleaningBrowsers = true;

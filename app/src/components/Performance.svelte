@@ -19,17 +19,30 @@
     errorMessage,
     isPaymentRequired,
     requestActivation,
+    type AppInfo,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
 
   let {
     license = null,
+    info = null,
     viewMode = $bindable<"pc" | "battery">("pc"),
   }: {
     license?: LicenseStatus | null;
+    info?: AppInfo | null;
     viewMode?: "pc" | "battery";
   } = $props();
+
+  const osType = $derived(
+    info?.os?.toLowerCase() ||
+      (typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)
+        ? "macos"
+        : typeof navigator !== "undefined" && /Linux/i.test(navigator.platform)
+          ? "linux"
+          : "windows")
+  );
+  const deviceLabel = $derived(osType === "macos" ? "Mac" : osType === "linux" ? "System" : "PC");
 
   let mem = $state<MemoryOverview | null>(cachedMem);
   let browserReport = $state<BrowserMemoryReport | null>(cachedBrowserReport);
@@ -40,7 +53,9 @@
   let boostNotice = $state<string | null>(null);
   let toggling = $state<string | null>(null);
   let killingProc = $state<string | null>(null);
+  let confirmKillProc = $state<string | null>(null);
   let restoringSession = $state<string | null>(null);
+  let confirmRestoreId = $state<string | null>(null);
   let showSavedTabs = $state(false);
   let listInteracting = $state(false);
   let error = $state<string | null>(null);
@@ -150,13 +165,11 @@
   }
 
   async function closeHeavyApp(name: string) {
-    if (
-      !confirm(
-        `Close "${name}" now?\n\nMake sure you have saved any open work in ${name} first.`
-      )
-    ) {
+    if (confirmKillProc !== name) {
+      confirmKillProc = name;
       return;
     }
+    confirmKillProc = null;
     error = null;
     boostNotice = null;
     killingProc = name;
@@ -181,13 +194,11 @@
       requestActivation();
       return;
     }
-    if (
-      !confirm(
-        `Restore saved browser tabs (${snap.browsers.join(", ")})?\n\nPlease close your browser first so it opens with these tabs.`
-      )
-    ) {
+    if (confirmRestoreId !== snap.id) {
+      confirmRestoreId = snap.id;
       return;
     }
+    confirmRestoreId = null;
     error = null;
     restoringSession = snap.id;
     try {
@@ -233,7 +244,7 @@
 <div class="speed-layout">
   <div class="header-row">
     <div>
-      <h1 class="page-title">Speed Up Your PC</h1>
+      <h1 class="page-title">Speed Up Your {deviceLabel}</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
         Free up memory in one click, stop slow startup apps, and extend laptop battery life.
       </p>
@@ -247,7 +258,7 @@
         role="tab"
         aria-selected={viewMode === "pc"}
       >
-        PC Speed &amp; Startup
+        {deviceLabel} Speed &amp; Startup
       </button>
       <button
         class="mode-btn"
@@ -357,11 +368,15 @@
                 <div class="muted small">{formatSnapshotTime(snap.created_at)}</div>
               </div>
               <button
-                class="ghost small-btn"
+                class={confirmRestoreId === snap.id ? "primary small-btn" : "ghost small-btn"}
                 disabled={restoringSession === snap.id}
                 onclick={() => restoreSession(snap)}
               >
-                {restoringSession === snap.id ? "Restoring…" : "Restore Tabs"}
+                {restoringSession === snap.id
+                  ? "Restoring…"
+                  : confirmRestoreId === snap.id
+                    ? "Confirm Restore"
+                    : "Restore Tabs"}
               </button>
             </div>
           {/each}
@@ -449,11 +464,16 @@
                   </div>
                 </div>
                 <button
-                  class="ghost small-btn"
+                  class={confirmKillProc === a.name ? "primary small-btn" : "ghost small-btn"}
+                  style={confirmKillProc === a.name ? "background: var(--danger);" : ""}
                   disabled={killingProc === a.name}
                   onclick={() => closeHeavyApp(a.name)}
                 >
-                  {killingProc === a.name ? "Closing…" : "Close App"}
+                  {killingProc === a.name
+                    ? "Closing…"
+                    : confirmKillProc === a.name
+                      ? "Confirm Close"
+                      : "Close App"}
                 </button>
               </div>
             {/each}

@@ -7,11 +7,11 @@ import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -48,16 +48,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
@@ -80,9 +81,10 @@ fun storageColor(fraction: Float): Color = when {
 }
 
 /**
- * Home tab (mockup #6): Quick Clean button nested inside the storage-used ring, two big stats,
- * a 2×2 tile grid with each area's potential saving, the Swipe to Clean card and the remaining
- * cleanup tools (with responsive 2-column tablet/landscape layout).
+ * Candidate 5 Home tab:
+ * Signature bioluminescent Smart Clean ring + Multi-Segment Device Storage Breakdown strip +
+ * 2×2 Vector Bento Grid (Photos, Videos, Contacts, Live Battery Telemetry) +
+ * 3D Swipe Photo Deck Promo Card + More Tools Bento List.
  */
 @Composable
 fun DashboardScreen(
@@ -93,6 +95,7 @@ fun DashboardScreen(
     onOpenPhotosTab: (Int) -> Unit = { onOpen(Screen.PhotosVideos) },
     onCleanUp: () -> Unit,
     onOpenReview: () -> Unit = onCleanUp,
+    onUpgrade: (() -> Unit)? = null,
 ) {
     val storage = remember(state.media, state.isScanning) { readStorage() }
     var showStorageDialog by remember { mutableStateOf(false) }
@@ -104,7 +107,38 @@ fun DashboardScreen(
     }
 
     Scaffold(
-        topBar = { SweeprWordmarkBar(isPro = state.hasPremium) },
+        topBar = {
+            SweeprWordmarkBar(
+                isPro = state.hasPremium,
+                onPlanClick = onUpgrade,
+                actions = {
+                    if (state.hasScanned && state.media.trashed.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
+                                .clickable { onOpen(Screen.Trash) }
+                                .padding(horizontal = 9.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            SweeprVectorIcon(
+                                kind = SweeprIconKind.TRASH_RESTORE,
+                                tint = SweeprAmber,
+                                modifier = Modifier.size(13.dp),
+                            )
+                            Text(
+                                text = "Trash (${state.media.trashed.size})",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                },
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (isWideLayout) {
@@ -118,9 +152,10 @@ fun DashboardScreen(
             ) {
                 Column(
                     modifier = Modifier
-                        .weight(0.42f)
+                        .weight(0.44f)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     QuickCleanBlock(
                         storage = storage,
@@ -128,12 +163,13 @@ fun DashboardScreen(
                         permissions = permissions,
                         onStatsClick = { showStorageDialog = true },
                         onScan = onScan,
+                        onCleanUp = onCleanUp,
                         onOpenReview = onOpenReview,
                     )
                 }
                 Column(
                     modifier = Modifier
-                        .weight(0.58f)
+                        .weight(0.56f)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -146,7 +182,7 @@ fun DashboardScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -156,6 +192,7 @@ fun DashboardScreen(
                     permissions = permissions,
                     onStatsClick = { showStorageDialog = true },
                     onScan = onScan,
+                    onCleanUp = onCleanUp,
                     onOpenReview = onOpenReview,
                 )
                 HomeTiles(state, permissions, onOpen, onOpenPhotosTab, onScan)
@@ -164,7 +201,7 @@ fun DashboardScreen(
     }
 }
 
-/** Storage ring with the Quick Clean core + the "X% Storage used / Y GB Free space" stats. */
+/** Signature Smart Ring + Primary 1-Tap Clean CTA + Multi-Segment Device Storage Breakdown Card. */
 @Composable
 private fun QuickCleanBlock(
     storage: StorageInfo,
@@ -172,22 +209,31 @@ private fun QuickCleanBlock(
     permissions: PermissionState,
     onStatsClick: () -> Unit,
     onScan: () -> Unit,
+    onCleanUp: () -> Unit,
     onOpenReview: () -> Unit,
 ) {
     val pct = (storage.fraction * 100).roundToInt()
     val gaugeA11y = stringResource(R.string.dashboard_used_of, formatBytes(storage.used), formatBytes(storage.total))
-    val reclaimable = state.media.reclaimableBytes
+    val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
+    val totalReclaimable = state.media.reclaimableBytes + videoSaving
+    val haptics = LocalHapticFeedback.current
     val ringAction: (() -> Unit)? = when {
         state.isBusy -> null
-        state.hasScanned -> onOpenReview
-        else -> onScan
+        state.hasScanned -> ({
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onOpenReview()
+        })
+        else -> ({
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onScan()
+        })
     }
     val actionLabel = if (state.hasScanned) stringResource(R.string.review_title) else stringResource(R.string.scan_my_phone)
 
     QuickCleanRing(
         progress = storage.fraction,
         modifier = Modifier
-            .padding(top = 4.dp)
+            .padding(top = 2.dp)
             .semantics { contentDescription = "$pct% · $gaugeA11y. $actionLabel" },
         onClick = ringAction,
         onClickLabel = actionLabel,
@@ -196,7 +242,13 @@ private fun QuickCleanBlock(
             state.isScanning -> {
                 CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp, modifier = Modifier.size(26.dp))
                 Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.home_scanning), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
+                Text(
+                    stringResource(R.string.home_scanning),
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp,
+                    letterSpacing = 1.sp,
+                )
                 if (state.scanStatus.isNotBlank()) {
                     Text(
                         state.scanStatus,
@@ -208,49 +260,221 @@ private fun QuickCleanBlock(
                 }
             }
             state.hasScanned -> {
-                Text(stringResource(R.string.home_quick_clean), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
-                Text("+${formatBytes(reclaimable)}", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp)
-                Text(stringResource(R.string.home_tap_to_review), color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
+                Text(
+                    "SAFE TO CLEAN",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 10.5.sp,
+                    letterSpacing = 1.3.sp,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = if (totalReclaimable > 0) "+${formatBytes(totalReclaimable)}" else formatBytes(storage.free),
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 24.sp,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = if (totalReclaimable > 0) "Duplicates, blur & shots" else "Storage is optimized",
+                    color = Color.White.copy(alpha = 0.86f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                )
             }
             else -> {
-                Text(stringResource(R.string.home_quick_clean), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, letterSpacing = 1.sp)
-                Text(stringResource(R.string.home_scan), color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 26.sp, letterSpacing = 2.sp)
-                Text(stringResource(R.string.home_tap_to_scan), color = Color.White.copy(alpha = 0.85f), fontSize = 10.sp)
+                Text(
+                    "SAFE TO CLEAN",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 10.5.sp,
+                    letterSpacing = 1.3.sp,
+                )
+                Text(
+                    stringResource(R.string.home_scan),
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 25.sp,
+                    letterSpacing = 1.5.sp,
+                )
+                Text(
+                    stringResource(R.string.home_tap_to_scan),
+                    color = Color.White.copy(alpha = 0.88f),
+                    fontSize = 10.sp,
+                )
             }
         }
     }
 
-    // Two big stats; tapping them opens the existing storage breakdown dialog.
-    val emerald = emeraldText()
-    val (freeNum, freeUnit) = splitSize(formatBytes(storage.free))
-    val detailsLabel = stringResource(R.string.home_storage_details)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClickLabel = detailsLabel, onClick = onStatsClick)
-            .padding(vertical = 6.dp),
-    ) {
-        BigStat(
-            number = "$pct",
-            unit = "%",
-            label = stringResource(R.string.home_storage_used),
-            color = emerald,
-            modifier = Modifier.weight(1f),
-        )
-        BigStat(
-            number = freeNum,
-            unit = " $freeUnit",
-            label = stringResource(R.string.home_free_space),
-            color = MaterialTheme.colorScheme.onBackground,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
+    // Unmistakable Thumb-Zone Primary CTA (3-Second Squint Test Winner)
+    if (state.hasScanned && totalReclaimable > 0) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(EmeraldGradient)
+                    .clickable(enabled = !state.isBusy, onClick = onCleanUp)
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SweeprVectorIcon(
+                        kind = SweeprIconKind.SPARKLE_CLEAN,
+                        tint = Color.White,
+                        modifier = Modifier.size(17.dp),
+                    )
+                    Text(
+                        text = "Clean +${formatBytes(totalReclaimable)} Now",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+                    .clickable(enabled = !state.isBusy, onClick = onOpenReview)
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Review ›",
+                    color = emeraldText(),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp,
+                )
+            }
+        }
     }
 
-    if (state.hasScanned && !state.isBusy) {
-        TextButton(onClick = onScan) {
-            Text(stringResource(R.string.home_rescan), color = emerald, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+    // Multi-Segment Storage Strip Card with Integrated Cloud Sync Savings
+    val totalBytes = storage.total.coerceAtLeast(1L)
+    val photosBytes = remember(state.media) {
+        state.media.everything.filter { !it.isVideo }.sumOf { it.size }
+    }
+    val videosBytes = remember(state.media) {
+        state.media.videos.sumOf { it.size }
+    }
+    val otherUsedBytes = (storage.used - photosBytes - videosBytes).coerceAtLeast(0L)
+
+    val photosFrac = (photosBytes.toFloat() / totalBytes).coerceIn(0.03f, 0.45f)
+    val videosFrac = (videosBytes.toFloat() / totalBytes).coerceIn(0.03f, 0.45f)
+    val otherFrac = (otherUsedBytes.toFloat() / totalBytes).coerceIn(0.08f, (storage.fraction - photosFrac - videosFrac).coerceAtLeast(0.08f))
+    val freeFrac = (1f - (photosFrac + videosFrac + otherFrac)).coerceAtLeast(0.05f)
+
+    SweeprPanel(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onStatsClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "${formatBytes(storage.used)} of ${formatBytes(storage.total)} Used ($pct%)",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    val cloudNote = if (state.hasScanned && totalReclaimable > 0) {
+                        "${formatBytes(storage.free)} free · +${formatBytes(totalReclaimable)} reclaimable"
+                    } else {
+                        "${formatBytes(storage.free)} available · Tap for breakdown"
+                    }
+                    Text(
+                        text = cloudNote,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (!state.isBusy) {
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(SweeprGreen.copy(alpha = 0.14f))
+                            .border(1.dp, SweeprGreen.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
+                            .clickable(onClick = onScan)
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                    ) {
+                        Text(
+                            text = if (state.hasScanned) "↻ Rescan" else "Scan Now",
+                            color = emeraldText(),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                    }
+                }
+            }
+
+            // 4-Segment Storage Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(9.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Box(
+                    Modifier
+                        .weight(photosFrac)
+                        .fillMaxHeight()
+                        .background(SweeprGreen),
+                )
+                Box(
+                    Modifier
+                        .weight(videosFrac)
+                        .fillMaxHeight()
+                        .background(SweeprCyan),
+                )
+                Box(
+                    Modifier
+                        .weight(otherFrac)
+                        .fillMaxHeight()
+                        .background(SweeprIndigo),
+                )
+                Box(
+                    Modifier
+                        .weight(freeFrac)
+                        .fillMaxHeight()
+                        .background(Color.Transparent),
+                )
+            }
+
+            // Legend Pills
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                StorageLegendDot("Photos", SweeprGreen)
+                StorageLegendDot("Videos", SweeprCyan)
+                StorageLegendDot("Apps & OS", SweeprIndigo)
+                StorageLegendDot("${formatBytes(storage.free)} Free", Slate400)
+            }
         }
     }
 
@@ -265,25 +489,10 @@ private fun QuickCleanBlock(
 }
 
 @Composable
-private fun BigStat(
-    number: String,
-    unit: String,
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-    labelColor: Color = color,
-) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            buildAnnotatedString {
-                append(number)
-                withStyle(SpanStyle(fontSize = 13.sp)) { append(unit) }
-            },
-            color = color,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.ExtraBold,
-        )
-        Text(label, color = labelColor, fontSize = 12.sp)
+private fun StorageLegendDot(label: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(Modifier.size(7.dp).clip(CircleShape).background(color))
+        Text(label, fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -315,12 +524,18 @@ fun StorageBreakdownDialog(storage: StorageInfo, media: MediaScanResult, onDismi
     )
 }
 
-/** What a home tile shows under its title: a saving (emerald), a neutral hint, or a warning. */
-private data class TileValue(val text: String, val kind: Kind) {
+/** What a home tile shows in its pill badge: a saving (emerald), a neutral hint, or a warning. */
+private data class TileValue(val text: String, val sub: String, val kind: Kind) {
     enum class Kind { Saving, Hint, Warning }
 }
 
-/** 2×2 tiles (Photos / Videos / Contacts / Battery), Swipe to Clean card and the other tools. */
+/**
+ * 100% Storage-Focused 2×2 Vector Bento Cards:
+ * 1. Duplicates & Blur (Photos & Media)
+ * 2. Large Videos (Shrink or delete)
+ * 3. Screenshots & Chat (Screen captures & messenger media)
+ * 4. Contacts & Calendar (Merge duplicates & clean old events)
+ */
 @Composable
 private fun HomeTiles(
     state: DashboardState,
@@ -332,139 +547,204 @@ private fun HomeTiles(
     val media = state.media
     val contactDupes = state.contactGroups.sumOf { it.contacts.size - 1 }
     val scanned = state.hasScanned
+
     fun open(screen: Screen) = if (scanned) onOpen(screen) else onScan()
     fun openTab(tab: Int) = if (scanned) onOpenPhotosTab(tab) else onScan()
 
-    val needsPermission = TileValue(stringResource(R.string.home_tile_needs_permission), TileValue.Kind.Warning)
-    val notScanned = TileValue(stringResource(R.string.home_tile_not_scanned), TileValue.Kind.Hint)
-    val allClean = TileValue(stringResource(R.string.home_tile_nothing), TileValue.Kind.Hint)
-
+    val dupAndSimCount = (media.duplicateGroups + media.similarGroups).sumOf { it.extras.size } + media.blurry.size
     val photosValue = when {
-        !permissions.media -> needsPermission
-        !scanned -> notScanned
-        media.reclaimableBytes > 0 -> TileValue("+${formatBytes(media.reclaimableBytes)}", TileValue.Kind.Saving)
-        else -> allClean
+        !permissions.media -> TileValue(stringResource(R.string.home_tile_needs_permission), "Allow photo access", TileValue.Kind.Warning)
+        state.isScanning -> TileValue("Scanning…", "Checking duplicates", TileValue.Kind.Hint)
+        !scanned -> TileValue("Ready", "Tap to analyze", TileValue.Kind.Hint)
+        media.reclaimableBytes > 0 -> TileValue(
+            "+${formatBytes(media.reclaimableBytes)}",
+            "$dupAndSimCount items to review",
+            TileValue.Kind.Saving,
+        )
+        else -> TileValue(
+            stringResource(R.string.home_tile_nothing),
+            "${media.everything.count { !it.isVideo }} photos checked",
+            TileValue.Kind.Hint,
+        )
     }
-    // Video saving = the app's existing re-encode estimate for large clips (CloudSavings breakdown).
+
     val videoSaving = remember(media) { CloudSavings.breakdown(media).compressibleBytes }
+    val totalVideoBytes = remember(media) { media.videos.sumOf { it.size } }
     val videosValue = when {
-        !permissions.media -> needsPermission
-        !scanned -> notScanned
-        videoSaving > 0 -> TileValue("+${formatBytes(videoSaving)}", TileValue.Kind.Saving)
-        media.videos.isNotEmpty() -> TileValue("${media.videos.size} · ${formatBytes(media.videos.sumOf { it.size })}", TileValue.Kind.Hint)
-        else -> allClean
+        !permissions.media -> TileValue(stringResource(R.string.home_tile_needs_permission), "Allow video access", TileValue.Kind.Warning)
+        state.isScanning -> TileValue("Scanning…", "Checking large clips", TileValue.Kind.Hint)
+        !scanned -> TileValue("Ready", "Tap to analyze", TileValue.Kind.Hint)
+        videoSaving > 0 -> TileValue(
+            "+${formatBytes(videoSaving)}",
+            "${media.videos.size} clips · Shrink",
+            TileValue.Kind.Saving,
+        )
+        media.videos.isNotEmpty() -> TileValue(
+            formatBytes(totalVideoBytes),
+            "${media.videos.size} videos stored",
+            TileValue.Kind.Hint,
+        )
+        else -> TileValue(stringResource(R.string.home_tile_nothing), "0 large videos", TileValue.Kind.Hint)
     }
+
+    val screenshotsBytes = remember(media) { media.screenshots.sumOf { it.size } + media.messengerMedia.sumOf { it.size } }
+    val screenshotsCount = media.screenshots.size + media.messengerMedia.size
+    val screenshotsValue = when {
+        !permissions.media -> TileValue(stringResource(R.string.home_tile_needs_permission), "Allow media access", TileValue.Kind.Warning)
+        state.isScanning -> TileValue("Scanning…", "Checking captures", TileValue.Kind.Hint)
+        !scanned -> TileValue("Ready", "Captures & chat media", TileValue.Kind.Hint)
+        screenshotsBytes > 0 -> TileValue(
+            "+${formatBytes(screenshotsBytes)}",
+            "${media.screenshots.size} shots, ${media.messengerMedia.size} chat",
+            TileValue.Kind.Saving,
+        )
+        else -> TileValue(stringResource(R.string.home_tile_nothing), "$screenshotsCount captures", TileValue.Kind.Hint)
+    }
+
+    val contactIssues = contactDupes + state.incompleteContacts.size
     val contactsValue = when {
-        !permissions.contactsRead -> needsPermission
-        !scanned -> notScanned
-        contactDupes > 0 -> TileValue(pluralStringResource(R.plurals.home_tile_contacts_dupes, contactDupes, contactDupes), TileValue.Kind.Saving)
-        else -> allClean
-    }
-    val batteryValue = TileValue(stringResource(R.string.home_tile_battery_hint), TileValue.Kind.Hint)
-
-    val lineColor = MaterialTheme.colorScheme.outline
-    SweeprPanel(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            HomeTile("🖼️", stringResource(R.string.home_tile_photos), photosValue, Modifier.weight(1f)) {
-                if (scanned) onOpenPhotosTab(PHOTOS_OVERVIEW_TAB) else onScan()
-            }
-            Box(Modifier.width(1.dp).fillMaxHeight().background(lineColor))
-            HomeTile("🎬", stringResource(R.string.home_tile_videos), videosValue, Modifier.weight(1f)) { openTab(3) }
-        }
-        HorizontalDivider(color = lineColor)
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            HomeTile("👥", stringResource(R.string.home_tile_contacts), contactsValue, Modifier.weight(1f)) { open(Screen.Contacts) }
-            Box(Modifier.width(1.dp).fillMaxHeight().background(lineColor))
-            HomeTile("🔋", stringResource(R.string.home_tile_battery), batteryValue, Modifier.weight(1f)) { onOpen(Screen.BatteryCare) }
-        }
+        !permissions.contactsRead -> TileValue(stringResource(R.string.home_tile_needs_permission), "Allow contacts", TileValue.Kind.Warning)
+        state.isScanning -> TileValue("Scanning…", "Checking address book", TileValue.Kind.Hint)
+        !scanned -> TileValue("Ready", "Merge dupes & events", TileValue.Kind.Hint)
+        contactIssues > 0 -> TileValue(
+            "$contactIssues issues",
+            "${state.contactGroups.size} dupes, ${state.incompleteContacts.size} incomplete",
+            TileValue.Kind.Saving,
+        )
+        else -> TileValue(stringResource(R.string.home_tile_nothing), "Contacts & events clean", TileValue.Kind.Hint)
     }
 
-    // Swipe to Clean promoted as a friendly card.
-    SweeprPanel(Modifier.fillMaxWidth(), onClick = { onOpen(Screen.Swipe) }) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("👆", fontSize = 22.sp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.home_swipe_title), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(stringResource(R.string.home_swipe_body), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+        SectionEyebrow("STORAGE CLEANUP CATEGORIES", Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            BentoCategoryCard(
+                iconKind = SweeprIconKind.PHOTOS,
+                iconTint = SweeprGreen,
+                title = "Duplicates & Blur",
+                value = photosValue,
+                modifier = Modifier.weight(1f),
+                onClick = { if (scanned) onOpenPhotosTab(PHOTOS_OVERVIEW_TAB) else onScan() },
+            )
+            BentoCategoryCard(
+                iconKind = SweeprIconKind.VIDEOS,
+                iconTint = SweeprCyan,
+                title = "Large Videos",
+                value = videosValue,
+                modifier = Modifier.weight(1f),
+                onClick = { openTab(3) },
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+            BentoCategoryCard(
+                iconKind = SweeprIconKind.SCREENSHOTS,
+                iconTint = SweeprAmber,
+                title = "Screenshots & Chat",
+                value = screenshotsValue,
+                modifier = Modifier.weight(1f),
+                onClick = { open(Screen.Screenshots) },
+            )
+            BentoCategoryCard(
+                iconKind = SweeprIconKind.CONTACTS,
+                iconTint = SweeprIndigo,
+                title = "Contacts & Calendar",
+                value = contactsValue,
+                modifier = Modifier.weight(1f),
+                onClick = { open(Screen.Contacts) },
+            )
         }
     }
-
-    // Remaining cleanup tools from the previous card grid (nothing removed, just re-laid out).
-    SectionEyebrow(stringResource(R.string.home_more_tools), Modifier.fillMaxWidth().padding(top = 4.dp))
-    SweeprPanel(Modifier.fillMaxWidth()) {
-        ToolRow(
-            emoji = "📸",
-            title = stringResource(R.string.category_screenshots),
-            value = when {
-                !permissions.media -> needsPermission.text
-                !scanned -> null
-                else -> "${media.screenshots.size} · ${formatBytes(media.screenshots.sumOf { it.size })}"
-            },
-            onClick = { open(Screen.Screenshots) },
-        )
-        HorizontalDivider(color = lineColor)
-        ToolRow(
-            emoji = "💬",
-            title = stringResource(R.string.category_messenger_media),
-            value = when {
-                !permissions.media -> needsPermission.text
-                !scanned -> null
-                else -> "${media.messengerMedia.size} · ${formatBytes(media.messengerMedia.sumOf { it.size })}"
-            },
-            onClick = { openTab(5) },
-        )
-        HorizontalDivider(color = lineColor)
-        ToolRow(
-            emoji = "♻️",
-            title = stringResource(R.string.category_trash),
-            value = when {
-                !permissions.media -> needsPermission.text
-                !scanned -> null
-                else -> "${media.trashed.size} · ${formatBytes(media.trashed.sumOf { it.size })}"
-            },
-            onClick = { open(Screen.Trash) },
-        )
-    }
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(4.dp))
 }
 
 @Composable
-private fun HomeTile(
-    emoji: String,
+private fun BentoCategoryCard(
+    iconKind: SweeprIconKind,
+    iconTint: Color,
     title: String,
     value: TileValue,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val valueColor = when (value.kind) {
+    val badgeBg = when (value.kind) {
+        TileValue.Kind.Saving -> SweeprGreen.copy(alpha = 0.14f)
+        TileValue.Kind.Hint -> MaterialTheme.colorScheme.surfaceVariant
+        TileValue.Kind.Warning -> SweeprRose.copy(alpha = 0.14f)
+    }
+    val badgeBorder = when (value.kind) {
+        TileValue.Kind.Saving -> SweeprGreen.copy(alpha = 0.35f)
+        TileValue.Kind.Hint -> MaterialTheme.colorScheme.outline
+        TileValue.Kind.Warning -> SweeprRose.copy(alpha = 0.35f)
+    }
+    val badgeFg = when (value.kind) {
         TileValue.Kind.Saving -> emeraldText()
         TileValue.Kind.Hint -> MaterialTheme.colorScheme.onSurfaceVariant
         TileValue.Kind.Warning -> SweeprRose
     }
-    Column(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = "$title, ${value.text}" }
-            .padding(vertical = 14.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+
+    SweeprPanel(
+        modifier = modifier.semantics { contentDescription = "$title, ${value.text}, ${value.sub}" },
+        onClick = onClick,
     ) {
-        Box(
-            Modifier.size(38.dp).clip(CircleShape).background(SweeprGreen.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(emoji, fontSize = 17.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SweeprIconBadge(
+                    kind = iconKind,
+                    tint = iconTint,
+                    badgeSize = 38.dp,
+                    iconSize = 19.dp,
+                )
+                Text(
+                    text = value.text,
+                    color = badgeFg,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(badgeBg)
+                        .border(1.dp, badgeBorder, RoundedCornerShape(999.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.5.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = value.sub,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-        Text(title, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
-        Text(value.text, color = valueColor, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = TextAlign.Center)
     }
 }
 
 @Composable
-private fun ToolRow(emoji: String, title: String, value: String?, onClick: () -> Unit) {
+private fun ToolRow(
+    iconKind: SweeprIconKind,
+    iconTint: Color,
+    title: String,
+    value: String?,
+    badgeText: String? = null,
+    onClick: () -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -473,15 +753,33 @@ private fun ToolRow(emoji: String, title: String, value: String?, onClick: () ->
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(emoji, fontSize = 18.sp)
+        SweeprIconBadge(
+            kind = iconKind,
+            tint = iconTint,
+            badgeSize = 36.dp,
+            iconSize = 18.dp,
+        )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             if (value != null) {
-                Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(
+                    value,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (badgeText != null) {
+            SizeBadge(badgeText, modifier = Modifier.padding(end = 6.dp))
+        }
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -557,6 +855,6 @@ fun CleanUpNowBar(state: DashboardState, onCleanUp: () -> Unit, buttonText: Stri
         label = parts.joinToString(" · "),
         // Android 11+ moves items to the 30-day System Trash; older versions delete permanently.
         note = if (mediaCount > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.review_undo_note) else null,
-        leading = "🧹",
+        leading = "sparkle",
     )
 }

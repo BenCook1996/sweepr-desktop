@@ -17,9 +17,10 @@
   let isError = $state(false);
   let needsPro = $state(false);
   let dragOver = $state(false);
+  let confirmingShred = $state(false);
 
   async function detectMedia(pathToCheck: string) {
-    const target = pathToCheck.trim() || "C:\\";
+    const target = pathToCheck.trim() || (typeof navigator !== "undefined" && /Win/i.test(navigator.platform) ? "C:\\" : "/");
     try {
       const info = await api.detectDriveMediaType(target);
       passes = info.recommended_passes;
@@ -33,6 +34,7 @@
       const picked = await api.pickFile("Choose a sensitive file to permanently erase");
       if (picked && picked.trim()) {
         filePath = picked.trim();
+        confirmingShred = false;
         statusMessage = "";
         isError = false;
         await detectMedia(filePath);
@@ -45,6 +47,7 @@
   function onDropFile(e: DragEvent) {
     e.preventDefault();
     dragOver = false;
+    confirmingShred = false;
     const f = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
     if (f?.path) {
       filePath = f.path;
@@ -69,15 +72,13 @@
       return;
     }
 
-    const fileName = filePath.split(/[\\/]/).pop() || filePath;
-    if (
-      !confirm(
-        `Permanently erase "${fileName}" forever?\n\nThis file will be securely wiped and will NOT go to the Recycle Bin. It can never be recovered.`
-      )
-    ) {
+    if (!confirmingShred) {
+      confirmingShred = true;
       return;
     }
+    confirmingShred = false;
 
+    const fileName = filePath.split(/[\\/]/).pop() || filePath;
     shredding = true;
     needsPro = false;
     statusMessage = "Securely erasing file so it can never be recovered…";
@@ -157,7 +158,11 @@
       </div>
 
       <button class="danger-cta-btn" onclick={handleShred} disabled={shredding}>
-        {shredding ? "Erasing File Forever…" : "Erase File Forever"}
+        {shredding
+          ? "Erasing File Forever…"
+          : confirmingShred
+            ? "⚠️ Click Again to Permanently Erase Forever"
+            : "Erase File Forever"}
       </button>
     {/if}
   </div>

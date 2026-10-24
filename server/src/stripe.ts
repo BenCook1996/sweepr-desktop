@@ -129,7 +129,9 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
       plan: `pro_${planName}`,
       status: sub.status === "active" || sub.status === "trialing" || sub.status === "past_due" ? sub.status : "canceled",
       amount_cents: amountCents,
+      currency: sub.currency || "usd",
       addons: Array.from(detectedAddons),
+      ...(refCode ? { ref: refCode, affiliate_code: refCode } : {}),
       notes: `Synced from SWEEPR Cleaner Stripe (${sub.id})`,
     });
   }

@@ -1,3 +1,7 @@
+<script module lang="ts">
+  let cachedVaultPassword = "";
+</script>
+
 <script lang="ts">
   import {
     api,
@@ -95,17 +99,37 @@
 
   // ---- vault ----
   let vaultDir = $state("");
-  let password = $state("");
-  let confirmPassword = $state("");
+  let password = $state(cachedVaultPassword);
+  let confirmPassword = $state(cachedVaultPassword);
   let showPassword = $state(false);
   let removeOriginals = $state(true);
   let pendingFiles = $state<string[]>([]);
   let entries = $state<VaultEntry[]>([]);
   let unlocked = $state(false);
   let vaultBusy = $state(false);
+  let vaultDragOver = $state(false);
 
   const pwTooShort = $derived(password.length > 0 && password.length < 8);
-  const pwMismatch = $derived(confirmPassword.length > 0 && confirmPassword !== password);
+  const needsConfirmPassword = $derived(entries.length === 0 && !unlocked);
+  const pwMismatch = $derived(
+    needsConfirmPassword && confirmPassword.length > 0 && confirmPassword !== password
+  );
+
+  function handleVaultDrop(e: DragEvent) {
+    e.preventDefault();
+    vaultDragOver = false;
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    const next = [...pendingFiles];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i] as File & { path?: string };
+      const p = f.path?.trim();
+      if (p && !next.includes(p)) {
+        next.push(p);
+      }
+    }
+    pendingFiles = next;
+  }
 
   async function pickVaultDir() {
     const picked = await api
@@ -120,8 +144,12 @@
 
   async function refreshVault(withPassword = false) {
     try {
-      entries = await cloudApi.vaultList(vaultDir, withPassword ? password : undefined);
-      unlocked = withPassword && entries.some((e) => e.original_name);
+      const pwToUse = withPassword || password.length >= 8 ? password : undefined;
+      entries = await cloudApi.vaultList(vaultDir, pwToUse);
+      unlocked = Boolean(pwToUse && entries.some((e) => e.original_name));
+      if (unlocked) {
+        cachedVaultPassword = password;
+      }
     } catch (e) {
       error = errorMessage(e);
     }
@@ -138,7 +166,8 @@
     error = "";
     status = "";
     if (password.length < 8) return void (error = "Please use a password of at least 8 characters.");
-    if (password !== confirmPassword) return void (error = "Your passwords don't match.");
+    if (needsConfirmPassword && password !== confirmPassword) return void (error = "Your passwords don't match.");
+    cachedVaultPassword = password;
     vaultBusy = true;
     try {
       const rep = await cloudApi.vaultEncrypt(pendingFiles, password, vaultDir || null, removeOriginals);
@@ -260,18 +289,29 @@
 
   <div class="grid">
     <!-- 1. Private File Vault -->
-    <div class="card">
+    <div
+      class="card"
+      style={vaultDragOver ? "border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent);" : ""}
+      ondragover={(e) => {
+        e.preventDefault();
+        vaultDragOver = true;
+      }}
+      ondragleave={() => (vaultDragOver = false)}
+      ondrop={handleVaultDrop}
+      role="region"
+      aria-label="Private File Vault"
+    >
       <div class="row">
         <strong>Lock Sensitive Files with a Password</strong>
         <span class="spacer"></span>
         <span class="badge free">Private Vault</span>
       </div>
       <p class="muted small">
-        Locks private photos, passports, and tax documents with your password before they sync to the cloud. Even the file names are hidden until you unlock them.
+        Locks private photos, passports, and tax documents with your password before they sync to the cloud. Drop files anywhere on this card or click <strong>+ Choose File…</strong> below.
       </p>
 
       <div class="field">
-        <label class="label" for="vault-pw">1. Choose a Vault Password</label>
+        <label class="label" for="vault-pw">1. {entries.length > 0 ? "Vault Password" : "Choose a Vault Password"}</label>
         <div class="row">
           <input
             id="vault-pw"
@@ -280,6 +320,7 @@
             placeholder="At least 8 characters"
             bind:value={password}
             oninput={() => {
+              cachedVaultPassword = password;
               if (password.length >= 8 && entries.length > 0) {
                 refreshVault(true);
               }
@@ -296,16 +337,18 @@
           </button>
         </div>
         {#if pwTooShort}<span class="hint warn">Please use at least 8 characters.</span>{/if}
-        <label class="label" for="vault-pw2">Confirm Password</label>
-        <input
-          id="vault-pw2"
-          type={showPassword ? "text" : "password"}
-          placeholder="Re-enter password"
-          bind:value={confirmPassword}
-          autocomplete="new-password"
-          aria-invalid={pwMismatch}
-        />
-        {#if pwMismatch}<span class="hint warn">Passwords don't match.</span>{/if}
+        {#if needsConfirmPassword}
+          <label class="label" for="vault-pw2">Confirm Password</label>
+          <input
+            id="vault-pw2"
+            type={showPassword ? "text" : "password"}
+            placeholder="Re-enter password"
+            bind:value={confirmPassword}
+            autocomplete="new-password"
+            aria-invalid={pwMismatch}
+          />
+          {#if pwMismatch}<span class="hint warn">Passwords don't match.</span>{/if}
+        {/if}
         <span class="hint">Keep this password safe — locked files cannot be opened without it.</span>
       </div>
 

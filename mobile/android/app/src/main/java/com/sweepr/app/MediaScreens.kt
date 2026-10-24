@@ -177,20 +177,72 @@ fun PhotosVideosScreen(
             return@Scaffold
         }
         Column(Modifier.padding(padding).fillMaxSize()) {
-            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 8.dp) {
+            val isVideosAndFilesGroup = tab >= 3
+            val groupTabs = if (!isVideosAndFilesGroup) {
                 listOf(
-                    stringResource(R.string.tab_duplicates, media.duplicateGroups.size),
-                    stringResource(R.string.tab_similar, media.similarGroups.size),
-                    stringResource(R.string.tab_blurry, media.blurry.size),
-                    stringResource(R.string.tab_videos, media.videos.size),
-                    stringResource(R.string.tab_large_files, media.largeFiles.size),
-                    stringResource(R.string.tab_messenger, media.messengerMedia.size),
-                ).forEachIndexed { index, title ->
-                    Tab(
-                        selected = tab == index,
-                        onClick = { tab = index },
-                        text = { Text(title, fontSize = 12.sp) },
-                    )
+                    0 to stringResource(R.string.tab_duplicates, media.duplicateGroups.size),
+                    1 to stringResource(R.string.tab_similar, media.similarGroups.size),
+                    2 to stringResource(R.string.tab_blurry, media.blurry.size),
+                )
+            } else {
+                listOf(
+                    3 to stringResource(R.string.tab_videos, media.videos.size),
+                    4 to stringResource(R.string.tab_large_files, media.largeFiles.size),
+                    5 to stringResource(R.string.tab_messenger, media.messengerMedia.size),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        groupTabs.forEach { (tabIdx, title) ->
+                            val selected = tab == tabIdx
+                            Surface(
+                                onClick = { tab = tabIdx },
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (selected) SweeprGreen else Color.Transparent,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(
+                                    text = title,
+                                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                    fontSize = 11.5.sp,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(vertical = 9.dp, horizontal = 6.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(
+                        onClick = { tab = if (isVideosAndFilesGroup) 0 else 3 },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                    ) {
+                        Text(
+                            text = if (isVideosAndFilesGroup) "Switch to Duplicate & Blurry Photos ›" else "Switch to Large Videos & Files ›",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = emeraldText(),
+                        )
+                    }
                 }
             }
             if (isSwipeMode && supportsSwipeTriage) {
@@ -579,7 +631,7 @@ private fun VideoShrinkHeader(
             onSelect = { onPresetChange(VIDEO_STRENGTHS[it]) },
             stopReductionPercents = stopReductions,
             specBadge = "≤${preset.maxLongSide}px H.264",
-            description = stringResource(preset.labelRes) + " · " + stringResource(R.string.shrink_video_hint),
+            description = stringResource(preset.labelRes),
         )
     }
 }
@@ -619,7 +671,10 @@ fun StrengthSlider(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
                         text = stringResource(R.string.shrink_strength_label),
                         fontSize = 10.sp,
@@ -844,13 +899,6 @@ private fun PhotoOptimizerTabContent(
                                 checked = stripGps,
                                 onCheckedChange = onStripGpsChange,
                             )
-                        }
-                    }
-                    SweeprPanel(Modifier.fillMaxWidth()) {
-                        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            SizeBadge("🛡️")
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.shrink_safety_note), fontSize = 11.5.sp)
                         }
                     }
                 }

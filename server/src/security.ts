@@ -51,9 +51,16 @@ export function createRateLimiter(limit: number, windowMs: number, maxKeys = 10_
   const sweep = (t: number) => {
     for (const [k, v] of hits) if (v.reset <= t) hits.delete(k);
     lastSweep = t;
-    // Still too big (e.g. under a distributed flood): drop oldest entries (Map preserves insertion order).
+    // Still too big (e.g. under a distributed flood): evict non-blocked (low-hit) entries first so attackers cannot flush active lockouts
     if (hits.size > maxKeys) {
       let excess = hits.size - maxKeys;
+      for (const [k, v] of hits) {
+        if (excess <= 0) break;
+        if (v.n < limit) {
+          hits.delete(k);
+          excess--;
+        }
+      }
       for (const k of hits.keys()) {
         if (excess-- <= 0) break;
         hits.delete(k);
@@ -167,7 +174,8 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
     // CSRF: browsers replay Basic credentials on cross-site requests, so reject foreign origins on writes.
     const method = c.req.method.toUpperCase();
     if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
-      if (c.req.header("sec-fetch-site") === "cross-site") return c.text("Forbidden (cross-site)", 403);
+      const fetchSite = c.req.header("sec-fetch-site");
+      if (fetchSite === "cross-site") return c.text("Forbidden (cross-site)", 403);
       const origin = c.req.header("origin");
       if (origin && origin !== "null") {
         const host = (opts.trustProxy && c.req.header("x-forwarded-host")) || c.req.header("host") || "";
@@ -181,6 +189,23 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
       } else if (origin === "null") {
         return c.text("Forbidden (bad origin)", 403);
       }
+      // Reject simple HTML form submissions without same-origin Fetch Metadata
+      const ct = (c.req.header("content-type") || "").toLowerCase();
+      if (
+        ct.startsWith("application/x-www-form-urlencoded") ||
+        ct.startsWith("multipart/form-data") ||
+        ct.startsWith("text/plain")
+      ) {
+        if (fetchSite !== "same-origin" && fetchSite !== "same-site") {
+          return c.text("Forbidden (form CSRF)", 403);
+        }
+      } else if (!fetchSite) {
+        // When both Origin and Sec-Fetch-Site are absent on a state-changing request, require JSON content-type or X-Requested-With
+        const xrw = c.req.header("x-requested-with");
+        if (!ct.startsWith("application/json") && !xrw) {
+          return c.text("Forbidden (missing origin header)", 403);
+        }
+      }
     }
 
     await next();
@@ -189,7 +214,7 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
 
 /**
  * CSRF check for cookie-authenticated endpoints. Rejects explicit cross-site Fetch Metadata
- * (`Sec-Fetch-Site: cross-site`) and foreign `Origin` headers when present.
+ * (`Sec-Fetch-Site: cross-site`), foreign `Origin` headers, and originless form posts.
  */
 export function isSameOriginRequest(c: Context, publicUrl: string, trustProxy: boolean): boolean {
   const fetchSite = c.req.header("sec-fetch-site");
@@ -209,6 +234,25 @@ export function isSameOriginRequest(c: Context, publicUrl: string, trustProxy: b
     }
     return false;
   }
+
+  // Reject simple HTML form submissions without explicit same-origin/same-site Fetch Metadata
+  const ct = (c.req.header("content-type") || "").toLowerCase();
+  if (
+    ct.startsWith("application/x-www-form-urlencoded") ||
+    ct.startsWith("multipart/form-data") ||
+    ct.startsWith("text/plain")
+  ) {
+    if (fetchSite !== "same-origin" && fetchSite !== "same-site") {
+      return false;
+    }
+  } else if (!fetchSite) {
+    // If both Origin and Sec-Fetch-Site are omitted on a state-changing request, require JSON content-type or X-Requested-With
+    const xrw = c.req.header("x-requested-with");
+    if (!ct.startsWith("application/json") && !xrw) {
+      return false;
+    }
+  }
+
   return true;
 }
 

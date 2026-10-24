@@ -1,5 +1,6 @@
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 /**
  * Wrapper around Tauri's `invoke` that automatically opens the subscription
@@ -279,6 +280,7 @@ export const api = {
     }),
   uninstallSelf: (removeAppData = false) =>
     invoke<void>("uninstall_self", { removeAppData }),
+  revealInFolder: (path: string) => revealItemInDir(path).catch(() => {}),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }

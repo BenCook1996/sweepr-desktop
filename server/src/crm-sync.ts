@@ -190,10 +190,13 @@ export function syncSubscriptionToCentralCrm(params: {
   activationCode?: string;
   addons?: string[];
   notes?: string;
+  ref?: string | null;
+  affiliateCode?: string | null;
 }): void {
   const email = (params.email || "").trim().toLowerCase();
   if (!email || email.endsWith("@pending.sweeprcleaner.com")) return;
   const rawPlan = (params.plan || "annual").replace(/^pro_/, "");
+  const affiliateRef = (params.ref || params.affiliateCode || "").trim().toLowerCase();
   syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
     project_id: PROJECT_ID,
     email,
@@ -212,5 +215,23 @@ export function syncSubscriptionToCentralCrm(params: {
     activation_code: params.activationCode,
     addons: params.addons ?? [],
     notes: params.notes,
+    ...(affiliateRef ? { ref: affiliateRef, affiliate_code: affiliateRef } : {}),
+  });
+}
+
+export function reportAffiliateClickToCentralCrm(params: {
+  code: string;
+  landingPath?: string | null;
+  referrer?: string | null;
+  country?: string | null;
+}): void {
+  const code = (params.code || "").trim().toLowerCase();
+  if (!code) return;
+  syncToCentralCrm("/v1/affiliate/click", {
+    project_id: PROJECT_ID,
+    code,
+    landing_path: params.landingPath ?? "/",
+    referrer: params.referrer ?? null,
+    country: params.country ?? null,
   });
 }

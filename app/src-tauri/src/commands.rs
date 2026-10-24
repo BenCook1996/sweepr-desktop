@@ -1283,13 +1283,7 @@ pub fn quit_app(app: AppHandle) {
 
 #[cfg(target_os = "windows")]
 fn system_powershell_path() -> std::path::PathBuf {
-    if let Some(root) = std::env::var_os("SystemRoot") {
-        let candidate = std::path::PathBuf::from(root).join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
-        if candidate.exists() {
-            return candidate;
-        }
-    }
-    std::path::PathBuf::from("powershell.exe")
+    crate::safety::system_powershell_path()
 }
 
 #[cfg(target_os = "windows")]
@@ -1445,7 +1439,22 @@ pub async fn uninstall_self(
         if let Ok(exe_path) = std::env::current_exe() {
             if let Some(parent) = exe_path.parent() {
                 let nsis_uninst = parent.join("uninstall.exe");
-                if nsis_uninst.is_file() {
+                // Only spawn an uninstaller if it resides outside untrusted user directories
+                // (Downloads, Desktop, Temp) where an attacker could drop a rogue uninstall.exe
+                let in_untrusted_dir = [
+                    dirs::download_dir(),
+                    dirs::desktop_dir(),
+                    Some(std::env::temp_dir()),
+                ]
+                .into_iter()
+                .flatten()
+                .any(|d| crate::safety::is_within(parent, &d));
+
+                let not_link = std::fs::symlink_metadata(&nsis_uninst)
+                    .map(|md| !crate::safety::metadata_is_link_like(&md))
+                    .unwrap_or(false);
+
+                if !in_untrusted_dir && nsis_uninst.is_file() && not_link {
                     if std::process::Command::new(&nsis_uninst).spawn().is_ok() {
                         launched_uninstaller = true;
                     }
@@ -2126,13 +2135,10 @@ pub async fn pick_folder(title: Option<String>) -> AppResult<Option<String>> {
         {
             use std::os::windows::process::CommandExt;
             const CREATE_NO_WINDOW: u32 = 0x08000000;
-            let safe_prompt = prompt.replace('\'', "''");
-            let script = format!(
-                "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = '{}'; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.SelectedPath) }}",
-                safe_prompt
-            );
+            let script = "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = $env:SWEEPR_PROMPT; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($f.SelectedPath) }";
             let out = std::process::Command::new(crate::safety::system_powershell_path())
-                .args(["-NoProfile", "-STA", "-Command", &script])
+                .env("SWEEPR_PROMPT", &prompt)
+                .args(["-NoProfile", "-NonInteractive", "-STA", "-Command", script])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output();
             if let Ok(o) = out {
@@ -2145,7 +2151,11 @@ pub async fn pick_folder(title: Option<String>) -> AppResult<Option<String>> {
         }
         #[cfg(target_os = "macos")]
         {
-            let safe_prompt = prompt.replace('"', "\\\"");
+            let safe_prompt: String = prompt
+                .chars()
+                .filter(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | '.' | ':' | '?'))
+                .take(80)
+                .collect();
             let script = format!("POSIX path of (choose folder with prompt \"{}\")", safe_prompt);
             let out = std::process::Command::new("osascript")
                 .args(["-e", &script])
@@ -2184,13 +2194,10 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
         {
             use std::os::windows::process::CommandExt;
             const CREATE_NO_WINDOW: u32 = 0x08000000;
-            let safe_prompt = prompt.replace('\'', "''");
-            let script = format!(
-                "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = '{}'; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ [Console]::Out.Write($f.FileName) }}",
-                safe_prompt
-            );
+            let script = "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Title = $env:SWEEPR_PROMPT; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [Console]::Out.Write($f.FileName) }";
             let out = std::process::Command::new(crate::safety::system_powershell_path())
-                .args(["-NoProfile", "-STA", "-Command", &script])
+                .env("SWEEPR_PROMPT", &prompt)
+                .args(["-NoProfile", "-NonInteractive", "-STA", "-Command", script])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output();
             if let Ok(o) = out {
@@ -2203,7 +2210,11 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
         }
         #[cfg(target_os = "macos")]
         {
-            let safe_prompt = prompt.replace('"', "\\\"");
+            let safe_prompt: String = prompt
+                .chars()
+                .filter(|c| c.is_alphanumeric() || matches!(c, ' ' | '-' | '_' | '.' | ':' | '?'))
+                .take(80)
+                .collect();
             let script = format!("POSIX path of (choose file with prompt \"{}\")", safe_prompt);
             let out = std::process::Command::new("osascript")
                 .args(["-e", &script])

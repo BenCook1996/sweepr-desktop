@@ -52,8 +52,17 @@ object Prefs {
         val plan: String? = null,
         val expiresAt: Long = 0L,
         val addons: List<String> = emptyList(),
+        val referralCode: String = "",
+        val redeemedReferralCode: String? = null,
     ) {
         val isSignedIn: Boolean get() = accountId.isNotBlank() && refreshToken.isNotBlank()
+    }
+
+    fun defaultReferralCode(deviceId: String, accountId: String = ""): String {
+        val seed = accountId.ifBlank { deviceId }
+        val clean = seed.replace("-", "").uppercase()
+        val suffix = clean.take(6).ifBlank { "PRO26" }
+        return "SWEEPR-$suffix"
     }
 
     private const val FILE = "sweepr_prefs"
@@ -66,6 +75,8 @@ object Prefs {
     private const val KEY_REMINDER = "reminder"
     private const val KEY_ACCOUNT_ID = "account_id"
     private const val KEY_ACCOUNT_EMAIL = "account_email"
+    private const val KEY_REFERRAL_CODE = "referral_code"
+    private const val KEY_REDEEMED_REFERRAL = "redeemed_referral_code"
     private const val KEY_LEGACY_REFRESH_TOKEN = "refresh_token"
     private const val KEY_LEGACY_LINKED_REFRESH_TOKEN = "linked_refresh_token"
     private const val KEY_ENCRYPTED_REFRESH_TOKEN = "encrypted_refresh_token"
@@ -242,8 +253,12 @@ object Prefs {
         val rawExpires = secureAuthStore.getLong(KEY_SERVER_EXPIRES, 0L)
         val expiresSec = if (rawExpires > 10_000_000_000L) rawExpires / 1000L else rawExpires
         val activeFromSecure = refreshToken.isNotBlank() && secureAuthStore.getBoolean(KEY_SERVER_ACTIVE, false)
+        val accountId = prefs.getString(KEY_ACCOUNT_ID, "") ?: ""
+        val referralCode = prefs.getString(KEY_REFERRAL_CODE, null)?.takeIf { it.isNotBlank() }
+            ?: defaultReferralCode(deviceId, accountId)
+        val redeemedCode = prefs.getString(KEY_REDEEMED_REFERRAL, null)?.takeIf { it.isNotBlank() }
         _account.value = LinkedAccount(
-            accountId = prefs.getString(KEY_ACCOUNT_ID, "") ?: "",
+            accountId = accountId,
             email = prefs.getString(KEY_ACCOUNT_EMAIL, "") ?: "",
             refreshToken = refreshToken,
             deviceId = deviceId,
@@ -259,6 +274,8 @@ object Prefs {
             } else {
                 emptyList()
             },
+            referralCode = referralCode,
+            redeemedReferralCode = redeemedCode,
         )
     }
 
@@ -274,19 +291,23 @@ object Prefs {
     }
 
     fun setLinkedAccount(account: LinkedAccount) {
-        _account.value = account
-        storeRefreshTokenSecurely(account.refreshToken)
+        val code = account.referralCode.ifBlank { defaultReferralCode(account.deviceId, account.accountId) }
+        val normalized = account.copy(referralCode = code)
+        _account.value = normalized
+        storeRefreshTokenSecurely(normalized.refreshToken)
         if (::secureAuthStore.isInitialized) {
             secureAuthStore.edit()
-                .putBoolean(KEY_SERVER_ACTIVE, account.serverActive)
-                .putString(KEY_SERVER_PLAN, account.plan)
-                .putLong(KEY_SERVER_EXPIRES, account.expiresAt)
-                .putString(KEY_SERVER_ADDONS, account.addons.joinToString(","))
+                .putBoolean(KEY_SERVER_ACTIVE, normalized.serverActive)
+                .putString(KEY_SERVER_PLAN, normalized.plan)
+                .putLong(KEY_SERVER_EXPIRES, normalized.expiresAt)
+                .putString(KEY_SERVER_ADDONS, normalized.addons.joinToString(","))
                 .apply()
         }
         prefs.edit()
-            .putString(KEY_ACCOUNT_ID, account.accountId)
-            .putString(KEY_ACCOUNT_EMAIL, account.email)
+            .putString(KEY_ACCOUNT_ID, normalized.accountId)
+            .putString(KEY_ACCOUNT_EMAIL, normalized.email)
+            .putString(KEY_REFERRAL_CODE, normalized.referralCode)
+            .putString(KEY_REDEEMED_REFERRAL, normalized.redeemedReferralCode)
             .remove(KEY_LEGACY_LINKED_REFRESH_TOKEN)
             .remove(KEY_LEGACY_REFRESH_TOKEN)
             .remove(KEY_SERVER_ACTIVE)
@@ -298,7 +319,10 @@ object Prefs {
 
     fun clearLinkedAccount() {
         val currentDevice = _account.value.deviceId
-        val cleared = LinkedAccount(deviceId = currentDevice)
+        val cleared = LinkedAccount(
+            deviceId = currentDevice,
+            referralCode = defaultReferralCode(currentDevice),
+        )
         setLinkedAccount(cleared)
     }
 
@@ -481,8 +505,9 @@ object SweeprAccountApi {
         val token = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
         val isActive = rawActive && token.isNotEmpty() && verifyTokenClaimsForProject(token, PROJECT_ID, deviceId)
+        val accountId = res.getString("account_id")
         return LinkedAccount(
-            accountId = res.getString("account_id"),
+            accountId = accountId,
             email = res.optString("email", email.trim().lowercase()),
             refreshToken = res.getString("refresh_token"),
             deviceId = deviceId,
@@ -490,7 +515,24 @@ object SweeprAccountApi {
             plan = res.optString("plan").takeIf { it.isNotBlank() },
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
             addons = if (isActive) parseAddons(res) else emptyList(),
+            referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
+                ?: Prefs.defaultReferralCode(deviceId, accountId),
         )
+    }
+
+    fun redeemReferralCode(code: String, current: LinkedAccount): LinkedAccount {
+        val trimmed = code.trim().uppercase()
+        require(trimmed.length >= 4) { "Please enter a valid referral code." }
+        val ownCode = current.referralCode.ifBlank { Prefs.defaultReferralCode(current.deviceId, current.accountId) }.uppercase()
+        require(trimmed != ownCode) { "You cannot redeem your own referral code." }
+        val body = org.json.JSONObject()
+            .put("code", trimmed)
+            .put("referral_code", trimmed)
+            .put("device_id", current.deviceId)
+            .put("account_id", current.accountId)
+            .put("project_id", PROJECT_ID)
+        postJson("/v1/referral/apply", body, bearerToken = current.refreshToken)
+        return current.copy(redeemedReferralCode = trimmed)
     }
 
     fun refreshEntitlement(current: LinkedAccount): LinkedAccount {

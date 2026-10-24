@@ -5,33 +5,39 @@ import StoreKit
 import SwiftUI
 import UIKit
 
-// MARK: - Color Palette
+// MARK: - Color Palette (Candidate 5: SWEEPR Signature Hybrid — Obsidian Dark & Mint-Pearl Light)
 extension Color {
     static let sweeprEmerald = Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
     static let sweeprDarkEmerald = Color(red: 5 / 255, green: 150 / 255, blue: 105 / 255)
-    static let cardBackground = Color(UIColor.secondarySystemBackground)
+    static let cardBackground = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x101829)
 
     /// Emerald 700 (#047857): gradient end stop.
     static let sweeprDeepEmerald = Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
     /// Emerald 400 (#34d399): highlights on dark surfaces.
     static let sweeprLightEmerald = Color(red: 52 / 255, green: 211 / 255, blue: 153 / 255)
+    /// Cyan (#06b6d4): secondary bioluminescent accent.
+    static let sweeprCyan = Color(red: 6 / 255, green: 182 / 255, blue: 212 / 255)
+    /// Indigo (#6366f1): Contacts & Apps storage segment accent.
+    static let sweeprIndigo = Color(red: 99 / 255, green: 102 / 255, blue: 241 / 255)
+    /// Amber (#f59e0b): Battery Care & warning accent.
+    static let sweeprAmber = Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
     /// Teal (#0d9488): secondary chart / callout colour.
     static let sweeprTeal = Color(red: 13 / 255, green: 148 / 255, blue: 136 / 255)
     /// Mint (#ecfdf5): light-mode tinted surfaces.
     static let sweeprMint = Color(red: 236 / 255, green: 253 / 255, blue: 245 / 255)
-    /// Rose (#f43f5e): draws the eye to the largest saving.
+    /// Rose (#f43f5e): destructive / trash highlight.
     static let sweeprRose = Color(red: 244 / 255, green: 63 / 255, blue: 94 / 255)
 
-    // Adaptive surfaces matching the approved mockups (dark = slate/navy, light = slate-50/white).
-    static let sweeprCanvas = Color.sweeprAdaptive(light: 0xF8FAFC, dark: 0x0B1220)
-    static let sweeprPanel = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x111A2E)
-    static let sweeprPanelAlt = Color.sweeprAdaptive(light: 0xF1F5F9, dark: 0x172238)
+    // Candidate 5 Adaptive Surfaces: Obsidian Dark (#070B14 / #101829) & Mint-Pearl Light (#F4FBF7 / #FFFFFF)
+    static let sweeprCanvas = Color.sweeprAdaptive(light: 0xF4FBF7, dark: 0x070B14)
+    static let sweeprPanel = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x101829)
+    static let sweeprPanelAlt = Color.sweeprAdaptive(light: 0xECFDF5, dark: 0x162138)
     static let sweeprAccentText = Color.sweeprAdaptive(light: 0x047857, dark: 0x34D399)
-    static let sweeprMutedText = Color.sweeprAdaptive(light: 0x64748B, dark: 0x94A3B8)
+    static let sweeprMutedText = Color.sweeprAdaptive(light: 0x475569, dark: 0x94A3B8)
     static let sweeprLine = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
-            ? UIColor(sweeprHex: 0x94A3B8, alpha: 0.14)
-            : UIColor(sweeprHex: 0xE2E8F0)
+            ? UIColor(sweeprHex: 0x94A3B8, alpha: 0.16)
+            : UIColor(sweeprHex: 0xD1FAE5)
     })
 
     static func sweeprAdaptive(light: UInt32, dark: UInt32) -> Color {
@@ -135,6 +141,75 @@ struct SweeprWordmark: View {
             .font(.system(size: fontSize, weight: .heavy))
             .lineLimit(1)
             .accessibilityLabel("SWEEPR Cleaner")
+    }
+}
+
+/// Tinted rounded-square icon badge matching Android's `SweeprIconBadge`.
+struct SweeprIconBadge: View {
+    let systemName: String
+    var tint: Color = .sweeprEmerald
+    var size: CGFloat = 38
+    var iconSize: CGFloat = 17
+    var cornerRadius: CGFloat = 12
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(tint.opacity(0.14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(tint.opacity(0.32), lineWidth: 1)
+                )
+            Image(systemName: systemName)
+                .font(.system(size: iconSize, weight: .bold))
+                .foregroundColor(tint)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+/// Candidate 5 top header bar with SWEEPR CLEANER wordmark and PRO/FREE badge (theme switcher lives exclusively in Account/Settings).
+struct SweeprWordmarkHeaderView: View {
+    @ObservedObject var vm: AppViewModel
+    let onShowPaywall: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            SweeprLogoView(size: 32)
+            HStack(spacing: 5) {
+                Text("SWEEPR")
+                    .font(.system(size: 16, weight: .heavy))
+                    .tracking(0.8)
+                    .foregroundColor(.primary)
+                Text("CLEANER")
+                    .font(.system(size: 16, weight: .heavy))
+                    .tracking(0.8)
+                    .foregroundColor(.sweeprEmerald)
+            }
+            .lineLimit(1)
+
+            Spacer()
+
+            // PRO / FREE status pill
+            Button {
+                onShowPaywall()
+            } label: {
+                Text(vm.hasPremium ? "PRO" : "FREE")
+                    .font(.system(size: 11, weight: .heavy))
+                    .tracking(0.6)
+                    .foregroundColor(.sweeprEmerald)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(Color.sweeprEmerald.opacity(0.14))
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.sweeprEmerald.opacity(0.42), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(vm.hasPremium ? "SWEEPR Pro Active" : "Free Plan, tap to upgrade to Pro")
+        }
     }
 }
 
@@ -283,8 +358,8 @@ enum SweeprNavigationItem: Int, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .dashboard: return "sparkles"
-        case .swipeReview: return "hand.draw"
-        case .batteryCare: return "battery.100.bolt"
+        case .swipeReview: return "rectangle.stack.fill"
+        case .batteryCare: return "bolt.shield.fill"
         case .account: return "person.crop.circle"
         }
     }
@@ -889,9 +964,19 @@ struct ContentView: View {
             }
         }
         .tint(.sweeprEmerald)
+        .task {
+            BatteryCareMonitor.shared.refresh()
+            let photoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            let contactsStatus = CNContactStore.authorizationStatus(for: .contacts)
+            if !vm.hasScanned && !vm.isScanning &&
+                (photoStatus == .authorized || photoStatus == .limited || contactsStatus == .authorized) {
+                await vm.scan()
+            }
+        }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 vm.refreshSubscriptionStatus()
+                BatteryCareMonitor.shared.refresh()
             }
         }
         .sheet(isPresented: Binding(
@@ -938,13 +1023,72 @@ struct AlertItem: Identifiable {
     let message: String
 }
 
-// MARK: - Swipe Review View (Batch-mark & Undo Tinder-style photo cleaner)
+// MARK: - Candidate 5: 3D Stacked Swipe Photo Deck (SwipeReviewView)
 struct SwipeReviewView: View {
     @ObservedObject var vm: AppViewModel
     let onShowPaywall: () -> Void
     @SceneStorage("sweepr_swipe_index") private var currentIndex = 0
+    @State private var selectedFilter: String = "All Media"
     @State private var offset: CGSize = .zero
     @State private var history: [(index: Int, id: String, wasSelected: Bool)] = []
+
+    private static let monthFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "MMM yyyy"
+        return df
+    }()
+
+    private static let detailDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateStyle = .medium
+        df.timeStyle = .short
+        return df
+    }()
+
+    private var monthBuckets: [(key: String, items: [MediaItem])] {
+        var groups: [String: [MediaItem]] = [:]
+        var order: [String] = []
+        for item in vm.mediaResult.allItems {
+            let key = Self.monthFormatter.string(from: item.creationDate)
+            if groups[key] == nil {
+                order.append(key)
+                groups[key] = []
+            }
+            groups[key]?.append(item)
+        }
+        return order.map { ($0, groups[$0] ?? []) }
+    }
+
+    private var filterOptions: [(key: String, label: String, count: Int)] {
+        var list: [(String, String, Int)] = [
+            ("All Media", "All Media", vm.mediaResult.allItems.count)
+        ]
+        let shotCount = vm.mediaResult.allItems.filter { $0.isScreenshot }.count
+        if shotCount > 0 {
+            list.append(("Screenshots", "Screenshots", shotCount))
+        }
+        let videoCount = vm.mediaResult.allItems.filter { $0.isVideo }.count
+        if videoCount > 0 {
+            list.append(("Videos", "Videos", videoCount))
+        }
+        for bucket in monthBuckets {
+            list.append((bucket.key, bucket.key, bucket.items.count))
+        }
+        return list
+    }
+
+    private var filteredItems: [MediaItem] {
+        switch selectedFilter {
+        case "All Media":
+            return vm.mediaResult.allItems
+        case "Screenshots":
+            return vm.mediaResult.allItems.filter { $0.isScreenshot }
+        case "Videos":
+            return vm.mediaResult.allItems.filter { $0.isVideo }
+        default:
+            return monthBuckets.first(where: { $0.key == selectedFilter })?.items ?? vm.mediaResult.allItems
+        }
+    }
 
     private var markedCount: Int {
         vm.selectedMediaIDs.count
@@ -958,177 +1102,459 @@ struct SwipeReviewView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                if vm.mediaResult.allItems.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "hand.draw")
-                            .font(.system(size: 48))
-                            .foregroundColor(.sweeprEmerald)
-                        Text("Scan first to start swipe cleaning.")
-                            .foregroundColor(.secondary)
-                        Button("Start Scan") {
-                            Task { await vm.scan() }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.sweeprEmerald)
-                        .accessibilityLabel("Start Scan for Swipe Review")
-                    }
-                    .frame(maxHeight: .infinity)
-                } else if currentIndex >= vm.mediaResult.allItems.count {
-                    VStack(spacing: 14) {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.sweeprEmerald)
-                        Text("You're all caught up!")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        if markedCount > 0 {
-                            Button("Move \(markedCount) Marked (\(formatByteCount(markedBytes))) to Trash") {
-                                commitMarkedTrash()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.sweeprEmerald)
-                        }
-                        Button("Review Again") {
-                            currentIndex = 0
-                            history.removeAll()
-                        }
-                    }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    let item = vm.mediaResult.allItems[currentIndex]
+            ZStack {
+                Color.sweeprCanvas.ignoresSafeArea()
 
-                    Text("Swipe right to Keep, left to Remove. Nothing is deleted until you tap Move to Trash.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-
-                    HStack {
-                        Text("Photo \(currentIndex + 1) of \(vm.mediaResult.allItems.count)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(formatByteCount(item.estimatedBytes)) · \(item.resolutionLabel)")
+                VStack(spacing: 12) {
+                    // Top Header Bar with PRO/FREE Badge (Undo is at bottom-center)
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Swipe Photo Deck")
+                                .font(.system(size: 19, weight: .heavy))
+                                .foregroundColor(.primary)
+                            Text(
+                                filteredItems.isEmpty
+                                    ? "Month-by-month photo & video review"
+                                    : "\(min(currentIndex + 1, filteredItems.count)) of \(filteredItems.count) in \(selectedFilter)"
+                            )
                             .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal)
+                            .foregroundColor(.sweeprMutedText)
+                        }
+                        Spacer()
 
-                    ZStack {
-                        AssetThumbnailView(localIdentifier: item.id)
-                            .frame(maxWidth: .infinity, maxHeight: 420)
-                            .cornerRadius(20)
-                            .shadow(radius: 8)
-                            .offset(offset)
-                            .rotationEffect(.degrees(Double(offset.width / 20)))
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { gesture in
-                                        offset = gesture.translation
+                        Button {
+                            onShowPaywall()
+                        } label: {
+                            Text(vm.hasPremium ? "PRO" : "FREE")
+                                .font(.system(size: 11, weight: .heavy))
+                                .foregroundColor(.sweeprEmerald)
+                                .padding(.horizontal, 11)
+                                .padding(.vertical, 6)
+                                .background(Color.sweeprEmerald.opacity(0.14))
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule().stroke(Color.sweeprEmerald.opacity(0.42), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+
+                    if vm.mediaResult.allItems.isEmpty {
+                        emptyDeckState
+                    } else {
+                        // Horizontal Filter & Month Capsules
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(filterOptions, id: \.key) { option in
+                                    let isSelected = selectedFilter == option.key
+                                    Button {
+                                        withAnimation(.easeInOut(duration: 0.18)) {
+                                            selectedFilter = option.key
+                                            currentIndex = 0
+                                            offset = .zero
+                                        }
+                                    } label: {
+                                        Text("\(option.label) (\(option.count))")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(isSelected ? .white : .sweeprMutedText)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 7)
+                                            .background(isSelected ? Color.sweeprEmerald : Color.sweeprPanel)
+                                            .clipShape(Capsule())
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(isSelected ? Color.sweeprEmerald : Color.sweeprLine, lineWidth: 1)
+                                            )
                                     }
-                                    .onEnded { gesture in
-                                        if gesture.translation.width > 120 {
-                                            withAnimation {
-                                                offset = CGSize(width: 500, height: 0)
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                        }
+
+                        if currentIndex >= filteredItems.count {
+                            deckCompletedState
+                        } else {
+                            let item = filteredItems[currentIndex]
+
+                            // 3D 3-Card Stacked Photo Deck
+                            ZStack {
+                                // Back Card (currentIndex + 2)
+                                if currentIndex + 2 < filteredItems.count {
+                                    let backItem = filteredItems[currentIndex + 2]
+                                    AssetThumbnailView(localIdentifier: backItem.id, targetSize: CGSize(width: 420, height: 540))
+                                        .frame(maxWidth: .infinity, maxHeight: 380)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                                .stroke(Color.sweeprLine, lineWidth: 1)
+                                        )
+                                        .scaleEffect(0.88)
+                                        .offset(y: 22)
+                                        .opacity(0.42)
+                                        .allowsHitTesting(false)
+                                }
+
+                                // Middle Card (currentIndex + 1)
+                                if currentIndex + 1 < filteredItems.count {
+                                    let midItem = filteredItems[currentIndex + 1]
+                                    AssetThumbnailView(localIdentifier: midItem.id, targetSize: CGSize(width: 520, height: 680))
+                                        .frame(maxWidth: .infinity, maxHeight: 380)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                                .stroke(Color.sweeprLine, lineWidth: 1)
+                                        )
+                                        .scaleEffect(0.94)
+                                        .offset(y: 11)
+                                        .opacity(0.72)
+                                        .allowsHitTesting(false)
+                                }
+
+                                // Active Front Card
+                                ZStack {
+                                    AssetThumbnailView(localIdentifier: item.id, targetSize: CGSize(width: 720, height: 960))
+                                        .frame(maxWidth: .infinity, maxHeight: 380)
+                                        .clipped()
+
+                                    // Top & Bottom Gradient Scrim
+                                    LinearGradient(
+                                        stops: [
+                                            .init(color: Color.black.opacity(0.45), location: 0.0),
+                                            .init(color: .clear, location: 0.28),
+                                            .init(color: .clear, location: 0.58),
+                                            .init(color: Color.black.opacity(0.82), location: 1.0)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+
+                                    // Top Metadata Overlay Pills + Bottom Info
+                                    VStack {
+                                        HStack {
+                                            Text("\(formatByteCount(item.estimatedBytes)) · \(item.resolutionLabel)")
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 5)
+                                                .background(Color.black.opacity(0.55))
+                                                .clipShape(Capsule())
+
+                                            Spacer()
+
+                                            Text(item.isScreenshot ? "Screenshot" : (item.isVideo ? "Video" : (item.isBlurry ? "Blurry Shot" : "Photo")))
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(.sweeprLightEmerald)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 5)
+                                                .background(Color.sweeprEmerald.opacity(0.24))
+                                                .clipShape(Capsule())
+                                                .overlay(
+                                                    Capsule().stroke(Color.sweeprEmerald.opacity(0.5), lineWidth: 1)
+                                                )
+                                        }
+
+                                        Spacer()
+
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text(Self.detailDateFormatter.string(from: item.creationDate))
+                                                .font(.system(size: 14, weight: .heavy))
+                                                .foregroundColor(.white)
+                                            // Auto-hide swipe hints after 3 swipes
+                                            if history.count < 3 {
+                                                HStack(spacing: 8) {
+                                                    Text("← Swipe Left: Trash")
+                                                        .font(.system(size: 10, weight: .bold))
+                                                        .foregroundColor(Color(red: 253 / 255, green: 164 / 255, blue: 175 / 255))
+                                                        .padding(.horizontal, 9)
+                                                        .padding(.vertical, 4)
+                                                        .background(Color.sweeprRose.opacity(0.24))
+                                                        .clipShape(Capsule())
+
+                                                    Spacer()
+
+                                                    Text("Swipe Right: Keep →")
+                                                        .font(.system(size: 10, weight: .bold))
+                                                        .foregroundColor(.sweeprLightEmerald)
+                                                        .padding(.horizontal, 9)
+                                                        .padding(.vertical, 4)
+                                                        .background(Color.sweeprEmerald.opacity(0.24))
+                                                        .clipShape(Capsule())
+                                                }
                                             }
-                                            keepCurrent(item: item)
-                                        } else if gesture.translation.width < -120 {
-                                            withAnimation {
-                                                offset = CGSize(width: -500, height: 0)
-                                            }
-                                            markForTrash(item: item)
-                                        } else {
-                                            withAnimation { offset = .zero }
                                         }
                                     }
-                            )
+                                    .padding(14)
 
-                        if offset.width < -50 {
-                            Text("MARK TRASH")
-                                .font(.title2)
-                                .fontWeight(.black)
-                                .foregroundColor(.red)
-                                .padding(10)
-                                .border(Color.red, width: 4)
-                                .cornerRadius(8)
-                        } else if offset.width > 50 {
-                            Text("KEEP")
-                                .font(.title2)
-                                .fontWeight(.black)
-                                .foregroundColor(.green)
-                                .padding(10)
-                                .border(Color.green, width: 4)
-                                .cornerRadius(8)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    HStack(spacing: 32) {
-                        Button {
-                            markForTrash(item: item)
-                        } label: {
-                            Image(systemName: "trash.fill")
-                                .font(.title2)
-                                .foregroundColor(.red)
-                                .frame(width: 60, height: 60)
-                                .background(Color.cardBackground)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Mark current photo for Trash")
-
-                        Button {
-                            undoLastSwipe()
-                        } label: {
-                            Image(systemName: "arrow.uturn.backward")
-                                .font(.title3.weight(.bold))
-                                .foregroundColor(history.isEmpty ? .secondary : .primary)
-                                .frame(width: 48, height: 48)
-                                .background(Color.cardBackground)
-                                .clipShape(Circle())
-                        }
-                        .disabled(history.isEmpty)
-                        .accessibilityLabel("Undo last swipe")
-
-                        Button {
-                            keepCurrent(item: item)
-                        } label: {
-                            Image(systemName: "checkmark")
-                                .font(.title2)
-                                .foregroundColor(.green)
-                                .frame(width: 60, height: 60)
-                                .background(Color.cardBackground)
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Keep current photo")
-                    }
-
-                    if markedCount > 0 {
-                        Button {
-                            commitMarkedTrash()
-                        } label: {
-                            HStack {
-                                Image(systemName: "trash")
-                                Text("Move \(markedCount) Marked (\(formatByteCount(markedBytes))) to Trash")
-                                    .fontWeight(.bold)
+                                    // Dynamic Stamp Overlay During Drag
+                                    if offset.width < -45 {
+                                        Text("TRASH")
+                                            .font(.title2.weight(.black))
+                                            .foregroundColor(.sweeprRose)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .background(Color.black.opacity(0.65))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(Color.sweeprRose, lineWidth: 3)
+                                            )
+                                            .cornerRadius(10)
+                                    } else if offset.width > 45 {
+                                        Text("KEEP")
+                                            .font(.title2.weight(.black))
+                                            .foregroundColor(.sweeprEmerald)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .background(Color.black.opacity(0.65))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(Color.sweeprEmerald, lineWidth: 3)
+                                            )
+                                            .cornerRadius(10)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 380)
+                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                        .stroke(Color.sweeprLine, lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.28), radius: 14, x: 0, y: 8)
+                                .offset(offset)
+                                .rotationEffect(.degrees(Double(offset.width / 18)))
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { gesture in
+                                            offset = gesture.translation
+                                        }
+                                        .onEnded { gesture in
+                                            if gesture.translation.width > 110 {
+                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                    offset = CGSize(width: 500, height: 0)
+                                                }
+                                                keepCurrent(item: item)
+                                            } else if gesture.translation.width < -110 {
+                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                    offset = CGSize(width: -500, height: 0)
+                                                }
+                                                markForTrash(item: item)
+                                            } else {
+                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                    offset = .zero
+                                                }
+                                            }
+                                        }
+                                )
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.sweeprEmerald)
-                            .foregroundColor(.white)
-                            .cornerRadius(14)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 10)
+
+                            // Tactile Action Controls (Remove | Undo | Keep)
+                            HStack(spacing: 28) {
+                                Button {
+                                    markForTrash(item: item)
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.sweeprRose.opacity(0.14))
+                                                .overlay(Circle().stroke(Color.sweeprRose.opacity(0.45), lineWidth: 1.5))
+                                                .frame(width: 56, height: 56)
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 20, weight: .black))
+                                                .foregroundColor(.sweeprRose)
+                                        }
+                                        Text("Remove")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.sweeprRose)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Mark current photo for Trash")
+
+                                Button {
+                                    undoLastSwipe()
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.sweeprPanel)
+                                                .overlay(Circle().stroke(Color.sweeprLine, lineWidth: 1))
+                                                .frame(width: 46, height: 46)
+                                            Image(systemName: "arrow.uturn.backward")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(history.isEmpty ? .sweeprMutedText.opacity(0.4) : .primary)
+                                        }
+                                        Text("Undo")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(.sweeprMutedText)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(history.isEmpty)
+                                .accessibilityLabel("Undo last swipe")
+
+                                Button {
+                                    keepCurrent(item: item)
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.sweeprEmerald.opacity(0.15))
+                                                .overlay(Circle().stroke(Color.sweeprEmerald.opacity(0.5), lineWidth: 1.5))
+                                                .frame(width: 56, height: 56)
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 20, weight: .black))
+                                                .foregroundColor(.sweeprEmerald)
+                                        }
+                                        Text("Keep")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.sweeprEmerald)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Keep current photo")
+                            }
+                            .padding(.top, 4)
                         }
-                        .padding(.horizontal)
-                        .disabled(vm.isWorking)
+                    }
+
+                    Spacer(minLength: 4)
+
+                    // Sticky Trash Tray Bar + Clear Action
+                    if markedCount > 0 {
+                        HStack(spacing: 8) {
+                            Button {
+                                commitMarkedTrash()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "trash.fill")
+                                        .font(.subheadline.weight(.bold))
+                                    Text("Move \(markedCount) Item\(markedCount == 1 ? "" : "s") to Trash · Free \(formatByteCount(markedBytes))")
+                                        .font(.subheadline.weight(.heavy))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 14)
+                                .background(
+                                    LinearGradient(
+                                        colors: [.sweeprDarkEmerald, .sweeprEmerald],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .shadow(color: Color.sweeprEmerald.opacity(0.35), radius: 10, x: 0, y: 4)
+                            }
+                            .disabled(vm.isWorking)
+
+                            Button {
+                                vm.selectedMediaIDs.removeAll()
+                            } label: {
+                                Text("Clear")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundColor(.sweeprRose)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 14)
+                                    .background(Color.sweeprPanel)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .stroke(Color.sweeprRose.opacity(0.45), lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 16)
                     }
                 }
+                .padding(.bottom, 10)
             }
-            .padding(.bottom, 12)
-            .navigationTitle("Swipe Clean")
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
+    private var emptyDeckState: some View {
+        VStack(spacing: 14) {
+            SweeprIconBadge(systemName: "rectangle.stack.fill", tint: .sweeprEmerald, size: 64, iconSize: 28, cornerRadius: 20)
+            Text(vm.isScanning ? "Scanning Your Photo Library…" : "Ready to Swipe & Clean")
+                .font(.title3.weight(.heavy))
+            Text(
+                vm.isScanning
+                    ? vm.scanStatus
+                    : "Scan your photos and videos to review them month by month in a 3D stacked deck."
+            )
+            .font(.subheadline)
+            .foregroundColor(.sweeprMutedText)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 28)
+
+            if vm.isScanning {
+                ProgressView()
+                    .tint(.sweeprEmerald)
+            } else {
+                Button {
+                    Task { await vm.scan() }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                        Text("Start Photo Scan")
+                    }
+                    .font(.subheadline.weight(.heavy))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 13)
+                    .background(Color.sweeprEmerald)
+                    .clipShape(Capsule())
+                }
+                .accessibilityLabel("Start Scan for Swipe Review")
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+
+    private var deckCompletedState: some View {
+        let keptCount = max(0, filteredItems.count - markedCount)
+        return VStack(spacing: 14) {
+            SweeprIconBadge(systemName: "checkmark.seal.fill", tint: .sweeprEmerald, size: 64, iconSize: 30, cornerRadius: 20)
+            Text("Deck Complete!")
+                .font(.title2.weight(.heavy))
+            Text(
+                markedCount > 0
+                    ? "You kept \(keptCount) photos and queued \(markedCount) (\(formatByteCount(markedBytes))) in your Trash Tray."
+                    : "You've reviewed and kept all \(filteredItems.count) items in \(selectedFilter)."
+            )
+            .font(.subheadline)
+            .foregroundColor(.sweeprMutedText)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 20)
+
+            Button {
+                currentIndex = 0
+                history.removeAll()
+            } label: {
+                Text("Review \(selectedFilter) Again")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(.sweeprEmerald)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(Color.sweeprPanel)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.sweeprLine, lineWidth: 1))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+
     private func keepCurrent(item: MediaItem) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         let prev = vm.selectedMediaIDs.contains(item.id)
         history.append((index: currentIndex, id: item.id, wasSelected: prev))
         vm.selectedMediaIDs.remove(item.id)
@@ -1137,6 +1563,7 @@ struct SwipeReviewView: View {
     }
 
     private func markForTrash(item: MediaItem) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         let prev = vm.selectedMediaIDs.contains(item.id)
         history.append((index: currentIndex, id: item.id, wasSelected: prev))
         vm.selectedMediaIDs.insert(item.id)
@@ -1146,6 +1573,7 @@ struct SwipeReviewView: View {
 
     private func undoLastSwipe() {
         guard let last = history.popLast() else { return }
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         if last.wasSelected {
             vm.selectedMediaIDs.insert(last.id)
         } else {
@@ -1159,7 +1587,7 @@ struct SwipeReviewView: View {
         if vm.hasPremium {
             Task {
                 await vm.deleteSelectedMedia()
-                if currentIndex >= vm.mediaResult.allItems.count {
+                if currentIndex >= filteredItems.count {
                     currentIndex = 0
                 }
                 history.removeAll()

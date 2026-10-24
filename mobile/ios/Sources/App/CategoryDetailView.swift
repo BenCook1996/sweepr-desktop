@@ -276,7 +276,7 @@ struct CategoryDetailView: View {
                         NavigationLink(destination: DuplicateReviewView(vm: vm)) {
                             categoryRow(
                                 title: "Exact Duplicates",
-                                subtitle: "SHA-256 verified identical files",
+                                subtitle: "Identical copies safe to remove",
                                 countText: "\(vm.mediaResult.duplicateGroups.count) groups",
                                 icon: "doc.on.doc",
                                 color: .blue
@@ -286,7 +286,7 @@ struct CategoryDetailView: View {
                         NavigationLink(destination: SimilarReviewView(vm: vm)) {
                             categoryRow(
                                 title: "Similar Photos",
-                                subtitle: "8×8 dHash + Best Shot recommendation",
+                                subtitle: "Keeps your sharpest shot automatically",
                                 countText: "\(vm.mediaResult.similarGroups.count) groups",
                                 icon: "square.stack",
                                 color: .purple
@@ -305,8 +305,8 @@ struct CategoryDetailView: View {
 
                         NavigationLink(destination: LargeVideosDetailView(vm: vm, onShowPaywall: onShowPaywall)) {
                             categoryRow(
-                                title: "Media Optimizer & Privacy",
-                                subtitle: "HW Video Compressor + Photo 82% JPEG & EXIF GPS Stripper",
+                                title: "Shrink Videos & Photos",
+                                subtitle: "Save up to 75% space & strip GPS location",
                                 countText: "\(vm.mediaResult.largeVideos.count) vid · \(vm.mediaResult.optimizablePhotos.count) img",
                                 icon: "film",
                                 color: .red
@@ -644,8 +644,8 @@ struct QuickCleanReviewView: View {
 
         var title: String {
             switch self {
-            case .duplicates: return "Exact duplicate copies"
-            case .similar: return "Similar photos (best one kept)"
+            case .duplicates: return "Identical copies"
+            case .similar: return "Similar photos"
             case .screenshots: return "Screenshots"
             case .blurry: return "Blurry photos"
             case .largeVideos: return "Big videos"
@@ -808,7 +808,12 @@ struct QuickCleanReviewView: View {
             .accessibilityLabel("\(category.title), \(state == .unchecked ? "not selected" : "selected")")
 
             NavigationLink(destination: destination(for: category)) {
-                reviewRowLabel(title: category.title, detail: detail, showsChevron: true)
+                reviewRowLabel(
+                    title: category.title,
+                    detail: detail,
+                    badge: (category == .duplicates || category == .similar) ? "✓ Best Kept" : nil,
+                    showsChevron: true
+                )
             }
             .buttonStyle(.plain)
         }
@@ -866,12 +871,31 @@ struct QuickCleanReviewView: View {
         .padding(.vertical, 12)
     }
 
-    private func reviewRowLabel(title: String, detail: String, showsChevron: Bool) -> some View {
+    private func reviewRowLabel(
+        title: String,
+        detail: String,
+        badge: String? = nil,
+        showsChevron: Bool
+    ) -> some View {
         HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(title)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(.sweeprEmerald)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(Color.sweeprEmerald.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                }
                 Text(detail)
                     .font(.caption)
                     .foregroundColor(.sweeprMutedText)
@@ -1353,8 +1377,8 @@ struct LargeVideosDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             Picker("Media Optimizer Mode", selection: $selectedSegment) {
-                Text("Shrink Large Videos (\(vm.mediaResult.largeVideos.count))").tag(0)
-                Text("Shrink Photos & Privacy (\(vm.mediaResult.optimizablePhotos.count))").tag(1)
+                Text("Videos (\(vm.mediaResult.largeVideos.count))").tag(0)
+                Text("Photos (\(vm.mediaResult.optimizablePhotos.count))").tag(1)
             }
             .pickerStyle(.segmented)
             .padding()
@@ -1414,9 +1438,11 @@ struct LargeVideosDetailView: View {
                             .font(.system(size: 15, weight: .heavy))
                             .foregroundColor(.primary)
                         if clamped == 1 {
-                            Text("Recommended")
+                            Text("Best")
                                 .font(.system(size: 10, weight: .heavy))
                                 .foregroundColor(.sweeprAccentText)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 2)
                                 .background(Capsule().fill(Color.sweeprEmerald.opacity(0.16)))
@@ -1552,9 +1578,10 @@ struct LargeVideosDetailView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(formatByteCount(video.estimatedBytes))
                                     .font(.headline)
-                                Text("\(video.resolutionLabel) · Saves ~\(formatByteCount(estSavings)) (\(videoPreset.title) — -\(videoPreset.savedPercentEstimate)%)")
+                                Text("\(video.resolutionLabel) · Saves ~\(formatByteCount(estSavings)) (-\(videoPreset.savedPercentEstimate)%)")
                                     .font(.caption)
                                     .foregroundColor(.sweeprMutedText)
+                                    .lineLimit(1)
 
                                 HStack(spacing: 8) {
                                     Button {
@@ -1666,7 +1693,7 @@ struct LargeVideosDetailView: View {
                         Image(systemName: "location.slash.fill")
                             .foregroundColor(.sweeprAccentText)
                         Toggle(
-                            "Also remove hidden GPS location tags (\(gpsCount) photos)",
+                            "Remove hidden GPS location tags (\(gpsCount) photos)",
                             isOn: $stripGpsCoordinates
                         )
                         .font(.caption.weight(.semibold))
@@ -1677,8 +1704,6 @@ struct LargeVideosDetailView: View {
                     .sweeprCard(cornerRadius: 14)
 
                     advancedOptions(gpsCount: gpsCount)
-
-                    safetyNote
 
                     photoGrid(candidates)
                 }
@@ -1830,9 +1855,9 @@ struct LargeVideosDetailView: View {
     private func advancedOptions(gpsCount: Int) -> some View {
         DisclosureGroup("Advanced options", isExpanded: $showAdvancedOptions) {
             VStack(alignment: .leading, spacing: 10) {
-                Toggle("Shrink Photo File Size — Reduces storage with no visible quality loss", isOn: $compressFileSize)
+                Toggle("Shrink Photo File Size", isOn: $compressFileSize)
                     .font(.subheadline.weight(.semibold))
-                Toggle("Remove Hidden Location Info (\(gpsCount) photos) — Strips GPS coordinates", isOn: $stripGpsCoordinates)
+                Toggle("Remove GPS Location (\(gpsCount) photos)", isOn: $stripGpsCoordinates)
                     .font(.subheadline.weight(.semibold))
                 Toggle("Move Original to 30-Day Trash", isOn: $moveOriginalsToTrash)
                     .font(.subheadline.weight(.semibold))
@@ -2016,9 +2041,9 @@ struct ContactsCleanerView: View {
     var body: some View {
         VStack(spacing: 0) {
             Picker("Contacts & Calendar Mode", selection: $selectedMode) {
-                Text("Duplicates (\(vm.contactGroups.count))").tag(0)
+                Text("Dupes (\(vm.contactGroups.count))").tag(0)
                 Text("Incomplete (\(vm.incompleteContacts.count))").tag(1)
-                Text("Old Calendar (>1 yr)").tag(2)
+                Text("Calendar").tag(2)
             }
             .pickerStyle(.segmented)
             .padding()

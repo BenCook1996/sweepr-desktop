@@ -1,5 +1,7 @@
 import CommonCrypto
 import CryptoKit
+import LocalAuthentication
+import Security
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -295,6 +297,68 @@ enum MobileCloudVault {
         let name = String(data: nameData, encoding: .utf8) ?? "restored_file"
         return (name, body)
     }
+
+    // MARK: - Keychain + Face ID / Touch ID Vault Key Persistence
+
+    private static let keychainService = "com.sweepr.app.vault"
+    private static let keychainAccount = "master_vault_password"
+
+    static func saveRememberedPassword(_ password: String) {
+        let clean = normalizePassword(password)
+        guard clean.count >= 8, let data = clean.data(using: .utf8) else { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+        var addQuery = query
+        addQuery[kSecValueData as String] = data
+        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    static func getRememberedPassword() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        guard status == errSecSuccess, let data = item as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func clearRememberedPassword() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
+    static func authenticateBiometrics(completion: @escaping (Bool) -> Void) {
+        let context = LAContext()
+        var error: NSError?
+        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
+            context.evaluatePolicy(
+                .deviceOwnerAuthentication,
+                localizedReason: "Unlock your SWEEPR Private Vault"
+            ) { success, _ in
+                DispatchQueue.main.async {
+                    completion(success)
+                }
+            }
+        } else {
+            DispatchQueue.main.async {
+                completion(true)
+            }
+        }
+    }
 }
 
 /// Dashboard banner shown after a scan.
@@ -331,10 +395,15 @@ struct CloudSavingsView: View {
     @Environment(\.openURL) private var openURL
 
     @State private var vaultPassword = ""
+    @State private var rememberedPassword: String? = MobileCloudVault.getRememberedPassword()
+    @State private var rememberInKeychain = true
     @State private var deleteOriginalAfterVault = false
     @State private var vaultEntries: [MobileCloudVault.Entry] = MobileCloudVault.list()
+    @State private var vaultUnlocked = false
     @State private var vaultStatus: String?
     @State private var showingFileImporter = false
+    @State private var showingPasswordModal = false
+    @State private var pendingEncryptAfterModal = false
 
     private var provider: CloudSavings.Provider {
         CloudSavings.Provider(rawValue: providerRaw) ?? .iCloud
@@ -342,18 +411,17 @@ struct CloudSavingsView: View {
 
     var body: some View {
         let info = CloudSavings.breakdown(result: vm.mediaResult)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
                 vaultSection
-                headline(info)
-                pickers
-                breakdown(info)
-                actions
+                cloudSummaryCard(info)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.bottom, 20)
         }
-        .navigationTitle("Private Vault & Cloud")
-        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingPasswordModal) {
+            vaultPasswordModalSheet
+        }
         .fileImporter(
             isPresented: $showingFileImporter,
             allowedContentTypes: [.item],
@@ -367,12 +435,17 @@ struct CloudSavingsView: View {
             case .success(let urls):
                 guard let url = urls.first else { return }
                 do {
+                    if rememberInKeychain && vaultPassword.count >= 8 {
+                        MobileCloudVault.saveRememberedPassword(vaultPassword)
+                        rememberedPassword = vaultPassword
+                    }
                     let entry = try MobileCloudVault.encryptFile(
                         sourceURL: url,
                         password: vaultPassword,
                         deleteOriginal: deleteOriginalAfterVault
                     )
                     vaultEntries = MobileCloudVault.list(password: vaultPassword)
+                    vaultUnlocked = true
                     vaultStatus = "Locked \(entry.originalName ?? "file") in your Private Vault."
                 } catch {
                     vaultStatus = error.localizedDescription
@@ -383,122 +456,254 @@ struct CloudSavingsView: View {
         }
     }
 
-    private func headline(_ info: CloudSavings.Breakdown) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("CLOUDCLEAN · STORAGE BREAKDOWN")
-                .font(.caption2.weight(.bold))
-                .foregroundColor(.sweeprEmerald)
-            Text("\(formatByteCount(info.reclaimBytes)) reclaimable")
-                .font(.title.bold())
-            Text("With cloud photo backup enabled, every duplicate photo, screenshot, and oversized video on this iPhone also consumes your \(provider.label) storage.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.cardBackground)
-        .cornerRadius(20)
-    }
+    private var vaultPasswordModalSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(pendingEncryptAfterModal ? "Set Vault Password (8+ chars)" : "Unlock Private Vault")
+                    .font(.title3.weight(.heavy))
+                Text("Files are encrypted locally with AES-256-GCM before cloud sync.")
+                    .font(.subheadline)
+                    .foregroundColor(.sweeprMutedText)
 
-    private var pickers: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Where do your photos back up?").font(.headline)
-            Picker("Service", selection: $providerRaw) {
-                ForEach(CloudSavings.Provider.allCases) { Text($0.label).tag($0.rawValue) }
+                SecureField("Vault password (min. 8 characters)", text: $vaultPassword)
+                    .padding(12)
+                    .background(Color.sweeprPanelAlt)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color.sweeprLine, lineWidth: 1)
+                    )
+
+                Toggle("Remember in Keychain with Face ID", isOn: $rememberInKeychain)
+                    .font(.system(size: 13, weight: .semibold))
+                    .tint(.sweeprEmerald)
+
+                Toggle("Remove original after locking in Vault", isOn: $deleteOriginalAfterVault)
+                    .font(.system(size: 13, weight: .semibold))
+                    .tint(.sweeprEmerald)
+
+                Button {
+                    let shouldPick = pendingEncryptAfterModal
+                    showingPasswordModal = false
+                    pendingEncryptAfterModal = false
+                    if rememberInKeychain {
+                        MobileCloudVault.saveRememberedPassword(vaultPassword)
+                        rememberedPassword = vaultPassword
+                    } else {
+                        MobileCloudVault.clearRememberedPassword()
+                        rememberedPassword = nil
+                    }
+                    if shouldPick {
+                        showingFileImporter = true
+                    } else {
+                        let list = MobileCloudVault.list(password: vaultPassword)
+                        vaultEntries = list
+                        vaultUnlocked = list.contains { $0.originalName != nil }
+                        vaultStatus = (vaultUnlocked || list.isEmpty)
+                            ? "Private Vault unlocked."
+                            : "Wrong password or damaged vault file."
+                    }
+                } label: {
+                    Text(pendingEncryptAfterModal ? "Continue & Pick File" : "Unlock Vault")
+                }
+                .buttonStyle(SweeprPrimaryButtonStyle())
+                .disabled(vaultPassword.count < 8)
+
+                Spacer()
             }
-            .pickerStyle(.segmented)
+            .padding(20)
+            .background(Color.sweeprCanvas.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") {
+                        showingPasswordModal = false
+                        pendingEncryptAfterModal = false
+                    }
+                }
+            }
         }
+        .presentationDetents([.medium])
     }
 
-    private func breakdown(_ info: CloudSavings.Breakdown) -> some View {
-        VStack(spacing: 10) {
-            row("Duplicates, similar, blurry & screenshots", formatByteCount(info.junkBytes))
-            row("Saved by compressing large videos (est.)", formatByteCount(info.compressibleBytes))
-            row("Total cloud storage reclaimable", formatByteCount(info.reclaimBytes), highlight: true)
+    private func cloudSummaryCard(_ info: CloudSavings.Breakdown) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("CLOUDCLEAN · STORAGE BREAKDOWN")
+                .font(.system(size: 10, weight: .heavy))
+                .tracking(0.8)
+                .foregroundColor(.sweeprEmerald)
+            Text("\(formatByteCount(info.reclaimBytes)) reclaimable in \(provider.label)")
+                .font(.system(size: 19, weight: .heavy, design: .rounded))
+            Text("Deleting phone clutter also frees space in your \(provider.label) backup.")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.sweeprMutedText)
+
+            HStack(spacing: 6) {
+                ForEach(CloudSavings.Provider.allCases) { p in
+                    let isSelected = providerRaw == p.rawValue
+                    Button {
+                        providerRaw = p.rawValue
+                    } label: {
+                        Text(p.label)
+                            .font(.system(size: 11, weight: .heavy))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? Color.sweeprEmerald : Color.sweeprPanelAlt)
+                            .foregroundColor(isSelected ? .white : .sweeprMutedText)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(isSelected ? Color.sweeprEmerald : Color.sweeprLine, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            VStack(spacing: 8) {
+                row("Duplicates, similar, blurry & screenshots", formatByteCount(info.junkBytes))
+                Divider().background(Color.sweeprLine)
+                row("Saved by compressing large videos (est.)", formatByteCount(info.compressibleBytes))
+                Divider().background(Color.sweeprLine)
+                row("Total cloud storage reclaimable", formatByteCount(info.reclaimBytes), highlight: true)
+            }
+            .padding(12)
+            .background(Color.sweeprPanelAlt)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.sweeprLine, lineWidth: 1))
+
+            if let url = provider.manageURL {
+                Button {
+                    openURL(url)
+                } label: {
+                    Text("Open \(provider.label) Storage Settings")
+                        .font(.system(size: 13, weight: .bold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.sweeprPanelAlt)
+                        .foregroundColor(.sweeprEmerald)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.sweeprLine, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 
     private func row(_ label: String, _ value: String, highlight: Bool = false) -> some View {
         HStack {
-            Text(label).font(.subheadline)
+            Text(label)
+                .font(.system(size: 12, weight: highlight ? .bold : .medium))
+                .foregroundColor(highlight ? .primary : .sweeprMutedText)
             Spacer()
             Text(value)
-                .font(.subheadline.weight(.semibold))
+                .font(.system(size: 13, weight: .heavy))
                 .foregroundColor(highlight ? .sweeprEmerald : .primary)
         }
         .accessibilityElement(children: .combine)
     }
 
-    private var actions: some View {
-        VStack(spacing: 10) {
-            NavigationLink(destination: DuplicateReviewView(vm: vm)) {
-                Text("Review duplicates & similar photos")
-                    .fontWeight(.bold)
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(Color.sweeprEmerald)
-                    .foregroundColor(.white)
-                    .cornerRadius(14)
-            }
-            NavigationLink(destination: LargeVideosDetailView(vm: vm, onShowPaywall: onShowPaywall)) {
-                Text("Compress large videos").frame(maxWidth: .infinity, minHeight: 48)
-            }
-            .buttonStyle(.bordered)
-            NavigationLink(destination: SingleMediaListView(vm: vm, title: "Screenshots", items: vm.mediaResult.screenshots)) {
-                Text("Clear old screenshots").frame(maxWidth: .infinity, minHeight: 48)
-            }
-            .buttonStyle(.bordered)
-            if let url = provider.manageURL {
-                Button {
-                    openURL(url)
-                } label: {
-                    Text("Open \(provider.label) storage settings").frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .tint(.sweeprEmerald)
-    }
-
     private var vaultSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "lock.shield.fill")
+            HStack(spacing: 10) {
+                SweeprIconBadge(systemName: "lock.shield.fill", tint: .sweeprEmerald, size: 38, iconSize: 17, cornerRadius: 12)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("AES-256-GCM Private Vault")
+                        .font(.system(size: 14, weight: .bold))
+                        .lineLimit(1)
+                    Text("Lock sensitive photos, IDs & documents locally")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 4)
+                Text(vaultUnlocked ? "Unlocked" : (rememberedPassword != nil ? "Face ID Ready" : "AES-256"))
+                    .font(.system(size: 10, weight: .heavy))
                     .foregroundColor(.sweeprEmerald)
-                Text("Private Photo & Document Vault")
-                    .font(.headline)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.sweeprEmerald.opacity(0.14))
+                    .clipShape(Capsule())
             }
-            Text("Lock sensitive photos, IDs, and documents with a password on your iPhone. Only your password can unlock them.")
-                .font(.caption)
-                .foregroundColor(.secondary)
 
-            SecureField("Choose a vault password (min. 8 characters)", text: $vaultPassword)
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: vaultPassword) { newValue in
-                    if newValue.count >= 8 {
-                        vaultEntries = MobileCloudVault.list(password: newValue)
+            HStack(spacing: 8) {
+                Button {
+                    guard vm.hasPremium else {
+                        onShowPaywall()
+                        return
                     }
+                    if vaultPassword.count >= 8 {
+                        showingFileImporter = true
+                    } else if let saved = rememberedPassword, saved.count >= 8 {
+                        MobileCloudVault.authenticateBiometrics { success in
+                            if success {
+                                vaultPassword = saved
+                                vaultEntries = MobileCloudVault.list(password: saved)
+                                vaultUnlocked = true
+                                showingFileImporter = true
+                            } else {
+                                pendingEncryptAfterModal = true
+                                showingPasswordModal = true
+                            }
+                        }
+                    } else {
+                        pendingEncryptAfterModal = true
+                        showingPasswordModal = true
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Lock a File in Vault…")
+                    }
+                    .font(.system(size: 13, weight: .heavy))
+                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .background(Color.sweeprEmerald)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
+                .buttonStyle(.plain)
 
-            Toggle("Remove original after locking in Vault", isOn: $deleteOriginalAfterVault)
-                .font(.subheadline)
-
-            Button {
-                guard vm.hasPremium else {
-                    onShowPaywall()
-                    return
+                if !vaultEntries.isEmpty && !vaultUnlocked {
+                    Button {
+                        if let saved = rememberedPassword, saved.count >= 8 {
+                            MobileCloudVault.authenticateBiometrics { success in
+                                if success {
+                                    vaultPassword = saved
+                                    let list = MobileCloudVault.list(password: saved)
+                                    vaultEntries = list
+                                    vaultUnlocked = list.contains { $0.originalName != nil }
+                                    vaultStatus = vaultUnlocked ? "Private Vault unlocked with Face ID." : nil
+                                    if !vaultUnlocked {
+                                        pendingEncryptAfterModal = false
+                                        showingPasswordModal = true
+                                    }
+                                } else {
+                                    pendingEncryptAfterModal = false
+                                    showingPasswordModal = true
+                                }
+                            }
+                        } else {
+                            pendingEncryptAfterModal = false
+                            showingPasswordModal = true
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: rememberedPassword != nil ? "faceid" : "key.fill")
+                            Text(rememberedPassword != nil ? "Face ID" : "Unlock")
+                        }
+                        .font(.system(size: 12, weight: .heavy))
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 46)
+                        .background(Color.sweeprPanelAlt)
+                        .foregroundColor(.sweeprEmerald)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.sweeprLine, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
                 }
-                showingFileImporter = true
-            } label: {
-                Label("Lock a File in Vault…", systemImage: "plus.circle.fill")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.sweeprEmerald)
-            .disabled(vaultPassword.count < 8)
 
             if let status = vaultStatus {
                 Text(status)
@@ -509,19 +714,25 @@ struct CloudSavingsView: View {
             if vaultEntries.isEmpty {
                 Text("No locked files in your Private Vault yet.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.sweeprMutedText)
             } else {
                 ForEach(vaultEntries) { entry in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(entry.originalName ?? "Locked Vault Item")
                                 .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
                             Text(formatByteCount(entry.encryptedBytes))
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.sweeprMutedText)
                         }
                         Spacer()
-                        Button("Save to Phone") {
+                        Button("Restore") {
+                            guard vaultPassword.count >= 8 else {
+                                pendingEncryptAfterModal = false
+                                showingPasswordModal = true
+                                return
+                            }
                             do {
                                 let dest = try MobileCloudVault.decryptToRestoredFolder(entry: entry, password: vaultPassword)
                                 vaultStatus = "Saved \(dest.lastPathComponent) to your iPhone Files."
@@ -529,8 +740,8 @@ struct CloudSavingsView: View {
                                 vaultStatus = error.localizedDescription
                             }
                         }
-                        .font(.caption.weight(.semibold))
-                        .disabled(vaultPassword.count < 8)
+                        .font(.caption.weight(.bold))
+                        .foregroundColor(.sweeprEmerald)
 
                         Button(role: .destructive) {
                             try? FileManager.default.removeItem(at: entry.fileURL)
@@ -538,14 +749,14 @@ struct CloudSavingsView: View {
                         } label: {
                             Image(systemName: "trash")
                                 .font(.caption)
+                                .foregroundColor(.sweeprRose)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
                 }
             }
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 }

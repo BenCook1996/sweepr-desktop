@@ -52,11 +52,26 @@
       msclkid: params.get('msclkid') || '',
       ttclid: params.get('ttclid') || '',
       irclickid: params.get('irclickid') || '',
-      ref: params.get('ref') || params.get('referral') || '',
+      ref: params.get('ref') || params.get('aff') || params.get('referral') || '',
       referrer: document.referrer || '',
       landing_page: window.location.pathname,
       timestamp: new Date().toISOString()
     };
+
+    if (touch.ref) {
+      try {
+        fetch('/api/affiliate/click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: touch.ref,
+            landing_path: touch.landing_page,
+            referrer: touch.referrer
+          }),
+          keepalive: true
+        }).catch(function () {});
+      } catch (e) {}
+    }
 
     const hasMarketingParams =
       touch.utm_source ||

@@ -5,8 +5,12 @@ package com.sweepr.app
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,14 +23,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -55,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -63,8 +72,11 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer
+import java.security.KeyStore
 import java.security.SecureRandom
 import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.PBEKeySpec
@@ -267,6 +279,56 @@ object MobileCloudVault {
         outFile.writeBytes(bytes)
         return outFile
     }
+
+    private const val KEYSTORE_ALIAS = "sweepr_vault_master_key"
+    private const val VAULT_PREFS = "sweepr_vault_keystore"
+
+    private fun getOrCreateKeystoreSecret(): SecretKey {
+        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val existing = ks.getEntry(KEYSTORE_ALIAS, null) as? KeyStore.SecretKeyEntry
+        if (existing != null) return existing.secretKey
+        val kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        kg.init(
+            KeyGenParameterSpec.Builder(
+                KEYSTORE_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build(),
+        )
+        return kg.generateKey()
+    }
+
+    /** Hardware-backed Android Keystore persistence for 1-tap Quick Unlock. */
+    fun saveRememberedPassword(context: Context, password: String) {
+        runCatching {
+            val secret = getOrCreateKeystoreSecret()
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, secret)
+            val ct = cipher.doFinal(password.toByteArray(Charsets.UTF_8))
+            context.getSharedPreferences(VAULT_PREFS, Context.MODE_PRIVATE).edit()
+                .putString("iv", Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
+                .putString("ct", Base64.encodeToString(ct, Base64.NO_WRAP))
+                .apply()
+        }
+    }
+
+    fun getRememberedPassword(context: Context): String? = runCatching {
+        val sp = context.getSharedPreferences(VAULT_PREFS, Context.MODE_PRIVATE)
+        val ivB64 = sp.getString("iv", null) ?: return null
+        val ctB64 = sp.getString("ct", null) ?: return null
+        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val secret = (ks.getEntry(KEYSTORE_ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey ?: return null
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, secret, GCMParameterSpec(128, Base64.decode(ivB64, Base64.NO_WRAP)))
+        String(cipher.doFinal(Base64.decode(ctB64, Base64.NO_WRAP)), Charsets.UTF_8)
+    }.getOrNull()
+
+    fun clearRememberedPassword(context: Context) {
+        context.getSharedPreferences(VAULT_PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+    }
 }
 
 /** Dashboard banner shown right after a scan. */
@@ -309,14 +371,27 @@ fun CloudSavingsScreen(
 
     // Vault state
     var vaultPassword by remember { mutableStateOf("") }
+    var rememberedPassword by remember { mutableStateOf<String?>(null) }
+    var rememberInKeystore by remember { mutableStateOf(true) }
     var showPassword by remember { mutableStateOf(false) }
+    var showPasswordModal by remember { mutableStateOf(false) }
+    var pendingEncryptAfterModal by remember { mutableStateOf(false) }
     var vaultItems by remember { mutableStateOf<List<MobileCloudVault.VaultItem>>(emptyList()) }
     var vaultUnlocked by remember { mutableStateOf(false) }
     var vaultBusy by remember { mutableStateOf(false) }
     var vaultStatus by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        vaultItems = withContext(Dispatchers.IO) { MobileCloudVault.list(context) }
+        val savedPw = withContext(Dispatchers.IO) { MobileCloudVault.getRememberedPassword(context) }
+        rememberedPassword = savedPw
+        if (!savedPw.isNullOrEmpty()) {
+            vaultPassword = savedPw
+        }
+        val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, savedPw) }
+        vaultItems = list
+        if (!savedPw.isNullOrEmpty() && list.any { it.unlockedName != null }) {
+            vaultUnlocked = true
+        }
     }
 
     val filePicker = rememberLauncherForActivityResult(
@@ -332,6 +407,10 @@ fun CloudSavingsScreen(
         scope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
+                    if (rememberInKeystore && vaultPassword.length >= 8) {
+                        MobileCloudVault.saveRememberedPassword(context, vaultPassword)
+                        rememberedPassword = vaultPassword
+                    }
                     uris.forEach { u -> MobileCloudVault.encryptUri(context, u, vaultPassword) }
                     MobileCloudVault.list(context, vaultPassword)
                 }
@@ -347,74 +426,25 @@ fun CloudSavingsScreen(
         }
     }
 
-    Scaffold(topBar = { SweeprTopBar(stringResource(R.string.cloud_title), onBack = onBack) }) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (onOpenBattery != null) {
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Surface(
-                            onClick = onOpenBattery,
-                            shape = RoundedCornerShape(20.dp),
-                            color = Color.Transparent,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = "🔋 Battery Saver",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                        }
-                        Surface(
-                            onClick = {},
-                            shape = RoundedCornerShape(20.dp),
-                            color = SweeprGreen,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = "🔒 Private Vault & Cloud",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 1. Private Photo & Document Vault (Top Card)
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.vault_eyebrow), color = SweeprGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.vault_title), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                    }
+    if (showPasswordModal) {
+        AlertDialog(
+            onDismissRequest = {
+                showPasswordModal = false
+                pendingEncryptAfterModal = false
+            },
+            title = {
+                Text(
+                    if (pendingEncryptAfterModal) "Set Vault Password (8+ chars)" else "Unlock Private Vault",
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        stringResource(R.string.vault_subtitle),
+                        "Files are encrypted locally with AES-256-GCM before cloud sync.",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp,
                     )
-
                     OutlinedTextField(
                         value = vaultPassword,
                         onValueChange = { vaultPassword = it },
@@ -429,108 +459,298 @@ fun CloudSavingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Checkbox(
+                            checked = rememberInKeystore,
+                            onCheckedChange = { rememberInKeystore = it },
+                        )
+                        Text(
+                            "Remember key in Android Hardware Keystore for 1-tap unlock",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = vaultPassword.length >= 8,
+                    colors = ButtonDefaults.buttonColors(containerColor = SweeprGreen),
+                    onClick = {
+                        val shouldLaunchPicker = pendingEncryptAfterModal
+                        showPasswordModal = false
+                        pendingEncryptAfterModal = false
+                        scope.launch {
+                            if (rememberInKeystore) {
+                                withContext(Dispatchers.IO) {
+                                    MobileCloudVault.saveRememberedPassword(context, vaultPassword)
+                                }
+                                rememberedPassword = vaultPassword
+                            } else {
+                                MobileCloudVault.clearRememberedPassword(context)
+                                rememberedPassword = null
+                            }
+                            if (shouldLaunchPicker) {
+                                filePicker.launch(arrayOf("image/*", "application/pdf", "*/*"))
+                            } else {
+                                val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, vaultPassword) }
+                                vaultItems = list
+                                vaultUnlocked = list.any { it.unlockedName != null }
+                                vaultStatus = if (vaultUnlocked || list.isEmpty()) {
+                                    context.getString(R.string.vault_msg_unlocked)
+                                } else {
+                                    context.getString(R.string.vault_msg_wrong_pw)
+                                }
+                            }
+                        }
+                    },
+                ) {
+                    Text(
+                        if (pendingEncryptAfterModal) "Continue & Pick File" else "Unlock Vault",
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showPasswordModal = false
+                        pendingEncryptAfterModal = false
+                    },
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    Scaffold(topBar = { SweeprTopBar(stringResource(R.string.cloud_title), onBack = onBack) }) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (onOpenBattery != null) {
+                BatteryVaultSegmentedBar(
+                    isBatterySelected = false,
+                    onSelectBattery = onOpenBattery,
+                    onSelectVault = {},
+                )
+            }
+
+            // 1. Private Photo & Document Vault (Top Card — Zero-Friction Modal / Keystore Flow)
+            SweeprPanel(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.VAULT_SHIELD,
+                                tint = SweeprGreen,
+                                badgeSize = 40.dp,
+                                iconSize = 20.dp,
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.vault_eyebrow),
+                                    color = emeraldText(),
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 0.8.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    stringResource(R.string.vault_title),
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        SizeBadge(
+                            text = when {
+                                vaultUnlocked -> "Unlocked"
+                                rememberedPassword != null -> "Keystore Ready"
+                                else -> "AES-256"
+                            },
+                        )
+                    }
+
+                    Text(
+                        stringResource(R.string.vault_subtitle),
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp,
+                    )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
                                 val runEncrypt = {
-                                    if (vaultPassword.length < 8) {
-                                        vaultStatus = context.getString(R.string.vault_msg_short_pw)
-                                    } else {
+                                    if (vaultPassword.length >= 8) {
                                         filePicker.launch(arrayOf("image/*", "application/pdf", "*/*"))
+                                    } else {
+                                        pendingEncryptAfterModal = true
+                                        showPasswordModal = true
                                     }
                                 }
                                 if (state.hasPremium) runEncrypt() else onShowPaywall(runEncrypt)
                             },
                             enabled = !vaultBusy,
-                            modifier = Modifier.weight(1f).heightIn(min = 46.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SweeprGreen),
                         ) {
-                            Text(stringResource(R.string.vault_btn_encrypt))
+                            Text(
+                                stringResource(R.string.vault_btn_encrypt),
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                            )
                         }
 
                         if (vaultItems.isNotEmpty() && !vaultUnlocked) {
                             OutlinedButton(
                                 onClick = {
-                                    if (vaultPassword.isBlank()) {
-                                        vaultStatus = context.getString(R.string.vault_msg_short_pw)
-                                        return@OutlinedButton
-                                    }
-                                    scope.launch {
-                                        val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, vaultPassword) }
-                                        vaultItems = list
-                                        vaultUnlocked = list.any { it.unlockedName != null }
-                                        vaultStatus = if (vaultUnlocked || list.isEmpty()) {
-                                            context.getString(R.string.vault_msg_unlocked)
-                                        } else {
-                                            context.getString(R.string.vault_msg_wrong_pw)
+                                    val saved = rememberedPassword
+                                    if (!saved.isNullOrEmpty() && saved.length >= 8) {
+                                        vaultPassword = saved
+                                        scope.launch {
+                                            val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, saved) }
+                                            vaultItems = list
+                                            vaultUnlocked = list.any { it.unlockedName != null }
+                                            vaultStatus = if (vaultUnlocked) {
+                                                context.getString(R.string.vault_msg_unlocked)
+                                            } else {
+                                                pendingEncryptAfterModal = false
+                                                showPasswordModal = true
+                                                null
+                                            }
                                         }
+                                    } else {
+                                        pendingEncryptAfterModal = false
+                                        showPasswordModal = true
                                     }
                                 },
                                 enabled = !vaultBusy,
-                                modifier = Modifier.heightIn(min = 46.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.heightIn(min = 48.dp),
                             ) {
-                                Text(stringResource(R.string.vault_btn_unlock))
+                                Text(
+                                    if (rememberedPassword != null) "Quick Unlock" else stringResource(R.string.vault_btn_unlock),
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        } else if (vaultPassword.isNotEmpty()) {
+                            OutlinedButton(
+                                onClick = {
+                                    pendingEncryptAfterModal = false
+                                    showPasswordModal = true
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                modifier = Modifier.heightIn(min = 48.dp),
+                            ) {
+                                Text("Key", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
 
                     vaultStatus?.let { msg ->
-                        Text(msg, fontSize = 12.sp, color = SweeprGreen, fontWeight = FontWeight.Medium)
+                        Text(msg, fontSize = 12.sp, color = emeraldText(), fontWeight = FontWeight.SemiBold)
                     }
 
                     if (vaultItems.isEmpty()) {
-                        Text(stringResource(R.string.vault_empty), fontSize = 12.sp, color = Color.Gray)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.background,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                stringResource(R.string.vault_empty),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(12.dp),
+                            )
+                        }
                     } else {
                         vaultItems.forEach { item ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.background,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                modifier = Modifier.fillMaxWidth(),
                             ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        item.unlockedName ?: stringResource(R.string.vault_locked_file),
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 13.sp,
-                                    )
-                                    Text(formatBytes(item.sizeBytes), fontSize = 11.sp, color = Color.Gray)
-                                }
-                                TextButton(
-                                    onClick = {
-                                        if (vaultPassword.isBlank()) {
-                                            vaultStatus = context.getString(R.string.vault_msg_short_pw)
-                                            return@TextButton
-                                        }
-                                        scope.launch {
-                                            runCatching {
-                                                withContext(Dispatchers.IO) {
-                                                    val restored = MobileCloudVault.restoreToDownloads(context, item, vaultPassword)
-                                                    val list = MobileCloudVault.list(context, vaultPassword)
-                                                    restored to list
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            item.unlockedName ?: stringResource(R.string.vault_locked_file),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                        )
+                                        Text(formatBytes(item.sizeBytes), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            if (vaultPassword.length < 8) {
+                                                pendingEncryptAfterModal = false
+                                                showPasswordModal = true
+                                                return@TextButton
+                                            }
+                                            scope.launch {
+                                                runCatching {
+                                                    withContext(Dispatchers.IO) {
+                                                        val restored = MobileCloudVault.restoreToDownloads(context, item, vaultPassword)
+                                                        val list = MobileCloudVault.list(context, vaultPassword)
+                                                        restored to list
+                                                    }
+                                                }.onSuccess { (out, list) ->
+                                                    vaultItems = list
+                                                    vaultUnlocked = true
+                                                    vaultStatus = context.getString(R.string.vault_msg_restored, out.name)
+                                                }.onFailure {
+                                                    vaultStatus = context.getString(R.string.vault_msg_wrong_pw)
                                                 }
-                                            }.onSuccess { (out, list) ->
-                                                vaultItems = list
-                                                vaultUnlocked = true
-                                                vaultStatus = context.getString(R.string.vault_msg_restored, out.name)
-                                            }.onFailure {
-                                                vaultStatus = context.getString(R.string.vault_msg_wrong_pw)
                                             }
-                                        }
-                                    },
-                                ) {
-                                    Text(stringResource(R.string.vault_btn_restore))
-                                }
-                                TextButton(
-                                    onClick = {
-                                        scope.launch {
-                                            withContext(Dispatchers.IO) { item.file.delete() }
-                                            vaultItems = withContext(Dispatchers.IO) {
-                                                MobileCloudVault.list(context, if (vaultUnlocked) vaultPassword else null)
+                                        },
+                                    ) {
+                                        Text(stringResource(R.string.vault_btn_restore), fontWeight = FontWeight.Bold)
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            scope.launch {
+                                                withContext(Dispatchers.IO) { item.file.delete() }
+                                                vaultItems = withContext(Dispatchers.IO) {
+                                                    MobileCloudVault.list(context, if (vaultUnlocked) vaultPassword else null)
+                                                }
                                             }
-                                        }
-                                    },
-                                ) {
-                                    Text(stringResource(R.string.swipe_delete), color = DangerRed)
+                                        },
+                                    ) {
+                                        Text(stringResource(R.string.swipe_delete), color = DangerRed, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
@@ -538,69 +758,69 @@ fun CloudSavingsScreen(
                 }
             }
 
-            // 2. Cloud Space Finder Card
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Column(Modifier.padding(20.dp)) {
-                    Text(stringResource(R.string.cloud_eyebrow), color = SweeprGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(6.dp))
+            // 2. Compact Cloud Backup Savings Card (Consolidated — no duplicate Home nav buttons)
+            SweeprPanel(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        stringResource(R.string.cloud_eyebrow),
+                        color = emeraldText(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.8.sp,
+                    )
                     Text(
                         stringResource(R.string.cloud_headline, formatBytes(bd.reclaimBytes)),
-                        fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 28.sp,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        lineHeight = 24.sp,
                     )
-                    Spacer(Modifier.height(6.dp))
-                    Text(stringResource(R.string.cloud_headline_body), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
-                }
-            }
-
-            // Provider selector
-            Text(stringResource(R.string.cloud_which_service), fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                CloudSavings.Provider.entries.forEach { p ->
-                    FilterChip(
-                        selected = provider == p,
-                        onClick = {
-                            provider = p
-                            CloudSavings.saveProvider(context, p)
-                        },
-                        label = { Text(stringResource(p.labelRes)) },
-                        modifier = Modifier.heightIn(min = 44.dp),
-                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = SweeprGreen.copy(alpha = 0.18f)),
+                    Text(
+                        stringResource(R.string.cloud_headline_body),
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp,
                     )
+
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CloudSavings.Provider.entries.forEach { p ->
+                            FilterChip(
+                                selected = provider == p,
+                                onClick = {
+                                    provider = p
+                                    CloudSavings.saveProvider(context, p)
+                                },
+                                label = { Text(stringResource(p.labelRes), fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = SweeprGreen.copy(alpha = 0.18f)),
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.background,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            BreakdownRow(stringResource(R.string.cloud_row_junk), formatBytes(bd.junkBytes))
+                            BreakdownRow(stringResource(R.string.cloud_row_videos), formatBytes(bd.compressibleBytes))
+                            BreakdownRow(stringResource(R.string.cloud_row_attachments), formatBytes(bd.attachmentBytes))
+                            BreakdownRow(stringResource(R.string.cloud_row_total_reclaimable), formatBytes(bd.reclaimBytes), highlight = true)
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { context.openUrl(manageUrl(provider)) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.cloud_action_manage, stringResource(provider.labelRes)),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
             }
-
-            // Storage Breakdown
-            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    BreakdownRow(stringResource(R.string.cloud_row_junk), formatBytes(bd.junkBytes))
-                    BreakdownRow(stringResource(R.string.cloud_row_videos), formatBytes(bd.compressibleBytes))
-                    BreakdownRow(stringResource(R.string.cloud_row_attachments), formatBytes(bd.attachmentBytes))
-                    BreakdownRow(stringResource(R.string.cloud_row_total_reclaimable), formatBytes(bd.reclaimBytes), highlight = true)
-                }
-            }
-            Text(stringResource(R.string.cloud_estimate_note), fontSize = 12.sp, color = Color.Gray, lineHeight = 16.sp)
-
-            // Actions
-            Button(
-                onClick = { onOpenPhotosTab(0) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SweeprGreen),
-            ) { Text(stringResource(R.string.cloud_action_duplicates)) }
-            OutlinedButton(onClick = { onOpenPhotosTab(3) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.cloud_action_videos))
-            }
-            OutlinedButton(onClick = { onOpen(Screen.Screenshots) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.cloud_action_screenshots))
-            }
-            OutlinedButton(onClick = { onOpenPhotosTab(5) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.cloud_action_attachments))
-            }
-            OutlinedButton(onClick = { context.openUrl(manageUrl(provider)) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.cloud_action_manage, stringResource(provider.labelRes)))
-            }
-
-            Text(stringResource(R.string.cloud_sync_note), fontSize = 12.sp, color = Color.Gray, lineHeight = 16.sp)
-            Spacer(Modifier.height(24.dp))
         }
     }
 }

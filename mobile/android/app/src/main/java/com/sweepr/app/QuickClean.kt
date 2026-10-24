@@ -52,7 +52,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -308,11 +310,28 @@ private fun ReviewRowShell(
                 colors = CheckboxDefaults.colors(checkedColor = SweeprGreen, checkmarkColor = Color.White),
             )
             Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (note != null) {
+                        SizeBadge("✓ Best Kept")
+                    }
+                }
                 Text(
-                    if (note != null) "$subtitle · $note" else subtitle,
+                    subtitle,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             Icon(
@@ -343,6 +362,10 @@ fun CleaningCompleteScreen(
         return
     }
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
     val reminder by Prefs.reminder.collectAsState()
     val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         Prefs.setReminder(context, ReminderFrequency.Weekly)
@@ -389,6 +412,37 @@ fun CleaningCompleteScreen(
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center,
                 )
+                if (summary.bytes > 0L) {
+                    val approxPhotos = maxOf(1L, summary.bytes / 3_500_000L)
+                    val approxMinutes4K = maxOf(1L, summary.bytes / 350_000_000L)
+                    SweeprPanel(Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.SPARKLE_CLEAN,
+                                tint = SweeprGreen,
+                                badgeSize = 34.dp,
+                                iconSize = 17.dp,
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = "Room for ~$approxPhotos photos or $approxMinutes4K min of 4K video",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 12.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = "Also frees cloud backup space",
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
                 if (beforePct != null && afterPct != null && afterPct < beforePct) {
                     Text(
                         stringResource(R.string.done_storage_went, beforePct, afterPct),
@@ -412,7 +466,12 @@ fun CleaningCompleteScreen(
                     onClick = if (reminder != ReminderFrequency.Weekly) turnOnReminders else null,
                 ) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("🗓️", fontSize = 22.sp)
+                        SweeprIconBadge(
+                            kind = SweeprIconKind.CALENDAR,
+                            tint = SweeprGreen,
+                            badgeSize = 38.dp,
+                            iconSize = 19.dp,
+                        )
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(stringResource(R.string.done_keep_clean_title), fontWeight = FontWeight.Bold, fontSize = 14.sp)

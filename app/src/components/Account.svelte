@@ -444,11 +444,16 @@
           </select>
         </div>
       </div>
+    </div>
 
-      <!-- Uninstall SWEEPR Cleaner -->
-      <div class="card box">
+    <!-- Advanced & Troubleshooting Disclosure (Uninstall tucked inside) -->
+    <details class="card" style="padding: 14px 18px;">
+      <summary class="small muted" style="cursor: pointer; font-weight: 600; user-select: none;">
+        Advanced &amp; Troubleshooting
+      </summary>
+      <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
         <div class="row">
-          <strong>Uninstall SWEEPR Cleaner</strong>
+          <strong class="small">Uninstall SWEEPR Cleaner</strong>
           <div class="spacer"></div>
         </div>
         <p class="muted small" style="margin: 0;">
@@ -461,7 +466,7 @@
         </label>
 
         {#if !confirmUninstall}
-          <div class="row" style="margin-top: auto;">
+          <div class="row">
             <button
               class="danger-outline"
               disabled={uninstalling}
@@ -488,7 +493,7 @@
           </div>
         {/if}
       </div>
-    </div>
+    </details>
 
     {#if info}
       <p class="muted small">SWEEPR Cleaner v{info.version}</p>

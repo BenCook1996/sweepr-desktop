@@ -56,6 +56,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -117,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 
 enum class Screen {
     // Bottom-navigation tabs
-    Dashboard, SmartClean, Tips, Settings,
+    Dashboard, Settings,
 
     // Detail screens
     PhotosVideos, Swipe, Screenshots, Contacts, Trash, CloudSavings, BatteryCare, Account, About,
@@ -236,6 +237,14 @@ fun SweeprRoot(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Auto-run pre-scan on launch as soon as media or contacts permission is available
+    // so all bento tiles show real MB/GB recoverable badges instead of dead "Tap to scan" states.
+    LaunchedEffect(permissions.media, permissions.contactsRead) {
+        if (!state.hasScanned && !state.isScanning && (permissions.media || permissions.contactsRead)) {
+            vm.scan(permissions)
+        }
+    }
+
     LaunchedEffect(state.pendingTrash) {
         state.pendingTrash?.let { pending ->
             trashLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
@@ -312,10 +321,35 @@ fun SweeprRoot(
         }
     }
 
+    var showPaywallSheet by remember { mutableStateOf(false) }
+    var pendingPaywallAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val requestPaywall: (() -> Unit) -> Unit = { then ->
+        pendingPaywallAction = then
+        showPaywallSheet = true
+    }
+
     // Premium gate: scanning is free, cleaning needs the subscription. If the user
     // subscribes from the paywall, the clean they asked for runs straight away.
     fun premium(action: () -> Unit) {
-        if (state.hasPremium) action() else onShowPaywall(action)
+        if (state.hasPremium) action() else requestPaywall(action)
+    }
+
+    if (showPaywallSheet) {
+        PaywallModalSheet(
+            state = state,
+            onDismiss = { showPaywallSheet = false },
+            onContinueToGooglePlay = {
+                val next = pendingPaywallAction ?: {}
+                pendingPaywallAction = null
+                onShowPaywall(next)
+            },
+            onRestore = vm::restorePurchases,
+            onOpenEmailSignIn = {
+                lastTab = Screen.Settings
+                screen = Screen.Account
+            },
+        )
     }
 
     val handleTrash: (List<MediaItem>) -> Unit = { items -> premium { vm.requestTrash(items) } }
@@ -328,6 +362,7 @@ fun SweeprRoot(
             premium { vm.optimizePhotos(items, compressRes, stripGps, preset) }
         }
     val handleMerge: (Set<String>) -> Unit = { groups -> premium { vm.mergeContactGroups(groups) } }
+    val handleDeleteIncompleteContacts: (Set<Long>) -> Unit = { ids -> premium { vm.deleteIncompleteContacts(ids) } }
     val handleDeleteCalendarEvents: (Set<Long>) -> Unit = { ids -> premium { vm.deleteCalendarEvents(ids) } }
     val handleCleanUp: () -> Unit = { premium { vm.cleanUpSelected(AppPermissions.current(context)) } }
 
@@ -351,6 +386,7 @@ fun SweeprRoot(
                         vm.clearCleanupSummary()
                         screen = Screen.QuickCleanReview
                     },
+                    onUpgrade = { requestPaywall {} },
                 )
                 Screen.QuickCleanReview -> QuickCleanReviewScreen(
                     state = state,
@@ -370,20 +406,17 @@ fun SweeprRoot(
                         selectTab(Screen.Dashboard)
                     },
                 )
-                Screen.SmartClean -> SmartCleanScreen(
-                    state = state,
-                    permissions = permissions,
-                    onScan = requestAccessAndScan,
-                    onOpen = open,
-                    onOpenPhotosTab = openPhotosTab,
-                    onRequestPermission = requestPermissions,
-                    onCleanUp = handleCleanUp,
-                )
-                Screen.Tips -> TipsScreen()
                 Screen.Settings -> SettingsScreen(
                     state = state,
                     permissions = permissions,
                     onOpen = open,
+                    onUpgrade = { requestPaywall {} },
+                    onRestore = vm::restorePurchases,
+                    onSendOtp = vm::sendOtp,
+                    onVerifyOtp = vm::verifyOtp,
+                    onSignOut = vm::signOutAccount,
+                    onDeleteAccount = vm::deleteAccount,
+                    onRedeemReferral = vm::redeemReferralCode,
                     onRescan = {
                         selectTab(Screen.Dashboard)
                         requestAccessAndScan()
@@ -405,13 +438,13 @@ fun SweeprRoot(
                     state = state,
                     onOpenPhotosTab = openPhotosTab,
                     onOpen = open,
-                    onShowPaywall = onShowPaywall,
+                    onShowPaywall = requestPaywall,
                     onOpenBattery = { open(Screen.BatteryCare) },
                     onBack = null,
                 )
                 Screen.BatteryCare -> BatteryCareScreen(
                     state = state,
-                    onUnlockAddon = onShowPaywall,
+                    onUnlockAddon = requestPaywall,
                     onOpenVault = { open(Screen.CloudSavings) },
                     onBack = null,
                 )
@@ -455,6 +488,9 @@ fun SweeprRoot(
                     onToggle = vm::toggleContactGroup,
                     onMerge = handleMerge,
                     onRequestPermission = requestPermissions,
+                    onToggleIncompleteContact = vm::toggleIncompleteContact,
+                    onSetIncompleteContactsSelected = vm::setIncompleteContactsSelected,
+                    onDeleteIncompleteContacts = handleDeleteIncompleteContacts,
                     onScanCalendarEvents = vm::scanCalendarEvents,
                     onToggleCalendarEvent = vm::toggleCalendarEvent,
                     onSetCalendarEventsSelected = vm::setCalendarEventsSelected,
@@ -475,34 +511,57 @@ fun SweeprRoot(
     }
 }
 
-private data class NavTab(val screen: Screen, val labelRes: Int, val icon: ImageVector)
+private data class NavTab(val screen: Screen, val labelRes: Int, val iconKind: SweeprIconKind)
 
 private val NAV_TABS = listOf(
-    NavTab(Screen.Dashboard, R.string.nav_home, Icons.Default.Home),
-    NavTab(Screen.Swipe, R.string.nav_swipe, Icons.Default.ThumbUp),
-    NavTab(Screen.BatteryCare, R.string.nav_battery_vault, Icons.Default.Lock),
-    NavTab(Screen.Settings, R.string.nav_settings, Icons.Default.Person),
+    NavTab(Screen.Dashboard, R.string.nav_home, SweeprIconKind.SPARKLE_CLEAN),
+    NavTab(Screen.Swipe, R.string.nav_swipe, SweeprIconKind.SWIPE_DECK),
+    NavTab(Screen.BatteryCare, R.string.nav_battery_vault, SweeprIconKind.VAULT_SHIELD),
+    NavTab(Screen.Settings, R.string.nav_settings, SweeprIconKind.CONTACTS),
 )
 
 @Composable
 private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NAV_TABS.forEach { tab ->
-            val isSelected = current == tab.screen ||
-                (tab.screen == Screen.BatteryCare && current == Screen.CloudSavings)
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = { onSelect(tab.screen) },
-                icon = { Icon(tab.icon, contentDescription = stringResource(tab.labelRes)) },
-                label = { Text(stringResource(tab.labelRes)) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = SweeprGreen,
-                    selectedTextColor = SweeprGreen,
-                    indicatorColor = SweeprGreen.copy(alpha = 0.15f),
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray,
-                ),
-            )
+    androidx.compose.foundation.layout.Column {
+        androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+        ) {
+            NAV_TABS.forEach { tab ->
+                val isSelected = current == tab.screen ||
+                    (tab.screen == Screen.BatteryCare && current == Screen.CloudSavings)
+                val iconTint = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                NavigationBarItem(
+                    selected = isSelected,
+                    onClick = { onSelect(tab.screen) },
+                    icon = {
+                        SweeprVectorIcon(
+                            kind = tab.iconKind,
+                            tint = iconTint,
+                            modifier = Modifier.padding(vertical = 1.dp),
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(tab.labelRes),
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.ExtraBold else androidx.compose.ui.text.font.FontWeight.Medium,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            letterSpacing = (-0.2).sp,
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = SweeprGreen,
+                        selectedTextColor = emeraldText(),
+                        indicatorColor = SweeprGreen.copy(alpha = 0.15f),
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
         }
     }
 }

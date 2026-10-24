@@ -60,6 +60,19 @@
   let statusNotice = $state<string | null>(null);
   let proNotice = $state<string | null>(null);
   let error = $state<string | null>(null);
+  let confirmUninstallId = $state<string | null>(null);
+  let searchInputEl = $state<HTMLInputElement | null>(null);
+
+  $effect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f" && mode === "apps") {
+        e.preventDefault();
+        searchInputEl?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   $effect(() => {
     cachedMode = mode;
@@ -130,7 +143,11 @@
       handleError({ kind: "payment_required" }, "App uninstaller");
       return;
     }
-    if (!confirm(`Uninstall ${app.name} from your PC?`)) return;
+    if (confirmUninstallId !== app.id) {
+      confirmUninstallId = app.id;
+      return;
+    }
+    confirmUninstallId = null;
     error = null;
     proNotice = null;
     try {
@@ -292,9 +309,10 @@
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
       </svg>
       <input
+        bind:this={searchInputEl}
         type="text"
         bind:value={searchQuery}
-        placeholder="Search your installed apps…"
+        placeholder="Search your installed apps (Ctrl/Cmd+F)…"
         class="filter-input"
       />
       {#if searchQuery}
@@ -327,7 +345,13 @@
             <div class="spacer"></div>
             <strong class="app-size">{formatBytes(app.estimated_size)}</strong>
             {#if !license?.active}<span class="badge pro">Pro</span>{/if}
-            <button class="ghost small-btn" onclick={() => uninstall(app)}>Uninstall</button>
+            <button
+              class={confirmUninstallId === app.id ? "primary small-btn" : "ghost small-btn"}
+              style={confirmUninstallId === app.id ? "background: var(--danger);" : ""}
+              onclick={() => uninstall(app)}
+            >
+              {confirmUninstallId === app.id ? "Confirm Uninstall" : "Uninstall"}
+            </button>
           </div>
         {/each}
       </div>

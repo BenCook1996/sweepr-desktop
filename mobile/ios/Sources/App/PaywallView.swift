@@ -11,8 +11,8 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
 
     var fallbackTitle: String {
         switch self {
-        case .annual: return "SWEEPR Cleaner Pro Annual"
-        case .monthly: return "SWEEPR Cleaner Pro Monthly"
+        case .annual: return "Annual Plan"
+        case .monthly: return "Monthly Plan"
         }
     }
 
@@ -77,7 +77,7 @@ struct PaywallView: View {
                             .font(.title)
                             .fontWeight(.bold)
 
-                        Text("Reclaim gigabytes of iPhone & iPad storage with on-device duplicate detection, hardware video compression, and smart contact merging.")
+                        Text("Reclaim gigabytes of space in one tap — duplicate finder, video shrinker & smart contact merger.")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -93,8 +93,7 @@ struct PaywallView: View {
                         BenefitRow(icon: "checkmark.circle.fill", text: "Use Your Account Across Computer, iPhone & Android")
                     }
                     .padding()
-                    .background(Color.cardBackground)
-                    .cornerRadius(16)
+                    .sweeprCard(cornerRadius: 18)
                     .padding(.horizontal)
 
                     // Plan Selector
@@ -116,15 +115,18 @@ struct PaywallView: View {
                                 .padding(.top, 2)
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text("Add Total Battery & Mac/Phone Care")
+                                    Text("Add Total Battery Care")
                                         .font(.subheadline.weight(.bold))
                                         .foregroundColor(.primary)
+                                        .lineLimit(1)
                                     Spacer()
                                     Text(selectedPlan == .annual ? "+£17.99/yr" : "+£2.99/mo")
                                         .font(.subheadline.weight(.heavy))
                                         .foregroundColor(.orange)
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
                                 }
-                                Text("Helps your battery last longer with an 80% unplug reminder, overheat warnings, and background junk cleanup.")
+                                Text("80% unplug reminder, overheat warnings, and 1-tap background cache cool-down.")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.leading)
@@ -204,6 +206,7 @@ struct PaywallView: View {
                     .padding(.bottom, 20)
                 }
             }
+            .background(Color.sweeprCanvas.ignoresSafeArea())
             .navigationTitle("SWEEPR Cleaner Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

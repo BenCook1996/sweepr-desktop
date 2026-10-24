@@ -42,18 +42,23 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -320,19 +325,25 @@ fun AccountScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            "Total Battery & Mac/Phone Care",
+                            "Total Battery Care",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
                         )
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            if (state.hasBatteryCare) "ACTIVE" else "+£17.99/yr · £2.99/mo",
+                            if (state.hasBatteryCare) "ACTIVE" else "+£17.99/yr",
                             color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                     }
                     Text(
-                        "Device Lifespan Extender: smart 80% charge-limit unplug alert, thermal guard, and background cache trim across Phone, Mac & PC.",
+                        "80% charge-limit unplug alert, thermal overheat guard, and 1-tap background cache cool-down.",
                         color = Color.Gray,
                         fontSize = 12.sp,
                     )
@@ -352,8 +363,35 @@ fun AccountScreen(
             Spacer(Modifier.height(16.dp))
 
             if (!state.hasPremium) {
-                Text(stringResource(R.string.account_premium_includes), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    "CHOOSE YOUR PLAN",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 0.8.sp,
+                )
                 Spacer(Modifier.height(8.dp))
+                PlanSelectorOptionCard(
+                    title = "Annual",
+                    price = "£49.99 / year",
+                    subtitle = "Equivalent to £4.17/month · billed annually",
+                    badge = "SAVE 58%",
+                    selected = selectedPlan == PlanTier.ANNUAL,
+                    onClick = { selectedPlan = PlanTier.ANNUAL },
+                )
+                Spacer(Modifier.height(8.dp))
+                PlanSelectorOptionCard(
+                    title = "Monthly",
+                    price = "£9.99 / month",
+                    subtitle = "Flexible monthly billing · cancel anytime",
+                    badge = null,
+                    selected = selectedPlan == PlanTier.MONTHLY,
+                    onClick = { selectedPlan = PlanTier.MONTHLY },
+                )
+
+                Spacer(Modifier.height(14.dp))
+                Text(stringResource(R.string.account_premium_includes), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Spacer(Modifier.height(6.dp))
                 listOf(
                     R.string.account_feature_clean_now,
                     R.string.account_feature_duplicates,
@@ -361,26 +399,19 @@ fun AccountScreen(
                     R.string.account_feature_screenshots,
                     R.string.account_feature_contacts,
                 ).forEach { feature ->
-                    Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Check, null, tint = SweeprGreen, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(feature), fontSize = 14.sp)
+                        Text(stringResource(feature), fontSize = 13.5.sp)
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
-                Button(
+                Spacer(Modifier.height(14.dp))
+                EmeraldButton(
+                    text = if (selectedPlan == PlanTier.ANNUAL) "Upgrade to Pro — £49.99/yr" else "Upgrade to Pro — £9.99/mo",
                     onClick = onUpgrade,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(26.dp),
-                ) {
-                    Text(
-                        stringResource(R.string.account_upgrade),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
+                )
+                Spacer(Modifier.height(12.dp))
             }
 
             Card(
@@ -538,6 +569,260 @@ fun AboutScreen(onBack: () -> Unit) {
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     )
                 }.onFailure { context.openUrl("https://play.google.com/store/apps/details?id=${context.packageName}") }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlanSelectorOptionCard(
+    title: String,
+    price: String,
+    subtitle: String,
+    badge: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) SweeprGreen.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) SweeprGreen else MaterialTheme.colorScheme.outline,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = onClick,
+                colors = RadioButtonDefaults.colors(selectedColor = SweeprGreen),
+            )
+            Column(Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (badge != null) {
+                        Surface(
+                            color = SweeprGreen,
+                            shape = RoundedCornerShape(999.dp),
+                        ) {
+                            Text(
+                                text = badge,
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = subtitle,
+                    fontSize = 11.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = price,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 15.sp,
+                color = if (selected) emeraldText() else MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+/**
+ * Candidate 5 Paywall Modal Sheet (matching iOS PaywallView.swift):
+ * Annual (£49.99/yr SAVE 58%) vs Monthly (£9.99/mo), optional +£17.99/yr Battery Care order bump,
+ * Subscribe CTA, Restore Purchases, and "Already have Pro? Sign in with Email".
+ */
+@Composable
+fun PaywallModalSheet(
+    state: DashboardState,
+    onDismiss: () -> Unit,
+    onContinueToGooglePlay: () -> Unit,
+    onRestore: () -> Unit,
+    onOpenEmailSignIn: () -> Unit,
+) {
+    val context = LocalContext.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
+    var includeBatteryCare by rememberSaveable { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SweeprBrushLogo(Modifier.size(48.dp))
+                Column {
+                    Text(
+                        "SWEEPR PRO",
+                        color = emeraldText(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.sp,
+                    )
+                    Text(
+                        "Clean Deeper. Reclaim More.",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+
+            SweeprPanel(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(
+                        R.string.account_feature_clean_now,
+                        R.string.account_feature_duplicates,
+                        R.string.account_feature_swipe,
+                        R.string.account_feature_screenshots,
+                        R.string.account_feature_contacts,
+                    ).forEach { feature ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Check, null, tint = SweeprGreen, modifier = Modifier.size(17.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                stringResource(feature),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+            }
+
+            PlanSelectorOptionCard(
+                title = "Annual",
+                price = "£49.99 / yr",
+                subtitle = "Equivalent to £4.17/mo · billed annually",
+                badge = "SAVE 58%",
+                selected = selectedPlan == PlanTier.ANNUAL,
+                onClick = { selectedPlan = PlanTier.ANNUAL },
+            )
+            PlanSelectorOptionCard(
+                title = "Monthly",
+                price = "£9.99 / mo",
+                subtitle = "Flexible monthly billing · cancel anytime",
+                badge = null,
+                selected = selectedPlan == PlanTier.MONTHLY,
+                onClick = { selectedPlan = PlanTier.MONTHLY },
+            )
+
+            // Optional Order Bump: Total Battery Care
+            if (!state.hasBatteryCare) {
+                Surface(
+                    onClick = { includeBatteryCare = !includeBatteryCare },
+                    shape = RoundedCornerShape(14.dp),
+                    color = if (includeBatteryCare) SweeprAmber.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(
+                        1.dp,
+                        if (includeBatteryCare) SweeprAmber else MaterialTheme.colorScheme.outline,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = includeBatteryCare,
+                            onCheckedChange = { includeBatteryCare = it },
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Add Total Battery Care (+£17.99/yr)",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                "80% Charge Guard, Thermal Overheat Alert & 1-Tap Cache Cool-Down",
+                                fontSize = 11.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+
+            val ctaLabel = when {
+                selectedPlan == PlanTier.ANNUAL && includeBatteryCare -> "Subscribe — £49.99/yr + Battery Care"
+                selectedPlan == PlanTier.ANNUAL -> "Subscribe — £49.99/year (Save 58%)"
+                includeBatteryCare -> "Subscribe — £9.99/mo + Battery Care"
+                else -> "Subscribe — £9.99/month"
+            }
+
+            EmeraldButton(
+                text = ctaLabel,
+                onClick = {
+                    onDismiss()
+                    onContinueToGooglePlay()
+                },
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        onRestore()
+                    },
+                ) {
+                    Text(stringResource(R.string.account_restore), fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                }
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        onOpenEmailSignIn()
+                    },
+                ) {
+                    Text("Already have Pro? Sign in", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                TextButton(onClick = { context.openUrl("$WEBSITE_URL/privacy") }) {
+                    Text(stringResource(R.string.about_privacy), fontSize = 11.sp, color = Color.Gray)
+                }
+                TextButton(onClick = { context.openUrl("$WEBSITE_URL/terms") }) {
+                    Text(stringResource(R.string.about_terms), fontSize = 11.sp, color = Color.Gray)
+                }
             }
         }
     }

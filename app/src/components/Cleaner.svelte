@@ -12,6 +12,7 @@
     isPaymentRequired,
     OPEN_UNDO_EVENT,
     requestActivation,
+    type AppInfo,
     type CategoryResult,
     type CleanReport,
     type LicenseStatus,
@@ -32,13 +33,26 @@
 
   let {
     license,
+    info = null,
     onLicenseChange,
     onOpenTool,
   }: {
     license: LicenseStatus | null;
+    info?: AppInfo | null;
     onLicenseChange: (force?: boolean) => Promise<void>;
-    onOpenTool?: (tool: "memory" | "apps" | "storage" | "privacy" | "shredder" | "schedule") => void;
+    onOpenTool?: (tool: "memory" | "battery" | "apps" | "storage" | "privacy" | "shredder" | "schedule") => void;
   } = $props();
+
+  const osType = $derived(
+    info?.os?.toLowerCase() ||
+      (typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)
+        ? "macos"
+        : typeof navigator !== "undefined" && /Linux/i.test(navigator.platform)
+          ? "linux"
+          : "windows")
+  );
+  const trashLabel = $derived(osType === "windows" ? "Recycle Bin" : "Trash");
+  const deviceLabel = $derived(osType === "macos" ? "Mac" : osType === "linux" ? "System" : "PC");
 
   type Phase = "idle" | "scanning" | "results" | "cleaning" | "done";
   let phase = $state<Phase>("idle");
@@ -54,11 +68,13 @@
   let quarantine = $state<QuarantineEntry[]>([]);
   let recycleBin = $state<RecycleBinInfo | null>(null);
   let emptyingRecycleBin = $state(false);
+  let confirmingRecycleBin = $state(false);
   let showQuarantine = $state(false);
   let restoreNotice = $state<string | null>(null);
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let sysOverview = $state<SystemOverview | null>(null);
   let lifetimeStats = $state(getLifetimeStats());
+  let ctxMenu = $state<{ x: number; y: number; path: string } | null>(null);
 
   // ---- v2 Home: first-run welcome, Smart/Custom mode, last scan & weekly savings ----
   const LS_WELCOME = "sweepr_welcome_seen_v2";
@@ -213,17 +229,36 @@
       phase = "idle";
       if (!showQuarantine) toggleQuarantineDrawer();
     };
+    const triggerScan = () => {
+      scan();
+    };
+    const closeCtx = () => {
+      if (ctxMenu) ctxMenu = null;
+    };
     const onStats = () => (history = getLocalCleaningHistory());
     window.addEventListener(OPEN_UNDO_EVENT, openUndo);
+    window.addEventListener("sweepr-trigger-scan", triggerScan);
     window.addEventListener("sweepr-stats-update", onStats);
+    window.addEventListener("click", closeCtx);
     return () => {
       window.removeEventListener(OPEN_UNDO_EVENT, openUndo);
+      window.removeEventListener("sweepr-trigger-scan", triggerScan);
       window.removeEventListener("sweepr-stats-update", onStats);
+      window.removeEventListener("click", closeCtx);
     };
   });
 
+  function copyPathToClipboard(path: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(path).catch(() => {});
+      restoreNotice = `Copied path: ${shortenPath(path, 50)}`;
+    }
+    ctxMenu = null;
+  }
+
   async function toggleQuarantineDrawer() {
     showQuarantine = !showQuarantine;
+    confirmingRecycleBin = false;
     if (showQuarantine) {
       const [q, rb] = await Promise.all([
         api.listQuarantine().catch(() => []),
@@ -235,21 +270,20 @@
   }
 
   async function emptyWindowsRecycleBin() {
-    const countLabel = recycleBin
-      ? `${formatCount(recycleBin.items)} item(s) (${formatBytes(recycleBin.bytes)})`
-      : "all items";
-    if (!confirm(`Permanently empty ${countLabel} from your Windows Recycle Bin?\n\nThis cannot be undone.`)) {
+    if (!confirmingRecycleBin) {
+      confirmingRecycleBin = true;
       return;
     }
+    confirmingRecycleBin = false;
     error = null;
     restoreNotice = null;
     emptyingRecycleBin = true;
     try {
       const freedBytes = await api.emptyRecycleBin();
-      addLifetimeStats(freedBytes, recycleBin?.items ?? 0, ["recycle_bin"], "Empty Recycle Bin");
+      addLifetimeStats(freedBytes, recycleBin?.items ?? 0, ["recycle_bin"], `Empty ${trashLabel}`);
       lifetimeStats = getLifetimeStats();
       recycleBin = { bytes: 0, items: 0 };
-      restoreNotice = `Emptied Recycle Bin (${formatBytes(freedBytes)} freed).`;
+      restoreNotice = `Emptied ${trashLabel} (${formatBytes(freedBytes)} freed).`;
     } catch (e) {
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
@@ -419,7 +453,7 @@
   <div class="card drawer-card">
     <div class="row" style="margin-bottom: 12px;">
       <div>
-        <strong>Recently Cleaned Files &amp; Recycle Bin</strong>
+        <strong>Recently Cleaned Files &amp; {trashLabel}</strong>
         <div class="muted small">Files cleaned by SWEEPR are kept safely for 7 days so you can put them back with one click.</div>
       </div>
       <div class="spacer"></div>
@@ -427,20 +461,32 @@
     </div>
 
     <div class="row sub-box" style="margin-bottom: 12px; gap: 12px;">
-      <span class="badge free">Recycle Bin</span>
+      <span class="badge free">{trashLabel}</span>
       <div style="flex: 1;">
         <strong class="small">
-          {recycleBin ? `${formatBytes(recycleBin.bytes)} (${formatCount(recycleBin.items)} items)` : "Checking Recycle Bin…"}
+          {recycleBin ? `${formatBytes(recycleBin.bytes)} (${formatCount(recycleBin.items)} items)` : `Checking ${trashLabel}…`}
         </strong>
-        <div class="muted small">Deleted files sitting in your Windows Recycle Bin</div>
+        <div class="muted small">Deleted files sitting in your {deviceLabel} {trashLabel}</div>
       </div>
-      <button
-        class="primary small-btn"
-        disabled={emptyingRecycleBin || !recycleBin || (recycleBin.bytes === 0 && recycleBin.items === 0)}
-        onclick={emptyWindowsRecycleBin}
-      >
-        {emptyingRecycleBin ? "Emptying…" : "Empty Recycle Bin"}
-      </button>
+      {#if confirmingRecycleBin}
+        <button
+          class="primary small-btn"
+          style="background: var(--danger);"
+          disabled={emptyingRecycleBin}
+          onclick={emptyWindowsRecycleBin}
+        >
+          {emptyingRecycleBin ? "Emptying…" : `Confirm Permanent Empty`}
+        </button>
+        <button class="ghost small-btn" onclick={() => (confirmingRecycleBin = false)}>Cancel</button>
+      {:else}
+        <button
+          class="primary small-btn"
+          disabled={emptyingRecycleBin || !recycleBin || (recycleBin.bytes === 0 && recycleBin.items === 0)}
+          onclick={emptyWindowsRecycleBin}
+        >
+          {emptyingRecycleBin ? "Emptying…" : `Empty ${trashLabel}`}
+        </button>
+      {/if}
     </div>
 
     {#if restoreNotice}
@@ -455,7 +501,7 @@
           <div class="row sub-box">
             <div style="flex: 1; min-width: 0;">
               <strong class="small">{q.file_name}</strong>
-              <div class="muted small" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={q.original_path}>
+              <div class="muted small path" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={q.original_path}>
                 {shortenPath(q.original_path, 70)}
               </div>
             </div>
@@ -488,10 +534,10 @@
       <circle cx="62" cy="79" r="3.5" fill="#a7f3d0" />
     </svg>
     <h1 class="welcome-first-title">Welcome to SWEEPR Cleaner</h1>
-    <strong class="welcome-first-sub">Get ready for a faster, cleaner PC!</strong>
+    <strong class="welcome-first-sub">Get ready for a faster, cleaner {deviceLabel}!</strong>
     <div class="welcome-gauge" aria-hidden="true"></div>
     <p class="muted welcome-first-copy">
-      To start, we'll safely check your PC for hidden junk and slow startup apps. Nothing is deleted until you say so.
+      To start, we'll safely check your {deviceLabel} for hidden junk and slow startup apps. Nothing is deleted until you say so.
     </p>
     <button class="primary welcome-scan-btn" onclick={() => dismissWelcome(true)}>SCAN NOW</button>
     <button class="ghost welcome-skip" onclick={() => dismissWelcome(false)}>Skip for now</button>
@@ -500,29 +546,37 @@
 {:else if phase === "idle"}
   <div class="dashboard-container">
     <div class="home-grid">
-      <!-- Left: headline + big glowing scan ring -->
-      <section class="home-hero">
+      <!-- Left: High-Signal Smart Clean Hero Card -->
+      <section class="card home-hero">
         <div class="hero-status-pill" class:scanning={initialScanning}>
           {#if initialScanning}
             <span class="pulse-dot"></span>
-            <span>Checking your PC{progress ? `: ${progress.category_name}` : "…"}</span>
+            <span>Scanning {deviceLabel}{progress ? `: ${progress.category_name}` : "…"}</span>
           {:else if report && report.total_bytes > 0}
             <span class="pulse-dot ready"></span>
             <span>Ready to clean · 🛡️ 7-Day Safety Undo enabled</span>
           {:else}
             <span class="pulse-dot clean"></span>
-            <span>Your PC is clean · 🛡️ 7-Day Safety Undo enabled</span>
+            <span>Your {deviceLabel} is clean · 🛡️ 7-Day Safety Undo enabled</span>
           {/if}
         </div>
 
-        <h1 class="home-title">Welcome to<br /><span class="home-title-brand">SWEEPR Cleaner!</span></h1>
+        <h1 class="home-title">
+          {#if initialScanning}
+            Checking System Clutter…
+          {:else if report && report.total_bytes > 0}
+            <span class="home-title-brand">{formatBytes(report.total_bytes)}</span> Ready to Free
+          {:else}
+            Smart System Clean
+          {/if}
+        </h1>
         <p class="muted home-sub">
           {#if initialScanning}
-            Safely checking temporary folders, browser clutter and old logs. Your personal files are never touched.
+            Safely checking temporary folders, browser caches, and old logs. Personal files are never touched.
           {:else if report && report.total_bytes > 0}
-            We found <strong class="accent-text">{formatBytes(report.total_bytes)}</strong> of junk across {nonEmpty.length} areas. Your personal files are completely safe.
+            Found across <strong>{nonEmpty.length} safe areas</strong> ({formatCount(report.total_files)} unneeded cache &amp; temp files).
           {:else}
-            One click checks your PC for junk, browser clutter and wasted space.
+            One click checks your {deviceLabel} for hidden caches, browser clutter, and wasted space.
           {/if}
         </p>
 
@@ -531,33 +585,36 @@
           class:busy={initialScanning}
           disabled={initialScanning}
           onclick={() => (report && report.total_bytes > 0 ? requestClean() : scan())}
-          aria-label={report && report.total_bytes > 0 ? `Clean ${formatBytes(selectedBytes)} now` : "Scan my PC"}
+          aria-label={report && report.total_bytes > 0 ? `Clean ${formatBytes(selectedBytes)} now` : `Scan my ${deviceLabel}`}
         >
           <span class="scan-ring-glow" aria-hidden="true"></span>
           <span class="scan-ring-ticks" aria-hidden="true"></span>
           <span class="scan-ring-arc" aria-hidden="true"></span>
           <span class="scan-ring-inner">
             {#if initialScanning}
-              <b class="scan-ring-word small-word">CHECKING</b>
+              <b class="scan-ring-word small-word">SCANNING</b>
               <small>{progress ? `${formatBytes(progress.bytes_so_far)} found` : "Starting…"}</small>
             {:else if report && report.total_bytes > 0}
               <b class="scan-ring-word">CLEAN</b>
               <small>{formatBytes(selectedBytes)} selected</small>
             {:else}
               <b class="scan-ring-word">SCAN</b>
-              <small>Takes about 20 seconds</small>
+              <small>~15 seconds</small>
             {/if}
           </span>
         </button>
 
-        <div class="last-scan muted">
-          Last scan<br />
-          <strong>
-            {relativeTime(lastScanAt)}{lastClean ? ` · ${formatBytes(lastClean.bytes_freed)} cleaned` : ""}
-          </strong>
-        </div>
-
         {#if report && report.total_bytes > 0 && !initialScanning}
+          <div class="hero-actions-row">
+            <button class="primary hero-primary-cta" onclick={requestClean}>
+              🧹 Clean +{formatBytes(selectedBytes)} Now
+            </button>
+            <button class="ghost hero-secondary-btn" onclick={() => (phase = "results")}>
+              Review ({nonEmpty.length}) ›
+            </button>
+            <button class="ghost hero-secondary-btn" onclick={scan}>Rescan</button>
+          </div>
+
           <div class="hero-breakdown">
             <div class="hero-breakdown-track" aria-hidden="true">
               {#if winTempBytes > 0}
@@ -572,107 +629,62 @@
             </div>
             <div class="hero-breakdown-legend">
               {#if winTempBytes > 0}
-                <span class="legend-item"><span class="legend-dot dot-win"></span>Windows &amp; System Temp ({formatBytes(winTempBytes)})</span>
+                <span class="legend-item"><span class="legend-dot dot-win"></span>System Temp ({formatBytes(winTempBytes)})</span>
               {/if}
               {#if browserBytes > 0}
                 <span class="legend-item"><span class="legend-dot dot-browser"></span>Browser Caches ({formatBytes(browserBytes)})</span>
               {/if}
               {#if appClutterBytes > 0}
-                <span class="legend-item"><span class="legend-dot dot-app"></span>App &amp; Other Clutter ({formatBytes(appClutterBytes)})</span>
+                <span class="legend-item"><span class="legend-dot dot-app"></span>App Caches ({formatBytes(appClutterBytes)})</span>
               {/if}
             </div>
           </div>
+        {:else if !initialScanning}
           <div class="hero-actions-row">
-            <button class="ghost hero-secondary-btn" onclick={() => (phase = "results")}>
-              Review What Was Found ({nonEmpty.length})
+            <button class="primary hero-primary-cta" onclick={scan}>
+              Scan {deviceLabel} Now
             </button>
-            <button class="ghost hero-secondary-btn" onclick={scan}>Scan Again</button>
           </div>
         {/if}
 
-        <!-- Smart Mode vs Custom Mode -->
-        <div class="mode-row">
-          <div class="mode-toggle" role="tablist" aria-label="Scan mode">
-            <button
-              class="mode-opt"
-              class:on={scanMode === "smart"}
-              role="tab"
-              aria-selected={scanMode === "smart"}
-              onclick={() => setScanMode("smart")}
-            >
-              ✨ Smart Mode
-            </button>
-            <button
-              class="mode-opt"
-              class:on={scanMode === "custom"}
-              role="tab"
-              aria-selected={scanMode === "custom"}
-              onclick={() => setScanMode("custom")}
-            >
-              Custom Mode
-            </button>
-          </div>
-          <button
-            class="ghost mode-help"
-            aria-label="What do these modes mean?"
-            aria-expanded={showModeTip}
-            onclick={() => (showModeTip = !showModeTip)}
-          >
-            ?
-          </button>
-          {#if showModeTip}
-            <div class="mode-tip" role="note">
-              <strong class="accent-text">Smart Mode</strong> picks the safe areas for you, so you don't need to decide anything.
-              Choose <strong>Custom</strong> only if you want to tick areas yourself.
-            </div>
-          {/if}
-        </div>
-
-        <div class="card areas-card">
-          <div class="row areas-head">
-            <strong class="small">{scanMode === "smart" ? "What Smart Mode will check" : "Choose what to clean"}</strong>
-            <div class="spacer"></div>
-            <span class="badge free">All safe · Personal files never touched</span>
-          </div>
-          <div class="areas-grid">
-            {#if report}
-              {#each report.categories as c (c.id)}
-                <label class="area-chk" class:off={c.bytes === 0}>
-                  <input
-                    type="checkbox"
-                    checked={c.bytes > 0 && !!selected[c.id]}
-                    disabled={scanMode === "smart" || c.bytes === 0}
-                    onchange={(e) => {
-                      selected[c.id] = (e.currentTarget as HTMLInputElement).checked;
-                      cachedSelected = selected;
-                    }}
-                  />
-                  <span>{c.name}{c.bytes > 0 ? ` (${formatBytes(c.bytes)})` : ""}</span>
-                </label>
-              {/each}
-            {:else}
-              {#each rules as r (r.id)}
-                <label class="area-chk">
-                  <input type="checkbox" checked disabled />
-                  <span>{r.name}</span>
-                </label>
-              {/each}
-            {/if}
-            {#each NEVER_TOUCHED as item}
-              <label class="area-chk off" title="SWEEPR never touches this">
-                <input type="checkbox" disabled />
-                <span>{item} (never touched)</span>
-              </label>
-            {/each}
-          </div>
+        <div class="last-scan muted">
+          Last scan: <strong>{relativeTime(lastScanAt)}</strong>{lastClean ? ` · Last cleaned ${formatBytes(lastClean.bytes_freed)}` : ""}
         </div>
       </section>
 
-      <!-- Right: weekly savings chart + tool tiles -->
+      <!-- Right: Live System Telemetry & 7-Day History -->
       <aside class="home-side">
+        <div class="card disk-mini">
+          <div class="row" style="justify-content: space-between;">
+            <strong class="small">Drive {sysOverview ? sysOverview.disk_mount : ""}</strong>
+            <span class="badge free">{sysOverview ? `${diskUsedPct}% used` : "—"}</span>
+          </div>
+          <div class="clean-bar"><div class="clean-bar-fill" class:amber={diskUsedPct > 90} style="width: {diskUsedPct}%"></div></div>
+          <div class="row" style="justify-content: space-between; font-size: 11.5px;">
+            <span class="muted">
+              {sysOverview ? `${formatBytes(sysOverview.disk_available_bytes)} free of ${formatBytes(sysOverview.disk_total_bytes)}` : ""}
+            </span>
+            <button class="ghost inline-link-btn" onclick={() => onOpenTool?.("storage")}>Duplicates ›</button>
+          </div>
+
+          <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+
+          <div class="row" style="justify-content: space-between;">
+            <strong class="small">System Memory (RAM)</strong>
+            <span class="muted small">{sysOverview ? `${memUsedPct}% in use` : "—"}</span>
+          </div>
+          <div class="clean-bar"><div class="clean-bar-fill" class:amber={memUsedPct > 80} style="width: {memUsedPct}%"></div></div>
+          <div class="row" style="justify-content: space-between; font-size: 11.5px;">
+            <span class="muted">
+              {sysOverview ? `${formatBytes(sysOverview.memory_used_bytes)} / ${formatBytes(sysOverview.memory_total_bytes)}` : "Idle background apps"}
+            </span>
+            <button class="ghost inline-link-btn" onclick={() => onOpenTool?.("memory")}>Boost RAM ›</button>
+          </div>
+        </div>
+
         <div class="card week-card">
           <div class="row" style="justify-content: space-between;">
-            <strong class="small">Space Cleaned This Week</strong>
+            <strong class="small">Space Cleaned (Last 7 Days)</strong>
             <span class="badge free">{formatBytes(weeklyTotal)}</span>
           </div>
           <div class="week-bars" role="img" aria-label="Space cleaned per day over the last 7 days">
@@ -683,46 +695,22 @@
               </div>
             {/each}
           </div>
-          <div class="muted small" style="margin-top: 6px;">
-            All-time: <strong style="color: var(--text);">{formatBytes(lifetimeStats.bytesFreed)}</strong> · {formatCount(lifetimeStats.filesRemoved)} files
+          <div class="muted small" style="margin-top: 4px;">
+            Lifetime freed: <strong style="color: var(--text);">{formatBytes(lifetimeStats.bytesFreed)}</strong> ({formatCount(lifetimeStats.filesRemoved)} files)
           </div>
-        </div>
-
-        <div class="tile-grid">
-          <button class="card tool-tile" onclick={() => onOpenTool?.("memory")}>
-            <span class="tile-ic">⚡</span>
-            <strong>Speed Up</strong>
-            <span class="muted">
-              {sysOverview ? `${memUsedPct}% memory in use` : "Free memory & stop slow startup apps"}
-            </span>
-          </button>
-          <button class="card tool-tile" onclick={() => onOpenTool?.("storage")}>
-            <span class="tile-ic">📑</span>
-            <strong>Duplicates</strong>
-            <span class="muted">
-              {sysOverview ? `${formatBytes(sysOverview.disk_available_bytes)} free on ${sysOverview.disk_mount}` : "Remove extra copies, keep the original"}
-            </span>
-          </button>
-          <button class="card tool-tile" onclick={() => onOpenTool?.("schedule")}>
-            <span class="tile-ic">🗓️</span>
-            <strong>Auto-Clean</strong>
-            <span class="muted">Cleans for you in the background</span>
-          </button>
-          <button class="card tool-tile" onclick={toggleQuarantineDrawer}>
-            <span class="tile-ic">↩️</span>
-            <strong>Undo ({quarantine.length})</strong>
-            <span class="muted">Put back anything within 7 days</span>
-          </button>
         </div>
 
         <div class="card disk-mini">
           <div class="row" style="justify-content: space-between;">
-            <strong class="small">Hard Drive {sysOverview ? sysOverview.disk_mount : ""}</strong>
-            <span class="muted small">{sysOverview ? `${diskUsedPct}% used` : "—"}</span>
-          </div>
-          <div class="clean-bar"><div class="clean-bar-fill" class:amber={diskUsedPct > 90} style="width: {diskUsedPct}%"></div></div>
-          <div class="muted small">
-            {sysOverview ? `${formatBytes(sysOverview.disk_available_bytes)} free of ${formatBytes(sysOverview.disk_total_bytes)}` : ""}
+            <div>
+              <strong class="small">7-Day Safety Undo &amp; {trashLabel}</strong>
+              <div class="muted small" style="margin-top: 2px;">
+                {quarantine.length} item(s) in 7-day undo bin
+              </div>
+            </div>
+            <button class="ghost small-btn" onclick={toggleQuarantineDrawer}>
+              {showQuarantine ? "Hide" : "Open Undo"}
+            </button>
           </div>
         </div>
       </aside>
@@ -732,7 +720,7 @@
 {:else if phase === "scanning"}
   <section class="card scanning-modal">
     <div class="spinner" aria-hidden="true"></div>
-    <h2 class="scanning-title">Checking your PC{progress ? `: ${progress.category_name}` : "…"}</h2>
+    <h2 class="scanning-title">Scanning your {deviceLabel}{progress ? `: ${progress.category_name}` : "…"}</h2>
     {#if progress}
       <div class="progress-bar-track">
         <div class="progress-bar-fill" style="width:{(progress.done / progress.total) * 100}%"></div>
@@ -749,7 +737,7 @@
         <div class="summary-label">READY TO CLEAN</div>
         <div class="big-number">{formatBytes(report.total_bytes)}</div>
         <div class="muted small" style="margin-top: 2px;">
-          {formatCount(report.total_files)} unneeded files found across {nonEmpty.length} areas · Your personal files are untouched
+          {formatCount(report.total_files)} unneeded files found across {nonEmpty.length} areas · Right-click any file for quick actions
         </div>
       </div>
       <div class="spacer"></div>
@@ -787,12 +775,12 @@
         </button>
       </div>
       {#if exclusions.length === 0}
-        <div class="muted small">No folders added yet. Click <strong>+ Choose Folder to Keep Safe…</strong> above or click <strong>Keep file</strong> next to any file below.</div>
+        <div class="muted small">No folders added yet. Click <strong>+ Choose Folder to Keep Safe…</strong> above or right-click any file below.</div>
       {:else}
         <div class="undo-list">
           {#each exclusions as ex}
             <div class="row sub-box">
-              <span class="small grow" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={ex}>{ex}</span>
+              <span class="small grow path" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={ex}>{ex}</span>
               <button class="ghost small-btn" onclick={() => removeExcludedPath(ex)}>Remove</button>
             </div>
           {/each}
@@ -860,15 +848,26 @@
         </div>
         {#if expanded === c.id}
           <div class="files-preview">
-            <div class="muted small" style="margin-bottom: 6px;">Largest files in this group:</div>
+            <div class="muted small" style="margin-bottom: 6px;">Largest files in this group (right-click any file for options):</div>
             {#each c.top_files as f}
-              <div class="row file-line" style="gap: 8px;">
-                <span class="grow small" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={f.path}>
+              <div
+                class="row file-line"
+                style="gap: 8px;"
+                role="listitem"
+                oncontextmenu={(e) => {
+                  e.preventDefault();
+                  ctxMenu = { x: e.clientX, y: e.clientY, path: f.path };
+                }}
+              >
+                <span class="grow small path" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={f.path}>
                   {shortenPath(f.path, 65)}
                 </span>
                 <span class="small" style="font-weight: 600;">{formatBytes(f.size)}</span>
+                <button class="ghost" style="padding: 2px 8px; font-size: 11px;" onclick={() => copyPathToClipboard(f.path)}>
+                  Copy path
+                </button>
                 <button class="ghost" style="padding: 2px 8px; font-size: 11px;" onclick={() => excludePath(f.path)}>
-                  Keep file
+                  Keep safe
                 </button>
               </div>
             {/each}
@@ -881,15 +880,54 @@
     {/if}
   </div>
 
+  {#if ctxMenu}
+    <div
+      class="desktop-ctx-menu card"
+      style="left: {Math.min(ctxMenu.x, typeof window !== 'undefined' ? window.innerWidth - 220 : ctxMenu.x)}px; top: {Math.min(ctxMenu.y, typeof window !== 'undefined' ? window.innerHeight - 180 : ctxMenu.y)}px;"
+      role="menu"
+    >
+      <button
+        class="ctx-item"
+        onclick={() => {
+          if (ctxMenu) void api.revealInFolder(ctxMenu.path);
+          ctxMenu = null;
+        }}
+      >
+        📂 Show in Folder
+      </button>
+      <button class="ctx-item" onclick={() => ctxMenu && copyPathToClipboard(ctxMenu.path)}>
+        📋 Copy Full File Path
+      </button>
+      <button
+        class="ctx-item"
+        onclick={() => {
+          if (ctxMenu) excludePath(ctxMenu.path);
+          ctxMenu = null;
+        }}
+      >
+        🛡️ Keep File Safe (Add to Exclusions)
+      </button>
+      <button
+        class="ctx-item"
+        onclick={() => {
+          ctxMenu = null;
+          onOpenTool?.("shredder");
+        }}
+      >
+        🔥 Open Permanent File Eraser…
+      </button>
+    </div>
+  {/if}
+
   <!-- Sticky Action Dock -->
   <footer class="card action-dock">
     <div>
       <div class="dock-label">SELECTED ({formatBytes(selectedBytes)})</div>
-      <div class="muted small">🛡️ You can undo this for 7 days</div>
+      <div class="muted small">🛡️ Backed by 7-day Quarantine Undo</div>
     </div>
     <div class="spacer"></div>
     <button class="primary clean-action-btn" disabled={!selectedCats.length} onclick={requestClean}>
-      🧹 Finish Cleaning
+      🧹 Clean +{formatBytes(selectedBytes)} Now
     </button>
   </footer>
 
@@ -974,9 +1012,6 @@
   }
   .pulse-dot.clean {
     background: #10b981;
-  }
-  .accent-text {
-    color: var(--accent);
   }
   .hero-breakdown {
     display: flex;
@@ -1241,14 +1276,14 @@
     color: var(--danger);
     font-size: 13px;
   }
-  /* ---------- v2 Home (inspired by Telamon / Advanced SystemCare / AVG) ---------- */
+  /* ---------- High-Density Desktop Home ---------- */
   .home-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 22px;
-    align-items: start;
+    gap: 16px;
+    align-items: stretch;
   }
-  @media (max-width: 1020px) {
+  @media (max-width: 860px) {
     .home-grid {
       grid-template-columns: 1fr;
     }
@@ -1257,18 +1292,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     text-align: center;
-    gap: 12px;
+    gap: 10px;
+    padding: 22px 24px;
   }
   .home-hero .hero-status-pill {
     align-self: center;
   }
   .home-title {
-    font-size: 34px;
-    line-height: 1.12;
-    letter-spacing: -1px;
+    font-size: 26px;
+    line-height: 1.15;
+    letter-spacing: -0.6px;
     font-weight: 800;
-    margin: 4px 0 0 0;
+    margin: 2px 0 0 0;
   }
   .home-title-brand {
     background: linear-gradient(90deg, #10b981, #0d9488);
@@ -1278,17 +1315,17 @@
   }
   .home-sub {
     margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
-    max-width: 56ch;
+    font-size: 13px;
+    line-height: 1.45;
+    max-width: 52ch;
   }
 
-  /* Big glowing scan ring */
+  /* Compact desktop scan ring */
   button.scan-ring {
     position: relative;
-    width: 220px;
-    height: 220px;
-    margin: 18px 0 4px 0;
+    width: 168px;
+    height: 168px;
+    margin: 8px 0 4px 0;
     padding: 0;
     border: none;
     border-radius: 50%;
@@ -1299,7 +1336,7 @@
   button.scan-ring:hover:not(:disabled) {
     background: transparent;
     box-shadow: none;
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
   button.scan-ring:disabled {
     opacity: 1;
@@ -1307,10 +1344,10 @@
   }
   .scan-ring-glow {
     position: absolute;
-    inset: -18px;
+    inset: -14px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.38), transparent 65%);
-    filter: blur(10px);
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.34), transparent 65%);
+    filter: blur(8px);
   }
   .scan-ring-ticks {
     position: absolute;
@@ -1323,8 +1360,8 @@
     inset: 0;
     border-radius: 50%;
     background: conic-gradient(from 210deg, #34d399, #10b981, #0d9488, #047857, transparent 78%, transparent);
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
   }
   button.scan-ring.busy .scan-ring-arc {
     animation: ring-spin 1.4s linear infinite;
@@ -1336,7 +1373,7 @@
   }
   .scan-ring-inner {
     position: absolute;
-    inset: 22px;
+    inset: 18px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
@@ -1344,36 +1381,56 @@
     justify-content: center;
     background: radial-gradient(circle at 35% 30%, #ffffff, #ecfdf5);
     border: 1px solid rgba(16, 185, 129, 0.3);
-    box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.18);
+    box-shadow: inset 0 0 32px rgba(16, 185, 129, 0.16);
     color: var(--text);
   }
   :global(:root[data-theme="dark"]) .scan-ring-inner {
     background: radial-gradient(circle at 35% 30%, #1d2b45, #0d1526);
   }
   .scan-ring-word {
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
   }
   .scan-ring-word.small-word {
-    font-size: 20px;
+    font-size: 16px;
   }
   .scan-ring-inner small {
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 3px;
+  }
+  .hero-primary-cta {
+    padding: 10px 22px;
+    font-size: 13.5px;
+    font-weight: 800;
+    border-radius: 9px;
+  }
+  .hero-secondary-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  button.inline-link-btn {
+    padding: 1px 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    border-radius: 4px;
   }
   .last-scan {
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11.5px;
+    line-height: 1.4;
+    margin-top: 2px;
   }
   .last-scan strong {
     color: var(--text);
-    font-size: 14px;
   }
   .home-hero .hero-breakdown {
     width: 100%;
-    max-width: 520px;
+    max-width: 480px;
   }
   .home-hero .hero-breakdown-legend {
     justify-content: center;
@@ -1382,111 +1439,21 @@
     justify-content: center;
   }
 
-  /* Smart vs Custom */
-  .mode-row {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .mode-toggle {
-    display: inline-flex;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    padding: 4px;
-  }
-  button.mode-opt {
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    padding: 7px 16px;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  button.mode-opt.on {
-    background: #10b981;
-    color: #ffffff;
-  }
-  button.mode-opt:hover:not(:disabled):not(.on) {
-    transform: none;
-    color: var(--text);
-  }
-  button.mode-help {
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    font-weight: 800;
-    font-size: 12px;
-  }
-  .mode-tip {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 280px;
-    z-index: 20;
-    text-align: left;
-    background: var(--panel-solid);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 12px;
-    line-height: 1.5;
-    box-shadow: 0 14px 30px -10px rgba(15, 23, 42, 0.35);
-  }
-  .areas-card {
-    width: 100%;
-    padding: 16px 20px;
-    text-align: left;
-  }
-  .areas-head {
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  .areas-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 9px 16px;
-    max-height: 220px;
-    overflow-y: auto;
-  }
-  .area-chk {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-    cursor: pointer;
-  }
-  .area-chk input {
-    flex-shrink: 0;
-  }
-  .area-chk input:disabled {
-    cursor: default;
-  }
-  .area-chk.off {
-    opacity: 0.5;
-  }
-
   /* Right column */
   .home-side {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
   .week-card {
-    padding: 16px 18px;
+    padding: 14px 16px;
   }
   .week-bars {
     display: flex;
     align-items: flex-end;
-    gap: 9px;
-    height: 104px;
-    padding-top: 10px;
+    gap: 8px;
+    height: 82px;
+    padding-top: 8px;
   }
   .week-bar {
     flex: 1;
@@ -1495,64 +1462,60 @@
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 10px;
     color: var(--muted);
   }
   .week-bar i {
     display: block;
     width: 100%;
-    border-radius: 6px 6px 3px 3px;
+    border-radius: 5px 5px 2px 2px;
     background: rgba(148, 163, 184, 0.28);
-    max-height: calc(100% - 18px);
+    max-height: calc(100% - 16px);
   }
   .week-bar.today i {
     background: linear-gradient(180deg, #34d399, #047857);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
   }
   .week-bar.today {
     color: var(--text);
     font-weight: 800;
   }
-  .tile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  button.tool-tile {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 6px;
-    text-align: left;
-    white-space: normal;
-    border-radius: 16px;
-  }
-  button.tool-tile strong {
-    font-size: 13.5px;
-  }
-  button.tool-tile .muted {
-    font-size: 11.5px;
-    line-height: 1.4;
-    font-weight: 500;
-  }
-  .tile-ic {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    display: grid;
-    place-items: center;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.28);
-    font-size: 17px;
-  }
   .disk-mini {
-    padding: 14px 18px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 7px;
+  }
+
+  /* Desktop Right-Click Context Menu */
+  .desktop-ctx-menu {
+    position: fixed;
+    z-index: 400;
+    min-width: 215px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  }
+  button.ctx-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  button.ctx-item:hover {
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--accent);
   }
 
   /* First-run welcome */

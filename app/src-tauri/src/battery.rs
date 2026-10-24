@@ -904,6 +904,15 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
         return;
     };
     let Ok(sep1) = PredefinedMenuItem::separator(app) else { return };
+    let Ok(quick_scan) = MenuItem::with_id(
+        app,
+        "tray_quick_scan",
+        "Quick Scan & Clean…",
+        true,
+        None::<&str>,
+    ) else {
+        return;
+    };
     let Ok(open_battery) = MenuItem::with_id(
         app,
         "tray_open_battery",
@@ -936,6 +945,7 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
             &status_item,
             &limit_item,
             &sep1,
+            &quick_scan,
             &open_battery,
             &hibernate_item,
             &open_app,
@@ -963,6 +973,10 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(move |app_handle, event| match event.id().as_ref() {
+            "tray_quick_scan" => {
+                show_main_window(app_handle);
+                let _ = app_handle.emit("tray://navigate", "scan");
+            }
             "tray_open_battery" => {
                 show_main_window(app_handle);
                 let _ = app_handle.emit("tray://navigate", "battery");

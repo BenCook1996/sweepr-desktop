@@ -36,7 +36,10 @@ export function getLocalWindowsDeviceId(): string {
   if (cachedDeviceId) return cachedDeviceId;
   if (process.platform === "win32") {
     try {
-      const out = execSync('powershell -Command "(Get-ItemProperty -Path HKLM:\\SOFTWARE\\Microsoft\\Cryptography -Name MachineGuid).MachineGuid"', {
+      const ps = process.env.SystemRoot
+        ? join(process.env.SystemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+        : "powershell.exe";
+      const out = execSync(`"${ps}" -NoProfile -NonInteractive -Command "(Get-ItemProperty -Path HKLM:\\SOFTWARE\\Microsoft\\Cryptography -Name MachineGuid).MachineGuid"`, {
         encoding: "utf8",
         stdio: ["pipe", "pipe", "ignore"],
         timeout: 4000,

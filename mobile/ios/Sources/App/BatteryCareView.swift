@@ -227,190 +227,280 @@ struct BatteryCareDashboardBanner: View {
     }
 }
 
-// MARK: - Main Battery Care View
+// MARK: - Main Battery Care View (Candidate 5: SWEEPR Signature Hybrid)
 
 struct BatteryCareView: View {
     @ObservedObject var vm: AppViewModel
     @ObservedObject var monitor = BatteryCareMonitor.shared
     let onShowPaywall: () -> Void
-    @State private var selectedSection: Int = 0 // 0 = Battery Saver, 1 = Private Vault & Cloud
+    @State private var selectedSection: Int = 0 // 0 = Battery Care, 1 = Private Vault
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                HStack(spacing: 8) {
-                    Button {
-                        selectedSection = 0
-                    } label: {
-                        Text("🔋 Battery Saver")
-                            .font(.subheadline.weight(.bold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(selectedSection == 0 ? Color.sweeprEmerald : Color.cardBackground)
-                            .foregroundColor(selectedSection == 0 ? .white : .primary)
-                            .cornerRadius(999)
+            ZStack {
+                Color.sweeprCanvas.ignoresSafeArea()
+
+                VStack(spacing: 12) {
+                    SweeprWordmarkHeaderView(vm: vm, onShowPaywall: onShowPaywall)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+
+                    // Candidate 5 Segmented Bar (Battery Care | Private Vault)
+                    HStack(spacing: 4) {
+                        segmentedTabButton(
+                            index: 0,
+                            icon: "bolt.shield.fill",
+                            title: "Battery Care"
+                        )
+                        segmentedTabButton(
+                            index: 1,
+                            icon: "lock.shield.fill",
+                            title: "Private Vault"
+                        )
                     }
-                    .buttonStyle(.plain)
+                    .padding(4)
+                    .background(Color.sweeprPanel)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.sweeprLine, lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
 
-                    Button {
-                        selectedSection = 1
-                    } label: {
-                        Text("🔒 Private Vault & Cloud")
-                            .font(.subheadline.weight(.bold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(selectedSection == 1 ? Color.sweeprEmerald : Color.cardBackground)
-                            .foregroundColor(selectedSection == 1 ? .white : .primary)
-                            .cornerRadius(999)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
+                    if selectedSection == 1 {
+                        CloudSavingsView(vm: vm, onShowPaywall: onShowPaywall)
+                    } else {
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 14) {
+                                diagnosticCard
 
-                if selectedSection == 1 {
-                    CloudSavingsView(vm: vm, onShowPaywall: onShowPaywall)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            diagnosticCard
+                                if monitor.unplugAlertActive {
+                                    unplugAlertCard
+                                }
 
-                            if monitor.unplugAlertActive {
-                                unplugAlertCard
+                                if let notice = monitor.statusNotice {
+                                    Text(notice)
+                                        .font(.footnote.weight(.semibold))
+                                        .foregroundColor(.sweeprEmerald)
+                                        .padding(12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(Color.sweeprEmerald.opacity(0.12))
+                                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                                .stroke(Color.sweeprEmerald.opacity(0.32), lineWidth: 1)
+                                        )
+                                }
+
+                                chargeLimiterCard
+                                thermalGuardCard
+                                memoryAndTabDietCard
                             }
-
-                            if let notice = monitor.statusNotice {
-                                Text(notice)
-                                    .font(.footnote)
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color.sweeprEmerald.opacity(0.12))
-                                    .cornerRadius(12)
-                            }
-
-                            chargeLimiterCard
-                            thermalGuardCard
-                            memoryAndTabDietCard
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 20)
                         }
-                        .padding()
                     }
                 }
             }
-            .navigationTitle("Battery & Vault")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        monitor.refresh()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .accessibilityLabel("Refresh battery status")
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .onAppear { monitor.refresh() }
         }
+    }
+
+    private func segmentedTabButton(index: Int, icon: String, title: String) -> some View {
+        let isSelected = selectedSection == index
+        return Button {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                selectedSection = index
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .bold))
+                Text(title)
+                    .font(.system(size: 13, weight: .bold))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(isSelected ? Color.sweeprEmerald : Color.clear)
+            .foregroundColor(isSelected ? .white : .sweeprMutedText)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     private var diagnosticCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("BATTERY HEALTH & TEMPERATURE")
-                    .font(.caption2.weight(.heavy))
+                Text("REAL-TIME SENSOR TELEMETRY")
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(0.8)
                     .foregroundColor(.sweeprEmerald)
                 Spacer()
-                Text(vm.hasBatteryCare ? "Battery Saver Active" : "Live Status")
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(vm.hasBatteryCare ? Color.sweeprEmerald.opacity(0.18) : Color.gray.opacity(0.15))
-                    .foregroundColor(vm.hasBatteryCare ? .sweeprEmerald : .secondary)
-                    .cornerRadius(999)
+                Button {
+                    monitor.refresh()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(vm.hasBatteryCare ? "Battery Care Active" : "Live Status")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(vm.hasBatteryCare ? Color.sweeprEmerald.opacity(0.16) : Color.sweeprPanelAlt)
+                    .foregroundColor(vm.hasBatteryCare ? .sweeprEmerald : .sweeprMutedText)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.sweeprLine, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
             }
 
-            Text(monitor.headlineText)
-                .font(.subheadline.weight(.semibold))
-
+            // 3-Column Sensor Telemetry (Single-line non-wrapping headers: CHARGE | TEMP | HEALTH)
             HStack(spacing: 8) {
                 sensorTile(
                     label: "CHARGE",
                     value: monitor.chargePercent.map { "\($0)%" } ?? "80%",
-                    sub: monitor.isCharging ? "Charging" : (monitor.isPluggedIn ? "Plugged in" : "On battery")
+                    sub: monitor.isCharging ? "Charging" : (monitor.isPluggedIn ? "Plugged in" : "Unplugged"),
+                    valueColor: .primary
                 )
                 sensorTile(
-                    label: "TEMPERATURE",
+                    label: "TEMP",
                     value: monitor.thermalLabel,
-                    sub: monitor.lowPowerMode ? "Low Power On" : "Cool & Safe"
+                    sub: monitor.lowPowerMode ? "Low Power" : "Cool & safe",
+                    valueColor: monitor.thermalState == .nominal ? .sweeprEmerald : .sweeprAmber
                 )
                 sensorTile(
-                    label: "CONDITION",
-                    value: monitor.thermalState == .nominal ? "Healthy" : "Check Heat",
-                    sub: "Battery status"
+                    label: "HEALTH",
+                    value: monitor.thermalState == .nominal ? "Good" : "Warm",
+                    sub: "Li-ion status",
+                    valueColor: .sweeprCyan
                 )
             }
 
-            Text("Unplugging around 80% and keeping your phone cool helps your battery last years longer.")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // 20%–80% Optimal Lifespan Zone Bar
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Optimal Lifespan Zone")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.sweeprMutedText)
+                    Spacer()
+                    Text("Target: \(monitor.chargeLimitPercent)%")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(.sweeprEmerald)
+                }
+
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    HStack(spacing: 3) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.sweeprAmber.opacity(0.45))
+                            .frame(width: w * 0.20)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.sweeprEmerald, .sweeprCyan],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: w * 0.60)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.sweeprRose.opacity(0.45))
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(height: 8)
+                .clipShape(Capsule())
+
+                HStack {
+                    Text("0% Low")
+                    Spacer()
+                    Text("20%–80% Best Longevity")
+                    Spacer()
+                    Text("100% Wear")
+                }
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(.sweeprMutedText)
+            }
+            .padding(11)
+            .background(Color.sweeprPanelAlt)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.sweeprLine, lineWidth: 1)
+            )
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 
     private var unplugAlertCard: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "bolt.trianglebadge.exclamationmark.fill")
-                .font(.title2)
-                .foregroundColor(.orange)
+            SweeprIconBadge(systemName: "bolt.trianglebadge.exclamationmark.fill", tint: .sweeprAmber, size: 38, iconSize: 17, cornerRadius: 12)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Time to Unplug — \(monitor.chargePercent ?? 80)% Reached")
                     .font(.subheadline.weight(.bold))
                 Text("Your iPhone has reached your \(monitor.chargeLimitPercent)% target. Unplugging now helps reduce everyday battery wear.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.sweeprMutedText)
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.14))
-        .cornerRadius(14)
+        .background(Color.sweeprAmber.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.sweeprAmber.opacity(0.4), lineWidth: 1)
+        )
     }
 
     private var chargeLimiterCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Remind Me to Unplug at \(monitor.chargeLimitPercent)%", systemImage: "bolt.shield.fill")
-                    .font(.headline)
-                Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                SweeprIconBadge(systemName: "bolt.shield.fill", tint: .sweeprEmerald, size: 36, iconSize: 16, cornerRadius: 11)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(monitor.chargeLimitPercent)% Charge Guard")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text("Reminds you to unplug at \(monitor.chargeLimitPercent)% so your battery lasts up to 2× longer.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                }
+                Spacer(minLength: 4)
                 if !vm.hasBatteryCare {
                     addonBadge
                 }
             }
-            Text("Sends a notification when your phone reaches \(monitor.chargeLimitPercent)% on the charger so you don't overcharge overnight.")
-                .font(.caption)
-                .foregroundColor(.secondary)
 
-            HStack {
-                Text("Unplug reminder target: \(monitor.chargeLimitPercent)%")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Stepper(
-                    "",
-                    value: Binding(
-                        get: { monitor.chargeLimitPercent },
-                        set: { newVal in
-                            guard vm.hasBatteryCare else { onShowPaywall(); return }
-                            monitor.chargeLimitPercent = newVal
-                        }
-                    ),
-                    in: 50...100,
-                    step: 5
-                )
-                .labelsHidden()
+            // Quick-select target chips (70%, 75%, 80%, 85%, 90%)
+            HStack(spacing: 6) {
+                ForEach([70, 75, 80, 85, 90], id: \.self) { pct in
+                    let isSelected = monitor.chargeLimitPercent == pct
+                    Button {
+                        guard vm.hasBatteryCare else { onShowPaywall(); return }
+                        monitor.chargeLimitPercent = pct
+                    } label: {
+                        Text("\(pct)%")
+                            .font(.system(size: 11, weight: .heavy))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 7)
+                            .background(isSelected ? Color.sweeprEmerald : Color.sweeprPanelAlt)
+                            .foregroundColor(isSelected ? .white : .sweeprMutedText)
+                            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .stroke(isSelected ? Color.sweeprEmerald : Color.sweeprLine, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
             Toggle(
-                "Remind me to unplug at \(monitor.chargeLimitPercent)%",
+                "Enable \(monitor.chargeLimitPercent)% Charge Guard",
                 isOn: Binding(
                     get: { monitor.chargeLimitEnabled },
                     set: { enabled in
@@ -422,29 +512,33 @@ struct BatteryCareView: View {
                     }
                 )
             )
-            .font(.subheadline)
+            .font(.system(size: 13, weight: .semibold))
+            .tint(.sweeprEmerald)
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 
     private var thermalGuardCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Warn Me If Phone Gets Too Hot", systemImage: "thermometer.sun.fill")
-                    .font(.headline)
-                Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                SweeprIconBadge(systemName: "thermometer.sun.fill", tint: .sweeprAmber, size: 36, iconSize: 16, cornerRadius: 11)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Thermal Overheat Guard")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text("Warns you if your iPhone gets hot (\(monitor.thermalLabel)) while fast-charging.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                }
+                Spacer(minLength: 4)
                 if !vm.hasBatteryCare {
                     addonBadge
                 }
             }
-            Text("Watches your phone's temperature and pauses heavy scans if your phone starts getting warm.")
-                .font(.caption)
-                .foregroundColor(.secondary)
 
             Toggle(
-                "Warn me when phone warms up",
+                "Overheat Protection",
                 isOn: Binding(
                     get: { monitor.thermalGuardEnabled },
                     set: { enabled in
@@ -453,81 +547,102 @@ struct BatteryCareView: View {
                         } else {
                             monitor.thermalGuardEnabled = enabled
                             monitor.statusNotice = enabled
-                                ? "Overheat warning enabled — SWEEPR will pause heavy work when your phone gets warm."
-                                : "Overheat warning turned off."
+                                ? "Overheat protection turned on."
+                                : "Overheat protection turned off."
                         }
                     }
                 )
             )
-            .font(.subheadline)
+            .font(.system(size: 13, weight: .semibold))
+            .tint(.sweeprEmerald)
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 
     private var memoryAndTabDietCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Clean Background Junk", systemImage: "sparkles")
-                    .font(.headline)
-                Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                SweeprIconBadge(systemName: "sparkles", tint: .sweeprCyan, size: 36, iconSize: 16, cornerRadius: 11)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Cool Down & Clear App Cache")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.primary)
+                    Text("Frees temporary memory (\(formatByteCount(monitor.availableMemoryBytes)) available) to reduce heat drain.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                }
+                Spacer(minLength: 4)
                 if !vm.hasBatteryCare {
                     addonBadge
                 }
             }
-            Text("Clears temporary cache files so your phone stays cool and responsive.")
-                .font(.caption)
-                .foregroundColor(.secondary)
 
-            HStack(spacing: 10) {
-                Button {
-                    if vm.hasBatteryCare {
-                        monitor.trimBackgroundCaches()
-                    } else {
-                        onShowPaywall()
-                    }
-                } label: {
-                    Text("Clean Background Junk")
-                        .font(.subheadline.weight(.bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.sweeprEmerald)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+            Button {
+                if vm.hasBatteryCare {
+                    monitor.trimBackgroundCaches()
+                } else {
+                    onShowPaywall()
                 }
+            } label: {
+                Text("Cool Down & Clear")
+                    .font(.system(size: 13, weight: .heavy))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 11)
+                    .background(Color.sweeprEmerald)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .buttonStyle(.plain)
         }
         .padding(16)
-        .background(Color.cardBackground)
-        .cornerRadius(16)
+        .sweeprCard(cornerRadius: 18)
     }
 
     private var addonBadge: some View {
-        Text("ADD-ON")
-            .font(.system(size: 10, weight: .heavy))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(Color.orange.opacity(0.18))
-            .foregroundColor(.orange)
-            .cornerRadius(999)
+        Button {
+            onShowPaywall()
+        } label: {
+            Text("+£17.99/YR")
+                .font(.system(size: 9, weight: .heavy))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.sweeprAmber.opacity(0.16))
+                .foregroundColor(.sweeprAmber)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule().stroke(Color.sweeprAmber.opacity(0.38), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
-    private func sensorTile(label: String, value: String, sub: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+    private func sensorTile(label: String, value: String, sub: String, valueColor: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.secondary)
+                .font(.system(size: 9, weight: .heavy))
+                .tracking(0.5)
+                .foregroundColor(.sweeprMutedText)
+                .lineLimit(1)
             Text(value)
-                .font(.headline)
+                .font(.system(size: 17, weight: .heavy, design: .rounded))
+                .foregroundColor(valueColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(sub)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.sweeprMutedText)
                 .lineLimit(1)
         }
-        .padding(10)
+        .padding(11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(UIColor.tertiarySystemBackground))
-        .cornerRadius(10)
+        .background(Color.sweeprPanelAlt)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.sweeprLine, lineWidth: 1)
+        )
     }
 }

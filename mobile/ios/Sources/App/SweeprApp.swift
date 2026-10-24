@@ -2,17 +2,25 @@ import RevenueCat
 import SwiftUI
 
 enum SweeprThemeMode: String, CaseIterable, Identifiable {
-    case system = "system"
-    case light = "light"
     case dark = "dark"
+    case light = "light"
+    case system = "system"
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .system: return "System Default"
-        case .light: return "Light"
-        case .dark: return "Dark"
+        case .dark: return "Obsidian Dark"
+        case .light: return "Mint Light"
+        case .system: return "Auto"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .dark: return "Obsidian"
+        case .light: return "Mint"
+        case .system: return "Auto"
         }
     }
 
@@ -27,7 +35,7 @@ enum SweeprThemeMode: String, CaseIterable, Identifiable {
 
 @main
 struct SweeprApp: App {
-    @AppStorage("sweepr_theme_mode") private var themeModeRaw: String = SweeprThemeMode.system.rawValue
+    @AppStorage("sweepr_theme_mode") private var themeModeRaw: String = SweeprThemeMode.dark.rawValue
 
     init() {
         // Install on-device crash & uncaught exception logger

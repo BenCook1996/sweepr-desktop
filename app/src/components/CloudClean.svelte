@@ -187,13 +187,6 @@
         .catch(() => null);
       if (!picked?.trim()) return;
       target = picked.trim();
-    } else if (
-      !confirm(
-        `Move ${selectedPaths.length} file(s) (${formatBytes(selectedBytes)}) to the Recycle Bin?\n\n` +
-          "You can still put them back from your Recycle Bin if you change your mind."
-      )
-    ) {
-      return;
     }
     working = true;
     error = "";

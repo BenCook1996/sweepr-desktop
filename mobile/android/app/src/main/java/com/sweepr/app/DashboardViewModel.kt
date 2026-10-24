@@ -62,10 +62,12 @@ data class DashboardState(
     val scanStatus: String = "",
     val media: MediaScanResult = MediaScanResult(),
     val contactGroups: List<ContactGroup> = emptyList(),
+    val incompleteContacts: List<IncompleteContact> = emptyList(),
     val oldCalendarEvents: List<OldCalendarEvent> = emptyList(),
     val selectedMedia: Set<Uri> = emptySet(),
     val selectedTrash: Set<Uri> = emptySet(),
     val selectedContactGroups: Set<String> = emptySet(),
+    val selectedIncompleteContactIds: Set<Long> = emptySet(),
     val selectedCalendarEventIds: Set<Long> = emptySet(),
     val isWorking: Boolean = false,
     val pendingTrash: PendingTrash? = null,
@@ -319,6 +321,30 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun redeemReferralCode(code: String, onDone: () -> Unit = {}) {
+        val current = _state.value.linkedAccount
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val res = withContext(Dispatchers.IO) {
+                runCatching { SweeprAccountApi.redeemReferralCode(code, current) }
+            }
+            res.onSuccess { updated ->
+                Prefs.setLinkedAccount(updated)
+                _state.update {
+                    it.copy(
+                        isWorking = false,
+                        linkedAccount = updated,
+                        message = "Referral code ${updated.redeemedReferralCode} applied!",
+                    )
+                }
+                onDone()
+            }.onFailure { err ->
+                _state.update { it.copy(isWorking = false) }
+                showMessage(err.message ?: "Could not apply referral code.")
+            }
+        }
+    }
+
     /** Re-attaches a Google Play subscription bought earlier (new phone, reinstall). */
     fun restorePurchases() {
         _state.update { it.copy(isWorking = true) }
@@ -352,6 +378,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             val contacts = if (permissions.contactsRead) {
                 withContext(Dispatchers.IO) { runCatching { ContactsScanner.scan(app) }.getOrDefault(emptyList()) }
             } else emptyList()
+            val incomplete = if (permissions.contactsRead) {
+                withContext(Dispatchers.IO) { runCatching { ContactsScanner.scanIncomplete(app) }.getOrDefault(emptyList()) }
+            } else emptyList()
 
             // Keep Best Shot (group.keep) unselected; pre-select duplicate & similar extras + screenshots
             val preselected = (media.duplicateGroups + media.similarGroups)
@@ -366,12 +395,48 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     scanStatus = "",
                     media = media,
                     contactGroups = contacts,
+                    incompleteContacts = incomplete,
                     selectedMedia = preselected,
                     selectedTrash = emptySet(),
                     selectedContactGroups = contacts.map { g -> g.key }.toSet(),
+                    selectedIncompleteContactIds = incomplete.map { c -> c.contactId }.toSet(),
                 )
             }
             StorageWidgetProvider.refreshAll(app)
+        }
+    }
+
+    fun toggleIncompleteContact(id: Long) = _state.update { s ->
+        s.copy(
+            selectedIncompleteContactIds = if (id in s.selectedIncompleteContactIds) s.selectedIncompleteContactIds - id
+            else s.selectedIncompleteContactIds + id,
+        )
+    }
+
+    fun setIncompleteContactsSelected(ids: Collection<Long>, selected: Boolean) = _state.update { s ->
+        s.copy(
+            selectedIncompleteContactIds = if (selected) s.selectedIncompleteContactIds + ids
+            else s.selectedIncompleteContactIds - ids.toSet(),
+        )
+    }
+
+    fun deleteIncompleteContacts(ids: Set<Long>) {
+        if (!_state.value.hasPremium || ids.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val deleted = withContext(Dispatchers.IO) {
+                runCatching { ContactsScanner.deleteContacts(app, ids) }.getOrDefault(0)
+            }
+            val shouldAskReview = if (deleted > 0) Prefs.recordCleanupForReviewPrompt() else false
+            _state.update { s ->
+                s.copy(
+                    isWorking = false,
+                    incompleteContacts = s.incompleteContacts.filterNot { it.contactId in ids },
+                    selectedIncompleteContactIds = s.selectedIncompleteContactIds - ids,
+                    promptInAppReview = s.promptInAppReview || shouldAskReview,
+                    message = if (deleted > 0) "Deleted $deleted incomplete contact(s)." else app.getString(R.string.msg_nothing_deleted),
+                )
+            }
         }
     }
 

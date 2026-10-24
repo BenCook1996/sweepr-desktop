@@ -31,11 +31,36 @@
   let updateDismissed = $state(false);
   let unplugAlert = $state<UnplugAlert | null>(null);
   let showStartupInstaller = $state(false);
-  let theme = $state<"light" | "dark">(
-    (typeof localStorage !== "undefined" &&
-      (localStorage.getItem("sweepr_theme") as "light" | "dark")) ||
-      "light"
+  const isMac =
+    typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
+  const modKeyLabel = isMac ? "⌘" : "Ctrl+";
+
+  function detectInitialTheme(): "light" | "dark" {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem("sweepr_theme");
+      if (saved === "light" || saved === "dark") return saved;
+    }
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "dark";
+  }
+
+  let theme = $state<"light" | "dark">(detectInitialTheme());
+  let sidebarCollapsed = $state<boolean>(
+    typeof localStorage !== "undefined" && localStorage.getItem("sweepr_sidebar_collapsed") === "1"
   );
+  let showCommandPalette = $state(false);
+  let cmdQuery = $state("");
+  let cmdSelectedIndex = $state(0);
+  let cmdInputEl = $state<HTMLInputElement | null>(null);
+
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sweepr_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
+    }
+  }
 
   let startupInitialized = false;
   let installerCompleted = false;
@@ -139,6 +164,9 @@
         if (target === "battery") {
           speedMode = "battery";
           tab = "speed";
+        } else if (target === "scan") {
+          tab = "cleaner";
+          setTimeout(() => window.dispatchEvent(new CustomEvent("sweepr-trigger-scan")), 0);
         }
       })
       .then((fn) => (unlistenNav = fn))
@@ -158,18 +186,223 @@
 
   let showSettingsMenu = $state(false);
 
+  type CommandAction = {
+    id: string;
+    label: string;
+    group: string;
+    shortcut?: string;
+    run: () => void;
+  };
+
+  const commandActions: CommandAction[] = [
+    {
+      id: "cmd-scan",
+      label: "Run Smart Scan Now",
+      group: "Quick Actions",
+      shortcut: `${modKeyLabel}R`,
+      run: () => {
+        tab = "cleaner";
+        setTimeout(() => window.dispatchEvent(new CustomEvent("sweepr-trigger-scan")), 0);
+      },
+    },
+    {
+      id: "cmd-undo",
+      label: "Open 7-Day Safety Undo & Recycle Bin",
+      group: "Quick Actions",
+      shortcut: `${modKeyLabel}Z`,
+      run: () => openUndoDrawer(),
+    },
+    {
+      id: "cmd-speed",
+      label: "PC Speed Boost & Startup Manager",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}2`,
+      run: () => {
+        speedMode = "pc";
+        tab = "speed";
+      },
+    },
+    {
+      id: "cmd-battery",
+      label: "80% Charge Guard & Laptop Battery Care",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}3`,
+      run: () => {
+        speedMode = "battery";
+        tab = "speed";
+      },
+    },
+    {
+      id: "cmd-duplicates",
+      label: "Find Duplicate & Large Files (Space & Cloud)",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}4`,
+      run: () => {
+        tab = "space";
+      },
+    },
+    {
+      id: "cmd-apps",
+      label: "Uninstall Apps, Updates & Leftovers",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}5`,
+      run: () => {
+        tab = "apps";
+      },
+    },
+    {
+      id: "cmd-privacy",
+      label: "Browser Privacy, Private Vault & File Shredder",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}6`,
+      run: () => {
+        tab = "privacy";
+      },
+    },
+    {
+      id: "cmd-schedule",
+      label: "Auto-Clean Background Schedule",
+      group: "Navigation",
+      shortcut: `${modKeyLabel}7`,
+      run: () => {
+        accountSection = "schedule";
+        tab = "account";
+      },
+    },
+    {
+      id: "cmd-account",
+      label: "Account, Subscription & Updates",
+      group: "Preferences",
+      shortcut: `${modKeyLabel},`,
+      run: () => {
+        accountSection = "account";
+        tab = "account";
+      },
+    },
+    {
+      id: "cmd-theme",
+      label: "Toggle Dark / Light Theme",
+      group: "Preferences",
+      run: () => toggleTheme(),
+    },
+    {
+      id: "cmd-sidebar",
+      label: "Collapse / Expand Left Sidebar",
+      group: "Preferences",
+      shortcut: `${modKeyLabel}B`,
+      run: () => toggleSidebar(),
+    },
+  ];
+
+  const filteredCommands = $derived.by(() => {
+    const q = cmdQuery.trim().toLowerCase();
+    if (!q) return commandActions;
+    return commandActions.filter(
+      (c) => c.label.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)
+    );
+  });
+
+  function openCommandPalette() {
+    cmdQuery = "";
+    cmdSelectedIndex = 0;
+    showCommandPalette = true;
+    setTimeout(() => cmdInputEl?.focus(), 10);
+  }
+
+  function executeCommand(cmd: CommandAction) {
+    showCommandPalette = false;
+    cmd.run();
+  }
+
   $effect(() => {
     const onDocClick = () => {
       if (showSettingsMenu) showSettingsMenu = false;
     };
+    const onResize = () => {
+      if (typeof window !== "undefined" && window.innerWidth < 820 && !sidebarCollapsed) {
+        sidebarCollapsed = true;
+      }
+    };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && showSettingsMenu) showSettingsMenu = false;
+      if (e.key === "Escape") {
+        if (showCommandPalette) {
+          showCommandPalette = false;
+          return;
+        }
+        if (showSettingsMenu) showSettingsMenu = false;
+      }
+      const mod = e.ctrlKey || e.metaKey;
+      const target = e.target as HTMLElement | null;
+      const inInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (showCommandPalette) showCommandPalette = false;
+        else openCommandPalette();
+        return;
+      }
+      if (mod && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+      if (mod && e.key === ",") {
+        e.preventDefault();
+        accountSection = "account";
+        tab = "account";
+        return;
+      }
+      if (!inInput && mod && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        openUndoDrawer();
+        return;
+      }
+      if (!inInput && mod && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        tab = "cleaner";
+        setTimeout(() => window.dispatchEvent(new CustomEvent("sweepr-trigger-scan")), 0);
+        return;
+      }
+      if (mod && !e.shiftKey && !e.altKey) {
+        if (e.key === "1") {
+          e.preventDefault();
+          tab = "cleaner";
+        } else if (e.key === "2") {
+          e.preventDefault();
+          speedMode = "pc";
+          tab = "speed";
+        } else if (e.key === "3") {
+          e.preventDefault();
+          speedMode = "battery";
+          tab = "speed";
+        } else if (e.key === "4") {
+          e.preventDefault();
+          tab = "space";
+        } else if (e.key === "5") {
+          e.preventDefault();
+          tab = "apps";
+        } else if (e.key === "6") {
+          e.preventDefault();
+          tab = "privacy";
+        } else if (e.key === "7") {
+          e.preventDefault();
+          accountSection = "schedule";
+          tab = "account";
+        }
+      }
     };
     window.addEventListener("click", onDocClick);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("click", onDocClick);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
     };
   });
 
@@ -286,8 +519,8 @@
   />
 {:else}
   <div class="app-layout">
-    <!-- Grouped left sidebar (Smart Scan / Speed / Storage / Protect) -->
-    <aside class="side-nav">
+    <!-- Grouped left sidebar (collapsible via Ctrl/Cmd+B) -->
+    <aside class="side-nav" class:collapsed={sidebarCollapsed}>
       <div class="brand">
         <div class="logo" aria-label="SWEEPR Cleaner">
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
@@ -311,37 +544,65 @@
             <circle class="logo-dot" cx="62" cy="79" r="3.5" />
           </svg>
         </div>
-        <div class="brand-text">
-          <span class="brand-name">SWEEPR <span class="brand-accent">Cleaner</span></span>
-        </div>
+        {#if !sidebarCollapsed}
+          <div class="brand-text">
+            <span class="brand-name">SWEEPR <span class="brand-accent">Cleaner</span></span>
+          </div>
+        {/if}
+        <button
+          class="ghost collapse-btn"
+          onclick={toggleSidebar}
+          title={sidebarCollapsed ? `Expand sidebar (${modKeyLabel}B)` : `Collapse sidebar (${modKeyLabel}B)`}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? "»" : "«"}
+        </button>
       </div>
+
+      {#if !sidebarCollapsed}
+        <button class="cmd-trigger-btn" onclick={openCommandPalette} title={`Command Palette (${modKeyLabel}K)`}>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Quick Jump…</span>
+          <kbd>{modKeyLabel}K</kbd>
+        </button>
+      {/if}
 
       <nav class="side-groups" aria-label="Main navigation">
         <button
           class="nav-tab"
           class:active={homeItem.isActive()}
           aria-current={homeItem.isActive() ? "page" : undefined}
+          title={`${t(homeItem.key, $lang)} (${modKeyLabel}1)`}
           onclick={homeItem.go}
         >
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d={homeItem.icon} />
           </svg>
-          <span>{t(homeItem.key, $lang)}</span>
+          {#if !sidebarCollapsed}
+            <span>{t(homeItem.key, $lang)}</span>
+          {/if}
         </button>
 
         {#each navGroups as group (group.key)}
-          <div class="side-group-label">{t(group.key, $lang)}</div>
+          {#if !sidebarCollapsed}
+            <div class="side-group-label">{t(group.key, $lang)}</div>
+          {:else}
+            <div class="side-group-divider"></div>
+          {/if}
           {#each group.items as item (item.id)}
             <button
               class="nav-tab"
               class:active={item.isActive()}
               aria-current={item.isActive() ? "page" : undefined}
+              title={t(item.key, $lang)}
               onclick={item.go}
             >
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d={item.icon} />
               </svg>
-              <span>{t(item.key, $lang)}</span>
+              {#if !sidebarCollapsed}
+                <span>{t(item.key, $lang)}</span>
+              {/if}
             </button>
           {/each}
         {/each}
@@ -349,28 +610,57 @@
 
       <div class="sidebar-footer">
         <button
-          class="nav-tab account-pill"
-          class:active={tab === "account" && accountSection === "account"}
-          onclick={() => {
-            accountSection = "account";
-            tab = "account";
-          }}
+          class="nav-tab"
+          title={`7-Day Safety Undo (${modKeyLabel}Z)`}
+          onclick={openUndoDrawer}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M20 21a8 8 0 1 0-16 0" />
+            <path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
           </svg>
-          <span>{t("nav.accountOnly", $lang)}</span>
+          {#if !sidebarCollapsed}
+            <span>7-Day Undo</span>
+          {/if}
         </button>
 
-        {#if license?.active}
-          <span class="tier-badge pro">
-            ✓ {license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : `${t("tier.pro", $lang)} Active`}
-          </span>
-        {:else}
-          <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
-            {t("tier.free", $lang)} · Upgrade
+        <div class="footer-row">
+          <button
+            class="nav-tab account-pill"
+            class:active={tab === "account" && accountSection === "account"}
+            title={t("nav.accountOnly", $lang)}
+            onclick={() => {
+              accountSection = "account";
+              tab = "account";
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M20 21a8 8 0 1 0-16 0" />
+            </svg>
+            {#if !sidebarCollapsed}
+              <span>{t("nav.accountOnly", $lang)}</span>
+            {/if}
           </button>
+
+          <button
+            class="ghost theme-icon-btn"
+            onclick={toggleTheme}
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            aria-label="Toggle color theme"
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+        </div>
+
+        {#if !sidebarCollapsed}
+          {#if license?.active}
+            <span class="tier-badge pro">
+              ✓ {license.dev_unlock ? "Dev unlock" : license.status === "trialing" ? t("tier.activated", $lang) : `${t("tier.pro", $lang)} Active`}
+            </span>
+          {:else}
+            <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
+              {t("tier.free", $lang)} · Upgrade
+            </button>
+          {/if}
         {/if}
       </div>
     </aside>
@@ -434,10 +724,14 @@
       {#if tab === "cleaner"}
         <Cleaner
           {license}
+          {info}
           onLicenseChange={refreshLicense}
           onOpenTool={(tool) => {
             if (tool === "memory") {
               speedMode = "pc";
+              tab = "speed";
+            } else if (tool === "battery") {
+              speedMode = "battery";
               tab = "speed";
             } else if (tool === "storage") {
               tab = "space";
@@ -452,9 +746,9 @@
           }}
         />
       {:else if tab === "speed"}
-        <Performance {license} bind:viewMode={speedMode} />
+        <Performance {license} {info} bind:viewMode={speedMode} />
       {:else if tab === "space"}
-        <Duplicates {license} />
+        <Duplicates {license} {info} />
       {:else if tab === "apps"}
         <Apps {license} />
       {:else if tab === "privacy"}
@@ -470,28 +764,88 @@
         />
       {/if}
     </main>
+
+    <!-- Native Desktop Status Bar -->
+    <footer class="desktop-status-bar" aria-label="Status bar">
+      <div class="status-left">
+        <span class="status-dot"></span>
+        <span>7-Day Quarantine Protection Active</span>
+        {#if info?.version}
+          <span class="status-sep">·</span>
+          <span>v{info.version}</span>
+        {/if}
+      </div>
+      <div class="status-right">
+        <button class="status-link" onclick={openCommandPalette}>
+          <span>Command Palette</span>
+          <kbd>{modKeyLabel}K</kbd>
+        </button>
+        <span class="status-sep">·</span>
+        <button class="status-link" onclick={openUndoDrawer}>
+          <span>Undo</span>
+          <kbd>{modKeyLabel}Z</kbd>
+        </button>
+      </div>
+    </footer>
     </div>
 
-    <!-- Right-edge quick rail: always one click from tools, savings and undo -->
-    <div class="quick-rail" aria-label="Quick shortcuts">
-      <button class="rail-btn" title="All tools (Home)" aria-label="All tools" onclick={() => (tab = "cleaner")}>
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS.apps} /></svg>
-      </button>
-      <button
-        class="rail-btn"
-        title="Auto-Clean & savings history"
-        aria-label="Auto-Clean and savings"
-        onclick={() => {
-          accountSection = "schedule";
-          tab = "account";
-        }}
-      >
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18M7 15v3M12 10v8M17 6v12" /></svg>
-      </button>
-      <button class="rail-btn" title="Undo — put back recently cleaned files" aria-label="Undo recently cleaned files" onclick={openUndoDrawer}>
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-15-6.7L3 13" /></svg>
-      </button>
-    </div>
+    {#if showCommandPalette}
+      <div class="cmd-backdrop" onclick={() => (showCommandPalette = false)} role="presentation">
+        <div
+          class="cmd-modal card"
+          onclick={(e) => e.stopPropagation()}
+          onkeydown={(e) => e.key === "Escape" && (showCommandPalette = false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command Palette"
+          tabindex="-1"
+        >
+          <div class="cmd-input-row">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              bind:this={cmdInputEl}
+              type="text"
+              bind:value={cmdQuery}
+              placeholder="Type a command or tool name (e.g. Scan, Battery, Vault, Shredder, Undo)…"
+              class="cmd-input"
+              onkeydown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  cmdSelectedIndex = Math.min(filteredCommands.length - 1, cmdSelectedIndex + 1);
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  cmdSelectedIndex = Math.max(0, cmdSelectedIndex - 1);
+                } else if (e.key === "Enter" && filteredCommands[cmdSelectedIndex]) {
+                  e.preventDefault();
+                  executeCommand(filteredCommands[cmdSelectedIndex]);
+                }
+              }}
+            />
+            <kbd class="cmd-esc">Esc</kbd>
+          </div>
+          <div class="cmd-list" role="listbox">
+            {#each filteredCommands as cmd, idx (cmd.id)}
+              <button
+                class="cmd-item"
+                class:selected={idx === cmdSelectedIndex}
+                onmouseenter={() => (cmdSelectedIndex = idx)}
+                onclick={() => executeCommand(cmd)}
+                role="option"
+                aria-selected={idx === cmdSelectedIndex}
+              >
+                <span class="cmd-group-pill">{cmd.group}</span>
+                <span class="cmd-label">{cmd.label}</span>
+                {#if cmd.shortcut}
+                  <kbd>{cmd.shortcut}</kbd>
+                {/if}
+              </button>
+            {:else}
+              <div class="cmd-empty muted small">No matching commands found.</div>
+            {/each}
+          </div>
+        </div>
+      </div>
+    {/if}
 
     <ActivateModal bind:open={showActivateModal} onActivated={refreshLicense} />
   </div>
@@ -503,63 +857,124 @@
     flex-direction: row;
     height: 100vh;
     background-color: var(--bg);
-    background-image: url("./assets/topography.svg");
-    background-size: 900px 900px;
-    background-repeat: repeat;
-    background-attachment: fixed;
     color: var(--text);
     overflow: hidden;
     position: relative;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   .side-nav {
-    width: 222px;
+    width: 214px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin: 14px 0 14px 14px;
-    padding: 16px 12px;
+    margin: 10px 0 10px 10px;
+    padding: 12px 10px;
     background: var(--panel);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
     border: 1px solid var(--border);
     border-top: 1px solid var(--border-highlight);
-    border-radius: 20px;
-    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
     z-index: 50;
     overflow-y: auto;
+    overflow-x: hidden;
+    transition: width 0.16s ease, padding 0.16s ease;
+  }
+  .side-nav.collapsed {
+    width: 58px;
+    padding: 12px 7px;
+    align-items: center;
   }
   .side-nav .brand {
-    padding: 2px 6px 14px 6px;
+    padding: 2px 4px 10px 4px;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .side-nav.collapsed .brand {
+    flex-direction: column;
+    gap: 6px;
+    padding: 2px 0 8px 0;
+  }
+  .collapse-btn {
+    padding: 2px 7px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: 6px;
+    margin-left: auto;
+  }
+  .side-nav.collapsed .collapse-btn {
+    margin-left: 0;
+  }
+  .cmd-trigger-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .cmd-trigger-btn kbd {
+    margin-left: auto;
+    font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
   }
   .side-groups {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    width: 100%;
   }
   .side-group-label {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
     opacity: 0.8;
-    margin: 14px 10px 4px 10px;
+    margin: 11px 8px 3px 8px;
+  }
+  .side-group-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 4px;
   }
   .sidebar-footer {
     margin-top: auto;
-    padding-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
+    width: 100%;
+  }
+  .footer-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .side-nav.collapsed .footer-row {
+    flex-direction: column;
+  }
+  .theme-icon-btn {
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    flex-shrink: 0;
   }
   .sidebar-footer .tier-badge {
     align-self: flex-start;
-    margin-left: 8px;
+    margin-left: 6px;
   }
 
   .content-col {
@@ -570,45 +985,21 @@
     overflow: hidden;
   }
 
-  .quick-rail {
-    position: absolute;
-    right: 0;
-    top: 96px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 60;
-  }
-  button.rail-btn {
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    border-radius: 14px 0 0 14px;
-    border: 1px solid var(--border);
-    border-right: none;
-    background: var(--panel-solid);
-    color: var(--muted);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-  }
-  button.rail-btn:hover:not(:disabled) {
-    color: var(--accent);
-    transform: translateX(-2px);
-  }
-
   .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-shrink: 0;
   }
   .logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
     display: grid;
     place-items: center;
-    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
     overflow: hidden;
+    flex-shrink: 0;
   }
   .logo-svg {
     width: 100%;
@@ -678,12 +1069,14 @@
   .brand-text {
     display: flex;
     align-items: center;
+    min-width: 0;
   }
   .brand-name {
     font-weight: 800;
-    font-size: 16px;
-    letter-spacing: -0.4px;
+    font-size: 14.5px;
+    letter-spacing: -0.3px;
     color: var(--text);
+    white-space: nowrap;
   }
   .brand-accent {
     color: #059669;
@@ -697,20 +1090,24 @@
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    padding: 9px 12px;
-    border-radius: 11px;
+    padding: 7px 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 9px;
     font-weight: 600;
-    font-size: 13px;
-    transition: all 0.15s ease-in-out;
+    font-size: 12.5px;
+    transition: background-color 0.12s ease, color 0.12s ease;
     box-shadow: none;
     white-space: nowrap;
     cursor: pointer;
     width: 100%;
     text-align: left;
+  }
+  .side-nav.collapsed button.nav-tab {
+    justify-content: center;
+    padding: 8px;
   }
   button.nav-tab svg {
     color: var(--muted);
@@ -734,7 +1131,7 @@
   }
 
   :global(:root[data-theme="dark"]) .side-nav {
-    background: rgba(15, 23, 42, 0.88);
+    background: rgba(15, 23, 42, 0.92);
   }
   :global(:root[data-theme="dark"]) .tier-badge.free {
     color: #fbbf24;
@@ -751,8 +1148,8 @@
     font-weight: 700;
     text-transform: uppercase;
     padding: 3px 8px;
-    border-radius: 9999px;
-    letter-spacing: 0.5px;
+    border-radius: 6px;
+    letter-spacing: 0.4px;
     white-space: nowrap;
   }
   .tier-badge.free {
@@ -771,13 +1168,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin: 10px 28px 0 28px;
-    padding: 8px 14px;
-    border-radius: 12px;
+    margin: 10px 20px 0 20px;
+    padding: 7px 14px;
+    border-radius: 10px;
     background: rgba(16, 185, 129, 0.14);
     border: 1px solid rgba(16, 185, 129, 0.35);
     color: var(--text);
-    font-size: 12.5px;
+    font-size: 12px;
     flex-shrink: 0;
   }
   .auto-update-text {
@@ -788,7 +1185,7 @@
   }
   .auto-update-notes {
     color: var(--muted);
-    font-size: 12px;
+    font-size: 11.5px;
   }
   .auto-update-actions {
     display: flex;
@@ -800,8 +1197,8 @@
     background: #10b981;
     color: #ffffff;
     border: none;
-    border-radius: 9999px;
-    padding: 5px 14px;
+    border-radius: 6px;
+    padding: 4px 12px;
     font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
@@ -819,6 +1216,154 @@
   .main-content {
     flex: 1;
     overflow-y: auto;
-    padding: 22px 62px 48px 24px;
+    padding: 16px 20px 24px 20px;
+  }
+
+  /* Native Desktop Status Bar */
+  .desktop-status-bar {
+    height: 26px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .status-left,
+  .status-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+  .status-sep {
+    opacity: 0.45;
+  }
+  button.status-link {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 1px 4px;
+    font-size: 11px;
+    color: var(--muted);
+    gap: 4px;
+    border-radius: 4px;
+  }
+  button.status-link:hover {
+    color: var(--text);
+    background: var(--panel-2);
+  }
+  button.status-link kbd {
+    font-family: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+    font-size: 10px;
+    padding: 0 4px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+  }
+
+  /* Command Palette Modal */
+  .cmd-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+    z-index: 300;
+  }
+  .cmd-modal {
+    width: 100%;
+    max-width: 540px;
+    padding: 0;
+    overflow: hidden;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  }
+  .cmd-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-input {
+    flex: 1;
+    border: none;
+    background: transparent !important;
+    color: var(--text);
+    font-size: 13.5px;
+    outline: none;
+  }
+  .cmd-esc {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .cmd-list {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  button.cmd-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    font-size: 13px;
+    gap: 10px;
+  }
+  button.cmd-item.selected,
+  button.cmd-item:hover {
+    background: rgba(16, 185, 129, 0.14);
+    color: var(--accent);
+  }
+  .cmd-group-pill {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--panel-2);
+    color: var(--muted);
+    min-width: 78px;
+    text-align: center;
+  }
+  .cmd-label {
+    flex: 1;
+    text-align: left;
+  }
+  button.cmd-item kbd {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 10.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--muted);
+  }
+  .cmd-empty {
+    padding: 18px;
+    text-align: center;
   }
 </style>

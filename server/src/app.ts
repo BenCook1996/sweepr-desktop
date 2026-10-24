@@ -33,6 +33,7 @@ import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
   syncToCentralCrm,
   syncSubscriptionToCentralCrm,
+  reportAffiliateClickToCentralCrm,
   verifyCentralEntitlement,
   verifyCentralOtp,
 } from "./crm-sync.js";
@@ -165,7 +166,8 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
   if (addons.length > 0) {
     meta.addons = addons.join(",");
   }
-  if (refCode) meta.ref = refCode.slice(0, 50);
+  const resolvedRef = String(refCode || attr.ref || body?.affiliate_code || "").trim();
+  if (resolvedRef) meta.ref = resolvedRef.slice(0, 50);
   const fields = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid", "msclkid", "irclickid"];
   for (const f of fields) {
     const val = String(attr[f] ?? body?.[f] ?? "").trim();
@@ -3056,6 +3058,19 @@ export function createApp(deps: AppDeps) {
       properties: body.metadata || null,
     });
     return c.json({ ok: true, id });
+  });
+
+  app.post("/api/affiliate/click", async (c) => {
+    if (!limitTelemetry.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
+    const body = await c.req.json().catch(() => ({}));
+    const code = String(body?.code || body?.ref || "").trim().slice(0, 64);
+    if (!code) return c.json({ ok: false, error: "missing_code" }, 400);
+    reportAffiliateClickToCentralCrm({
+      code,
+      landingPath: typeof body?.landing_path === "string" ? body.landing_path.slice(0, 250) : "/",
+      referrer: typeof body?.referrer === "string" ? body.referrer.slice(0, 250) : c.req.header("referer") || undefined,
+    });
+    return c.json({ ok: true });
   });
 
   // HIBP k-anonymity password breach check & email breach check proxy

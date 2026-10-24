@@ -49,16 +49,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.cos
+import kotlin.math.sin
 
 /*
- * Shared building blocks for the "Mockups v2" mobile screens (#6–#10):
- * the two-tone wordmark top bar, the storage ring with the Quick Clean core,
- * emerald pill buttons, sticky bottom docks, size badges and 3-up stat rows.
+ * Shared building blocks for Candidate 5: SWEEPR Signature Hybrid (Desktop + Mobile Flagship):
+ * the two-tone wordmark top bar with adaptive theme pill, the bioluminescent precision storage ring
+ * with the Smart Clean core, emerald pill buttons, sticky bottom docks, size badges and stat rows.
  */
 
-/** Emerald → emerald-700 gradient used by the primary pill buttons and the Quick Clean core. */
+/** Emerald → teal-emerald gradient used by the primary pill buttons and the Smart Clean core. */
 val EmeraldGradient: Brush
-    get() = Brush.linearGradient(listOf(SweeprGreen, SweeprGreenDark))
+    get() = Brush.linearGradient(listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857)))
 
 /** Splits a formatted size like "3.2 GB" into ("3.2", "GB") so the unit can be drawn smaller. */
 fun splitSize(formatted: String): Pair<String, String> {
@@ -66,70 +68,81 @@ fun splitSize(formatted: String): Pair<String, String> {
     return if (idx > 0) formatted.substring(0, idx) to formatted.substring(idx + 1) else formatted to ""
 }
 
-/** Logo + two-tone "SWEEPR Cleaner" wordmark + Pro / Free pill (mockup #6 top bar). */
+/** Logo + two-tone "SWEEPR Cleaner" wordmark + clickable Pro / Free pill. */
 @Composable
 fun SweeprWordmarkBar(
     isPro: Boolean?,
     modifier: Modifier = Modifier,
+    onPlanClick: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     Surface(color = MaterialTheme.colorScheme.background) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SweeprBrushLogo(Modifier.size(28.dp))
-            Spacer(Modifier.width(9.dp))
-            Text(
-                buildAnnotatedString {
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onBackground)) { append("SWEEPR ") }
-                    withStyle(SpanStyle(color = SweeprGreen)) { append("Cleaner") }
-                },
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 17.sp,
-                letterSpacing = (-0.3).sp,
-            )
-            Spacer(Modifier.weight(1f))
-            actions()
-            if (isPro != null) {
-                PlanPill(isPro)
+        Column(Modifier.fillMaxWidth()) {
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SweeprBrushLogo(Modifier.size(28.dp))
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onBackground)) { append("SWEEPR ") }
+                            withStyle(SpanStyle(color = SweeprGreen)) { append("Cleaner") }
+                        },
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
+                        letterSpacing = (-0.4).sp,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                actions()
+                if (isPro != null) {
+                    Spacer(Modifier.width(8.dp))
+                    PlanPill(isPro = isPro, onClick = onPlanClick)
+                }
             }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         }
     }
 }
 
 @Composable
-fun PlanPill(isPro: Boolean) {
+fun PlanPill(isPro: Boolean, onClick: (() -> Unit)? = null) {
     val accent = emeraldText()
-    val label = if (isPro) "✓ Pro" else "Free"
+    val label = if (isPro) "PRO" else "FREE"
     Text(
         label,
         color = if (isPro) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-        fontSize = 11.sp,
+        fontSize = 10.5.sp,
         fontWeight = FontWeight.ExtraBold,
+        letterSpacing = 0.6.sp,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(if (isPro) SweeprGreen.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant)
+            .background(if (isPro) SweeprGreen.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface)
             .border(
                 1.dp,
-                if (isPro) SweeprGreen.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline,
+                if (isPro) SweeprGreen.copy(alpha = 0.40f) else MaterialTheme.colorScheme.outline,
                 RoundedCornerShape(999.dp),
             )
-            .padding(horizontal = 10.dp, vertical = 3.dp),
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 
 /**
- * Storage ring (arc = [progress], emerald) with an emerald gradient core in the middle.
- * Used by the Quick Clean button on Home (#6) and the "ALL CLEAN" celebration (#10).
+ * Candidate 5 Signature Smart Ring:
+ * Bioluminescent dual-ring gauge with precision outer tick marks and an emerald-cyan gradient core.
  */
 @Composable
 fun QuickCleanRing(
     progress: Float,
     modifier: Modifier = Modifier,
-    size: Dp = 210.dp,
+    size: Dp = 204.dp,
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -139,18 +152,49 @@ fun QuickCleanRing(
         animationSpec = tween(900),
         label = "quickCleanRing",
     )
-    val trackColor = Slate400.copy(alpha = 0.18f)
+    val trackColor = Slate400.copy(alpha = 0.16f)
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
-            // Soft emerald glow behind the ring.
+            val center = Offset(this.size.width / 2f, this.size.height / 2f)
+            val outerRadius = this.size.minDimension / 2f
+
+            // Bioluminescent emerald + cyan ambient glow
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(SweeprGreen.copy(alpha = 0.28f), SweeprGreen.copy(alpha = 0.06f), Color.Transparent),
+                    listOf(
+                        SweeprGreen.copy(alpha = 0.26f),
+                        SweeprCyan.copy(alpha = 0.08f),
+                        Color.Transparent,
+                    ),
                 ),
-                radius = this.size.minDimension / 2,
+                radius = outerRadius,
             )
-            val stroke = 9.dp.toPx()
-            val inset = stroke / 2 + 6.dp.toPx()
+
+            // Precision outer tick marks (36 ticks around circumference)
+            val tickCount = 36
+            val tickOuter = outerRadius - 2.dp.toPx()
+            val tickInner = outerRadius - 6.dp.toPx()
+            for (i in 0 until tickCount) {
+                val angleDeg = -90f + (i * 360f / tickCount)
+                val rad = Math.toRadians(angleDeg.toDouble())
+                val isLit = (i.toFloat() / tickCount) <= animated
+                drawLine(
+                    color = if (isLit) SweeprGreen.copy(alpha = 0.55f) else Slate400.copy(alpha = 0.18f),
+                    start = Offset(
+                        center.x + (tickInner * cos(rad)).toFloat(),
+                        center.y + (tickInner * sin(rad)).toFloat(),
+                    ),
+                    end = Offset(
+                        center.x + (tickOuter * cos(rad)).toFloat(),
+                        center.y + (tickOuter * sin(rad)).toFloat(),
+                    ),
+                    strokeWidth = 1.5.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
+            }
+
+            val stroke = 10.dp.toPx()
+            val inset = stroke / 2 + 10.dp.toPx()
             val arcSize = Size(this.size.width - inset * 2, this.size.height - inset * 2)
             val topLeft = Offset(inset, inset)
             drawArc(
@@ -164,7 +208,9 @@ fun QuickCleanRing(
             )
             if (animated > 0f) {
                 drawArc(
-                    brush = Brush.sweepGradient(listOf(Emerald400, SweeprGreen, SweeprGreen, Emerald400)),
+                    brush = Brush.sweepGradient(
+                        listOf(Emerald400, SweeprGreen, SweeprCyan, SweeprGreen, Emerald400),
+                    ),
                     startAngle = -90f,
                     sweepAngle = 360f * animated,
                     useCenter = false,
@@ -174,16 +220,17 @@ fun QuickCleanRing(
                 )
             }
         }
-        val coreSize = size - 48.dp
+        val coreSize = size - 54.dp
         val click = if (onClick != null) {
             Modifier.clickable(onClickLabel = onClickLabel, role = Role.Button, onClick = onClick)
         } else Modifier
         Column(
             modifier = Modifier
                 .size(coreSize)
-                .shadow(18.dp, CircleShape, ambientColor = SweeprGreen, spotColor = SweeprGreen)
+                .shadow(20.dp, CircleShape, ambientColor = SweeprGreen, spotColor = SweeprGreen)
                 .clip(CircleShape)
                 .background(EmeraldGradient)
+                .border(1.5.dp, Color.White.copy(alpha = 0.28f), CircleShape)
                 .then(click),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -192,7 +239,7 @@ fun QuickCleanRing(
     }
 }
 
-/** Full-width emerald gradient pill button (mockup `.btn`). */
+/** Full-width emerald gradient pill button. */
 @Composable
 fun EmeraldButton(
     text: String,
@@ -201,28 +248,46 @@ fun EmeraldButton(
     enabled: Boolean = true,
     leading: String? = null,
 ) {
-    val shape = RoundedCornerShape(999.dp)
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
-            .then(if (enabled) Modifier.shadow(10.dp, shape, ambientColor = SweeprGreen, spotColor = SweeprGreen) else Modifier)
+            .then(if (enabled) Modifier.shadow(12.dp, shape, ambientColor = SweeprGreen, spotColor = SweeprGreen) else Modifier)
             .clip(shape)
             .background(
-                if (enabled) Brush.linearGradient(listOf(Emerald600, SweeprGreen))
+                if (enabled) Brush.linearGradient(listOf(SweeprGreen, Emerald600))
                 else Brush.linearGradient(listOf(Slate400.copy(alpha = 0.35f), Slate400.copy(alpha = 0.35f))),
+            )
+            .border(
+                1.dp,
+                if (enabled) Color.White.copy(alpha = 0.22f) else Color.Transparent,
+                shape,
             )
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = text },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            if (leading != null) "$leading  $text" else text,
-            color = Color.White,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 15.sp,
-            textAlign = TextAlign.Center,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (leading != null) {
+                SweeprVectorIcon(
+                    kind = SweeprIconKind.SPARKLE_CLEAN,
+                    tint = Color.White,
+                    modifier = Modifier.size(17.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                text = text,
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 15.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -236,7 +301,7 @@ fun StickyDock(
     note: String? = null,
     leading: String? = null,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shadowElevation = 8.dp) {
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 10.dp) {
         Column(Modifier.fillMaxWidth()) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             Column(
@@ -272,24 +337,26 @@ fun SizeBadge(text: String, rose: Boolean = false, modifier: Modifier = Modifier
     Text(
         text,
         color = fg,
-        fontSize = 10.5.sp,
+        fontSize = 11.sp,
         fontWeight = FontWeight.ExtraBold,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
             .background(base.copy(alpha = 0.14f))
-            .border(1.dp, base.copy(alpha = 0.3f), RoundedCornerShape(999.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .border(1.dp, base.copy(alpha = 0.32f), RoundedCornerShape(999.dp))
+            .padding(horizontal = 9.dp, vertical = 3.dp),
     )
 }
 
-/** Mockup "card": panel colour, hairline border, 16dp corners. */
+/** Frosted glass bento card: panel colour, hairline border, 18dp corners. */
 @Composable
 fun SweeprPanel(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(18.dp)
     Column(
         modifier = modifier
             .clip(shape)

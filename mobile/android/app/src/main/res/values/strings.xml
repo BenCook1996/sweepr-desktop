@@ -143,7 +143,7 @@
     <string name="videos_largest_first">Largest videos first</string>
     <string name="empty_no_videos">No videos found</string>
     <string name="empty_no_screenshots">No screenshots found 🎉</string>
-    <string name="group_intro">We keep the BEST copy and pre-select the rest. Tap to select · long-press to preview.</string>
+    <string name="group_intro">Best shot kept automatically. Tap to toggle · hold to preview.</string>
     <string name="group_can_be_freed">%1$s can be freed</string>
     <string name="action_deselect">Deselect</string>
     <string name="action_select_extras">Select extras</string>
@@ -160,7 +160,7 @@
     <string name="contacts_permission_text">SWEEPR Cleaner needs access to your contacts to find duplicates.</string>
     <string name="contacts_permission_button">Allow contacts access</string>
     <string name="contacts_none_found">No duplicate contacts found 🎉</string>
-    <string name="contacts_merge_explainer">Merging links duplicates into one contact. No numbers or emails are deleted, and you can separate them again from your Contacts app.</string>
+    <string name="contacts_merge_explainer">Combines numbers &amp; emails safely without deleting data.</string>
     <string name="contacts_no_phone">No phone number</string>
     <string name="contacts_merge_now">Merge now</string>
     <string name="contact_no_name">(No name)</string>
@@ -355,8 +355,8 @@
     <string name="category_messenger_media">Chat &amp; Messenger Media</string>
     <string name="category_trash">Trash Bin (Restore Deleted)</string>
     <string name="tab_blurry">Blurry (%1$d)</string>
-    <string name="tab_large_files">Large Files (%1$d)</string>
-    <string name="tab_messenger">Chat Media (%1$d)</string>
+    <string name="tab_large_files">Large (%1$d)</string>
+    <string name="tab_messenger">Chat (%1$d)</string>
     <string name="kind_identical_copies">exact copies</string>
     <string name="kind_similar_shots">similar photos</string>
     <string name="badge_best_shot">✓ Best Photo (Kept)</string>
@@ -371,20 +371,20 @@
     <string name="compressor_badge">Shrink Size</string>
     <string name="compressor_title">Shrink Video Size</string>
     <string name="compressor_subtitle">Estimated space saved: ~%1$s</string>
-    <string name="compressor_preset_720p">Recommended — Save ~60%% Space (Great for phone &amp; sharing)</string>
-    <string name="compressor_preset_1080p">High Quality — Save ~40%% Space (Keeps full HD detail)</string>
-    <string name="compressor_preset_480p">Maximum Space Saver — Save ~72%% Space (Best for old clips)</string>
+    <string name="compressor_preset_720p">Balanced — 720p HD (~60%% smaller)</string>
+    <string name="compressor_preset_1080p">Gentle — 1080p Full HD (~40%% smaller)</string>
+    <string name="compressor_preset_480p">Maximum — 480p Compact (~72%% smaller)</string>
     <string name="compressor_action_start">Shrink Video Now</string>
     <string name="compressor_working_title">Shrinking video size…</string>
     <string name="compressor_done_title">Video Size Reduced!</string>
     <string name="compressor_done_summary">Original: %1$s → Smaller copy: %2$s\nSpace saved: %3$s (%4$d%%)</string>
-    <string name="compressor_saved_location">Saved to Movies/Sweepr/%1$s. The original is kept until you move it to the Trash bin.</string>
+    <string name="compressor_saved_location">Saved to Movies/Sweepr/%1$s. Original stays safe unless moved to Trash.</string>
     <string name="compressor_trash_original">Move Original to Trash</string>
     <string name="compressor_keep_both">Keep Both</string>
     <string name="compressor_failed">Could not shrink video: %1$s</string>
 
     <!-- System Trash Undo (#20) -->
-    <string name="trash_explainer">Deleted items stay in your Trash bin for 30 days so you can restore them anytime.</string>
+    <string name="trash_explainer">Restore deleted items within 30 days.</string>
     <string name="trash_header_count">%1$d items in Trash bin · %2$s</string>
     <string name="trash_restore_action">Restore Selected Items</string>
     <string name="empty_trash">Your Trash bin is empty</string>
@@ -461,12 +461,12 @@
     <string name="triage_marked_trash_badge">SELECTED TO REMOVE</string>
 
     <!-- Batch Photo Optimizer (#1) & EXIF GPS Privacy Stripper (#9) -->
-    <string name="media_opt_tab_video">Shrink Large Videos</string>
-    <string name="media_opt_tab_photo_privacy">Shrink Photos &amp; Privacy</string>
+    <string name="media_opt_tab_video">Shrink Videos</string>
+    <string name="media_opt_tab_photo_privacy">Shrink Photos</string>
     <string name="photo_opt_toggle_compress">Shrink Photo File Size</string>
-    <string name="photo_opt_toggle_compress_sub">Makes photos take up ~65%% less space while looking just as sharp</string>
+    <string name="photo_opt_toggle_compress_sub">~60%% smaller with no visible quality loss</string>
     <string name="photo_opt_toggle_gps">Remove Hidden Location Info</string>
-    <string name="photo_opt_toggle_gps_sub">Erases the map location saved inside your photos (%1$d photos have location tags)</string>
+    <string name="photo_opt_toggle_gps_sub">Strips GPS tags (%1$d photos tagged)</string>
     <string name="photo_opt_batch_cta">Shrink %1$d Photos (Save ~%2$s)</string>
     <string name="photo_opt_batch_gps_only_cta">Remove Location Info from %1$d Photos</string>
     <string name="photo_opt_empty">No large photos or location-tagged photos found 🎉</string>
@@ -478,7 +478,7 @@
     <string name="photo_opt_done_title">Photos Shrunk!</string>
     <string name="photo_opt_done_summary">Shrunk %1$d photos: %2$s → %3$s\nSpace saved: %4$s (%5$d%%)</string>
     <string name="photo_opt_gps_stripped_summary">Hidden map location removed from %1$d photos</string>
-    <string name="photo_opt_saved_location">Saved to Pictures/Sweepr. Originals are kept until moved to the Trash bin.</string>
+    <string name="photo_opt_saved_location">Saved to Pictures/Sweepr. Originals stay safe unless moved to Trash.</string>
     <string name="photo_opt_trash_original">Move Original to Trash</string>
     <string name="photo_opt_failed">Could not shrink selected photos.</string>
 
@@ -505,30 +505,30 @@
     <string name="cloud_title">Private Vault &amp; Cloud Space</string>
     <string name="cloud_eyebrow">CLOUD SPACE FINDER</string>
     <string name="cloud_banner_title">%1$s of cloud space can be freed</string>
-    <string name="cloud_banner_body">%1$s of duplicates, screenshots, and large videos are taking up room in %2$s. Tap to free up cloud space or lock private files.</string>
+    <string name="cloud_banner_body">%1$s of duplicates, screenshots, and large videos are taking up room in %2$s.</string>
     <string name="cloud_headline">Free up %1$s of Cloud Space</string>
-    <string name="cloud_headline_body">Duplicates, screenshots, and large videos on your phone also fill up your cloud backup. Clean them here to free up cloud space without upgrading your storage plan.</string>
+    <string name="cloud_headline_body">Deleting phone clutter also frees space in your cloud backup.</string>
     <string name="cloud_which_service">Which cloud backup do you use?</string>
     <string name="cloud_row_junk">Duplicate photos, blurry shots &amp; screenshots</string>
     <string name="cloud_row_videos">Space saved by shrinking large videos</string>
     <string name="cloud_row_attachments">Saved chat photos &amp; videos</string>
     <string name="cloud_row_total_reclaimable">Total cloud space you can free up</string>
-    <string name="cloud_estimate_note">Checked privately on your phone — SWEEPR never asks for your cloud login.</string>
+    <string name="cloud_estimate_note">Checked privately on your phone — no cloud login needed.</string>
     <string name="cloud_action_duplicates">Clean duplicate &amp; similar photos</string>
     <string name="cloud_action_videos">Shrink large videos</string>
     <string name="cloud_action_screenshots">Clear old screenshots</string>
     <string name="cloud_action_attachments">Clean saved chat media</string>
     <string name="cloud_action_manage">Open %1$s storage settings</string>
-    <string name="cloud_sync_note">When cloud backup is turned on, deleting duplicates on your phone also frees up that space in your cloud backup.</string>
+    <string name="cloud_sync_note">Deleting duplicates on your phone also frees that space in your cloud backup.</string>
     <string name="vault_eyebrow">PRIVATE FILE VAULT</string>
     <string name="vault_title">Private Photo &amp; Document Vault</string>
-    <string name="vault_subtitle">Lock sensitive photos, IDs, and personal documents with a password so nobody else using your phone can open them.</string>
+    <string name="vault_subtitle">Lock sensitive photos, IDs &amp; documents with local AES-256 encryption.</string>
     <string name="vault_password_label">Your vault password (at least 8 characters)</string>
     <string name="vault_show">Show</string>
     <string name="vault_hide">Hide</string>
     <string name="vault_btn_encrypt">+ Lock Photo or File…</string>
     <string name="vault_btn_unlock">Unlock My Vault</string>
-    <string name="vault_btn_restore">Save to Phone</string>
+    <string name="vault_btn_restore">Restore</string>
     <string name="vault_locked_file">Locked Private File</string>
     <string name="vault_empty">No files locked in your Private Vault yet.</string>
     <string name="vault_msg_short_pw">Please enter a password of at least 8 characters.</string>
@@ -551,7 +551,7 @@
     <string name="home_tile_contacts">Contacts</string>
     <string name="home_tile_battery">Battery</string>
     <string name="home_tile_battery_hint">Health &amp; charging</string>
-    <string name="home_tile_needs_permission">Needs permission</string>
+    <string name="home_tile_needs_permission">Allow</string>
     <string name="home_tile_not_scanned">Tap to scan</string>
     <string name="home_tile_nothing">All clean</string>
     <plurals name="home_tile_contacts_dupes">
@@ -562,7 +562,7 @@
     <string name="home_swipe_body">Keep or remove photos one by one</string>
     <string name="home_more_tools">More tools</string>
     <string name="home_storage_details">Storage details</string>
-    <string name="home_rescan">↻ Scan again</string>
+    <string name="home_rescan">↻ Rescan</string>
 
     <!-- Mockups v2: Quick Clean review (#7) -->
     <string name="review_title">Quick Clean review</string>
@@ -628,20 +628,20 @@
     <string name="shrink_smaller">smaller</string>
     <string name="shrink_total_saved">total saved</string>
     <string name="shrink_strength_label">COMPRESSION STRENGTH</string>
-    <string name="shrink_recommended">Recommended</string>
+    <string name="shrink_recommended">Best</string>
     <string name="shrink_gentle">Gentle</string>
     <string name="shrink_balanced">Balanced</string>
     <string name="shrink_maximum">Maximum</string>
-    <string name="shrink_photo_gentle_desc">~35%% smaller (≤3200px, 88%% quality) — best for printing &amp; large screens.</string>
-    <string name="shrink_photo_balanced_desc">~58%% smaller (≤2560px, 80%% quality) — looks identical on phone screens.</string>
-    <string name="shrink_photo_maximum_desc">~75%% smaller (≤1920px, 70%% quality) — frees up the most storage space.</string>
-    <string name="shrink_gps_toggle_chip">Also remove hidden GPS location tags</string>
-    <string name="shrink_safety_note">Originals are kept until you choose to move them to the Trash bin, where they can be restored for 30 days.</string>
+    <string name="shrink_photo_gentle_desc">Up to 3200px · Best for printing &amp; large screens</string>
+    <string name="shrink_photo_balanced_desc">Up to 2560px · Looks identical on phone screens</string>
+    <string name="shrink_photo_maximum_desc">Up to 1920px · Frees the most storage space</string>
+    <string name="shrink_gps_toggle_chip">Remove hidden GPS location tags</string>
+    <string name="shrink_safety_note">Originals stay untouched unless Move Originals to Trash is on.</string>
     <string name="shrink_n_photos">Shrink %1$d Photos (Save ~%2$s)</string>
     <string name="shrink_clean_n_photos">Remove Location from %1$d Photos</string>
     <string name="shrink_select_photos">Select photos to shrink</string>
     <string name="shrink_n_videos">videos</string>
-    <string name="shrink_video_hint">Tap Shrink on a video to compress it with this strength.</string>
+    <string name="shrink_video_hint">Tap Shrink on a video below to compress it.</string>
 
     <!-- Mockups v2: Cleaning complete (#10) -->
     <string name="done_all_clean">ALL CLEAN</string>

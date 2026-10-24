@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
@@ -469,86 +470,56 @@ fun BatteryCareScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (onOpenVault != null) {
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Surface(
-                            onClick = {},
-                            shape = RoundedCornerShape(20.dp),
-                            color = SweeprGreen,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = "🔋 Battery Saver",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                        }
-                        Surface(
-                            onClick = onOpenVault,
-                            shape = RoundedCornerShape(20.dp),
-                            color = Color.Transparent,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = "🔒 Private Vault & Cloud",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            )
-                        }
-                    }
-                }
+                BatteryVaultSegmentedBar(
+                    isBatterySelected = true,
+                    onSelectBattery = {},
+                    onSelectVault = onOpenVault,
+                )
             }
 
-            // Friendly 3-Stat Overview Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.5.dp, SweeprGreen.copy(alpha = 0.45f)),
+            // Candidate 5: 3-Stat Telemetry Card + 20%–80% Optimal Lifespan Zone Bar
+            SweeprPanel(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp)),
             ) {
-                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            "BATTERY HEALTH OVERVIEW",
-                            color = SweeprGreen,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                        )
-                        Surface(
-                            color = if (state.hasBatteryCare) SweeprGreen.copy(alpha = 0.16f) else Color.Gray.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(999.dp),
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
+                            SweeprVectorIcon(
+                                kind = SweeprIconKind.BATTERY,
+                                tint = SweeprGreen,
+                                modifier = Modifier.size(16.dp),
+                            )
                             Text(
-                                if (state.hasBatteryCare) "Battery Care Active" else "Live Status",
-                                color = if (state.hasBatteryCare) SweeprGreenDark else Color.Gray,
+                                "BATTERY HEALTH TELEMETRY",
+                                color = emeraldText(),
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.8.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
+                        SizeBadge(
+                            text = if (state.hasBatteryCare) "✓ Guard Active" else "Live Telemetry",
+                        )
                     }
 
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         SensorStatBox(
                             modifier = Modifier.weight(1f),
                             label = "CHARGE",
@@ -557,23 +528,80 @@ fun BatteryCareScreen(
                         )
                         SensorStatBox(
                             modifier = Modifier.weight(1f),
-                            label = "TEMPERATURE",
-                            value = snap.thermalStatusLabel,
-                            sub = snap.temperatureC?.let { "$it °C" } ?: "Safe",
+                            label = "TEMP",
+                            value = snap.temperatureC?.let { "${it}°C" } ?: snap.thermalStatusLabel,
+                            sub = snap.thermalStatusLabel,
                         )
                         SensorStatBox(
                             modifier = Modifier.weight(1f),
-                            label = "CONDITION",
+                            label = "HEALTH",
                             value = snap.healthStatusLabel,
-                            sub = snap.cycleCount?.let { "$it cycles" } ?: "Healthy",
+                            sub = snap.cycleCount?.let { "$it cycles" } ?: "Optimal",
                         )
                     }
 
-                    Text(
-                        "Keeping your battery between 20% and 80% and avoiding excess heat helps your battery last years longer.",
-                        color = Color.Gray,
-                        fontSize = 12.sp,
-                    )
+                    // 20%–80% Optimal Lifespan Zone Visual Bar
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "20%–80% Optimal Lifespan Zone",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "Target: ${snap.chargeLimitPercent}%",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = emeraldText(),
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(999.dp)),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Box(
+                                Modifier
+                                    .weight(0.20f)
+                                    .fillMaxSize()
+                                    .background(SweeprRose.copy(alpha = 0.55f)),
+                            )
+                            Box(
+                                Modifier
+                                    .weight(0.60f)
+                                    .fillMaxSize()
+                                    .background(SweeprGreen),
+                            )
+                            Box(
+                                Modifier
+                                    .weight(0.20f)
+                                    .fillMaxSize()
+                                    .background(SweeprAmber.copy(alpha = 0.65f)),
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text("0% Low", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("20%–80% Best Longevity", fontSize = 10.sp, color = emeraldText(), fontWeight = FontWeight.Bold)
+                            Text("100% Wear", fontSize = 10.sp, color = SweeprAmber)
+                        }
+                    }
                 }
             }
 
@@ -608,26 +636,78 @@ fun BatteryCareScreen(
                 }
             }
 
-            // 1. Remind Me to Unplug at 80%
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
+            // 1. 80% Charge Guard
+            SweeprPanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Remind Me to Unplug at 80%", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        if (!state.hasBatteryCare) AddonPill()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.BATTERY,
+                                tint = SweeprGreen,
+                                badgeSize = 36.dp,
+                                iconSize = 18.dp,
+                            )
+                            Text(
+                                "80% Charge Guard",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        if (!state.hasBatteryCare) {
+                            Spacer(Modifier.width(8.dp))
+                            AddonPill()
+                        }
                     }
                     Text(
-                        "Sends a gentle alert when your phone reaches your chosen charge level so it doesn't sit at 100% on the charger.",
-                        color = Color.Gray,
+                        "Reminds you to unplug at $sliderLimit% so your battery lasts up to 2× longer.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.5.sp,
                     )
+                    // 1-Tap Quick-Select Target Chips (70% - 90%)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        listOf(70, 75, 80, 85, 90).forEach { preset ->
+                            val selected = sliderLimit == preset
+                            Surface(
+                                onClick = {
+                                    requireBatteryCare {
+                                        sliderLimit = preset
+                                        if (snap.chargeLimitEnabled) {
+                                            snap = BatteryCareManager.setChargeLimit(context, true, preset)
+                                            notice = "Updated unplug reminder to $preset%."
+                                        }
+                                    }
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (selected) SweeprGreen else MaterialTheme.colorScheme.background,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (selected) SweeprGreen else MaterialTheme.colorScheme.outline,
+                                ),
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(
+                                    text = "$preset%",
+                                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(vertical = 7.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Slider(
                             value = sliderLimit.toFloat(),
@@ -641,7 +721,12 @@ fun BatteryCareScreen(
                             modifier = Modifier.weight(1f),
                         )
                         Spacer(Modifier.width(10.dp))
-                        Text("$sliderLimit%", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text(
+                            "$sliderLimit%",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = emeraldText(),
+                        )
                     }
                     Row(
                         Modifier.fillMaxWidth(),
@@ -649,9 +734,10 @@ fun BatteryCareScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            if (snap.chargeLimitEnabled) "Reminder active at ${snap.chargeLimitPercent}%"
-                            else "Unplug reminder off",
+                            if (snap.chargeLimitEnabled) "Guard active at ${snap.chargeLimitPercent}%"
+                            else "Charge guard off",
                             fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
                         )
                         Switch(
                             checked = snap.chargeLimitEnabled,
@@ -659,48 +745,63 @@ fun BatteryCareScreen(
                                 if (enabled) {
                                     requireBatteryCare {
                                         snap = BatteryCareManager.setChargeLimit(context, true, sliderLimit)
-                                        notice = "Unplug reminder turned on at $sliderLimit%."
+                                        notice = "80% Charge Guard turned on at $sliderLimit%."
                                     }
                                 } else {
                                     snap = BatteryCareManager.setChargeLimit(context, false, sliderLimit)
-                                    notice = "Unplug reminder turned off."
+                                    notice = "Charge Guard turned off."
                                 }
                             },
                         )
                     }
                     if (snap.chargeLimitEnabled && sliderLimit != snap.chargeLimitPercent) {
-                        Button(
+                        EmeraldButton(
+                            text = "Save $sliderLimit% Target",
                             onClick = {
                                 requireBatteryCare {
                                     snap = BatteryCareManager.setChargeLimit(context, true, sliderLimit)
-                                    notice = "Updated unplug reminder to $sliderLimit%."
+                                    notice = "Updated Charge Guard target to $sliderLimit%."
                                 }
                             },
-                        ) {
-                            Text("Save $sliderLimit% Target")
-                        }
+                        )
                     }
                 }
             }
 
             // 2. Overheat Alert & Battery Saver
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
+            SweeprPanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Warn Me If Phone Gets Too Hot", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        if (!state.hasBatteryCare) AddonPill()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.SPARKLE_CLEAN,
+                                tint = SweeprAmber,
+                                badgeSize = 36.dp,
+                                iconSize = 18.dp,
+                            )
+                            Text(
+                                "Thermal Overheat Guard",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        if (!state.hasBatteryCare) {
+                            Spacer(Modifier.width(8.dp))
+                            AddonPill()
+                        }
                     }
                     Text(
-                        "Watches your phone's temperature (${snap.temperatureC?.let { "$it °C" } ?: snap.thermalStatusLabel}) and pauses heavy tasks if your phone gets warm while charging.",
-                        color = Color.Gray,
+                        "Warns you if your phone gets hot (${snap.temperatureC?.let { "$it °C" } ?: snap.thermalStatusLabel}) while fast-charging.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.5.sp,
                     )
                     Row(
@@ -708,7 +809,7 @@ fun BatteryCareScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Overheat Protection", fontSize = 13.sp)
+                        Text("Overheat Protection", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         Switch(
                             checked = snap.thermalGuardEnabled,
                             onCheckedChange = { enabled ->
@@ -733,33 +834,50 @@ fun BatteryCareScreen(
                                 )
                             }
                         },
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Open Phone Battery Saver")
+                        Text("Open Phone Battery Saver", fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
-            // 3. Clean Background Junk
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
+            // 3. Cool Down & Clear App Cache
+            SweeprPanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Clean Background Junk", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        if (!state.hasBatteryCare) AddonPill()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.SPARKLE_CLEAN,
+                                tint = SweeprCyan,
+                                badgeSize = 36.dp,
+                                iconSize = 18.dp,
+                            )
+                            Text(
+                                "Cool Down & Clear App Cache",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        if (!state.hasBatteryCare) {
+                            Spacer(Modifier.width(8.dp))
+                            AddonPill()
+                        }
                     }
                     Text(
-                        "Clears temporary background files to free up memory (${formatBytes(snap.availableRamBytes)} free) and lets you see which apps use the most battery.",
-                        color = Color.Gray,
+                        "Frees temporary memory (${formatBytes(snap.availableRamBytes)} available) to reduce heat drain.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.5.sp,
                     )
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -769,15 +887,16 @@ fun BatteryCareScreen(
                                     val freed = BatteryCareManager.trimAppCaches(context)
                                     snap = BatteryCareManager.readSnapshot(context)
                                     notice = if (freed > 0) {
-                                        "Cleared ${formatBytes(freed)} of background junk."
+                                        "Cooled down & cleared ${formatBytes(freed)} of app cache."
                                     } else {
-                                        "Background memory is already clean."
+                                        "App cache is already clean & cool."
                                     }
                                 }
                             },
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Clean Background Junk")
+                            Text("Cool Down & Clear", fontWeight = FontWeight.Bold, maxLines = 1)
                         }
                         OutlinedButton(
                             onClick = {
@@ -788,11 +907,84 @@ fun BatteryCareScreen(
                                     )
                                 }
                             },
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("See App Drain")
+                            Text("App Drain", fontWeight = FontWeight.Bold, maxLines = 1)
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BatteryVaultSegmentedBar(
+    isBatterySelected: Boolean,
+    onSelectBattery: () -> Unit,
+    onSelectVault: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Surface(
+                onClick = onSelectBattery,
+                shape = RoundedCornerShape(12.dp),
+                color = if (isBatterySelected) SweeprGreen else Color.Transparent,
+                modifier = Modifier.weight(1f),
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SweeprVectorIcon(
+                        kind = SweeprIconKind.BATTERY,
+                        tint = if (isBatterySelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Battery Care",
+                        color = if (isBatterySelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.5.sp,
+                        maxLines = 1,
+                    )
+                }
+            }
+            Surface(
+                onClick = onSelectVault,
+                shape = RoundedCornerShape(12.dp),
+                color = if (!isBatterySelected) SweeprGreen else Color.Transparent,
+                modifier = Modifier.weight(1f),
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SweeprVectorIcon(
+                        kind = SweeprIconKind.VAULT_SHIELD,
+                        tint = if (!isBatterySelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Private Vault",
+                        color = if (!isBatterySelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.5.sp,
+                        maxLines = 1,
+                    )
                 }
             }
         }
@@ -810,26 +1002,52 @@ private fun SensorStatBox(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.background)
-            .padding(12.dp),
+            .padding(horizontal = 10.dp, vertical = 10.dp),
     ) {
-        Text(label, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(2.dp))
-        Text(value, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-        Text(sub, color = Color.Gray, fontSize = 11.sp)
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 0.6.sp,
+            maxLines = 1,
+            softWrap = false,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = value,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 16.5.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
+        Text(
+            text = sub,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 11.sp,
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
     }
 }
 
 @Composable
 private fun AddonPill() {
     Surface(
-        color = Color(0xFFF59E0B).copy(alpha = 0.18f),
+        color = Color(0xFFF59E0B).copy(alpha = 0.16f),
         shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.38f)),
     ) {
         Text(
-            "ADD-ON · £17.99/YR",
-            color = Color(0xFFB45309),
+            "£17.99/YR",
+            color = Color(0xFFF59E0B),
             fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }

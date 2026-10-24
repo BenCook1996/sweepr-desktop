@@ -17,12 +17,23 @@
     errorMessage,
     isPaymentRequired,
     requestActivation,
+    type AppInfo,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
 
-  let { license }: { license: LicenseStatus | null } = $props();
+  let { license, info = null }: { license: LicenseStatus | null; info?: AppInfo | null } = $props();
+  const osType = $derived(
+    info?.os?.toLowerCase() ||
+      (typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)
+        ? "macos"
+        : typeof navigator !== "undefined" && /Linux/i.test(navigator.platform)
+          ? "linux"
+          : "windows")
+  );
+  const trashLabel = $derived(osType === "windows" ? "Recycle Bin" : "Trash");
+  const deviceLabel = $derived(osType === "macos" ? "Mac" : osType === "linux" ? "System" : "PC");
   let sourceTab = $state<"pc" | "cloud">(cachedSourceTab);
   let mode = $state<"duplicates" | "large">(cachedMode);
   let groups = $state<DuplicateGroup[]>(cachedGroups);
@@ -37,6 +48,46 @@
   let scanned = $state(cachedScanned);
   let selectedDir = $state(cachedSelectedDir);
   let movingFile = $state<string | null>(null);
+  let dragOver = $state(false);
+  let lastClickedFile = $state<string | null>(null);
+
+  const flatExtraFiles = $derived(groups.flatMap((g) => g.files.slice(1)));
+
+  function handleDuplicateCheckClick(file: string, e: MouseEvent) {
+    const nextState = !selectedFiles[file];
+    if (e.shiftKey && lastClickedFile) {
+      const i1 = flatExtraFiles.indexOf(lastClickedFile);
+      const i2 = flatExtraFiles.indexOf(file);
+      if (i1 !== -1 && i2 !== -1) {
+        const [start, end] = i1 < i2 ? [i1, i2] : [i2, i1];
+        const next = { ...selectedFiles };
+        for (let i = start; i <= end; i++) {
+          next[flatExtraFiles[i]] = nextState;
+        }
+        selectedFiles = next;
+        lastClickedFile = file;
+        return;
+      }
+    }
+    selectedFiles = { ...selectedFiles, [file]: nextState };
+    lastClickedFile = file;
+  }
+
+  function onDropFolder(e: DragEvent) {
+    e.preventDefault();
+    dragOver = false;
+    const f = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
+    if (f?.path) {
+      selectedDir = f.path;
+      scan();
+      return;
+    }
+    const text = e.dataTransfer?.getData("text/plain");
+    if (text) {
+      selectedDir = text.trim().replace(/^"+|"+$/g, "");
+      scan();
+    }
+  }
 
   $effect(() => {
     cachedSourceTab = sourceTab;
@@ -191,12 +242,22 @@
   }
 </script>
 
-<div class="space-layout">
+<div
+  class="space-layout"
+  ondragover={(e) => {
+    e.preventDefault();
+    dragOver = true;
+  }}
+  ondragleave={() => (dragOver = false)}
+  ondrop={onDropFolder}
+  role="region"
+  aria-label="Space and Cloud Cleaner"
+>
   <div class="header-row">
     <div>
       <h1 class="page-title">Space &amp; Cloud Cleaner</h1>
       <p class="muted small" style="margin: 4px 0 0 0;">
-        Find duplicate files and large space-hogging videos on this PC or across your cloud folders.
+        Find duplicate files and large space-hogging videos on this {deviceLabel} or across your cloud folders (or drag a folder here).
       </p>
     </div>
 
@@ -208,7 +269,7 @@
         role="tab"
         aria-selected={sourceTab === "pc"}
       >
-        This PC
+        This {deviceLabel}
       </button>
       <button
         class="source-btn"
@@ -225,8 +286,8 @@
   {#if sourceTab === "cloud"}
     <CloudClean {license} />
   {:else}
-    <!-- Simple Folder Picker & Mode Card (No Raw Path Input!) -->
-    <div class="card scan-bar-card">
+    <!-- Simple Folder Picker & Mode Card (Supports Drag & Drop!) -->
+    <div class="card scan-bar-card" style={dragOver ? "border-color: var(--accent); background: var(--accent-light);" : ""}>
       <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div class="quick-folders-row">
           <span class="field-label">FOLDER TO CHECK:</span>
@@ -354,14 +415,14 @@
         <div class="card toolbar-card">
           <div>
             <strong>Found {groups.length} sets of duplicate files</strong>
-            <div class="muted small">We automatically keep the first copy safe and select the extra copies for you.</div>
+            <div class="muted small">We automatically keep the first copy safe and select the extra copies for you (Shift+Click to select a range).</div>
           </div>
           <div class="spacer"></div>
           <button class="ghost small-btn" onclick={smartSelectExtras}>
             Select All Extra Copies
           </button>
           <button class="primary small-btn" disabled={!selectedList.length || cleaning} onclick={cleanSelected}>
-            {cleaning ? "Moving to Recycle Bin…" : `Move ${selectedList.length} Extra Copy(s) to Recycle Bin (${formatBytes(selectedBytes)})`}
+            {cleaning ? `Moving to ${trashLabel}…` : `Move ${selectedList.length} Extra Copy(s) to ${trashLabel} (${formatBytes(selectedBytes)})`}
           </button>
         </div>
 
@@ -384,9 +445,16 @@
                     {#if idx === 0}
                       <span class="badge free" style="font-size: 10px; padding: 2px 6px;">✓ Original Kept Safe</span>
                     {:else}
-                      <input type="checkbox" bind:checked={selectedFiles[f]} />
+                      <input
+                        type="checkbox"
+                        checked={!!selectedFiles[f]}
+                        onclick={(e) => {
+                          e.preventDefault();
+                          handleDuplicateCheckClick(f, e);
+                        }}
+                      />
                     {/if}
-                    <span class="muted small" style="flex: 1; overflow: hidden; text-overflow: ellipsis;">
+                    <span class="muted small path" style="flex: 1; overflow: hidden; text-overflow: ellipsis;">
                       {shortenPath(f, 52)}
                     </span>
                     {#if idx > 0 && selectedFiles[f]}
@@ -436,6 +504,13 @@
                     </div>
                   </div>
                   <strong style="color: var(--accent); font-size: 15px;">{formatBytes(lf.size)}</strong>
+                  <button
+                    class="ghost small-btn"
+                    onclick={() => void api.revealInFolder(lf.path)}
+                    title="Show in Windows Explorer / macOS Finder"
+                  >
+                    📂 Show in Folder
+                  </button>
                   <button
                     class="ghost small-btn"
                     disabled={movingFile === lf.path}

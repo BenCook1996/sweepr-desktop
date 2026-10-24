@@ -63,6 +63,22 @@ pub fn run() {
             battery::setup_tray_and_monitor(app.handle(), data_dir);
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let keep_in_tray = if cfg!(target_os = "macos") {
+                    true
+                } else if let Some(st) = window.try_state::<commands::AppState>() {
+                    let bcfg = battery::load_config(&st.data_dir);
+                    bcfg.charge_limit_enabled || bcfg.thermal_throttling_enabled || bcfg.auto_hibernate_tabs
+                } else {
+                    false
+                };
+                if keep_in_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::scan_start,
             commands::clean_categories,

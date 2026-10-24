@@ -1,3 +1,4 @@
+import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { attr } from "./html.js";
 import type { BacklinkRow, BacklinkStatus, SeoStore } from "./store.js";
@@ -22,7 +23,25 @@ const BROWSER_HEADERS: Record<string, string> = {
 
 const MAX_BYTES = 3 * 1024 * 1024;
 
-/** Rejects obviously internal targets so the admin tool can't be pointed at the host's private network. */
+function isPrivateIpv4Parts(a: number, b: number, c = 0): boolean {
+  return (
+    a === 10 ||
+    a === 127 ||
+    a === 0 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    a >= 224 ||
+    (a === 192 && b === 0 && c === 2) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 192 && b === 88 && c === 99)
+  );
+}
+
+/** Rejects internal, loopback, link-local, multicast, and IPv4-mapped IPv6 targets so admin/SEO tools cannot be used for SSRF. */
 export function isPublicHttpUrl(raw: string): boolean {
   let u: URL;
   try {
@@ -38,21 +57,83 @@ export function isPublicHttpUrl(raw: string): boolean {
     h.endsWith(".localhost") ||
     h.endsWith(".local") ||
     h.endsWith(".internal") ||
+    h === "metadata.google.internal" ||
     h === "0.0.0.0" ||
     h === "::" ||
-    h === "::1" ||
-    h.startsWith("::ffff:")
+    h === "::1"
   ) {
     return false;
   }
+  // Rejects hex/octal or integer decimal representations (e.g. 0x7f000001 or 2130706433)
+  if (/^(0x[0-9a-f]+|\d+)$/i.test(h)) return false;
+
   const ipv = isIP(h);
   if (ipv === 4) {
-    const [a, b] = h.split(".").map(Number);
-    if (a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127)) return false;
+    const [a, b, c] = h.split(".").map(Number);
+    if (isPrivateIpv4Parts(a, b, c)) return false;
   } else if (ipv === 6) {
-    if (h === "::" || h === "::1" || h.startsWith("::ffff:") || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80")) return false;
+    if (
+      h === "::1" ||
+      h === "::" ||
+      h.startsWith("fc") ||
+      h.startsWith("fd") ||
+      h.startsWith("fe8") ||
+      h.startsWith("fe9") ||
+      h.startsWith("fea") ||
+      h.startsWith("feb") ||
+      h.startsWith("fec") ||
+      h.startsWith("fed") ||
+      h.startsWith("fee") ||
+      h.startsWith("fef") ||
+      h.startsWith("ff") ||
+      h.startsWith("100:") ||
+      h.startsWith("2001:db8") ||
+      h.startsWith("2001:0db8")
+    ) {
+      return false;
+    }
+    // Block IPv4-mapped or IPv4-compatible IPv6 addresses (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1)
+    if (h.startsWith("::ffff:") || h.includes("ffff:") || h.startsWith("::")) {
+      return false;
+    }
   }
   return true;
+}
+
+export async function fetchPublicUrlSafe(initialUrl: string, timeoutMs: number, maxRedirects = 5): Promise<{ res: Response; finalUrl: string }> {
+  let currentUrl = initialUrl;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (!isPublicHttpUrl(currentUrl)) {
+      throw new Error("Redirect target is not a public http(s) address");
+    }
+    const u = new URL(currentUrl);
+    const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    if (isIP(host) === 0) {
+      const records = await lookup(host, { all: true });
+      if (!records.length) {
+        throw new Error("DNS resolution returned no records");
+      }
+      for (const rec of records) {
+        const ipLiteral = rec.family === 6 ? `[${rec.address}]` : rec.address;
+        if (!isPublicHttpUrl(`${u.protocol}//${ipLiteral}/`)) {
+          throw new Error("Resolved IP is not a public address");
+        }
+      }
+    }
+    const res = await fetch(currentUrl, {
+      headers: BROWSER_HEADERS,
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get("location");
+      if (!loc) return { res, finalUrl: currentUrl };
+      currentUrl = new URL(loc, currentUrl).toString();
+      continue;
+    }
+    return { res, finalUrl: currentUrl };
+  }
+  throw new Error("Too many redirects");
 }
 
 async function readCapped(res: Response): Promise<string> {
@@ -88,47 +169,14 @@ export async function checkBacklink(sourceUrl: string, targetDomain: string, tim
   if (!isPublicHttpUrl(sourceUrl)) {
     return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: "URL is not a public http(s) address" } };
   }
-  let currentUrl = sourceUrl;
-  let res: Response | null = null;
+  let res: Response;
+  let finalUrl = sourceUrl;
   try {
-    for (let hop = 0; hop <= 5; hop++) {
-      if (!isPublicHttpUrl(currentUrl)) {
-        return {
-          status: "unreachable",
-          anchor_text: null,
-          rel: null,
-          found_href: null,
-          http_status: null,
-          evidence: { checked_at: checkedAt, error: "Redirect target is not a public http(s) address" },
-        };
-      }
-      res = await fetch(currentUrl, { headers: BROWSER_HEADERS, redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
-      if (res.status >= 300 && res.status < 400) {
-        const loc = res.headers.get("location");
-        if (!loc || hop === 5) {
-          return {
-            status: "unreachable",
-            anchor_text: null,
-            rel: null,
-            found_href: null,
-            http_status: res.status,
-            evidence: { checked_at: checkedAt, error: "Too many redirects or missing Location header" },
-          };
-        }
-        currentUrl = new URL(loc, currentUrl).toString();
-        continue;
-      }
-      break;
-    }
+    const fetched = await fetchPublicUrlSafe(sourceUrl, timeoutMs, 5);
+    res = fetched.res;
+    finalUrl = fetched.finalUrl;
   } catch (e) {
     return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: (e as Error).message } };
-  }
-  if (!res) {
-    return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: null, evidence: { checked_at: checkedAt, error: "No response" } };
-  }
-  const finalUrl = res.url || currentUrl;
-  if (!isPublicHttpUrl(finalUrl)) {
-    return { status: "unreachable", anchor_text: null, rel: null, found_href: null, http_status: res.status, evidence: { checked_at: checkedAt, error: "Final URL is not a public http(s) address" } };
   }
   const html = await readCapped(res).catch(() => "");
   const cfRay = res.headers.get("cf-ray");

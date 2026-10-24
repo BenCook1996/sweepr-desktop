@@ -187,6 +187,7 @@ test("helpers: escapeHtml, normalizeEmail, rate limiter eviction", () => {
   assert.equal(rl.hit("k"), false);
   for (let i = 0; i < 500; i++) rl.hit(`ip${i}`);
   assert.ok(rl.size <= 101, `limiter should stay bounded, size=${rl.size}`);
+  assert.equal(rl.isBlocked("k"), true, "blocked key must survive cache eviction (low-hit entries dropped first)");
 });
 
 test("CSRF protection on /api/logout and /api/billing-portal", async () => {
@@ -202,6 +203,26 @@ test("CSRF protection on /api/logout and /api/billing-portal", async () => {
     headers: { origin: "https://evil.example" },
   });
   assert.equal(badOriginBilling.status, 403);
+
+  // Form submission with no Origin and no Sec-Fetch-Site and standard urlencoded content-type is rejected
+  const formLogout = await app.request("/api/logout", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+  });
+  assert.equal(formLogout.status, 403);
+
+  // Request with no Origin, no Sec-Fetch-Site, and no JSON content-type is rejected
+  const plainLogout = await app.request("/api/logout", {
+    method: "POST",
+  });
+  assert.equal(plainLogout.status, 403);
+
+  // Same request with application/json is accepted
+  const jsonLogout = await app.request("/api/logout", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+  });
+  assert.equal(jsonLogout.status, 200);
 });
 
 test("Desktop OTP device linking (/v1/account/send-otp & /v1/account/verify-otp) and paid account prioritization", async () => {
