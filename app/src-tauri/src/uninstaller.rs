@@ -91,9 +91,77 @@ pub fn get_installed_apps() -> Vec<AppInfo> {
     apps
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn extract_plist_key_str(xml: &str, key: &str) -> String {
+    let needle = format!("<key>{key}</key>");
+    let Some(idx) = xml.find(&needle) else {
+        return String::new();
+    };
+    let rest = &xml[idx + needle.len()..];
+    let Some(s_start) = rest.find("<string>") else {
+        return String::new();
+    };
+    let after_s = &rest[s_start + 8..];
+    let Some(s_end) = after_s.find("</string>") else {
+        return String::new();
+    };
+    after_s[..s_end].trim().to_string()
+}
+
+#[cfg(target_os = "macos")]
 pub fn get_installed_apps() -> Vec<AppInfo> {
-    Vec::new() // Not implemented for non-Windows
+    let mut apps = Vec::new();
+    let mut roots = vec![("MACSYS", std::path::PathBuf::from("/Applications"))];
+    if let Some(home) = dirs::home_dir() {
+        roots.push(("MACUSR", home.join("Applications")));
+    }
+
+    for (prefix, root) in roots {
+        let Ok(entries) = std::fs::read_dir(&root) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let file_name = entry.file_name().to_string_lossy().into_owned();
+            if !file_name.ends_with(".app") || !path.is_dir() {
+                continue;
+            }
+            if file_name.to_ascii_lowercase().contains("sweepr") {
+                continue;
+            }
+            let display_name = file_name.trim_end_matches(".app").to_string();
+            let plist_path = path.join("Contents/Info.plist");
+            let plist_xml = std::fs::read_to_string(&plist_path).unwrap_or_default();
+            let version = {
+                let v = extract_plist_key_str(&plist_xml, "CFBundleShortVersionString");
+                if v.is_empty() {
+                    extract_plist_key_str(&plist_xml, "CFBundleVersion")
+                } else {
+                    v
+                }
+            };
+            let bundle_id = extract_plist_key_str(&plist_xml, "CFBundleIdentifier");
+            let (bytes, _) = dir_size_and_files(&path, 400);
+
+            apps.push(AppInfo {
+                id: format!("{prefix}:{file_name}"),
+                name: display_name,
+                publisher: bundle_id,
+                version,
+                install_date: String::new(),
+                estimated_size: bytes,
+            });
+        }
+    }
+
+    apps.sort_by(|a, b| a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase()));
+    apps.dedup_by(|a, b| a.name == b.name);
+    apps
+}
+
+#[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+pub fn get_installed_apps() -> Vec<AppInfo> {
+    Vec::new()
 }
 
 #[tauri::command]
@@ -204,6 +272,7 @@ fn launch(program: &std::path::Path, args: &str) -> AppResult<()> {
 /// uninstall command is read from the registry here, never from the UI.
 #[tauri::command]
 pub async fn uninstall_app(state: State<'_, AppState>, id: String) -> AppResult<()> {
+    #[cfg(target_os = "windows")]
     parse_app_id(&id)?;
     state.licensing.require_active().await?;
 
@@ -218,8 +287,47 @@ pub async fn uninstall_app(state: State<'_, AppState>, id: String) -> AppResult<
         .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     {
+        tauri::async_runtime::spawn_blocking(move || {
+            let (prefix, bundle_name) = id
+                .split_once(':')
+                .ok_or_else(|| AppError::Other("Invalid application id".into()))?;
+            if !bundle_name.ends_with(".app")
+                || bundle_name.contains(['/', '\\', '\0'])
+                || bundle_name.starts_with('.')
+            {
+                return Err(AppError::Other("Invalid macOS application bundle".into()));
+            }
+            let base = match prefix {
+                "MACSYS" => std::path::PathBuf::from("/Applications"),
+                "MACUSR" => dirs::home_dir()
+                    .ok_or_else(|| AppError::Other("Home directory not found".into()))?
+                    .join("Applications"),
+                _ => return Err(AppError::Other("Invalid application scope".into())),
+            };
+            let app_path = base.join(bundle_name);
+            if !app_path.is_dir() {
+                return Err(AppError::NotFound("Application bundle is no longer installed".into()));
+            }
+            let trash_dir = dirs::home_dir()
+                .ok_or_else(|| AppError::Other("Home directory not found".into()))?
+                .join(".Trash");
+            let _ = std::fs::create_dir_all(&trash_dir);
+            let dest = trash_dir.join(bundle_name);
+            if dest.exists() {
+                let _ = std::fs::remove_dir_all(&dest);
+            }
+            std::fs::rename(&app_path, &dest)
+                .map_err(|e| AppError::Other(format!("Could not move app to Trash: {e}")))
+        })
+        .await
+        .map_err(|e| AppError::Other(format!("background task failed: {e}")))?
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        let _ = id;
         Err(AppError::Other("Not supported on this OS".into()))
     }
 }

@@ -45,6 +45,7 @@ import {
   COUNTRY_TO_CURRENCY,
   COUNTRY_TO_LANG,
 } from "./pricing.js";
+import { generateQrSvg } from "./qr.js";
 
 export interface AppDeps {
   repo: Repo;
@@ -264,7 +265,15 @@ export function createApp(deps: AppDeps) {
   app.use("/v1/*", bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
   app.use("/webhooks/*", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
 
-  app.get("/health", (c) => c.json({ ok: true }));
+  app.get("/health", (c) => {
+    let dbOk = false;
+    try {
+      dbOk = Boolean(repo.db.prepare("SELECT 1 AS ok").get());
+    } catch {
+      dbOk = false;
+    }
+    return c.json({ ok: dbOk, db: dbOk, ts: Math.floor(Date.now() / 1000) }, dbOk ? 200 : 503);
+  });
 
   // Apple Pay Web Domain Verification File (Required by Stripe & Apple for Safari Apple Pay)
   app.get("/.well-known/apple-developer-merchantid-domain-association", (c) => {
@@ -530,32 +539,34 @@ export function createApp(deps: AppDeps) {
   };
 
   const pickerPage = (heading: string, msg: string) => {
-    const btn = (href: string, text: string) =>
-      `<a href="${href}" style="display:block;margin-top:10px;background:#10b981;color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
+    const btn = (href: string, text: string, primary = true) =>
+      `<a href="${href}" style="display:block;margin-top:10px;background:${primary ? "#10b981" : "#0f172a"};color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
     const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
     const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const links =
-      btn("/download?platform=windows", "Download for Windows 10 & 11 (.exe)") +
-      (hasMac ? btn("/download?platform=mac", "Download for Mac (macOS .dmg)") : "") +
-      (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)") : "") +
-      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Visiting from Mac, Linux, or Mobile? Lock in the <strong>&pound;1.99 1st-Month Intro Offer</strong> right now and receive your 6-digit activation key + Windows PC download link by email:<a href="/order?plan=monthly&amp;intro=1" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Unlock Pro — &pound;1.99 1st Month (Instant Email Delivery)</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
+      btn("/download?platform=windows", "Download for Windows 10 & 11 (.exe)", true) +
+      (hasMac ? btn("/download?platform=mac", "Download for Mac — macOS 11+ Universal (.dmg)", true) : "") +
+      (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)", false) : "") +
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Visiting from Mobile or another device? Lock in the <strong>&pound;1.99 1st-Month Intro Offer</strong> right now and receive your 6-digit activation key + Windows &amp; Mac download links by email:<a href="/order?plan=monthly&amp;intro=1" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Unlock Pro — &pound;1.99 1st Month (Instant Email Delivery)</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
-  /** Streams a file from disk (no full in-memory buffering) with an explicit Content-Length. */
+  /** Streams a file from disk (no full in-memory buffering) with an explicit Content-Length and edge caching headers. */
   const streamFile = (path: string, type: string, filename: string) => {
-    const { size } = statSync(path);
+    const stat = statSync(path);
     const body = Readable.toWeb(createReadStream(path)) as unknown as ReadableStream<Uint8Array>;
     return new Response(body, {
       headers: {
         "Content-Type": type,
-        "Content-Length": String(size),
+        "Content-Length": String(stat.size),
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "public, max-age=3600, s-maxage=86400",
       },
     });
   };
 
   app.get("/Sweepr_Setup.exe", (c) => c.redirect("/download?platform=windows", 302));
+  app.get("/Sweepr_Setup.dmg", (c) => c.redirect("/download?platform=mac", 302));
 
   app.get("/download", (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
@@ -2365,6 +2376,8 @@ export function createApp(deps: AppDeps) {
       referrals_count: referralsCount,
       winback_claimed: Boolean(account.winback_claimed),
       devices,
+      devices_used: devices.length,
+      devices_max: Math.max(1, config.maxDevicesPc || 3),
       invoices,
     });
   });
@@ -2976,25 +2989,742 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // 4. Unlink / Revoke a Device (marks revoked=1, clears device token, and rotates account token so device cannot re-register)
+  // 4. Unlink / Remove a Device (frees up a slot under the 3-device limit and invalidates its per-device token)
+  const maxTotalDevices = Math.max(1, config.maxDevicesPc || 3);
+  const limitQrCreate = createRateLimiter(30, 10 * 60 * 1000);
+  const limitQrRedeem = createRateLimiter(20, 10 * 60 * 1000);
+  const limitQrChallenge = createRateLimiter(30, 10 * 60 * 1000);
+  const limitQrPoll = createRateLimiter(240, 10 * 60 * 1000);
+
+  const activeDevicesForAccount = (accountId: string) =>
+    repo.db
+      .prepare(
+        "SELECT id, type, device_name, platform, first_seen, last_seen FROM devices WHERE account_id = ? AND revoked = 0 ORDER BY last_seen DESC"
+      )
+      .all(accountId) as Array<{
+      id: string;
+      type: string;
+      device_name: string | null;
+      platform: string | null;
+      first_seen: number;
+      last_seen: number;
+    }>;
+
+  const resolvePortalOrBearerOrOtpAccount = async (c: Context, body?: any): Promise<Account | null> => {
+    const sessId = await sessionAccountId(c);
+    if (sessId) {
+      const acc = repo.accountById(sessId);
+      if (acc) return acc;
+    }
+    const authHeader = c.req.header("authorization") ?? "";
+    const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (bearer) {
+      const acc = repo.accountByTokenHash(sha256(bearer));
+      if (acc) return acc;
+    }
+    const email = normalizeEmail(body?.email);
+    const code = String(body?.code ?? body?.otp ?? "").trim();
+    if (email && /^\d{6}$/.test(code)) {
+      if (!limitOtpVerifyIp.hit(clientIp(c)) || !limitOtpVerifyEmail.hit(email)) {
+        return null;
+      }
+      const t = now();
+      let valid = repo.verifyRecentEmailCode(email, code, sha256(code), t);
+      if (!valid) {
+        const centralOtp = await verifyCentralOtp({ email, code, deviceType: "pc" });
+        if (centralOtp?.valid) valid = true;
+      }
+      if (valid) {
+        limitOtpVerifyEmail.reset(email);
+        limitOtpSendEmail.reset(email);
+        const acc = (await findOrSyncEntitledAccountByEmail(email)) ?? repo.accountByEmail(email) ?? null;
+        return acc;
+      }
+    }
+    return null;
+  };
+
   app.delete("/api/portal/devices/:deviceId", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
     }
-    const accountId = await sessionAccountId(c);
-    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = await resolvePortalOrBearerOrOtpAccount(c);
+    if (!account) return c.json({ error: "unauthorized" }, 401);
     const deviceId = c.req.param("deviceId");
     if (!deviceId) return c.json({ error: "missing_device_id" }, 400);
 
     const existingDev = repo.db
-      .prepare("SELECT id FROM devices WHERE id = ? AND account_id = ?")
-      .get(deviceId, accountId) as { id: string } | undefined;
+      .prepare("SELECT id, device_name FROM devices WHERE id = ? AND account_id = ?")
+      .get(deviceId, account.id) as { id: string; device_name?: string | null } | undefined;
     if (existingDev) {
-      repo.revokeDevice(accountId, deviceId, "customer");
-      repo.rotateAccountTokenHash(accountId, sha256(randomToken(32)));
+      repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(deviceId, account.id);
+      repo.addActivity({
+        account_id: account.id,
+        type: "device_revoked",
+        title: "Customer Unlinked Device",
+        description: `Removed device ${existingDev.device_name || deviceId.slice(0, 8) + "..."} from subscription`,
+        actor: "customer",
+        metadata: { device_id: deviceId },
+      });
+    }
+    const remaining = activeDevicesForAccount(account.id);
+    return c.json({
+      ok: true,
+      devices: remaining,
+      devices_used: remaining.length,
+      devices_max: maxTotalDevices,
+    });
+  });
+
+  app.post("/api/portal/devices/remove", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const account = await resolvePortalOrBearerOrOtpAccount(c, body);
+    if (!account) return c.json({ ok: false, error: "unauthorized" }, 401);
+    const deviceId = String(body?.device_id ?? "").trim();
+    if (!deviceId) return c.json({ ok: false, error: "missing_device_id" }, 400);
+
+    const existingDev = repo.db
+      .prepare("SELECT id, device_name FROM devices WHERE id = ? AND account_id = ?")
+      .get(deviceId, account.id) as { id: string; device_name?: string | null } | undefined;
+    if (existingDev) {
+      repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(deviceId, account.id);
+      repo.addActivity({
+        account_id: account.id,
+        type: "device_revoked",
+        title: "Customer Unlinked Device",
+        description: `Removed device ${existingDev.device_name || deviceId.slice(0, 8) + "..."} from subscription`,
+        actor: "customer",
+        metadata: { device_id: deviceId },
+      });
+    }
+    const remaining = activeDevicesForAccount(account.id);
+    return c.json({
+      ok: true,
+      devices: remaining,
+      devices_used: remaining.length,
+      devices_max: maxTotalDevices,
+    });
+  });
+
+  // ---------- Bi-Directional QR-Code Account & Device Linking (Flow A & Flow B) ----------
+
+  const normalizePairDeviceId = (raw: unknown): string | null => {
+    const s = String(raw ?? "").trim();
+    if (DEVICE_RE.test(s)) return s;
+    if (/^[a-zA-Z0-9_-]{8,128}$/.test(s)) {
+      return sha256(`sweepr-cleaner-dev:${s}`);
+    }
+    return null;
+  };
+
+  const issueDeviceEntitlementCredentials = (
+    account: Account,
+    deviceId: string,
+    deviceType: "pc" | "mobile",
+    meta?: { deviceName?: string | null; platform?: string | null }
+  ) => {
+    const t = now();
+    const ent = repo.entitlement(account.id);
+    if (!ent || !isEntitled(ent, t, config.pastDueGraceDays)) {
+      return { ok: false as const, status: 402 as const, error: "subscription_inactive" };
+    }
+    if (!repo.touchDevice(account.id, deviceId, deviceType, maxTotalDevices, maxTotalDevices, meta)) {
+      const activeDevs = activeDevicesForAccount(account.id);
+      return {
+        ok: false as const,
+        status: 403 as const,
+        error: "device_limit_reached",
+        message: `Maximum of ${maxTotalDevices} linked devices reached (any combination of desktop or mobile). Remove an existing device to link this one.`,
+        devices: activeDevs,
+        devices_used: activeDevs.length,
+        devices_max: maxTotalDevices,
+      };
+    }
+    const refreshToken = randomToken(32);
+    repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
+    const addons = repo.addonsForAccount(account.id);
+    let exp = t + config.tokenTtlHours * 3600;
+    if (ent.current_period_end) {
+      exp = Math.min(exp, ent.current_period_end + config.pastDueGraceDays * 86400);
+    }
+    exp = Math.max(exp, t + 300);
+    const jws = signEntitlement(signingKey, {
+      sub: account.id,
+      device_id: deviceId,
+      status: ent.status === "trialing" ? "trialing" : "active",
+      plan: ent.plan ?? "annual",
+      addons,
+      iat: t,
+      exp,
+    });
+    const activeDevs = activeDevicesForAccount(account.id);
+    return {
+      ok: true as const,
+      account_id: account.id,
+      email: account.email,
+      refresh_token: refreshToken,
+      token: jws,
+      active: true,
+      status: ent.status,
+      plan: ent.plan ?? "annual",
+      addons,
+      expires_at: exp,
+      device_id: deviceId,
+      devices: activeDevs,
+      devices_used: activeDevs.length,
+      devices_max: maxTotalDevices,
+    };
+  };
+
+  // Flow A — Step 1: Authenticated Portal or Activated App generates a 120-second one-time QR token (ptk_...)
+  app.post("/api/device-link/create-token", async (c) => {
+    if (!limitQrCreate.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited" }, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const account = await resolvePortalOrBearerOrOtpAccount(c, body);
+    if (!account) {
+      return c.json({ ok: false, error: "unauthorized" }, 401);
+    }
+    const t = now();
+    let ent = repo.entitlement(account.id);
+    if (!isEntitled(ent, t, config.pastDueGraceDays) && account.email) {
+      const synced = await findOrSyncEntitledAccountByEmail(account.email);
+      if (synced) ent = repo.entitlement(synced.id);
+    }
+    if (!ent || !isEntitled(ent, t, config.pastDueGraceDays)) {
+      return c.json({ ok: false, error: "subscription_inactive", message: "Active Pro subscription required to link devices." }, 403);
+    }
+    const activeDevs = activeDevicesForAccount(account.id);
+    if (activeDevs.length >= maxTotalDevices) {
+      return c.json(
+        {
+          ok: false,
+          error: "device_limit_reached",
+          message: `You have reached the maximum of ${maxTotalDevices} linked devices on your subscription. Remove a device first to link a new one.`,
+          devices: activeDevs,
+          devices_used: activeDevs.length,
+          devices_max: maxTotalDevices,
+        },
+        403
+      );
     }
 
-    return c.json({ ok: true });
+    const rawToken = `ptk_${randomToken(24)}`;
+    const tokenHash = sha256(rawToken);
+    const expiresAt = t + 120;
+    repo.db
+      .prepare("DELETE FROM qr_pairing_tokens WHERE expires_at < ? OR (account_id = ? AND consumed = 0)")
+      .run(t, account.id);
+    repo.db
+      .prepare(
+        "INSERT INTO qr_pairing_tokens (token_hash, account_id, created_at, expires_at, consumed, created_by_ip) VALUES (?, ?, ?, ?, 0, ?)"
+      )
+      .run(tokenHash, account.id, t, expiresAt, clientIp(c));
+
+    const baseUrl = config.publicUrl.replace(/\/+$/, "");
+    const pairUrl = `${baseUrl}/pair?token=${encodeURIComponent(rawToken)}`;
+    const qrSvg = generateQrSvg(pairUrl);
+
+    return c.json({
+      ok: true,
+      token: rawToken,
+      pair_url: pairUrl,
+      qr_svg: qrSvg,
+      expires_at: expiresAt,
+      ttl_seconds: 120,
+      devices_used: activeDevs.length,
+      devices_max: maxTotalDevices,
+      devices: activeDevs,
+    });
+  });
+
+  // Flow A — Step 2: Target device (Mobile App, Second PC, or Mobile Web /pair) redeems ptk_...
+  app.post("/api/device-link/redeem", async (c) => {
+    if (!limitQrRedeem.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited" }, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const rawToken = String(body?.token ?? "").trim();
+    if (!/^ptk_[A-Za-z0-9_-]{20,64}$/.test(rawToken)) {
+      return c.json({ ok: false, error: "invalid_or_expired_token", message: "Invalid or expired QR pairing token." }, 400);
+    }
+    const deviceId = normalizePairDeviceId(body?.device_id);
+    if (!deviceId) {
+      return c.json({ ok: false, error: "invalid_device_id", message: "Valid device_id is required." }, 400);
+    }
+    const rawPlatform = String(body?.platform ?? "").trim().toLowerCase();
+    const deviceType: "pc" | "mobile" =
+      body?.device_type === "mobile" || /ios|iphone|ipad|android|mobile/.test(rawPlatform) ? "mobile" : "pc";
+    const deviceName =
+      String(body?.device_name ?? "").trim().slice(0, 80) ||
+      (deviceType === "mobile" ? "Mobile Device" : "Desktop PC");
+
+    const t = now();
+    const tokenHash = sha256(rawToken);
+    const tokenRow = repo.db
+      .prepare("SELECT * FROM qr_pairing_tokens WHERE token_hash = ?")
+      .get(tokenHash) as { token_hash: string; account_id: string; expires_at: number; consumed: number } | undefined;
+
+    if (!tokenRow || tokenRow.consumed || tokenRow.expires_at < t) {
+      return c.json({ ok: false, error: "invalid_or_expired_token", message: "This QR code has expired or has already been used." }, 400);
+    }
+
+    const account = repo.accountById(tokenRow.account_id);
+    if (!account) {
+      return c.json({ ok: false, error: "account_not_found" }, 404);
+    }
+
+    // Check device limit before consuming token so user can remove a device and retry if needed, or burn atomically
+    const consumeRes = repo.db
+      .prepare("UPDATE qr_pairing_tokens SET consumed = 1 WHERE token_hash = ? AND consumed = 0 AND expires_at >= ?")
+      .run(tokenHash, t);
+    if (Number(consumeRes.changes) === 0) {
+      return c.json({ ok: false, error: "invalid_or_expired_token", message: "This QR code has already been used." }, 400);
+    }
+
+    const cred = issueDeviceEntitlementCredentials(account, deviceId, deviceType, {
+      deviceName,
+      platform: rawPlatform || (deviceType === "mobile" ? "mobile" : "windows"),
+    });
+    if (!cred.ok) {
+      return c.json(cred, cred.status);
+    }
+
+    return c.json(cred);
+  });
+
+  // Flow B — Step 1: Unactivated Desktop or Mobile App requests a 120s QR Challenge (chk_... + psec_...)
+  app.post("/api/device-link/challenge", async (c) => {
+    if (!limitQrChallenge.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited" }, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const deviceId = normalizePairDeviceId(body?.device_id);
+    if (!deviceId) {
+      return c.json({ ok: false, error: "invalid_device_id" }, 400);
+    }
+    const rawPlatform = String(body?.platform ?? "windows").trim().toLowerCase().slice(0, 40);
+    const deviceType: "pc" | "mobile" =
+      body?.device_type === "mobile" || /ios|iphone|ipad|android|mobile/.test(rawPlatform) ? "mobile" : "pc";
+    const deviceName =
+      String(body?.device_name ?? "").trim().slice(0, 80) ||
+      (rawPlatform === "macos" || rawPlatform === "mac"
+        ? "Mac Desktop"
+        : rawPlatform === "linux"
+        ? "Linux Desktop"
+        : deviceType === "mobile"
+        ? "Mobile Device"
+        : "Windows PC");
+
+    const t = now();
+    const challengeId = `chk_${randomToken(24)}`;
+    const pollSecret = `psec_${randomToken(24)}`;
+    const expiresAt = t + 120;
+
+    repo.db.prepare("DELETE FROM qr_pairing_challenges WHERE expires_at < ?").run(t);
+    repo.db
+      .prepare(
+        `INSERT INTO qr_pairing_challenges
+         (challenge_id, poll_secret_hash, device_id, device_type, device_name, platform, status, created_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)`
+      )
+      .run(challengeId, sha256(pollSecret), deviceId, deviceType, deviceName, rawPlatform, t, expiresAt);
+
+    const baseUrl = config.publicUrl.replace(/\/+$/, "");
+    const approveUrl = `${baseUrl}/pair?mode=approve&challenge=${encodeURIComponent(challengeId)}`;
+    const qrSvg = generateQrSvg(approveUrl);
+
+    return c.json({
+      ok: true,
+      challenge_id: challengeId,
+      poll_secret: pollSecret,
+      approve_url: approveUrl,
+      qr_svg: qrSvg,
+      device_id: deviceId,
+      device_name: deviceName,
+      expires_at: expiresAt,
+      ttl_seconds: 120,
+    });
+  });
+
+  // Flow B — Step 2: Unactivated App polls for challenge approval
+  app.get("/api/device-link/poll", (c) => {
+    if (!limitQrPoll.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited" }, 429);
+    }
+    const challengeId = String(c.req.query("challenge_id") ?? "").trim();
+    const pollSecret = String(c.req.query("poll_secret") ?? "").trim();
+    if (!/^chk_[A-Za-z0-9_-]{20,64}$/.test(challengeId) || !/^psec_[A-Za-z0-9_-]{20,64}$/.test(pollSecret)) {
+      return c.json({ ok: false, error: "invalid_challenge" }, 400);
+    }
+
+    const row = repo.db
+      .prepare("SELECT * FROM qr_pairing_challenges WHERE challenge_id = ?")
+      .get(challengeId) as
+      | {
+          challenge_id: string;
+          poll_secret_hash: string;
+          device_id: string;
+          device_type: "pc" | "mobile";
+          device_name: string | null;
+          platform: string | null;
+          status: string;
+          account_id: string | null;
+          issued_refresh_token: string | null;
+          issued_jws: string | null;
+          expires_at: number;
+        }
+      | undefined;
+
+    if (!row || !safeEqual(sha256(pollSecret), row.poll_secret_hash)) {
+      return c.json({ ok: false, error: "not_found" }, 404);
+    }
+
+    const t = now();
+    if (row.status === "approved" && row.account_id && row.issued_refresh_token) {
+      const acc = repo.accountById(row.account_id);
+      const ent = repo.entitlement(row.account_id);
+      const addons = repo.addonsForAccount(row.account_id);
+      repo.db
+        .prepare(
+          "UPDATE qr_pairing_challenges SET status = 'delivered', issued_refresh_token = NULL, issued_jws = NULL WHERE challenge_id = ?"
+        )
+        .run(challengeId);
+      return c.json({
+        ok: true,
+        status: "approved",
+        account_id: row.account_id,
+        email: acc?.email ?? null,
+        refresh_token: row.issued_refresh_token,
+        token: row.issued_jws,
+        plan: ent?.plan ?? "annual",
+        addons,
+        expires_at: ent?.current_period_end ?? null,
+      });
+    }
+
+    if (row.expires_at < t || row.status === "delivered") {
+      return c.json({ ok: true, status: "expired" });
+    }
+
+    return c.json({
+      ok: true,
+      status: "pending",
+      expires_at: row.expires_at,
+    });
+  });
+
+  // Flow B — Step 3: Phone / Portal approves the waiting Desktop/Mobile challenge
+  app.post("/api/device-link/approve", async (c) => {
+    if (!limitQrRedeem.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited" }, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const challengeId = String(body?.challenge_id ?? body?.challenge ?? "").trim();
+    if (!/^chk_[A-Za-z0-9_-]{20,64}$/.test(challengeId)) {
+      return c.json({ ok: false, error: "invalid_challenge", message: "Invalid or expired QR challenge." }, 400);
+    }
+
+    const t = now();
+    const row = repo.db
+      .prepare("SELECT * FROM qr_pairing_challenges WHERE challenge_id = ?")
+      .get(challengeId) as
+      | {
+          challenge_id: string;
+          device_id: string;
+          device_type: "pc" | "mobile";
+          device_name: string | null;
+          platform: string | null;
+          status: string;
+          expires_at: number;
+        }
+      | undefined;
+
+    if (!row || row.expires_at < t || row.status !== "pending") {
+      return c.json({ ok: false, error: "challenge_expired", message: "This QR code has expired or was already approved. Please refresh the QR code in the app." }, 400);
+    }
+
+    const account = await resolvePortalOrBearerOrOtpAccount(c, body);
+    if (!account) {
+      return c.json(
+        {
+          ok: false,
+          error: "authentication_required",
+          message: "Please sign in with your account email and 6-digit Subscription Key to approve this device.",
+        },
+        401
+      );
+    }
+
+    const cred = issueDeviceEntitlementCredentials(account, row.device_id, row.device_type === "mobile" ? "mobile" : "pc", {
+      deviceName: row.device_name,
+      platform: row.platform,
+    });
+    if (!cred.ok) {
+      return c.json(cred, cred.status);
+    }
+
+    repo.db
+      .prepare(
+        "UPDATE qr_pairing_challenges SET status = 'approved', account_id = ?, issued_refresh_token = ?, issued_jws = ? WHERE challenge_id = ?"
+      )
+      .run(account.id, cred.refresh_token, cred.token, challengeId);
+
+    await setSignedCookie(c, SESSION_COOKIE, account.id, sessionSecret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: isHttps,
+      maxAge: 86400 * 30,
+    });
+
+    return c.json({
+      ok: true,
+      status: "approved",
+      account_id: account.id,
+      email: account.email,
+      device_id: row.device_id,
+      device_name: row.device_name,
+      devices: cred.devices,
+      devices_used: cred.devices_used,
+      devices_max: maxTotalDevices,
+    });
+  });
+
+  // Mobile-First Web Pairing Landing Page (Handles both Flow A ?token=ptk_... and Flow B ?mode=approve&challenge=chk_...)
+  app.get("/pair", async (c) => {
+    c.header("Cache-Control", "private, no-store, no-cache, must-revalidate");
+    c.header("X-Robots-Tag", "noindex, nofollow");
+    const mode = String(c.req.query("mode") ?? "").trim().toLowerCase();
+    const challengeId = String(c.req.query("challenge") ?? "").trim();
+    const token = String(c.req.query("token") ?? "").trim();
+    const sessAccId = await sessionAccountId(c);
+    const sessAcc = sessAccId ? repo.accountById(sessAccId) : undefined;
+    const isApproveMode = mode === "approve" || Boolean(challengeId);
+
+    let challengeDeviceName = "SWEEPR Cleaner Desktop";
+    let challengeValid = false;
+    if (isApproveMode && /^chk_[A-Za-z0-9_-]{20,64}$/.test(challengeId)) {
+      const row = repo.db
+        .prepare("SELECT device_name, status, expires_at FROM qr_pairing_challenges WHERE challenge_id = ?")
+        .get(challengeId) as { device_name: string | null; status: string; expires_at: number } | undefined;
+      if (row && row.status === "pending" && row.expires_at >= now()) {
+        challengeValid = true;
+        if (row.device_name) challengeDeviceName = row.device_name;
+      }
+    }
+
+    const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Link Device via QR — SWEEPR Cleaner</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
+  <div class="w-full max-w-md bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-lg">S</div>
+      <div>
+        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">SWEEPR Cleaner Pro</div>
+        <h1 class="text-lg font-extrabold text-white">${isApproveMode ? "Approve Device Link" : "Link This Device"}</h1>
+      </div>
+    </div>
+
+    ${
+      isApproveMode
+        ? `<div id="approveBox" class="space-y-4">
+            <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm">
+              <div class="text-xs uppercase font-bold text-slate-400">Waiting Device</div>
+              <div class="font-bold text-white mt-0.5">${escapeHtml(challengeDeviceName)}</div>
+              <div class="text-xs text-emerald-400 mt-1">Up to 3 devices per subscription (any combination of desktop or mobile)</div>
+            </div>
+            ${
+              !challengeValid
+                ? `<div class="p-3.5 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-sm">
+                    This QR challenge has expired or was already used. Please click <strong>Refresh QR</strong> inside the SWEEPR Cleaner app and scan again.
+                  </div>`
+                : sessAcc
+                ? `<div class="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-200">
+                    Signed in as <strong>${escapeHtml(sessAcc.email || sessAcc.id)}</strong>
+                  </div>
+                  <button id="oneTapApproveBtn" type="button" class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition cursor-pointer">
+                    ✓ Approve &amp; Unlock ${escapeHtml(challengeDeviceName)}
+                  </button>`
+                : `<div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-bold text-slate-300 mb-1">Account Email</label>
+                      <input id="pairEmail" type="email" placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div id="codeWrap">
+                      <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-300">6-Digit Subscription Key / Login Code</label>
+                        <button id="sendOtpBtn" type="button" class="text-xs font-bold text-emerald-400 hover:underline cursor-pointer">Email me a code</button>
+                      </div>
+                      <input id="pairCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-center font-mono text-lg tracking-widest focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <button id="formApproveBtn" type="button" class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition cursor-pointer">
+                      Approve &amp; Unlock Device
+                    </button>
+                  </div>`
+            }
+          </div>`
+        : `<div id="redeemBox" class="space-y-4">
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Tap below to link this device to your SWEEPR Cleaner Pro subscription (up to 3 devices across Desktop &amp; Mobile).
+            </p>
+            <button id="redeemBtn" type="button" class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition cursor-pointer">
+              ✓ Link This Device Now
+            </button>
+            <a href="sweeprcleaner://pair?token=${encodeURIComponent(token)}" class="block text-center w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
+              Open in SWEEPR Cleaner Mobile App
+            </a>
+          </div>`
+    }
+
+    <div id="pairStatus" class="hidden mt-4 p-3.5 rounded-xl text-sm font-semibold"></div>
+    <div id="deviceLimitBox" class="hidden mt-4 p-4 rounded-xl bg-amber-950/50 border border-amber-500/40 space-y-3">
+      <div class="text-xs font-extrabold uppercase tracking-wider text-amber-300">3 / 3 Device Slots In Use</div>
+      <p class="text-xs text-amber-100">Your subscription includes up to 3 linked devices (any combination of desktop or mobile). Remove one below to continue:</p>
+      <ul id="limitDeviceList" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <script>
+    const challengeId = ${JSON.stringify(challengeId)};
+    const pairToken = ${JSON.stringify(token)};
+    const statusEl = document.getElementById('pairStatus');
+    const limitBox = document.getElementById('deviceLimitBox');
+    const limitList = document.getElementById('limitDeviceList');
+
+    function showStatus(msg, ok) {
+      statusEl.textContent = msg;
+      statusEl.className = 'mt-4 p-3.5 rounded-xl text-sm font-semibold ' + (ok ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-200' : 'bg-red-950/70 border border-red-500/40 text-red-200');
+      statusEl.classList.remove('hidden');
+    }
+
+    function renderDeviceLimitList(devices, retryFn) {
+      if (!Array.isArray(devices) || !devices.length) return;
+      limitBox.classList.remove('hidden');
+      limitList.innerHTML = devices.map(d => \`
+        <li class="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-900/90 border border-slate-700 text-xs">
+          <div>
+            <div class="font-bold text-white">\${(d.device_name || (d.type === 'mobile' ? 'Mobile Device' : 'Desktop PC')).replace(/</g, '&lt;')}</div>
+            <div class="text-slate-400 font-mono">\${String(d.id || '').slice(0, 12)}...</div>
+          </div>
+          <button type="button" data-dev="\${String(d.id || '').replace(/"/g, '&quot;')}" class="rm-dev-btn px-2.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold cursor-pointer">
+            Remove
+          </button>
+        </li>
+      \`).join('');
+      limitList.querySelectorAll('.rm-dev-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const devId = btn.getAttribute('data-dev');
+          btn.textContent = '...';
+          const emailEl = document.getElementById('pairEmail');
+          const codeEl = document.getElementById('pairCode');
+          const res = await fetch('/api/portal/devices/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              device_id: devId,
+              email: emailEl ? emailEl.value : undefined,
+              code: codeEl ? codeEl.value : undefined
+            })
+          });
+          if (res.ok) {
+            limitBox.classList.add('hidden');
+            if (retryFn) retryFn();
+          }
+        });
+      });
+    }
+
+    async function doApprove(extra) {
+      showStatus('Approving device link...', true);
+      const res = await fetch('/api/device-link/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_id: challengeId, ...(extra || {}) })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        showStatus('✓ Approved! Your SWEEPR Cleaner app is now unlocked.', true);
+      } else {
+        showStatus(data.message || data.error || 'Could not approve device link.', false);
+        if (data.error === 'device_limit_reached' && data.devices) {
+          renderDeviceLimitList(data.devices, () => doApprove(extra));
+        }
+      }
+    }
+
+    const oneTapBtn = document.getElementById('oneTapApproveBtn');
+    if (oneTapBtn) {
+      oneTapBtn.addEventListener('click', () => doApprove({}));
+    }
+    const formApproveBtn = document.getElementById('formApproveBtn');
+    if (formApproveBtn) {
+      formApproveBtn.addEventListener('click', () => {
+        const email = (document.getElementById('pairEmail')?.value || '').trim();
+        const code = (document.getElementById('pairCode')?.value || '').trim();
+        doApprove({ email, code });
+      });
+    }
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    if (sendOtpBtn) {
+      sendOtpBtn.addEventListener('click', async () => {
+        const email = (document.getElementById('pairEmail')?.value || '').trim();
+        if (!email) { showStatus('Enter your account email first.', false); return; }
+        sendOtpBtn.textContent = 'Sending...';
+        const r = await fetch('/v1/account/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        sendOtpBtn.textContent = r.ok ? 'Code Sent! Check Email' : 'Email me a code';
+      });
+    }
+    const redeemBtn = document.getElementById('redeemBtn');
+    if (redeemBtn) {
+      redeemBtn.addEventListener('click', async () => {
+        let devId = localStorage.getItem('sweepr_cleaner_device_id');
+        if (!devId) {
+          devId = (crypto.randomUUID ? crypto.randomUUID() : 'a'.repeat(64));
+          localStorage.setItem('sweepr_cleaner_device_id', devId);
+        }
+        const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+        showStatus('Linking this device...', true);
+        const res = await fetch('/api/device-link/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: pairToken,
+            device_id: devId,
+            device_type: isMobile ? 'mobile' : 'pc',
+            device_name: isMobile ? 'Mobile Browser / App' : 'Desktop Browser',
+            platform: isMobile ? 'mobile' : 'web'
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          localStorage.setItem('sweepr_cleaner_paired', JSON.stringify(data));
+          showStatus('✓ Device Linked! Subscription active (' + (data.devices_used || 1) + ' / ' + (data.devices_max || 3) + ' devices used).', true);
+        } else {
+          showStatus(data.message || data.error || 'Could not redeem QR token.', false);
+          if (data.error === 'device_limit_reached' && data.devices) {
+            renderDeviceLimitList(data.devices);
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>`;
+    return c.html(html);
   });
 
   // Anonymous, device-bound account.
@@ -3334,6 +4064,10 @@ export function createApp(deps: AppDeps) {
     const referralCode = repo.ensureReferralCode(account.id);
     const referralsCount = repo.referralsCount(account.id);
     const addons = repo.addonsForAccount(account.id);
+    const disabledRules = (process.env.DISABLED_CLEAN_RULES || "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
     if (!isEntitled(ent, t, config.pastDueGraceDays)) {
       return c.json({
         active: false,
@@ -3345,6 +4079,7 @@ export function createApp(deps: AppDeps) {
         email: account.email ?? null,
         referral_code: referralCode,
         referrals_count: referralsCount,
+        disabledRules,
       });
     }
 
@@ -3374,6 +4109,7 @@ export function createApp(deps: AppDeps) {
       email: account.email ?? null,
       referral_code: referralCode,
       referrals_count: referralsCount,
+      disabledRules,
     });
   });
 
@@ -3658,6 +4394,21 @@ export function createApp(deps: AppDeps) {
   app.post("/v1/support", handleSupportTicket);
 
   // Tauri v2 Auto-Updater endpoints
+  const parseSemverTuple = (v: string): [number, number, number] => {
+    const parts = v.replace(/^v/i, "").split("-")[0].split(".");
+    return [
+      Number.parseInt(parts[0] || "0", 10) || 0,
+      Number.parseInt(parts[1] || "0", 10) || 0,
+      Number.parseInt(parts[2] || "0", 10) || 0,
+    ];
+  };
+  const isNewerSemver = (latestVer: string, currentVer: string): boolean => {
+    const [lMaj, lMin, lPat] = parseSemverTuple(latestVer);
+    const [cMaj, cMin, cPat] = parseSemverTuple(currentVer);
+    if (lMaj !== cMaj) return lMaj > cMaj;
+    if (lMin !== cMin) return lMin > cMin;
+    return lPat > cPat;
+  };
   const buildUpdateManifest = () => ({
     version: config.latestAppVersion || "0.1.0",
     notes: config.latestAppNotes || "Bug fixes, security hardening, and new cleaning tools.",
@@ -3665,13 +4416,36 @@ export function createApp(deps: AppDeps) {
     url: `${config.publicUrl}/download?platform=windows`,
     signature: config.latestAppSignature || "",
     sha256: process.env.LATEST_APP_SHA256 || "",
+    disabledRules: (process.env.DISABLED_CLEAN_RULES || "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
   });
   app.get("/v1/updates/latest.json", (c) => c.json(buildUpdateManifest()));
   app.get("/v1/updates/:target/:arch/:current_version", (c) => {
     const current = c.req.param("current_version")?.replace(/^v/i, "") ?? "";
     const latest = (config.latestAppVersion || "0.1.0").replace(/^v/i, "");
-    if (current === latest) return c.body(null, 204);
+    if (current && !isNewerSemver(latest, current)) return c.body(null, 204);
     return c.json(buildUpdateManifest());
+  });
+
+  // Admin-authenticated SQLite logical backup snapshot (#10 Backups)
+  app.get("/api/crm/backup-db", (c) => {
+    try {
+      repo.db.exec("PRAGMA wal_checkpoint(PASSIVE);");
+    } catch {}
+    const snapshot = {
+      exported_at: new Date().toISOString(),
+      accounts: repo.db.prepare("SELECT * FROM accounts").all(),
+      entitlements: repo.db.prepare("SELECT * FROM entitlements").all(),
+      subscriptions: repo.db.prepare("SELECT * FROM subscriptions").all(),
+      devices: repo.db.prepare("SELECT * FROM devices").all(),
+      support_tickets: repo.db.prepare("SELECT * FROM support_tickets").all(),
+      crash_reports: repo.db.prepare("SELECT * FROM crash_reports ORDER BY id DESC LIMIT 500").all(),
+      webhook_dlq: repo.db.prepare("SELECT * FROM webhook_dlq ORDER BY created_at DESC LIMIT 200").all(),
+    };
+    c.header("Content-Disposition", `attachment; filename="sweepr-backup-${ now() }.json"`);
+    return c.json(snapshot);
   });
 
   // Crash reporting & privacy-friendly funnel analytics
@@ -3707,6 +4481,18 @@ export function createApp(deps: AppDeps) {
       message: body.message || body.error_type || "crash",
       stack_trace: body.stack || null,
     });
+    // Automated incident alert notification (#26 Alerts)
+    import("./email.js")
+      .then(({ sendSupportNotificationEmail }) =>
+        sendSupportNotificationEmail({
+          fromEmail: "alerts@sweeprcleaner.com",
+          subject: `[SWEEPR CRASH ALERT] v${body.app_version || "0.1.0"} on ${body.platform || "windows"}`,
+          message: `Crash Report #${id}: ${body.error_type || "panic"} — ${body.message || ""}\n\n${body.stack || ""}`,
+          platform: String(body.platform || "windows"),
+          ticketId: `crash_${id}`,
+        })
+      )
+      .catch(() => {});
     return c.json({ ok: true, id });
   });
   app.post("/v1/telemetry/event", async (c) => {
@@ -3797,6 +4583,7 @@ export function createApp(deps: AppDeps) {
       await handleStripeEvent(stripe, repo, event);
     } catch (e) {
       repo.unmarkEvent(event.id); // let Stripe retry
+      repo.recordWebhookDlq(event.id, "stripe", event.type, raw, String((e as Error)?.message || e));
       console.error(`[stripe] failed handling ${event.type} ${event.id}`, e);
       return c.json({ error: "handler_failed" }, 500);
     }
@@ -3833,6 +4620,7 @@ export function createApp(deps: AppDeps) {
     } catch (e) {
       repo.unmarkEvent(key); // let RevenueCat retry
       if (e instanceof RevenueCatPayloadError) return c.json({ error: e.message }, 400);
+      repo.recordWebhookDlq(key, "revenuecat", String((body as any)?.event?.type || "rc_event"), JSON.stringify(body), String((e as Error)?.message || e));
       console.error("[revenuecat] failed handling webhook", e);
       return c.json({ error: "handler_failed" }, 500);
     }

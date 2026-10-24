@@ -153,7 +153,14 @@ fn is_os_task_registered() -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn is_os_task_registered() -> bool {
+    dirs::home_dir()
+        .map(|h| h.join("Library/LaunchAgents/com.sweepr.cleaner.scheduled-clean.plist").is_file())
+        .unwrap_or(false)
+}
+
+#[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
 fn is_os_task_registered() -> bool {
     false
 }
@@ -219,7 +226,73 @@ fn sync_os_task(cfg: &ScheduleConfig, data_dir: &Path) -> AppResult<()> {
     Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn sync_os_task(cfg: &ScheduleConfig, data_dir: &Path) -> AppResult<()> {
+    let home = dirs::home_dir().ok_or_else(|| AppError::Other("Home directory not found".into()))?;
+    let agents_dir = home.join("Library/LaunchAgents");
+    let plist_path = agents_dir.join("com.sweepr.cleaner.scheduled-clean.plist");
+
+    if !cfg.enabled {
+        let _ = std::process::Command::new("launchctl")
+            .args(["unload", "-w"])
+            .arg(&plist_path)
+            .output();
+        let _ = std::fs::remove_file(&plist_path);
+        return Ok(());
+    }
+
+    let _ = std::fs::create_dir_all(&agents_dir);
+    let exe = std::env::current_exe()
+        .map_err(|e| AppError::Other(format!("Could not determine application executable path: {e}")))?;
+
+    let mut parts = cfg.time.split(':');
+    let hour: u32 = parts.next().and_then(|s| s.parse().ok()).unwrap_or(11).min(23);
+    let minute: u32 = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0).min(59);
+
+    let extra_calendar = match cfg.frequency.as_str() {
+        "weekly" => {
+            let weekday = match cfg.day_of_week.as_str() {
+                "SUN" => 0,
+                "MON" => 1,
+                "TUE" => 2,
+                "WED" => 3,
+                "THU" => 4,
+                "FRI" => 5,
+                "SAT" => 6,
+                _ => 1,
+            };
+            format!("    <key>Weekday</key>\n    <integer>{weekday}</integer>\n")
+        }
+        "monthly" => {
+            let day = cfg.day_of_month.clamp(1, 28);
+            format!("    <key>Day</key>\n    <integer>{day}</integer>\n")
+        }
+        _ => String::new(),
+    };
+
+    let plist = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n  <key>Label</key>\n  <string>com.sweepr.cleaner.scheduled-clean</string>\n  <key>ProgramArguments</key>\n  <array>\n    <string>{}</string>\n    <string>--scheduled-clean</string>\n    <string>--data-dir</string>\n    <string>{}</string>\n  </array>\n  <key>StartCalendarInterval</key>\n  <dict>\n{}    <key>Hour</key>\n    <integer>{hour}</integer>\n    <key>Minute</key>\n    <integer>{minute}</integer>\n  </dict>\n</dict>\n</plist>\n",
+        exe.display(),
+        data_dir.display(),
+        extra_calendar
+    );
+
+    crate::safety::atomic_write(&plist_path, plist.as_bytes())
+        .map_err(|e| AppError::Other(format!("Could not write LaunchAgent schedule plist: {e}")))?;
+
+    let _ = std::process::Command::new("launchctl")
+        .args(["unload", "-w"])
+        .arg(&plist_path)
+        .output();
+    let _ = std::process::Command::new("launchctl")
+        .args(["load", "-w"])
+        .arg(&plist_path)
+        .output();
+
+    Ok(())
+}
+
+#[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
 fn sync_os_task(_cfg: &ScheduleConfig, _data_dir: &Path) -> AppResult<()> {
     Ok(())
 }

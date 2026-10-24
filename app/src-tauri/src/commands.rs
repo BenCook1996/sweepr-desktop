@@ -3,7 +3,9 @@
 use crate::battery::{self, BatteryCareConfig, BatteryDiagnostics, HibernateTabsResult, ThermalThrottleResult};
 use crate::cleaner::{self, CleanReport, QuarantineEntry};
 use crate::error::{AppError, AppResult};
-use crate::licensing::{LicenseStatus, Licensing};
+use crate::licensing::{
+    LicenseStatus, Licensing, QrChallengeResponse, QrCreateTokenResponse, QrPollResult,
+};
 use crate::memory::{
     self, BrowserMemoryReport, BrowserTameResult, ContextMenuItem, GamingBoostResult,
     MemoryOverview, RunningAppConflict, StartupItem, SystemHealthDetails, SystemOverview,
@@ -63,14 +65,18 @@ fn append_cleaning_history(data_dir: &Path, entry: CleanHistoryEntry) -> std::io
         list.truncate(100);
     }
     let json = serde_json::to_string_pretty(&list)?;
-    std::fs::write(data_dir.join("cleaning_history.json"), json)
+    safety::atomic_write(&data_dir.join("cleaning_history.json"), json.as_bytes())
 }
 
 #[tauri::command]
 pub async fn scan_start(app: AppHandle, state: State<'_, AppState>) -> AppResult<ScanReport> {
     let exclusions = safety::load_exclusions(&state.data_dir);
+    let disabled = safety::load_disabled_rules(&state.data_dir);
     tauri::async_runtime::spawn_blocking(move || {
-        let rules = rules::all();
+        let rules: Vec<rules::Rule> = rules::all()
+            .into_iter()
+            .filter(|r| !disabled.contains(&r.id.to_ascii_lowercase()))
+            .collect();
         scanner::scan_all_with_exclusions(&rules, &exclusions, |p| {
             let _ = app.emit("scan://progress", p);
         })
@@ -86,8 +92,12 @@ pub async fn clean_categories(
     use_trash: bool,
 ) -> AppResult<Vec<CleanReport>> {
     state.licensing.require_active().await?;
+    let disabled = safety::load_disabled_rules(&state.data_dir);
     let mut selected = Vec::new();
     for id in &ids {
+        if disabled.contains(&id.trim().to_ascii_lowercase()) {
+            continue;
+        }
         let rule = rules::find(id).ok_or_else(|| AppError::NotFound(id.clone()))?;
         selected.push(rule);
     }
@@ -312,6 +322,25 @@ pub async fn verify_login_otp(state: State<'_, AppState>, email: String, code: S
 }
 
 #[tauri::command]
+pub async fn start_qr_challenge(state: State<'_, AppState>) -> AppResult<QrChallengeResponse> {
+    state.licensing.start_qr_challenge().await
+}
+
+#[tauri::command]
+pub async fn poll_qr_challenge(
+    state: State<'_, AppState>,
+    challenge_id: String,
+    poll_secret: String,
+) -> AppResult<QrPollResult> {
+    state.licensing.poll_qr_challenge(&challenge_id, &poll_secret).await
+}
+
+#[tauri::command]
+pub async fn create_qr_link_token(state: State<'_, AppState>) -> AppResult<QrCreateTokenResponse> {
+    state.licensing.create_qr_link_token().await
+}
+
+#[tauri::command]
 pub async fn memory_overview() -> AppResult<MemoryOverview> {
     tauri::async_runtime::spawn_blocking(memory::overview).await.map_err(join_err)
 }
@@ -487,6 +516,7 @@ fn scan_chromium_browser(name: &str, id: &str, relative_path: &str) -> BrowserPr
         installed: false,
     };
 
+    #[cfg(not(target_os = "macos"))]
     if let Some(local_app_data) = dirs::data_local_dir() {
         let user_data = local_app_data.join(relative_path).join("User Data");
         if user_data.exists() {
@@ -502,6 +532,54 @@ fn scan_chromium_browser(name: &str, id: &str, relative_path: &str) -> BrowserPr
                 item.history_bytes += file_size(&default_profile.join("History-journal"));
             }
         }
+    }
+
+    #[cfg(target_os = "macos")]
+    if let Some(home) = dirs::home_dir() {
+        let mac_rel = match id {
+            "chrome" => "Google/Chrome",
+            "edge" => "Microsoft Edge",
+            _ => "BraveSoftware/Brave-Browser",
+        };
+        let app_support = home.join("Library/Application Support").join(mac_rel);
+        let cache_dir = home.join("Library/Caches").join(mac_rel);
+        if app_support.exists() || cache_dir.exists() {
+            item.installed = true;
+            item.cache_bytes += dir_size(&cache_dir);
+            let default_profile = app_support.join("Default");
+            if default_profile.exists() {
+                item.cache_bytes += dir_size(&default_profile.join("Code Cache"));
+                item.cache_bytes += dir_size(&default_profile.join("GPUCache"));
+                item.cookies_bytes += file_size(&default_profile.join("Network").join("Cookies"));
+                item.cookies_bytes += file_size(&default_profile.join("Cookies"));
+                item.history_bytes += file_size(&default_profile.join("History"));
+                item.history_bytes += file_size(&default_profile.join("History-journal"));
+            }
+        }
+    }
+
+    item.total_bytes = item.cache_bytes + item.cookies_bytes + item.history_bytes;
+    item
+}
+
+#[cfg(target_os = "macos")]
+fn scan_safari_browser() -> BrowserPrivacyItem {
+    let mut item = BrowserPrivacyItem {
+        id: "safari".into(),
+        browser: "safari".into(),
+        name: "Apple Safari".into(),
+        cache_bytes: 0,
+        cookies_bytes: 0,
+        history_bytes: 0,
+        total_bytes: 0,
+        installed: true,
+    };
+    if let Some(home) = dirs::home_dir() {
+        item.cache_bytes += dir_size(&home.join("Library/Caches/com.apple.Safari"));
+        item.cache_bytes += dir_size(&home.join("Library/Safari/Touch Icons Cache"));
+        item.cookies_bytes += dir_size(&home.join("Library/Safari/LocalStorage"));
+        item.history_bytes += file_size(&home.join("Library/Safari/History.db"));
+        item.history_bytes += file_size(&home.join("Library/Safari/History.db-wal"));
     }
     item.total_bytes = item.cache_bytes + item.cookies_bytes + item.history_bytes;
     item
@@ -520,7 +598,11 @@ fn scan_firefox_browser() -> BrowserPrivacyItem {
     };
 
     if let Some(roaming) = dirs::data_dir() {
-        let profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+        let profiles = if cfg!(target_os = "macos") {
+            roaming.join("Firefox").join("Profiles")
+        } else {
+            roaming.join("Mozilla").join("Firefox").join("Profiles")
+        };
         if profiles.exists() {
             item.installed = true;
             if let Ok(entries) = std::fs::read_dir(&profiles) {
@@ -535,8 +617,12 @@ fn scan_firefox_browser() -> BrowserPrivacyItem {
         }
     }
 
-    if let Some(local) = dirs::data_local_dir() {
-        let cache_profiles = local.join("Mozilla").join("Firefox").join("Profiles");
+    if let Some(local) = dirs::cache_dir().or_else(dirs::data_local_dir) {
+        let cache_profiles = if cfg!(target_os = "macos") {
+            local.join("Firefox").join("Profiles")
+        } else {
+            local.join("Mozilla").join("Firefox").join("Profiles")
+        };
         if cache_profiles.exists() {
             if let Ok(entries) = std::fs::read_dir(&cache_profiles) {
                 for e in entries.flatten() {
@@ -556,12 +642,16 @@ fn scan_firefox_browser() -> BrowserPrivacyItem {
 #[tauri::command]
 pub async fn scan_browser_privacy() -> AppResult<Vec<BrowserPrivacyItem>> {
     tauri::async_runtime::spawn_blocking(|| {
-        vec![
+        #[allow(unused_mut)]
+        let mut list = vec![
             scan_chromium_browser("Google Chrome", "chrome", "Google/Chrome"),
             scan_chromium_browser("Microsoft Edge", "edge", "Microsoft/Edge"),
             scan_chromium_browser("Brave Browser", "brave", "BraveSoftware/Brave-Browser"),
             scan_firefox_browser(),
-        ]
+        ];
+        #[cfg(target_os = "macos")]
+        list.insert(1, scan_safari_browser());
+        list
     })
     .await
     .map_err(join_err)
@@ -604,16 +694,45 @@ pub async fn clean_browser_privacy(
         for b in &browsers {
             match b.as_str() {
                 "chrome" | "edge" | "brave" => {
-                    let rel = match b.as_str() {
-                        "chrome" => "Google/Chrome",
-                        "edge" => "Microsoft/Edge",
-                        _ => "BraveSoftware/Brave-Browser",
-                    };
-                    if let Some(local_app_data) = dirs::data_local_dir() {
-                        let default_profile = local_app_data.join(rel).join("User Data").join("Default");
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        let rel = match b.as_str() {
+                            "chrome" => "Google/Chrome",
+                            "edge" => "Microsoft/Edge",
+                            _ => "BraveSoftware/Brave-Browser",
+                        };
+                        if let Some(local_app_data) = dirs::data_local_dir() {
+                            let default_profile = local_app_data.join(rel).join("User Data").join("Default");
+                            if default_profile.exists() {
+                                if clear_cache {
+                                    total_freed += clean_file_or_dir(&default_profile.join("Cache"));
+                                    total_freed += clean_file_or_dir(&default_profile.join("Code Cache"));
+                                    total_freed += clean_file_or_dir(&default_profile.join("GPUCache"));
+                                }
+                                if clear_cookies {
+                                    total_freed += clean_file_or_dir(&default_profile.join("Network").join("Cookies"));
+                                    total_freed += clean_file_or_dir(&default_profile.join("Cookies"));
+                                }
+                                if clear_history {
+                                    total_freed += clean_file_or_dir(&default_profile.join("History"));
+                                    total_freed += clean_file_or_dir(&default_profile.join("History-journal"));
+                                }
+                            }
+                        }
+                    }
+                    #[cfg(target_os = "macos")]
+                    if let Some(home) = dirs::home_dir() {
+                        let mac_rel = match b.as_str() {
+                            "chrome" => "Google/Chrome",
+                            "edge" => "Microsoft Edge",
+                            _ => "BraveSoftware/Brave-Browser",
+                        };
+                        if clear_cache {
+                            total_freed += clean_file_or_dir(&home.join("Library/Caches").join(mac_rel));
+                        }
+                        let default_profile = home.join("Library/Application Support").join(mac_rel).join("Default");
                         if default_profile.exists() {
                             if clear_cache {
-                                total_freed += clean_file_or_dir(&default_profile.join("Cache"));
                                 total_freed += clean_file_or_dir(&default_profile.join("Code Cache"));
                                 total_freed += clean_file_or_dir(&default_profile.join("GPUCache"));
                             }
@@ -628,9 +747,30 @@ pub async fn clean_browser_privacy(
                         }
                     }
                 }
+                "safari" => {
+                    #[cfg(target_os = "macos")]
+                    if let Some(home) = dirs::home_dir() {
+                        if clear_cache {
+                            total_freed += clean_file_or_dir(&home.join("Library/Caches/com.apple.Safari"));
+                            total_freed += clean_file_or_dir(&home.join("Library/Safari/Touch Icons Cache"));
+                        }
+                        if clear_cookies {
+                            total_freed += clean_file_or_dir(&home.join("Library/Safari/LocalStorage"));
+                        }
+                        if clear_history {
+                            total_freed += clean_file_or_dir(&home.join("Library/Safari/History.db"));
+                            total_freed += clean_file_or_dir(&home.join("Library/Safari/History.db-wal"));
+                            total_freed += clean_file_or_dir(&home.join("Library/Safari/History.db-shm"));
+                        }
+                    }
+                }
                 "firefox" => {
                     if let Some(roaming) = dirs::data_dir() {
-                        let profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+                        let profiles = if cfg!(target_os = "macos") {
+                            roaming.join("Firefox").join("Profiles")
+                        } else {
+                            roaming.join("Mozilla").join("Firefox").join("Profiles")
+                        };
                         if let Ok(entries) = std::fs::read_dir(&profiles) {
                             for e in entries.flatten() {
                                 let p = e.path();
@@ -646,8 +786,12 @@ pub async fn clean_browser_privacy(
                         }
                     }
                     if clear_cache {
-                        if let Some(local) = dirs::data_local_dir() {
-                            let cache_profiles = local.join("Mozilla").join("Firefox").join("Profiles");
+                        if let Some(local) = dirs::cache_dir().or_else(dirs::data_local_dir) {
+                            let cache_profiles = if cfg!(target_os = "macos") {
+                                local.join("Firefox").join("Profiles")
+                            } else {
+                                local.join("Mozilla").join("Firefox").join("Profiles")
+                            };
                             if let Ok(entries) = std::fs::read_dir(&cache_profiles) {
                                 for e in entries.flatten() {
                                     let p = e.path();
@@ -1432,7 +1576,9 @@ pub async fn complete_installation(
                 if desktop_shortcut {
                     let _ = std::fs::remove_file(&candidates[1]);
                     let _ = std::fs::remove_file(&candidates[2]);
-                    create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                    if !candidates[0].exists() {
+                        create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                    }
                 } else {
                     for c in &candidates {
                         let _ = std::fs::remove_file(c);
@@ -1453,7 +1599,9 @@ pub async fn complete_installation(
                 if start_menu_shortcut {
                     let _ = std::fs::remove_file(&candidates[1]);
                     let _ = std::fs::remove_file(&candidates[2]);
-                    create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                    if !candidates[0].exists() && !candidates[3].exists() {
+                        create_windows_shortcut(&candidates[0], &exe_str, &work_dir);
+                    }
                 } else {
                     for c in &candidates {
                         let _ = std::fs::remove_file(c);
@@ -1565,13 +1713,15 @@ pub async fn uninstall_self(
             }
 
             if !launched_uninstaller {
-                // Schedule removal of the standalone executable once this process exits
-                let _ = std::process::Command::new(crate::safety::system32_binary("cmd"))
+                // Schedule removal of the standalone executable on next reboot if no NSIS uninstaller is present
+                let _ = std::process::Command::new(system_powershell_path())
                     .creation_flags(0x08000000)
                     .env("SWEEPR_SELF_EXE", exe_path.as_os_str())
                     .args([
-                        "/C",
-                        "ping 127.0.0.1 -n 3 > NUL & del /f /q \"%SWEEPR_SELF_EXE%\"",
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-Command",
+                        "Start-Sleep -Seconds 2; Remove-Item -LiteralPath $env:SWEEPR_SELF_EXE -Force -ErrorAction SilentlyContinue",
                     ])
                     .spawn();
             }
@@ -2202,10 +2352,11 @@ pub async fn empty_recycle_bin(state: State<'_, AppState>) -> AppResult<u64> {
         let mut freed = 0u64;
 
         for root in recycle_bin_roots() {
-            let Ok(sid_dirs) = std::fs::read_dir(&root) else {
+            let Ok(entries) = std::fs::read_dir(&root) else {
                 continue;
             };
-            for sid_entry in sid_dirs.flatten() {
+            #[cfg(windows)]
+            for sid_entry in entries.flatten() {
                 let sid_path = sid_entry.path();
                 if !sid_path.is_dir() {
                     continue;
@@ -2221,6 +2372,15 @@ pub async fn empty_recycle_bin(state: State<'_, AppState>) -> AppResult<u64> {
                     }
                     freed += clean_file_or_dir(&cpath);
                 }
+            }
+            #[cfg(not(windows))]
+            for child in entries.flatten() {
+                let cpath = child.path();
+                let cname = child.file_name().to_string_lossy().into_owned();
+                if cname.eq_ignore_ascii_case(".DS_Store") {
+                    continue;
+                }
+                freed += clean_file_or_dir(&cpath);
             }
         }
 

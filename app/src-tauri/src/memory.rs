@@ -186,20 +186,23 @@ pub fn startup_items() -> Vec<StartupItem> {
 
 #[cfg(unix)]
 pub fn startup_items() -> Vec<StartupItem> {
-    let mut dirs_to_check: Vec<(std::path::PathBuf, &str, &str)> = Vec::new();
+    let mut dirs_to_check: Vec<(std::path::PathBuf, &str, &str, bool)> = Vec::new();
     if let Some(h) = dirs::home_dir() {
         #[cfg(target_os = "macos")]
-        dirs_to_check.push((h.join("Library/LaunchAgents"), "Current user", "plist"));
+        {
+            dirs_to_check.push((h.join("Library/LaunchAgents"), "Current user", "plist", true));
+            dirs_to_check.push((h.join("Library/LaunchAgents (SweeprDisabled)"), "Current user", "plist", false));
+        }
         #[cfg(not(target_os = "macos"))]
-        dirs_to_check.push((h.join(".config/autostart"), "Current user", "desktop"));
+        dirs_to_check.push((h.join(".config/autostart"), "Current user", "desktop", true));
     }
     #[cfg(target_os = "macos")]
-    dirs_to_check.push(("/Library/LaunchAgents".into(), "All users", "plist"));
+    dirs_to_check.push(("/Library/LaunchAgents".into(), "All users", "plist", true));
     #[cfg(not(target_os = "macos"))]
-    dirs_to_check.push(("/etc/xdg/autostart".into(), "All users", "desktop"));
+    dirs_to_check.push(("/etc/xdg/autostart".into(), "All users", "desktop", true));
 
     let mut out = Vec::new();
-    for (dir, scope, ext) in dirs_to_check {
+    for (dir, scope, ext, enabled) in dirs_to_check {
         if let Ok(rd) = std::fs::read_dir(&dir) {
             for e in rd.flatten() {
                 let p = e.path();
@@ -211,7 +214,7 @@ pub fn startup_items() -> Vec<StartupItem> {
                         name,
                         command,
                         scope: scope.into(),
-                        enabled: true,
+                        enabled,
                         impact,
                     });
                 }
@@ -275,10 +278,53 @@ pub fn toggle_startup_item_blocking(name: &str, scope: &str, enabled: bool) -> A
     Ok(startup_items())
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+pub fn toggle_startup_item_blocking(name: &str, scope: &str, enabled: bool) -> AppResult<Vec<StartupItem>> {
+    let name = validate_startup_name(name)?;
+    if scope != "Current user" {
+        return Err(AppError::Other(
+            "System-wide ('All users') LaunchAgents require Administrator privileges to toggle.".into(),
+        ));
+    }
+    let home = dirs::home_dir().ok_or_else(|| AppError::Other("Home directory not found".into()))?;
+    let active_dir = home.join("Library/LaunchAgents");
+    let disabled_dir = home.join("Library/LaunchAgents (SweeprDisabled)");
+    let _ = std::fs::create_dir_all(&active_dir);
+    let _ = std::fs::create_dir_all(&disabled_dir);
+
+    let file_name = format!("{name}.plist");
+    let active_plist = active_dir.join(&file_name);
+    let disabled_plist = disabled_dir.join(&file_name);
+
+    if !enabled {
+        if !active_plist.is_file() {
+            return Err(AppError::NotFound("Startup LaunchAgent not found".into()));
+        }
+        let _ = std::process::Command::new("launchctl")
+            .args(["unload", "-w"])
+            .arg(&active_plist)
+            .status();
+        std::fs::rename(&active_plist, &disabled_plist)
+            .map_err(|e| AppError::Other(format!("Could not disable LaunchAgent: {e}")))?;
+    } else {
+        if !disabled_plist.is_file() {
+            return Err(AppError::NotFound("Disabled LaunchAgent not found".into()));
+        }
+        std::fs::rename(&disabled_plist, &active_plist)
+            .map_err(|e| AppError::Other(format!("Could not re-enable LaunchAgent: {e}")))?;
+        let _ = std::process::Command::new("launchctl")
+            .args(["load", "-w"])
+            .arg(&active_plist)
+            .status();
+    }
+
+    Ok(startup_items())
+}
+
+#[cfg(all(not(windows), not(target_os = "macos")))]
 pub fn toggle_startup_item_blocking(name: &str, _scope: &str, _enabled: bool) -> AppResult<Vec<StartupItem>> {
     let _ = validate_startup_name(name)?;
-    Err(AppError::Other("Toggling startup items is currently supported on Windows.".into()))
+    Err(AppError::Other("Toggling startup items is currently supported on Windows and macOS.".into()))
 }
 
 pub fn toggle_startup_item(name: &str, scope: &str, enabled: bool) -> AppResult<Vec<StartupItem>> {
@@ -296,7 +342,14 @@ pub fn is_autostart_enabled() -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+pub fn is_autostart_enabled() -> bool {
+    dirs::home_dir()
+        .map(|h| h.join("Library/LaunchAgents/com.sweepr.cleaner.autostart.plist").is_file())
+        .unwrap_or(false)
+}
+
+#[cfg(all(not(windows), not(target_os = "macos")))]
 pub fn is_autostart_enabled() -> bool {
     false
 }
@@ -326,7 +379,28 @@ pub fn set_autostart_enabled(enabled: bool) -> AppResult<bool> {
     Ok(is_autostart_enabled())
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+pub fn set_autostart_enabled(enabled: bool) -> AppResult<bool> {
+    let home = dirs::home_dir().ok_or_else(|| AppError::Other("Home directory not found".into()))?;
+    let agents_dir = home.join("Library/LaunchAgents");
+    let plist_path = agents_dir.join("com.sweepr.cleaner.autostart.plist");
+    if enabled {
+        let _ = std::fs::create_dir_all(&agents_dir);
+        let exe = std::env::current_exe()
+            .map_err(|e| AppError::Other(format!("Could not determine executable path: {e}")))?;
+        let plist = format!(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n  <key>Label</key>\n  <string>com.sweepr.cleaner.autostart</string>\n  <key>ProgramArguments</key>\n  <array>\n    <string>{}</string>\n    <string>--autostart</string>\n  </array>\n  <key>RunAtLoad</key>\n  <true/>\n</dict>\n</plist>\n",
+            exe.to_string_lossy()
+        );
+        crate::safety::atomic_write(&plist_path, plist.as_bytes())
+            .map_err(|e| AppError::Other(format!("Could not write LaunchAgent plist: {e}")))?;
+    } else {
+        let _ = std::fs::remove_file(&plist_path);
+    }
+    Ok(is_autostart_enabled())
+}
+
+#[cfg(all(not(windows), not(target_os = "macos")))]
 pub fn set_autostart_enabled(enabled: bool) -> AppResult<bool> {
     Ok(enabled)
 }

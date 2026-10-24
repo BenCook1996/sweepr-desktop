@@ -12,11 +12,14 @@ jobs:
       matrix:
         include:
           - platform: "macos-latest"
-            args: ""
+            args: "--target universal-apple-darwin"
+            targets: "aarch64-apple-darwin,x86_64-apple-darwin"
           - platform: "ubuntu-22.04"
             args: ""
+            targets: ""
           - platform: "windows-latest"
             args: ""
+            targets: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -31,6 +34,7 @@ jobs:
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
         with:
           toolchain: stable
+          targets: ${{ matrix.targets }}
 
       - name: Install Ubuntu dependencies
         if: matrix.platform == 'ubuntu-22.04'

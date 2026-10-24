@@ -137,21 +137,48 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="glass-card p-6 bg-white shadow-sm rounded-2xl border border-gray-100">
-          <h3 class="font-bold text-lg mb-4">Linked Devices</h3>
-          <p class="text-sm text-gray-500 mb-4">You can link up to 3 Desktop PCs on your license.</p>
-          <ul id="deviceList" class="space-y-3">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <h3 class="font-bold text-lg">Linked Devices</h3>
+            <span id="deviceCountBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">0 / 3 Devices</span>
+          </div>
+          <p class="text-sm text-gray-500 mb-4">You can link up to <strong>3 devices</strong> on your subscription (any combination of Desktop PC, Mac, Linux, iOS &amp; Android).</p>
+          <ul id="deviceList" class="space-y-3 mb-4">
             <!-- Populated by JS -->
           </ul>
+          <button
+            type="button"
+            id="showPortalQrBtn"
+            onclick="generatePortalQrCode()"
+            class="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span>📱 Link Phone or Another PC via QR Code</span>
+          </button>
+          <div id="portalQrPanel" class="hidden mt-4 p-4 rounded-xl bg-gray-50 border border-emerald-200 text-center">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-1">Scan with Phone Camera or SWEEPR App</div>
+            <p class="text-xs text-gray-500 mb-3">One-time cryptographic pairing token. Automatically unlocks your device without typing a code.</p>
+            <div id="portalQrSvgBox" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center"></div>
+            <div class="mt-2.5 flex items-center justify-center gap-3 text-xs">
+              <span id="portalQrTimer" class="font-mono font-bold text-gray-600">Expires in 120s</span>
+              <button type="button" onclick="generatePortalQrCode()" class="font-bold text-emerald-600 hover:underline cursor-pointer">Refresh QR</button>
+            </div>
+            <div id="portalQrError" class="hidden mt-2 text-xs font-semibold text-red-600"></div>
+          </div>
         </div>
         
         <div class="glass-card p-6 bg-white shadow-sm rounded-2xl border border-gray-100 flex flex-col justify-center items-center text-center">
           <h3 class="font-bold text-lg mb-2">Need the app?</h3>
-          <p class="text-sm text-gray-500 mb-6">Download the latest version of SWEEPR Cleaner for Windows.</p>
-          <a href="/download" class="btn btn-go justify-center gap-2 w-full max-w-xs">
-            <span>Download SWEEPR Cleaner</span>
-          </a>
+          <p class="text-sm text-gray-500 mb-5">Download the latest version of SWEEPR Cleaner for Windows or Mac.</p>
+          <div class="flex flex-col sm:flex-row gap-2.5 w-full max-w-sm">
+            <a href="/download?platform=windows" class="btn btn-go justify-center gap-2 flex-1 text-xs sm:text-sm py-3">
+              <span>Windows (.exe)</span>
+            </a>
+            <a href="/download?platform=mac" class="btn btn-go justify-center gap-2 flex-1 text-xs sm:text-sm py-3" style="background:#0f172a;">
+              <span>macOS (.dmg)</span>
+            </a>
+          </div>
           <p class="text-xs text-gray-400 mt-4 max-w-xs leading-relaxed">
-            If Chrome shows a download prompt, click the <strong>&gt;</strong> arrow next to <code>SWEEPRCleaner.exe</code> and select <strong>Download suspicious file</strong> (or on Windows SmartScreen click <strong>More info &rarr; Run anyway</strong>).
+            <strong>Windows:</strong> If SmartScreen appears, click <strong>More info &rarr; Run anyway</strong>.<br>
+            <strong>macOS:</strong> Open <code>SWEEPRCleaner.dmg</code>, drag <strong>SWEEPR Cleaner</strong> to Applications, and right-click &rarr; <strong>Open</strong> on first launch.
           </p>
         </div>
       </div>
@@ -265,21 +292,36 @@
         }
 
         const deviceList = document.getElementById('deviceList');
+        const deviceCountBadge = document.getElementById('deviceCountBadge');
+        const usedCount = Array.isArray(data.devices) ? data.devices.length : 0;
+        const maxCount = data.devices_max || 3;
+        if (deviceCountBadge) {
+          deviceCountBadge.textContent = `${usedCount} / ${maxCount} Devices`;
+        }
         if (data.devices && data.devices.length > 0) {
-          deviceList.innerHTML = data.devices.map(d => `
+          deviceList.innerHTML = data.devices.map(d => {
+            const isMob = d.type === 'mobile' || /ios|iphone|ipad|android|mobile/i.test(String(d.platform || ''));
+            const label = d.device_name || (isMob ? 'Mobile Phone / Tablet' : 'Desktop PC');
+            return `
             <li class="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
               <div class="flex items-center gap-3">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 <div>
-                  <div class="text-sm font-semibold text-gray-800">Windows PC</div>
+                  <div class="text-sm font-semibold text-gray-800">${escapeHtml(label)}</div>
                   <div class="text-xs text-gray-400 font-mono">${escapeHtml(String(d.id ?? '').substring(0, 12))}...</div>
                 </div>
               </div>
-              <span class="text-xs text-gray-400">Active</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-emerald-600 font-semibold">Active</span>
+                <button type="button" onclick="removeLinkedDevice('${escapeHtml(String(d.id ?? ''))}')" class="px-2.5 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 cursor-pointer">
+                  Remove
+                </button>
+              </div>
             </li>
-          `).join('');
+          `;
+          }).join('');
         } else {
-          deviceList.innerHTML = '<li class="text-sm text-gray-500 italic">No devices linked yet. Log into the desktop app to link a device.</li>';
+          deviceList.innerHTML = '<li class="text-sm text-gray-500 italic">No devices linked yet. Scan a QR code below or log into the app to link a device.</li>';
         }
         try {
           const savedLang = localStorage.getItem('sweepr_lang');
@@ -289,6 +331,54 @@
         } catch (e) {}
       } catch (err) {
         console.error(err);
+      }
+    }
+    let portalQrInterval = null;
+    async function removeLinkedDevice(deviceId) {
+      if (!deviceId) return;
+      try {
+        const res = await fetch('/api/portal/devices/' + encodeURIComponent(deviceId), { method: 'DELETE' });
+        if (res.ok) await load();
+      } catch (e) {}
+    }
+    async function generatePortalQrCode() {
+      const panel = document.getElementById('portalQrPanel');
+      const svgBox = document.getElementById('portalQrSvgBox');
+      const timerEl = document.getElementById('portalQrTimer');
+      const errEl = document.getElementById('portalQrError');
+      if (!panel || !svgBox) return;
+      panel.classList.remove('hidden');
+      errEl.classList.add('hidden');
+      svgBox.innerHTML = '<span class="text-xs text-gray-400">Generating QR...</span>';
+      if (portalQrInterval) clearInterval(portalQrInterval);
+      try {
+        const res = await fetch('/api/device-link/create-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          svgBox.innerHTML = '<span class="text-xs text-red-500 font-semibold">Limit Reached</span>';
+          errEl.textContent = data.message || data.error || 'Could not generate QR code.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        svgBox.innerHTML = data.qr_svg;
+        let rem = Number(data.ttl_seconds) || 120;
+        timerEl.textContent = 'Expires in ' + rem + 's';
+        portalQrInterval = setInterval(async () => {
+          rem--;
+          if (rem <= 0) {
+            clearInterval(portalQrInterval);
+            timerEl.textContent = 'QR Expired — Click Refresh QR';
+          } else {
+            timerEl.textContent = 'Expires in ' + rem + 's';
+            if (rem % 4 === 0) await load();
+          }
+        }, 1000);
+      } catch (e) {
+        svgBox.innerHTML = '<span class="text-xs text-red-500">Error</span>';
       }
     }
     async function purchaseAddon(addonId, btnId) {
