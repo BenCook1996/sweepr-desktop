@@ -229,6 +229,17 @@ export function createApp(deps: AppDeps) {
   app.use("*", etag());
   app.use("*", securityHeaders({ hsts: isHttps }));
 
+  // Drop automated PHP/CGI/scanner probes early before body parsing, static lookup, or bot telemetry
+  const SCANNER_PROBE_RE = /\.(?:php\d?|phtml|phar|cgi|asp|aspx|jsp|env)$/i;
+  const SCANNER_PATH_RE = /^\/+(?:cgi-bin|vendor\/phpunit|wp-admin|wp-login|wp-content|xmlrpc\.php|\.env|\.git)(?:\/|$)/i;
+  app.use("*", async (c, next) => {
+    const p = c.req.path;
+    if (SCANNER_PROBE_RE.test(p) || SCANNER_PATH_RE.test(p)) {
+      return c.text("Not Found", 404);
+    }
+    await next();
+  });
+
   // Static asset caching & performance headers (strictly non-visual / non-functional)
   app.use("*", async (c, next) => {
     await next();
