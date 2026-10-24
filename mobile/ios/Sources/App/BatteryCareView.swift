@@ -294,7 +294,6 @@ struct BatteryCareView: View {
 
                                 chargeLimiterCard
                                 thermalGuardCard
-                                memoryAndTabDietCard
                             }
                             .padding(.horizontal, 16)
                             .padding(.bottom, 20)
@@ -457,62 +456,28 @@ struct BatteryCareView: View {
         )
     }
 
+    private var isUnlocked: Bool {
+        vm.hasPremium || vm.hasBatteryCare
+    }
+
     private var chargeLimiterCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                SweeprIconBadge(systemName: "bolt.shield.fill", tint: .sweeprEmerald, size: 36, iconSize: 16, cornerRadius: 11)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(monitor.chargeLimitPercent)% Charge Guard")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.primary)
-                    Text("Reminds you to unplug at \(monitor.chargeLimitPercent)% so your battery lasts up to 2× longer.")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.sweeprMutedText)
-                }
-                Spacer(minLength: 4)
-                if !vm.hasBatteryCare {
-                    addonBadge
-                }
-            }
-
-            // Quick-select target chips (70%, 75%, 80%, 85%, 90%)
-            HStack(spacing: 6) {
-                ForEach([70, 75, 80, 85, 90], id: \.self) { pct in
-                    let isSelected = monitor.chargeLimitPercent == pct
-                    Button {
-                        guard vm.hasBatteryCare else { onShowPaywall(); return }
-                        monitor.chargeLimitPercent = pct
-                    } label: {
-                        Text("\(pct)%")
-                            .font(.system(size: 11, weight: .heavy))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 7)
-                            .background(isSelected ? Color.sweeprEmerald : Color.sweeprPanelAlt)
-                            .foregroundColor(isSelected ? .white : .sweeprMutedText)
-                            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                                    .stroke(isSelected ? Color.sweeprEmerald : Color.sweeprLine, lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
+        HStack(spacing: 12) {
+            SweeprIconBadge(systemName: "bolt.shield.fill", tint: .sweeprEmerald, size: 36, iconSize: 16, cornerRadius: 11)
             Toggle(
-                "Enable \(monitor.chargeLimitPercent)% Charge Guard",
+                "80% Charge Guard",
                 isOn: Binding(
                     get: { monitor.chargeLimitEnabled },
                     set: { enabled in
-                        if enabled && !vm.hasBatteryCare {
+                        if enabled && !isUnlocked {
                             onShowPaywall()
                         } else {
+                            monitor.chargeLimitPercent = 80
                             monitor.requestNotificationPermissionAndEnableLimit(enabled)
                         }
                     }
                 )
             )
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 14, weight: .bold))
             .tint(.sweeprEmerald)
         }
         .padding(16)
@@ -520,80 +485,26 @@ struct BatteryCareView: View {
     }
 
     private var thermalGuardCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                SweeprIconBadge(systemName: "thermometer.sun.fill", tint: .sweeprAmber, size: 36, iconSize: 16, cornerRadius: 11)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Thermal Overheat Guard")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.primary)
-                    Text("Warns you if your iPhone gets hot (\(monitor.thermalLabel)) while fast-charging.")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.sweeprMutedText)
-                }
-                Spacer(minLength: 4)
-                if !vm.hasBatteryCare {
-                    addonBadge
-                }
-            }
-
+        HStack(spacing: 12) {
+            SweeprIconBadge(systemName: "thermometer.sun.fill", tint: .sweeprAmber, size: 36, iconSize: 16, cornerRadius: 11)
             Toggle(
                 "Overheat Protection",
                 isOn: Binding(
                     get: { monitor.thermalGuardEnabled },
                     set: { enabled in
-                        if enabled && !vm.hasBatteryCare {
+                        if enabled && !isUnlocked {
                             onShowPaywall()
                         } else {
                             monitor.thermalGuardEnabled = enabled
                             monitor.statusNotice = enabled
-                                ? "Overheat protection turned on."
-                                : "Overheat protection turned off."
+                                ? "Overheat protection on."
+                                : "Overheat protection off."
                         }
                     }
                 )
             )
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 14, weight: .bold))
             .tint(.sweeprEmerald)
-        }
-        .padding(16)
-        .sweeprCard(cornerRadius: 18)
-    }
-
-    private var memoryAndTabDietCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                SweeprIconBadge(systemName: "sparkles", tint: .sweeprCyan, size: 36, iconSize: 16, cornerRadius: 11)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Cool Down & Clear App Cache")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.primary)
-                    Text("Frees temporary memory (\(formatByteCount(monitor.availableMemoryBytes)) available) to reduce heat drain.")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.sweeprMutedText)
-                }
-                Spacer(minLength: 4)
-                if !vm.hasBatteryCare {
-                    addonBadge
-                }
-            }
-
-            Button {
-                if vm.hasBatteryCare {
-                    monitor.trimBackgroundCaches()
-                } else {
-                    onShowPaywall()
-                }
-            } label: {
-                Text("Cool Down & Clear")
-                    .font(.system(size: 13, weight: .heavy))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Color.sweeprEmerald)
-                    .foregroundColor(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
         }
         .padding(16)
         .sweeprCard(cornerRadius: 18)
@@ -603,7 +514,7 @@ struct BatteryCareView: View {
         Button {
             onShowPaywall()
         } label: {
-            Text("+£17.99/YR")
+            Text("+£9.99/YR")
                 .font(.system(size: 9, weight: .heavy))
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)

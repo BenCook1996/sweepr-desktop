@@ -447,7 +447,7 @@ fun BatteryCareScreen(
     }
 
     fun requireBatteryCare(action: () -> Unit) {
-        if (state.hasBatteryCare) action() else onUnlockAddon(action)
+        if (state.hasPremium || state.hasBatteryCare) action() else onUnlockAddon(action)
     }
 
     Scaffold(
@@ -638,281 +638,90 @@ fun BatteryCareScreen(
 
             // 1. 80% Charge Guard
             SweeprPanel(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f),
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            SweeprIconBadge(
-                                kind = SweeprIconKind.BATTERY,
-                                tint = SweeprGreen,
-                                badgeSize = 36.dp,
-                                iconSize = 18.dp,
-                            )
-                            Text(
-                                "80% Charge Guard",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        if (!state.hasBatteryCare) {
-                            Spacer(Modifier.width(8.dp))
-                            AddonPill()
-                        }
-                    }
-                    Text(
-                        "Reminds you to unplug at $sliderLimit% so your battery lasts up to 2× longer.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.5.sp,
-                    )
-                    // 1-Tap Quick-Select Target Chips (70% - 90%)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        listOf(70, 75, 80, 85, 90).forEach { preset ->
-                            val selected = sliderLimit == preset
-                            Surface(
-                                onClick = {
-                                    requireBatteryCare {
-                                        sliderLimit = preset
-                                        if (snap.chargeLimitEnabled) {
-                                            snap = BatteryCareManager.setChargeLimit(context, true, preset)
-                                            notice = "Updated unplug reminder to $preset%."
-                                        }
-                                    }
-                                },
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (selected) SweeprGreen else MaterialTheme.colorScheme.background,
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (selected) SweeprGreen else MaterialTheme.colorScheme.outline,
-                                ),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(
-                                    text = "$preset%",
-                                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.padding(vertical = 7.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                )
-                            }
-                        }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Slider(
-                            value = sliderLimit.toFloat(),
-                            onValueChange = { next ->
-                                requireBatteryCare {
-                                    sliderLimit = (next / 5f).roundToInt() * 5
-                                }
-                            },
-                            valueRange = 50f..100f,
-                            steps = 9,
-                            modifier = Modifier.weight(1f),
+                        SweeprIconBadge(
+                            kind = SweeprIconKind.BATTERY,
+                            tint = SweeprGreen,
+                            badgeSize = 36.dp,
+                            iconSize = 18.dp,
                         )
-                        Spacer(Modifier.width(10.dp))
                         Text(
-                            "$sliderLimit%",
+                            "80% Charge Guard",
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp,
-                            color = emeraldText(),
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            if (snap.chargeLimitEnabled) "Guard active at ${snap.chargeLimitPercent}%"
-                            else "Charge guard off",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Switch(
-                            checked = snap.chargeLimitEnabled,
-                            onCheckedChange = { enabled ->
-                                if (enabled) {
-                                    requireBatteryCare {
-                                        snap = BatteryCareManager.setChargeLimit(context, true, sliderLimit)
-                                        notice = "80% Charge Guard turned on at $sliderLimit%."
-                                    }
-                                } else {
-                                    snap = BatteryCareManager.setChargeLimit(context, false, sliderLimit)
-                                    notice = "Charge Guard turned off."
-                                }
-                            },
-                        )
-                    }
-                    if (snap.chargeLimitEnabled && sliderLimit != snap.chargeLimitPercent) {
-                        EmeraldButton(
-                            text = "Save $sliderLimit% Target",
-                            onClick = {
+                    Switch(
+                        checked = snap.chargeLimitEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
                                 requireBatteryCare {
-                                    snap = BatteryCareManager.setChargeLimit(context, true, sliderLimit)
-                                    notice = "Updated Charge Guard target to $sliderLimit%."
+                                    sliderLimit = 80
+                                    snap = BatteryCareManager.setChargeLimit(context, true, 80)
+                                    notice = "80% Charge Guard on."
                                 }
-                            },
-                        )
-                    }
-                }
-            }
-
-            // 2. Overheat Alert & Battery Saver
-            SweeprPanel(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            SweeprIconBadge(
-                                kind = SweeprIconKind.SPARKLE_CLEAN,
-                                tint = SweeprAmber,
-                                badgeSize = 36.dp,
-                                iconSize = 18.dp,
-                            )
-                            Text(
-                                "Thermal Overheat Guard",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        if (!state.hasBatteryCare) {
-                            Spacer(Modifier.width(8.dp))
-                            AddonPill()
-                        }
-                    }
-                    Text(
-                        "Warns you if your phone gets hot (${snap.temperatureC?.let { "$it °C" } ?: snap.thermalStatusLabel}) while fast-charging.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.5.sp,
-                    )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("Overheat Protection", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Switch(
-                            checked = snap.thermalGuardEnabled,
-                            onCheckedChange = { enabled ->
-                                if (enabled) {
-                                    requireBatteryCare {
-                                        snap = BatteryCareManager.setThermalGuard(context, true)
-                                        notice = "Overheat protection turned on."
-                                    }
-                                } else {
-                                    snap = BatteryCareManager.setThermalGuard(context, false)
-                                    notice = "Overheat protection turned off."
-                                }
-                            },
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                )
+                            } else {
+                                snap = BatteryCareManager.setChargeLimit(context, false, 80)
+                                notice = "80% Charge Guard off."
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Open Phone Battery Saver", fontWeight = FontWeight.Bold)
-                    }
+                    )
                 }
             }
 
-            // 3. Cool Down & Clear App Cache
+            // 2. Thermal Overheat Guard
             SweeprPanel(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f),
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            SweeprIconBadge(
-                                kind = SweeprIconKind.SPARKLE_CLEAN,
-                                tint = SweeprCyan,
-                                badgeSize = 36.dp,
-                                iconSize = 18.dp,
-                            )
-                            Text(
-                                "Cool Down & Clear App Cache",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        if (!state.hasBatteryCare) {
-                            Spacer(Modifier.width(8.dp))
-                            AddonPill()
-                        }
+                        SweeprIconBadge(
+                            kind = SweeprIconKind.SPARKLE_CLEAN,
+                            tint = SweeprAmber,
+                            badgeSize = 36.dp,
+                            iconSize = 18.dp,
+                        )
+                        Text(
+                            "Overheat Protection",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
-                    Text(
-                        "Frees temporary memory (${formatBytes(snap.availableRamBytes)} available) to reduce heat drain.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.5.sp,
-                    )
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(
-                            onClick = {
+                    Switch(
+                        checked = snap.thermalGuardEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
                                 requireBatteryCare {
-                                    val freed = BatteryCareManager.trimAppCaches(context)
-                                    snap = BatteryCareManager.readSnapshot(context)
-                                    notice = if (freed > 0) {
-                                        "Cooled down & cleared ${formatBytes(freed)} of app cache."
-                                    } else {
-                                        "App cache is already clean & cool."
-                                    }
+                                    snap = BatteryCareManager.setThermalGuard(context, true)
+                                    notice = "Overheat protection on."
                                 }
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text("Cool Down & Clear", fontWeight = FontWeight.Bold, maxLines = 1)
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                runCatching {
-                                    context.startActivity(
-                                        Intent(Intent.ACTION_POWER_USAGE_SUMMARY)
-                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                    )
-                                }
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text("App Drain", fontWeight = FontWeight.Bold, maxLines = 1)
-                        }
-                    }
+                            } else {
+                                snap = BatteryCareManager.setThermalGuard(context, false)
+                                notice = "Overheat protection off."
+                            }
+                        },
+                    )
                 }
             }
         }
@@ -1042,7 +851,7 @@ private fun AddonPill() {
         border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.38f)),
     ) {
         Text(
-            "£17.99/YR",
+            "£9.99/YR",
             color = Color(0xFFF59E0B),
             fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,

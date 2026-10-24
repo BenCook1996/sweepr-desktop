@@ -76,9 +76,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-enum class PlanTier(val productId: String) {
-    ANNUAL("sweepr_annual_4999"),
-    MONTHLY("sweepr_monthly_999"),
+enum class PlanTier(val productId: String, val priceLabel: String) {
+    MONTHLY("sweepr_monthly_999", "£1.99"),
+    SIX_MONTH("sweepr_six_month_3899", "£38.99"),
+    ANNUAL("sweepr_annual_4999", "£49.99"),
 }
 
 const val GOOGLE_PLAY_SUBSCRIPTIONS_URL = "https://play.google.com/store/account/subscriptions"
@@ -334,7 +335,7 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (state.hasBatteryCare) "ACTIVE" else "+£17.99/yr",
+                            if (state.hasBatteryCare) "ACTIVE" else "+£9.99/yr",
                             color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
@@ -354,7 +355,7 @@ fun AccountScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                         ) {
-                            Text("Add Battery Care (£17.99/yr)", fontWeight = FontWeight.Bold)
+                            Text("Add Battery Care (£9.99/yr)", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -363,52 +364,42 @@ fun AccountScreen(
             Spacer(Modifier.height(16.dp))
 
             if (!state.hasPremium) {
-                Text(
-                    "CHOOSE YOUR PLAN",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    letterSpacing = 0.8.sp,
-                )
-                Spacer(Modifier.height(8.dp))
-                PlanSelectorOptionCard(
-                    title = "Annual",
-                    price = "£49.99 / year",
-                    subtitle = "Equivalent to £4.17/month · billed annually",
-                    badge = "SAVE 58%",
-                    selected = selectedPlan == PlanTier.ANNUAL,
-                    onClick = { selectedPlan = PlanTier.ANNUAL },
-                )
-                Spacer(Modifier.height(8.dp))
-                PlanSelectorOptionCard(
-                    title = "Monthly",
-                    price = "£9.99 / month",
-                    subtitle = "Flexible monthly billing · cancel anytime",
-                    badge = null,
-                    selected = selectedPlan == PlanTier.MONTHLY,
-                    onClick = { selectedPlan = PlanTier.MONTHLY },
-                )
-
-                Spacer(Modifier.height(14.dp))
-                Text(stringResource(R.string.account_premium_includes), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Spacer(Modifier.height(6.dp))
-                listOf(
-                    R.string.account_feature_clean_now,
-                    R.string.account_feature_duplicates,
-                    R.string.account_feature_swipe,
-                    R.string.account_feature_screenshots,
-                    R.string.account_feature_contacts,
-                ).forEach { feature ->
-                    Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Check, null, tint = SweeprGreen, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(feature), fontSize = 13.5.sp)
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ConceptAPlanCard(
+                        label = "Monthly",
+                        price = "£1.99",
+                        sub = "1st mo, then £9.99",
+                        highlightSub = false,
+                        selected = selectedPlan == PlanTier.MONTHLY,
+                        onClick = { selectedPlan = PlanTier.MONTHLY },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ConceptAPlanCard(
+                        label = "6 Months",
+                        price = "£38.99",
+                        sub = "Save 35% (£6.50/mo)",
+                        highlightSub = true,
+                        selected = selectedPlan == PlanTier.SIX_MONTH,
+                        onClick = { selectedPlan = PlanTier.SIX_MONTH },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ConceptAPlanCard(
+                        label = "Yearly",
+                        price = "£49.99",
+                        sub = "Save 58% (£4.16/mo)",
+                        highlightSub = true,
+                        selected = selectedPlan == PlanTier.ANNUAL,
+                        onClick = { selectedPlan = PlanTier.ANNUAL },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))
                 EmeraldButton(
-                    text = if (selectedPlan == PlanTier.ANNUAL) "Upgrade to Pro — £49.99/yr" else "Upgrade to Pro — £9.99/mo",
+                    text = "Continue for ${selectedPlan.priceLabel} →",
                     onClick = onUpgrade,
                 )
                 Spacer(Modifier.height(12.dp))
@@ -646,9 +637,9 @@ fun PlanSelectorOptionCard(
 }
 
 /**
- * Candidate 5 Paywall Modal Sheet (matching iOS PaywallView.swift):
- * Annual (£49.99/yr SAVE 58%) vs Monthly (£9.99/mo), optional +£17.99/yr Battery Care order bump,
- * Subscribe CTA, Restore Purchases, and "Already have Pro? Sign in with Email".
+ * Concept A Paywall Modal Sheet (matching Desktop ActivateModal.svelte & iOS PaywallView.swift):
+ * 3-Plan Radio Grid (Monthly £1.99, 6 Months £38.99, Yearly £49.99), crisp white-on-emerald CTA,
+ * and quiet footer with Restore & Sign In.
  */
 @Composable
 fun PaywallModalSheet(
@@ -658,10 +649,8 @@ fun PaywallModalSheet(
     onRestore: () -> Unit,
     onOpenEmailSignIn: () -> Unit,
 ) {
-    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
-    var includeBatteryCare by rememberSaveable { mutableStateOf(false) }
+    var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.MONTHLY) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -673,117 +662,85 @@ fun PaywallModalSheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            // Brand Pill
+            Surface(
+                color = SweeprGreen.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, SweeprGreen.copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(999.dp),
             ) {
-                SweeprBrushLogo(Modifier.size(48.dp))
-                Column {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(
+                        Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(SweeprGreen),
+                    )
                     Text(
-                        "SWEEPR PRO",
+                        "SWEEPR Pro",
                         color = emeraldText(),
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp,
-                    )
-                    Text(
-                        "Clean Deeper. Reclaim More.",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }
 
-            SweeprPanel(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(
-                        R.string.account_feature_clean_now,
-                        R.string.account_feature_duplicates,
-                        R.string.account_feature_swipe,
-                        R.string.account_feature_screenshots,
-                        R.string.account_feature_contacts,
-                    ).forEach { feature ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Check, null, tint = SweeprGreen, modifier = Modifier.size(17.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                stringResource(feature),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                    }
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "Clean & speed up in 1 click",
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    "Try your first month for £1.99. Cancel anytime.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
-            PlanSelectorOptionCard(
-                title = "Annual",
-                price = "£49.99 / yr",
-                subtitle = "Equivalent to £4.17/mo · billed annually",
-                badge = "SAVE 58%",
-                selected = selectedPlan == PlanTier.ANNUAL,
-                onClick = { selectedPlan = PlanTier.ANNUAL },
-            )
-            PlanSelectorOptionCard(
-                title = "Monthly",
-                price = "£9.99 / mo",
-                subtitle = "Flexible monthly billing · cancel anytime",
-                badge = null,
-                selected = selectedPlan == PlanTier.MONTHLY,
-                onClick = { selectedPlan = PlanTier.MONTHLY },
-            )
-
-            // Optional Order Bump: Total Battery Care
-            if (!state.hasBatteryCare) {
-                Surface(
-                    onClick = { includeBatteryCare = !includeBatteryCare },
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (includeBatteryCare) SweeprAmber.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(
-                        1.dp,
-                        if (includeBatteryCare) SweeprAmber else MaterialTheme.colorScheme.outline,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = includeBatteryCare,
-                            onCheckedChange = { includeBatteryCare = it },
-                        )
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                "Add Total Battery Care (+£17.99/yr)",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                "80% Charge Guard, Thermal Overheat Alert & 1-Tap Cache Cool-Down",
-                                fontSize = 11.5.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-
-            val ctaLabel = when {
-                selectedPlan == PlanTier.ANNUAL && includeBatteryCare -> "Subscribe — £49.99/yr + Battery Care"
-                selectedPlan == PlanTier.ANNUAL -> "Subscribe — £49.99/year (Save 58%)"
-                includeBatteryCare -> "Subscribe — £9.99/mo + Battery Care"
-                else -> "Subscribe — £9.99/month"
+            // 3-Plan Radio Grid (Monthly, 6 Months, Yearly)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ConceptAPlanCard(
+                    label = "Monthly",
+                    price = "£1.99",
+                    sub = "1st mo, then £9.99",
+                    highlightSub = false,
+                    selected = selectedPlan == PlanTier.MONTHLY,
+                    onClick = { selectedPlan = PlanTier.MONTHLY },
+                    modifier = Modifier.weight(1f),
+                )
+                ConceptAPlanCard(
+                    label = "6 Months",
+                    price = "£38.99",
+                    sub = "Save 35% (£6.50/mo)",
+                    highlightSub = true,
+                    selected = selectedPlan == PlanTier.SIX_MONTH,
+                    onClick = { selectedPlan = PlanTier.SIX_MONTH },
+                    modifier = Modifier.weight(1f),
+                )
+                ConceptAPlanCard(
+                    label = "Yearly",
+                    price = "£49.99",
+                    sub = "Save 58% (£4.16/mo)",
+                    highlightSub = true,
+                    selected = selectedPlan == PlanTier.ANNUAL,
+                    onClick = { selectedPlan = PlanTier.ANNUAL },
+                    modifier = Modifier.weight(1f),
+                )
             }
 
             EmeraldButton(
-                text = ctaLabel,
+                text = "Continue for ${selectedPlan.priceLabel} →",
                 onClick = {
                     onDismiss()
                     onContinueToGooglePlay()
@@ -792,7 +749,7 @@ fun PaywallModalSheet(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
@@ -801,7 +758,7 @@ fun PaywallModalSheet(
                         onRestore()
                     },
                 ) {
-                    Text(stringResource(R.string.account_restore), fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.account_restore), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
                 TextButton(
                     onClick = {
@@ -809,21 +766,68 @@ fun PaywallModalSheet(
                         onOpenEmailSignIn()
                     },
                 ) {
-                    Text("Already have Pro? Sign in", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                    Text("Already have Pro? Sign in", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+        }
+    }
+}
 
+@Composable
+private fun ConceptAPlanCard(
+    label: String,
+    price: String,
+    sub: String,
+    highlightSub: Boolean,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) SweeprGreen.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 2.dp,
+            color = if (selected) SweeprGreen else MaterialTheme.colorScheme.outline,
+        ),
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(11.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { context.openUrl("$WEBSITE_URL/privacy") }) {
-                    Text(stringResource(R.string.about_privacy), fontSize = 11.sp, color = Color.Gray)
-                }
-                TextButton(onClick = { context.openUrl("$WEBSITE_URL/terms") }) {
-                    Text(stringResource(R.string.about_terms), fontSize = 11.sp, color = Color.Gray)
-                }
+                Text(
+                    text = label,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) SweeprGreen else Color.Transparent)
+                        .padding(3.dp),
+                )
             }
+            Text(
+                text = price,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = sub,
+                fontSize = 10.sp,
+                fontWeight = if (highlightSub) FontWeight.Bold else FontWeight.Medium,
+                color = if (highlightSub) emeraldText() else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

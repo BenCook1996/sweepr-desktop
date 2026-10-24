@@ -454,7 +454,7 @@
                   </span>
                 </div>
                 <span id="batteryAddonPriceBadge" class="text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                  + £17.99/yr (£1.49/mo eq.)
+                  + £9.99/yr (£0.83/mo eq.)
                 </span>
               </div>
               <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">
@@ -483,7 +483,7 @@
                   </span>
                 </div>
                 <span id="cloudVaultAddonPriceBadge" class="text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                  + £17.99/yr (£1.49/mo eq.)
+                  + £9.99/yr (£0.83/mo eq.)
                 </span>
               </div>
               <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">
@@ -506,7 +506,7 @@
               <span>🔋</span>
               <span id="addonSummaryTitle">Total Battery &amp; Mac/Phone Care Add-on</span>
             </span>
-            <span id="addonSummaryPrice" class="font-bold text-gray-900 text-xs">+ £17.99/year</span>
+            <span id="addonSummaryPrice" class="font-bold text-gray-900 text-xs">+ £9.99/year</span>
           </div>
 
           <!-- Cloud Vault Add-on Line Item -->
@@ -515,7 +515,7 @@
               <span>🔒</span>
               <span id="cloudVaultSummaryTitle">SWEEPR Cloud Protection Add-on</span>
             </span>
-            <span id="cloudVaultSummaryPrice" class="font-bold text-gray-900 text-xs">+ £17.99/year</span>
+            <span id="cloudVaultSummaryPrice" class="font-bold text-gray-900 text-xs">+ £9.99/year</span>
           </div>
 
           <!-- Savings Line (Annual / 6-Month) -->
@@ -542,7 +542,7 @@
 
           <div class="pt-2.5 border-t border-gray-200 flex items-center justify-between">
             <span id="totalTodayLabel" class="font-bold text-gray-900 text-sm sm:text-base">Total Today (GBP)</span>
-            <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900">£85.97</span>
+            <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900">£69.97</span>
           </div>
         </div>
 
@@ -1035,9 +1035,9 @@
 
     function getBatteryAddonPence(plan = selectedPlan) {
       const p = checkoutConfig && checkoutConfig.pricing;
-      if (plan === 'annual') return p?.batteryCareAnnualAmount ?? 1799;
-      if (plan === 'six_month') return p?.batteryCareSixMonthAmount ?? 1199;
-      return p?.batteryCareMonthlyAmount ?? 299;
+      if (plan === 'annual') return p?.batteryCareAnnualAmount ?? 999;
+      if (plan === 'six_month') return p?.batteryCareSixMonthAmount ?? 699;
+      return p?.batteryCareMonthlyAmount ?? 199;
     }
 
     function getBasePlanPence(plan = selectedPlan) {
@@ -1242,15 +1242,15 @@
       const addonSummaryRow = document.getElementById('addonSummaryRow');
       const addonSummaryPrice = document.getElementById('addonSummaryPrice');
       const addonFormatted = plan === 'annual'
-        ? `${p?.batteryCareAnnualFormatted ?? '£17.99'}/yr (${p?.batteryCareAnnualMonthlyEqFormatted ?? '£1.49'}/mo eq.)`
+        ? `${p?.batteryCareAnnualFormatted ?? '£9.99'}/yr (${p?.batteryCareAnnualMonthlyEqFormatted ?? '£0.83'}/mo eq.)`
         : plan === 'six_month'
-        ? `${p?.batteryCareSixMonthFormatted ?? '£11.99'}/6mo (${p?.batteryCareSixMonthMonthlyEqFormatted ?? '£1.99'}/mo eq.)`
-        : `${p?.batteryCareMonthlyFormatted ?? '£2.99'}/mo`;
+        ? `${p?.batteryCareSixMonthFormatted ?? '£6.99'}/6mo (${p?.batteryCareSixMonthMonthlyEqFormatted ?? '£1.16'}/mo eq.)`
+        : `${p?.batteryCareMonthlyFormatted ?? '£1.99'}/mo`;
       const addonLineFormatted = plan === 'annual'
-        ? `+ ${p?.batteryCareAnnualFormatted ?? '£17.99'}/year`
+        ? `+ ${p?.batteryCareAnnualFormatted ?? '£9.99'}/year`
         : plan === 'six_month'
-        ? `+ ${p?.batteryCareSixMonthFormatted ?? '£11.99'}/6 months`
-        : `+ ${p?.batteryCareMonthlyFormatted ?? '£2.99'}/month`;
+        ? `+ ${p?.batteryCareSixMonthFormatted ?? '£6.99'}/6 months`
+        : `+ ${p?.batteryCareMonthlyFormatted ?? '£1.99'}/month`;
       if (addonBadge) addonBadge.textContent = `+ ${addonFormatted}`;
       if (addonSummaryPrice) addonSummaryPrice.textContent = addonLineFormatted;
       const cloudBadge = document.getElementById('cloudVaultAddonPriceBadge');
