@@ -153,6 +153,29 @@ pub fn is_excluded(path: &Path, exclusions: &[ std::path::PathBuf ]) -> bool {
     exclusions.iter().any(|ex| is_within(path, ex))
 }
 
+pub fn atomic_write(path: &Path, data: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let file_name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "file".into());
+    let tmp_path = path.with_file_name(format!(".{file_name}.{}.tmp", std::process::id()));
+    {
+        let mut f = std::fs::File::create(&tmp_path)?;
+        f.write_all(data)?;
+        let _ = f.sync_all();
+    }
+    if std::fs::rename(&tmp_path, path).is_err() {
+        let res = std::fs::write(path, data);
+        let _ = std::fs::remove_file(&tmp_path);
+        return res;
+    }
+    Ok(())
+}
+
 fn exclusions_file(data_dir: &Path) -> std::path::PathBuf {
     data_dir.join("exclusions.json")
 }
@@ -173,7 +196,33 @@ pub fn save_exclusions(data_dir: &Path, paths: &[std::path::PathBuf]) -> std::io
     std::fs::create_dir_all(data_dir)?;
     let strings: Vec<String> = paths.iter().map(|p| p.to_string_lossy().into_owned()).collect();
     let json = serde_json::to_string_pretty(&strings).unwrap_or_else(|_| "[]".into());
-    std::fs::write(exclusions_file(data_dir), json)
+    atomic_write(&exclusions_file(data_dir), json.as_bytes())
+}
+
+fn disabled_rules_file(data_dir: &Path) -> std::path::PathBuf {
+    data_dir.join("disabled_rules.json")
+}
+
+/// Remote feature-flag kill-switch: returns rule IDs disabled by the server.
+pub fn load_disabled_rules(data_dir: &Path) -> std::collections::HashSet<String> {
+    let Ok(raw) = std::fs::read_to_string(disabled_rules_file(data_dir)) else {
+        return std::collections::HashSet::new();
+    };
+    let list: Vec<String> = serde_json::from_str(&raw).unwrap_or_default();
+    list.into_iter()
+        .map(|s| s.trim().to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+pub fn save_disabled_rules(data_dir: &Path, rules: &[String]) -> std::io::Result<()> {
+    let cleaned: Vec<String> = rules
+        .iter()
+        .map(|s| s.trim().to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect();
+    let json = serde_json::to_string_pretty(&cleaned).unwrap_or_else(|_| "[]".into());
+    atomic_write(&disabled_rules_file(data_dir), json.as_bytes())
 }
 
 pub fn system_powershell_path() -> std::path::PathBuf {

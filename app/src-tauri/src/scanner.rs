@@ -16,7 +16,9 @@ use walkdir::WalkDir;
 
 const TOP_FILES: usize = 50;
 const MIN_DUP_SIZE: u64 = 1024;
+const MAX_QUICK_DUP_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_DUP_FILES: usize = 60_000;
+const MAX_FILES_PER_ROOT: usize = 50_000;
 const DUP_SKIP_DIRS: &[&str] = &[
     ".git",
     "node_modules",
@@ -262,7 +264,7 @@ fn for_each_device_duplicate(
             }
             let Ok(md) = entry.metadata() else { continue };
             let len = md.len();
-            if len < MIN_DUP_SIZE {
+            if len < MIN_DUP_SIZE || len > MAX_QUICK_DUP_BYTES {
                 continue;
             }
             let norm_key = entry.path().to_string_lossy().to_ascii_lowercase();
@@ -373,7 +375,11 @@ pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut 
             .into_iter()
             .filter_entry(|e| !safety::is_link_like(e) && !safety::is_excluded(e.path(), exclusions));
 
+        let mut root_files = 0usize;
         for entry in walker.flatten() {
+            if root_files >= MAX_FILES_PER_ROOT {
+                break;
+            }
             if !entry.file_type().is_file() || !entry.path().starts_with(root) {
                 continue;
             }
@@ -391,6 +397,7 @@ pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut 
                     _ => continue,
                 }
             }
+            root_files += 1;
             f(entry.path(), md.len());
         }
     }

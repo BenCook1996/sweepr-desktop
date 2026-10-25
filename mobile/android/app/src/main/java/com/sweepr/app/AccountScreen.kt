@@ -101,6 +101,7 @@ fun AccountScreen(
     onRestore: () -> Unit,
     onSendOtp: (email: String, onSent: () -> Unit) -> Unit = { _, _ -> },
     onVerifyOtp: (email: String, code: String, onVerified: () -> Unit) -> Unit = { _, _, _ -> },
+    onQrPair: (rawInput: String, onDone: () -> Unit) -> Unit = { _, _ -> },
     onSignOut: () -> Unit = {},
     onDeleteAccount: (onDeleted: () -> Unit) -> Unit = {},
     onBack: () -> Unit,
@@ -111,6 +112,8 @@ fun AccountScreen(
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
+    var showQrPairDialog by rememberSaveable { mutableStateOf(false) }
+    var qrPairInput by rememberSaveable { mutableStateOf("") }
     var otpSent by rememberSaveable { mutableStateOf(false) }
     var emailInput by rememberSaveable { mutableStateOf("") }
     var codeInput by rememberSaveable { mutableStateOf("") }
@@ -238,6 +241,51 @@ fun AccountScreen(
                     },
                 ) {
                     Text(if (otpSent) stringResource(R.string.action_back) else stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showQrPairDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isWorking) showQrPairDialog = false },
+            title = { Text("Link Device via QR Code") },
+            text = {
+                Column {
+                    Text(
+                        "Scan the QR code on sweeprcleaner.com/dashboard or your PC app with your camera, or paste a pairing link / token (ptk_... or chk_...) below. Up to 3 devices total.",
+                        fontSize = 13.sp,
+                        color = Color.Gray,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = qrPairInput,
+                        onValueChange = { qrPairInput = it },
+                        label = { Text("Paste QR pairing link or token") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !state.isWorking && qrPairInput.isNotBlank(),
+                    onClick = {
+                        onQrPair(qrPairInput) {
+                            showQrPairDialog = false
+                            qrPairInput = ""
+                        }
+                    },
+                ) {
+                    Text("Link / Approve")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isWorking,
+                    onClick = { showQrPairDialog = false },
+                ) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             },
         )
@@ -459,6 +507,14 @@ fun AccountScreen(
                         onClick = if (state.isWorking) null else ({ showDeleteConfirm = true }),
                     )
                 }
+                SettingsItem(
+                    icon = Icons.Default.Lock,
+                    title = "Link Phone or Approve PC via QR",
+                    value = "Up to 3 devices (any mix of PC & mobile)",
+                    onClick = if (state.isWorking) null else ({
+                        showQrPairDialog = true
+                    }),
+                )
                 SettingsItem(
                     icon = Icons.Default.Info,
                     title = stringResource(R.string.account_customer_id),

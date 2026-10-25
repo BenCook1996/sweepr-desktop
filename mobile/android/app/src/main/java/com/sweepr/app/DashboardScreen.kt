@@ -106,6 +106,9 @@ fun DashboardScreen(
         StorageBreakdownDialog(storage, state.media, onDismiss = { showStorageDialog = false })
     }
 
+    val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
+    val totalReclaimable = state.media.reclaimableBytes + videoSaving
+
     Scaffold(
         topBar = {
             SweeprWordmarkBar(
@@ -138,6 +141,54 @@ fun DashboardScreen(
                     }
                 },
             )
+        },
+        bottomBar = {
+            if (state.hasScanned && totalReclaimable > 0 && !state.isScanning) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(EmeraldGradient)
+                            .clickable(enabled = !state.isBusy, onClick = onCleanUp)
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Clean +${formatBytes(totalReclaimable)}",
+                            color = Color.White,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.5.sp,
+                            maxLines = 1,
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
+                            .clickable(enabled = !state.isBusy, onClick = onOpenReview)
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Review",
+                            color = emeraldText(),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+            }
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -301,61 +352,6 @@ private fun QuickCleanBlock(
                     stringResource(R.string.home_tap_to_scan),
                     color = Color.White.copy(alpha = 0.88f),
                     fontSize = 10.sp,
-                )
-            }
-        }
-    }
-
-    // Unmistakable Thumb-Zone Primary CTA (3-Second Squint Test Winner)
-    if (state.hasScanned && totalReclaimable > 0) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(EmeraldGradient)
-                    .clickable(enabled = !state.isBusy, onClick = onCleanUp)
-                    .padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SweeprVectorIcon(
-                        kind = SweeprIconKind.SPARKLE_CLEAN,
-                        tint = Color.White,
-                        modifier = Modifier.size(17.dp),
-                    )
-                    Text(
-                        text = "Clean +${formatBytes(totalReclaimable)} Now",
-                        color = Color.White,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                    )
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
-                    .clickable(enabled = !state.isBusy, onClick = onOpenReview)
-                    .padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Review ›",
-                    color = emeraldText(),
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 13.sp,
                 )
             }
         }
@@ -615,12 +611,11 @@ private fun HomeTiles(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-        SectionEyebrow("STORAGE CLEANUP CATEGORIES", Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             BentoCategoryCard(
                 iconKind = SweeprIconKind.PHOTOS,
                 iconTint = SweeprGreen,
-                title = "Duplicates & Blur",
+                title = "Duplicates",
                 value = photosValue,
                 modifier = Modifier.weight(1f),
                 onClick = { if (scanned) onOpenPhotosTab(PHOTOS_OVERVIEW_TAB) else onScan() },
@@ -638,7 +633,7 @@ private fun HomeTiles(
             BentoCategoryCard(
                 iconKind = SweeprIconKind.SCREENSHOTS,
                 iconTint = SweeprAmber,
-                title = "Screenshots & Chat",
+                title = "Screenshots",
                 value = screenshotsValue,
                 modifier = Modifier.weight(1f),
                 onClick = { open(Screen.Screenshots) },
@@ -646,7 +641,7 @@ private fun HomeTiles(
             BentoCategoryCard(
                 iconKind = SweeprIconKind.CONTACTS,
                 iconTint = SweeprIndigo,
-                title = "Contacts & Calendar",
+                title = "Contacts",
                 value = contactsValue,
                 modifier = Modifier.weight(1f),
                 onClick = { open(Screen.Contacts) },

@@ -225,29 +225,15 @@
 
   <div class="card config-card">
     <div class="row" style="justify-content: space-between; align-items: center;">
-      <div>
-        <h2 style="margin: 0; font-size: 19px;">Automatic Background Cleaning</h2>
-        <p class="muted small" style="margin: 4px 0 0 0;">
-          Let SWEEPR keep your PC clean and backed up automatically without you lifting a finger.
-        </p>
-      </div>
-      {#if config.enabled && config.os_task_registered && license?.active}
-        <span class="badge free">Auto-Clean On</span>
-      {:else}
-        <span class="badge muted-badge">Auto-Clean Off</span>
-      {/if}
+      <h2 style="margin: 0; font-size: 18px;">Auto-Clean</h2>
+      <button class="ghost small-btn" disabled={runningNow || loading} onclick={triggerNow}>
+        {runningNow ? "Cleaning…" : "Run Now"}
+      </button>
     </div>
-
-    <div class="divider"></div>
 
     <!-- 1. Clean automatically -->
     <div class="row enable-row">
-      <div>
-        <strong style="font-size: 14.5px;">Clean my PC automatically in the background</strong>
-        <div class="muted small" style="margin-top: 2px;">
-          Safely clears unneeded temporary files and caches on your schedule, even when SWEEPR is closed
-        </div>
-      </div>
+      <strong style="font-size: 14px;">Automatic Background Clean</strong>
       <label class="switch">
         <input
           type="checkbox"
@@ -270,12 +256,7 @@
 
     <!-- 2. Start with Windows -->
     <div class="row enable-row">
-      <div>
-        <strong style="font-size: 14.5px;">Open SWEEPR when I sign in to Windows</strong>
-        <div class="muted small" style="margin-top: 2px;">
-          Starts SWEEPR automatically whenever you turn on your PC
-        </div>
-      </div>
+      <strong style="font-size: 14px;">Start with Windows</strong>
       <label class="switch">
         <input
           type="checkbox"
@@ -291,34 +272,23 @@
 
     <!-- 3. Automatic Cloud Backup -->
     <div class="row enable-row">
-      <div>
-        <strong style="font-size: 14.5px;">Back up my protected cloud folders automatically</strong>
-        <div class="muted small" style="margin-top: 2px;">
-          Copies new files in your Cloud Backup folders whenever this schedule runs
-        </div>
-      </div>
+      <strong style="font-size: 14px;">Auto-Sync Cloud Backups</strong>
       <label class="switch">
         <input
           type="checkbox"
           checked={Boolean(config.sync_cloud_backups) &&
-            Boolean(license?.dev_unlock || (license?.active && license?.addons?.includes("cloud_vault")))}
+            Boolean(license?.dev_unlock || license?.active)}
           onchange={(e) => {
             const target = e.currentTarget as HTMLInputElement;
-            const hasCloudAddon = Boolean(
-              license?.dev_unlock || (license?.active && license?.addons?.includes("cloud_vault"))
-            );
-            if (!hasCloudAddon) {
+            const hasPro = Boolean(license?.dev_unlock || license?.active);
+            if (!hasPro) {
               target.checked = false;
               config.sync_cloud_backups = false;
-              if (license?.active) {
-                api.startAddonCheckout("cloud_vault").catch(() => requestActivation());
-              } else {
-                requestActivation();
-              }
+              requestActivation();
               return;
             }
             config.sync_cloud_backups = target.checked;
-            if (license?.active) void saveSchedule();
+            void saveSchedule();
           }}
         />
         <span class="slider"></span>
@@ -330,7 +300,7 @@
     <!-- Frequency & Time -->
     <div class="row time-row">
       <div class="field-group" style="flex: 1.4;">
-        <span class="field-label">HOW OFTEN?</span>
+        <span class="field-label">FREQUENCY</span>
         <div class="segmented-pills">
           <button
             type="button"
@@ -341,7 +311,7 @@
               if (license?.active) void saveSchedule();
             }}
           >
-            Every Day
+            Daily
           </button>
           <button
             type="button"
@@ -352,7 +322,7 @@
               if (license?.active) void saveSchedule();
             }}
           >
-            Every Week
+            Weekly
           </button>
           <button
             type="button"
@@ -363,13 +333,13 @@
               if (license?.active) void saveSchedule();
             }}
           >
-            Every Month
+            Monthly
           </button>
         </div>
       </div>
 
       <div class="field-group" style="flex: 0.8;">
-        <label class="field-label" for="sched-time">TIME OF DAY</label>
+        <label class="field-label" for="sched-time">TIME</label>
         <input
           id="sched-time"
           type="time"
@@ -383,7 +353,7 @@
 
       {#if config.frequency === "weekly"}
         <div class="field-group" style="flex: 0.8;">
-          <label class="field-label" for="sched-dow">DAY OF WEEK</label>
+          <label class="field-label" for="sched-dow">DAY</label>
           <select
             id="sched-dow"
             class="input-control"
@@ -399,7 +369,7 @@
         </div>
       {:else if config.frequency === "monthly"}
         <div class="field-group" style="flex: 0.8;">
-          <label class="field-label" for="sched-dom">DAY OF MONTH (1–28)</label>
+          <label class="field-label" for="sched-dom">DAY (1–28)</label>
           <input
             id="sched-dom"
             type="number"
@@ -416,21 +386,12 @@
     </div>
 
     <div class="row cta-row">
-      <button class="primary save-btn" disabled={saving || loading} onclick={saveSchedule}>
-        {saving ? "Saving…" : "Save Auto-Clean Settings"}
-      </button>
-      <button class="ghost run-now-btn" disabled={runningNow || loading} onclick={triggerNow}>
-        {runningNow ? "Cleaning Now…" : "Run Auto-Clean Right Now"}
-      </button>
-      <div class="spacer"></div>
       <button
         type="button"
         class="ghost small-btn"
         onclick={() => (showCustomCategories = !showCustomCategories)}
       >
-        {showCustomCategories
-          ? "Hide cleanup areas"
-          : `Customize what gets cleaned (${config.categories.length} areas)`}
+        {showCustomCategories ? "Hide Areas" : "Customize Areas"}
       </button>
     </div>
 

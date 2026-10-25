@@ -24,7 +24,7 @@
   let scheduleSync = $state(false);
   let scheduleFreq = $state("daily");
   const hasCloudBundle = $derived(
-    Boolean(license?.dev_unlock || (license?.active && license?.addons?.includes("cloud_vault")))
+    Boolean(license?.dev_unlock || license?.active)
   );
 
   $effect(() => {
@@ -53,15 +53,7 @@
 
   async function unlockBundle() {
     error = "";
-    if (!license?.active) {
-      requestActivation();
-      return;
-    }
-    try {
-      await api.startAddonCheckout("cloud_vault");
-    } catch {
-      requestActivation();
-    }
+    requestActivation();
   }
 
   async function toggleScheduleSync(enabled: boolean, inputEl?: HTMLInputElement) {
@@ -88,9 +80,8 @@
     }
   }
 
-  function handle(e: unknown, feature: string) {
+  function handle(e: unknown, _feature: string) {
     if (isPaymentRequired(e)) {
-      error = `${feature} requires the SWEEPR Cloud Protection add-on.`;
       unlockBundle();
     } else {
       error = errorMessage(e);
@@ -272,18 +263,6 @@
 </script>
 
 <section class="protect" aria-label="Private Vault and Cloud Backup">
-  <div class="card bundle-head">
-    <div>
-      <span class="eyebrow">Private Vault &amp; Cloud Backup</span>
-      <h3>Lock sensitive files with a password and keep a safe backup copy in another cloud</h3>
-    </div>
-    {#if !hasCloudBundle}
-      <button class="primary small-btn" onclick={unlockBundle}>Unlock Cloud Protection</button>
-    {:else}
-      <span class="badge free">Active</span>
-    {/if}
-  </div>
-
   {#if error}<div class="card error-banner" role="alert">{error}</div>{/if}
   {#if status}<div class="card status-box" role="status">{status}</div>{/if}
 
@@ -302,22 +281,18 @@
       aria-label="Private File Vault"
     >
       <div class="row">
-        <strong>Lock Sensitive Files with a Password</strong>
+        <strong>Private Vault</strong>
         <span class="spacer"></span>
-        <span class="badge free">Private Vault</span>
+        <button class="ghost small-btn" onclick={addFile}>+ Add File</button>
       </div>
-      <p class="muted small">
-        Locks private photos, passports, and tax documents with your password before they sync to the cloud. Drop files anywhere on this card or click <strong>+ Choose File…</strong> below.
-      </p>
 
       <div class="field">
-        <label class="label" for="vault-pw">1. {entries.length > 0 ? "Vault Password" : "Choose a Vault Password"}</label>
         <div class="row">
           <input
             id="vault-pw"
             class="grow"
             type={showPassword ? "text" : "password"}
-            placeholder="At least 8 characters"
+            placeholder="Vault password (8+ chars)"
             bind:value={password}
             oninput={() => {
               cachedVaultPassword = password;
@@ -336,44 +311,39 @@
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
-        {#if pwTooShort}<span class="hint warn">Please use at least 8 characters.</span>{/if}
+        {#if pwTooShort}<span class="hint warn">8+ characters required</span>{/if}
         {#if needsConfirmPassword}
-          <label class="label" for="vault-pw2">Confirm Password</label>
           <input
             id="vault-pw2"
             type={showPassword ? "text" : "password"}
-            placeholder="Re-enter password"
+            placeholder="Confirm password"
             bind:value={confirmPassword}
             autocomplete="new-password"
             aria-invalid={pwMismatch}
           />
-          {#if pwMismatch}<span class="hint warn">Passwords don't match.</span>{/if}
+          {#if pwMismatch}<span class="hint warn">Passwords don't match</span>{/if}
         {/if}
-        <span class="hint">Keep this password safe — locked files cannot be opened without it.</span>
       </div>
 
-      <div class="field">
-        <div class="row">
-          <span class="label">2. Files to lock</span>
-          <span class="spacer"></span>
-          <button class="ghost small-btn" onclick={addFile}>+ Choose File…</button>
+      {#if pendingFiles.length > 0}
+        <div class="field">
+          {#each pendingFiles as f}
+            <div class="row sub-box small">
+              <span class="path grow" title={f}>{shortenPath(f, 52)}</span>
+              <button
+                class="ghost small-btn"
+                onclick={() => (pendingFiles = pendingFiles.filter((x) => x !== f))}
+              >
+                ×
+              </button>
+            </div>
+          {/each}
+          <label class="check">
+            <input type="checkbox" bind:checked={removeOriginals} />
+            <span>Remove original file</span>
+          </label>
         </div>
-        {#each pendingFiles as f}
-          <div class="row sub-box small">
-            <span class="path grow" title={f}>{shortenPath(f, 52)}</span>
-            <button
-              class="ghost small-btn"
-              onclick={() => (pendingFiles = pendingFiles.filter((x) => x !== f))}
-            >
-              Remove
-            </button>
-          </div>
-        {/each}
-        <label class="check">
-          <input type="checkbox" bind:checked={removeOriginals} />
-          <span>Erase the unlocked original files after locking them</span>
-        </label>
-      </div>
+      {/if}
 
       <button
         class="primary"
@@ -381,32 +351,27 @@
         disabled={vaultBusy || !pendingFiles.length}
         aria-busy={vaultBusy}
       >
-        {#if vaultBusy}<span class="spinner" aria-hidden="true"></span>{/if}
-        Lock {pendingFiles.length || ""} File(s) Now
+        {vaultBusy ? "Locking…" : "Lock Files"}
       </button>
 
       <div class="row small muted" style="justify-content: space-between; align-items: center;">
-        <span class="path" title={vaultDir || "Automatic SWEEPR Private Vault"}>
-          Saved in: {vaultDir ? shortenPath(vaultDir, 38) : "SWEEPR Private Vault"}
+        <span class="path" title={vaultDir || "SWEEPR Private Vault"}>
+          {vaultDir ? shortenPath(vaultDir, 38) : "SWEEPR Private Vault"}
         </span>
-        <button class="ghost small-btn" onclick={pickVaultDir}>Change folder…</button>
+        <button class="ghost small-btn" onclick={pickVaultDir}>Folder…</button>
       </div>
 
       <div class="vault-list">
-        <div class="row">
-          <strong class="small">Locked files in your Vault ({entries.length})</strong>
-          <span class="spacer"></span>
-        </div>
         {#each entries as e (e.vault_path)}
           <div class="row small sub-box">
-            <span class="grow">{unlocked && e.original_name ? e.original_name : "Locked Vault File"}</span>
+            <span class="grow">{unlocked && e.original_name ? e.original_name : "Locked File"}</span>
             <span class="muted">{formatBytes(e.size)}</span>
             <button class="ghost small-btn" onclick={() => restore(e)} disabled={vaultBusy}>
-              Save Unlocked Copy…
+              Unlock
             </button>
           </div>
         {:else}
-          <span class="muted small">No locked files in your Vault yet.</span>
+          <span class="muted small">No locked files</span>
         {/each}
       </div>
     </div>
@@ -414,33 +379,26 @@
     <!-- 2. Automatic Cloud Backup -->
     <div class="card">
       <div class="row">
-        <strong>Keep a Backup Copy in Another Cloud</strong>
-        <span class="spacer"></span>
-        <span class="badge free">Safe Copy</span>
+        <strong>Cloud Backup</strong>
       </div>
-      <p class="muted small">
-        Copies important folders from one cloud drive (like OneDrive) into another (like Google Drive) so your files are always safe even if you get locked out of an account.
-      </p>
 
       <div class="field">
-        <span class="label">1. Folder you want to protect</span>
         <div class="row sub-box">
           <span class="path small grow" title={syncSource}>
-            {syncSource ? shortenPath(syncSource, 44) : "No folder chosen yet"}
+            {syncSource ? shortenPath(syncSource, 44) : "Source folder"}
           </span>
-          <button class="ghost small-btn" onclick={() => pick("src")}>Choose Folder…</button>
+          <button class="ghost small-btn" onclick={() => pick("src")}>Choose</button>
         </div>
 
-        <span class="label">2. Where to save the backup copy</span>
         <div class="row sub-box">
           <span class="path small grow" title={syncDest}>
-            {syncDest ? shortenPath(syncDest, 44) : "No backup folder chosen yet"}
+            {syncDest ? shortenPath(syncDest, 44) : "Backup folder"}
           </span>
-          <button class="ghost small-btn" onclick={() => pick("dst")}>Choose Folder…</button>
+          <button class="ghost small-btn" onclick={() => pick("dst")}>Choose</button>
         </div>
 
         <button class="primary" onclick={addPair} disabled={!syncSource || !syncDest}>
-          Save Backup Rule
+          Save Rule
         </button>
       </div>
 
@@ -449,15 +407,12 @@
           <li class="pair">
             <div class="small">
               <span class="badge">{providerOf(p.source)}</span>
-              <span title={p.source}>{shortenPath(p.source, 40)}</span>
-            </div>
-            <div class="small arrow" aria-hidden="true">↓ copies to</div>
-            <div class="small">
+              <span title={p.source}>{shortenPath(p.source, 36)}</span>
+              <span class="arrow">→</span>
               <span class="badge">{providerOf(p.destination)}</span>
-              <span title={p.destination}>{shortenPath(p.destination, 40)}</span>
             </div>
             <div class="row small muted" style="margin-top: 4px;">
-              Last backed up: {fmtTime(p.last_run_at)}
+              <span>{fmtTime(p.last_run_at)}</span>
               <span class="spacer"></span>
               <button class="ghost small-btn" onclick={() => removePair(p.id)}>Remove</button>
               <button
@@ -466,14 +421,10 @@
                 disabled={syncBusy !== null}
                 aria-busy={syncBusy === p.id}
               >
-                {syncBusy === p.id ? "Backing up…" : "Back Up Now"}
+                {syncBusy === p.id ? "…" : "Back Up"}
               </button>
             </div>
             {#if p.last_error}<div class="hint warn">{p.last_error}</div>{/if}
-          </li>
-        {:else}
-          <li class="muted small">
-            No backup folders set up yet. Choose a folder above to get started.
           </li>
         {/each}
       </ul>
@@ -487,7 +438,7 @@
             toggleScheduleSync(target.checked, target);
           }}
         />
-        <span>Back up these folders automatically on my {scheduleFreq} schedule</span>
+        <span>Auto-sync on schedule</span>
       </label>
     </div>
   </div>

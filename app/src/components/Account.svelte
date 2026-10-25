@@ -55,6 +55,78 @@
   let checkingUpdate = $state(false);
   let installingUpdate = $state(false);
 
+  // Bi-Directional QR Device Linking (Flow A & Flow B)
+  let qrMode = $state<"none" | "challenge" | "token">("none");
+  let qrSvg = $state<string | null>(null);
+  let qrCountdown = $state(120);
+  let qrDevicesUsed = $state(1);
+  let qrDevicesMax = $state(3);
+  let qrInterval: ReturnType<typeof setInterval> | null = null;
+
+  function stopQrTimer() {
+    if (qrInterval) clearInterval(qrInterval);
+    qrInterval = null;
+  }
+
+  async function startDesktopQrChallenge() {
+    error = null;
+    linkSuccess = null;
+    stopQrTimer();
+    qrMode = "challenge";
+    qrSvg = null;
+    try {
+      const ch = await api.startQrChallenge();
+      qrSvg = ch.qr_svg;
+      qrCountdown = ch.ttl_seconds || 120;
+      qrInterval = setInterval(async () => {
+        qrCountdown = Math.max(0, qrCountdown - 1);
+        if (qrCountdown <= 0) {
+          stopQrTimer();
+          return;
+        }
+        if (qrCountdown % 2 === 0) {
+          try {
+            const res = await api.pollQrChallenge(ch.challenge_id, ch.poll_secret);
+            if (res.status === "approved") {
+              stopQrTimer();
+              qrMode = "none";
+              linkSuccess = "Your PC is now activated with SWEEPR Pro via QR Code!";
+              await onRefresh();
+            } else if (res.status === "expired") {
+              qrCountdown = 0;
+              stopQrTimer();
+            }
+          } catch {}
+        }
+      }, 1000);
+    } catch (e) {
+      error = errorMessage(e);
+      qrMode = "none";
+    }
+  }
+
+  async function showLinkAnotherDeviceQr() {
+    error = null;
+    linkSuccess = null;
+    stopQrTimer();
+    qrMode = "token";
+    qrSvg = null;
+    try {
+      const tok = await api.createQrLinkToken();
+      qrSvg = tok.qr_svg;
+      qrCountdown = tok.ttl_seconds || 120;
+      qrDevicesUsed = tok.devices_used || 1;
+      qrDevicesMax = tok.devices_max || 3;
+      qrInterval = setInterval(() => {
+        qrCountdown = Math.max(0, qrCountdown - 1);
+        if (qrCountdown <= 0) stopQrTimer();
+      }, 1000);
+    } catch (e) {
+      error = errorMessage(e);
+      qrMode = "none";
+    }
+  }
+
   $effect(() => {
     cachedLinkEmail = linkEmail;
     cachedOtpSent = otpSent;
@@ -203,12 +275,7 @@
 
 <div class="account-layout">
   <div class="header-row">
-    <div>
-      <h1 class="page-title">Account &amp; Auto-Clean</h1>
-      <p class="muted small" style="margin: 4px 0 0 0;">
-        Set up automatic background cleaning, manage your subscription, or contact our support team.
-      </p>
-    </div>
+    <h1 class="page-title">Settings</h1>
 
     <div class="mode-toggle" role="tablist">
       <button
@@ -218,7 +285,7 @@
         role="tab"
         aria-selected={section === "schedule"}
       >
-        Auto-Clean Schedule
+        Auto-Clean
       </button>
       <button
         class="mode-btn"
@@ -227,7 +294,7 @@
         role="tab"
         aria-selected={section === "account"}
       >
-        My Account, Updates &amp; Help
+        Account &amp; App
       </button>
     </div>
   </div>
@@ -243,63 +310,40 @@
     <div class="card box">
       {#if license?.active}
         <div class="row">
-          <strong>Your Subscription</strong>
-          <span class="badge free">SWEEPR Pro Active</span>
+          <strong>Subscription</strong>
+          <span class="badge free">Pro Active</span>
           {#if license.plan}<span class="badge pro">{license.plan}</span>{/if}
           <div class="spacer"></div>
-          <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh Status</button>
+          <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
         </div>
         {#if expiry}
-          <div class="muted small">Active and renews automatically (checked until {expiry}).</div>
+          <div class="muted small">Renews {expiry} · Up to 3 devices (log in at sweeprcleaner.com/dashboard to activate a separate device via QR code)</div>
         {/if}
       {:else}
         <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <strong style="font-size: 16px;">You are on the Free Plan</strong>
-            <p class="muted small" style="margin: 4px 0 0 0;">
-              Scanning your PC is always free. Upgrade to SWEEPR Pro to unlock 1-click cleaning, speed boost, duplicate removal, and automatic cleaning.
-            </p>
-          </div>
+          <strong>Free Plan</strong>
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <button class="primary small-btn" disabled={busy} onclick={startPlanCheckout}>
-              View Plans &amp; Upgrade to Pro
+              Unlock Pro
             </button>
             <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
           </div>
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--border); width: 100%; margin: 6px 0;" />
-        <div class="row"><strong>Already bought SWEEPR Pro? Activate this PC with your email</strong></div>
         {#if !otpSent}
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <input
               type="email"
               bind:value={linkEmail}
-              placeholder="Enter the email address you used at checkout"
+              placeholder="Account email"
               style="flex: 1; min-width: 240px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border);"
             />
             <button class="primary small-btn" disabled={busy} onclick={sendOtp}>
-              Email Me an Activation Code
-            </button>
-            <button
-              class="ghost small-btn"
-              disabled={busy}
-              onclick={() => {
-                error = null;
-                if (!linkEmail.trim() || !linkEmail.includes("@")) {
-                  error = "Please enter the email address you used at checkout.";
-                  return;
-                }
-                otpSent = true;
-              }}
-            >
-              I already have a 6-digit code
+              Send Code
             </button>
           </div>
         {:else}
-          <p class="muted small" style="margin: 0;">
-            Enter the 6-digit code sent to <strong>{linkEmail}</strong>:
-          </p>
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <input
               type="text"
@@ -309,19 +353,9 @@
               style="width: 150px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border); letter-spacing: 2px;"
             />
             <button class="primary small-btn" disabled={busy} onclick={verifyOtp}>
-              Activate Pro
+              Activate
             </button>
-            <button class="ghost small-btn" disabled={busy} onclick={sendOtp}>Resend code</button>
-            <button
-              class="ghost small-btn"
-              disabled={busy}
-              onclick={() => {
-                otpSent = false;
-                otpCode = "";
-              }}
-            >
-              Change email
-            </button>
+            <button class="ghost small-btn" disabled={busy} onclick={sendOtp}>Resend</button>
           </div>
         {/if}
       {/if}
@@ -332,78 +366,56 @@
       <!-- App Updates -->
       <div class="card box">
         <div class="row">
-          <strong>App Updates</strong>
+          <strong>Updates</strong>
           <div class="spacer"></div>
           {#if info}<span class="badge free">v{info.version}</span>{/if}
         </div>
-        <p class="muted small" style="margin: 0;">
-          Check if a newer version of SWEEPR Cleaner is available.
-        </p>
         <div class="row" style="gap: 8px; flex-wrap: wrap;">
           <button
             class="ghost small-btn"
             disabled={checkingUpdate || installingUpdate}
             onclick={checkUpdates}
           >
-            {checkingUpdate ? "Checking…" : "Check for Updates"}
+            {checkingUpdate ? "…" : "Check Updates"}
           </button>
           {#if updateInfo?.update_available}
             <button class="primary small-btn" disabled={installingUpdate} onclick={installUpdate}>
-              {installingUpdate
-                ? "Updating…"
-                : `Update to v${updateInfo.latest_version} & Restart`}
+              {installingUpdate ? "Updating…" : `Install v${updateInfo.latest_version}`}
             </button>
           {/if}
         </div>
-        {#if updateInfo}
-          <div class="update-box small">
-            {#if updateInfo.update_available}
-              <strong style="color: var(--accent);">
-                New version available: v{updateInfo.latest_version}
-              </strong>
-              <div class="muted">{updateInfo.notes}</div>
-            {:else}
-              <strong>You have the latest version (v{updateInfo.current_version}).</strong>
-            {/if}
-          </div>
-        {/if}
       </div>
 
       <!-- Get Help / Contact Support -->
       <div class="card box">
         <div class="row">
-          <strong>Get Help &amp; Support</strong>
+          <strong>Support</strong>
           <div class="spacer"></div>
-          <span class="badge free">We're Here to Help</span>
-        </div>
-        <p class="muted small" style="margin: 0;">
-          Have a question about cleaning your PC or activating your subscription? Send us a message and we'll reply by email.
-        </p>
-        {#if !showSupportForm}
-          <div class="row" style="margin-top: auto;">
+          {#if !showSupportForm}
             <button class="ghost small-btn" onclick={() => (showSupportForm = true)}>
-              Contact Support…
+              Contact
             </button>
-          </div>
-        {:else}
+          {/if}
+        </div>
+        {#if showSupportForm}
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <input
               type="email"
               bind:value={supportEmail}
-              placeholder="Your email address"
+              placeholder="Your email"
               aria-label="Your email address"
               style="padding: 8px 14px; border-radius: 9999px; border: 1px solid var(--border); font-size: 13px;"
             />
             <textarea
-              rows="3"
+              rows="2"
               bind:value={supportMessage}
-              placeholder="How can we help you?"
+              placeholder="Message"
               aria-label="Support message"
               style="padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); font-family: inherit; font-size: 13px; resize: vertical;"
             ></textarea>
             <div class="row" style="gap: 8px;">
               <button class="primary small-btn" disabled={sendingSupport} onclick={submitSupportReport}>
-                {sendingSupport ? "Sending…" : "Send Message"}
+                {sendingSupport ? "…" : "Send"}
               </button>
               <button
                 class="ghost small-btn"
@@ -419,18 +431,14 @@
 
       <!-- Appearance & Language -->
       <div class="card box">
-        <div class="row">
-          <strong>Appearance &amp; Language</strong>
-          <div class="spacer"></div>
-        </div>
         <div class="row" style="justify-content: space-between;">
-          <span class="small">App Theme</span>
+          <strong>Theme</strong>
           <button class="ghost small-btn" onclick={() => onToggleTheme?.()}>
-            {theme === "dark" ? "🌙 Dark Mode (Switch to Light)" : "☀️ Light Mode (Switch to Dark)"}
+            {theme === "dark" ? "Dark" : "Light"}
           </button>
         </div>
         <div class="row" style="justify-content: space-between;">
-          <span class="small">Language</span>
+          <strong>Language</strong>
           <select
             class="small-btn"
             style="border: 1px solid var(--border); background: var(--panel-2); color: var(--text);"

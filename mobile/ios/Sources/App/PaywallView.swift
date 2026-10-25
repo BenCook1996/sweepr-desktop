@@ -4,36 +4,40 @@ import SwiftUI
 typealias PaywallSheetView = PaywallView
 
 enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
-    case annual = "annual"
     case monthly = "monthly"
+    case sixMonth = "six_month"
+    case annual = "annual"
 
     var id: String { rawValue }
 
     var fallbackTitle: String {
         switch self {
-        case .annual: return "Annual Plan"
-        case .monthly: return "Monthly Plan"
+        case .monthly: return "Monthly"
+        case .sixMonth: return "6 Months"
+        case .annual: return "Yearly"
         }
     }
 
     var fallbackPrice: String {
         switch self {
-        case .annual: return "Annual Plan"
-        case .monthly: return "Monthly Plan"
+        case .monthly: return "£1.99"
+        case .sixMonth: return "£38.99"
+        case .annual: return "£49.99"
         }
     }
 
     var fallbackSubtitle: String {
         switch self {
-        case .annual: return "Save 58% · Billed annually"
-        case .monthly: return "Flexible monthly billing · Cancel anytime"
+        case .monthly: return "1st mo, then £9.99"
+        case .sixMonth: return "Save 35% (£6.50/mo)"
+        case .annual: return "Save 58% (£4.16/mo)"
         }
     }
 
-    var badgeText: String? {
+    var highlightsSavings: Bool {
         switch self {
-        case .annual: return "SAVE 58%"
-        case .monthly: return nil
+        case .monthly: return false
+        case .sixMonth, .annual: return true
         }
     }
 }
@@ -42,8 +46,7 @@ struct PaywallView: View {
     @ObservedObject var vm: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var packages: [Package] = []
-    @State private var selectedPlan: SubscriptionPlanOption = .annual
-    @State private var includeBatteryCare: Bool = false
+    @State private var selectedPlan: SubscriptionPlanOption = .monthly
     @State private var isLoadingPackages = true
     @State private var isPurchasing = false
 
@@ -56,6 +59,12 @@ struct PaywallView: View {
                     || $0.identifier.localizedCaseInsensitiveContains("annual")
                     || $0.identifier.localizedCaseInsensitiveContains("year")
             }) ?? packages.first
+        case .sixMonth:
+            return packages.first(where: {
+                $0.packageType == .sixMonth
+                    || $0.identifier.localizedCaseInsensitiveContains("six")
+                    || $0.identifier.localizedCaseInsensitiveContains("6")
+            }) ?? packages.first
         case .monthly:
             return packages.first(where: {
                 $0.packageType == .monthly
@@ -66,153 +75,115 @@ struct PaywallView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Hero Header
-                    VStack(spacing: 10) {
-                        SweeprLogoView(size: 72)
-                            .padding(.top, 12)
+            VStack(alignment: .leading, spacing: 18) {
+                // Brand Pill
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.sweeprEmerald)
+                        .frame(width: 6, height: 6)
+                    Text("SWEEPR Pro")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.sweeprAccentText)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .fill(Color.sweeprEmerald.opacity(0.12))
+                        .overlay(Capsule().stroke(Color.sweeprEmerald.opacity(0.3), lineWidth: 1))
+                )
 
-                        Text("Upgrade to SWEEPR Cleaner Pro")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Text("Reclaim gigabytes of space in one tap — duplicate finder, video shrinker & smart contact merger.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-
-                    // Benefits Checklist
-                    VStack(alignment: .leading, spacing: 12) {
-                        BenefitRow(icon: "checkmark.circle.fill", text: "1-Click Full Storage Clean Up")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Duplicate & Similar Photo Finder (Keeps Your Best Photo)")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Shrink Large Videos Without Losing Quality")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Smart Contact Duplicate Merger & Incomplete Cleaner")
-                        BenefitRow(icon: "checkmark.circle.fill", text: "Use Your Account Across Computer, iPhone & Android")
-                    }
-                    .padding()
-                    .sweeprCard(cornerRadius: 18)
-                    .padding(.horizontal)
-
-                    // Plan Selector
-                    VStack(spacing: 12) {
-                        ForEach(SubscriptionPlanOption.allCases) { option in
-                            planSelectorCard(option: option)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Optional Battery Care Add-on Order Bump (+20% charm pricing)
-                    Button {
-                        includeBatteryCare.toggle()
-                    } label: {
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: includeBatteryCare ? "checkmark.square.fill" : "square")
-                                .font(.title3)
-                                .foregroundColor(.orange)
-                                .padding(.top, 2)
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text("Add Total Battery Care")
-                                        .font(.subheadline.weight(.bold))
-                                        .foregroundColor(.primary)
-                                        .lineLimit(1)
-                                    Spacer()
-                                    Text(selectedPlan == .annual ? "+£17.99/yr" : "+£2.99/mo")
-                                        .font(.subheadline.weight(.heavy))
-                                        .foregroundColor(.orange)
-                                        .lineLimit(1)
-                                        .fixedSize(horizontal: true, vertical: false)
-                                }
-                                Text("80% unplug reminder, overheat warnings, and 1-tap background cache cool-down.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.leading)
-                            }
-                        }
-                        .padding(14)
-                        .background(Color.orange.opacity(includeBatteryCare ? 0.14 : 0.07))
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.orange.opacity(0.65), style: StrokeStyle(lineWidth: 1.5, dash: includeBatteryCare ? [] : [5]))
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal)
-
-                    // Primary Subscribe CTA
-                    Button {
-                        Task { await purchaseSelectedPlan() }
-                    } label: {
-                        HStack {
-                            if isPurchasing {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text(
-                                    selectedPlan == .annual
-                                        ? "Subscribe Annual — \(priceText(for: .annual))"
-                                        : "Subscribe Monthly — \(priceText(for: .monthly))"
-                                )
-                                .fontWeight(.bold)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.sweeprEmerald)
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
-                    }
-                    .disabled(isPurchasing || vm.isWorking)
-                    .padding(.horizontal)
-                    .accessibilityLabel(
-                        selectedPlan == .annual
-                            ? "Subscribe to SWEEPR Cleaner Pro Annual for \(priceText(for: .annual)), save 58 percent, no free trial"
-                            : "Subscribe to SWEEPR Cleaner Pro Monthly for \(priceText(for: .monthly)), no free trial"
-                    )
-
-                    Text("No free trial. Payment will be charged to your Apple ID account at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.")
-                        .font(.caption2)
+                // Headline & Subtitle
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Clean & speed up in 1 click")
+                        .font(.system(size: 22, weight: .heavy))
+                        .foregroundColor(.primary)
+                    Text("Try your first month for £1.99. Cancel anytime.")
+                        .font(.system(size: 13.5))
                         .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
+                }
 
-                    // Restore & Legal Footer
-                    Button("Restore Previous Purchases") {
+                // 3-Plan Radio Grid (Concept A)
+                HStack(spacing: 8) {
+                    ForEach(SubscriptionPlanOption.allCases) { option in
+                        planSelectorCard(option: option)
+                    }
+                }
+
+                // Primary CTA
+                Button {
+                    Task { await purchaseSelectedPlan() }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isPurchasing {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Continue for \(priceText(for: selectedPlan))")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("→")
+                                .font(.system(size: 15, weight: .bold))
+                                .opacity(0.85)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(
+                            colors: [.sweeprDarkEmerald, .sweeprEmerald],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundColor(.white)
+                    .cornerRadius(14)
+                }
+                .disabled(isPurchasing || vm.isWorking)
+
+                Divider()
+
+                // Quiet Footer
+                HStack {
+                    Button("Restore Purchases") {
                         Task {
                             await vm.restorePurchases()
                             if vm.hasPremium { dismiss() }
                         }
                     }
-                    .font(.footnote)
-                    .fontWeight(.medium)
-                    .foregroundColor(.sweeprEmerald)
-                    .accessibilityLabel("Restore Previous Purchases")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary)
 
-                    HStack(spacing: 16) {
+                    Spacer()
+
+                    HStack(spacing: 10) {
                         if let url = URL(string: "\(AppConfig.websiteURL)/privacy") {
-                            Link("Privacy Policy", destination: url)
+                            Link("Privacy", destination: url)
                         }
                         Text("·").foregroundColor(.secondary)
                         if let url = URL(string: "\(AppConfig.websiteURL)/terms") {
-                            Link("Terms of Service", destination: url)
+                            Link("Terms", destination: url)
                         }
                     }
-                    .font(.caption2)
+                    .font(.system(size: 11.5))
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 20)
                 }
+
+                Spacer(minLength: 0)
             }
+            .padding(22)
             .background(Color.sweeprCanvas.ignoresSafeArea())
-            .navigationTitle("SWEEPR Cleaner Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Close") { dismiss() }
-                        .accessibilityLabel("Close paywall")
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .padding(7)
+                            .background(Circle().fill(Color.sweeprPanelAlt))
+                    }
+                    .accessibilityLabel("Close paywall")
                 }
             }
             .task {
@@ -237,7 +208,16 @@ struct PaywallView: View {
                     || $0.identifier.localizedCaseInsensitiveContains("annual")
                     || $0.identifier.localizedCaseInsensitiveContains("year")
             }) {
-                return "\(pkg.localizedPriceString) / year"
+                return pkg.localizedPriceString
+            }
+            return option.fallbackPrice
+        case .sixMonth:
+            if let pkg = packages.first(where: {
+                $0.packageType == .sixMonth
+                    || $0.identifier.localizedCaseInsensitiveContains("six")
+                    || $0.identifier.localizedCaseInsensitiveContains("6")
+            }) {
+                return pkg.localizedPriceString
             }
             return option.fallbackPrice
         case .monthly:
@@ -245,7 +225,7 @@ struct PaywallView: View {
                 $0.packageType == .monthly
                     || $0.identifier.localizedCaseInsensitiveContains("month")
             }) {
-                return "\(pkg.localizedPriceString) / month"
+                return pkg.localizedPriceString
             }
             return option.fallbackPrice
         }
@@ -256,45 +236,44 @@ struct PaywallView: View {
         return Button {
             selectedPlan = option
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundColor(isSelected ? .sweeprEmerald : .secondary)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(option.fallbackTitle)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        if let badge = option.badgeText {
-                            Text(badge)
-                                .font(.system(size: 10, weight: .bold))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.sweeprEmerald)
-                                .foregroundColor(.white)
-                                .cornerRadius(4)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(option.fallbackTitle)
+                        .font(.system(size: 11.5, weight: .bold))
+                        .foregroundColor(.primary.opacity(0.85))
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    ZStack {
+                        Circle()
+                            .stroke(isSelected ? Color.sweeprEmerald : Color.gray.opacity(0.35), lineWidth: 2)
+                            .frame(width: 14, height: 14)
+                        if isSelected {
+                            Circle()
+                                .fill(Color.sweeprEmerald)
+                                .frame(width: 7, height: 7)
                         }
                     }
-                    Text(option.fallbackSubtitle)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.leading)
                 }
 
-                Spacer()
-
                 Text(priceText(for: option))
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.sweeprEmerald)
+                    .font(.system(size: 20, weight: .black))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                Text(option.fallbackSubtitle)
+                    .font(.system(size: 10, weight: option.highlightsSavings ? .bold : .medium))
+                    .foregroundColor(option.highlightsSavings ? .sweeprAccentText : .secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(16)
-            .background(Color.cardBackground)
-            .cornerRadius(14)
+            .padding(11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(isSelected ? Color.sweeprEmerald.opacity(0.1) : Color.cardBackground)
+            .cornerRadius(16)
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(isSelected ? Color.sweeprEmerald : Color.gray.opacity(0.25), lineWidth: isSelected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.sweeprEmerald : Color.gray.opacity(0.25), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)
@@ -313,10 +292,6 @@ struct PaywallView: View {
         do {
             let res = try await Purchases.shared.purchase(package: pkg)
             if !res.userCancelled {
-                if includeBatteryCare,
-                   let addonPkg = packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("battery") }) {
-                    _ = try? await Purchases.shared.purchase(package: addonPkg)
-                }
                 vm.checkSubscription()
                 dismiss()
             }
@@ -324,22 +299,5 @@ struct PaywallView: View {
             CrashLogger.recordError("Purchase", error: error)
             vm.alertMessage = error.localizedDescription
         }
-    }
-}
-
-struct BenefitRow: View {
-    let icon: String
-    let text: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(.sweeprEmerald)
-            Text(text)
-                .font(.subheadline)
-            Spacer()
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(text)
     }
 }

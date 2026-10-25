@@ -429,6 +429,7 @@ fun SweeprRoot(
                     onRestore = vm::restorePurchases,
                     onSendOtp = vm::sendOtp,
                     onVerifyOtp = vm::verifyOtp,
+                    onQrPair = vm::handleQrPairInput,
                     onSignOut = vm::signOutAccount,
                     onDeleteAccount = vm::deleteAccount,
                     onBack = goBack,

@@ -360,6 +360,69 @@ enum AccountService {
         return linked
     }
 
+    static func redeemQrPairToken(_ rawInput: String) async throws -> LinkedSweeprAccount {
+        var token = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: token),
+           let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let qTok = comps.queryItems?.first(where: { $0.name == "token" })?.value {
+            token = qTok
+        }
+        let deviceId = currentDeviceId()
+        let res = try await requestJSON(
+            path: "/api/device-link/redeem",
+            method: "POST",
+            body: [
+                "token": token,
+                "device_id": deviceId,
+                "device_type": "mobile",
+                "device_name": UIDevice.current.name,
+                "platform": "ios"
+            ]
+        )
+        let accountId = (res["account_id"] as? String) ?? ""
+        let refreshToken = (res["refresh_token"] as? String) ?? ""
+        let rawSigned = (res["token"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let isActive = !rawSigned.isEmpty && verifyTokenClaimsForProject(
+            rawSigned,
+            expectedProject: AccountService.projectId,
+            expectedDeviceId: deviceId
+        )
+        let expiresSec = (res["expires_at"] as? NSNumber)?.int64Value ?? 0
+        let rawAddons = (res["addons"] as? [String]) ?? []
+        let addons = isActive ? expandBundleAddons(rawAddons) : []
+        let linked = LinkedSweeprAccount(
+            accountId: accountId,
+            email: (res["email"] as? String) ?? "",
+            refreshToken: refreshToken,
+            deviceId: deviceId,
+            serverActive: isActive,
+            plan: res["plan"] as? String,
+            expiresAt: max(0, expiresSec),
+            addons: addons,
+            referralCode: defaultReferralCode(for: deviceId, accountId: accountId),
+            signedToken: isActive ? rawSigned : nil
+        )
+        saveAccount(linked)
+        return linked
+    }
+
+    static func approveDesktopQrChallenge(_ rawChallenge: String, current: LinkedSweeprAccount) async throws {
+        var challenge = rawChallenge.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let url = URL(string: challenge),
+           let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let qCh = comps.queryItems?.first(where: { $0.name == "challenge" || $0.name == "challenge_id" })?.value {
+            challenge = qCh
+        }
+        _ = try await requestJSON(
+            path: "/api/device-link/approve",
+            method: "POST",
+            body: [
+                "challenge_id": challenge
+            ],
+            bearerToken: current.refreshToken
+        )
+    }
+
     static func refreshEntitlement(current: LinkedSweeprAccount) async throws -> LinkedSweeprAccount {
         guard current.isSignedIn else { return current }
         let res: [String: Any]

@@ -345,6 +345,44 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /** Links this Android phone via a Flow A QR token (`ptk_...`) or approves a Flow B desktop QR challenge (`chk_...`). */
+    fun handleQrPairInput(rawInput: String, onDone: () -> Unit = {}) {
+        val trimmed = rawInput.trim()
+        if (trimmed.isBlank()) {
+            showMessage("Paste a QR pairing link or token first.")
+            return
+        }
+        val current = _state.value.linkedAccount
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            if (trimmed.contains("chk_") || trimmed.contains("mode=approve")) {
+                val res = withContext(Dispatchers.IO) {
+                    runCatching { SweeprAccountApi.approveDesktopQrChallenge(trimmed, current) }
+                }
+                _state.update { it.copy(isWorking = false) }
+                res.onSuccess { pcName ->
+                    showMessage("Approved $pcName! Your PC will unlock automatically.")
+                    onDone()
+                }.onFailure { err ->
+                    showMessage(err.message ?: "Could not approve PC QR code.")
+                }
+            } else {
+                val deviceId = current.deviceId
+                val res = withContext(Dispatchers.IO) {
+                    runCatching { SweeprAccountApi.redeemQrPairToken(trimmed, deviceId) }
+                }
+                res.onSuccess { linked ->
+                    Prefs.setLinkedAccount(linked)
+                    onAccountLinked(linked)
+                    onDone()
+                }.onFailure { err ->
+                    _state.update { it.copy(isWorking = false) }
+                    showMessage(err.message ?: "Invalid or expired QR pairing token.")
+                }
+            }
+        }
+    }
+
     /** Re-attaches a Google Play subscription bought earlier (new phone, reinstall). */
     fun restorePurchases() {
         _state.update { it.copy(isWorking = true) }

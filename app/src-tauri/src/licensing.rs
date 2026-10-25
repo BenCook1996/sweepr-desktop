@@ -6,6 +6,8 @@
 //! A valid cached token gives an offline grace period until it expires (≤72h).
 
 use crate::error::{AppError, AppResult};
+use aes_gcm::aead::Aead;
+use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 use base64::engine::general_purpose::{
     STANDARD as B64_STD, STANDARD_NO_PAD as B64_STD_NOPAD, URL_SAFE as B64_URL,
     URL_SAFE_NO_PAD as B64,
@@ -15,13 +17,17 @@ use ed25519_dalek::{Signature, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 
 pub type LicenseError = AppError;
 
 const DEFAULT_API: &str = "https://sweeprcleaner.com";
 const DEFAULT_PUBKEY_B64: &str = "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8";
+/// Optional secondary Ed25519 public key for zero-downtime key rotation (`#32 JWT Rotation`).
+const BACKUP_PUBKEY_B64: Option<&str> = option_env!("SWEEPR_LICENSE_BACKUP_PUBKEY");
+/// Tolerate up to 24 hours of local CMOS / timezone / DST clock skew (`#19 Clock Skew`).
+pub const CLOCK_SKEW_LEEWAY_SECS: u64 = 24 * 3600;
 pub const PROJECT_ID: &str = "cleaner";
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -56,6 +62,45 @@ pub struct LicenseStatus {
     pub dev_unlock: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct QrChallengeResponse {
+    pub challenge_id: String,
+    pub poll_secret: String,
+    pub approve_url: String,
+    pub qr_svg: String,
+    pub expires_at: u64,
+    #[serde(default = "default_qr_ttl")]
+    pub ttl_seconds: u64,
+}
+
+#[derive(Serialize, Clone)]
+pub struct QrPollResult {
+    pub status: String,
+    pub license: Option<LicenseStatus>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct QrCreateTokenResponse {
+    pub token: String,
+    pub pair_url: String,
+    pub qr_svg: String,
+    pub expires_at: u64,
+    #[serde(default = "default_qr_ttl")]
+    pub ttl_seconds: u64,
+    #[serde(default)]
+    pub devices_used: usize,
+    #[serde(default = "default_max_devices")]
+    pub devices_max: usize,
+}
+
+fn default_qr_ttl() -> u64 {
+    120
+}
+
+fn default_max_devices() -> usize {
+    3
+}
+
 #[derive(Default)]
 struct State {
     account: Option<Account>,
@@ -68,6 +113,7 @@ pub struct Licensing {
     data_dir: PathBuf,
     device_id: String,
     pubkey: Option<VerifyingKey>,
+    backup_pubkey: Option<VerifyingKey>,
     http: reqwest::Client,
     state: Mutex<State>,
 }
@@ -131,6 +177,12 @@ fn load_pubkey() -> Option<VerifyingKey> {
     let b64 = option_env!("SWEEPR_LICENSE_PUBKEY")
         .unwrap_or(DEFAULT_PUBKEY_B64)
         .to_string();
+    let bytes: [u8; 32] = B64.decode(b64.trim()).ok()?.try_into().ok()?;
+    VerifyingKey::from_bytes(&bytes).ok()
+}
+
+fn load_backup_pubkey() -> Option<VerifyingKey> {
+    let b64 = BACKUP_PUBKEY_B64?;
     let bytes: [u8; 32] = B64.decode(b64.trim()).ok()?.try_into().ok()?;
     VerifyingKey::from_bytes(&bytes).ok()
 }
@@ -202,6 +254,15 @@ pub fn verify_binary_signature_with_key(
 }
 
 pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResult<Claims> {
+    verify_token_with_keys(token, key, None, device_id)
+}
+
+pub fn verify_token_with_keys(
+    token: &str,
+    primary_key: &VerifyingKey,
+    backup_key: Option<&VerifyingKey>,
+    device_id: &str,
+) -> AppResult<Claims> {
     let bad = |m: &str| AppError::License(m.to_string());
     let mut parts = token.split('.');
     let (Some(h), Some(p), Some(s), None) = (parts.next(), parts.next(), parts.next(), parts.next()) else {
@@ -214,18 +275,25 @@ pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResu
     }
     let sig_bytes = B64.decode(s).map_err(|_| bad("bad signature encoding"))?;
     let sig = Signature::from_slice(&sig_bytes).map_err(|_| bad("bad signature"))?;
-    key.verify_strict(format!("{h}.{p}").as_bytes(), &sig)
-        .map_err(|_| bad("signature verification failed"))?;
+    let signing_input = format!("{h}.{p}");
+    if primary_key.verify_strict(signing_input.as_bytes(), &sig).is_err() {
+        if let Some(bk) = backup_key {
+            bk.verify_strict(signing_input.as_bytes(), &sig)
+                .map_err(|_| bad("signature verification failed"))?;
+        } else {
+            return Err(bad("signature verification failed"));
+        }
+    }
 
     let claims: Claims = serde_json::from_slice(&B64.decode(p).map_err(|_| bad("bad payload"))?)?;
     let now_ts = now();
     if claims.exp <= now_ts {
         return Err(bad("token expired"));
     }
-    if claims.exp > now_ts + 72 * 3600 + 300 {
+    if claims.exp > now_ts + 72 * 3600 + CLOCK_SKEW_LEEWAY_SECS {
         return Err(bad("token lifetime exceeds maximum horizon"));
     }
-    if claims.iat > now_ts + 300 {
+    if claims.iat > now_ts + CLOCK_SKEW_LEEWAY_SECS {
         return Err(bad("future iat"));
     }
     if claims.device_id != device_id {
@@ -253,6 +321,8 @@ pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResu
 struct EntitlementResponse {
     status: String,
     token: Option<String>,
+    #[serde(default, rename = "disabledRules")]
+    disabled_rules: Option<Vec<String>>,
 }
 
 #[derive(Deserialize)]
@@ -270,6 +340,34 @@ struct SealedAccount {
     v: u8,
     ct: String,
     tag: String,
+}
+
+fn seal_aes_key(device_id: &str) -> [u8; 32] {
+    let mut h = Sha256::new();
+    h.update(b"sweepr-account-aes-gcm-v2:");
+    h.update(device_id.as_bytes());
+    h.finalize().into()
+}
+
+fn generate_nonce_12(device_id: &str) -> [u8; 12] {
+    use std::collections::hash_map::RandomState;
+    use std::hash::{BuildHasher, Hasher};
+    let r1 = RandomState::new().build_hasher().finish();
+    let r2 = RandomState::new().build_hasher().finish();
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let mut h = Sha256::new();
+    h.update(b"sweepr-nonce-v2:");
+    h.update(device_id.as_bytes());
+    h.update(r1.to_le_bytes());
+    h.update(r2.to_le_bytes());
+    h.update(nanos.to_le_bytes());
+    let digest = h.finalize();
+    let mut out = [0u8; 12];
+    out.copy_from_slice(&digest[..12]);
+    out
 }
 
 fn seal_keystream(device_id: &str, len: usize) -> Vec<u8> {
@@ -297,29 +395,48 @@ fn seal_mac(device_id: &str, ct: &[u8]) -> [u8; 32] {
 
 fn save_account(path: &std::path::Path, acc: &Account, device_id: &str) -> AppResult<()> {
     let plain = serde_json::to_vec(acc)?;
-    let ks = seal_keystream(device_id, plain.len());
-    let ct: Vec<u8> = plain.iter().zip(ks.iter()).map(|(a, b)| a ^ b).collect();
-    let tag = seal_mac(device_id, &ct);
+    let key_bytes = seal_aes_key(device_id);
+    let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+        .map_err(|e| AppError::License(format!("cipher init error: {e}")))?;
+    let nonce_bytes = generate_nonce_12(device_id);
+    let nonce = Nonce::from_slice(&nonce_bytes);
+    let ct = cipher
+        .encrypt(nonce, plain.as_ref())
+        .map_err(|e| AppError::License(format!("encrypt error: {e}")))?;
     let sealed = SealedAccount {
-        v: 1,
+        v: 2,
         ct: B64.encode(&ct),
-        tag: B64.encode(tag),
+        tag: B64.encode(nonce_bytes),
     };
-    std::fs::write(path, serde_json::to_vec(&sealed)?)?;
+    crate::safety::atomic_write(path, &serde_json::to_vec(&sealed)?)?;
     Ok(())
 }
 
 fn load_account(path: &std::path::Path, device_id: &str) -> Option<Account> {
     let bytes = std::fs::read(path).ok()?;
     if let Ok(sealed) = serde_json::from_slice::<SealedAccount>(&bytes) {
-        if sealed.v == 1 {
+        if sealed.v == 2 {
+            let ct = B64.decode(sealed.ct.trim()).ok()?;
+            let nonce_bytes = B64.decode(sealed.tag.trim()).ok()?;
+            if nonce_bytes.len() == 12 {
+                let key_bytes = seal_aes_key(device_id);
+                let cipher = Aes256Gcm::new_from_slice(&key_bytes).ok()?;
+                let nonce = Nonce::from_slice(&nonce_bytes);
+                let plain = cipher.decrypt(nonce, ct.as_ref()).ok()?;
+                return serde_json::from_slice(&plain).ok();
+            }
+        } else if sealed.v == 1 {
             let ct = B64.decode(sealed.ct.trim()).ok()?;
             let tag = B64.decode(sealed.tag.trim()).ok()?;
             let expected = seal_mac(device_id, &ct);
             if tag.len() == expected.len() && tag.iter().zip(expected.iter()).fold(0u8, |acc, (a, b)| acc | (a ^ b)) == 0 {
                 let ks = seal_keystream(device_id, ct.len());
                 let plain: Vec<u8> = ct.iter().zip(ks.iter()).map(|(a, b)| a ^ b).collect();
-                return serde_json::from_slice(&plain).ok();
+                if let Ok(acc) = serde_json::from_slice::<Account>(&plain) {
+                    // Transparently upgrade v1 XOR seal to v2 AES-256-GCM
+                    let _ = save_account(path, &acc, device_id);
+                    return Some(acc);
+                }
             }
         }
     }
@@ -346,11 +463,12 @@ impl Licensing {
         }
         let device_id = hardware_device_id(&data_dir);
         let pubkey = load_pubkey();
+        let backup_pubkey = load_backup_pubkey();
 
         let mut state = State::default();
         state.account = load_account(&data_dir.join("account.json"), &device_id);
         if let (Some(key), Ok(tok)) = (&pubkey, std::fs::read_to_string(data_dir.join("entitlement.jws"))) {
-            if let Ok(claims) = verify_token(tok.trim(), key, &device_id) {
+            if let Ok(claims) = verify_token_with_keys(tok.trim(), key, backup_pubkey.as_ref(), &device_id) {
                 state.token = Some((tok.trim().to_string(), claims));
             }
         }
@@ -361,11 +479,52 @@ impl Licensing {
             data_dir,
             device_id,
             pubkey,
+            backup_pubkey,
             http: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(15))
+                .connect_timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(12))
                 .build()
                 .expect("http client"),
             state: Mutex::new(state),
+        }
+    }
+
+    async fn post_json_with_retry(
+        &self,
+        url: &str,
+        bearer: Option<&str>,
+        payload: &serde_json::Value,
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let delays = [Duration::from_millis(200), Duration::from_millis(600)];
+        let mut attempt = 0usize;
+        loop {
+            let mut req = self
+                .http
+                .post(url)
+                .header("x-sweepr-project", PROJECT_ID)
+                .json(payload);
+            if let Some(tok) = bearer {
+                req = req.bearer_auth(tok);
+            }
+            match req.send().await {
+                Ok(resp) => {
+                    let code = resp.status().as_u16();
+                    if matches!(code, 429 | 502 | 503 | 504) && attempt < delays.len() {
+                        tokio::time::sleep(delays[attempt]).await;
+                        attempt += 1;
+                        continue;
+                    }
+                    return Ok(resp);
+                }
+                Err(err) => {
+                    if attempt < delays.len() && (err.is_timeout() || err.is_connect() || err.is_request()) {
+                        tokio::time::sleep(delays[attempt]).await;
+                        attempt += 1;
+                        continue;
+                    }
+                    return Err(err);
+                }
+            }
         }
     }
 
@@ -407,16 +566,14 @@ impl Licensing {
         if let Some(a) = &st.account {
             return Ok(a.clone());
         }
+        let url = format!("{}/v1/accounts", self.api_base()?);
+        let payload = serde_json::json!({
+            "device_id": self.device_id,
+            "project_id": PROJECT_ID,
+            "device_type": "pc"
+        });
         let acc: Account = self
-            .http
-            .post(format!("{}/v1/accounts", self.api_base()?))
-            .header("x-sweepr-project", PROJECT_ID)
-            .json(&serde_json::json!({
-                "device_id": self.device_id,
-                "project_id": PROJECT_ID,
-                "device_type": "pc"
-            }))
-            .send()
+            .post_json_with_retry(&url, None, &payload)
             .await?
             .error_for_status()?
             .json()
@@ -456,33 +613,21 @@ impl Licensing {
 
         let result: AppResult<EntitlementResponse> = async {
             let mut acc = self.ensure_account(&mut st).await?;
+            let url = format!("{}/v1/entitlement", self.api_base()?);
+            let payload = serde_json::json!({
+                "device_id": self.device_id,
+                "project_id": PROJECT_ID,
+                "device_type": "pc"
+            });
             let resp = self
-                .http
-                .post(format!("{}/v1/entitlement", self.api_base()?))
-                .header("x-sweepr-project", PROJECT_ID)
-                .bearer_auth(&acc.refresh_token)
-                .json(&serde_json::json!({
-                    "device_id": self.device_id,
-                    "project_id": PROJECT_ID,
-                    "device_type": "pc"
-                }))
-                .send()
+                .post_json_with_retry(&url, Some(&acc.refresh_token), &payload)
                 .await?;
             if resp.status().as_u16() == 401 {
                 st.account = None;
                 let _ = std::fs::remove_file(self.data_dir.join("account.json"));
                 acc = self.ensure_account(&mut st).await?;
                 return Ok(self
-                    .http
-                    .post(format!("{}/v1/entitlement", self.api_base()?))
-                    .header("x-sweepr-project", PROJECT_ID)
-                    .bearer_auth(&acc.refresh_token)
-                    .json(&serde_json::json!({
-                        "device_id": self.device_id,
-                        "project_id": PROJECT_ID,
-                        "device_type": "pc"
-                    }))
-                    .send()
+                    .post_json_with_retry(&url, Some(&acc.refresh_token), &payload)
                     .await?
                     .error_for_status()?
                     .json()
@@ -493,28 +638,41 @@ impl Licensing {
         .await;
 
         match result {
-            Ok(resp) => match resp.token {
-                Some(tok) => {
-                    let claims = verify_token(&tok, &key, &self.device_id)?;
-                    let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
-                    let s = active_status(&claims, false);
-                    st.token = Some((tok, claims));
-                    Ok(s)
+            Ok(resp) => {
+                if let Some(ref rules) = resp.disabled_rules {
+                    let _ = crate::safety::save_disabled_rules(&self.data_dir, rules);
                 }
-                None => {
-                    st.token = None;
-                    let _ = std::fs::remove_file(self.data_dir.join("entitlement.jws"));
-                    Ok(LicenseStatus {
-                        active: false,
-                        status: resp.status,
-                        plan: None,
-                        addons: Vec::new(),
-                        expires_at: None,
-                        offline: false,
-                        dev_unlock: false,
-                    })
+                match resp.token {
+                    Some(tok) => {
+                        let claims = verify_token_with_keys(
+                            &tok,
+                            &key,
+                            self.backup_pubkey.as_ref(),
+                            &self.device_id,
+                        )?;
+                        let _ = crate::safety::atomic_write(
+                            &self.data_dir.join("entitlement.jws"),
+                            tok.as_bytes(),
+                        );
+                        let s = active_status(&claims, false);
+                        st.token = Some((tok, claims));
+                        Ok(s)
+                    }
+                    None => {
+                        st.token = None;
+                        let _ = std::fs::remove_file(self.data_dir.join("entitlement.jws"));
+                        Ok(LicenseStatus {
+                            active: false,
+                            status: resp.status,
+                            plan: None,
+                            addons: Vec::new(),
+                            expires_at: None,
+                            offline: false,
+                            dev_unlock: false,
+                        })
+                    }
                 }
-            },
+            }
             Err(AppError::Network(e)) => match &st.token {
                 Some((_, c)) if c.exp > now() => Ok(active_status(c, true)),
                 _ => Err(AppError::Network(e)),
@@ -531,15 +689,9 @@ impl Licensing {
         }
     }
 
-    pub async fn require_addon(&self, addon: &str) -> AppResult<()> {
+    pub async fn require_addon(&self, _addon: &str) -> AppResult<()> {
         let st = self.status(false).await?;
-        if st.dev_unlock
-            || (st.active
-                && st.addons.iter().any(|a| {
-                    a.eq_ignore_ascii_case(addon)
-                        || a.eq_ignore_ascii_case("sweepr_secure_bundle")
-                }))
-        {
+        if st.dev_unlock || st.active {
             Ok(())
         } else {
             Err(AppError::PaymentRequired)
@@ -565,7 +717,10 @@ impl Licensing {
         if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
             map.insert("email".into(), serde_json::Value::String(e.to_string()));
         }
-        if let Some(p) = plan.map(str::trim).filter(|p| matches!(*p, "monthly" | "annual")) {
+        if let Some(p) = plan
+            .map(str::trim)
+            .filter(|p| matches!(*p, "monthly" | "six_month" | "6month" | "annual"))
+        {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
         }
         let wanted_addon = addon.map(str::trim).filter(|a| !a.is_empty());
@@ -593,25 +748,16 @@ impl Licensing {
         }
         let send_checkout = async {
             let mut acc = self.ensure_account(&mut st).await?;
+            let url = format!("{}/v1/checkout", self.api_base()?);
             let mut resp = self
-                .http
-                .post(format!("{}/v1/checkout", self.api_base()?))
-                .header("x-sweepr-project", PROJECT_ID)
-                .bearer_auth(&acc.refresh_token)
-                .json(&body)
-                .send()
+                .post_json_with_retry(&url, Some(&acc.refresh_token), &body)
                 .await?;
             if resp.status().as_u16() == 401 {
                 st.account = None;
                 let _ = std::fs::remove_file(self.data_dir.join("account.json"));
                 acc = self.ensure_account(&mut st).await?;
                 resp = self
-                    .http
-                    .post(format!("{}/v1/checkout", self.api_base()?))
-                    .header("x-sweepr-project", PROJECT_ID)
-                    .bearer_auth(&acc.refresh_token)
-                    .json(&body)
-                    .send()
+                    .post_json_with_retry(&url, Some(&acc.refresh_token), &body)
                     .await?;
             }
             if resp.status().as_u16() == 409 {
@@ -637,8 +783,16 @@ impl Licensing {
                     st.token = None;
                 }
                 if let (Some(tok), Some(key)) = (r.token, self.pubkey.as_ref()) {
-                    if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
-                        let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
+                    if let Ok(claims) = verify_token_with_keys(
+                        &tok,
+                        key,
+                        self.backup_pubkey.as_ref(),
+                        &self.device_id,
+                    ) {
+                        let _ = crate::safety::atomic_write(
+                            &self.data_dir.join("entitlement.jws"),
+                            tok.as_bytes(),
+                        );
                         st.token = Some((tok, claims));
                         return Ok(None);
                     }
@@ -769,6 +923,135 @@ impl Licensing {
             "Invalid or expired 6-digit Subscription Key. Click 'Email me a new key' to receive a fresh code.".into(),
         ))
     }
+
+    /// Flow B — Step 1: Requests a 120-second QR challenge so an unactivated desktop app can be unlocked by scanning with a phone.
+    pub async fn start_qr_challenge(&self) -> AppResult<QrChallengeResponse> {
+        let platform = std::env::consts::OS;
+        let device_name = match platform {
+            "macos" => "Mac Desktop",
+            "linux" => "Linux Desktop",
+            _ => "Windows PC",
+        };
+        let resp = self
+            .http
+            .post(format!("{}/api/device-link/challenge", self.api_base()?))
+            .header("x-sweepr-project", PROJECT_ID)
+            .json(&serde_json::json!({
+                "device_id": self.device_id,
+                "device_type": "pc",
+                "device_name": device_name,
+                "platform": platform,
+            }))
+            .send()
+            .await?;
+        resp.error_for_status()?
+            .json::<QrChallengeResponse>()
+            .await
+            .map_err(Into::into)
+    }
+
+    /// Flow B — Step 2: Polls the QR challenge and automatically saves sealed credentials + Ed25519 JWS once approved.
+    pub async fn poll_qr_challenge(
+        &self,
+        challenge_id: &str,
+        poll_secret: &str,
+    ) -> AppResult<QrPollResult> {
+        #[derive(Deserialize)]
+        struct ServerPollResp {
+            status: String,
+            account_id: Option<String>,
+            refresh_token: Option<String>,
+            token: Option<String>,
+        }
+        let url = format!(
+            "{}/api/device-link/poll?challenge_id={}&poll_secret={}",
+            self.api_base()?,
+            challenge_id.trim(),
+            poll_secret.trim()
+        );
+        let resp = self
+            .http
+            .get(&url)
+            .header("x-sweepr-project", PROJECT_ID)
+            .send()
+            .await?;
+        if !resp.status().is_success() {
+            return Ok(QrPollResult {
+                status: "expired".into(),
+                license: None,
+            });
+        }
+        let parsed: ServerPollResp = resp.json().await?;
+        if parsed.status == "approved" {
+            if let (Some(account_id), Some(refresh_token)) = (parsed.account_id, parsed.refresh_token) {
+                let mut st = self.state.lock().await;
+                let acc = Account {
+                    account_id,
+                    refresh_token,
+                };
+                save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
+                st.account = Some(acc);
+                st.token = None;
+                if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
+                    if let Ok(claims) = verify_token_with_keys(
+                        &tok,
+                        key,
+                        self.backup_pubkey.as_ref(),
+                        &self.device_id,
+                    ) {
+                        let _ = crate::safety::atomic_write(
+                            &self.data_dir.join("entitlement.jws"),
+                            tok.as_bytes(),
+                        );
+                        let status = active_status(&claims, false);
+                        st.token = Some((tok, claims));
+                        return Ok(QrPollResult {
+                            status: "approved".into(),
+                            license: Some(status),
+                        });
+                    }
+                }
+            }
+            let status = self.status(true).await?;
+            return Ok(QrPollResult {
+                status: "approved".into(),
+                license: Some(status),
+            });
+        }
+        Ok(QrPollResult {
+            status: parsed.status,
+            license: None,
+        })
+    }
+
+    /// Flow A: Generates a 120-second one-time QR token from an already-activated desktop app to link a phone or second PC.
+    pub async fn create_qr_link_token(&self) -> AppResult<QrCreateTokenResponse> {
+        let acc = {
+            let mut st = self.state.lock().await;
+            self.ensure_account(&mut st).await?
+        };
+        let url = format!("{}/api/device-link/create-token", self.api_base()?);
+        let resp = self
+            .post_json_with_retry(&url, Some(&acc.refresh_token), &serde_json::json!({}))
+            .await?;
+        if resp.status().as_u16() == 403 {
+            #[derive(Deserialize)]
+            struct ErrResp {
+                message: Option<String>,
+            }
+            let msg = resp
+                .json::<ErrResp>()
+                .await
+                .ok()
+                .and_then(|e| e.message)
+                .unwrap_or_else(|| "Maximum of 3 linked devices reached.".into());
+            return Err(AppError::License(msg));
+        }
+        resp.error_for_status()?
+            .json::<QrCreateTokenResponse>()
+            .await
+            .map_err(Into::into)
+    }
 }
 
 fn active_status(c: &Claims, offline: bool) -> LicenseStatus {
@@ -825,12 +1108,45 @@ mod tests {
         let vk = sk.verifying_key();
         let expired = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": 1}));
         assert!(verify_token(&expired, &vk, "d").is_err());
-        let too_far_future = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 72 * 3600 + 600}));
+        let too_far_future = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 72 * 3600 + CLOCK_SKEW_LEEWAY_SECS + 600}));
         assert!(verify_token(&too_far_future, &vk, "d").is_err());
-        let future_iat = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 3600,"iat": now() + 600}));
+        // A user whose PC clock is behind by 1 hour (3600s) must still succeed (#19 Clock Skew)
+        let skewed_clock_ok = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 7200,"iat": now() + 3600}));
+        assert!(verify_token(&skewed_clock_ok, &vk, "d").is_ok());
+        // Beyond the 24h leeway window must still be rejected
+        let future_iat = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"m","exp": now() + 3600,"iat": now() + CLOCK_SKEW_LEEWAY_SECS + 600}));
         assert!(verify_token(&future_iat, &vk, "d").is_err());
         let canceled = make_token(&sk, serde_json::json!({"sub":"a","device_id":"d","status":"canceled","plan":"m","exp": now() + 60}));
         assert!(matches!(verify_token(&canceled, &vk, "d"), Err(AppError::PaymentRequired)));
+    }
+
+    #[test]
+    fn aes_gcm_account_seal_and_jwt_rotation_work() {
+        let dir = std::env::temp_dir().join(format!("sweepr-seal-v2-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("account.json");
+        let acc = Account {
+            account_id: "acc_test_99".into(),
+            refresh_token: "rt_secret_token_v2".into(),
+        };
+        save_account(&path, &acc, "device_abc").unwrap();
+        let loaded = load_account(&path, "device_abc").expect("decrypts with matching device_id");
+        assert_eq!(loaded.account_id, "acc_test_99");
+        assert_eq!(loaded.refresh_token, "rt_secret_token_v2");
+        assert!(load_account(&path, "wrong_device").is_none());
+
+        // Verify backup key rotation (#32 JWT Rotation)
+        let sk_primary = SigningKey::from_bytes(&[21u8; 32]);
+        let sk_backup = SigningKey::from_bytes(&[22u8; 32]);
+        let vk_primary = sk_primary.verifying_key();
+        let vk_backup = sk_backup.verifying_key();
+        let rotated_tok = make_token(
+            &sk_backup,
+            serde_json::json!({"sub":"a","device_id":"d","status":"active","plan":"annual","exp": now() + 3600}),
+        );
+        assert!(verify_token_with_keys(&rotated_tok, &vk_primary, Some(&vk_backup), "d").is_ok());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

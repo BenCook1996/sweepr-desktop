@@ -141,7 +141,7 @@
             <h3 class="font-bold text-lg">Linked Devices</h3>
             <span id="deviceCountBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">0 / 3 Devices</span>
           </div>
-          <p class="text-sm text-gray-500 mb-4">You can link up to <strong>3 devices</strong> on your subscription (any combination of Desktop PC, Mac, Linux, iOS &amp; Android).</p>
+          <p class="text-sm text-gray-500 mb-4">Purchased on desktop and downloaded the app separately on another device? Generate a one-time QR code below to activate your account on your separate device (up to <strong>3 devices</strong> — desktop or mobile).</p>
           <ul id="deviceList" class="space-y-3 mb-4">
             <!-- Populated by JS -->
           </ul>
@@ -151,12 +151,16 @@
             onclick="generatePortalQrCode()"
             class="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>📱 Link Phone or Another PC via QR Code</span>
+            <span>📱 Activate Separate Device via QR Code</span>
           </button>
           <div id="portalQrPanel" class="hidden mt-4 p-4 rounded-xl bg-gray-50 border border-emerald-200 text-center">
-            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-1">Scan with Phone Camera or SWEEPR App</div>
-            <p class="text-xs text-gray-500 mb-3">One-time cryptographic pairing token. Automatically unlocks your device without typing a code.</p>
+            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-1">One-Time Device Activation QR</div>
+            <p class="text-xs text-gray-500 mb-3">Scan with your separate device or copy the pairing code below to activate your account on your separate device.</p>
             <div id="portalQrSvgBox" class="w-44 h-44 mx-auto bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center"></div>
+            <div id="portalQrTokenRow" class="hidden mt-2.5 flex items-center justify-center gap-2">
+              <code id="portalQrTokenVal" class="text-xs font-mono font-bold bg-white border border-gray-200 px-2.5 py-1 rounded-lg text-gray-800"></code>
+              <button type="button" id="portalQrCopyBtn" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg cursor-pointer">Copy Pairing Code</button>
+            </div>
             <div class="mt-2.5 flex items-center justify-center gap-3 text-xs">
               <span id="portalQrTimer" class="font-mono font-bold text-gray-600">Expires in 120s</span>
               <button type="button" onclick="generatePortalQrCode()" class="font-bold text-emerald-600 hover:underline cursor-pointer">Refresh QR</button>
@@ -365,6 +369,20 @@
           return;
         }
         svgBox.innerHTML = data.qr_svg;
+        const tokenRow = document.getElementById('portalQrTokenRow');
+        const tokenVal = document.getElementById('portalQrTokenVal');
+        const copyBtn = document.getElementById('portalQrCopyBtn');
+        if (tokenRow && tokenVal && data.token) {
+          tokenVal.textContent = data.token;
+          tokenRow.classList.remove('hidden');
+          if (copyBtn) {
+            copyBtn.onclick = () => {
+              navigator.clipboard.writeText(data.token);
+              copyBtn.textContent = 'Copied ✓';
+              setTimeout(() => { copyBtn.textContent = 'Copy Pairing Code'; }, 2000);
+            };
+          }
+        }
         let rem = Number(data.ttl_seconds) || 120;
         timerEl.textContent = 'Expires in ' + rem + 's';
         portalQrInterval = setInterval(async () => {

@@ -405,6 +405,7 @@ class AppViewModel: ObservableObject {
 
     /// While true, success alerts are suppressed because the Cleaning Complete screen reports the result.
     private var isBatchCleaning = false
+    private var pendingAfterPurchase: (() -> Void)? = nil
     private var rcActive: Bool = false
     private var rcBatteryCare: Bool = false
     private static let entitlementIDs = ["premium", "Sweepr Pro", "SWEEPR Cleaner Pro"]
@@ -417,10 +418,14 @@ class AppViewModel: ObservableObject {
     }
 
     private func isServerBatteryCareEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
-        guard isServerEntitled(acc), let acc = acc else { return false }
-        return acc.addons.contains {
-            $0.caseInsensitiveCompare("battery_care") == .orderedSame ||
-            $0.caseInsensitiveCompare("sweepr_secure_bundle") == .orderedSame
+        return isServerEntitled(acc)
+    }
+
+    private func resumePendingIfEntitled() {
+        if hasPremium, let action = pendingAfterPurchase {
+            pendingAfterPurchase = nil
+            showingPaywall = false
+            action()
         }
     }
 
@@ -472,11 +477,12 @@ class AppViewModel: ObservableObject {
         rcBatteryCare = Self.batteryCareEntitlementIDs.contains { info.entitlements[$0]?.isActive == true }
         let serverEntitled = isServerEntitled(linkedAccount)
         let active = rcActive || serverEntitled
-        let batActive = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+        let batActive = active || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
         hasPremium = active
         hasBatteryCare = batActive
         BatteryCareMonitor.shared.enforceEntitlement(batActive)
         if active {
+            resumePendingIfEntitled()
             if let exp = info.entitlements.all.values.first(where: { $0.isActive })?.expirationDate {
                 let formatter = DateFormatter()
                 formatter.dateStyle = .medium
@@ -643,7 +649,13 @@ class AppViewModel: ObservableObject {
     }
 
     func performSmartCleanAll() async {
-        guard hasPremium else { showingPaywall = true; return }
+        guard hasPremium else {
+            pendingAfterPurchase = { [weak self] in
+                Task { await self?.performSmartCleanAll() }
+            }
+            showingPaywall = true
+            return
+        }
         let usedBefore = storage.usedFraction
         let mediaIDsBefore = selectedMediaIDs
         let bytesByID = Dictionary(
@@ -674,7 +686,13 @@ class AppViewModel: ObservableObject {
     }
 
     func deleteSelectedMedia() async {
-        guard hasPremium else { showingPaywall = true; return }
+        guard hasPremium else {
+            pendingAfterPurchase = { [weak self] in
+                Task { await self?.deleteSelectedMedia() }
+            }
+            showingPaywall = true
+            return
+        }
         guard !selectedMediaIDs.isEmpty else { return }
         isWorking = true
         let idsToDelete = Array(selectedMediaIDs)
@@ -809,10 +827,11 @@ class AppViewModel: ObservableObject {
             _ = try? await Purchases.shared.logIn(linked.accountId)
             Purchases.shared.attribution.setEmail(linked.email)
             Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])
-            let batActive = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+            let batActive = rcActive || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
             hasPremium = rcActive || isServerEntitled(linkedAccount)
             hasBatteryCare = batActive
             BatteryCareMonitor.shared.enforceEntitlement(batActive)
+            resumePendingIfEntitled()
             alertMessage = "Signed in as \(linked.email)"
             return true
         } catch {
@@ -826,10 +845,11 @@ class AppViewModel: ObservableObject {
         guard linkedAccount.isSignedIn else { return }
         if let updated = try? await AccountService.refreshEntitlement(current: linkedAccount) {
             linkedAccount = updated
-            let batActive = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+            let batActive = rcActive || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
             hasPremium = rcActive || isServerEntitled(linkedAccount)
             hasBatteryCare = batActive
             BatteryCareMonitor.shared.enforceEntitlement(batActive)
+            resumePendingIfEntitled()
         }
     }
 

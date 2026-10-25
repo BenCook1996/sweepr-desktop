@@ -146,7 +146,17 @@
     needsPro = false;
     try {
       if (mode === "duplicates") {
-        groups = await api.findDuplicates(selectedDir.trim());
+        const COPY_RE = /\(\d+\)| - copy|_copy/i;
+        const raw = await api.findDuplicates(selectedDir.trim());
+        groups = raw.map((g) => ({
+          ...g,
+          files: [...g.files].sort((a, b) => {
+            const aCopy = COPY_RE.test(a) ? 1 : 0;
+            const bCopy = COPY_RE.test(b) ? 1 : 0;
+            if (aCopy !== bCopy) return aCopy - bCopy;
+            return a.length - b.length;
+          }),
+        }));
         smartSelectExtras();
         scanned = true;
       } else {
@@ -254,12 +264,7 @@
   aria-label="Space and Cloud Cleaner"
 >
   <div class="header-row">
-    <div>
-      <h1 class="page-title">Space &amp; Cloud Cleaner</h1>
-      <p class="muted small" style="margin: 4px 0 0 0;">
-        Find duplicate files and large space-hogging videos on this {deviceLabel} or across your cloud folders (or drag a folder here).
-      </p>
-    </div>
+    <h1 class="page-title">Duplicates &amp; Files</h1>
 
     <div class="source-toggle" role="tablist">
       <button
@@ -278,7 +283,7 @@
         role="tab"
         aria-selected={sourceTab === "cloud"}
       >
-        Cloud Drives (OneDrive, Google, Dropbox, iCloud)
+        Cloud
       </button>
     </div>
   </div>
@@ -290,7 +295,6 @@
     <div class="card scan-bar-card" style={dragOver ? "border-color: var(--accent); background: var(--accent-light);" : ""}>
       <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div class="quick-folders-row">
-          <span class="field-label">FOLDER TO CHECK:</span>
           {#each QUICK_FOLDERS as folder}
             <button
               type="button"
@@ -298,7 +302,6 @@
               class:active={selectedDir.trim().toLowerCase() === folder.toLowerCase()}
               onclick={() => pickQuickFolder(folder)}
             >
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
               <span>{folder}</span>
             </button>
           {/each}
@@ -309,12 +312,12 @@
             onclick={browseScanFolder}
             disabled={loading || cleaning}
           >
-            <span>+ Choose Another Folder…</span>
+            <span>+ Folder</span>
           </button>
         </div>
 
         <span class="badge free" title={selectedDir}>
-          Folder: {shortenPath(selectedDir, 42)}
+          {shortenPath(selectedDir, 36)}
         </span>
       </div>
 
@@ -332,7 +335,7 @@
             role="tab"
             aria-selected={mode === "duplicates"}
           >
-            Duplicate Files
+            Duplicates
           </button>
           <button
             class="subtab-btn"
@@ -344,29 +347,24 @@
             role="tab"
             aria-selected={mode === "large"}
           >
-            Largest Files
+            Large Files
           </button>
         </div>
 
         <div class="row" style="gap: 10px;">
           {#if mode === "large"}
             <label class="row small" style="gap: 6px;">
-              <span class="muted">Show files over:</span>
               <select bind:value={minSizeMb} onchange={scan} aria-label="Minimum file size" class="size-select">
-                <option value={10}>10 MB</option>
-                <option value={25}>25 MB</option>
-                <option value={50}>50 MB</option>
-                <option value={100}>100 MB</option>
-                <option value={500}>500 MB</option>
+                <option value={10}>&gt; 10 MB</option>
+                <option value={25}>&gt; 25 MB</option>
+                <option value={50}>&gt; 50 MB</option>
+                <option value={100}>&gt; 100 MB</option>
+                <option value={500}>&gt; 500 MB</option>
               </select>
             </label>
           {/if}
           <button class="primary scan-btn" onclick={scan} disabled={loading || cleaning}>
-            {loading
-              ? "Scanning…"
-              : mode === "duplicates"
-                ? `Scan ${shortenPath(selectedDir, 24)} for Duplicates`
-                : `Find Largest Files in ${shortenPath(selectedDir, 24)}`}
+            {loading ? "Scanning…" : "Scan"}
           </button>
         </div>
       </div>
@@ -400,29 +398,22 @@
     {:else if mode === "duplicates"}
       {#if !scanned}
         <div class="card center-state">
-          <strong>Ready to check {selectedDir} for duplicate files</strong>
-          <p class="muted small" style="margin: 6px 0 14px 0;">
-            Click the button below to find identical copies of photos, documents, and downloads. We always keep one copy safe.
-          </p>
-          <button class="primary scan-btn" onclick={scan}>Scan {selectedDir} Now</button>
+          <strong>{selectedDir}</strong>
+          <button class="primary scan-btn" style="margin-top: 12px;" onclick={scan}>Scan</button>
         </div>
       {:else if groups.length === 0}
         <div class="card center-state">
-          <strong>No duplicate files found in {selectedDir}</strong>
-          <p class="muted small" style="margin-top: 4px;">Every file in this folder is unique! Try choosing another folder above.</p>
+          <strong>No duplicates in {selectedDir}</strong>
         </div>
       {:else}
         <div class="card toolbar-card">
-          <div>
-            <strong>Found {groups.length} sets of duplicate files</strong>
-            <div class="muted small">We automatically keep the first copy safe and select the extra copies for you (Shift+Click to select a range).</div>
-          </div>
+          <strong>{groups.length} duplicate sets</strong>
           <div class="spacer"></div>
           <button class="ghost small-btn" onclick={smartSelectExtras}>
-            Select All Extra Copies
+            Select Extras
           </button>
           <button class="primary small-btn" disabled={!selectedList.length || cleaning} onclick={cleanSelected}>
-            {cleaning ? `Moving to ${trashLabel}…` : `Move ${selectedList.length} Extra Copy(s) to ${trashLabel} (${formatBytes(selectedBytes)})`}
+            {cleaning ? "Cleaning…" : `Clean (${formatBytes(selectedBytes)})`}
           </button>
         </div>
 
@@ -434,16 +425,16 @@
                   {fileNameOf(g.files[0])}
                 </strong>
                 <div class="spacer"></div>
-                <span class="badge free">{g.files.length} copies</span>
+                <span class="badge free">{g.files.length}×</span>
               </div>
               <div class="cluster-size">
-                {formatBytes(g.size)} <span class="muted small" style="font-weight: 500;">each</span>
+                {formatBytes(g.size)}
               </div>
               <div class="files">
                 {#each g.files as f, idx}
                   <label class="row file-path" class:kept={idx === 0} title={f}>
                     {#if idx === 0}
-                      <span class="badge free" style="font-size: 10px; padding: 2px 6px;">✓ Original Kept Safe</span>
+                      <span class="badge free" style="font-size: 10px; padding: 2px 6px;">Kept</span>
                     {:else}
                       <input
                         type="checkbox"
@@ -457,9 +448,6 @@
                     <span class="muted small path" style="flex: 1; overflow: hidden; text-overflow: ellipsis;">
                       {shortenPath(f, 52)}
                     </span>
-                    {#if idx > 0 && selectedFiles[f]}
-                      <span class="badge remove-badge">Remove</span>
-                    {/if}
                   </label>
                 {/each}
               </div>
@@ -470,25 +458,17 @@
     {:else if mode === "large"}
       {#if !largeReport}
         <div class="card center-state">
-          <strong>Ready to find the largest files in {selectedDir}</strong>
-          <p class="muted small" style="margin: 6px 0 14px 0;">
-            Quickly see which big videos, backups, or downloads are taking up the most space on your hard drive.
-          </p>
-          <button class="primary scan-btn" onclick={scan}>Find Largest Files Now</button>
+          <strong>{selectedDir}</strong>
+          <button class="primary scan-btn" style="margin-top: 12px;" onclick={scan}>Scan</button>
         </div>
       {:else}
         <div class="card" style="padding: 20px 24px;">
           <div class="row" style="margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <strong>Largest Files in {shortenPath(selectedDir, 40)} ({largeReport.top_files.length})</strong>
-              <div class="muted small">
-                Checked {formatCount(largeReport.total_scanned_files)} files ({formatBytes(largeReport.total_scanned_bytes)} total)
-              </div>
-            </div>
+            <strong>Largest Files ({largeReport.top_files.length})</strong>
           </div>
 
           {#if largeReport.top_files.length === 0}
-            <div class="muted small">No files larger than {minSizeMb} MB were found in this folder.</div>
+            <div class="muted small">None over {minSizeMb} MB.</div>
           {:else}
             <div class="large-list">
               {#each largeReport.top_files as lf (lf.path)}
@@ -507,19 +487,19 @@
                   <button
                     class="ghost small-btn"
                     onclick={() => void api.revealInFolder(lf.path)}
-                    title="Show in Windows Explorer / macOS Finder"
+                    title="Show in Folder"
                   >
-                    📂 Show in Folder
+                    Reveal
                   </button>
                   <button
                     class="ghost small-btn"
                     disabled={movingFile === lf.path}
                     onclick={() => moveLargeFileToFolder(lf.path)}
                   >
-                    {movingFile === lf.path ? "Moving…" : "Move to Folder…"}
+                    {movingFile === lf.path ? "…" : "Move"}
                   </button>
                   <button class="ghost small-btn" onclick={() => trashLargeFile(lf.path)}>
-                    Move to Recycle Bin
+                    Trash
                   </button>
                 </div>
               {/each}

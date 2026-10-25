@@ -65,15 +65,7 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let keep_in_tray = if cfg!(target_os = "macos") {
-                    true
-                } else if let Some(st) = window.try_state::<commands::AppState>() {
-                    let bcfg = battery::load_config(&st.data_dir);
-                    bcfg.charge_limit_enabled || bcfg.thermal_throttling_enabled || bcfg.auto_hibernate_tabs
-                } else {
-                    false
-                };
-                if keep_in_tray {
+                if cfg!(target_os = "macos") {
                     api.prevent_close();
                     let _ = window.hide();
                 }
@@ -99,6 +91,9 @@ pub fn run() {
             commands::hibernate_browser_tabs,
             commands::request_login_otp,
             commands::verify_login_otp,
+            commands::start_qr_challenge,
+            commands::poll_qr_challenge,
+            commands::create_qr_link_token,
             commands::memory_overview,
             commands::startup_items,
             commands::toggle_startup_item,

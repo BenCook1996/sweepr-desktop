@@ -155,12 +155,7 @@
 
 <div class="privacy-layout">
   <div class="section-header">
-    <div>
-      <h1 class="page-title">Privacy &amp; Safety</h1>
-      <p class="muted small" style="margin: 4px 0 0 0;">
-        Clear browser tracking, lock private files with a password, or permanently erase sensitive documents.
-      </p>
-    </div>
+    <h1 class="page-title">Vault &amp; Privacy</h1>
 
     <div class="mode-toggle" role="tablist">
       <button
@@ -170,7 +165,7 @@
         role="tab"
         aria-selected={subView === "browser"}
       >
-        Browser Privacy
+        Browsers
       </button>
       <button
         class="mode-btn"
@@ -179,7 +174,7 @@
         role="tab"
         aria-selected={subView === "vault"}
       >
-        Private Vault &amp; Backup
+        Vault &amp; Backup
       </button>
       <button
         class="mode-btn"
@@ -188,7 +183,7 @@
         role="tab"
         aria-selected={subView === "eraser"}
       >
-        Permanent File Eraser
+        File Shredder
       </button>
     </div>
   </div>
@@ -214,17 +209,7 @@
 
     <div class="card browser-card">
       <div class="card-top-row">
-        <div class="title-with-icon">
-          <div class="icon-bubble emerald">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </div>
-          <div>
-            <strong class="card-title">Clear Browser Tracking &amp; Clutter</strong>
-            <div class="muted small">
-              Clear temporary web files, tracking cookies, and browsing history while keeping your favorite websites signed in.
-            </div>
-          </div>
-        </div>
+        <strong class="card-title">Browser Privacy</strong>
 
         <div class="toolbar-actions">
           <button
@@ -232,10 +217,10 @@
             class:active-pill={showKeepSignedIn}
             onclick={() => (showKeepSignedIn = !showKeepSignedIn)}
           >
-            <span>Websites to Keep Signed In ({cookieAllowlist.length})</span>
+            <span>Keep Signed In ({cookieAllowlist.length})</span>
           </button>
           <button class="ghost small-pill" onclick={scanBrowsers} disabled={scanningBrowsers}>
-            <span>{scanningBrowsers ? "Checking…" : "Check Again"}</span>
+            <span>{scanningBrowsers ? "…" : "Rescan"}</span>
           </button>
         </div>
       </div>
@@ -243,19 +228,16 @@
       {#if showKeepSignedIn}
         <div class="sub-panel">
           <div class="row" style="justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <strong class="small">Websites to Keep Signed In</strong>
-              <div class="muted small">These websites will stay signed in even when you clear tracking cookies.</div>
-            </div>
+            <strong class="small">Keep Signed In</strong>
             <div class="row" style="gap: 6px;">
               <input
                 type="text"
                 bind:value={newDomain}
-                placeholder="Add website (e.g. google.com)"
+                placeholder="google.com"
                 class="mini-input"
                 onkeydown={(e) => e.key === "Enter" && addAllowedDomain()}
               />
-              <button class="primary small-pill" onclick={addAllowedDomain}>Add Website</button>
+              <button class="primary small-pill" onclick={addAllowedDomain}>Add</button>
             </div>
           </div>
           <div class="domain-pills">
@@ -272,7 +254,7 @@
                 </button>
               </span>
             {:else}
-              <span class="muted small">No websites added yet.</span>
+              <span class="muted small">None</span>
             {/each}
           </div>
         </div>
@@ -280,26 +262,23 @@
 
       <!-- What to Clear -->
       <div class="data-type-bar">
-        <span class="field-label">WHAT TO CLEAR:</span>
         <label class="type-chip" class:checked={clearCache}>
           <input type="checkbox" bind:checked={clearCache} />
-          <span>Temporary Web Files (Cache)</span>
+          <span>Cache</span>
         </label>
         <label class="type-chip" class:checked={clearCookies}>
           <input type="checkbox" bind:checked={clearCookies} />
-          <span>Tracking Cookies</span>
-          {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+          <span>Cookies</span>
         </label>
         <label class="type-chip" class:checked={clearHistory}>
           <input type="checkbox" bind:checked={clearHistory} />
-          <span>Browsing History</span>
-          {#if !license?.active}<span class="badge pro">Pro</span>{/if}
+          <span>History</span>
         </label>
       </div>
 
       {#if browsers.length === 0}
         <div class="empty-state">
-          <span class="muted small">All your browsers are already clean!</span>
+          <span class="muted small">Clean</span>
         </div>
       {:else}
         <div class="browser-list">
@@ -308,11 +287,6 @@
             <label class="row browser-row">
               <input type="checkbox" bind:checked={selectedBrowsers[key]} />
               <strong class="browser-name">{b.name || b.browser}</strong>
-              <div class="browser-metrics">
-                <span class="metric-pill">Temp files: <strong>{formatBytes(b.cache_bytes)}</strong></span>
-                <span class="metric-pill">Cookies: <strong>{formatBytes(b.cookies_bytes)}</strong></span>
-                <span class="metric-pill">History: <strong>{formatBytes(b.history_bytes)}</strong></span>
-              </div>
               <div class="spacer"></div>
               <strong class="browser-total">
                 {formatBytes(b.total_bytes ?? b.cache_bytes + b.cookies_bytes + b.history_bytes)}
@@ -329,10 +303,10 @@
           onclick={cleanBrowsers}
         >
           {cleaningBrowsers
-            ? "Clearing Browser Data…"
+            ? "Cleaning…"
             : totalBrowserBytes > 0
-              ? `Clear Selected Browser Data (${formatBytes(totalBrowserBytes)})`
-              : "Clear Selected Browser Data"}
+              ? `Clean (${formatBytes(totalBrowserBytes)})`
+              : "Clean"}
         </button>
       </div>
     </div>

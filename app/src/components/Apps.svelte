@@ -100,7 +100,7 @@
   });
 
   const totalOrphanCount = $derived(
-    remnants.length + brokenItems.length + regIssues.length
+    remnants.length + brokenItems.length
   );
 
   const totalRemnantBytes = $derived(
@@ -198,16 +198,14 @@
     orphansLoaded = true;
     error = null;
     try {
-      const [rem, brk, reg, bkp] = await Promise.all([
+      const [rem, brk] = await Promise.all([
         api.scanAppRemnants().catch(() => []),
         api.scanBrokenItems().catch(() => []),
-        api.scanRegistry().catch(() => []),
-        api.listRegistryBackups().catch(() => []),
       ]);
       remnants = rem;
       brokenItems = brk;
-      regIssues = reg;
-      regBackups = bkp;
+      regIssues = [];
+      regBackups = [];
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -239,16 +237,10 @@
         cleanedCount += removed;
         brokenItems = [];
       }
-      for (const issue of [...regIssues]) {
-        await api.fixRegistryIssue(issue.key);
-        cleanedCount += 1;
-        regIssues = regIssues.filter((i) => i.key !== issue.key);
-      }
-      regBackups = await api.listRegistryBackups().catch(() => regBackups);
       if (freedBytes > 0 || cleanedCount > 0) {
         addLifetimeStats(freedBytes, cleanedCount);
       }
-      statusNotice = `Cleaned up ${cleanedCount} leftover item(s)${freedBytes > 0 ? ` and freed ${formatBytes(freedBytes)}` : ""}.`;
+      statusNotice = `Cleaned ${cleanedCount} leftover(s)${freedBytes > 0 ? ` (${formatBytes(freedBytes)})` : ""}`;
     } catch (e) {
       handleError(e, "Leftovers cleanup");
     } finally {
@@ -259,12 +251,7 @@
 
 <div class="apps-layout">
   <div class="header-row">
-    <div>
-      <h1 class="page-title">Manage Your Apps</h1>
-      <p class="muted small" style="margin: 4px 0 0 0;">
-        Uninstall programs you don't use, update outdated apps, and clean up files left behind by old programs.
-      </p>
-    </div>
+    <h1 class="page-title">Uninstaller</h1>
 
     <div class="mode-toggle" role="tablist">
       <button
@@ -274,7 +261,7 @@
         role="tab"
         aria-selected={mode === "apps"}
       >
-        Installed Apps ({apps.length})
+        Installed ({apps.length})
       </button>
       <button
         class="mode-btn"
@@ -283,7 +270,7 @@
         role="tab"
         aria-selected={mode === "maintenance"}
       >
-        Updates &amp; Leftovers {updaterLoaded || orphansLoaded ? `(${outdated.length + totalOrphanCount})` : ""}
+        Updates &amp; Leftovers
       </button>
     </div>
   </div>
@@ -362,30 +349,20 @@
     <div class="maintenance-grid">
       <!-- Card 1: Outdated Apps -->
       <section class="card maint-card">
-        <div class="row" style="justify-content: space-between; align-items: flex-start;">
-          <div>
-            <h3>App Updates</h3>
-            <p class="muted small">Keep your installed apps up to date with one click.</p>
-          </div>
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <h3>App Updates</h3>
           <button class="ghost small-btn" disabled={updaterLoading} onclick={loadOutdated}>
-            {updaterLoading ? "Checking…" : "Check Again"}
+            {updaterLoading ? "…" : "Check"}
           </button>
         </div>
 
         {#if updaterLoading}
           <div class="center-mini">
             <div class="spinner"></div>
-            <span class="muted small">Checking for app updates…</span>
           </div>
         {:else if outdated.length === 0}
           <div class="clean-state-box">
-            <div class="status-icon-bubble green">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div>
-              <strong>All Your Apps Are Up to Date</strong>
-              <div class="muted small">No updates needed right now.</div>
-            </div>
+            <strong>All apps up to date</strong>
           </div>
         {:else}
           <div class="maint-list">
@@ -403,7 +380,7 @@
                   disabled={upgradingId === pkg.id}
                   onclick={() => upgradePkg(pkg)}
                 >
-                  {upgradingId === pkg.id ? "Updating…" : "Update"}
+                  {upgradingId === pkg.id ? "…" : "Update"}
                 </button>
               </div>
             {/each}
@@ -413,50 +390,32 @@
 
       <!-- Card 2: Leftover Files from Uninstalled Apps -->
       <section class="card maint-card">
-        <div class="row" style="justify-content: space-between; align-items: flex-start;">
-          <div>
-            <h3>Leftovers from Uninstalled Apps</h3>
-            <p class="muted small">
-              Old folders, dead shortcuts, and leftover settings left behind by removed programs.
-            </p>
-          </div>
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <h3>App Leftovers</h3>
           <button class="ghost small-btn" disabled={orphansLoading} onclick={scanAllOrphans}>
-            {orphansLoading ? "Checking…" : "Scan Again"}
+            {orphansLoading ? "…" : "Scan"}
           </button>
         </div>
 
         {#if orphansLoading}
           <div class="center-mini">
             <div class="spinner"></div>
-            <span class="muted small">Looking for leftover files from old apps…</span>
           </div>
         {:else if totalOrphanCount === 0}
           <div class="clean-state-box">
-            <div class="status-icon-bubble green">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div>
-              <strong>No Leftover Clutter Found</strong>
-              <div class="muted small">Old uninstalled apps haven't left any junk behind.</div>
-            </div>
+            <strong>No leftovers found</strong>
           </div>
         {:else}
           <div class="leftover-summary-box">
-            <div>
-              <strong style="font-size: 16px;">
-                {totalOrphanCount} leftover item(s) found
-                {totalRemnantBytes > 0 ? ` (${formatBytes(totalRemnantBytes)})` : ""}
-              </strong>
-              <div class="muted small" style="margin-top: 2px;">
-                Includes {remnants.length} old app folder(s), {brokenItems.length} broken shortcut(s), and {regIssues.length} old setting(s).
-              </div>
-            </div>
+            <strong style="font-size: 15px;">
+              {totalOrphanCount} leftover(s) {totalRemnantBytes > 0 ? `(${formatBytes(totalRemnantBytes)})` : ""}
+            </strong>
             <div class="row" style="gap: 8px; margin-top: 10px;">
               <button class="primary small-btn" disabled={cleaningOrphans} onclick={cleanAllOrphans}>
-                {cleaningOrphans ? "Cleaning Up…" : `Clean Up All Leftovers (${totalOrphanCount})`}
+                {cleaningOrphans ? "Cleaning…" : "Clean Leftovers"}
               </button>
               <button class="ghost small-btn" onclick={() => (showLeftoverDetails = !showLeftoverDetails)}>
-                {showLeftoverDetails ? "Hide items" : "Show items"}
+                {showLeftoverDetails ? "Hide" : "Details"}
               </button>
             </div>
           </div>
@@ -467,7 +426,7 @@
                 <div class="row maint-row">
                   <div class="app-main">
                     <strong class="app-name">{rem.name}</strong>
-                    <span class="muted small">{shortenPath(rem.path, 55)} ({formatCount(rem.files)} files)</span>
+                    <span class="muted small">{shortenPath(rem.path, 55)}</span>
                   </div>
                   <div class="spacer"></div>
                   <strong class="small" style="color: var(--accent);">{formatBytes(rem.bytes)}</strong>
@@ -478,16 +437,6 @@
                   <div class="app-main">
                     <strong class="app-name">{item.name}</strong>
                     <span class="muted small">{shortenPath(item.path, 55)}</span>
-                  </div>
-                  <div class="spacer"></div>
-                  <span class="badge">Broken Shortcut</span>
-                </div>
-              {/each}
-              {#each regIssues as issue (issue.key)}
-                <div class="row maint-row">
-                  <div class="app-main">
-                    <strong class="app-name">{issue.name}</strong>
-                    <span class="muted small">Old app setting</span>
                   </div>
                 </div>
               {/each}

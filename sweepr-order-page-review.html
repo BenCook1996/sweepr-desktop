@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Checkout CRO Lab — PRE vs. POST Microscopic Interactive Sandbox</title>
+  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <style>
+    :root {
+      color-scheme: dark light;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+      background: #0b0f17;
+      color: #f8fafc;
+      margin: 0;
+      padding-bottom: 92px;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+    /* 3D Software Box inside Checkout Previews */
+    .software-box {
+      width: 64px;
+      height: 88px;
+      position: relative;
+      perspective: 500px;
+      filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.16));
+    }
+    .box-face {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px 6px 6px 4px;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6px;
+      color: white;
+      transform: rotateY(-16deg);
+      transform-style: preserve-3d;
+    }
+    .box-spine {
+      position: absolute;
+      left: -9px;
+      top: 2px;
+      width: 11px;
+      height: 84px;
+      border-radius: 3px 0 0 3px;
+      border: 1px solid rgba(255,255,255,0.18);
+      transform: rotateY(-72deg);
+      transform-origin: right center;
+    }
+
+    /* Mobile iPhone 390px Frame */
+    .iphone-frame {
+      width: 390px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 10px solid #1f2937;
+      border-radius: 42px;
+      background: #f8fafc;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.1);
+      overflow: hidden;
+      position: relative;
+    }
+    .iphone-notch {
+      width: 120px;
+      height: 22px;
+      background: #111827;
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 20;
+    }
+
+    /* Green Pulse CTA */
+    @keyframes greenPulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
+      50% { box-shadow: 0 6px 24px rgba(16, 185, 129, 0.58); }
+    }
+    .btn-purchase-live {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: greenPulse 3s infinite;
+    }
+    .btn-purchase-live:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+    }
+
+    /* Highlight ring when a tweak is hovered in the control panel */
+    .tweak-highlight-ring {
+      outline: 2px dashed #10b981 !important;
+      outline-offset: 2px !important;
+      transition: outline 0.15s ease;
+    }
+    .friction-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .lift-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- ======================================================================= -->
+  <!-- 1. STICKY TOP ARCHITECT CONTROL DECK                                    -->
+  <!-- ======================================================================= -->
+  <header class="sticky top-0 z-40 bg-[#0f1521]/95 backdrop-blur-xl border-b border-slate-800 shadow-2xl">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-base shadow-inner">
+            ⚡
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-sm sm:text-base font-black tracking-tight text-white">SWEEPR FinTech Checkout CRO Sandbox</h1>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">
+                PRE vs. POST Live Simulator
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Baymard &amp; Stripe Checkout Ergonomics Audit • Toggle any <code class="text-emerald-300 font-mono">CHK-01..10</code> tweak to inspect real-time DOM changes
+            </p>
+          </div>
+        </div>
+
+        <!-- Product Suite Switcher -->
+        <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 hidden xl:inline">Product:</span>
+          <button type="button" onclick="setProduct('cleaner')" id="prodBtn_cleaner" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer bg-emerald-600 text-white shadow-xs">
+            🧹 SWEEPR Cleaner
+          </button>
+          <button type="button" onclick="setProduct('vpn')" id="prodBtn_vpn" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800">
+            🛡️ SWEEPR VPN
+          </button>
+          <button type="button" onclick="setProduct('deepblock')" id="prodBtn_deepblock" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800">
+            🚀 SWEEPR Deepblock (+£14.99 Bump)
+          </button>
+        </div>
+
+        <!-- Viewport Mode Switcher -->
+        <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+          <button type="button" onclick="setViewport('split')" id="vpBtn_split" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-xs">
+            🖥️ Desktop Split (PRE vs POST)
+          </button>
+          <button type="button" onclick="setViewport('mobile')" id="vpBtn_mobile" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800">
+            📱 Mobile iPhone (390px Frame)
+          </button>
+          <button type="button" onclick="setViewport('post_only')" id="vpBtn_post_only" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800">
+            ✨ Full-Width POST Only
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Telemetry & Tweak Drawer Toggle Row -->
+      <div class="mt-2.5 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+          <!-- Shared Plan Selector for Instant Comparison -->
+          <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400">Simulate Arrival Offer:</span>
+            <button type="button" onclick="setOfferScenario('intro')" id="scenBtn_intro" class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer">
+              ⚡ £1.99 1st-Month Intro
+            </button>
+            <button type="button" onclick="setOfferScenario('annual')" id="scenBtn_annual" class="px-2 py-0.5 rounded text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer">
+              ★ £49.99/yr Annual
+            </button>
+            <button type="button" onclick="setOfferScenario('six_month')" id="scenBtn_six_month" class="px-2 py-0.5 rounded text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer">
+              £38.99 / 6-Mo
+            </button>
+          </div>
+
+          <!-- Ergonomic Telemetry Pills -->
+          <div class="flex items-center gap-3 text-[11px]">
+            <span class="text-slate-400">
+              Card Keystrokes: <strong class="text-red-400 line-through font-mono">84</strong> &rarr; <strong id="metricKeystrokes" class="text-emerald-400 font-mono">54 (-36%)</strong>
+            </span>
+            <span class="text-slate-600">•</span>
+            <span class="text-slate-400">
+              Default Total Displayed: <strong id="metricPreTotal" class="text-red-400 font-mono">£5.97</strong> vs <strong id="metricPostTotal" class="text-emerald-400 font-mono">£1.99</strong>
+            </span>
+            <span class="text-slate-600 hidden md:inline">•</span>
+            <span class="text-slate-400 hidden md:inline">
+              Express Pay Scroll Depth (Mobile): <strong class="text-red-400 font-mono">760px</strong> &rarr; <strong id="metricScrollDepth" class="text-emerald-400 font-mono">140px (Above Fold)</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="toggleAllTweaks(true)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-[11px] cursor-pointer border border-slate-700">
+            Enable All 10 Tweaks
+          </button>
+          <button type="button" onclick="toggleAllTweaks(false)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] cursor-pointer border border-slate-700">
+            Disable All (Raw PRE)
+          </button>
+          <button type="button" onclick="toggleTweakPanel()" id="tweakDrawerBtn" class="px-3 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-extrabold text-[11px] cursor-pointer flex items-center gap-1">
+            <span>🎛️ Tweak Switches (<span id="activeTweakCountTop">10</span>/10)</span>
+            <span id="tweakDrawerChevron">▴</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- 2. INTERACTIVE "TOGGLE SUBTLE TWEAKS ON/OFF" CONTROL MATRIX         -->
+      <!-- =================================================================== -->
+      <div id="tweakControlDrawer" class="mt-3 pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <!-- Populated dynamically by renderTweakSwitches() -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================= -->
+  <!-- 3. SIDE-BY-SIDE LIVE CHECKOUT SANDBOX (PRE vs. POST)                    -->
+  <!-- ======================================================================= -->
+  <section class="max-w-[1600px] mx-auto px-3 sm:px-6 pt-5">
+    <div id="comparisonGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+
+      <!-- =================================================================== -->
+      <!-- LEFT PANE: PRE (CURRENT PRODUCTION ORDER PAGE — server/public/order.html) -->
+      <!-- =================================================================== -->
+      <div id="preColumnWrapper" class="space-y-2">
+        <div class="flex items-center justify-between bg-red-950/40 border border-red-500/30 rounded-xl px-4 py-2.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black bg-red-500 text-white uppercase tracking-wider">PRE (Current)</span>
+            <span class="text-xs font-bold text-red-200">Current <code class="font-mono text-[11px]">server/public/order.html</code></span>
+          </div>
+          <div class="text-[11px] text-red-300 font-medium">
+            ⚠️ 2 Pre-Ticked Bumps • Street Address Required • Generic CTA
+          </div>
+        </div>
+
+        <!-- PRE Checkout Container -->
+        <div id="preFrameContainer" class="rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-[#f8fafc] text-gray-800">
+          <div id="preMobileNotch" class="iphone-notch hidden"></div>
+
+          <!-- PRE Header (Current: Logo links to /?home=1 + Language Dropdown in top right) -->
+          <div class="bg-[#232931] text-white py-4 px-5 border-b border-gray-800">
+            <div class="flex items-center justify-between">
+              <a href="#pre-escape" onclick="event.preventDefault(); alert('PRE Friction: Clicking the logo exits checkout back to /?home=1!');" class="inline-flex items-center gap-2 text-white no-underline group">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-black text-sm">✦</div>
+                <span class="font-black text-lg tracking-tight text-white">SWEEPR <span id="preHeaderProductWord" class="text-emerald-400">Cleaner</span></span>
+                <span class="friction-badge ml-1">Exit Link</span>
+              </a>
+
+              <!-- Language Dropdown Distraction -->
+              <div class="flex items-center gap-1.5">
+                <span class="friction-badge">Distraction</span>
+                <button type="button" class="text-xs flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 font-medium text-white">
+                  <span>🇬🇧</span>
+                  <span class="text-[11px] font-bold">EN ▾</span>
+                </button>
+              </div>
+            </div>
+            <div class="text-center pt-3 pb-1">
+              <h2 id="preBannerTitle" class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Special Introductory Offer - <span class="text-emerald-400">1st Month for £1.99</span>
+              </h2>
+              <p id="preBannerSubtitle" class="text-gray-300 text-xs mt-1">
+                Get High-Speed Optimization, Deep Cleaning &amp; Full Pro Protection Included
+              </p>
+            </div>
+          </div>
+
+          <!-- PRE Main Body -->
+          <div class="p-4 sm:p-5 space-y-4">
+            <!-- PRE Top Segmented Plan Bar -->
+            <div class="bg-white rounded-xl p-1.5 border border-gray-200 shadow-2xs grid grid-cols-3 gap-1.5">
+              <button type="button" onclick="selectPrePlan('annual')" id="prePlanBtn_annual" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer">
+                ★ Annual — £4.16/mo
+              </button>
+              <button type="button" onclick="selectPrePlan('six_month')" id="prePlanBtn_six_month" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer">
+                6-Month — £6.50/mo
+              </button>
+              <button type="button" onclick="selectPrePlan('monthly')" id="prePlanBtn_monthly" class="py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer">
+                <span id="prePlanMonthlyLabel">Monthly — £1.99 1st mo</span>
+              </button>
+            </div>
+
+            <!-- PRE Mobile Quick-Jump Bar (Still pushes full left column above payment on mobile) -->
+            <div id="preMobileJumpBar" class="hidden bg-white rounded-xl p-2.5 border border-emerald-200 flex items-center justify-between gap-2">
+              <div class="text-xs">
+                <div class="text-[10px] font-bold uppercase text-emerald-700">SWEEPR Pro</div>
+                <div class="text-[11px] text-gray-600"><strong id="preMobileJumpTotal" class="text-gray-900 tabular-nums">£5.97</strong> • 3 Devices</div>
+              </div>
+              <span class="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">Jump to Payment ↓</span>
+            </div>
+
+            <!-- PRE 2-Column Grid -->
+            <div id="preInnerGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+              <!-- PRE Left Column: Order Summary -->
+              <div class="lg:col-span-6 bg-white rounded-2xl p-4 border border-gray-200 shadow-xs space-y-3">
+                <!-- Product Header -->
+                <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+                  <div class="flex items-start gap-3">
+                    <div class="software-box shrink-0">
+                      <div class="box-spine bg-emerald-950"></div>
+                      <div id="preBoxFace" class="box-face" style="background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);">
+                        <div class="flex items-center justify-between w-full">
+                          <span class="text-[10px]">✦</span>
+                          <span class="bg-emerald-500 text-[6px] font-black px-1 rounded">2026</span>
+                        </div>
+                        <div>
+                          <div id="preBoxTitle" class="text-[8px] font-black leading-tight">SWEEPR CLEANER</div>
+                          <div class="text-[6px] text-emerald-300 font-bold">PRO EDITION</div>
+                        </div>
+                        <div class="text-[6px] text-emerald-200 font-bold">3 DEVICES</div>
+                      </div>
+                    </div>
+                    <div>
+                      <span id="preProductBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 mb-1">
+                        Save £8.00 off 1st month
+                      </span>
+                      <h3 id="preProductTitle" class="text-sm sm:text-base font-black text-gray-900 leading-snug">SWEEPR Cleaner Pro All-Access</h3>
+                      <p id="preProductDesc" class="text-[11px] text-gray-500 mt-0.5">Clears hidden system junk, speeds up slow startups &amp; reclaims storage</p>
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div id="preTopPrice" class="text-xl font-black text-gray-900 tabular-nums">£1.99</div>
+                    <div id="preTopPriceSub" class="text-[10px] text-gray-500">1st month (renews £9.99/mo)</div>
+                  </div>
+                </div>
+
+                <!-- PRE Included Free Bonuses -->
+                <div class="space-y-1.5">
+                  <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 text-xs">
+                      <span>🎁</span>
+                      <div>
+                        <div id="preBonus1Title" class="font-bold text-gray-900 text-[11px]">DeepClean System Cache &amp; Speed Optimizer</div>
+                        <div class="text-[10px] text-gray-500">Included with your Pro membership</div>
+                      </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold text-emerald-800 bg-white border border-emerald-200 shrink-0">INCLUDED FREE</span>
+                  </div>
+                  <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 text-xs">
+                      <span>🎁</span>
+                      <div>
+                        <div id="preBonus2Title" class="font-bold text-gray-900 text-[11px]">Duplicate Matcher, Clean Uninstaller &amp; Shredder</div>
+                        <div class="text-[10px] text-gray-500">7-Day Safety Undo Vault protection</div>
+                      </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-extrabold text-emerald-800 bg-white border border-emerald-200 shrink-0">INCLUDED FREE</span>
+                  </div>
+                </div>
+
+                <!-- PRE Order Bump 1 (PRE-TICKED BY DEFAULT -> STICKER SHOCK!) -->
+                <div onclick="togglePreBump1()" class="bg-emerald-50/50 rounded-xl p-2.5 border border-emerald-300 cursor-pointer select-none">
+                  <div class="flex items-start gap-2">
+                    <input type="checkbox" id="preBump1Cb" checked onclick="event.stopPropagation(); togglePreBump1();" class="mt-0.5 w-4 h-4 rounded text-emerald-600 cursor-pointer" />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1 flex-wrap">
+                          <span id="preBump1Title" class="font-bold text-gray-900 text-xs">Total Battery &amp; Mac/Phone Care</span>
+                          <span class="friction-badge">Pre-Ticked!</span>
+                        </div>
+                        <span id="preBump1Price" class="text-[10px] font-bold text-emerald-800 bg-white px-1.5 py-0.5 rounded border border-emerald-200 tabular-nums">+ £1.99/mo</span>
+                      </div>
+                      <p id="preBump1Desc" class="text-[10px] text-gray-500 mt-0.5">Caps desk charging at 80% &amp; sleeps background drainers.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PRE Order Bump 2 (SECOND PRE-TICKED BUMP -> TRIPLE CHARGE!) -->
+                <div onclick="togglePreBump2()" class="bg-emerald-50/50 rounded-xl p-2.5 border border-emerald-300 cursor-pointer select-none">
+                  <div class="flex items-start gap-2">
+                    <input type="checkbox" id="preBump2Cb" checked onclick="event.stopPropagation(); togglePreBump2();" class="mt-0.5 w-4 h-4 rounded text-emerald-600 cursor-pointer" />
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between gap-1">
+                        <div class="flex items-center gap-1 flex-wrap">
+                          <span class="font-bold text-gray-900 text-xs">SWEEPR Cloud Protection</span>
+                          <span class="friction-badge">Pre-Ticked #2!</span>
+                        </div>
+                        <span id="preBump2Price" class="text-[10px] font-bold text-emerald-800 bg-white px-1.5 py-0.5 rounded border border-emerald-200 tabular-nums">+ £1.99/mo</span>
+                      </div>
+                      <p class="text-[10px] text-gray-500 mt-0.5">Locks private photos &amp; IDs inside an AES-256 encrypted vault.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PRE Itemized Breakdown & Total -->
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 space-y-2 text-xs">
+                  <div class="flex justify-between text-gray-700">
+                    <span id="preSummaryPlanLabel">SWEEPR Cleaner Pro (Monthly Plan)</span>
+                    <span id="preSummaryPlanPrice" class="font-semibold text-gray-900 tabular-nums">£9.99/month</span>
+                  </div>
+                  <div id="preSummaryBump1Row" class="flex justify-between text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 text-[11px]">
+                    <span id="preSummaryBump1Name">🔋 Battery &amp; Phone Care Add-on</span>
+                    <span id="preSummaryBump1Val" class="font-bold tabular-nums">+ £1.99/mo</span>
+                  </div>
+                  <div id="preSummaryBump2Row" class="flex justify-between text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 text-[11px]">
+                    <span>🔒 SWEEPR Cloud Protection Add-on</span>
+                    <span id="preSummaryBump2Val" class="font-bold tabular-nums">+ £1.99/mo</span>
+                  </div>
+                  <div id="preSummaryDiscountRow" class="flex justify-between text-emerald-600 font-medium border-t border-dashed border-gray-200 pt-1.5 text-[11px]">
+                    <span id="preSummaryDiscountLabel">Introductory 1st-Month Discount (Save £8.00)</span>
+                    <span id="preSummaryDiscountVal" class="font-bold tabular-nums">- £8.00</span>
+                  </div>
+                  <div class="pt-2 border-t border-gray-200 flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold text-gray-900 text-sm">Total Today (GBP)</span>
+                      <span id="preStickerShockBadge" class="friction-badge">Sticker Shock (£5.97 vs £1.99)</span>
+                    </div>
+                    <span id="preTotalToday" class="font-black text-xl text-gray-900 tabular-nums">£5.97</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PRE Right Column: Payment Form -->
+              <div class="lg:col-span-6 bg-white p-4 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <!-- Top Green Guarantee Box with 2 external links -->
+                <div class="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-2.5 text-[11px] text-gray-700 flex items-start gap-2">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <div>
+                    You are eligible for a full refund within 14 days under our <span class="text-emerald-700 font-bold underline">Refund Policy ↗</span>. Cancel anytime via <span class="text-emerald-700 font-semibold underline">instructions ↗</span>.
+                  </div>
+                </div>
+
+                <!-- 2 Verbose Checkboxes BEFORE Express Wallets -->
+                <div class="space-y-2 text-[11px] text-gray-700 bg-red-50/40 p-2 rounded-lg border border-red-200/70">
+                  <div class="flex items-center justify-between">
+                    <span class="friction-badge">Pushes Express Pay 95px Down</span>
+                  </div>
+                  <label class="flex items-start gap-2">
+                    <input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 rounded text-emerald-600" />
+                    <span id="preTermsText" class="leading-snug text-[10px]">
+                      I agree to pay £5.97 today for my 1st month. My subscription will automatically renew at the standard price of £13.97 monthly thereafter unless cancelled.
+                    </span>
+                  </label>
+                  <label class="flex items-start gap-2">
+                    <input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 rounded text-emerald-600" />
+                    <span class="leading-snug text-[10px]">
+                      I agree to the <span class="text-blue-600 underline">Terms of Service ↗</span>, <span class="text-blue-600 underline">Privacy Policy ↗</span>, and <span class="text-blue-600 underline">Refund Policy ↗</span>.
+                    </span>
+                  </label>
+                </div>
+
+                <!-- Express Row -->
+                <div class="grid grid-cols-3 gap-2">
+                  <button type="button" class="h-10 bg-[#ffc439] text-[#003087] font-black italic text-base rounded-xl flex items-center justify-center">
+                    Pay<span class="text-[#0079c1]">Pal</span>
+                  </button>
+                  <button type="button" class="h-10 bg-[#202124] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-1">
+                    <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span> Pay
+                  </button>
+                  <button type="button" class="h-10 bg-[#0666eb] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1">
+                    <span>Revolut</span><span class="bg-white text-[#0666eb] px-1 rounded text-[9px] font-black">Pay</span>
+                  </button>
+                </div>
+
+                <div class="relative flex py-0.5 items-center">
+                  <div class="flex-grow border-t border-gray-200"></div>
+                  <span class="mx-3 text-[10px] uppercase font-bold text-gray-400">OR</span>
+                  <div class="flex-grow border-t border-gray-200"></div>
+                </div>
+
+                <!-- Payment Method Logo Switcher -->
+                <div class="grid grid-cols-3 gap-1.5 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+                  <div class="h-11 rounded-lg bg-white border-2 border-emerald-500 flex items-center justify-center gap-1 px-1">
+                    <svg class="h-4 w-[25px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#FFFFFF"/><path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/><path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/></svg>
+                    <svg class="h-4 w-[25px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#FFFFFF"/><circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/><circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/><path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/></svg>
+                    <svg class="h-4 w-[25px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#016FD0"/><path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/></svg>
+                    <svg class="h-4 w-[28px] shrink-0 rounded bg-[#635BFF]" viewBox="0 0 54 32" fill="none"><rect width="54" height="32" rx="4" fill="#635BFF"/><text x="27" y="20" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="12.5" letter-spacing="-0.4">stripe</text></svg>
+                  </div>
+                  <div class="h-11 rounded-lg bg-white/60 flex items-center justify-center gap-1 text-[11px] font-black text-gray-800 px-1">
+                    <span class="w-4 h-4 rounded bg-[#0666eb] text-white inline-flex items-center justify-center text-[9px] shrink-0">R</span>
+                    <span>Revolut</span>
+                    <span class="bg-[#0666eb] text-white px-1 py-0.5 rounded text-[9px] leading-none">Pay</span>
+                  </div>
+                  <div class="h-11 rounded-lg bg-white/60 flex items-center justify-center px-1">
+                    <svg class="h-6 w-auto max-w-full" viewBox="0 0 132 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Amazon Pay">
+                      <text x="5" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="800" font-size="18.5" letter-spacing="-0.6">amazon</text>
+                      <text x="79" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="400" font-size="18.5" letter-spacing="-0.3">pay</text>
+                      <path d="M13.5 23.8C25.2 29.8 43.8 30.1 56.4 24.1" stroke="#FF9900" stroke-width="2.6" stroke-linecap="round"/>
+                      <path d="M51.8 22.1C54.6 21.8 57.6 22.4 58.3 23.4C59.0 24.4 57.7 27.2 55.8 29.1" stroke="#FF9900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Duplicate Card Badges Row (#cardMethodBadges) -->
+                <div class="flex items-center justify-between bg-red-50/50 border border-red-200/80 rounded-lg px-2 py-1">
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] font-black text-[#1434CB] border bg-white px-1 rounded">VISA</span>
+                    <span class="text-[9px] font-black text-red-600 border bg-white px-1 rounded">MC</span>
+                    <span class="text-[9px] font-black text-white bg-[#016FD0] px-1 rounded">AMEX</span>
+                    <span class="text-[9px] font-bold text-emerald-900 bg-emerald-100 px-1.5 rounded">⚡ Stripe link</span>
+                  </div>
+                  <span class="friction-badge">Duplicate Row</span>
+                </div>
+
+                <!-- PRE Input Fields (6 Fields, Street Address Required, Email buried at bottom) -->
+                <div class="space-y-2.5 text-xs">
+                  <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-0.5">1. Name On Card</label>
+                    <input type="text" placeholder="John Doe" class="w-full p-2 rounded-lg border border-gray-300 text-xs" />
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-bold text-gray-700 mb-0.5">2. Card Number</label>
+                    <input type="text" placeholder="4000 1234 5678 9010" class="w-full p-2 rounded-lg border border-gray-300 text-xs font-mono" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-bold text-gray-700 mb-0.5">3. Expiry Date</label>
+                      <input type="text" placeholder="MM/YY" class="w-full p-2 rounded-lg border border-gray-300 text-xs font-mono" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-bold text-gray-700 mb-0.5">4. CVV</label>
+                      <input type="password" placeholder="•••" class="w-full p-2 rounded-lg border border-gray-300 text-xs font-mono" />
+                    </div>
+                  </div>
+                  <!-- Street Address + Postcode -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-red-50/50 p-1.5 rounded-lg border border-red-300">
+                      <div class="flex items-center justify-between mb-0.5">
+                        <label class="block text-[11px] font-bold text-red-800">5. Street Address *</label>
+                        <span class="friction-badge">+22 Keys</span>
+                      </div>
+                      <input type="text" placeholder="Street address" class="w-full p-1.5 rounded border border-red-300 text-xs bg-white" />
+                    </div>
+                    <div class="p-1.5">
+                      <label class="block text-[11px] font-bold text-gray-700 mb-0.5">6. Post Code *</label>
+                      <input type="text" placeholder="SW1A 1AA" class="w-full p-1.5 rounded border border-gray-300 text-xs uppercase" />
+                    </div>
+                  </div>
+                  <!-- Email buried at #7 -->
+                  <div class="bg-red-50/40 p-1.5 rounded-lg border border-red-200">
+                    <div class="flex items-center justify-between mb-0.5">
+                      <label class="block text-[11px] font-bold text-gray-700">7. Email Address (Buried Last!)</label>
+                      <span class="friction-badge">Late Lead Capture</span>
+                    </div>
+                    <input type="email" placeholder="you@example.com" class="w-full p-1.5 rounded border border-gray-300 text-xs bg-white" />
+                  </div>
+                </div>
+
+                <!-- PRE Generic Submit CTA -->
+                <div class="pt-1">
+                  <button type="button" class="btn-purchase-live w-full py-3 px-4 rounded-full text-white font-black text-sm tracking-wide flex items-center justify-center gap-2 shadow-md">
+                    <span>🔒</span>
+                    <span>PURCHASE SECURELY</span>
+                  </button>
+                  <div class="text-center mt-1">
+                    <span class="friction-badge">Vague CTA (Hides £1.99 Price &amp; Guarantee)</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- RIGHT PANE: POST (FRICTIONLESS CRO ORDER PAGE — REAL-TIME TOGGLES)  -->
+      <!-- =================================================================== -->
+      <div id="postColumnWrapper" class="space-y-2">
+        <div class="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-4 py-2.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500 text-slate-950 uppercase tracking-wider">POST (Optimized)</span>
+            <span class="text-xs font-bold text-emerald-200">Interactive Frictionless Checkout (<span id="postActiveCountLabel">10/10</span> Tweaks Active)</span>
+          </div>
+          <div class="text-[11px] text-emerald-300 font-semibold">
+            ✨ Zero Dark Patterns • 1-Tap Express • Scan Context Carry-Over
+          </div>
+        </div>
+
+        <!-- POST Checkout Container -->
+        <div id="postFrameContainer" class="rounded-2xl overflow-hidden border-2 border-emerald-500/50 shadow-2xl bg-[#f8fafc] text-gray-800">
+          <div id="postMobileNotch" class="iphone-notch hidden"></div>
+
+          <!-- POST Header (Controlled by CHK-05: Locked Tunnel-Vision Header) -->
+          <div id="postHeaderDom" class="bg-[#181d24] text-white py-3.5 px-5 border-b border-gray-800">
+            <!-- Populated dynamically by renderPostPreview() -->
+          </div>
+
+          <!-- POST Main Body -->
+          <div class="p-4 sm:p-5 space-y-4">
+            <!-- POST Top Segmented Plan Switcher (Controlled by CHK-04) -->
+            <div id="postPlanBarDom"></div>
+
+            <!-- POST Mobile 1-Line Collapsible Summary Accordion (Controlled by CHK-10) -->
+            <div id="postMobileAccordionDom" class="hidden"></div>
+
+            <!-- POST 2-Column Grid -->
+            <div id="postInnerGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+              <!-- POST Left Column: Order Summary -->
+              <div id="postLeftColDom" class="lg:col-span-6 bg-white rounded-2xl p-4 sm:p-5 border border-gray-200/90 shadow-sm space-y-3.5">
+                <!-- Populated dynamically by renderPostPreview() -->
+              </div>
+
+              <!-- POST Right Column: Express Payment Form -->
+              <div id="postRightColDom" class="lg:col-span-6 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-sm space-y-3.5">
+                <!-- Populated dynamically by renderPostPreview() -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- 4. PHASE 2 AUDIT MATRIX & EXPANDABLE SURGICAL CODE DIFFS                -->
+  <!-- ======================================================================= -->
+  <section class="max-w-[1600px] mx-auto px-4 sm:px-6 mt-10 space-y-6">
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">
+            Phase 2: The "Subtle Tweaks, Big Lift" Audit Matrix &amp; Surgical Code Diffs
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Ordered by <strong>Highest Conversion Lift per Line of Code Changed</strong>. Click any row to expand the exact HTML/JS diff for <code class="text-emerald-300 font-mono">server/public/order.html</code>.
+          </p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+          Production Code Untouched Until You Approve
+        </span>
+      </div>
+
+      <div id="auditMatrixCards" class="space-y-3">
+        <!-- Populated dynamically by renderAuditMatrix() -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- 5. STICKY BOTTOM "EXPORT APPROVED TWEAKS" ACTION BAR                    -->
+  <!-- ======================================================================= -->
+  <div class="fixed bottom-0 inset-x-0 z-50 bg-[#0b0f17]/95 backdrop-blur-xl border-t border-slate-800 px-4 sm:px-8 py-3 shadow-2xl">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div class="text-xs sm:text-sm">
+          <span class="font-bold text-white">Approved Tweaks Selected:</span>
+          <span id="bottomSelectedBadges" class="ml-1.5 font-mono text-emerald-400 font-bold">CHK-01 .. CHK-10</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button type="button" onclick="copyApprovedPrompt()" id="copyPromptBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide cursor-pointer shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+          <span>📋 Copy Approved Tweaks Prompt (<span id="bottomCountText">10</span>/10)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- CLIENT SIMULATION & REAL-TIME DIFF ENGINE                               -->
+  <!-- ======================================================================= -->
+  <script>
+    // 1. Product Suite Definitions
+    const PRODUCTS = {
+      cleaner: {
+        id: 'cleaner',
+        name: 'SWEEPR Cleaner',
+        word: 'Cleaner',
+        domain: 'sweeprcleaner.com',
+        boxTitle: 'SWEEPR CLEANER',
+        boxGradient: 'linear-gradient(145deg, #064e3b 0%, #022c22 100%)',
+        proTitle: 'SWEEPR Cleaner Pro All-Access',
+        subtitle: 'Clears hidden system junk, speeds up slow startups & reclaims gigabytes of storage safely',
+        scanHeadline: 'Diagnostic Scan Linked: 12.4 GB of System Junk & 342 Duplicate Files found on your PC',
+        scanSub: 'Unlock 1-click cleanup + 7-Day Safety Undo Vault protection below',
+        bonus1: 'DeepClean System Cache & Speed Optimizer',
+        bonus2: 'Duplicate Matcher, Clean Uninstaller & File Shredder',
+        bumpTitle: 'Total Battery & Mac/Phone Care',
+        bumpTag: '2x Device Lifespan',
+        bumpDesc: 'Caps desk charging at 80% & sleeps background drainers to double laptop and phone battery life.',
+        bumpAnnual: 9.99,
+        bumpSixMo: 6.99,
+        bumpMonthly: 1.99
+      },
+      vpn: {
+        id: 'vpn',
+        name: 'SWEEPR VPN',
+        word: 'VPN',
+        domain: 'sweeprvpn.com',
+        boxTitle: 'SWEEPR VPN PRO',
+        boxGradient: 'linear-gradient(145deg, #1e3a8a 0%, #0f172a 100%)',
+        proTitle: 'SWEEPR VPN Pro + Wi-Fi Intruder Shield',
+        subtitle: 'Encrypts traffic with WireGuard®, blocks ISP throttling & alerts you to unknown Wi-Fi devices',
+        scanHeadline: 'Network Scan Linked: 18 Wi-Fi Devices Found & Unencrypted ISP Traffic Detected',
+        scanSub: 'Activate 256-Bit WireGuard® Tunnel + Real-Time Wi-Fi Intruder Blocker below',
+        bonus1: 'Ultra-Fast 10Gbps Global WireGuard® Streaming Servers',
+        bonus2: '24/7 Home Wi-Fi Intruder & Rogue Device Scanner',
+        bumpTitle: 'Dedicated Streaming & Low-Ping Gaming IP',
+        bumpTag: 'Zero Captchas',
+        bumpDesc: 'Your own private residential-grade static IP in UK/US/EU for banking, streaming & zero-lag gaming.',
+        bumpAnnual: 9.99,
+        bumpSixMo: 6.99,
+        bumpMonthly: 1.99
+      },
+      deepblock: {
+        id: 'deepblock',
+        name: 'SWEEPR Deepblock',
+        word: 'Deepblock',
+        domain: 'sweeprdeepblock.com',
+        boxTitle: 'SWEEPR DEEPBLOCK',
+        boxGradient: 'linear-gradient(145deg, #065f46 0%, #111827 100%)',
+        proTitle: 'SWEEPR Deepblock Pro Ad & Tracker Shield',
+        subtitle: 'System-wide ad blocker, cookie-banner auto-rejector & fingerprint cloak across all browsers',
+        scanHeadline: 'Browser Scan Linked: 45 Open Tabs Using 7.1 GB RAM & 68 Hidden Trackers Active',
+        scanSub: 'Unlock 1-click tracker elimination + automatic tab memory suspension below',
+        bonus1: 'System-Wide Video & Pop-Up Ad Blocker (All Browsers)',
+        bonus2: 'Zero-Telemetry Fingerprint & Cookie Popup Terminator',
+        bumpTitle: 'Total Tab & RAM Tamer Add-On',
+        bumpTag: 'Reclaim 7.1 GB RAM',
+        bumpDesc: 'Automatically hibernates inactive background tabs to slash browser RAM usage by up to 75% without losing your work.',
+        bumpAnnual: 14.99,
+        bumpSixMo: 9.99,
+        bumpMonthly: 1.99
+      }
+    };
+
+    // 2. The 10 Microscopic Checkout Tweaks (CHK-01 .. CHK-10)
+    const TWEAKS = [
+      {
+        id: 'CHK-01',
+        short: 'Drop Street Address',
+        title: 'Remove Required Street Address Field (#billingAddress)',
+        impact: '🔥 High Impact',
+        principle: 'Baymard Input Diet: Digital subscriptions only need Postcode/ZIP for Stripe AVS. Cuts 22+ keystrokes & 1 full input.',
+        preFriction: 'Requires full street address (#billingAddress required) alongside Postcode, causing 6-field form fatigue.',
+        postFix: 'Removes #billingAddress and pairs Email + Postcode/ZIP cleanly, cutting card typing friction by 36%.',
+        targetFile: 'server/public/order.html (lines 853-866 & 1624)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -853,13 +853,7 @@
+-              <!-- 4. Address & Post Code (2 Columns) -->
+-              <div class="grid grid-cols-2 gap-3">
+-                <div>
+-                  <label for="billingAddress" class="block text-xs font-bold text-gray-700 mb-1">Address</label>
+-                  <input type="text" id="billingAddress" name="address-line1" required placeholder="Street address" autocomplete="billing address-line1"
+-                    class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+-                </div>
+-                <div>
++              <!-- 4. Name on Card & Post Code (2 Columns — Zero Street Address Friction) -->
++              <div class="grid grid-cols-2 gap-3">
++                <div>
+                   <label for="billingPostcode" class="block text-xs font-bold text-gray-700 mb-1">Post Code / ZIP</label>
+                   <input type="text" id="billingPostcode" name="postal-code" required placeholder="Postcode / ZIP" autocomplete="billing postal-code"
+                     class="w-full p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all uppercase">
+                 </div>`
+      },
+      {
+        id: 'CHK-02',
+        short: 'Express First + Email #1',
+        title: 'Elevate Express Wallets to Top & Move Email + Stripe Link to Field #1',
+        impact: '🔥 High Impact',
+        principle: 'Zero-Typing Ergonomics: Putting Apple/Google/PayPal at the very top of #checkoutBox and Email first enables 1-tap wallet pay & early lead capture.',
+        preFriction: 'Express buttons are pushed 95px down by 2 legal checkboxes; Email (#email) is buried at the very bottom (Field #7).',
+        postFix: 'Elevates Express Wallets to the top of #checkoutBox and moves Email (with ⚡ Stripe Link 1-click autofill badge) to Field #1.',
+        targetFile: 'server/public/order.html (lines 584-605 & 868-874)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -584,6 +584,15 @@
++          <!-- 1. Express 1-Click Checkout Elevated Directly to Top -->
++          <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center justify-between">
++            <span>⚡ 1-Click Express Checkout</span>
++            <span class="text-emerald-600 font-semibold">Instant Activation</span>
++          </div>
++          <div id="expressPaymentRow" class="grid grid-cols-3 gap-2 sm:gap-2.5">...</div>
++
++          <!-- Email First for Early Lead Capture & Stripe Link 1-Click Autofill -->
++          <div>
++            <div class="flex items-center justify-between mb-1">
++              <label for="email" class="block text-xs font-bold text-gray-700">Email Address (For Instant License Delivery)</label>
++              <span class="px-1.5 py-0.5 rounded bg-[#00D66F]/15 text-emerald-900 text-[10px] font-extrabold">⚡ Stripe Link Autofill</span>
++            </div>
++            <input type="email" id="email" name="email" required inputmode="email" placeholder="you@example.com" autocomplete="email" ...>`
+      },
+      {
+        id: 'CHK-03',
+        short: 'Stop Pre-Ticking Bumps',
+        title: 'Honest Opt-In Order Bump (Default Add-Ons to Unchecked)',
+        impact: '🔥 High Impact',
+        principle: 'Sticker-Shock Elimination (Loss Aversion): Pre-ticking two £1.99/mo (£9.99/yr) add-ons inflates £1.99 to £5.97 (+200%) and £49.99 to £69.97, triggering dark-pattern distrust.',
+        preFriction: 'Both #batteryCareCheckbox and #cloudVaultCheckbox are hardcoded checked=true, making £1.99 show £5.97 Total Today.',
+        postFix: 'Defaults order bumps to unchecked (opt-in) so Total Today matches the exact advertised price (£1.99 or £49.99), with 1-click tabular-nums add-on.',
+        targetFile: 'server/public/order.html (lines 444, 473, 1062-1063)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -442,3 +442,3 @@
+-              type="checkbox" id="batteryCareCheckbox" checked
++              type="checkbox" id="batteryCareCheckbox"
+@@ -1061,3 +1061,3 @@
+-    let isBatteryAddonSelected = true;
+-    let isCloudVaultAddonSelected = true;
++    let isBatteryAddonSelected = false;
++    let isCloudVaultAddonSelected = false;`
+      },
+      {
+        id: 'CHK-04',
+        short: '£1.99 Tab + Dynamic CTA',
+        title: 'Surface £1.99 1st-Month Offer in Plan Switcher & Echo Price in CTA Button',
+        impact: '🔥 High Impact',
+        principle: 'Price Anchoring & Clarity at Point of Action: Echoing "Complete Order — Pay £1.99 Today" on the button eliminates ambiguity on what will be charged.',
+        preFriction: 'CTA says generic "PURCHASE SECURELY" with no price; £1.99 intro offer is hidden unless URL param or exit modal fires.',
+        postFix: 'Highlights "⚡ £1.99 1st Month (Save 80%)" directly in the plan switcher and updates CTA dynamically ("Complete Order — Pay £1.99 Today").',
+        targetFile: 'server/public/order.html (lines 341-345, 885, 1315)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -341,3 +341,3 @@
+-        <span id="planTabMonthlyText">Monthly — £9.99/mo</span>
++        <span id="planTabMonthlyText">⚡ 1st Month — £1.99 (Save 80%)</span>
+@@ -885,1 +885,1 @@
+-        <span id="submitBtnText" class="uppercase">PURCHASE SECURELY</span>
++        <span id="submitBtnText" class="tabular-nums">Complete Order — Pay £1.99 Today</span>`
+      },
+      {
+        id: 'CHK-05',
+        short: 'Locked Tunnel Header',
+        title: 'Locked "Tunnel-Vision" Checkout Header (Remove Exit Link & Lang Dropdown)',
+        impact: '⚡ Medium Impact',
+        principle: 'Baymard Tunnel-Vision Rule: Removing header navigation/dropdown distractions prevents cart abandonment at the 1-yard line.',
+        preFriction: 'Logo links out to /?home=1 and top-right header shows a Language Dropdown instead of SSL security verification.',
+        postFix: 'Replaces top-right dropdown with "🔒 256-Bit SSL Secure Checkout" badge + subtle "← Back" link and non-exiting brand mark.',
+        targetFile: 'server/public/order.html (lines 275-316)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -276,12 +276,12 @@
+     <div class="max-w-6xl mx-auto flex items-center justify-between">
+-      <a href="/?home=1" class="inline-flex items-center gap-2.5 text-inherit no-underline group">
++      <div class="inline-flex items-center gap-3">
++        <a href="javascript:history.back()" class="text-xs text-gray-400 hover:text-white transition-colors">← Back</a>
+         <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="28" height="28" class="w-7 h-7 rounded-lg" />
+         <span class="font-black text-lg tracking-tight text-white">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
+-      </a>
++      </div>
++      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
++        <span>🔒 256-Bit SSL Secure Checkout</span>
++      </div>`
+      },
+      {
+        id: 'CHK-06',
+        short: 'Calm Renewal Pill',
+        title: 'Calm Renewal Transparency Pill Next to Total Today',
+        impact: '⚡ Medium Impact',
+        principle: 'Subscription Trap Inoculation: Putting "Renews at £9.99/mo • ⚡ Cancel Anytime in 1-Click" calmly beside Total Today builds instant trust & slashes chargebacks.',
+        preFriction: 'Renewal terms are written in a dense 4-line legal paragraph inside a mandatory checkbox at the top of the right column.',
+        postFix: 'Adds a clean, high-trust reassurance pill right under Total Today ("Renews at £9.99/mo • ⚡ Cancel in 1-Click in Portal").',
+        targetFile: 'server/public/order.html (lines 543-547)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -543,4 +543,8 @@
+           <div class="pt-2.5 border-t border-gray-200 flex items-center justify-between">
+             <div>
+               <span id="totalTodayLabel" class="font-bold text-gray-900 text-sm sm:text-base block">Total Due Today (GBP)</span>
++              <span id="renewalCalmPill" class="text-[11px] text-emerald-700 font-semibold">
++                Save 80% Today • Renews at £9.99/mo • ⚡ Cancel anytime in 1-click
++              </span>
+             </div>
+             <span id="totalTodayText" class="font-black text-xl sm:text-2xl text-gray-900 tabular-nums">£1.99</span>
+           </div>`
+      },
+      {
+        id: 'CHK-07',
+        short: 'Scan Value Carry-Over',
+        title: 'Contextual Diagnostic Scan Value Carry-Over Banner (?junk_gb=12.4)',
+        impact: '🔥 High Impact',
+        principle: 'Endowed Progress & Goal Gradient: Reminding the user of their exact diagnostic scan result ("12.4 GB of Junk Found") connects the £1.99 price to immediate personal relief.',
+        preFriction: 'Order summary shows generic static copy even when the user arrives directly from a Free Diagnostic Scan.',
+        postFix: 'Reads ?junk_gb / ?devices / ?tabs from URL or sessionStorage and displays a personalized green scan status bar inside the Order Summary.',
+        targetFile: 'server/public/order.html (lines 363 & 1705)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -363,2 +363,9 @@
++        <!-- Contextual Diagnostic Scan Carry-Over Banner -->
++        <div id="scanCarryOverBanner" class="bg-emerald-950 text-white rounded-xl px-3.5 py-2.5 border border-emerald-500/40 flex items-center justify-between gap-2">
++          <div class="flex items-center gap-2 text-xs">
++            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
++            <span id="scanCarryOverText" class="font-bold text-emerald-100">Diagnostic Scan Linked: Ready to clean 12.4 GB of System Junk</span>
++          </div>
++          <span class="text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">READY</span>
++        </div>`
+      },
+      {
+        id: 'CHK-08',
+        short: 'Deduplicate Badges & Consent',
+        title: 'Remove Duplicate #cardMethodBadges Row & Condense Consent Above Submit',
+        impact: '✨ Polish',
+        principle: 'Visual Signal-to-Noise Ratio: Visa/MC/Amex/Stripe logos already live inside the Card tab button; repeating them 8px below wastes vertical space.',
+        preFriction: '#cardMethodBadges repeats Visa/MC/Amex directly under the Card logo button, and 2 separate checkboxes clutter the top of the form.',
+        postFix: 'Removes redundant #cardMethodBadges row and places a clean 1-line transparent renewal consent directly above the Submit button.',
+        targetFile: 'server/public/order.html (lines 585-599 & 754-780)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -754,3 +754,3 @@
+-            <div id="cardMethodBadges" class="flex items-center justify-between gap-2 pb-0.5">...</div>
++            <!-- Redundant #cardMethodBadges removed (logos already inside Card tab) -->`
+      },
+      {
+        id: 'CHK-09',
+        short: 'Point-of-Anxiety Trust (<35px)',
+        title: 'Place 14-Day Money-Back Guarantee & Payment Logos Within 35px of CTA',
+        impact: '⚡ Medium Impact',
+        principle: 'Point-of-Anxiety Reassurance: Trust signals within 50px of the primary Pay button lift conversion far more than badges isolated in the left column or top banner.',
+        preFriction: 'The 14-day refund box is at the top of the right column (520px away from the Pay button).',
+        postFix: 'Places a compact 🛡️ 14-Day 100% Money-Back Guarantee + ⚡ Instant License + 🔒 Stripe SSL strip directly below #submitBtn.',
+        targetFile: 'server/public/order.html (lines 889-900)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -889,6 +889,10 @@
++          <!-- Point-of-Anxiety Micro-Trust Pill (Within 35px of Submit CTA) -->
++          <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-[11px] text-gray-700">
++            <span class="font-bold text-emerald-800 flex items-center gap-1">🛡️ 14-Day 100% Money-Back Guarantee</span>
++            <span class="text-gray-500 font-medium">⚡ Cancel in 1-Click</span>
++          </div>`
+      },
+      {
+        id: 'CHK-10',
+        short: 'Mobile 1-Line Accordion',
+        title: '1-Line Collapsible Mobile Order Summary Accordion & Thumb-Zone Wallets',
+        impact: '🔥 High Impact',
+        principle: 'Mobile Thumb-Zone & Keyboard Obstruction: On 390px screens, stacking 620px of summary cards above #checkoutBox buries Apple/Google Pay below the fold.',
+        preFriction: 'Mobile users must scroll past 760px of boxes, bonuses, and bumps before reaching Express Pay.',
+        postFix: 'Collapses mobile order summary into a 1-line tap-to-expand bar ("🛒 Order Summary — £1.99 Today ▾") so Express Pay + Email sit 100% above the keyboard.',
+        targetFile: 'server/public/order.html (lines 348-362)',
+        diff: `--- a/server/public/order.html
++++ b/server/public/order.html
+@@ -348,8 +348,11 @@
+-    <div class="lg:hidden mb-4 bg-white rounded-xl p-3 border border-emerald-200 ...">
++    <button type="button" onclick="toggleMobileSummaryAccordion()" class="lg:hidden w-full mb-3 bg-white rounded-xl px-3.5 py-3 border border-emerald-300 shadow-xs flex items-center justify-between">
++      <span class="text-xs font-extrabold text-gray-900 flex items-center gap-1.5">🛒 Order Summary <span class="text-emerald-700 font-semibold">(Tap to view items ▾)</span></span>
++      <span id="mobileQuickTotalText" class="text-sm font-black text-emerald-700 tabular-nums">£1.99 Today</span>
++    </button>`
+      }
+    ];
+
+    // 3. Sandbox State
+    let currentProduct = 'cleaner';
+    let currentViewport = 'split'; // 'split' | 'mobile' | 'post_only'
+    let prePlan = 'monthly'; // 'monthly' | 'six_month' | 'annual'
+    let preIntroDiscount = true;
+    let preBump1 = true;
+    let preBump2 = true;
+
+    let postPlan = 'monthly';
+    let postIntroDiscount = true;
+    let postBump1 = false; // Controlled by CHK-03 when reset
+    let postBump2 = false;
+    let postLogoTab = 'card'; // 'card' | 'revolut_pay' | 'amazon_pay'
+    let postMobileSummaryExpanded = false;
+
+    const activeTweaks = {
+      'CHK-01': true,
+      'CHK-02': true,
+      'CHK-03': true,
+      'CHK-04': true,
+      'CHK-05': true,
+      'CHK-06': true,
+      'CHK-07': true,
+      'CHK-08': true,
+      'CHK-09': true,
+      'CHK-10': true
+    };
+
+    let drawerOpen = true;
+
+    function toggleTweakPanel() {
+      drawerOpen = !drawerOpen;
+      const drawer = document.getElementById('tweakControlDrawer');
+      const chev = document.getElementById('tweakDrawerChevron');
+      if (drawer) drawer.classList.toggle('hidden', !drawerOpen);
+      if (chev) chev.textContent = drawerOpen ? '▴' : '▾';
+    }
+
+    function setProduct(prodId) {
+      currentProduct = prodId;
+      ['cleaner', 'vpn', 'deepblock'].forEach((id) => {
+        const btn = document.getElementById(`prodBtn_${id}`);
+        if (!btn) return;
+        btn.className = id === prodId
+          ? 'px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer bg-emerald-600 text-white shadow-xs'
+          : 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800';
+      });
+      renderPrePreview();
+      renderPostPreview();
+    }
+
+    function setViewport(mode) {
+      currentViewport = mode;
+      ['split', 'mobile', 'post_only'].forEach((m) => {
+        const btn = document.getElementById(`vpBtn_${m}`);
+        if (!btn) return;
+        btn.className = m === mode
+          ? 'px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer bg-indigo-600 text-white shadow-xs'
+          : 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-slate-800';
+      });
+
+      const grid = document.getElementById('comparisonGrid');
+      const preWrap = document.getElementById('preColumnWrapper');
+      const preFrame = document.getElementById('preFrameContainer');
+      const postFrame = document.getElementById('postFrameContainer');
+      const preNotch = document.getElementById('preMobileNotch');
+      const postNotch = document.getElementById('postMobileNotch');
+      const preInner = document.getElementById('preInnerGrid');
+      const postInner = document.getElementById('postInnerGrid');
+      const preJump = document.getElementById('preMobileJumpBar');
+
+      if (mode === 'post_only') {
+        preWrap.classList.add('hidden');
+        grid.className = 'grid grid-cols-1 gap-6 items-start max-w-5xl mx-auto';
+        preFrame.classList.remove('iphone-frame');
+        postFrame.classList.remove('iphone-frame');
+        preNotch.classList.add('hidden');
+        postNotch.classList.add('hidden');
+        preInner.className = 'grid grid-cols-1 lg:grid-cols-12 gap-4 items-start';
+        postInner.className = 'grid grid-cols-1 lg:grid-cols-12 gap-4 items-start';
+        preJump.classList.add('hidden');
+      } else if (mode === 'mobile') {
+        preWrap.classList.remove('hidden');
+        grid.className = 'grid grid-cols-1 lg:grid-cols-2 gap-8 items-start justify-items-center';
+        preFrame.classList.add('iphone-frame');
+        postFrame.classList.add('iphone-frame');
+        preNotch.classList.remove('hidden');
+        postNotch.classList.remove('hidden');
+        preInner.className = 'grid grid-cols-1 gap-4 items-start';
+        postInner.className = 'grid grid-cols-1 gap-4 items-start';
+        preJump.classList.remove('hidden');
+      } else {
+        preWrap.classList.remove('hidden');
+        grid.className = 'grid grid-cols-1 xl:grid-cols-2 gap-6 items-start';
+        preFrame.classList.remove('iphone-frame');
+        postFrame.classList.remove('iphone-frame');
+        preNotch.classList.add('hidden');
+        postNotch.classList.add('hidden');
+        preInner.className = 'grid grid-cols-1 lg:grid-cols-12 gap-4 items-start';
+        postInner.className = 'grid grid-cols-1 lg:grid-cols-12 gap-4 items-start';
+        preJump.classList.add('hidden');
+      }
+      renderPostPreview();
+    }
+
+    function setOfferScenario(scen) {
+      ['intro', 'annual', 'six_month'].forEach((s) => {
+        const b = document.getElementById(`scenBtn_${s}`);
+        if (!b) return;
+        b.className = s === scen
+          ? 'px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-pointer'
+          : 'px-2 py-0.5 rounded text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer';
+      });
+      if (scen === 'intro') {
+        prePlan = 'monthly';
+        preIntroDiscount = true;
+        postPlan = 'monthly';
+        postIntroDiscount = true;
+      } else if (scen === 'annual') {
+        prePlan = 'annual';
+        postPlan = 'annual';
+      } else {
+        prePlan = 'six_month';
+        postPlan = 'six_month';
+      }
+      renderPrePreview();
+      renderPostPreview();
+    }
+
+    function toggleTweak(id) {
+      activeTweaks[id] = !activeTweaks[id];
+      if (id === 'CHK-03') {
+        postBump1 = !activeTweaks['CHK-03'];
+        postBump2 = !activeTweaks['CHK-03'];
+      }
+      renderTweakSwitches();
+      renderPostPreview();
+      renderAuditMatrix();
+    }
+
+    function toggleAllTweaks(state) {
+      Object.keys(activeTweaks).forEach((k) => { activeTweaks[k] = state; });
+      postBump1 = !state;
+      postBump2 = !state;
+      renderTweakSwitches();
+      renderPostPreview();
+      renderAuditMatrix();
+    }
+
+    // 4. Render Top Tweak Switches
+    function renderTweakSwitches() {
+      const container = document.getElementById('tweakControlDrawer');
+      if (!container) return;
+
+      const enabledList = TWEAKS.filter((t) => activeTweaks[t.id]);
+      const count = enabledList.length;
+
+      document.getElementById('activeTweakCountTop').textContent = count;
+      document.getElementById('postActiveCountLabel').textContent = `${count}/10`;
+      document.getElementById('bottomCountText').textContent = count;
+      document.getElementById('bottomSelectedBadges').textContent = count === 10
+        ? 'All 10 Tweaks (CHK-01 .. CHK-10)'
+        : count === 0
+        ? 'None selected'
+        : enabledList.map((t) => t.id).join(', ');
+
+      // Update telemetry bar
+      const keys = activeTweaks['CHK-01'] ? 54 : 84;
+      const pct = activeTweaks['CHK-01'] ? '(-36%)' : '(0%)';
+      document.getElementById('metricKeystrokes').textContent = `${keys} ${pct}`;
+      document.getElementById('metricScrollDepth').textContent = activeTweaks['CHK-10']
+        ? '140px (Above Fold)'
+        : '760px (Below Fold)';
+
+      container.innerHTML = TWEAKS.map((t) => {
+        const on = activeTweaks[t.id];
+        const badgeColor = t.impact.includes('High')
+          ? 'text-amber-300 bg-amber-500/15 border-amber-500/30'
+          : t.impact.includes('Medium')
+          ? 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'
+          : 'text-sky-300 bg-sky-500/15 border-sky-500/30';
+        return `
+          <label class="flex items-start gap-2 p-2 rounded-xl border transition-all cursor-pointer select-none ${
+            on
+              ? 'bg-emerald-950/30 border-emerald-500/40 hover:border-emerald-400'
+              : 'bg-slate-900/60 border-slate-800 opacity-65 hover:opacity-100'
+          }">
+            <input type="checkbox" ${on ? 'checked' : ''} onchange="toggleTweak('${t.id}')" class="mt-0.5 w-3.5 h-3.5 rounded text-emerald-500 focus:ring-0 cursor-pointer shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-mono text-[10px] font-black ${on ? 'text-emerald-400' : 'text-slate-400'}">${t.id}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${badgeColor}">${t.impact}</span>
+              </div>
+              <div class="text-[11px] font-bold text-white truncate mt-0.5" title="${t.title}">${t.short}</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
+
+    // 5. PRE Preview Calculator & Renderer
+    function selectPrePlan(plan) {
+      prePlan = plan;
+      renderPrePreview();
+    }
+    function togglePreBump1() {
+      preBump1 = !preBump1;
+      document.getElementById('preBump1Cb').checked = preBump1;
+      renderPrePreview();
+    }
+    function togglePreBump2() {
+      preBump2 = !preBump2;
+      document.getElementById('preBump2Cb').checked = preBump2;
+      renderPrePreview();
+    }
+
+    function getPlanBaseAmount(plan, intro) {
+      if (plan === 'annual') return 49.99;
+      if (plan === 'six_month') return 38.99;
+      return intro ? 1.99 : 9.99;
+    }
+
+    function getBump1Amount(prod, plan) {
+      if (plan === 'annual') return prod.bumpAnnual;
+      if (plan === 'six_month') return prod.bumpSixMo;
+      return prod.bumpMonthly;
+    }
+
+    function getBump2Amount(plan) {
+      if (plan === 'annual') return 9.99;
+      if (plan === 'six_month') return 6.99;
+      return 1.99;
+    }
+
+    function renderPrePreview() {
+      const prod = PRODUCTS[currentProduct];
+      document.getElementById('preHeaderProductWord').textContent = prod.word;
+      document.getElementById('preBoxFace').style.background = prod.boxGradient;
+      document.getElementById('preBoxTitle').textContent = prod.boxTitle;
+      document.getElementById('preProductTitle').textContent = prod.proTitle;
+      document.getElementById('preProductDesc').textContent = prod.subtitle;
+      document.getElementById('preBonus1Title').textContent = prod.bonus1;
+      document.getElementById('preBonus2Title').textContent = prod.bonus2;
+      document.getElementById('preBump1Title').textContent = prod.bumpTitle;
+      document.getElementById('preBump1Desc').textContent = prod.bumpDesc;
+
+      const activeBtnCls = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer bg-emerald-600 text-white shadow-2xs';
+      const idleBtnCls = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer bg-gray-50 text-gray-700 hover:bg-gray-100';
+      document.getElementById('prePlanBtn_annual').className = prePlan === 'annual' ? activeBtnCls : idleBtnCls;
+      document.getElementById('prePlanBtn_six_month').className = prePlan === 'six_month' ? activeBtnCls : idleBtnCls;
+      document.getElementById('prePlanBtn_monthly').className = prePlan === 'monthly' ? activeBtnCls : idleBtnCls;
+
+      const base = getPlanBaseAmount(prePlan, preIntroDiscount);
+      const b1 = getBump1Amount(prod, prePlan);
+      const b2 = getBump2Amount(prePlan);
+      const total = base + (preBump1 ? b1 : 0) + (preBump2 ? b2 : 0);
+
+      const suffix = prePlan === 'annual' ? '/yr' : prePlan === 'six_month' ? '/6mo' : '/mo';
+      document.getElementById('preBump1Price').textContent = `+ £${b1.toFixed(2)}${suffix}`;
+      document.getElementById('preBump2Price').textContent = `+ £${b2.toFixed(2)}${suffix}`;
+
+      if (prePlan === 'annual') {
+        document.getElementById('preTopPrice').textContent = '£49.99';
+        document.getElementById('preTopPriceSub').textContent = 'per year (£4.16/mo)';
+        document.getElementById('preProductBadge').textContent = 'Save 58% vs monthly billing';
+        document.getElementById('preSummaryPlanLabel').textContent = `${prod.name} Pro (Annual Plan)`;
+        document.getElementById('preSummaryPlanPrice').textContent = '£49.99/year';
+        document.getElementById('preSummaryDiscountLabel').textContent = 'Annual Plan Savings (Save 58%)';
+        document.getElementById('preSummaryDiscountVal').textContent = '- £69.89';
+      } else if (prePlan === 'six_month') {
+        document.getElementById('preTopPrice').textContent = '£38.99';
+        document.getElementById('preTopPriceSub').textContent = 'every 6 months (£6.50/mo)';
+        document.getElementById('preProductBadge').textContent = 'Save 35% vs monthly billing';
+        document.getElementById('preSummaryPlanLabel').textContent = `${prod.name} Pro (6-Month Plan)`;
+        document.getElementById('preSummaryPlanPrice').textContent = '£38.99/6 months';
+        document.getElementById('preSummaryDiscountLabel').textContent = '6-Month Plan Savings (Save 35%)';
+        document.getElementById('preSummaryDiscountVal').textContent = '- £20.95';
+      } else {
+        document.getElementById('preTopPrice').textContent = '£1.99';
+        document.getElementById('preTopPriceSub').textContent = '1st month (renews £9.99/mo)';
+        document.getElementById('preProductBadge').textContent = 'Save £8.00 off 1st month';
+        document.getElementById('preSummaryPlanLabel').textContent = `${prod.name} Pro (Monthly Plan)`;
+        document.getElementById('preSummaryPlanPrice').textContent = '£9.99/month';
+        document.getElementById('preSummaryDiscountLabel').textContent = 'Introductory 1st-Month Discount (Save £8.00)';
+        document.getElementById('preSummaryDiscountVal').textContent = '- £8.00';
+      }
+
+      document.getElementById('preSummaryBump1Row').classList.toggle('hidden', !preBump1);
+      document.getElementById('preSummaryBump1Name').textContent = `⚡ ${prod.bumpTitle}`;
+      document.getElementById('preSummaryBump1Val').textContent = `+ £${b1.toFixed(2)}${suffix}`;
+
+      document.getElementById('preSummaryBump2Row').classList.toggle('hidden', !preBump2);
+      document.getElementById('preSummaryBump2Val').textContent = `+ £${b2.toFixed(2)}${suffix}`;
+
+      document.getElementById('preTotalToday').textContent = `£${total.toFixed(2)}`;
+      document.getElementById('preMobileJumpTotal').textContent = `£${total.toFixed(2)}`;
+      document.getElementById('metricPreTotal').textContent = `£${total.toFixed(2)}`;
+
+      const shockBadge = document.getElementById('preStickerShockBadge');
+      if (preBump1 || preBump2) {
+        shockBadge.classList.remove('hidden');
+        shockBadge.textContent = `Sticker Shock (£${total.toFixed(2)} vs £${base.toFixed(2)})`;
+      } else {
+        shockBadge.classList.add('hidden');
+      }
+    }
+
+    // 6. POST Preview Calculator & Real-Time Tweak Renderer
+    function selectPostPlan(plan) {
+      postPlan = plan;
+      renderPostPreview();
+    }
+    function togglePostBump1() {
+      postBump1 = !postBump1;
+      renderPostPreview();
+    }
+    function togglePostBump2() {
+      postBump2 = !postBump2;
+      renderPostPreview();
+    }
+    function selectPostPaymentTab(tab) {
+      postLogoTab = tab;
+      renderPostPreview();
+    }
+    function togglePostMobileAccordion() {
+      postMobileSummaryExpanded = !postMobileSummaryExpanded;
+      renderPostPreview();
+    }
+
+    function renderPostPreview() {
+      const prod = PRODUCTS[currentProduct];
+      const base = getPlanBaseAmount(postPlan, postIntroDiscount);
+      const b1 = getBump1Amount(prod, postPlan);
+      const b2 = getBump2Amount(postPlan);
+      const hasSecondBump = !activeTweaks['CHK-03']; // When CHK-03 is active, we show 1 focused high-converting order bump instead of 2 pre-ticked bumps
+      const total = base + (postBump1 ? b1 : 0) + (hasSecondBump && postBump2 ? b2 : 0);
+      const suffix = postPlan === 'annual' ? '/yr' : postPlan === 'six_month' ? '/6mo' : '/mo';
+
+      document.getElementById('metricPostTotal').textContent = `£${total.toFixed(2)}`;
+
+      // A. Render POST Header (CHK-05: Locked Tunnel-Vision Header)
+      const headerEl = document.getElementById('postHeaderDom');
+      if (activeTweaks['CHK-05']) {
+        headerEl.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="inline-flex items-center gap-2.5">
+              <span class="text-[11px] text-gray-400 hover:text-white cursor-pointer font-medium">← Back</span>
+              <span class="text-gray-700">|</span>
+              <div class="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-black text-xs">✦</div>
+              <span class="font-black text-base sm:text-lg tracking-tight text-white">SWEEPR <span class="text-emerald-400">${prod.word}</span></span>
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold">
+              <span>🔒 256-Bit SSL Secure Checkout</span>
+              <span class="lift-badge ml-1">CHK-05</span>
+            </div>
+          </div>
+        `;
+      } else {
+        headerEl.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="inline-flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-black text-sm">✦</div>
+              <span class="font-black text-lg tracking-tight text-white">SWEEPR <span class="text-emerald-400">${prod.word}</span></span>
+            </div>
+            <button type="button" class="text-xs flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 font-medium text-white">
+              <span>🇬🇧 EN ▾</span>
+            </button>
+          </div>
+        `;
+      }
+
+      // B. Render POST Segmented Plan Switcher (CHK-04: Explicit £1.99 1st-Month Offer Pill)
+      const planBarEl = document.getElementById('postPlanBarDom');
+      const activeCls = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer bg-emerald-600 text-white shadow-2xs';
+      const idleCls = 'py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer bg-gray-50 text-gray-700 hover:bg-gray-100';
+      const monthlyTabLabel = activeTweaks['CHK-04']
+        ? '⚡ 1st Month — £1.99 (Save 80%)'
+        : 'Monthly — £1.99 1st mo';
+      planBarEl.innerHTML = `
+        <div class="bg-white rounded-xl p-1.5 border border-gray-200 shadow-2xs grid grid-cols-3 gap-1.5">
+          <button type="button" onclick="selectPostPlan('monthly')" class="${postPlan === 'monthly' ? activeCls : idleCls}">
+            ${monthlyTabLabel}
+          </button>
+          <button type="button" onclick="selectPostPlan('annual')" class="${postPlan === 'annual' ? activeCls : idleCls}">
+            ★ Annual — £4.16/mo (Save 58%)
+          </button>
+          <button type="button" onclick="selectPostPlan('six_month')" class="${postPlan === 'six_month' ? activeCls : idleCls}">
+            6-Month — £6.50/mo
+          </button>
+        </div>
+      `;
+
+      // C. Render POST Mobile 1-Line Accordion (CHK-10)
+      const mobAccEl = document.getElementById('postMobileAccordionDom');
+      const leftColEl = document.getElementById('postLeftColDom');
+      const isMobileFrame = currentViewport === 'mobile';
+
+      if (isMobileFrame && activeTweaks['CHK-10']) {
+        mobAccEl.classList.remove('hidden');
+        mobAccEl.innerHTML = `
+          <button type="button" onclick="togglePostMobileAccordion()" class="w-full bg-emerald-50/90 hover:bg-emerald-100/80 rounded-xl px-3.5 py-2.5 border border-emerald-300 shadow-2xs flex items-center justify-between gap-2 cursor-pointer transition-all">
+            <div class="flex items-center gap-2 text-left">
+              <span class="text-sm">🛒</span>
+              <div>
+                <div class="text-xs font-black text-gray-900 flex items-center gap-1.5">
+                  <span>${prod.name} Pro Summary</span>
+                  <span class="lift-badge">CHK-10</span>
+                </div>
+                <div class="text-[10px] text-emerald-800 font-semibold">
+                  ${postMobileSummaryExpanded ? 'Tap to collapse summary ▴' : 'Tap to view 2 free bonuses & add-on ▾'}
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-black text-emerald-800 tabular-nums">£${total.toFixed(2)} Today</div>
+              <div class="text-[10px] text-gray-500">14-Day Refund</div>
+            </div>
+          </button>
+        `;
+        leftColEl.classList.toggle('hidden', !postMobileSummaryExpanded);
+      } else {
+        mobAccEl.classList.add('hidden');
+        leftColEl.classList.remove('hidden');
+      }
+
+      // D. Render POST Left Column (Order Summary + CHK-07 Scan Carry-Over + CHK-03 Opt-In Bump + CHK-06 Calm Renewal Pill)
+      const scanBannerHtml = activeTweaks['CHK-07']
+        ? `
+          <div class="bg-[#0f291e] text-white rounded-xl p-3 border border-emerald-500/40 flex items-start justify-between gap-2.5 shadow-xs">
+            <div class="flex items-start gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse mt-1 shrink-0"></span>
+              <div>
+                <div class="text-xs font-extrabold text-emerald-200 leading-snug">${prod.scanHeadline}</div>
+                <div class="text-[10px] text-emerald-300/80 mt-0.5">${prod.scanSub}</div>
+              </div>
+            </div>
+            <span class="lift-badge shrink-0">CHK-07</span>
+          </div>
+        `
+        : '';
+
+      const topPriceText = postPlan === 'annual' ? '£49.99' : postPlan === 'six_month' ? '£38.99' : '£1.99';
+      const topPriceSubText = postPlan === 'annual'
+        ? 'per year (£4.16/mo eq.)'
+        : postPlan === 'six_month'
+        ? 'every 6 months (£6.50/mo eq.)'
+        : '1st month (Save 80% today)';
+
+      const calmRenewalHtml = activeTweaks['CHK-06']
+        ? `
+          <div class="mt-1 flex flex-wrap items-center justify-between gap-1 bg-emerald-50/90 border border-emerald-200 rounded-lg px-2.5 py-1.5 text-[11px] text-emerald-900">
+            <span class="font-semibold">
+              ${postPlan === 'monthly'
+                ? '✓ Save 80% Today (£1.99 vs £9.99) • Renews at £9.99/mo'
+                : postPlan === 'annual'
+                ? '✓ Save 58% Today (£4.16/mo eq.) • Billed £49.99/yr'
+                : '✓ Save 35% Today (£6.50/mo eq.) • Billed £38.99/6mo'}
+            </span>
+            <span class="font-extrabold text-emerald-700">⚡ Cancel in 1-Click <span class="lift-badge ml-0.5">CHK-06</span></span>
+          </div>
+        `
+        : '';
+
+      leftColEl.innerHTML = `
+        ${scanBannerHtml}
+
+        <!-- Product Header -->
+        <div class="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+          <div class="flex items-start gap-3">
+            <div class="software-box shrink-0">
+              <div class="box-spine bg-emerald-950"></div>
+              <div class="box-face" style="background: ${prod.boxGradient};">
+                <div class="flex items-center justify-between w-full">
+                  <span class="text-[10px]">✦</span>
+                  <span class="bg-emerald-500 text-[6px] font-black px-1 rounded">2026</span>
+                </div>
+                <div>
+                  <div class="text-[8px] font-black leading-tight">${prod.boxTitle}</div>
+                  <div class="text-[6px] text-emerald-300 font-bold">PRO EDITION</div>
+                </div>
+                <div class="text-[6px] text-emerald-200 font-bold">3 DEVICES</div>
+              </div>
+            </div>
+            <div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 mb-1">
+                ${postPlan === 'monthly' ? '⚡ Special Intro Offer — Save 80%' : postPlan === 'annual' ? '★ Best Value — Save 58%' : 'Save 35% vs Monthly'}
+              </span>
+              <h3 class="text-sm sm:text-base font-black text-gray-900 leading-snug">${prod.proTitle}</h3>
+              <p class="text-[11px] text-gray-500 mt-0.5">${prod.subtitle}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-xl font-black text-gray-900 tabular-nums">${topPriceText}</div>
+            <div class="text-[10px] text-gray-500">${topPriceSubText}</div>
+          </div>
+        </div>
+
+        <!-- Included Free Bonuses -->
+        <div class="space-y-1.5">
+          <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs">
+              <span>🎁</span>
+              <div>
+                <div class="font-bold text-gray-900 text-[11px]">${prod.bonus1}</div>
+                <div class="text-[10px] text-gray-500">Included free with your 3-device Pro license</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[9px] font-extrabold text-emerald-800 bg-white border border-emerald-200 shrink-0">INCLUDED FREE</span>
+          </div>
+          <div class="bg-emerald-50/60 border border-emerald-200/80 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs">
+              <span>🎁</span>
+              <div>
+                <div class="font-bold text-gray-900 text-[11px]">${prod.bonus2}</div>
+                <div class="text-[10px] text-gray-500">Instant activation across Windows, Mac &amp; Linux</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[9px] font-extrabold text-emerald-800 bg-white border border-emerald-200 shrink-0">INCLUDED FREE</span>
+          </div>
+        </div>
+
+        <!-- 1-Click Optional Order Bump (CHK-03: Honest Opt-In + Single High-Affinity Bump) -->
+        <div onclick="togglePostBump1()" class="${
+          postBump1
+            ? 'bg-emerald-50/70 border-emerald-400 ring-1 ring-emerald-400/50'
+            : 'bg-gray-50/70 border-gray-200 hover:border-emerald-300'
+        } rounded-xl p-3 border cursor-pointer transition-all select-none">
+          <div class="flex items-start gap-2.5">
+            <input type="checkbox" ${postBump1 ? 'checked' : ''} onclick="event.stopPropagation(); togglePostBump1();" class="mt-0.5 w-4 h-4 rounded text-emerald-600 cursor-pointer shrink-0" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1 flex-wrap">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-gray-900 text-xs">${prod.bumpTitle}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">${prod.bumpTag}</span>
+                  ${activeTweaks['CHK-03'] ? '<span class="lift-badge">CHK-03 Opt-In</span>' : ''}
+                </div>
+                <span class="text-[11px] font-extrabold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200 tabular-nums">
+                  + £${b1.toFixed(2)}${suffix}
+                </span>
+              </div>
+              <p class="text-[10px] text-gray-500 mt-0.5 leading-snug">${prod.bumpDesc}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Itemized Breakdown & Total Due Today -->
+        <div class="bg-gray-50/90 rounded-xl p-3.5 border border-gray-200 space-y-2 text-xs">
+          <div class="flex justify-between text-gray-700">
+            <span>${prod.name} Pro (${postPlan === 'annual' ? 'Annual' : postPlan === 'six_month' ? '6-Month' : 'Monthly'} Plan)</span>
+            <span class="font-semibold text-gray-900 tabular-nums">${postPlan === 'annual' ? '£49.99/yr' : postPlan === 'six_month' ? '£38.99/6mo' : '£9.99/mo'}</span>
+          </div>
+          ${postBump1 ? `
+            <div class="flex justify-between text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 text-[11px]">
+              <span class="font-semibold">⚡ ${prod.bumpTitle}</span>
+              <span class="font-bold tabular-nums">+ £${b1.toFixed(2)}${suffix}</span>
+            </div>
+          ` : ''}
+          ${postPlan === 'monthly' ? `
+            <div class="flex justify-between text-emerald-600 font-semibold border-t border-dashed border-gray-200 pt-1.5 text-[11px]">
+              <span>Introductory 1st-Month Savings (80% Off)</span>
+              <span class="font-bold tabular-nums">- £8.00</span>
+            </div>
+          ` : ''}
+          <div class="pt-2 border-t border-gray-200 flex items-baseline justify-between">
+            <span class="font-bold text-gray-900 text-sm">Total Due Today (GBP)</span>
+            <span class="font-black text-2xl text-gray-900 tabular-nums">£${total.toFixed(2)}</span>
+          </div>
+          ${calmRenewalHtml}
+        </div>
+      `;
+
+      // E. Render POST Right Column (Controlled by CHK-02, CHK-01, CHK-08, CHK-04, CHK-09)
+      const rightColEl = document.getElementById('postRightColDom');
+
+      const expressBlockHtml = `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-extrabold uppercase tracking-wider text-gray-500">⚡ 1-Click Express Checkout</span>
+            ${activeTweaks['CHK-02'] ? '<span class="lift-badge">CHK-02 Elevated #1</span>' : ''}
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="h-11 bg-[#ffc439] hover:bg-[#f4bb33] text-[#003087] font-black italic text-base rounded-xl flex items-center justify-center shadow-2xs cursor-pointer">
+              Pay<span class="text-[#0079c1]">Pal</span>
+            </button>
+            <button type="button" class="h-11 bg-[#202124] hover:bg-black text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-1 shadow-2xs cursor-pointer">
+              <span class="text-[#4285F4] font-bold">G</span><span class="text-[#EA4335] font-bold">o</span><span class="text-[#FBBC05] font-bold">o</span><span class="text-[#4285F4] font-bold">g</span><span class="text-[#34A853] font-bold">l</span><span class="text-[#EA4335] font-bold">e</span> Pay
+            </button>
+          </div>
+        </div>
+      `;
+
+      const emailFieldHtml = `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-gray-700">Email Address <span class="text-gray-400 font-normal">(For instant license key)</span></label>
+            <span class="px-1.5 py-0.5 rounded bg-[#00D66F]/15 border border-[#00D66F]/40 text-emerald-900 text-[10px] font-extrabold">⚡ Stripe Link 1-Click</span>
+          </div>
+          <input type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        </div>
+      `;
+
+      const duplicateBadgesHtml = !activeTweaks['CHK-08']
+        ? `
+          <div class="flex items-center justify-between bg-red-50/40 border border-red-200 rounded-lg px-2 py-1">
+            <span class="text-[10px] font-bold text-gray-600">VISA • MC • AMEX • Stripe Link</span>
+            <span class="friction-badge">CHK-08 Off</span>
+          </div>
+        `
+        : '';
+
+      const addressPostcodeHtml = activeTweaks['CHK-01']
+        ? `
+          <!-- CHK-01 Active: Name on Card + Post Code on 1 Compact Row (Zero Street Address!) -->
+          <div class="grid grid-cols-12 gap-2.5">
+            <div class="col-span-7">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Name On Card</label>
+              <input type="text" autocomplete="cc-name" placeholder="John Doe" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div class="col-span-5">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-gray-700">Post Code / ZIP</label>
+                <span class="lift-badge">CHK-01</span>
+              </div>
+              <input type="text" autocomplete="billing postal-code" placeholder="SW1A 1AA" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+          </div>
+        `
+        : `
+          <div>
+            <label class="block text-[11px] font-bold text-gray-700 mb-1">Name On Card</label>
+            <input type="text" placeholder="John Doe" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-red-700 mb-1">Street Address *</label>
+              <input type="text" placeholder="Street address" class="w-full p-2.5 rounded-lg border border-red-300 text-xs" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Post Code *</label>
+              <input type="text" placeholder="SW1A 1AA" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs uppercase" />
+            </div>
+          </div>
+        `;
+
+      const ctaLabel = activeTweaks['CHK-04']
+        ? `Complete Order — Pay £${total.toFixed(2)} Today`
+        : 'PURCHASE SECURELY';
+
+      const pointOfAnxietyHtml = activeTweaks['CHK-09']
+        ? `
+          <div class="bg-[#f0fdf4] border border-emerald-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-[11px]">
+            <span class="font-bold text-emerald-900 flex items-center gap-1">
+              🛡️ 14-Day 100% Money-Back Guarantee
+            </span>
+            <span class="text-emerald-700 font-semibold flex items-center gap-1">
+              ⚡ Instant Key <span class="lift-badge">CHK-09</span>
+            </span>
+          </div>
+        `
+        : '';
+
+      rightColEl.innerHTML = `
+        ${activeTweaks['CHK-02'] ? expressBlockHtml : ''}
+
+        <div class="relative flex py-0.5 items-center">
+          <div class="flex-grow border-t border-gray-200"></div>
+          <span class="mx-3 text-[10px] uppercase font-bold text-gray-400">OR PAY WITH CARD / APP</span>
+          <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        <!-- Branded Vector Payment Method Switcher -->
+        <div class="grid grid-cols-3 gap-1.5 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+          <button type="button" onclick="selectPostPaymentTab('card')" class="h-11 rounded-lg ${postLogoTab === 'card' ? 'bg-white border-2 border-emerald-500 shadow-2xs' : 'bg-white/60'} flex items-center justify-center gap-1 px-1 cursor-pointer">
+            <svg class="h-4 w-[25px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#FFFFFF"/><path d="M19.95 21.2H17.1L18.88 10.8H21.73L19.95 21.2ZM14.68 10.8L11.96 17.95L11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C5.72 11.35 6.79 11.75 7.45 12.14L9.82 21.2H12.79L17.65 10.8H14.68ZM36.68 21.2H39.29L37.01 10.8H34.61C33.96 10.8 33.48 11.16 33.24 11.73L29.02 21.2H31.98L32.57 19.58H36.19L36.68 21.2ZM33.41 17.34L34.9 13.3L35.75 17.34H33.41ZM29.43 13.32L29.84 11.03C29.04 10.74 28.01 10.55 26.94 10.55C24.16 10.55 22.18 11.96 22.16 13.99C22.14 15.5 23.58 16.34 24.67 16.85C25.78 17.37 26.15 17.71 26.15 18.18C26.14 18.9 25.25 19.22 24.42 19.22C23.16 19.22 22.42 18.89 21.58 18.51L21.15 20.88C22.02 21.26 23.29 21.52 24.6 21.54C27.56 21.54 29.49 20.15 29.51 18C29.52 15.27 25.54 15.09 25.57 13.86C25.58 13.48 25.96 13.08 26.8 12.97C27.22 12.92 28.37 12.88 29.43 13.32Z" fill="#1434CB"/><path d="M11.64 16.41L10.68 11.75C10.52 11.08 10.04 10.8 9.38 10.8H4.85L4.78 11.12C6.96 11.66 8.86 12.99 9.74 14.6L11.64 16.41Z" fill="#F7B600"/></svg>
+            <svg class="h-4 w-[25px] shrink-0 rounded border border-gray-200 bg-white" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#FFFFFF"/><circle cx="19.5" cy="16" r="8.5" fill="#EB001B"/><circle cx="28.5" cy="16" r="8.5" fill="#F79E1B"/><path d="M24 9.31C26.16 10.88 27.5 13.29 27.5 16C27.5 18.71 26.16 21.12 24 22.69C21.84 21.12 20.5 18.71 20.5 16C20.5 13.29 21.84 10.88 24 9.31Z" fill="#FF5F00"/></svg>
+            <svg class="h-4 w-[25px] shrink-0 rounded border border-[#016FD0] bg-[#016FD0]" viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#016FD0"/><path d="M8.6 12.2L5.2 19.8H7.3L8 18.1H11.3L12 19.8H14.2L10.8 12.2H8.6ZM8.7 16.5L9.65 14.1L10.6 16.5H8.7ZM14.8 12.2V19.8H16.7V14.9L18.9 19.8H20.4L22.6 14.9V19.8H24.5V12.2H21.7L19.65 16.9L17.6 12.2H14.8ZM25.8 12.2V19.8H32.2V18.1H27.7V16.8H32.1V15.1H27.7V13.9H32.2V12.2H25.8ZM32.8 12.2L35.9 16L32.7 19.8H35.1L37.1 17.3L39.1 19.8H41.5L38.3 16L41.4 12.2H39L37.1 14.6L35.2 12.2H32.8Z" fill="#FFFFFF"/></svg>
+            <svg class="h-4 w-[28px] shrink-0 rounded bg-[#635BFF]" viewBox="0 0 54 32" fill="none"><rect width="54" height="32" rx="4" fill="#635BFF"/><text x="27" y="20" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="12.5" letter-spacing="-0.4">stripe</text></svg>
+          </button>
+          <button type="button" onclick="selectPostPaymentTab('revolut_pay')" class="h-11 rounded-lg ${postLogoTab === 'revolut_pay' ? 'bg-white border-2 border-emerald-500 shadow-2xs' : 'bg-white/60'} flex items-center justify-center gap-1 text-[11px] font-black text-gray-800 px-1 cursor-pointer">
+            <span class="w-4 h-4 rounded bg-[#0666eb] text-white inline-flex items-center justify-center text-[9px] shrink-0">R</span>
+            <span>Revolut</span>
+            <span class="bg-[#0666eb] text-white px-1 py-0.5 rounded text-[9px] leading-none">Pay</span>
+          </button>
+          <button type="button" onclick="selectPostPaymentTab('amazon_pay')" class="h-11 rounded-lg ${postLogoTab === 'amazon_pay' ? 'bg-white border-2 border-emerald-500 shadow-2xs' : 'bg-white/60'} flex items-center justify-center px-1 cursor-pointer">
+            <svg class="h-6 w-auto max-w-full" viewBox="0 0 132 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Amazon Pay">
+              <text x="5" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="800" font-size="18.5" letter-spacing="-0.6">amazon</text>
+              <text x="79" y="19" fill="#333E48" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif" font-weight="400" font-size="18.5" letter-spacing="-0.3">pay</text>
+              <path d="M13.5 23.8C25.2 29.8 43.8 30.1 56.4 24.1" stroke="#FF9900" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M51.8 22.1C54.6 21.8 57.6 22.4 58.3 23.4C59.0 24.4 57.7 27.2 55.8 29.1" stroke="#FF9900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        ${duplicateBadgesHtml}
+
+        <!-- Streamlined Input Fields -->
+        <div class="space-y-2.5 text-xs">
+          ${activeTweaks['CHK-02'] ? emailFieldHtml : ''}
+
+          <div>
+            <label class="block text-[11px] font-bold text-gray-700 mb-1">Card Number</label>
+            <div class="relative">
+              <input type="text" inputmode="numeric" autocomplete="cc-number" placeholder="4000 1234 5678 9010" class="w-full p-2.5 pr-8 rounded-lg border border-gray-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <span class="absolute inset-y-0 right-2.5 flex items-center text-gray-400 text-xs">🔒</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Expiry Date (MM/YY)</label>
+              <input type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Security Code (CVV)</label>
+              <input type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="•••" class="w-full p-2.5 rounded-lg border border-gray-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+          </div>
+
+          ${addressPostcodeHtml}
+
+          ${!activeTweaks['CHK-02'] ? emailFieldHtml : ''}
+        </div>
+
+        <!-- Condensed Transparent Renewal Consent Right Above CTA (CHK-08) -->
+        <div class="text-[10px] text-gray-500 leading-snug pt-0.5">
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 rounded text-emerald-600 shrink-0" />
+            <span>
+              I agree to pay <strong class="text-gray-800 tabular-nums">£${total.toFixed(2)}</strong> today (${postPlan === 'monthly' ? 'renews at £9.99/mo unless cancelled in 1-click' : postPlan === 'annual' ? 'renews annually at £49.99/yr' : 'renews at £38.99/6mo'}) under the Terms &amp; 14-Day Refund Policy.
+            </span>
+          </label>
+        </div>
+
+        <!-- Primary Submit CTA (CHK-04 Dynamic Price Echo) -->
+        <div>
+          <button type="button" class="btn-purchase-live w-full py-3.5 px-5 rounded-full text-white font-black text-sm sm:text-base tracking-wide flex items-center justify-center gap-2 shadow-lg cursor-pointer tabular-nums">
+            <span>🔒</span>
+            <span>${ctaLabel}</span>
+          </button>
+        </div>
+
+        ${pointOfAnxietyHtml}
+      `;
+    }
+
+    // 7. Render Phase 2 Audit Matrix & Expandable Code Diffs
+    function renderAuditMatrix() {
+      const container = document.getElementById('auditMatrixCards');
+      if (!container) return;
+
+      container.innerHTML = TWEAKS.map((t) => {
+        const on = activeTweaks[t.id];
+        return `
+          <details class="group bg-slate-950/80 border ${on ? 'border-emerald-500/30' : 'border-slate-800 opacity-70'} rounded-xl overflow-hidden transition-all">
+            <summary class="px-4 py-3 cursor-pointer flex flex-wrap items-center justify-between gap-2 hover:bg-slate-900/80 select-none list-none">
+              <div class="flex items-center gap-3 min-w-0">
+                <input type="checkbox" ${on ? 'checked' : ''} onclick="event.stopPropagation(); toggleTweak('${t.id}');" class="w-4 h-4 rounded text-emerald-500 cursor-pointer shrink-0" />
+                <span class="font-mono text-xs font-black px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${t.id}</span>
+                <span class="font-bold text-sm text-white">${t.title}</span>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-300">${t.impact}</span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-slate-400">
+                <span class="font-mono text-[11px] text-slate-400 hidden sm:inline">${t.targetFile}</span>
+                <span class="text-emerald-400 font-bold group-open:rotate-180 transition-transform">▾ View Code Diff</span>
+              </div>
+            </summary>
+            <div class="p-4 border-t border-slate-800/90 bg-slate-900/40 space-y-3 text-xs">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="bg-red-950/30 border border-red-500/25 rounded-lg p-3">
+                  <div class="text-[10px] font-black uppercase text-red-400 mb-1">PRE (Current Friction)</div>
+                  <p class="text-slate-300 leading-relaxed">${t.preFriction}</p>
+                </div>
+                <div class="bg-emerald-950/30 border border-emerald-500/25 rounded-lg p-3">
+                  <div class="text-[10px] font-black uppercase text-emerald-400 mb-1">POST (Subtle Optimization)</div>
+                  <p class="text-slate-200 leading-relaxed">${t.postFix}</p>
+                </div>
+                <div class="bg-indigo-950/30 border border-indigo-500/25 rounded-lg p-3">
+                  <div class="text-[10px] font-black uppercase text-indigo-300 mb-1">Behavioral / Baymard Principle</div>
+                  <p class="text-slate-300 leading-relaxed">${t.principle}</p>
+                </div>
+              </div>
+              <pre class="bg-[#090d14] border border-slate-800 rounded-xl p-3.5 overflow-x-auto font-mono text-[11px] leading-relaxed text-emerald-300"><code>${t.diff.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+            </div>
+          </details>
+        `;
+      }).join('');
+    }
+
+    // 8. Copy Approved Tweaks Prompt
+    function copyApprovedPrompt() {
+      const selected = TWEAKS.filter((t) => activeTweaks[t.id]);
+      const ids = selected.map((t) => t.id).join(', ');
+      const promptText = `Apply the following approved Checkout CRO tweaks to server/public/order.html: ${ids}\n\n` +
+        selected.map((t) => `- ${t.id}: ${t.title} (${t.postFix})`).join('\n');
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const btn = document.getElementById('copyPromptBtn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<span>✅ Copied ${selected.length} Approved Tweaks to Clipboard!</span>`;
+        setTimeout(() => { btn.innerHTML = orig; }, 2400);
+      });
+    }
+
+    // Initialize Sandbox
+    renderTweakSwitches();
+    renderPrePreview();
+    renderPostPreview();
+    renderAuditMatrix();
+  </script>
+</body>
+</html>

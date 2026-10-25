@@ -117,29 +117,16 @@
   aria-label="Permanent File Eraser"
 >
   <div class="card-top-row">
-    <div class="title-with-icon">
-      <div class="shred-icon-bubble">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div>
-        <strong class="card-title">Permanent File Eraser</strong>
-        <div class="muted small">
-          Permanently wipe sensitive files (like tax documents, ID scans, or bank statements) so nobody can ever recover them.
-        </div>
-      </div>
-    </div>
-    {#if !license?.active}
-      <span class="badge pro">Pro</span>
-    {/if}
+    <strong class="card-title">File Shredder</strong>
   </div>
 
   <div class="dropzone-box">
     {#if !filePath}
       <p class="muted" style="margin: 0 0 12px 0;">
-        Drag and drop a sensitive file here, or click the button below to choose a file from your PC.
+        Drop a file here to erase it permanently.
       </p>
       <button type="button" class="primary choose-btn" onclick={browseFileToShred} disabled={shredding}>
-        Choose File to Erase…
+        Choose File
       </button>
     {:else}
       <div class="selected-file-pill">
@@ -150,7 +137,7 @@
           <span class="muted small" title={filePath}>{shortenPath(filePath, 75)}</span>
         </div>
         <button type="button" class="ghost small-btn" onclick={browseFileToShred} disabled={shredding}>
-          Change File…
+          Change
         </button>
         <button type="button" class="ghost small-btn" onclick={() => (filePath = "")} disabled={shredding}>
           Cancel
@@ -159,10 +146,10 @@
 
       <button class="danger-cta-btn" onclick={handleShred} disabled={shredding}>
         {shredding
-          ? "Erasing File Forever…"
+          ? "Shredding…"
           : confirmingShred
-            ? "⚠️ Click Again to Permanently Erase Forever"
-            : "Erase File Forever"}
+            ? "Confirm Shred"
+            : "Shred Forever"}
       </button>
     {/if}
   </div>

@@ -63,7 +63,7 @@ fn save_quarantine_entries(data_dir: &Path, entries: &[QuarantineEntry]) -> std:
     let dir = quarantine_dir(data_dir);
     std::fs::create_dir_all(&dir)?;
     let json = serde_json::to_string_pretty(entries).unwrap_or_else(|_| "[]".into());
-    std::fs::write(quarantine_manifest_path(data_dir), json)
+    crate::safety::atomic_write(&quarantine_manifest_path(data_dir), json.as_bytes())
 }
 
 fn is_safe_quarantine_id(id: &str) -> bool {
@@ -251,6 +251,17 @@ pub fn clean_with_quarantine(
     exclusions: &[PathBuf],
     quarantine_data_dir: Option<&Path>,
 ) -> CleanReport {
+    if let Some(data_dir) = quarantine_data_dir {
+        let disabled = crate::safety::load_disabled_rules(data_dir);
+        if disabled.contains(&rule.id.to_ascii_lowercase()) {
+            return CleanReport {
+                category_id: rule.id.to_string(),
+                moved_to_trash: use_trash,
+                ..Default::default()
+            };
+        }
+    }
+
     let mut targets: Vec<(PathBuf, u64)> = Vec::new();
     for_each_target_with_exclusions(rule, exclusions, |p, size| targets.push((p.to_path_buf(), size)));
 
@@ -307,6 +318,10 @@ pub fn clean_with_quarantine(
             if move_to_quarantine(data_dir, path, *s, rule.id, &mut entries) {
                 report.files_removed += 1;
                 report.bytes_freed += s;
+                if report.files_removed.is_multiple_of(25) {
+                    entries.truncate(QUARANTINE_MAX_ITEMS);
+                    let _ = save_quarantine_entries(data_dir, &entries);
+                }
             } else {
                 report.files_skipped += 1;
             }

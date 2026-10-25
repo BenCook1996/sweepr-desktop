@@ -9,11 +9,15 @@
   let email = $state("");
   let selectedPlan = $state<PlanId>("monthly");
   let showSignIn = $state(false);
+  let showQrScan = $state(false);
+  let qrSvg = $state<string | null>(null);
+  let qrCountdown = $state(120);
   let busy = $state(false);
   let error = $state<string | null>(null);
   let waitingPayment = $state(false);
   let unlockedSuccess = $state(false);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let qrTimer: ReturnType<typeof setInterval> | null = null;
 
   const ctaPriceLabel = $derived(
     selectedPlan === "monthly"
@@ -26,6 +30,40 @@
   function stopPolling() {
     if (pollTimer) clearInterval(pollTimer);
     pollTimer = null;
+    if (qrTimer) clearInterval(qrTimer);
+    qrTimer = null;
+  }
+
+  async function startQrSignIn() {
+    error = null;
+    showQrScan = true;
+    qrSvg = null;
+    stopPolling();
+    try {
+      const ch = await api.startQrChallenge();
+      qrSvg = ch.qr_svg;
+      qrCountdown = ch.ttl_seconds || 120;
+      qrTimer = setInterval(async () => {
+        qrCountdown = Math.max(0, qrCountdown - 1);
+        if (qrCountdown <= 0) {
+          stopPolling();
+          return;
+        }
+        if (qrCountdown % 2 === 0) {
+          try {
+            const res = await api.pollQrChallenge(ch.challenge_id, ch.poll_secret);
+            if (res.status === "approved") {
+              notifyActivated();
+            } else if (res.status === "expired") {
+              qrCountdown = 0;
+              stopPolling();
+            }
+          } catch {}
+        }
+      }, 1000);
+    } catch (e) {
+      error = errorMessage(e);
+    }
   }
 
   function notifyActivated() {

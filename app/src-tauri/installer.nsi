@@ -9,7 +9,7 @@ ManifestDPIAwareness PerMonitorV2
 !if "{{compression}}" == "none"
   SetCompress off
 !else
-  SetCompressor zlib
+  SetCompress off
 !endif
 
 ; Keep above !include to stay ahead of any plugin command
@@ -84,7 +84,10 @@ InstallDir "${PLACEHOLDER_INSTALL_DIR}"
 
 VIProductVersion "${VERSIONWITHBUILD}"
 VIAddVersionKey "ProductName" "${PRODUCTNAME}"
-VIAddVersionKey "FileDescription" "${PRODUCTNAME}"
+VIAddVersionKey "CompanyName" "${MANUFACTURER}"
+VIAddVersionKey "FileDescription" "SWEEPR Cleaner Setup"
+VIAddVersionKey "InternalName" "${PRODUCTNAME}"
+VIAddVersionKey "OriginalFilename" "SWEEPRCleaner.exe"
 VIAddVersionKey "LegalCopyright" "${COPYRIGHT}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"

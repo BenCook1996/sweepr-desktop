@@ -70,39 +70,11 @@ struct DashboardView: View {
                         // Candidate 5 Signature Smart Clean Ring
                         quickCleanRing
 
-                        // Thumb-Zone Primary CTA Row (1-tap Clean Now + Review ›)
-                        if vm.hasScanned && vm.mediaResult.totalReclaimableBytes > 0 && !vm.isScanning {
-                            HStack(spacing: 10) {
-                                Button {
-                                    Task { await vm.performSmartCleanAll() }
-                                } label: {
-                                    Text("Clean +\(formatByteCount(vm.mediaResult.totalReclaimableBytes)) Now")
-                                }
-                                .buttonStyle(SweeprPrimaryButtonStyle())
-
-                                Button {
-                                    showQuickCleanReview = true
-                                } label: {
-                                    Text("Review ›")
-                                        .font(.system(size: 13, weight: .heavy))
-                                        .foregroundColor(.primary)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 15)
-                                        .background(Color.sweeprPanel)
-                                        .clipShape(Capsule())
-                                        .overlay(
-                                            Capsule().stroke(Color.sweeprLine, lineWidth: 1)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
                         if vm.isScanning {
                             scanProgressLabel
                         }
 
-                        // Multi-Segment Device Storage Breakdown Card (with integrated Cloud Sync Savings)
+                        // Multi-Segment Device Storage Breakdown Card
                         storageBreakdownCard
 
                         // 2x2 Bento Category Grid (4 100% Storage-Focused Categories)
@@ -110,6 +82,36 @@ struct DashboardView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if vm.hasScanned && vm.mediaResult.totalReclaimableBytes > 0 && !vm.isScanning {
+                    SweeprBottomDock {
+                        HStack(spacing: 10) {
+                            Button {
+                                Task { await vm.performSmartCleanAll() }
+                            } label: {
+                                Text("Clean +\(formatByteCount(vm.mediaResult.totalReclaimableBytes))")
+                            }
+                            .buttonStyle(SweeprPrimaryButtonStyle())
+
+                            Button {
+                                showQuickCleanReview = true
+                            } label: {
+                                Text("Review")
+                                    .font(.system(size: 13, weight: .heavy))
+                                    .foregroundColor(.primary)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 15)
+                                    .background(Color.sweeprPanel)
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule().stroke(Color.sweeprLine, lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -469,20 +471,13 @@ struct DashboardView: View {
 
     private var bentoCategoryGrid: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("CLEANUP CATEGORIES")
-                .font(.system(size: 11, weight: .heavy))
-                .tracking(0.8)
-                .foregroundColor(.sweeprMutedText)
-
             HStack(spacing: 10) {
                 NavigationLink(destination: PhotosMediaOverviewView(vm: vm, onShowPaywall: onShowPaywall)) {
                     BentoCategoryCard(
                         icon: "photo.on.rectangle.angled",
                         tint: .sweeprEmerald,
-                        title: "Duplicates & Blur",
-                        subtitle: vm.hasScanned
-                            ? "\(photoClutterCount) items · Similar & shrink"
-                            : "Duplicates, blur & shrink",
+                        title: "Duplicates",
+                        subtitle: vm.hasScanned ? "\(photoClutterCount) items" : "Photos & blur",
                         badgeText: vm.hasScanned
                             ? (photoSavingsBytes > 0 ? "+\(formatByteCount(photoSavingsBytes))" : "Clean")
                             : "Scan"
@@ -494,11 +489,9 @@ struct DashboardView: View {
                         icon: "video.fill",
                         tint: .sweeprCyan,
                         title: "Large Videos",
-                        subtitle: vm.hasScanned
-                            ? "\(vm.mediaResult.largeVideos.count) clips · Shrink"
-                            : "4K clips & recordings",
+                        subtitle: vm.hasScanned ? "\(vm.mediaResult.largeVideos.count) clips" : "4K clips",
                         badgeText: vm.hasScanned
-                            ? (videoSavingsBytes > 0 ? "+\(formatByteCount(videoSavingsBytes))" : "0 B")
+                            ? (videoSavingsBytes > 0 ? "+\(formatByteCount(videoSavingsBytes))" : "Clean")
                             : "Scan"
                     )
                 }
@@ -516,9 +509,7 @@ struct DashboardView: View {
                         icon: "camera.viewfinder",
                         tint: .sweeprTeal,
                         title: "Screenshots",
-                        subtitle: vm.hasScanned
-                            ? "\(vm.mediaResult.screenshots.count) captures"
-                            : "Old screen captures",
+                        subtitle: vm.hasScanned ? "\(vm.mediaResult.screenshots.count) captures" : "Screen captures",
                         badgeText: vm.hasScanned
                             ? (screenshotSavingsBytes > 0 ? "+\(formatByteCount(screenshotSavingsBytes))" : "Clean")
                             : "Scan"
@@ -529,10 +520,10 @@ struct DashboardView: View {
                     BentoCategoryCard(
                         icon: "person.2.fill",
                         tint: .sweeprIndigo,
-                        title: "Contacts & Events",
-                        subtitle: "Merge dupes & events",
+                        title: "Contacts",
+                        subtitle: vm.hasScanned ? "\(contactIssueCount) duplicates" : "Duplicates",
                         badgeText: vm.hasScanned
-                            ? (contactIssueCount > 0 ? "\(contactIssueCount) fix" : "Clean")
+                            ? (contactIssueCount > 0 ? "\(contactIssueCount)" : "Clean")
                             : "Scan"
                     )
                 }

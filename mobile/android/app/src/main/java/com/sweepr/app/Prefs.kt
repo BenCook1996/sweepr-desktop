@@ -571,6 +571,53 @@ object SweeprAccountApi {
             .put("project_id", PROJECT_ID)
         postJson("/v1/account", body, method = "DELETE", bearerToken = current.refreshToken)
     }
+
+    /** Flow A: Redeem a QR pairing token (`ptk_...` or full `/pair?token=ptk_...` URL) from Portal or Desktop App. */
+    fun redeemQrPairToken(rawInput: String, deviceId: String): LinkedAccount {
+        val trimmed = rawInput.trim()
+        val match = Regex("ptk_[A-Za-z0-9_-]{20,64}").find(trimmed)
+        val token = match?.value ?: trimmed
+        require(token.startsWith("ptk_")) { "Invalid QR pairing token. Scan a QR code from your Customer Portal or PC app." }
+        val body = org.json.JSONObject()
+            .put("token", token)
+            .put("device_id", deviceId)
+            .put("device_name", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
+            .put("platform", "android")
+            .put("project_id", PROJECT_ID)
+        val res = postJson("/api/device-link/redeem", body)
+        val expiresSec = res.optLong("expires_at", 0L)
+        val jwsToken = res.optString("token", "").trim()
+        val rawActive = res.optBoolean("active", true)
+        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, deviceId))
+        val accountId = res.getString("account_id")
+        return LinkedAccount(
+            accountId = accountId,
+            email = res.optString("email", ""),
+            refreshToken = res.getString("refresh_token"),
+            deviceId = deviceId,
+            serverActive = isActive,
+            plan = res.optString("plan").takeIf { it.isNotBlank() },
+            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
+            addons = if (isActive) parseAddons(res) else emptyList(),
+            referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
+                ?: Prefs.defaultReferralCode(deviceId, accountId),
+        )
+    }
+
+    /** Flow B: Approve an unactivated PC's QR challenge (`chk_...` or `/pair?mode=approve&challenge=chk_...`) from this signed-in Android phone. */
+    fun approveDesktopQrChallenge(rawInput: String, current: LinkedAccount): String {
+        require(current.isSignedIn) { "Sign in on this phone first before approving a PC QR code." }
+        val trimmed = rawInput.trim()
+        val match = Regex("chk_[A-Za-z0-9_-]{20,64}").find(trimmed)
+        val challengeId = match?.value ?: trimmed
+        require(challengeId.startsWith("chk_")) { "Invalid desktop QR challenge." }
+        val body = org.json.JSONObject()
+            .put("challenge_id", challengeId)
+            .put("refresh_token", current.refreshToken)
+            .put("project_id", PROJECT_ID)
+        val res = postJson("/api/device-link/approve", body, bearerToken = current.refreshToken)
+        return res.optString("device_name", "Desktop PC").ifBlank { "Desktop PC" }
+    }
 }
 
 object Reminders {

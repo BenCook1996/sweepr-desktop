@@ -41,7 +41,7 @@
       },
       "nsis": {
         "installMode": "currentUser",
-        "compression": "zlib",
+        "compression": "none",
         "sidebarImage": "icons/nsis-sidebar.bmp",
         "headerImage": "icons/nsis-header.bmp",
         "installerIcon": "icons/icon.ico",

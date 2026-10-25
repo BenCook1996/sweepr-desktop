@@ -29,6 +29,9 @@ export interface ScanReport { categories: CategoryResult[]; total_bytes: number;
 export interface ScanProgress { done: number; total: number; category_id: string; category_name: string; bytes_so_far: number }
 export interface CleanReport { category_id: string; bytes_freed: number; files_removed: number; files_skipped: number; moved_to_trash: boolean }
 export interface LicenseStatus { active: boolean; status: string; plan: string | null; expires_at: number | null; offline: boolean; dev_unlock: boolean; addons?: string[] }
+export interface QrChallengeResponse { challenge_id: string; poll_secret: string; approve_url: string; qr_svg: string; expires_at: number; ttl_seconds: number }
+export interface QrPollResult { status: string; license: LicenseStatus | null }
+export interface QrCreateTokenResponse { token: string; pair_url: string; qr_svg: string; expires_at: number; ttl_seconds: number; devices_used: number; devices_max: number }
 
 export interface BatteryCareConfig {
   charge_limit_enabled: boolean;
@@ -195,9 +198,9 @@ export const api = {
   removeExclusion: (path: string) => invoke<string[]>("remove_exclusion", { path }),
   checkRunningApps: (categoryIds: string[]) => invoke<RunningAppConflict[]>("check_running_apps", { categoryIds }),
   licenseStatus: (force = false) => invoke<LicenseStatus>("license_status", { force }),
-  startCheckout: (email?: string, plan: "monthly" | "annual" = "monthly") =>
+  startCheckout: (email?: string, plan: "monthly" | "six_month" | "annual" = "monthly") =>
     invoke<boolean>("start_checkout", { email: email ?? null, plan }),
-  startAddonCheckout: (addon: string, email?: string, plan: "monthly" | "annual" = "annual") =>
+  startAddonCheckout: (addon: string, email?: string, plan: "monthly" | "six_month" | "annual" = "annual") =>
     invoke<boolean>("start_addon_checkout", { addon, email: email ?? null, plan }),
   batteryDiagnostics: () => invoke<BatteryDiagnostics>("battery_diagnostics"),
   setBatteryChargeLimit: (enabled: boolean, limitPercent: number) =>
@@ -212,6 +215,10 @@ export const api = {
     listen<string>("tray://navigate", (e) => cb(e.payload)),
   requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
   verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
+  startQrChallenge: () => invoke<QrChallengeResponse>("start_qr_challenge"),
+  pollQrChallenge: (challengeId: string, pollSecret: string) =>
+    invoke<QrPollResult>("poll_qr_challenge", { challengeId, pollSecret }),
+  createQrLinkToken: () => invoke<QrCreateTokenResponse>("create_qr_link_token"),
   memory: () => invoke<MemoryOverview>("memory_overview"),
   startupItems: () => invoke<StartupItem[]>("startup_items"),
   toggleStartupItem: (name: string, scope: string, enabled: boolean) =>

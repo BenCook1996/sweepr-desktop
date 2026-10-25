@@ -1,12 +1,13 @@
 use crate::commands::AppState;
 use crate::error::{AppError, AppResult};
 use crate::safety;
+use rayon::prelude::*;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 use tauri::State;
@@ -49,10 +50,33 @@ pub struct LargeFilesReport {
     pub by_folder: Vec<DiskBreakdownItem>,
 }
 
+fn partial_hash_file(path: &Path, size: u64) -> Option<[u8; 32]> {
+    let mut file = File::open(path).ok()?;
+    let mut hasher = Sha256::new();
+    let mut buf = [0u8; 8192];
+    if size <= 16_384 {
+        loop {
+            match file.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => hasher.update(&buf[..n]),
+                Err(_) => return None,
+            }
+        }
+    } else {
+        hasher.update(size.to_le_bytes());
+        let n1 = file.read(&mut buf).ok()?;
+        hasher.update(&buf[..n1]);
+        file.seek(SeekFrom::End(-8192)).ok()?;
+        let n2 = file.read(&mut buf).ok()?;
+        hasher.update(&buf[..n2]);
+    }
+    Some(hasher.finalize().into())
+}
+
 fn hash_file(path: &Path) -> Option<String> {
     let mut file = File::open(path).ok()?;
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 8192];
+    let mut buffer = [0u8; 65536];
     loop {
         match file.read(&mut buffer) {
             Ok(0) => break,
@@ -243,26 +267,51 @@ pub fn find_duplicates_with_exclusions(
         }
     }
 
-    // 3. Group by full hash for remaining
-    let mut results = Vec::new();
-    for (size, paths) in potential {
-        let mut by_hash: HashMap<String, Vec<String>> = HashMap::new();
-        for path in paths {
-            if let Some(hash) = hash_file(&path) {
-                by_hash
-                    .entry(hash)
-                    .or_default()
-                    .push(path.to_string_lossy().to_string());
+    // 3. Two-stage parallel hashing: 16 KB partial pre-hash filter -> 64 KB full SHA-256
+    let mut results: Vec<DuplicateGroup> = potential
+        .into_par_iter()
+        .flat_map(|(size, paths)| {
+            let mut by_partial: HashMap<[u8; 32], Vec<PathBuf>> = HashMap::new();
+            for path in paths {
+                if let Some(ph) = partial_hash_file(&path, size) {
+                    by_partial.entry(ph).or_default().push(path);
+                }
             }
-        }
 
-        for (hash, mut files) in by_hash {
-            if files.len() > 1 {
-                files.sort();
-                results.push(DuplicateGroup { hash, size, files });
+            let mut groups = Vec::new();
+            for (ph, candidates) in by_partial {
+                if candidates.len() < 2 {
+                    continue;
+                }
+                if size <= 16_384 {
+                    let hash: String = ph.iter().map(|b| format!("{b:02x}")).collect();
+                    let mut files: Vec<String> = candidates
+                        .into_iter()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .collect();
+                    files.sort();
+                    groups.push(DuplicateGroup { hash, size, files });
+                } else {
+                    let mut by_hash: HashMap<String, Vec<String>> = HashMap::new();
+                    for path in candidates {
+                        if let Some(hash) = hash_file(&path) {
+                            by_hash
+                                .entry(hash)
+                                .or_default()
+                                .push(path.to_string_lossy().to_string());
+                        }
+                    }
+                    for (hash, mut files) in by_hash {
+                        if files.len() > 1 {
+                            files.sort();
+                            groups.push(DuplicateGroup { hash, size, files });
+                        }
+                    }
+                }
             }
-        }
-    }
+            groups
+        })
+        .collect();
 
     // Sort largest groups first
     results.sort_by(|a, b| b.size.cmp(&a.size));

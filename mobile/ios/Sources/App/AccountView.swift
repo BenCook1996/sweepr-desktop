@@ -18,6 +18,8 @@ struct AccountView: View {
     @SceneStorage("sweepr_otp_email") private var otpEmail = ""
     @State private var otpCode = ""
     @SceneStorage("sweepr_otp_sent") private var otpSent = false
+    @State private var qrPairInput = ""
+    @State private var qrPairStatus = ""
     @State private var friendReferralInput = ""
     @State private var crashLogText = ""
 
@@ -648,6 +650,42 @@ struct AccountView: View {
                         Button("Use a Different Email") {
                             otpSent = false
                         }
+                    }
+                }
+
+                Section(
+                    header: Text("Instant QR Code Device Link (Up to 3 Devices)"),
+                    footer: Text("Paste a Portal QR token (ptk_...) to unlock this iPhone, or a Desktop QR challenge (chk_...) to unlock your PC.")
+                ) {
+                    TextField("ptk_... or chk_... or /pair URL", text: $qrPairInput)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+
+                    Button("Link Device via QR Token / Challenge") {
+                        Task {
+                            let val = qrPairInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !val.isEmpty else { return }
+                            do {
+                                if val.contains("chk_") {
+                                    try await AccountService.approveDesktopQrChallenge(val, current: vm.linkedAccount)
+                                    qrPairStatus = "✓ Desktop PC unlocked!"
+                                } else {
+                                    let linked = try await AccountService.redeemQrPairToken(val)
+                                    vm.linkedAccount = linked
+                                    qrPairStatus = "✓ iPhone linked to SWEEPR Cleaner Pro!"
+                                    showSignInSheet = false
+                                }
+                            } catch {
+                                qrPairStatus = error.localizedDescription
+                            }
+                        }
+                    }
+                    .disabled(qrPairInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    if !qrPairStatus.isEmpty {
+                        Text(qrPairStatus)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                 }
             }
