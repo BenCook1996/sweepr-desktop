@@ -3377,8 +3377,8 @@ export function createApp(deps: AppDeps) {
     if (!limitQrCreate.hit(clientIp(c))) {
       return c.json({ ok: false, error: "rate_limited" }, 429);
     }
-    const sessId = await sessionAccountId(c);
-    const account = sessId ? repo.accountById(sessId) : null;
+    const body = await c.req.json().catch(() => ({}));
+    const account = await resolvePortalOrBearerOrOtpAccount(c, body);
     if (!account) {
       return c.json({ ok: false, error: "unauthorized", message: "Please log in on the website Customer Portal to generate a QR code for activating a separate device." }, 401);
     }
