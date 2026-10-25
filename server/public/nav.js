@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </a>
           <a href="/download" class="btn w-full justify-center bg-white border border-gray-300 text-gray-800 text-sm py-2.5">
-            <span>Free PC Download</span>
+            <span>Install Now</span>
           </a>
         </div>
       `;
@@ -189,4 +189,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
+
+  try {
+    const ua = (navigator.userAgent || '').toLowerCase();
+    const isIpadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isIos = /iphone|ipad|ipod/.test(ua) || isIpadOs;
+    const isAndroid = ua.includes('android');
+    const isOtherMobile = /mobile|iemobile|opera mini/.test(ua);
+    if (isIos || isAndroid || isOtherMobile) {
+      const targetHref = isIos ? '/download?platform=ios' : '/download?platform=android';
+      document.querySelectorAll('a[href="/download"]').forEach((a) => {
+        a.setAttribute('href', targetHref);
+      });
+      const osBtnLbl = document.getElementById('osDownloadText') || document.getElementById('downloadBtnLabel');
+      if (osBtnLbl) {
+        osBtnLbl.textContent = 'Install Now';
+      }
+    }
+  } catch {}
 });
