@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>FullScreen</key>
+      <true/>
+      <key>IgnoreManifestScope</key>
+      <true/>
+      <key>IsRemovable</key>
+      <true/>
+      <key>Label</key>
+      <string>SWEEPR Cleaner</string>
+      <key>PayloadDescription</key>
+      <string>Installs the SWEEPR Cleaner app onto your iPhone or iPad Home Screen.</string>
+      <key>PayloadDisplayName</key>
+      <string>SWEEPR Cleaner iOS App</string>
+      <key>PayloadIdentifier</key>
+      <string>com.sweeprcleaner.ios.webclip</string>
+      <key>PayloadType</key>
+      <string>com.apple.webClip.managed</string>
+      <key>PayloadUUID</key>
+      <string>A194E2A0-19C4-4A12-9A2E-8147B53E9055</string>
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+      <key>Precomposed</key>
+      <true/>
+      <key>URL</key>
+      <string>https://sweeprcleaner.com/ios-app</string>
+    </dict>
+  </array>
+  <key>PayloadDescription</key>
+  <string>1-Tap SWEEPR Cleaner Installer for iPhone and iPad. Installs the SWEEPR Cleaner iOS App to scan duplicate photos, large videos, and manage your 3-device Pro subscription.</string>
+  <key>PayloadDisplayName</key>
+  <string>SWEEPR Cleaner (iPhone &amp; iPad Installer)</string>
+  <key>PayloadIdentifier</key>
+  <string>com.sweeprcleaner.ios.installer</string>
+  <key>PayloadOrganization</key>
+  <string>SWEEPR Technologies</string>
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+  <key>PayloadType</key>
+  <string>Configuration</string>
+  <key>PayloadUUID</key>
+  <string>B252A4C2-39E6-4C34-9C4A-0369D750B266</string>
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+</dict>
+</plist>
