@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-24T05:26:41.653Z",
+  "lastRunAt": "2026-10-25T06:26:29.510Z",
   "lastCount": 50,
-  "totalCleanItems": 378,
+  "totalCleanItems": 478,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/logitech-ghub-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/logitech-ghub-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/logitech-ghub-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/adobe-creative-cloud-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/premiere-pro-2026-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/premiere-pro-2026-code-bytecode-cache"
+    "https://sweeprcleaner.com/clean/app/zoom-workplace-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/zoom-workplace-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/thunderbird-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/thunderbird-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/thunderbird-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/thunderbird-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/thunderbird-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/dropbox-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/dropbox-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/dropbox-desktop-service-worker-cachestorage"
   ]
 }

@@ -274,6 +274,307 @@ const CURATED_TOPICS = [
       "Delete Windows.edb / Windows.db inside C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows.",
       "Run: net start WSearch to rebuild a compact, fast search index."
     ]
+  },
+  {
+    slug: "pip-wheel-cache",
+    category: "app",
+    name: "Python Pip Wheel & Download HTTP Cache",
+    path: "%LocalAppData%\\pip\\cache",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 12.0 GB",
+    whatIsIt: "Pip caches downloaded Python package .whl wheels and index queries across all your virtual environments.",
+    whatHappens: "Safely frees gigabytes of SSD space without uninstalling any Python packages from existing venvs.",
+    manualSteps: [
+      "Open Windows Terminal.",
+      "Run 'pip cache purge' to clear all cached wheel archives.",
+      "Or press Windows Key + R, type %localappdata%\\pip\\cache, and delete the contents."
+    ]
+  },
+  {
+    slug: "gradle-wrapper-cache",
+    category: "app",
+    name: "Gradle Build & Dependency Wrapper Cache",
+    path: "%UserProfile%\\.gradle\\caches",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 30.0 GB",
+    whatIsIt: "Gradle stores downloaded JAR dependencies, daemon logs, and incremental transform caches inside your user directory.",
+    whatHappens: "Reclaims massive disk space from old build artifacts. Active projects will re-fetch only the latest dependencies on next build.",
+    manualSteps: [
+      "Close Android Studio and IntelliJ IDEA.",
+      "Open %userprofile%\\.gradle\\caches in File Explorer.",
+      "Delete old 'modules-2', 'transforms-3', and 'jars-9' folders."
+    ]
+  },
+  {
+    slug: "nuget-package-cache",
+    category: "app",
+    name: "NuGet Global Packages Cache (%UserProfile%\\.nuget)",
+    path: "%UserProfile%\\.nuget\\packages",
+    safeToDelete: true,
+    avgSpace: "3.0 GB – 20.0 GB",
+    whatIsIt: "Visual Studio and .NET CLI download every NuGet package version you reference into a shared global package cache.",
+    whatHappens: "Frees tens of gigabytes of storage from unused package versions without affecting your solution source code.",
+    manualSteps: [
+      "Close Visual Studio and Rider.",
+      "Run: dotnet nuget locals all --clear in Windows Terminal.",
+      "Or navigate to %userprofile%\\.nuget\\packages and remove outdated packages."
+    ]
+  },
+  {
+    slug: "go-build-cache",
+    category: "app",
+    name: "Go Language Module & Build Cache",
+    path: "%LocalAppData%\\go-build and %UserProfile%\\go\\pkg\\mod",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 15.0 GB",
+    whatIsIt: "The Go compiler caches compiled package archives, test results, and downloaded module source trees.",
+    whatHappens: "Safely cleans up stale Go build artifacts and reclaims SSD storage without touching your project code.",
+    manualSteps: [
+      "Open Windows Terminal.",
+      "Run: go clean -cache -modcache to purge build and module download caches.",
+      "Or delete the %localappdata%\\go-build directory."
+    ]
+  },
+  {
+    slug: "git-lfs-cache",
+    category: "app",
+    name: "Git Large File Storage (LFS) Objects Cache",
+    path: ".git\\lfs\\objects and %LocalAppData%\\Git",
+    safeToDelete: true,
+    avgSpace: "2.5 GB – 35.0 GB",
+    whatIsIt: "Git LFS keeps local copies of binary assets, textures, and 3D models even after you switch branches or delete files.",
+    whatHappens: "Safely prunes unreferenced Git LFS media blobs while keeping your remote repositories fully intact.",
+    manualSteps: [
+      "Open Terminal in your Git repository.",
+      "Run: git lfs prune to safely discard unreferenced binary files.",
+      "Clear old Git credential and clone cache directories in %localappdata%."
+    ]
+  },
+  {
+    slug: "pnpm-content-store",
+    category: "app",
+    name: "pnpm Global Content-Addressable Store",
+    path: "%LocalAppData%\\pnpm\\store",
+    safeToDelete: true,
+    avgSpace: "3.5 GB – 25.0 GB",
+    whatIsIt: "pnpm stores hard-linked node_modules packages in a content-addressable store on your primary Windows drive.",
+    whatHappens: "Pruning unreferenced packages reclaims gigabytes of disk space without breaking existing projects.",
+    manualSteps: [
+      "Open Windows Terminal.",
+      "Run: pnpm store prune to remove orphaned packages.",
+      "Confirm reclaimed space in %localappdata%\\pnpm\\store."
+    ]
+  },
+  {
+    slug: "yarn-berry-cache",
+    category: "app",
+    name: "Yarn Package Manager Global Cache",
+    path: "%LocalAppData%\\Yarn\\Berry\\cache",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 14.0 GB",
+    whatIsIt: "Yarn Modern (Berry) caches zero-install zip archives and package tarballs across all frontend projects.",
+    whatHappens: "Safely purges stale package archives while allowing active projects to re-download zip files on demand.",
+    manualSteps: [
+      "Open Windows Terminal.",
+      "Run: yarn cache clean --all.",
+      "Or delete %localappdata%\\Yarn\\Berry\\cache."
+    ]
+  },
+  {
+    slug: "rustup-toolchain-downloads",
+    category: "app",
+    name: "Rustup Toolchain Downloads & Old Component Temp",
+    path: "%UserProfile%\\.rustup\\downloads",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 8.0 GB",
+    whatIsIt: "Rustup downloads compressed toolchain tarballs (rustc, cargo, rust-docs) and keeps leftover archives in downloads.",
+    whatHappens: "Deleting leftover archives reclaims SSD space without altering your installed Rust toolchains.",
+    manualSteps: [
+      "Open %userprofile%\\.rustup in File Explorer.",
+      "Select and delete all files inside the 'downloads' directory.",
+      "Run 'rustup check' to verify toolchain integrity."
+    ]
+  },
+  {
+    slug: "amd-dxcache-bloat",
+    category: "app",
+    name: "AMD Radeon Software DirectX Shader Cache",
+    path: "%LocalAppData%\\AMD\\DxCache",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 10.0 GB",
+    whatIsIt: "AMD Adrenalin drivers cache compiled DirectX 11 and DirectX 12 GPU shaders in %LocalAppData%\\AMD\\DxCache.",
+    whatHappens: "Safely frees gigabytes of storage and resolves stuttering or black texture glitches following an AMD driver update.",
+    manualSteps: [
+      "Close all running games.",
+      "Press Windows Key + R, type %localappdata%\\AMD\\DxCache, and press Enter.",
+      "Delete all files inside the DxCache folder."
+    ]
+  },
+  {
+    slug: "amd-oglcache-bloat",
+    category: "app",
+    name: "AMD Radeon Software OpenGL Shader Cache",
+    path: "%LocalAppData%\\AMD\\OglCache",
+    safeToDelete: true,
+    avgSpace: "0.8 GB – 5.5 GB",
+    whatIsIt: "AMD graphics drivers compile and store OpenGL and Vulkan pipeline binary shaders in %LocalAppData%\\AMD\\OglCache.",
+    whatHappens: "Reclaims disk space and forces games to rebuild clean shader binaries on next run.",
+    manualSteps: [
+      "Quit running 3D emulators and OpenGL games.",
+      "Press Windows Key + R, type %localappdata%\\AMD\\OglCache, and hit Enter.",
+      "Select all files (Ctrl+A) and delete them."
+    ]
+  },
+  {
+    slug: "roblox-textures-cache",
+    category: "app",
+    name: "Roblox Textures & Asset Download Cache",
+    path: "%LocalAppData%\\Roblox\\Downloads and %LocalAppData%\\Temp\\Roblox",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 9.0 GB",
+    whatIsIt: "Roblox Player downloads meshes, audio files, and place textures into your local AppData directory without auto-pruning.",
+    whatHappens: "Frees hidden storage and resolves texture loading errors or stuck joining screens.",
+    manualSteps: [
+      "Close the Roblox Player.",
+      "Press Windows Key + R, type %localappdata%\\Roblox\\Downloads, and press Enter.",
+      "Delete the contents of Downloads and %localappdata%\\Temp\\Roblox."
+    ]
+  },
+  {
+    slug: "minecraft-launcher-logs",
+    category: "app",
+    name: "Minecraft Launcher Native Logs & Crash Dumps",
+    path: "%AppData%\\.minecraft\\logs and %AppData%\\.minecraft\\crash-reports",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 8.5 GB",
+    whatIsIt: "Minecraft Java Edition writes uncompressed log files (latest.log, .log.gz) and JVM crash dumps every gaming session.",
+    whatHappens: "Safely clears old session logs and dumps without touching your worlds, saves, or resource packs.",
+    manualSteps: [
+      "Close Minecraft and Minecraft Launcher.",
+      "Press Windows Key + R, type %appdata%\\.minecraft\\logs, and hit Enter.",
+      "Delete all archived .log.gz files."
+    ]
+  },
+  {
+    slug: "windows-delivery-optimization-cache",
+    category: "folder",
+    name: "Windows Delivery Optimization Peering Cache",
+    path: "C:\\Windows\\SoftwareDistribution\\DeliveryOptimization",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 15.0 GB",
+    whatIsIt: "Windows Delivery Optimization stores peer-to-peer Windows Update files to distribute across local network PCs.",
+    whatHappens: "Safely removes cached update files and frees space immediately without affecting Windows Update functionality.",
+    manualSteps: [
+      "Open Windows Settings > System > Storage > Temporary files.",
+      "Check 'Delivery Optimization Files' and click Remove files.",
+      "Or clear C:\\Windows\\SoftwareDistribution\\DeliveryOptimization via Administrator prompt."
+    ]
+  },
+  {
+    slug: "windows-cryptneturlcache",
+    category: "folder",
+    name: "Windows CryptnetUrlCache (SSL/TLS Certificate Revocation)",
+    path: "%AppData%\\..\\LocalLow\\Microsoft\\CryptnetUrlCache",
+    safeToDelete: true,
+    avgSpace: "0.5 GB – 3.5 GB",
+    whatIsIt: "Windows saves cached CRL (Certificate Revocation List) and OCSP responses in LocalLow\\Microsoft\\CryptnetUrlCache.",
+    whatHappens: "Clearing stale certificate caches frees disk space and resolves unexpected SSL/TLS verification errors.",
+    manualSteps: [
+      "Open Terminal as Administrator.",
+      "Run 'certutil -urlcache * delete' to safely purge expired certificate caches.",
+      "Or delete files inside %userprofile%\\AppData\\LocalLow\\Microsoft\\CryptnetUrlCache."
+    ]
+  },
+  {
+    slug: "windows-fontcache-dat",
+    category: "folder",
+    name: "Windows System Font Cache Service (FontCache.dat)",
+    path: "C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Local\\FontCache",
+    safeToDelete: true,
+    avgSpace: "0.4 GB – 2.0 GB",
+    whatIsIt: "The Windows Font Cache Service caches glyph rasterizations and font family metrics in system service profiles.",
+    whatHappens: "Rebuilding corrupted font caches fixes garbled desktop text, missing symbols, and high CPU usage in FontCache service.",
+    manualSteps: [
+      "Open Terminal as Administrator and stop the font service: net stop FontCache",
+      "Delete files inside C:\\Windows\\ServiceProfiles\\LocalService\\AppData\\Local\\FontCache.",
+      "Restart the service: net start FontCache"
+    ]
+  },
+  {
+    slug: "windows-system32-winevt-logs",
+    category: "folder",
+    name: "Windows Event Viewer Historical Logs (winevt\\Logs)",
+    path: "C:\\Windows\\System32\\winevt\\Logs",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 6.0 GB",
+    whatIsIt: "Windows writes Application, System, Security, and Diagnostic event logs into multi-megabyte .evtx binary log files.",
+    whatHappens: "Safely clears bloated event log archives when disk space is critically low.",
+    manualSteps: [
+      "Open Event Viewer (eventvwr.msc).",
+      "Right-click 'Application' or 'System' and select 'Clear Log'.",
+      "Or use SWEEPR Cleaner to safely archive and purge old Windows event logs in 1 click."
+    ]
+  },
+  {
+    slug: "windows-wer-system-reports",
+    category: "folder",
+    name: "Windows Error Reporting System Queue (ProgramData\\WER)",
+    path: "C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue",
+    safeToDelete: true,
+    avgSpace: "1.2 GB – 11.0 GB",
+    whatIsIt: "Windows stages crash reports, minidump attachments, and system state snapshots in ProgramData\\Microsoft\\Windows\\WER.",
+    whatHappens: "Safely deletes queued crash reports and frees gigabytes of primary drive space.",
+    manualSteps: [
+      "Open File Explorer as Administrator.",
+      "Navigate to C:\\ProgramData\\Microsoft\\Windows\\WER.",
+      "Delete the contents of 'ReportQueue' and 'ReportArchive'."
+    ]
+  },
+  {
+    slug: "windows-prefetch-readyboot",
+    category: "folder",
+    name: "Windows Prefetch ReadyBoot Trace Files (ReadyBoot)",
+    path: "C:\\Windows\\Prefetch\\ReadyBoot",
+    safeToDelete: true,
+    avgSpace: "0.3 GB – 1.8 GB",
+    whatIsIt: "Windows generates boot prefetch trace files in C:\\Windows\\Prefetch\\ReadyBoot to monitor system startup sequences.",
+    whatHappens: "Safely cleans up stale boot trace files without altering your system boot configuration.",
+    manualSteps: [
+      "Open Terminal as Administrator.",
+      "Navigate to C:\\Windows\\Prefetch\\ReadyBoot.",
+      "Delete old .fx trace files."
+    ]
+  },
+  {
+    slug: "windows-temp-system-runtime",
+    category: "folder",
+    name: "Windows System Root Temp Directory (C:\\Windows\\Temp)",
+    path: "C:\\Windows\\Temp",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 20.0 GB",
+    whatIsIt: "System services, MSI installers, and background scheduled tasks store temporary staging files inside C:\\Windows\\Temp.",
+    whatHappens: "Safely deletes accumulated system temp files and unblocks pending installations.",
+    manualSteps: [
+      "Open File Explorer as Administrator.",
+      "Navigate to C:\\Windows\\Temp.",
+      "Select all files (Ctrl+A) and delete them (skip any files currently locked by active services)."
+    ]
+  },
+  {
+    slug: "windows-installer-superseded-msp",
+    category: "folder",
+    name: "Windows Installer Superseded MSP Patches (C:\\Windows\\Installer)",
+    path: "C:\\Windows\\Installer",
+    safeToDelete: false,
+    warning: "Never delete C:\\Windows\\Installer manually in File Explorer. Only use SWEEPR Cleaner's verified orphaned patch algorithm to remove superseded .msp files.",
+    avgSpace: "4.0 GB – 28.0 GB",
+    whatIsIt: "Windows Installer stores cached .msi setup files and .msp patch packages required for software repair and uninstallation.",
+    whatHappens: "Safely removes orphaned MSP patches that have been superseded by newer software versions.",
+    manualSteps: [
+      "Do NOT delete C:\\Windows\\Installer directly via File Explorer.",
+      "Launch SWEEPR Cleaner and select 'Installer Leftovers'.",
+      "Run the scan to safely remove only verified orphaned MSP and MSI files."
+    ]
   }
 ];
 
@@ -330,7 +631,22 @@ const APP_MATRIX_APPS = [
   { key: "jetbrains-rider", label: "JetBrains Rider .NET IDE", baseDir: "%LocalAppData%\\JetBrains\\Rider2025.1\\caches", proc: "rider64.exe" },
   { key: "android-studio-koala", label: "Android Studio", baseDir: "%LocalAppData%\\Google\\AndroidStudio2024.3\\caches", proc: "studio64.exe" },
   { key: "docker-desktop-wsl", label: "Docker Desktop Windows", baseDir: "%LocalAppData%\\Docker\\log", proc: "Docker Desktop.exe" },
-  { key: "plex-media-server", label: "Plex Media Server", baseDir: "%LocalAppData%\\Plex Media Server\\Cache\\PhotoTranscoder", proc: "Plex Media Server.exe" }
+  { key: "plex-media-server", label: "Plex Media Server", baseDir: "%LocalAppData%\\Plex Media Server\\Cache\\PhotoTranscoder", proc: "Plex Media Server.exe" },
+  { key: "firefox", label: "Mozilla Firefox", baseDir: "%LocalAppData%\\Mozilla\\Firefox\\Profiles\\Default", proc: "firefox.exe" },
+  { key: "zoom-workplace", label: "Zoom Workplace", baseDir: "%AppData%\\Zoom\\data", proc: "Zoom.exe" },
+  { key: "thunderbird", label: "Mozilla Thunderbird", baseDir: "%LocalAppData%\\Thunderbird\\Profiles\\Default", proc: "thunderbird.exe" },
+  { key: "dropbox-desktop", label: "Dropbox Desktop Client", baseDir: "%LocalAppData%\\Dropbox\\cache", proc: "Dropbox.exe" },
+  { key: "onedrive-sync", label: "Microsoft OneDrive Sync", baseDir: "%LocalAppData%\\Microsoft\\OneDrive\\logs", proc: "OneDrive.exe" },
+  { key: "github-desktop", label: "GitHub Desktop", baseDir: "%AppData%\\GitHub Desktop", proc: "GitHubDesktop.exe" },
+  { key: "insomnia-rest", label: "Insomnia API Client", baseDir: "%AppData%\\Insomnia", proc: "Insomnia.exe" },
+  { key: "dbeaver-db", label: "DBeaver", baseDir: "%AppData%\\DBeaverData\\workspace6\\.metadata", proc: "dbeaver.exe" },
+  { key: "vlc-media-player", label: "VLC Media Player", baseDir: "%AppData%\\vlc\\art", proc: "vlc.exe" },
+  { key: "audacity-audio", label: "Audacity Audio Editor", baseDir: "%AppData%\\audacity\\SessionData", proc: "audacity.exe" },
+  { key: "visual-studio-2022", label: "Visual Studio 2022 IDE", baseDir: "%LocalAppData%\\Microsoft\\VisualStudio\\17.0", proc: "devenv.exe" },
+  { key: "league-of-legends", label: "League of Legends Client", baseDir: "C:\\Riot Games\\League of Legends\\Logs", proc: "LeagueClient.exe" },
+  { key: "geforce-now", label: "NVIDIA GeForce NOW", baseDir: "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache", proc: "GeForceNOW.exe" },
+  { key: "roblox-player", label: "Roblox Engine & Player", baseDir: "%LocalAppData%\\Roblox\\Downloads", proc: "RobloxPlayerBeta.exe" },
+  { key: "tiktok-live-studio", label: "TikTok LIVE Studio", baseDir: "%AppData%\\tiktok-live-studio\\Cache", proc: "TikTok LIVE Studio.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
