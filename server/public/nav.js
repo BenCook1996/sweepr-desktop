@@ -194,11 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const ua = (navigator.userAgent || '').toLowerCase();
     const isIpadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
     const isIos = /iphone|ipad|ipod/.test(ua) || isIpadOs;
-    const isAndroid = ua.includes('android');
+    const isAndroid = ua.includes('android') || (ua.includes('linux') && navigator.maxTouchPoints > 0);
     const isOtherMobile = /mobile|iemobile|opera mini/.test(ua);
     if (isIos || isAndroid || isOtherMobile) {
-      const targetHref = isIos ? '/download?platform=ios' : '/download?platform=android';
-      document.querySelectorAll('a[href="/download"]').forEach((a) => {
+      const targetHref = isIos ? '/download?platform=ios&direct=1' : '/download?platform=android&direct=1';
+      document.querySelectorAll('a[href^="/download"]').forEach((a) => {
         a.setAttribute('href', targetHref);
       });
       const osBtnLbl = document.getElementById('osDownloadText') || document.getElementById('downloadBtnLabel');

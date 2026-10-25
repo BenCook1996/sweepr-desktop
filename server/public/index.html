@@ -260,13 +260,13 @@
         var ua = (navigator.userAgent || '').toLowerCase();
         var isIpadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
         var isIos = /iphone|ipad|ipod/.test(ua) || isIpadOs;
-        var isAndroid = ua.indexOf('android') !== -1;
+        var isAndroid = ua.indexOf('android') !== -1 || (ua.indexOf('linux') !== -1 && navigator.maxTouchPoints > 0);
         var isMobile = isIos || isAndroid || /mobile|iemobile|opera mini/.test(ua);
         var btn = document.getElementById('downloadBtn');
         var lbl = document.getElementById('downloadBtnLabel');
         if (isMobile) {
           if (lbl) lbl.textContent = 'Install Now';
-          if (btn) btn.setAttribute('href', isIos ? '/download?platform=ios' : '/download?platform=android');
+          if (btn) btn.setAttribute('href', isIos ? '/download?platform=ios&direct=1' : '/download?platform=android&direct=1');
         } else if (btn && (ua.indexOf('macintosh') !== -1 || ua.indexOf('mac os x') !== -1)) {
           btn.setAttribute('href', '/download?platform=mac');
         }

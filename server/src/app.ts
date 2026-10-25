@@ -532,13 +532,13 @@ export function createApp(deps: AppDeps) {
   };
 
   /** Order matters: Android and ChromeOS user agents also contain "Linux". */
-  const detectPlatform = (ua: string): Platform | null => {
-    if (/iphone|ipad|ipod/.test(ua)) return "ios";
-    if (/android/.test(ua)) return "android";
+  const detectPlatform = (ua: string, chPlatform = "", chMobile = ""): Platform | null => {
+    if (/iphone|ipad|ipod/.test(ua) || chPlatform.includes("ios")) return "ios";
+    if (/android/.test(ua) || chPlatform.includes("android") || (chMobile === "?1" && /linux|x11/.test(ua)) || /mobile|iemobile|opera mini/.test(ua)) return "android";
     if (/cros/.test(ua)) return null;
-    if (/windows/.test(ua)) return "windows";
-    if (/macintosh|mac os x/.test(ua)) return "mac";
-    if (/linux|x11/.test(ua)) return "linux";
+    if (/windows/.test(ua) || chPlatform.includes("win")) return "windows";
+    if (/macintosh|mac os x/.test(ua) || chPlatform.includes("mac")) return "mac";
+    if (/linux|x11/.test(ua) || chPlatform.includes("linux")) return "linux";
     return null;
   };
 
@@ -619,32 +619,19 @@ export function createApp(deps: AppDeps) {
   app.get("/download", (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
     const ua = c.req.header("user-agent")?.toLowerCase() || "";
+    const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
+    const chMobile = c.req.header("sec-ch-ua-mobile")?.toLowerCase() || "";
     const host = c.req.header("host") || "sweeprcleaner.com";
-    const forceDirect = c.req.query("direct") === "1";
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
     const platform: Platform | null =
       requested && (validPlatforms as readonly string[]).includes(requested)
         ? (requested as Platform)
-        : detectPlatform(ua);
+        : detectPlatform(ua, chPlatform, chMobile);
 
     if (!platform || requested === "picker") {
       return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device platform:", ua, host));
-    }
-
-    if (platform === "ios" && !forceDirect) {
-      const isNonSafariIos = /crios|fxios|edgios|opios|instagram|fban|fbav|tiktok|line\/|wv/.test(ua) || (ua.includes("iphone") && !ua.includes("safari"));
-      if (isNonSafariIos) {
-        return c.html(pickerPage("Install SWEEPR Cleaner on iOS", "Tap below to install on your iPhone or iPad:", ua, host));
-      }
-    }
-
-    if (platform === "android" && !forceDirect) {
-      const isAndroidWebView = /\bwv\b|instagram|fban|fbav|tiktok|bytedancewebview|line\/|micromessenger|reddit/.test(ua);
-      if (isAndroidWebView) {
-        return c.html(pickerPage("Install SWEEPR Cleaner on Android", "Downloading SWEEPRCleaner.apk...", ua, host));
-      }
     }
 
     const { file, type, label } = DESKTOP_FILES[platform];
