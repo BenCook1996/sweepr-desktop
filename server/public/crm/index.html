@@ -67,7 +67,7 @@
   <aside id="crm-sidebar" class="w-64 border-r border-slate-800 bg-surface-900/95 backdrop-blur-xl flex flex-col fixed inset-y-0 z-40 -translate-x-full lg:translate-x-0 transition-transform duration-200">
     <div class="p-6 border-b border-slate-800/80 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" class="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20" />
+        <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="36" height="36" class="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20" />
         <div>
           <span class="font-extrabold text-base tracking-tight text-white block">SWEEPR Cleaner CRM</span>
           <span class="text-xs text-brand-400 font-mono font-medium">Subscription Engine</span>
@@ -103,6 +103,13 @@
           <span>Outreach & Directories</span>
         </div>
         <span id="nav-outreach-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30">256</span>
+      </button>
+      <button onclick="switchTab('email-actions')" id="nav-email-actions" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <div class="flex items-center gap-3">
+          <i data-lucide="mail-check" class="w-4 h-4 text-cyan-400"></i>
+          <span>Email &amp; Portal Actions</span>
+        </div>
+        <span id="nav-email-actions-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">9</span>
       </button>
       <button onclick="switchTab('seo')" id="nav-seo" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
         <i data-lucide="line-chart" class="w-4 h-4 text-sky-400"></i>
@@ -605,6 +612,125 @@
               <tbody id="outreach-table-body" class="divide-y divide-slate-800/80 text-xs">
                 <tr>
                   <td colspan="8" class="py-12 text-center text-slate-400">Loading outreach & directory submissions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: EMAIL & PORTAL ACTIONS AUTOMATION LOG (WITH DEDUPLICATION & 3-DAY COOLDOWN) -->
+      <section id="tab-email-actions" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div class="bg-surface-900 border border-cyan-500/30 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-cyan-300">Total Emails Actioned</span>
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                <i data-lucide="mail-check" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="ea-stat-total" class="text-3xl font-extrabold text-white">0</span>
+              <span class="text-xs text-cyan-400 font-medium">SWEEPR threads logged</span>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">48h inbox scanner across Cleaner, Deepblock &amp; VPN</p>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Email Replies Sent</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <i data-lucide="reply" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="ea-stat-replied" class="text-3xl font-extrabold text-emerald-400">0</span>
+              <span class="text-xs text-slate-400 font-medium">via Gmail TLS SMTP</span>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">Editorial reviews, reviewer keys &amp; partner replies</p>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Portals &amp; Appeals Done</span>
+              <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                <i data-lucide="globe" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="ea-stat-portal" class="text-3xl font-extrabold text-purple-400">0</span>
+              <span class="text-xs text-slate-400 font-medium">portals &amp; verifications</span>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">Store verifications, directory forms &amp; appeals</p>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Code Fixes &amp; Dedupe Guard</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-3 flex items-baseline gap-2">
+              <span id="ea-stat-code" class="text-3xl font-extrabold text-amber-400">0</span>
+              <span class="text-xs text-slate-400 font-medium">fixes / 3d cooldown</span>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">Blocks duplicate replies unless new reply or &ge;3d follow-up</p>
+          </div>
+        </div>
+
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="filterEmailActions('all')" id="ea-filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-500 text-white transition-all">All Actions</button>
+              <button onclick="filterEmailActions('email_reply')" id="ea-filter-email_reply" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all">Email Replies</button>
+              <button onclick="filterEmailActions('portal_submission')" id="ea-filter-portal_submission" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all">Portal &amp; Appeals</button>
+              <button onclick="filterEmailActions('code_fix')" id="ea-filter-code_fix" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all">Code &amp; Config Fixes</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input
+                  id="ea-search-input"
+                  type="text"
+                  oninput="loadEmailActions(this.value)"
+                  placeholder="Search sender, subject, action..."
+                  class="pl-9 pr-4 py-1.5 bg-surface-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 w-64"
+                />
+              </div>
+              <a href="/api/crm/email-actions/export.csv" class="px-3 py-1.5 rounded-xl bg-surface-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-all flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span>Export CSV</span>
+              </a>
+              <button onclick="promptAddEmailAction()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Log Email / Portal Action</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="px-6 py-2.5 bg-cyan-950/20 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+            <span id="ea-count-label">Showing 0 logged email &amp; portal actions</span>
+            <span class="font-mono text-[11px] text-cyan-400">Dedupe Rule: 1 response per Message-ID / Thread-ID · Auto-skips unless new inbound reply or &ge;3-day follow-up window</span>
+          </div>
+
+          <div class="overflow-x-auto max-h-[640px] overflow-y-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 z-10 bg-surface-850 shadow-sm">
+                <tr class="border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th class="py-3.5 px-4">Project</th>
+                  <th class="py-3.5 px-4">Sender &amp; Subject</th>
+                  <th class="py-3.5 px-4">Category</th>
+                  <th class="py-3.5 px-4">Action Taken &amp; Details</th>
+                  <th class="py-3.5 px-4">Portal / Reply ID</th>
+                  <th class="py-3.5 px-4">Dedupe &amp; Follow-Up Guard</th>
+                  <th class="py-3.5 px-4">Actioned At</th>
+                  <th class="py-3.5 px-4 text-right">Manage</th>
+                </tr>
+              </thead>
+              <tbody id="ea-table-body" class="divide-y divide-slate-800/80 text-xs">
+                <tr>
+                  <td colspan="8" class="py-12 text-center text-slate-400">Loading Email &amp; Portal Action logs...</td>
                 </tr>
               </tbody>
             </table>
@@ -1301,6 +1427,7 @@
         loadCustomers(),
         loadActivities(),
         loadOutreach(),
+        loadEmailActions(),
         loadTelemetry()
       ]);
     }
@@ -1430,6 +1557,155 @@
       }
     }
 
+    let currentEmailActionFilter = 'all';
+
+    async function loadEmailActions(search = '') {
+      try {
+        let url = `/api/crm/email-actions?action_type=${encodeURIComponent(currentEmailActionFilter)}&limit=300`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows = data.rows || data.items || [];
+
+        if (data.counts) {
+          const elTotal = document.getElementById('ea-stat-total');
+          const elReplied = document.getElementById('ea-stat-replied');
+          const elPortal = document.getElementById('ea-stat-portal');
+          const elCode = document.getElementById('ea-stat-code');
+          const navBadge = document.getElementById('nav-email-actions-badge');
+          if (elTotal) elTotal.textContent = data.counts.total ?? rows.length;
+          if (elReplied) elReplied.textContent = data.counts.replied_count ?? 0;
+          if (elPortal) elPortal.textContent = data.counts.portal_count ?? 0;
+          if (elCode) elCode.textContent = (data.counts.code_fix_count ?? 0) + (data.counts.deduped_count ?? 0);
+          if (navBadge) navBadge.textContent = data.counts.total ?? rows.length;
+        }
+
+        const countLabel = document.getElementById('ea-count-label');
+        if (countLabel) {
+          countLabel.textContent = `Showing ${rows.length} of ${data.total ?? rows.length} logged email & portal actions`;
+        }
+
+        const tbody = document.getElementById('ea-table-body');
+        if (!tbody) return;
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="py-12 text-center text-slate-400">No email or portal actions match the current filter.</td></tr>';
+          return;
+        }
+
+        const actionBadges = {
+          email_reply: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Email Reply Sent</span>',
+          portal_submission: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">Portal Actioned</span>',
+          appeal_filed: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Appeal Filed</span>',
+          code_fix: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/30">Code / Schema Fix</span>',
+          config_update: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Config / Infra Action</span>',
+          logged_only: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-700 text-slate-300">Logged</span>'
+        };
+
+        tbody.innerHTML = rows.map(r => {
+          const actionDate = r.actioned_at ? new Date(r.actioned_at * 1000).toLocaleString() : '—';
+          const followUpDate = r.follow_up_after_ts ? new Date(r.follow_up_after_ts * 1000).toISOString().slice(0, 10) : '—';
+          const dedupePill = r.cooldown_active
+            ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-semibold">Locked (${r.cooldown_remaining_hours}h left)</div><div class="text-[10px] text-slate-500 mt-0.5">Follow-up after ${esc(followUpDate)}</div>`
+            : `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">Follow-Up Eligible</div>`;
+          const portalHtml = r.portal_url
+            ? `<a href="${esc(r.portal_url)}" target="_blank" rel="noopener" class="text-cyan-400 hover:underline font-mono text-[11px] block truncate max-w-[180px]">${esc(r.portal_url.replace(/^https?:\/\//, ''))}</a>`
+            : '';
+          const replyHtml = r.reply_message_id
+            ? `<div class="text-[10px] font-mono text-emerald-400 truncate max-w-[180px]" title="${esc(r.reply_message_id)}">Reply: ${esc(r.reply_message_id)}</div>`
+            : `<div class="text-[10px] font-mono text-slate-500 truncate max-w-[180px]" title="${esc(r.message_id)}">Msg: ${esc(r.message_id)}</div>`;
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition-colors">
+              <td class="py-3.5 px-4 align-top"><span class="px-2 py-0.5 rounded bg-brand-500/15 border border-brand-500/30 text-brand-300 text-[10px] font-mono uppercase font-bold">${esc(r.project_id || 'cleaner')}</span></td>
+              <td class="py-3.5 px-4 align-top max-w-[240px]">
+                <div class="font-bold text-white truncate">${esc(r.subject)}</div>
+                <div class="text-[11px] text-slate-400 truncate">${esc(r.sender_name || r.sender_email)} &lt;${esc(r.sender_email)}&gt;</div>
+                <div class="text-[10px] font-mono text-slate-500 mt-0.5">Thread: ${esc(r.thread_id)}</div>
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                <span class="px-2 py-0.5 rounded bg-surface-800 border border-slate-700 text-slate-300 text-[10px] font-mono uppercase">${esc(r.category)}</span>
+              </td>
+              <td class="py-3.5 px-4 align-top max-w-[340px]">
+                <div class="mb-1">${actionBadges[r.action_type] || actionBadges.logged_only}</div>
+                <div class="font-semibold text-slate-100">${esc(r.action_summary)}</div>
+                ${r.action_detail ? `<div class="text-[11px] text-slate-400 mt-1 leading-relaxed">${esc(r.action_detail)}</div>` : ''}
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                ${portalHtml}
+                ${replyHtml}
+              </td>
+              <td class="py-3.5 px-4 align-top">${dedupePill}</td>
+              <td class="py-3.5 px-4 align-top text-[11px] text-slate-300 whitespace-nowrap">${esc(actionDate)}</td>
+              <td class="py-3.5 px-4 align-top text-right">
+                <button onclick="deleteEmailActionRow(${Number(r.id)})" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[11px] font-semibold border border-rose-500/20">Reset Dedupe</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load email actions:', err);
+      }
+    }
+
+    function filterEmailActions(actionType) {
+      currentEmailActionFilter = actionType;
+      ['all', 'email_reply', 'portal_submission', 'code_fix'].forEach(k => {
+        const btn = document.getElementById(`ea-filter-${k}`);
+        if (!btn) return;
+        if (k === actionType) {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-500 text-white transition-all';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all';
+        }
+      });
+      const searchEl = document.getElementById('ea-search-input');
+      loadEmailActions(searchEl ? searchEl.value : '');
+    }
+
+    async function promptAddEmailAction() {
+      const sender_email = prompt('Sender Email Address (e.g. editor@softpedia.com):');
+      if (!sender_email) return;
+      const subject = prompt('Email Subject:');
+      if (!subject) return;
+      const project_id = prompt('Project ID (cleaner, deepblock, vpn, shopsafe):', 'cleaner') || 'cleaner';
+      const action_type = prompt('Action Type (email_reply, portal_submission, appeal_filed, code_fix, config_update):', 'email_reply') || 'email_reply';
+      const action_summary = prompt('Action Summary (what was done):');
+      if (!action_summary) return;
+      const portal_url = prompt('Portal / Reference URL (optional):', '') || '';
+
+      try {
+        const res = await fetch('/api/crm/email-actions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            sender_email,
+            subject,
+            project_id,
+            action_type,
+            status: action_type === 'email_reply' ? 'replied' : action_type === 'portal_submission' ? 'portal_completed' : 'actioned',
+            action_summary,
+            portal_url: portal_url || null
+          })
+        });
+        if (res.ok) {
+          await loadEmailActions();
+        }
+      } catch (err) {
+        alert('Failed to log email action: ' + err.message);
+      }
+    }
+
+    async function deleteEmailActionRow(id) {
+      if (!confirm('Remove this email action record from the deduplication log?')) return;
+      try {
+        await fetch(`/api/crm/email-actions/${id}`, { method: 'DELETE' });
+        await loadEmailActions();
+      } catch (err) {
+        console.error('Failed to delete email action:', err);
+      }
+    }
+
     function toggleCrmSidebar(forceOpen) {
       const sb = document.getElementById('crm-sidebar');
       const bd = document.getElementById('crm-mobile-backdrop');
@@ -1451,14 +1727,14 @@
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
 
       document.querySelectorAll('.nav-item').forEach(el => {
-        if (el.id === 'nav-outreach') {
+        if (el.id === 'nav-outreach' || el.id === 'nav-email-actions') {
           el.className = "nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60";
         } else {
           el.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60";
         }
       });
       const activeNav = document.getElementById(`nav-${tab}`);
-      if (tab === 'outreach') {
+      if (tab === 'outreach' || tab === 'email-actions') {
         activeNav.className = "nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20";
       } else {
         activeNav.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20";
@@ -1470,11 +1746,13 @@
         subscriptions: "Subscriptions & Recurring Revenue",
         activities: "Activity & Audit Log",
         outreach: "Outreach & Directories Log",
+        "email-actions": "Email & Portal Actions Automation Log (48h Scanner + Deduplication)",
         telemetry: "Support Tickets, Funnel & Crash Telemetry",
         seo: "SEO & Search Intelligence"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
       if (tab === 'seo') seoShow(seoState.view);
+      if (tab === 'email-actions') loadEmailActions();
       if (tab === 'telemetry') loadTelemetry();
       safeCreateIcons();
     }

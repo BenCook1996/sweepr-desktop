@@ -1195,5 +1195,89 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     return c.json({ ok: true });
   });
 
+  // 16. Email & Portal Actions Automation Log + Deduplication Check
+  router.get("/email-actions/check", (c) => {
+    const res = repo.checkEmailActionDedupe({
+      thread_id: c.req.query("thread_id") || c.req.query("threadId"),
+      message_id: c.req.query("message_id") || c.req.query("messageId"),
+      sender_email: c.req.query("sender_email") || c.req.query("sender") || c.req.query("from"),
+      subject: c.req.query("subject"),
+      follow_up_days: Number(c.req.query("follow_up_days") || 3),
+    });
+    return c.json({ ok: true, ...res });
+  });
+
+  router.get("/email-actions", (c) => {
+    const list = repo.listEmailActionLogs({
+      action_type: c.req.query("action_type") || "all",
+      status: c.req.query("status") || "all",
+      search: c.req.query("search") || "",
+      limit: Number(c.req.query("limit") || 300),
+    });
+    return c.json({ ok: true, ...list });
+  });
+
+  router.post("/email-actions", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    if (body?.enforce_dedupe) {
+      const check = repo.checkEmailActionDedupe({
+        thread_id: body.thread_id,
+        message_id: body.message_id,
+        sender_email: body.sender_email,
+        subject: body.subject,
+        follow_up_days: Number(body.follow_up_days || 3),
+      });
+      if (!check.allowed_to_respond) {
+        return c.json({ ok: true, skipped_duplicate: true, ...check, item: check.existing });
+      }
+    }
+    const item = repo.upsertEmailActionLog(body);
+    return c.json({ ok: true, item, row: item });
+  });
+
+  router.delete("/email-actions/:id", (c) => {
+    const id = Number(c.req.param("id"));
+    if (!id) return c.json({ error: "Invalid ID" }, 400);
+    const deleted = repo.deleteEmailActionLog(id);
+    return c.json({ ok: true, deleted });
+  });
+
+  router.get("/email-actions/export.csv", (c) => {
+    const list = repo.listEmailActionLogs({ limit: 2000 });
+    const header = [
+      "id",
+      "thread_id",
+      "message_id",
+      "project_id",
+      "sender_email",
+      "sender_name",
+      "subject",
+      "category",
+      "status",
+      "action_type",
+      "action_summary",
+      "portal_url",
+      "reply_message_id",
+      "actioned_at",
+      "follow_up_after_ts",
+    ];
+    const esc = (v: unknown) => {
+      let s = v === null || v === undefined ? "" : String(v);
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [header.join(",")];
+    for (const r of list.rows) {
+      const rec = r as Record<string, unknown>;
+      lines.push(header.map((h) => esc(rec[h])).join(","));
+    }
+    return new Response(lines.join("\n"), {
+      headers: {
+        "content-type": "text/csv; charset=utf-8",
+        "content-disposition": `attachment; filename="sweepr-email-portal-actions-${new Date().toISOString().slice(0, 10)}.csv"`,
+      },
+    });
+  });
+
   return router;
 }

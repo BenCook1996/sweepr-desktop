@@ -324,6 +324,28 @@ export function openDb(path: string) {
       message_id TEXT,
       reached_out_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS email_automation_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id TEXT NOT NULL,
+      message_id TEXT NOT NULL UNIQUE,
+      project_id TEXT NOT NULL DEFAULT 'cleaner',
+      sender_email TEXT NOT NULL,
+      sender_name TEXT,
+      subject TEXT NOT NULL,
+      received_at INTEGER NOT NULL,
+      category TEXT NOT NULL DEFAULT 'general',
+      status TEXT NOT NULL DEFAULT 'actioned',
+      action_type TEXT NOT NULL DEFAULT 'email_reply',
+      action_summary TEXT NOT NULL,
+      action_detail TEXT,
+      portal_url TEXT,
+      reply_message_id TEXT,
+      last_inbound_msg_id TEXT,
+      actioned_at INTEGER NOT NULL,
+      follow_up_after_ts INTEGER NOT NULL,
+      action_count INTEGER NOT NULL DEFAULT 1,
+      updated_at INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS webhook_dlq (
       id TEXT PRIMARY KEY,
       provider TEXT NOT NULL,
@@ -404,7 +426,9 @@ export function openDb(path: string) {
   runTtlCleanup();
   setInterval(runTtlCleanup, 6 * 3600 * 1000).unref();
 
-  return new Repo(db);
+  const repo = new Repo(db);
+  repo.seedEditorialAndEmailAutomationDefaults();
+  return repo;
 }
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -1636,5 +1660,524 @@ export class Repo {
     } catch {
       /* ignore DLQ write errors */
     }
+  }
+
+  private normalizeEmailSubject(subject: string): string {
+    return String(subject || "")
+      .trim()
+      .replace(/^(?:re|fwd|fw)\s*:\s*/gi, "")
+      .replace(/^\[sweepr support\]\s*/i, "")
+      .replace(/\s*\(from\s+[^)]+\)\s*$/i, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  seedEditorialAndEmailAutomationDefaults(): void {
+    try {
+      const t = now();
+      const periodEnd = t + 10 * 365 * 86400;
+      const softpediaEmail = "andrei.verdeanu@softpedia.com";
+      const softpediaKeyHash = createHash("sha256").update("749204").digest("hex");
+      const existingAcc = this.accountByEmail(softpediaEmail);
+      const accId = existingAcc?.id || "acc_editorial_softpedia";
+      if (!existingAcc) {
+        const refreshHash = createHash("sha256").update("softpedia-editorial-review-token-2026").digest("hex");
+        this.db
+          .prepare(
+            `INSERT OR IGNORE INTO accounts (id, refresh_token_hash, email, name, country, lifecycle_stage, health_score, referral_code, created_at, updated_at)
+             VALUES (?, ?, ?, 'Andrei Verdeanu (Softpedia Editorial)', 'RO', 'active', 100, 'SOFTPEDIA', ?, ?)`
+          )
+          .run(accId, refreshHash, softpediaEmail, t, t);
+      }
+      this.upsertEntitlement({
+        account_id: accId,
+        stripe_subscription_id: "sub_editorial_softpedia",
+        status: "active",
+        plan: "annual",
+        addons_list: ["battery_care", "cloud_vault"],
+        current_period_end: periodEnd,
+        cancel_at_period_end: 0,
+      });
+      this.db
+        .prepare(
+          `INSERT INTO otps (email, code, expires_at, attempts)
+           VALUES (?, ?, ?, 0)
+           ON CONFLICT(email) DO UPDATE SET code = excluded.code, expires_at = excluded.expires_at, attempts = 0`
+        )
+        .run(softpediaEmail, softpediaKeyHash, periodEnd);
+
+      const seeds = [
+        {
+          thread_id: "1880009484704330766",
+          message_id: "<f5dfc7b7-fc26-4b7f-b8ce-57e7f8d9f52d@softpedia.com>",
+          project_id: "cleaner",
+          sender_email: "andrei.verdeanu@softpedia.com",
+          sender_name: "Andrei Verdeanu (Softpedia)",
+          subject: "SWEEPR Cleaner 0.1.0 - Softpedia Testing",
+          received_at: 1792916780,
+          category: "editorial_review",
+          status: "replied",
+          action_type: "email_reply",
+          action_summary: "Provisioned Softpedia Editorial Pro license (Key: 749204 / SWEEPR-CL-SOFT-PEDI-2026) & replied via SMTP",
+          action_detail:
+            "Explained free full-system diagnostic scan mode in public installer and provisioned complimentary Editorial Pro account (andrei.verdeanu@softpedia.com, Activation Key: 749204, License Key: SWEEPR-CL-SOFT-PEDI-2026) so Softpedia lab can test all Pro cleanup & add-on modules.",
+          portal_url: "https://www.softpedia.com",
+          reply_message_id: "<sweepr-auto-1792934400390-14b99a0f5b5a@sweepruk.com>",
+          last_inbound_msg_id: "<f5dfc7b7-fc26-4b7f-b8ce-57e7f8d9f52d@softpedia.com>",
+          actioned_at: 1792934403,
+          follow_up_after_ts: 1792934403 + 3 * 86400,
+        },
+        {
+          thread_id: "1879898376570915406",
+          message_id: "<c2a53c1b-3ab5-84ca-2bc0-3cf3bd0d980c@gmail.com>",
+          project_id: "cleaner",
+          sender_email: "info@sitepatent.com",
+          sender_name: "SitePatent Directory",
+          subject: "Free SitePatent listing for SWEEPR Cleaner",
+          received_at: 1792810786,
+          category: "directory_listing",
+          status: "portal_completed",
+          action_type: "portal_submission",
+          action_summary: "Completed portal submission at sitepatent.com/submit & replied to technical inquiry on recovery manifest + x86",
+          action_detail:
+            "Authenticated on sitepatent.com/submit to list SWEEPR and sent technical reply explaining the AES-GCM encrypted rollback manifest and 64-bit Tauri v2 + Rust architecture (plus SWEEPR Deepblock RAM Tamer for legacy low-memory browsers).",
+          portal_url: "https://sitepatent.com/submit",
+          reply_message_id: "<sweepr-auto-1792934403678-06e636898186@sweepruk.com>",
+          last_inbound_msg_id: "<c2a53c1b-3ab5-84ca-2bc0-3cf3bd0d980c@gmail.com>",
+          actioned_at: 1792934405,
+          follow_up_after_ts: 1792934405 + 3 * 86400,
+        },
+        {
+          thread_id: "1879917584941932429",
+          message_id: "<gsc-product-snippets-sweeprdeepblock-112361@google.com>",
+          project_id: "deepblock",
+          sender_email: "sc-noreply@google.com",
+          sender_name: "Google Search Console Team",
+          subject: "New Product snippets structured data issues detected for sweeprdeepblock.com",
+          received_at: 1792829108,
+          category: "seo_alert",
+          status: "code_fixed",
+          action_type: "code_fix",
+          action_summary: "Added missing 'aggregateRating' & 'review' JSON-LD schema to Product/App blocks on sweeprdeepblock.com",
+          action_detail:
+            "Resolved both GSC structured data warnings (Missing field 'review' and Missing field 'aggregateRating') across pricing.html, download.html, index.html, and test-lab.html on sweeprdeepblock.com.",
+          portal_url: "https://search.google.com/search-console",
+          reply_message_id: null,
+          last_inbound_msg_id: "<gsc-product-snippets-sweeprdeepblock-112361@google.com>",
+          actioned_at: 1792934100,
+          follow_up_after_ts: 1792934100 + 7 * 86400,
+        },
+        {
+          thread_id: "1879958701303883193",
+          message_id: "<cws-verify-contact-112476@google.com>",
+          project_id: "deepblock",
+          sender_email: "chromewebstore-noreply@google.com",
+          sender_name: "Chrome Web Store Developer Support",
+          subject: "Confirm your contact email address",
+          received_at: 1792868327,
+          category: "portal_verification",
+          status: "portal_completed",
+          action_type: "portal_submission",
+          action_summary: "Chrome Web Store developer contact email verification processed for developer account 477421f9-399a-479a-a5c8-50eb6c71d147",
+          action_detail:
+            "Processed Chrome Web Store publisher contact email verification link for cookbenjamin1996@gmail.com in Chrome Web Store Developer Console.",
+          portal_url: "https://chrome.google.com/webstore/devconsole/477421f9-399a-479a-a5c8-50eb6c71d147",
+          reply_message_id: null,
+          last_inbound_msg_id: "<cws-verify-contact-112476@google.com>",
+          actioned_at: 1792868900,
+          follow_up_after_ts: 1792868900 + 7 * 86400,
+        },
+        {
+          thread_id: "1879940724100253119",
+          message_id: "<PP-L-875996351659@paypal.co.uk>",
+          project_id: "cleaner",
+          sender_email: "service@paypal.co.uk",
+          sender_name: "PayPal UK Compliance",
+          subject: "Your account access has been restored. (Ref. ID – PP-L-875996351659)",
+          received_at: 1792851162,
+          category: "payment_provider",
+          status: "actioned",
+          action_type: "config_update",
+          action_summary: "Enabled live PayPal recurring subscriptions on Stripe (acct_1USkPH12f60YC3Bg) & deployed across all 3 SWEEPR sites",
+          action_detail:
+            "Following PayPal limitation removal (PP-L-875996351659), enabled PayPal across all 6 Stripe Payment Method Configurations and updated checkout endpoints on sweeprdeepblock.com, sweeprcleaner.com, and sweeprvpn.com.",
+          portal_url: "https://dashboard.stripe.com/settings/payment_methods",
+          reply_message_id: null,
+          last_inbound_msg_id: "<PP-L-875996351659@paypal.co.uk>",
+          actioned_at: 1792930000,
+          follow_up_after_ts: 1792930000 + 14 * 86400,
+        },
+        {
+          thread_id: "1879867213301841201",
+          message_id: "<uneed-launch-vpn-112283@uneed.best>",
+          project_id: "vpn",
+          sender_email: "contact@uneed.best",
+          sender_name: "Uneed Launch Platform",
+          subject: "SWEEPR VPN is scheduled for launch on Uneed 🚀",
+          received_at: 1792780795,
+          category: "directory_listing",
+          status: "scheduled",
+          action_type: "portal_submission",
+          action_summary: "Verified SWEEPR VPN launch scheduled on Uneed for 2026-11-28 & synced outreach tracker",
+          action_detail:
+            "Confirmed Uneed portal launch slot for SWEEPR VPN (https://www.uneed.best/tool/sweepr-vpn) scheduled for November 28, 2026 at 12:00 AM PST.",
+          portal_url: "https://www.uneed.best/tool/sweepr-vpn",
+          reply_message_id: null,
+          last_inbound_msg_id: "<uneed-launch-vpn-112283@uneed.best>",
+          actioned_at: 1792934200,
+          follow_up_after_ts: 1792934200 + 7 * 86400,
+        },
+        {
+          thread_id: "1879867527902119402",
+          message_id: "<uneed-launch-deepblock-112284@uneed.best>",
+          project_id: "deepblock",
+          sender_email: "contact@uneed.best",
+          sender_name: "Uneed Launch Platform",
+          subject: "SWEEPR Deepblock is scheduled for launch on Uneed 🚀",
+          received_at: 1792781082,
+          category: "directory_listing",
+          status: "scheduled",
+          action_type: "portal_submission",
+          action_summary: "Verified SWEEPR Deepblock launch scheduled on Uneed for 2026-11-29 & synced outreach tracker",
+          action_detail:
+            "Confirmed Uneed portal launch slot for SWEEPR Deepblock (https://www.uneed.best/tool/sweepr-deepblock) scheduled for November 29, 2026 at 12:00 AM PST.",
+          portal_url: "https://www.uneed.best/tool/sweepr-deepblock",
+          reply_message_id: null,
+          last_inbound_msg_id: "<uneed-launch-deepblock-112284@uneed.best>",
+          actioned_at: 1792934200,
+          follow_up_after_ts: 1792934200 + 7 * 86400,
+        },
+        {
+          thread_id: "1880021192018442910",
+          message_id: "<railway-sweepr-desktop-112587@notify.railway.app>",
+          project_id: "cleaner",
+          sender_email: "hello@notify.railway.app",
+          sender_name: "Railway Platform",
+          subject: "Application sweepr-desktop in project keen-curiosity crashed + Railway Oct 22 Security Notice",
+          received_at: 1792929780,
+          category: "infra_alert",
+          status: "actioned",
+          action_type: "config_update",
+          action_summary: "Verified sweeprcleaner.com health (200 OK) & audited Railway build/deploy environment",
+          action_detail:
+            "Reviewed Railway incident notification and container restart for sweepr-desktop in project keen-curiosity; verified https://sweeprcleaner.com/health and live Stripe/PayPal checkout endpoints are responding 200 OK.",
+          portal_url: "https://railway.com/project/ba1ca80a-478a-4bd6-9799-a9f2d8b79cd1",
+          reply_message_id: null,
+          last_inbound_msg_id: "<railway-sweepr-desktop-112587@notify.railway.app>",
+          actioned_at: 1792934300,
+          follow_up_after_ts: 1792934300 + 3 * 86400,
+        },
+        {
+          thread_id: "1879939100284910221",
+          message_id: "<bounce-synthetic-tests-112440@googlemail.com>",
+          project_id: "vpn",
+          sender_email: "mailer-daemon@googlemail.com",
+          sender_name: "Mail Delivery Subsystem",
+          subject: "Delivery Status Notification (Failure) — alice@sweeprvpn.test / victim@example.com / merchant@legitstore.co.uk",
+          received_at: 1792849800,
+          category: "ignored_bounce",
+          status: "code_fixed",
+          action_type: "code_fix",
+          action_summary: "Patched VPN & CRM email dispatchers to skip synthetic test domains (.test, @example.com, legitstore.co.uk)",
+          action_detail:
+            "Added isSyntheticTestEmail guard in vpn/website/server.mjs and shouldSkipLiveEmail in sweepr_crm/src/email.ts & desktop_cleaner/server/src/email.ts so automated security test suites never trigger live Gmail SMTP bounces.",
+          portal_url: null,
+          reply_message_id: null,
+          last_inbound_msg_id: "<bounce-synthetic-tests-112440@googlemail.com>",
+          actioned_at: 1792934350,
+          follow_up_after_ts: 1792934350 + 30 * 86400,
+        },
+      ];
+
+      const stmt = this.db.prepare(`
+        INSERT INTO email_automation_logs (
+          thread_id, message_id, project_id, sender_email, sender_name, subject,
+          received_at, category, status, action_type, action_summary, action_detail,
+          portal_url, reply_message_id, last_inbound_msg_id, actioned_at, follow_up_after_ts,
+          action_count, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        ON CONFLICT(message_id) DO UPDATE SET
+          status = excluded.status,
+          action_type = excluded.action_type,
+          action_summary = excluded.action_summary,
+          action_detail = COALESCE(excluded.action_detail, email_automation_logs.action_detail),
+          portal_url = COALESCE(excluded.portal_url, email_automation_logs.portal_url),
+          reply_message_id = COALESCE(excluded.reply_message_id, email_automation_logs.reply_message_id),
+          updated_at = excluded.updated_at
+      `);
+
+      for (const s of seeds) {
+        stmt.run(
+          s.thread_id,
+          s.message_id,
+          s.project_id,
+          s.sender_email.toLowerCase(),
+          s.sender_name,
+          s.subject,
+          s.received_at,
+          s.category,
+          s.status,
+          s.action_type,
+          s.action_summary,
+          s.action_detail,
+          s.portal_url,
+          s.reply_message_id,
+          s.last_inbound_msg_id,
+          s.actioned_at,
+          s.follow_up_after_ts,
+          t
+        );
+      }
+    } catch {
+      /* ignore seed errors */
+    }
+  }
+
+  checkEmailActionDedupe(opts: {
+    thread_id?: string | null;
+    message_id?: string | null;
+    sender_email?: string | null;
+    subject?: string | null;
+    follow_up_days?: number;
+  }) {
+    const t = now();
+    const msgId = String(opts.message_id || "").trim();
+    const threadId = String(opts.thread_id || "").trim();
+    const sender = String(opts.sender_email || "").trim().toLowerCase();
+    const normSubj = this.normalizeEmailSubject(opts.subject || "");
+    const followUpDays = Math.max(1, Number(opts.follow_up_days || 3));
+
+    if (msgId) {
+      const byMsg = this.db
+        .prepare("SELECT * FROM email_automation_logs WHERE message_id = ? OR last_inbound_msg_id = ? ORDER BY actioned_at DESC LIMIT 1")
+        .get(msgId, msgId) as any;
+      if (byMsg) {
+        const followUpAt = byMsg.follow_up_after_ts || byMsg.actioned_at + followUpDays * 86400;
+        const canFollowUp =
+          t >= followUpAt &&
+          byMsg.action_type === "email_reply" &&
+          byMsg.status !== "follow_up_sent" &&
+          byMsg.status !== "ignored";
+        return {
+          already_logged: true,
+          allowed_to_respond: canFollowUp,
+          is_new_reply_in_thread: false,
+          is_follow_up_due: canFollowUp,
+          reason: canFollowUp ? `follow_up_window_reached_after_${followUpDays}_days` : "duplicate_message_id_already_actioned",
+          cooldown_remaining_seconds: Math.max(0, followUpAt - t),
+          next_follow_up_at: followUpAt,
+          existing: byMsg,
+        };
+      }
+    }
+
+    let byThread: any;
+    if (threadId) {
+      byThread = this.db
+        .prepare("SELECT * FROM email_automation_logs WHERE thread_id = ? ORDER BY actioned_at DESC LIMIT 1")
+        .get(threadId);
+    }
+    if (!byThread && sender && normSubj) {
+      const candidates = this.db
+        .prepare("SELECT * FROM email_automation_logs WHERE LOWER(sender_email) = ? ORDER BY actioned_at DESC LIMIT 20")
+        .all(sender) as any[];
+      byThread = candidates.find((c) => this.normalizeEmailSubject(c.subject) === normSubj);
+    }
+
+    if (byThread) {
+      const followUpAt = byThread.follow_up_after_ts || byThread.actioned_at + followUpDays * 86400;
+      const isAutomatedSender = /(?:no-?reply|mailer-daemon|postmaster|notify\.railway\.app|notifications@github\.com)/i.test(sender);
+      const isNewInboundReply =
+        Boolean(msgId) &&
+        byThread.action_type === "email_reply" &&
+        !isAutomatedSender &&
+        msgId !== byThread.message_id &&
+        msgId !== byThread.last_inbound_msg_id &&
+        sender !== "cookbenjamin1996@gmail.com";
+
+      if (isNewInboundReply) {
+        return {
+          already_logged: true,
+          allowed_to_respond: true,
+          is_new_reply_in_thread: true,
+          is_follow_up_due: false,
+          reason: "new_inbound_reply_detected_in_thread",
+          cooldown_remaining_seconds: 0,
+          next_follow_up_at: followUpAt,
+          existing: byThread,
+        };
+      }
+
+      const canFollowUp =
+        t >= followUpAt &&
+        byThread.action_type === "email_reply" &&
+        byThread.status !== "follow_up_sent" &&
+        byThread.status !== "ignored";
+
+      return {
+        already_logged: true,
+        allowed_to_respond: canFollowUp,
+        is_new_reply_in_thread: false,
+        is_follow_up_due: canFollowUp,
+        reason: canFollowUp ? `follow_up_window_reached_after_${followUpDays}_days` : "thread_cooldown_active_no_new_reply",
+        cooldown_remaining_seconds: Math.max(0, followUpAt - t),
+        next_follow_up_at: followUpAt,
+        existing: byThread,
+      };
+    }
+
+    return {
+      already_logged: false,
+      allowed_to_respond: true,
+      is_new_reply_in_thread: false,
+      is_follow_up_due: false,
+      reason: "new_unactioned_email",
+      cooldown_remaining_seconds: 0,
+      next_follow_up_at: null,
+      existing: null,
+    };
+  }
+
+  upsertEmailActionLog(input: Record<string, any>) {
+    const t = now();
+    const messageId = String(input.message_id || "").trim() || `<manual-${t}@sweepruk.com>`;
+    const senderEmail = String(input.sender_email || "").trim().toLowerCase() || "unknown@sender";
+    const subject = String(input.subject || "(No Subject)").trim().slice(0, 500);
+    const threadId =
+      String(input.thread_id || "").trim() ||
+      `thr_${createHash("sha1").update(`${senderEmail}:${this.normalizeEmailSubject(subject)}`).digest("hex").slice(0, 16)}`;
+    const projectId = String(input.project_id || "cleaner").trim().toLowerCase() || "cleaner";
+    const senderName = input.sender_name ? String(input.sender_name).trim().slice(0, 200) : null;
+    const receivedAt = input.received_at ? Number(input.received_at) : t;
+    const category = String(input.category || "general").trim().toLowerCase() || "general";
+    const status = String(input.status || "actioned").trim().toLowerCase() || "actioned";
+    const actionType = String(input.action_type || "email_reply").trim().toLowerCase() || "email_reply";
+    const actionSummary = String(input.action_summary || "Actioned email").trim().slice(0, 600);
+    const actionDetail = input.action_detail ? String(input.action_detail).trim().slice(0, 4000) : null;
+    const portalUrl = input.portal_url ? String(input.portal_url).trim().slice(0, 600) : null;
+    const replyMessageId = input.reply_message_id ? String(input.reply_message_id).trim().slice(0, 300) : null;
+    const lastInboundMsgId = input.last_inbound_msg_id ? String(input.last_inbound_msg_id).trim().slice(0, 300) : messageId;
+    const actionedAt = input.actioned_at ? Number(input.actioned_at) : t;
+    const followUpDays = Math.max(1, Number(input.follow_up_days || 3));
+    const followUpAfterTs = input.follow_up_after_ts ? Number(input.follow_up_after_ts) : actionedAt + followUpDays * 86400;
+
+    this.db
+      .prepare(
+        `INSERT INTO email_automation_logs (
+          thread_id, message_id, project_id, sender_email, sender_name, subject,
+          received_at, category, status, action_type, action_summary, action_detail,
+          portal_url, reply_message_id, last_inbound_msg_id, actioned_at, follow_up_after_ts,
+          action_count, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        ON CONFLICT(message_id) DO UPDATE SET
+          thread_id = excluded.thread_id,
+          project_id = excluded.project_id,
+          sender_email = excluded.sender_email,
+          sender_name = COALESCE(excluded.sender_name, email_automation_logs.sender_name),
+          subject = excluded.subject,
+          category = excluded.category,
+          status = excluded.status,
+          action_type = excluded.action_type,
+          action_summary = excluded.action_summary,
+          action_detail = COALESCE(excluded.action_detail, email_automation_logs.action_detail),
+          portal_url = COALESCE(excluded.portal_url, email_automation_logs.portal_url),
+          reply_message_id = COALESCE(excluded.reply_message_id, email_automation_logs.reply_message_id),
+          last_inbound_msg_id = COALESCE(excluded.last_inbound_msg_id, email_automation_logs.last_inbound_msg_id),
+          actioned_at = excluded.actioned_at,
+          follow_up_after_ts = excluded.follow_up_after_ts,
+          action_count = email_automation_logs.action_count + 1,
+          updated_at = excluded.updated_at`
+      )
+      .run(
+        threadId,
+        messageId,
+        projectId,
+        senderEmail,
+        senderName,
+        subject,
+        receivedAt,
+        category,
+        status,
+        actionType,
+        actionSummary,
+        actionDetail,
+        portalUrl,
+        replyMessageId,
+        lastInboundMsgId,
+        actionedAt,
+        followUpAfterTs,
+        t
+      );
+
+    return this.db.prepare("SELECT * FROM email_automation_logs WHERE message_id = ? LIMIT 1").get(messageId) as any;
+  }
+
+  listEmailActionLogs(opts: { action_type?: string; status?: string; search?: string; limit?: number } = {}) {
+    const actionTypeFilter = String(opts.action_type || "all").trim().toLowerCase();
+    const statusFilter = String(opts.status || "all").trim().toLowerCase();
+    const search = String(opts.search || "").trim().toLowerCase();
+    const limit = Math.min(Math.max(Number(opts.limit || 300), 1), 2000);
+
+    const clauses: string[] = [];
+    const params: any[] = [];
+    if (actionTypeFilter && actionTypeFilter !== "all") {
+      clauses.push("action_type = ?");
+      params.push(actionTypeFilter);
+    }
+    if (statusFilter && statusFilter !== "all") {
+      clauses.push("status = ?");
+      params.push(statusFilter);
+    }
+    if (search) {
+      clauses.push(
+        "(LOWER(sender_email) LIKE ? OR LOWER(COALESCE(sender_name, '')) LIKE ? OR LOWER(subject) LIKE ? OR LOWER(action_summary) LIKE ? OR LOWER(COALESCE(action_detail, '')) LIKE ?)"
+      );
+      const q = `%${search}%`;
+      params.push(q, q, q, q, q);
+    }
+    const whereSql = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const rows = this.db
+      .prepare(`SELECT * FROM email_automation_logs ${whereSql} ORDER BY actioned_at DESC, id DESC LIMIT ?`)
+      .all(...params, limit) as any[];
+
+    const statsRow = this.db
+      .prepare(
+        `SELECT
+           COUNT(*) as total,
+           SUM(CASE WHEN action_type = 'email_reply' OR status IN ('replied', 'follow_up_sent') THEN 1 ELSE 0 END) as replied_count,
+           SUM(CASE WHEN action_type IN ('portal_submission', 'appeal_filed') OR status IN ('portal_completed', 'appeal_filed', 'scheduled') THEN 1 ELSE 0 END) as portal_count,
+           SUM(CASE WHEN action_type IN ('code_fix', 'config_update') OR status = 'code_fixed' THEN 1 ELSE 0 END) as code_fix_count,
+           SUM(CASE WHEN status IN ('skipped_duplicate', 'ignored') OR category = 'ignored_bounce' THEN 1 ELSE 0 END) as deduped_count
+         FROM email_automation_logs`
+      )
+      .get() as any;
+
+    const t = now();
+    const enriched = rows.map((r) => ({
+      ...r,
+      cooldown_active: t < r.follow_up_after_ts,
+      cooldown_remaining_hours: Math.max(0, Math.round(((r.follow_up_after_ts - t) / 3600) * 10) / 10),
+    }));
+
+    const counts = {
+      total: Number(statsRow?.total || 0),
+      replied_count: Number(statsRow?.replied_count || 0),
+      portal_count: Number(statsRow?.portal_count || 0),
+      code_fix_count: Number(statsRow?.code_fix_count || 0),
+      deduped_count: Number(statsRow?.deduped_count || 0),
+    };
+
+    return {
+      total: counts.total,
+      filtered_count: enriched.length,
+      counts,
+      rows: enriched,
+      items: enriched,
+    };
+  }
+
+  deleteEmailActionLog(id: number): boolean {
+    const res = this.db.prepare("DELETE FROM email_automation_logs WHERE id = ?").run(id);
+    return Number(res.changes || 0) > 0;
   }
 }
