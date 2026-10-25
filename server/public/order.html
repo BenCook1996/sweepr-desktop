@@ -26,7 +26,7 @@
   <link rel="shortcut icon" type="image/svg+xml" href="/padlock-favicon.svg">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <link rel="stylesheet" href="/style.css">
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://js.stripe.com/v3/" async></script>
   <script src="https://pay.google.com/gp/p/js/pay.js" async></script>
   <style>
     #googlePayButtonContainer > div,
@@ -274,20 +274,13 @@
   <!-- TOP DARK BANNER (Locked Tunnel-Vision Checkout Header — CHK-05) -->
   <header class="bg-[#232931] text-white py-4 sm:py-5 px-4 sm:px-8 border-b border-gray-800/80 shadow-md">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
-      <!-- Left: Subtle Back Link + Locked Brand Mark (Zero homepage escape trap) -->
-      <div class="inline-flex items-center gap-2.5 sm:gap-3">
-        <a href="javascript:history.back()" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-white transition-colors no-underline" aria-label="Go back">
-          <span>&larr;</span>
-          <span>Back</span>
-        </a>
-        <span class="text-gray-700 select-none">|</span>
-        <div class="inline-flex items-center gap-2.5 select-none">
-          <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="32" height="32" class="w-8 h-8 rounded-lg drop-shadow" />
-          <div class="flex items-baseline gap-1.5">
-            <span class="font-black text-lg sm:text-xl tracking-tight text-white">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
-          </div>
+      <!-- Left: Brand Mark -->
+      <a href="/?home=1" class="inline-flex items-center gap-2.5 text-inherit no-underline group">
+        <img src="/logo-mint-glass.svg" alt="SWEEPR Cleaner" width="32" height="32" class="w-8 h-8 rounded-lg drop-shadow transition-transform group-hover:scale-105" />
+        <div class="flex items-baseline gap-1.5">
+          <span class="font-black text-lg sm:text-xl tracking-tight text-white">SWEEPR <span class="text-emerald-400">Cleaner</span></span>
         </div>
-      </div>
+      </a>
 
       <!-- Right: Locked 256-Bit SSL Secure Checkout Badge -->
       <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] sm:text-xs font-bold shadow-2xs">
