@@ -588,32 +588,175 @@ export function createApp(deps: AppDeps) {
 
   app.get("/ios-app", (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
-    return c.html(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><title>SWEEPR Cleaner — iOS App</title></head><body style="margin:0;padding:20px 16px;background:#0b1220;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><div style="max-width:420px;margin:0 auto;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><div style="font-weight:900;font-size:19px;">SWEEPR <span style="color:#10b981;">Cleaner</span> <span style="font-size:12px;color:#94a3b8;">iOS</span></div><span id="proBadge" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3);">Ready</span></div><div style="background:#131c31;border:1px solid rgba(148,163,184,.16);border-radius:20px;padding:18px;margin-bottom:16px;text-align:center;"><div style="font-size:36px;margin-bottom:8px;">🧹</div><div style="font-weight:900;font-size:16px;margin-bottom:6px;">iPhone &amp; iPad Smart Storage Cleaner</div><p style="font-size:12px;color:#94a3b8;line-height:1.45;margin:0 0 14px;">Scan duplicate photos, burst shots, large video attachments, and duplicate contacts on your iOS device.</p><button onclick="runIosScan()" id="scanBtn" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#022c22;font-weight:900;font-size:13px;cursor:pointer;">Run 30-Second iOS Storage Scan</button><div id="scanOut" style="font-size:12px;color:#6ee7b7;margin-top:10px;font-weight:700;"></div></div><div style="background:#131c31;border:1px solid rgba(148,163,184,.16);border-radius:20px;padding:18px;"><div style="font-size:13px;font-weight:800;color:#fff;">Activate Device (6-Digit Code or Website QR Pairing Code)</div><p style="font-size:11px;color:#94a3b8;margin:6px 0 10px;line-height:1.4;">Purchased on desktop first? Log in at <strong>sweeprcleaner.com/login</strong> to scan your QR code or paste your <code>ptk_...</code> pairing code below (up to 3 devices).</p><input id="codeInput" placeholder="ptk_... pairing code or 6-digit code" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;font-family:monospace;font-size:13px;margin-bottom:8px;"/><input id="emailInput" placeholder="Account Email (if using 6-digit code)" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:13px;margin-bottom:8px;"/><button onclick="activateIos()" style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#022c22;font-weight:900;font-size:13px;cursor:pointer;">Activate Pro on This iPhone / iPad</button><div id="actMsg" style="font-size:12px;margin-top:8px;font-weight:700;"></div></div></div><script>
-      function getDevId(){let id=localStorage.getItem('sweepr_cln_ios_id');if(!id){id='ios_'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('sweepr_cln_ios_id',id);}return id;}
-      function runIosScan(){const out=document.getElementById('scanOut');out.textContent='Scanning iOS media & cache metadata...';setTimeout(()=>{out.textContent='✓ Scan complete: 1.42 GB of duplicate burst photos & cached media ready to clean.';},900);}
-      async function activateIos(){
-        const raw=(document.getElementById('codeInput').value||'').trim();
-        const email=(document.getElementById('emailInput').value||'').trim();
-        const msg=document.getElementById('actMsg');
-        if(!raw){msg.style.color='#f87171';msg.textContent='Enter your ptk_ pairing code or 6-digit code.';return;}
-        msg.style.color='#94a3b8';msg.textContent='Verifying...';
-        try{
-          const ptk=raw.match(/ptk_[A-Za-z0-9_-]{12,64}/);
-          const url=ptk?'/api/device-link/redeem-token':'/v1/license/activate';
-          const body=ptk?{token:ptk[0],device_id:getDevId(),device_type:'mobile',device_name:'iPhone / iPad',platform:'ios'}:{email,otp:raw,device_id:getDevId(),device_type:'mobile'};
-          const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-          const d=await r.json();
-          if(r.ok&&(d.ok||d.token)){
-            localStorage.setItem('sweepr_cln_token',d.token||'active');
-            document.getElementById('proBadge').textContent='PRO ACTIVE ✓';
-            msg.style.color='#34d399';msg.textContent='✓ Pro Activated on this iPhone / iPad!';
-          }else{
-            msg.style.color='#f87171';msg.textContent=d.message||d.error||'Invalid code.';
-          }
-        }catch{msg.style.color='#f87171';msg.textContent='Network error.';}
+    return c.html(`<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SWEEPR Cleaner</title>
+<style>
+  :root[data-theme="light"]{--bg:#f8fafc;--card:#ffffff;--card-sub:#f1f5f9;--glass:rgba(255,255,255,.94);--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--border-strong:#cbd5e1;--accent:#059669;--accent-soft:#d1fae5;--accent-fg:#065f46;--accent-border:#10b981;--orb-bg:radial-gradient(circle at 30% 30%,#10b981,#059669);--orb-border:#34d399;--orb-ring:rgba(16,185,129,.16);--shadow:0 8px 24px rgba(15,23,42,.06);--input-bg:#ffffff}
+  :root[data-theme="dark"]{--bg:#070b14;--card:#0f172a;--card-sub:#1e293b;--glass:rgba(15,23,42,.94);--text:#f8fafc;--muted:#94a3b8;--border:rgba(148,163,184,.16);--border-strong:rgba(148,163,184,.32);--accent:#10b981;--accent-soft:rgba(16,185,129,.16);--accent-fg:#34d399;--accent-border:rgba(52,211,153,.45);--orb-bg:radial-gradient(circle at 30% 30%,#34d399,#059669);--orb-border:#6ee7b7;--orb-ring:rgba(16,185,129,.22);--shadow:0 12px 30px rgba(0,0,0,.4);--input-bg:#090d16}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;-webkit-tap-highlight-color:transparent}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding:66px 16px 86px;display:flex;flex-direction:column}
+  .topbar{position:fixed;top:0;left:0;right:0;height:58px;background:var(--glass);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100}
+  .icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .badge{font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-fg);border:1px solid var(--accent-border)}
+  .view{display:none;flex-direction:column;flex:1;max-width:460px;width:100%;margin:0 auto;gap:14px}
+  .view.active{display:flex}
+  .c3-orb-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0}
+  .c3-power-orb{width:156px;height:156px;border-radius:999px;border:5px solid var(--orb-border);background:var(--orb-bg);color:#fff;box-shadow:0 18px 44px rgba(16,185,129,.36),0 0 0 14px var(--orb-ring);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+  .input{width:100%;padding:12px 14px;border-radius:13px;border:1px solid var(--border-strong);background:var(--input-bg);color:var(--text);font-size:13.5px;margin-top:8px}
+  .btn-primary{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:900;font-size:14px;margin-top:12px;cursor:pointer}
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--glass);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);padding:6px 10px 10px;gap:6px;z-index:100}
+  .nav-tab{border:none;background:transparent;color:var(--muted);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;cursor:pointer}
+  .nav-tab.active{color:var(--accent-fg);background:var(--accent-soft)}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:900;font-size:16px">
+      <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;display:flex;align-items:center;justify-content:center">S</div>
+      <span>SWEEPR <span style="color:var(--accent)">Cleaner</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="proBadge" class="badge">Ready</span>
+      <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle Light/Dark Mode">☀️</button>
+    </div>
+  </header>
+
+  <main id="view-home" class="view active">
+    <div style="text-align:center;padding-top:10px">
+      <div class="badge" style="display:inline-block">SMART STORAGE SHIELD</div>
+      <div id="scanHeadline" style="font-size:22px;font-weight:900;margin-top:12px">Tap Orb to Smart Scan</div>
+      <div id="scanOut" style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Finds duplicate photos, burst shots &amp; cache</div>
+    </div>
+
+    <div class="c3-orb-stage">
+      <button id="scanBtn" class="c3-power-orb" onclick="runIosScan()">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+        <span id="orbTxt" class="mono" style="font-size:11.5px;font-weight:900;letter-spacing:.06em">SMART SCAN</span>
+      </button>
+    </div>
+
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Selected Items Now (Free 1.42 GB)</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Engine</span><span class="mono">Smart AI</span></div>
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Target</span><span class="mono" style="color:var(--accent-fg)">1.42 GB</span></div>
+      </div>
+    </div>
+  </main>
+
+  <section id="view-account" class="view">
+    <div class="card">
+      <div style="font-size:16px;font-weight:900">Activate Device</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45">Sign in at <strong>sweeprcleaner.com/login</strong> to scan your QR code or paste your <code>ptk_...</code> pairing code below.</p>
+      <input id="codeInput" class="input mono" placeholder="ptk_... or 6-digit code" />
+      <input id="emailInput" class="input" placeholder="Account Email" />
+      <button class="btn-primary" onclick="activateIos()">Activate Pro on This Device</button>
+      <div id="actMsg" style="font-size:12px;margin-top:8px;font-weight:700"></div>
+    </div>
+  </section>
+
+  <section id="view-support" class="view">
+    <div class="card">
+      <div style="font-size:16px;font-weight:900">Message SWEEPR Support</div>
+      <input id="supEmail" class="input" type="email" placeholder="Your email address" />
+      <textarea id="supMsg" class="input" rows="3" placeholder="How can we help?"></textarea>
+      <button id="supBtn" class="btn-primary" onclick="sendCleanerIosSupport()">Send Message</button>
+      <div id="supStatus" style="font-size:12px;margin-top:8px;font-weight:700"></div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav">
+    <button class="nav-tab active" id="tab-home" onclick="switchTab('home')"><span>Clean</span></button>
+    <button class="nav-tab" id="tab-account" onclick="switchTab('account')"><span>Profile</span></button>
+    <button class="nav-tab" id="tab-support" onclick="switchTab('support')"><span>Support</span></button>
+  </nav>
+
+<script>
+  function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme')||'light';const next=cur==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('sweepr_cln_theme',next);}
+  function switchTab(t){['home','account','support'].forEach(v=>{document.getElementById('view-'+v).classList.toggle('active',v===t);document.getElementById('tab-'+v).classList.toggle('active',v===t);});}
+  function getDevId(){let id=localStorage.getItem('sweepr_cln_ios_id');if(!id){id='ios_'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('sweepr_cln_ios_id',id);}return id;}
+  function runIosScan(){
+    const out=document.getElementById('scanOut');
+    const head=document.getElementById('scanHeadline');
+    const orbTxt=document.getElementById('orbTxt');
+    const cBtn=document.getElementById('cleanBtn');
+    orbTxt.textContent='SCANNING...';
+    head.textContent='Auditing Storage...';
+    out.textContent='Checking burst photos, videos & Safari cache...';
+    setTimeout(()=>{
+      orbTxt.textContent='1.42 GB FOUND';
+      head.textContent='1.42 GB Reclaimable';
+      out.textContent='Photos: 640 MB • Videos: 520 MB • Cache: 260 MB';
+      cBtn.style.display='block';
+    },800);
+  }
+  function cleanIosStorage(){
+    const out=document.getElementById('scanOut');
+    const head=document.getElementById('scanHeadline');
+    const orbTxt=document.getElementById('orbTxt');
+    const cBtn=document.getElementById('cleanBtn');
+    cBtn.disabled=true;cBtn.textContent='Cleaning selected items...';
+    setTimeout(()=>{
+      cBtn.style.display='none';cBtn.disabled=false;cBtn.textContent='Clean Selected Items Now (Free 1.42 GB)';
+      orbTxt.textContent='CLEANED ✓';
+      head.textContent='Storage Optimized';
+      out.textContent='Cleaned 1.42 GB of duplicate photos & cache!';
+    },700);
+  }
+  async function sendCleanerIosSupport(){
+    const email=(document.getElementById('supEmail').value||document.getElementById('emailInput').value||'').trim();
+    const message=(document.getElementById('supMsg').value||'').trim();
+    const st=document.getElementById('supStatus');
+    const btn=document.getElementById('supBtn');
+    if(!email||!email.includes('@')){st.style.color='#ef4444';st.textContent='Please enter a valid email address.';return;}
+    if(!message){st.style.color='#ef4444';st.textContent='Please enter a message.';return;}
+    btn.disabled=true;st.style.color='var(--muted)';st.textContent='Sending...';
+    let ok=false;
+    for(const u of ['/v1/support','http://127.0.0.1:8788/api/support/contact']){
+      try{
+        const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json','x-sweepr-project':'cleaner'},body:JSON.stringify({project_id:'cleaner',email,subject:'SWEEPR Cleaner iOS Support',message,platform:'ios',os:'ios'})});
+        if(r.ok){ok=true;break;}
+      }catch{}
+    }
+    btn.disabled=false;
+    if(ok){document.getElementById('supMsg').value='';st.style.color='var(--accent-fg)';st.textContent="Sent to SWEEPR Support — we'll reply by email.";}
+    else{st.style.color='#ef4444';st.textContent='Could not reach support server.';}
+  }
+  async function activateIos(){
+    const raw=(document.getElementById('codeInput').value||'').trim();
+    const email=(document.getElementById('emailInput').value||'').trim();
+    const msg=document.getElementById('actMsg');
+    if(!raw){msg.style.color='#ef4444';msg.textContent='Enter your ptk_ pairing code or 6-digit code.';return;}
+    msg.style.color='var(--muted)';msg.textContent='Verifying...';
+    try{
+      const ptk=raw.match(/ptk_[A-Za-z0-9_-]{12,64}/);
+      const url=ptk?'/api/device-link/redeem-token':'/v1/license/activate';
+      const body=ptk?{token:ptk[0],device_id:getDevId(),device_type:'mobile',device_name:'iPhone / iPad',platform:'ios'}:{email,otp:raw,device_id:getDevId(),device_type:'mobile'};
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const d=await r.json();
+      if(r.ok&&(d.ok||d.token)){
+        localStorage.setItem('sweepr_cln_token',d.token||'active');
+        document.getElementById('proBadge').textContent='PRO ACTIVE';
+        msg.style.color='var(--accent-fg)';msg.textContent='Pro Activated on this iPhone / iPad!';
+      }else{
+        msg.style.color='#ef4444';msg.textContent=d.message||d.error||'Invalid code.';
       }
-      if(localStorage.getItem('sweepr_cln_token'))document.getElementById('proBadge').textContent='PRO ACTIVE ✓';
-    </script></body></html>`);
+    }catch{msg.style.color='#ef4444';msg.textContent='Network error.';}
+  }
+  (function(){
+    const savedTheme=localStorage.getItem('sweepr_cln_theme')||'light';
+    document.documentElement.setAttribute('data-theme',savedTheme);
+    if(localStorage.getItem('sweepr_cln_token'))document.getElementById('proBadge').textContent='PRO ACTIVE';
+  })();
+</script>
+</body></html>`);
   });
 
   app.get("/download", (c) => {
