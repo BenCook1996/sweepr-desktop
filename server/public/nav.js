@@ -107,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const drawer = document.createElement('div');
       drawer.id = 'mobileNavDrawer';
-      drawer.className = 'hidden md:hidden fixed left-0 right-0 top-[68px] z-50 mx-3 rounded-2xl bg-white/98 backdrop-blur-xl border border-gray-200/90 shadow-2xl p-4 space-y-3';
+      drawer.className = 'hidden md:hidden fixed left-0 right-0 top-[72px] z-[9999] bg-white border-b border-gray-200 shadow-2xl p-4 space-y-3 max-h-[calc(100vh-72px)] overflow-y-auto';
+      drawer.style.backgroundColor = '#ffffff';
+      drawer.style.zIndex = '9999';
       drawer.innerHTML = `
         <div class="grid grid-cols-1 gap-1 text-sm font-semibold text-gray-800">
           <a href="/#features" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">

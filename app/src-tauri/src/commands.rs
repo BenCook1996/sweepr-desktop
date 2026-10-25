@@ -1374,10 +1374,12 @@ pub async fn send_support_report(
     }
     let crash_log = std::fs::read_to_string(state.data_dir.join("crash.log")).unwrap_or_default();
     let body = serde_json::json!({
+        "project_id": "cleaner",
         "email": email,
-        "subject": subject.trim(),
+        "subject": if subject.trim().is_empty() { "SWEEPR Cleaner Desktop Support" } else { subject.trim() },
         "message": message.trim(),
         "platform": std::env::consts::OS,
+        "os": std::env::consts::OS,
         "logs": if crash_log.is_empty() { None } else { Some(crash_log) },
     });
     let api_url = state.licensing.api_url();
@@ -1386,16 +1388,33 @@ pub async fn send_support_report(
         .build()
         .map_err(|e| AppError::Other(e.to_string()))?;
 
-    client
-        .post(format!("{api_url}/v1/support"))
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| AppError::Other(format!("Failed to send report: {e}")))?
-        .error_for_status()
-        .map_err(|e| AppError::Other(format!("Server returned error: {e}")))?;
+    let endpoints = [
+        format!("{api_url}/v1/support"),
+        "http://127.0.0.1:8788/api/support/contact".to_string(),
+        "http://localhost:8787/v1/support".to_string(),
+        "https://sweeprcleaner.com/v1/support".to_string(),
+    ];
 
-    Ok(())
+    let mut last_err = String::from("Could not reach support server");
+    for url in endpoints {
+        match client
+            .post(&url)
+            .header("x-sweepr-project", "cleaner")
+            .json(&body)
+            .send()
+            .await
+        {
+            Ok(resp) if resp.status().is_success() => return Ok(()),
+            Ok(resp) => {
+                last_err = format!("Server returned status {}", resp.status());
+            }
+            Err(e) => {
+                last_err = e.to_string();
+            }
+        }
+    }
+
+    Err(AppError::Other(format!("Failed to send report: {last_err}")))
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
