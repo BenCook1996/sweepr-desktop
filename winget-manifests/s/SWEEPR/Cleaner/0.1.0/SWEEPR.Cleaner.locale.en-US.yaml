@@ -1,0 +1,33 @@
+# Created using wingetcreate 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: SWEEPR.Cleaner
+PackageVersion: 0.1.0
+PackageLocale: en-US
+Publisher: SWEEPR Cleaner Team
+PublisherUrl: https://sweeprcleaner.com
+PublisherSupportUrl: https://sweeprcleaner.com/support
+PrivacyUrl: https://sweeprcleaner.com/privacy
+Author: SWEEPR Cleaner Team
+PackageName: SWEEPR Cleaner
+PackageUrl: https://sweeprcleaner.com
+License: Freemium
+LicenseUrl: https://sweeprcleaner.com/terms
+Copyright: Copyright (c) 2026 SWEEPR Cleaner Team
+ShortDescription: Fast, lightweight PC cleaner, duplicate file finder, app uninstaller, and speed booster for Windows 10 and 11.
+Description: >-
+  SWEEPR Cleaner is a modern, lightweight (~5.9 MB) PC cleaner and storage optimizer for Windows 10 and Windows 11.
+  Includes 60-second junk and cache cleanup across 40+ apps, drag-and-drop uninstaller, 1-click software updater,
+  RAM & gaming booster, duplicate file finder, private file shredder, and a 7-day undo safety net.
+Moniker: sweepr-cleaner
+Tags:
+  - cleaner
+  - disk-cleanup
+  - duplicate-finder
+  - optimizer
+  - privacy
+  - system-utilities
+  - uninstaller
+  - windows-11
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

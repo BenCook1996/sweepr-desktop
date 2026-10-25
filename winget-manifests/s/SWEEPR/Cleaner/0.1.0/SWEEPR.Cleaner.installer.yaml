@@ -1,0 +1,21 @@
+# Created using wingetcreate 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: SWEEPR.Cleaner
+PackageVersion: 0.1.0
+Platform:
+  - Windows.Desktop
+MinimumOSVersion: 10.0.17763.0
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+  - interactive
+  - silent
+UpgradeBehavior: install
+ReleaseDate: 2026-10-25
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://sweeprcleaner.com/SWEEPRCleaner.exe
+    InstallerSha256: D1CEBF669A8888B114C3964EFE16DDA2B71EE39B0F9E7E8B1FFDA161E6E9B0E8
+ManifestType: installer
+ManifestVersion: 1.6.0
