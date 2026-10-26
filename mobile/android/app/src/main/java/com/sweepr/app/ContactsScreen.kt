@@ -82,6 +82,8 @@ fun ContactsScreen(
     var showMergeConfirm by rememberSaveable { mutableStateOf(false) }
     var showIncompleteDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     var showCalendarDeleteConfirm by rememberSaveable { mutableStateOf(false) }
+    var showCalendarDisclosure by rememberSaveable { mutableStateOf(false) }
+    var showContactsDisclosure by rememberSaveable { mutableStateOf(false) }
 
     fun hasCalendarPerm(): Boolean {
         val readOk = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
@@ -116,7 +118,66 @@ fun ContactsScreen(
     val selectedEventsHere = state.selectedCalendarEventIds.filter { it in existingEventIds }.toSet()
 
     fun merge(keys: Set<String>) {
-        if (permissions.contactsWrite) onMerge(keys) else onRequestPermission()
+        if (permissions.contactsWrite) onMerge(keys) else showContactsDisclosure = true
+    }
+
+    if (showContactsDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showContactsDisclosure = false },
+            title = { Text("Contacts Access Disclosure") },
+            text = {
+                Text(
+                    "SWEEPR Cleaner needs access to your device's Contacts (READ_CONTACTS & WRITE_CONTACTS) solely to detect duplicate or incomplete contacts and merge/clean them at your request.\n\nAll contact scanning and merging happens 100% locally on your phone. Your contacts are never uploaded or shared with any server.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showContactsDisclosure = false
+                        onRequestPermission()
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showContactsDisclosure = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showCalendarDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showCalendarDisclosure = false },
+            title = { Text("Calendar Access Disclosure") },
+            text = {
+                Text(
+                    "SWEEPR Cleaner needs access to your device's Calendar (READ_CALENDAR & WRITE_CALENDAR) solely to find past calendar events older than 1 year so you can review and remove them.\n\nAll calendar scanning happens 100% locally on your phone. Your calendar data is never uploaded or shared with any server.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCalendarDisclosure = false
+                        calendarPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.READ_CALENDAR,
+                                Manifest.permission.WRITE_CALENDAR,
+                            ),
+                        )
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCalendarDisclosure = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 
     if (showMergeConfirm && selectedHere.isNotEmpty()) {
@@ -294,14 +355,6 @@ fun ContactsScreen(
                         Surface(
                             onClick = {
                                 activeSegment = index
-                                if (index == 2 && !calendarGranted) {
-                                    calendarPermissionLauncher.launch(
-                                        arrayOf(
-                                            Manifest.permission.READ_CALENDAR,
-                                            Manifest.permission.WRITE_CALENDAR,
-                                        ),
-                                    )
-                                }
                             },
                             shape = RoundedCornerShape(20.dp),
                             color = if (selected) SweeprGreen else Color.Transparent,
@@ -328,7 +381,7 @@ fun ContactsScreen(
                         !permissions.contactsRead -> PermissionPrompt(
                             text = stringResource(R.string.contacts_permission_text),
                             buttonText = stringResource(R.string.contacts_permission_button),
-                            onClick = onRequestPermission,
+                            onClick = { showContactsDisclosure = true },
                             modifier = Modifier.weight(1f),
                         )
                         state.contactGroups.isEmpty() -> EmptyState(
@@ -381,7 +434,7 @@ fun ContactsScreen(
                         !permissions.contactsRead -> PermissionPrompt(
                             text = stringResource(R.string.contacts_permission_text),
                             buttonText = stringResource(R.string.contacts_permission_button),
-                            onClick = onRequestPermission,
+                            onClick = { showContactsDisclosure = true },
                             modifier = Modifier.weight(1f),
                         )
                         state.incompleteContacts.isEmpty() -> EmptyState(
@@ -439,12 +492,7 @@ fun ContactsScreen(
                             text = stringResource(R.string.calendar_permission_text),
                             buttonText = stringResource(R.string.calendar_permission_button),
                             onClick = {
-                                calendarPermissionLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.READ_CALENDAR,
-                                        Manifest.permission.WRITE_CALENDAR,
-                                    ),
-                                )
+                                showCalendarDisclosure = true
                             },
                             modifier = Modifier.weight(1f),
                         )

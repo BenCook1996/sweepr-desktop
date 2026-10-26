@@ -291,8 +291,28 @@
   {/if}
 
   <!-- Section 1: Autopilot -->
-  <section class="group-section">
-    <div class="group-label">Autopilot</div>
+  <section class="group-section" class:battery-highlight={viewMode === "battery"}>
+    <div class="group-label" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>{viewMode === "battery" ? "Battery Care & Power Saver" : "Autopilot"}</span>
+      <div style="display: flex; gap: 4px;">
+        <button
+          type="button"
+          class="ghost mini-btn"
+          style={viewMode === "pc" ? "color: var(--accent); font-weight: 800;" : ""}
+          onclick={() => (viewMode = "pc")}
+        >
+          RAM &amp; PC
+        </button>
+        <button
+          type="button"
+          class="ghost mini-btn"
+          style={viewMode === "battery" ? "color: var(--accent); font-weight: 800;" : ""}
+          onclick={() => (viewMode = "battery")}
+        >
+          Battery Care
+        </button>
+      </div>
+    </div>
     <div class="row-list">
       <label class="line-row">
         <span class="row-name">80% Battery Limit</span>

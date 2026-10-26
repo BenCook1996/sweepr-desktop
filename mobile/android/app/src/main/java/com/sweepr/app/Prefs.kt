@@ -245,7 +245,8 @@ object Prefs {
             storeRefreshTokenSecurely(legacyToken)
         }
 
-        val deviceId = prefs.getString(KEY_DEVICE_ID, null)?.takeIf { it.isNotBlank() }
+        val deviceId = prefs.getString(KEY_DEVICE_ID, null)
+            ?.takeIf { it.isNotBlank() && !it.startsWith("and_") }
             ?: java.util.UUID.randomUUID().toString().also {
                 prefs.edit().putString(KEY_DEVICE_ID, it).apply()
             }
@@ -304,6 +305,7 @@ object Prefs {
                 .apply()
         }
         prefs.edit()
+            .putString(KEY_DEVICE_ID, normalized.deviceId.ifBlank { _account.value.deviceId })
             .putString(KEY_ACCOUNT_ID, normalized.accountId)
             .putString(KEY_ACCOUNT_EMAIL, normalized.email)
             .putString(KEY_REFERRAL_CODE, normalized.referralCode)
@@ -497,6 +499,7 @@ object SweeprAccountApi {
             .put("email", email.trim())
             .put("code", code.trim())
             .put("device_id", deviceId)
+            .put("device_type", "mobile")
             .put("platform", "android")
             .put("project_id", PROJECT_ID)
             .put("device_label", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
@@ -532,7 +535,11 @@ object SweeprAccountApi {
             .put("account_id", current.accountId)
             .put("project_id", PROJECT_ID)
         postJson("/v1/referral/apply", body, bearerToken = current.refreshToken)
-        return current.copy(redeemedReferralCode = trimmed)
+        return runCatching {
+            refreshEntitlement(current.copy(redeemedReferralCode = trimmed))
+        }.getOrElse {
+            current.copy(redeemedReferralCode = trimmed)
+        }
     }
 
     fun refreshEntitlement(current: LinkedAccount): LinkedAccount {
@@ -585,22 +592,23 @@ object SweeprAccountApi {
             .put("platform", "android")
             .put("project_id", PROJECT_ID)
         val res = postJson("/api/device-link/redeem", body)
+        val resolvedDeviceId = res.optString("device_id").ifBlank { deviceId }
         val expiresSec = res.optLong("expires_at", 0L)
         val jwsToken = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
-        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, deviceId))
+        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, resolvedDeviceId))
         val accountId = res.getString("account_id")
         return LinkedAccount(
             accountId = accountId,
             email = res.optString("email", ""),
             refreshToken = res.getString("refresh_token"),
-            deviceId = deviceId,
+            deviceId = resolvedDeviceId,
             serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() },
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
             addons = if (isActive) parseAddons(res) else emptyList(),
             referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
-                ?: Prefs.defaultReferralCode(deviceId, accountId),
+                ?: Prefs.defaultReferralCode(resolvedDeviceId, accountId),
         )
     }
 
@@ -617,6 +625,65 @@ object SweeprAccountApi {
             .put("project_id", PROJECT_ID)
         val res = postJson("/api/device-link/approve", body, bearerToken = current.refreshToken)
         return res.optString("device_name", "Desktop PC").ifBlank { "Desktop PC" }
+    }
+
+    /** Direct Google Play purchase verification & Central CRM sync. */
+    fun verifyGooglePlayPurchase(
+        productId: String,
+        purchaseToken: String,
+        orderId: String? = null,
+        plan: String? = null,
+        addons: List<String> = emptyList(),
+        current: LinkedAccount,
+    ): LinkedAccount {
+        val addonsJson = org.json.JSONArray()
+        for (a in addons) addonsJson.put(a)
+        val body = org.json.JSONObject()
+            .put("product_id", productId)
+            .put("purchase_token", purchaseToken)
+            .put("device_id", current.deviceId)
+            .put("project_id", PROJECT_ID)
+            .put("addons", addonsJson)
+        if (!orderId.isNullOrBlank()) body.put("order_id", orderId)
+        if (!plan.isNullOrBlank()) body.put("plan", plan)
+        val res = postJson(
+            "/v1/billing/google-play/verify",
+            body,
+            bearerToken = current.refreshToken.takeIf { it.isNotBlank() },
+        )
+        val resolvedDeviceId = res.optString("device_id").ifBlank { current.deviceId }
+        val expiresSec = res.optLong("expires_at", 0L)
+        val jwsToken = res.optString("token", "").trim()
+        val rawActive = res.optBoolean("active", true)
+        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, resolvedDeviceId))
+        val accountId = res.optString("account_id").ifBlank { current.accountId }
+        val refreshToken = res.optString("refresh_token").ifBlank { current.refreshToken }
+        return current.copy(
+            accountId = accountId,
+            refreshToken = refreshToken,
+            deviceId = resolvedDeviceId,
+            serverActive = isActive,
+            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
+            expiresAt = if (expiresSec > 0L) expiresSec else current.expiresAt,
+            addons = if (isActive) parseAddons(res, current.addons) else current.addons,
+        )
+    }
+
+    /** Submits an in-app support ticket to POST /v1/support (which syncs to Central CRM). */
+    fun submitSupportTicket(
+        email: String,
+        subject: String,
+        message: String,
+        logs: String? = null,
+        current: LinkedAccount? = null,
+    ) {
+        val body = org.json.JSONObject()
+            .put("email", email.trim())
+            .put("subject", subject.trim())
+            .put("message", message.trim())
+            .put("project_id", PROJECT_ID)
+        if (!logs.isNullOrBlank()) body.put("logs", logs)
+        postJson("/v1/support", body, bearerToken = current?.refreshToken?.takeIf { it.isNotBlank() })
     }
 }
 

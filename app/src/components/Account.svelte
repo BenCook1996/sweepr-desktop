@@ -314,6 +314,9 @@
           <span class="badge free">Pro Active</span>
           {#if license.plan}<span class="badge pro">{license.plan}</span>{/if}
           <div class="spacer"></div>
+          <button class="ghost small-btn" disabled={busy} onclick={showLinkAnotherDeviceQr}>
+            Pair Mobile Device via QR
+          </button>
           <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
         </div>
         {#if expiry}
@@ -325,6 +328,9 @@
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <button class="primary small-btn" disabled={busy} onclick={startPlanCheckout}>
               Unlock Pro
+            </button>
+            <button class="ghost small-btn" disabled={busy} onclick={startDesktopQrChallenge}>
+              Sign In with QR Code
             </button>
             <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
           </div>
@@ -358,6 +364,26 @@
             <button class="ghost small-btn" disabled={busy} onclick={sendOtp}>Resend</button>
           </div>
         {/if}
+      {/if}
+
+      {#if qrMode !== "none"}
+        <div style="margin-top: 8px; padding: 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+          <strong class="small">
+            {qrMode === "token" ? `Scan with Mobile App (${qrDevicesUsed}/${qrDevicesMax} devices used)` : "Scan with Signed-In Mobile App or Portal to Unlock PC"}
+          </strong>
+          {#if qrSvg}
+            <div style="width: 168px; height: 168px; background: #fff; padding: 8px; border-radius: 12px;">
+              {@html qrSvg}
+            </div>
+          {:else}
+            <span class="muted small">Generating QR code…</span>
+          {/if}
+          <div class="row" style="gap: 10px; justify-content: center;">
+            <span class="muted small">Expires in {qrCountdown}s</span>
+            <button class="ghost small-btn" onclick={() => (qrMode === "token" ? showLinkAnotherDeviceQr() : startDesktopQrChallenge())}>Refresh QR</button>
+            <button class="ghost small-btn" onclick={() => { stopQrTimer(); qrMode = "none"; }}>Close</button>
+          </div>
+        </div>
       {/if}
     </div>
 

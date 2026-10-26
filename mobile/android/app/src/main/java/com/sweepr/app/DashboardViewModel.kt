@@ -330,11 +330,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
             res.onSuccess { updated ->
                 Prefs.setLinkedAccount(updated)
-                _state.update {
-                    it.copy(
+                serverActive = isServerAccountCurrentlyEntitled(updated)
+                val batActive = rcBatteryCare || isServerBatteryCareEntitled(updated)
+                BatteryCareManager.enforceEntitlement(app, batActive)
+                _state.update { s ->
+                    s.copy(
                         isWorking = false,
                         linkedAccount = updated,
-                        message = "Referral code ${updated.redeemedReferralCode} applied!",
+                        subscription = s.subscription.copy(
+                            active = rcActive || serverActive,
+                            batteryCareActive = batActive,
+                            productId = if (rcActive) s.subscription.productId else updated.plan,
+                            expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
+                        ),
+                        message = "Referral code ${updated.redeemedReferralCode} applied! +30 days Pro unlocked.",
                     )
                 }
                 onDone()
@@ -373,12 +382,109 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 res.onSuccess { linked ->
                     Prefs.setLinkedAccount(linked)
+                    runCatching {
+                        if (Purchases.isConfigured && linked.accountId.isNotBlank()) {
+                            Purchases.sharedInstance.logIn(
+                                linked.accountId,
+                                object : LogInCallback {
+                                    override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
+                                        runCatching {
+                                            if (linked.email.isNotBlank()) {
+                                                Purchases.sharedInstance.setEmail(linked.email)
+                                            }
+                                            Purchases.sharedInstance.setAttributes(mapOf("project_id" to BuildConfig.SWEEPR_PROJECT_ID))
+                                        }
+                                        updateCustomerInfo(customerInfo)
+                                    }
+                                    override fun onError(error: PurchasesError) = Unit
+                                },
+                            )
+                        }
+                    }
                     onAccountLinked(linked)
                     onDone()
                 }.onFailure { err ->
                     _state.update { it.copy(isWorking = false) }
                     showMessage(err.message ?: "Invalid or expired QR pairing token.")
                 }
+            }
+        }
+    }
+
+    /** Syncs a Google Play purchase with the SWEEPR backend + Central CRM and updates local entitlement state. */
+    fun syncGooglePlayPurchase(
+        productId: String,
+        purchaseToken: String,
+        orderId: String? = null,
+    ) {
+        val current = _state.value.linkedAccount
+        viewModelScope.launch {
+            val res = withContext(Dispatchers.IO) {
+                runCatching {
+                    SweeprAccountApi.verifyGooglePlayPurchase(
+                        productId = productId,
+                        purchaseToken = purchaseToken,
+                        orderId = orderId,
+                        current = current,
+                    )
+                }
+            }
+            res.onSuccess { updated ->
+                Prefs.setLinkedAccount(updated)
+                serverActive = isServerAccountCurrentlyEntitled(updated)
+                val batActive = rcBatteryCare || isServerBatteryCareEntitled(updated)
+                BatteryCareManager.enforceEntitlement(app, batActive)
+                _state.update { s ->
+                    s.copy(
+                        linkedAccount = updated,
+                        subscription = s.subscription.copy(
+                            active = rcActive || serverActive,
+                            batteryCareActive = batActive,
+                            productId = s.subscription.productId ?: updated.plan,
+                            expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(updated),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /** Submits an in-app support ticket directly to POST /v1/support (synced to Central CRM). */
+    fun submitSupportTicket(
+        email: String,
+        subject: String,
+        message: String,
+        onDone: () -> Unit = {},
+    ) {
+        if (email.isBlank() || !email.contains("@")) {
+            showMessage("Please enter a valid contact email.")
+            return
+        }
+        if (subject.trim().length < 2 || message.trim().length < 5) {
+            showMessage("Please enter a subject and message.")
+            return
+        }
+        val current = _state.value.linkedAccount
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val logs = "Android ${android.os.Build.VERSION.RELEASE} (${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}), plan=${current.plan ?: "free"}, device=${current.deviceId}"
+            val res = withContext(Dispatchers.IO) {
+                runCatching {
+                    SweeprAccountApi.submitSupportTicket(
+                        email = email,
+                        subject = subject,
+                        message = message,
+                        logs = logs,
+                        current = current,
+                    )
+                }
+            }
+            _state.update { it.copy(isWorking = false) }
+            res.onSuccess {
+                showMessage("Support ticket submitted! Our team will reply to ${email.trim()}.")
+                onDone()
+            }.onFailure { err ->
+                showMessage(err.message ?: "Could not submit support ticket. Please email $SUPPORT_EMAIL.")
             }
         }
     }

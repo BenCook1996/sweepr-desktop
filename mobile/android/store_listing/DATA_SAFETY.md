@@ -7,7 +7,8 @@ Sweepr strictly adheres to Google Play's Photo and Video Permissions policy and 
   - `android.permission.READ_MEDIA_VISUAL_USER_SELECTED` (Android 14+ partial photo picker access support)
   - `android.permission.READ_EXTERNAL_STORAGE` (`maxSdkVersion="32"`) & `android.permission.WRITE_EXTERNAL_STORAGE` (`maxSdkVersion="28"`)
   - `android.permission.READ_CONTACTS` & `android.permission.WRITE_CONTACTS` (Core functionality: finding and merging duplicate contacts on-device)
-  - `android.permission.POST_NOTIFICATIONS` (Optional weekly/monthly cleanup reminders)
+  - `android.permission.READ_CALENDAR` & `android.permission.WRITE_CALENDAR` (Core functionality: scanning and cleaning past calendar events older than 1 year 100% locally on-device)
+  - `android.permission.POST_NOTIFICATIONS` (Optional weekly/monthly cleanup reminders and battery care unplug/overheat alerts)
   - `android.permission.INTERNET` (Google Play Billing / RevenueCat entitlement verification and optional Cross-Platform Sweepr Account email OTP sign-in)
 - **Excluded / Prohibited Permissions (NEVER used):**
   - ❌ `MANAGE_EXTERNAL_STORAGE`
@@ -34,8 +35,8 @@ Sweepr strictly adheres to Google Play's Photo and Video Permissions policy and 
 - **Shared with third parties:** **No**.
 - **Deletions:** Handled via Android's official `MediaStore.createTrashRequest` (30-day System Trash with user confirmation dialog).
 
-#### B. Contacts (`ContactsContract`)
-- **Collected:** **No** (Scanned and linked/merged 100% locally via `ContactsContract.AggregationExceptions`; never transmitted off the device).
+#### B. Contacts (`ContactsContract`) & Calendar (`CalendarContract`)
+- **Collected:** **No** (Contacts are scanned and linked/merged 100% locally via `ContactsContract.AggregationExceptions`, and past calendar events older than 1 year are scanned and deleted 100% locally via `CalendarContract.Events`; neither ever leaves the device).
 - **Shared with third parties:** **No**.
 
 #### C. Personal Info → Email Address (Optional)

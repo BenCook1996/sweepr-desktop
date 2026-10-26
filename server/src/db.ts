@@ -1413,6 +1413,22 @@ export class Repo {
       cancel_at_period_end: refEnt.cancel_at_period_end ?? 0,
     });
 
+    // Also grant the referred account +30 days (either extending existing entitlement or granting a 30-day Pro trial)
+    const referredEnt = this.entitlement(referredAccountId);
+    const referredActive =
+      referredEnt && (referredEnt.status === "active" || referredEnt.status === "trialing") && (referredEnt.current_period_end ?? 0) > nowSec;
+    const referredBaseEnd = referredActive && referredEnt?.current_period_end ? referredEnt.current_period_end : nowSec;
+    const referredNewEnd = referredBaseEnd + 30 * 86400;
+    this.upsertEntitlement({
+      account_id: referredAccountId,
+      stripe_subscription_id: referredEnt?.stripe_subscription_id ?? null,
+      status: referredActive && referredEnt?.status === "active" ? "active" : "trialing",
+      plan: referredEnt?.plan ?? "monthly",
+      addons_list: this.addonsForAccount(referredAccountId),
+      current_period_end: referredNewEnd,
+      cancel_at_period_end: referredEnt?.cancel_at_period_end ?? 0,
+    });
+
     this.addActivity({
       account_id: referrer.id,
       type: "referral_reward",
@@ -1420,6 +1436,14 @@ export class Repo {
       description: `Referred account ${referred.email || referredAccountId} with code ${referrerCode}`,
       actor: "system",
       metadata: { referred_account_id: referredAccountId, code: referrerCode, new_period_end: newEnd },
+    });
+    this.addActivity({
+      account_id: referredAccountId,
+      type: "referral_redeemed",
+      title: "Redeemed Friend Referral (+30 Days Pro)",
+      description: `Applied friend referral code ${referrerCode} for +30 days of SWEEPR Pro`,
+      actor: "customer",
+      metadata: { referrer_account_id: referrer.id, code: referrerCode, new_period_end: referredNewEnd },
     });
     return true;
   }

@@ -274,7 +274,40 @@ object MobileCloudVault {
     fun restoreToDownloads(context: Context, item: VaultItem, password: String): File {
         val (origName, bytes) = decrypt(item.file, password)
         val safeName = origName.replace(Regex("[\\\\/:*?\"<>|]"), "_")
-        val outDir = File(context.getExternalFilesDir(null) ?: context.filesDir, "Restored").apply { mkdirs() }
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            runCatching {
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Downloads.DISPLAY_NAME, safeName)
+                    put(android.provider.MediaStore.Downloads.RELATIVE_PATH, "${android.os.Environment.DIRECTORY_DOWNLOADS}/SWEEPR Restored")
+                    put(android.provider.MediaStore.Downloads.IS_PENDING, 1)
+                }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    values.clear()
+                    values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
+                    resolver.update(uri, values, null, null)
+                }
+            }
+        }
+        val publicDownloads = runCatching {
+            val dir = File(
+                android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS),
+                "SWEEPR Restored",
+            )
+            if (dir.exists() || dir.mkdirs()) {
+                val f = File(dir, safeName)
+                f.writeBytes(bytes)
+                f
+            } else null
+        }.getOrNull()
+        if (publicDownloads != null) return publicDownloads
+
+        val outDir = File(
+            context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir,
+            "Restored",
+        ).apply { mkdirs() }
         val outFile = File(outDir, safeName)
         outFile.writeBytes(bytes)
         return outFile

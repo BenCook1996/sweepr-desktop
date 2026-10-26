@@ -227,6 +227,28 @@
                 aria-label="Email address"
                 onkeydown={(e) => e.key === "Enter" && handleActivate()}
               />
+              <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                <button type="button" class="link-btn" onclick={startQrSignIn}>
+                  Sign In with QR Code
+                </button>
+              </div>
+            </div>
+          {/if}
+
+          {#if showQrScan}
+            <div style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
+              {#if qrSvg}
+                <div style="width: 150px; height: 150px; background: #fff; padding: 8px; border-radius: 10px;">
+                  {@html qrSvg}
+                </div>
+              {:else}
+                <span style="font-size: 12px; color: var(--muted);">Generating QR code…</span>
+              {/if}
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted);">
+                <span>Expires in {qrCountdown}s</span>
+                <button type="button" class="link-btn" onclick={startQrSignIn}>Refresh QR</button>
+                <button type="button" class="link-btn" onclick={() => { stopPolling(); showQrScan = false; }}>Hide QR</button>
+              </div>
             </div>
           {/if}
 

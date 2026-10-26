@@ -112,10 +112,12 @@ object BatteryCareManager {
     private const val KEY_THERMAL_GUARD = "thermal_guard_enabled"
     private const val KEY_ENTITLED = "battery_care_entitled"
     private const val KEY_LAST_ALERT_MS = "last_unplug_alert_ms"
+    private const val KEY_LAST_THERMAL_ALERT_MS = "last_thermal_alert_ms"
     private const val ALERT_COOLDOWN_MS = 30L * 60L * 1000L
     private const val WORK_NAME = "sweepr_battery_unplug_monitor"
     private const val CHANNEL_ID = "battery_care_alerts"
     private const val NOTIFICATION_ID = 4209
+    private const val THERMAL_NOTIFICATION_ID = 4210
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
@@ -247,21 +249,26 @@ object BatteryCareManager {
 
     fun setChargeLimit(context: Context, enabled: Boolean, percent: Int): BatteryCareSnapshot {
         val clamped = clampLimit(percent)
-        prefs(context).edit()
+        val sp = prefs(context)
+        sp.edit()
             .putBoolean(KEY_LIMIT_ENABLED, enabled)
             .putInt(KEY_LIMIT_PERCENT, clamped)
             .apply()
-        scheduleOrCancelWorker(context, enabled)
+        scheduleOrCancelWorker(context, enabled || sp.getBoolean(KEY_THERMAL_GUARD, false))
         val snap = readSnapshot(context)
         if (enabled) maybeNotifyUnplug(context, snap)
         return snap
     }
 
     fun setThermalGuard(context: Context, enabled: Boolean): BatteryCareSnapshot {
-        prefs(context).edit()
+        val sp = prefs(context)
+        sp.edit()
             .putBoolean(KEY_THERMAL_GUARD, enabled)
             .apply()
-        return readSnapshot(context)
+        scheduleOrCancelWorker(context, enabled || sp.getBoolean(KEY_LIMIT_ENABLED, false))
+        val snap = readSnapshot(context)
+        if (enabled) maybeNotifyUnplug(context, snap)
+        return snap
     }
 
     fun trimAppCaches(context: Context): Long {
@@ -298,13 +305,51 @@ object BatteryCareManager {
             scheduleOrCancelWorker(context, false)
             return
         }
+        val now = System.currentTimeMillis()
+
+        // 1. Thermal Overheat Guard notification (>= 40.0°C)
+        val tempC = snap.temperatureC ?: 0f
+        if (snap.thermalGuardEnabled && tempC >= 40.0f) {
+            val lastThermal = sp.getLong(KEY_LAST_THERMAL_ALERT_MS, 0L)
+            if (lastThermal == 0L || (now - lastThermal) >= ALERT_COOLDOWN_MS) {
+                sp.edit().putLong(KEY_LAST_THERMAL_ALERT_MS, now).apply()
+                if (Reminders.canNotify(context)) {
+                    ensureChannel(context)
+                    val open = PendingIntent.getActivity(
+                        context,
+                        THERMAL_NOTIFICATION_ID,
+                        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                    )
+                    val title = "SWEEPR Overheat Guard — ${tempC}°C Detected"
+                    val body = "Your battery temperature reached ${tempC}°C. Run 1-Tap Cache Cool-Down or unplug charger to reduce thermal wear."
+                    val notif = NotificationCompat.Builder(context, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setColor(0xFFEF4444.toInt())
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(open)
+                        .setAutoCancel(true)
+                        .build()
+                    try {
+                        NotificationManagerCompat.from(context).notify(THERMAL_NOTIFICATION_ID, notif)
+                    } catch (_: SecurityException) {
+                    }
+                }
+            }
+        } else if (tempC < 38.5f) {
+            sp.edit().putLong(KEY_LAST_THERMAL_ALERT_MS, 0L).apply()
+        }
+
+        // 2. 80% Charge Limit Unplug Alert
         if (!snap.chargeLimitEnabled || !snap.isPluggedIn || (snap.chargePercent ?: 0) < snap.chargeLimitPercent) {
             if (!snap.isPluggedIn || (snap.chargePercent ?: 0) < snap.chargeLimitPercent) {
                 sp.edit().putLong(KEY_LAST_ALERT_MS, 0L).apply()
             }
             return
         }
-        val now = System.currentTimeMillis()
         val last = sp.getLong(KEY_LAST_ALERT_MS, 0L)
         if (last > 0L && (now - last) < ALERT_COOLDOWN_MS) return
         sp.edit().putLong(KEY_LAST_ALERT_MS, now).apply()
@@ -540,6 +585,27 @@ fun BatteryCareScreen(
                         )
                     }
 
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SensorStatBox(
+                            modifier = Modifier.weight(1f),
+                            label = "POWER",
+                            value = snap.powerWatts?.let { "${it}W" } ?: (snap.voltageMv?.let { "${it}mV" } ?: "Idle"),
+                            sub = snap.voltageMv?.let { "${it} mV" } ?: "Voltage",
+                        )
+                        SensorStatBox(
+                            modifier = Modifier.weight(1f),
+                            label = "RAM FREE",
+                            value = formatBytes(snap.availableRamBytes),
+                            sub = "of ${formatBytes(snap.totalRamBytes)}",
+                        )
+                        SensorStatBox(
+                            modifier = Modifier.weight(1f),
+                            label = "SAVER",
+                            value = if (snap.batterySaverOn) "ON" else "OFF",
+                            sub = "OS Saver",
+                        )
+                    }
+
                     // 20%–80% Optimal Lifespan Zone Visual Bar
                     Column(
                         modifier = Modifier
@@ -722,6 +788,58 @@ fun BatteryCareScreen(
                             }
                         },
                     )
+                }
+            }
+
+            // 3. 1-Tap Cache Cool-Down
+            SweeprPanel(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        SweeprIconBadge(
+                            kind = SweeprIconKind.SPARKLE_CLEAN,
+                            tint = SweeprGreen,
+                            badgeSize = 36.dp,
+                            iconSize = 18.dp,
+                        )
+                        Column {
+                            Text(
+                                "1-Tap Cache Cool-Down",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                "Flush temporary app cache files & refresh memory telemetry",
+                                fontSize = 11.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val freed = BatteryCareManager.trimAppCaches(context)
+                            snap = BatteryCareManager.readSnapshot(context)
+                            notice = if (freed > 0L) {
+                                "Cache Cool-Down complete — freed ${formatBytes(freed)}."
+                            } else {
+                                "Cache Cool-Down complete — temporary caches are already clean."
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Cool Down", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }

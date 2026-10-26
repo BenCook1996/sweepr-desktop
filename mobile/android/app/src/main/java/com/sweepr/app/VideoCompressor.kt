@@ -62,12 +62,15 @@ object VideoCompressor {
             if (!transcodedOk || !tempFile.exists() || tempFile.length() <= 0L) {
                 throw IllegalStateException("Could not compress this video format on this device.")
             }
+            if (tempFile.length() >= item.size) {
+                throw IllegalStateException("Video is already maximally compressed (${formatBytes(item.size)}).")
+            }
 
             onProgress(0.92f)
             val baseName = item.name.substringBeforeLast('.')
             val outName = "${baseName}_sweepr_${preset.maxLongSide}p.mp4"
             val savedUri = publishToMediaStore(context, tempFile, outName)
-            val finalBytes = tempFile.length().coerceAtMost(item.size)
+            val finalBytes = tempFile.length()
             onProgress(1.0f)
 
             return VideoCompressionResult(
@@ -184,8 +187,12 @@ object VideoCompressor {
         val srcWidth = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_WIDTH) }.getOrDefault(1280)
         val srcHeight = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_HEIGHT) }.getOrDefault(720)
         val srcMime = sourceVideoFormat.getString(MediaFormat.KEY_MIME) ?: return false
+        val longSide = maxOf(srcWidth, srcHeight).coerceAtLeast(1)
+        val scale = if (longSide > preset.maxLongSide) preset.maxLongSide.toFloat() / longSide.toFloat() else 1.0f
+        val dstWidth = (((srcWidth * scale).toInt() + 1) / 2 * 2).coerceAtLeast(16)
+        val dstHeight = (((srcHeight * scale).toInt() + 1) / 2 * 2).coerceAtLeast(16)
 
-        val encoderFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, srcWidth, srcHeight).apply {
+        val encoderFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, dstWidth, dstHeight).apply {
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,

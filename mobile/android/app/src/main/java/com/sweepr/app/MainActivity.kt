@@ -61,6 +61,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.revenuecat.purchases.CustomerInfo
+import com.revenuecat.purchases.PurchaseParams
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesError
+import com.revenuecat.purchases.interfaces.GetStoreProductsCallback
+import com.revenuecat.purchases.interfaces.PurchaseCallback
+import com.revenuecat.purchases.models.StoreProduct
+import com.revenuecat.purchases.models.StoreTransaction
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallActivityLauncher
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResult
 import com.revenuecat.purchases.ui.revenuecatui.activity.PaywallResultHandler
@@ -70,9 +78,11 @@ class MainActivity : AppCompatActivity() {
 
     /** What the user was trying to do when the paywall opened – resumed after they subscribe. */
     private var afterPurchase: (() -> Unit)? = null
+    private var pendingDeepLinkPair by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        extractDeepLinkPair(intent)
 
         // Must be created in onCreate. Scanning is free; cleaning is Premium (Google Play
         // subscription via RevenueCat). If they subscribe or restore, carry on with the clean.
@@ -104,15 +114,94 @@ class MainActivity : AppCompatActivity() {
         )
 
         setContent {
+            val vm: DashboardViewModel = viewModel()
+            LaunchedEffect(pendingDeepLinkPair) {
+                val raw = pendingDeepLinkPair
+                if (!raw.isNullOrBlank()) {
+                    pendingDeepLinkPair = null
+                    vm.handleQrPairInput(raw)
+                }
+            }
             SweeprTheme {
                 SweeprRoot(
+                    vm = vm,
                     onShowPaywall = { then ->
                         afterPurchase = then
                         paywallLauncher.launch(shouldDisplayDismissButton = true)
                     },
+                    onPurchasePlan = { productId, then ->
+                        launchPlanPurchase(productId, vm, then)
+                    },
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        extractDeepLinkPair(intent)
+    }
+
+    private fun extractDeepLinkPair(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == "sweeprcleaner" && data.host == "pair") {
+            val token = data.getQueryParameter("token") ?: data.getQueryParameter("challenge")
+            pendingDeepLinkPair = token?.takeIf { it.isNotBlank() } ?: data.toString()
+        }
+    }
+
+    private fun launchPlanPurchase(
+        productId: String,
+        vm: DashboardViewModel,
+        then: () -> Unit,
+    ) {
+        if (!Purchases.isConfigured) {
+            afterPurchase = then
+            paywallLauncher.launch(shouldDisplayDismissButton = true)
+            return
+        }
+        Purchases.sharedInstance.getProducts(
+            listOf(productId),
+            object : GetStoreProductsCallback {
+                override fun onReceived(storeProducts: List<StoreProduct>) {
+                    val product = storeProducts.firstOrNull()
+                    if (product == null) {
+                        afterPurchase = then
+                        paywallLauncher.launch(shouldDisplayDismissButton = true)
+                        return
+                    }
+                    Purchases.sharedInstance.purchase(
+                        PurchaseParams.Builder(this@MainActivity, product).build(),
+                        object : PurchaseCallback {
+                            override fun onCompleted(storeTransaction: StoreTransaction, customerInfo: CustomerInfo) {
+                                vm.applyCustomerInfo(customerInfo)
+                                val pToken = storeTransaction.purchaseToken
+                                if (pToken.isNotBlank()) {
+                                    vm.syncGooglePlayPurchase(
+                                        productId = productId,
+                                        purchaseToken = pToken,
+                                        orderId = storeTransaction.orderId,
+                                    )
+                                }
+                                then()
+                            }
+
+                            override fun onError(error: PurchasesError, userCancelled: Boolean) {
+                                if (!userCancelled) {
+                                    vm.showMessage(error.message)
+                                }
+                            }
+                        },
+                    )
+                }
+
+                override fun onError(error: PurchasesError) {
+                    afterPurchase = then
+                    paywallLauncher.launch(shouldDisplayDismissButton = true)
+                }
+            },
+        )
     }
 }
 
@@ -136,7 +225,7 @@ data class PermissionState(
 )
 
 object AppPermissions {
-    private fun mediaPermissions(): Array<String> = when {
+    fun mediaPermissions(): Array<String> = when {
         Build.VERSION.SDK_INT >= 34 -> arrayOf(
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO,
@@ -150,9 +239,14 @@ object AppPermissions {
         else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 
+    fun contactsPermissions(): Array<String> = arrayOf(
+        Manifest.permission.READ_CONTACTS,
+        Manifest.permission.WRITE_CONTACTS,
+    )
+
     /** Requests media and contacts permissions needed for scanning. Notification permission is requested contextually in Settings. */
     fun all(): Array<String> {
-        return mediaPermissions() + arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
+        return mediaPermissions() + contactsPermissions()
     }
 
     fun current(context: Context): PermissionState {
@@ -180,6 +274,7 @@ object AppPermissions {
 fun SweeprRoot(
     vm: DashboardViewModel = viewModel(),
     onShowPaywall: (then: () -> Unit) -> Unit = {},
+    onPurchasePlan: (productId: String, then: () -> Unit) -> Unit = { _, then -> onShowPaywall(then) },
 ) {
     val context = LocalContext.current
     val state by vm.state.collectAsState()
@@ -188,6 +283,7 @@ fun SweeprRoot(
     var photosInitialTab by rememberSaveable { mutableIntStateOf(0) }
     var permissions by remember { mutableStateOf(AppPermissions.current(context)) }
     var scanAfterGrant by remember { mutableStateOf(false) }
+    var showMediaDisclosure by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -212,16 +308,43 @@ fun SweeprRoot(
     }
 
     val requestAccessAndScan: () -> Unit = {
-        if (permissions.media && permissions.contactsRead) {
+        if (permissions.media) {
             vm.scan(permissions)
         } else {
-            scanAfterGrant = true
-            permissionLauncher.launch(AppPermissions.all())
+            showMediaDisclosure = true
         }
     }
     val requestPermissions: () -> Unit = {
         scanAfterGrant = true
-        permissionLauncher.launch(AppPermissions.all())
+        permissionLauncher.launch(AppPermissions.contactsPermissions())
+    }
+
+    if (showMediaDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showMediaDisclosure = false },
+            title = { Text("Photos & Videos Access Disclosure") },
+            text = {
+                Text(
+                    "SWEEPR Cleaner needs access to your device's Photos and Videos solely to scan for duplicate photos, similar bursts, large videos, and screenshots so you can review and free up storage space.\n\nAll photo and video analysis happens 100% locally on your device. Your media is never uploaded or shared with any server.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showMediaDisclosure = false
+                        scanAfterGrant = true
+                        permissionLauncher.launch(AppPermissions.mediaPermissions())
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMediaDisclosure = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 
     // Re-check permissions and subscription entitlements when coming back to the app.
@@ -339,10 +462,10 @@ fun SweeprRoot(
         PaywallModalSheet(
             state = state,
             onDismiss = { showPaywallSheet = false },
-            onContinueToGooglePlay = {
+            onContinueToGooglePlay = { productId ->
                 val next = pendingPaywallAction ?: {}
                 pendingPaywallAction = null
-                onShowPaywall(next)
+                onPurchasePlan(productId, next)
             },
             onRestore = vm::restorePurchases,
             onOpenEmailSignIn = {
@@ -425,11 +548,12 @@ fun SweeprRoot(
                 )
                 Screen.Account -> AccountScreen(
                     state = state,
-                    onUpgrade = { onShowPaywall {} },
+                    onUpgrade = { productId -> onPurchasePlan(productId) {} },
                     onRestore = vm::restorePurchases,
                     onSendOtp = vm::sendOtp,
                     onVerifyOtp = vm::verifyOtp,
                     onQrPair = vm::handleQrPairInput,
+                    onSubmitSupport = vm::submitSupportTicket,
                     onSignOut = vm::signOutAccount,
                     onDeleteAccount = vm::deleteAccount,
                     onBack = goBack,

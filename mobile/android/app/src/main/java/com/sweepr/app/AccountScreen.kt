@@ -97,11 +97,12 @@ internal fun Context.openUrl(url: String) {
 @Composable
 fun AccountScreen(
     state: DashboardState,
-    onUpgrade: () -> Unit,
+    onUpgrade: (productId: String) -> Unit,
     onRestore: () -> Unit,
     onSendOtp: (email: String, onSent: () -> Unit) -> Unit = { _, _ -> },
     onVerifyOtp: (email: String, code: String, onVerified: () -> Unit) -> Unit = { _, _, _ -> },
     onQrPair: (rawInput: String, onDone: () -> Unit) -> Unit = { _, _ -> },
+    onSubmitSupport: (email: String, subject: String, message: String, onDone: () -> Unit) -> Unit = { _, _, _, _ -> },
     onSignOut: () -> Unit = {},
     onDeleteAccount: (onDeleted: () -> Unit) -> Unit = {},
     onBack: () -> Unit,
@@ -114,6 +115,10 @@ fun AccountScreen(
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
     var showQrPairDialog by rememberSaveable { mutableStateOf(false) }
     var qrPairInput by rememberSaveable { mutableStateOf("") }
+    var showSupportDialog by rememberSaveable { mutableStateOf(false) }
+    var supportEmail by rememberSaveable { mutableStateOf(linked.email) }
+    var supportSubject by rememberSaveable { mutableStateOf("") }
+    var supportMessage by rememberSaveable { mutableStateOf("") }
     var otpSent by rememberSaveable { mutableStateOf(false) }
     var emailInput by rememberSaveable { mutableStateOf("") }
     var codeInput by rememberSaveable { mutableStateOf("") }
@@ -159,7 +164,7 @@ fun AccountScreen(
                 Button(
                     onClick = {
                         showRetentionDialog = false
-                        onUpgrade()
+                        onUpgrade(PlanTier.ANNUAL.productId)
                     },
                 ) {
                     Text(stringResource(R.string.retention_switch_annual))
@@ -291,6 +296,66 @@ fun AccountScreen(
         )
     }
 
+    if (showSupportDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isWorking) showSupportDialog = false },
+            title = { Text("Contact SWEEPR Support") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Submit a support ticket directly to our team. We'll respond by email.",
+                        fontSize = 13.sp,
+                        color = Color.Gray,
+                    )
+                    OutlinedTextField(
+                        value = supportEmail,
+                        onValueChange = { supportEmail = it },
+                        label = { Text("Your Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = supportSubject,
+                        onValueChange = { supportSubject = it },
+                        label = { Text("Subject") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = supportMessage,
+                        onValueChange = { supportMessage = it },
+                        label = { Text("How can we help?") },
+                        minLines = 3,
+                        maxLines = 5,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !state.isWorking && supportEmail.contains("@") && supportSubject.isNotBlank() && supportMessage.isNotBlank(),
+                    onClick = {
+                        onSubmitSupport(supportEmail, supportSubject, supportMessage) {
+                            showSupportDialog = false
+                            supportSubject = ""
+                            supportMessage = ""
+                        }
+                    },
+                ) {
+                    Text("Send Ticket")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isWorking,
+                    onClick = { showSupportDialog = false },
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { if (!state.isWorking) showDeleteConfirm = false },
@@ -399,7 +464,7 @@ fun AccountScreen(
                     if (!state.hasBatteryCare) {
                         Spacer(Modifier.height(4.dp))
                         Button(
-                            onClick = onUpgrade,
+                            onClick = { onUpgrade("sweepr_battery_care_999") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                         ) {
@@ -448,7 +513,7 @@ fun AccountScreen(
                 Spacer(Modifier.height(14.dp))
                 EmeraldButton(
                     text = "Continue for ${selectedPlan.priceLabel} →",
-                    onClick = onUpgrade,
+                    onClick = { onUpgrade(selectedPlan.productId) },
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -513,6 +578,17 @@ fun AccountScreen(
                     value = "Up to 3 devices (any mix of PC & mobile)",
                     onClick = if (state.isWorking) null else ({
                         showQrPairDialog = true
+                    }),
+                )
+                SettingsItem(
+                    icon = Icons.Default.Email,
+                    title = "Contact Support",
+                    value = "Submit an in-app support ticket",
+                    onClick = if (state.isWorking) null else ({
+                        if (supportEmail.isBlank() && linked.email.isNotBlank()) {
+                            supportEmail = linked.email
+                        }
+                        showSupportDialog = true
                     }),
                 )
                 SettingsItem(
@@ -701,7 +777,7 @@ fun PlanSelectorOptionCard(
 fun PaywallModalSheet(
     state: DashboardState,
     onDismiss: () -> Unit,
-    onContinueToGooglePlay: () -> Unit,
+    onContinueToGooglePlay: (productId: String) -> Unit,
     onRestore: () -> Unit,
     onOpenEmailSignIn: () -> Unit,
 ) {
@@ -798,8 +874,9 @@ fun PaywallModalSheet(
             EmeraldButton(
                 text = "Continue for ${selectedPlan.priceLabel} →",
                 onClick = {
+                    val chosen = selectedPlan.productId
                     onDismiss()
-                    onContinueToGooglePlay()
+                    onContinueToGooglePlay(chosen)
                 },
             )
 

@@ -100,7 +100,7 @@ export interface AppDeps {
   now?: () => number;
 }
 
-const DEVICE_RE = /^([a-f0-9]{64}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+const DEVICE_RE = /^([a-f0-9]{64}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|and_[a-zA-Z0-9_-]{8,64}|[a-zA-Z0-9_-]{8,128})$/;
 const SESSION_COOKIE = "sweepr_session";
 const ALLOWED_FUNNEL_EVENTS = new Set([
   "scan_started",
@@ -2700,6 +2700,23 @@ export function createApp(deps: AppDeps) {
     const account = repo.accountById(accountId);
     if (!account) return c.json({ error: "account_not_found" }, 404);
 
+    if (stripe && account.stripe_customer_id && typeof (stripe as any).billingPortal?.sessions?.create === "function") {
+      try {
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: account.stripe_customer_id,
+          return_url: `${config.publicUrl.replace(/\/+$/, "")}/dashboard`,
+        });
+        if (portalSession?.url) {
+          if (c.req.method === "POST") {
+            return c.json({ url: portalSession.url });
+          }
+          return c.redirect(portalSession.url);
+        }
+      } catch (err) {
+        console.warn("[billing-portal] Stripe billingPortal.sessions.create fallback to #billing:", (err as Error)?.message || err);
+      }
+    }
+
     if (c.req.method === "POST") {
       return c.json({ url: "/dashboard#billing" });
     }
@@ -2708,6 +2725,120 @@ export function createApp(deps: AppDeps) {
 
   app.get("/api/billing-portal", createBillingPortalSession);
   app.post("/api/billing-portal", createBillingPortalSession);
+
+  // Google Play Console Mandatory Web Account Deletion URL & Portal Account Deletion
+  app.post("/api/portal/delete-account", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    let account = await resolvePortalOrBearerOrOtpAccount(c, body);
+    if (!account) {
+      return c.json({ error: "Please sign in or enter a valid email and 6-digit verification code." }, 401);
+    }
+    if (stripe && account.stripe_customer_id) {
+      const ent = repo.entitlement(account.id);
+      if (ent?.stripe_subscription_id && (ent.status === "active" || ent.status === "trialing" || ent.status === "past_due")) {
+        await stripe.subscriptions.cancel(ent.stripe_subscription_id).catch(() => {});
+      }
+    }
+    syncToCentralCrm("/v1/account/delete", { account_id: account.id, email: account.email });
+    if (account.email) {
+      syncSubscriptionToCentralCrm({
+        email: account.email,
+        accountId: account.id,
+        status: "canceled",
+        notes: "Account deleted via web portal / delete-account page",
+      });
+    }
+    repo.deleteAccount(account.id);
+    deleteCookie(c, SESSION_COOKIE, { path: "/" });
+    return c.json({ ok: true, deleted: true });
+  });
+
+  app.get("/delete-account", (c) => {
+    c.header("Cache-Control", "private, no-store, no-cache, must-revalidate");
+    return c.html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Account &amp; Data — SWEEPR Cleaner</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
+  <div class="w-full max-w-md bg-slate-900 border border-red-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/40 flex items-center justify-center text-red-400 font-black text-lg">S</div>
+      <div>
+        <div class="text-xs font-extrabold uppercase tracking-wider text-red-400">SWEEPR Cleaner — Data Privacy</div>
+        <h1 class="text-lg font-extrabold text-white">Delete Your Account &amp; Data</h1>
+      </div>
+    </div>
+    <p class="text-xs text-slate-300 leading-relaxed">
+      Enter your account email and 6-digit verification code (or Subscription Key) to permanently delete your SWEEPR Cleaner account, linked device tokens, and stored account data across SWEEPR Cleaner and our CRM.
+    </p>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">Account Email</label>
+        <input id="delEmail" type="email" placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none focus:border-red-500">
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-xs font-bold text-slate-300">6-Digit Code / Subscription Key</label>
+          <button id="delSendOtpBtn" type="button" class="text-xs font-bold text-emerald-400 hover:underline cursor-pointer">Email me a code</button>
+        </div>
+        <input id="delCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-center font-mono text-lg tracking-widest focus:outline-none focus:border-red-500">
+      </div>
+      <button id="delSubmitBtn" type="button" class="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-sm transition cursor-pointer">
+        Permanently Delete Account &amp; Data
+      </button>
+    </div>
+    <div id="delStatus" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+    <div class="text-center pt-2">
+      <a href="/privacy" class="text-xs text-slate-400 hover:text-slate-200 underline">Privacy Policy</a>
+      <span class="text-slate-600 mx-2">·</span>
+      <a href="/dashboard" class="text-xs text-slate-400 hover:text-slate-200 underline">Return to Portal</a>
+    </div>
+  </div>
+  <script>
+    const statusEl = document.getElementById('delStatus');
+    function showMsg(msg, ok) {
+      statusEl.textContent = msg;
+      statusEl.className = 'p-3.5 rounded-xl text-xs font-semibold ' + (ok ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-200' : 'bg-red-950/70 border border-red-500/40 text-red-200');
+      statusEl.classList.remove('hidden');
+    }
+    document.getElementById('delSendOtpBtn').addEventListener('click', async () => {
+      const email = (document.getElementById('delEmail').value || '').trim();
+      if (!email) { showMsg('Please enter your account email first.', false); return; }
+      const r = await fetch('/v1/account/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      showMsg(r.ok ? 'Verification code sent! Check your email.' : 'No account found for that email address.', r.ok);
+    });
+    document.getElementById('delSubmitBtn').addEventListener('click', async () => {
+      const email = (document.getElementById('delEmail').value || '').trim();
+      const code = (document.getElementById('delCode').value || '').trim();
+      if (!confirm('Are you sure you want to permanently delete your SWEEPR Cleaner account and all associated data? This cannot be undone.')) return;
+      const r = await fetch('/api/portal/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.deleted) {
+        showMsg('Your account and all associated data have been permanently deleted.', true);
+      } else {
+        showMsg(d.error || 'Could not verify account deletion request.', false);
+      }
+    });
+  </script>
+</body>
+</html>`);
+  });
 
   // ---------- Customer Portal Self-Service Endpoints ----------
 
@@ -3952,7 +4083,8 @@ export function createApp(deps: AppDeps) {
       account_id: accountId,
       properties: { device_type: deviceType, country: localizedPricing.country, source: "v1_accounts" },
     });
-    return c.json({ account_id: accountId, refresh_token: refreshToken });
+    const referralCode = repo.ensureReferralCode(accountId);
+    return c.json({ account_id: accountId, refresh_token: refreshToken, referral_code: referralCode });
   });
 
   async function findOrSyncEntitledAccountByEmail(rawEmail?: string | null): Promise<Account | null> {
@@ -4126,7 +4258,10 @@ export function createApp(deps: AppDeps) {
     const email = normalizeEmail(body.email);
     const code = String(body.code ?? "").trim();
     const deviceId = String(body.device_id ?? "");
-    const deviceType = body.device_type === "mobile" ? "mobile" : "pc";
+    const deviceType =
+      body.device_type === "mobile" || body.platform === "android" || body.platform === "ios"
+        ? "mobile"
+        : "pc";
     if (!email || !/^\d{6}$/.test(code) || !DEVICE_RE.test(deviceId)) {
       return c.json({ error: "invalid_request" }, 400);
     }
@@ -4211,6 +4346,15 @@ export function createApp(deps: AppDeps) {
         await stripe.subscriptions.cancel(ent.stripe_subscription_id).catch(() => {});
       }
     }
+    syncToCentralCrm("/v1/account/delete", { account_id: account.id, email: account.email });
+    if (account.email) {
+      syncSubscriptionToCentralCrm({
+        email: account.email,
+        accountId: account.id,
+        status: "canceled",
+        notes: "Account deleted via DELETE /v1/account",
+      });
+    }
     repo.deleteAccount(account.id);
     return c.json({ ok: true, deleted: true });
   });
@@ -4221,7 +4365,10 @@ export function createApp(deps: AppDeps) {
     if (!limitEntitlement.hit(account.id)) return c.json({ error: "rate_limited" }, 429);
     const body = await c.req.json().catch(() => ({}));
     const deviceId = String(body.device_id ?? "");
-    const deviceType = body.device_type === "mobile" ? "mobile" : "pc";
+    const deviceType =
+      body.device_type === "mobile" || body.platform === "android" || body.platform === "ios"
+        ? "mobile"
+        : "pc";
     if (!DEVICE_RE.test(deviceId)) return c.json({ error: "invalid device_id" }, 400);
     if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
@@ -4313,7 +4460,8 @@ export function createApp(deps: AppDeps) {
     const account = c.get("account");
     const t = now();
     const ent = repo.entitlement(account.id);
-    if (!ent || ent.status !== "active" || !isEntitled(ent, t, config.pastDueGraceDays)) {
+    const isSignedInWithEmail = Boolean(account.email && !account.email.endsWith("@pending.sweeprcleaner.com"));
+    if (!isSignedInWithEmail && (!ent || !isEntitled(ent, t, config.pastDueGraceDays))) {
       return c.json({ error: "payment_required" }, 402);
     }
     const body = await c.req.json().catch(() => ({}));
@@ -4321,7 +4469,131 @@ export function createApp(deps: AppDeps) {
     if (!code) return c.json({ error: "missing_code" }, 400);
     const applied = repo.applyReferral(account.id, code, t);
     if (!applied) return c.json({ error: "invalid_or_already_applied" }, 400);
-    return c.json({ ok: true });
+    const updatedEnt = repo.entitlement(account.id);
+    return c.json({
+      ok: true,
+      days_added: 30,
+      status: updatedEnt?.status ?? "trialing",
+      plan: updatedEnt?.plan ?? "monthly",
+      expires_at: updatedEnt?.current_period_end ?? t + 30 * 86400,
+    });
+  });
+
+  // Direct Google Play Billing Verification & Immediate Central CRM Sync
+  app.post("/v1/billing/google-play/verify", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const productId = String(body?.product_id ?? "").trim();
+    const purchaseToken = String(body?.purchase_token ?? "").trim();
+    const orderId = String(body?.order_id ?? "").trim();
+    const rawDeviceId = String(body?.device_id ?? "").trim();
+    const deviceId = DEVICE_RE.test(rawDeviceId) ? rawDeviceId : `and_${randomToken(12)}`;
+
+    if (!productId || !purchaseToken) {
+      return c.json({ error: "missing_purchase_details" }, 400);
+    }
+
+    let account = await resolvePortalOrBearerOrOtpAccount(c, body);
+    const email = normalizeEmail(body?.email) ?? account?.email ?? undefined;
+    if (!account && email) {
+      account = repo.accountByEmail(email) ?? null;
+    }
+    if (!account && typeof body?.account_id === "string" && body.account_id.trim()) {
+      account = repo.accountById(body.account_id.trim()) ?? null;
+    }
+    let refreshToken = "";
+    if (!account) {
+      const newAccId = `acc_gp_${randomToken(10)}`;
+      refreshToken = randomToken(32);
+      repo.createAccount(newAccId, sha256(refreshToken), email);
+      account = repo.accountById(newAccId)!;
+    }
+
+    const t = now();
+    repo.touchDevice(account.id, deviceId, "mobile", config.maxDevicesPc, config.maxDevicesMobile, {
+      deviceName: typeof body?.device_name === "string" ? body.device_name : "Android Phone",
+      platform: "android",
+    });
+    if (!refreshToken) {
+      refreshToken = randomToken(32);
+      repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
+    }
+
+    const isBatteryAddon =
+      productId.toLowerCase().includes("battery") || hasBatteryCareAddon(body);
+    const isCloudAddon =
+      productId.toLowerCase().includes("vault") || productId.toLowerCase().includes("cloud") || hasCloudVaultAddon(body);
+
+    const plan =
+      body?.plan === "annual" || productId.includes("annual") || productId.includes("4999")
+        ? "annual"
+        : body?.plan === "six_month" || productId.includes("six_month") || productId.includes("3899")
+        ? "six_month"
+        : "monthly";
+    const days = plan === "annual" ? 365 : plan === "six_month" ? 183 : 30;
+    const periodEnd = t + days * 86400;
+
+    const existingEnt = repo.entitlement(account.id);
+    const effectivePeriodEnd = Math.max(existingEnt?.current_period_end ?? 0, periodEnd);
+    const effectivePlan = existingEnt?.plan ?? plan;
+
+    repo.upsertEntitlement({
+      account_id: account.id,
+      stripe_subscription_id: orderId || `gp_${purchaseToken.slice(0, 24)}`,
+      status: "active",
+      plan: effectivePlan,
+      current_period_end: effectivePeriodEnd,
+      cancel_at_period_end: 0,
+    });
+    if (isBatteryAddon) repo.grantAddon(account.id, "battery_care");
+    if (isCloudAddon) repo.grantAddon(account.id, "cloud_vault");
+    const addons = repo.addonsForAccount(account.id);
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "google_play_purchase",
+      title: `Google Play Purchase Verified (${productId})`,
+      description: `Activated ${productId} on Android (${orderId || "Google Play Billing"})`,
+      actor: "customer",
+      metadata: { product_id: productId, order_id: orderId, plan: effectivePlan, addons },
+    });
+
+    syncSubscriptionToCentralCrm({
+      email: account.email ?? email,
+      accountId: account.id,
+      name: account.name,
+      country: account.country,
+      plan: effectivePlan,
+      status: "active",
+      days,
+      addons,
+      notes: `Google Play purchase verified (${productId}${orderId ? `, order ${orderId}` : ""})`,
+    });
+
+    let exp = t + config.tokenTtlHours * 3600;
+    exp = Math.min(exp, effectivePeriodEnd + config.pastDueGraceDays * 86400);
+    exp = Math.max(exp, t + 300);
+    const token = signEntitlement(signingKey, {
+      sub: account.id,
+      device_id: deviceId,
+      status: "active",
+      plan: effectivePlan,
+      addons,
+      iat: t,
+      exp,
+    });
+
+    return c.json({
+      ok: true,
+      active: true,
+      account_id: account.id,
+      email: account.email ?? email ?? null,
+      refresh_token: refreshToken,
+      token,
+      status: "active",
+      plan: effectivePlan,
+      addons,
+      expires_at: effectivePeriodEnd,
+    });
   });
 
   app.post("/v1/checkout", auth, async (c) => {

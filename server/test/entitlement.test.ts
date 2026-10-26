@@ -270,4 +270,49 @@ test("battery_care and cloud_vault add-on pricing (9.99/yr) and Ed25519 signed J
   assert.deepEqual(claims.addons, ["battery_care"]);
 });
 
+test("Google Play purchase verification activates entitlement, supports and_ device IDs, and signed-in free user referral unlocks 30-day trial", async () => {
+  const { app, post } = setup();
+  const DEVICE_B = "b".repeat(64);
+
+  const androidDevice = "and_9876543210abcdef";
+  const playRes = await post("/v1/billing/google-play/verify", {
+    product_id: "sweepr_annual_4999",
+    purchase_token: "play_purchase_token_1234567890",
+    order_id: "GPA.3312-4567-8901-23456",
+    device_id: androidDevice,
+    addons: ["battery_care"],
+  });
+  assert.equal(playRes.status, 200);
+  const playBody = await playRes.json();
+  assert.equal(playBody.active, true);
+  assert.equal(playBody.plan, "annual");
+  assert.ok(playBody.addons.includes("battery_care"));
+  assert.ok(playBody.token);
+
+  // Signed-in free user can redeem a valid referral code from an active subscriber and receive a 30-day Pro trial
+  const referrer = await (await post("/v1/accounts", { device_id: DEVICE, email: "referrer@example.com" })).json();
+  await post("/dev/grant", { account_id: referrer.account_id, status: "active", days: 30 });
+  const freeSignedIn = await (await post("/v1/accounts", { device_id: DEVICE_B, email: "friend@example.com" })).json();
+  const refRes = await post(
+    "/v1/referral/apply",
+    { code: referrer.referral_code, device_id: DEVICE_B },
+    freeSignedIn.refresh_token,
+  );
+  assert.equal(refRes.status, 200);
+  const refBody = await refRes.json();
+  assert.equal(refBody.ok, true);
+  assert.equal(refBody.days_added, 30);
+
+  const friendEnt = await (await post("/v1/entitlement", { device_id: DEVICE_B, platform: "android" }, freeSignedIn.refresh_token)).json();
+  assert.equal(friendEnt.active, true);
+  assert.equal(friendEnt.status, "trialing");
+
+  // Web Account Deletion page is served at GET /delete-account
+  const delPage = await app.request("/delete-account");
+  assert.equal(delPage.status, 200);
+  const delHtml = await delPage.text();
+  assert.ok(delHtml.includes("Delete Your Account"));
+});
+
+
 

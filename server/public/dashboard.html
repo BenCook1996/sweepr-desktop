@@ -68,7 +68,7 @@
         <div>
           <h2 class="text-xl sm:text-2xl font-bold mb-1">Your Subscription</h2>
           <p class="text-gray-500 text-sm sm:text-base mb-4">Manage your SWEEPR Cleaner access and devices.</p>
-          <a id="manageBillingBtn" href="/api/billing-portal" class="hidden inline-flex items-center gap-2 text-sm font-semibold text-green-700 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors border border-green-200">
+          <a id="manageBillingBtn" href="#billing" class="inline-flex items-center gap-2 text-sm font-semibold text-green-700 bg-green-50 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors border border-green-200">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             Manage Billing & Payments
           </a>
@@ -187,6 +187,28 @@
         </div>
       </div>
 
+      <!-- Interactive Billing & Account Self-Service Section (#billing) -->
+      <div id="billing" class="glass-card p-6 sm:p-8 bg-white shadow-sm rounded-2xl border border-gray-100 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Billing, Subscription &amp; Account Privacy</h3>
+            <p id="billingRenewalSub" class="text-sm text-gray-500 mt-0.5">Manage auto-renewal, payment methods, or permanently delete your account data.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="cancelSubBtn" onclick="cancelSubscriptionPortal()" class="px-4 py-2 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 cursor-pointer">
+              Cancel Auto-Renewal
+            </button>
+            <button type="button" id="reactivateSubBtn" onclick="reactivateSubscriptionPortal()" class="hidden px-4 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 cursor-pointer">
+              Keep / Reactivate Subscription
+            </button>
+            <button type="button" id="deleteAccountPortalBtn" onclick="deleteAccountPortal()" class="px-4 py-2 rounded-xl text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 cursor-pointer">
+              Delete Account &amp; Data
+            </button>
+          </div>
+        </div>
+        <div id="billingActionNotice" class="hidden p-3.5 rounded-xl text-xs font-semibold"></div>
+      </div>
+
     </div>
   </main>
 
@@ -232,17 +254,32 @@
         document.getElementById('userEmail').textContent = data.email || "User";
         document.getElementById('planName').textContent = data.plan;
         
-        if (data.has_stripe) {
-          const billingBtn = document.getElementById('manageBillingBtn');
+        const billingBtn = document.getElementById('manageBillingBtn');
+        if (billingBtn) {
           billingBtn.classList.remove('hidden');
-          billingBtn.addEventListener('click', async (e) => {
+          billingBtn.onclick = async (e) => {
             e.preventDefault();
-            try {
-              const r = await fetch('/api/billing-portal', { method: 'POST' });
-              const d = await r.json();
-              if (d.url) window.location.href = d.url;
-            } catch {}
-          });
+            if (data.has_stripe) {
+              try {
+                const r = await fetch('/api/billing-portal', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const d = await r.json();
+                if (d.url && !d.url.startsWith('/dashboard#')) {
+                  window.location.href = d.url;
+                  return;
+                }
+              } catch {}
+            }
+            document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth' });
+          };
+        }
+        const cancelBtn = document.getElementById('cancelSubBtn');
+        const reactivateBtn = document.getElementById('reactivateSubBtn');
+        if (data.cancel_at_period_end) {
+          if (cancelBtn) cancelBtn.classList.add('hidden');
+          if (reactivateBtn) reactivateBtn.classList.remove('hidden');
+        } else {
+          if (cancelBtn) cancelBtn.classList.remove('hidden');
+          if (reactivateBtn) reactivateBtn.classList.add('hidden');
         }
         
         const statusBadge = document.getElementById('statusBadge');
@@ -422,6 +459,68 @@
       } catch (e) {
         btn.disabled = false;
         btn.innerHTML = orig;
+      }
+    }
+    function showBillingNotice(msg, ok) {
+      const el = document.getElementById('billingActionNotice');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'p-3.5 rounded-xl text-xs font-semibold ' + (ok ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-700');
+      el.classList.remove('hidden');
+    }
+    async function cancelSubscriptionPortal() {
+      if (!confirm('Are you sure you want to cancel auto-renewal at the end of your current billing period?')) return;
+      try {
+        const res = await fetch('/api/portal/cancel-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'portal_self_service' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          showBillingNotice('Auto-renewal has been cancelled. Your Pro access remains active until the end of your current billing period.', true);
+          await load();
+        } else {
+          showBillingNotice(data.error || 'Could not cancel subscription.', false);
+        }
+      } catch (e) {
+        showBillingNotice('Request failed. Please try again.', false);
+      }
+    }
+    async function reactivateSubscriptionPortal() {
+      try {
+        const res = await fetch('/api/portal/reactivate-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          showBillingNotice('Your subscription has been reactivated!', true);
+          await load();
+        } else {
+          showBillingNotice(data.error || 'Could not reactivate subscription.', false);
+        }
+      } catch (e) {
+        showBillingNotice('Request failed. Please try again.', false);
+      }
+    }
+    async function deleteAccountPortal() {
+      if (!confirm('Are you sure you want to permanently delete your SWEEPR Cleaner account and all associated data? This action cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/portal/delete-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.deleted) {
+          window.location.href = '/?account_deleted=1';
+        } else {
+          showBillingNotice(data.error || 'Could not delete account.', false);
+        }
+      } catch (e) {
+        showBillingNotice('Request failed. Please try again.', false);
       }
     }
     load();

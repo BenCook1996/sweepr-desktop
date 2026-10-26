@@ -843,7 +843,7 @@ private fun PhotoOptimizerTabContent(
                 ) {
                     if (previewItem != null) {
                         val after = (previewItem.size * (1.0 - preset.estSavingFraction)).toLong().coerceAtLeast(1L)
-                        BeforeAfterPreview(previewItem, previewItem.size, after)
+                        BeforeAfterPreview(previewItem, preset, previewItem.size, after)
                         Text(
                             stringResource(R.string.shrink_looks_same),
                             fontWeight = FontWeight.Bold,
@@ -953,13 +953,56 @@ private fun PhotoOptimizerTabContent(
 }
 
 /**
- * Drag-to-compare preview. Both halves show the real photo; the tags give the original size
- * and the optimizer's estimated size, since the shrunk copy is only created when the user confirms.
+ * Drag-to-compare preview. The left half renders the original photo and the right ("After") half
+ * renders a live JPEG-compressed bitmap generated with the selected preset's quality & resolution.
  */
 @Composable
-private fun BeforeAfterPreview(item: MediaItem, beforeBytes: Long, afterBytes: Long) {
+private fun BeforeAfterPreview(
+    item: MediaItem,
+    preset: PhotoCompressionPreset,
+    beforeBytes: Long,
+    afterBytes: Long,
+) {
+    val context = LocalContext.current
     var split by remember { mutableFloatStateOf(0.5f) }
     var widthPx by remember { mutableFloatStateOf(1f) }
+    var afterJpegBytes by remember(item.uri, preset) { mutableStateOf<ByteArray?>(null) }
+    var measuredAfterBytes by remember(item.uri, preset) { mutableStateOf<Long?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(item.uri, preset) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val boundsOpts = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                context.contentResolver.openInputStream(item.uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it, null, boundsOpts)
+                }
+                val srcLong = maxOf(boundsOpts.outWidth, boundsOpts.outHeight).coerceAtLeast(1)
+                var sample = 1
+                while (srcLong / (sample * 2) >= preset.maxLongEdgePx.coerceAtMost(1440)) {
+                    sample *= 2
+                }
+                val decodeOpts = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+                val rawBmp = context.contentResolver.openInputStream(item.uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it, null, decodeOpts)
+                }
+                if (rawBmp != null) {
+                    val baos = java.io.ByteArrayOutputStream()
+                    rawBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, preset.jpegQuality, baos)
+                    rawBmp.recycle()
+                    val jpegBytes = baos.toByteArray()
+                    if (jpegBytes.isNotEmpty()) {
+                        val scaleFactor = (sample * sample).toLong().coerceAtLeast(1L)
+                        val estRealBytes = (jpegBytes.size.toLong() * scaleFactor).coerceIn(1024L, (beforeBytes * 0.92).toLong().coerceAtLeast(1024L))
+                        measuredAfterBytes = estRealBytes
+                        afterJpegBytes = jpegBytes
+                    }
+                }
+            }
+        }
+    }
+
+    val displayedAfterBytes = measuredAfterBytes ?: afterBytes
+
     Box(
         Modifier
             .fillMaxWidth()
@@ -980,7 +1023,7 @@ private fun BeforeAfterPreview(item: MediaItem, beforeBytes: Long, afterBytes: L
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
-        // "After" half: same photo, slightly brighter emerald wash so the split is visible.
+        // "After" half: real JPEG-compressed preview bytes at preset.jpegQuality
         Box(
             Modifier
                 .fillMaxSize()
@@ -989,12 +1032,12 @@ private fun BeforeAfterPreview(item: MediaItem, beforeBytes: Long, afterBytes: L
                 },
         ) {
             AsyncImage(
-                model = item.uri,
+                model = afterJpegBytes ?: item.uri,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            Box(Modifier.fillMaxSize().background(SweeprGreen.copy(alpha = 0.08f)))
+            Box(Modifier.fillMaxSize().background(SweeprGreen.copy(alpha = 0.06f)))
         }
         // Divider + knob
         Canvas(Modifier.fillMaxSize()) {
@@ -1025,7 +1068,7 @@ private fun BeforeAfterPreview(item: MediaItem, beforeBytes: Long, afterBytes: L
                 .padding(horizontal = 8.dp, vertical = 3.dp),
         )
         Text(
-            stringResource(R.string.shrink_after, formatBytes(afterBytes)),
+            stringResource(R.string.shrink_after, formatBytes(displayedAfterBytes)),
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = FontWeight.ExtraBold,
