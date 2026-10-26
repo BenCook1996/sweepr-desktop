@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-25T06:26:29.510Z",
-  "lastCount": 50,
-  "totalCleanItems": 478,
+  "lastRunAt": "2026-10-26T04:24:41.923Z",
+  "lastCount": 17,
+  "totalCleanItems": 495,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/zoom-workplace-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/zoom-workplace-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/thunderbird-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/thunderbird-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/thunderbird-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/thunderbird-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/thunderbird-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/dropbox-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/dropbox-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/dropbox-desktop-service-worker-cachestorage"
+    "https://sweeprcleaner.com/clean/app/league-of-legends-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/league-of-legends-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/geforce-now-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/geforce-now-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/geforce-now-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/geforce-now-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/geforce-now-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/roblox-player-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/roblox-player-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/roblox-player-service-worker-cachestorage"
   ]
 }

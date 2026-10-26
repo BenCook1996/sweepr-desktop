@@ -4,7 +4,7 @@
   "bing_requested": [],
   "last_indexnow_ping": "2026-10-26T00:28:15.937Z",
   "last_sitemap_ping": "2026-10-26T00:28:15.937Z",
-  "updatedAt": "2026-10-25T06:26:29.509Z",
+  "updatedAt": "2026-10-26T04:24:41.922Z",
   "pendingUrls": [
     "https://sweeprcleaner.com/clean/app/ollama-models-blob-cache",
     "https://sweeprcleaner.com/clean/app/lm-studio-models-cache",
@@ -355,6 +355,23 @@
     "https://sweeprcleaner.com/clean/app/visual-studio-2022-media-blob-storage",
     "https://sweeprcleaner.com/clean/app/league-of-legends-gpu-shader-cache",
     "https://sweeprcleaner.com/clean/app/league-of-legends-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/league-of-legends-service-worker-cachestorage"
+    "https://sweeprcleaner.com/clean/app/league-of-legends-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/league-of-legends-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/league-of-legends-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/geforce-now-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/geforce-now-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/geforce-now-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/geforce-now-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/geforce-now-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/roblox-player-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/roblox-player-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/roblox-player-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/roblox-player-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/roblox-player-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/tiktok-live-studio-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/tiktok-live-studio-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/tiktok-live-studio-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/tiktok-live-studio-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/tiktok-live-studio-media-blob-storage"
   ]
 }

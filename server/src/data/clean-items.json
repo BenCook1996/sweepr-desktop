@@ -7132,5 +7132,260 @@
       "Press Windows Key + R, type C:\\Riot Games\\League of Legends\\Logs and press Enter.",
       "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "league-of-legends-crashpad-dump-logs",
+    "category": "app",
+    "name": "League of Legends Client Crashpad Reports & Diagnostic DMP Logs",
+    "path": "C:\\Riot Games\\League of Legends\\Logs\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "League of Legends Client writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning League of Legends Client's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit League of Legends Client (verify LeagueClient.exe is closed in Task Manager).",
+      "Press Windows Key + R, type C:\\Riot Games\\League of Legends\\Logs and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "league-of-legends-media-blob-storage",
+    "category": "app",
+    "name": "League of Legends Client Media Cache & IndexedDB Blob Storage",
+    "path": "C:\\Riot Games\\League of Legends\\Logs\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "League of Legends Client stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning League of Legends Client's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit League of Legends Client (verify LeagueClient.exe is closed in Task Manager).",
+      "Press Windows Key + R, type C:\\Riot Games\\League of Legends\\Logs and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geforce-now-gpu-shader-cache",
+    "category": "app",
+    "name": "NVIDIA GeForce NOW GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "NVIDIA GeForce NOW stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning NVIDIA GeForce NOW's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit NVIDIA GeForce NOW (verify GeForceNOW.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geforce-now-code-bytecode-cache",
+    "category": "app",
+    "name": "NVIDIA GeForce NOW Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "NVIDIA GeForce NOW compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning NVIDIA GeForce NOW's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit NVIDIA GeForce NOW (verify GeForceNOW.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geforce-now-service-worker-cachestorage",
+    "category": "app",
+    "name": "NVIDIA GeForce NOW Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "NVIDIA GeForce NOW quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning NVIDIA GeForce NOW's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit NVIDIA GeForce NOW (verify GeForceNOW.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geforce-now-crashpad-dump-logs",
+    "category": "app",
+    "name": "NVIDIA GeForce NOW Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "NVIDIA GeForce NOW writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning NVIDIA GeForce NOW's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit NVIDIA GeForce NOW (verify GeForceNOW.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geforce-now-media-blob-storage",
+    "category": "app",
+    "name": "NVIDIA GeForce NOW Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "NVIDIA GeForce NOW stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning NVIDIA GeForce NOW's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit NVIDIA GeForce NOW (verify GeForceNOW.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "roblox-player-gpu-shader-cache",
+    "category": "app",
+    "name": "Roblox Engine & Player GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Roblox\\Downloads\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Roblox Engine & Player stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Roblox Engine & Player's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Roblox Engine & Player (verify RobloxPlayerBeta.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Roblox\\Downloads and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "roblox-player-code-bytecode-cache",
+    "category": "app",
+    "name": "Roblox Engine & Player Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Roblox\\Downloads\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Roblox Engine & Player compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Roblox Engine & Player's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Roblox Engine & Player (verify RobloxPlayerBeta.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Roblox\\Downloads and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "roblox-player-service-worker-cachestorage",
+    "category": "app",
+    "name": "Roblox Engine & Player Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Roblox\\Downloads\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Roblox Engine & Player quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Roblox Engine & Player's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Roblox Engine & Player (verify RobloxPlayerBeta.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Roblox\\Downloads and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "roblox-player-crashpad-dump-logs",
+    "category": "app",
+    "name": "Roblox Engine & Player Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Roblox\\Downloads\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Roblox Engine & Player writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Roblox Engine & Player's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Roblox Engine & Player (verify RobloxPlayerBeta.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Roblox\\Downloads and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "roblox-player-media-blob-storage",
+    "category": "app",
+    "name": "Roblox Engine & Player Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Roblox\\Downloads\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Roblox Engine & Player stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Roblox Engine & Player's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Roblox Engine & Player (verify RobloxPlayerBeta.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Roblox\\Downloads and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tiktok-live-studio-gpu-shader-cache",
+    "category": "app",
+    "name": "TikTok LIVE Studio GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\tiktok-live-studio\\Cache\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "TikTok LIVE Studio stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning TikTok LIVE Studio's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit TikTok LIVE Studio (verify TikTok LIVE Studio.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tiktok-live-studio-code-bytecode-cache",
+    "category": "app",
+    "name": "TikTok LIVE Studio Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\tiktok-live-studio\\Cache\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "TikTok LIVE Studio compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning TikTok LIVE Studio's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit TikTok LIVE Studio (verify TikTok LIVE Studio.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tiktok-live-studio-service-worker-cachestorage",
+    "category": "app",
+    "name": "TikTok LIVE Studio Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\tiktok-live-studio\\Cache\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "TikTok LIVE Studio quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning TikTok LIVE Studio's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit TikTok LIVE Studio (verify TikTok LIVE Studio.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tiktok-live-studio-crashpad-dump-logs",
+    "category": "app",
+    "name": "TikTok LIVE Studio Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\tiktok-live-studio\\Cache\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "TikTok LIVE Studio writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning TikTok LIVE Studio's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit TikTok LIVE Studio (verify TikTok LIVE Studio.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tiktok-live-studio-media-blob-storage",
+    "category": "app",
+    "name": "TikTok LIVE Studio Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\tiktok-live-studio\\Cache\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "TikTok LIVE Studio stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning TikTok LIVE Studio's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit TikTok LIVE Studio (verify TikTok LIVE Studio.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]
