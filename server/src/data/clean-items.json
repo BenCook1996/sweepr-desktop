@@ -7863,5 +7863,20 @@
       "Run 'podman system prune -a' to remove stopped containers and unused image layers.",
       "Verify reclaimed space with 'podman system df'."
     ]
+  },
+  {
+    "slug": "flutter-sdk-cache",
+    "category": "app",
+    "name": "Flutter SDK Engine Artifacts & Pub Dependency Cache",
+    "path": "%LocalAppData%\\Pub\\Cache and %UserProfile%\\.pub-cache",
+    "safeToDelete": true,
+    "avgSpace": "3.0 GB – 20.0 GB",
+    "whatIsIt": "Flutter and Dart package managers cache downloaded pub packages, git repo dependencies, and compiled engine artifacts.",
+    "whatHappens": "Safely cleans up orphaned Dart/Flutter packages and frees gigabytes of storage. Active projects re-download packages on next flutter pub get.",
+    "manualSteps": [
+      "Close VS Code and Android Studio.",
+      "Run 'dart pub cache clean' in Windows Terminal.",
+      "Or delete %localappdata%\\Pub\\Cache in File Explorer."
+    ]
   }
 ]

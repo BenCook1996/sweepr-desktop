@@ -1,17 +1,8 @@
 {
-  "lastRunAt": "2026-10-26T04:30:06.824Z",
-  "lastCount": 32,
-  "totalCleanItems": 527,
+  "lastRunAt": "2026-10-26T04:30:34.412Z",
+  "lastCount": 1,
+  "totalCleanItems": 528,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/bun-install-cache",
-    "https://sweeprcleaner.com/clean/app/conda-package-cache",
-    "https://sweeprcleaner.com/clean/app/cargo-target-cache",
-    "https://sweeprcleaner.com/clean/app/android-emulator-avd-snapshots",
-    "https://sweeprcleaner.com/clean/app/unity-shader-cache",
-    "https://sweeprcleaner.com/clean/app/godot-editor-cache",
-    "https://sweeprcleaner.com/clean/app/substance-painter-cache",
-    "https://sweeprcleaner.com/clean/app/autocad-temp-drawing-cache",
-    "https://sweeprcleaner.com/clean/app/curseforge-addon-cache",
-    "https://sweeprcleaner.com/clean/app/mod-organizer-downloads"
+    "https://sweeprcleaner.com/clean/app/flutter-sdk-cache"
   ]
 }

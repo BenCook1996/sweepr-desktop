@@ -35,8 +35,9 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (527 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (528 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
+- [Flutter SDK Engine Artifacts & Pub Dependency Cache (%LocalAppData%\Pub\Cache and %UserProfile%\.pub-cache)](https://sweeprcleaner.com/clean/app/flutter-sdk-cache): Reclaim 3.0 GB – 20.0 GB
 - [Podman Desktop WSL Machine Blobs & Container Cache (%UserProfile%\.local\share\containers)](https://sweeprcleaner.com/clean/app/podman-machine-cache): Reclaim 5.0 GB – 35.0 GB
 - [Apache Maven Global Repository Dependency Cache (%UserProfile%\.m2) (%UserProfile%\.m2\repository)](https://sweeprcleaner.com/clean/app/maven-repository-cache): Reclaim 3.5 GB – 30.0 GB
 - [HashiCorp Terraform Provider Plugin & Binary Cache (%AppData%\terraform.d\plugins)](https://sweeprcleaner.com/clean/app/terraform-plugin-cache): Reclaim 1.5 GB – 12.0 GB
@@ -61,4 +62,3 @@
 - [Nexus Mods Vortex Archive Staging & Download Cache (%AppData%\Vortex\downloads)](https://sweeprcleaner.com/clean/app/vortex-mod-downloads): Reclaim 8.0 GB – 50.0 GB
 - [Mod Organizer 2 Staged Archive & Download Cache (%LocalAppData%\ModOrganizer\downloads)](https://sweeprcleaner.com/clean/app/mod-organizer-downloads): Reclaim 10.0 GB – 60.0 GB
 - [CurseForge Mod & Addon Download Archive Cache (%UserProfile%\CurseForge\Cache and %AppData%\CurseForge)](https://sweeprcleaner.com/clean/app/curseforge-addon-cache): Reclaim 3.0 GB – 22.0 GB
-- [Autodesk AutoCAD Temp Drawing History & Graphics Cache (%LocalAppData%\Autodesk\AutoCAD\Drawing History and %LocalAppData%\Temp)](https://sweeprcleaner.com/clean/app/autocad-temp-drawing-cache): Reclaim 2.0 GB – 15.0 GB

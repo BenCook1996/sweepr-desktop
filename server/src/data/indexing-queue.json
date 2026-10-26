@@ -4,7 +4,7 @@
   "bing_requested": [],
   "last_indexnow_ping": "2026-10-26T00:28:15.937Z",
   "last_sitemap_ping": "2026-10-26T00:28:15.937Z",
-  "updatedAt": "2026-10-26T04:30:06.823Z",
+  "updatedAt": "2026-10-26T04:30:34.411Z",
   "pendingUrls": [
     "https://sweeprcleaner.com/clean/app/ollama-models-blob-cache",
     "https://sweeprcleaner.com/clean/app/lm-studio-models-cache",
@@ -404,6 +404,7 @@
     "https://sweeprcleaner.com/clean/app/clip-studio-paint-cache",
     "https://sweeprcleaner.com/clean/app/terraform-plugin-cache",
     "https://sweeprcleaner.com/clean/app/maven-repository-cache",
-    "https://sweeprcleaner.com/clean/app/podman-machine-cache"
+    "https://sweeprcleaner.com/clean/app/podman-machine-cache",
+    "https://sweeprcleaner.com/clean/app/flutter-sdk-cache"
   ]
 }
