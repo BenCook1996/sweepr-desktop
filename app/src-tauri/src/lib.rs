@@ -140,6 +140,7 @@ pub fn run() {
             commands::empty_recycle_bin,
             commands::pick_folder,
             commands::pick_file,
+            commands::reveal_in_folder,
             duplicates::find_duplicates,
             duplicates::delete_duplicates,
             duplicates::scan_large_files,

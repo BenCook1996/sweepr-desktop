@@ -137,9 +137,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-video:2.6.0")
 
-    // RevenueCat
+    // RevenueCat + Direct Google Play Billing Library
     implementation("com.revenuecat.purchases:purchases:8.2.1")
     implementation("com.revenuecat.purchases:purchases-ui:8.2.1") // Paywalls UI
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20231013")

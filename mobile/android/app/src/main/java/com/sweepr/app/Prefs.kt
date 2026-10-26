@@ -523,22 +523,55 @@ object SweeprAccountApi {
         )
     }
 
+    fun ensureDeviceRegistered(current: LinkedAccount): LinkedAccount {
+        if (current.refreshToken.isNotBlank() && current.accountId.isNotBlank()) return current
+        val body = org.json.JSONObject()
+            .put("device_id", current.deviceId)
+            .put("device_type", "mobile")
+            .put("project_id", PROJECT_ID)
+        if (current.email.isNotBlank()) {
+            body.put("email", current.email.trim())
+        }
+        val res = postJson("/v1/accounts", body)
+        val accountId = res.optString("account_id").ifBlank { current.accountId }
+        val refreshToken = res.optString("refresh_token").ifBlank { current.refreshToken }
+        val referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
+            ?: current.referralCode.ifBlank { Prefs.defaultReferralCode(current.deviceId, accountId) }
+        val updated = current.copy(
+            accountId = accountId,
+            refreshToken = refreshToken,
+            referralCode = referralCode,
+        )
+        runCatching { Prefs.setLinkedAccount(updated) }
+        return updated
+    }
+
     fun redeemReferralCode(code: String, current: LinkedAccount): LinkedAccount {
         val trimmed = code.trim().uppercase()
         require(trimmed.length >= 4) { "Please enter a valid referral code." }
-        val ownCode = current.referralCode.ifBlank { Prefs.defaultReferralCode(current.deviceId, current.accountId) }.uppercase()
+        val authed = ensureDeviceRegistered(current)
+        val ownCode = authed.referralCode.ifBlank { Prefs.defaultReferralCode(authed.deviceId, authed.accountId) }.uppercase()
         require(trimmed != ownCode) { "You cannot redeem your own referral code." }
         val body = org.json.JSONObject()
             .put("code", trimmed)
             .put("referral_code", trimmed)
-            .put("device_id", current.deviceId)
-            .put("account_id", current.accountId)
+            .put("device_id", authed.deviceId)
+            .put("account_id", authed.accountId)
             .put("project_id", PROJECT_ID)
-        postJson("/v1/referral/apply", body, bearerToken = current.refreshToken)
+        val res = postJson("/v1/referral/apply", body, bearerToken = authed.refreshToken)
+        val status = res.optString("status", "")
+        val expiresAt = res.optLong("expires_at", 0L)
+        val trialGranted = status == "trialing" || status == "active" || expiresAt > (System.currentTimeMillis() / 1000L)
+        val baseUpdated = authed.copy(
+            redeemedReferralCode = trimmed,
+            serverActive = if (trialGranted) true else authed.serverActive,
+            plan = if (trialGranted) (authed.plan ?: "monthly") else authed.plan,
+            expiresAt = if (expiresAt > 0L) expiresAt else authed.expiresAt,
+        )
         return runCatching {
-            refreshEntitlement(current.copy(redeemedReferralCode = trimmed))
+            refreshEntitlement(baseUpdated)
         }.getOrElse {
-            current.copy(redeemedReferralCode = trimmed)
+            baseUpdated
         }
     }
 

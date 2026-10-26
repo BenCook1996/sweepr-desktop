@@ -643,10 +643,12 @@ export function createApp(deps: AppDeps) {
     </div>
 
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
-      <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Selected Items Now (Free 1.42 GB)</button>
+      <input id="iosFilePicker" type="file" multiple accept="image/*,video/*,*/*" style="display:none" onchange="onIosFilesSelected(this.files)" />
+      <button id="pickFilesBtn" onclick="document.getElementById('iosFilePicker').click()" class="card" style="padding:11px 14px;border-radius:14px;font-size:12.5px;font-weight:800;text-align:center;cursor:pointer;color:var(--accent-fg)">Select Photos / Videos to Check for Real Duplicates (SHA-256)</button>
+      <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Web Cache &amp; Duplicate Report</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Engine</span><span class="mono">Smart AI</span></div>
-        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Target</span><span class="mono" style="color:var(--accent-fg)">1.42 GB</span></div>
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Engine</span><span class="mono">SHA-256 + Quota</span></div>
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Reclaimable</span><span id="targetBytesLabel" class="mono" style="color:var(--accent-fg)">Tap Scan</span></div>
       </div>
     </div>
   </main>
@@ -654,9 +656,10 @@ export function createApp(deps: AppDeps) {
   <section id="view-account" class="view">
     <div class="card">
       <div style="font-size:16px;font-weight:900">Activate Device</div>
-      <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45">Sign in at <strong>sweeprcleaner.com/login</strong> to scan your QR code or paste your <code>ptk_...</code> pairing code below.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45">Enter your email and tap <strong>Send 6-Digit Code</strong>, or paste your <code>ptk_...</code> pairing code from <strong>sweeprcleaner.com/dashboard</strong>.</p>
+      <input id="emailInput" class="input" type="email" placeholder="Account Email (you@example.com)" />
+      <button id="sendIosOtpBtn" class="card" style="width:100%;padding:10px;border-radius:12px;font-size:12.5px;font-weight:800;margin-top:8px;cursor:pointer;color:var(--accent-fg)" onclick="sendIosOtp()">Send 6-Digit Code to Email</button>
       <input id="codeInput" class="input mono" placeholder="ptk_... or 6-digit code" />
-      <input id="emailInput" class="input" placeholder="Account Email" />
       <button class="btn-primary" onclick="activateIos()">Activate Pro on This Device</button>
       <div id="actMsg" style="font-size:12px;margin-top:8px;font-weight:700"></div>
     </div>
@@ -679,36 +682,109 @@ export function createApp(deps: AppDeps) {
   </nav>
 
 <script>
+  let lastScanReclaimableBytes = 0;
+  let duplicateFileNames = [];
+  function fmtBytes(b){if(!b||b<=0)return '0 B';if(b>=1073741824)return (b/1073741824).toFixed(2)+' GB';if(b>=1048576)return (b/1048576).toFixed(2)+' MB';if(b>=1024)return (b/1024).toFixed(1)+' KB';return b+' B';}
   function toggleTheme(){const cur=document.documentElement.getAttribute('data-theme')||'light';const next=cur==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('sweepr_cln_theme',next);}
   function switchTab(t){['home','account','support'].forEach(v=>{document.getElementById('view-'+v).classList.toggle('active',v===t);document.getElementById('tab-'+v).classList.toggle('active',v===t);});}
   function getDevId(){let id=localStorage.getItem('sweepr_cln_ios_id');if(!id){id='ios_'+Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('sweepr_cln_ios_id',id);}return id;}
-  function runIosScan(){
+  async function runIosScan(){
     const out=document.getElementById('scanOut');
     const head=document.getElementById('scanHeadline');
     const orbTxt=document.getElementById('orbTxt');
     const cBtn=document.getElementById('cleanBtn');
+    const tgt=document.getElementById('targetBytesLabel');
     orbTxt.textContent='SCANNING...';
-    head.textContent='Auditing Storage...';
-    out.textContent='Checking burst photos, videos & Safari cache...';
-    setTimeout(()=>{
-      orbTxt.textContent='1.42 GB FOUND';
-      head.textContent='1.42 GB Reclaimable';
-      out.textContent='Photos: 640 MB • Videos: 520 MB • Cache: 260 MB';
-      cBtn.style.display='block';
-    },800);
+    head.textContent='Inspecting Device Storage...';
+    out.textContent='Querying StorageManager quota, Cache API & IndexedDB...';
+    let quotaUsage=0, quotaTotal=0, cacheCount=0, idbCount=0, lsBytes=0;
+    try{
+      if(navigator.storage&&navigator.storage.estimate){
+        const est=await navigator.storage.estimate();
+        quotaUsage=est.usage||0;
+        quotaTotal=est.quota||0;
+      }
+      if(window.caches&&caches.keys){
+        const keys=await caches.keys();
+        cacheCount=keys.length;
+      }
+      if(window.indexedDB&&indexedDB.databases){
+        const dbs=await indexedDB.databases();
+        idbCount=Array.isArray(dbs)?dbs.length:0;
+      }
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i)||'';
+        if(!k.startsWith('sweepr_cln_')){lsBytes+=(k.length+(localStorage.getItem(k)||'').length)*2;}
+      }
+    }catch{}
+    const totalReclaimable=quotaUsage+lsBytes+lastScanReclaimableBytes;
+    const label=fmtBytes(totalReclaimable);
+    orbTxt.textContent=totalReclaimable>0?(label+' FOUND'):'SCAN DONE';
+    head.textContent=totalReclaimable>0?(label+' Reclaimable'):'Web Storage Clean (Select Photos Below)';
+    out.textContent='Origin Cache: '+fmtBytes(quotaUsage+lsBytes)+' ('+cacheCount+' caches, '+idbCount+' DBs)'+(duplicateFileNames.length?' • '+duplicateFileNames.length+' duplicate file(s) ('+fmtBytes(lastScanReclaimableBytes)+')':' • Quota: '+fmtBytes(quotaTotal));
+    tgt.textContent=label;
+    cBtn.textContent='Clean Web Cache & Export Duplicate Report ('+label+')';
+    cBtn.style.display='block';
   }
-  function cleanIosStorage(){
+  async function onIosFilesSelected(fileList){
+    if(!fileList||!fileList.length)return;
     const out=document.getElementById('scanOut');
     const head=document.getElementById('scanHeadline');
     const orbTxt=document.getElementById('orbTxt');
     const cBtn=document.getElementById('cleanBtn');
-    cBtn.disabled=true;cBtn.textContent='Cleaning selected items...';
-    setTimeout(()=>{
-      cBtn.style.display='none';cBtn.disabled=false;cBtn.textContent='Clean Selected Items Now (Free 1.42 GB)';
-      orbTxt.textContent='CLEANED ✓';
-      head.textContent='Storage Optimized';
-      out.textContent='Cleaned 1.42 GB of duplicate photos & cache!';
-    },700);
+    const tgt=document.getElementById('targetBytesLabel');
+    orbTxt.textContent='HASHING...';
+    head.textContent='Computing SHA-256 Digests...';
+    const seen=new Map();
+    let dupBytes=0;
+    const dups=[];
+    for(let i=0;i<fileList.length;i++){
+      const f=fileList[i];
+      try{
+        const buf=await f.arrayBuffer();
+        const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+        const hashHex=Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+        if(seen.has(hashHex)){
+          dupBytes+=f.size;
+          dups.push(f.name+' (duplicate of '+seen.get(hashHex)+')');
+        }else{
+          seen.set(hashHex,f.name);
+        }
+      }catch{}
+    }
+    lastScanReclaimableBytes=dupBytes;
+    duplicateFileNames=dups;
+    await runIosScan();
+  }
+  async function cleanIosStorage(){
+    const out=document.getElementById('scanOut');
+    const head=document.getElementById('scanHeadline');
+    const orbTxt=document.getElementById('orbTxt');
+    const cBtn=document.getElementById('cleanBtn');
+    const tgt=document.getElementById('targetBytesLabel');
+    cBtn.disabled=true;cBtn.textContent='Purging caches & temporary storage...';
+    let clearedCaches=0;
+    try{
+      if(window.caches&&caches.keys){
+        const keys=await caches.keys();
+        for(const k of keys){await caches.delete(k);clearedCaches++;}
+      }
+      const removeKeys=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i)||'';
+        if(!k.startsWith('sweepr_cln_'))removeKeys.push(k);
+      }
+      removeKeys.forEach(k=>localStorage.removeItem(k));
+      sessionStorage.clear();
+    }catch{}
+    const summary=duplicateFileNames.length?('Cleared '+clearedCaches+' cache(s). Duplicates to delete in Photos: '+duplicateFileNames.join(', ')):('Cleared '+clearedCaches+' browser cache(s) & temporary session data.');
+    lastScanReclaimableBytes=0;
+    duplicateFileNames=[];
+    cBtn.style.display='none';cBtn.disabled=false;
+    orbTxt.textContent='CLEANED ✓';
+    head.textContent='Storage Optimized';
+    out.textContent=summary;
+    tgt.textContent='0 B';
   }
   async function sendCleanerIosSupport(){
     const email=(document.getElementById('supEmail').value||document.getElementById('emailInput').value||'').trim();
@@ -729,6 +805,18 @@ export function createApp(deps: AppDeps) {
     if(ok){document.getElementById('supMsg').value='';st.style.color='var(--accent-fg)';st.textContent="Sent to SWEEPR Support — we'll reply by email.";}
     else{st.style.color='#ef4444';st.textContent='Could not reach support server.';}
   }
+  async function sendIosOtp(){
+    const email=(document.getElementById('emailInput').value||'').trim();
+    const msg=document.getElementById('actMsg');
+    if(!email||!email.includes('@')){msg.style.color='#ef4444';msg.textContent='Enter your email address first.';return;}
+    msg.style.color='var(--muted)';msg.textContent='Sending 6-digit code...';
+    try{
+      const r=await fetch('/v1/account/send-otp',{method:'POST',headers:{'Content-Type':'application/json','x-sweepr-project':'cleaner'},body:JSON.stringify({email,project_id:'cleaner'})});
+      const d=await r.json();
+      if(r.ok&&d.ok){msg.style.color='var(--accent-fg)';msg.textContent='6-digit code sent to '+email+'! Enter it below.';}
+      else{msg.style.color='#ef4444';msg.textContent=d.error||'Could not send code.';}
+    }catch{msg.style.color='#ef4444';msg.textContent='Network error.';}
+  }
   async function activateIos(){
     const raw=(document.getElementById('codeInput').value||'').trim();
     const email=(document.getElementById('emailInput').value||'').trim();
@@ -737,14 +825,16 @@ export function createApp(deps: AppDeps) {
     msg.style.color='var(--muted)';msg.textContent='Verifying...';
     try{
       const ptk=raw.match(/ptk_[A-Za-z0-9_-]{12,64}/);
-      const url=ptk?'/api/device-link/redeem-token':'/v1/license/activate';
-      const body=ptk?{token:ptk[0],device_id:getDevId(),device_type:'mobile',device_name:'iPhone / iPad',platform:'ios'}:{email,otp:raw,device_id:getDevId(),device_type:'mobile'};
-      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const url=ptk?'/api/device-link/redeem':'/v1/account/verify-otp';
+      const body=ptk
+        ?{token:ptk[0],device_id:getDevId(),device_type:'mobile',device_name:'iPhone / iPad',platform:'ios',project_id:'cleaner'}
+        :{email,code:raw,device_id:getDevId(),device_type:'mobile',platform:'ios',device_label:'iPhone / iPad',project_id:'cleaner'};
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-sweepr-project':'cleaner'},body:JSON.stringify(body)});
       const d=await r.json();
-      if(r.ok&&(d.ok||d.token)){
-        localStorage.setItem('sweepr_cln_token',d.token||'active');
-        document.getElementById('proBadge').textContent='PRO ACTIVE';
-        msg.style.color='var(--accent-fg)';msg.textContent='Pro Activated on this iPhone / iPad!';
+      if(r.ok&&(d.ok||d.token||d.refresh_token)){
+        localStorage.setItem('sweepr_cln_token',d.token||d.refresh_token||'active');
+        document.getElementById('proBadge').textContent=d.active?'PRO ACTIVE':'LINKED';
+        msg.style.color='var(--accent-fg)';msg.textContent=d.active?'Pro Activated on this iPhone / iPad!':'Account linked on this iPhone / iPad!';
       }else{
         msg.style.color='#ef4444';msg.textContent=d.message||d.error||'Invalid code.';
       }
@@ -3899,6 +3989,9 @@ export function createApp(deps: AppDeps) {
                     </button>
                   </div>`
             }
+            <a id="openInAppApproveBtn" href="sweeprcleaner://pair?mode=approve&amp;challenge=${encodeURIComponent(challengeId)}" class="block text-center w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700">
+              Open in SWEEPR Cleaner Mobile App
+            </a>
           </div>`
         : `<div id="redeemBox" class="space-y-4">
             <p class="text-sm text-slate-300 leading-relaxed">
@@ -4210,7 +4303,7 @@ export function createApp(deps: AppDeps) {
     return null;
   }
 
-  // Step 1 of linking an existing web/email purchase to a desktop/mobile device via OTP.
+  // Step 1 of linking an existing web/email purchase or free account to a desktop/mobile device via OTP.
   app.post("/v1/account/send-otp", async (c) => {
     if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     const body = await c.req.json().catch(() => ({}));
@@ -4218,16 +4311,19 @@ export function createApp(deps: AppDeps) {
     if (!email) return c.json({ error: "invalid_email" }, 400);
     if (!limitOtpSendEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
-    const account = await findSignedUpAccountByEmail(email);
+    let account = await findSignedUpAccountByEmail(email);
     if (!account) {
-      return c.json(
-        {
-          ok: false,
-          otpSent: false,
-          error: "No account found for this email address. Please sign up first or check your email.",
-        },
-        404
-      );
+      const existing = repo.accountByEmail(email);
+      if (existing) {
+        account = existing;
+      } else {
+        const newId = `acc_${randomToken(12)}`;
+        repo.createAccount(newId, sha256(randomToken(32)), email);
+        account = repo.accountById(newId) ?? null;
+      }
+    }
+    if (!account) {
+      return c.json({ ok: false, otpSent: false, error: "Could not initialize account." }, 500);
     }
 
     const code = randomInt(100000, 1000000).toString();
@@ -4459,11 +4555,6 @@ export function createApp(deps: AppDeps) {
   app.post("/v1/referral/apply", auth, async (c) => {
     const account = c.get("account");
     const t = now();
-    const ent = repo.entitlement(account.id);
-    const isSignedInWithEmail = Boolean(account.email && !account.email.endsWith("@pending.sweeprcleaner.com"));
-    if (!isSignedInWithEmail && (!ent || !isEntitled(ent, t, config.pastDueGraceDays))) {
-      return c.json({ error: "payment_required" }, 402);
-    }
     const body = await c.req.json().catch(() => ({}));
     const code = String(body?.code ?? body?.referral_code ?? "").trim();
     if (!code) return c.json({ error: "missing_code" }, 400);
@@ -4491,6 +4582,11 @@ export function createApp(deps: AppDeps) {
     if (!productId || !purchaseToken) {
       return c.json({ error: "missing_purchase_details" }, 400);
     }
+    if (purchaseToken.length < 10 || !/^[A-Za-z0-9._:-]+$/.test(purchaseToken)) {
+      return c.json({ error: "invalid_purchase_token" }, 400);
+    }
+
+    const subRefId = orderId || `gp_${purchaseToken.slice(0, 32)}`;
 
     let account = await resolvePortalOrBearerOrOtpAccount(c, body);
     const email = normalizeEmail(body?.email) ?? account?.email ?? undefined;
@@ -4500,6 +4596,34 @@ export function createApp(deps: AppDeps) {
     if (!account && typeof body?.account_id === "string" && body.account_id.trim()) {
       account = repo.accountById(body.account_id.trim()) ?? null;
     }
+
+    // Prevent replay of the same Google Play purchase token / order ID across different accounts
+    const existingSubOwner = repo.db
+      .prepare("SELECT account_id FROM entitlements WHERE stripe_subscription_id = ? LIMIT 1")
+      .get(subRefId) as { account_id: string } | undefined;
+    if (existingSubOwner && account && existingSubOwner.account_id !== account.id) {
+      return c.json({ error: "duplicate_purchase_token" }, 409);
+    }
+    if (existingSubOwner && !account) {
+      account = repo.accountById(existingSubOwner.account_id) ?? null;
+    }
+
+    // Optional live Google Play Developer API verification when GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is configured
+    if (process.env.GOOGLE_PLAY_ACCESS_TOKEN) {
+      try {
+        const pkg = String(body?.package_name || "com.sweepr.app");
+        const verifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(pkg)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
+        const gpRes = await fetch(verifyUrl, {
+          headers: { Authorization: `Bearer ${process.env.GOOGLE_PLAY_ACCESS_TOKEN}` },
+        });
+        if (gpRes.status === 404 || gpRes.status === 410) {
+          return c.json({ error: "google_play_token_rejected" }, 402);
+        }
+      } catch (err) {
+        console.warn("[google-play] Developer API check warning:", err);
+      }
+    }
+
     let refreshToken = "";
     if (!account) {
       const newAccId = `acc_gp_${randomToken(10)}`;
@@ -4522,24 +4646,42 @@ export function createApp(deps: AppDeps) {
       productId.toLowerCase().includes("battery") || hasBatteryCareAddon(body);
     const isCloudAddon =
       productId.toLowerCase().includes("vault") || productId.toLowerCase().includes("cloud") || hasCloudVaultAddon(body);
+    const isBaseSubProduct =
+      productId.toLowerCase().includes("monthly") ||
+      productId.toLowerCase().includes("six_month") ||
+      productId.toLowerCase().includes("6month") ||
+      productId.toLowerCase().includes("annual") ||
+      productId.includes("4999") ||
+      productId.includes("3899") ||
+      body?.plan === "monthly" ||
+      body?.plan === "six_month" ||
+      body?.plan === "annual";
+    const isAddonOnly = (isBatteryAddon || isCloudAddon) && !isBaseSubProduct;
 
     const plan =
       body?.plan === "annual" || productId.includes("annual") || productId.includes("4999")
         ? "annual"
-        : body?.plan === "six_month" || productId.includes("six_month") || productId.includes("3899")
+        : body?.plan === "six_month" || productId.includes("six_month") || productId.includes("6month") || productId.includes("3899")
         ? "six_month"
         : "monthly";
-    const days = plan === "annual" ? 365 : plan === "six_month" ? 183 : 30;
+    const days = isAddonOnly ? 365 : plan === "annual" ? 365 : plan === "six_month" ? 183 : 30;
     const periodEnd = t + days * 86400;
 
     const existingEnt = repo.entitlement(account.id);
     const effectivePeriodEnd = Math.max(existingEnt?.current_period_end ?? 0, periodEnd);
-    const effectivePlan = existingEnt?.plan ?? plan;
+    // When purchasing or upgrading a base plan, always apply the newly purchased plan tier!
+    // When purchasing an add-on alone, preserve the existing base plan (or "addon_only" if none).
+    const effectivePlan = isAddonOnly ? (existingEnt?.plan ?? "addon_only") : plan;
+    const effectiveStatus = isAddonOnly
+      ? existingEnt && isEntitled(existingEnt, t, config.pastDueGraceDays)
+        ? existingEnt.status
+        : ("active" as const)
+      : ("active" as const);
 
     repo.upsertEntitlement({
       account_id: account.id,
-      stripe_subscription_id: orderId || `gp_${purchaseToken.slice(0, 24)}`,
-      status: "active",
+      stripe_subscription_id: subRefId,
+      status: effectiveStatus,
       plan: effectivePlan,
       current_period_end: effectivePeriodEnd,
       cancel_at_period_end: 0,

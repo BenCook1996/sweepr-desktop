@@ -8,6 +8,7 @@
   import {
     api,
     errorMessage,
+    requestActivation,
     type AppInfo,
     type AppUpdateInfo,
     type LicenseStatus,
@@ -169,18 +170,7 @@
 
   async function startPlanCheckout() {
     error = null;
-    busy = true;
-    try {
-      const activated = await api.startCheckout(linkEmail.trim() || undefined);
-      if (activated) {
-        linkSuccess = "Your PC is now activated with your subscription!";
-        await onRefresh();
-      }
-    } catch (e) {
-      error = errorMessage(e);
-    } finally {
-      busy = false;
-    }
+    requestActivation();
   }
 
   async function refresh() {

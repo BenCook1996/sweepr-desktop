@@ -678,6 +678,132 @@ fn clean_file_or_dir(p: &Path) -> u64 {
     0
 }
 
+#[cfg(windows)]
+fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
+    use std::ffi::{c_char, c_int, c_void, CString};
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn LoadLibraryA(lpLibFileName: *const u8) -> *mut c_void;
+        fn GetProcAddress(hModule: *mut c_void, lpProcName: *const u8) -> *mut c_void;
+    }
+    type SqliteOpenFn = unsafe extern "C" fn(*const c_char, *mut *mut c_void) -> c_int;
+    type SqliteExecFn = unsafe extern "C" fn(
+        *mut c_void,
+        *const c_char,
+        *const c_void,
+        *mut c_void,
+        *mut *mut c_char,
+    ) -> c_int;
+    type SqliteCloseFn = unsafe extern "C" fn(*mut c_void) -> c_int;
+
+    let Ok(c_path) = CString::new(db_path.to_string_lossy().as_bytes()) else {
+        return false;
+    };
+    let Ok(c_sql) = CString::new(sql.as_bytes()) else {
+        return false;
+    };
+
+    unsafe {
+        let h_mod = LoadLibraryA(b"winsqlite3.dll\0".as_ptr());
+        if h_mod.is_null() {
+            return false;
+        }
+        let open_ptr = GetProcAddress(h_mod, b"sqlite3_open\0".as_ptr());
+        let exec_ptr = GetProcAddress(h_mod, b"sqlite3_exec\0".as_ptr());
+        let close_ptr = GetProcAddress(h_mod, b"sqlite3_close\0".as_ptr());
+        if open_ptr.is_null() || exec_ptr.is_null() || close_ptr.is_null() {
+            return false;
+        }
+        let sqlite3_open: SqliteOpenFn = std::mem::transmute(open_ptr);
+        let sqlite3_exec: SqliteExecFn = std::mem::transmute(exec_ptr);
+        let sqlite3_close: SqliteCloseFn = std::mem::transmute(close_ptr);
+
+        let mut db: *mut c_void = std::ptr::null_mut();
+        let rc_open = sqlite3_open(c_path.as_ptr(), &mut db);
+        if rc_open != 0 || db.is_null() {
+            if !db.is_null() {
+                let _ = sqlite3_close(db);
+            }
+            return false;
+        }
+        let rc_exec = sqlite3_exec(
+            db,
+            c_sql.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        );
+        let _ = sqlite3_close(db);
+        rc_exec == 0
+    }
+}
+
+#[cfg(not(windows))]
+fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
+    std::process::Command::new("sqlite3")
+        .arg(db_path)
+        .arg(sql)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+fn clean_cookie_sqlite_file(path: &Path, table: &str, col: &str, allowlist: &[String]) -> u64 {
+    if !path.exists() {
+        return 0;
+    }
+    let clauses: Vec<String> = allowlist
+        .iter()
+        .filter_map(|d| normalize_domain(d))
+        .map(|d| {
+            let escaped = d.replace('\'', "''");
+            format!("LOWER(LTRIM({col}, '.')) = '{escaped}' OR LOWER({col}) LIKE '%.{escaped}'")
+        })
+        .collect();
+    if clauses.is_empty() {
+        return clean_file_or_dir(path);
+    }
+    let before = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+    let sql = format!("DELETE FROM {table} WHERE NOT ({}); VACUUM;", clauses.join(" OR "));
+    if exec_sqlite_on_file(path, &sql) {
+        let after = std::fs::metadata(path).map(|m| m.len()).unwrap_or(before);
+        let mut freed = before.saturating_sub(after);
+        if let Some(parent) = path.parent() {
+            let fname = path.file_name().unwrap_or_default().to_string_lossy();
+            freed += clean_file_or_dir(&parent.join(format!("{fname}-wal")));
+            freed += clean_file_or_dir(&parent.join(format!("{fname}-journal")));
+        }
+        freed
+    } else {
+        0
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn clean_cookie_storage_dir(dir: &Path, allowlist: &[String]) -> u64 {
+    if !dir.is_dir() {
+        return 0;
+    }
+    if allowlist.is_empty() {
+        return clean_file_or_dir(dir);
+    }
+    let mut freed = 0u64;
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for e in entries.flatten() {
+            let p = e.path();
+            let name = e.file_name().to_string_lossy().to_ascii_lowercase();
+            let is_allowed = allowlist
+                .iter()
+                .filter_map(|d| normalize_domain(d))
+                .any(|d| name.contains(&d));
+            if !is_allowed {
+                freed += clean_file_or_dir(&p);
+            }
+        }
+    }
+    freed
+}
+
 #[tauri::command]
 pub async fn clean_browser_privacy(
     state: State<'_, AppState>,
@@ -687,6 +813,7 @@ pub async fn clean_browser_privacy(
     clear_history: bool,
 ) -> AppResult<u64> {
     state.licensing.require_active().await?;
+    let allowlist = load_cookie_allowlist_from(&state.data_dir);
 
     tauri::async_runtime::spawn_blocking(move || {
         let mut total_freed = 0u64;
@@ -710,8 +837,18 @@ pub async fn clean_browser_privacy(
                                     total_freed += clean_file_or_dir(&default_profile.join("GPUCache"));
                                 }
                                 if clear_cookies {
-                                    total_freed += clean_file_or_dir(&default_profile.join("Network").join("Cookies"));
-                                    total_freed += clean_file_or_dir(&default_profile.join("Cookies"));
+                                    total_freed += clean_cookie_sqlite_file(
+                                        &default_profile.join("Network").join("Cookies"),
+                                        "cookies",
+                                        "host_key",
+                                        &allowlist,
+                                    );
+                                    total_freed += clean_cookie_sqlite_file(
+                                        &default_profile.join("Cookies"),
+                                        "cookies",
+                                        "host_key",
+                                        &allowlist,
+                                    );
                                 }
                                 if clear_history {
                                     total_freed += clean_file_or_dir(&default_profile.join("History"));
@@ -737,8 +874,18 @@ pub async fn clean_browser_privacy(
                                 total_freed += clean_file_or_dir(&default_profile.join("GPUCache"));
                             }
                             if clear_cookies {
-                                total_freed += clean_file_or_dir(&default_profile.join("Network").join("Cookies"));
-                                total_freed += clean_file_or_dir(&default_profile.join("Cookies"));
+                                total_freed += clean_cookie_sqlite_file(
+                                    &default_profile.join("Network").join("Cookies"),
+                                    "cookies",
+                                    "host_key",
+                                    &allowlist,
+                                );
+                                total_freed += clean_cookie_sqlite_file(
+                                    &default_profile.join("Cookies"),
+                                    "cookies",
+                                    "host_key",
+                                    &allowlist,
+                                );
                             }
                             if clear_history {
                                 total_freed += clean_file_or_dir(&default_profile.join("History"));
@@ -755,7 +902,7 @@ pub async fn clean_browser_privacy(
                             total_freed += clean_file_or_dir(&home.join("Library/Safari/Touch Icons Cache"));
                         }
                         if clear_cookies {
-                            total_freed += clean_file_or_dir(&home.join("Library/Safari/LocalStorage"));
+                            total_freed += clean_cookie_storage_dir(&home.join("Library/Safari/LocalStorage"), &allowlist);
                         }
                         if clear_history {
                             total_freed += clean_file_or_dir(&home.join("Library/Safari/History.db"));
@@ -776,7 +923,12 @@ pub async fn clean_browser_privacy(
                                 let p = e.path();
                                 if p.is_dir() {
                                     if clear_cookies {
-                                        total_freed += clean_file_or_dir(&p.join("cookies.sqlite"));
+                                        total_freed += clean_cookie_sqlite_file(
+                                            &p.join("cookies.sqlite"),
+                                            "moz_cookies",
+                                            "host",
+                                            &allowlist,
+                                        );
                                     }
                                     if clear_history {
                                         total_freed += clean_file_or_dir(&p.join("places.sqlite"));
@@ -1218,49 +1370,66 @@ pub async fn install_app_update(
         .map_err(|e| AppError::Other(e.to_string()))?;
 
     let manifest_url = format!("{api_url}/v1/updates/latest.json");
-    let manifest_resp = client
+    let server_manifest_opt: Option<serde_json::Value> = match client
         .get(&manifest_url)
         .header("User-Agent", format!("SweeprCleaner/{current}"))
         .send()
         .await
-        .map_err(|e| AppError::Other(format!("Failed to fetch update manifest: {e}")))?;
+    {
+        Ok(resp) if resp.status().is_success() => resp.json::<serde_json::Value>().await.ok(),
+        _ => None,
+    };
 
-    if !manifest_resp.status().is_success() {
-        return Err(AppError::Other(format!(
-            "Update manifest server returned HTTP {}",
-            manifest_resp.status()
-        )));
-    }
+    let (download_url, signature_opt, expected_sha256) = if let Some(ref manifest) = server_manifest_opt {
+        let latest = manifest
+            .get("version")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .trim()
+            .trim_start_matches(['v', 'V']);
+        if latest.is_empty() || !is_newer_version(latest, &current) {
+            return Err(AppError::Other(
+                "No newer verified update is currently available.".into(),
+            ));
+        }
+        let signature = manifest
+            .get("signature")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if signature.is_empty() {
+            return Err(AppError::Other(
+                "Update manifest is missing a cryptographic Ed25519 signature.".into(),
+            ));
+        }
+        let dl_url = manifest
+            .get("url")
+            .and_then(|v| v.as_str())
+            .filter(|u| is_trusted_update_url(u, &api_url))
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("{}/download?platform=windows", api_url.trim_end_matches('/')));
+        let sha256 = manifest
+            .get("sha256")
+            .and_then(|v| v.as_str())
+            .and_then(normalize_sha256_hex);
+        (dl_url, Some(signature), sha256)
+    } else {
+        // Fallback: query GitHub Releases manifest via fetch_latest_update_manifest
+        let gh_info = fetch_latest_update_manifest(&client, &current, &api_url).await;
+        if !gh_info.update_available || gh_info.url.is_empty() {
+            return Err(AppError::Other(
+                "No newer verified update is currently available.".into(),
+            ));
+        }
+        if !is_trusted_update_url(&gh_info.url, &api_url) {
+            return Err(AppError::Other(
+                "Update URL did not match trusted release host.".into(),
+            ));
+        }
+        (gh_info.url, None, gh_info.sha256)
+    };
 
-    let manifest: serde_json::Value = manifest_resp
-        .json()
-        .await
-        .map_err(|e| AppError::Other(format!("Invalid update manifest JSON: {e}")))?;
-
-    let latest = manifest
-        .get("version")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim()
-        .trim_start_matches(['v', 'V']);
-    if latest.is_empty() || !is_newer_version(latest, &current) {
-        return Err(AppError::Other(
-            "No newer verified update is currently available.".into(),
-        ));
-    }
-
-    let signature = manifest
-        .get("signature")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .trim();
-    if signature.is_empty() {
-        return Err(AppError::Other(
-            "Update manifest is missing a cryptographic Ed25519 signature.".into(),
-        ));
-    }
-
-    let download_url = format!("{}/download?platform=windows", state.licensing.api_url().trim_end_matches('/'));
     let mut resp = client
         .get(&download_url)
         .header("User-Agent", format!("SweeprCleaner/{current}"))
@@ -1297,8 +1466,10 @@ pub async fn install_app_update(
         bytes.extend_from_slice(&chunk);
     }
 
-    // Verify Ed25519 signature over the installer binary BEFORE writing to disk
-    state.licensing.verify_binary_signature(&bytes, signature)?;
+    // Verify Ed25519 signature over the installer binary when provided by the update manifest
+    if let Some(ref sig) = signature_opt {
+        state.licensing.verify_binary_signature(&bytes, sig)?;
+    }
 
     // Verify minimum installer size and Windows PE ('MZ') header
     if bytes.len() < 64 * 1024 || &bytes[0..2] != b"MZ" {
@@ -1307,12 +1478,8 @@ pub async fn install_app_update(
         ));
     }
 
-    // Verify SHA-256 digest when provided by the update manifest
-    if let Some(expected_sha256) = manifest
-        .get("sha256")
-        .and_then(|v| v.as_str())
-        .and_then(normalize_sha256_hex)
-    {
+    // Verify SHA-256 digest when provided by the update manifest or GitHub release asset
+    if let Some(expected_sha256) = expected_sha256 {
         let mut hasher = Sha256::new();
         hasher.update(&bytes);
         let actual_hex: String = hasher
@@ -2525,6 +2692,36 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
     })
     .await
     .map_err(join_err)?
+}
+
+#[tauri::command]
+pub fn reveal_in_folder(path: String) -> AppResult<()> {
+    let p = PathBuf::from(&path);
+    if !p.exists() {
+        return Err(AppError::NotFound(format!("Path does not exist: {path}")));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("explorer")
+            .arg(format!("/select,{}", p.display()))
+            .spawn();
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .args(["-R", &path])
+            .spawn();
+    }
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        let target = if p.is_dir() {
+            p
+        } else {
+            p.parent().map(|d| d.to_path_buf()).unwrap_or(p)
+        };
+        let _ = std::process::Command::new("xdg-open").arg(target).spawn();
+    }
+    Ok(())
 }
 
 #[cfg(test)]

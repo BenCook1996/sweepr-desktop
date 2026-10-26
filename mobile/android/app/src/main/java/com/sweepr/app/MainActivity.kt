@@ -82,6 +82,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        PlayBillingManager.init(this)
         extractDeepLinkPair(intent)
 
         // Must be created in onCreate. Scanning is free; cleaning is Premium (Google Play
@@ -156,9 +157,26 @@ class MainActivity : AppCompatActivity() {
         vm: DashboardViewModel,
         then: () -> Unit,
     ) {
-        if (!Purchases.isConfigured) {
-            afterPurchase = then
-            paywallLauncher.launch(shouldDisplayDismissButton = true)
+        val launchDirectPlayOrFallback = {
+            PlayBillingManager.launchPurchase(
+                activity = this@MainActivity,
+                productId = productId,
+                onSuccess = { purchasedId, pToken, orderId ->
+                    vm.syncGooglePlayPurchase(
+                        productId = purchasedId,
+                        purchaseToken = pToken,
+                        orderId = orderId,
+                    )
+                    then()
+                },
+                onFallback = {
+                    afterPurchase = then
+                    paywallLauncher.launch(shouldDisplayDismissButton = true)
+                },
+            )
+        }
+        if (!Purchases.isConfigured || !BuildConfig.REVENUECAT_API_KEY.startsWith("goog_")) {
+            launchDirectPlayOrFallback()
             return
         }
         Purchases.sharedInstance.getProducts(
@@ -167,8 +185,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onReceived(storeProducts: List<StoreProduct>) {
                     val product = storeProducts.firstOrNull()
                     if (product == null) {
-                        afterPurchase = then
-                        paywallLauncher.launch(shouldDisplayDismissButton = true)
+                        launchDirectPlayOrFallback()
                         return
                     }
                     Purchases.sharedInstance.purchase(
@@ -197,8 +214,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onError(error: PurchasesError) {
-                    afterPurchase = then
-                    paywallLauncher.launch(shouldDisplayDismissButton = true)
+                    launchDirectPlayOrFallback()
                 }
             },
         )
@@ -210,7 +226,7 @@ enum class Screen {
     Dashboard, Settings,
 
     // Detail screens
-    PhotosVideos, Swipe, Screenshots, Contacts, Trash, CloudSavings, BatteryCare, Account, About,
+    PhotosVideos, Swipe, Screenshots, Contacts, Trash, CloudSavings, BatteryCare, Account, About, Tips,
     QuickCleanReview, CleaningComplete,
 }
 
@@ -559,6 +575,7 @@ fun SweeprRoot(
                     onBack = goBack,
                 )
                 Screen.About -> AboutScreen(onBack = goBack)
+                Screen.Tips -> TipsScreen(onBack = goBack)
                 Screen.CloudSavings -> CloudSavingsScreen(
                     state = state,
                     onOpenPhotosTab = openPhotosTab,

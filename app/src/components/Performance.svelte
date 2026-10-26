@@ -2,6 +2,7 @@
   import type {
     BatteryDiagnostics,
     BrowserMemoryReport,
+    ContextMenuItem,
     MemoryOverview,
     StartupItem,
     TabSessionSnapshot,
@@ -11,6 +12,7 @@
   let cachedBrowserReport: BrowserMemoryReport | null = null;
   let cachedTabSessions: TabSessionSnapshot[] = [];
   let cachedStartup: StartupItem[] = [];
+  let cachedContextMenu: ContextMenuItem[] = [];
   let cachedBattery: BatteryDiagnostics | null = null;
 </script>
 
@@ -39,6 +41,7 @@
   let browserReport = $state<BrowserMemoryReport | null>(cachedBrowserReport);
   let tabSessions = $state<TabSessionSnapshot[]>(cachedTabSessions);
   let startup = $state<StartupItem[]>(cachedStartup);
+  let contextMenuItems = $state<ContextMenuItem[]>(cachedContextMenu);
   let diag = $state<BatteryDiagnostics | null>(cachedBattery);
 
   let boosting = $state(false);
@@ -59,25 +62,43 @@
 
   async function load() {
     try {
-      const [m, b, ts, s, bat] = await Promise.all([
+      const [m, b, ts, s, cm, bat] = await Promise.all([
         api.memory(),
         api.browserMemoryReport().catch(() => null),
         api.listTabSessions().catch(() => []),
         api.startupItems(),
+        api.listContextMenuItems().catch(() => []),
         api.batteryDiagnostics().catch(() => null),
       ]);
       mem = m;
       browserReport = b;
       tabSessions = ts;
       startup = s;
+      contextMenuItems = cm;
       diag = bat;
       cachedMem = m;
       cachedBrowserReport = b;
       cachedTabSessions = ts;
       cachedStartup = s;
+      cachedContextMenu = cm;
       cachedBattery = bat;
     } catch (e) {
       error = errorMessage(e);
+    }
+  }
+
+  async function toggleContextMenu(item: ContextMenuItem) {
+    if (!isPro) {
+      requestActivation();
+      return;
+    }
+    error = null;
+    try {
+      contextMenuItems = await api.toggleContextMenuItem(item.id, !item.enabled);
+      cachedContextMenu = contextMenuItems;
+    } catch (e) {
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
     }
   }
 
@@ -405,6 +426,25 @@
               {restoringSession === snap.id ? "…" : "Restore"}
             </button>
           </div>
+        {/each}
+      </div>
+    </details>
+  {/if}
+
+  {#if contextMenuItems.length > 0}
+    <details class="extra-drawer">
+      <summary>Right-Click Context Menu ({contextMenuItems.length})</summary>
+      <div class="row-list" style="margin-top: 8px;">
+        {#each contextMenuItems as cm (cm.id)}
+          <label class="line-row">
+            <span class="row-name">{cm.name}</span>
+            <input
+              type="checkbox"
+              class="toggle-switch"
+              checked={cm.enabled}
+              onchange={() => toggleContextMenu(cm)}
+            />
+          </label>
         {/each}
       </div>
     </details>

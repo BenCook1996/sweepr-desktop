@@ -647,6 +647,26 @@ private fun HomeTiles(
                 onClick = { open(Screen.Contacts) },
             )
         }
+        BatteryCareDashboardBanner(
+            state = state,
+            onOpen = { onOpen(Screen.BatteryCare) },
+        )
+        if (scanned) {
+            CloudSavingsBanner(
+                state = state,
+                onOpen = { onOpen(Screen.CloudSavings) },
+            )
+        }
+        SweeprPanel(Modifier.fillMaxWidth()) {
+            ToolRow(
+                iconKind = SweeprIconKind.SPARKLE_CLEAN,
+                iconTint = SweeprGreen,
+                title = "Deep System Cleanup Guides",
+                value = "Clear WhatsApp media, browser caches, Downloads & Google Photos trash",
+                badgeText = "7 Guides",
+                onClick = { onOpen(Screen.Tips) },
+            )
+        }
     }
     Spacer(Modifier.height(4.dp))
 }

@@ -19,12 +19,59 @@
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let qrTimer: ReturnType<typeof setInterval> | null = null;
 
+  let monthlyIntroLabel = $state("£1.99");
+  let monthlyRenewLabel = $state("£9.99");
+  let sixMonthLabel = $state("£38.99");
+  let sixMonthPerMoLabel = $state("£6.50");
+  let annualLabel = $state("£49.99");
+  let annualPerMoLabel = $state("£4.16");
+
+  $effect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const loc = navigator.language || "en-GB";
+      if (tz.startsWith("America/") || loc === "en-US") {
+        monthlyIntroLabel = "$1.99";
+        monthlyRenewLabel = "$9.99";
+        sixMonthLabel = "$38.99";
+        sixMonthPerMoLabel = "$6.50";
+        annualLabel = "$49.99";
+        annualPerMoLabel = "$4.16";
+      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
+        monthlyIntroLabel = "€1.99";
+        monthlyRenewLabel = "€9.99";
+        sixMonthLabel = "€38.99";
+        sixMonthPerMoLabel = "€6.50";
+        annualLabel = "€49.99";
+        annualPerMoLabel = "€4.16";
+      }
+    } catch {}
+    api
+      .appInfo()
+      .then((info) => {
+        const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+        return fetch(`${base}/api/checkout-config`);
+      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        const p = cfg?.pricing;
+        if (!p) return;
+        if (p.monthlyIntroFormatted) monthlyIntroLabel = p.monthlyIntroFormatted;
+        if (p.monthlyFormatted) monthlyRenewLabel = p.monthlyFormatted;
+        if (p.sixMonthFormatted) sixMonthLabel = p.sixMonthFormatted;
+        if (p.sixMonthPerMonthFormatted) sixMonthPerMoLabel = p.sixMonthPerMonthFormatted;
+        if (p.annualFormatted) annualLabel = p.annualFormatted;
+        if (p.annualPerMonthFormatted) annualPerMoLabel = p.annualPerMonthFormatted;
+      })
+      .catch(() => {});
+  });
+
   const ctaPriceLabel = $derived(
     selectedPlan === "monthly"
-      ? "£1.99"
+      ? monthlyIntroLabel
       : selectedPlan === "six_month"
-      ? "£38.99"
-      : "£49.99"
+      ? sixMonthLabel
+      : annualLabel
   );
 
   function stopPolling() {
@@ -171,7 +218,7 @@
           </div>
 
           <h2 class="modal-title">Clean &amp; speed up in 1 click</h2>
-          <p class="prompt-text">Try your first month for £1.99. Cancel anytime.</p>
+          <p class="prompt-text">Try your first month for {monthlyIntroLabel}. Cancel anytime.</p>
 
           <div class="plan-grid">
             <button
@@ -184,8 +231,8 @@
                 <span class="plan-label">Monthly</span>
                 <span class="radio-dot" aria-hidden="true"></span>
               </div>
-              <span class="plan-price">£1.99</span>
-              <span class="plan-sub">1st mo, then £9.99</span>
+              <span class="plan-price">{monthlyIntroLabel}</span>
+              <span class="plan-sub">1st mo, then {monthlyRenewLabel}</span>
             </button>
 
             <button
@@ -198,8 +245,8 @@
                 <span class="plan-label">6 Months</span>
                 <span class="radio-dot" aria-hidden="true"></span>
               </div>
-              <span class="plan-price">£38.99</span>
-              <span class="plan-sub highlight">Save 35% (£6.50/mo)</span>
+              <span class="plan-price">{sixMonthLabel}</span>
+              <span class="plan-sub highlight">Save 35% ({sixMonthPerMoLabel}/mo)</span>
             </button>
 
             <button
@@ -212,8 +259,8 @@
                 <span class="plan-label">Yearly</span>
                 <span class="radio-dot" aria-hidden="true"></span>
               </div>
-              <span class="plan-price">£49.99</span>
-              <span class="plan-sub highlight">Save 58% (£4.16/mo)</span>
+              <span class="plan-price">{annualLabel}</span>
+              <span class="plan-sub highlight">Save 58% ({annualPerMoLabel}/mo)</span>
             </button>
           </div>
 

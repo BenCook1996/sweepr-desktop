@@ -91,11 +91,17 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
   ) {
     rcAddons.push("cloud_vault");
   }
+  const resolvedPlan =
+    productId.includes("annual") || productId.includes("4999")
+      ? "annual"
+      : productId.includes("six_month") || productId.includes("6month") || productId.includes("3899")
+      ? "six_month"
+      : "monthly";
   repo.upsertEntitlement({
     account_id: account.id,
     stripe_subscription_id: typeof event.original_transaction_id === "string" ? event.original_transaction_id : null, // Map RC transaction ID here
     status: newStatus,
-    plan: productId.includes("annual") ? "annual" : "monthly",
+    plan: resolvedPlan,
     addons_list: rcAddons,
     current_period_end: expirationAt,
     cancel_at_period_end: event.type === "CANCELLATION" ? 1 : 0,
@@ -122,7 +128,7 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
       email: account.email,
       name: account.name,
       country: account.country,
-      plan: productId.includes("annual") ? "annual" : "monthly",
+      plan: resolvedPlan,
       status: newStatus,
       addons: rcAddons,
       notes: `Synced from SWEEPR Cleaner RevenueCat (${store}: ${event.type})`,

@@ -558,8 +558,14 @@ fun SettingsScreen(
                     icon = Icons.Default.Refresh,
                     title = stringResource(R.string.settings_rescan),
                     value = stringResource(R.string.settings_rescan_detail),
-                    showDivider = false,
                     onClick = onRescan,
+                )
+                SettingsItem(
+                    icon = Icons.Default.Star,
+                    title = stringResource(R.string.tips_title),
+                    value = stringResource(R.string.tips_subheading),
+                    showDivider = false,
+                    onClick = { onOpen(Screen.Tips) },
                 )
             }
 

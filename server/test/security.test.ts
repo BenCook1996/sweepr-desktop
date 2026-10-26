@@ -111,8 +111,9 @@ test("OTP: checks email is signed up before sending 6-digit OTP, hashed storage,
   const unpaidLead = await unpaidLeadRes.json();
   assert.equal(unpaidLead.otpSent, false);
 
-  const missingDeviceOtpRes = await post("/v1/account/send-otp", { email: "nobody@example.com" });
-  assert.equal(missingDeviceOtpRes.status, 404);
+  const newDeviceOtpRes = await post("/v1/account/send-otp", { email: "newfreeuser@example.com" });
+  assert.equal(newDeviceOtpRes.status, 200);
+  assert.ok(repo.accountByEmail("newfreeuser@example.com"));
 
   assert.equal((await post("/api/portal-login", { email: "not-an-email" })).status, 400);
 
@@ -392,14 +393,20 @@ test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and
     }
   }
 
-  // 7. Referral apply requires active paid entitlement
+  // 7. Referral apply grants a 30-day trial once and rejects duplicate redemptions
   const unpaid = await (await post("/v1/accounts", { device_id: "e".repeat(64) })).json();
   const refUnpaidRes = await post(
     "/v1/referral/apply",
     { code },
     { authorization: `Bearer ${unpaid.refresh_token}` }
   );
-  assert.equal(refUnpaidRes.status, 402);
+  assert.equal(refUnpaidRes.status, 200);
+  const refDuplicateRes = await post(
+    "/v1/referral/apply",
+    { code },
+    { authorization: `Bearer ${unpaid.refresh_token}` }
+  );
+  assert.equal(refDuplicateRes.status, 400);
 
   // 8. Unpaid referrer cannot be upgraded to active via applyReferral, and past_due cannot claimWinback
   repo.createAccount("acc_unpaid_ref", sha256("tok_unpaid_ref"), "unpaid-ref@example.com");

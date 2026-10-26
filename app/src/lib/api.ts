@@ -305,7 +305,8 @@ export const api = {
     }),
   uninstallSelf: (removeAppData = false) =>
     invoke<void>("uninstall_self", { removeAppData }),
-  revealInFolder: (path: string) => revealItemInDir(path).catch(() => {}),
+  revealInFolder: (path: string) =>
+    invoke<void>("reveal_in_folder", { path }).catch(() => revealItemInDir(path).catch(() => {})),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }

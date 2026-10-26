@@ -159,6 +159,11 @@
         const sel = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
         selected = sel;
         cachedSelected = sel;
+        const activeIds = r.categories.filter((c) => c.bytes > 0).map((c) => c.id);
+        api
+          .checkRunningApps(activeIds)
+          .then((conflicts) => (runningConflicts = conflicts))
+          .catch(() => (runningConflicts = []));
       } else {
         throw scanRes.reason;
       }
@@ -397,6 +402,11 @@
             {formatBytes(displayedHeroBytes)}
           </div>
           <p class="hero-sub">Personal files and logins stay untouched</p>
+          {#if runningConflicts.length > 0}
+            <div style="margin-top: 6px; font-size: 11.5px; color: var(--warn, #f59e0b); font-weight: 600;">
+              Open apps detected ({runningConflicts.map((rc) => rc.app_name).join(", ")}) — active files will be safely skipped.
+            </div>
+          {/if}
         </div>
 
         <div class="rows-stack">

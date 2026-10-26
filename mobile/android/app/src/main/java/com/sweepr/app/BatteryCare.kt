@@ -2,6 +2,7 @@
 
 package com.sweepr.app
 
+import android.Manifest
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,6 +14,8 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +56,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -260,6 +264,11 @@ object BatteryCareManager {
         return snap
     }
 
+    fun setChargeLimitPercent(context: Context, percent: Int): BatteryCareSnapshot {
+        val sp = prefs(context)
+        return setChargeLimit(context, sp.getBoolean(KEY_LIMIT_ENABLED, true), percent)
+    }
+
     fun setThermalGuard(context: Context, enabled: Boolean): BatteryCareSnapshot {
         val sp = prefs(context)
         sp.edit()
@@ -275,7 +284,11 @@ object BatteryCareManager {
         var freed = 0L
         fun clearDir(dir: File?) {
             dir?.listFiles()?.forEach { f ->
-                if (f.name != "sweepr_crash_diagnostics.log") {
+                val isDiagnostic = f.name == "sweepr_crash_diagnostics.log" ||
+                    f.name == "logs" ||
+                    f.name == "last_crash.txt" ||
+                    f.name.startsWith("sweepr-log-")
+                if (!isDiagnostic) {
                     freed += f.length()
                     f.deleteRecursively()
                 }
@@ -479,6 +492,20 @@ fun BatteryCareScreen(
     var snap by remember { mutableStateOf(BatteryCareManager.readSnapshot(context)) }
     var sliderLimit by remember { mutableIntStateOf(snap.chargeLimitPercent) }
     var notice by remember { mutableStateOf<String?>(null) }
+
+    val notifPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            notice = "Allow notifications so SWEEPR can alert you when your battery reaches your target."
+        }
+    }
+
+    fun ensureNotifPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && !Reminders.canNotify(context)) {
+            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -704,46 +731,88 @@ fun BatteryCareScreen(
 
             // 1. 80% Charge Guard
             SweeprPanel(Modifier.fillMaxWidth()) {
-                Row(
+                Column(
                     Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.weight(1f),
                     ) {
-                        SweeprIconBadge(
-                            kind = SweeprIconKind.BATTERY,
-                            tint = SweeprGreen,
-                            badgeSize = 36.dp,
-                            iconSize = 18.dp,
-                        )
-                        Text(
-                            "80% Charge Guard",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            SweeprIconBadge(
+                                kind = SweeprIconKind.BATTERY,
+                                tint = SweeprGreen,
+                                badgeSize = 36.dp,
+                                iconSize = 18.dp,
+                            )
+                            Column {
+                                Text(
+                                    "${snap.chargeLimitPercent}% Charge Guard",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    "Unplug alert at ${sliderLimit}% to reduce high-voltage lithium wear",
+                                    fontSize = 11.5.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = snap.chargeLimitEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    requireBatteryCare {
+                                        ensureNotifPermission()
+                                        snap = BatteryCareManager.setChargeLimit(context, true, sliderLimit)
+                                        notice = "${sliderLimit}% Charge Guard on."
+                                    }
+                                } else {
+                                    snap = BatteryCareManager.setChargeLimit(context, false, sliderLimit)
+                                    notice = "Charge Guard off."
+                                }
+                            },
                         )
                     }
-                    Switch(
-                        checked = snap.chargeLimitEnabled,
-                        onCheckedChange = { enabled ->
-                            if (enabled) {
-                                requireBatteryCare {
-                                    sliderLimit = 80
-                                    snap = BatteryCareManager.setChargeLimit(context, true, 80)
-                                    notice = "80% Charge Guard on."
-                                }
-                            } else {
-                                snap = BatteryCareManager.setChargeLimit(context, false, 80)
-                                notice = "80% Charge Guard off."
-                            }
-                        },
-                    )
+                    if (snap.chargeLimitEnabled) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Target Charge Limit",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                "Alert at ${sliderLimit}%",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = emeraldText(),
+                            )
+                        }
+                        Slider(
+                            value = sliderLimit.toFloat(),
+                            onValueChange = { sliderLimit = ((it / 5f).roundToInt() * 5).coerceIn(50, 95) },
+                            onValueChangeFinished = {
+                                snap = BatteryCareManager.setChargeLimitPercent(context, sliderLimit)
+                                notice = "Charge limit set to ${sliderLimit}%."
+                            },
+                            valueRange = 50f..95f,
+                            steps = 8,
+                        )
+                    }
                 }
             }
 
@@ -779,6 +848,7 @@ fun BatteryCareScreen(
                         onCheckedChange = { enabled ->
                             if (enabled) {
                                 requireBatteryCare {
+                                    ensureNotifPermission()
                                     snap = BatteryCareManager.setThermalGuard(context, true)
                                     notice = "Overheat protection on."
                                 }
@@ -963,13 +1033,15 @@ private fun SensorStatBox(
 
 @Composable
 private fun AddonPill() {
+    val prices by PlayBillingManager.prices.collectAsState()
+    val addonPrice = prices["sweepr_battery_care_999"]?.formattedPrice ?: "£9.99"
     Surface(
         color = Color(0xFFF59E0B).copy(alpha = 0.16f),
         shape = RoundedCornerShape(999.dp),
         border = BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.38f)),
     ) {
         Text(
-            "£9.99/YR",
+            "$addonPrice/YR",
             color = Color(0xFFF59E0B),
             fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,

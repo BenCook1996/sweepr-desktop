@@ -60,6 +60,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -110,6 +111,14 @@ fun AccountScreen(
     val context = LocalContext.current
     val sub = state.subscription
     val linked = state.linkedAccount
+    val prices by PlayBillingManager.prices.collectAsState()
+    val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
+    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "1st mo, then £9.99"
+    val sixMonthPrice = prices[PlanTier.SIX_MONTH.productId]?.formattedPrice ?: PlanTier.SIX_MONTH.priceLabel
+    val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
+    val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel
+    val annualSub = prices[PlanTier.ANNUAL.productId]?.subtitle ?: "Save 58% (£4.16/mo)"
+    val batteryAddonPrice = prices["sweepr_battery_care_999"]?.formattedPrice ?: "£9.99"
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
@@ -448,7 +457,7 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (state.hasBatteryCare) "ACTIVE" else "+£9.99/yr",
+                            if (state.hasBatteryCare) "ACTIVE" else "+$batteryAddonPrice/yr",
                             color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
@@ -468,7 +477,7 @@ fun AccountScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                         ) {
-                            Text("Add Battery Care (£9.99/yr)", fontWeight = FontWeight.Bold)
+                            Text("Add Battery Care ($batteryAddonPrice/yr)", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -483,8 +492,8 @@ fun AccountScreen(
                 ) {
                     ConceptAPlanCard(
                         label = "Monthly",
-                        price = "£1.99",
-                        sub = "1st mo, then £9.99",
+                        price = monthlyPrice,
+                        sub = monthlySub,
                         highlightSub = false,
                         selected = selectedPlan == PlanTier.MONTHLY,
                         onClick = { selectedPlan = PlanTier.MONTHLY },
@@ -492,8 +501,8 @@ fun AccountScreen(
                     )
                     ConceptAPlanCard(
                         label = "6 Months",
-                        price = "£38.99",
-                        sub = "Save 35% (£6.50/mo)",
+                        price = sixMonthPrice,
+                        sub = sixMonthSub,
                         highlightSub = true,
                         selected = selectedPlan == PlanTier.SIX_MONTH,
                         onClick = { selectedPlan = PlanTier.SIX_MONTH },
@@ -501,8 +510,8 @@ fun AccountScreen(
                     )
                     ConceptAPlanCard(
                         label = "Yearly",
-                        price = "£49.99",
-                        sub = "Save 58% (£4.16/mo)",
+                        price = annualPrice,
+                        sub = annualSub,
                         highlightSub = true,
                         selected = selectedPlan == PlanTier.ANNUAL,
                         onClick = { selectedPlan = PlanTier.ANNUAL },
@@ -511,8 +520,9 @@ fun AccountScreen(
                 }
 
                 Spacer(Modifier.height(14.dp))
+                val selectedPriceText = prices[selectedPlan.productId]?.formattedPrice ?: selectedPlan.priceLabel
                 EmeraldButton(
-                    text = "Continue for ${selectedPlan.priceLabel} →",
+                    text = "Continue for $selectedPriceText →",
                     onClick = { onUpgrade(selectedPlan.productId) },
                 )
                 Spacer(Modifier.height(12.dp))
@@ -783,6 +793,14 @@ fun PaywallModalSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.MONTHLY) }
+    val prices by PlayBillingManager.prices.collectAsState()
+    val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
+    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "1st mo, then £9.99"
+    val sixMonthPrice = prices[PlanTier.SIX_MONTH.productId]?.formattedPrice ?: PlanTier.SIX_MONTH.priceLabel
+    val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
+    val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel
+    val annualSub = prices[PlanTier.ANNUAL.productId]?.subtitle ?: "Save 58% (£4.16/mo)"
+    val selectedPriceText = prices[selectedPlan.productId]?.formattedPrice ?: selectedPlan.priceLabel
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -831,7 +849,7 @@ fun PaywallModalSheet(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "Try your first month for £1.99. Cancel anytime.",
+                    "Try your first month for $monthlyPrice. Cancel anytime.",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -844,8 +862,8 @@ fun PaywallModalSheet(
             ) {
                 ConceptAPlanCard(
                     label = "Monthly",
-                    price = "£1.99",
-                    sub = "1st mo, then £9.99",
+                    price = monthlyPrice,
+                    sub = monthlySub,
                     highlightSub = false,
                     selected = selectedPlan == PlanTier.MONTHLY,
                     onClick = { selectedPlan = PlanTier.MONTHLY },
@@ -853,8 +871,8 @@ fun PaywallModalSheet(
                 )
                 ConceptAPlanCard(
                     label = "6 Months",
-                    price = "£38.99",
-                    sub = "Save 35% (£6.50/mo)",
+                    price = sixMonthPrice,
+                    sub = sixMonthSub,
                     highlightSub = true,
                     selected = selectedPlan == PlanTier.SIX_MONTH,
                     onClick = { selectedPlan = PlanTier.SIX_MONTH },
@@ -862,8 +880,8 @@ fun PaywallModalSheet(
                 )
                 ConceptAPlanCard(
                     label = "Yearly",
-                    price = "£49.99",
-                    sub = "Save 58% (£4.16/mo)",
+                    price = annualPrice,
+                    sub = annualSub,
                     highlightSub = true,
                     selected = selectedPlan == PlanTier.ANNUAL,
                     onClick = { selectedPlan = PlanTier.ANNUAL },
@@ -872,7 +890,7 @@ fun PaywallModalSheet(
             }
 
             EmeraldButton(
-                text = "Continue for ${selectedPlan.priceLabel} →",
+                text = "Continue for $selectedPriceText →",
                 onClick = {
                     val chosen = selectedPlan.productId
                     onDismiss()

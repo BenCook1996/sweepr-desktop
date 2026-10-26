@@ -216,7 +216,7 @@ private val TIPS = listOf(
 
 /** Tips tab: guides for the space Sweepr can't remove automatically. */
 @Composable
-fun TipsScreen() {
+fun TipsScreen(onBack: (() -> Unit)? = null) {
     val context = LocalContext.current
     var open by remember { mutableStateOf<Tip?>(null) }
 
@@ -245,7 +245,7 @@ fun TipsScreen() {
         )
     }
 
-    Scaffold(topBar = { SweeprTopBar(stringResource(R.string.tips_title), onBack = null) }) { padding ->
+    Scaffold(topBar = { SweeprTopBar(stringResource(R.string.tips_title), onBack = onBack) }) { padding ->
         Column(
             Modifier
                 .fillMaxSize()

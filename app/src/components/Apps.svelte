@@ -100,7 +100,7 @@
   });
 
   const totalOrphanCount = $derived(
-    remnants.length + brokenItems.length
+    remnants.length + brokenItems.length + regIssues.length
   );
 
   const totalRemnantBytes = $derived(
@@ -198,18 +198,47 @@
     orphansLoaded = true;
     error = null;
     try {
-      const [rem, brk] = await Promise.all([
+      const [rem, brk, reg, bkp] = await Promise.all([
         api.scanAppRemnants().catch(() => []),
         api.scanBrokenItems().catch(() => []),
+        api.scanRegistry().catch(() => []),
+        api.listRegistryBackups().catch(() => []),
       ]);
       remnants = rem;
       brokenItems = brk;
-      regIssues = [];
-      regBackups = [];
+      regIssues = reg;
+      regBackups = bkp;
     } catch (e) {
       error = errorMessage(e);
     } finally {
       orphansLoading = false;
+    }
+  }
+
+  async function fixRegistry(issue: RegistryIssue) {
+    if (!license?.active) {
+      handleError({ kind: "payment_required" }, "Registry cleaner");
+      return;
+    }
+    error = null;
+    try {
+      await api.fixRegistryIssue(issue.key);
+      regIssues = regIssues.filter((r) => r.key !== issue.key);
+      regBackups = await api.listRegistryBackups().catch(() => regBackups);
+      statusNotice = `Backed up and fixed registry key: ${issue.name}`;
+    } catch (e) {
+      handleError(e, "Registry cleaner");
+    }
+  }
+
+  async function restoreRegBackup(backup: RegistryBackupEntry) {
+    error = null;
+    try {
+      await api.restoreRegistryBackup(backup.id);
+      regBackups = regBackups.filter((b) => b.id !== backup.id);
+      statusNotice = `Restored registry key: ${backup.name}`;
+    } catch (e) {
+      error = errorMessage(e);
     }
   }
 
@@ -237,6 +266,12 @@
         cleanedCount += removed;
         brokenItems = [];
       }
+      for (const reg of [...regIssues]) {
+        await api.fixRegistryIssue(reg.key);
+        cleanedCount += 1;
+        regIssues = regIssues.filter((r) => r.key !== reg.key);
+      }
+      regBackups = await api.listRegistryBackups().catch(() => regBackups);
       if (freedBytes > 0 || cleanedCount > 0) {
         addLifetimeStats(freedBytes, cleanedCount);
       }
@@ -440,8 +475,36 @@
                   </div>
                 </div>
               {/each}
+              {#each regIssues as reg (reg.key)}
+                <div class="row maint-row">
+                  <div class="app-main">
+                    <strong class="app-name">{reg.name}</strong>
+                    <span class="muted small">{reg.issue_type} · {shortenPath(reg.key, 50)}</span>
+                  </div>
+                  <div class="spacer"></div>
+                  <button class="ghost small-btn" onclick={() => fixRegistry(reg)}>Fix</button>
+                </div>
+              {/each}
             </div>
           {/if}
+        {/if}
+
+        {#if regBackups.length > 0}
+          <div style="margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border);">
+            <strong class="small muted">Registry Backups ({regBackups.length})</strong>
+            <div class="maint-list" style="margin-top: 6px;">
+              {#each regBackups as bkp (bkp.id)}
+                <div class="row maint-row">
+                  <div class="app-main">
+                    <strong class="app-name">{bkp.name}</strong>
+                    <span class="muted small">{shortenPath(bkp.key, 50)}</span>
+                  </div>
+                  <div class="spacer"></div>
+                  <button class="ghost small-btn" onclick={() => restoreRegBackup(bkp)}>Restore</button>
+                </div>
+              {/each}
+            </div>
+          </div>
         {/if}
       </section>
     </div>

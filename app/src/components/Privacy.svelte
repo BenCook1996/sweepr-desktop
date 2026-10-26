@@ -15,6 +15,7 @@
     errorMessage,
     isPaymentRequired,
     requestActivation,
+    type BrowserExtensionItem,
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
@@ -38,6 +39,42 @@
   let showKeepSignedIn = $state(false);
   let cookieAllowlist = $state<string[]>(cachedAllowlist);
   let newDomain = $state("");
+
+  // Browser Extensions & Password Security Audit
+  let extensions = $state<BrowserExtensionItem[]>([]);
+  let showExtensions = $state(false);
+  let breachPassword = $state("");
+  let breachCount = $state<number | null>(null);
+  let checkingBreach = $state(false);
+  let generatedPassword = $state("");
+
+  async function loadExtensions() {
+    showExtensions = !showExtensions;
+    if (showExtensions && extensions.length === 0) {
+      extensions = await api.listBrowserExtensions().catch(() => []);
+    }
+  }
+
+  async function runPasswordBreachCheck() {
+    if (!breachPassword) return;
+    checkingBreach = true;
+    error = null;
+    try {
+      breachCount = await api.checkPasswordBreach(breachPassword);
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      checkingBreach = false;
+    }
+  }
+
+  async function runGeneratePassword() {
+    try {
+      generatedPassword = await api.generateStrongPassword(20, true);
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
 
   $effect(() => {
     cachedSubView = subView;
@@ -309,6 +346,73 @@
               : "Clean"}
         </button>
       </div>
+    </div>
+
+    <div class="card browser-card">
+      <div class="card-top-row">
+        <strong class="card-title">Extensions &amp; Password Audit</strong>
+        <div class="toolbar-actions">
+          <button class="ghost small-pill" class:active-pill={showExtensions} onclick={loadExtensions}>
+            <span>Browser Extensions {extensions.length ? `(${extensions.length})` : ""}</span>
+          </button>
+          <button class="ghost small-pill" onclick={runGeneratePassword}>
+            <span>Generate Strong Password</span>
+          </button>
+        </div>
+      </div>
+
+      {#if generatedPassword}
+        <div class="sub-panel" style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <code style="font-size: 13px; font-weight: 700; color: var(--accent);">{generatedPassword}</code>
+          <button
+            class="ghost small-pill"
+            onclick={() => navigator.clipboard?.writeText(generatedPassword)}
+          >
+            Copy
+          </button>
+        </div>
+      {/if}
+
+      <div class="row" style="gap: 8px; flex-wrap: wrap;">
+        <input
+          type="password"
+          bind:value={breachPassword}
+          placeholder="Check password against k-anonymity breach database (SHA-1 prefix only)…"
+          class="mini-input"
+          style="flex: 1; min-width: 240px;"
+          onkeydown={(e) => e.key === "Enter" && runPasswordBreachCheck()}
+        />
+        <button class="primary small-pill" disabled={checkingBreach || !breachPassword} onclick={runPasswordBreachCheck}>
+          {checkingBreach ? "Checking…" : "Check Breach"}
+        </button>
+      </div>
+
+      {#if breachCount !== null}
+        <div class="small" style="font-weight: 700; color: {breachCount > 0 ? 'var(--danger)' : 'var(--accent)'};">
+          {breachCount > 0
+            ? `⚠ Found in ${breachCount.toLocaleString()} known data breaches — rotate immediately.`
+            : "✓ Not found in any known data breaches."}
+        </div>
+      {/if}
+
+      {#if showExtensions}
+        <div class="browser-list">
+          {#each extensions as ext (ext.browser + ext.id)}
+            <div class="row browser-row">
+              <div>
+                <strong class="browser-name">{ext.name}</strong>
+                <div class="muted small">{ext.browser} · v{ext.version} · {ext.permissions_count} permissions</div>
+              </div>
+              <div class="spacer"></div>
+              <button class="ghost small-pill" onclick={() => api.revealInFolder(ext.path)}>
+                Reveal
+              </button>
+            </div>
+          {:else}
+            <div class="muted small">No third-party browser extensions detected.</div>
+          {/each}
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
