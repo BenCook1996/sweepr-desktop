@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-26T04:24:41.923Z",
-  "lastCount": 17,
-  "totalCleanItems": 495,
+  "lastRunAt": "2026-10-26T04:30:06.824Z",
+  "lastCount": 32,
+  "totalCleanItems": 527,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/league-of-legends-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/league-of-legends-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/geforce-now-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/geforce-now-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/geforce-now-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/geforce-now-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/geforce-now-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/roblox-player-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/roblox-player-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/roblox-player-service-worker-cachestorage"
+    "https://sweeprcleaner.com/clean/app/bun-install-cache",
+    "https://sweeprcleaner.com/clean/app/conda-package-cache",
+    "https://sweeprcleaner.com/clean/app/cargo-target-cache",
+    "https://sweeprcleaner.com/clean/app/android-emulator-avd-snapshots",
+    "https://sweeprcleaner.com/clean/app/unity-shader-cache",
+    "https://sweeprcleaner.com/clean/app/godot-editor-cache",
+    "https://sweeprcleaner.com/clean/app/substance-painter-cache",
+    "https://sweeprcleaner.com/clean/app/autocad-temp-drawing-cache",
+    "https://sweeprcleaner.com/clean/app/curseforge-addon-cache",
+    "https://sweeprcleaner.com/clean/app/mod-organizer-downloads"
   ]
 }

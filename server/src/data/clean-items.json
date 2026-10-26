@@ -7387,5 +7387,481 @@
       "Press Windows Key + R, type %AppData%\\tiktok-live-studio\\Cache and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "bun-install-cache",
+    "category": "app",
+    "name": "Bun JavaScript Runtime Package & Install Cache",
+    "path": "%UserProfile%\\.bun\\install\\cache",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 10.0 GB",
+    "whatIsIt": "Bun caches downloaded npm packages, binary tarballs, and compiled native bindings in .bun\\install\\cache for ultra-fast offline installs.",
+    "whatHappens": "Safely cleans up stale package downloads and frees gigabytes of SSD space. Bun will re-fetch only needed packages on subsequent install commands.",
+    "manualSteps": [
+      "Open Windows Terminal.",
+      "Run 'bun pm cache rm' to purge the global package cache.",
+      "Or delete the %userprofile%\\.bun\\install\\cache directory in File Explorer."
+    ]
+  },
+  {
+    "slug": "conda-package-cache",
+    "category": "app",
+    "name": "Conda & Anaconda Package Tarball Cache (%UserProfile%\\.conda\\pkgs)",
+    "path": "%UserProfile%\\.conda\\pkgs and C:\\ProgramData\\anaconda3\\pkgs",
+    "safeToDelete": true,
+    "avgSpace": "5.0 GB – 35.0 GB",
+    "whatIsIt": "Conda and Anaconda download compressed conda package archives (.conda and .tar.bz2) and unpack them into pkgs before linking into environments.",
+    "whatHappens": "Safely deletes unlinked package archives, cache tarballs, and temporary downloads without corrupting existing virtual environments.",
+    "manualSteps": [
+      "Open Anaconda Prompt or Windows Terminal.",
+      "Run 'conda clean --all -y' to purge all unused packages and tarballs.",
+      "Verify reclaimed disk space in %userprofile%\\.conda\\pkgs."
+    ]
+  },
+  {
+    "slug": "cargo-target-cache",
+    "category": "app",
+    "name": "Rust Cargo Package Index & Crate Source Cache",
+    "path": "%UserProfile%\\.cargo\\registry\\cache",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 18.0 GB",
+    "whatIsIt": "The Cargo package manager caches crates.io index snapshots, git checkouts, and downloaded .crate archive files in your user profile.",
+    "whatHappens": "Reclaims gigabytes of C: drive space from old crate versions. Active projects automatically redownload required crates during cargo build.",
+    "manualSteps": [
+      "Close any active IDE or terminal compiling Rust code.",
+      "Open %userprofile%\\.cargo\\registry in File Explorer.",
+      "Delete the 'cache' and 'src' folders to free space, or run 'cargo clean' inside project folders."
+    ]
+  },
+  {
+    "slug": "android-emulator-avd-snapshots",
+    "category": "app",
+    "name": "Android Studio AVD Emulator Snapshots & System Images",
+    "path": "%UserProfile%\\.android\\avd",
+    "safeToDelete": true,
+    "avgSpace": "8.0 GB – 40.0 GB",
+    "whatIsIt": "Android Studio stores multiple multi-gigabyte virtual device disk images, ram.bin state snapshots, and qemu images inside .android\\avd.",
+    "whatHappens": "Frees tens of gigabytes of storage from unused emulators and stale Quick Boot state dumps without removing your Android SDK.",
+    "manualSteps": [
+      "Close Android Studio and all running Android emulators.",
+      "Open %userprofile%\\.android\\avd in File Explorer.",
+      "Delete .avd folders for virtual devices you no longer test against."
+    ]
+  },
+  {
+    "slug": "unity-shader-cache",
+    "category": "app",
+    "name": "Unity Engine Local Shader Compilation Cache",
+    "path": "%LocalAppData%\\Unity\\cache\\shaders",
+    "safeToDelete": true,
+    "avgSpace": "3.0 GB – 20.0 GB",
+    "whatIsIt": "Unity compiles and caches HLSL and ShaderLab shader variants across every project you develop into %LocalAppData%\\Unity\\cache\\shaders.",
+    "whatHappens": "Safely cleans up stale compiled shader binaries and reclaims SSD storage. Unity automatically recompiles active shaders on demand.",
+    "manualSteps": [
+      "Close Unity Editor and Unity Hub.",
+      "Press Windows Key + R, type %localappdata%\\Unity\\cache\\shaders, and press Enter.",
+      "Select all cached shader directories and delete them."
+    ]
+  },
+  {
+    "slug": "godot-editor-cache",
+    "category": "app",
+    "name": "Godot Engine Editor Data & Export Templates Cache",
+    "path": "%AppData%\\Godot\\editor_data and %LocalAppData%\\Godot",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 12.0 GB",
+    "whatIsIt": "Godot Engine caches imported texture thumbnails, script documentation indexes, and old export template packages on your system drive.",
+    "whatHappens": "Reclaims gigabytes of disk space without affecting your project source files or project.godot configuration.",
+    "manualSteps": [
+      "Close the Godot Engine editor.",
+      "Open %appdata%\\Godot in File Explorer.",
+      "Delete the 'editor_data' and 'tmp' subfolders to clear stale cache files."
+    ]
+  },
+  {
+    "slug": "substance-painter-cache",
+    "category": "app",
+    "name": "Adobe Substance 3D Painter Shelf & Texture Cache",
+    "path": "%AppData%\\Adobe\\Adobe Substance 3D Painter\\cache",
+    "safeToDelete": true,
+    "avgSpace": "4.0 GB – 25.0 GB",
+    "whatIsIt": "Substance 3D Painter caches high-resolution texture mipmaps, baked normal maps, and brush shelf thumbnails in AppData.",
+    "whatHappens": "Frees significant SSD space and resolves texture viewport corruption without modifying your .spp project files.",
+    "manualSteps": [
+      "Exit Adobe Substance 3D Painter.",
+      "Navigate to %appdata%\\Adobe\\Adobe Substance 3D Painter\\cache in File Explorer.",
+      "Delete cached mipmaps and temporary thumbnail folders."
+    ]
+  },
+  {
+    "slug": "autocad-temp-drawing-cache",
+    "category": "app",
+    "name": "Autodesk AutoCAD Temp Drawing History & Graphics Cache",
+    "path": "%LocalAppData%\\Autodesk\\AutoCAD\\Drawing History and %LocalAppData%\\Temp",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 15.0 GB",
+    "whatIsIt": "AutoCAD saves cached drawing version diffs, temporary BAK files, and DirectX graphics cache databases on your primary drive.",
+    "whatHappens": "Safely cleans up orphaned temporary drawing files and frees disk space without touching your main DWG project files.",
+    "manualSteps": [
+      "Save your work and exit AutoCAD completely.",
+      "Press Windows Key + R, type %localappdata%\\Autodesk, and navigate to your version's GraphicsCache folder.",
+      "Clear temporary cache files."
+    ]
+  },
+  {
+    "slug": "curseforge-addon-cache",
+    "category": "app",
+    "name": "CurseForge Mod & Addon Download Archive Cache",
+    "path": "%UserProfile%\\CurseForge\\Cache and %AppData%\\CurseForge",
+    "safeToDelete": true,
+    "avgSpace": "3.0 GB – 22.0 GB",
+    "whatIsIt": "CurseForge keeps zip archives of downloaded World of Warcraft addons, Minecraft modpacks, and Sims 4 custom content in its download cache.",
+    "whatHappens": "Frees gigabytes of storage from previously installed zip archives without removing active mods from your games.",
+    "manualSteps": [
+      "Close the CurseForge app.",
+      "Navigate to %userprofile%\\CurseForge\\Cache in File Explorer.",
+      "Delete downloaded archive files to recover drive space."
+    ]
+  },
+  {
+    "slug": "mod-organizer-downloads",
+    "category": "app",
+    "name": "Mod Organizer 2 Staged Archive & Download Cache",
+    "path": "%LocalAppData%\\ModOrganizer\\downloads",
+    "safeToDelete": true,
+    "avgSpace": "10.0 GB – 60.0 GB",
+    "whatIsIt": "Mod Organizer 2 retains 7z and zip mod installer archives after mods have already been extracted and installed into your profile.",
+    "whatHappens": "Safely reclaims tens of gigabytes of disk space once your mod load order is verified and operational.",
+    "manualSteps": [
+      "Open Mod Organizer 2 and confirm all installed mods work properly.",
+      "Right-click downloaded archives in the Downloads tab and delete them, or delete files directly in %localappdata%\\ModOrganizer\\downloads."
+    ]
+  },
+  {
+    "slug": "vortex-mod-downloads",
+    "category": "app",
+    "name": "Nexus Mods Vortex Archive Staging & Download Cache",
+    "path": "%AppData%\\Vortex\\downloads",
+    "safeToDelete": true,
+    "avgSpace": "8.0 GB – 50.0 GB",
+    "whatIsIt": "Vortex retains multi-gigabyte Nexus Mods zip/7z archives in its download directory even after deployment via hard links.",
+    "whatHappens": "Deleting installed archives frees massive SSD space without affecting hard-linked mods in your game folders.",
+    "manualSteps": [
+      "Open Vortex Mod Manager.",
+      "Navigate to the Downloads tab.",
+      "Remove completed archives that have already been installed."
+    ]
+  },
+  {
+    "slug": "ea-anticheat-logs",
+    "category": "app",
+    "name": "EA AntiCheat Service Logs & Crash Dump Dumps",
+    "path": "C:\\ProgramData\\EA Desktop\\EA AntiCheat",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 6.0 GB",
+    "whatIsIt": "The EA AntiCheat background driver and client write verbose telemetry traces and memory dump files during game launches (EA FC, Battlefield).",
+    "whatHappens": "Safely deletes stale diagnostic log clutter and frees disk space without interfering with EA game anti-cheat verification.",
+    "manualSteps": [
+      "Close EA App and all EA games.",
+      "Open C:\\ProgramData\\EA Desktop in File Explorer.",
+      "Delete old log files and dump files inside the EA AntiCheat folder."
+    ]
+  },
+  {
+    "slug": "riot-vanguard-logs",
+    "category": "app",
+    "name": "Riot Vanguard Kernel Driver Logs & Crash Memory Dumps",
+    "path": "C:\\Program Files\\Riot Vanguard\\Logs",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 4.5 GB",
+    "whatIsIt": "Riot Vanguard creates kernel driver execution logs, memory snapshots, and watchdog trace files during Valorant and League of Legends matches.",
+    "whatHappens": "Safely purges historical diagnostic text logs and dump files without affecting the active Vanguard anti-cheat kernel service.",
+    "manualSteps": [
+      "Exit Valorant and League of Legends.",
+      "Open C:\\Program Files\\Riot Vanguard\\Logs in File Explorer as Administrator.",
+      "Delete old .log and .dmp files."
+    ]
+  },
+  {
+    "slug": "easy-anticheat-logs",
+    "category": "app",
+    "name": "Easy Anti-Cheat Diagnostic Logs & Certificate Cache",
+    "path": "%AppData%\\EasyAntiCheat",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 3.5 GB",
+    "whatIsIt": "Easy Anti-Cheat accumulates game crash reports, error traces, and cached security certificates across titles like Apex Legends and Fortnite.",
+    "whatHappens": "Clears old error trace clutter and fixes anti-cheat initialization loop errors without uninstalling games.",
+    "manualSteps": [
+      "Exit any running games protected by Easy Anti-Cheat.",
+      "Press Windows Key + R, type %appdata%\\EasyAntiCheat, and press Enter.",
+      "Delete old .log files."
+    ]
+  },
+  {
+    "slug": "xbox-app-delivery-temp",
+    "category": "app",
+    "name": "Windows Xbox App Cloud Gaming & Install Temp Cache",
+    "path": "%LocalAppData%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe\\LocalCache",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 14.0 GB",
+    "whatIsIt": "The Windows 11 Xbox App caches cloud gaming stream chunks, game pass cover art, and interrupted game installation blobs in LocalCache.",
+    "whatHappens": "Safely frees gigabytes of storage and fixes stuck Xbox Game Pass game download or update errors.",
+    "manualSteps": [
+      "Close the Xbox App and terminate GamingServices in Task Manager.",
+      "Open %localappdata%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe\\LocalCache.",
+      "Select and delete all cached temporary files."
+    ]
+  },
+  {
+    "slug": "windows-bluetooth-logs",
+    "category": "folder",
+    "name": "Windows Bluetooth Pairing Logs & Diagnostic Traces",
+    "path": "C:\\Windows\\System32\\Winevt\\Logs",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 3.0 GB",
+    "whatIsIt": "Windows logs Bluetooth LE connection attempts, RFCOMM socket events, and audio packet drops into dedicated event log files.",
+    "whatHappens": "Clearing historical Bluetooth logs frees drive space without unpairing any of your connected wireless devices.",
+    "manualSteps": [
+      "Open Windows Event Viewer as Administrator.",
+      "Navigate to Applications and Services Logs > Microsoft > Windows > Bluetooth.",
+      "Right-click operational logs and select 'Clear Log'."
+    ]
+  },
+  {
+    "slug": "windows-telemetry-staging",
+    "category": "folder",
+    "name": "Windows Diagnostic Data & Telemetry ETL Log Queue",
+    "path": "C:\\ProgramData\\Microsoft\\Diagnosis\\ETLLogs",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 7.0 GB",
+    "whatIsIt": "The Connected User Experiences and Telemetry service collects system performance traces (.etl files) before uploading them to Microsoft servers.",
+    "whatHappens": "Deleting queued ETL files frees gigabytes of SSD space immediately and improves privacy without affecting Windows updates.",
+    "manualSteps": [
+      "Open Terminal as Administrator and run: net stop DiagTrack",
+      "Open C:\\ProgramData\\Microsoft\\Diagnosis\\ETLLogs and delete old AutoLogger and ETL files.",
+      "Restart the service with: net start DiagTrack"
+    ]
+  },
+  {
+    "slug": "windows-defender-quarantine",
+    "category": "folder",
+    "name": "Windows Defender Quarantined Files & Signature Cache",
+    "path": "C:\\ProgramData\\Microsoft\\Windows Defender\\Quarantine",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 6.0 GB",
+    "whatIsIt": "Windows Defender encrypts and stores quarantined files, obsolete antivirus definitions, and scan history in ProgramData.",
+    "whatHappens": "Safely purges resolved threats and expired scan logs while keeping real-time security protection fully operational.",
+    "manualSteps": [
+      "Open Windows Security > Virus & threat protection > Protection history.",
+      "Clear resolved quarantine items, or use SWEEPR Cleaner to purge expired definition caches."
+    ]
+  },
+  {
+    "slug": "windows-speech-recognition-cache",
+    "category": "folder",
+    "name": "Windows Speech Recognition & Voice Dictation Model Cache",
+    "path": "%LocalAppData%\\Microsoft\\Speech",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 4.0 GB",
+    "whatIsIt": "Windows stores local acoustic language models, voice dictation profiles, and speech synthesizer cache files in %LocalAppData%\\Microsoft\\Speech.",
+    "whatHappens": "Safely frees disk space from unused speech profiles; active Windows 11 voice typing automatically re-downloads needed language assets.",
+    "manualSteps": [
+      "Open %localappdata%\\Microsoft in File Explorer.",
+      "Open the Speech folder and delete old audio training profiles and cache files."
+    ]
+  },
+  {
+    "slug": "windows-rdp-bitmap-cache",
+    "category": "folder",
+    "name": "Windows Remote Desktop (RDP) Bitmap Cache",
+    "path": "%LocalAppData%\\Microsoft\\Terminal Server Client\\Cache",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 3.0 GB",
+    "whatIsIt": "The Remote Desktop Connection client caches screen tiles and graphical bitmaps (bcache*.bmc files) to speed up remote session rendering.",
+    "whatHappens": "Deleting the bitmap cache frees disk space and fixes corrupted graphics or black tiles in Remote Desktop sessions.",
+    "manualSteps": [
+      "Close all active Remote Desktop Connection sessions.",
+      "Press Windows Key + R, type %localappdata%\\Microsoft\\Terminal Server Client\\Cache, and hit Enter.",
+      "Delete all .bmc and .bin files inside."
+    ]
+  },
+  {
+    "slug": "windows-ink-handwriting-cache",
+    "category": "folder",
+    "name": "Windows Ink Workspace & Handwriting Personalization Cache",
+    "path": "%LocalAppData%\\Microsoft\\InputPersonalization",
+    "safeToDelete": true,
+    "avgSpace": "0.3 GB – 2.0 GB",
+    "whatIsIt": "Windows stores touch keyboard dictionary customizations, stylus handwriting samples, and ink strokes in InputPersonalization.",
+    "whatHappens": "Safely frees storage space and resolves stylus lag or touch keyboard dictionary sync issues.",
+    "manualSteps": [
+      "Open File Explorer and navigate to %localappdata%\\Microsoft\\InputPersonalization.",
+      "Delete temporary handwriting learning cache files."
+    ]
+  },
+  {
+    "slug": "windows-action-center-database",
+    "category": "folder",
+    "name": "Windows Action Center Notification History Database",
+    "path": "%LocalAppData%\\Microsoft\\Windows\\Notifications",
+    "safeToDelete": true,
+    "avgSpace": "0.2 GB – 1.5 GB",
+    "whatIsIt": "Windows maintains a local SQLite database (wpnidm / appcache.db) storing notification toasts, badge icons, and quick actions.",
+    "whatHappens": "Safely shrinks bloated notification databases and fixes stuck, phantom, or repeating notification toasts.",
+    "manualSteps": [
+      "Open Task Manager and end the Windows Explorer task.",
+      "Open Terminal (Admin) and delete %LocalAppData%\\Microsoft\\Windows\\Notifications\\wpnidm.sqlite.",
+      "Start explorer.exe to reinitialize a clean notification database."
+    ]
+  },
+  {
+    "slug": "windows-dism-scratch-dir",
+    "category": "folder",
+    "name": "Windows DISM Servicing Scratch Directory (%WINDIR%\\Temp\\DISM)",
+    "path": "C:\\Windows\\Temp\\DISM",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 16.0 GB",
+    "whatIsIt": "When running DISM or system image repair operations, Windows mounts WIM images and stages uncompressed packages in Temp\\DISM.",
+    "whatHappens": "Safely cleans up abandoned mount points and orphaned scratch files left behind after interrupted servicing tasks.",
+    "manualSteps": [
+      "Open Terminal as Administrator.",
+      "Run: dism /cleanup-wim to unmount any leftover servicing images.",
+      "Open C:\\Windows\\Temp\\DISM and delete leftover scratch directories."
+    ]
+  },
+  {
+    "slug": "windows-system-restore-points",
+    "category": "folder",
+    "name": "Windows System Restore Shadow Copies & Restore Points",
+    "path": "System Volume Information",
+    "safeToDelete": true,
+    "avgSpace": "5.0 GB – 45.0 GB",
+    "whatIsIt": "Windows creates Volume Shadow Copies (VSS) before major software updates, driver changes, and scheduled maintenance.",
+    "whatHappens": "Pruning old restore points while keeping the most recent one reclaims tens of gigabytes of storage while preserving rollback safety.",
+    "manualSteps": [
+      "Press Windows Key + R, type 'cleanmgr', and select your C: drive.",
+      "Click 'Clean up system files', then switch to the 'More Options' tab.",
+      "Under System Restore and Shadow Copies, click 'Clean up' to remove all but the most recent restore point."
+    ]
+  },
+  {
+    "slug": "garena-client-cache",
+    "category": "app",
+    "name": "Garena PC Gaming Client Download Cache & Update Temp",
+    "path": "%LocalAppData%\\Garena\\Cache",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 10.0 GB",
+    "whatIsIt": "Garena caches game patches, news feeds, embedded browser assets, and download chunks inside %LocalAppData%\\Garena\\Cache.",
+    "whatHappens": "Safely cleans up stale game update files and reclaims disk space without affecting installed games like Free Fire PC or League.",
+    "manualSteps": [
+      "Exit the Garena PC client completely.",
+      "Press Windows Key + R, type %localappdata%\\Garena\\Cache, and press Enter.",
+      "Select and delete all files inside the cache folder."
+    ]
+  },
+  {
+    "slug": "affinity-scratch-cache",
+    "category": "app",
+    "name": "Affinity Photo & Designer Scratch Disk Temp Files",
+    "path": "%LocalAppData%\\Serif\\Affinity\\Photo\\2.0\\Temp",
+    "safeToDelete": true,
+    "avgSpace": "2.5 GB – 18.0 GB",
+    "whatIsIt": "Serif Affinity Photo and Designer write scratch swap files and raster rendering buffers when working with high-resolution documents.",
+    "whatHappens": "Safely deletes leftover swap files from closed sessions, freeing gigabytes of SSD space.",
+    "manualSteps": [
+      "Close all Serif Affinity applications.",
+      "Open %localappdata%\\Serif\\Affinity in File Explorer.",
+      "Navigate to the Temp folder and delete lingering temporary swap files."
+    ]
+  },
+  {
+    "slug": "inkscape-thumbnail-cache",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Thumbnail & Font Cache",
+    "path": "%AppData%\\inkscape\\cache",
+    "safeToDelete": true,
+    "avgSpace": "0.5 GB – 3.5 GB",
+    "whatIsIt": "Inkscape caches SVG preview thumbnails, font metrics, and extension manifests inside %AppData%\\inkscape\\cache.",
+    "whatHappens": "Frees disk space and fixes corrupted font listings or slow Inkscape startup times without touching your SVG designs.",
+    "manualSteps": [
+      "Close Inkscape.",
+      "Open %appdata%\\inkscape\\cache in File Explorer.",
+      "Delete the cached thumbnail and font index files."
+    ]
+  },
+  {
+    "slug": "cinema4d-temp-cache",
+    "category": "app",
+    "name": "Maxon Cinema 4D Simulation & Viewport Render Cache",
+    "path": "%AppData%\\Maxon\\Cinema 4D\\cache",
+    "safeToDelete": true,
+    "avgSpace": "4.0 GB – 28.0 GB",
+    "whatIsIt": "Maxon Cinema 4D stores physics simulation caches, Redshift material previews, and viewport shader caches on your C: drive.",
+    "whatHappens": "Reclaims significant disk space from old project renders without modifying your .c4d project files.",
+    "manualSteps": [
+      "Exit Cinema 4D and Maxon App.",
+      "Navigate to %appdata%\\Maxon in File Explorer.",
+      "Delete temporary simulation and thumbnail caches."
+    ]
+  },
+  {
+    "slug": "clip-studio-paint-cache",
+    "category": "app",
+    "name": "Clip Studio Paint Backup Canvas & Auto-Recovery Cache",
+    "path": "%AppData%\\CELSYS\\CLIPStudioPaintVer1_5_0",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 15.0 GB",
+    "whatIsIt": "Clip Studio Paint writes autosave snapshots, material download archives, and canvas recovery states into CELSYS AppData.",
+    "whatHappens": "Clears old recovery clutter and frees gigabytes of storage once your artwork is saved and backed up.",
+    "manualSteps": [
+      "Save all active illustrations and exit Clip Studio Paint.",
+      "Open %appdata%\\CELSYS in File Explorer.",
+      "Navigate to the DocumentBackup folder and clear obsolete autosaved files."
+    ]
+  },
+  {
+    "slug": "terraform-plugin-cache",
+    "category": "app",
+    "name": "HashiCorp Terraform Provider Plugin & Binary Cache",
+    "path": "%AppData%\\terraform.d\\plugins",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 12.0 GB",
+    "whatIsIt": "Terraform downloads provider executables (AWS, Azure, GCP, Kubernetes) for each project into a global plugin cache.",
+    "whatHappens": "Safely cleans up duplicate provider versions from older Terraform deployments without altering your .tf configuration.",
+    "manualSteps": [
+      "Open %appdata%\\terraform.d\\plugins in File Explorer.",
+      "Delete provider binary versions you no longer use.",
+      "Run 'terraform init' in active projects to re-fetch only active providers."
+    ]
+  },
+  {
+    "slug": "maven-repository-cache",
+    "category": "app",
+    "name": "Apache Maven Global Repository Dependency Cache (%UserProfile%\\.m2)",
+    "path": "%UserProfile%\\.m2\\repository",
+    "safeToDelete": true,
+    "avgSpace": "3.5 GB – 30.0 GB",
+    "whatIsIt": "Maven downloads and keeps every version of every JAR, POM, and plugin dependency ever requested across all your Java projects in .m2\\repository.",
+    "whatHappens": "Reclaims massive SSD space from old library versions. Active projects automatically re-download only required dependencies.",
+    "manualSteps": [
+      "Close your Java IDE (Eclipse, IntelliJ IDEA, NetBeans).",
+      "Open %userprofile%\\.m2 in File Explorer.",
+      "Delete the 'repository' folder to completely purge the cache, or delete outdated artifact subfolders."
+    ]
+  },
+  {
+    "slug": "podman-machine-cache",
+    "category": "app",
+    "name": "Podman Desktop WSL Machine Blobs & Container Cache",
+    "path": "%UserProfile%\\.local\\share\\containers",
+    "safeToDelete": true,
+    "avgSpace": "5.0 GB – 35.0 GB",
+    "whatIsIt": "Podman Desktop stores container layers, unused QCOW2/EXT4 virtual disk images, and image pull layers on your system drive.",
+    "whatHappens": "Safely prunes unused container images and build caches, reclaiming tens of gigabytes of disk space.",
+    "manualSteps": [
+      "Open Windows Terminal.",
+      "Run 'podman system prune -a' to remove stopped containers and unused image layers.",
+      "Verify reclaimed space with 'podman system df'."
+    ]
   }
 ]

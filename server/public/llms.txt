@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (495 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (527 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [TikTok LIVE Studio Media Cache & IndexedDB Blob Storage (%AppData%\tiktok-live-studio\Cache\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/tiktok-live-studio-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [TikTok LIVE Studio Crashpad Reports & Diagnostic DMP Logs (%AppData%\tiktok-live-studio\Cache\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/tiktok-live-studio-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [TikTok LIVE Studio Service Worker CacheStorage & Offline Blobs (%AppData%\tiktok-live-studio\Cache\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/tiktok-live-studio-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [TikTok LIVE Studio Code Cache & V8 JavaScript Bytecode (%AppData%\tiktok-live-studio\Cache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/tiktok-live-studio-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [TikTok LIVE Studio GPUCache & Dawn WebGPU Cache (%AppData%\tiktok-live-studio\Cache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/tiktok-live-studio-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Roblox Engine & Player Media Cache & IndexedDB Blob Storage (%LocalAppData%\Roblox\Downloads\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/roblox-player-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Roblox Engine & Player Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Roblox\Downloads\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/roblox-player-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Roblox Engine & Player Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Roblox\Downloads\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/roblox-player-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Roblox Engine & Player Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Roblox\Downloads\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/roblox-player-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Roblox Engine & Player GPUCache & Dawn WebGPU Cache (%LocalAppData%\Roblox\Downloads\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/roblox-player-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [NVIDIA GeForce NOW Media Cache & IndexedDB Blob Storage (%LocalAppData%\NVIDIA Corporation\GeForceNOW\cache\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/geforce-now-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [NVIDIA GeForce NOW Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\NVIDIA Corporation\GeForceNOW\cache\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/geforce-now-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [NVIDIA GeForce NOW Service Worker CacheStorage & Offline Blobs (%LocalAppData%\NVIDIA Corporation\GeForceNOW\cache\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/geforce-now-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [NVIDIA GeForce NOW Code Cache & V8 JavaScript Bytecode (%LocalAppData%\NVIDIA Corporation\GeForceNOW\cache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/geforce-now-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [NVIDIA GeForce NOW GPUCache & Dawn WebGPU Cache (%LocalAppData%\NVIDIA Corporation\GeForceNOW\cache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/geforce-now-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [League of Legends Client Media Cache & IndexedDB Blob Storage (C:\Riot Games\League of Legends\Logs\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/league-of-legends-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [League of Legends Client Crashpad Reports & Diagnostic DMP Logs (C:\Riot Games\League of Legends\Logs\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/league-of-legends-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [League of Legends Client Service Worker CacheStorage & Offline Blobs (C:\Riot Games\League of Legends\Logs\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/league-of-legends-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [League of Legends Client Code Cache & V8 JavaScript Bytecode (C:\Riot Games\League of Legends\Logs\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/league-of-legends-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [League of Legends Client GPUCache & Dawn WebGPU Cache (C:\Riot Games\League of Legends\Logs\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/league-of-legends-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Visual Studio 2022 IDE Media Cache & IndexedDB Blob Storage (%LocalAppData%\Microsoft\VisualStudio\17.0\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/visual-studio-2022-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Visual Studio 2022 IDE Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Microsoft\VisualStudio\17.0\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/visual-studio-2022-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Visual Studio 2022 IDE Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Microsoft\VisualStudio\17.0\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/visual-studio-2022-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Visual Studio 2022 IDE Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Microsoft\VisualStudio\17.0\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/visual-studio-2022-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Visual Studio 2022 IDE GPUCache & Dawn WebGPU Cache (%LocalAppData%\Microsoft\VisualStudio\17.0\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/visual-studio-2022-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Podman Desktop WSL Machine Blobs & Container Cache (%UserProfile%\.local\share\containers)](https://sweeprcleaner.com/clean/app/podman-machine-cache): Reclaim 5.0 GB – 35.0 GB
+- [Apache Maven Global Repository Dependency Cache (%UserProfile%\.m2) (%UserProfile%\.m2\repository)](https://sweeprcleaner.com/clean/app/maven-repository-cache): Reclaim 3.5 GB – 30.0 GB
+- [HashiCorp Terraform Provider Plugin & Binary Cache (%AppData%\terraform.d\plugins)](https://sweeprcleaner.com/clean/app/terraform-plugin-cache): Reclaim 1.5 GB – 12.0 GB
+- [Clip Studio Paint Backup Canvas & Auto-Recovery Cache (%AppData%\CELSYS\CLIPStudioPaintVer1_5_0)](https://sweeprcleaner.com/clean/app/clip-studio-paint-cache): Reclaim 2.0 GB – 15.0 GB
+- [Maxon Cinema 4D Simulation & Viewport Render Cache (%AppData%\Maxon\Cinema 4D\cache)](https://sweeprcleaner.com/clean/app/cinema4d-temp-cache): Reclaim 4.0 GB – 28.0 GB
+- [Inkscape Vector Graphics Thumbnail & Font Cache (%AppData%\inkscape\cache)](https://sweeprcleaner.com/clean/app/inkscape-thumbnail-cache): Reclaim 0.5 GB – 3.5 GB
+- [Affinity Photo & Designer Scratch Disk Temp Files (%LocalAppData%\Serif\Affinity\Photo\2.0\Temp)](https://sweeprcleaner.com/clean/app/affinity-scratch-cache): Reclaim 2.5 GB – 18.0 GB
+- [Garena PC Gaming Client Download Cache & Update Temp (%LocalAppData%\Garena\Cache)](https://sweeprcleaner.com/clean/app/garena-client-cache): Reclaim 1.5 GB – 10.0 GB
+- [Windows System Restore Shadow Copies & Restore Points (System Volume Information)](https://sweeprcleaner.com/clean/folder/windows-system-restore-points): Reclaim 5.0 GB – 45.0 GB
+- [Windows DISM Servicing Scratch Directory (%WINDIR%\Temp\DISM) (C:\Windows\Temp\DISM)](https://sweeprcleaner.com/clean/folder/windows-dism-scratch-dir): Reclaim 2.0 GB – 16.0 GB
+- [Windows Action Center Notification History Database (%LocalAppData%\Microsoft\Windows\Notifications)](https://sweeprcleaner.com/clean/folder/windows-action-center-database): Reclaim 0.2 GB – 1.5 GB
+- [Windows Ink Workspace & Handwriting Personalization Cache (%LocalAppData%\Microsoft\InputPersonalization)](https://sweeprcleaner.com/clean/folder/windows-ink-handwriting-cache): Reclaim 0.3 GB – 2.0 GB
+- [Windows Remote Desktop (RDP) Bitmap Cache (%LocalAppData%\Microsoft\Terminal Server Client\Cache)](https://sweeprcleaner.com/clean/folder/windows-rdp-bitmap-cache): Reclaim 0.5 GB – 3.0 GB
+- [Windows Speech Recognition & Voice Dictation Model Cache (%LocalAppData%\Microsoft\Speech)](https://sweeprcleaner.com/clean/folder/windows-speech-recognition-cache): Reclaim 0.5 GB – 4.0 GB
+- [Windows Defender Quarantined Files & Signature Cache (C:\ProgramData\Microsoft\Windows Defender\Quarantine)](https://sweeprcleaner.com/clean/folder/windows-defender-quarantine): Reclaim 0.8 GB – 6.0 GB
+- [Windows Diagnostic Data & Telemetry ETL Log Queue (C:\ProgramData\Microsoft\Diagnosis\ETLLogs)](https://sweeprcleaner.com/clean/folder/windows-telemetry-staging): Reclaim 1.0 GB – 7.0 GB
+- [Windows Bluetooth Pairing Logs & Diagnostic Traces (C:\Windows\System32\Winevt\Logs)](https://sweeprcleaner.com/clean/folder/windows-bluetooth-logs): Reclaim 0.5 GB – 3.0 GB
+- [Windows Xbox App Cloud Gaming & Install Temp Cache (%LocalAppData%\Packages\Microsoft.GamingApp_8wekyb3d8bbwe\LocalCache)](https://sweeprcleaner.com/clean/app/xbox-app-delivery-temp): Reclaim 2.0 GB – 14.0 GB
+- [Easy Anti-Cheat Diagnostic Logs & Certificate Cache (%AppData%\EasyAntiCheat)](https://sweeprcleaner.com/clean/app/easy-anticheat-logs): Reclaim 0.5 GB – 3.5 GB
+- [Riot Vanguard Kernel Driver Logs & Crash Memory Dumps (C:\Program Files\Riot Vanguard\Logs)](https://sweeprcleaner.com/clean/app/riot-vanguard-logs): Reclaim 0.5 GB – 4.5 GB
+- [EA AntiCheat Service Logs & Crash Dump Dumps (C:\ProgramData\EA Desktop\EA AntiCheat)](https://sweeprcleaner.com/clean/app/ea-anticheat-logs): Reclaim 1.0 GB – 6.0 GB
+- [Nexus Mods Vortex Archive Staging & Download Cache (%AppData%\Vortex\downloads)](https://sweeprcleaner.com/clean/app/vortex-mod-downloads): Reclaim 8.0 GB – 50.0 GB
+- [Mod Organizer 2 Staged Archive & Download Cache (%LocalAppData%\ModOrganizer\downloads)](https://sweeprcleaner.com/clean/app/mod-organizer-downloads): Reclaim 10.0 GB – 60.0 GB
+- [CurseForge Mod & Addon Download Archive Cache (%UserProfile%\CurseForge\Cache and %AppData%\CurseForge)](https://sweeprcleaner.com/clean/app/curseforge-addon-cache): Reclaim 3.0 GB – 22.0 GB
+- [Autodesk AutoCAD Temp Drawing History & Graphics Cache (%LocalAppData%\Autodesk\AutoCAD\Drawing History and %LocalAppData%\Temp)](https://sweeprcleaner.com/clean/app/autocad-temp-drawing-cache): Reclaim 2.0 GB – 15.0 GB
