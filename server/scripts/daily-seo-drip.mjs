@@ -90,30 +90,33 @@ async function verifyAndProbePadXml() {
   return { version, sizeBytes, sizeMb, specUrl, primaryDl };
 }
 
-const tokenPool = [];
+const tokenPool = ["0bbded8645afb2952f5db91fc9b7d68f5b2f463021d0e4fd680849165065"];
 let tokenIdx = 0;
-async function getTelegraphToken() {
-  if (tokenPool.length >= 6) {
-    const token = tokenPool[tokenIdx % tokenPool.length];
-    tokenIdx++;
-    return token;
-  }
-  try {
-    const accRes = await fetch(`https://api.telegra.ph/createAccount?short_name=SWEEPR_${tokenPool.length}_${Date.now().toString().slice(-4)}&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com`, {
-      signal: AbortSignal.timeout(10000)
-    });
-    const acc = await accRes.json();
-    if (acc.result?.access_token) {
-      tokenPool.push(acc.result.access_token);
-      return acc.result.access_token;
+async function initTelegraphPool() {
+  while (tokenPool.length < 5) {
+    try {
+      const accRes = await fetch(`https://api.telegra.ph/createAccount?short_name=SWEEPR_${tokenPool.length}_${Date.now().toString().slice(-4)}&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com`, {
+        signal: AbortSignal.timeout(10000)
+      });
+      const acc = await accRes.json();
+      if (acc.result?.access_token) {
+        tokenPool.push(acc.result.access_token);
+      } else {
+        break;
+      }
+    } catch {
+      break;
     }
-  } catch {}
-  if (tokenPool.length > 0) {
-    const token = tokenPool[tokenIdx % tokenPool.length];
-    tokenIdx++;
-    return token;
   }
-  throw new Error("Telegraph auth err");
+}
+
+async function getTelegraphToken() {
+  if (tokenPool.length < 2) {
+    await initTelegraphPool();
+  }
+  const token = tokenPool[tokenIdx % tokenPool.length];
+  tokenIdx++;
+  return token;
 }
 
 async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
@@ -174,6 +177,39 @@ async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
   };
 }
 
+async function publishRentry(item, lang, dateTag) {
+  const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+  const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
+  const md = `# ${title}
+
+- **Official Site:** [${lang.cta}](https://sweeprcleaner.com)
+- **Step-by-Step Guide:** [${item.name} (${item.path})](${targetUrl})
+- **Free Download (<15MB):** [Download SWEEPR Cleaner](https://sweeprcleaner.com/download)
+- **CCleaner Comparison:** [SWEEPR Cleaner vs CCleaner](https://sweeprcleaner.com/vs/ccleaner)
+
+${item.whatIsIt}
+
+${item.whatHappens}
+`;
+  const body = new URLSearchParams({ text: md });
+  const r = await fetch("https://rentry.co/api/new", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    signal: AbortSignal.timeout(8000)
+  });
+  if (!r.ok) throw new Error(`rentry HTTP ${r.status}`);
+  const j = await r.json();
+  if (!j.url || !j.url.startsWith("https://rentry.co/")) throw new Error("rentry err: " + JSON.stringify(j));
+  return {
+    url: j.url,
+    who: `Rentry 6-Hourly Drip (${lang.code})`,
+    website: "rentry.co",
+    how: `6-Hourly Drip Dofollow Markdown (${lang.code})`,
+    category: `${title} -> ${targetUrl} (DR 79)`
+  };
+}
+
 async function publishDpaste(item, lang, dateTag) {
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
@@ -208,19 +244,27 @@ ${item.whatHappens}
 }
 
 async function publishGuide(item, lang, idx, dateTag) {
-  // Alternate between Telegraph (DR 89) and DPaste (DR 74), with immediate fallback to the other
+  // Alternate between Telegraph (DR 89) and Rentry (DR 79) with automatic fallback
   const itemTag = `${dateTag}-${String(idx).padStart(3, "0")}`;
   if (idx % 2 === 0) {
     try {
       return await publishTelegraph(item, lang, itemTag);
     } catch {
-      return await publishDpaste(item, lang, `${itemTag}-r`);
+      try {
+        return await publishRentry(item, lang, `${itemTag}-r`);
+      } catch {
+        return await publishDpaste(item, lang, `${itemTag}-d`);
+      }
     }
   } else {
     try {
-      return await publishDpaste(item, lang, itemTag);
+      return await publishRentry(item, lang, itemTag);
     } catch {
-      return await publishTelegraph(item, lang, `${itemTag}-r`);
+      try {
+        return await publishTelegraph(item, lang, `${itemTag}-r`);
+      } catch {
+        return await publishDpaste(item, lang, `${itemTag}-d`);
+      }
     }
   }
 }
