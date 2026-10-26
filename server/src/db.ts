@@ -203,6 +203,7 @@ function ensureColumn(db: DatabaseSync, table: string, col: string, def: string)
 export function openDb(path: string) {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
+  db.exec(`PRAGMA busy_timeout = 15000;`);
   db.exec(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS accounts (
