@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (528 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (578 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Flutter SDK Engine Artifacts & Pub Dependency Cache (%LocalAppData%\Pub\Cache and %UserProfile%\.pub-cache)](https://sweeprcleaner.com/clean/app/flutter-sdk-cache): Reclaim 3.0 GB – 20.0 GB
-- [Podman Desktop WSL Machine Blobs & Container Cache (%UserProfile%\.local\share\containers)](https://sweeprcleaner.com/clean/app/podman-machine-cache): Reclaim 5.0 GB – 35.0 GB
-- [Apache Maven Global Repository Dependency Cache (%UserProfile%\.m2) (%UserProfile%\.m2\repository)](https://sweeprcleaner.com/clean/app/maven-repository-cache): Reclaim 3.5 GB – 30.0 GB
-- [HashiCorp Terraform Provider Plugin & Binary Cache (%AppData%\terraform.d\plugins)](https://sweeprcleaner.com/clean/app/terraform-plugin-cache): Reclaim 1.5 GB – 12.0 GB
-- [Clip Studio Paint Backup Canvas & Auto-Recovery Cache (%AppData%\CELSYS\CLIPStudioPaintVer1_5_0)](https://sweeprcleaner.com/clean/app/clip-studio-paint-cache): Reclaim 2.0 GB – 15.0 GB
-- [Maxon Cinema 4D Simulation & Viewport Render Cache (%AppData%\Maxon\Cinema 4D\cache)](https://sweeprcleaner.com/clean/app/cinema4d-temp-cache): Reclaim 4.0 GB – 28.0 GB
-- [Inkscape Vector Graphics Thumbnail & Font Cache (%AppData%\inkscape\cache)](https://sweeprcleaner.com/clean/app/inkscape-thumbnail-cache): Reclaim 0.5 GB – 3.5 GB
-- [Affinity Photo & Designer Scratch Disk Temp Files (%LocalAppData%\Serif\Affinity\Photo\2.0\Temp)](https://sweeprcleaner.com/clean/app/affinity-scratch-cache): Reclaim 2.5 GB – 18.0 GB
-- [Garena PC Gaming Client Download Cache & Update Temp (%LocalAppData%\Garena\Cache)](https://sweeprcleaner.com/clean/app/garena-client-cache): Reclaim 1.5 GB – 10.0 GB
-- [Windows System Restore Shadow Copies & Restore Points (System Volume Information)](https://sweeprcleaner.com/clean/folder/windows-system-restore-points): Reclaim 5.0 GB – 45.0 GB
-- [Windows DISM Servicing Scratch Directory (%WINDIR%\Temp\DISM) (C:\Windows\Temp\DISM)](https://sweeprcleaner.com/clean/folder/windows-dism-scratch-dir): Reclaim 2.0 GB – 16.0 GB
-- [Windows Action Center Notification History Database (%LocalAppData%\Microsoft\Windows\Notifications)](https://sweeprcleaner.com/clean/folder/windows-action-center-database): Reclaim 0.2 GB – 1.5 GB
-- [Windows Ink Workspace & Handwriting Personalization Cache (%LocalAppData%\Microsoft\InputPersonalization)](https://sweeprcleaner.com/clean/folder/windows-ink-handwriting-cache): Reclaim 0.3 GB – 2.0 GB
-- [Windows Remote Desktop (RDP) Bitmap Cache (%LocalAppData%\Microsoft\Terminal Server Client\Cache)](https://sweeprcleaner.com/clean/folder/windows-rdp-bitmap-cache): Reclaim 0.5 GB – 3.0 GB
-- [Windows Speech Recognition & Voice Dictation Model Cache (%LocalAppData%\Microsoft\Speech)](https://sweeprcleaner.com/clean/folder/windows-speech-recognition-cache): Reclaim 0.5 GB – 4.0 GB
-- [Windows Defender Quarantined Files & Signature Cache (C:\ProgramData\Microsoft\Windows Defender\Quarantine)](https://sweeprcleaner.com/clean/folder/windows-defender-quarantine): Reclaim 0.8 GB – 6.0 GB
-- [Windows Diagnostic Data & Telemetry ETL Log Queue (C:\ProgramData\Microsoft\Diagnosis\ETLLogs)](https://sweeprcleaner.com/clean/folder/windows-telemetry-staging): Reclaim 1.0 GB – 7.0 GB
-- [Windows Bluetooth Pairing Logs & Diagnostic Traces (C:\Windows\System32\Winevt\Logs)](https://sweeprcleaner.com/clean/folder/windows-bluetooth-logs): Reclaim 0.5 GB – 3.0 GB
-- [Windows Xbox App Cloud Gaming & Install Temp Cache (%LocalAppData%\Packages\Microsoft.GamingApp_8wekyb3d8bbwe\LocalCache)](https://sweeprcleaner.com/clean/app/xbox-app-delivery-temp): Reclaim 2.0 GB – 14.0 GB
-- [Easy Anti-Cheat Diagnostic Logs & Certificate Cache (%AppData%\EasyAntiCheat)](https://sweeprcleaner.com/clean/app/easy-anticheat-logs): Reclaim 0.5 GB – 3.5 GB
-- [Riot Vanguard Kernel Driver Logs & Crash Memory Dumps (C:\Program Files\Riot Vanguard\Logs)](https://sweeprcleaner.com/clean/app/riot-vanguard-logs): Reclaim 0.5 GB – 4.5 GB
-- [EA AntiCheat Service Logs & Crash Dump Dumps (C:\ProgramData\EA Desktop\EA AntiCheat)](https://sweeprcleaner.com/clean/app/ea-anticheat-logs): Reclaim 1.0 GB – 6.0 GB
-- [Nexus Mods Vortex Archive Staging & Download Cache (%AppData%\Vortex\downloads)](https://sweeprcleaner.com/clean/app/vortex-mod-downloads): Reclaim 8.0 GB – 50.0 GB
-- [Mod Organizer 2 Staged Archive & Download Cache (%LocalAppData%\ModOrganizer\downloads)](https://sweeprcleaner.com/clean/app/mod-organizer-downloads): Reclaim 10.0 GB – 60.0 GB
-- [CurseForge Mod & Addon Download Archive Cache (%UserProfile%\CurseForge\Cache and %AppData%\CurseForge)](https://sweeprcleaner.com/clean/app/curseforge-addon-cache): Reclaim 3.0 GB – 22.0 GB
+- [Streamlabs Desktop Media Cache & IndexedDB Blob Storage (%AppData%\slobs-client\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/streamlabs-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Streamlabs Desktop Crashpad Reports & Diagnostic DMP Logs (%AppData%\slobs-client\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/streamlabs-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Streamlabs Desktop Service Worker CacheStorage & Offline Blobs (%AppData%\slobs-client\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/streamlabs-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Streamlabs Desktop Code Cache & V8 JavaScript Bytecode (%AppData%\slobs-client\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/streamlabs-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Streamlabs Desktop GPUCache & Dawn WebGPU Cache (%AppData%\slobs-client\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/streamlabs-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [1Password Desktop Media Cache & IndexedDB Blob Storage (%LocalAppData%\1Password\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/1password-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [1Password Desktop Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\1Password\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/1password-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [1Password Desktop Service Worker CacheStorage & Offline Blobs (%LocalAppData%\1Password\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/1password-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [1Password Desktop Code Cache & V8 JavaScript Bytecode (%LocalAppData%\1Password\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/1password-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [1Password Desktop GPUCache & Dawn WebGPU Cache (%LocalAppData%\1Password\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/1password-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Bitwarden Desktop Media Cache & IndexedDB Blob Storage (%AppData%\Bitwarden\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/bitwarden-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Bitwarden Desktop Crashpad Reports & Diagnostic DMP Logs (%AppData%\Bitwarden\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/bitwarden-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Bitwarden Desktop Service Worker CacheStorage & Offline Blobs (%AppData%\Bitwarden\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/bitwarden-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Bitwarden Desktop Code Cache & V8 JavaScript Bytecode (%AppData%\Bitwarden\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/bitwarden-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Bitwarden Desktop GPUCache & Dawn WebGPU Cache (%AppData%\Bitwarden\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/bitwarden-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Asana Desktop App Media Cache & IndexedDB Blob Storage (%AppData%\Asana\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/asana-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Asana Desktop App Crashpad Reports & Diagnostic DMP Logs (%AppData%\Asana\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/asana-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Asana Desktop App Service Worker CacheStorage & Offline Blobs (%AppData%\Asana\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/asana-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Asana Desktop App Code Cache & V8 JavaScript Bytecode (%AppData%\Asana\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/asana-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Asana Desktop App GPUCache & Dawn WebGPU Cache (%AppData%\Asana\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/asana-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [ClickUp Desktop App Media Cache & IndexedDB Blob Storage (%AppData%\ClickUp\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/clickup-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [ClickUp Desktop App Crashpad Reports & Diagnostic DMP Logs (%AppData%\ClickUp\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/clickup-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [ClickUp Desktop App Service Worker CacheStorage & Offline Blobs (%AppData%\ClickUp\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/clickup-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [ClickUp Desktop App Code Cache & V8 JavaScript Bytecode (%AppData%\ClickUp\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/clickup-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [ClickUp Desktop App GPUCache & Dawn WebGPU Cache (%AppData%\ClickUp\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/clickup-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB

@@ -67,7 +67,7 @@ const issue = (severity: IssueSeverity, code: string, finding: string, evidence:
 export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
   const siteOrigin = new URL(opts.siteUrl);
   const siteHosts = new Set([siteOrigin.hostname.toLowerCase(), siteOrigin.hostname.toLowerCase().replace(/^www\./, ""), "www." + siteOrigin.hostname.toLowerCase().replace(/^www\./, "")]);
-  const maxPages = Math.min(Math.max(opts.maxPages ?? 150, 1), 500);
+  const maxPages = Math.min(Math.max(opts.maxPages ?? 150, 1), 1000);
   const runId = store.startAuditRun(opts.source, opts.baseLabel);
   const siteIssues: AuditIssue[] = [];
 

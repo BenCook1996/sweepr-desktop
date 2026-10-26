@@ -97,10 +97,26 @@
           },
           {
             "@type": "Question",
+            "name": "Will SWEEPR Cleaner delete any of my personal photos, documents, or saved passwords?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Never. SWEEPR Cleaner specifically isolates scratch buffers, redundant driver staging packages, build artifacts, shader caches, and temporary web assets. Your personal documents, desktop files, browser login cookies, and media libraries are strictly protected."
+            }
+          },
+          {
+            "@type": "Question",
             "name": "How many devices does one SWEEPR Cleaner license cover?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Every SWEEPR Cleaner Pro license covers up to 3 Desktop PCs (Windows, Mac, Linux)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does SWEEPR Cleaner run in the background or slow down my PC?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Zero background overhead. When you close SWEEPR Cleaner, it releases all system memory and terminates cleanly. We do not register persistent startup services, system tray monitors, or scheduled popup nags."
             }
           },
           {
@@ -417,6 +433,69 @@
           <h3 class="font-extrabold text-lg mb-2 text-gray-900">3. 7-Day Safety Undo, Duplicates &amp; Privacy</h3>
           <p class="text-sm text-gray-600 leading-relaxed">Every cleanup is backed by a 7-day undo safety net so nothing important is ever lost. Spot duplicate photos and large files, shred private documents, and clear tracking cookies.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Frequently Asked Questions & Technical Specifications -->
+  <section id="faq" class="py-16 px-6 bg-white/40 border-t border-emerald-100/60">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-2">COMMON QUESTIONS &amp; ARCHITECTURE</div>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Frequently Asked Questions</h2>
+        <p class="text-sm sm:text-base text-gray-600 mt-2">Everything you need to know about safety, licensing, and system performance.</p>
+      </div>
+
+      <div class="space-y-4 text-left">
+        <details class="glass-card p-5 rounded-2xl group cursor-pointer" open>
+          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
+            <span>How is SWEEPR Cleaner different from CCleaner or other legacy cleaners?</span>
+            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
+          </summary>
+          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            SWEEPR Cleaner is a lightweight, high-performance native utility (under 15 MB) engineered in Rust. Unlike legacy cleaners that install persistent background daemons, upsell third-party toolbars, or collect intrusive telemetry, SWEEPR operates strictly on demand. It analyzes over 400 deep Windows system caches and application bloat repositories, displays transparent file paths before cleanup, and creates a 7-day safety restore point so you stay in total control.
+          </p>
+        </details>
+
+        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
+          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
+            <span>Will SWEEPR Cleaner delete any of my personal photos, documents, or saved passwords?</span>
+            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
+          </summary>
+          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            Never. SWEEPR Cleaner specifically isolates scratch buffers, redundant driver staging packages, build artifacts, shader caches, and temporary web assets. Your personal documents, desktop files, browser login cookies, and media libraries are strictly protected by our safety engine. Furthermore, our built-in 7-day undo safety net ensures any cleaned item can be restored instantly with a single click.
+          </p>
+        </details>
+
+        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
+          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
+            <span>How many devices does one SWEEPR Cleaner license cover?</span>
+            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
+          </summary>
+          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            Every SWEEPR Cleaner Pro license covers up to 3 Desktop PCs across Windows 11, Windows 10, macOS, and Linux. You can manage or reassign active device activations anytime through your secure web account portal without contacting support.
+          </p>
+        </details>
+
+        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
+          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
+            <span>Does SWEEPR Cleaner run in the background or slow down my PC?</span>
+            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
+          </summary>
+          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            Zero background overhead. When you close SWEEPR Cleaner, it releases all system memory and terminates cleanly. We do not register persistent startup services, system tray monitors, or scheduled popup nags that drain CPU cycles and battery life.
+          </p>
+        </details>
+
+        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
+          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
+            <span>Can I cancel my subscription anytime?</span>
+            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
+          </summary>
+          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            Yes. You can cancel your subscription with a single click inside your online dashboard at any time with no questions asked or phone calls required. All orders are backed by an unconditional 14-day money-back guarantee.
+          </p>
+        </details>
       </div>
     </div>
   </section>

@@ -41,12 +41,21 @@ export function getCleanItems(): CleanItem[] {
 }
 
 function buildPseoTitle(item: CleanItem): string {
-  const cleanName = item.name.replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+  const cleanName = item.name
+    .replace(/Roblox Engine & Player/g, "Roblox Player")
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const candidates: string[] = [cleanName];
   if (cleanName.includes("&")) {
     const parts = cleanName.split("&").map((s) => s.trim());
     if (parts[0] && parts[0].length >= 10) candidates.push(parts[0]);
+  }
+  if (cleanName.includes("Service Worker CacheStorage")) {
+    candidates.push(cleanName.replace("Service Worker CacheStorage", "Service Worker Cache"));
+    const swPart = cleanName.split("&")[0].replace("Service Worker CacheStorage", "Service Worker Cache").trim();
+    if (swPart.length >= 10) candidates.push(swPart);
   }
 
   const brands = [
