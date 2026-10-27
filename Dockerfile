@@ -15,4 +15,4 @@ ENV NODE_ENV=production
 ENV PORT=8787
 EXPOSE 8787
 
-CMD ["npx", "tsx", "src/index.ts"]
+CMD ["./node_modules/.bin/tsx", "src/index.ts"]

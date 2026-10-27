@@ -24,11 +24,26 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   if (metaAccountId && hint && metaAccountId !== hint) {
     throw new Error("account_id mismatch");
   }
-  const account =
+  let account =
     (metaAccountId && repo.accountById(metaAccountId)) ||
     (hint && repo.accountById(hint)) ||
     (customerId && repo.accountByCustomer(customerId)) ||
     undefined;
+  if (!account) {
+    const fallbackAccountId = metaAccountId || hint || (customerId ? `acc_stripe_${customerId}` : "");
+    if (fallbackAccountId) {
+      const fallbackEmail =
+        (typeof (sub as any).customer_email === "string" && (sub as any).customer_email.trim()) ||
+        (typeof sub.metadata?.email === "string" && sub.metadata.email.trim()) ||
+        `${fallbackAccountId}@pending.sweeprcleaner.com`;
+      try {
+        repo.createAccount(fallbackAccountId, `wh_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`, fallbackEmail, customerId);
+        account = repo.accountById(fallbackAccountId);
+      } catch {
+        account = (customerId && repo.accountByCustomer(customerId)) || repo.accountById(fallbackAccountId);
+      }
+    }
+  }
   if (!account) {
     console.warn(`[stripe] no account for subscription ${sub.id}`);
     return;

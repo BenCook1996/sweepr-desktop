@@ -12,6 +12,14 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   console.error("[fatal-guard] Unhandled rejection:", reason);
 });
+process.on("SIGTERM", () => {
+  console.log("[lifecycle] Received SIGTERM, shutting down cleanly.");
+  process.exit(0);
+});
+process.on("SIGINT", () => {
+  console.log("[lifecycle] Received SIGINT, shutting down cleanly.");
+  process.exit(0);
+});
 
 const repo = openDb(config.databasePath);
 let signingKey;

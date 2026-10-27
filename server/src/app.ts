@@ -5255,10 +5255,17 @@ export function createApp(deps: AppDeps) {
     const raw = await c.req.text(); // raw body is required for signature verification
     let event: Stripe.Event | null = null;
     if (config.stripeWebhookSecret && sig) {
-      try {
-        event = await stripe.webhooks.constructEventAsync(raw, sig, config.stripeWebhookSecret);
-      } catch {
-        event = null;
+      const secrets = config.stripeWebhookSecret
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      for (const secret of secrets) {
+        try {
+          event = await stripe.webhooks.constructEventAsync(raw, sig, secret);
+          if (event) break;
+        } catch {
+          event = null;
+        }
       }
     }
     // Fallback when multiple Stripe webhook endpoints exist with distinct signing secrets:
