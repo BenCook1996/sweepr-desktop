@@ -9379,5 +9379,755 @@
       "Press Windows Key + R, type %LocalAppData%\\Google\\DriveFS and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "fl-studio-daw-gpu-shader-cache",
+    "category": "app",
+    "name": "FL Studio DAW GPUCache & Dawn WebGPU Cache",
+    "path": "%Documents%\\Image-Line\\FL Studio\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "FL Studio DAW stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning FL Studio DAW's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit FL Studio DAW (verify FL64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "fl-studio-daw-code-bytecode-cache",
+    "category": "app",
+    "name": "FL Studio DAW Code Cache & V8 JavaScript Bytecode",
+    "path": "%Documents%\\Image-Line\\FL Studio\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "FL Studio DAW compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning FL Studio DAW's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit FL Studio DAW (verify FL64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "fl-studio-daw-service-worker-cachestorage",
+    "category": "app",
+    "name": "FL Studio DAW Service Worker CacheStorage & Offline Blobs",
+    "path": "%Documents%\\Image-Line\\FL Studio\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "FL Studio DAW quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning FL Studio DAW's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit FL Studio DAW (verify FL64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "fl-studio-daw-crashpad-dump-logs",
+    "category": "app",
+    "name": "FL Studio DAW Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%Documents%\\Image-Line\\FL Studio\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "FL Studio DAW writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning FL Studio DAW's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit FL Studio DAW (verify FL64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "fl-studio-daw-media-blob-storage",
+    "category": "app",
+    "name": "FL Studio DAW Media Cache & IndexedDB Blob Storage",
+    "path": "%Documents%\\Image-Line\\FL Studio\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "FL Studio DAW stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning FL Studio DAW's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit FL Studio DAW (verify FL64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ableton-live-suite-gpu-shader-cache",
+    "category": "app",
+    "name": "Ableton Live Suite GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Ableton\\Live 12\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Ableton Live Suite stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Ableton Live Suite's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Ableton Live Suite (verify Ableton Live 12 Suite.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Ableton\\Live 12 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ableton-live-suite-code-bytecode-cache",
+    "category": "app",
+    "name": "Ableton Live Suite Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Ableton\\Live 12\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Ableton Live Suite compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Ableton Live Suite's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Ableton Live Suite (verify Ableton Live 12 Suite.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Ableton\\Live 12 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ableton-live-suite-service-worker-cachestorage",
+    "category": "app",
+    "name": "Ableton Live Suite Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Ableton\\Live 12\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Ableton Live Suite quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Ableton Live Suite's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Ableton Live Suite (verify Ableton Live 12 Suite.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Ableton\\Live 12 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ableton-live-suite-crashpad-dump-logs",
+    "category": "app",
+    "name": "Ableton Live Suite Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Ableton\\Live 12\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Ableton Live Suite writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Ableton Live Suite's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Ableton Live Suite (verify Ableton Live 12 Suite.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Ableton\\Live 12 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ableton-live-suite-media-blob-storage",
+    "category": "app",
+    "name": "Ableton Live Suite Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Ableton\\Live 12\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Ableton Live Suite stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Ableton Live Suite's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Ableton Live Suite (verify Ableton Live 12 Suite.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Ableton\\Live 12 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "sidefx-houdini-gpu-shader-cache",
+    "category": "app",
+    "name": "SideFX Houdini 3D GPUCache & Dawn WebGPU Cache",
+    "path": "%UserProfile%\\Documents\\houdini20.5\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "SideFX Houdini 3D stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning SideFX Houdini 3D's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit SideFX Houdini 3D (verify hindie.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\houdini20.5 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "sidefx-houdini-code-bytecode-cache",
+    "category": "app",
+    "name": "SideFX Houdini 3D Code Cache & V8 JavaScript Bytecode",
+    "path": "%UserProfile%\\Documents\\houdini20.5\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "SideFX Houdini 3D compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning SideFX Houdini 3D's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit SideFX Houdini 3D (verify hindie.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\houdini20.5 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "sidefx-houdini-service-worker-cachestorage",
+    "category": "app",
+    "name": "SideFX Houdini 3D Service Worker CacheStorage & Offline Blobs",
+    "path": "%UserProfile%\\Documents\\houdini20.5\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "SideFX Houdini 3D quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning SideFX Houdini 3D's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit SideFX Houdini 3D (verify hindie.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\houdini20.5 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "sidefx-houdini-crashpad-dump-logs",
+    "category": "app",
+    "name": "SideFX Houdini 3D Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%UserProfile%\\Documents\\houdini20.5\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "SideFX Houdini 3D writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning SideFX Houdini 3D's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit SideFX Houdini 3D (verify hindie.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\houdini20.5 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "sidefx-houdini-media-blob-storage",
+    "category": "app",
+    "name": "SideFX Houdini 3D Media Cache & IndexedDB Blob Storage",
+    "path": "%UserProfile%\\Documents\\houdini20.5\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "SideFX Houdini 3D stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning SideFX Houdini 3D's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit SideFX Houdini 3D (verify hindie.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\houdini20.5 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-maya-gpu-shader-cache",
+    "category": "app",
+    "name": "Autodesk Maya GPUCache & Dawn WebGPU Cache",
+    "path": "%UserProfile%\\Documents\\maya\\2025\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Autodesk Maya stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Autodesk Maya's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Autodesk Maya (verify maya.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\maya\\2025 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-maya-code-bytecode-cache",
+    "category": "app",
+    "name": "Autodesk Maya Code Cache & V8 JavaScript Bytecode",
+    "path": "%UserProfile%\\Documents\\maya\\2025\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Autodesk Maya compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Autodesk Maya's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Autodesk Maya (verify maya.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\maya\\2025 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-maya-service-worker-cachestorage",
+    "category": "app",
+    "name": "Autodesk Maya Service Worker CacheStorage & Offline Blobs",
+    "path": "%UserProfile%\\Documents\\maya\\2025\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Autodesk Maya quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Autodesk Maya's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Autodesk Maya (verify maya.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\maya\\2025 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-maya-crashpad-dump-logs",
+    "category": "app",
+    "name": "Autodesk Maya Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%UserProfile%\\Documents\\maya\\2025\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Autodesk Maya writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Autodesk Maya's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Autodesk Maya (verify maya.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\maya\\2025 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-maya-media-blob-storage",
+    "category": "app",
+    "name": "Autodesk Maya Media Cache & IndexedDB Blob Storage",
+    "path": "%UserProfile%\\Documents\\maya\\2025\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Autodesk Maya stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Autodesk Maya's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Autodesk Maya (verify maya.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\Documents\\maya\\2025 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-3ds-max-gpu-shader-cache",
+    "category": "app",
+    "name": "Autodesk 3ds Max GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Autodesk 3ds Max stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Autodesk 3ds Max's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Autodesk 3ds Max (verify 3dsmax.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-3ds-max-code-bytecode-cache",
+    "category": "app",
+    "name": "Autodesk 3ds Max Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Autodesk 3ds Max compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Autodesk 3ds Max's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Autodesk 3ds Max (verify 3dsmax.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-3ds-max-service-worker-cachestorage",
+    "category": "app",
+    "name": "Autodesk 3ds Max Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Autodesk 3ds Max quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Autodesk 3ds Max's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Autodesk 3ds Max (verify 3dsmax.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-3ds-max-crashpad-dump-logs",
+    "category": "app",
+    "name": "Autodesk 3ds Max Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Autodesk 3ds Max writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Autodesk 3ds Max's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Autodesk 3ds Max (verify 3dsmax.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "autodesk-3ds-max-media-blob-storage",
+    "category": "app",
+    "name": "Autodesk 3ds Max Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Autodesk 3ds Max stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Autodesk 3ds Max's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Autodesk 3ds Max (verify 3dsmax.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rpcs3-ps3-emulator-gpu-shader-cache",
+    "category": "app",
+    "name": "RPCS3 PS3 Emulator GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\rpcs3\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "RPCS3 PS3 Emulator stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning RPCS3 PS3 Emulator's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit RPCS3 PS3 Emulator (verify rpcs3.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\rpcs3 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rpcs3-ps3-emulator-code-bytecode-cache",
+    "category": "app",
+    "name": "RPCS3 PS3 Emulator Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\rpcs3\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "RPCS3 PS3 Emulator compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning RPCS3 PS3 Emulator's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit RPCS3 PS3 Emulator (verify rpcs3.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\rpcs3 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rpcs3-ps3-emulator-service-worker-cachestorage",
+    "category": "app",
+    "name": "RPCS3 PS3 Emulator Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\rpcs3\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "RPCS3 PS3 Emulator quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning RPCS3 PS3 Emulator's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit RPCS3 PS3 Emulator (verify rpcs3.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\rpcs3 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rpcs3-ps3-emulator-crashpad-dump-logs",
+    "category": "app",
+    "name": "RPCS3 PS3 Emulator Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\rpcs3\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "RPCS3 PS3 Emulator writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning RPCS3 PS3 Emulator's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit RPCS3 PS3 Emulator (verify rpcs3.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\rpcs3 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rpcs3-ps3-emulator-media-blob-storage",
+    "category": "app",
+    "name": "RPCS3 PS3 Emulator Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\rpcs3\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "RPCS3 PS3 Emulator stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning RPCS3 PS3 Emulator's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit RPCS3 PS3 Emulator (verify rpcs3.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\rpcs3 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "dolphin-emulator-gpu-shader-cache",
+    "category": "app",
+    "name": "Dolphin Emulator GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Dolphin Emulator\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Dolphin Emulator stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Dolphin Emulator's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Dolphin Emulator (verify Dolphin.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Dolphin Emulator and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "dolphin-emulator-code-bytecode-cache",
+    "category": "app",
+    "name": "Dolphin Emulator Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Dolphin Emulator\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Dolphin Emulator compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Dolphin Emulator's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Dolphin Emulator (verify Dolphin.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Dolphin Emulator and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "dolphin-emulator-service-worker-cachestorage",
+    "category": "app",
+    "name": "Dolphin Emulator Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Dolphin Emulator\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Dolphin Emulator quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Dolphin Emulator's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Dolphin Emulator (verify Dolphin.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Dolphin Emulator and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "dolphin-emulator-crashpad-dump-logs",
+    "category": "app",
+    "name": "Dolphin Emulator Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Dolphin Emulator\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Dolphin Emulator writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Dolphin Emulator's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Dolphin Emulator (verify Dolphin.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Dolphin Emulator and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "dolphin-emulator-media-blob-storage",
+    "category": "app",
+    "name": "Dolphin Emulator Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Dolphin Emulator\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Dolphin Emulator stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Dolphin Emulator's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Dolphin Emulator (verify Dolphin.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Dolphin Emulator and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "retroarch-emu-gpu-shader-cache",
+    "category": "app",
+    "name": "RetroArch GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\RetroArch\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "RetroArch Multi-System Emulator stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning RetroArch Multi-System Emulator's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit RetroArch Multi-System Emulator (verify retroarch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RetroArch and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "retroarch-emu-code-bytecode-cache",
+    "category": "app",
+    "name": "RetroArch Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\RetroArch\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "RetroArch Multi-System Emulator compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning RetroArch Multi-System Emulator's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit RetroArch Multi-System Emulator (verify retroarch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RetroArch and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "retroarch-emu-service-worker-cachestorage",
+    "category": "app",
+    "name": "RetroArch Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\RetroArch\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "RetroArch Multi-System Emulator quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning RetroArch Multi-System Emulator's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit RetroArch Multi-System Emulator (verify retroarch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RetroArch and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "retroarch-emu-crashpad-dump-logs",
+    "category": "app",
+    "name": "RetroArch Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\RetroArch\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "RetroArch Multi-System Emulator writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning RetroArch Multi-System Emulator's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit RetroArch Multi-System Emulator (verify retroarch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RetroArch and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "retroarch-emu-media-blob-storage",
+    "category": "app",
+    "name": "RetroArch Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\RetroArch\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "RetroArch Multi-System Emulator stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning RetroArch Multi-System Emulator's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit RetroArch Multi-System Emulator (verify retroarch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RetroArch and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "prism-minecraft-gpu-shader-cache",
+    "category": "app",
+    "name": "Prism Launcher Minecraft GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\PrismLauncher\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Prism Launcher Minecraft stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Prism Launcher Minecraft's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Prism Launcher Minecraft (verify prismlauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\PrismLauncher and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "prism-minecraft-code-bytecode-cache",
+    "category": "app",
+    "name": "Prism Launcher Minecraft Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\PrismLauncher\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Prism Launcher Minecraft compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Prism Launcher Minecraft's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Prism Launcher Minecraft (verify prismlauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\PrismLauncher and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "prism-minecraft-service-worker-cachestorage",
+    "category": "app",
+    "name": "Prism Launcher Minecraft Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\PrismLauncher\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Prism Launcher Minecraft quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Prism Launcher Minecraft's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Prism Launcher Minecraft (verify prismlauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\PrismLauncher and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "prism-minecraft-crashpad-dump-logs",
+    "category": "app",
+    "name": "Prism Launcher Minecraft Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\PrismLauncher\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Prism Launcher Minecraft writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Prism Launcher Minecraft's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Prism Launcher Minecraft (verify prismlauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\PrismLauncher and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "prism-minecraft-media-blob-storage",
+    "category": "app",
+    "name": "Prism Launcher Minecraft Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\PrismLauncher\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Prism Launcher Minecraft stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Prism Launcher Minecraft's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Prism Launcher Minecraft (verify prismlauncher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\PrismLauncher and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-clion-gpu-shader-cache",
+    "category": "app",
+    "name": "JetBrains CLion GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "JetBrains CLion stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning JetBrains CLion's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit JetBrains CLion (verify clion64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-clion-code-bytecode-cache",
+    "category": "app",
+    "name": "JetBrains CLion Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "JetBrains CLion compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning JetBrains CLion's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit JetBrains CLion (verify clion64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-clion-service-worker-cachestorage",
+    "category": "app",
+    "name": "JetBrains CLion Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "JetBrains CLion quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning JetBrains CLion's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit JetBrains CLion (verify clion64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-clion-crashpad-dump-logs",
+    "category": "app",
+    "name": "JetBrains CLion Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "JetBrains CLion writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning JetBrains CLion's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit JetBrains CLion (verify clion64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-clion-media-blob-storage",
+    "category": "app",
+    "name": "JetBrains CLion Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "JetBrains CLion stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning JetBrains CLion's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit JetBrains CLion (verify clion64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

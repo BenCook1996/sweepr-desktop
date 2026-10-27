@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (628 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (678 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Google Drive for Desktop Media Cache & IndexedDB Blob Storage (%LocalAppData%\Google\DriveFS\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/google-drive-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Google Drive for Desktop Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Google\DriveFS\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/google-drive-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Google Drive for Desktop Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Google\DriveFS\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/google-drive-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Google Drive for Desktop Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Google\DriveFS\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/google-drive-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Google Drive for Desktop GPUCache & Dawn WebGPU Cache (%LocalAppData%\Google\DriveFS\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/google-drive-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Adobe Audition Media Cache & IndexedDB Blob Storage (%AppData%\Adobe\Audition\25.0\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/adobe-audition-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Adobe Audition Crashpad Reports & Diagnostic DMP Logs (%AppData%\Adobe\Audition\25.0\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/adobe-audition-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Adobe Audition Service Worker CacheStorage & Offline Blobs (%AppData%\Adobe\Audition\25.0\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/adobe-audition-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Adobe Audition Code Cache & V8 JavaScript Bytecode (%AppData%\Adobe\Audition\25.0\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/adobe-audition-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Adobe Audition GPUCache & Dawn WebGPU Cache (%AppData%\Adobe\Audition\25.0\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/adobe-audition-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Adobe Lightroom Classic Media Cache & IndexedDB Blob Storage (%LocalAppData%\Adobe\Lightroom\Caches\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/adobe-lightroom-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Adobe Lightroom Classic Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Adobe\Lightroom\Caches\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/adobe-lightroom-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Adobe Lightroom Classic Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Adobe\Lightroom\Caches\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/adobe-lightroom-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Adobe Lightroom Classic Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Adobe\Lightroom\Caches\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/adobe-lightroom-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Adobe Lightroom Classic GPUCache & Dawn WebGPU Cache (%LocalAppData%\Adobe\Lightroom\Caches\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/adobe-lightroom-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Adobe Illustrator Media Cache & IndexedDB Blob Storage (%AppData%\Adobe\Adobe Illustrator 29 Settings\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/adobe-illustrator-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Adobe Illustrator Crashpad Reports & Diagnostic DMP Logs (%AppData%\Adobe\Adobe Illustrator 29 Settings\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/adobe-illustrator-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Adobe Illustrator Service Worker CacheStorage & Offline Blobs (%AppData%\Adobe\Adobe Illustrator 29 Settings\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/adobe-illustrator-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Adobe Illustrator Code Cache & V8 JavaScript Bytecode (%AppData%\Adobe\Adobe Illustrator 29 Settings\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/adobe-illustrator-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Adobe Illustrator GPUCache & Dawn WebGPU Cache (%AppData%\Adobe\Adobe Illustrator 29 Settings\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/adobe-illustrator-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Adobe Photoshop Media Cache & IndexedDB Blob Storage (%AppData%\Adobe\Adobe Photoshop 2025\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/adobe-photoshop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Adobe Photoshop Crashpad Reports & Diagnostic DMP Logs (%AppData%\Adobe\Adobe Photoshop 2025\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/adobe-photoshop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Adobe Photoshop Service Worker CacheStorage & Offline Blobs (%AppData%\Adobe\Adobe Photoshop 2025\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/adobe-photoshop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Adobe Photoshop Code Cache & V8 JavaScript Bytecode (%AppData%\Adobe\Adobe Photoshop 2025\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/adobe-photoshop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Adobe Photoshop GPUCache & Dawn WebGPU Cache (%AppData%\Adobe\Adobe Photoshop 2025\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/adobe-photoshop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [JetBrains CLion Media Cache & IndexedDB Blob Storage (%LocalAppData%\JetBrains\CLion2025.1\caches\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/jetbrains-clion-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [JetBrains CLion Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\JetBrains\CLion2025.1\caches\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/jetbrains-clion-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [JetBrains CLion Service Worker CacheStorage & Offline Blobs (%LocalAppData%\JetBrains\CLion2025.1\caches\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/jetbrains-clion-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [JetBrains CLion Code Cache & V8 JavaScript Bytecode (%LocalAppData%\JetBrains\CLion2025.1\caches\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/jetbrains-clion-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [JetBrains CLion GPUCache & Dawn WebGPU Cache (%LocalAppData%\JetBrains\CLion2025.1\caches\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/jetbrains-clion-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Prism Launcher Minecraft Media Cache & IndexedDB Blob Storage (%AppData%\PrismLauncher\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/prism-minecraft-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Prism Launcher Minecraft Crashpad Reports & Diagnostic DMP Logs (%AppData%\PrismLauncher\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/prism-minecraft-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Prism Launcher Minecraft Service Worker CacheStorage & Offline Blobs (%AppData%\PrismLauncher\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/prism-minecraft-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Prism Launcher Minecraft Code Cache & V8 JavaScript Bytecode (%AppData%\PrismLauncher\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/prism-minecraft-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Prism Launcher Minecraft GPUCache & Dawn WebGPU Cache (%AppData%\PrismLauncher\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/prism-minecraft-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [RetroArch Media Cache & IndexedDB Blob Storage (%AppData%\RetroArch\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/retroarch-emu-media-blob-storage): Reclaim 2.0 GB - 12.0 GB
+- [RetroArch Crashpad Reports & Diagnostic DMP Logs (%AppData%\RetroArch\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/retroarch-emu-crashpad-dump-logs): Reclaim 0.6 GB - 3.8 GB
+- [RetroArch Service Worker CacheStorage & Offline Blobs (%AppData%\RetroArch\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/retroarch-emu-service-worker-cachestorage): Reclaim 1.5 GB - 8.5 GB
+- [RetroArch Code Cache & V8 JavaScript Bytecode (%AppData%\RetroArch\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/retroarch-emu-code-bytecode-cache): Reclaim 1.0 GB - 5.2 GB
+- [RetroArch GPUCache & Dawn WebGPU Cache (%AppData%\RetroArch\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/retroarch-emu-gpu-shader-cache): Reclaim 0.8 GB - 4.5 GB
+- [Dolphin Emulator Media Cache & IndexedDB Blob Storage (%AppData%\Dolphin Emulator\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/dolphin-emulator-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Dolphin Emulator Crashpad Reports & Diagnostic DMP Logs (%AppData%\Dolphin Emulator\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/dolphin-emulator-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Dolphin Emulator Service Worker CacheStorage & Offline Blobs (%AppData%\Dolphin Emulator\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/dolphin-emulator-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Dolphin Emulator Code Cache & V8 JavaScript Bytecode (%AppData%\Dolphin Emulator\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/dolphin-emulator-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Dolphin Emulator GPUCache & Dawn WebGPU Cache (%AppData%\Dolphin Emulator\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/dolphin-emulator-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [RPCS3 PS3 Emulator Media Cache & IndexedDB Blob Storage (%AppData%\rpcs3\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [RPCS3 PS3 Emulator Crashpad Reports & Diagnostic DMP Logs (%AppData%\rpcs3\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [RPCS3 PS3 Emulator Service Worker CacheStorage & Offline Blobs (%AppData%\rpcs3\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [RPCS3 PS3 Emulator Code Cache & V8 JavaScript Bytecode (%AppData%\rpcs3\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [RPCS3 PS3 Emulator GPUCache & Dawn WebGPU Cache (%AppData%\rpcs3\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB

@@ -256,9 +256,9 @@ export function createApp(deps: AppDeps) {
 
     if (p.endsWith(".css") || p.endsWith(".js")) {
       c.res.headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-    } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf)$/.test(p)) {
+    } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf|exe|msi|dmg|apk|mobileconfig)$/.test(p)) {
       c.res.headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
-    } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml") {
+    } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml" || p.endsWith(".txt")) {
       c.res.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     } else if (c.res.headers.get("content-type")?.includes("text/html")) {
       c.res.headers.set("Cache-Control", "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400");

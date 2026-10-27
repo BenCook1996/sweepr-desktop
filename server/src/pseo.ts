@@ -43,6 +43,7 @@ export function getCleanItems(): CleanItem[] {
 function buildPseoTitle(item: CleanItem): string {
   const cleanName = item.name
     .replace(/Roblox Engine & Player/g, "Roblox Player")
+    .replace(/RetroArch Multi-System Emulator/g, "RetroArch")
     .replace(/\s*\([^)]*\)/g, "")
     .replace(/\s+/g, " ")
     .trim();

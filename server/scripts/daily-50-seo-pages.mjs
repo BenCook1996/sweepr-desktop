@@ -1551,7 +1551,7 @@ const APP_MATRIX_APPS = [
   { key: "autodesk-3ds-max", label: "Autodesk 3ds Max", baseDir: "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit", proc: "3dsmax.exe" },
   { key: "rpcs3-ps3-emulator", label: "RPCS3 PS3 Emulator", baseDir: "%AppData%\\rpcs3", proc: "rpcs3.exe" },
   { key: "dolphin-emulator", label: "Dolphin Emulator", baseDir: "%AppData%\\Dolphin Emulator", proc: "Dolphin.exe" },
-  { key: "retroarch-emu", label: "RetroArch Multi-System Emulator", baseDir: "%AppData%\\RetroArch", proc: "retroarch.exe" },
+  { key: "retroarch-emu", label: "RetroArch", baseDir: "%AppData%\\RetroArch", proc: "retroarch.exe" },
   { key: "prism-minecraft", label: "Prism Launcher Minecraft", baseDir: "%AppData%\\PrismLauncher", proc: "prismlauncher.exe" },
   { key: "jetbrains-clion", label: "JetBrains CLion", baseDir: "%LocalAppData%\\JetBrains\\CLion2025.1\\caches", proc: "clion64.exe" },
   { key: "jetbrains-datagrip", label: "JetBrains DataGrip", baseDir: "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches", proc: "datagrip64.exe" },

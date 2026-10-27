@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-27T06:31:25.963Z",
+  "lastRunAt": "2026-10-27T07:02:30.462Z",
   "lastCount": 50,
-  "totalCleanItems": 628,
+  "totalCleanItems": 678,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/sd-webui-model-cache",
-    "https://sweeprcleaner.com/clean/app/text-gen-webui-cache",
-    "https://sweeprcleaner.com/clean/app/jan-ai-models-cache",
-    "https://sweeprcleaner.com/clean/app/anythingllm-vector-cache",
-    "https://sweeprcleaner.com/clean/app/gpt4all-models-cache",
-    "https://sweeprcleaner.com/clean/app/koboldai-models-cache",
-    "https://sweeprcleaner.com/clean/folder/wsl2-ext4-vhdx-compaction",
-    "https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk",
-    "https://sweeprcleaner.com/clean/app/vcpkg-binary-cache",
-    "https://sweeprcleaner.com/clean/app/visual-studio-symbols-cache"
+    "https://sweeprcleaner.com/clean/app/fl-studio-daw-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/fl-studio-daw-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/fl-studio-daw-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/fl-studio-daw-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/fl-studio-daw-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/ableton-live-suite-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/ableton-live-suite-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/ableton-live-suite-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/ableton-live-suite-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/ableton-live-suite-media-blob-storage"
   ]
 }
