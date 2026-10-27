@@ -16,7 +16,8 @@ val localProps = Properties().apply {
 val revenueCatApiKey: String =
     (findProperty("REVENUECAT_API_KEY") as String?)?.takeIf { it.isNotBlank() }
         ?: localProps.getProperty("REVENUECAT_API_KEY")?.takeIf { it.isNotBlank() }
-        ?: "test_ivOfZALfmxHMtyKQZXOxmKqYibQ"
+        ?: System.getenv("REVENUECAT_API_KEY")?.takeIf { it.isNotBlank() }
+        ?: ""
 
 val sweeprWebsiteUrl: String =
     (findProperty("SWEEPR_WEBSITE_URL") as String?)?.takeIf { it.isNotBlank() }
@@ -73,17 +74,21 @@ android {
     signingConfigs {
         create("release") {
             val ksFile = file("upload-keystore.jks")
-            if (ksFile.exists()) {
+            val ksPassword = (findProperty("SWEEPR_KEYSTORE_PASSWORD") as String?)
+                ?: localProps.getProperty("SWEEPR_KEYSTORE_PASSWORD")
+                ?: System.getenv("SWEEPR_KEYSTORE_PASSWORD")
+                ?: ""
+            if (ksFile.exists() && ksPassword.isNotBlank()) {
                 storeFile = ksFile
-                storePassword = (findProperty("SWEEPR_KEYSTORE_PASSWORD") as String?)
-                    ?: localProps.getProperty("SWEEPR_KEYSTORE_PASSWORD")
-                    ?: "SweeprCleaner2026!"
+                storePassword = ksPassword
                 keyAlias = (findProperty("SWEEPR_KEY_ALIAS") as String?)
                     ?: localProps.getProperty("SWEEPR_KEY_ALIAS")
+                    ?: System.getenv("SWEEPR_KEY_ALIAS")
                     ?: "sweeprcleaner"
                 keyPassword = (findProperty("SWEEPR_KEY_PASSWORD") as String?)
                     ?: localProps.getProperty("SWEEPR_KEY_PASSWORD")
-                    ?: "SweeprCleaner2026!"
+                    ?: System.getenv("SWEEPR_KEY_PASSWORD")
+                    ?: ksPassword
             }
         }
     }
@@ -92,8 +97,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = if (file("upload-keystore.jks").exists()) {
-                signingConfigs.getByName("release")
+            val relSigning = signingConfigs.getByName("release")
+            signingConfig = if (relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()) {
+                relSigning
             } else {
                 signingConfigs.getByName("debug")
             }

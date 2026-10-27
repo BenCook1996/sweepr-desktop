@@ -129,8 +129,12 @@ class MainActivity : AppCompatActivity() {
                 SweeprRoot(
                     vm = vm,
                     onShowPaywall = { then ->
-                        afterPurchase = then
-                        paywallLauncher.launch(shouldDisplayDismissButton = true)
+                        if (Purchases.isConfigured) {
+                            afterPurchase = then
+                            paywallLauncher.launch(shouldDisplayDismissButton = true)
+                        } else {
+                            launchPlanPurchase("sweepr_annual_4999", vm, then)
+                        }
                     },
                     onPurchasePlan = { productId, then ->
                         launchPlanPurchase(productId, vm, then)
@@ -182,8 +186,12 @@ class MainActivity : AppCompatActivity() {
                     then()
                 },
                 onFallback = {
-                    afterPurchase = then
-                    paywallLauncher.launch(shouldDisplayDismissButton = true)
+                    if (Purchases.isConfigured) {
+                        afterPurchase = then
+                        paywallLauncher.launch(shouldDisplayDismissButton = true)
+                    } else {
+                        vm.showMessage(getString(R.string.msg_no_subscription_found))
+                    }
                 },
             )
         }

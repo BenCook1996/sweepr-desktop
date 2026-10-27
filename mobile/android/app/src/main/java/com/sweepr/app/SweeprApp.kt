@@ -28,10 +28,11 @@ class SweeprApp : Application(), ImageLoaderFactory {
             Purchases.logLevel = LogLevel.DEBUG
         }
         
-        // Initialize RevenueCat SDK.
-        // The key comes from REVENUECAT_API_KEY (gradle property / local.properties, see app/build.gradle.kts).
+        // Initialize RevenueCat SDK only when a production Google Play key ("goog_...") is supplied
+        // (or a debug key in debug builds). Direct PlayBillingManager + SweeprAccountApi handle
+        // Google Play Billing and cross-platform entitlement verification independently.
         val apiKey = BuildConfig.REVENUECAT_API_KEY
-        if (apiKey.isNotBlank()) {
+        if (apiKey.startsWith("goog_") || (BuildConfig.DEBUG && apiKey.isNotBlank())) {
             runCatching {
                 val linked = Prefs.account.value
                 val builder = PurchasesConfiguration.Builder(this, apiKey)

@@ -89,6 +89,11 @@
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
 
+        <!-- Strip unused Amazon Appstore billing proxy merged by RevenueCat SDK (missing android:exported attribute) -->
+        <activity
+            android:name="com.revenuecat.purchases.amazon.purchasing.ProxyAmazonBillingActivity"
+            tools:node="remove" />
+
         <!-- Lets "Generate Log Files" share the log through email / Drive etc. -->
         <provider
             android:name="androidx.core.content.FileProvider"

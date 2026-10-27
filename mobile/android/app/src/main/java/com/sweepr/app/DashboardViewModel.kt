@@ -165,11 +165,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
 
-        // RevenueCat is configured in SweeprApp.onCreate. Seed the state once, then listen
-        // for changes (purchase, restore, renewal, expiry) so the UI unlocks instantly.
-        runCatching {
-            Purchases.sharedInstance.updatedCustomerInfoListener =
-                UpdatedCustomerInfoListener { info -> updateCustomerInfo(info) }
+        // RevenueCat is configured in SweeprApp.onCreate when a production key is present.
+        if (Purchases.isConfigured) {
+            runCatching {
+                Purchases.sharedInstance.updatedCustomerInfoListener =
+                    UpdatedCustomerInfoListener { info -> updateCustomerInfo(info) }
+            }
         }
         refreshSubscriptionStatus()
     }
@@ -182,7 +183,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     _state.update { it.copy(updateStatus = status) }
                 }
             }
-            runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+            if (Purchases.isConfigured) {
+                runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+            }
             val linked = _state.value.linkedAccount
             if (linked.isSignedIn) {
                 withContext(Dispatchers.IO) {
@@ -309,20 +312,22 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
             result.onSuccess { linked ->
                 Prefs.setLinkedAccount(linked)
-                runCatching {
-                    Purchases.sharedInstance.logIn(
-                        linked.accountId,
-                        object : LogInCallback {
-                            override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
-                                runCatching {
-                                    Purchases.sharedInstance.setEmail(linked.email)
-                                    Purchases.sharedInstance.setAttributes(mapOf("project_id" to BuildConfig.SWEEPR_PROJECT_ID))
+                if (Purchases.isConfigured && linked.accountId.isNotBlank()) {
+                    runCatching {
+                        Purchases.sharedInstance.logIn(
+                            linked.accountId,
+                            object : LogInCallback {
+                                override fun onReceived(customerInfo: CustomerInfo, created: Boolean) {
+                                    runCatching {
+                                        Purchases.sharedInstance.setEmail(linked.email)
+                                        Purchases.sharedInstance.setAttributes(mapOf("project_id" to BuildConfig.SWEEPR_PROJECT_ID))
+                                    }
+                                    updateCustomerInfo(customerInfo)
                                 }
-                                updateCustomerInfo(customerInfo)
-                            }
-                            override fun onError(error: PurchasesError) = Unit
-                        },
-                    )
+                                override fun onError(error: PurchasesError) = Unit
+                            },
+                        )
+                    }
                 }
                 onAccountLinked(linked)
                 onVerified()
@@ -335,10 +340,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun signOutAccount() {
         Prefs.clearLinkedAccount()
-        runCatching { Purchases.sharedInstance.logOut(null) }
+        if (Purchases.isConfigured) {
+            runCatching { Purchases.sharedInstance.logOut(null) }
+        }
         onAccountUnlinked(message = locApp.getString(R.string.account_signed_out_msg))
-        viewModelScope.launch {
-            runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+        if (Purchases.isConfigured) {
+            viewModelScope.launch {
+                runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
+            }
         }
     }
 
@@ -352,7 +361,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
             res.onSuccess {
                 Prefs.clearLinkedAccount()
-                runCatching { Purchases.sharedInstance.logOut(null) }
+                if (Purchases.isConfigured) {
+                    runCatching { Purchases.sharedInstance.logOut(null) }
+                }
                 onAccountUnlinked(message = locApp.getString(R.string.account_deleted_msg), isWorking = false)
                 onDeleted()
             }.onFailure { err ->
