@@ -393,7 +393,7 @@
           </svg>
         </div>
         <div class="hero-number">{formatBytes(freedTotal)} Cleaned</div>
-        <p class="hero-sub undo-safety-pill">🛡️ Protected by 7-Day Safety Undo</p>
+        <p class="hero-sub undo-safety-pill">Protected by 7-Day Safety Undo</p>
       </div>
     {:else if report && totalFoundBytes > 0}
       <!-- Minimalist Results View (<30 Words on Screen) -->
@@ -543,7 +543,11 @@
     {:else}
       <!-- Minimalist Idle / All Clean State -->
       <div class="center-state">
-        <div class="done-badge">✨</div>
+        <div class="done-badge" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+        </div>
         <div class="hero-number">Ready to Scan</div>
         <p class="hero-sub">Checks cache, duplicates, leftovers, and startup apps</p>
       </div>

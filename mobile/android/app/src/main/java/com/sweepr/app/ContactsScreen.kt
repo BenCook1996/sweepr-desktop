@@ -216,7 +216,7 @@ fun ContactsScreen(
                 Button(
                     onClick = {
                         showIncompleteDeleteConfirm = false
-                        if (permissions.contactsWrite) onDeleteIncompleteContacts(selectedIncompleteHere) else onRequestPermission()
+                        if (permissions.contactsWrite) onDeleteIncompleteContacts(selectedIncompleteHere) else showContactsDisclosure = true
                     },
                 ) {
                     Text(stringResource(R.string.action_delete))

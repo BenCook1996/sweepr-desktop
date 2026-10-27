@@ -68,6 +68,20 @@
                     android:scheme="sweeprcleaner"
                     android:host="pair" />
             </intent-filter>
+            <!-- Verified HTTPS App Link for QR device pairing: https://sweeprcleaner.com/pair -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="sweeprcleaner.com"
+                    android:pathPrefix="/pair" />
+                <data
+                    android:scheme="https"
+                    android:host="www.sweeprcleaner.com"
+                    android:pathPrefix="/pair" />
+            </intent-filter>
         </activity>
 
         <!-- Remove WorkManager's unused SystemForegroundService (BatteryCareWorker & ReminderWorker do not call setForeground) -->

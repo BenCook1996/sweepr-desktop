@@ -275,7 +275,7 @@ object MobileCloudVault {
         val (origName, bytes) = decrypt(item.file, password)
         val safeName = origName.replace(Regex("[\\\\/:*?\"<>|]"), "_")
         if (android.os.Build.VERSION.SDK_INT >= 29) {
-            runCatching {
+            val mediaStoreFile = runCatching {
                 val values = android.content.ContentValues().apply {
                     put(android.provider.MediaStore.Downloads.DISPLAY_NAME, safeName)
                     put(android.provider.MediaStore.Downloads.RELATIVE_PATH, "${android.os.Environment.DIRECTORY_DOWNLOADS}/SWEEPR Restored")
@@ -284,12 +284,20 @@ object MobileCloudVault {
                 val resolver = context.contentResolver
                 val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 if (uri != null) {
-                    resolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    val out = resolver.openOutputStream(uri) ?: error("Could not open MediaStore output stream")
+                    out.use { it.write(bytes) }
                     values.clear()
                     values.put(android.provider.MediaStore.Downloads.IS_PENDING, 0)
                     resolver.update(uri, values, null, null)
+                    File(
+                        android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS),
+                        "SWEEPR Restored/$safeName",
+                    )
+                } else {
+                    null
                 }
-            }
+            }.getOrNull()
+            if (mediaStoreFile != null) return mediaStoreFile
         }
         val publicDownloads = runCatching {
             val dir = File(

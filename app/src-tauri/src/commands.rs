@@ -699,7 +699,8 @@ fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
     let Ok(c_path) = CString::new(db_path.to_string_lossy().as_bytes()) else {
         return false;
     };
-    let Ok(c_sql) = CString::new(sql.as_bytes()) else {
+    let full_sql = format!("PRAGMA busy_timeout = 1500;\n{sql}");
+    let Ok(c_sql) = CString::new(full_sql.as_bytes()) else {
         return false;
     };
 
@@ -740,9 +741,10 @@ fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
 
 #[cfg(not(windows))]
 fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
+    let full_sql = format!("PRAGMA busy_timeout = 1500;\n{sql}");
     std::process::Command::new("sqlite3")
         .arg(db_path)
-        .arg(sql)
+        .arg(&full_sql)
         .status()
         .map(|s| s.success())
         .unwrap_or(false)
@@ -2130,13 +2132,24 @@ pub async fn set_cookie_allowlist(
     state: State<'_, AppState>,
     domains: Vec<String>,
 ) -> AppResult<Vec<String>> {
-    state.licensing.require_active().await?;
     save_cookie_allowlist_to(&state.data_dir, domains)
 }
 
 // ---------------------------------------------------------------------------
 // Browser SQLite Database VACUUM / Journal Compactor (#7)
 // ---------------------------------------------------------------------------
+
+fn file_and_wal_len(base_db: &Path) -> u64 {
+    let mut total = std::fs::metadata(base_db).map(|m| m.len()).unwrap_or(0);
+    if let Some(parent) = base_db.parent() {
+        let base_name = base_db.file_name().unwrap_or_default().to_string_lossy();
+        for suffix in ["-wal", "-journal"] {
+            let companion = parent.join(format!("{base_name}{suffix}"));
+            total += std::fs::metadata(&companion).map(|m| m.len()).unwrap_or(0);
+        }
+    }
+    total
+}
 
 fn compact_sqlite_dir(dir: &Path) -> u64 {
     let mut reclaimed = 0u64;
@@ -2153,11 +2166,14 @@ fn compact_sqlite_dir(dir: &Path) -> u64 {
         let name = raw_name.to_ascii_lowercase();
 
         // Only remove -wal / -shm / -journal files if their parent database file no longer exists on disk
-        if let Some(base_name) = raw_name
-            .strip_suffix("-journal")
-            .or_else(|| raw_name.strip_suffix("-wal"))
-            .or_else(|| raw_name.strip_suffix("-shm"))
-        {
+        let mut matched_companion_base: Option<&str> = None;
+        for suffix in ["-journal", "-wal", "-shm"] {
+            if name.ends_with(suffix) && raw_name.len() > suffix.len() {
+                matched_companion_base = Some(&raw_name[..raw_name.len() - suffix.len()]);
+                break;
+            }
+        }
+        if let Some(base_name) = matched_companion_base {
             let base_db_path = dir.join(base_name);
             if !base_db_path.exists() {
                 let len = md.len();
@@ -2183,9 +2199,9 @@ fn compact_sqlite_dir(dir: &Path) -> u64 {
             || name == "top sites"
             || name.ends_with(".sqlite");
         if is_sqlite_db {
-            let before = md.len();
+            let before = file_and_wal_len(&p);
             if exec_sqlite_on_file(&p, "PRAGMA wal_checkpoint(TRUNCATE); VACUUM;") {
-                let after = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(before);
+                let after = file_and_wal_len(&p);
                 reclaimed += before.saturating_sub(after);
             }
         }

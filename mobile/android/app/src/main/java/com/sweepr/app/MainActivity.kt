@@ -146,7 +146,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun extractDeepLinkPair(intent: Intent?) {
         val data = intent?.data ?: return
-        if (data.scheme == "sweeprcleaner" && data.host == "pair") {
+        val isCustomScheme = data.scheme == "sweeprcleaner" && data.host == "pair"
+        val isHttpsAppLink = (data.scheme == "https" || data.scheme == "http") &&
+            (data.host == "sweeprcleaner.com" || data.host == "www.sweeprcleaner.com") &&
+            (data.path?.startsWith("/pair") == true)
+        if (isCustomScheme || isHttpsAppLink) {
             val token = data.getQueryParameter("token") ?: data.getQueryParameter("challenge")
             pendingDeepLinkPair = token?.takeIf { it.isNotBlank() } ?: data.toString()
         }
@@ -166,6 +170,7 @@ class MainActivity : AppCompatActivity() {
                         productId = purchasedId,
                         purchaseToken = pToken,
                         orderId = orderId,
+                        isNewPurchase = true,
                     )
                     then()
                 },
@@ -199,6 +204,7 @@ class MainActivity : AppCompatActivity() {
                                         productId = productId,
                                         purchaseToken = pToken,
                                         orderId = storeTransaction.orderId,
+                                        isNewPurchase = true,
                                     )
                                 }
                                 then()
@@ -231,7 +237,7 @@ enum class Screen {
 }
 
 private val TABS = listOf(Screen.Dashboard, Screen.Swipe, Screen.BatteryCare, Screen.CloudSavings, Screen.Settings)
-private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Screenshots, Screen.Contacts, Screen.Trash, Screen.QuickCleanReview)
+private val RESULT_SCREENS = setOf(Screen.PhotosVideos, Screen.Screenshots, Screen.Trash, Screen.QuickCleanReview)
 
 data class PermissionState(
     val media: Boolean = false,
@@ -270,7 +276,7 @@ object AppPermissions {
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
         val full = if (Build.VERSION.SDK_INT >= 33) {
-            granted(Manifest.permission.READ_MEDIA_IMAGES)
+            granted(Manifest.permission.READ_MEDIA_IMAGES) || granted(Manifest.permission.READ_MEDIA_VIDEO)
         } else {
             granted(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
@@ -518,6 +524,10 @@ fun SweeprRoot(
                     state = state,
                     permissions = permissions,
                     onScan = requestAccessAndScan,
+                    onManageLimitedMedia = {
+                        scanAfterGrant = true
+                        permissionLauncher.launch(AppPermissions.mediaPermissions())
+                    },
                     onOpen = open,
                     onOpenPhotosTab = openPhotosTab,
                     onCleanUp = handleCleanUp,

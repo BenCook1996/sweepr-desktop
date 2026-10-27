@@ -169,6 +169,10 @@
       cachedAllowlist = cookieAllowlist;
       newDomain = "";
     } catch (e) {
+      if (isPaymentRequired(e)) {
+        requestActivation();
+        return;
+      }
       error = errorMessage(e);
     }
   }
@@ -180,6 +184,10 @@
       );
       cachedAllowlist = cookieAllowlist;
     } catch (e) {
+      if (isPaymentRequired(e)) {
+        requestActivation();
+        return;
+      }
       error = errorMessage(e);
     }
   }

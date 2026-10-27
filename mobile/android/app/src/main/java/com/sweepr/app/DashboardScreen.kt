@@ -91,6 +91,7 @@ fun DashboardScreen(
     state: DashboardState,
     permissions: PermissionState,
     onScan: () -> Unit,
+    onManageLimitedMedia: () -> Unit = onScan,
     onOpen: (Screen) -> Unit,
     onOpenPhotosTab: (Int) -> Unit = { onOpen(Screen.PhotosVideos) },
     onCleanUp: () -> Unit,
@@ -214,6 +215,7 @@ fun DashboardScreen(
                         permissions = permissions,
                         onStatsClick = { showStorageDialog = true },
                         onScan = onScan,
+                        onManageLimitedMedia = onManageLimitedMedia,
                         onCleanUp = onCleanUp,
                         onOpenReview = onOpenReview,
                     )
@@ -243,6 +245,7 @@ fun DashboardScreen(
                     permissions = permissions,
                     onStatsClick = { showStorageDialog = true },
                     onScan = onScan,
+                    onManageLimitedMedia = onManageLimitedMedia,
                     onCleanUp = onCleanUp,
                     onOpenReview = onOpenReview,
                 )
@@ -260,6 +263,7 @@ private fun QuickCleanBlock(
     permissions: PermissionState,
     onStatsClick: () -> Unit,
     onScan: () -> Unit,
+    onManageLimitedMedia: () -> Unit = onScan,
     onCleanUp: () -> Unit,
     onOpenReview: () -> Unit,
 ) {
@@ -477,9 +481,14 @@ private fun QuickCleanBlock(
     if (permissions.mediaLimited) {
         Text(
             stringResource(R.string.dashboard_limited_access),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = emeraldText(),
             fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onManageLimitedMedia)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
 }
@@ -644,7 +653,7 @@ private fun HomeTiles(
                 title = "Contacts",
                 value = contactsValue,
                 modifier = Modifier.weight(1f),
-                onClick = { open(Screen.Contacts) },
+                onClick = { onOpen(Screen.Contacts) },
             )
         }
         BatteryCareDashboardBanner(

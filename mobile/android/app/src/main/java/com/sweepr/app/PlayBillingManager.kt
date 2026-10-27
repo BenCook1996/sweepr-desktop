@@ -42,8 +42,17 @@ data class PlayProductPrice(
  *    `POST /v1/billing/google-play/verify`.
  */
 object PlayBillingManager : PurchasesUpdatedListener {
+    private const val SKU_MONTHLY = "sweepr_monthly_999"
+    private const val SKU_SIX_MONTH = "sweepr_six_month_3899"
+    private const val SKU_ANNUAL = "sweepr_annual_4999"
+    private const val SKU_BATTERY_CARE = "sweepr_battery_care_999"
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Volatile
     private var billingClient: BillingClient? = null
+    @Volatile
+    private var isConnecting: Boolean = false
+    private val connectionWaiters = java.util.concurrent.CopyOnWriteArrayList<Pair<(BillingClient) -> Unit, () -> Unit>>()
     private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
     private var pendingCallback: ((productId: String, purchaseToken: String, orderId: String?) -> Unit)? = null
 
@@ -113,9 +122,56 @@ object PlayBillingManager : PurchasesUpdatedListener {
 
     fun init(context: Context) {
         _prices.value = defaultLocalePrices(Locale.getDefault())
-        if (billingClient != null) return
         val appCtx = context.applicationContext
-        val client = BillingClient.newBuilder(appCtx)
+        queryActivePurchases(appCtx) { activePurchases ->
+            if (activePurchases.isNotEmpty()) {
+                scope.launch {
+                    for (purchase in activePurchases) {
+                        val prodId = purchase.products.firstOrNull() ?: SKU_ANNUAL
+                        syncPurchaseToAccount(prodId, purchase.purchaseToken, purchase.orderId)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun syncPurchaseToAccount(prodId: String, purchaseToken: String, orderId: String?) {
+        val current = Prefs.account.value
+        val isBatteryAddon = prodId.equals(SKU_BATTERY_CARE, ignoreCase = true) ||
+            prodId.contains("battery_care", ignoreCase = true)
+        val localFallback = current.copy(
+            serverActive = if (isBatteryAddon) current.serverActive else true,
+            plan = if (isBatteryAddon) (current.plan ?: "addon_only") else (current.plan ?: prodId),
+            expiresAt = if (current.expiresAt > 0L) current.expiresAt else (System.currentTimeMillis() / 1000L + 365L * 86400L),
+            addons = if (isBatteryAddon && !current.addons.contains("battery_care")) current.addons + "battery_care" else current.addons,
+        )
+        val updated = runCatching {
+            SweeprAccountApi.verifyGooglePlayPurchase(
+                productId = prodId,
+                purchaseToken = purchaseToken,
+                orderId = orderId,
+                current = current,
+            )
+        }.getOrDefault(localFallback)
+        Prefs.setLinkedAccount(updated)
+    }
+
+    fun ensureConnected(
+        context: Context,
+        onReady: (BillingClient) -> Unit,
+        onError: () -> Unit = {},
+    ) {
+        val existing = billingClient
+        if (existing != null && existing.isReady) {
+            onReady(existing)
+            return
+        }
+        connectionWaiters.add(onReady to onError)
+        if (isConnecting) return
+        isConnecting = true
+
+        val appCtx = context.applicationContext
+        val client = existing ?: BillingClient.newBuilder(appCtx)
             .setListener(this)
             .enablePendingPurchases(
                 PendingPurchasesParams.newBuilder()
@@ -123,90 +179,80 @@ object PlayBillingManager : PurchasesUpdatedListener {
                     .build(),
             )
             .build()
-        billingClient = client
-        connectAndQuery(appCtx, client)
-    }
+            .also { billingClient = it }
 
-    private fun connectAndQuery(appCtx: Context, client: BillingClient) {
         runCatching {
             client.startConnection(object : BillingClientStateListener {
                 override fun onBillingSetupFinished(result: BillingResult) {
+                    isConnecting = false
+                    val waiters = ArrayList(connectionWaiters)
+                    connectionWaiters.clear()
                     if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                         queryStoreProducts(client)
-                        queryActivePurchases(appCtx) { activePurchases ->
-                            if (activePurchases.isNotEmpty()) {
-                                scope.launch {
-                                    for (purchase in activePurchases) {
-                                        runCatching {
-                                            val prodId = purchase.products.firstOrNull() ?: "sweepr_annual_4999"
-                                            val current = Prefs.account.value
-                                            val updated = SweeprAccountApi.verifyGooglePlayPurchase(
-                                                productId = prodId,
-                                                purchaseToken = purchase.purchaseToken,
-                                                orderId = purchase.orderId,
-                                                current = current,
-                                            )
-                                            Prefs.setLinkedAccount(updated)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        waiters.forEach { (ready, _) -> ready(client) }
+                    } else {
+                        waiters.forEach { (_, err) -> err() }
                     }
                 }
 
                 override fun onBillingServiceDisconnected() {
-                    // Reconnected on next purchase attempt if needed
+                    isConnecting = false
                 }
             })
+        }.onFailure {
+            isConnecting = false
+            val waiters = ArrayList(connectionWaiters)
+            connectionWaiters.clear()
+            waiters.forEach { (_, err) -> err() }
         }
     }
 
     fun queryActivePurchases(context: Context, onResult: (List<Purchase>) -> Unit) {
-        val client = billingClient
-        if (client == null || !client.isReady) {
-            onResult(emptyList())
-            return
-        }
-        val subsParams = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.SUBS)
-            .build()
-        val inappParams = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
+        ensureConnected(
+            context = context,
+            onReady = { client ->
+                val subsParams = QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.SUBS)
+                    .build()
+                val inappParams = QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
 
-        client.queryPurchasesAsync(subsParams) { subsResult, subsPurchases ->
-            val activeSubs = if (subsResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                subsPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-            } else {
-                emptyList()
-            }
-            for (p in activeSubs) {
-                if (!p.isAcknowledged) {
-                    val ackParams = AcknowledgePurchaseParams.newBuilder()
-                        .setPurchaseToken(p.purchaseToken)
-                        .build()
-                    client.acknowledgePurchase(ackParams) {}
-                }
-            }
-            client.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
-                val activeInapp = if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    inappPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
-                } else {
-                    emptyList()
-                }
-                for (p in activeInapp) {
-                    if (!p.isAcknowledged) {
-                        val ackParams = AcknowledgePurchaseParams.newBuilder()
-                            .setPurchaseToken(p.purchaseToken)
-                            .build()
-                        client.acknowledgePurchase(ackParams) {}
+                client.queryPurchasesAsync(subsParams) { subsResult, subsPurchases ->
+                    val activeSubs = if (subsResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                        subsPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                    } else {
+                        emptyList()
+                    }
+                    for (p in activeSubs) {
+                        if (!p.isAcknowledged) {
+                            val ackParams = AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(p.purchaseToken)
+                                .build()
+                            client.acknowledgePurchase(ackParams) {}
+                        }
+                    }
+                    client.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
+                        val activeInapp = if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                            inappPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                        } else {
+                            emptyList()
+                        }
+                        for (p in activeInapp) {
+                            if (!p.isAcknowledged) {
+                                val ackParams = AcknowledgePurchaseParams.newBuilder()
+                                    .setPurchaseToken(p.purchaseToken)
+                                    .build()
+                                client.acknowledgePurchase(ackParams) {}
+                            }
+                        }
+                        val combined = (activeSubs + activeInapp).distinctBy { it.purchaseToken }
+                        onResult(combined)
                     }
                 }
-                val combined = (activeSubs + activeInapp).distinctBy { it.purchaseToken }
-                onResult(combined)
-            }
-        }
+            },
+            onError = { onResult(emptyList()) },
+        )
     }
 
     private fun queryStoreProducts(client: BillingClient) {
@@ -288,33 +334,90 @@ object PlayBillingManager : PurchasesUpdatedListener {
         }
     }
 
+    private fun launchBillingFlowWithDetails(
+        activity: Activity,
+        client: BillingClient,
+        details: ProductDetails,
+        onSuccess: (productId: String, purchaseToken: String, orderId: String?) -> Unit,
+        onFallback: () -> Unit,
+    ) {
+        activity.runOnUiThread {
+            val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
+            val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(details)
+            if (details.productType == BillingClient.ProductType.SUBS && !offerToken.isNullOrBlank()) {
+                productDetailsParamsBuilder.setOfferToken(offerToken)
+            }
+            val flowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
+                .build()
+            pendingCallback = onSuccess
+            val billingResult = client.launchBillingFlow(activity, flowParams)
+            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                pendingCallback = null
+                onFallback()
+            }
+        }
+    }
+
     fun launchPurchase(
         activity: Activity,
         productId: String,
         onSuccess: (productId: String, purchaseToken: String, orderId: String?) -> Unit,
         onFallback: () -> Unit,
     ) {
-        val client = billingClient
-        val details = productDetailsMap[productId]
-        if (client == null || !client.isReady || details == null) {
-            onFallback()
-            return
-        }
-        val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
-        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-        if (details.productType == BillingClient.ProductType.SUBS && !offerToken.isNullOrBlank()) {
-            productDetailsParamsBuilder.setOfferToken(offerToken)
-        }
-        val flowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
-            .build()
-        pendingCallback = onSuccess
-        val billingResult = client.launchBillingFlow(activity, flowParams)
-        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            pendingCallback = null
-            onFallback()
-        }
+        ensureConnected(
+            context = activity,
+            onReady = { client ->
+                val cached = productDetailsMap[productId]
+                if (cached != null) {
+                    launchBillingFlowWithDetails(activity, client, cached, onSuccess, onFallback)
+                    return@ensureConnected
+                }
+                val subsParam = QueryProductDetailsParams.newBuilder()
+                    .setProductList(
+                        listOf(
+                            QueryProductDetailsParams.Product.newBuilder()
+                                .setProductId(productId)
+                                .setProductType(BillingClient.ProductType.SUBS)
+                                .build(),
+                        ),
+                    )
+                    .build()
+                client.queryProductDetailsAsync(subsParam) { subsResult, subsList ->
+                    val foundSub = subsList.firstOrNull()
+                    if (subsResult.responseCode == BillingClient.BillingResponseCode.OK && foundSub != null) {
+                        productDetailsMap[productId] = foundSub
+                        launchBillingFlowWithDetails(activity, client, foundSub, onSuccess, onFallback)
+                        return@queryProductDetailsAsync
+                    }
+                    if (productId == SKU_BATTERY_CARE) {
+                        val inappParam = QueryProductDetailsParams.newBuilder()
+                            .setProductList(
+                                listOf(
+                                    QueryProductDetailsParams.Product.newBuilder()
+                                        .setProductId(productId)
+                                        .setProductType(BillingClient.ProductType.INAPP)
+                                        .build(),
+                                ),
+                            )
+                            .build()
+                        client.queryProductDetailsAsync(inappParam) { inappResult, inappList ->
+                            val foundInapp = inappList.firstOrNull()
+                            if (inappResult.responseCode == BillingClient.BillingResponseCode.OK && foundInapp != null) {
+                                productDetailsMap[productId] = foundInapp
+                                launchBillingFlowWithDetails(activity, client, foundInapp, onSuccess, onFallback)
+                            } else {
+                                activity.runOnUiThread { onFallback() }
+                            }
+                        }
+                    } else {
+                        activity.runOnUiThread { onFallback() }
+                    }
+                }
+            },
+            onError = { activity.runOnUiThread { onFallback() } },
+        )
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
@@ -324,7 +427,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
         val client = billingClient
         for (purchase in purchases) {
             if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                val prodId = purchase.products.firstOrNull() ?: "sweepr_annual_4999"
+                val prodId = purchase.products.firstOrNull() ?: SKU_ANNUAL
                 val pToken = purchase.purchaseToken
                 val orderId = purchase.orderId
                 if (!purchase.isAcknowledged && client != null) {
@@ -339,16 +442,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
                     cb(prodId, pToken, orderId)
                 } else {
                     scope.launch {
-                        runCatching {
-                            val current = Prefs.account.value
-                            val updated = SweeprAccountApi.verifyGooglePlayPurchase(
-                                productId = prodId,
-                                purchaseToken = pToken,
-                                orderId = orderId,
-                                current = current,
-                            )
-                            Prefs.setLinkedAccount(updated)
-                        }
+                        syncPurchaseToAccount(prodId, pToken, orderId)
                     }
                 }
             }

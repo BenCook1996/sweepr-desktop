@@ -441,8 +441,8 @@
                         type="checkbox"
                         checked={!!selectedFiles[f]}
                         onclick={(e) => {
-                          e.preventDefault();
                           handleDuplicateCheckClick(f, e);
+                          (e.currentTarget as HTMLInputElement).checked = !!selectedFiles[f];
                         }}
                       />
                     {/if}

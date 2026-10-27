@@ -1237,9 +1237,9 @@ private fun MediaDonut(
                 Text(formatBytes(centerBytes), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
-        CalloutChip("🎬 $videoLabel", SweeprTeal, Color.White, Modifier.align(Alignment.TopStart).padding(top = 6.dp, start = 8.dp))
-        CalloutChip("📸 $screenshotLabel", Emerald400, Color(0xFF064E3B), Modifier.align(Alignment.TopEnd).padding(top = 30.dp, end = 4.dp))
-        CalloutChip("🖼️ $photoLabel", Emerald600, Color.White, Modifier.align(Alignment.BottomCenter))
+        CalloutChip(videoLabel, SweeprTeal, Color.White, Modifier.align(Alignment.TopStart).padding(top = 6.dp, start = 8.dp))
+        CalloutChip(screenshotLabel, Emerald400, Color(0xFF064E3B), Modifier.align(Alignment.TopEnd).padding(top = 30.dp, end = 4.dp))
+        CalloutChip(photoLabel, Emerald600, Color.White, Modifier.align(Alignment.BottomCenter))
     }
 }
 

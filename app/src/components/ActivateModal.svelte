@@ -316,7 +316,7 @@
           </button>
 
           <div class="footer-links">
-            <span class="secure-label">🔒 Stripe Secure Checkout</span>
+            <span class="secure-label">Stripe Secure Checkout</span>
             <button
               type="button"
               class="link-btn"

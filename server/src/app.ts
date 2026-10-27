@@ -284,6 +284,27 @@ export function createApp(deps: AppDeps) {
     return c.body(readFileSync(file, "utf-8"));
   });
 
+  // Android Digital Asset Links (App Links autoVerify for https://sweeprcleaner.com/pair)
+  app.get("/.well-known/assetlinks.json", (c) => {
+    const baseFingerprint = "62:53:82:F9:86:E2:6B:13:DB:4F:F8:57:CD:F0:F0:D7:4C:C6:36:F3:56:6C:5F:54:03:C7:55:EC:2A:19:83:D7";
+    const extraFingerprints = String(process.env.ANDROID_ASSETLINKS_SHA256 ?? "")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter((s) => s.length > 0 && s !== baseFingerprint);
+    const fingerprints = [baseFingerprint, ...extraFingerprints];
+    c.header("Cache-Control", "public, max-age=86400");
+    return c.json([
+      {
+        relation: ["delegate_permission/common.handle_all_urls"],
+        target: {
+          namespace: "android_app",
+          package_name: "com.sweepr.app",
+          sha256_cert_fingerprints: fingerprints,
+        },
+      },
+    ]);
+  });
+
   // Admin-only surface: CRM API, dashboard HTML (including the static copy under /crm/*) and /admin.
   const adminAuth = adminBasicAuth({
     user: config.crmAdminUser || "admin",

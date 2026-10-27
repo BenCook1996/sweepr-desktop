@@ -452,6 +452,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         productId: String,
         purchaseToken: String,
         orderId: String? = null,
+        isNewPurchase: Boolean = false,
     ) {
         val isAddonOnly = productId.contains("battery_care", ignoreCase = true)
         if (!isAddonOnly) {
@@ -460,18 +461,26 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             rcBatteryCare = true
         }
         val current = _state.value.linkedAccount
-        serverActive = isServerAccountCurrentlyEntitled(current)
+        val localUpdated = current.copy(
+            serverActive = if (isAddonOnly) current.serverActive else true,
+            plan = if (isAddonOnly) (current.plan ?: "addon_only") else (current.plan ?: productId),
+            expiresAt = if (current.expiresAt > 0L) current.expiresAt else (System.currentTimeMillis() / 1000L + 365L * 86400L),
+            addons = if (isAddonOnly && !current.addons.contains("battery_care")) current.addons + "battery_care" else current.addons,
+        )
+        Prefs.setLinkedAccount(localUpdated)
+        serverActive = isServerAccountCurrentlyEntitled(localUpdated)
         val immediateActive = rcActive || serverActive
-        val immediateBatActive = immediateActive || rcBatteryCare || isServerBatteryCareEntitled(current)
+        val immediateBatActive = immediateActive || rcBatteryCare || isServerBatteryCareEntitled(localUpdated)
         BatteryCareManager.enforceEntitlement(app, immediateActive || immediateBatActive)
         _state.update { s ->
             s.copy(
+                linkedAccount = localUpdated,
                 subscription = s.subscription.copy(
                     active = immediateActive,
                     batteryCareActive = immediateBatActive,
                     productId = if (!isAddonOnly) productId else (s.subscription.productId ?: productId),
                 ),
-                message = locApp.getString(R.string.msg_premium_restored),
+                message = locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored),
             )
         }
 

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sweepr.app",
+      "sha256_cert_fingerprints": [
+        "62:53:82:F9:86:E2:6B:13:DB:4F:F8:57:CD:F0:F0:D7:4C:C6:36:F3:56:6C:5F:54:03:C7:55:EC:2A:19:83:D7"
+      ]
+    }
+  }
+]

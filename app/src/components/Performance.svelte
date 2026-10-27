@@ -90,8 +90,10 @@
     }
   }
 
-  async function toggleContextMenu(item: ContextMenuItem) {
+  async function toggleContextMenu(item: ContextMenuItem, evt?: Event) {
+    const input = evt?.currentTarget as HTMLInputElement | undefined;
     if (!isPro) {
+      if (input) input.checked = item.enabled;
       requestActivation();
       return;
     }
@@ -100,6 +102,7 @@
       contextMenuItems = await api.toggleContextMenuItem(item.id, !item.enabled);
       cachedContextMenu = contextMenuItems;
     } catch (e) {
+      if (input) input.checked = item.enabled;
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
     }
@@ -149,8 +152,11 @@
     }
   }
 
-  async function toggleChargeLimit(enabled: boolean) {
+  async function toggleChargeLimit(enabled: boolean, evt?: Event) {
+    const input = evt?.currentTarget as HTMLInputElement | undefined;
+    const prev = diag?.config.charge_limit_enabled ?? false;
     if (enabled && !isPro) {
+      if (input) input.checked = prev;
       requestActivation();
       return;
     }
@@ -163,6 +169,7 @@
         cachedBattery = diag;
       }
     } catch (e) {
+      if (input) input.checked = prev;
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
     } finally {
@@ -170,8 +177,11 @@
     }
   }
 
-  async function toggleThermal(enabled: boolean) {
+  async function toggleThermal(enabled: boolean, evt?: Event) {
+    const input = evt?.currentTarget as HTMLInputElement | undefined;
+    const prev = diag?.config.thermal_throttling_enabled ?? false;
     if (enabled && !isPro) {
+      if (input) input.checked = prev;
       requestActivation();
       return;
     }
@@ -184,6 +194,7 @@
         cachedBattery = diag;
       }
     } catch (e) {
+      if (input) input.checked = prev;
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
     } finally {
@@ -191,8 +202,11 @@
     }
   }
 
-  async function toggleSleepTabs(enabled: boolean) {
+  async function toggleSleepTabs(enabled: boolean, evt?: Event) {
+    const input = evt?.currentTarget as HTMLInputElement | undefined;
+    const prev = diag?.config.auto_hibernate_tabs ?? false;
     if (enabled && !isPro) {
+      if (input) input.checked = prev;
       requestActivation();
       return;
     }
@@ -208,6 +222,7 @@
         boostNotice = `Freed ${formatBytes(r.bytes_freed)}`;
       }
     } catch (e) {
+      if (input) input.checked = prev;
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
     } finally {
@@ -215,18 +230,22 @@
     }
   }
 
-  async function toggleStartupApp(item: StartupItem) {
+  async function toggleStartupApp(item: StartupItem, evt?: Event) {
+    const input = evt?.currentTarget as HTMLInputElement | undefined;
+    const prev = item.enabled ?? true;
     if (!isPro) {
+      if (input) input.checked = prev;
       requestActivation();
       return;
     }
     error = null;
     toggling = item.name;
     try {
-      const nextEnabled = !(item.enabled ?? true);
+      const nextEnabled = !prev;
       startup = await api.toggleStartupItem(item.name, item.scope, nextEnabled);
       cachedStartup = startup;
     } catch (e) {
+      if (input) input.checked = prev;
       if (isPaymentRequired(e)) {
         requestActivation();
       } else {
@@ -379,7 +398,7 @@
           class="toggle-switch"
           checked={diag?.config.charge_limit_enabled ?? false}
           disabled={busyAutopilot === "limit" || (diag != null && !diag.has_battery)}
-          onchange={(e) => toggleChargeLimit((e.currentTarget as HTMLInputElement).checked)}
+          onchange={(e) => toggleChargeLimit((e.currentTarget as HTMLInputElement).checked, e)}
         />
       </label>
 
@@ -390,7 +409,7 @@
           class="toggle-switch"
           checked={diag?.config.auto_hibernate_tabs ?? false}
           disabled={busyAutopilot === "tabs"}
-          onchange={(e) => toggleSleepTabs((e.currentTarget as HTMLInputElement).checked)}
+          onchange={(e) => toggleSleepTabs((e.currentTarget as HTMLInputElement).checked, e)}
         />
       </label>
 
@@ -401,7 +420,7 @@
           class="toggle-switch"
           checked={diag?.config.thermal_throttling_enabled ?? false}
           disabled={busyAutopilot === "thermal"}
-          onchange={(e) => toggleThermal((e.currentTarget as HTMLInputElement).checked)}
+          onchange={(e) => toggleThermal((e.currentTarget as HTMLInputElement).checked, e)}
         />
       </label>
     </div>
@@ -423,7 +442,7 @@
               class="toggle-switch"
               checked={isEnabled}
               disabled={toggling === s.name}
-              onchange={() => toggleStartupApp(s)}
+              onchange={(e) => toggleStartupApp(s, e)}
             />
           </label>
         {/each}
@@ -497,7 +516,7 @@
               type="checkbox"
               class="toggle-switch"
               checked={cm.enabled}
-              onchange={() => toggleContextMenu(cm)}
+              onchange={(e) => toggleContextMenu(cm, e)}
             />
           </label>
         {/each}

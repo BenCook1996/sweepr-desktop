@@ -195,6 +195,7 @@
     <string name="msg_need_permissions">SWEEPR Cleaner needs access to photos or contacts to scan. Enable it in Settings.</string>
     <string name="msg_restore_failed">Restore failed: %1$s</string>
     <string name="msg_premium_restored">Premium restored – you\'re all set</string>
+    <string name="acct_pro_unlocked">SWEEPR Pro unlocked – you\'re all set!</string>
     <string name="msg_no_subscription_found">No previous subscription found on this Google account</string>
     <string name="scan_status_media">Scanning photos &amp; videos…</string>
     <string name="scan_status_contacts">Checking contacts…</string>
