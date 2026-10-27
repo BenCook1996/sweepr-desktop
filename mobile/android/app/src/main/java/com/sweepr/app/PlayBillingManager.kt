@@ -275,7 +275,8 @@ object PlayBillingManager : PurchasesUpdatedListener {
             .setProductList(subsProducts)
             .build()
 
-        client.queryProductDetailsAsync(subsParams) { result, detailsList ->
+        client.queryProductDetailsAsync(subsParams) { result, subsDetailsResult ->
+            val detailsList = subsDetailsResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 val updated = _prices.value.toMutableMap()
                 for (details in detailsList) {
@@ -316,7 +317,8 @@ object PlayBillingManager : PurchasesUpdatedListener {
             .setProductList(inappProducts)
             .build()
 
-        client.queryProductDetailsAsync(inappParams) { result, detailsList ->
+        client.queryProductDetailsAsync(inappParams) { result, inappDetailsResult ->
+            val detailsList = inappDetailsResult.productDetailsList
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 val updated = _prices.value.toMutableMap()
                 for (details in detailsList) {
@@ -388,7 +390,8 @@ object PlayBillingManager : PurchasesUpdatedListener {
                         ),
                     )
                     .build()
-                client.queryProductDetailsAsync(subsParam) { subsResult, subsList ->
+                client.queryProductDetailsAsync(subsParam) { subsResult, subsDetailsResult ->
+                    val subsList = subsDetailsResult.productDetailsList
                     val foundSub = subsList.firstOrNull()
                     if (subsResult.responseCode == BillingClient.BillingResponseCode.OK && foundSub != null) {
                         productDetailsMap[productId] = foundSub
@@ -406,7 +409,8 @@ object PlayBillingManager : PurchasesUpdatedListener {
                                 ),
                             )
                             .build()
-                        client.queryProductDetailsAsync(inappParam) { inappResult, inappList ->
+                        client.queryProductDetailsAsync(inappParam) { inappResult, inappDetailsResult ->
+                            val inappList = inappDetailsResult.productDetailsList
                             val foundInapp = inappList.firstOrNull()
                             if (inappResult.responseCode == BillingClient.BillingResponseCode.OK && foundInapp != null) {
                                 productDetailsMap[productId] = foundInapp

@@ -43,7 +43,7 @@ val sweeprLicensePubkey: String =
 
 android {
     namespace = "com.sweepr.app"
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -56,9 +56,9 @@ android {
     defaultConfig {
         applicationId = "com.sweepr.app"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = 3
+        versionName = "1.0.2"
 
         // Only ship the languages Sweepr is translated into (drops unused library translations).
         resourceConfigurations += listOf("en", "es", "fr", "de", "it", "pt", "nl")
@@ -150,10 +150,17 @@ dependencies {
     // RevenueCat + Direct Google Play Billing Library + Google Play In-App Updates
     implementation("com.revenuecat.purchases:purchases:8.2.1")
     implementation("com.revenuecat.purchases:purchases-ui:8.2.1") // Paywalls UI
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20231013")
     testImplementation("org.mockito:mockito-core:5.11.0")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("com.android.billingclient:billing:8.0.0")
+        force("com.android.billingclient:billing-ktx:8.0.0")
+    }
 }
