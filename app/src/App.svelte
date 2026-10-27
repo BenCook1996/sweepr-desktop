@@ -585,7 +585,7 @@
             <path d={ICONS.scan} />
           </svg>
           {#if !sidebarCollapsed}
-            <span>Clean</span>
+            <span>{t("nav.clean", $lang)}</span>
           {/if}
         </button>
 
@@ -599,7 +599,7 @@
             <path d={ICONS.speed} />
           </svg>
           {#if !sidebarCollapsed}
-            <span>Speed</span>
+            <span>{t("nav.speedShort", $lang)}</span>
           {/if}
         </button>
 
@@ -613,7 +613,7 @@
             <path d={ICONS.apps} />
           </svg>
           {#if !sidebarCollapsed}
-            <span>Tools</span>
+            <span>{t("nav.tools", $lang)}</span>
           {/if}
         </button>
       </nav>
@@ -628,7 +628,7 @@
             <path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
           </svg>
           {#if !sidebarCollapsed}
-            <span>Undo</span>
+            <span>{t("nav.undo", $lang)}</span>
           {/if}
         </button>
 
@@ -645,7 +645,7 @@
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
             {#if !sidebarCollapsed}
-              <span>Settings</span>
+              <span>{t("nav.settings", $lang)}</span>
             {/if}
           </button>
 
@@ -661,7 +661,7 @@
 
         {#if !sidebarCollapsed && !license?.active}
           <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
-            Unlock Pro
+            {t("tier.unlockPro", $lang)}
           </button>
         {/if}
       </div>
@@ -730,21 +730,21 @@
             class:active={tab === "privacy"}
             onclick={() => { toolsMode = "privacy"; tab = "privacy"; }}
           >
-            Vault &amp; Privacy
+            {t("nav.privacy", $lang)}
           </button>
           <button
             class="tools-pill"
             class:active={tab === "apps"}
             onclick={() => { toolsMode = "apps"; tab = "apps"; }}
           >
-            Uninstaller
+            {t("nav.apps", $lang)}
           </button>
           <button
             class="tools-pill"
             class:active={tab === "space"}
             onclick={() => { toolsMode = "space"; tab = "space"; }}
           >
-            Duplicates &amp; Files
+            {t("nav.space", $lang)}
           </button>
         </div>
       {/if}

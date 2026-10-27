@@ -91,12 +91,17 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
   ) {
     rcAddons.push("cloud_vault");
   }
-  const resolvedPlan =
-    productId.includes("annual") || productId.includes("4999")
-      ? "annual"
-      : productId.includes("six_month") || productId.includes("6month") || productId.includes("3899")
-      ? "six_month"
-      : "monthly";
+  const isAddon =
+    productId.toLowerCase().includes("battery") ||
+    productId.toLowerCase().includes("cloud") ||
+    productId.toLowerCase().includes("vault");
+  const resolvedPlan = isAddon
+    ? existing?.plan ?? "addon_only"
+    : productId.includes("annual") || productId.includes("4999")
+    ? "annual"
+    : productId.includes("six_month") || productId.includes("6month") || productId.includes("3899")
+    ? "six_month"
+    : "monthly";
   repo.upsertEntitlement({
     account_id: account.id,
     stripe_subscription_id: typeof event.original_transaction_id === "string" ? event.original_transaction_id : null, // Map RC transaction ID here

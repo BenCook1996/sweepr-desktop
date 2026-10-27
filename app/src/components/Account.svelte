@@ -13,7 +13,7 @@
     type AppUpdateInfo,
     type LicenseStatus,
   } from "../lib/api";
-  import { lang, setLang, LANGUAGES, type Lang } from "../lib/i18n";
+  import { lang, setLang, LANGUAGES, t, type Lang } from "../lib/i18n";
 
   let {
     license,
@@ -55,6 +55,43 @@
   let updateInfo = $state<AppUpdateInfo | null>(null);
   let checkingUpdate = $state(false);
   let installingUpdate = $state(false);
+
+  // Scan Exclusions
+  let exclusions = $state<string[]>([]);
+  let newExclusionPath = $state("");
+
+  async function addScanExclusion() {
+    const p = newExclusionPath.trim();
+    if (!p) return;
+    error = null;
+    try {
+      exclusions = await api.addExclusion(p);
+      newExclusionPath = "";
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
+
+  async function pickExclusionFolder() {
+    error = null;
+    try {
+      const picked = await api.pickFolder();
+      if (picked) {
+        exclusions = await api.addExclusion(picked);
+      }
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
+
+  async function removeScanExclusion(path: string) {
+    error = null;
+    try {
+      exclusions = await api.removeExclusion(path);
+    } catch (e) {
+      error = errorMessage(e);
+    }
+  }
 
   // Bi-Directional QR Device Linking (Flow A & Flow B)
   let qrMode = $state<"none" | "challenge" | "token">("none");
@@ -137,6 +174,10 @@
     api
       .checkAppUpdate()
       .then((u) => (updateInfo = u))
+      .catch(() => {});
+    api
+      .listExclusions()
+      .then((ex) => (exclusions = ex))
       .catch(() => {});
   });
 
@@ -265,7 +306,7 @@
 
 <div class="account-layout">
   <div class="header-row">
-    <h1 class="page-title">Settings</h1>
+    <h1 class="page-title">{t("nav.settings", $lang)}</h1>
 
     <div class="mode-toggle" role="tablist">
       <button
@@ -275,7 +316,7 @@
         role="tab"
         aria-selected={section === "schedule"}
       >
-        Auto-Clean
+        {t("nav.schedule", $lang)}
       </button>
       <button
         class="mode-btn"
@@ -284,7 +325,7 @@
         role="tab"
         aria-selected={section === "account"}
       >
-        Account &amp; App
+        {t("nav.account", $lang)}
       </button>
     </div>
   </div>
@@ -301,7 +342,7 @@
       {#if license?.active}
         <div class="row">
           <strong>Subscription</strong>
-          <span class="badge free">Pro Active</span>
+          <span class="badge free">{t("tier.activated", $lang)}</span>
           {#if license.plan}<span class="badge pro">{license.plan}</span>{/if}
           <div class="spacer"></div>
           <button class="ghost small-btn" disabled={busy} onclick={showLinkAnotherDeviceQr}>
@@ -314,10 +355,10 @@
         {/if}
       {:else}
         <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <strong>Free Plan</strong>
+          <strong>{t("tier.free", $lang)}</strong>
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <button class="primary small-btn" disabled={busy} onclick={startPlanCheckout}>
-              Unlock Pro
+              {t("tier.unlockPro", $lang)}
             </button>
             <button class="ghost small-btn" disabled={busy} onclick={startDesktopQrChallenge}>
               Sign In with QR Code
@@ -450,7 +491,7 @@
         <div class="row" style="justify-content: space-between;">
           <strong>Theme</strong>
           <button class="ghost small-btn" onclick={() => onToggleTheme?.()}>
-            {theme === "dark" ? "Dark" : "Light"}
+            {theme === "dark" ? t("theme.dark", $lang) : t("theme.light", $lang)}
           </button>
         </div>
         <div class="row" style="justify-content: space-between;">
@@ -467,6 +508,36 @@
             {/each}
           </select>
         </div>
+      </div>
+
+      <!-- Scan Exclusions -->
+      <div class="card box">
+        <div class="row" style="justify-content: space-between;">
+          <strong>Scan Exclusions ({exclusions.length})</strong>
+          <button class="ghost small-btn" onclick={pickExclusionFolder}>+ Browse Folder</button>
+        </div>
+        <div class="row" style="gap: 8px; flex-wrap: wrap;">
+          <input
+            type="text"
+            bind:value={newExclusionPath}
+            placeholder="Path or folder to skip during scans"
+            style="flex: 1; min-width: 180px; padding: 7px 12px; border-radius: 9999px; border: 1px solid var(--border); font-size: 12.5px;"
+            onkeydown={(e) => e.key === "Enter" && addScanExclusion()}
+          />
+          <button class="primary small-btn" onclick={addScanExclusion}>Add</button>
+        </div>
+        {#if exclusions.length > 0}
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;">
+            {#each exclusions as ex (ex)}
+              <div class="row" style="justify-content: space-between; padding: 4px 10px; border-radius: 8px; background: var(--panel-2); font-size: 12px;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{ex}</span>
+                <button class="ghost small-btn" style="padding: 2px 8px;" onclick={() => removeScanExclusion(ex)}>×</button>
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <span class="muted small">No excluded folders or files configured.</span>
+        {/if}
       </div>
     </div>
 

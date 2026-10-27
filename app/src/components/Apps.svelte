@@ -31,6 +31,7 @@
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
+  import { lang, t } from "../lib/i18n";
 
   let { license }: { license: LicenseStatus | null } = $props();
   let mode = $state<"apps" | "maintenance">(cachedMode);
@@ -286,7 +287,7 @@
 
 <div class="apps-layout">
   <div class="header-row">
-    <h1 class="page-title">Uninstaller</h1>
+    <h1 class="page-title">{t("nav.apps", $lang)}</h1>
 
     <div class="mode-toggle" role="tablist">
       <button

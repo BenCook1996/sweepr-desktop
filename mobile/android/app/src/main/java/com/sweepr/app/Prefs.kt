@@ -266,7 +266,7 @@ object Prefs {
             serverActive = activeFromSecure,
             plan = secureAuthStore.getString(KEY_SERVER_PLAN, null),
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (activeFromSecure) {
+            addons = if (refreshToken.isNotBlank()) {
                 secureAuthStore.getString(KEY_SERVER_ADDONS, "")
                     ?.split(",")
                     ?.map { it.trim() }
@@ -599,7 +599,7 @@ object SweeprAccountApi {
             serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (isActive) parseAddons(res, current.addons) else emptyList(),
+            addons = if (isActive || res.optJSONArray("addons") != null) parseAddons(res, current.addons) else emptyList(),
         )
     }
 
@@ -639,7 +639,7 @@ object SweeprAccountApi {
             serverActive = isActive,
             plan = res.optString("plan").takeIf { it.isNotBlank() },
             expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (isActive) parseAddons(res) else emptyList(),
+            addons = if (isActive || res.optJSONArray("addons") != null) parseAddons(res) else emptyList(),
             referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
                 ?: Prefs.defaultReferralCode(resolvedDeviceId, accountId),
         )
@@ -669,12 +669,13 @@ object SweeprAccountApi {
         addons: List<String> = emptyList(),
         current: LinkedAccount,
     ): LinkedAccount {
+        val authed = ensureDeviceRegistered(current)
         val addonsJson = org.json.JSONArray()
         for (a in addons) addonsJson.put(a)
         val body = org.json.JSONObject()
             .put("product_id", productId)
             .put("purchase_token", purchaseToken)
-            .put("device_id", current.deviceId)
+            .put("device_id", authed.deviceId)
             .put("project_id", PROJECT_ID)
             .put("addons", addonsJson)
         if (!orderId.isNullOrBlank()) body.put("order_id", orderId)
@@ -682,23 +683,23 @@ object SweeprAccountApi {
         val res = postJson(
             "/v1/billing/google-play/verify",
             body,
-            bearerToken = current.refreshToken.takeIf { it.isNotBlank() },
+            bearerToken = authed.refreshToken.takeIf { it.isNotBlank() },
         )
-        val resolvedDeviceId = res.optString("device_id").ifBlank { current.deviceId }
+        val resolvedDeviceId = res.optString("device_id").ifBlank { authed.deviceId }
         val expiresSec = res.optLong("expires_at", 0L)
         val jwsToken = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
         val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, resolvedDeviceId))
-        val accountId = res.optString("account_id").ifBlank { current.accountId }
-        val refreshToken = res.optString("refresh_token").ifBlank { current.refreshToken }
-        return current.copy(
+        val accountId = res.optString("account_id").ifBlank { authed.accountId }
+        val refreshToken = res.optString("refresh_token").ifBlank { authed.refreshToken }
+        return authed.copy(
             accountId = accountId,
             refreshToken = refreshToken,
             deviceId = resolvedDeviceId,
             serverActive = isActive,
-            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
-            expiresAt = if (expiresSec > 0L) expiresSec else current.expiresAt,
-            addons = if (isActive) parseAddons(res, current.addons) else current.addons,
+            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: authed.plan,
+            expiresAt = if (expiresSec > 0L) expiresSec else authed.expiresAt,
+            addons = parseAddons(res, authed.addons),
         )
     }
 
@@ -727,11 +728,12 @@ object Reminders {
 
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
+        val loc = context.localized()
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.notif_channel_name),
+            loc.getString(R.string.notif_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
-        ).apply { description = context.getString(R.string.notif_channel_desc) }
+        ).apply { description = loc.getString(R.string.notif_channel_desc) }
         context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
     }
 
@@ -762,12 +764,13 @@ object Reminders {
 
     fun show(context: Context) {
         if (!canNotify(context)) return
+        val loc = context.localized()
         val storage = readStorage()
         val percent = (storage.fraction * 100).roundToInt()
         val text = if (storage.total > 0) {
-            context.getString(R.string.notif_text_percent, percent)
+            loc.getString(R.string.notif_text_percent, percent)
         } else {
-            context.getString(R.string.notif_text)
+            loc.getString(R.string.notif_text)
         }
         val open = PendingIntent.getActivity(
             context,
@@ -778,7 +781,7 @@ object Reminders {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setColor(0xFF10B981.toInt())
-            .setContentTitle(context.getString(R.string.notif_title))
+            .setContentTitle(loc.getString(R.string.notif_title))
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(open)

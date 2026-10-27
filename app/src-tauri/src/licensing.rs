@@ -253,6 +253,7 @@ pub fn verify_binary_signature_with_key(
         .map_err(|_| bad("binary signature verification failed"))
 }
 
+#[allow(dead_code)]
 pub fn verify_token(token: &str, key: &VerifyingKey, device_id: &str) -> AppResult<Claims> {
     verify_token_with_keys(token, key, None, device_id)
 }
@@ -689,9 +690,9 @@ impl Licensing {
         }
     }
 
-    pub async fn require_addon(&self, _addon: &str) -> AppResult<()> {
+    pub async fn require_addon(&self, addon: &str) -> AppResult<()> {
         let st = self.status(false).await?;
-        if st.dev_unlock || st.active {
+        if st.dev_unlock || st.active || st.addons.iter().any(|a| a.eq_ignore_ascii_case(addon)) {
             Ok(())
         } else {
             Err(AppError::PaymentRequired)
@@ -908,8 +909,16 @@ impl Licensing {
                 st.account = Some(acc);
                 st.token = None;
                 if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
-                    if let Ok(claims) = verify_token(&tok, key, &self.device_id) {
-                        let _ = std::fs::write(self.data_dir.join("entitlement.jws"), &tok);
+                    if let Ok(claims) = verify_token_with_keys(
+                        &tok,
+                        key,
+                        self.backup_pubkey.as_ref(),
+                        &self.device_id,
+                    ) {
+                        let _ = crate::safety::atomic_write(
+                            &self.data_dir.join("entitlement.jws"),
+                            tok.as_bytes(),
+                        );
                         let status = active_status(&claims, false);
                         st.token = Some((tok, claims));
                         return Ok(status);

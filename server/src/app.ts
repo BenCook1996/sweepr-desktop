@@ -4538,9 +4538,10 @@ export function createApp(deps: AppDeps) {
       iat: t,
       exp,
     });
+    const baseProActive = ent!.plan !== "addon_only";
     return c.json({
-      active: true,
-      status: ent!.status,
+      active: baseProActive,
+      status: baseProActive ? ent!.status : "addon_only",
       plan: ent!.plan ?? "monthly",
       addons,
       token,
@@ -4671,12 +4672,18 @@ export function createApp(deps: AppDeps) {
     const effectivePeriodEnd = Math.max(existingEnt?.current_period_end ?? 0, periodEnd);
     // When purchasing or upgrading a base plan, always apply the newly purchased plan tier!
     // When purchasing an add-on alone, preserve the existing base plan (or "addon_only" if none).
-    const effectivePlan = isAddonOnly ? (existingEnt?.plan ?? "addon_only") : plan;
+    const hasBasePro = Boolean(
+      existingEnt &&
+        existingEnt.plan !== "addon_only" &&
+        isEntitled(existingEnt, t, config.pastDueGraceDays)
+    );
+    const effectivePlan = isAddonOnly ? (hasBasePro ? existingEnt!.plan : "addon_only") : plan;
     const effectiveStatus = isAddonOnly
-      ? existingEnt && isEntitled(existingEnt, t, config.pastDueGraceDays)
-        ? existingEnt.status
+      ? hasBasePro
+        ? existingEnt!.status
         : ("active" as const)
       : ("active" as const);
+    const baseProActive = effectivePlan !== "addon_only";
 
     repo.upsertEntitlement({
       account_id: account.id,
@@ -4726,12 +4733,12 @@ export function createApp(deps: AppDeps) {
 
     return c.json({
       ok: true,
-      active: true,
+      active: baseProActive,
       account_id: account.id,
       email: account.email ?? email ?? null,
       refresh_token: refreshToken,
       token,
-      status: "active",
+      status: baseProActive ? "active" : "addon_only",
       plan: effectivePlan,
       addons,
       expires_at: effectivePeriodEnd,

@@ -26,6 +26,7 @@
     type LicenseStatus,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
+  import { lang, t } from "../lib/i18n";
 
   let {
     license = null,
@@ -51,6 +52,8 @@
   let killingProc = $state<string | null>(null);
   let confirmKillProc = $state<string | null>(null);
   let restoringSession = $state<string | null>(null);
+  let savingTabs = $state(false);
+  let deletingSession = $state<string | null>(null);
   let error = $state<string | null>(null);
 
   const isPro = $derived(!!license && (license.dev_unlock || license.active));
@@ -272,6 +275,40 @@
     }
   }
 
+  async function saveTabsNow() {
+    if (!isPro) {
+      requestActivation();
+      return;
+    }
+    error = null;
+    savingTabs = true;
+    try {
+      const saved = await api.backupTabSessions();
+      tabSessions = await api.listTabSessions().catch(() => saved);
+      cachedTabSessions = tabSessions;
+      boostNotice = saved.length > 0 ? `Saved ${saved.length} browser tab session(s)` : "No open browser tab sessions found";
+    } catch (e) {
+      if (isPaymentRequired(e)) requestActivation();
+      else error = errorMessage(e);
+    } finally {
+      savingTabs = false;
+    }
+  }
+
+  async function removeTabSession(id: string) {
+    error = null;
+    deletingSession = id;
+    try {
+      await api.deleteTabSession(id);
+      tabSessions = tabSessions.filter((s) => s.id !== id);
+      cachedTabSessions = tabSessions;
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      deletingSession = null;
+    }
+  }
+
   $effect(() => {
     load();
     const timer = setInterval(() => {
@@ -290,7 +327,7 @@
 <div class="speed-shell">
   <div class="speed-header">
     <div>
-      <h1 class="speed-title">Speed &amp; Battery</h1>
+      <h1 class="speed-title">{t("speed.title", $lang)}</h1>
       <span class="speed-sub">
         {mem ? `${usedPct}% RAM in use` : "Checking memory…"}
         {#if diag?.has_battery && diag.charge_percent != null}
@@ -300,7 +337,7 @@
     </div>
 
     <button class="primary boost-btn" disabled={boosting} onclick={runOneClickSpeedBoost}>
-      {boosting ? "Boosting…" : "Boost RAM"}
+      {boosting ? "Boosting…" : t("speed.boostRam", $lang)}
     </button>
   </div>
 
@@ -372,7 +409,7 @@
 
   <!-- Section 2: Startup Apps -->
   <section class="group-section">
-    <div class="group-label">Startup Apps</div>
+    <div class="group-label">{t("speed.startupApps", $lang)}</div>
     {#if toggleableStartup.length === 0}
       <div class="empty-line">No startup apps found</div>
     {:else}
@@ -395,41 +432,59 @@
   </section>
 
   <!-- Optional Demoted Drawer: Running Memory Hogs & Tab Backups -->
-  {#if topFiveApps.length > 0 || tabSessions.length > 0}
-    <details class="extra-drawer">
-      <summary>Running Apps ({topFiveApps.length})</summary>
-      <div class="row-list" style="margin-top: 8px;">
-        {#each topFiveApps as a (a.name)}
-          <div class="line-row">
-            <span class="row-name">{a.name}</span>
-            <div class="row-right">
-              <span class="row-meta">{formatBytes(a.bytes)}</span>
-              <button
-                class="ghost mini-btn"
-                disabled={killingProc === a.name}
-                onclick={() => closeHeavyApp(a.name)}
-              >
-                {killingProc === a.name ? "…" : confirmKillProc === a.name ? "Confirm" : "Close"}
-              </button>
-            </div>
+  <details class="extra-drawer">
+    <summary>Running Apps ({topFiveApps.length}) &amp; Saved Tabs ({tabSessions.length})</summary>
+    <div class="row-list" style="margin-top: 8px;">
+      <div class="line-row">
+        <span class="row-name">Browser Tab Session Backup</span>
+        <button
+          class="ghost mini-btn"
+          disabled={savingTabs}
+          onclick={saveTabsNow}
+        >
+          {savingTabs ? "Saving…" : "Save Current Tabs"}
+        </button>
+      </div>
+      {#each topFiveApps as a (a.name)}
+        <div class="line-row">
+          <span class="row-name">{a.name}</span>
+          <div class="row-right">
+            <span class="row-meta">{formatBytes(a.bytes)}</span>
+            <button
+              class="ghost mini-btn"
+              disabled={killingProc === a.name}
+              onclick={() => closeHeavyApp(a.name)}
+            >
+              {killingProc === a.name ? "…" : confirmKillProc === a.name ? "Confirm" : "Close"}
+            </button>
           </div>
-        {/each}
+        </div>
+      {/each}
 
-        {#each tabSessions as snap (snap.id)}
-          <div class="line-row">
-            <span class="row-name">Saved Tabs ({snap.estimated_tabs})</span>
+      {#each tabSessions as snap (snap.id)}
+        <div class="line-row">
+          <span class="row-name">{snap.browser} — Saved Tabs ({snap.estimated_tabs})</span>
+          <div class="row-right">
             <button
               class="ghost mini-btn"
               disabled={restoringSession === snap.id}
               onclick={() => restoreSession(snap)}
             >
-              {restoringSession === snap.id ? "…" : "Restore"}
+              {restoringSession === snap.id ? "…" : t("action.restore", $lang)}
+            </button>
+            <button
+              class="ghost mini-btn"
+              disabled={deletingSession === snap.id}
+              onclick={() => removeTabSession(snap.id)}
+              title="Delete saved tab session"
+            >
+              {deletingSession === snap.id ? "…" : "×"}
             </button>
           </div>
-        {/each}
-      </div>
-    </details>
-  {/if}
+        </div>
+      {/each}
+    </div>
+  </details>
 
   {#if contextMenuItems.length > 0}
     <details class="extra-drawer">

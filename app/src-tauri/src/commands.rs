@@ -686,15 +686,15 @@ fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
         fn LoadLibraryA(lpLibFileName: *const u8) -> *mut c_void;
         fn GetProcAddress(hModule: *mut c_void, lpProcName: *const u8) -> *mut c_void;
     }
-    type SqliteOpenFn = unsafe extern "C" fn(*const c_char, *mut *mut c_void) -> c_int;
-    type SqliteExecFn = unsafe extern "C" fn(
+    type SqliteOpenFn = unsafe extern "system" fn(*const c_char, *mut *mut c_void) -> c_int;
+    type SqliteExecFn = unsafe extern "system" fn(
         *mut c_void,
         *const c_char,
         *const c_void,
         *mut c_void,
         *mut *mut c_char,
     ) -> c_int;
-    type SqliteCloseFn = unsafe extern "C" fn(*mut c_void) -> c_int;
+    type SqliteCloseFn = unsafe extern "system" fn(*mut c_void) -> c_int;
 
     let Ok(c_path) = CString::new(db_path.to_string_lossy().as_bytes()) else {
         return false;
@@ -761,19 +761,23 @@ fn clean_cookie_sqlite_file(path: &Path, table: &str, col: &str, allowlist: &[St
         })
         .collect();
     if clauses.is_empty() {
-        return clean_file_or_dir(path);
-    }
-    let before = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
-    let sql = format!("DELETE FROM {table} WHERE NOT ({}); VACUUM;", clauses.join(" OR "));
-    if exec_sqlite_on_file(path, &sql) {
-        let after = std::fs::metadata(path).map(|m| m.len()).unwrap_or(before);
-        let mut freed = before.saturating_sub(after);
+        let mut freed = clean_file_or_dir(path);
         if let Some(parent) = path.parent() {
             let fname = path.file_name().unwrap_or_default().to_string_lossy();
             freed += clean_file_or_dir(&parent.join(format!("{fname}-wal")));
+            freed += clean_file_or_dir(&parent.join(format!("{fname}-shm")));
             freed += clean_file_or_dir(&parent.join(format!("{fname}-journal")));
         }
-        freed
+        return freed;
+    }
+    let before = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+    let sql = format!(
+        "PRAGMA wal_checkpoint(TRUNCATE); DELETE FROM {table} WHERE NOT ({}); VACUUM;",
+        clauses.join(" OR ")
+    );
+    if exec_sqlite_on_file(path, &sql) {
+        let after = std::fs::metadata(path).map(|m| m.len()).unwrap_or(before);
+        before.saturating_sub(after)
     } else {
         0
     }
@@ -2145,16 +2149,44 @@ fn compact_sqlite_dir(dir: &Path) -> u64 {
         if crate::safety::metadata_is_link_like(&md) || !md.is_file() {
             continue;
         }
-        let name = entry.file_name().to_string_lossy().to_ascii_lowercase();
-        let is_temp_journal = name.ends_with("-journal")
-            || name.ends_with("-wal")
-            || name.ends_with("-shm")
-            || name.ends_with(".tmp")
-            || name == "visited links";
-        if is_temp_journal {
+        let raw_name = entry.file_name().to_string_lossy().to_string();
+        let name = raw_name.to_ascii_lowercase();
+
+        // Only remove -wal / -shm / -journal files if their parent database file no longer exists on disk
+        if let Some(base_name) = raw_name
+            .strip_suffix("-journal")
+            .or_else(|| raw_name.strip_suffix("-wal"))
+            .or_else(|| raw_name.strip_suffix("-shm"))
+        {
+            let base_db_path = dir.join(base_name);
+            if !base_db_path.exists() {
+                let len = md.len();
+                if std::fs::remove_file(&p).is_ok() {
+                    reclaimed += len;
+                }
+            }
+            continue;
+        }
+
+        if name.ends_with(".tmp") || name == "visited links" {
             let len = md.len();
             if std::fs::remove_file(&p).is_ok() {
                 reclaimed += len;
+            }
+            continue;
+        }
+
+        let is_sqlite_db = name == "history"
+            || name == "cookies"
+            || name == "web data"
+            || name == "favicons"
+            || name == "top sites"
+            || name.ends_with(".sqlite");
+        if is_sqlite_db {
+            let before = md.len();
+            if exec_sqlite_on_file(&p, "PRAGMA wal_checkpoint(TRUNCATE); VACUUM;") {
+                let after = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(before);
+                reclaimed += before.saturating_sub(after);
             }
         }
     }

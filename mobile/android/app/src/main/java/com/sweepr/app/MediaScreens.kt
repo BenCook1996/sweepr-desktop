@@ -887,7 +887,7 @@ private fun PhotoOptimizerTabContent(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            SizeBadge("📍")
+                            SizeBadge("GPS")
                             Spacer(Modifier.width(10.dp))
                             Text(
                                 text = stringResource(R.string.shrink_gps_toggle_chip),

@@ -22,10 +22,11 @@
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
+  import { lang, t } from "../lib/i18n";
 
   let { license, info = null }: { license: LicenseStatus | null; info?: AppInfo | null } = $props();
   const osType = $derived(
-    info?.os?.toLowerCase() ||
+    info?.platform?.toLowerCase() ||
       (typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)
         ? "macos"
         : typeof navigator !== "undefined" && /Linux/i.test(navigator.platform)
@@ -264,7 +265,7 @@
   aria-label="Space and Cloud Cleaner"
 >
   <div class="header-row">
-    <h1 class="page-title">Duplicates &amp; Files</h1>
+    <h1 class="page-title">{t("nav.space", $lang)}</h1>
 
     <div class="source-toggle" role="tablist">
       <button

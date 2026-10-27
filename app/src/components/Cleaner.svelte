@@ -25,6 +25,7 @@
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats, syncLifetimeStatsFromBackend } from "../lib/store";
+  import { lang, t } from "../lib/i18n";
 
   let {
     license,
@@ -557,12 +558,12 @@
       disabled={phase === "scanning" || phase === "cleaning"}
       onclick={scan}
     >
-      Rescan
+      {t("action.rescan", $lang)}
     </button>
 
     {#if phase === "done"}
       <button type="button" class="primary cta-btn" onclick={scan}>
-        Scan
+        {t("action.scan", $lang)}
       </button>
     {:else if report && selectedBytes > 0}
       <button
@@ -571,7 +572,7 @@
         disabled={phase === "scanning" || phase === "cleaning"}
         onclick={requestClean}
       >
-        Clean {formatBytes(selectedBytes)}
+        {t("action.clean", $lang)} {formatBytes(selectedBytes)}
       </button>
     {:else}
       <button
@@ -580,7 +581,7 @@
         disabled={phase === "scanning" || phase === "cleaning"}
         onclick={scan}
       >
-        Scan
+        {t("action.scan", $lang)}
       </button>
     {/if}
   </footer>

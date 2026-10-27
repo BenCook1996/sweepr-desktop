@@ -41,6 +41,7 @@ class StorageWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
+            val loc = context.localized()
             val storage = readStorage()
             val usedPercent = (storage.fraction * 100).roundToInt().coerceIn(0, 100)
             val freePercent = (100 - usedPercent).coerceIn(0, 100)
@@ -58,11 +59,11 @@ class StorageWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.storage_widget).apply {
                 setTextViewText(
                     R.id.widget_percent,
-                    context.getString(R.string.widget_storage_percent, usedPercent, freePercent),
+                    loc.getString(R.string.widget_storage_percent, usedPercent, freePercent),
                 )
                 setTextViewText(
                     R.id.widget_detail,
-                    context.getString(
+                    loc.getString(
                         R.string.widget_storage_detail,
                         formatBytes(storage.used),
                         formatBytes(storage.free),

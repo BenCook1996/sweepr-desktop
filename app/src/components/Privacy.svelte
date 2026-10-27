@@ -20,6 +20,7 @@
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
+  import { lang, t } from "../lib/i18n";
 
   let { license }: { license: LicenseStatus | null } = $props();
   let subView = $state<"browser" | "vault" | "eraser">(cachedSubView);
@@ -192,7 +193,7 @@
 
 <div class="privacy-layout">
   <div class="section-header">
-    <h1 class="page-title">Vault &amp; Privacy</h1>
+    <h1 class="page-title">{t("nav.privacy", $lang)}</h1>
 
     <div class="mode-toggle" role="tablist">
       <button

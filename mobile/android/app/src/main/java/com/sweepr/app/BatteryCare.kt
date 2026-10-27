@@ -313,6 +313,7 @@ object BatteryCareManager {
     }
 
     fun maybeNotifyUnplug(context: Context, snap: BatteryCareSnapshot = readSnapshot(context)) {
+        val loc = context.localized()
         val sp = prefs(context)
         if (!sp.getBoolean(KEY_ENTITLED, false)) {
             scheduleOrCancelWorker(context, false)
@@ -327,16 +328,16 @@ object BatteryCareManager {
             if (lastThermal == 0L || (now - lastThermal) >= ALERT_COOLDOWN_MS) {
                 sp.edit().putLong(KEY_LAST_THERMAL_ALERT_MS, now).apply()
                 if (Reminders.canNotify(context)) {
-                    ensureChannel(context)
+                    ensureChannel(loc)
                     val open = PendingIntent.getActivity(
                         context,
                         THERMAL_NOTIFICATION_ID,
                         Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     )
-                    val title = "SWEEPR Overheat Guard — ${tempC}°C Detected"
+                    val title = "${loc.getString(R.string.app_name)} Overheat Guard — ${tempC}°C"
                     val body = "Your battery temperature reached ${tempC}°C. Run 1-Tap Cache Cool-Down or unplug charger to reduce thermal wear."
-                    val notif = NotificationCompat.Builder(context, CHANNEL_ID)
+                    val notif = NotificationCompat.Builder(loc, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setColor(0xFFEF4444.toInt())
                         .setContentTitle(title)
@@ -368,9 +369,9 @@ object BatteryCareManager {
         sp.edit().putLong(KEY_LAST_ALERT_MS, now).apply()
 
         if (!Reminders.canNotify(context)) return
-        ensureChannel(context)
+        ensureChannel(loc)
         val pct = snap.chargePercent ?: snap.chargeLimitPercent
-        val title = "SWEEPR Battery Care — $pct% Reached (Target ${snap.chargeLimitPercent}%)"
+        val title = "${loc.getString(R.string.app_name)} Battery Care — $pct% Reached (Target ${snap.chargeLimitPercent}%)"
         val body = "Your phone is at $pct% on ${snap.plugTypeLabel}. Unplug now to prevent high-voltage lithium-ion battery wear."
 
         val open = PendingIntent.getActivity(
@@ -379,7 +380,7 @@ object BatteryCareManager {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notif = NotificationCompat.Builder(context, CHANNEL_ID)
+        val notif = NotificationCompat.Builder(loc, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setColor(0xFFF59E0B.toInt())
             .setContentTitle(title)

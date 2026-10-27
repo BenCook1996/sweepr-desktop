@@ -12,6 +12,7 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -123,15 +124,34 @@ object PlayBillingManager : PurchasesUpdatedListener {
             )
             .build()
         billingClient = client
-        connectAndQuery(client)
+        connectAndQuery(appCtx, client)
     }
 
-    private fun connectAndQuery(client: BillingClient) {
+    private fun connectAndQuery(appCtx: Context, client: BillingClient) {
         runCatching {
             client.startConnection(object : BillingClientStateListener {
                 override fun onBillingSetupFinished(result: BillingResult) {
                     if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                         queryStoreProducts(client)
+                        queryActivePurchases(appCtx) { activePurchases ->
+                            if (activePurchases.isNotEmpty()) {
+                                scope.launch {
+                                    for (purchase in activePurchases) {
+                                        runCatching {
+                                            val prodId = purchase.products.firstOrNull() ?: "sweepr_annual_4999"
+                                            val current = Prefs.account.value
+                                            val updated = SweeprAccountApi.verifyGooglePlayPurchase(
+                                                productId = prodId,
+                                                purchaseToken = purchase.purchaseToken,
+                                                orderId = purchase.orderId,
+                                                current = current,
+                                            )
+                                            Prefs.setLinkedAccount(updated)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -139,6 +159,53 @@ object PlayBillingManager : PurchasesUpdatedListener {
                     // Reconnected on next purchase attempt if needed
                 }
             })
+        }
+    }
+
+    fun queryActivePurchases(context: Context, onResult: (List<Purchase>) -> Unit) {
+        val client = billingClient
+        if (client == null || !client.isReady) {
+            onResult(emptyList())
+            return
+        }
+        val subsParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS)
+            .build()
+        val inappParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        client.queryPurchasesAsync(subsParams) { subsResult, subsPurchases ->
+            val activeSubs = if (subsResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                subsPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+            } else {
+                emptyList()
+            }
+            for (p in activeSubs) {
+                if (!p.isAcknowledged) {
+                    val ackParams = AcknowledgePurchaseParams.newBuilder()
+                        .setPurchaseToken(p.purchaseToken)
+                        .build()
+                    client.acknowledgePurchase(ackParams) {}
+                }
+            }
+            client.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
+                val activeInapp = if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    inappPurchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                } else {
+                    emptyList()
+                }
+                for (p in activeInapp) {
+                    if (!p.isAcknowledged) {
+                        val ackParams = AcknowledgePurchaseParams.newBuilder()
+                            .setPurchaseToken(p.purchaseToken)
+                            .build()
+                        client.acknowledgePurchase(ackParams) {}
+                    }
+                }
+                val combined = (activeSubs + activeInapp).distinctBy { it.purchaseToken }
+                onResult(combined)
+            }
         }
     }
 
@@ -188,6 +255,37 @@ object PlayBillingManager : PurchasesUpdatedListener {
                 _prices.value = updated
             }
         }
+
+        val inappProducts = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("sweepr_battery_care_999")
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build(),
+        )
+        val inappParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(inappProducts)
+            .build()
+
+        client.queryProductDetailsAsync(inappParams) { result, detailsList ->
+            if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
+                val updated = _prices.value.toMutableMap()
+                for (details in detailsList) {
+                    if (!productDetailsMap.containsKey(details.productId)) {
+                        productDetailsMap[details.productId] = details
+                    }
+                    val oneTime = details.oneTimePurchaseOfferDetails
+                    if (oneTime != null && details.subscriptionOfferDetails == null) {
+                        updated[details.productId] = PlayProductPrice(
+                            productId = details.productId,
+                            formattedPrice = oneTime.formattedPrice,
+                            subtitle = "${oneTime.formattedPrice}/yr",
+                            currencyCode = oneTime.priceCurrencyCode,
+                        )
+                    }
+                }
+                _prices.value = updated
+            }
+        }
     }
 
     fun launchPurchase(
@@ -205,7 +303,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
         val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
         val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(details)
-        if (!offerToken.isNullOrBlank()) {
+        if (details.productType == BillingClient.ProductType.SUBS && !offerToken.isNullOrBlank()) {
             productDetailsParamsBuilder.setOfferToken(offerToken)
         }
         val flowParams = BillingFlowParams.newBuilder()
