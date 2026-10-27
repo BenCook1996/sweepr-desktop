@@ -81,6 +81,7 @@ data class DashboardState(
     val subscription: SubscriptionInfo = SubscriptionInfo(),
     val linkedAccount: LinkedAccount = LinkedAccount(),
     val lastCleanup: CleanupSummary? = null,
+    val updateStatus: AppUpdateStatus = AppUpdateStatus(),
 ) {
     val hasPremium: Boolean get() = subscription.active
     val hasBatteryCare: Boolean get() = subscription.batteryCareActive
@@ -176,6 +177,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     /** Re-verifies both RevenueCat and cross-platform server entitlements (called on launch and on resume). */
     fun refreshSubscriptionStatus() {
         viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                runCatching { SweeprAccountApi.checkAppUpdate() }.onSuccess { status ->
+                    _state.update { it.copy(updateStatus = status) }
+                }
+            }
             runCatching { updateCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo()) }
             val linked = _state.value.linkedAccount
             if (linked.isSignedIn) {

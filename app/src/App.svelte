@@ -684,7 +684,7 @@
     </aside>
 
     <div class="content-col">
-    {#if autoUpdateInfo?.update_available && !updateDismissed}
+    {#if autoUpdateInfo?.update_available && !autoUpdateInfo?.force_update && !updateDismissed}
       <div class="auto-update-banner" role="status">
         <div class="auto-update-text">
           <strong>Update Available: SWEEPR Cleaner v{autoUpdateInfo.latest_version}</strong>
@@ -872,6 +872,34 @@
     {/if}
 
     <ActivateModal bind:open={showActivateModal} onActivated={refreshLicense} />
+
+    {#if autoUpdateInfo?.update_available && autoUpdateInfo?.force_update}
+      <div class="force-update-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="force-update-title">
+        <div class="force-update-modal card">
+          <div class="force-update-badge">Mandatory Security &amp; Compatibility Update</div>
+          <h2 id="force-update-title" style="margin: 8px 0 6px 0; font-size: 20px;">
+            Update Required to Continue
+          </h2>
+          <p class="muted small" style="margin: 0 0 14px 0; line-height: 1.5;">
+            Your installed version (<strong>v{autoUpdateInfo.current_version}</strong>) is older than the minimum supported version and must be updated to <strong>v{autoUpdateInfo.latest_version}</strong> to continue using SWEEPR Cleaner safely.
+          </p>
+          {#if autoUpdateInfo.notes}
+            <div class="force-update-notes">
+              <strong class="small">What's included in v{autoUpdateInfo.latest_version}:</strong>
+              <p class="small muted" style="margin: 4px 0 0 0; white-space: pre-wrap;">{autoUpdateInfo.notes}</p>
+            </div>
+          {/if}
+          <button
+            class="primary"
+            style="width: 100%; margin-top: 16px; padding: 11px 18px; font-weight: 700;"
+            disabled={installingUpdate}
+            onclick={installUpdateNow}
+          >
+            {installingUpdate ? "Downloading & Installing Update…" : `Update to v${autoUpdateInfo.latest_version} & Restart Now`}
+          </button>
+        </div>
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -1394,5 +1422,46 @@
   .cmd-empty {
     padding: 18px;
     text-align: center;
+  }
+
+  .force-update-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 9999;
+  }
+  .force-update-modal {
+    width: 100%;
+    max-width: 460px;
+    padding: 24px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    text-align: left;
+  }
+  .force-update-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent);
+  }
+  .force-update-notes {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    max-height: 150px;
+    overflow-y: auto;
   }
 </style>

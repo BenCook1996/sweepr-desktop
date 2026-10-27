@@ -22,6 +22,11 @@
 # Application class is referenced from the manifest (AAPT generates a keep rule, kept here for clarity).
 -keep class com.sweepr.app.SweeprApp { <init>(); }
 
+# Google Play In-App Updates & Billing Library classes
+-keep class com.google.android.play.core.appupdate.** { *; }
+-dontwarn com.google.android.play.core.appupdate.**
+-keep class com.android.billingclient.** { *; }
+
 # Keep line numbers for readable crash stack traces; hide original source file names.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile

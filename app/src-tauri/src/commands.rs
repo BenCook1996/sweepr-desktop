@@ -1065,6 +1065,8 @@ pub struct AppUpdateInfo {
     pub update_available: bool,
     pub latest_version: String,
     pub current_version: String,
+    pub min_version: String,
+    pub force_update: bool,
     pub notes: String,
     pub url: String,
     pub source: String,
@@ -1142,8 +1144,101 @@ async fn fetch_latest_update_manifest(
     api_url: &str,
 ) -> AppUpdateInfo {
     let user_agent = format!("SweeprCleaner/{current}");
+    let platform = match std::env::consts::OS {
+        "macos" => "macos",
+        "linux" => "linux",
+        _ => "windows",
+    };
 
-    // 1. Check GitHub Releases first (https://api.github.com/repos/BenCook1996/sweepr-desktop/releases/latest)
+    // Fetch policy metadata (min_version, force_update, fallback manifest) from Sweepr Update Server
+    let mut server_min_version = current.to_string();
+    let mut server_force_update = false;
+    let mut server_fallback: Option<AppUpdateInfo> = None;
+
+    let server_manifest_url = format!(
+        "{}/v1/updates/latest.json?platform={platform}&current_version={current}",
+        api_url.trim_end_matches('/')
+    );
+    if let Ok(resp) = client
+        .get(&server_manifest_url)
+        .header("User-Agent", &user_agent)
+        .send()
+        .await
+    {
+        if resp.status().is_success() {
+            if let Ok(info) = resp.json::<serde_json::Value>().await {
+                let latest = info
+                    .get("latest_version")
+                    .or_else(|| info.get("version"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(current)
+                    .trim()
+                    .trim_start_matches(['v', 'V'])
+                    .to_string();
+                let min_ver = info
+                    .get("min_version")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(current)
+                    .trim()
+                    .trim_start_matches(['v', 'V'])
+                    .to_string();
+                let flag_force = info
+                    .get("force_update")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let below_min = is_newer_version(&min_ver, current);
+                server_min_version = min_ver.clone();
+                server_force_update = flag_force || below_min;
+
+                let notes = info
+                    .get("notes")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let candidate_url = info
+                    .get("url")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| {
+                        format!("{}/download?platform={platform}", api_url.trim_end_matches('/'))
+                    });
+                let sha256 = info
+                    .get("sha256")
+                    .and_then(|v| v.as_str())
+                    .and_then(normalize_sha256_hex);
+                let url = if is_trusted_update_url(&candidate_url, api_url) {
+                    candidate_url
+                } else {
+                    String::new()
+                };
+                let update_available = (!latest.is_empty()
+                    && !url.is_empty()
+                    && is_newer_version(&latest, current))
+                    || below_min;
+                server_fallback = Some(AppUpdateInfo {
+                    update_available,
+                    latest_version: if below_min && !is_newer_version(&latest, &min_ver) {
+                        min_ver.clone()
+                    } else {
+                        latest
+                    },
+                    current_version: current.to_string(),
+                    min_version: min_ver,
+                    force_update: server_force_update && update_available,
+                    notes: if notes.is_empty() {
+                        "Verified against SWEEPR update server.".into()
+                    } else {
+                        notes
+                    },
+                    url,
+                    source: "server".into(),
+                    sha256,
+                });
+            }
+        }
+    }
+
+    // 1. Check GitHub Releases (https://api.github.com/repos/BenCook1996/sweepr-desktop/releases/latest)
     if let Ok(resp) = client
         .get(GITHUB_RELEASES_LATEST_URL)
         .header("User-Agent", &user_agent)
@@ -1198,22 +1293,31 @@ async fn fetch_latest_update_manifest(
                         }
                     }
 
+                    let notes_upper = notes.to_ascii_uppercase();
+                    let mandatory_tag = notes_upper.contains("[FORCE_UPDATE]")
+                        || notes_upper.contains("[MANDATORY]");
                     let update_available = is_newer_version(&latest, current);
+                    let force_update =
+                        update_available && (server_force_update || mandatory_tag);
                     if update_available && !asset_url.is_empty() {
                         return AppUpdateInfo {
                             update_available: true,
                             latest_version: latest,
                             current_version: current.to_string(),
+                            min_version: server_min_version,
+                            force_update,
                             notes,
                             url: asset_url,
                             source: "github".into(),
                             sha256: asset_sha256,
                         };
-                    } else if !update_available {
+                    } else if !update_available && !server_force_update {
                         return AppUpdateInfo {
                             update_available: false,
                             latest_version: latest,
                             current_version: current.to_string(),
+                            min_version: server_min_version,
+                            force_update: false,
                             notes: "Verified against GitHub Releases — SWEEPR Cleaner is up to date.".into(),
                             url: String::new(),
                             source: "github".into(),
@@ -1225,64 +1329,17 @@ async fn fetch_latest_update_manifest(
         }
     }
 
-    // 2. Fallback: Check Sweepr Update Server ({api_url}/v1/updates/latest.json)
-    if let Ok(resp) = client
-        .get(format!("{}/v1/updates/latest.json", api_url.trim_end_matches('/')))
-        .header("User-Agent", &user_agent)
-        .send()
-        .await
-    {
-        if resp.status().is_success() {
-            if let Ok(info) = resp.json::<serde_json::Value>().await {
-                let latest = info
-                    .get("version")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(current)
-                    .trim()
-                    .trim_start_matches(['v', 'V'])
-                    .to_string();
-                let notes = info
-                    .get("notes")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string();
-                let candidate_url = info
-                    .get("url")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| format!("{}/download?platform=windows", api_url.trim_end_matches('/')));
-                let sha256 = info
-                    .get("sha256")
-                    .and_then(|v| v.as_str())
-                    .and_then(normalize_sha256_hex);
-                let url = if is_trusted_update_url(&candidate_url, api_url) {
-                    candidate_url
-                } else {
-                    String::new()
-                };
-                let update_available =
-                    !latest.is_empty() && !url.is_empty() && is_newer_version(&latest, current);
-                return AppUpdateInfo {
-                    update_available,
-                    latest_version: latest,
-                    current_version: current.to_string(),
-                    notes: if notes.is_empty() {
-                        "Verified against SWEEPR update server.".into()
-                    } else {
-                        notes
-                    },
-                    url,
-                    source: "server".into(),
-                    sha256,
-                };
-            }
-        }
+    // 2. Fallback: Use Sweepr Update Server manifest if retrieved
+    if let Some(info) = server_fallback {
+        return info;
     }
 
     AppUpdateInfo {
         update_available: false,
         latest_version: current.to_string(),
         current_version: current.to_string(),
+        min_version: current.to_string(),
+        force_update: false,
         notes: "SWEEPR Cleaner is up to date.".into(),
         url: String::new(),
         source: "local".into(),

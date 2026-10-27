@@ -149,6 +149,8 @@ export interface AppUpdateInfo {
   update_available: boolean;
   latest_version: string;
   current_version: string;
+  min_version?: string;
+  force_update?: boolean;
   notes: string;
   url: string;
   source?: string;

@@ -491,6 +491,58 @@ private fun QuickCleanBlock(
                 .padding(horizontal = 10.dp, vertical = 4.dp),
         )
     }
+
+    if (state.updateStatus.updateAvailable && !state.updateStatus.forceUpdate) {
+        val context = LocalContext.current
+        SweeprPanel(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                PlayAppUpdateManager.openPlayStore(
+                    context = context,
+                    marketUri = state.updateStatus.marketUri,
+                    webUrl = state.updateStatus.playStoreUrl,
+                )
+            },
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "Update Available (v${state.updateStatus.latestVersion})",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 12.5.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = state.updateStatus.notes.ifBlank { "Tap to update on Google Play" },
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(EmeraldGradient)
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                ) {
+                    Text(
+                        text = "Update",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

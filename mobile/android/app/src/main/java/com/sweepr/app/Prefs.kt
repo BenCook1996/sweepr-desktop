@@ -719,6 +719,76 @@ object SweeprAccountApi {
         if (!logs.isNullOrBlank()) body.put("logs", logs)
         postJson("/v1/support", body, bearerToken = current?.refreshToken?.takeIf { it.isNotBlank() })
     }
+
+    internal fun isNewerSemver(latestVer: String, currentVer: String): Boolean {
+        val parseParts = { v: String ->
+            v.trim().removePrefix("v").removePrefix("V")
+                .substringBefore("-")
+                .substringBefore("+")
+                .split(".")
+                .map { it.toIntOrNull() ?: 0 }
+        }
+        val l = parseParts(latestVer)
+        val c = parseParts(currentVer)
+        val maxLen = maxOf(l.size, c.size)
+        for (i in 0 until maxLen) {
+            val lv = l.getOrElse(i) { 0 }
+            val cv = c.getOrElse(i) { 0 }
+            if (lv != cv) return lv > cv
+        }
+        return false
+    }
+
+    /**
+     * Queries GET /v1/updates/latest.json?platform=android&current_version=<version>
+     * to check whether a newer or mandatory Google Play Store update is required.
+     */
+    fun checkAppUpdate(currentVersion: String = BuildConfig.VERSION_NAME): AppUpdateStatus {
+        val base = API_URL.trimEnd('/')
+        val encodedVer = java.net.URLEncoder.encode(currentVersion, "UTF-8")
+        val url = "$base/v1/updates/latest.json?platform=android&current_version=$encodedVer"
+        val conn = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 8_000
+            readTimeout = 8_000
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("X-Sweepr-Project", PROJECT_ID)
+        }
+        try {
+            val code = conn.responseCode
+            if (code !in 200..299) return AppUpdateStatus(latestVersion = currentVersion, minVersion = currentVersion)
+            val text = conn.inputStream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            val json = org.json.JSONObject(text)
+            val latest = json.optString("android_version")
+                .ifBlank { json.optString("latest_version") }
+                .ifBlank { json.optString("version") }
+                .ifBlank { currentVersion }
+                .removePrefix("v")
+            val minVer = json.optString("android_min_version")
+                .ifBlank { json.optString("min_version") }
+                .ifBlank { currentVersion }
+                .removePrefix("v")
+            val belowMin = isNewerSemver(minVer, currentVersion)
+            val newerAvailable = isNewerSemver(latest, currentVersion) || belowMin
+            val serverForce = json.optBoolean("force_update", false)
+            val force = belowMin || (serverForce && newerAvailable)
+            val playUrl = json.optString("play_store_url")
+                .ifBlank { "https://play.google.com/store/apps/details?id=com.sweepr.app" }
+            val marketUri = json.optString("market_uri")
+                .ifBlank { "market://details?id=com.sweepr.app" }
+            return AppUpdateStatus(
+                updateAvailable = newerAvailable,
+                forceUpdate = force,
+                latestVersion = if (belowMin && !isNewerSemver(latest, minVer)) minVer else latest,
+                minVersion = minVer,
+                notes = json.optString("notes", ""),
+                playStoreUrl = playUrl,
+                marketUri = marketUri,
+            )
+        } finally {
+            conn.disconnect()
+        }
+    }
 }
 
 object Reminders {

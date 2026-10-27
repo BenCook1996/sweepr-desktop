@@ -308,7 +308,12 @@ test("Store-compliant account deletion (DELETE /v1/account) wipes account and cr
 });
 
 test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and breach check", async () => {
-  const { post, repo, app } = setup({ latestAppVersion: "0.2.0" });
+  const { post, repo, app } = setup({
+    latestAppVersion: "0.2.0",
+    minAppVersion: "0.1.5",
+    latestAndroidVersion: "1.1.0",
+    minAndroidVersion: "1.0.5",
+  });
 
   // 1. Auto-updater returns 204 when up-to-date and 200 manifest when outdated
   const upToDate = await app.request("/v1/updates/windows/x86_64/0.2.0");
@@ -317,7 +322,28 @@ test("Auto-updater manifest, telemetry, support tickets, referrals, winback, and
   assert.equal(outdated.status, 200);
   const manifest = await outdated.json();
   assert.equal(manifest.version, "0.2.0");
+  assert.equal(manifest.latest_version, "0.2.0");
+  assert.equal(manifest.min_version, "0.1.5");
+  assert.equal(manifest.force_update, true);
+  assert.equal(manifest.update_available, true);
   assert.ok(manifest.url.includes("/download?platform=windows"));
+
+  // Android Play Store update manifest check (forced when below min_version, flexible when >= min_version)
+  const androidForce = await (
+    await app.request("/v1/updates/latest.json?platform=android&current_version=1.0.0")
+  ).json();
+  assert.equal(androidForce.latest_version, "1.1.0");
+  assert.equal(androidForce.min_version, "1.0.5");
+  assert.equal(androidForce.update_available, true);
+  assert.equal(androidForce.force_update, true);
+  assert.equal(androidForce.play_store_url, "https://play.google.com/store/apps/details?id=com.sweepr.app");
+  assert.equal(androidForce.market_uri, "market://details?id=com.sweepr.app");
+
+  const androidFlex = await (
+    await app.request("/v1/updates/latest.json?platform=android&current_version=1.0.5")
+  ).json();
+  assert.equal(androidFlex.update_available, true);
+  assert.equal(androidFlex.force_update, false);
 
   // 2. Telemetry crash & funnel event recording
   const crashRes = await post("/v1/telemetry/crash", {

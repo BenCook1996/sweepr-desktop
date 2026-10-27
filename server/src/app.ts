@@ -78,6 +78,10 @@ export interface AppDeps {
     trustProxy?: boolean;
     stripeCoupon?: string;
     latestAppVersion?: string;
+    minAppVersion?: string;
+    latestAndroidVersion?: string;
+    minAndroidVersion?: string;
+    forceAppUpdate?: boolean;
     latestAppNotes?: string;
     latestAppSignature?: string;
     hibpApiKey?: string;
@@ -5047,24 +5051,63 @@ export function createApp(deps: AppDeps) {
     if (lMin !== cMin) return lMin > cMin;
     return lPat > cPat;
   };
-  const buildUpdateManifest = () => ({
-    version: config.latestAppVersion || "0.1.0",
-    notes: config.latestAppNotes || "Bug fixes, security hardening, and new cleaning tools.",
-    pub_date: new Date().toISOString(),
-    url: `${config.publicUrl}/download?platform=windows`,
-    signature: config.latestAppSignature || "",
-    sha256: process.env.LATEST_APP_SHA256 || "",
-    disabledRules: (process.env.DISABLED_CLEAN_RULES || "")
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean),
-  });
-  app.get("/v1/updates/latest.json", (c) => c.json(buildUpdateManifest()));
+  const buildUpdateManifest = (opts?: { platform?: string; currentVersion?: string }) => {
+    const platform = (opts?.platform || "").trim().toLowerCase();
+    const current = (opts?.currentVersion || "").trim().replace(/^v/i, "");
+    const desktopLatest = (config.latestAppVersion || process.env.LATEST_APP_VERSION || "0.1.0").replace(/^v/i, "");
+    const desktopMin = (config.minAppVersion || process.env.MIN_APP_VERSION || "0.1.0").replace(/^v/i, "");
+    const androidLatest = (config.latestAndroidVersion || process.env.LATEST_ANDROID_VERSION || "1.0.0").replace(/^v/i, "");
+    const androidMin = (config.minAndroidVersion || process.env.MIN_ANDROID_VERSION || "1.0.0").replace(/^v/i, "");
+    const isAndroid = platform === "android";
+    const isMac = platform === "macos" || platform === "mac" || platform === "darwin";
+    const latest_version = isAndroid ? androidLatest : desktopLatest;
+    const min_version = isAndroid ? androidMin : desktopMin;
+    const update_available = current ? isNewerSemver(latest_version, current) : false;
+    const belowMin = current ? isNewerSemver(min_version, current) : false;
+    const envForce = Boolean(config.forceAppUpdate || process.env.FORCE_APP_UPDATE === "true");
+    const force_update = current ? belowMin || (envForce && update_available) : envForce;
+    const playStoreUrl = "https://play.google.com/store/apps/details?id=com.sweepr.app";
+    const marketUri = "market://details?id=com.sweepr.app";
+    const downloadUrl = isAndroid
+      ? playStoreUrl
+      : isMac
+        ? `${config.publicUrl}/download?platform=mac`
+        : `${config.publicUrl}/download?platform=windows`;
+    return {
+      version: latest_version,
+      latest_version,
+      min_version,
+      android_version: androidLatest,
+      android_min_version: androidMin,
+      force_update,
+      update_available,
+      play_store_url: playStoreUrl,
+      market_uri: marketUri,
+      notes: config.latestAppNotes || "Bug fixes, security hardening, and new cleaning tools.",
+      pub_date: new Date().toISOString(),
+      url: downloadUrl,
+      signature: config.latestAppSignature || "",
+      sha256: process.env.LATEST_APP_SHA256 || "",
+      disabledRules: (process.env.DISABLED_CLEAN_RULES || "")
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
+    };
+  };
+  app.get("/v1/updates/latest.json", (c) =>
+    c.json(
+      buildUpdateManifest({
+        platform: c.req.query("platform"),
+        currentVersion: c.req.query("current_version"),
+      })
+    )
+  );
   app.get("/v1/updates/:target/:arch/:current_version", (c) => {
+    const target = c.req.param("target") ?? "";
     const current = c.req.param("current_version")?.replace(/^v/i, "") ?? "";
-    const latest = (config.latestAppVersion || "0.1.0").replace(/^v/i, "");
-    if (current && !isNewerSemver(latest, current)) return c.body(null, 204);
-    return c.json(buildUpdateManifest());
+    const manifest = buildUpdateManifest({ platform: target, currentVersion: current });
+    if (current && !isNewerSemver(manifest.version, current)) return c.body(null, 204);
+    return c.json(manifest);
   });
 
   // Admin-authenticated SQLite logical backup snapshot (#10 Backups)

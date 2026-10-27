@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -83,6 +84,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PlayBillingManager.init(this)
+        PlayAppUpdateManager.checkAndPrompt(this)
         extractDeepLinkPair(intent)
 
         // Must be created in onCreate. Scanning is free; cleaning is Premium (Google Play
@@ -136,6 +138,11 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        PlayAppUpdateManager.checkAndPrompt(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -401,6 +408,46 @@ fun SweeprRoot(
             vm.clearMessage()
             snackbarHostState.showSnackbar(it)
         }
+    }
+
+    LaunchedEffect(state.updateStatus.forceUpdate) {
+        if (state.updateStatus.forceUpdate) {
+            (context as? Activity)?.let { act ->
+                PlayAppUpdateManager.checkAndPrompt(act, forceUpdate = true)
+            }
+        }
+    }
+
+    if (state.updateStatus.forceUpdate) {
+        AlertDialog(
+            onDismissRequest = {},
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+            title = { Text("Update Required") },
+            text = {
+                Text(
+                    buildString {
+                        append("A mandatory update (v${state.updateStatus.latestVersion}) is required to continue using SWEEPR Cleaner safely.")
+                        if (state.updateStatus.notes.isNotBlank()) {
+                            append("\n\n")
+                            append(state.updateStatus.notes)
+                        }
+                    },
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        PlayAppUpdateManager.openPlayStore(
+                            context = context,
+                            marketUri = state.updateStatus.marketUri,
+                            webUrl = state.updateStatus.playStoreUrl,
+                        )
+                    },
+                ) {
+                    Text("Update on Google Play")
+                }
+            },
+        )
     }
 
     // #25 In-App Review prompt after the user's 2nd successful cleanup
