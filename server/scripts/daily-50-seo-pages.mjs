@@ -1081,6 +1081,382 @@ const CURATED_TOPICS = [
       "Run 'dart pub cache clean' in Windows Terminal.",
       "Or delete %localappdata%\\Pub\\Cache in File Explorer."
     ]
+  },
+  {
+    slug: "sd-webui-model-cache",
+    category: "app",
+    name: "Stable Diffusion WebUI Model & LoRA Cache",
+    path: "%UserProfile%\\stable-diffusion-webui\\models\\Stable-diffusion",
+    safeToDelete: true,
+    avgSpace: "8.0 GB – 45.0 GB",
+    whatIsIt: "Automatic1111 Stable Diffusion WebUI stores downloaded checkpoint weights (.safetensors, .ckpt), LoRA adapters, and VAE models in your models folder.",
+    whatHappens: "Safely frees tens of gigabytes of disk space from unused model checkpoints without modifying your generated output images or WebUI configuration.",
+    manualSteps: [
+      "Close the Stable Diffusion WebUI console terminal.",
+      "Open your stable-diffusion-webui installation directory.",
+      "Navigate to models\\Stable-diffusion and delete checkpoints you no longer use (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    slug: "text-gen-webui-cache",
+    category: "app",
+    name: "Text Generation WebUI Model & Quant Cache",
+    path: "%UserProfile%\\text-generation-webui\\models",
+    safeToDelete: true,
+    avgSpace: "10.0 GB – 70.0 GB",
+    whatIsIt: "Oobabooga Text Generation WebUI stores multi-gigabyte GGUF, EXL2, and AWQ local LLM model weights and tokenizer caches on your primary drive.",
+    whatHappens: "Reclaims massive SSD storage from old model versions while preserving your generation presets, character cards, and chat session logs.",
+    manualSteps: [
+      "Stop the Text Generation WebUI server.",
+      "Open your text-generation-webui\\models directory in File Explorer.",
+      "Remove obsolete LLM subfolders that you no longer load."
+    ]
+  },
+  {
+    slug: "jan-ai-models-cache",
+    category: "app",
+    name: "Jan AI Local LLM Model Download Cache",
+    path: "%UserProfile%\\jan\\models and %AppData%\\jan",
+    safeToDelete: true,
+    avgSpace: "6.0 GB – 40.0 GB",
+    whatIsIt: "Jan AI downloads multi-gigabyte GGUF weights, local inference engine binaries (Nitro/Cortex), and temporary conversational vectors to your user drive.",
+    whatHappens: "Frees tens of gigabytes of storage space while keeping your user settings, assistant preferences, and chat exports intact.",
+    manualSteps: [
+      "Quit Jan AI completely from the system tray.",
+      "Press Windows Key + R, type %userprofile%\\jan\\models, and press Enter.",
+      "Delete model folders you no longer actively query."
+    ]
+  },
+  {
+    slug: "anythingllm-vector-cache",
+    category: "app",
+    name: "AnythingLLM Vector Store & Document Cache",
+    path: "%AppData%\\anythingllm-desktop\\storage",
+    safeToDelete: true,
+    avgSpace: "3.0 GB – 25.0 GB",
+    whatIsIt: "AnythingLLM embeds documents, PDFs, and web pages into a local LanceDB vector database and document cache in %AppData%.",
+    whatHappens: "Safely cleans up stale vector embeddings and document caches without deleting your original source documents or API credentials.",
+    manualSteps: [
+      "Exit AnythingLLM Desktop.",
+      "Press Windows Key + R, type %appdata%\\anythingllm-desktop\\storage, and hit Enter.",
+      "Prune old vector workspace databases and cache files."
+    ]
+  },
+  {
+    slug: "gpt4all-models-cache",
+    category: "app",
+    name: "GPT4All Local Model Download & Chat Cache",
+    path: "%LocalAppData%\\nomic.ai\\GPT4All",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 30.0 GB",
+    whatIsIt: "GPT4All downloads quantized AI model weights and cached local docs embeddings inside %LocalAppData%\\nomic.ai\\GPT4All.",
+    whatHappens: "Frees gigabytes of primary drive storage. Active models can be re-downloaded at any time from the in-app model explorer.",
+    manualSteps: [
+      "Close GPT4All.",
+      "Press Windows Key + R, type %localappdata%\\nomic.ai\\GPT4All, and hit Enter.",
+      "Delete unused .bin and .gguf model weights."
+    ]
+  },
+  {
+    slug: "koboldai-models-cache",
+    category: "app",
+    name: "KoboldAI & Kobold.cpp Model Checkpoint Cache",
+    path: "%UserProfile%\\KoboldAI\\models and %LocalAppData%\\KoboldAI",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 50.0 GB",
+    whatIsIt: "KoboldAI and Kobold.cpp store downloaded storytelling and roleplay model checkpoints, TPU/CUDA kernels, and context cache buffers on disk.",
+    whatHappens: "Safely reclaims gigabytes of SSD space without deleting your saved story files, world info, or character presets.",
+    manualSteps: [
+      "Terminate running KoboldAI or koboldcpp instances.",
+      "Navigate to your KoboldAI models folder.",
+      "Delete unreferenced GGUF or SafeTensors model files."
+    ]
+  },
+  {
+    slug: "wsl2-ext4-vhdx-compaction",
+    category: "folder",
+    name: "WSL2 Virtual Hard Disk Bloat (ext4.vhdx)",
+    path: "%LocalAppData%\\Packages\\*\\LocalState\\ext4.vhdx",
+    safeToDelete: false,
+    warning: "Do NOT delete ext4.vhdx directly or you will lose your entire Linux distribution. Use diskpart compaction or SWEEPR Cleaner to reclaim unallocated disk blocks safely.",
+    avgSpace: "15.0 GB – 90.0 GB",
+    whatIsIt: "WSL 2 automatically expands the ext4.vhdx virtual hard drive as you install Linux packages, but never shrinks it when files are deleted inside Linux.",
+    whatHappens: "Compacting the VHDX file reclaims tens of gigabytes of unallocated free space back to Windows without losing any Linux data.",
+    manualSteps: [
+      "Open Terminal and shut down WSL: wsl --shutdown",
+      "Launch diskpart as Administrator.",
+      "Select your ext4.vhdx file and run 'compact vdisk' to recover all unused storage space."
+    ]
+  },
+  {
+    slug: "docker-desktop-ext4-disk",
+    category: "app",
+    name: "Docker Desktop WSL2 Virtual Disk Bloat",
+    path: "%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx",
+    safeToDelete: false,
+    warning: "Never delete ext4.vhdx in File Explorer. Prune dangling Docker images and compact the virtual disk via diskpart or SWEEPR Cleaner.",
+    avgSpace: "12.0 GB – 80.0 GB",
+    whatIsIt: "Docker Desktop on Windows uses a dynamic VHDX file inside WSL2 that grows as images and containers are pulled, but never shrinks automatically.",
+    whatHappens: "Pruning unused container images and compacting the disk reclaims massive drive space while keeping active containers intact.",
+    manualSteps: [
+      "Open Windows Terminal.",
+      "Run 'docker system prune -a --volumes' to delete dangling images and build layers.",
+      "Shut down WSL with 'wsl --shutdown' and compact ext4.vhdx via diskpart."
+    ]
+  },
+  {
+    slug: "vcpkg-binary-cache",
+    category: "app",
+    name: "Microsoft vcpkg C++ Library & Binary Cache",
+    path: "%LocalAppData%\\vcpkg\\archives and %LocalAppData%\\vcpkg\\downloads",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 25.0 GB",
+    whatIsIt: "The Microsoft vcpkg C/C++ package manager caches downloaded tarballs, git clones, and compiled binary packages across triplets.",
+    whatHappens: "Safely cleans up gigabytes of intermediate build archives. vcpkg simply recompiles packages on demand when needed.",
+    manualSteps: [
+      "Close Visual Studio and active C++ builds.",
+      "Press Windows Key + R, type %localappdata%\\vcpkg, and hit Enter.",
+      "Delete the 'archives' and 'downloads' folders to free disk space."
+    ]
+  },
+  {
+    slug: "visual-studio-symbols-cache",
+    category: "app",
+    name: "Visual Studio Debugger Symbol Cache (PDB Cache)",
+    path: "%LocalAppData%\\Temp\\SymbolCache",
+    safeToDelete: true,
+    avgSpace: "2.5 GB – 18.0 GB",
+    whatIsIt: "Visual Studio downloads symbol files (.pdb) from Microsoft Symbol Servers during debugging sessions and caches them in %LocalAppData%\\Temp.",
+    whatHappens: "Frees gigabytes of storage space and clears stale debug symbol files. Visual Studio will re-fetch symbols on future debug runs.",
+    manualSteps: [
+      "Close Visual Studio.",
+      "Press Windows Key + R, type %localappdata%\\Temp\\SymbolCache, and hit Enter.",
+      "Select all PDB symbol folders and delete them."
+    ]
+  },
+  {
+    slug: "unreal-engine-niagara-cache",
+    category: "app",
+    name: "Unreal Engine 5 Niagara VFX Simulation Cache",
+    path: "%LocalAppData%\\UnrealEngine\\Common\\DerivedDataCache\\Niagara",
+    safeToDelete: true,
+    avgSpace: "3.5 GB – 22.0 GB",
+    whatIsIt: "Unreal Engine caches compiled GPU and CPU Niagara particle simulation scripts, vector fields, and emitter bytecode across projects.",
+    whatHappens: "Safely frees gigabytes of SSD space. Niagara automatically recompiles active particle emitters when you open your level.",
+    manualSteps: [
+      "Close Unreal Editor and Epic Games Launcher.",
+      "Open %localappdata%\\UnrealEngine\\Common\\DerivedDataCache in File Explorer.",
+      "Delete stale Niagara and shader cache directories."
+    ]
+  },
+  {
+    slug: "blender-cycles-gpu-cache",
+    category: "app",
+    name: "Blender 3D Cycles OptiX & CUDA Kernel Cache",
+    path: "%LocalAppData%\\Blender Foundation\\Blender\\cache",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 10.0 GB",
+    whatIsIt: "Blender compiles and stores NVIDIA OptiX and CUDA render kernels and geometry BVH caches to accelerate 3D ray tracing renders.",
+    whatHappens: "Frees storage and fixes GPU render initialization errors or driver mismatch crashes following an NVIDIA driver update.",
+    manualSteps: [
+      "Exit Blender completely.",
+      "Press Windows Key + R, type %localappdata%\\Blender Foundation\\Blender, and hit Enter.",
+      "Delete the 'cache' folder to reset compiled Cycles kernels."
+    ]
+  },
+  {
+    slug: "davinci-resolve-optimized-media",
+    category: "app",
+    name: "DaVinci Resolve Optimized Media & Render Cache",
+    path: "C:\\Users\\%USERNAME%\\Videos\\CacheClip and %LocalAppData%\\Blackmagic Design\\DaVinci Resolve\\Support\\optimized_media",
+    safeToDelete: true,
+    avgSpace: "15.0 GB – 120.0 GB",
+    whatIsIt: "DaVinci Resolve creates uncompressed ProRes or DNxHR proxy media and timeline render clips inside CacheClip on your primary drive.",
+    whatHappens: "Immediately reclaims tens to hundreds of gigabytes of SSD space without altering your original camera video clips or timeline edits.",
+    manualSteps: [
+      "Open DaVinci Resolve and go to Playback > Delete Render Cache > All.",
+      "Or close Resolve and manually delete CacheClip contents in your Videos folder."
+    ]
+  },
+  {
+    slug: "ableton-waveform-peaks-cache",
+    category: "app",
+    name: "Ableton Live Audio Analysis & Temp Cache",
+    path: "%AppData%\\Ableton\\Live Database and %LocalAppData%\\Temp\\Ableton",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 15.0 GB",
+    whatIsIt: "Ableton Live generates auxiliary analysis files (.asd) and temporary recorded audio buffers across your sample libraries.",
+    whatHappens: "Frees gigabytes of storage space and clears orphaned recording buffers from closed sessions without touching your .als project files.",
+    manualSteps: [
+      "Save your project and exit Ableton Live.",
+      "Press Windows Key + R, type %localappdata%\\Temp, and hit Enter.",
+      "Delete temporary Ableton recording staging folders."
+    ]
+  },
+  {
+    slug: "reaper-reapeaks-cache",
+    category: "app",
+    name: "REAPER DAW Audio Waveform Peak Files (.reapeaks)",
+    path: "%AppData%\\REAPER\\reapeaks and %LocalAppData%\\REAPER",
+    safeToDelete: true,
+    avgSpace: "3.0 GB – 25.0 GB",
+    whatIsIt: "Cockos REAPER creates graphical waveform peak files (.reapeaks) for every imported audio stem and sample on your hard drive.",
+    whatHappens: "Reclaims significant disk space. REAPER will silently regenerate peaks for any active tracks when you open a project.",
+    manualSteps: [
+      "Close REAPER.",
+      "Open %appdata%\\REAPER in File Explorer.",
+      "Search for and delete *.reapeaks files in your media and cache directories."
+    ]
+  },
+  {
+    slug: "steam-workshop-orphaned-mods",
+    category: "app",
+    name: "Steam Workshop Orphaned Mods & Downloading Cache",
+    path: "C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\temp and downloading",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 40.0 GB",
+    whatIsIt: "Steam stages mod files and downloads in workshop\\temp, leaving behind orphaned mod files after game uninstalls.",
+    whatHappens: "Safely cleans up gigabytes of leftover mod files from uninstalled games while keeping active subscribed mods intact.",
+    manualSteps: [
+      "Exit Steam completely.",
+      "Open your Steam\\steamapps\\workshop directory in File Explorer.",
+      "Delete files inside 'temp' and 'downloading' folders."
+    ]
+  },
+  {
+    slug: "hoyoplay-download-chunks",
+    category: "app",
+    name: "HoYoPlay Launcher Update Chunks & Staging Cache",
+    path: "%LocalAppData%\\HoYoPlay\\cache and %AppData%\\HoYoPlay",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 30.0 GB",
+    whatIsIt: "The HoYoPlay unified launcher (Genshin Impact, Honkai Star Rail, ZZZ) retains compressed game patch archives and diff chunks.",
+    whatHappens: "Safely purges temporary game patch chunks and frees storage space without requiring game verification.",
+    manualSteps: [
+      "Exit the HoYoPlay launcher and all HoYoverse games.",
+      "Press Windows Key + R, type %localappdata%\\HoYoPlay\\cache, and hit Enter.",
+      "Delete all cached update chunks and web data."
+    ]
+  },
+  {
+    slug: "wargaming-update-cache",
+    category: "app",
+    name: "Wargaming Game Center Patch & Update Cache",
+    path: "%ProgramData%\\Wargaming.net\\GameCenter\\Updates",
+    safeToDelete: true,
+    avgSpace: "3.0 GB – 25.0 GB",
+    whatIsIt: "Wargaming Game Center keeps downloaded client updates and torrent distribution files for World of Tanks and World of Warships.",
+    whatHappens: "Frees tens of gigabytes of disk space immediately after game updates finish installing.",
+    manualSteps: [
+      "Exit Wargaming Game Center from the taskbar tray.",
+      "Open C:\\ProgramData\\Wargaming.net\\GameCenter\\Updates in File Explorer.",
+      "Delete all downloaded patch files inside the Updates folder."
+    ]
+  },
+  {
+    slug: "oculus-client-staging",
+    category: "app",
+    name: "Meta Quest Oculus PC Software Download Staging",
+    path: "C:\\Program Files\\Oculus\\Downloads and %LocalAppData%\\Oculus",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 35.0 GB",
+    whatIsIt: "The Meta Quest PC app downloads VR software and staging packages into Oculus\\Downloads before extracting them.",
+    whatHappens: "Safely clears leftover installer staging archives from interrupted or completed VR software installs.",
+    manualSteps: [
+      "Close the Meta Quest PC app and stop Oculus VR Runtime Service.",
+      "Open C:\\Program Files\\Oculus\\Downloads in File Explorer.",
+      "Delete lingering staging folders and restart the Oculus app."
+    ]
+  },
+  {
+    slug: "windows-system32-logfiles-w3c",
+    category: "folder",
+    name: "Windows System32 LogFiles (HTTPERR & Firewall Logs)",
+    path: "C:\\Windows\\System32\\LogFiles",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 8.0 GB",
+    whatIsIt: "Windows HTTP.sys, Windows Defender Firewall, and IIS store uncompressed HTTP error logs and network connection traces in System32\\LogFiles.",
+    whatHappens: "Safely deletes old HTTPERR and firewall drop logs, reclaiming gigabytes on your primary Windows drive.",
+    manualSteps: [
+      "Open File Explorer as Administrator.",
+      "Navigate to C:\\Windows\\System32\\LogFiles.",
+      "Open the HTTPERR subfolder and delete historical .log files."
+    ]
+  },
+  {
+    slug: "windows-system32-sleepstudy",
+    category: "folder",
+    name: "Windows Modern Standby & SleepStudy Diagnostics",
+    path: "C:\\Windows\\System32\\SleepStudy",
+    safeToDelete: true,
+    avgSpace: "0.5 GB – 4.0 GB",
+    whatIsIt: "Windows laptops track battery drain, Modern Standby sleep transitions, and screen state traces into .etl trace logs in SleepStudy.",
+    whatHappens: "Clearing historical sleep study traces frees C: drive space without affecting battery life or power management profiles.",
+    manualSteps: [
+      "Open Windows Terminal as Administrator.",
+      "Navigate to C:\\Windows\\System32\\SleepStudy.",
+      "Delete old UserNotPresentSession and ScreenOnSession .etl files."
+    ]
+  },
+  {
+    slug: "windows-system32-wbem-logs",
+    category: "folder",
+    name: "Windows Management Instrumentation (WMI) Diagnostic Logs",
+    path: "C:\\Windows\\System32\\wbem\\Logs",
+    safeToDelete: true,
+    avgSpace: "0.4 GB – 3.0 GB",
+    whatIsIt: "The Windows WMI repository logs provider query events, CIM repository repairs, and diagnostic traces inside wbem\\Logs.",
+    whatHappens: "Safely purges historical WMI text logs and resolves drive space constraints without breaking system management services.",
+    manualSteps: [
+      "Open Terminal as Administrator and run: net stop winmgmt",
+      "Navigate to C:\\Windows\\System32\\wbem\\Logs and delete old .log files.",
+      "Restart the service with: net start winmgmt"
+    ]
+  },
+  {
+    slug: "windows-tracing-logs",
+    category: "folder",
+    name: "Windows Routing & Network Tracing Session Logs",
+    path: "C:\\Windows\\tracing",
+    safeToDelete: true,
+    avgSpace: "0.6 GB – 4.5 GB",
+    whatIsIt: "Windows network stack, VPN clients, and Routing and Remote Access (RRAS) write persistent diagnostic logs into C:\\Windows\\tracing.",
+    whatHappens: "Safely deletes accumulated network tracing logs without disrupting current internet or VPN connections.",
+    manualSteps: [
+      "Open File Explorer as Administrator.",
+      "Open C:\\Windows\\tracing.",
+      "Select all .log files and delete them."
+    ]
+  },
+  {
+    slug: "windows-system32-sru-monitor",
+    category: "folder",
+    name: "Windows System Resource Usage Monitor Database",
+    path: "C:\\Windows\\System32\\sru",
+    safeToDelete: true,
+    avgSpace: "0.5 GB – 3.5 GB",
+    whatIsIt: "The System Resource Usage Monitor (SRUM) records network bytes sent/received and application CPU energy consumption in SRUDB.dat.",
+    whatHappens: "Resetting a corrupted or oversized SRUDB database resolves Task Manager App History tab freezes and frees SSD storage.",
+    manualSteps: [
+      "Open Terminal as Administrator and run: net stop DPS",
+      "Delete or archive C:\\Windows\\System32\\sru\\SRUDB.dat.",
+      "Restart the service with: net start DPS"
+    ]
+  },
+  {
+    slug: "windows-usoshared-logs",
+    category: "folder",
+    name: "Windows Update Session Orchestrator Diagnostic Logs",
+    path: "C:\\ProgramData\\USOShared\\Logs",
+    safeToDelete: true,
+    avgSpace: "0.5 GB – 3.0 GB",
+    whatIsIt: "The Update Session Orchestrator service writes ETL trace files and diagnostic update logs inside ProgramData\\USOShared\\Logs.",
+    whatHappens: "Safely cleans up stale update orchestration logs and frees SSD space without interfering with Windows Update.",
+    manualSteps: [
+      "Open File Explorer as Administrator.",
+      "Navigate to C:\\ProgramData\\USOShared\\Logs.",
+      "Delete old .etl trace files."
+    ]
   }
 ];
 
@@ -1162,7 +1538,27 @@ const APP_MATRIX_APPS = [
   { key: "asana-desktop", label: "Asana Desktop App", baseDir: "%AppData%\\Asana", proc: "Asana.exe" },
   { key: "bitwarden-desktop", label: "Bitwarden Desktop", baseDir: "%AppData%\\Bitwarden", proc: "Bitwarden.exe" },
   { key: "1password-desktop", label: "1Password Desktop", baseDir: "%LocalAppData%\\1Password", proc: "1Password.exe" },
-  { key: "streamlabs-desktop", label: "Streamlabs Desktop", baseDir: "%AppData%\\slobs-client", proc: "Streamlabs Desktop.exe" }
+  { key: "streamlabs-desktop", label: "Streamlabs Desktop", baseDir: "%AppData%\\slobs-client", proc: "Streamlabs Desktop.exe" },
+  { key: "adobe-photoshop", label: "Adobe Photoshop", baseDir: "%AppData%\\Adobe\\Adobe Photoshop 2025", proc: "Photoshop.exe" },
+  { key: "adobe-illustrator", label: "Adobe Illustrator", baseDir: "%AppData%\\Adobe\\Adobe Illustrator 29 Settings", proc: "Illustrator.exe" },
+  { key: "adobe-lightroom", label: "Adobe Lightroom Classic", baseDir: "%LocalAppData%\\Adobe\\Lightroom\\Caches", proc: "Lightroom.exe" },
+  { key: "adobe-audition", label: "Adobe Audition", baseDir: "%AppData%\\Adobe\\Audition\\25.0", proc: "Adobe Audition.exe" },
+  { key: "google-drive-desktop", label: "Google Drive for Desktop", baseDir: "%LocalAppData%\\Google\\DriveFS", proc: "GoogleDriveFS.exe" },
+  { key: "fl-studio-daw", label: "FL Studio DAW", baseDir: "%Documents%\\Image-Line\\FL Studio", proc: "FL64.exe" },
+  { key: "ableton-live-suite", label: "Ableton Live Suite", baseDir: "%AppData%\\Ableton\\Live 12", proc: "Ableton Live 12 Suite.exe" },
+  { key: "sidefx-houdini", label: "SideFX Houdini 3D", baseDir: "%UserProfile%\\Documents\\houdini20.5", proc: "hindie.exe" },
+  { key: "autodesk-maya", label: "Autodesk Maya", baseDir: "%UserProfile%\\Documents\\maya\\2025", proc: "maya.exe" },
+  { key: "autodesk-3ds-max", label: "Autodesk 3ds Max", baseDir: "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit", proc: "3dsmax.exe" },
+  { key: "rpcs3-ps3-emulator", label: "RPCS3 PS3 Emulator", baseDir: "%AppData%\\rpcs3", proc: "rpcs3.exe" },
+  { key: "dolphin-emulator", label: "Dolphin Emulator", baseDir: "%AppData%\\Dolphin Emulator", proc: "Dolphin.exe" },
+  { key: "retroarch-emu", label: "RetroArch Multi-System Emulator", baseDir: "%AppData%\\RetroArch", proc: "retroarch.exe" },
+  { key: "prism-minecraft", label: "Prism Launcher Minecraft", baseDir: "%AppData%\\PrismLauncher", proc: "prismlauncher.exe" },
+  { key: "jetbrains-clion", label: "JetBrains CLion", baseDir: "%LocalAppData%\\JetBrains\\CLion2025.1\\caches", proc: "clion64.exe" },
+  { key: "jetbrains-datagrip", label: "JetBrains DataGrip", baseDir: "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches", proc: "datagrip64.exe" },
+  { key: "jetbrains-goland", label: "JetBrains GoLand", baseDir: "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches", proc: "goland64.exe" },
+  { key: "jetbrains-phpstorm", label: "JetBrains PhpStorm", baseDir: "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches", proc: "phpstorm64.exe" },
+  { key: "megasync-app", label: "MEGAsync Cloud Storage", baseDir: "%LocalAppData%\\Mega Limited\\MEGAsync", proc: "MEGAsync.exe" },
+  { key: "microsoft-outlook", label: "Microsoft Outlook", baseDir: "%LocalAppData%\\Microsoft\\Outlook", proc: "OUTLOOK.EXE" }
 ];
 
 const APP_CACHE_COMPONENTS = [
@@ -1577,7 +1973,8 @@ async function main() {
           "server/src/data/indexing-queue.json",
           "server/src/data/daily-seo-pages-state.json",
           "server/public/sitemap.xml",
-          "server/public/llms.txt"
+          "server/public/llms.txt",
+          "server/scripts/daily-50-seo-pages.mjs"
         ],
         { cwd: REPO_ROOT, stdio: "inherit" }
       );

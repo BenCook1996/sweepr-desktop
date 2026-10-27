@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-26T06:33:01.451Z",
+  "lastRunAt": "2026-10-27T06:31:25.963Z",
   "lastCount": 50,
-  "totalCleanItems": 578,
+  "totalCleanItems": 628,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/zen-browser-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/zen-browser-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/zen-browser-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/zen-browser-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/zen-browser-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/waterfox-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/waterfox-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/waterfox-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/waterfox-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/waterfox-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/sd-webui-model-cache",
+    "https://sweeprcleaner.com/clean/app/text-gen-webui-cache",
+    "https://sweeprcleaner.com/clean/app/jan-ai-models-cache",
+    "https://sweeprcleaner.com/clean/app/anythingllm-vector-cache",
+    "https://sweeprcleaner.com/clean/app/gpt4all-models-cache",
+    "https://sweeprcleaner.com/clean/app/koboldai-models-cache",
+    "https://sweeprcleaner.com/clean/folder/wsl2-ext4-vhdx-compaction",
+    "https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk",
+    "https://sweeprcleaner.com/clean/app/vcpkg-binary-cache",
+    "https://sweeprcleaner.com/clean/app/visual-studio-symbols-cache"
   ]
 }
