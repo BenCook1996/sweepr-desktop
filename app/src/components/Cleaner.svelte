@@ -594,7 +594,14 @@
 <!-- Minimalist 7-Day Safety Undo Modal (Always 100% Free) -->
 {#if showQuarantine}
   <div class="undo-backdrop" onclick={() => (showQuarantine = false)} role="presentation">
-    <div class="undo-modal card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
+    <div
+      class="undo-modal card"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+    >
       <div class="undo-head">
         <h3 class="undo-title">7-Day Undo</h3>
         <button type="button" class="close-x" onclick={() => (showQuarantine = false)}>✕</button>

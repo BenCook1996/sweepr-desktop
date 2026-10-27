@@ -1075,16 +1075,6 @@ const GITHUB_RELEASES_LATEST_URL: &str =
     "https://api.github.com/repos/BenCook1996/sweepr-desktop/releases/latest";
 
 fn is_newer_version(latest: &str, current: &str) -> bool {
-    let parse = |s: &str| -> Vec<u32> {
-        s.trim()
-            .trim_start_matches(['v', 'V'])
-            .split(['.', '-', '+'])
-            .next()
-            .unwrap_or("")
-            .split('.')
-            .map(|p| p.parse::<u32>().unwrap_or(0))
-            .collect()
-    };
     let max_parts = |s: &str| -> Vec<u32> {
         s.trim()
             .trim_start_matches(['v', 'V'])
@@ -1095,7 +1085,6 @@ fn is_newer_version(latest: &str, current: &str) -> bool {
             .map(|p| p.parse::<u32>().unwrap_or(0))
             .collect()
     };
-    let _ = parse;
     let l = max_parts(latest);
     let c = max_parts(current);
     for i in 0..l.len().max(c.len()) {
@@ -2198,7 +2187,15 @@ fn compact_sqlite_dir(dir: &Path) -> u64 {
             || name == "favicons"
             || name == "top sites"
             || name.ends_with(".sqlite");
-        if is_sqlite_db {
+        let has_sqlite_magic = is_sqlite_db && {
+            use std::io::Read;
+            let mut hdr = [0u8; 16];
+            std::fs::File::open(&p)
+                .and_then(|mut f| f.read_exact(&mut hdr))
+                .map(|_| &hdr == b"SQLite format 3\0")
+                .unwrap_or(false)
+        };
+        if has_sqlite_magic {
             let before = file_and_wal_len(&p);
             if exec_sqlite_on_file(&p, "PRAGMA wal_checkpoint(TRUNCATE); VACUUM;") {
                 let after = file_and_wal_len(&p);
@@ -2833,16 +2830,19 @@ mod tests {
         assert_eq!(history.len(), 1);
         assert_eq!(history[0].bytes_freed, 10240);
 
-        // Test SQLite temporary journal compactor
+        // Test SQLite temporary journal compactor: preserves active companion files
+        // whose parent DB exists on disk, while removing orphaned -wal/-journal files
         let prof = dir.join("browser_profile");
         std::fs::create_dir_all(&prof).unwrap();
         std::fs::write(prof.join("History"), vec![b'1'; 500]).unwrap();
-        std::fs::write(prof.join("History-journal"), vec![b'2'; 300]).unwrap();
+        std::fs::write(prof.join("History-journal"), vec![b'2'; 150]).unwrap();
+        std::fs::write(prof.join("OrphanDb-journal"), vec![b'2'; 300]).unwrap();
         std::fs::write(prof.join("Cookies-wal"), vec![b'3'; 200]).unwrap();
         let reclaimed = compact_sqlite_dir(&prof);
         assert_eq!(reclaimed, 500);
         assert!(prof.join("History").exists());
-        assert!(!prof.join("History-journal").exists());
+        assert!(prof.join("History-journal").exists());
+        assert!(!prof.join("OrphanDb-journal").exists());
         assert!(!prof.join("Cookies-wal").exists());
 
         // Test browser extension i18n message resolution

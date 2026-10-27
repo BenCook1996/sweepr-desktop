@@ -7,6 +7,17 @@
 -keep class com.sweepr.app.ReminderWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
+-keep class com.sweepr.app.BatteryCareWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+-keep class com.sweepr.app.BatteryUnplugWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+-keep class com.sweepr.app.StorageWidgetProvider { <init>(); }
+-keepclassmembers enum com.sweepr.app.** {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
 # Application class is referenced from the manifest (AAPT generates a keep rule, kept here for clarity).
 -keep class com.sweepr.app.SweeprApp { <init>(); }

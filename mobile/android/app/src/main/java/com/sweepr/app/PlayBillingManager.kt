@@ -196,7 +196,11 @@ object PlayBillingManager : PurchasesUpdatedListener {
                 }
 
                 override fun onBillingServiceDisconnected() {
-                    isConnecting = false
+                    val waiters = synchronized(connectionWaiters) {
+                        isConnecting = false
+                        connectionWaiters.toList().also { connectionWaiters.clear() }
+                    }
+                    waiters.forEach { (_, err) -> err() }
                 }
             })
         }.onFailure {
@@ -422,6 +426,9 @@ object PlayBillingManager : PurchasesUpdatedListener {
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK || purchases.isNullOrEmpty()) {
+            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                pendingCallback = null
+            }
             return
         }
         val client = billingClient

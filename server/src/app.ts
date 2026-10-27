@@ -4698,7 +4698,7 @@ export function createApp(deps: AppDeps) {
         existingEnt.plan !== "addon_only" &&
         isEntitled(existingEnt, t, config.pastDueGraceDays)
     );
-    const effectivePlan = isAddonOnly ? (hasBasePro ? existingEnt!.plan : "addon_only") : plan;
+    const effectivePlan: string = isAddonOnly ? (hasBasePro ? (existingEnt!.plan || "annual") : "addon_only") : plan;
     const effectiveStatus = isAddonOnly
       ? hasBasePro
         ? existingEnt!.status

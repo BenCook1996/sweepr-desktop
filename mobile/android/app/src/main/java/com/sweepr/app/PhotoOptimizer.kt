@@ -254,7 +254,7 @@ object PhotoOptimizer {
                 outputName = outputName,
                 originalBytes = item.size,
                 optimizedBytes = finalBytes,
-                gpsStripped = stripGps && (hadGps || savedGpsAttrs.isNotEmpty() || stripGps),
+                gpsStripped = stripGps && (hadGps || savedGpsAttrs.isNotEmpty()),
             )
         } finally {
             runCatching { tempFile.delete() }

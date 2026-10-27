@@ -182,8 +182,8 @@
     statusMessage = "";
     try {
       const rep = await api.deleteDuplicates(selectedDir.trim(), selectedList, true);
-      addLifetimeStats(rep.bytes_freed, rep.files_removed, ["duplicates"], "Recycle Bin");
-      statusMessage = `Moved ${rep.files_removed} extra duplicate file(s) (${formatBytes(rep.bytes_freed)}) to the Recycle Bin.`;
+      addLifetimeStats(rep.bytes_freed, rep.files_removed, ["duplicates"], trashLabel);
+      statusMessage = `Moved ${rep.files_removed} extra duplicate file(s) (${formatBytes(rep.bytes_freed)}) to the ${trashLabel}.`;
       groups = await api.findDuplicates(selectedDir.trim());
       smartSelectExtras();
     } catch (e) {
@@ -203,8 +203,8 @@
     statusMessage = "";
     try {
       const freed = await api.deleteLargeFile(selectedDir.trim(), filePath, true);
-      addLifetimeStats(freed, 1, ["large_files"], "Recycle Bin");
-      statusMessage = `Moved file (${formatBytes(freed)}) to the Recycle Bin.`;
+      addLifetimeStats(freed, 1, ["large_files"], trashLabel);
+      statusMessage = `Moved file (${formatBytes(freed)}) to the ${trashLabel}.`;
       if (largeReport) {
         largeReport.top_files = largeReport.top_files.filter((f) => f.path !== filePath);
       }
