@@ -5253,10 +5253,31 @@ export function createApp(deps: AppDeps) {
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const sig = c.req.header("stripe-signature") ?? "";
     const raw = await c.req.text(); // raw body is required for signature verification
-    let event: Stripe.Event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(raw, sig, config.stripeWebhookSecret);
-    } catch {
+    let event: Stripe.Event | null = null;
+    if (config.stripeWebhookSecret && sig) {
+      try {
+        event = await stripe.webhooks.constructEventAsync(raw, sig, config.stripeWebhookSecret);
+      } catch {
+        event = null;
+      }
+    }
+    // Fallback when multiple Stripe webhook endpoints exist with distinct signing secrets:
+    // verify the event ID directly against Stripe's API (`stripe.events.retrieve`) using STRIPE_SECRET_KEY.
+    if (!event && sig && typeof (stripe.events as any)?.retrieve === "function") {
+      try {
+        const parsed = JSON.parse(raw);
+        const evtId = typeof parsed?.id === "string" ? parsed.id.trim() : "";
+        if (/^evt_[A-Za-z0-9_]+$/.test(evtId)) {
+          const verified = await stripe.events.retrieve(evtId);
+          if (verified && verified.id === evtId) {
+            event = verified;
+          }
+        }
+      } catch {
+        event = null;
+      }
+    }
+    if (!event) {
       return c.json({ error: "invalid signature" }, 400);
     }
     if (!repo.markEventProcessed(event.id)) return c.json({ received: true, duplicate: true });
@@ -5274,6 +5295,8 @@ export function createApp(deps: AppDeps) {
   app.post("/webhooks/stripe", handleStripeWebhook);
   app.post("/api/webhook/stripe", handleStripeWebhook);
   app.post("/api/webhooks/stripe", handleStripeWebhook);
+  app.post("/api/stripe-webhook", handleStripeWebhook);
+  app.post("/stripe-webhook", handleStripeWebhook);
 
   app.post("/webhooks/revenuecat", async (c) => {
     // Verify standard RevenueCat Authorization header. RC sends exactly the value configured in its dashboard,

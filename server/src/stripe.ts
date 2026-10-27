@@ -215,9 +215,11 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       }
       const subId = idOf(s.subscription as any);
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId);
-        await syncPayPalEmailFromSubscription(stripe, repo, sub, accountId);
-        syncSubscription(repo, sub, accountId);
+        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        if (sub) {
+          await syncPayPalEmailFromSubscription(stripe, repo, sub, accountId);
+          syncSubscription(repo, sub, accountId);
+        }
       }
       
       if (email) {
@@ -270,9 +272,11 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       const inv = event.data.object as Stripe.Invoice;
       const subId = invoiceSubscriptionId(inv);
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId);
-        await syncPayPalEmailFromSubscription(stripe, repo, sub);
-        syncSubscription(repo, sub);
+        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        if (sub) {
+          await syncPayPalEmailFromSubscription(stripe, repo, sub);
+          syncSubscription(repo, sub);
+        }
       }
       const custId = idOf(inv.customer as any);
       const account = custId ? repo.accountByCustomer(custId) : undefined;
@@ -305,7 +309,10 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     case "invoice.payment_failed": {
       const inv = event.data.object as Stripe.Invoice;
       const subId = invoiceSubscriptionId(inv);
-      if (subId) syncSubscription(repo, await stripe.subscriptions.retrieve(subId));
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        if (sub) syncSubscription(repo, sub);
+      }
       const custId = idOf(inv.customer as any);
       const account = custId ? repo.accountByCustomer(custId) : undefined;
       if (account) {
@@ -370,10 +377,11 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     }
     case "charge.dispute.created": {
       const d = event.data.object as Stripe.Dispute;
-      const charge = await stripe.charges.retrieve(idOf(d.charge as any)!);
-      const customerId = idOf(charge.customer as any);
+      const chargeId = idOf(d.charge as any);
+      const charge = chargeId ? await stripe.charges.retrieve(chargeId).catch(() => null) : null;
+      const customerId = charge ? idOf(charge.customer as any) : null;
       const account = customerId ? repo.accountByCustomer(customerId) : undefined;
-      if (account) {
+      if (account && charge) {
         repo.setStatus(account.id, "disputed");
         repo.addActivity({
           account_id: account.id,
