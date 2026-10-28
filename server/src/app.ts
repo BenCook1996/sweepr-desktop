@@ -244,6 +244,19 @@ export function createApp(deps: AppDeps) {
     if (SCANNER_PROBE_RE.test(p) || SCANNER_PATH_RE.test(p)) {
       return c.text("Not Found", 404);
     }
+    if (c.req.method === "GET" || c.req.method === "HEAD") {
+      if (p.startsWith("/cdn-cgi/l/email-protection")) {
+        c.header("X-Robots-Tag", "noindex, nofollow");
+        return c.redirect("/support", 301);
+      }
+      if (p.length > 1 && /[).,\]]+$/.test(p)) {
+        const cleanTarget = p.replace(/[).,\]]+$/, "") || "/";
+        return c.redirect(cleanTarget, 301);
+      }
+      if (p === "/" && c.req.query("home") === "1" && detectBot(c.req.header("user-agent"))) {
+        return c.redirect("/", 301);
+      }
+    }
     await next();
   });
 
@@ -252,6 +265,9 @@ export function createApp(deps: AppDeps) {
     await next();
     const p = c.req.path.toLowerCase();
     if (/^\/+(api|crm|admin|v1|webhooks|dev)(\/|$)/.test(p)) return;
+    if (p === "/pad.xml") {
+      c.res.headers.set("X-Robots-Tag", "noindex, follow");
+    }
     if (c.res.headers.has("Cache-Control")) return;
 
     if (p.endsWith(".css") || p.endsWith(".js")) {
