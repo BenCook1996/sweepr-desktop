@@ -316,6 +316,9 @@ async function runBacklinksWorkflow(targetCount = 300) {
     `[CRM Deduplication Check] Local CRM Rows: ${crmState.localCrmCount} | Seed Entries: ${seed.length} | Unique URLs: ${crmState.postedUrls.size} | Unique Combos: ${crmState.postedCombos.size}`
   );
 
+  await initTelegraphPool();
+  console.log(`[Telegraph Pool] Initialized ${tokenPool.length} active publisher tokens.`);
+
   const now = new Date();
   const dateTag = `${now.toISOString().slice(0, 10)}-${String(now.getUTCHours()).padStart(2, "0")}`;
   const startOffset = seed.length;
@@ -393,8 +396,13 @@ async function runBacklinksWorkflow(targetCount = 300) {
   fs.writeFileSync(SEED_PATH, JSON.stringify(seed, null, 2), "utf8");
   console.log(`[Backlink Syndication Complete] Published ${completed} new dofollow backlinks. Total seed count: ${seed.length}`);
 
-  // Trigger CRM backlink verification
+  // Trigger CRM backlink import & verification
   for (const base of [CRM_BASE, LOCAL_CRM]) {
+    fetch(`${base}/api/crm/seo/backlinks/import-outreach`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
+      signal: AbortSignal.timeout(10000)
+    }).catch(() => {});
     fetch(`${base}/api/crm/seo/backlinks/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
