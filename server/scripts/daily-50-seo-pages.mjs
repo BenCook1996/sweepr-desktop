@@ -1877,17 +1877,18 @@ const WINDOWS_FOLDER_MATRIX = [
     ]
   },
   {
-    slug: "davinci-resolve-render-cache",
-    category: "app",
-    name: "DaVinci Resolve Optimized Media & Render Cache",
-    path: "%UserProfile%\\Videos\\CacheClip",
+    slug: "davinci-resolve-fusion-cache",
+    category: "folder",
+    name: "DaVinci Resolve Fusion Composition Cache & LUTs",
+    path: "%LocalAppData%\\Blackmagic Design\\DaVinci Resolve\\Support\\Fusion\\Cache",
     safeToDelete: true,
-    avgSpace: "20.0 GB – 120.0 GB",
-    whatIsIt: "Blackmagic DaVinci Resolve renders ProRes/DNxHR proxy clips and timeline color node caches into CacheClip on your drive.",
-    whatHappens: "Frees tens to hundreds of gigabytes. Render cache can be re-rendered on the timeline at any time.",
+    avgSpace: "5.0 GB – 35.0 GB",
+    whatIsIt: "DaVinci Resolve Fusion generates intermediate composite frames, node preview caches, and 3D LUT buffers when compositing visual effects.",
+    whatHappens: "Safe to delete. Reclaims gigabytes of disk space; Fusion automatically re-renders node branches upon playback.",
     manualSteps: [
-      "In DaVinci Resolve, open Playback > Delete Render Cache > All.",
-      "Or navigate to your CacheClip directory and delete the cached render folders."
+      "Open DaVinci Resolve Fusion page.",
+      "Go to Fusion > Fusion Settings > Cache and click Purge.",
+      "Or delete %LocalAppData%\\Blackmagic Design\\DaVinci Resolve\\Support\\Fusion\\Cache."
     ]
   },
   {

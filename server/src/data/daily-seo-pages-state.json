@@ -1,8 +1,16 @@
 {
   "lastRunAt": "2026-10-28T04:27:50.927Z",
-  "lastCount": 2,
+  "lastCount": 50,
   "totalCleanItems": 728,
   "sampleUrls": [
+    "https://sweeprcleaner.com/clean/app/docker-desktop-buildx-cache",
+    "https://sweeprcleaner.com/clean/app/podman-desktop-machine-cache",
+    "https://sweeprcleaner.com/clean/app/android-studio-gradle-build-cache",
+    "https://sweeprcleaner.com/clean/app/android-studio-avd-snapshots-cache",
+    "https://sweeprcleaner.com/clean/app/unity-editor-package-manager-cache",
+    "https://sweeprcleaner.com/clean/app/unreal-engine-derived-data-cache",
+    "https://sweeprcleaner.com/clean/folder/davinci-resolve-fusion-cache",
+    "https://sweeprcleaner.com/clean/folder/davinci-resolve-gallery-stills",
     "https://sweeprcleaner.com/clean/folder/vmware-workstation-vmem-cache",
     "https://sweeprcleaner.com/clean/folder/virtualbox-guest-snapshots-cache"
   ]

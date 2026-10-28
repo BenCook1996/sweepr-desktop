@@ -521,6 +521,9 @@ export function createApp(deps: AppDeps) {
     let cleanSlug = rawSlug.toLowerCase().replace(/%20|\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 
     // Legacy / historical redirect aliases
+    if (category === "folder" && cleanSlug === "davinci-resolve-render-cache") {
+      return c.redirect("/clean/folder/davinci-resolve-fusion-cache", 301);
+    }
     if (category === "folder" && cleanSlug === "localappdata-explorer-thumbcache-db") {
       return c.redirect("/clean/folder/windows-iconcache-db", 301);
     }

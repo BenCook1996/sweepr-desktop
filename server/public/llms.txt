@@ -53,7 +53,7 @@
 - [Adobe Premiere Pro Media Cache Database (.mcd Index) (%AppData%\Adobe\Common\Media Cache)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-database): Reclaim 1.0 GB – 8.0 GB
 - [Adobe Premiere Pro Media Cache Files (.mcf and .pek) (%AppData%\Adobe\Common\Media Cache Files)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-files): Reclaim 10.0 GB – 85.0 GB
 - [DaVinci Resolve Gallery Stills & Temporary Color Grade Caches (%UserProfile%\Videos\.gallery)](https://sweeprcleaner.com/clean/folder/davinci-resolve-gallery-stills): Reclaim 2.5 GB – 15.0 GB
-- [DaVinci Resolve Optimized Media & Render Cache (%UserProfile%\Videos\CacheClip)](https://sweeprcleaner.com/clean/folder/davinci-resolve-render-cache): Reclaim 20.0 GB – 120.0 GB
+- [DaVinci Resolve Fusion Composition Cache & LUTs (%LocalAppData%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Cache)](https://sweeprcleaner.com/clean/folder/davinci-resolve-fusion-cache): Reclaim 5.0 GB – 35.0 GB
 - [Godot Engine Editor Imported Asset & Shader Cache (%UserProfile%\.godot\editor)](https://sweeprcleaner.com/clean/folder/godot-engine-editor-import-cache): Reclaim 1.5 GB – 12.0 GB
 - [Unreal Engine Crash Reports & Saved Diagnostics Log Dumps (%LocalAppData%\UnrealEngine\Saved\Crashes)](https://sweeprcleaner.com/clean/folder/unreal-engine-crash-reports): Reclaim 2.0 GB – 18.0 GB
 - [Unity Editor Global Illumination Lightmap Cache (GI Cache) (%LocalAppData%\Unity\cache\gi)](https://sweeprcleaner.com/clean/folder/unity-editor-gi-cache): Reclaim 8.0 GB – 60.0 GB
