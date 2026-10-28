@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-28T06:31:25.440Z",
+  "lastRunAt": "2026-10-28T07:14:20.074Z",
   "lastCount": 50,
-  "totalCleanItems": 778,
+  "totalCleanItems": 828,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/gitkraken-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/gitkraken-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/gitkraken-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/gitkraken-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/gitkraken-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/vscodium-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/vscodium-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/vscodium-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/vscodium-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/vscodium-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/curseforge-app-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/curseforge-app-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/curseforge-app-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/curseforge-app-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/curseforge-app-media-blob-storage"
   ]
 }

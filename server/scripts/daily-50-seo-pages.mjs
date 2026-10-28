@@ -1568,7 +1568,17 @@ const APP_MATRIX_APPS = [
   { key: "deezer-desktop", label: "Deezer Desktop Music", baseDir: "%AppData%\\Deezer", proc: "Deezer.exe" },
   { key: "logitech-options-plus", label: "Logitech Options+", baseDir: "%LocalAppData%\\LogiOptionsPlus", proc: "logioptionsplus.exe" },
   { key: "elgato-stream-deck", label: "Elgato Stream Deck", baseDir: "%AppData%\\Elgato\\StreamDeck", proc: "StreamDeck.exe" },
-  { key: "bambu-studio", label: "Bambu Studio Slicer", baseDir: "%AppData%\\BambuStudio", proc: "bambu-studio.exe" }
+  { key: "bambu-studio", label: "Bambu Studio Slicer", baseDir: "%AppData%\\BambuStudio", proc: "bambu-studio.exe" },
+  { key: "chatgpt-desktop", label: "ChatGPT Desktop App", baseDir: "%AppData%\\ChatGPT", proc: "ChatGPT.exe" },
+  { key: "curseforge-app", label: "CurseForge Mod Manager", baseDir: "%AppData%\\curseforge", proc: "CurseForge.exe" },
+  { key: "qbittorrent-app", label: "qBittorrent Client", baseDir: "%LocalAppData%\\qBittorrent", proc: "qbittorrent.exe" },
+  { key: "prusa-slicer", label: "PrusaSlicer 3D Slicer", baseDir: "%AppData%\\PrusaSlicer", proc: "prusa-slicer.exe" },
+  { key: "orca-slicer", label: "OrcaSlicer 3D Slicer", baseDir: "%AppData%\\OrcaSlicer", proc: "orca-slicer.exe" },
+  { key: "ultimaker-cura", label: "UltiMaker Cura Slicer", baseDir: "%AppData%\\cura", proc: "Cura.exe" },
+  { key: "krita-painting", label: "Krita Digital Art", baseDir: "%LocalAppData%\\krita", proc: "krita.exe" },
+  { key: "gimp-editor", label: "GIMP Photo Editor", baseDir: "%AppData%\\GIMP\\2.10", proc: "gimp-2.10.exe" },
+  { key: "anydesk-remote", label: "AnyDesk Remote Desktop", baseDir: "%AppData%\\AnyDesk", proc: "AnyDesk.exe" },
+  { key: "sublime-text", label: "Sublime Text Editor", baseDir: "%AppData%\\Sublime Text", proc: "sublime_text.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
