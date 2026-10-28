@@ -1742,6 +1742,366 @@ const WINDOWS_FOLDER_MATRIX = [
       "Delete the icon cache database: del /f /q %LocalAppData%\\IconCache.db",
       "Restart Windows Explorer: start explorer.exe"
     ]
+  },
+  {
+    slug: "docker-desktop-buildx-cache",
+    category: "app",
+    name: "Docker Desktop BuildKit Container Cache & Dangling Images",
+    path: "%LocalAppData%\\Docker\\wsl\\data and %UserProfile%\\.docker\\buildx",
+    safeToDelete: true,
+    avgSpace: "12.0 GB – 75.0 GB",
+    whatIsIt: "Docker Desktop accumulates gigabytes of cached intermediate container layers, multi-arch buildx builders, and dangling image blobs on your C: drive.",
+    whatHappens: "Safely cleans orphaned Docker build caches and unused container layers without deleting running containers or volumes.",
+    manualSteps: [
+      "Open Windows Terminal or PowerShell.",
+      "Run 'docker builder prune -a' to clear all cached BuildKit layers.",
+      "Run 'docker image prune -a' to remove dangling, untagged Docker images."
+    ]
+  },
+  {
+    slug: "podman-desktop-machine-cache",
+    category: "app",
+    name: "Podman Desktop Virtual Machine Images & Temp Socket Blobs",
+    path: "%UserProfile%\\.local\\share\\containers\\podman\\machine",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 35.0 GB",
+    whatIsIt: "Podman Desktop for Windows maintains WSL2 virtual machine disks, ignition files, and socket buffers that expand over time.",
+    whatHappens: "Frees significant disk space from stopped Podman machines while keeping your container files and configurations intact.",
+    manualSteps: [
+      "Open Podman Desktop and stop active virtual machines.",
+      "Open PowerShell and run 'podman system prune --all --volumes'.",
+      "Optionally re-initialize the machine using 'podman machine rm' and 'podman machine init'."
+    ]
+  },
+  {
+    slug: "android-studio-gradle-build-cache",
+    category: "app",
+    name: "Android Studio Gradle Build Cache & Transform Caches",
+    path: "%UserProfile%\\.gradle\\caches\\transforms-3",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 30.0 GB",
+    whatIsIt: "Android Studio builds cache transformed AAR libraries, dex files, and jetified JAR archives in .gradle\\caches\\transforms-3.",
+    whatHappens: "Safely frees gigabytes of drive space. Gradle will rebuild transforms for current projects upon the next build.",
+    manualSteps: [
+      "Close Android Studio completely.",
+      "Press Windows Key + R, type %userprofile%\\.gradle\\caches, and press Enter.",
+      "Delete the 'transforms-3' and 'jars-9' cache directories."
+    ]
+  },
+  {
+    slug: "android-studio-avd-snapshots-cache",
+    category: "app",
+    name: "Android Emulator AVD Quickboot Snapshots & Temp QEMU Dumps",
+    path: "%UserProfile%\\.android\\avd",
+    safeToDelete: true,
+    avgSpace: "6.0 GB – 25.0 GB",
+    whatIsIt: "The Android Virtual Device (AVD) emulator writes multi-gigabyte RAM snapshot images (qemu.img and snapshot.pb) to enable quick boot.",
+    whatHappens: "Reclaims tens of gigabytes. Emulators will perform a standard clean cold boot on next launch.",
+    manualSteps: [
+      "Open Android Studio Device Manager.",
+      "Click the menu next to your virtual device and select 'Wipe Data'.",
+      "Or delete snapshot folders inside %UserProfile%\\.android\\avd\\<device>.avd\\snapshots."
+    ]
+  },
+  {
+    slug: "unity-editor-package-manager-cache",
+    category: "app",
+    name: "Unity Editor UPM Package Manager & Asset Store Cache",
+    path: "%LocalAppData%\\Unity\\cache\\packages",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 45.0 GB",
+    whatIsIt: "Unity Package Manager (UPM) and Unity Asset Store download and permanently store tarballs of every package and asset version you test.",
+    whatHappens: "Safely cleans old, unreferenced Unity asset packages. Active project dependencies are re-downloaded seamlessly when opened.",
+    manualSteps: [
+      "Close Unity Hub and all open Unity Editor instances.",
+      "Press Windows Key + R, type %LocalAppData%\\Unity\\cache, and press Enter.",
+      "Delete the 'packages' and 'npm' folders."
+    ]
+  },
+  {
+    slug: "unity-editor-gi-cache",
+    category: "app",
+    name: "Unity Editor Global Illumination Lightmap Cache (GI Cache)",
+    path: "%LocalAppData%\\Unity\\cache\\gi",
+    safeToDelete: true,
+    avgSpace: "8.0 GB – 60.0 GB",
+    whatIsIt: "Unity Editor stores precomputed realtime and baked global illumination ray tracing data inside the GI cache on drive C:.",
+    whatHappens: "Safe to delete. Frees massive SSD capacity; Unity will rebake scene lighting when requested.",
+    manualSteps: [
+      "In Unity Editor, open Edit > Preferences > GI Cache.",
+      "Click 'Clean Cache' button, or manually delete %LocalAppData%\\Unity\\cache\\gi."
+    ]
+  },
+  {
+    slug: "unreal-engine-derived-data-cache",
+    category: "app",
+    name: "Unreal Engine Derived Data Cache (Local DDC)",
+    path: "%LocalAppData%\\UnrealEngine\\Common\\DerivedDataCache",
+    safeToDelete: true,
+    avgSpace: "15.0 GB – 90.0 GB",
+    whatIsIt: "Unreal Engine creates compiled shader formats, cooked sound waves, and processed meshes in the local Derived Data Cache.",
+    whatHappens: "Reclaims massive storage space. Unreal Engine will regenerate required DDC entries automatically upon project load.",
+    manualSteps: [
+      "Close Unreal Engine and Epic Games Launcher.",
+      "Press Windows Key + R, type %LocalAppData%\\UnrealEngine\\Common\\DerivedDataCache, and press Enter.",
+      "Select all subfolders and delete them."
+    ]
+  },
+  {
+    slug: "unreal-engine-crash-reports",
+    category: "app",
+    name: "Unreal Engine Crash Reports & Saved Diagnostics Log Dumps",
+    path: "%LocalAppData%\\UnrealEngine\\Saved\\Crashes",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 18.0 GB",
+    whatIsIt: "CrashReportClient generates full minidump files and stack trace logs every time an editor instance or game prototype crashes.",
+    whatHappens: "Safely eliminates stale crash dumps without impacting project assets or engine functionality.",
+    manualSteps: [
+      "Press Windows Key + R, type %LocalAppData%\\UnrealEngine, and press Enter.",
+      "Search for 'Crashes' folders across engine versions and delete the dump logs."
+    ]
+  },
+  {
+    slug: "godot-engine-editor-import-cache",
+    category: "app",
+    name: "Godot Engine Editor Imported Asset & Shader Cache",
+    path: "%UserProfile%\\.godot\\editor",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 12.0 GB",
+    whatIsIt: "Godot Engine 4.x caches imported textures, audio streams, and compiled SPIR-V shaders in .godot\\editor.",
+    whatHappens: "Frees disk storage. Godot automatically re-imports assets from source files upon opening your game project.",
+    manualSteps: [
+      "Quit Godot Engine.",
+      "Press Windows Key + R, type %UserProfile%\\.godot, and press Enter.",
+      "Delete old editor cache folders."
+    ]
+  },
+  {
+    slug: "davinci-resolve-render-cache",
+    category: "app",
+    name: "DaVinci Resolve Optimized Media & Render Cache",
+    path: "%UserProfile%\\Videos\\CacheClip",
+    safeToDelete: true,
+    avgSpace: "20.0 GB – 120.0 GB",
+    whatIsIt: "Blackmagic DaVinci Resolve renders ProRes/DNxHR proxy clips and timeline color node caches into CacheClip on your drive.",
+    whatHappens: "Frees tens to hundreds of gigabytes. Render cache can be re-rendered on the timeline at any time.",
+    manualSteps: [
+      "In DaVinci Resolve, open Playback > Delete Render Cache > All.",
+      "Or navigate to your CacheClip directory and delete the cached render folders."
+    ]
+  },
+  {
+    slug: "davinci-resolve-gallery-stills",
+    category: "app",
+    name: "DaVinci Resolve Gallery Stills & Temporary Color Grade Caches",
+    path: "%UserProfile%\\Videos\\.gallery",
+    safeToDelete: true,
+    avgSpace: "2.5 GB – 15.0 GB",
+    whatIsIt: "DaVinci Resolve stores full-resolution DPX/TIFF stills and grading reference buffers in hidden .gallery directories.",
+    whatHappens: "Reclaims gigabytes of disk space while keeping your project timelines and timelines color metadata safe.",
+    manualSteps: [
+      "Open your DaVinci Resolve Project Settings > Master Settings.",
+      "Check Working Folders > Gallery Stills Location and purge unused gallery stills."
+    ]
+  },
+  {
+    slug: "premiere-pro-media-cache-files",
+    category: "app",
+    name: "Adobe Premiere Pro Media Cache Files (.mcf and .pek)",
+    path: "%AppData%\\Adobe\\Common\\Media Cache Files",
+    safeToDelete: true,
+    avgSpace: "10.0 GB – 85.0 GB",
+    whatIsIt: "Premiere Pro creates peak (.pek) waveform files and conformed video streams in Media Cache Files for every imported video.",
+    whatHappens: "Completely safe to delete. Premiere Pro easily regenerates audio waveforms when projects are reopened.",
+    manualSteps: [
+      "In Premiere Pro, go to Edit > Preferences > Media Cache.",
+      "Click 'Delete' next to Remove Media Cache Files, choosing 'Delete all media cache files'.",
+      "Or delete the contents of %AppData%\\Adobe\\Common\\Media Cache Files manually."
+    ]
+  },
+  {
+    slug: "premiere-pro-media-cache-database",
+    category: "app",
+    name: "Adobe Premiere Pro Media Cache Database (.mcd Index)",
+    path: "%AppData%\\Adobe\\Common\\Media Cache",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 8.0 GB",
+    whatIsIt: "Premiere Pro indexes all cached files in the Media Cache folder to map clip IDs to cached audio waveforms.",
+    whatHappens: "Safe to delete. Premiere Pro reconstructs a fresh database index on launch, resolving media sync errors.",
+    manualSteps: [
+      "Close all Adobe applications.",
+      "Navigate to %AppData%\\Adobe\\Common\\Media Cache and delete all files."
+    ]
+  },
+  {
+    slug: "after-effects-disk-cache",
+    category: "app",
+    name: "Adobe After Effects Conformed Audio & Disk Cache",
+    path: "%UserProfile%\\AppData\\Roaming\\Adobe\\Common\\Media Cache",
+    safeToDelete: true,
+    avgSpace: "15.0 GB – 100.0 GB",
+    whatIsIt: "Adobe After Effects stores rendered frames and RAM preview caches in its global disk cache folder.",
+    whatHappens: "Safe to delete. Instantly frees up to 100 GB of SSD space without losing any project composition settings.",
+    manualSteps: [
+      "In After Effects, navigate to Edit > Purge > All Memory & Disk Cache.",
+      "Confirm to clear the disk cache folder."
+    ]
+  },
+  {
+    slug: "lightroom-smart-preview-cache",
+    category: "app",
+    name: "Adobe Lightroom Classic Smart Previews & 1:1 Previews Cache",
+    path: "%UserProfile%\\Pictures\\Lightroom",
+    safeToDelete: true,
+    avgSpace: "8.0 GB – 55.0 GB",
+    whatIsIt: "Lightroom Classic builds large DNG Smart Previews and 1:1 rendering preview caches (.lrdata) for fast photo browsing.",
+    whatHappens: "Safe to delete. Frees massive disk space; original raw photos remain untouched and previews are regenerated on demand.",
+    manualSteps: [
+      "In Lightroom Classic, select Library > Previews > Discard 1:1 Previews.",
+      "Or close Lightroom and delete the [Catalog Name] Previews.lrdata folder."
+    ]
+  },
+  {
+    slug: "obs-studio-remux-temp-cache",
+    category: "app",
+    name: "OBS Studio Video Recording Remux & Browser Cache",
+    path: "%AppData%\\obs-studio\\plugin_config\\obs-browser",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 10.0 GB",
+    whatIsIt: "OBS Studio caches Chromium Embedded Framework (CEF) browser sources, stream alert caches, and temp remux artifacts.",
+    whatHappens: "Clears stale browser cookies, animated overlay caches, and unlinked temporary recording fragments.",
+    manualSteps: [
+      "Close OBS Studio.",
+      "Press Windows Key + R, type %AppData%\\obs-studio\\plugin_config\\obs-browser, and press Enter.",
+      "Delete the 'Cache' and 'Code Cache' directories."
+    ]
+  },
+  {
+    slug: "streamlabs-desktop-worker-cache",
+    category: "app",
+    name: "Streamlabs Desktop CEF Browser Cache & Transition Blobs",
+    path: "%AppData%\\slobs-client\\Cache",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 14.0 GB",
+    whatIsIt: "Streamlabs Desktop stores animated WebM stinger transitions, widget overlays, and CEF worker caches in %AppData%\\slobs-client.",
+    whatHappens: "Safe to clean. Restores browser memory responsiveness and clears gigabytes of old overlay caches.",
+    manualSteps: [
+      "Quit Streamlabs Desktop completely.",
+      "Navigate to %AppData%\\slobs-client and delete the Cache directory."
+    ]
+  },
+  {
+    slug: "pcsx2-ps2-texture-shader-cache",
+    category: "app",
+    name: "PCSX2 PlayStation 2 Vulkan & DirectX Shader Cache",
+    path: "%UserProfile%\\Documents\\PCSX2\\shaders",
+    safeToDelete: true,
+    avgSpace: "1.0 GB – 7.5 GB",
+    whatIsIt: "PCSX2 emulator writes precompiled graphics shaders for PS2 games to prevent micro-stutters during gameplay.",
+    whatHappens: "Safe to delete. Clears corrupted or outdated emulator shaders; PCSX2 will compile fresh shaders during emulation.",
+    manualSteps: [
+      "Close PCSX2 emulator.",
+      "Navigate to Documents\\PCSX2\\shaders (or %LocalAppData%\\PCSX2\\shaders) and delete the cache files."
+    ]
+  },
+  {
+    slug: "ryujinx-switch-vulkan-shader-cache",
+    category: "app",
+    name: "Ryujinx Nintendo Switch Vulkan & PPTC Shader Cache",
+    path: "%AppData%\\Ryujinx\\games",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 18.0 GB",
+    whatIsIt: "Ryujinx caches compiled guest code (PPTC) and Vulkan/SPIR-V graphics shaders for each Nintendo Switch title.",
+    whatHappens: "Safe to clean. Resolves shader compilation glitches and frees multiple gigabytes of C: drive storage.",
+    manualSteps: [
+      "Right-click any game in Ryujinx and select 'Purge PPTC Cache' or 'Purge Shader Cache'.",
+      "Or delete cache subfolders in %AppData%\\Ryujinx\\games."
+    ]
+  },
+  {
+    slug: "cemu-wii-u-pipeline-shader-cache",
+    category: "app",
+    name: "Cemu Wii U Emulator Pipeline Shader Cache & Transferable Cache",
+    path: "C:\\Cemu\\shaderCache\\transferable",
+    safeToDelete: true,
+    avgSpace: "1.5 GB – 8.5 GB",
+    whatIsIt: "Cemu emulator saves transferable and precompiled OpenGL/Vulkan pipeline caches inside Cemu\\shaderCache.",
+    whatHappens: "Safe to delete. Frees disk space and allows Cemu to compile fresh, glitch-free graphics pipelines.",
+    manualSteps: [
+      "Close Cemu emulator.",
+      "Navigate to your Cemu installation folder, open 'shaderCache', and delete contents of 'precompiled'."
+    ]
+  },
+  {
+    slug: "solidworks-temporary-scratch-files",
+    category: "app",
+    name: "SolidWorks Temporary Scratch Files & Crash Backup Files",
+    path: "%LocalAppData%\\SolidWorks\\SolidWorks Temp",
+    safeToDelete: true,
+    avgSpace: "3.0 GB – 25.0 GB",
+    whatIsIt: "Dassault Systèmes SolidWorks leaves behind massive CAD scratch buffers, auto-recover backups, and visualization files.",
+    whatHappens: "Safely cleans orphaned CAD temp files without altering your native .sldprt or .sldasm assembly models.",
+    manualSteps: [
+      "Save and close all SolidWorks projects.",
+      "Press Windows Key + R, type %LocalAppData%\\SolidWorks, and delete the Temp folders."
+    ]
+  },
+  {
+    slug: "autocad-graphics-hardware-cache",
+    category: "app",
+    name: "Autodesk AutoCAD Graphics Cache & Temporary Plot Logs",
+    path: "%LocalAppData%\\Autodesk\\AutoCAD",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 15.0 GB",
+    whatIsIt: "Autodesk AutoCAD caches hardware-accelerated 2D/3D display tessellations in GraphicsCache folders.",
+    whatHappens: "Safe to delete. Forces AutoCAD to regenerate graphics cache, resolving display artifacts and reclaiming SSD space.",
+    manualSteps: [
+      "Close AutoCAD.",
+      "In Windows Explorer, navigate to %LocalAppData%\\Autodesk\\AutoCAD <version>\\GraphicsCache and clear files."
+    ]
+  },
+  {
+    slug: "clip-studio-paint-canvas-cache",
+    category: "app",
+    name: "Clip Studio Paint Auto-Save Canvas & Material Backup Cache",
+    path: "%UserProfile%\\AppData\\Roaming\\CELSYS\\CLIPStudioPaintVer1_5_0\\DocumentTemp",
+    safeToDelete: true,
+    avgSpace: "2.0 GB – 12.0 GB",
+    whatIsIt: "Clip Studio Paint maintains canvas state snapshots, recovery files, and material download caches in %AppData%\\CELSYS.",
+    whatHappens: "Safely reclaims disk capacity from closed illustration projects while protecting your saved .clip artworks.",
+    manualSteps: [
+      "Close Clip Studio Paint.",
+      "Navigate to %AppData%\\CELSYS\\CLIPStudioPaintVer1_5_0 and clear the DocumentTemp folder."
+    ]
+  },
+  {
+    slug: "cyberlink-powerdirector-shadow-files",
+    category: "app",
+    name: "CyberLink PowerDirector Shadow Preview Files & Render Cache",
+    path: "%UserProfile%\\AppData\\Roaming\\CyberLink\\PowerDirector",
+    safeToDelete: true,
+    avgSpace: "5.0 GB – 30.0 GB",
+    whatIsIt: "CyberLink PowerDirector generates low-resolution shadow files and temporary timeline render files for video editing.",
+    whatHappens: "Safe to delete. Frees tens of gigabytes; PowerDirector will regenerate shadow files as needed when editing.",
+    manualSteps: [
+      "In PowerDirector, open Preferences > General.",
+      "Click 'Manually Delete' next to Auto-delete temporary files, or clean with SWEEPR Cleaner."
+    ]
+  },
+  {
+    slug: "windows-dism-superseded-components",
+    category: "folder",
+    name: "Windows 11 Component Store Superseded Updates (WinSxS Temp)",
+    path: "C:\\Windows\\WinSxS\\Temp\\PendingRenames",
+    safeToDelete: true,
+    avgSpace: "4.0 GB – 22.0 GB",
+    whatIsIt: "The Windows Component Store (WinSxS) leaves behind superseded update payload staging files and pending rename files.",
+    whatHappens: "Safely reclaims gigabytes from the Windows directory. Active operating system files are fully preserved.",
+    manualSteps: [
+      "Open Windows Terminal as Administrator.",
+      "Run: Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase",
+      "Wait for DISM to complete component retirement and cleanup."
+    ]
   }
 ];
 

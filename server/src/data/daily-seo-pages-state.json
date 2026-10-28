@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-28T04:24:29.321Z",
-  "lastCount": 25,
-  "totalCleanItems": 703,
+  "lastRunAt": "2026-10-28T04:27:16.593Z",
+  "lastCount": 23,
+  "totalCleanItems": 726,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/jetbrains-datagrip-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/jetbrains-datagrip-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/jetbrains-datagrip-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/jetbrains-datagrip-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/jetbrains-datagrip-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/jetbrains-goland-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/jetbrains-goland-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/jetbrains-goland-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/jetbrains-goland-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/jetbrains-goland-media-blob-storage"
+    "https://sweeprcleaner.com/clean/folder/docker-desktop-buildx-cache",
+    "https://sweeprcleaner.com/clean/folder/podman-desktop-machine-cache",
+    "https://sweeprcleaner.com/clean/folder/android-studio-gradle-build-cache",
+    "https://sweeprcleaner.com/clean/folder/android-studio-avd-snapshots-cache",
+    "https://sweeprcleaner.com/clean/folder/unity-editor-package-manager-cache",
+    "https://sweeprcleaner.com/clean/folder/unity-editor-gi-cache",
+    "https://sweeprcleaner.com/clean/folder/unreal-engine-crash-reports",
+    "https://sweeprcleaner.com/clean/folder/godot-engine-editor-import-cache",
+    "https://sweeprcleaner.com/clean/folder/davinci-resolve-render-cache",
+    "https://sweeprcleaner.com/clean/folder/davinci-resolve-gallery-stills"
   ]
 }

@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (703 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (726 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
+- [Windows 11 Component Store Superseded Updates (WinSxS Temp) (C:\Windows\WinSxS\Temp\PendingRenames)](https://sweeprcleaner.com/clean/folder/windows-dism-superseded-components): Reclaim 4.0 GB – 22.0 GB
+- [CyberLink PowerDirector Shadow Preview Files & Render Cache (%UserProfile%\AppData\Roaming\CyberLink\PowerDirector)](https://sweeprcleaner.com/clean/folder/cyberlink-powerdirector-shadow-files): Reclaim 5.0 GB – 30.0 GB
+- [Clip Studio Paint Auto-Save Canvas & Material Backup Cache (%UserProfile%\AppData\Roaming\CELSYS\CLIPStudioPaintVer1_5_0\DocumentTemp)](https://sweeprcleaner.com/clean/folder/clip-studio-paint-canvas-cache): Reclaim 2.0 GB – 12.0 GB
+- [Autodesk AutoCAD Graphics Cache & Temporary Plot Logs (%LocalAppData%\Autodesk\AutoCAD)](https://sweeprcleaner.com/clean/folder/autocad-graphics-hardware-cache): Reclaim 2.0 GB – 15.0 GB
+- [SolidWorks Temporary Scratch Files & Crash Backup Files (%LocalAppData%\SolidWorks\SolidWorks Temp)](https://sweeprcleaner.com/clean/folder/solidworks-temporary-scratch-files): Reclaim 3.0 GB – 25.0 GB
+- [Cemu Wii U Emulator Pipeline Shader Cache & Transferable Cache (C:\Cemu\shaderCache\transferable)](https://sweeprcleaner.com/clean/folder/cemu-wii-u-pipeline-shader-cache): Reclaim 1.5 GB – 8.5 GB
+- [Ryujinx Nintendo Switch Vulkan & PPTC Shader Cache (%AppData%\Ryujinx\games)](https://sweeprcleaner.com/clean/folder/ryujinx-switch-vulkan-shader-cache): Reclaim 2.0 GB – 18.0 GB
+- [PCSX2 PlayStation 2 Vulkan & DirectX Shader Cache (%UserProfile%\Documents\PCSX2\shaders)](https://sweeprcleaner.com/clean/folder/pcsx2-ps2-texture-shader-cache): Reclaim 1.0 GB – 7.5 GB
+- [Streamlabs Desktop CEF Browser Cache & Transition Blobs (%AppData%\slobs-client\Cache)](https://sweeprcleaner.com/clean/folder/streamlabs-desktop-worker-cache): Reclaim 2.0 GB – 14.0 GB
+- [OBS Studio Video Recording Remux & Browser Cache (%AppData%\obs-studio\plugin_config\obs-browser)](https://sweeprcleaner.com/clean/folder/obs-studio-remux-temp-cache): Reclaim 1.5 GB – 10.0 GB
+- [Adobe Lightroom Classic Smart Previews & 1:1 Previews Cache (%UserProfile%\Pictures\Lightroom)](https://sweeprcleaner.com/clean/folder/lightroom-smart-preview-cache): Reclaim 8.0 GB – 55.0 GB
+- [Adobe Premiere Pro Media Cache Database (.mcd Index) (%AppData%\Adobe\Common\Media Cache)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-database): Reclaim 1.0 GB – 8.0 GB
+- [Adobe Premiere Pro Media Cache Files (.mcf and .pek) (%AppData%\Adobe\Common\Media Cache Files)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-files): Reclaim 10.0 GB – 85.0 GB
+- [DaVinci Resolve Gallery Stills & Temporary Color Grade Caches (%UserProfile%\Videos\.gallery)](https://sweeprcleaner.com/clean/folder/davinci-resolve-gallery-stills): Reclaim 2.5 GB – 15.0 GB
+- [DaVinci Resolve Optimized Media & Render Cache (%UserProfile%\Videos\CacheClip)](https://sweeprcleaner.com/clean/folder/davinci-resolve-render-cache): Reclaim 20.0 GB – 120.0 GB
+- [Godot Engine Editor Imported Asset & Shader Cache (%UserProfile%\.godot\editor)](https://sweeprcleaner.com/clean/folder/godot-engine-editor-import-cache): Reclaim 1.5 GB – 12.0 GB
+- [Unreal Engine Crash Reports & Saved Diagnostics Log Dumps (%LocalAppData%\UnrealEngine\Saved\Crashes)](https://sweeprcleaner.com/clean/folder/unreal-engine-crash-reports): Reclaim 2.0 GB – 18.0 GB
+- [Unity Editor Global Illumination Lightmap Cache (GI Cache) (%LocalAppData%\Unity\cache\gi)](https://sweeprcleaner.com/clean/folder/unity-editor-gi-cache): Reclaim 8.0 GB – 60.0 GB
+- [Unity Editor UPM Package Manager & Asset Store Cache (%LocalAppData%\Unity\cache\packages)](https://sweeprcleaner.com/clean/folder/unity-editor-package-manager-cache): Reclaim 5.0 GB – 45.0 GB
+- [Android Emulator AVD Quickboot Snapshots & Temp QEMU Dumps (%UserProfile%\.android\avd)](https://sweeprcleaner.com/clean/folder/android-studio-avd-snapshots-cache): Reclaim 6.0 GB – 25.0 GB
+- [Android Studio Gradle Build Cache & Transform Caches (%UserProfile%\.gradle\caches\transforms-3)](https://sweeprcleaner.com/clean/folder/android-studio-gradle-build-cache): Reclaim 4.0 GB – 30.0 GB
+- [Podman Desktop Virtual Machine Images & Temp Socket Blobs (%UserProfile%\.local\share\containers\podman\machine)](https://sweeprcleaner.com/clean/folder/podman-desktop-machine-cache): Reclaim 5.0 GB – 35.0 GB
+- [Docker Desktop BuildKit Container Cache & Dangling Images (%LocalAppData%\Docker\wsl\data and %UserProfile%\.docker\buildx)](https://sweeprcleaner.com/clean/folder/docker-desktop-buildx-cache): Reclaim 12.0 GB – 75.0 GB
 - [Microsoft Outlook Media Cache & IndexedDB Blob Storage (%LocalAppData%\Microsoft\Outlook\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/microsoft-outlook-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
 - [Microsoft Outlook Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Microsoft\Outlook\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/microsoft-outlook-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Microsoft Outlook Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Microsoft\Outlook\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/microsoft-outlook-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Microsoft Outlook Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Microsoft\Outlook\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/microsoft-outlook-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Microsoft Outlook GPUCache & Dawn WebGPU Cache (%LocalAppData%\Microsoft\Outlook\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/microsoft-outlook-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [MEGAsync Cloud Storage Media Cache & IndexedDB Blob Storage (%LocalAppData%\Mega Limited\MEGAsync\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/megasync-app-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [MEGAsync Cloud Storage Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Mega Limited\MEGAsync\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/megasync-app-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [MEGAsync Cloud Storage Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Mega Limited\MEGAsync\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/megasync-app-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [MEGAsync Cloud Storage Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Mega Limited\MEGAsync\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/megasync-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [MEGAsync Cloud Storage GPUCache & Dawn WebGPU Cache (%LocalAppData%\Mega Limited\MEGAsync\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/megasync-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [JetBrains PhpStorm Media Cache & IndexedDB Blob Storage (%LocalAppData%\JetBrains\PhpStorm2025.1\caches\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [JetBrains PhpStorm Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\JetBrains\PhpStorm2025.1\caches\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [JetBrains PhpStorm Service Worker CacheStorage & Offline Blobs (%LocalAppData%\JetBrains\PhpStorm2025.1\caches\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [JetBrains PhpStorm Code Cache & V8 JavaScript Bytecode (%LocalAppData%\JetBrains\PhpStorm2025.1\caches\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [JetBrains PhpStorm GPUCache & Dawn WebGPU Cache (%LocalAppData%\JetBrains\PhpStorm2025.1\caches\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [JetBrains GoLand Media Cache & IndexedDB Blob Storage (%LocalAppData%\JetBrains\GoLand2025.1\caches\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/jetbrains-goland-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [JetBrains GoLand Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\JetBrains\GoLand2025.1\caches\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/jetbrains-goland-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [JetBrains GoLand Service Worker CacheStorage & Offline Blobs (%LocalAppData%\JetBrains\GoLand2025.1\caches\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/jetbrains-goland-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [JetBrains GoLand Code Cache & V8 JavaScript Bytecode (%LocalAppData%\JetBrains\GoLand2025.1\caches\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/jetbrains-goland-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [JetBrains GoLand GPUCache & Dawn WebGPU Cache (%LocalAppData%\JetBrains\GoLand2025.1\caches\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/jetbrains-goland-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [JetBrains DataGrip Media Cache & IndexedDB Blob Storage (%LocalAppData%\JetBrains\DataGrip2025.1\caches\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/jetbrains-datagrip-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [JetBrains DataGrip Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\JetBrains\DataGrip2025.1\caches\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/jetbrains-datagrip-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [JetBrains DataGrip Service Worker CacheStorage & Offline Blobs (%LocalAppData%\JetBrains\DataGrip2025.1\caches\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/jetbrains-datagrip-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [JetBrains DataGrip Code Cache & V8 JavaScript Bytecode (%LocalAppData%\JetBrains\DataGrip2025.1\caches\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/jetbrains-datagrip-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [JetBrains DataGrip GPUCache & Dawn WebGPU Cache (%LocalAppData%\JetBrains\DataGrip2025.1\caches\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/jetbrains-datagrip-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
