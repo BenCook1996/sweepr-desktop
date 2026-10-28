@@ -10129,5 +10129,380 @@
       "Press Windows Key + R, type %LocalAppData%\\JetBrains\\CLion2025.1\\caches and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "jetbrains-datagrip-gpu-shader-cache",
+    "category": "app",
+    "name": "JetBrains DataGrip GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "JetBrains DataGrip stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning JetBrains DataGrip's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit JetBrains DataGrip (verify datagrip64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\DataGrip2025.1\\caches and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-datagrip-code-bytecode-cache",
+    "category": "app",
+    "name": "JetBrains DataGrip Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "JetBrains DataGrip compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning JetBrains DataGrip's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit JetBrains DataGrip (verify datagrip64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\DataGrip2025.1\\caches and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-datagrip-service-worker-cachestorage",
+    "category": "app",
+    "name": "JetBrains DataGrip Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "JetBrains DataGrip quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning JetBrains DataGrip's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit JetBrains DataGrip (verify datagrip64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\DataGrip2025.1\\caches and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-datagrip-crashpad-dump-logs",
+    "category": "app",
+    "name": "JetBrains DataGrip Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "JetBrains DataGrip writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning JetBrains DataGrip's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit JetBrains DataGrip (verify datagrip64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\DataGrip2025.1\\caches and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-datagrip-media-blob-storage",
+    "category": "app",
+    "name": "JetBrains DataGrip Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "JetBrains DataGrip stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning JetBrains DataGrip's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit JetBrains DataGrip (verify datagrip64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\DataGrip2025.1\\caches and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-goland-gpu-shader-cache",
+    "category": "app",
+    "name": "JetBrains GoLand GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "JetBrains GoLand stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning JetBrains GoLand's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit JetBrains GoLand (verify goland64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\GoLand2025.1\\caches and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-goland-code-bytecode-cache",
+    "category": "app",
+    "name": "JetBrains GoLand Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "JetBrains GoLand compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning JetBrains GoLand's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit JetBrains GoLand (verify goland64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\GoLand2025.1\\caches and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-goland-service-worker-cachestorage",
+    "category": "app",
+    "name": "JetBrains GoLand Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "JetBrains GoLand quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning JetBrains GoLand's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit JetBrains GoLand (verify goland64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\GoLand2025.1\\caches and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-goland-crashpad-dump-logs",
+    "category": "app",
+    "name": "JetBrains GoLand Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "JetBrains GoLand writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning JetBrains GoLand's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit JetBrains GoLand (verify goland64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\GoLand2025.1\\caches and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-goland-media-blob-storage",
+    "category": "app",
+    "name": "JetBrains GoLand Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "JetBrains GoLand stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning JetBrains GoLand's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit JetBrains GoLand (verify goland64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\GoLand2025.1\\caches and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-phpstorm-gpu-shader-cache",
+    "category": "app",
+    "name": "JetBrains PhpStorm GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "JetBrains PhpStorm stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning JetBrains PhpStorm's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit JetBrains PhpStorm (verify phpstorm64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-phpstorm-code-bytecode-cache",
+    "category": "app",
+    "name": "JetBrains PhpStorm Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "JetBrains PhpStorm compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning JetBrains PhpStorm's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit JetBrains PhpStorm (verify phpstorm64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-phpstorm-service-worker-cachestorage",
+    "category": "app",
+    "name": "JetBrains PhpStorm Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "JetBrains PhpStorm quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning JetBrains PhpStorm's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit JetBrains PhpStorm (verify phpstorm64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-phpstorm-crashpad-dump-logs",
+    "category": "app",
+    "name": "JetBrains PhpStorm Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "JetBrains PhpStorm writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning JetBrains PhpStorm's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit JetBrains PhpStorm (verify phpstorm64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jetbrains-phpstorm-media-blob-storage",
+    "category": "app",
+    "name": "JetBrains PhpStorm Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "JetBrains PhpStorm stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning JetBrains PhpStorm's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit JetBrains PhpStorm (verify phpstorm64.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "megasync-app-gpu-shader-cache",
+    "category": "app",
+    "name": "MEGAsync Cloud Storage GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Mega Limited\\MEGAsync\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "MEGAsync Cloud Storage stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning MEGAsync Cloud Storage's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit MEGAsync Cloud Storage (verify MEGAsync.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Mega Limited\\MEGAsync and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "megasync-app-code-bytecode-cache",
+    "category": "app",
+    "name": "MEGAsync Cloud Storage Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Mega Limited\\MEGAsync\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "MEGAsync Cloud Storage compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning MEGAsync Cloud Storage's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit MEGAsync Cloud Storage (verify MEGAsync.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Mega Limited\\MEGAsync and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "megasync-app-service-worker-cachestorage",
+    "category": "app",
+    "name": "MEGAsync Cloud Storage Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Mega Limited\\MEGAsync\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "MEGAsync Cloud Storage quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning MEGAsync Cloud Storage's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit MEGAsync Cloud Storage (verify MEGAsync.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Mega Limited\\MEGAsync and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "megasync-app-crashpad-dump-logs",
+    "category": "app",
+    "name": "MEGAsync Cloud Storage Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Mega Limited\\MEGAsync\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "MEGAsync Cloud Storage writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning MEGAsync Cloud Storage's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit MEGAsync Cloud Storage (verify MEGAsync.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Mega Limited\\MEGAsync and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "megasync-app-media-blob-storage",
+    "category": "app",
+    "name": "MEGAsync Cloud Storage Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Mega Limited\\MEGAsync\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "MEGAsync Cloud Storage stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning MEGAsync Cloud Storage's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit MEGAsync Cloud Storage (verify MEGAsync.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Mega Limited\\MEGAsync and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "microsoft-outlook-gpu-shader-cache",
+    "category": "app",
+    "name": "Microsoft Outlook GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Microsoft\\Outlook\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Microsoft Outlook stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Microsoft Outlook's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Microsoft Outlook (verify OUTLOOK.EXE is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Outlook and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "microsoft-outlook-code-bytecode-cache",
+    "category": "app",
+    "name": "Microsoft Outlook Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Microsoft\\Outlook\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Microsoft Outlook compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Microsoft Outlook's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Microsoft Outlook (verify OUTLOOK.EXE is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Outlook and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "microsoft-outlook-service-worker-cachestorage",
+    "category": "app",
+    "name": "Microsoft Outlook Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Microsoft\\Outlook\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Microsoft Outlook quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Microsoft Outlook's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Microsoft Outlook (verify OUTLOOK.EXE is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Outlook and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "microsoft-outlook-crashpad-dump-logs",
+    "category": "app",
+    "name": "Microsoft Outlook Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Microsoft\\Outlook\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Microsoft Outlook writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Microsoft Outlook's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Microsoft Outlook (verify OUTLOOK.EXE is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Outlook and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "microsoft-outlook-media-blob-storage",
+    "category": "app",
+    "name": "Microsoft Outlook Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Microsoft\\Outlook\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Microsoft Outlook stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Microsoft Outlook's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Microsoft Outlook (verify OUTLOOK.EXE is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Microsoft\\Outlook and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]
