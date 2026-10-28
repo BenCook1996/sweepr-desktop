@@ -1558,7 +1558,17 @@ const APP_MATRIX_APPS = [
   { key: "jetbrains-goland", label: "JetBrains GoLand", baseDir: "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches", proc: "goland64.exe" },
   { key: "jetbrains-phpstorm", label: "JetBrains PhpStorm", baseDir: "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches", proc: "phpstorm64.exe" },
   { key: "megasync-app", label: "MEGAsync Cloud Storage", baseDir: "%LocalAppData%\\Mega Limited\\MEGAsync", proc: "MEGAsync.exe" },
-  { key: "microsoft-outlook", label: "Microsoft Outlook", baseDir: "%LocalAppData%\\Microsoft\\Outlook", proc: "OUTLOOK.EXE" }
+  { key: "microsoft-outlook", label: "Microsoft Outlook", baseDir: "%LocalAppData%\\Microsoft\\Outlook", proc: "OUTLOOK.EXE" },
+  { key: "gitkraken", label: "GitKraken Git Client", baseDir: "%AppData%\\GitKraken", proc: "GitKraken.exe" },
+  { key: "vscodium", label: "VSCodium Editor", baseDir: "%AppData%\\VSCodium", proc: "VSCodium.exe" },
+  { key: "bruno-api", label: "Bruno API Client", baseDir: "%AppData%\\bruno", proc: "bruno.exe" },
+  { key: "beekeeper-studio", label: "Beekeeper Studio", baseDir: "%AppData%\\beekeeper-studio", proc: "Beekeeper Studio.exe" },
+  { key: "heroic-games", label: "Heroic Games Launcher", baseDir: "%AppData%\\heroic", proc: "Heroic.exe" },
+  { key: "modrinth-app", label: "Modrinth App Launcher", baseDir: "%AppData%\\ModrinthApp", proc: "ModrinthApp.exe" },
+  { key: "deezer-desktop", label: "Deezer Desktop Music", baseDir: "%AppData%\\Deezer", proc: "Deezer.exe" },
+  { key: "logitech-options-plus", label: "Logitech Options+", baseDir: "%LocalAppData%\\LogiOptionsPlus", proc: "logioptionsplus.exe" },
+  { key: "elgato-stream-deck", label: "Elgato Stream Deck", baseDir: "%AppData%\\Elgato\\StreamDeck", proc: "StreamDeck.exe" },
+  { key: "bambu-studio", label: "Bambu Studio Slicer", baseDir: "%AppData%\\BambuStudio", proc: "bambu-studio.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [

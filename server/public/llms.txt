@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (728 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (778 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Oracle VirtualBox VM State Snapshots & VDI Dumps (%UserProfile%\VirtualBox VMs)](https://sweeprcleaner.com/clean/folder/virtualbox-guest-snapshots-cache): Reclaim 10.0 GB – 50.0 GB
-- [VMware Workstation Virtual Machine Paging Files (.vmem) (%UserProfile%\Documents\Virtual Machines)](https://sweeprcleaner.com/clean/folder/vmware-workstation-vmem-cache): Reclaim 8.0 GB – 40.0 GB
-- [Windows 11 Component Store Superseded Updates (WinSxS Temp) (C:\Windows\WinSxS\Temp\PendingRenames)](https://sweeprcleaner.com/clean/folder/windows-dism-superseded-components): Reclaim 4.0 GB – 22.0 GB
-- [CyberLink PowerDirector Shadow Preview Files & Render Cache (%UserProfile%\AppData\Roaming\CyberLink\PowerDirector)](https://sweeprcleaner.com/clean/folder/cyberlink-powerdirector-shadow-files): Reclaim 5.0 GB – 30.0 GB
-- [Clip Studio Paint Auto-Save Canvas & Material Backup Cache (%UserProfile%\AppData\Roaming\CELSYS\CLIPStudioPaintVer1_5_0\DocumentTemp)](https://sweeprcleaner.com/clean/folder/clip-studio-paint-canvas-cache): Reclaim 2.0 GB – 12.0 GB
-- [Autodesk AutoCAD Graphics Cache & Temporary Plot Logs (%LocalAppData%\Autodesk\AutoCAD)](https://sweeprcleaner.com/clean/folder/autocad-graphics-hardware-cache): Reclaim 2.0 GB – 15.0 GB
-- [SolidWorks Temporary Scratch Files & Crash Backup Files (%LocalAppData%\SolidWorks\SolidWorks Temp)](https://sweeprcleaner.com/clean/folder/solidworks-temporary-scratch-files): Reclaim 3.0 GB – 25.0 GB
-- [Cemu Wii U Emulator Pipeline Shader Cache & Transferable Cache (C:\Cemu\shaderCache\transferable)](https://sweeprcleaner.com/clean/folder/cemu-wii-u-pipeline-shader-cache): Reclaim 1.5 GB – 8.5 GB
-- [Ryujinx Nintendo Switch Vulkan & PPTC Shader Cache (%AppData%\Ryujinx\games)](https://sweeprcleaner.com/clean/folder/ryujinx-switch-vulkan-shader-cache): Reclaim 2.0 GB – 18.0 GB
-- [PCSX2 PlayStation 2 Vulkan & DirectX Shader Cache (%UserProfile%\Documents\PCSX2\shaders)](https://sweeprcleaner.com/clean/folder/pcsx2-ps2-texture-shader-cache): Reclaim 1.0 GB – 7.5 GB
-- [Streamlabs Desktop CEF Browser Cache & Transition Blobs (%AppData%\slobs-client\Cache)](https://sweeprcleaner.com/clean/folder/streamlabs-desktop-worker-cache): Reclaim 2.0 GB – 14.0 GB
-- [OBS Studio Video Recording Remux & Browser Cache (%AppData%\obs-studio\plugin_config\obs-browser)](https://sweeprcleaner.com/clean/folder/obs-studio-remux-temp-cache): Reclaim 1.5 GB – 10.0 GB
-- [Adobe Lightroom Classic Smart Previews & 1:1 Previews Cache (%UserProfile%\Pictures\Lightroom)](https://sweeprcleaner.com/clean/folder/lightroom-smart-preview-cache): Reclaim 8.0 GB – 55.0 GB
-- [Adobe Premiere Pro Media Cache Database (.mcd Index) (%AppData%\Adobe\Common\Media Cache)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-database): Reclaim 1.0 GB – 8.0 GB
-- [Adobe Premiere Pro Media Cache Files (.mcf and .pek) (%AppData%\Adobe\Common\Media Cache Files)](https://sweeprcleaner.com/clean/folder/premiere-pro-media-cache-files): Reclaim 10.0 GB – 85.0 GB
-- [DaVinci Resolve Gallery Stills & Temporary Color Grade Caches (%UserProfile%\Videos\.gallery)](https://sweeprcleaner.com/clean/folder/davinci-resolve-gallery-stills): Reclaim 2.5 GB – 15.0 GB
-- [DaVinci Resolve Fusion Composition Cache & LUTs (%LocalAppData%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Cache)](https://sweeprcleaner.com/clean/folder/davinci-resolve-fusion-cache): Reclaim 5.0 GB – 35.0 GB
-- [Godot Engine Editor Imported Asset & Shader Cache (%UserProfile%\.godot\editor)](https://sweeprcleaner.com/clean/folder/godot-engine-editor-import-cache): Reclaim 1.5 GB – 12.0 GB
-- [Unreal Engine Crash Reports & Saved Diagnostics Log Dumps (%LocalAppData%\UnrealEngine\Saved\Crashes)](https://sweeprcleaner.com/clean/folder/unreal-engine-crash-reports): Reclaim 2.0 GB – 18.0 GB
-- [Unity Editor Global Illumination Lightmap Cache (GI Cache) (%LocalAppData%\Unity\cache\gi)](https://sweeprcleaner.com/clean/folder/unity-editor-gi-cache): Reclaim 8.0 GB – 60.0 GB
-- [Unity Editor UPM Package Manager & Asset Store Cache (%LocalAppData%\Unity\cache\packages)](https://sweeprcleaner.com/clean/folder/unity-editor-package-manager-cache): Reclaim 5.0 GB – 45.0 GB
-- [Android Emulator AVD Quickboot Snapshots & Temp QEMU Dumps (%UserProfile%\.android\avd)](https://sweeprcleaner.com/clean/folder/android-studio-avd-snapshots-cache): Reclaim 6.0 GB – 25.0 GB
-- [Android Studio Gradle Build Cache & Transform Caches (%UserProfile%\.gradle\caches\transforms-3)](https://sweeprcleaner.com/clean/folder/android-studio-gradle-build-cache): Reclaim 4.0 GB – 30.0 GB
-- [Podman Desktop Virtual Machine Images & Temp Socket Blobs (%UserProfile%\.local\share\containers\podman\machine)](https://sweeprcleaner.com/clean/folder/podman-desktop-machine-cache): Reclaim 5.0 GB – 35.0 GB
-- [Docker Desktop BuildKit Container Cache & Dangling Images (%LocalAppData%\Docker\wsl\data and %UserProfile%\.docker\buildx)](https://sweeprcleaner.com/clean/folder/docker-desktop-buildx-cache): Reclaim 12.0 GB – 75.0 GB
+- [Bambu Studio Slicer Media Cache & IndexedDB Blob Storage (%AppData%\BambuStudio\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/bambu-studio-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Bambu Studio Slicer Crashpad Reports & Diagnostic DMP Logs (%AppData%\BambuStudio\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/bambu-studio-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Bambu Studio Slicer Service Worker CacheStorage & Offline Blobs (%AppData%\BambuStudio\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/bambu-studio-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Bambu Studio Slicer Code Cache & V8 JavaScript Bytecode (%AppData%\BambuStudio\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/bambu-studio-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Bambu Studio Slicer GPUCache & Dawn WebGPU Cache (%AppData%\BambuStudio\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/bambu-studio-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Elgato Stream Deck Media Cache & IndexedDB Blob Storage (%AppData%\Elgato\StreamDeck\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/elgato-stream-deck-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Elgato Stream Deck Crashpad Reports & Diagnostic DMP Logs (%AppData%\Elgato\StreamDeck\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/elgato-stream-deck-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Elgato Stream Deck Service Worker CacheStorage & Offline Blobs (%AppData%\Elgato\StreamDeck\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/elgato-stream-deck-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Elgato Stream Deck Code Cache & V8 JavaScript Bytecode (%AppData%\Elgato\StreamDeck\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/elgato-stream-deck-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Elgato Stream Deck GPUCache & Dawn WebGPU Cache (%AppData%\Elgato\StreamDeck\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/elgato-stream-deck-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Logitech Options+ Media Cache & IndexedDB Blob Storage (%LocalAppData%\LogiOptionsPlus\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/logitech-options-plus-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Logitech Options+ Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\LogiOptionsPlus\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/logitech-options-plus-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Logitech Options+ Service Worker CacheStorage & Offline Blobs (%LocalAppData%\LogiOptionsPlus\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/logitech-options-plus-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Logitech Options+ Code Cache & V8 JavaScript Bytecode (%LocalAppData%\LogiOptionsPlus\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/logitech-options-plus-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Logitech Options+ GPUCache & Dawn WebGPU Cache (%LocalAppData%\LogiOptionsPlus\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/logitech-options-plus-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Deezer Desktop Music Media Cache & IndexedDB Blob Storage (%AppData%\Deezer\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/deezer-desktop-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Deezer Desktop Music Crashpad Reports & Diagnostic DMP Logs (%AppData%\Deezer\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/deezer-desktop-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Deezer Desktop Music Service Worker CacheStorage & Offline Blobs (%AppData%\Deezer\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/deezer-desktop-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Deezer Desktop Music Code Cache & V8 JavaScript Bytecode (%AppData%\Deezer\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/deezer-desktop-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Deezer Desktop Music GPUCache & Dawn WebGPU Cache (%AppData%\Deezer\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/deezer-desktop-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Modrinth App Launcher Media Cache & IndexedDB Blob Storage (%AppData%\ModrinthApp\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/modrinth-app-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Modrinth App Launcher Crashpad Reports & Diagnostic DMP Logs (%AppData%\ModrinthApp\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/modrinth-app-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Modrinth App Launcher Service Worker CacheStorage & Offline Blobs (%AppData%\ModrinthApp\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/modrinth-app-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Modrinth App Launcher Code Cache & V8 JavaScript Bytecode (%AppData%\ModrinthApp\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/modrinth-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Modrinth App Launcher GPUCache & Dawn WebGPU Cache (%AppData%\ModrinthApp\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/modrinth-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB

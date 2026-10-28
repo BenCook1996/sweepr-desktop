@@ -1,8 +1,8 @@
 {
   "result": {
     "run_id": 1,
-    "pages": 737,
-    "html_pages": 737,
+    "pages": 787,
+    "html_pages": 787,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -13,9 +13,9 @@
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1793161797,
-    "finished_at": 1793161799,
-    "pages": 737,
+    "started_at": 1793169119,
+    "finished_at": 1793169120,
+    "pages": 787,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
