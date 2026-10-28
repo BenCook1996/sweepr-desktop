@@ -35,8 +35,10 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (726 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (728 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
+- [Oracle VirtualBox VM State Snapshots & VDI Dumps (%UserProfile%\VirtualBox VMs)](https://sweeprcleaner.com/clean/folder/virtualbox-guest-snapshots-cache): Reclaim 10.0 GB – 50.0 GB
+- [VMware Workstation Virtual Machine Paging Files (.vmem) (%UserProfile%\Documents\Virtual Machines)](https://sweeprcleaner.com/clean/folder/vmware-workstation-vmem-cache): Reclaim 8.0 GB – 40.0 GB
 - [Windows 11 Component Store Superseded Updates (WinSxS Temp) (C:\Windows\WinSxS\Temp\PendingRenames)](https://sweeprcleaner.com/clean/folder/windows-dism-superseded-components): Reclaim 4.0 GB – 22.0 GB
 - [CyberLink PowerDirector Shadow Preview Files & Render Cache (%UserProfile%\AppData\Roaming\CyberLink\PowerDirector)](https://sweeprcleaner.com/clean/folder/cyberlink-powerdirector-shadow-files): Reclaim 5.0 GB – 30.0 GB
 - [Clip Studio Paint Auto-Save Canvas & Material Backup Cache (%UserProfile%\AppData\Roaming\CELSYS\CLIPStudioPaintVer1_5_0\DocumentTemp)](https://sweeprcleaner.com/clean/folder/clip-studio-paint-canvas-cache): Reclaim 2.0 GB – 12.0 GB
@@ -60,5 +62,3 @@
 - [Android Studio Gradle Build Cache & Transform Caches (%UserProfile%\.gradle\caches\transforms-3)](https://sweeprcleaner.com/clean/folder/android-studio-gradle-build-cache): Reclaim 4.0 GB – 30.0 GB
 - [Podman Desktop Virtual Machine Images & Temp Socket Blobs (%UserProfile%\.local\share\containers\podman\machine)](https://sweeprcleaner.com/clean/folder/podman-desktop-machine-cache): Reclaim 5.0 GB – 35.0 GB
 - [Docker Desktop BuildKit Container Cache & Dangling Images (%LocalAppData%\Docker\wsl\data and %UserProfile%\.docker\buildx)](https://sweeprcleaner.com/clean/folder/docker-desktop-buildx-cache): Reclaim 12.0 GB – 75.0 GB
-- [Microsoft Outlook Media Cache & IndexedDB Blob Storage (%LocalAppData%\Microsoft\Outlook\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/microsoft-outlook-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Microsoft Outlook Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Microsoft\Outlook\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/microsoft-outlook-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB

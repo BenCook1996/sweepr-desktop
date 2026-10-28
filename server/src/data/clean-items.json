@@ -10835,5 +10835,34 @@
       "Run: Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase",
       "Wait for DISM to complete component retirement and cleanup."
     ]
+  },
+  {
+    "slug": "vmware-workstation-vmem-cache",
+    "category": "folder",
+    "name": "VMware Workstation Virtual Machine Paging Files (.vmem)",
+    "path": "%UserProfile%\\Documents\\Virtual Machines",
+    "safeToDelete": true,
+    "avgSpace": "8.0 GB – 40.0 GB",
+    "whatIsIt": "VMware Workstation caches guest virtual machine memory snapshots and paging files (.vmem) on the host C: drive.",
+    "whatHappens": "Safe to clean when VMs are powered off. Frees tens of gigabytes of host SSD capacity.",
+    "manualSteps": [
+      "Shut down active VMware virtual machines.",
+      "Navigate to your Virtual Machines folder.",
+      "Delete orphaned .vmem and .vmss memory checkpoint files."
+    ]
+  },
+  {
+    "slug": "virtualbox-guest-snapshots-cache",
+    "category": "folder",
+    "name": "Oracle VirtualBox VM State Snapshots & VDI Dumps",
+    "path": "%UserProfile%\\VirtualBox VMs",
+    "safeToDelete": true,
+    "avgSpace": "10.0 GB – 50.0 GB",
+    "whatIsIt": "VirtualBox saves multi-gigabyte saved machine states (.sav) and temporary differencing disk images.",
+    "whatHappens": "Safely cleans outdated VM saved states while preserving master virtual hard disks.",
+    "manualSteps": [
+      "Open Oracle VM VirtualBox Manager.",
+      "Right-click inactive VMs and discard saved states, or purge stale snapshot disks."
+    ]
   }
 ]
