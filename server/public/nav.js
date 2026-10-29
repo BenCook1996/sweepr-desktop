@@ -200,8 +200,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const isOtherMobile = /mobile|iemobile|opera mini/.test(ua);
     if (isIos || isAndroid || isOtherMobile) {
       const targetHref = isIos ? '/download?platform=ios&direct=1' : '/download?platform=android&direct=1';
+      const showCleanerMobileSheet = () => {
+        if (!isAndroid) return;
+        let sheet = document.getElementById('mobileInstallHelperSheet');
+        if (!sheet) {
+          sheet = document.createElement('div');
+          sheet.id = 'mobileInstallHelperSheet';
+          sheet.className = 'fixed inset-x-0 bottom-0 p-4 bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl';
+          sheet.style.backgroundColor = '#ffffff';
+          sheet.style.zIndex = '10001';
+          sheet.innerHTML = `
+            <div class="max-w-md mx-auto text-left space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="font-extrabold text-sm text-gray-900">📱 Downloading SWEEPRCleaner.apk...</div>
+                <button type="button" id="closeMobileInstallSheet" class="text-xs font-bold text-gray-400 hover:text-gray-700 px-2 py-1 cursor-pointer">&#10005;</button>
+              </div>
+              <p class="text-xs text-gray-600 leading-relaxed">
+                Your Android installer (<strong>SWEEPRCleaner.apk</strong>) is downloading now. Or join our official Google Play Beta below for automatic Play Store updates:
+              </p>
+              <div class="grid grid-cols-1 gap-2 pt-1">
+                <a href="https://play.google.com/apps/testing/com.sweepr.app" target="_blank" rel="noopener" class="btn btn-go w-full justify-center py-2.5 text-xs font-extrabold">▶️ Join Official Google Play Beta (Get 30 Days Pro Free)</a>
+                <a href="/download?platform=android&direct=1" class="flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-800 w-full py-2 text-xs font-bold no-underline">⬇️ Download SWEEPRCleaner.apk Again</a>
+              </div>
+            </div>`;
+          document.body.appendChild(sheet);
+          const closeBtn = document.getElementById('closeMobileInstallSheet');
+          if (closeBtn) closeBtn.addEventListener('click', () => sheet.classList.add('hidden'));
+        } else {
+          sheet.classList.remove('hidden');
+        }
+      };
       document.querySelectorAll('a[href^="/download"]').forEach((a) => {
         a.setAttribute('href', targetHref);
+        a.addEventListener('click', () => setTimeout(showCleanerMobileSheet, 150));
       });
       const osBtnLbl = document.getElementById('osDownloadText') || document.getElementById('downloadBtnLabel');
       if (osBtnLbl) {

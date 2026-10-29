@@ -603,6 +603,7 @@ export function createApp(deps: AppDeps) {
     const links =
       assistBanner +
       (hasAndroid ? btn("/download?platform=android&direct=1", "📱 Download for Android (.apk)", true) : "") +
+      btn("https://play.google.com/apps/testing/com.sweepr.app", "▶️ Join Official Google Play Beta (Get 30 Days Pro Free)", true) +
       btn("/download?platform=ios&direct=1", "🍎 Install on iPhone & iPad (iOS / iPadOS)", true) +
       btn("/download?platform=windows", "💻 Download for Windows 10 & 11 (.exe)", true) +
       (hasMac ? btn("/download?platform=mac", "🍏 Download for Mac — macOS 11+ Universal (.dmg)", true) : "") +
