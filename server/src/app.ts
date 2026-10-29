@@ -689,6 +689,14 @@ export function createApp(deps: AppDeps) {
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
       <input id="iosFilePicker" type="file" multiple accept="image/*,video/*,*/*" style="display:none" onchange="onIosFilesSelected(this.files)" />
       <button id="pickFilesBtn" onclick="document.getElementById('iosFilePicker').click()" class="card" style="padding:11px 14px;border-radius:14px;font-size:12.5px;font-weight:800;text-align:center;cursor:pointer;color:var(--accent-fg)">Select Photos / Videos to Check for Real Duplicates (SHA-256)</button>
+      <details class="card" style="padding:11px 14px;border-radius:14px;font-size:12px">
+        <summary style="cursor:pointer;font-weight:800;display:flex;justify-content:space-between;align-items:center;list-style:none"><span>App, Game &amp; Browser Cache Targets</span><span class="mono" style="color:var(--accent-fg);font-size:11px">View ▾</span></summary>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;color:var(--muted);line-height:1.4">
+          <div>• <strong>Browsers:</strong> Safari, Chrome, Brave, Opera GX &amp; Arc Service Worker / WebGPU cache</div>
+          <div>• <strong>Games:</strong> Genshin Impact / HoYoPlay update staging &amp; Roblox HTTP texture cache</div>
+          <div>• <strong>Creator &amp; Chat:</strong> CapCut, Discord, WhatsApp &amp; Telegram media exports</div>
+        </div>
+      </details>
       <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Web Cache &amp; Duplicate Report</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Engine</span><span class="mono">SHA-256 + Quota</span></div>

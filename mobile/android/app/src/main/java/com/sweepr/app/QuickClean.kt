@@ -111,6 +111,12 @@ fun QuickCleanReviewScreen(
             ReviewCategory("sim", simTitle, simNote, media.similarGroups.flatMap { it.extras }) { onOpenPhotosTab(1) },
             ReviewCategory("shots", shotsTitle, null, media.screenshots) { onOpen(Screen.Screenshots) },
             ReviewCategory("blurry", blurryTitle, null, media.blurry) { onOpenPhotosTab(2) },
+            ReviewCategory(
+                "chat",
+                "App, Chat & Creator Media",
+                "WhatsApp, Telegram, Discord, CapCut & game media caches",
+                media.messengerMedia,
+            ) { onOpen(Screen.PhotosVideos) },
         ).filter { it.items.isNotEmpty() }
     }
     // Anything the user ticked elsewhere (videos, chat media, swipe…) so the dock total adds up.

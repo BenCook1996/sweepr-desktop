@@ -63,21 +63,11 @@
 
   const nonEmpty = $derived(report?.categories.filter((c) => c.bytes > 0) ?? []);
 
-  const sysBrowserCats = $derived(
-    nonEmpty.filter((c) =>
-      /temp|log|crash|update|prefetch|thumb|font|dns|shader|memory_dump|windows|chrome|edge|brave|firefox|opera|vivaldi|safari|browser/i.test(
-        c.id
-      )
-    )
-  );
-  const appCacheCats = $derived(
-    nonEmpty.filter(
-      (c) =>
-        !/temp|log|crash|update|prefetch|thumb|font|dns|shader|memory_dump|windows|chrome|edge|brave|firefox|opera|vivaldi|safari|browser/i.test(
-          c.id
-        )
-    )
-  );
+  const SYS_BROWSER_RE =
+    /temp|log|crash|update|prefetch|thumb|font|dns|shader|memory_dump|windows|chrome|edge|brave|firefox|opera|vivaldi|safari|browser|delivery_opt|recent_activity|system_slimmer|webview2|trash/i;
+
+  const sysBrowserCats = $derived(nonEmpty.filter((c) => SYS_BROWSER_RE.test(c.id)));
+  const appCacheCats = $derived(nonEmpty.filter((c) => !SYS_BROWSER_RE.test(c.id)));
 
   const sysBrowserBytes = $derived(sysBrowserCats.reduce((s, c) => s + c.bytes, 0));
   const appCacheBytes = $derived(appCacheCats.reduce((s, c) => s + c.bytes, 0));
@@ -341,7 +331,11 @@
     const onOpenUndo = () => {
       void openUndoModal();
     };
-    const onTriggerScan = () => {
+    const onTriggerScan = (e: Event) => {
+      const detail = (e as CustomEvent<{ expand?: string }> | undefined)?.detail;
+      if (detail?.expand) {
+        expandedGroup = detail.expand;
+      }
       scan();
     };
     const onActivated = async () => {

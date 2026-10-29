@@ -214,8 +214,18 @@
     label: string;
     group: string;
     shortcut?: string;
+    keywords?: string;
+    queryOnly?: boolean;
     run: () => void;
   };
+
+  function triggerTargetedScan(expand: "sys" | "app") {
+    tab = "cleaner";
+    setTimeout(
+      () => window.dispatchEvent(new CustomEvent("sweepr-trigger-scan", { detail: { expand } })),
+      0
+    );
+  }
 
   const commandActions: CommandAction[] = [
     {
@@ -315,13 +325,68 @@
       shortcut: `${modKeyLabel}B`,
       run: () => toggleSidebar(),
     },
+    {
+      id: "cmd-target-peripheral",
+      label: "Clean Logitech G HUB, Razer Synapse & iCUE Caches",
+      group: "Targeted Cache Cleanup",
+      keywords: "lghub logitech g hub depots blob_storage razer synapse corsair icue settings.db",
+      queryOnly: true,
+      run: () => triggerTargetedScan("app"),
+    },
+    {
+      id: "cmd-target-gaming",
+      label: "Clean Gaming Launchers (Steam, Epic, EA, Genshin, Riot, VRChat)",
+      group: "Targeted Cache Cleanup",
+      keywords:
+        "steam depotcache shadercache epic games webcache ea app origin genshin impact hoyoplay riot client valorant medal tv vrchat gog galaxy ubisoft overwolf minecraft roblox call of duty",
+      queryOnly: true,
+      run: () => triggerTargetedScan("app"),
+    },
+    {
+      id: "cmd-target-shader",
+      label: "Reset AMD, NVIDIA & DirectX GPU Shader Caches",
+      group: "Targeted Cache Cleanup",
+      keywords: "amd dxcache vkcache glcache c:\\amd nvidia nv_cache d3dscache directx shader stuttering",
+      queryOnly: true,
+      run: () => triggerTargetedScan("sys"),
+    },
+    {
+      id: "cmd-target-webview2",
+      label: "Clean WebView2 (EBWebView), Package Cache & Windows.old",
+      group: "Targeted Cache Cleanup",
+      keywords:
+        "webview2 ebwebview localappdata package cache windows.old winsxs livekernelreports watchdog crash dumps delivery optimization",
+      queryOnly: true,
+      run: () => triggerTargetedScan("sys"),
+    },
+    {
+      id: "cmd-target-browsers",
+      label: "Clean Chrome, Opera GX, Arc, Vivaldi, Brave & Edge GPU/ServiceWorker Caches",
+      group: "Targeted Cache Cleanup",
+      keywords:
+        "chrome gpucache dawncache service worker code cache opera gx arc browser vivaldi thunderbird brave edge firefox",
+      queryOnly: true,
+      run: () => triggerTargetedScan("sys"),
+    },
+    {
+      id: "cmd-target-creator-dev",
+      label: "Clean Creator, AI & Dev Caches (Maven, Go, JetBrains, CapCut, OBS, DaVinci, LM Studio)",
+      group: "Targeted Cache Cleanup",
+      keywords:
+        "maven .m2 gradle cargo npm pnpm go-build jetbrains intellij capcut obs studio davinci resolve cacheclip after effects lightroom canva notion postman plex comfyui lm studio",
+      queryOnly: true,
+      run: () => triggerTargetedScan("app"),
+    },
   ];
 
   const filteredCommands = $derived.by(() => {
     const q = cmdQuery.trim().toLowerCase();
-    if (!q) return commandActions;
+    if (!q) return commandActions.filter((c) => !c.queryOnly);
     return commandActions.filter(
-      (c) => c.label.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)
+      (c) =>
+        c.label.toLowerCase().includes(q) ||
+        c.group.toLowerCase().includes(q) ||
+        (c.keywords && c.keywords.toLowerCase().includes(q))
     );
   });
 
