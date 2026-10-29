@@ -12365,5 +12365,755 @@
       "Press Windows Key + R, type %AppData%\\Sublime Text and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "claude-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Claude Desktop App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Claude\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Claude Desktop App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Claude Desktop App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Claude Desktop App (verify Claude.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Claude and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "claude-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Claude Desktop App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Claude\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Claude Desktop App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Claude Desktop App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Claude Desktop App (verify Claude.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Claude and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "claude-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Claude Desktop App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Claude\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Claude Desktop App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Claude Desktop App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Claude Desktop App (verify Claude.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Claude and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "claude-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Claude Desktop App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Claude\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Claude Desktop App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Claude Desktop App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Claude Desktop App (verify Claude.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Claude and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "claude-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Claude Desktop App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Claude\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Claude Desktop App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Claude Desktop App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Claude Desktop App (verify Claude.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Claude and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-photo-gpu-shader-cache",
+    "category": "app",
+    "name": "Affinity Photo 2 GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Affinity\\Photo\\2.0\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Affinity Photo 2 stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Affinity Photo 2's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Affinity Photo 2 (verify Photo.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Photo\\2.0 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-photo-code-bytecode-cache",
+    "category": "app",
+    "name": "Affinity Photo 2 Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Affinity\\Photo\\2.0\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Affinity Photo 2 compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Affinity Photo 2's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Affinity Photo 2 (verify Photo.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Photo\\2.0 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-photo-service-worker-cachestorage",
+    "category": "app",
+    "name": "Affinity Photo 2 Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Affinity\\Photo\\2.0\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Affinity Photo 2 quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Affinity Photo 2's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Affinity Photo 2 (verify Photo.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Photo\\2.0 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-photo-crashpad-dump-logs",
+    "category": "app",
+    "name": "Affinity Photo 2 Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Affinity\\Photo\\2.0\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Affinity Photo 2 writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Affinity Photo 2's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Affinity Photo 2 (verify Photo.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Photo\\2.0 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-photo-media-blob-storage",
+    "category": "app",
+    "name": "Affinity Photo 2 Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Affinity\\Photo\\2.0\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Affinity Photo 2 stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Affinity Photo 2's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Affinity Photo 2 (verify Photo.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Photo\\2.0 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-designer-gpu-shader-cache",
+    "category": "app",
+    "name": "Affinity Designer 2 GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Affinity\\Designer\\2.0\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Affinity Designer 2 stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Affinity Designer 2's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Affinity Designer 2 (verify Designer.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Designer\\2.0 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-designer-code-bytecode-cache",
+    "category": "app",
+    "name": "Affinity Designer 2 Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Affinity\\Designer\\2.0\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Affinity Designer 2 compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Affinity Designer 2's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Affinity Designer 2 (verify Designer.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Designer\\2.0 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-designer-service-worker-cachestorage",
+    "category": "app",
+    "name": "Affinity Designer 2 Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Affinity\\Designer\\2.0\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Affinity Designer 2 quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Affinity Designer 2's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Affinity Designer 2 (verify Designer.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Designer\\2.0 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-designer-crashpad-dump-logs",
+    "category": "app",
+    "name": "Affinity Designer 2 Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Affinity\\Designer\\2.0\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Affinity Designer 2 writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Affinity Designer 2's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Affinity Designer 2 (verify Designer.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Designer\\2.0 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-designer-media-blob-storage",
+    "category": "app",
+    "name": "Affinity Designer 2 Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Affinity\\Designer\\2.0\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Affinity Designer 2 stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Affinity Designer 2's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Affinity Designer 2 (verify Designer.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Designer\\2.0 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-publisher-gpu-shader-cache",
+    "category": "app",
+    "name": "Affinity Publisher 2 GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Affinity\\Publisher\\2.0\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Affinity Publisher 2 stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Affinity Publisher 2's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Affinity Publisher 2 (verify Publisher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Publisher\\2.0 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-publisher-code-bytecode-cache",
+    "category": "app",
+    "name": "Affinity Publisher 2 Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Affinity\\Publisher\\2.0\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Affinity Publisher 2 compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Affinity Publisher 2's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Affinity Publisher 2 (verify Publisher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Publisher\\2.0 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-publisher-service-worker-cachestorage",
+    "category": "app",
+    "name": "Affinity Publisher 2 Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Affinity\\Publisher\\2.0\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Affinity Publisher 2 quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Affinity Publisher 2's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Affinity Publisher 2 (verify Publisher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Publisher\\2.0 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-publisher-crashpad-dump-logs",
+    "category": "app",
+    "name": "Affinity Publisher 2 Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Affinity\\Publisher\\2.0\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Affinity Publisher 2 writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Affinity Publisher 2's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Affinity Publisher 2 (verify Publisher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Publisher\\2.0 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "affinity-publisher-media-blob-storage",
+    "category": "app",
+    "name": "Affinity Publisher 2 Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Affinity\\Publisher\\2.0\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Affinity Publisher 2 stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Affinity Publisher 2's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Affinity Publisher 2 (verify Publisher.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Affinity\\Publisher\\2.0 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "handbrake-encoder-gpu-shader-cache",
+    "category": "app",
+    "name": "HandBrake Video Transcoder GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\HandBrake\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "HandBrake Video Transcoder stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning HandBrake Video Transcoder's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit HandBrake Video Transcoder (verify HandBrake.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\HandBrake and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "handbrake-encoder-code-bytecode-cache",
+    "category": "app",
+    "name": "HandBrake Video Transcoder Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\HandBrake\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "HandBrake Video Transcoder compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning HandBrake Video Transcoder's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit HandBrake Video Transcoder (verify HandBrake.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\HandBrake and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "handbrake-encoder-service-worker-cachestorage",
+    "category": "app",
+    "name": "HandBrake Video Transcoder Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\HandBrake\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "HandBrake Video Transcoder quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning HandBrake Video Transcoder's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit HandBrake Video Transcoder (verify HandBrake.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\HandBrake and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "handbrake-encoder-crashpad-dump-logs",
+    "category": "app",
+    "name": "HandBrake Video Transcoder Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\HandBrake\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "HandBrake Video Transcoder writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning HandBrake Video Transcoder's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit HandBrake Video Transcoder (verify HandBrake.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\HandBrake and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "handbrake-encoder-media-blob-storage",
+    "category": "app",
+    "name": "HandBrake Video Transcoder Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\HandBrake\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "HandBrake Video Transcoder stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning HandBrake Video Transcoder's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit HandBrake Video Transcoder (verify HandBrake.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\HandBrake and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "calibre-ebook-gpu-shader-cache",
+    "category": "app",
+    "name": "Calibre E-Book Manager GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\calibre\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Calibre E-Book Manager stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Calibre E-Book Manager's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Calibre E-Book Manager (verify calibre.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\calibre and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "calibre-ebook-code-bytecode-cache",
+    "category": "app",
+    "name": "Calibre E-Book Manager Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\calibre\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Calibre E-Book Manager compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Calibre E-Book Manager's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Calibre E-Book Manager (verify calibre.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\calibre and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "calibre-ebook-service-worker-cachestorage",
+    "category": "app",
+    "name": "Calibre E-Book Manager Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\calibre\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Calibre E-Book Manager quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Calibre E-Book Manager's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Calibre E-Book Manager (verify calibre.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\calibre and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "calibre-ebook-crashpad-dump-logs",
+    "category": "app",
+    "name": "Calibre E-Book Manager Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\calibre\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Calibre E-Book Manager writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Calibre E-Book Manager's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Calibre E-Book Manager (verify calibre.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\calibre and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "calibre-ebook-media-blob-storage",
+    "category": "app",
+    "name": "Calibre E-Book Manager Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\calibre\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Calibre E-Book Manager stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Calibre E-Book Manager's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Calibre E-Book Manager (verify calibre.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\calibre and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "reaper-daw-gpu-shader-cache",
+    "category": "app",
+    "name": "REAPER Audio Workstation GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\REAPER\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "REAPER Audio Workstation stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning REAPER Audio Workstation's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit REAPER Audio Workstation (verify reaper.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\REAPER and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "reaper-daw-code-bytecode-cache",
+    "category": "app",
+    "name": "REAPER Audio Workstation Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\REAPER\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "REAPER Audio Workstation compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning REAPER Audio Workstation's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit REAPER Audio Workstation (verify reaper.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\REAPER and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "reaper-daw-service-worker-cachestorage",
+    "category": "app",
+    "name": "REAPER Audio Workstation Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\REAPER\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "REAPER Audio Workstation quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning REAPER Audio Workstation's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit REAPER Audio Workstation (verify reaper.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\REAPER and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "reaper-daw-crashpad-dump-logs",
+    "category": "app",
+    "name": "REAPER Audio Workstation Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\REAPER\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "REAPER Audio Workstation writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning REAPER Audio Workstation's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit REAPER Audio Workstation (verify reaper.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\REAPER and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "reaper-daw-media-blob-storage",
+    "category": "app",
+    "name": "REAPER Audio Workstation Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\REAPER\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "REAPER Audio Workstation stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning REAPER Audio Workstation's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit REAPER Audio Workstation (verify reaper.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\REAPER and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "freecad-3d-gpu-shader-cache",
+    "category": "app",
+    "name": "FreeCAD 3D Modeler GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\FreeCAD\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "FreeCAD 3D Modeler stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning FreeCAD 3D Modeler's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit FreeCAD 3D Modeler (verify FreeCAD.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\FreeCAD and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "freecad-3d-code-bytecode-cache",
+    "category": "app",
+    "name": "FreeCAD 3D Modeler Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\FreeCAD\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "FreeCAD 3D Modeler compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning FreeCAD 3D Modeler's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit FreeCAD 3D Modeler (verify FreeCAD.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\FreeCAD and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "freecad-3d-service-worker-cachestorage",
+    "category": "app",
+    "name": "FreeCAD 3D Modeler Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\FreeCAD\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "FreeCAD 3D Modeler quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning FreeCAD 3D Modeler's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit FreeCAD 3D Modeler (verify FreeCAD.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\FreeCAD and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "freecad-3d-crashpad-dump-logs",
+    "category": "app",
+    "name": "FreeCAD 3D Modeler Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\FreeCAD\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "FreeCAD 3D Modeler writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning FreeCAD 3D Modeler's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit FreeCAD 3D Modeler (verify FreeCAD.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\FreeCAD and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "freecad-3d-media-blob-storage",
+    "category": "app",
+    "name": "FreeCAD 3D Modeler Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\FreeCAD\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "FreeCAD 3D Modeler stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning FreeCAD 3D Modeler's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit FreeCAD 3D Modeler (verify FreeCAD.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\FreeCAD and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "shotcut-video-gpu-shader-cache",
+    "category": "app",
+    "name": "Shotcut Video Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Meltytech\\Shotcut\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Shotcut Video Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Shotcut Video Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Shotcut Video Editor (verify shotcut.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Meltytech\\Shotcut and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "shotcut-video-code-bytecode-cache",
+    "category": "app",
+    "name": "Shotcut Video Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Meltytech\\Shotcut\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Shotcut Video Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Shotcut Video Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Shotcut Video Editor (verify shotcut.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Meltytech\\Shotcut and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "shotcut-video-service-worker-cachestorage",
+    "category": "app",
+    "name": "Shotcut Video Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Meltytech\\Shotcut\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Shotcut Video Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Shotcut Video Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Shotcut Video Editor (verify shotcut.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Meltytech\\Shotcut and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "shotcut-video-crashpad-dump-logs",
+    "category": "app",
+    "name": "Shotcut Video Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Meltytech\\Shotcut\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Shotcut Video Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Shotcut Video Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Shotcut Video Editor (verify shotcut.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Meltytech\\Shotcut and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "shotcut-video-media-blob-storage",
+    "category": "app",
+    "name": "Shotcut Video Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Meltytech\\Shotcut\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Shotcut Video Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Shotcut Video Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Shotcut Video Editor (verify shotcut.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Meltytech\\Shotcut and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "kdenlive-video-gpu-shader-cache",
+    "category": "app",
+    "name": "Kdenlive Video Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\\\kdenlive\\\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Kdenlive Video Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Kdenlive Video Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves video preview rendering glitches without resetting your projects.",
+    "manualSteps": [
+      "Completely quit Kdenlive Video Editor (verify kdenlive.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\\\kdenlive and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "kdenlive-video-code-bytecode-cache",
+    "category": "app",
+    "name": "Kdenlive Video Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\\\kdenlive\\\\Code Cache\\\\js and Code Cache\\\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Kdenlive Video Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Kdenlive Video Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and timelines.",
+    "manualSteps": [
+      "Completely quit Kdenlive Video Editor (verify kdenlive.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\\\kdenlive and press Enter.",
+      "Locate Code Cache\\\\js and Code Cache\\\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "kdenlive-video-service-worker-cachestorage",
+    "category": "app",
+    "name": "Kdenlive Video Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\\\kdenlive\\\\Service Worker\\\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Kdenlive Video Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\\\CacheStorage.",
+    "whatHappens": "Cleaning Kdenlive Video Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active preferences intact.",
+    "manualSteps": [
+      "Completely quit Kdenlive Video Editor (verify kdenlive.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\\\kdenlive and press Enter.",
+      "Locate Service Worker\\\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "kdenlive-video-crashpad-dump-logs",
+    "category": "app",
+    "name": "Kdenlive Video Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\\\kdenlive\\\\Crashpad\\\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Kdenlive Video Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background render process hangs.",
+    "whatHappens": "Cleaning Kdenlive Video Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Kdenlive Video Editor (verify kdenlive.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\\\kdenlive and press Enter.",
+      "Locate Crashpad\\\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "kdenlive-video-media-blob-storage",
+    "category": "app",
+    "name": "Kdenlive Video Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\\\kdenlive\\\\Cache\\\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Kdenlive Video Editor stores high-resolution video clip thumbnails, proxy previews, and temporary audio waveforms in Cache_Data.",
+    "whatHappens": "Cleaning Kdenlive Video Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active project clips remain intact.",
+    "manualSteps": [
+      "Completely quit Kdenlive Video Editor (verify kdenlive.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\\\kdenlive and press Enter.",
+      "Locate Cache\\\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

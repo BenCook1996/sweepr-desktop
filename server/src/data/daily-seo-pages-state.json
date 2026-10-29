@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-28T07:14:20.074Z",
+  "lastRunAt": "2026-10-29T04:19:22.839Z",
   "lastCount": 50,
-  "totalCleanItems": 828,
+  "totalCleanItems": 878,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/chatgpt-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/curseforge-app-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/curseforge-app-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/curseforge-app-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/curseforge-app-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/curseforge-app-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/claude-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/claude-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/claude-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/claude-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/claude-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/affinity-photo-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/affinity-photo-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/affinity-photo-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/affinity-photo-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/affinity-photo-media-blob-storage"
   ]
 }

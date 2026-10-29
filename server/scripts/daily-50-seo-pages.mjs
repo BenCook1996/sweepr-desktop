@@ -1578,7 +1578,17 @@ const APP_MATRIX_APPS = [
   { key: "krita-painting", label: "Krita Digital Art", baseDir: "%LocalAppData%\\krita", proc: "krita.exe" },
   { key: "gimp-editor", label: "GIMP Photo Editor", baseDir: "%AppData%\\GIMP\\2.10", proc: "gimp-2.10.exe" },
   { key: "anydesk-remote", label: "AnyDesk Remote Desktop", baseDir: "%AppData%\\AnyDesk", proc: "AnyDesk.exe" },
-  { key: "sublime-text", label: "Sublime Text Editor", baseDir: "%AppData%\\Sublime Text", proc: "sublime_text.exe" }
+  { key: "sublime-text", label: "Sublime Text Editor", baseDir: "%AppData%\\Sublime Text", proc: "sublime_text.exe" },
+  { key: "claude-desktop", label: "Claude Desktop App", baseDir: "%AppData%\\Claude", proc: "Claude.exe" },
+  { key: "affinity-photo", label: "Affinity Photo 2", baseDir: "%AppData%\\Affinity\\Photo\\2.0", proc: "Photo.exe" },
+  { key: "affinity-designer", label: "Affinity Designer 2", baseDir: "%AppData%\\Affinity\\Designer\\2.0", proc: "Designer.exe" },
+  { key: "affinity-publisher", label: "Affinity Publisher 2", baseDir: "%AppData%\\Affinity\\Publisher\\2.0", proc: "Publisher.exe" },
+  { key: "kdenlive-video", label: "Kdenlive Video Editor", baseDir: "%LocalAppData%\\kdenlive", proc: "kdenlive.exe" },
+  { key: "handbrake-encoder", label: "HandBrake Video Transcoder", baseDir: "%AppData%\\HandBrake", proc: "HandBrake.exe" },
+  { key: "calibre-ebook", label: "Calibre E-Book Manager", baseDir: "%AppData%\\calibre", proc: "calibre.exe" },
+  { key: "reaper-daw", label: "REAPER Audio Workstation", baseDir: "%AppData%\\REAPER", proc: "reaper.exe" },
+  { key: "freecad-3d", label: "FreeCAD 3D Modeler", baseDir: "%AppData%\\FreeCAD", proc: "FreeCAD.exe" },
+  { key: "shotcut-video", label: "Shotcut Video Editor", baseDir: "%LocalAppData%\\Meltytech\\Shotcut", proc: "shotcut.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
