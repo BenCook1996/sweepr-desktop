@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-29T06:20:38.083Z",
+  "lastRunAt": "2026-10-29T08:26:45.717Z",
   "lastCount": 50,
-  "totalCleanItems": 928,
+  "totalCleanItems": 978,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/zed-editor-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/zed-editor-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/zed-editor-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/zed-editor-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/zed-editor-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/trae-ide-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/trae-ide-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/trae-ide-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/trae-ide-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/trae-ide-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/lens-k8s-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/lens-k8s-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/lens-k8s-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/lens-k8s-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/lens-k8s-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/termius-app-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/termius-app-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/termius-app-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/termius-app-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/termius-app-media-blob-storage"
   ]
 }

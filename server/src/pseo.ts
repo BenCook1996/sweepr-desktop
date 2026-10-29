@@ -40,7 +40,7 @@ export function getCleanItems(): CleanItem[] {
   return cleanItems;
 }
 
-function buildPseoTitle(item: CleanItem): string {
+export function buildPseoTitle(item: CleanItem): string {
   const cleanName = item.name
     .replace(/Roblox Engine & Player/g, "Roblox Player")
     .replace(/RetroArch Multi-System Emulator/g, "RetroArch")
@@ -57,6 +57,10 @@ function buildPseoTitle(item: CleanItem): string {
     candidates.push(cleanName.replace("Service Worker CacheStorage", "Service Worker Cache"));
     const swPart = cleanName.split("&")[0].replace("Service Worker CacheStorage", "Service Worker Cache").trim();
     if (swPart.length >= 10) candidates.push(swPart);
+  }
+  if (cleanName.includes("Crashpad Diagnostic Crash Dumps")) {
+    candidates.push(cleanName.replace("Crashpad Diagnostic Crash Dumps & Error Logs", "Crash Dumps"));
+    candidates.push(cleanName.replace("Crashpad Diagnostic Crash Dumps & Error Logs", "Crashpad Logs"));
   }
 
   const brands = [

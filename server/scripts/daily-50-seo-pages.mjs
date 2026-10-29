@@ -1598,7 +1598,17 @@ const APP_MATRIX_APPS = [
   { key: "cubase-daw", label: "Steinberg Cubase DAW", baseDir: "%AppData%\\Steinberg\\Cubase", proc: "Cubase.exe" },
   { key: "studio-one", label: "PreSonus Studio One DAW", baseDir: "%AppData%\\PreSonus\\Studio One", proc: "Studio One.exe" },
   { key: "bitwig-studio", label: "Bitwig Studio DAW", baseDir: "%LocalAppData%\\Bitwig Studio", proc: "BitwigStudio.exe" },
-  { key: "duckduckgo-browser", label: "DuckDuckGo Browser", baseDir: "%LocalAppData%\\Packages\\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\\LocalCache", proc: "DuckDuckGo.exe" }
+  { key: "duckduckgo-browser", label: "DuckDuckGo Browser", baseDir: "%LocalAppData%\\Packages\\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\\LocalCache", proc: "DuckDuckGo.exe" },
+  { key: "lens-k8s", label: "Lens Kubernetes IDE", baseDir: "%AppData%\\Lens", proc: "Lens.exe" },
+  { key: "termius-app", label: "Termius SSH Client", baseDir: "%AppData%\\Termius", proc: "Termius.exe" },
+  { key: "tableplus-db", label: "TablePlus DB Client", baseDir: "%AppData%\\TablePlus", proc: "tableplus.exe" },
+  { key: "miro-desktop", label: "Miro Workspace", baseDir: "%AppData%\\RealtimeBoard", proc: "Miro.exe" },
+  { key: "vortex-mod-manager", label: "Vortex Mod Manager", baseDir: "%AppData%\\Vortex", proc: "Vortex.exe" },
+  { key: "playnite-launcher", label: "Playnite Launcher", baseDir: "%AppData%\\Playnite", proc: "Playnite.DesktopApp.exe" },
+  { key: "amazon-music", label: "Amazon Music Desktop", baseDir: "%LocalAppData%\\Amazon Music\\Data", proc: "Amazon Music.exe" },
+  { key: "maxon-cinema-4d", label: "Maxon Cinema 4D", baseDir: "%AppData%\\Maxon", proc: "CINEMA 4D.exe" },
+  { key: "teamviewer-remote", label: "TeamViewer Remote", baseDir: "%AppData%\\TeamViewer", proc: "TeamViewer.exe" },
+  { key: "darktable-photo", label: "Darktable RAW Editor", baseDir: "%LocalAppData%\\darktable", proc: "darktable.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
