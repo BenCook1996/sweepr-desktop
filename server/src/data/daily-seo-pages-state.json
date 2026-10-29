@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-29T04:19:22.839Z",
+  "lastRunAt": "2026-10-29T06:20:38.083Z",
   "lastCount": 50,
-  "totalCleanItems": 878,
+  "totalCleanItems": 928,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/claude-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/claude-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/claude-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/claude-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/claude-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/affinity-photo-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/affinity-photo-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/affinity-photo-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/affinity-photo-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/affinity-photo-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/zed-editor-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/zed-editor-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/zed-editor-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/zed-editor-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/zed-editor-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/trae-ide-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/trae-ide-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/trae-ide-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/trae-ide-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/trae-ide-media-blob-storage"
   ]
 }

@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (878 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (928 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Shotcut Video Editor Media Cache & IndexedDB Blob Storage (%LocalAppData%\Meltytech\Shotcut\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/shotcut-video-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Shotcut Video Editor Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Meltytech\Shotcut\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/shotcut-video-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Shotcut Video Editor Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Meltytech\Shotcut\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/shotcut-video-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Shotcut Video Editor Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Meltytech\Shotcut\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/shotcut-video-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Shotcut Video Editor GPUCache & Dawn WebGPU Cache (%LocalAppData%\Meltytech\Shotcut\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/shotcut-video-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [FreeCAD 3D Modeler Media Cache & IndexedDB Blob Storage (%AppData%\FreeCAD\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/freecad-3d-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [FreeCAD 3D Modeler Crashpad Reports & Diagnostic DMP Logs (%AppData%\FreeCAD\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/freecad-3d-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [FreeCAD 3D Modeler Service Worker CacheStorage & Offline Blobs (%AppData%\FreeCAD\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/freecad-3d-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [FreeCAD 3D Modeler Code Cache & V8 JavaScript Bytecode (%AppData%\FreeCAD\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/freecad-3d-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [FreeCAD 3D Modeler GPUCache & Dawn WebGPU Cache (%AppData%\FreeCAD\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/freecad-3d-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [REAPER Audio Workstation Media Cache & IndexedDB Blob Storage (%AppData%\REAPER\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/reaper-daw-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [REAPER Audio Workstation Crashpad Reports & Diagnostic DMP Logs (%AppData%\REAPER\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/reaper-daw-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [REAPER Audio Workstation Service Worker CacheStorage & Offline Blobs (%AppData%\REAPER\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/reaper-daw-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [REAPER Audio Workstation Code Cache & V8 JavaScript Bytecode (%AppData%\REAPER\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/reaper-daw-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [REAPER Audio Workstation GPUCache & Dawn WebGPU Cache (%AppData%\REAPER\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/reaper-daw-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Calibre E-Book Manager Media Cache & IndexedDB Blob Storage (%AppData%\calibre\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/calibre-ebook-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Calibre E-Book Manager Crashpad Reports & Diagnostic DMP Logs (%AppData%\calibre\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/calibre-ebook-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Calibre E-Book Manager Service Worker CacheStorage & Offline Blobs (%AppData%\calibre\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/calibre-ebook-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Calibre E-Book Manager Code Cache & V8 JavaScript Bytecode (%AppData%\calibre\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/calibre-ebook-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Calibre E-Book Manager GPUCache & Dawn WebGPU Cache (%AppData%\calibre\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/calibre-ebook-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [HandBrake Video Transcoder Media Cache & IndexedDB Blob Storage (%AppData%\HandBrake\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/handbrake-encoder-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [HandBrake Video Transcoder Crashpad Reports & Diagnostic DMP Logs (%AppData%\HandBrake\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/handbrake-encoder-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [HandBrake Video Transcoder Service Worker CacheStorage & Offline Blobs (%AppData%\HandBrake\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/handbrake-encoder-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [HandBrake Video Transcoder Code Cache & V8 JavaScript Bytecode (%AppData%\HandBrake\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/handbrake-encoder-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [HandBrake Video Transcoder GPUCache & Dawn WebGPU Cache (%AppData%\HandBrake\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/handbrake-encoder-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [DuckDuckGo Browser Media Cache & IndexedDB Blob Storage (%LocalAppData%\Packages\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\LocalCache\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/duckduckgo-browser-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [DuckDuckGo Browser Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Packages\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\LocalCache\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/duckduckgo-browser-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [DuckDuckGo Browser Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Packages\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\LocalCache\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/duckduckgo-browser-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [DuckDuckGo Browser Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Packages\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\LocalCache\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/duckduckgo-browser-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [DuckDuckGo Browser GPUCache & Dawn WebGPU Cache (%LocalAppData%\Packages\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\LocalCache\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/duckduckgo-browser-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Bitwig Studio DAW Media Cache & IndexedDB Blob Storage (%LocalAppData%\Bitwig Studio\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/bitwig-studio-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Bitwig Studio DAW Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Bitwig Studio\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/bitwig-studio-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Bitwig Studio DAW Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Bitwig Studio\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/bitwig-studio-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Bitwig Studio DAW Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Bitwig Studio\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/bitwig-studio-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Bitwig Studio DAW GPUCache & Dawn WebGPU Cache (%LocalAppData%\Bitwig Studio\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/bitwig-studio-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [PreSonus Studio One DAW Media Cache & IndexedDB Blob Storage (%AppData%\PreSonus\Studio One\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/studio-one-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [PreSonus Studio One DAW Crashpad Reports & Diagnostic DMP Logs (%AppData%\PreSonus\Studio One\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/studio-one-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [PreSonus Studio One DAW Service Worker CacheStorage & Offline Blobs (%AppData%\PreSonus\Studio One\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/studio-one-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [PreSonus Studio One DAW Code Cache & V8 JavaScript Bytecode (%AppData%\PreSonus\Studio One\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/studio-one-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [PreSonus Studio One DAW GPUCache & Dawn WebGPU Cache (%AppData%\PreSonus\Studio One\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/studio-one-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Steinberg Cubase DAW Media Cache & IndexedDB Blob Storage (%AppData%\Steinberg\Cubase\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/cubase-daw-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Steinberg Cubase DAW Crashpad Reports & Diagnostic DMP Logs (%AppData%\Steinberg\Cubase\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/cubase-daw-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Steinberg Cubase DAW Service Worker CacheStorage & Offline Blobs (%AppData%\Steinberg\Cubase\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/cubase-daw-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Steinberg Cubase DAW Code Cache & V8 JavaScript Bytecode (%AppData%\Steinberg\Cubase\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/cubase-daw-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Steinberg Cubase DAW GPUCache & Dawn WebGPU Cache (%AppData%\Steinberg\Cubase\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/cubase-daw-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [VEGAS Pro Video Editor Media Cache & IndexedDB Blob Storage (%AppData%\VEGAS Pro\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/vegas-pro-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [VEGAS Pro Video Editor Crashpad Reports & Diagnostic DMP Logs (%AppData%\VEGAS Pro\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/vegas-pro-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [VEGAS Pro Video Editor Service Worker CacheStorage & Offline Blobs (%AppData%\VEGAS Pro\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/vegas-pro-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [VEGAS Pro Video Editor Code Cache & V8 JavaScript Bytecode (%AppData%\VEGAS Pro\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/vegas-pro-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [VEGAS Pro Video Editor GPUCache & Dawn WebGPU Cache (%AppData%\VEGAS Pro\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/vegas-pro-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB

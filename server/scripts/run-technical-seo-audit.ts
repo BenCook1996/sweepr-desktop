@@ -37,7 +37,7 @@ async function main() {
     baseLabel: "in-process",
     source: "local",
     concurrency: 4,
-    maxPages: 1000,
+    maxPages: 1200,
     fetcher: async (path) => app.request(path, { headers: { "user-agent": AUDIT_USER_AGENT } }),
   });
   const elapsed = Date.now() - t0;

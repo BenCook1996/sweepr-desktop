@@ -1588,7 +1588,17 @@ const APP_MATRIX_APPS = [
   { key: "calibre-ebook", label: "Calibre E-Book Manager", baseDir: "%AppData%\\calibre", proc: "calibre.exe" },
   { key: "reaper-daw", label: "REAPER Audio Workstation", baseDir: "%AppData%\\REAPER", proc: "reaper.exe" },
   { key: "freecad-3d", label: "FreeCAD 3D Modeler", baseDir: "%AppData%\\FreeCAD", proc: "FreeCAD.exe" },
-  { key: "shotcut-video", label: "Shotcut Video Editor", baseDir: "%LocalAppData%\\Meltytech\\Shotcut", proc: "shotcut.exe" }
+  { key: "shotcut-video", label: "Shotcut Video Editor", baseDir: "%LocalAppData%\\Meltytech\\Shotcut", proc: "shotcut.exe" },
+  { key: "zed-editor", label: "Zed Code Editor", baseDir: "%LocalAppData%\\Zed", proc: "zed.exe" },
+  { key: "trae-ide", label: "Trae AI IDE", baseDir: "%AppData%\\Trae", proc: "trae.exe" },
+  { key: "warp-terminal", label: "Warp AI Terminal", baseDir: "%LocalAppData%\\Warp", proc: "warp.exe" },
+  { key: "fork-git", label: "Fork Git Client", baseDir: "%LocalAppData%\\Fork", proc: "Fork.exe" },
+  { key: "sublime-merge", label: "Sublime Merge", baseDir: "%AppData%\\Sublime Merge", proc: "sublime_merge.exe" },
+  { key: "vegas-pro", label: "VEGAS Pro Video Editor", baseDir: "%AppData%\\VEGAS Pro", proc: "vegas210.exe" },
+  { key: "cubase-daw", label: "Steinberg Cubase DAW", baseDir: "%AppData%\\Steinberg\\Cubase", proc: "Cubase.exe" },
+  { key: "studio-one", label: "PreSonus Studio One DAW", baseDir: "%AppData%\\PreSonus\\Studio One", proc: "Studio One.exe" },
+  { key: "bitwig-studio", label: "Bitwig Studio DAW", baseDir: "%LocalAppData%\\Bitwig Studio", proc: "BitwigStudio.exe" },
+  { key: "duckduckgo-browser", label: "DuckDuckGo Browser", baseDir: "%LocalAppData%\\Packages\\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\\LocalCache", proc: "DuckDuckGo.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
