@@ -1608,7 +1608,27 @@ const APP_MATRIX_APPS = [
   { key: "amazon-music", label: "Amazon Music Desktop", baseDir: "%LocalAppData%\\Amazon Music\\Data", proc: "Amazon Music.exe" },
   { key: "maxon-cinema-4d", label: "Maxon Cinema 4D", baseDir: "%AppData%\\Maxon", proc: "CINEMA 4D.exe" },
   { key: "teamviewer-remote", label: "TeamViewer Remote", baseDir: "%AppData%\\TeamViewer", proc: "TeamViewer.exe" },
-  { key: "darktable-photo", label: "Darktable RAW Editor", baseDir: "%LocalAppData%\\darktable", proc: "darktable.exe" }
+  { key: "darktable-photo", label: "Darktable RAW Editor", baseDir: "%LocalAppData%\\darktable", proc: "darktable.exe" },
+  { key: "mongodb-compass", label: "MongoDB Compass", baseDir: "%AppData%\\MongoDB Compass", proc: "MongoDBCompass.exe" },
+  { key: "redis-insight", label: "RedisInsight GUI", baseDir: "%AppData%\\RedisInsight", proc: "RedisInsight.exe" },
+  { key: "logseq-desktop", label: "Logseq Knowledge Base", baseDir: "%AppData%\\Logseq", proc: "Logseq.exe" },
+  { key: "proton-mail-desktop", label: "Proton Mail Desktop", baseDir: "%AppData%\\Proton Mail", proc: "Proton Mail.exe" },
+  { key: "todoist-desktop", label: "Todoist Desktop App", baseDir: "%AppData%\\Todoist", proc: "Todoist.exe" },
+  { key: "ticktick-desktop", label: "TickTick Desktop App", baseDir: "%AppData%\\TickTick", proc: "TickTick.exe" },
+  { key: "mattermost-desktop", label: "Mattermost Desktop", baseDir: "%AppData%\\Mattermost", proc: "Mattermost.exe" },
+  { key: "element-desktop", label: "Element Messenger", baseDir: "%AppData%\\Element", proc: "Element.exe" },
+  { key: "tabby-terminal", label: "Tabby Terminal", baseDir: "%AppData%\\tabby", proc: "Tabby.exe" },
+  { key: "hoppscotch-desktop", label: "Hoppscotch Desktop", baseDir: "%AppData%\\Hoppscotch", proc: "Hoppscotch.exe" },
+  { key: "proton-drive-desktop", label: "Proton Drive Desktop", baseDir: "%LocalAppData%\\ProtonDrive", proc: "ProtonDrive.exe" },
+  { key: "craft-docs", label: "Craft Docs Desktop", baseDir: "%LocalAppData%\\Craft", proc: "Craft.exe" },
+  { key: "openlens-k8s", label: "OpenLens Kubernetes IDE", baseDir: "%AppData%\\OpenLens", proc: "OpenLens.exe" },
+  { key: "hyper-terminal", label: "Hyper Terminal", baseDir: "%AppData%\\Hyper", proc: "Hyper.exe" },
+  { key: "session-messenger", label: "Session Private Messenger", baseDir: "%AppData%\\Session", proc: "Session.exe" },
+  { key: "keybase-desktop", label: "Keybase Desktop App", baseDir: "%AppData%\\Keybase", proc: "Keybase.exe" },
+  { key: "mullvad-vpn", label: "Mullvad VPN Desktop", baseDir: "%LocalAppData%\\Mullvad VPN", proc: "mullvad-gui.exe" },
+  { key: "yaak-api", label: "Yaak REST and GraphQL Client", baseDir: "%AppData%\\yaak", proc: "yaak.exe" },
+  { key: "zulip-desktop", label: "Zulip Team Chat", baseDir: "%AppData%\\Zulip", proc: "Zulip.exe" },
+  { key: "standard-notes", label: "Standard Notes Desktop", baseDir: "%AppData%\\Standard Notes", proc: "Standard Notes.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [

@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-29T08:26:45.717Z",
+  "lastRunAt": "2026-10-30T06:22:20.882Z",
   "lastCount": 50,
-  "totalCleanItems": 978,
+  "totalCleanItems": 1028,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/lens-k8s-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/lens-k8s-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/lens-k8s-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/lens-k8s-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/lens-k8s-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/termius-app-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/termius-app-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/termius-app-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/termius-app-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/termius-app-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/mongodb-compass-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/mongodb-compass-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/mongodb-compass-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/mongodb-compass-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/mongodb-compass-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/redis-insight-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/redis-insight-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/redis-insight-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/redis-insight-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/redis-insight-media-blob-storage"
   ]
 }

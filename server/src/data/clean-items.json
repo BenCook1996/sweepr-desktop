@@ -14615,5 +14615,755 @@
       "Press Windows Key + R, type %LocalAppData%\\darktable and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "mongodb-compass-gpu-shader-cache",
+    "category": "app",
+    "name": "MongoDB Compass GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\MongoDB Compass\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "MongoDB Compass stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning MongoDB Compass's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit MongoDB Compass (verify MongoDBCompass.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MongoDB Compass and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mongodb-compass-code-bytecode-cache",
+    "category": "app",
+    "name": "MongoDB Compass Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\MongoDB Compass\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "MongoDB Compass compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning MongoDB Compass's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit MongoDB Compass (verify MongoDBCompass.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MongoDB Compass and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mongodb-compass-service-worker-cachestorage",
+    "category": "app",
+    "name": "MongoDB Compass Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\MongoDB Compass\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "MongoDB Compass quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning MongoDB Compass's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit MongoDB Compass (verify MongoDBCompass.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MongoDB Compass and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mongodb-compass-crashpad-dump-logs",
+    "category": "app",
+    "name": "MongoDB Compass Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\MongoDB Compass\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "MongoDB Compass writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning MongoDB Compass's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit MongoDB Compass (verify MongoDBCompass.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MongoDB Compass and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mongodb-compass-media-blob-storage",
+    "category": "app",
+    "name": "MongoDB Compass Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\MongoDB Compass\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "MongoDB Compass stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning MongoDB Compass's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit MongoDB Compass (verify MongoDBCompass.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MongoDB Compass and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "redis-insight-gpu-shader-cache",
+    "category": "app",
+    "name": "RedisInsight GUI GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\RedisInsight\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "RedisInsight GUI stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning RedisInsight GUI's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit RedisInsight GUI (verify RedisInsight.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RedisInsight and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "redis-insight-code-bytecode-cache",
+    "category": "app",
+    "name": "RedisInsight GUI Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\RedisInsight\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "RedisInsight GUI compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning RedisInsight GUI's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit RedisInsight GUI (verify RedisInsight.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RedisInsight and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "redis-insight-service-worker-cachestorage",
+    "category": "app",
+    "name": "RedisInsight GUI Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\RedisInsight\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "RedisInsight GUI quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning RedisInsight GUI's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit RedisInsight GUI (verify RedisInsight.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RedisInsight and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "redis-insight-crashpad-dump-logs",
+    "category": "app",
+    "name": "RedisInsight GUI Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\RedisInsight\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "RedisInsight GUI writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning RedisInsight GUI's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit RedisInsight GUI (verify RedisInsight.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RedisInsight and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "redis-insight-media-blob-storage",
+    "category": "app",
+    "name": "RedisInsight GUI Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\RedisInsight\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "RedisInsight GUI stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning RedisInsight GUI's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit RedisInsight GUI (verify RedisInsight.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\RedisInsight and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "logseq-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Logseq Knowledge Base GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Logseq\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Logseq Knowledge Base stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Logseq Knowledge Base's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Logseq Knowledge Base (verify Logseq.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Logseq and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "logseq-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Logseq Knowledge Base Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Logseq\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Logseq Knowledge Base compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Logseq Knowledge Base's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Logseq Knowledge Base (verify Logseq.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Logseq and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "logseq-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Logseq Knowledge Base Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Logseq\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Logseq Knowledge Base quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Logseq Knowledge Base's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Logseq Knowledge Base (verify Logseq.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Logseq and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "logseq-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Logseq Knowledge Base Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Logseq\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Logseq Knowledge Base writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Logseq Knowledge Base's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Logseq Knowledge Base (verify Logseq.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Logseq and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "logseq-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Logseq Knowledge Base Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Logseq\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Logseq Knowledge Base stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Logseq Knowledge Base's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Logseq Knowledge Base (verify Logseq.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Logseq and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "proton-mail-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Proton Mail Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Proton Mail\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Proton Mail Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Proton Mail Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Proton Mail Desktop (verify Proton Mail.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Proton Mail and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "proton-mail-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Proton Mail Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Proton Mail\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Proton Mail Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Proton Mail Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Proton Mail Desktop (verify Proton Mail.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Proton Mail and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "proton-mail-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Proton Mail Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Proton Mail\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Proton Mail Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Proton Mail Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Proton Mail Desktop (verify Proton Mail.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Proton Mail and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "proton-mail-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Proton Mail Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Proton Mail\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Proton Mail Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Proton Mail Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Proton Mail Desktop (verify Proton Mail.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Proton Mail and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "proton-mail-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Proton Mail Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Proton Mail\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Proton Mail Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Proton Mail Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Proton Mail Desktop (verify Proton Mail.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Proton Mail and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "todoist-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Todoist Desktop App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Todoist\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Todoist Desktop App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Todoist Desktop App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Todoist Desktop App (verify Todoist.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Todoist and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "todoist-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Todoist Desktop App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Todoist\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Todoist Desktop App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Todoist Desktop App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Todoist Desktop App (verify Todoist.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Todoist and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "todoist-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Todoist Desktop App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Todoist\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Todoist Desktop App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Todoist Desktop App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Todoist Desktop App (verify Todoist.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Todoist and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "todoist-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Todoist Desktop App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Todoist\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Todoist Desktop App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Todoist Desktop App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Todoist Desktop App (verify Todoist.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Todoist and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "todoist-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Todoist Desktop App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Todoist\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Todoist Desktop App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Todoist Desktop App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Todoist Desktop App (verify Todoist.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Todoist and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ticktick-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "TickTick Desktop App GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\TickTick\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "TickTick Desktop App stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning TickTick Desktop App's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit TickTick Desktop App (verify TickTick.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TickTick and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ticktick-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "TickTick Desktop App Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\TickTick\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "TickTick Desktop App compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning TickTick Desktop App's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit TickTick Desktop App (verify TickTick.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TickTick and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ticktick-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "TickTick Desktop App Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\TickTick\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "TickTick Desktop App quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning TickTick Desktop App's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit TickTick Desktop App (verify TickTick.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TickTick and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ticktick-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "TickTick Desktop App Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\TickTick\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "TickTick Desktop App writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning TickTick Desktop App's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit TickTick Desktop App (verify TickTick.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TickTick and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ticktick-desktop-media-blob-storage",
+    "category": "app",
+    "name": "TickTick Desktop App Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\TickTick\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "TickTick Desktop App stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning TickTick Desktop App's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit TickTick Desktop App (verify TickTick.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\TickTick and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mattermost-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Mattermost Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Mattermost\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Mattermost Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Mattermost Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Mattermost Desktop (verify Mattermost.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Mattermost and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mattermost-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Mattermost Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Mattermost\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Mattermost Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Mattermost Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Mattermost Desktop (verify Mattermost.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Mattermost and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mattermost-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Mattermost Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Mattermost\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Mattermost Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Mattermost Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Mattermost Desktop (verify Mattermost.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Mattermost and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mattermost-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Mattermost Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Mattermost\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Mattermost Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Mattermost Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Mattermost Desktop (verify Mattermost.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Mattermost and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mattermost-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Mattermost Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Mattermost\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Mattermost Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Mattermost Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Mattermost Desktop (verify Mattermost.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Mattermost and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "element-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Element Messenger GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Element\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Element Messenger stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Element Messenger's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Element Messenger (verify Element.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Element and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "element-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Element Messenger Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Element\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Element Messenger compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Element Messenger's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Element Messenger (verify Element.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Element and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "element-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Element Messenger Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Element\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Element Messenger quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Element Messenger's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Element Messenger (verify Element.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Element and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "element-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Element Messenger Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Element\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Element Messenger writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Element Messenger's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Element Messenger (verify Element.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Element and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "element-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Element Messenger Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Element\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Element Messenger stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Element Messenger's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Element Messenger (verify Element.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Element and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tabby-terminal-gpu-shader-cache",
+    "category": "app",
+    "name": "Tabby Terminal GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\tabby\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Tabby Terminal stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Tabby Terminal's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Tabby Terminal (verify Tabby.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tabby and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tabby-terminal-code-bytecode-cache",
+    "category": "app",
+    "name": "Tabby Terminal Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\tabby\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Tabby Terminal compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Tabby Terminal's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Tabby Terminal (verify Tabby.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tabby and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tabby-terminal-service-worker-cachestorage",
+    "category": "app",
+    "name": "Tabby Terminal Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\tabby\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Tabby Terminal quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Tabby Terminal's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Tabby Terminal (verify Tabby.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tabby and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tabby-terminal-crashpad-dump-logs",
+    "category": "app",
+    "name": "Tabby Terminal Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\tabby\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Tabby Terminal writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Tabby Terminal's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Tabby Terminal (verify Tabby.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tabby and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "tabby-terminal-media-blob-storage",
+    "category": "app",
+    "name": "Tabby Terminal Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\tabby\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Tabby Terminal stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Tabby Terminal's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Tabby Terminal (verify Tabby.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\tabby and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "hoppscotch-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Hoppscotch Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Hoppscotch\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Hoppscotch Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Hoppscotch Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Hoppscotch Desktop (verify Hoppscotch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Hoppscotch and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "hoppscotch-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Hoppscotch Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Hoppscotch\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Hoppscotch Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Hoppscotch Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Hoppscotch Desktop (verify Hoppscotch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Hoppscotch and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "hoppscotch-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Hoppscotch Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Hoppscotch\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Hoppscotch Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Hoppscotch Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Hoppscotch Desktop (verify Hoppscotch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Hoppscotch and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "hoppscotch-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Hoppscotch Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Hoppscotch\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Hoppscotch Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Hoppscotch Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Hoppscotch Desktop (verify Hoppscotch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Hoppscotch and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "hoppscotch-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Hoppscotch Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Hoppscotch\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Hoppscotch Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Hoppscotch Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Hoppscotch Desktop (verify Hoppscotch.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Hoppscotch and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]
