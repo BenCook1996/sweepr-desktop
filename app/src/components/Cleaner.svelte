@@ -440,15 +440,24 @@
   {/if}
 
   <!-- 1. D3 Top Native OS Storage Bar & Primary Fitts's Law Action -->
-  <header class="d3-storage-card">
+  <header class="d3-storage-card" class:is-busy={phase === "scanning" || phase === "cleaning"}>
     <div class="d3-storage-top">
       <div class="d3-disk-meta">
         <div class="d3-disk-kicker">
           <span class="d3-os-pill">{osDiskLabel}</span>
           {#if phase === "scanning"}
-            <span class="d3-status-text">Scanning: {progress ? progress.category_name : "System paths…"}</span>
+            <span class="d3-status-text is-active" role="status" aria-live="polite">
+              <span class="d3-live-spinner" aria-hidden="true"></span>
+              <span>Scanning: {progress ? progress.category_name : "System paths…"}</span>
+              {#if progress && progress.total > 0}
+                <span class="d3-scan-pct">{Math.max(4, Math.min(99, Math.round((progress.done / progress.total) * 100)))}%</span>
+              {/if}
+            </span>
           {:else if phase === "cleaning"}
-            <span class="d3-status-text">Reclaiming space safely…</span>
+            <span class="d3-status-text is-active" role="status" aria-live="polite">
+              <span class="d3-live-spinner" aria-hidden="true"></span>
+              <span>Reclaiming space safely…</span>
+            </span>
           {:else if phase === "done"}
             <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files)</span>
           {:else}
@@ -458,9 +467,11 @@
 
         <div class="d3-hero-row">
           {#if phase === "scanning"}
-            <span class="d3-hero-metric">{progress ? formatBytes(progress.bytes_so_far) : "Scanning…"}</span>
+            <span class="d3-hero-metric is-scanning">{progress ? formatBytes(progress.bytes_so_far) : "Scanning…"}</span>
+            <span class="d3-hero-unit d3-scanning-pulse">analyzing storage…</span>
           {:else if phase === "cleaning"}
-            <span class="d3-hero-metric">{formatBytes(depletingBytes)}</span>
+            <span class="d3-hero-metric is-scanning">{formatBytes(depletingBytes)}</span>
+            <span class="d3-hero-unit d3-scanning-pulse">moving to 7-day safety undo…</span>
           {:else if phase === "done"}
             <span class="d3-hero-metric">{formatBytes(freedTotal)} Freed</span>
           {:else if report && totalFoundBytes > 0}
@@ -488,7 +499,17 @@
           {t("action.rescan", $lang)}
         </button>
 
-        {#if phase === "done"}
+        {#if phase === "scanning"}
+          <button type="button" class="d3-primary-btn is-loading" disabled aria-busy="true">
+            <span class="d3-btn-spinner" aria-hidden="true"></span>
+            <span>Scanning…</span>
+          </button>
+        {:else if phase === "cleaning"}
+          <button type="button" class="d3-primary-btn is-loading" disabled aria-busy="true">
+            <span class="d3-btn-spinner" aria-hidden="true"></span>
+            <span>Cleaning…</span>
+          </button>
+        {:else if phase === "done"}
           <button type="button" class="d3-primary-btn" onclick={scan}>
             {t("action.scan", $lang)}
           </button>
@@ -496,7 +517,6 @@
           <button
             type="button"
             class="d3-primary-btn"
-            disabled={phase === "scanning" || phase === "cleaning"}
             onclick={requestClean}
           >
             {t("action.clean", $lang)} {formatBytes(selectedBytes)}
@@ -505,7 +525,6 @@
           <button
             type="button"
             class="d3-primary-btn"
-            disabled={phase === "scanning" || phase === "cleaning"}
             onclick={scan}
           >
             {t("action.scan", $lang)}
@@ -515,7 +534,7 @@
     </div>
 
     <!-- Segmented OS Storage Bar -->
-    <div class="d3-bar-track" aria-label="Storage allocation breakdown">
+    <div class="d3-bar-track" class:is-busy={phase === "scanning" || phase === "cleaning"} aria-label="Storage allocation breakdown">
       <div class="d3-seg d3-seg-used" style="width: 38%;" title="Protected OS & Personal Files"></div>
       <div class="d3-seg d3-seg-green" style={`width: ${sysSegmentPct}%;`} title="Safe Temp & Browser Cache"></div>
       <div class="d3-seg d3-seg-cobalt" style={`width: ${appSegmentPct}%;`} title="App Cache & Leftovers"></div>
@@ -1011,6 +1030,120 @@
   .d3-dot-green { background: #0a7c52; }
   .d3-dot-cobalt { background: #1e4fd6; }
   .d3-dot-amber { background: #d97706; }
+
+  /* Subtle Scan / Clean Loading Animations */
+  .d3-status-text.is-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .d3-live-spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(10, 124, 82, 0.22);
+    border-top-color: #0a7c52;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: d3Spin 720ms linear infinite;
+  }
+  :global(body[data-theme="dark"]) .d3-live-spinner,
+  :global(.dark) .d3-live-spinner {
+    border-color: rgba(52, 211, 153, 0.24);
+    border-top-color: #34d399;
+  }
+
+  .d3-scan-pct {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--d3-green-bg);
+    color: var(--d3-green-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .d3-scanning-pulse {
+    animation: d3PulseOpacity 1.4s ease-in-out infinite;
+  }
+
+  .d3-primary-btn.is-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0.92;
+    cursor: progress;
+  }
+
+  .d3-btn-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.32);
+    border-top-color: #ffffff;
+    display: inline-block;
+    flex-shrink: 0;
+    animation: d3Spin 720ms linear infinite;
+  }
+
+  .d3-bar-track {
+    position: relative;
+  }
+
+  .d3-bar-track.is-busy::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.42) 48%,
+      rgba(16, 185, 129, 0.28) 54%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: d3BarShimmer 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  @keyframes d3Spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes d3BarShimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes d3PulseOpacity {
+    0%, 100% {
+      opacity: 0.95;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .d3-live-spinner,
+    .d3-btn-spinner,
+    .d3-scanning-pulse,
+    .d3-bar-track.is-busy::after {
+      animation: none;
+    }
+  }
 
   /* 2. 4 Semantic Pastel-Tinted Category Tiles */
   .d3-tiles-grid {
