@@ -2728,7 +2728,7 @@ export function createApp(deps: AppDeps) {
       winback_claimed: Boolean(account.winback_claimed),
       devices,
       devices_used: devices.length,
-      devices_max: Math.max(1, config.maxDevicesPc || 3),
+      devices_max: Math.max(1, config.maxDevicesPc || 5),
       invoices,
     });
   });
@@ -3473,8 +3473,8 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // 4. Unlink / Remove a Device (frees up a slot under the 3-device limit and invalidates its per-device token)
-  const maxTotalDevices = Math.max(1, config.maxDevicesPc || 3);
+  // 4. Unlink / Remove a Device (frees up a slot under the 5-device limit and invalidates its per-device token)
+  const maxTotalDevices = Math.max(1, config.maxDevicesPc || 5);
   const limitQrCreate = createRateLimiter(30, 10 * 60 * 1000);
   const limitQrRedeem = createRateLimiter(20, 10 * 60 * 1000);
   const limitQrChallenge = createRateLimiter(30, 10 * 60 * 1000);
@@ -4030,7 +4030,7 @@ export function createApp(deps: AppDeps) {
             <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm">
               <div class="text-xs uppercase font-bold text-slate-400">Waiting Device</div>
               <div class="font-bold text-white mt-0.5">${escapeHtml(challengeDeviceName)}</div>
-              <div class="text-xs text-emerald-400 mt-1">Up to 3 devices per subscription (any combination of desktop or mobile)</div>
+              <div class="text-xs text-emerald-400 mt-1">Clean up to ${maxTotalDevices} devices per subscription (any combination of desktop or mobile)</div>
             </div>
             ${
               !challengeValid
@@ -4067,7 +4067,7 @@ export function createApp(deps: AppDeps) {
           </div>`
         : `<div id="redeemBox" class="space-y-4">
             <p class="text-sm text-slate-300 leading-relaxed">
-              Tap below to link this device to your SWEEPR Cleaner Pro subscription (up to 3 devices across Desktop &amp; Mobile).
+              Tap below to link this device to your SWEEPR Cleaner Pro subscription (clean up to ${maxTotalDevices} devices across Desktop &amp; Mobile).
             </p>
             <button id="redeemBtn" type="button" class="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition cursor-pointer">
               ✓ Link This Device Now
@@ -4080,8 +4080,8 @@ export function createApp(deps: AppDeps) {
 
     <div id="pairStatus" class="hidden mt-4 p-3.5 rounded-xl text-sm font-semibold"></div>
     <div id="deviceLimitBox" class="hidden mt-4 p-4 rounded-xl bg-amber-950/50 border border-amber-500/40 space-y-3">
-      <div class="text-xs font-extrabold uppercase tracking-wider text-amber-300">3 / 3 Device Slots In Use</div>
-      <p class="text-xs text-amber-100">Your subscription includes up to 3 linked devices (any combination of desktop or mobile). Remove one below to continue:</p>
+      <div class="text-xs font-extrabold uppercase tracking-wider text-amber-300">${maxTotalDevices} / ${maxTotalDevices} Device Slots In Use</div>
+      <p class="text-xs text-amber-100">Your subscription includes up to ${maxTotalDevices} linked devices (any combination of desktop or mobile). Remove one below to continue:</p>
       <ul id="limitDeviceList" class="space-y-2"></ul>
     </div>
   </div>
@@ -4204,7 +4204,7 @@ export function createApp(deps: AppDeps) {
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.ok) {
           localStorage.setItem('sweepr_cleaner_paired', JSON.stringify(data));
-          showStatus('✓ Device Linked! Subscription active (' + (data.devices_used || 1) + ' / ' + (data.devices_max || 3) + ' devices used).', true);
+          showStatus('✓ Device Linked! Subscription active (' + (data.devices_used || 1) + ' / ' + (data.devices_max || 5) + ' devices used).', true);
         } else {
           showStatus(data.message || data.error || 'Could not redeem QR token.', false);
           if (data.error === 'device_limit_reached' && data.devices) {
@@ -4840,15 +4840,19 @@ export function createApp(deps: AppDeps) {
         const ent = repo.entitlement(entitledAcc.id);
         const t = now();
         if (ent && isEntitled(ent, t, config.pastDueGraceDays) && DEVICE_RE.test(deviceId)) {
-          if (!repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile)) {
+          const checkoutDeviceType =
+            body?.device_type === "mobile" || body?.platform === "android" || body?.platform === "ios"
+              ? "mobile"
+              : "pc";
+          if (!repo.touchDevice(entitledAcc.id, deviceId, checkoutDeviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
             const oldest = repo.db
-              .prepare("SELECT id FROM devices WHERE account_id = ? AND type = 'pc' AND revoked = 0 ORDER BY last_seen ASC LIMIT 1")
+              .prepare("SELECT id FROM devices WHERE account_id = ? AND revoked = 0 ORDER BY last_seen ASC LIMIT 1")
               .get(entitledAcc.id) as { id: string } | undefined;
             if (oldest) {
               repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(oldest.id, entitledAcc.id);
             }
             repo.db.prepare("UPDATE devices SET revoked = 0 WHERE id = ? AND account_id = ?").run(deviceId, entitledAcc.id);
-            repo.touchDevice(entitledAcc.id, deviceId, "pc", config.maxDevicesPc, config.maxDevicesMobile);
+            repo.touchDevice(entitledAcc.id, deviceId, checkoutDeviceType, config.maxDevicesPc, config.maxDevicesMobile);
           }
           const refreshToken = randomToken(32);
           repo.setDeviceTokenHash(entitledAcc.id, deviceId, sha256(refreshToken));

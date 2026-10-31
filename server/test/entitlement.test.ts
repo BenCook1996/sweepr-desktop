@@ -13,7 +13,7 @@ function setup(now = () => Math.floor(Date.now() / 1000)) {
     repo, signingKey: privateKey, stripe: null, now,
     config: {
       publicUrl: "http://test", stripeWebhookSecret: "", priceActivation: "", priceMonthly: "",
-      trialDays: 7, tokenTtlHours: 72, maxDevicesPc: 3, maxDevicesMobile: 2, devEndpoints: true, pastDueGraceDays: 3,
+      trialDays: 7, tokenTtlHours: 72, maxDevicesPc: 5, maxDevicesMobile: 5, devEndpoints: true, pastDueGraceDays: 3,
     },
   });
   const post = (path: string, body: unknown, token?: string) =>
@@ -54,7 +54,7 @@ test("entitled account receives a valid Ed25519 token bound to device", async ()
   assert.ok(claims.exp - claims.iat <= 72 * 3600);
 });
 
-test("device limit enforced (unified 3-device limit across any combination of desktop or mobile)", async () => {
+test("device limit enforced (unified 5-device limit across any combination of desktop or mobile)", async () => {
   const { post } = setup();
   // 1st device (PC)
   const acc = await (await post("/v1/accounts", { device_id: DEVICE, device_type: "pc" })).json();
@@ -62,15 +62,29 @@ test("device limit enforced (unified 3-device limit across any combination of de
   
   // 2nd device (PC)
   assert.equal((await post("/v1/entitlement", { device_id: "b".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 200);
-  // 3rd device (Mobile) — any combination of desktop or mobile up to 3 total
+  // 3rd device (PC)
+  assert.equal((await post("/v1/entitlement", { device_id: "c".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 200);
+  // 4th device (PC) — proves we are not capped at 3 PCs!
+  assert.equal((await post("/v1/entitlement", { device_id: "d".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 200);
+  // 5th device (Mobile) — any combination of desktop or mobile up to 5 total
   assert.equal((await post("/v1/entitlement", { device_id: "1".repeat(64), device_type: "mobile" }, acc.refresh_token)).status, 200);
-  // 4th device (PC) -> 403
-  assert.equal((await post("/v1/entitlement", { device_id: "c".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 403);
-  // 4th device (Mobile) -> 403
+  // 6th device (PC) -> 403
+  assert.equal((await post("/v1/entitlement", { device_id: "e".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 403);
+  // 6th device (Mobile) -> 403
   assert.equal((await post("/v1/entitlement", { device_id: "2".repeat(64), device_type: "mobile" }, acc.refresh_token)).status, 403);
+
+  // Also verify 5 mobile devices work on a single subscription (not capped at 2 phones!)
+  const mobAcc = await (await post("/v1/accounts", { device_id: "3".repeat(64), device_type: "mobile" })).json();
+  await post("/dev/grant", { account_id: mobAcc.account_id });
+  assert.equal((await post("/v1/entitlement", { device_id: "4".repeat(64), device_type: "mobile" }, mobAcc.refresh_token)).status, 200);
+  assert.equal((await post("/v1/entitlement", { device_id: "5".repeat(64), device_type: "mobile" }, mobAcc.refresh_token)).status, 200);
+  assert.equal((await post("/v1/entitlement", { device_id: "6".repeat(64), device_type: "mobile" }, mobAcc.refresh_token)).status, 200);
+  assert.equal((await post("/v1/entitlement", { device_id: "7".repeat(64), device_type: "mobile" }, mobAcc.refresh_token)).status, 200);
+  // 6th device -> 403
+  assert.equal((await post("/v1/entitlement", { device_id: "8".repeat(64), device_type: "mobile" }, mobAcc.refresh_token)).status, 403);
 });
 
-test("QR device linking Flow A (create-token -> redeem) and Flow B (challenge -> approve -> poll) with 3-device enforcement", async () => {
+test("QR device linking Flow A (create-token -> redeem) and Flow B (challenge -> approve -> poll) with 5-device enforcement", async () => {
   const { app, post } = setup();
   // Create paid account with 1st device (DEVICE)
   const acc = await (await post("/v1/accounts", { device_id: DEVICE, device_type: "pc", email: "qruser@example.com" })).json();
@@ -84,7 +98,7 @@ test("QR device linking Flow A (create-token -> redeem) and Flow B (challenge ->
   assert.match(created.token, /^ptk_[A-Za-z0-9_-]+$/);
   assert.ok(created.qr_svg.includes("<svg"));
   assert.equal(created.devices_used, 1);
-  assert.equal(created.devices_max, 3);
+  assert.equal(created.devices_max, 5);
 
   // Redeem Flow A token on 2nd device (Mobile)
   const mobileDevId = "e".repeat(64);
@@ -158,18 +172,22 @@ test("QR device linking Flow A (create-token -> redeem) and Flow B (challenge ->
   ).json();
   assert.equal(pollAfter.status, "expired");
 
-  // Now at 3/3 devices: attempting to create a 4th QR token returns 403 device_limit_reached
-  const fourthTokenRes = await post("/api/device-link/create-token", {}, acc.refresh_token);
-  assert.equal(fourthTokenRes.status, 403);
-  const fourthBody = await fourthTokenRes.json();
-  assert.equal(fourthBody.error, "device_limit_reached");
-  assert.equal(fourthBody.devices.length, 3);
+  // Activate 4th and 5th devices (Android Phone + Linux PC)
+  assert.equal((await post("/v1/entitlement", { device_id: "7".repeat(64), device_type: "mobile" }, acc.refresh_token)).status, 200);
+  assert.equal((await post("/v1/entitlement", { device_id: "8".repeat(64), device_type: "pc" }, acc.refresh_token)).status, 200);
 
-  // Removing a device frees a slot (2/3) so creating a new QR token succeeds again
+  // Now at 5/5 devices: attempting to create a 6th QR token returns 403 device_limit_reached
+  const sixthTokenRes = await post("/api/device-link/create-token", {}, acc.refresh_token);
+  assert.equal(sixthTokenRes.status, 403);
+  const sixthBody = await sixthTokenRes.json();
+  assert.equal(sixthBody.error, "device_limit_reached");
+  assert.equal(sixthBody.devices.length, 5);
+
+  // Removing a device frees a slot (4/5) so creating a new QR token succeeds again
   const rmRes = await post("/api/portal/devices/remove", { device_id: mobileDevId }, acc.refresh_token);
   assert.equal(rmRes.status, 200);
   const rmBody = await rmRes.json();
-  assert.equal(rmBody.devices_used, 2);
+  assert.equal(rmBody.devices_used, 4);
 
   const retryTokenRes = await post("/api/device-link/create-token", {}, acc.refresh_token);
   assert.equal(retryTokenRes.status, 200);

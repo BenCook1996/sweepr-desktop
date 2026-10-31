@@ -98,7 +98,7 @@ fn default_qr_ttl() -> u64 {
 }
 
 fn default_max_devices() -> usize {
-    3
+    5
 }
 
 #[derive(Default)]
@@ -1064,7 +1064,7 @@ impl Licensing {
                 .await
                 .ok()
                 .and_then(|e| e.message)
-                .unwrap_or_else(|| "Maximum of 3 linked devices reached.".into());
+                .unwrap_or_else(|| "Maximum of 5 linked devices reached.".into());
             return Err(AppError::License(msg));
         }
         resp.error_for_status()?

@@ -412,13 +412,13 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     // Device connection
     if (body.device_id) {
-      repo.touchDevice(accountId, body.device_id, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
+      repo.touchDevice(accountId, body.device_id, "pc", deps.config.maxDevicesPc || 5, deps.config.maxDevicesMobile || 5);
     }
 
     let localActivation = null;
     if (body.activate_local_app && config.devEndpoints) {
       const localDeviceId = getLocalWindowsDeviceId();
-      repo.touchDevice(accountId, localDeviceId, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
+      repo.touchDevice(accountId, localDeviceId, "pc", deps.config.maxDevicesPc || 5, deps.config.maxDevicesMobile || 5);
       if (refreshToken) {
         localActivation = activateLocalSweepr(
           { account_id: accountId, refresh_token: refreshToken },
@@ -493,7 +493,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     }
 
     // 3. Register device
-    repo.touchDevice(accountId, localDeviceId, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
+    repo.touchDevice(accountId, localDeviceId, "pc", deps.config.maxDevicesPc || 5, deps.config.maxDevicesMobile || 5);
 
     // 4. Update profile
     repo.updateAccountProfile(accountId, {
@@ -1110,7 +1110,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       }
 
       for (const dev of demo.devices) {
-        repo.touchDevice(demo.id, dev, "pc", deps.config.maxDevicesPc || 3, deps.config.maxDevicesMobile || 2);
+        repo.touchDevice(demo.id, dev, "pc", deps.config.maxDevicesPc || 5, deps.config.maxDevicesMobile || 5);
       }
 
       repo.addNote(demo.id, "System", demo.notes);

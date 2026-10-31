@@ -166,9 +166,9 @@
         <div class="glass-card p-6 bg-white shadow-sm rounded-2xl border border-gray-100">
           <div class="flex items-center justify-between gap-3 mb-2">
             <h3 class="font-bold text-lg">Linked Devices</h3>
-            <span id="deviceCountBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">0 / 3 Devices</span>
+            <span id="deviceCountBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">0 / 5 Devices</span>
           </div>
-          <p class="text-sm text-gray-500 mb-4">Purchased on desktop and downloaded the app separately on another device? Generate a one-time QR code below to activate your account on your separate device (up to <strong>3 devices</strong> — desktop or mobile).</p>
+          <p class="text-sm text-gray-500 mb-4">Purchased on desktop and downloaded the app separately on another device? Generate a one-time QR code below to activate your account on your separate device (clean up to <strong>5 devices</strong> — any combination of desktop or mobile).</p>
           <ul id="deviceList" class="space-y-3 mb-4">
             <!-- Populated by JS -->
           </ul>
@@ -368,7 +368,7 @@
         const deviceList = document.getElementById('deviceList');
         const deviceCountBadge = document.getElementById('deviceCountBadge');
         const usedCount = Array.isArray(data.devices) ? data.devices.length : 0;
-        const maxCount = data.devices_max || 3;
+        const maxCount = data.devices_max || 5;
         if (deviceCountBadge) {
           deviceCountBadge.textContent = `${usedCount} / ${maxCount} Devices`;
         }

@@ -98,7 +98,7 @@
   let qrSvg = $state<string | null>(null);
   let qrCountdown = $state(120);
   let qrDevicesUsed = $state(1);
-  let qrDevicesMax = $state(3);
+  let qrDevicesMax = $state(5);
   let qrInterval: ReturnType<typeof setInterval> | null = null;
 
   function stopQrTimer() {
@@ -154,7 +154,7 @@
       qrSvg = tok.qr_svg;
       qrCountdown = tok.ttl_seconds || 120;
       qrDevicesUsed = tok.devices_used || 1;
-      qrDevicesMax = tok.devices_max || 3;
+      qrDevicesMax = tok.devices_max || 5;
       qrInterval = setInterval(() => {
         qrCountdown = Math.max(0, qrCountdown - 1);
         if (qrCountdown <= 0) stopQrTimer();
@@ -346,7 +346,7 @@
           {#if license.plan}<span class="badge pro">{license.plan}</span>{/if}
           <div class="spacer"></div>
           <button class="ghost small-btn" disabled={busy} onclick={showLinkAnotherDeviceQr}>
-            Pair Mobile Device via QR
+            Pair Another Device via QR
           </button>
           <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
         </div>
@@ -400,7 +400,7 @@
       {#if qrMode !== "none"}
         <div style="margin-top: 8px; padding: 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
           <strong class="small">
-            {qrMode === "token" ? `Scan with Mobile App (${qrDevicesUsed}/${qrDevicesMax} devices used)` : "Scan with Signed-In Mobile App or Portal to Unlock PC"}
+            {qrMode === "token" ? `Scan with Another Device (${qrDevicesUsed}/${qrDevicesMax} devices used)` : "Scan with Signed-In App or Portal to Unlock PC"}
           </strong>
           {#if qrSvg}
             <div style="width: 168px; height: 168px; background: #fff; padding: 8px; border-radius: 12px;">

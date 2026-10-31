@@ -75,7 +75,7 @@ Whether it's thousands of duplicate and burst photos, blurry out-of-focus shots,
 • Unlock unlimited cleanup, video & photo optimization, EXIF GPS privacy stripping, swipe triage, and contact/calendar cleanup with Sweepr Premium:
   – Monthly Plan: £9.99/month (no free trial, cancel anytime in Google Play)
   – Annual Plan: £49.99/year — Save 58% (£4.16/mo equivalent, no free trial, cancel anytime in Google Play)
-  – Cross-Platform Account Linking: Link your Sweepr Pro license via 6-digit email OTP to share access across up to 3 Desktop PCs + 2 Mobile devices.
+  – Cross-Platform Account Linking: Link your Sweepr Pro license via 6-digit email OTP to clean up to 5 devices.
 • Subscriptions renew automatically through Google Play unless cancelled before the renewal date at https://play.google.com/store/account/subscriptions.
 ```
 

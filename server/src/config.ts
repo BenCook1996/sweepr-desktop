@@ -68,8 +68,8 @@ export const config = {
   hibpApiKey: process.env.HIBP_API_KEY ?? "",
   trialDays: num(process.env.TRIAL_DAYS, 30),
   tokenTtlHours: num(process.env.TOKEN_TTL_HOURS, 72),
-  maxDevicesPc: num(process.env.MAX_DEVICES_PC, 3),
-  maxDevicesMobile: num(process.env.MAX_DEVICES_MOBILE, 2),
+  maxDevicesPc: num(process.env.MAX_DEVICES_PC, 5),
+  maxDevicesMobile: num(process.env.MAX_DEVICES_MOBILE, 5),
   devEndpoints:
     process.env.DEV_ENDPOINTS === "1" &&
     process.env.NODE_ENV !== "production" &&

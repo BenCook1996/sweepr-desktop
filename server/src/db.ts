@@ -476,7 +476,7 @@ export class Repo {
       this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
     } else {
       // Keep Subscription Activation Keys / login codes valid until expiry so the customer
-      // can sign in to the web portal AND activate up to 3 PCs + 2 mobile devices with the same key.
+      // can sign in to the web portal AND activate up to 5 devices (any combination of computers or phones) with the same key.
       this.db.prepare(`UPDATE otps SET attempts = 0 WHERE email = ? COLLATE NOCASE`).run(normEmail);
     }
     return true;
@@ -643,7 +643,7 @@ export class Repo {
   }
 
   /**
-   * Registers the device if there's room under the unified 3-device limit
+   * Registers the device if there's room under the unified 5-device limit
    * (any combination of desktop or mobile). Returns false if the device limit is reached or the device is revoked.
    */
   touchDevice(
@@ -667,7 +667,7 @@ export class Repo {
     const { n } = this.db
       .prepare("SELECT COUNT(*) AS n FROM devices WHERE account_id = ? AND revoked = 0")
       .get(accountId) as { n: number };
-    const limit = Math.max(1, maxPc || 3);
+    const limit = Math.max(1, maxPc || 5);
     if (n >= limit) return false;
     this.db
       .prepare("INSERT INTO devices (id, account_id, type, device_name, platform, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)")

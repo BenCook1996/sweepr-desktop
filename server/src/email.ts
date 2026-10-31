@@ -120,7 +120,7 @@ export async function sendSubscriptionEmail(
   <div style="text-align: center; margin-bottom: 24px;">
     <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #10b981; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
     <h2 style="font-size: 22px; font-weight: 800; margin: 16px 0 6px 0; color: #0f172a;">Welcome to SWEEPR Cleaner ${safePlanUpper}!</h2>
-    <p style="color: #475569; font-size: 14px; margin: 0;">Hi ${safeName}, your subscription is now active and ready to use across up to 3 PCs.</p>
+    <p style="color: #475569; font-size: 14px; margin: 0;">Hi ${safeName}, your subscription is now active and ready to clean up to 5 devices.</p>
   </div>
   ${
     safeActivationCode
