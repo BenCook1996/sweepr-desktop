@@ -12,10 +12,10 @@ InstallModes:
   - interactive
   - silent
 UpgradeBehavior: install
-ReleaseDate: 2026-10-25
+ReleaseDate: 2026-10-31
 Installers:
   - Architecture: x64
     InstallerUrl: https://sweeprcleaner.com/SWEEPRCleaner.exe
-    InstallerSha256: D1CEBF669A8888B114C3964EFE16DDA2B71EE39B0F9E7E8B1FFDA161E6E9B0E8
+    InstallerSha256: 94DE083BCAACC556D21BE7A7D81CD47386C824B35EEEC0333DB9254CD779A7E9
 ManifestType: installer
 ManifestVersion: 1.6.0

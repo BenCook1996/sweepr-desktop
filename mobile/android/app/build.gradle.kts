@@ -60,8 +60,8 @@ android {
         applicationId = "com.sweepr.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
 
         // Only ship the languages Sweepr is translated into (drops unused library translations).
         resourceConfigurations += listOf("en", "es", "fr", "de", "it", "pt", "nl")
