@@ -2068,6 +2068,27 @@ export function createApp(deps: AppDeps) {
           ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
           : "";
 
+      if (Boolean(body.hostedCheckoutFallback) && paymentMethod === "card") {
+        const checkoutSession = await createRedirectCheckoutSessionFallback({
+          customerId,
+          accountId,
+          subItems,
+          introCouponId,
+          attributionMeta,
+          isPopup,
+          paymentMethod: "card",
+        }).catch(() => null);
+        if (checkoutSession?.url) {
+          return c.json({
+            redirectUrl: checkoutSession.url,
+            subscriptionId: checkoutSession.id,
+            accountId,
+            plan,
+            livemode: Boolean(checkoutSession.livemode),
+          });
+        }
+      }
+
       const subscriptionPaymentMethodTypes =
         paymentMethod === "ideal"
           ? ["ideal", "sepa_debit"]

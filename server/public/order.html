@@ -47,7 +47,7 @@
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
   <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <link rel="stylesheet" href="/style.css">
-  <script src="https://js.stripe.com/v3/" async></script>
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://pay.google.com/gp/p/js/pay.js" async></script>
   <style>
     #googlePayButtonContainer > div,
@@ -1013,11 +1013,34 @@
         .replace(/'/g, '&#39;');
     }
 
+    const DEFAULT_STRIPE_PUBLISHABLE_KEY = 'pk_live_51UPMkj0Y0NLVZ2yqEhyw8TQdFT9YA86RzxfzhtyXtnpGzQ1cw2LnKJs7GzElp2RdtynJbK9sWhPBjFN7VUR9w0Wd00UtJ7gia9';
+
     function isTestOrDevCheckoutMode() {
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return true;
       if (!checkoutConfig) return false;
-      if (checkoutConfig.devMode === true) return true;
+      if (checkoutConfig.devMode === true || checkoutConfig.elementsEnabled === false) return true;
       const pubKey = String(checkoutConfig.publishableKey || checkoutConfig.stripePublishableKey || '');
       return pubKey.startsWith('pk_test_');
+    }
+
+    async function waitForStripeJs(timeoutMs = 8000) {
+      if (typeof window.Stripe === 'function') return window.Stripe;
+      const start = Date.now();
+      let retryInjected = false;
+      while (Date.now() - start < timeoutMs) {
+        if (typeof window.Stripe === 'function') return window.Stripe;
+        if (!retryInjected && Date.now() - start > 1200) {
+          retryInjected = true;
+          try {
+            const s = document.createElement('script');
+            s.src = 'https://js.stripe.com/v3/';
+            s.async = true;
+            document.head.appendChild(s);
+          } catch (e) {}
+        }
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return typeof window.Stripe === 'function' ? window.Stripe : null;
     }
 
     const TRUSTED_REDIRECT_ORIGINS = new Set([
@@ -1400,7 +1423,7 @@
         document.getElementById('fallbackCardNumber')?.remove();
         document.getElementById('fallbackCardExpiry')?.remove();
         document.getElementById('fallbackCardCvc')?.remove();
-        showError('Secure card payment form could not be loaded. Please disable any ad or script blockers and refresh the page, or complete your order using PayPal above.');
+        document.getElementById('cardOnlyFields')?.classList.add('hidden');
         return;
       }
       const fn = document.getElementById('fallbackCardNumber');
@@ -1771,17 +1794,33 @@
         if (res.ok) {
           checkoutConfig = await res.json();
           applyGeoPaymentLayout();
-          if (checkoutConfig.elementsEnabled && window.Stripe && checkoutConfig.publishableKey) {
-            setupStripeElements(checkoutConfig.publishableKey);
+          const pk = (checkoutConfig.publishableKey || '').trim() || (checkoutConfig.elementsEnabled !== false ? DEFAULT_STRIPE_PUBLISHABLE_KEY : '');
+          if (checkoutConfig.elementsEnabled !== false && pk) {
+            const stripeCtor = await waitForStripeJs(8000);
+            if (stripeCtor) {
+              setupStripeElements(pk);
+            } else {
+              enableFallbackCardInputs();
+            }
           } else {
             enableFallbackCardInputs();
           }
         } else {
-          enableFallbackCardInputs();
+          const stripeCtor = await waitForStripeJs(8000);
+          if (stripeCtor) {
+            setupStripeElements(DEFAULT_STRIPE_PUBLISHABLE_KEY);
+          } else {
+            enableFallbackCardInputs();
+          }
         }
       } catch (err) {
         console.warn('Could not load Stripe config:', err);
-        enableFallbackCardInputs();
+        const stripeCtor = await waitForStripeJs(8000);
+        if (stripeCtor) {
+          setupStripeElements(DEFAULT_STRIPE_PUBLISHABLE_KEY);
+        } else {
+          enableFallbackCardInputs();
+        }
       }
 
       setupFallbackInputMasks();
@@ -2763,9 +2802,38 @@
           return;
         }
 
-        // Case C: On-page Card / Wallet confirmation without Stripe Hosted Checkout (Dev/Test Mode ONLY)
+        // Case C: Hosted Stripe Checkout fallback in production (when client-side Stripe.js is blocked), or Dev/Test Mode fallback
         if (!isTestOrDevCheckoutMode()) {
-          throw new Error('Secure card payment form is unavailable. Please disable any ad or script blockers and refresh the page, or complete your order with PayPal.');
+          const subRes = await fetch('/api/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              name: cardName || undefined,
+              address: billingAddress || undefined,
+              postcode: billingPostcode || undefined,
+              applyDiscount: isDiscountApplied && selectedPlan === 'monthly',
+              plan: selectedPlan,
+              batteryCareAddon: isBatteryAddonSelected,
+              cloudVaultAddon: isCloudVaultAddonSelected,
+              addons: getSelectedAddonsList(),
+              currency: checkoutConfig?.currency,
+              country: checkoutConfig?.country,
+              attribution: typeof getAttributionPayload === 'function' ? getAttributionPayload() : undefined,
+              ref: typeof getAttributionPayload === 'function' ? getAttributionPayload().ref : undefined,
+              paymentMethod: 'card',
+              hostedCheckoutFallback: true
+            })
+          });
+          const subData = await subRes.json();
+          if (subRes.ok && (subData.redirectUrl || subData.url)) {
+            if ((subData.redirectUrl || subData.url || '').includes('/checkout/success')) {
+              clearOrderDraft();
+            }
+            window.location.href = toSafeRedirectUrl(subData.approveUrl || subData.redirectUrl || subData.url, '/order?error=payment_incomplete');
+            return;
+          }
+          throw new Error(subData.error || 'Unable to initialize secure card payment. Please try again or complete your order with PayPal above.');
         }
         let rawNum = '';
         if (method === 'card') {
