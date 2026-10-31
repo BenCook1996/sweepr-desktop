@@ -452,12 +452,32 @@
 
     .trust-strip {
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 14px;
       font-family: var(--font-mono);
-      font-size: 0.76rem;
+      font-size: 0.75rem;
+      font-weight: 600;
       color: var(--muted);
       margin-bottom: 24px;
+    }
+    .trust-point {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .trust-point svg {
+      width: 15px;
+      height: 15px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    @media (max-width: 640px) {
+      .trust-strip {
+        flex-wrap: wrap;
+        gap: 10px 14px;
+      }
     }
 
     /* 3-Stage Interactive Preview Scrubber (Doherty <16ms) */
@@ -994,10 +1014,27 @@
         </div>
 
         <div class="trust-strip" aria-label="Key guarantees">
-          <span>60-Second Quick Scan</span>
-          <span>7-Day Undo Safety Net</span>
-          <span>14-Day Money-Back Guarantee</span>
-          <span>Covers 3 Computers + 2 Phones</span>
+          <span class="trust-point">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" fill="rgba(13, 104, 71, 0.14)" stroke="currentColor" stroke-width="1.4" />
+              <path d="M5.2 8.2L7.1 10.1L10.9 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>60-Second Quick Scan</span>
+          </span>
+          <span class="trust-point">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" fill="rgba(13, 104, 71, 0.14)" stroke="currentColor" stroke-width="1.4" />
+              <path d="M5.2 8.2L7.1 10.1L10.9 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>7-Day Undo Safety Net</span>
+          </span>
+          <span class="trust-point">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="7" fill="rgba(13, 104, 71, 0.14)" stroke="currentColor" stroke-width="1.4" />
+              <path d="M5.2 8.2L7.1 10.1L10.9 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>14-Day Money-Back Guarantee</span>
+          </span>
         </div>
 
         <!-- 3-Stage Interactive Preview Scrubber (Doherty Threshold <16ms) -->
