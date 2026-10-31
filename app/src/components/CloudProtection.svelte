@@ -23,6 +23,7 @@
   let status = $state("");
   let scheduleSync = $state(false);
   let scheduleFreq = $state("daily");
+  let addonPriceLabel = $state("£9.99/yr");
   const hasCloudBundle = $derived(
     Boolean(
       license?.dev_unlock ||
@@ -31,6 +32,22 @@
   );
 
   $effect(() => {
+    api
+      .appInfo()
+      .then((info) => {
+        const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+        return fetch(`${base}/api/pricing`);
+      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        const p = cfg?.pricing;
+        if (p?.cloudVaultAnnualFormatted) {
+          addonPriceLabel = `${p.cloudVaultAnnualFormatted}/yr`;
+        } else if (p?.batteryCareAnnualFormatted) {
+          addonPriceLabel = `${p.batteryCareAnnualFormatted}/yr`;
+        }
+      })
+      .catch(() => {});
     cloudApi
       .detectRoots()
       .then((r) => {
@@ -280,12 +297,12 @@
   {#if !hasCloudBundle}
     <div class="card bundle-head">
       <div>
-        <div class="eyebrow">Optional Add-On · £9.99/yr</div>
+        <div class="eyebrow">Optional Add-On · {addonPriceLabel}</div>
         <h3>Private File Lockbox &amp; Automatic Folder Backup</h3>
         <p class="small muted">Lock personal photos and documents with your own password, and back up important folders automatically.</p>
       </div>
       <button class="primary" onclick={unlockBundle}>
-        Unlock Cloud Protection (+£9.99/yr)
+        Unlock Cloud Protection (+{addonPriceLabel})
       </button>
     </div>
   {/if}

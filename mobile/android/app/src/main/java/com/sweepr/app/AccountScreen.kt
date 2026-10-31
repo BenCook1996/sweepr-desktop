@@ -847,7 +847,7 @@ fun PaywallModalSheet(
     onOpenEmailSignIn: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.MONTHLY) }
+    var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
     val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
@@ -904,7 +904,7 @@ fun PaywallModalSheet(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "Try your first month for $monthlyPrice. Cancel anytime.",
+                    "Choose a plan below, or save 58% with Yearly. Cancel anytime.",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

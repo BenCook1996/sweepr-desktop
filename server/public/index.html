@@ -1347,21 +1347,21 @@
     (function () {
       // 1. Complete Multi-Currency Fallback Catalog (Matches server/src/pricing.ts 1:1)
       var FALLBACK_PRICING = {
-        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', intro: 1.99, monthly: 9.99, addonAnnual: 9.99, fmt: function(v) { return '£' + v.toFixed(2); } },
-        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.42', annualStrike: '$155.88', intro: 1.99, monthly: 12.99, addonAnnual: 9.99, fmt: function(v) { return '$' + v.toFixed(2); } },
-        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€5.00', annualStrike: '€143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, fmt: function(v) { return '€' + v.toFixed(2); } },
-        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.50', annualStrike: 'CA$203.88', intro: 2.99, monthly: 16.99, addonAnnual: 9.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
-        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$227.88', intro: 2.99, monthly: 18.99, addonAnnual: 9.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
-        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.17', annualStrike: 'NZ$239.88', intro: 2.99, monthly: 19.99, addonAnnual: 9.99, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
-        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 5.00', annualStrike: 'CHF 143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
-        sek: { code: 'sek', symbol: 'kr', label: 'Sweden (SEK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', intro: 25, monthly: 129, addonAnnual: 99, fmt: function(v) { return Math.round(v) + ' kr'; } },
-        nok: { code: 'nok', symbol: 'kr', label: 'Norway (NOK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', intro: 25, monthly: 129, addonAnnual: 99, fmt: function(v) { return Math.round(v) + ' kr'; } },
-        dkk: { code: 'dkk', symbol: 'kr.', label: 'Denmark (DKK)', annual: 449, annualEq: '37 kr.', annualStrike: '1 068 kr.', intro: 15, monthly: 89, addonAnnual: 69, fmt: function(v) { return Math.round(v) + ' kr.'; } },
-        pln: { code: 'pln', symbol: 'zł', label: 'Poland (PLN)', annual: 249.99, annualEq: '20.83 zł', annualStrike: '599.88 zł', intro: 9.99, monthly: 49.99, addonAnnual: 39.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
-        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9800, annualEq: '¥817', annualStrike: '¥23,760', intro: 300, monthly: 1980, addonAnnual: 1500, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
-        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 2999, annualEq: '₹250', annualStrike: '₹7,188', intro: 199, monthly: 599, addonAnnual: 799, fmt: function(v) { return '₹' + Math.round(v).toLocaleString(); } },
-        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$203.88', intro: 2.99, monthly: 16.99, addonAnnual: 9.99, fmt: function(v) { return 'S$' + v.toFixed(2); } },
-        brl: { code: 'brl', symbol: 'R$', label: 'Brazil (BRL)', annual: 249.90, annualEq: 'R$20.83', annualStrike: 'R$598.80', intro: 9.90, monthly: 49.90, addonAnnual: 49.90, fmt: function(v) { return 'R$' + v.toFixed(2); } }
+        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', intro: 1.99, monthly: 9.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '£' + v.toFixed(2); } },
+        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '$' + v.toFixed(2); } },
+        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '€' + v.toFixed(2); } },
+        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', intro: 2.99, monthly: 15.99, addonAnnual: 14.99, addonMonthly: 2.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
+        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', intro: 2.99, monthly: 17.99, addonAnnual: 15.99, addonMonthly: 2.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
+        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', intro: 2.99, monthly: 19.99, addonAnnual: 17.99, addonMonthly: 3.49, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
+        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
+        sek: { code: 'sek', symbol: ' kr', label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
+        nok: { code: 'nok', symbol: ' kr', label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
+        dkk: { code: 'dkk', symbol: ' kr.', label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1 019.88 kr.', intro: 14.99, monthly: 84.99, addonAnnual: 79.99, addonMonthly: 14.99, fmt: function(v) { return v.toFixed(2) + ' kr.'; } },
+        pln: { code: 'pln', symbol: ' zł', label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', intro: 7.99, monthly: 47.99, addonAnnual: 44.99, addonMonthly: 7.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
+        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', intro: 290, monthly: 1880, addonAnnual: 1580, addonMonthly: 290, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
+        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', intro: 169.99, monthly: 999.99, addonAnnual: 899.99, addonMonthly: 169.99, fmt: function(v) { return '₹' + v.toFixed(2); } },
+        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', intro: 2.99, monthly: 15.99, addonAnnual: 13.99, addonMonthly: 2.49, fmt: function(v) { return 'S$' + v.toFixed(2); } },
+        brl: { code: 'brl', symbol: 'R$ ', label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', intro: 9.99, monthly: 64.99, addonAnnual: 59.99, addonMonthly: 9.99, fmt: function(v) { return 'R$ ' + v.toFixed(2); } }
       };
 
       var OS_PROFILES = {
@@ -1477,20 +1477,25 @@
         var c = FALLBACK_PRICING[state.currency] || FALLBACK_PRICING.gbp;
         var api = state.apiPricing && state.apiPricing.currency === state.currency ? state.apiPricing : null;
 
-        var annualBase = api ? api.annualAmountMajor : c.annual;
-        var monthlyBase = api && api.monthlyAmountMajor ? api.monthlyAmountMajor : c.monthly;
-        var monthlyRenew = api ? api.monthlyFormatted : c.fmt(c.monthly);
-        var annualEq = api ? api.annualMonthlyEqFormatted : c.annualEq;
-        var annualStrike = api ? api.annualCompareAtFormatted : c.annualStrike;
-        var addonRate = api && api.batteryCareAnnualAmountMajor ? api.batteryCareAnnualAmountMajor : c.addonAnnual;
-        var addonFormatted = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : c.fmt(c.addonAnnual);
+        var divisor = api && api.zeroDecimal ? 1 : 100;
+        var annualBase = api && api.annualAmount ? (api.annualAmount / divisor) : c.annual;
+        var monthlyBase = api && api.monthlyAmount ? (api.monthlyAmount / divisor) : c.monthly;
+        var monthlyRenew = api && api.monthlyFormatted ? api.monthlyFormatted : c.fmt(c.monthly);
+        var annualEq = api && api.annualMonthlyEqFormatted ? api.annualMonthlyEqFormatted : c.annualEq;
+        var annualStrike = api && api.annualRegularTotalFormatted ? api.annualRegularTotalFormatted : c.annualStrike;
+        var addonAnnualRate = api && api.batteryCareAnnualAmount ? (api.batteryCareAnnualAmount / divisor) : c.addonAnnual;
+        var addonMonthlyRate = api && api.batteryCareMonthlyAmount ? (api.batteryCareMonthlyAmount / divisor) : c.addonMonthly;
+        var addonAnnualFmt = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : c.fmt(c.addonAnnual);
+        var addonMonthlyFmt = api && api.batteryCareMonthlyFormatted ? api.batteryCareMonthlyFormatted : c.fmt(c.addonMonthly);
+        var activeAddonRate = state.plan === 'annual' ? addonAnnualRate : addonMonthlyRate;
+        var activeAddonTag = state.plan === 'annual' ? ('+' + addonAnnualFmt + '/yr') : ('+' + addonMonthlyFmt + '/mo');
 
         var batteryChecked = document.getElementById('addonBatteryCheckbox') && document.getElementById('addonBatteryCheckbox').checked;
         var cloudChecked = document.getElementById('addonCloudCheckbox') && document.getElementById('addonCloudCheckbox').checked;
         var addonCount = (batteryChecked ? 1 : 0) + (cloudChecked ? 1 : 0);
 
         var baseToday = state.plan === 'annual' ? annualBase : monthlyBase;
-        var totalToday = baseToday + addonCount * addonRate;
+        var totalToday = baseToday + addonCount * activeAddonRate;
         var formattedTotal = c.fmt(totalToday);
 
         var figEl = document.getElementById('giantPriceFigure');
@@ -1514,11 +1519,11 @@
         if (locEl) locEl.textContent = 'Region: ' + c.label;
         if (swAnnualSub) swAnnualSub.textContent = annualEq + '/mo equivalent';
         if (swMonthlySub) swMonthlySub.textContent = monthlyRenew + '/month · Cancel anytime';
-        if (addonBatTag) addonBatTag.textContent = '+' + addonFormatted + '/yr';
-        if (addonCloudTag) addonCloudTag.textContent = '+' + addonFormatted + '/yr';
-        if (scrubBat) scrubBat.textContent = '+' + addonFormatted + '/yr';
-        if (scrubCloud) scrubCloud.textContent = '+' + addonFormatted + '/yr';
-        if (tilePlum) tilePlum.textContent = '+' + addonFormatted + '/yr';
+        if (addonBatTag) addonBatTag.textContent = activeAddonTag;
+        if (addonCloudTag) addonCloudTag.textContent = activeAddonTag;
+        if (scrubBat) scrubBat.textContent = '+' + addonAnnualFmt + '/yr';
+        if (scrubCloud) scrubCloud.textContent = '+' + addonAnnualFmt + '/yr';
+        if (tilePlum) tilePlum.textContent = '+' + addonAnnualFmt + '/yr';
         if (secBadge) secBadge.textContent = c.fmt(annualBase) + '/yr';
 
         if (state.plan === 'annual') {
@@ -1534,21 +1539,21 @@
           if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/yr →';
         } else {
           if (figEl) figEl.textContent = formattedTotal;
-          if (perEl) perEl.textContent = addonCount > 0 ? 'today (monthly + ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '') + ')' : '/month';
+          if (perEl) perEl.textContent = addonCount > 0 ? '/month (with ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '') + ')' : '/month';
           if (strikeEl) {
             strikeEl.style.display = 'none';
           }
           if (capEl) {
-            capEl.textContent = 'Billed monthly at ' + monthlyRenew + '/mo' + (addonCount > 0 ? ' (+ ' + addonCount + ' yearly add-on' + (addonCount > 1 ? 's' : '') + ')' : '') + '. Clean up to 5 devices. Cancel anytime in 1 click.';
+            capEl.textContent = 'Billed monthly at ' + formattedTotal + '/mo. Clean up to 5 devices. Cancel anytime in 1 click.';
           }
-          if (checkoutTotal) checkoutTotal.textContent = (addonCount > 0 ? formattedTotal + ' today →' : monthlyRenew + '/mo →');
+          if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/mo →';
         }
 
         if (faqPlan) {
           faqPlan.textContent = 'Both plans let you clean up to 5 devices. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving 58%, or ' + annualEq + '/month), while the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
         }
         if (faqAddon) {
-          faqAddon.textContent = 'Each optional add-on is ' + addonFormatted + '/year. Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';
+          faqAddon.textContent = 'Each optional add-on is ' + addonAnnualFmt + '/year (' + addonMonthlyFmt + '/month on monthly billing). Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';
         }
 
         // Update deep links to /order with selected plan, currency & add-ons
@@ -1556,9 +1561,7 @@
         if (batteryChecked) addonsArr.push('battery_care');
         if (cloudChecked) addonsArr.push('cloud_vault');
         var orderHref = '/order?plan=' + encodeURIComponent(state.plan) + '&currency=' + encodeURIComponent(state.currency);
-        if (addonsArr.length > 0) {
-          orderHref += '&addons=' + encodeURIComponent(addonsArr.join(','));
-        }
+        orderHref += '&addons=' + encodeURIComponent(addonsArr.length > 0 ? addonsArr.join(',') : 'none');
         if (checkoutBtn) checkoutBtn.setAttribute('href', orderHref);
         var secCta = document.getElementById('secondaryOrderCta');
         if (secCta) secCta.setAttribute('href', orderHref);
@@ -1635,7 +1638,10 @@
         if (sel) {
           sel.addEventListener('change', function () {
             state.currency = this.value;
-            try { localStorage.setItem('sweepr_currency', state.currency); } catch (e) {}
+            try {
+              localStorage.setItem('sweepr_currency', state.currency);
+              localStorage.setItem('sweepr_currency_manual', state.currency);
+            } catch (e) {}
             renderPricing();
             fetchServerGeoPricing(state.currency);
           });

@@ -53,32 +53,33 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
         switch self {
         case .monthly:
             switch code {
-            case "USD": return Self.formatLocalCurrency(12.99)
-            case "EUR", "CHF": return Self.formatLocalCurrency(11.99)
-            case "CAD", "SGD": return Self.formatLocalCurrency(16.99)
-            case "AUD": return Self.formatLocalCurrency(18.99)
+            case "USD": return Self.formatLocalCurrency(11.99)
+            case "EUR", "CHF": return Self.formatLocalCurrency(10.99)
+            case "CAD", "SGD": return Self.formatLocalCurrency(15.99)
+            case "AUD": return Self.formatLocalCurrency(17.99)
             case "NZD": return Self.formatLocalCurrency(19.99)
-            case "SEK", "NOK": return Self.formatLocalCurrency(129)
-            case "DKK": return Self.formatLocalCurrency(89)
-            case "PLN": return Self.formatLocalCurrency(49.99)
-            case "JPY": return Self.formatLocalCurrency(1980)
-            case "INR": return Self.formatLocalCurrency(599)
-            case "BRL": return Self.formatLocalCurrency(49.90)
+            case "SEK", "NOK": return Self.formatLocalCurrency(129.99)
+            case "DKK": return Self.formatLocalCurrency(84.99)
+            case "PLN": return Self.formatLocalCurrency(47.99)
+            case "JPY": return Self.formatLocalCurrency(1880)
+            case "INR": return Self.formatLocalCurrency(999.99)
+            case "BRL": return Self.formatLocalCurrency(64.99)
             default: return Self.formatLocalCurrency(9.99)
             }
         case .sixMonth:
             switch code {
-            case "USD": return Self.formatLocalCurrency(49.99)
+            case "USD": return Self.formatLocalCurrency(47.99)
             case "EUR", "CHF": return Self.formatLocalCurrency(44.99)
-            case "CAD", "SGD": return Self.formatLocalCurrency(64.99)
+            case "CAD": return Self.formatLocalCurrency(64.99)
+            case "SGD": return Self.formatLocalCurrency(62.99)
             case "AUD": return Self.formatLocalCurrency(74.99)
             case "NZD": return Self.formatLocalCurrency(79.99)
-            case "SEK", "NOK": return Self.formatLocalCurrency(499)
-            case "DKK": return Self.formatLocalCurrency(349)
+            case "SEK", "NOK": return Self.formatLocalCurrency(519.99)
+            case "DKK": return Self.formatLocalCurrency(329.99)
             case "PLN": return Self.formatLocalCurrency(189.99)
-            case "JPY": return Self.formatLocalCurrency(7400)
-            case "INR": return Self.formatLocalCurrency(2199)
-            case "BRL": return Self.formatLocalCurrency(189.90)
+            case "JPY": return Self.formatLocalCurrency(7480)
+            case "INR": return Self.formatLocalCurrency(3999.99)
+            case "BRL": return Self.formatLocalCurrency(259.99)
             default: return Self.formatLocalCurrency(38.99)
             }
         case .annual:
@@ -89,12 +90,12 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
             case "AUD": return Self.formatLocalCurrency(99.99)
             case "NZD": return Self.formatLocalCurrency(109.99)
             case "SGD": return Self.formatLocalCurrency(84.99)
-            case "SEK", "NOK": return Self.formatLocalCurrency(649)
-            case "DKK": return Self.formatLocalCurrency(449)
-            case "PLN": return Self.formatLocalCurrency(249.99)
-            case "JPY": return Self.formatLocalCurrency(9800)
-            case "INR": return Self.formatLocalCurrency(2999)
-            case "BRL": return Self.formatLocalCurrency(249.90)
+            case "SEK", "NOK": return Self.formatLocalCurrency(699.99)
+            case "DKK": return Self.formatLocalCurrency(449.99)
+            case "PLN": return Self.formatLocalCurrency(259.99)
+            case "JPY": return Self.formatLocalCurrency(9980)
+            case "INR": return Self.formatLocalCurrency(5499.99)
+            case "BRL": return Self.formatLocalCurrency(349.99)
             default: return Self.formatLocalCurrency(49.99)
             }
         }
@@ -106,10 +107,10 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
         case .monthly:
             return "Billed monthly · Cancel anytime"
         case .sixMonth:
-            let eq: Double = (code == "USD") ? 8.33 : ((code == "EUR" || code == "CHF") ? 7.50 : 6.50)
+            let eq: Double = (code == "USD") ? 7.99 : ((code == "EUR" || code == "CHF") ? 7.49 : 6.50)
             return "Save 35% (\(Self.formatLocalCurrency(eq))/mo)"
         case .annual:
-            let eq: Double = (code == "USD") ? 5.42 : ((code == "EUR" || code == "CHF") ? 5.00 : 4.16)
+            let eq: Double = (code == "USD") ? 5.41 : ((code == "EUR" || code == "CHF") ? 4.99 : 4.16)
             return "Save 58% (\(Self.formatLocalCurrency(eq))/mo)"
         }
     }

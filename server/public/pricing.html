@@ -549,21 +549,21 @@
   <script>
     (function () {
       var CATALOG = {
-        gbp: { label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', sixMo: 38.99, sixEq: '£6.50', sixStrike: '£59.94', intro: 1.99, monthly: 9.99, addon: 9.99, fmt: function(v){ return '£' + v.toFixed(2); } },
-        usd: { label: 'United States (USD)', annual: 64.99, annualEq: '$5.42', annualStrike: '$155.88', sixMo: 49.99, sixEq: '$8.33', sixStrike: '$77.94', intro: 1.99, monthly: 12.99, addon: 9.99, fmt: function(v){ return '$' + v.toFixed(2); } },
-        eur: { label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€5.00', annualStrike: '€143.88', sixMo: 44.99, sixEq: '€7.50', sixStrike: '€71.94', intro: 1.99, monthly: 11.99, addon: 9.99, fmt: function(v){ return '€' + v.toFixed(2); } },
-        cad: { label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.50', annualStrike: 'CA$203.88', sixMo: 64.99, sixEq: 'CA$10.83', sixStrike: 'CA$101.94', intro: 2.99, monthly: 16.99, addon: 9.99, fmt: function(v){ return 'CA$' + v.toFixed(2); } },
-        aud: { label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$227.88', sixMo: 74.99, sixEq: 'A$12.50', sixStrike: 'A$113.94', intro: 2.99, monthly: 18.99, addon: 9.99, fmt: function(v){ return 'A$' + v.toFixed(2); } },
-        nzd: { label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.17', annualStrike: 'NZ$239.88', sixMo: 79.99, sixEq: 'NZ$13.33', sixStrike: 'NZ$119.94', intro: 2.99, monthly: 19.99, addon: 9.99, fmt: function(v){ return 'NZ$' + v.toFixed(2); } },
-        chf: { label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 5.00', annualStrike: 'CHF 143.88', sixMo: 44.99, sixEq: 'CHF 7.50', sixStrike: 'CHF 71.94', intro: 1.99, monthly: 11.99, addon: 9.99, fmt: function(v){ return 'CHF ' + v.toFixed(2); } },
-        sek: { label: 'Sweden (SEK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', sixMo: 499, sixEq: '83 kr', sixStrike: '774 kr', intro: 25, monthly: 129, addon: 99, fmt: function(v){ return Math.round(v) + ' kr'; } },
-        nok: { label: 'Norway (NOK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', sixMo: 499, sixEq: '83 kr', sixStrike: '774 kr', intro: 25, monthly: 129, addon: 99, fmt: function(v){ return Math.round(v) + ' kr'; } },
-        dkk: { label: 'Denmark (DKK)', annual: 449, annualEq: '37 kr.', annualStrike: '1 068 kr.', sixMo: 349, sixEq: '58 kr.', sixStrike: '534 kr.', intro: 15, monthly: 89, addon: 69, fmt: function(v){ return Math.round(v) + ' kr.'; } },
-        pln: { label: 'Poland (PLN)', annual: 249.99, annualEq: '20.83 zł', annualStrike: '599.88 zł', sixMo: 189.99, sixEq: '31.67 zł', sixStrike: '299.94 zł', intro: 9.99, monthly: 49.99, addon: 39.99, fmt: function(v){ return v.toFixed(2) + ' zł'; } },
-        jpy: { label: 'Japan (JPY)', annual: 9800, annualEq: '¥817', annualStrike: '¥23,760', sixMo: 7400, sixEq: '¥1,233', sixStrike: '¥11,880', intro: 300, monthly: 1980, addon: 1500, fmt: function(v){ return '¥' + Math.round(v).toLocaleString(); } },
-        inr: { label: 'India (INR)', annual: 2999, annualEq: '₹250', annualStrike: '₹7,188', sixMo: 2199, sixEq: '₹367', sixStrike: '₹3,594', intro: 199, monthly: 599, addon: 799, fmt: function(v){ return '₹' + Math.round(v).toLocaleString(); } },
-        sgd: { label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$203.88', sixMo: 64.99, sixEq: 'S$10.83', sixStrike: 'S$101.94', intro: 2.99, monthly: 16.99, addon: 9.99, fmt: function(v){ return 'S$' + v.toFixed(2); } },
-        brl: { label: 'Brazil (BRL)', annual: 249.90, annualEq: 'R$20.83', annualStrike: 'R$598.80', sixMo: 189.90, sixEq: 'R$31.65', sixStrike: 'R$299.40', intro: 9.90, monthly: 49.90, addon: 49.90, fmt: function(v){ return 'R$' + v.toFixed(2); } }
+        gbp: { label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', sixMo: 38.99, sixEq: '£6.50', sixStrike: '£59.94', intro: 1.99, monthly: 9.99, addon: 9.99, addonSixMo: 6.99, addonMo: 1.99, fmt: function(v){ return '£' + v.toFixed(2); } },
+        usd: { label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', sixMo: 47.99, sixEq: '$7.99', sixStrike: '$71.94', intro: 1.99, monthly: 11.99, addon: 9.99, addonSixMo: 6.99, addonMo: 1.99, fmt: function(v){ return '$' + v.toFixed(2); } },
+        eur: { label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', sixMo: 44.99, sixEq: '€7.49', sixStrike: '€65.94', intro: 1.99, monthly: 10.99, addon: 9.99, addonSixMo: 6.99, addonMo: 1.99, fmt: function(v){ return '€' + v.toFixed(2); } },
+        cad: { label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', sixMo: 64.99, sixEq: 'CA$10.83', sixStrike: 'CA$95.94', intro: 2.99, monthly: 15.99, addon: 14.99, addonSixMo: 9.99, addonMo: 2.99, fmt: function(v){ return 'CA$' + v.toFixed(2); } },
+        aud: { label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', sixMo: 74.99, sixEq: 'A$12.49', sixStrike: 'A$107.94', intro: 2.99, monthly: 17.99, addon: 15.99, addonSixMo: 10.99, addonMo: 2.99, fmt: function(v){ return 'A$' + v.toFixed(2); } },
+        nzd: { label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', sixMo: 79.99, sixEq: 'NZ$13.33', sixStrike: 'NZ$119.94', intro: 2.99, monthly: 19.99, addon: 17.99, addonSixMo: 11.99, addonMo: 3.49, fmt: function(v){ return 'NZ$' + v.toFixed(2); } },
+        chf: { label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', sixMo: 44.99, sixEq: 'CHF 7.49', sixStrike: 'CHF 65.94', intro: 1.99, monthly: 10.99, addon: 9.99, addonSixMo: 6.99, addonMo: 1.99, fmt: function(v){ return 'CHF ' + v.toFixed(2); } },
+        sek: { label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, sixEq: '86.66 kr', sixStrike: '779.94 kr', intro: 19.99, monthly: 129.99, addon: 119.99, addonSixMo: 79.99, addonMo: 19.99, fmt: function(v){ return v.toFixed(2) + ' kr'; } },
+        nok: { label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, sixEq: '86.66 kr', sixStrike: '779.94 kr', intro: 19.99, monthly: 129.99, addon: 119.99, addonSixMo: 79.99, addonMo: 19.99, fmt: function(v){ return v.toFixed(2) + ' kr'; } },
+        dkk: { label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1 019.88 kr.', sixMo: 329.99, sixEq: '54.99 kr.', sixStrike: '509.94 kr.', intro: 14.99, monthly: 84.99, addon: 79.99, addonSixMo: 49.99, addonMo: 14.99, fmt: function(v){ return v.toFixed(2) + ' kr.'; } },
+        pln: { label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', sixMo: 189.99, sixEq: '31.66 zł', sixStrike: '287.94 zł', intro: 7.99, monthly: 47.99, addon: 44.99, addonSixMo: 29.99, addonMo: 7.99, fmt: function(v){ return v.toFixed(2) + ' zł'; } },
+        jpy: { label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', sixMo: 7480, sixEq: '¥1,246', sixStrike: '¥11,280', intro: 290, monthly: 1880, addon: 1580, addonSixMo: 980, addonMo: 290, fmt: function(v){ return '¥' + Math.round(v).toLocaleString(); } },
+        inr: { label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', sixMo: 3999.99, sixEq: '₹666.66', sixStrike: '₹5,999.94', intro: 169.99, monthly: 999.99, addon: 899.99, addonSixMo: 599.99, addonMo: 169.99, fmt: function(v){ return '₹' + v.toFixed(2); } },
+        sgd: { label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', sixMo: 62.99, sixEq: 'S$10.49', sixStrike: 'S$95.94', intro: 2.99, monthly: 15.99, addon: 13.99, addonSixMo: 8.99, addonMo: 2.49, fmt: function(v){ return 'S$' + v.toFixed(2); } },
+        brl: { label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', sixMo: 259.99, sixEq: 'R$ 43.33', sixStrike: 'R$ 389.94', intro: 9.99, monthly: 64.99, addon: 59.99, addonSixMo: 39.99, addonMo: 9.99, fmt: function(v){ return 'R$ ' + v.toFixed(2); } }
       };
 
       var state = { currency: 'gbp', plan: 'annual' };
@@ -575,14 +575,16 @@
         var addonCount = (bat ? 1 : 0) + (cld ? 1 : 0);
 
         var base = state.plan === 'annual' ? c.annual : (state.plan === '6month' ? c.sixMo : c.monthly);
-        var total = base + addonCount * c.addon;
+        var activeAddon = state.plan === 'annual' ? c.addon : (state.plan === '6month' ? c.addonSixMo : c.addonMo);
+        var activeAddonLabel = state.plan === 'annual' ? ('+' + c.fmt(c.addon) + '/yr') : (state.plan === '6month' ? ('+' + c.fmt(c.addonSixMo) + '/6mo') : ('+' + c.fmt(c.addonMo) + '/mo'));
+        var total = base + addonCount * activeAddon;
 
         document.getElementById('pricingRegionBadge').textContent = c.label;
         document.getElementById('pSubAnnual').textContent = c.annualEq + '/mo eq';
         document.getElementById('pSub6Month').textContent = c.sixEq + '/mo eq';
         document.getElementById('pSubMonthly').textContent = c.fmt(c.monthly) + '/month';
-        document.getElementById('pAddonBatteryPrice').textContent = '+' + c.fmt(c.addon) + '/yr';
-        document.getElementById('pAddonCloudPrice').textContent = '+' + c.fmt(c.addon) + '/yr';
+        document.getElementById('pAddonBatteryPrice').textContent = activeAddonLabel;
+        document.getElementById('pAddonCloudPrice').textContent = activeAddonLabel;
         document.getElementById('checklistAddonBadge').textContent = '+' + c.fmt(c.addon) + '/yr';
         document.getElementById('tableAddonCell').textContent = 'Optional (+' + c.fmt(c.addon) + '/yr each)';
 
@@ -600,17 +602,17 @@
           document.getElementById('pGiantDesc').textContent = 'Billed every 6 months at ' + c.fmt(c.sixMo) + ' (' + c.sixEq + '/month equivalent). Save 35% vs monthly.';
           document.getElementById('pCheckoutTotal').textContent = c.fmt(total) + ' →';
         } else {
-          document.getElementById('pGiantPeriod').textContent = addonCount > 0 ? 'today (monthly + add-on)' : '/month';
+          document.getElementById('pGiantPeriod').textContent = addonCount > 0 ? '/month (with add-on)' : '/month';
           document.getElementById('pGiantStrike').style.display = 'none';
-          document.getElementById('pGiantDesc').textContent = 'Billed monthly at ' + c.fmt(c.monthly) + '/month. Cancel anytime in 1 click.';
-          document.getElementById('pCheckoutTotal').textContent = (addonCount > 0 ? c.fmt(total) + ' today →' : c.fmt(c.monthly) + '/mo →');
+          document.getElementById('pGiantDesc').textContent = 'Billed monthly at ' + c.fmt(total) + '/month. Cancel anytime in 1 click.';
+          document.getElementById('pCheckoutTotal').textContent = c.fmt(total) + '/mo →';
         }
 
         var addons = [];
         if (bat) addons.push('battery_care');
         if (cld) addons.push('cloud_vault');
         var href = '/order?plan=' + encodeURIComponent(state.plan) + '&currency=' + encodeURIComponent(state.currency);
-        if (addons.length) href += '&addons=' + encodeURIComponent(addons.join(','));
+        href += '&addons=' + encodeURIComponent(addons.length ? addons.join(',') : 'none');
         document.getElementById('pCheckoutBtn').setAttribute('href', href);
       }
 
@@ -636,7 +638,10 @@
         }
         sel.addEventListener('change', function () {
           state.currency = this.value;
-          try { localStorage.setItem('sweepr_currency', state.currency); } catch (e) {}
+          try {
+            localStorage.setItem('sweepr_currency', state.currency);
+            localStorage.setItem('sweepr_currency_manual', state.currency);
+          } catch (e) {}
           render();
         });
 

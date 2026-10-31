@@ -346,7 +346,7 @@
       <!-- Hidden Legacy Mobile Accordion Toggle (Kept in DOM for script safety; O2 shows controls inline on mobile) -->
       <button type="button" id="mobileSummaryToggleBtn" onclick="toggleMobileOrderSummary()" aria-expanded="false" class="hidden">
         <span id="mobileAccordionHint"></span>
-        <span id="mobileQuickTotalText">£69.97</span>
+        <span id="mobileQuickTotalText">£49.99</span>
       </button>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
@@ -392,12 +392,11 @@
           <div class="space-y-2.5">
             <div class="text-xs font-bold text-[#3f4743]">Optional protection add-ons (Click to include)</div>
 
-            <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-[#e6f4ee] rounded-xl px-4 py-3 border border-[#e5e7e4] cursor-pointer transition-all select-none">
+            <div id="batteryCareBumpCard" onclick="toggleBatteryCareAddon()" class="bg-white rounded-xl px-4 py-3 border border-[#e5e7e4] cursor-pointer transition-all select-none">
               <div class="flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="batteryCareCheckbox"
-                  checked
                   onclick="event.stopPropagation(); toggleBatteryCareAddon(this.checked);"
                   class="mt-0.5 w-4 h-4 rounded accent-[#0d6847] cursor-pointer shrink-0"
                 />
@@ -415,12 +414,11 @@
               </div>
             </div>
 
-            <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-[#e6f4ee] rounded-xl px-4 py-3 border border-[#e5e7e4] cursor-pointer transition-all select-none">
+            <div id="cloudVaultBumpCard" onclick="toggleCloudVaultAddon()" class="bg-white rounded-xl px-4 py-3 border border-[#e5e7e4] cursor-pointer transition-all select-none">
               <div class="flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="cloudVaultCheckbox"
-                  checked
                   onclick="event.stopPropagation(); toggleCloudVaultAddon(this.checked);"
                   class="mt-0.5 w-4 h-4 rounded accent-[#0d6847] cursor-pointer shrink-0"
                 />
@@ -446,12 +444,12 @@
               <span id="summaryPlanPrice" class="font-bold text-[#0c0f0e] tabular-nums">£49.99/year</span>
             </div>
 
-            <div id="addonSummaryRow" class="flex items-center justify-between text-[#3f4743]">
+            <div id="addonSummaryRow" class="hidden flex items-center justify-between text-[#3f4743]">
               <span id="addonSummaryTitle">+ Battery Health Saver Add-On</span>
               <span id="addonSummaryPrice" class="font-semibold text-[#0c0f0e] tabular-nums">+ £9.99/year</span>
             </div>
 
-            <div id="cloudVaultSummaryRow" class="flex items-center justify-between text-[#3f4743]">
+            <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-[#3f4743]">
               <span id="cloudVaultSummaryTitle">+ Private File Lockbox &amp; Cloud Backup</span>
               <span id="cloudVaultSummaryPrice" class="font-semibold text-[#0c0f0e] tabular-nums">+ £9.99/year</span>
             </div>
@@ -478,7 +476,7 @@
 
             <div class="pt-2.5 border-t border-[#e5e7e4] flex items-center justify-between">
               <span id="totalTodayLabel" class="font-bold text-[#0c0f0e] text-sm sm:text-base">Total Due Today</span>
-              <span id="totalTodayText" class="font-extrabold text-xl sm:text-2xl text-[#0c0f0e] tabular-nums">£69.97</span>
+              <span id="totalTodayText" class="font-extrabold text-xl sm:text-2xl text-[#0c0f0e] tabular-nums">£49.99</span>
             </div>
           </div>
 
@@ -622,16 +620,16 @@
             <!-- Step 2: Compact 1-Tap Optional Add-Ons -->
             <div class="space-y-2">
               <div class="text-xs font-bold text-[#3f4743]">2. Optional Add-Ons (Tap to include)</div>
-              <label id="o2MobileBatCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-[#e6f4ee] cursor-pointer select-none">
-                <input type="checkbox" id="o2MobileBatCheckbox" checked onchange="toggleBatteryCareAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
+              <label id="o2MobileBatCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-white cursor-pointer select-none">
+                <input type="checkbox" id="o2MobileBatCheckbox" onchange="toggleBatteryCareAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
                 <span class="flex-1 flex items-center justify-between gap-2 text-xs">
                   <span class="text-[#0c0f0e]"><strong>Battery Health Saver</strong> (Stops early wear)</span>
                   <strong id="o2MobileBatPrice" class="text-[#0d6847] tabular-nums shrink-0">+£9.99/yr</strong>
                 </span>
               </label>
 
-              <label id="o2MobileCloudCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-[#e6f4ee] cursor-pointer select-none">
-                <input type="checkbox" id="o2MobileCloudCheckbox" checked onchange="toggleCloudVaultAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
+              <label id="o2MobileCloudCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-white cursor-pointer select-none">
+                <input type="checkbox" id="o2MobileCloudCheckbox" onchange="toggleCloudVaultAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
                 <span class="flex-1 flex items-center justify-between gap-2 text-xs">
                   <span class="text-[#0c0f0e]"><strong>Private File Lockbox</strong> (Password folder + backup)</span>
                   <strong id="o2MobileCloudPrice" class="text-[#0d6847] tabular-nums shrink-0">+£9.99/yr</strong>
@@ -991,8 +989,8 @@
     // State
     let selectedPlan = 'annual'; // 'annual' | 'six_month' | 'monthly'
     let isDiscountApplied = false;
-    let isBatteryAddonSelected = true;
-    let isCloudVaultAddonSelected = true;
+    let isBatteryAddonSelected = false;
+    let isCloudVaultAddonSelected = false;
     let stripe = null;
     let elements = null;
     let cardElements = null;
@@ -1148,21 +1146,46 @@
       if (radioMonthly) radioMonthly.checked = (plan === 'monthly');
 
       const p = checkoutConfig && checkoutConfig.pricing;
+      const annualFmt = p?.annualFormatted ?? '£49.99';
       const annualMoEq = p?.annualMonthlyEqFormatted ?? '£4.16';
+      const annualRegTotal = p?.annualRegularTotalFormatted ?? '£119.88';
+      const annualSavAmt = p?.annualSavingsAmountFormatted ?? '£69.89';
+      const annualSavPct = p?.annualSavingsPercent ?? 58;
+      const sixFmt = p?.sixMonthFormatted ?? '£38.99';
       const sixMoEq = p?.sixMonthMonthlyEqFormatted ?? '£6.50';
+      const sixRegTotal = p?.sixMonthRegularTotalFormatted ?? '£59.94';
+      const sixSavAmt = p?.sixMonthSavingsAmountFormatted ?? '£20.95';
+      const sixSavPct = p?.sixMonthSavingsPercent ?? 35;
       const monthlyFmt = p?.monthlyFormatted ?? '£9.99';
       const introFmt = p?.introMonthlyFormatted ?? '£1.99';
+      const introSavFmt = p?.introSavingsFormatted ?? '£8.00';
 
       const tabAnnualText = document.getElementById('planTabAnnualText');
       const tabSixText = document.getElementById('planTabSixMonthText');
       const tabMonthlyText = document.getElementById('planTabMonthlyText');
-      if (tabAnnualText) tabAnnualText.textContent = `★ Annual — ${annualMoEq}/mo (Save 58%)`;
-      if (tabSixText) tabSixText.textContent = `6-Month — ${sixMoEq}/mo (Save 35%)`;
+      if (tabAnnualText) tabAnnualText.textContent = `★ Annual — ${annualMoEq}/mo (Save ${annualSavPct}%)`;
+      if (tabSixText) tabSixText.textContent = `6-Month — ${sixMoEq}/mo (Save ${sixSavPct}%)`;
       if (tabMonthlyText) {
         tabMonthlyText.textContent = isDiscountApplied && plan === 'monthly'
           ? `Monthly — ${introFmt} 1st mo`
           : `Monthly — ${monthlyFmt}/mo`;
       }
+
+      // Sync exit-intent modal & discount rows to localized currency
+      const modalIntroPriceText = document.getElementById('modalIntroPriceText');
+      const modalIntroBigPrice = document.getElementById('modalIntroBigPrice');
+      const modalRegularStrikePrice = document.getElementById('modalRegularStrikePrice');
+      const modalRenewMonthlyPrice = document.getElementById('modalRenewMonthlyPrice');
+      const modalSavingsNote = document.getElementById('modalSavingsNote');
+      const discountSaveStrong = document.getElementById('discountSaveStrong');
+      const discountAmountMinus = document.getElementById('discountAmountMinus');
+      if (modalIntroPriceText) modalIntroPriceText.textContent = introFmt;
+      if (modalIntroBigPrice) modalIntroBigPrice.textContent = introFmt;
+      if (modalRegularStrikePrice) modalRegularStrikePrice.textContent = `Regular ${monthlyFmt}`;
+      if (modalRenewMonthlyPrice) modalRenewMonthlyPrice.textContent = `${monthlyFmt}/month`;
+      if (modalSavingsNote) modalSavingsNote.textContent = `Introductory ${introSavFmt} savings applies strictly to month 1. Auto-renews at standard ${monthlyFmt}/month unless cancelled.`;
+      if (discountSaveStrong) discountSaveStrong.textContent = `Save ${introSavFmt}`;
+      if (discountAmountMinus) discountAmountMinus.textContent = `- ${introSavFmt}`;
 
       const productPriceTop = document.getElementById('productPriceTop');
       const productPriceSub = document.getElementById('productPriceSub');
@@ -1179,63 +1202,63 @@
       const termsConsentLabel = document.getElementById('termsConsentLabel');
 
       if (plan === 'annual') {
-        if (productPriceTop) productPriceTop.textContent = '£49.99';
-        if (productPriceSub) productPriceSub.textContent = 'per year (£4.16/mo)';
+        if (productPriceTop) productPriceTop.textContent = annualFmt;
+        if (productPriceSub) productPriceSub.textContent = `per year (${annualMoEq}/mo)`;
         if (productTag) productTag.classList.remove('hidden');
         if (productTagContent) {
           productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
-          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 58% vs monthly billing`;
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save ${annualSavPct}% vs monthly billing`;
         }
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Annual Plan)';
-        if (summaryPlanPrice) summaryPlanPrice.textContent = '£49.99/year';
+        if (summaryPlanPrice) summaryPlanPrice.textContent = `${annualFmt}/year`;
         if (savingsSummaryRow) savingsSummaryRow.classList.remove('hidden');
-        if (savingsSummaryLabel) savingsSummaryLabel.textContent = 'Annual Plan Savings (Save 58%)';
-        if (savingsSummaryAmount) savingsSummaryAmount.textContent = '- £69.89';
-        if (savingsSummaryNote) savingsSummaryNote.textContent = 'Billed annually at £49.99/year (£4.16/month equivalent) instead of standard £119.88/year.';
+        if (savingsSummaryLabel) savingsSummaryLabel.textContent = `Annual Plan Savings (Save ${annualSavPct}%)`;
+        if (savingsSummaryAmount) savingsSummaryAmount.textContent = `- ${annualSavAmt}`;
+        if (savingsSummaryNote) savingsSummaryNote.textContent = `Billed annually at ${annualFmt}/year (${annualMoEq}/month equivalent) instead of standard ${annualRegTotal}/year.`;
         if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
-        if (totalTodayText) totalTodayText.textContent = '£49.99';
-        if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+        if (totalTodayText) totalTodayText.textContent = annualFmt;
+        if (termsConsentLabel) termsConsentLabel.textContent = `I agree to pay ${annualFmt} today which will auto renew at ${annualFmt} annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
       } else if (plan === 'six_month') {
-        if (productPriceTop) productPriceTop.textContent = '£38.99';
-        if (productPriceSub) productPriceSub.textContent = 'every 6 months (£6.50/mo)';
+        if (productPriceTop) productPriceTop.textContent = sixFmt;
+        if (productPriceSub) productPriceSub.textContent = `every 6 months (${sixMoEq}/mo)`;
         if (productTag) productTag.classList.remove('hidden');
         if (productTagContent) {
           productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-teal-800 bg-teal-100 border border-teal-300';
-          productTagContent.innerHTML = `<svg class="w-3 h-3 text-teal-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save 35% vs monthly billing`;
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-teal-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save ${sixSavPct}% vs monthly billing`;
         }
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (6-Month Plan)';
-        if (summaryPlanPrice) summaryPlanPrice.textContent = '£38.99/6 months';
+        if (summaryPlanPrice) summaryPlanPrice.textContent = `${sixFmt}/6 months`;
         if (savingsSummaryRow) savingsSummaryRow.classList.remove('hidden');
-        if (savingsSummaryLabel) savingsSummaryLabel.textContent = '6-Month Plan Savings (Save 35%)';
-        if (savingsSummaryAmount) savingsSummaryAmount.textContent = '- £20.95';
-        if (savingsSummaryNote) savingsSummaryNote.textContent = 'Billed every 6 months at £38.99 (£6.50/month equivalent) instead of standard £59.94/6-months.';
+        if (savingsSummaryLabel) savingsSummaryLabel.textContent = `6-Month Plan Savings (Save ${sixSavPct}%)`;
+        if (savingsSummaryAmount) savingsSummaryAmount.textContent = `- ${sixSavAmt}`;
+        if (savingsSummaryNote) savingsSummaryNote.textContent = `Billed every 6 months at ${sixFmt} (${sixMoEq}/month equivalent) instead of standard ${sixRegTotal}/6-months.`;
         if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
-        if (totalTodayText) totalTodayText.textContent = '£38.99';
-        if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £38.99 today which will auto renew at £38.99 every 6 months unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+        if (totalTodayText) totalTodayText.textContent = sixFmt;
+        if (termsConsentLabel) termsConsentLabel.textContent = `I agree to pay ${sixFmt} today which will auto renew at ${sixFmt} every 6 months unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
       } else {
         if (savingsSummaryRow) savingsSummaryRow.classList.add('hidden');
         if (summaryPlanTitle) summaryPlanTitle.textContent = 'SWEEPR Cleaner Pro (Monthly Plan)';
 
         if (isDiscountApplied) {
-          if (productPriceTop) productPriceTop.textContent = '£1.99';
-          if (productPriceSub) productPriceSub.textContent = '1st month (renews £9.99/mo)';
+          if (productPriceTop) productPriceTop.textContent = introFmt;
+          if (productPriceSub) productPriceSub.textContent = `1st month (renews ${monthlyFmt}/mo)`;
           if (productTag) productTag.classList.remove('hidden');
           if (productTagContent) {
             productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
-            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save £8.00 off 1st month`;
+            productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Save ${introSavFmt} off 1st month`;
           }
-          if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
+          if (summaryPlanPrice) summaryPlanPrice.textContent = `${monthlyFmt}/month`;
           if (discountSummaryRow) discountSummaryRow.classList.remove('hidden');
-          if (totalTodayText) totalTodayText.textContent = '£1.99';
-          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £1.99 today for my 1st month. My subscription will automatically renew at the standard price of £9.99 monthly thereafter unless cancelled. The £8.00 introductory discount applies to month 1 only and never reduces future £9.99 renewals. I can cancel anytime via my online portal.';
+          if (totalTodayText) totalTodayText.textContent = introFmt;
+          if (termsConsentLabel) termsConsentLabel.textContent = `I agree to pay ${introFmt} today for my 1st month. My subscription will automatically renew at the standard price of ${monthlyFmt} monthly thereafter unless cancelled. The ${introSavFmt} introductory discount applies to month 1 only and never reduces future ${monthlyFmt} renewals. I can cancel anytime via my online portal.`;
         } else {
-          if (productPriceTop) productPriceTop.textContent = '£9.99';
+          if (productPriceTop) productPriceTop.textContent = monthlyFmt;
           if (productPriceSub) productPriceSub.textContent = 'per month';
           if (productTag) productTag.classList.add('hidden');
-          if (summaryPlanPrice) summaryPlanPrice.textContent = '£9.99/month';
+          if (summaryPlanPrice) summaryPlanPrice.textContent = `${monthlyFmt}/month`;
           if (discountSummaryRow) discountSummaryRow.classList.add('hidden');
-          if (totalTodayText) totalTodayText.textContent = '£9.99';
-          if (termsConsentLabel) termsConsentLabel.textContent = 'I agree to pay £9.99 today which will auto renew at £9.99 monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.';
+          if (totalTodayText) totalTodayText.textContent = monthlyFmt;
+          if (termsConsentLabel) termsConsentLabel.textContent = `I agree to pay ${monthlyFmt} today which will auto renew at ${monthlyFmt} monthly unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
         }
       }
 
@@ -1673,8 +1696,23 @@
     // 1b. Initialize Page and Checkout Config
     async function initCheckout() {
       applyGeoPaymentLayout();
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryCurrency = (urlParams.get('currency') || '').trim().toLowerCase();
+      const queryCountry = (urlParams.get('country') || '').trim().toUpperCase();
+      let manualCurrency = '';
+      try { manualCurrency = (localStorage.getItem('sweepr_currency_manual') || localStorage.getItem('sweepr_currency') || '').trim().toLowerCase(); } catch (e) {}
+      const cfgParams = new URLSearchParams();
+      if (queryCurrency) {
+        cfgParams.set('currency', queryCurrency);
+      } else if (manualCurrency) {
+        cfgParams.set('currency', manualCurrency);
+      }
+      if (queryCountry) {
+        cfgParams.set('country', queryCountry);
+      }
+      const cfgUrl = cfgParams.toString() ? `/api/checkout-config?${cfgParams.toString()}` : '/api/checkout-config';
       try {
-        const res = await fetch('/api/checkout-config');
+        const res = await fetch(cfgUrl);
         if (res.ok) {
           checkoutConfig = await res.json();
           applyGeoPaymentLayout();
@@ -1697,7 +1735,6 @@
       const restoredDraft = restoreOrderDraft();
 
       // Check URL parameters for selected plan or add-ons
-      const urlParams = new URLSearchParams(window.location.search);
       const planParam = urlParams.get('plan');
       const offerParam = urlParams.get('offer');
       const errorParam = urlParams.get('error');
@@ -1973,6 +2010,8 @@
             batteryCareAddon: isBatteryAddonSelected,
             cloudVaultAddon: isCloudVaultAddonSelected,
             addons: getSelectedAddonsList(),
+            currency: checkoutConfig?.currency,
+            country: checkoutConfig?.country,
             paymentMethod: 'google_pay'
           })
         });
@@ -2017,7 +2056,7 @@
       if (!stripe) return;
       try {
         paymentRequestInstance = stripe.paymentRequest({
-          country: 'GB',
+          country: (checkoutConfig?.country || 'GB').toUpperCase(),
           currency: (checkoutConfig?.currency || 'gbp').toLowerCase(),
           total: {
             label: selectedPlan === 'annual'
@@ -2072,6 +2111,8 @@
                   batteryCareAddon: isBatteryAddonSelected,
                   cloudVaultAddon: isCloudVaultAddonSelected,
                   addons: getSelectedAddonsList(),
+              currency: checkoutConfig?.currency,
+              country: checkoutConfig?.country,
                   paymentMethod: 'wallet'
                 })
               });
@@ -2225,12 +2266,15 @@
     function activateDiscountOffer() {
       closeDiscountModal();
       isDiscountApplied = true;
+      const p = checkoutConfig && checkoutConfig.pricing;
+      const introFmt = p?.introMonthlyFormatted ?? '£1.99';
+      const monthlyFmt = p?.monthlyFormatted ?? '£9.99';
 
       // Update Header Banner (Obsidian & Emerald brand styling)
       const bannerTitle = document.getElementById('bannerTitle');
       const bannerSubtitle = document.getElementById('bannerSubtitle');
-      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for £1.99</span>`;
-      if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Clean up to 5 devices. Renews at standard £9.99/mo; cancel anytime in 1 click.`;
+      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for ${introFmt}</span>`;
+      if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Clean up to 5 devices. Renews at standard ${monthlyFmt}/mo; cancel anytime in 1 click.`;
 
       // Update monthly card pill & details
       const monthlyIntroPill = document.getElementById('monthlyIntroPill');
@@ -2238,9 +2282,9 @@
       const monthlySubDisplay = document.getElementById('monthlySubDisplay');
       const monthlyPlanDesc = document.getElementById('monthlyPlanDesc');
       if (monthlyIntroPill) monthlyIntroPill.classList.remove('hidden');
-      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `£1.99<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
-      if (monthlySubDisplay) monthlySubDisplay.textContent = 'renews £9.99/mo';
-      if (monthlyPlanDesc) monthlyPlanDesc.textContent = 'Special 1st-month introductory rate • Renews standard £9.99/mo';
+      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `${introFmt}<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
+      if (monthlySubDisplay) monthlySubDisplay.textContent = `renews ${monthlyFmt}/mo`;
+      if (monthlyPlanDesc) monthlyPlanDesc.textContent = `Special 1st-month introductory rate • Renews standard ${monthlyFmt}/mo`;
 
       // Switch selection to monthly plan
       selectOrderPlan('monthly');
@@ -2430,6 +2474,8 @@
               batteryCareAddon: isBatteryAddonSelected,
               cloudVaultAddon: isCloudVaultAddonSelected,
               addons: getSelectedAddonsList(),
+              currency: checkoutConfig?.currency,
+              country: checkoutConfig?.country,
               paymentMethod: 'paypal',
               popup: Boolean(paypalPopup && !paypalPopup.closed)
             })
@@ -2575,6 +2621,8 @@
               batteryCareAddon: isBatteryAddonSelected,
               cloudVaultAddon: isCloudVaultAddonSelected,
               addons: getSelectedAddonsList(),
+              currency: checkoutConfig?.currency,
+              country: checkoutConfig?.country,
               attribution: typeof getAttributionPayload === 'function' ? getAttributionPayload() : undefined,
               ref: typeof getAttributionPayload === 'function' ? getAttributionPayload().ref : undefined,
               paymentMethod: method
@@ -2613,6 +2661,8 @@
               batteryCareAddon: isBatteryAddonSelected,
               cloudVaultAddon: isCloudVaultAddonSelected,
               addons: getSelectedAddonsList(),
+              currency: checkoutConfig?.currency,
+              country: checkoutConfig?.country,
               attribution: getAttributionPayload(),
               ref: getAttributionPayload().ref,
               paymentMethod: 'card'
@@ -2696,6 +2746,8 @@
             batteryCareAddon: isBatteryAddonSelected,
             cloudVaultAddon: isCloudVaultAddonSelected,
             addons: getSelectedAddonsList(),
+            currency: checkoutConfig?.currency,
+            country: checkoutConfig?.country,
             paymentMethod: method,
             confirmOnServer: true,
             cardNumber: rawNum || undefined

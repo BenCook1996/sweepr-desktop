@@ -330,6 +330,42 @@ test("Google Play purchase verification activates entitlement, supports and_ dev
   assert.equal(delPage.status, 200);
   const delHtml = await delPage.text();
   assert.ok(delHtml.includes("Delete Your Account"));
+
+  // Verify /api/pricing and /api/checkout-config return consistent currencies and numbers across GBP, USD, and EUR
+  const gbpPricingRes = await app.request("/api/pricing");
+  assert.equal(gbpPricingRes.status, 200);
+  const gbpPricing = await gbpPricingRes.json();
+  assert.equal(gbpPricing.currency, "gbp");
+  assert.equal(gbpPricing.country, "GB");
+  assert.equal(gbpPricing.pricing.annualFormatted, "£49.99");
+  assert.equal(gbpPricing.pricing.annualMonthlyEqFormatted, "£4.16");
+  assert.equal(gbpPricing.pricing.sixMonthFormatted, "£38.99");
+  assert.equal(gbpPricing.pricing.sixMonthMonthlyEqFormatted, "£6.50");
+  assert.equal(gbpPricing.pricing.monthlyFormatted, "£9.99");
+  assert.equal(gbpPricing.pricing.batteryCareAnnualFormatted, "£9.99");
+
+  const usdCfgRes = await app.request("/api/checkout-config?currency=usd");
+  assert.equal(usdCfgRes.status, 200);
+  const usdCfg = await usdCfgRes.json();
+  assert.equal(usdCfg.currency, "usd");
+  assert.equal(usdCfg.country, "US");
+  assert.equal(usdCfg.pricing.annualFormatted, "$64.99");
+  assert.equal(usdCfg.pricing.annualMonthlyEqFormatted, "$5.41");
+  assert.equal(usdCfg.pricing.sixMonthFormatted, "$47.99");
+  assert.equal(usdCfg.pricing.sixMonthMonthlyEqFormatted, "$7.99");
+  assert.equal(usdCfg.pricing.monthlyFormatted, "$11.99");
+  assert.equal(usdCfg.pricing.batteryCareAnnualFormatted, "$9.99");
+
+  const eurCfgRes = await app.request("/api/checkout-config?currency=eur");
+  assert.equal(eurCfgRes.status, 200);
+  const eurCfg = await eurCfgRes.json();
+  assert.equal(eurCfg.currency, "eur");
+  assert.equal(eurCfg.pricing.annualFormatted, "€59.99");
+  assert.equal(eurCfg.pricing.annualMonthlyEqFormatted, "€4.99");
+  assert.equal(eurCfg.pricing.sixMonthFormatted, "€44.99");
+  assert.equal(eurCfg.pricing.sixMonthMonthlyEqFormatted, "€7.49");
+  assert.equal(eurCfg.pricing.monthlyFormatted, "€10.99");
+  assert.equal(eurCfg.pricing.batteryCareAnnualFormatted, "€9.99");
 });
 
 

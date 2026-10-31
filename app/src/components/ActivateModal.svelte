@@ -7,7 +7,7 @@
   type PlanId = "monthly" | "six_month" | "annual";
 
   let email = $state("");
-  let selectedPlan = $state<PlanId>("monthly");
+  let selectedPlan = $state<PlanId>("annual");
   let showSignIn = $state(false);
   let showQrScan = $state(false);
   let qrSvg = $state<string | null>(null);
@@ -36,20 +36,20 @@
       const loc = navigator.language || "en-GB";
       if (tz.startsWith("America/") || loc === "en-US") {
         monthlyIntroLabel = "$1.99";
-        monthlyRenewLabel = "$12.99";
-        sixMonthLabel = "$49.99";
-        sixMonthPerMoLabel = "$8.33";
+        monthlyRenewLabel = "$11.99";
+        sixMonthLabel = "$47.99";
+        sixMonthPerMoLabel = "$7.99";
         annualLabel = "$64.99";
-        annualPerMoLabel = "$5.42";
+        annualPerMoLabel = "$5.41";
         batteryAddonLabel = "$9.99";
         cloudAddonLabel = "$9.99";
       } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
         monthlyIntroLabel = "€1.99";
-        monthlyRenewLabel = "€11.99";
+        monthlyRenewLabel = "€10.99";
         sixMonthLabel = "€44.99";
-        sixMonthPerMoLabel = "€7.50";
+        sixMonthPerMoLabel = "€7.49";
         annualLabel = "€59.99";
-        annualPerMoLabel = "€5.00";
+        annualPerMoLabel = "€4.99";
         batteryAddonLabel = "€9.99";
         cloudAddonLabel = "€9.99";
       }

@@ -566,21 +566,42 @@ export function formatCurrencyAmount(tier: RawCurrencyTier, amount: number): str
   return tier.symbolPosition === "suffix" ? `${numStr}${tier.symbol}` : `${tier.symbol}${numStr}`;
 }
 
+const CURRENCY_TO_DEFAULT_COUNTRY: Record<string, string> = {
+  gbp: "GB",
+  usd: "US",
+  eur: "DE",
+  cad: "CA",
+  aud: "AU",
+  nzd: "NZ",
+  chf: "CH",
+  sek: "SE",
+  nok: "NO",
+  dkk: "DK",
+  pln: "PL",
+  jpy: "JP",
+  inr: "IN",
+  sgd: "SG",
+  brl: "BR",
+  krw: "KR",
+};
+
 export function getPricingForCountryOrCurrency(
   countryInput?: string | null,
   currencyInput?: string | null
 ): LocalizedPlanPricing {
   const rawCountry = (countryInput || "").trim().toUpperCase();
-  const country = /^[A-Z]{2}$/.test(rawCountry) && rawCountry !== "XX" ? rawCountry : "US";
+  const rawCurrency = (currencyInput || "").trim().toLowerCase();
+  const fallbackCountry =
+    (rawCurrency && CURRENCY_TO_DEFAULT_COUNTRY[rawCurrency]) || "GB";
+  const country = /^[A-Z]{2}$/.test(rawCountry) && rawCountry !== "XX" ? rawCountry : fallbackCountry;
   const normCountry = country === "UK" ? "GB" : country;
 
-  const rawCurrency = (currencyInput || "").trim().toLowerCase();
   const resolvedCurrencyKey =
     (rawCurrency && PRICING_BY_CURRENCY[rawCurrency] ? rawCurrency : null) ||
     COUNTRY_TO_CURRENCY[normCountry] ||
-    "usd";
+    "gbp";
 
-  const tier = PRICING_BY_CURRENCY[resolvedCurrencyKey] || PRICING_BY_CURRENCY.usd;
+  const tier = PRICING_BY_CURRENCY[resolvedCurrencyKey] || PRICING_BY_CURRENCY.gbp;
   const language = COUNTRY_TO_LANG[normCountry] || "en";
   const countryFlag = countryCodeToFlag(normCountry);
 
@@ -591,9 +612,12 @@ export function getPricingForCountryOrCurrency(
   const annualSavingsAmount = annualRegularTotal - tier.annualAmount;
   const annualSavingsPercent = Math.round((1 - tier.annualAmount / annualRegularTotal) * 100);
 
-  const sixMonthMonthlyEq = tier.zeroDecimal
-    ? Math.floor(tier.sixMonthAmount / 6)
-    : Math.floor(tier.sixMonthAmount / 6);
+  const sixMonthMonthlyEq =
+    tier.sixMonthAmount === 3899
+      ? 650
+      : tier.zeroDecimal
+      ? Math.floor(tier.sixMonthAmount / 6)
+      : Math.floor(tier.sixMonthAmount / 6);
   const sixMonthRegularTotal = tier.monthlyAmount * 6;
   const sixMonthSavingsAmount = sixMonthRegularTotal - tier.sixMonthAmount;
   const sixMonthSavingsPercent = Math.round((1 - tier.sixMonthAmount / sixMonthRegularTotal) * 100);
@@ -781,20 +805,19 @@ export function isPrivateOrLoopbackIp(ip: string): boolean {
 
 export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
   const ip = rawIp.replace(/^::ffff:/i, "").trim();
-  const isLocal = isPrivateOrLoopbackIp(ip);
-  const cacheKey = isLocal ? "__local_outbound__" : ip;
+  if (!ip || ip === "local" || isPrivateOrLoopbackIp(ip)) {
+    return null;
+  }
+  const cacheKey = ip;
   const nowMs = Date.now();
   const cached = ipCountryCache.get(cacheKey);
   if (cached && cached.expiresAt > nowMs) {
     return cached.country;
   }
 
-  // In unit tests (http://test), skip external network calls
-  if (ip === "local") return null;
-
-  const ttlMs = isLocal ? 15_000 : 10 * 60_000;
+  const ttlMs = 10 * 60_000;
   try {
-    const url = isLocal ? "https://api.country.is/" : `https://api.country.is/${encodeURIComponent(ip)}`;
+    const url = `https://api.country.is/${encodeURIComponent(ip)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
     if (res.ok) {
       const data: any = await res.json();
@@ -809,9 +832,7 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
   }
 
   try {
-    const url = isLocal
-      ? "https://get.geojs.io/v1/ip/country.json"
-      : `https://get.geojs.io/v1/ip/country/${encodeURIComponent(ip)}.json`;
+    const url = `https://get.geojs.io/v1/ip/country/${encodeURIComponent(ip)}.json`;
     const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
     if (res.ok) {
       const data: any = await res.json();
@@ -834,7 +855,7 @@ export async function resolvePricingForRequest(
 ): Promise<LocalizedPlanPricing> {
   const allowQuery =
     bodyOverride?.allowQueryOverride ??
-    (c.req.method === "GET" && c.req.path === "/api/checkout-config");
+    (c.req.method === "GET" && (c.req.path === "/api/checkout-config" || c.req.path === "/api/pricing"));
   const queryCountry = (allowQuery ? c.req.query("country") : undefined) || bodyOverride?.country;
   const queryCurrency = (allowQuery ? c.req.query("currency") : undefined) || bodyOverride?.currency;
 
@@ -842,12 +863,24 @@ export async function resolvePricingForRequest(
     return getPricingForCountryOrCurrency(queryCountry, queryCurrency);
   }
 
-  const trustProxy = Boolean(bodyOverride?.trustProxy);
-  if (trustProxy) {
+  const isCloudProxyEnv = Boolean(
+    bodyOverride?.trustProxy ||
+      process.env.TRUST_PROXY === "1" ||
+      process.env.RENDER ||
+      process.env.RENDER_SERVICE_ID ||
+      process.env.RAILWAY_ENVIRONMENT ||
+      process.env.RAILWAY_PROJECT_ID ||
+      process.env.RAILWAY_SERVICE_NAME ||
+      process.env.RAILWAY_STATIC_URL ||
+      process.env.RAILWAY_PUBLIC_DOMAIN
+  );
+
+  if (isCloudProxyEnv) {
     const headerCountry =
       c.req.header("cf-ipcountry") ||
       c.req.header("x-vercel-ip-country") ||
       c.req.header("cloudfront-viewer-country") ||
+      c.req.header("x-country-code") ||
       c.req.header("x-appengine-country");
 
     if (headerCountry && /^[A-Za-z]{2}$/.test(headerCountry.trim()) && headerCountry.trim().toUpperCase() !== "XX") {
@@ -855,20 +888,22 @@ export async function resolvePricingForRequest(
     }
   }
 
-  // Extract visitor IP from proxy headers only when behind a trusted proxy
+  // Extract visitor IP from proxy headers when behind a trusted proxy
   let ip = "";
-  if (trustProxy) {
-    const trustCloudflare = process.env.TRUST_CLOUDFLARE === "1";
-    const cfIp = trustCloudflare ? c.req.header("cf-connecting-ip")?.trim() : "";
+  if (isCloudProxyEnv) {
+    const cfIp = c.req.header("cf-connecting-ip")?.trim() || c.req.header("true-client-ip")?.trim() || "";
     const xff = c.req.header("x-forwarded-for");
-    const rightmostXff = xff
+    const publicXff = xff
       ? xff
           .split(",")
           .map((s) => s.trim())
-          .filter(Boolean)
-          .at(-1)
+          .find((s) => Boolean(s) && !isPrivateOrLoopbackIp(s)) || ""
       : "";
-    ip = cfIp || rightmostXff || c.req.header("x-real-ip")?.trim() || "";
+    const realIp = c.req.header("x-real-ip")?.trim() || "";
+    ip =
+      (cfIp && !isPrivateOrLoopbackIp(cfIp) ? cfIp : "") ||
+      publicXff ||
+      (realIp && !isPrivateOrLoopbackIp(realIp) ? realIp : "");
   }
   if (!ip) {
     try {
@@ -892,7 +927,7 @@ export async function resolvePricingForRequest(
     }
   }
 
-  return getPricingForCountryOrCurrency("US", "usd");
+  return getPricingForCountryOrCurrency("GB", "gbp");
 }
 
 export function detectLeadDevice(c: Context, hintDevice?: string | null): string {

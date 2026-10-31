@@ -1630,6 +1630,14 @@ export function createApp(deps: AppDeps) {
   });
 
   // Public checkout configuration for on-page Stripe Elements, Apple Pay, Google Pay & localized Geo-Pricing
+  app.get("/api/pricing", async (c) => {
+    const localizedPricing = await resolvePricingForRequest(c, { trustProxy, allowQueryOverride: true });
+    return c.json({
+      ...localizedPricing,
+      pricing: localizedPricing,
+    });
+  });
+
   app.get("/api/checkout-config", async (c) => {
     const pk = (config.stripePublishableKey ?? "").trim();
     const validPk = pk.startsWith("pk_") && !pk.includes("...") ? pk : "";
@@ -4461,7 +4469,12 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {
-      const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+      const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+      trustProxy,
+      allowQueryOverride: true,
+    });
       repo.setAccountLeadMeta(account.id, {
         country: localizedPricing.country,
         lead_device: detectLeadDevice(c, deviceType),
@@ -4542,7 +4555,12 @@ export function createApp(deps: AppDeps) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {
-      const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+      const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+      trustProxy,
+      allowQueryOverride: true,
+    });
       repo.setAccountLeadMeta(account.id, {
         country: localizedPricing.country,
         lead_device: detectLeadDevice(c, deviceType),
@@ -4826,7 +4844,12 @@ export function createApp(deps: AppDeps) {
       .prepare("SELECT id FROM devices WHERE account_id = ? LIMIT 1")
       .get(account.id) as { id: string } | undefined;
     const deviceId = DEVICE_RE.test(rawDeviceId) ? rawDeviceId : fallbackDevice?.id ?? "";
-    const localizedPricing = await resolvePricingForRequest(c, { trustProxy });
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: typeof body?.country === "string" ? body.country : undefined,
+      currency: typeof body?.currency === "string" ? body.currency : undefined,
+      trustProxy,
+      allowQueryOverride: true,
+    });
     repo.setAccountLeadMeta(account.id, {
       country: localizedPricing.country,
       lead_device: detectLeadDevice(c, body?.device_type || "pc"),

@@ -831,6 +831,10 @@ impl Licensing {
                 let base = self.api_base()?;
                 let mut url = format!("{base}/order");
                 let mut sep = '?';
+                if let Some(p) = plan.map(str::trim).filter(|p| !p.is_empty()) {
+                    url = format!("{url}{sep}plan={p}");
+                    sep = '&';
+                }
                 if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
                     let encoded: String = e
                         .bytes()

@@ -46,7 +46,9 @@ export const config = {
       process.env.RENDER ||
         process.env.RENDER_SERVICE_ID ||
         process.env.RAILWAY_ENVIRONMENT ||
-        process.env.RAILWAY_PROJECT_ID
+        process.env.RAILWAY_PROJECT_ID ||
+        process.env.RAILWAY_SERVICE_ID ||
+        process.env.RAILWAY_PUBLIC_DOMAIN
     ),
   stripeCoupon: process.env.STRIPE_COUPON ?? "MYskiOdE",
   stripePublishableKey:

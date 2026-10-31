@@ -55,6 +55,24 @@
   let savingTabs = $state(false);
   let deletingSession = $state<string | null>(null);
   let error = $state<string | null>(null);
+  let addonPriceLabel = $state("£9.99/yr");
+
+  $effect(() => {
+    api
+      .appInfo()
+      .then((appInfo) => {
+        const base = (appInfo.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+        return fetch(`${base}/api/pricing`);
+      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        const p = cfg?.pricing;
+        if (p?.batteryCareAnnualFormatted) {
+          addonPriceLabel = `${p.batteryCareAnnualFormatted}/yr`;
+        }
+      })
+      .catch(() => {});
+  });
 
   const isPro = $derived(!!license && (license.dev_unlock || license.active));
   const hasBatteryCareAddon = $derived(
@@ -397,7 +415,7 @@
             class="primary mini-btn"
             onclick={unlockBatteryAddon}
           >
-            Unlock Battery Saver (+£9.99/yr)
+            Unlock Battery Saver (+{addonPriceLabel})
           </button>
         {/if}
         <button
