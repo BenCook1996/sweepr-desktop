@@ -58,11 +58,14 @@
   let addonPriceLabel = $state("£9.99/yr");
 
   $effect(() => {
+    let clientTz = "";
+    try { clientTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch {}
     api
       .appInfo()
       .then((appInfo) => {
         const base = (appInfo.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-        return fetch(`${base}/api/pricing`);
+        const qs = clientTz ? `?tz=${encodeURIComponent(clientTz)}` : "";
+        return fetch(`${base}/api/pricing${qs}`);
       })
       .then((r) => (r.ok ? r.json() : null))
       .then((cfg) => {

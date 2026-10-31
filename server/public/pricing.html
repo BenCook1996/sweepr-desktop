@@ -631,11 +631,44 @@
         document.getElementById('pAddonCloud').addEventListener('change', render);
 
         var sel = document.getElementById('pricingCurrencySelect');
-        var saved = (localStorage.getItem('sweepr_currency') || '').toLowerCase();
-        if (saved && CATALOG[saved]) {
+        var qCurr = '';
+        try { qCurr = (new URLSearchParams(window.location.search).get('currency') || '').toLowerCase(); } catch (e) {}
+        var saved = '';
+        try { saved = (localStorage.getItem('sweepr_currency_manual') || '').toLowerCase(); } catch (e) {}
+        var tz = '';
+        try { tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase(); } catch (e) {}
+        if (qCurr && CATALOG[qCurr]) {
+          state.currency = qCurr;
+        } else if (saved && CATALOG[saved]) {
           state.currency = saved;
-          sel.value = saved;
+        } else if (tz.indexOf('london') !== -1 || tz.indexOf('belfast') !== -1) {
+          state.currency = 'gbp';
+        } else if (tz.indexOf('tokyo') !== -1) {
+          state.currency = 'jpy';
+        } else if (tz.indexOf('kolkata') !== -1 || tz.indexOf('calcutta') !== -1) {
+          state.currency = 'inr';
+        } else if (tz.indexOf('sydney') !== -1 || tz.indexOf('melbourne') !== -1) {
+          state.currency = 'aud';
+        } else if (tz.indexOf('auckland') !== -1) {
+          state.currency = 'nzd';
+        } else if (tz.indexOf('toronto') !== -1 || tz.indexOf('vancouver') !== -1) {
+          state.currency = 'cad';
+        } else if (tz.indexOf('zurich') !== -1) {
+          state.currency = 'chf';
+        } else if (tz.indexOf('stockholm') !== -1) {
+          state.currency = 'sek';
+        } else if (tz.indexOf('oslo') !== -1) {
+          state.currency = 'nok';
+        } else if (tz.indexOf('copenhagen') !== -1) {
+          state.currency = 'dkk';
+        } else if (tz.indexOf('warsaw') !== -1) {
+          state.currency = 'pln';
+        } else if (tz.indexOf('europe/') === 0) {
+          state.currency = 'eur';
+        } else if (tz.indexOf('america/') === 0) {
+          state.currency = 'usd';
         }
+        sel.value = state.currency;
         sel.addEventListener('change', function () {
           state.currency = this.value;
           try {
@@ -646,10 +679,16 @@
         });
 
         render();
-        fetch('/api/pricing', { credentials: 'same-origin' })
+        var apiQs = new URLSearchParams();
+        if (qCurr || saved) apiQs.set('currency', qCurr || saved);
+        try {
+          var rawTz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+          if (rawTz) apiQs.set('tz', rawTz);
+        } catch (e) {}
+        fetch('/api/pricing' + (apiQs.toString() ? '?' + apiQs.toString() : ''), { credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (d) {
-            if (d && d.pricing && d.pricing.currency && CATALOG[d.pricing.currency.toLowerCase()] && !saved) {
+            if (d && d.pricing && d.pricing.currency && CATALOG[d.pricing.currency.toLowerCase()] && !saved && !qCurr) {
               state.currency = d.pricing.currency.toLowerCase();
               sel.value = state.currency;
               render();

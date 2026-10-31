@@ -1700,7 +1700,9 @@
       const queryCurrency = (urlParams.get('currency') || '').trim().toLowerCase();
       const queryCountry = (urlParams.get('country') || '').trim().toUpperCase();
       let manualCurrency = '';
-      try { manualCurrency = (localStorage.getItem('sweepr_currency_manual') || localStorage.getItem('sweepr_currency') || '').trim().toLowerCase(); } catch (e) {}
+      try { manualCurrency = (localStorage.getItem('sweepr_currency_manual') || '').trim().toLowerCase(); } catch (e) {}
+      let clientTz = '';
+      try { clientTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
       const cfgParams = new URLSearchParams();
       if (queryCurrency) {
         cfgParams.set('currency', queryCurrency);
@@ -1709,6 +1711,9 @@
       }
       if (queryCountry) {
         cfgParams.set('country', queryCountry);
+      }
+      if (clientTz) {
+        cfgParams.set('tz', clientTz);
       }
       const cfgUrl = cfgParams.toString() ? `/api/checkout-config?${cfgParams.toString()}` : '/api/checkout-config';
       try {

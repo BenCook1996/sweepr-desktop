@@ -849,6 +849,58 @@ export async function lookupCountryByIp(rawIp: string): Promise<string | null> {
   return null;
 }
 
+export function countryFromTimezone(rawTz?: string | null): string | null {
+  const tz = String(rawTz ?? "").trim().toLowerCase();
+  if (!tz || tz === "utc" || tz === "etc/utc" || tz === "gmt") return null;
+  if (tz.includes("london") || tz.includes("belfast") || tz.includes("guernsey") || tz.includes("jersey") || tz.includes("isle_of_man") || tz === "gb" || tz === "europe/uk") {
+    return "GB";
+  }
+  if (tz.includes("dublin")) return "IE";
+  if (tz.includes("zurich") || tz.includes("vaduz")) return "CH";
+  if (tz.includes("stockholm")) return "SE";
+  if (tz.includes("oslo")) return "NO";
+  if (tz.includes("copenhagen")) return "DK";
+  if (tz.includes("warsaw")) return "PL";
+  if (tz.includes("prague")) return "CZ";
+  if (tz.includes("bucharest")) return "RO";
+  if (tz.includes("sofia")) return "BG";
+  if (tz.includes("istanbul")) return "TR";
+  if (tz.startsWith("europe/")) return "DE";
+  if (
+    tz.includes("toronto") ||
+    tz.includes("vancouver") ||
+    tz.includes("montreal") ||
+    tz.includes("edmonton") ||
+    tz.includes("winnipeg") ||
+    tz.includes("halifax") ||
+    tz.includes("st_johns") ||
+    tz.includes("regina")
+  ) {
+    return "CA";
+  }
+  if (tz.includes("sao_paulo") || tz.includes("fortaleza") || tz.includes("recife") || tz.includes("manaus") || tz.includes("belem")) {
+    return "BR";
+  }
+  if (tz.includes("mexico") || tz.includes("cancun") || tz.includes("tijuana") || tz.includes("monterrey")) {
+    return "MX";
+  }
+  if (tz.startsWith("america/") || tz.startsWith("us/") || tz === "pacific/honolulu") {
+    return "US";
+  }
+  if (tz.startsWith("australia/")) return "AU";
+  if (tz.includes("auckland") || tz.includes("chatham")) return "NZ";
+  if (tz.includes("tokyo")) return "JP";
+  if (tz.includes("seoul")) return "KR";
+  if (tz.includes("singapore")) return "SG";
+  if (tz.includes("hong_kong")) return "HK";
+  if (tz.includes("taipei")) return "TW";
+  if (tz.includes("kolkata") || tz.includes("calcutta")) return "IN";
+  if (tz.includes("dubai")) return "AE";
+  if (tz.includes("riyadh")) return "SA";
+  if (tz.includes("johannesburg")) return "ZA";
+  return null;
+}
+
 export async function resolvePricingForRequest(
   c: Context,
   bodyOverride?: { country?: string; currency?: string; trustProxy?: boolean; allowQueryOverride?: boolean }
@@ -861,6 +913,12 @@ export async function resolvePricingForRequest(
 
   if (queryCountry || queryCurrency) {
     return getPricingForCountryOrCurrency(queryCountry, queryCurrency);
+  }
+
+  const tzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
+  const tzCountry = countryFromTimezone(tzHint);
+  if (tzCountry) {
+    return getPricingForCountryOrCurrency(tzCountry, null);
   }
 
   const isCloudProxyEnv = Boolean(

@@ -1428,7 +1428,7 @@
           var params = new URLSearchParams(window.location.search);
           var qCurr = (params.get('currency') || '').toLowerCase();
           if (qCurr && FALLBACK_PRICING[qCurr]) return qCurr;
-          var saved = (localStorage.getItem('sweepr_currency') || '').toLowerCase();
+          var saved = (localStorage.getItem('sweepr_currency_manual') || '').toLowerCase();
           if (saved && FALLBACK_PRICING[saved]) return saved;
           var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
           if (tz.indexOf('london') !== -1 || tz.indexOf('belfast') !== -1) return 'gbp';
@@ -1568,7 +1568,16 @@
       }
 
       function fetchServerGeoPricing(currencyOverride) {
-        var url = '/api/pricing' + (currencyOverride ? '?currency=' + encodeURIComponent(currencyOverride) : '');
+        var qs = new URLSearchParams();
+        var manual = '';
+        try { manual = (localStorage.getItem('sweepr_currency_manual') || '').toLowerCase(); } catch (e) {}
+        var effCurr = currencyOverride || manual;
+        if (effCurr) qs.set('currency', effCurr);
+        try {
+          var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+          if (tz) qs.set('tz', tz);
+        } catch (e) {}
+        var url = '/api/pricing' + (qs.toString() ? '?' + qs.toString() : '');
         fetch(url, { credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {

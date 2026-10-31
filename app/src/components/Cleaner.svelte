@@ -375,20 +375,22 @@
       }
 
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      const loc = navigator.language || "en-GB";
-      if (tz.startsWith("America/") || loc === "en-US") {
+      if (tz.startsWith("America/")) {
         localizedAddonPrice = "$9.99/yr";
-      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
+      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !tz.includes("Belfast")) {
         localizedAddonPrice = "€9.99/yr";
       }
     } catch {}
 
     // Fetch live localized pricing from server
+    let clientTz = "";
+    try { clientTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch {}
     api
       .appInfo()
       .then((inf) => {
         const base = (inf.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-        return fetch(`${base}/api/pricing`);
+        const qs = clientTz ? `?tz=${encodeURIComponent(clientTz)}` : "";
+        return fetch(`${base}/api/pricing${qs}`);
       })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {

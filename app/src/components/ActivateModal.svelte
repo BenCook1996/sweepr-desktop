@@ -31,10 +31,10 @@
   let addCloudVault = $state(false);
 
   $effect(() => {
+    let tz = "";
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      const loc = navigator.language || "en-GB";
-      if (tz.startsWith("America/") || loc === "en-US") {
+      tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      if (tz.startsWith("America/")) {
         monthlyIntroLabel = "$1.99";
         monthlyRenewLabel = "$11.99";
         sixMonthLabel = "$47.99";
@@ -43,7 +43,7 @@
         annualPerMoLabel = "$5.41";
         batteryAddonLabel = "$9.99";
         cloudAddonLabel = "$9.99";
-      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
+      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !tz.includes("Belfast")) {
         monthlyIntroLabel = "€1.99";
         monthlyRenewLabel = "€10.99";
         sixMonthLabel = "€44.99";
@@ -58,7 +58,8 @@
       .appInfo()
       .then((info) => {
         const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-        return fetch(`${base}/api/pricing`);
+        const qs = tz ? `?tz=${encodeURIComponent(tz)}` : "";
+        return fetch(`${base}/api/pricing${qs}`);
       })
       .then((r) => (r.ok ? r.json() : null))
       .then((cfg) => {
