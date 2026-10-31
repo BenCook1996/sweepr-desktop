@@ -96,7 +96,7 @@
         "name": "How many devices does one SWEEPR Cleaner Pro plan cover?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A single SWEEPR Cleaner Pro plan covers up to 5 devices simultaneously: up to 3 desktop computers (Windows, macOS, or Linux) plus 2 mobile devices (iPhone, iPad, or Android)."
+          "text": "A single SWEEPR Cleaner Pro plan lets you clean up to 5 devices simultaneously across Windows, macOS, Linux, iPhone, iPad, and Android."
         }
       },
       {
@@ -1008,7 +1008,7 @@
             <span id="primaryDownloadLabel">Download Free for Windows</span>
           </a>
           <a href="/order?plan=annual" id="secondaryOrderCta" class="btn-secondary-os btn-press">
-            <span>Cover All 5 Devices</span>
+            <span>Clean up to 5 devices</span>
             <span class="mono" id="secondaryOrderPriceBadge">£49.99/yr</span>
           </a>
         </div>
@@ -1128,7 +1128,7 @@
               <div class="path-audit-row">
                 <div>
                   <strong>Easy 1-Scan Phone &amp; Computer Linking</strong>
-                  <span class="path-tag">Connect up to 3 computers and 2 phones by scanning a simple QR code</span>
+                  <span class="path-tag">Clean up to 5 devices by scanning a simple QR code</span>
                 </div>
                 <span class="path-size">5 Devices</span>
               </div>
@@ -1164,7 +1164,7 @@
             <span class="giant-price-strike" id="giantPriceStrike">£119.88/yr</span>
           </div>
           <p class="giant-price-caption" id="giantPriceCaption">
-            Covers up to 3 Computers (PC/Mac) + 2 Phones (iPhone/Android). Billed yearly (£4.16/mo equivalent). Cancel anytime in 1 click.
+            Clean up to 5 devices across PC, Mac, iPhone, and Android. Billed yearly (£4.16/mo equivalent). Cancel anytime in 1 click.
           </p>
         </div>
 
@@ -1287,7 +1287,7 @@
             </div>
             <div class="path-audit-row">
               <span><strong>One Account for Everything</strong></span>
-              <span class="mono">3 Computers + 2 Phones Included</span>
+              <span class="mono">Clean up to 5 devices</span>
             </div>
           </div>
           <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
@@ -1302,7 +1302,7 @@
           <details class="faq-item" open>
             <summary class="faq-summary">What is the difference between the Yearly and Monthly plans?</summary>
             <p class="faq-answer" id="faqPlanAnswer">
-              Both plans give you full access on up to 3 computers and 2 phones. The Yearly plan is £49.99/year (saving 58%, or £4.16/month), while the Monthly plan is £9.99/month with no long-term commitment. You can cancel anytime in one click.
+              Both plans let you clean up to 5 devices. The Yearly plan is £49.99/year (saving 58%, or £4.16/month), while the Monthly plan is £9.99/month with no long-term commitment. You can cancel anytime in one click.
             </p>
           </details>
           <details class="faq-item">
@@ -1529,7 +1529,7 @@
             strikeEl.textContent = annualStrike + '/yr';
           }
           if (capEl) {
-            capEl.textContent = 'Covers up to 3 Computers (PC/Mac) + 2 Phones (iPhone/Android). Billed yearly (' + annualEq + '/mo equivalent). Cancel anytime in 1 click.';
+            capEl.textContent = 'Clean up to 5 devices across PC, Mac, iPhone, and Android. Billed yearly (' + annualEq + '/mo equivalent). Cancel anytime in 1 click.';
           }
           if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/yr →';
         } else {
@@ -1539,13 +1539,13 @@
             strikeEl.style.display = 'none';
           }
           if (capEl) {
-            capEl.textContent = 'Billed monthly at ' + monthlyRenew + '/mo' + (addonCount > 0 ? ' (+ ' + addonCount + ' yearly add-on' + (addonCount > 1 ? 's' : '') + ')' : '') + '. Covers up to 3 Computers + 2 Phones. Cancel anytime in 1 click.';
+            capEl.textContent = 'Billed monthly at ' + monthlyRenew + '/mo' + (addonCount > 0 ? ' (+ ' + addonCount + ' yearly add-on' + (addonCount > 1 ? 's' : '') + ')' : '') + '. Clean up to 5 devices. Cancel anytime in 1 click.';
           }
           if (checkoutTotal) checkoutTotal.textContent = (addonCount > 0 ? formattedTotal + ' today →' : monthlyRenew + '/mo →');
         }
 
         if (faqPlan) {
-          faqPlan.textContent = 'Both plans give you full access on up to 3 computers and 2 phones. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving 58%, or ' + annualEq + '/month), while the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
+          faqPlan.textContent = 'Both plans let you clean up to 5 devices. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving 58%, or ' + annualEq + '/month), while the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
         }
         if (faqAddon) {
           faqAddon.textContent = 'Each optional add-on is ' + addonFormatted + '/year. Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';

@@ -268,7 +268,7 @@ fun AccountScreen(
             text = {
                 Column {
                     Text(
-                        "Scan the QR code on sweeprcleaner.com/dashboard or your PC app with your camera, or paste a pairing link / token (ptk_... or chk_...) below. Up to 3 devices total.",
+                        "Scan the QR code on sweeprcleaner.com/dashboard or your PC app with your camera, or paste a pairing link / token (ptk_... or chk_...) below. Clean up to 5 devices total.",
                         fontSize = 13.sp,
                         color = Color.Gray,
                     )
@@ -640,7 +640,7 @@ fun AccountScreen(
                 SettingsItem(
                     icon = Icons.Default.Lock,
                     title = "Link Phone or Approve PC via QR",
-                    value = "Up to 3 devices (any mix of PC & mobile)",
+                    value = "Clean up to 5 devices",
                     onClick = if (state.isWorking) null else ({
                         showQrPairDialog = true
                     }),

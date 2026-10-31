@@ -654,7 +654,7 @@ struct AccountView: View {
                 }
 
                 Section(
-                    header: Text("Instant QR Code Device Link (Up to 3 Devices)"),
+                    header: Text("Instant QR Code Device Link (Clean up to 5 devices)"),
                     footer: Text("Paste a Portal QR token (ptk_...) to unlock this iPhone, or a Desktop QR challenge (chk_...) to unlock your PC.")
                 ) {
                     TextField("ptk_... or chk_... or /pair URL", text: $qrPairInput)

@@ -351,7 +351,7 @@
           <button class="ghost small-btn" disabled={busy} onclick={refresh}>Refresh</button>
         </div>
         {#if expiry}
-          <div class="muted small">Renews {expiry} · Up to 3 devices (log in at sweeprcleaner.com/dashboard to activate a separate device via QR code)</div>
+          <div class="muted small">Renews {expiry} · Clean up to 5 devices (log in at sweeprcleaner.com/dashboard to activate another device via QR code)</div>
         {/if}
       {:else}
         <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
