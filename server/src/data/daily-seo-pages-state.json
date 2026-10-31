@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-30T06:22:20.882Z",
+  "lastRunAt": "2026-10-31T07:00:18.724Z",
   "lastCount": 50,
-  "totalCleanItems": 1028,
+  "totalCleanItems": 1078,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/mongodb-compass-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/mongodb-compass-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/mongodb-compass-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/mongodb-compass-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/mongodb-compass-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/redis-insight-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/redis-insight-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/redis-insight-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/redis-insight-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/redis-insight-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/craft-docs-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/craft-docs-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/craft-docs-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/craft-docs-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/craft-docs-media-blob-storage"
   ]
 }
