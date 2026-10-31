@@ -156,31 +156,17 @@ object PlayBillingManager : PurchasesUpdatedListener {
 
     private fun syncPurchaseToAccount(prodId: String, purchaseToken: String, orderId: String?) {
         val current = Prefs.account.value
-        val isBatteryAddon = prodId.equals(SKU_BATTERY_CARE, ignoreCase = true) ||
-            prodId.contains("battery_care", ignoreCase = true)
-        val isCloudAddon = prodId.equals(SKU_CLOUD_VAULT, ignoreCase = true) ||
-            prodId.contains("cloud_vault", ignoreCase = true)
-        val isAddonOnly = isBatteryAddon || isCloudAddon
-        val nextAddons = buildList {
-            addAll(current.addons)
-            if (isBatteryAddon && !contains("battery_care")) add("battery_care")
-            if (isCloudAddon && !contains("cloud_vault")) add("cloud_vault")
-        }
-        val localFallback = current.copy(
-            serverActive = if (isAddonOnly) current.serverActive else true,
-            plan = if (isAddonOnly) (current.plan ?: "addon_only") else (current.plan ?: prodId),
-            expiresAt = if (current.expiresAt > 0L) current.expiresAt else (System.currentTimeMillis() / 1000L + 365L * 86400L),
-            addons = nextAddons,
-        )
-        val updated = runCatching {
-            SweeprAccountApi.verifyGooglePlayPurchase(
+        runCatching {
+            val verified = SweeprAccountApi.verifyGooglePlayPurchase(
                 productId = prodId,
                 purchaseToken = purchaseToken,
                 orderId = orderId,
                 current = current,
             )
-        }.getOrDefault(localFallback)
-        Prefs.setLinkedAccount(updated)
+            Prefs.setLinkedAccount(verified)
+        }.onFailure { err ->
+            android.util.Log.w("PlayBilling", "Purchase verification failed: ${err.message}")
+        }
     }
 
     fun ensureConnected(

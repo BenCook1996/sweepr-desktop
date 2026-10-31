@@ -16,7 +16,6 @@ jobs:
       contents: write
     env:
       APPIMAGE_EXTRACT_AND_RUN: "1"
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +77,7 @@ jobs:
         run: |
           APP_BUNDLE=$(find app/src-tauri/target -name "*.app" -type d | head -n 1)
           if [ -n "$APP_BUNDLE" ]; then
-            codesign --force --deep --sign - "$APP_BUNDLE"
+            codesign --force --deep --options runtime --sign - "$APP_BUNDLE"
             STAGE_DIR=$(mktemp -d)
             cp -R "$APP_BUNDLE" "$STAGE_DIR/"
             ln -s /Applications "$STAGE_DIR/Applications"
@@ -98,8 +97,21 @@ jobs:
             fi
           fi
 
+      - name: Check Azure Signing Configuration
+        id: azure-check
+        if: matrix.platform == 'windows-latest'
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:AZURE_CLIENT_ID)) {
+            "enabled=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            "enabled=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+
       - name: Sign Windows Binaries with Azure Artifact Signing (Authenticode + SmartScreen)
-        if: matrix.platform == 'windows-latest' && env.AZURE_CLIENT_ID != ''
+        if: matrix.platform == 'windows-latest' && steps.azure-check.outputs.enabled == 'true'
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         uses: azure/artifact-signing-action@v1
@@ -115,3 +127,14 @@ jobs:
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
+
+      - name: Upload Signed Windows Binaries to GitHub Release
+        if: matrix.platform == 'windows-latest' && steps.azure-check.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $signedInstallers = Get-ChildItem -Path "app/src-tauri/target/release/bundle" -Recurse -Include *.exe,*.msi | Select-Object -ExpandProperty FullName
+          if ($signedInstallers) {
+            gh release upload v1.0.0 $signedInstallers --clobber
+          }

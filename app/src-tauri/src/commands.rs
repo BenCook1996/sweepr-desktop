@@ -681,12 +681,23 @@ fn clean_file_or_dir(p: &Path) -> u64 {
 #[cfg(windows)]
 fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
     use std::ffi::{c_char, c_int, c_void, CString};
+    use std::sync::OnceLock;
+
     #[link(name = "kernel32")]
     extern "system" {
-        fn LoadLibraryA(lpLibFileName: *const u8) -> *mut c_void;
+        fn LoadLibraryExW(
+            lpLibFileName: *const u16,
+            hFile: *mut c_void,
+            dwFlags: u32,
+        ) -> *mut c_void;
         fn GetProcAddress(hModule: *mut c_void, lpProcName: *const u8) -> *mut c_void;
     }
-    type SqliteOpenFn = unsafe extern "system" fn(*const c_char, *mut *mut c_void) -> c_int;
+
+    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
+    const SQLITE_OPEN_READWRITE: c_int = 0x0000_0002;
+
+    type SqliteOpenV2Fn =
+        unsafe extern "system" fn(*const c_char, *mut *mut c_void, c_int, *const c_char) -> c_int;
     type SqliteExecFn = unsafe extern "system" fn(
         *mut c_void,
         *const c_char,
@@ -695,6 +706,39 @@ fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
         *mut *mut c_char,
     ) -> c_int;
     type SqliteCloseFn = unsafe extern "system" fn(*mut c_void) -> c_int;
+
+    struct WinSqliteFns {
+        open_v2: SqliteOpenV2Fn,
+        exec: SqliteExecFn,
+        close: SqliteCloseFn,
+    }
+
+    static SQLITE_FNS: OnceLock<Option<WinSqliteFns>> = OnceLock::new();
+
+    let Some(fns) = SQLITE_FNS.get_or_init(|| unsafe {
+        let dll_name: Vec<u16> = "winsqlite3.dll\0".encode_utf16().collect();
+        let h_mod = LoadLibraryExW(
+            dll_name.as_ptr(),
+            std::ptr::null_mut(),
+            LOAD_LIBRARY_SEARCH_SYSTEM32,
+        );
+        if h_mod.is_null() {
+            return None;
+        }
+        let open_ptr = GetProcAddress(h_mod, b"sqlite3_open_v2\0".as_ptr());
+        let exec_ptr = GetProcAddress(h_mod, b"sqlite3_exec\0".as_ptr());
+        let close_ptr = GetProcAddress(h_mod, b"sqlite3_close\0".as_ptr());
+        if open_ptr.is_null() || exec_ptr.is_null() || close_ptr.is_null() {
+            return None;
+        }
+        Some(WinSqliteFns {
+            open_v2: std::mem::transmute(open_ptr),
+            exec: std::mem::transmute(exec_ptr),
+            close: std::mem::transmute(close_ptr),
+        })
+    }) else {
+        return false;
+    };
 
     let Ok(c_path) = CString::new(db_path.to_string_lossy().as_bytes()) else {
         return false;
@@ -705,36 +749,27 @@ fn exec_sqlite_on_file(db_path: &Path, sql: &str) -> bool {
     };
 
     unsafe {
-        let h_mod = LoadLibraryA(b"winsqlite3.dll\0".as_ptr());
-        if h_mod.is_null() {
-            return false;
-        }
-        let open_ptr = GetProcAddress(h_mod, b"sqlite3_open\0".as_ptr());
-        let exec_ptr = GetProcAddress(h_mod, b"sqlite3_exec\0".as_ptr());
-        let close_ptr = GetProcAddress(h_mod, b"sqlite3_close\0".as_ptr());
-        if open_ptr.is_null() || exec_ptr.is_null() || close_ptr.is_null() {
-            return false;
-        }
-        let sqlite3_open: SqliteOpenFn = std::mem::transmute(open_ptr);
-        let sqlite3_exec: SqliteExecFn = std::mem::transmute(exec_ptr);
-        let sqlite3_close: SqliteCloseFn = std::mem::transmute(close_ptr);
-
         let mut db: *mut c_void = std::ptr::null_mut();
-        let rc_open = sqlite3_open(c_path.as_ptr(), &mut db);
+        let rc_open = (fns.open_v2)(
+            c_path.as_ptr(),
+            &mut db,
+            SQLITE_OPEN_READWRITE,
+            std::ptr::null(),
+        );
         if rc_open != 0 || db.is_null() {
             if !db.is_null() {
-                let _ = sqlite3_close(db);
+                let _ = (fns.close)(db);
             }
             return false;
         }
-        let rc_exec = sqlite3_exec(
+        let rc_exec = (fns.exec)(
             db,
             c_sql.as_ptr(),
             std::ptr::null(),
             std::ptr::null_mut(),
             std::ptr::null_mut(),
         );
-        let _ = sqlite3_close(db);
+        let _ = (fns.close)(db);
         rc_exec == 0
     }
 }
@@ -1103,23 +1138,54 @@ fn is_newer_version(latest: &str, current: &str) -> bool {
 }
 
 fn is_trusted_update_url(url: &str, api_url: &str) -> bool {
-    let u = url.trim();
-    if u.starts_with("https://github.com/BenCook1996/sweepr-desktop/releases/download/")
-        || u.starts_with("https://objects.githubusercontent.com/")
-        || u.starts_with("https://release-assets.githubusercontent.com/")
-        || u.starts_with("https://sweeprcleaner.com/")
-    {
-        return true;
+    let Ok(parsed) = reqwest::Url::parse(url.trim()) else {
+        return false;
+    };
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return false;
     }
-    let clean_api = api_url.trim_end_matches('/');
-    if clean_api.starts_with("https://") && u.starts_with(clean_api) {
-        return true;
-    }
+    let Some(host) = parsed.host_str().map(|h| h.to_ascii_lowercase()) else {
+        return false;
+    };
     #[cfg(debug_assertions)]
-    if (clean_api.starts_with("http://localhost") || clean_api.starts_with("http://127.0.0.1"))
-        && u.starts_with(clean_api)
-    {
+    if parsed.scheme() == "http" && matches!(host.as_str(), "localhost" | "127.0.0.1" | "[::1]") {
+        if let Ok(parsed_api) = reqwest::Url::parse(api_url.trim()) {
+            if parsed_api.scheme() == "http"
+                && parsed_api.username().is_empty()
+                && parsed_api.password().is_none()
+                && parsed_api.host_str().map(|h| h.to_ascii_lowercase()).as_deref()
+                    == Some(host.as_str())
+                && parsed_api.port_or_known_default() == parsed.port_or_known_default()
+            {
+                return true;
+            }
+        }
+    }
+    if parsed.scheme() != "https" {
+        return false;
+    }
+    if matches!(
+        host.as_str(),
+        "sweeprcleaner.com" | "www.sweeprcleaner.com" | "sweepr.app" | "www.sweepr.app"
+    ) {
         return true;
+    }
+    if host == "github.com" {
+        return parsed
+            .path()
+            .to_ascii_lowercase()
+            .starts_with("/bencook1996/sweepr-desktop/releases/download/");
+    }
+    if let Ok(parsed_api) = reqwest::Url::parse(api_url.trim()) {
+        if parsed_api.scheme() == "https"
+            && parsed_api.username().is_empty()
+            && parsed_api.password().is_none()
+            && parsed_api.host_str().map(|h| h.to_ascii_lowercase()).as_deref()
+                == Some(host.as_str())
+            && parsed_api.port_or_known_default() == parsed.port_or_known_default()
+        {
+            return true;
+        }
     }
     false
 }
@@ -1482,6 +1548,18 @@ pub async fn install_app_update(
         (gh_info.url, None, gh_info.sha256)
     };
 
+    let sig = signature_opt
+        .as_deref()
+        .filter(|s| !s.trim().is_empty())
+        .ok_or_else(|| {
+            AppError::Other("Update manifest is missing a cryptographic Ed25519 signature.".into())
+        })?;
+    let expected_sha256 = expected_sha256
+        .filter(|s| !s.trim().is_empty())
+        .ok_or_else(|| {
+            AppError::Other("Update manifest is missing a SHA-256 digest.".into())
+        })?;
+
     let mut resp = client
         .get(&download_url)
         .header("User-Agent", format!("SweeprCleaner/{current}"))
@@ -1518,10 +1596,8 @@ pub async fn install_app_update(
         bytes.extend_from_slice(&chunk);
     }
 
-    // Verify Ed25519 signature over the installer binary when provided by the update manifest
-    if let Some(ref sig) = signature_opt {
-        state.licensing.verify_binary_signature(&bytes, sig)?;
-    }
+    // Mandatory Ed25519 signature verification over the installer binary
+    state.licensing.verify_binary_signature(&bytes, sig)?;
 
     // Verify minimum installer size and Windows PE ('MZ') header
     if bytes.len() < 64 * 1024 || &bytes[0..2] != b"MZ" {
@@ -1530,20 +1606,18 @@ pub async fn install_app_update(
         ));
     }
 
-    // Verify SHA-256 digest when provided by the update manifest or GitHub release asset
-    if let Some(expected_sha256) = expected_sha256 {
-        let mut hasher = Sha256::new();
-        hasher.update(&bytes);
-        let actual_hex: String = hasher
-            .finalize()
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect();
-        if !actual_hex.eq_ignore_ascii_case(&expected_sha256) {
-            return Err(AppError::Other(
-                "Update SHA-256 integrity check failed. Aborting installation.".into(),
-            ));
-        }
+    // Mandatory SHA-256 digest verification
+    let mut hasher = Sha256::new();
+    hasher.update(&bytes);
+    let actual_hex: String = hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    if !actual_hex.eq_ignore_ascii_case(&expected_sha256) {
+        return Err(AppError::Other(
+            "Update SHA-256 integrity check failed. Aborting installation.".into(),
+        ));
     }
 
     let updates_dir = state.data_dir.join("updates");
@@ -1609,7 +1683,9 @@ pub async fn send_support_report(
 
     let endpoints = [
         format!("{api_url}/v1/support"),
+        #[cfg(debug_assertions)]
         "http://127.0.0.1:8788/api/support/contact".to_string(),
+        #[cfg(debug_assertions)]
         "http://localhost:8787/v1/support".to_string(),
         "https://sweeprcleaner.com/v1/support".to_string(),
     ];
@@ -2485,12 +2561,7 @@ pub async fn list_browser_extensions() -> AppResult<Vec<BrowserExtensionItem>> {
 
 #[tauri::command]
 pub fn generate_strong_password(length: usize, include_symbols: bool) -> AppResult<String> {
-    use sha2::{Digest, Sha256};
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
-    use std::sync::atomic::{AtomicU64, Ordering};
-
-    static COUNTER: AtomicU64 = AtomicU64::new(1);
+    use rand::seq::SliceRandom;
 
     let len = length.clamp(8, 64);
     let upper = b"ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -2506,51 +2577,31 @@ pub fn generate_strong_password(length: usize, include_symbols: bool) -> AppResu
         pool.extend_from_slice(symbols);
     }
 
-    let mut random_bytes = Vec::with_capacity(len * 2 + 32);
-    let mut block_idx = 0u64;
-    while random_bytes.len() < len * 2 + 16 {
-        // RandomState::new() pulls fresh entropy from the OS CSPRNG in standard library.
-        let r1 = RandomState::new().build_hasher().finish();
-        let r2 = RandomState::new().build_hasher().finish();
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0);
-        let ctr = COUNTER.fetch_add(1, Ordering::Relaxed);
-
-        let mut hasher = Sha256::new();
-        hasher.update(r1.to_le_bytes());
-        hasher.update(r2.to_le_bytes());
-        hasher.update(nanos.to_le_bytes());
-        hasher.update(std::process::id().to_le_bytes());
-        hasher.update(ctr.to_le_bytes());
-        hasher.update(block_idx.to_le_bytes());
-        random_bytes.extend_from_slice(&hasher.finalize());
-        block_idx += 1;
-    }
-
+    let mut rng = rand::thread_rng();
     let mut chars: Vec<u8> = Vec::with_capacity(len);
-    // Guarantee at least one character from each required class
-    chars.push(upper[(random_bytes[0] as usize) % upper.len()]);
-    chars.push(lower[(random_bytes[1] as usize) % lower.len()]);
-    chars.push(digits[(random_bytes[2] as usize) % digits.len()]);
+    // Guarantee at least one character from each required class using unbiased SliceRandom::choose
+    if let Some(&c) = upper.choose(&mut rng) {
+        chars.push(c);
+    }
+    if let Some(&c) = lower.choose(&mut rng) {
+        chars.push(c);
+    }
+    if let Some(&c) = digits.choose(&mut rng) {
+        chars.push(c);
+    }
     if include_symbols {
-        chars.push(symbols[(random_bytes[3] as usize) % symbols.len()]);
+        if let Some(&c) = symbols.choose(&mut rng) {
+            chars.push(c);
+        }
     }
 
-    let mut cursor = 4usize;
     while chars.len() < len {
-        let b = random_bytes[cursor];
-        cursor += 1;
-        chars.push(pool[(b as usize) % pool.len()]);
+        if let Some(&c) = pool.choose(&mut rng) {
+            chars.push(c);
+        }
     }
 
-    // Fisher-Yates shuffle using remaining CSPRNG digest bytes
-    for i in (1..chars.len()).rev() {
-        let j = (random_bytes[cursor] as usize) % (i + 1);
-        cursor += 1;
-        chars.swap(i, j);
-    }
+    chars.shuffle(&mut rng);
 
     Ok(String::from_utf8(chars).unwrap_or_default())
 }
@@ -2809,40 +2860,27 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
 
 #[tauri::command]
 pub fn reveal_in_folder(path: String) -> AppResult<()> {
-    let p = PathBuf::from(&path);
-    if !p.exists() {
-        return Err(AppError::NotFound(format!("Path does not exist: {path}")));
+    let p = PathBuf::from(path.trim());
+    if !p.is_absolute() {
+        return Err(AppError::Other("Expected an absolute path.".into()));
     }
-    #[cfg(target_os = "windows")]
-    {
-        let explorer = if let Some(root) = std::env::var_os("SystemRoot") {
-            let candidate = std::path::PathBuf::from(root).join("explorer.exe");
-            if candidate.exists() {
-                candidate
-            } else {
-                std::path::PathBuf::from("explorer.exe")
-            }
+    let md = std::fs::symlink_metadata(&p)
+        .map_err(|_| AppError::NotFound(format!("Path does not exist: {path}")))?;
+    if crate::safety::metadata_is_link_like(&md) {
+        return Err(AppError::Other(
+            "Refusing to reveal a symlink or reparse point.".into(),
+        ));
+    }
+    let canon = std::fs::canonicalize(&p)
+        .map_err(|_| AppError::NotFound(format!("Path does not exist: {path}")))?;
+    if tauri_plugin_opener::reveal_item_in_dir(&canon).is_err() {
+        let dir = if canon.is_dir() {
+            canon.as_path()
         } else {
-            std::path::PathBuf::from(r"C:\Windows\explorer.exe")
+            canon.parent().unwrap_or(canon.as_path())
         };
-        let _ = std::process::Command::new(explorer)
-            .arg(format!("/select,{}", p.display()))
-            .spawn();
-    }
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("open")
-            .args(["-R", &path])
-            .spawn();
-    }
-    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
-    {
-        let target = if p.is_dir() {
-            p
-        } else {
-            p.parent().map(|d| d.to_path_buf()).unwrap_or(p)
-        };
-        let _ = std::process::Command::new("xdg-open").arg(target).spawn();
+        tauri_plugin_opener::open_path(dir, None::<&str>)
+            .map_err(|e| AppError::Other(format!("Could not open folder: {e}")))?;
     }
     Ok(())
 }
@@ -2968,8 +3006,28 @@ mod tests {
             "https://sweeprcleaner.com/download?platform=windows",
             "https://sweeprcleaner.com"
         ));
+        assert!(is_trusted_update_url(
+            "https://github.com/BenCook1996/sweepr-desktop/releases/download/v1.0.0/SWEEPR.exe",
+            "https://sweeprcleaner.com"
+        ));
         assert!(!is_trusted_update_url(
             "https://evil.example.com/setup.exe",
+            "https://sweeprcleaner.com"
+        ));
+        assert!(!is_trusted_update_url(
+            "https://sweeprcleaner.com.attacker.com/setup.exe",
+            "https://sweeprcleaner.com"
+        ));
+        assert!(!is_trusted_update_url(
+            "https://sweeprcleaner.com@attacker.com/setup.exe",
+            "https://sweeprcleaner.com"
+        ));
+        assert!(!is_trusted_update_url(
+            "https://objects.githubusercontent.com/github-production-release-asset/evil.exe",
+            "https://sweeprcleaner.com"
+        ));
+        assert!(!is_trusted_update_url(
+            "https://github.com/otheruser/sweepr-desktop/releases/download/v1.0.0/SWEEPR.exe",
             "https://sweeprcleaner.com"
         ));
     }

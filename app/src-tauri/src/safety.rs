@@ -106,6 +106,50 @@ pub fn metadata_is_link_like(md: &std::fs::Metadata) -> bool {
     false
 }
 
+/// Returns `true` if `root` or any existing path prefix between `root` and `target`
+/// (inclusive) is a symlink or Windows reparse point / NTFS junction.
+pub fn has_symlink_component(root: &Path, target: &Path) -> bool {
+    if target.components().any(|c| matches!(c, Component::ParentDir)) {
+        return true;
+    }
+    if let Ok(md) = std::fs::symlink_metadata(root) {
+        if metadata_is_link_like(&md) {
+            return true;
+        }
+    }
+    for anc in target.ancestors() {
+        if anc.as_os_str().is_empty() {
+            break;
+        }
+        if let Ok(md) = std::fs::symlink_metadata(anc) {
+            if metadata_is_link_like(&md) {
+                return true;
+            }
+        }
+        if paths_equal(anc, root) {
+            break;
+        }
+    }
+    false
+}
+
+/// Restricts file permissions to owner read/write only (`0o600` on Unix).
+pub fn restrict_file_permissions(path: &Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(md) = std::fs::metadata(path) {
+            let mut perms = md.permissions();
+            perms.set_mode(0o600);
+            let _ = std::fs::set_permissions(path, perms);
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+    }
+}
+
 /// Normalise a path for prefix comparison: strip the Windows verbatim prefix
 /// produced by `canonicalize`, unify separators and case, trim trailing slashes.
 fn normalise_for_compare(p: &Path) -> String {
@@ -127,11 +171,66 @@ fn normalise_for_compare(p: &Path) -> String {
     }
 }
 
-/// True if `child` is `parent` or lies inside it. Both paths should be
-/// absolute; they are canonicalised when possible.
+/// Resolves an absolute path by canonicalizing its deepest existing ancestor on disk
+/// and lexically collapsing `.` and `..` segments in the remaining non-existent suffix.
+pub fn resolve_path_lexically_and_canonically(p: &Path) -> Option<std::path::PathBuf> {
+    if !p.is_absolute() {
+        return None;
+    }
+    let mut base = std::path::PathBuf::new();
+    let mut suffix_start = p;
+    for anc in p.ancestors() {
+        if let Ok(canon) = std::fs::canonicalize(anc) {
+            base = canon;
+            suffix_start = p.strip_prefix(anc).unwrap_or_else(|_| Path::new(""));
+            break;
+        }
+    }
+    if base.as_os_str().is_empty() {
+        for comp in p.components() {
+            match comp {
+                Component::Prefix(pref) => base.push(pref.as_os_str()),
+                Component::RootDir => base.push(comp.as_os_str()),
+                Component::CurDir => {}
+                Component::ParentDir => {
+                    if !base.pop() {
+                        return None;
+                    }
+                }
+                Component::Normal(seg) => base.push(seg),
+            }
+        }
+        return Some(base);
+    }
+    for comp in suffix_start.components() {
+        match comp {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                if !base.pop() {
+                    return None;
+                }
+            }
+            Component::Normal(seg) => {
+                base.push(seg);
+                if let Ok(canon) = std::fs::canonicalize(&base) {
+                    base = canon;
+                }
+            }
+            Component::Prefix(_) | Component::RootDir => {}
+        }
+    }
+    Some(base)
+}
+
+/// True if `child` is `parent` or lies inside it. Both paths must be
+/// absolute; they are canonicalised and lexically resolved against `..` traversal.
 pub fn is_within(child: &Path, parent: &Path) -> bool {
-    let c = std::fs::canonicalize(child).unwrap_or_else(|_| child.to_path_buf());
-    let p = std::fs::canonicalize(parent).unwrap_or_else(|_| parent.to_path_buf());
+    let (Some(c), Some(p)) = (
+        resolve_path_lexically_and_canonically(child),
+        resolve_path_lexically_and_canonically(parent),
+    ) else {
+        return false;
+    };
     let (c, p) = (normalise_for_compare(&c), normalise_for_compare(&p));
     if p.is_empty() {
         // Filesystem root ("/"): everything is inside it.
@@ -290,6 +389,29 @@ mod tests {
         assert!(is_within(&t, &t));
         let sibling = format!("{}-sibling", t.to_string_lossy().trim_end_matches(['\\', '/']));
         assert!(!is_within(Path::new(&sibling), &t));
+    }
+
+    #[test]
+    fn is_within_rejects_lexical_dotdot_traversal_on_nonexistent_paths() {
+        let t = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let vault_root = t.join("nonexistent_vault_root");
+        let escaped = vault_root
+            .join("sub")
+            .join("..")
+            .join("..")
+            .join("outside_folder")
+            .join("evil.txt");
+        assert!(!is_within(&escaped, &vault_root));
+
+        let stayed_inside = vault_root
+            .join("sub")
+            .join("..")
+            .join("legit_inner")
+            .join("file.txt");
+        assert!(is_within(&stayed_inside, &vault_root));
+
+        // Relative paths must always be rejected
+        assert!(!is_within(Path::new("relative/child"), &vault_root));
     }
 
     #[test]

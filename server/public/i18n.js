@@ -7,7 +7,9 @@
   function checkOrderDraftRedirect() {
     try {
       localStorage.removeItem('sweepr_visited_order');
-      document.cookie = 'sweepr_visited_order=; path=/; max-age=0';
+      localStorage.removeItem('sweepr_order_draft');
+      var secureAttr = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = 'sweepr_visited_order=; path=/; max-age=0' + secureAttr;
 
       var path = (window.location.pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
       if (
@@ -19,13 +21,24 @@
         path === '/es/order' ||
         path.indexOf('/checkout/') === 0 ||
         path === '/dashboard' ||
+        path === '/privacy' ||
+        path === '/privacy.html' ||
+        path === '/terms' ||
+        path === '/terms.html' ||
+        path === '/refund' ||
+        path === '/refund.html' ||
+        path === '/support' ||
+        path === '/support.html' ||
+        path === '/login' ||
+        path === '/login.html' ||
+        /^\/(de|fr|es)\/(privacy|terms|refund|support|login)(\.html)?$/.test(path) ||
         path.indexOf('/crm') === 0 ||
         path.indexOf('/admin') === 0
       ) {
         return;
       }
 
-      var raw = localStorage.getItem('sweepr_order_draft');
+      var raw = sessionStorage.getItem('sweepr_order_draft');
       if (!raw) return;
       var draft = JSON.parse(raw);
       var ttl = 30 * 60 * 1000; // 30 minutes
@@ -37,8 +50,8 @@
             (draft.email && String(draft.email).trim()))
       );
       if (!draft || !draft.updatedAt || Date.now() - Number(draft.updatedAt) >= ttl || !hasDetails) {
-        localStorage.removeItem('sweepr_order_draft');
-        document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';
+        sessionStorage.removeItem('sweepr_order_draft');
+        document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax' + secureAttr;
         return;
       }
       window.location.replace('/order');

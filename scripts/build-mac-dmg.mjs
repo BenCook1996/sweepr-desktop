@@ -88,7 +88,7 @@ function run(argv) {
 `;
 
 const macosRuntimePy = `#!/usr/bin/env python3
-import os, sys, json, time, shutil, socket, struct, hashlib, subprocess, threading, urllib.request
+import os, sys, json, time, shutil, socket, struct, hashlib, hmac, secrets, subprocess, threading, urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
@@ -102,6 +102,8 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 QUARANTINE_DIR = DATA_DIR / "quarantine"
 QUARANTINE_DIR.mkdir(parents=True, exist_ok=True)
 API_URL = "https://sweeprcleaner.com"
+IPC_TOKEN = secrets.token_urlsafe(32)
+SERVER_PORT = 0
 
 def get_dir_stats(p: Path, max_depth=4):
     total_bytes = 0
@@ -205,7 +207,9 @@ def handle_ipc(cmd, args):
                 items.append({"name": p.stem, "command": str(p), "scope": "Current user", "enabled": True, "impact": "Low"})
         return items
     if cmd == "start_checkout":
-        plan = args.get("plan") or "monthly"
+        plan = args.get("plan", "annual")
+        if plan not in {"monthly", "six_month", "annual"}:
+            plan = "annual"
         subprocess.Popen(["open", f"{API_URL}/order?plan={plan}&intro=1"])
         return False
     return {}
@@ -215,9 +219,45 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=str(DIST_DIR), **kw)
     def log_message(self, format, *args):
         pass
+    def do_GET(self):
+        clean_path = self.path.split("?", 1)[0].split("#", 1)[0]
+        if clean_path in ("/", "/index.html"):
+            idx_file = DIST_DIR / "index.html"
+            if idx_file.exists():
+                html = idx_file.read_text("utf-8")
+                html = html.replace("__SWEEPR_IPC_TOKEN_PLACEHOLDER__", IPC_TOKEN)
+                out = html.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(out)))
+                self.end_headers()
+                self.wfile.write(out)
+                return
+        return super().do_GET()
     def do_POST(self):
         if self.path.startswith("/__tauri_ipc__"):
-            length = int(self.headers.get("Content-Length", "0"))
+            port = SERVER_PORT or self.server.server_port
+            if self.headers.get("Host") != f"127.0.0.1:{port}":
+                self.send_error(403, "Forbidden")
+                return
+            if self.headers.get("Origin") != f"http://127.0.0.1:{port}":
+                self.send_error(403, "Forbidden")
+                return
+            if not hmac.compare_digest(self.headers.get("X-Sweepr-Ipc-Token", ""), IPC_TOKEN):
+                self.send_error(403, "Forbidden")
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                self.send_error(400, "Bad Request")
+                return
+            if length <= 0:
+                self.send_error(400, "Bad Request")
+                return
+            if length > 65536:
+                self.send_error(413, "Payload Too Large")
+                return
             body = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
             res = handle_ipc(body.get("cmd", ""), body.get("args", {}))
             out = json.dumps(res).encode("utf-8")
@@ -230,8 +270,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_error(404)
 
 def main():
+    global SERVER_PORT
     srv = HTTPServer(("127.0.0.1", 0), Handler)
     port = srv.server_port
+    SERVER_PORT = port
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     url = f"http://127.0.0.1:{port}/index.html"
@@ -263,6 +305,7 @@ exec /usr/bin/osascript -l JavaScript "$RES/window.jxa" "https://sweeprcleaner.c
 `;
 
 const installCommandSh = `#!/bin/bash
+set -e
 clear
 echo "===================================================="
 echo "  SWEEPR Cleaner for macOS — 1-Click Installer"
@@ -273,9 +316,10 @@ APP_DST="/Applications/SWEEPR Cleaner.app"
 
 if [ -d "$APP_SRC" ]; then
   echo "Installing SWEEPR Cleaner to /Applications..."
-  rm -rf "$APP_DST" 2>/dev/null || sudo rm -rf "$APP_DST"
-  cp -R "$APP_SRC" "/Applications/" 2>/dev/null || sudo cp -R "$APP_SRC" "/Applications/"
-  xattr -cr "$APP_DST" 2>/dev/null || true
+  if [ -d "$APP_DST" ]; then
+    rm -rf "$APP_DST"
+  fi
+  cp -R "$APP_SRC" "/Applications/"
   chmod +x "$APP_DST/Contents/MacOS/sweepr-cleaner" 2>/dev/null || true
   echo "Launching SWEEPR Cleaner..."
   open "$APP_DST"
@@ -285,12 +329,16 @@ fi
 
 const tauriBridgeSnippet = `<script>
 (function(){
+  const __SWEEPR_IPC_TOKEN__ = "__SWEEPR_IPC_TOKEN_PLACEHOLDER__";
   if (window.__TAURI_INTERNALS__) return;
   window.__TAURI_INTERNALS__ = {
     invoke: async function(cmd, args) {
       const r = await fetch('/__tauri_ipc__', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Sweepr-Ipc-Token': __SWEEPR_IPC_TOKEN__
+        },
         body: JSON.stringify({cmd: cmd, args: args || {}})
       });
       return await r.json();

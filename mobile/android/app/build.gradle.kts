@@ -41,6 +41,9 @@ val sweeprLicensePubkey: String =
         ?: localProps.getProperty("SWEEPR_LICENSE_PUBKEY")?.takeIf { it.isNotBlank() }
         ?: "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8"
 
+fun escapeBuildConfigString(value: String): String =
+    value.replace("\\", "\\\\").replace("\"", "\\\"")
+
 android {
     namespace = "com.sweepr.app"
     compileSdk = 36
@@ -63,12 +66,14 @@ android {
         // Only ship the languages Sweepr is translated into (drops unused library translations).
         resourceConfigurations += listOf("en", "es", "fr", "de", "it", "pt", "nl")
 
-        buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
-        buildConfigField("String", "SWEEPR_WEBSITE_URL", "\"$sweeprWebsiteUrl\"")
-        buildConfigField("String", "SWEEPR_SUPPORT_EMAIL", "\"$sweeprSupportEmail\"")
-        buildConfigField("String", "SWEEPR_API_URL", "\"$sweeprApiUrl\"")
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"${escapeBuildConfigString(revenueCatApiKey)}\"")
+        buildConfigField("String", "SWEEPR_WEBSITE_URL", "\"${escapeBuildConfigString(sweeprWebsiteUrl)}\"")
+        buildConfigField("String", "SWEEPR_PUBLIC_URL", "\"${escapeBuildConfigString(sweeprWebsiteUrl)}\"")
+        buildConfigField("String", "SWEEPR_SUPPORT_EMAIL", "\"${escapeBuildConfigString(sweeprSupportEmail)}\"")
+        buildConfigField("String", "SWEEPR_API_URL", "\"${escapeBuildConfigString(sweeprApiUrl)}\"")
         buildConfigField("String", "SWEEPR_PROJECT_ID", "\"cleaner\"")
-        buildConfigField("String", "SWEEPR_LICENSE_PUBKEY", "\"$sweeprLicensePubkey\"")
+        buildConfigField("String", "SWEEPR_LICENSE_PUBKEY", "\"${escapeBuildConfigString(sweeprLicensePubkey)}\"")
+        buildConfigField("String", "SWEEPR_ED25519_PUBKEY_B64", "\"${escapeBuildConfigString(sweeprLicensePubkey)}\"")
     }
 
     signingConfigs {
@@ -98,7 +103,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             val relSigning = signingConfigs.getByName("release")
-            signingConfig = if (relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()) {
+            val hasValidReleaseKeystore = relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()
+            signingConfig = if (hasValidReleaseKeystore) {
                 relSigning
             } else {
                 signingConfigs.getByName("debug")
@@ -121,11 +127,18 @@ gradle.taskGraph.whenReady {
     val isReleaseBuild = allTasks.any { task ->
         task.project == project && task.name.contains("Release", ignoreCase = true)
     }
-    if (isReleaseBuild && !revenueCatApiKey.startsWith("goog_")) {
-        logger.lifecycle(
-            "NOTE: Building release with fallback RevenueCat key ('$revenueCatApiKey'). " +
-                "Direct SweeprAccountApi (/v1/billing/google-play/verify) & Cross-Platform OTP/QR entitlement verification remain active."
-        )
+    if (isReleaseBuild) {
+        val relSigning = android.signingConfigs.getByName("release")
+        val hasValidReleaseKeystore = relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()
+        if (System.getenv("CI") == "true" && !hasValidReleaseKeystore) {
+            throw GradleException("Release build in CI requires a valid upload-keystore.jks and SWEEPR_KEYSTORE_PASSWORD.")
+        }
+        if (!revenueCatApiKey.startsWith("goog_")) {
+            logger.lifecycle(
+                "NOTE: Building release with fallback RevenueCat key ('$revenueCatApiKey'). " +
+                    "Direct SweeprAccountApi (/v1/billing/google-play/verify) & Cross-Platform OTP/QR entitlement verification remain active."
+            )
+        }
     }
 }
 
@@ -147,11 +160,12 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-video:2.6.0")
 
-    // RevenueCat + Direct Google Play Billing Library + Google Play In-App Updates
+    // RevenueCat + Direct Google Play Billing Library + Google Play In-App Updates + BouncyCastle Ed25519 (API 26+)
     implementation("com.revenuecat.purchases:purchases:8.2.1")
     implementation("com.revenuecat.purchases:purchases-ui:8.2.1") // Paywalls UI
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.70")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20231013")

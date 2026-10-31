@@ -355,7 +355,7 @@ enum MobileCloudVault {
             }
         } else {
             DispatchQueue.main.async {
-                completion(true)
+                completion(false)
             }
         }
     }

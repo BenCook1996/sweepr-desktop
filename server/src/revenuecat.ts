@@ -72,8 +72,9 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
 
   // A disputed (charged-back) entitlement must not be silently reinstated or overwritten by RC lifecycle events.
   const existing = repo.entitlement(account.id);
-  const newStatus: EntStatus =
-    existing?.status === "disputed" ? "disputed" : isTrial && mapped === "active" ? "trialing" : mapped;
+  const hasActiveStripeSub = Boolean(
+    existing?.stripe_subscription_id?.startsWith("sub_") && existing.status === "active"
+  );
 
   // Upsert the entitlement based on RevenueCat state
   const rcAddons: string[] = [];
@@ -95,6 +96,7 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
     productId.toLowerCase().includes("battery") ||
     productId.toLowerCase().includes("cloud") ||
     productId.toLowerCase().includes("vault");
+
   const resolvedPlan = isAddon
     ? existing?.plan ?? "addon_only"
     : productId.includes("annual") || productId.includes("4999")
@@ -102,14 +104,50 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
     : productId.includes("six_month") || productId.includes("6month") || productId.includes("3899")
     ? "six_month"
     : "monthly";
+
+  const rcTxId = typeof event.original_transaction_id === "string" ? event.original_transaction_id : null;
+  const resolvedSubId = hasActiveStripeSub ? existing!.stripe_subscription_id : rcTxId ?? existing?.stripe_subscription_id ?? null;
+
+  let newStatus: EntStatus;
+  if (existing?.status === "disputed") {
+    newStatus = "disputed";
+  } else if (isAddon) {
+    if (event.type === "EXPIRATION") {
+      const currentAddons = repo.addonsForAccount(account.id);
+      const remaining = currentAddons.filter((a) => !rcAddons.includes(a));
+      repo.setAddons(account.id, remaining);
+      newStatus =
+        existing && existing.plan && existing.plan !== "addon_only"
+          ? (existing.status as EntStatus)
+          : "canceled";
+    } else {
+      // Add-on purchase/renewal: preserve base plan status; do not grant base Pro if user only bought an add-on
+      newStatus =
+        existing && existing.plan && existing.plan !== "addon_only" && existing.status === "active"
+          ? "active"
+          : existing?.status === "trialing"
+          ? "trialing"
+          : "none";
+    }
+  } else if (hasActiveStripeSub && mapped === "canceled") {
+    newStatus = "active";
+  } else {
+    newStatus = isTrial && mapped === "active" ? "trialing" : mapped;
+  }
+
   repo.upsertEntitlement({
     account_id: account.id,
-    stripe_subscription_id: typeof event.original_transaction_id === "string" ? event.original_transaction_id : null, // Map RC transaction ID here
+    stripe_subscription_id: resolvedSubId,
     status: newStatus,
     plan: resolvedPlan,
-    addons_list: rcAddons,
-    current_period_end: expirationAt,
-    cancel_at_period_end: event.type === "CANCELLATION" ? 1 : 0,
+    addons_list: isAddon && event.type === "EXPIRATION" ? undefined : rcAddons,
+    current_period_end:
+      isAddon && existing?.current_period_end ? existing.current_period_end : expirationAt,
+    cancel_at_period_end: isAddon
+      ? (existing?.cancel_at_period_end ?? 0)
+      : event.type === "CANCELLATION"
+      ? 1
+      : 0,
   });
 
   // Log activity in the CRM

@@ -1,11 +1,81 @@
-import { existsSync } from "node:fs";
-import { createHash, randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 
 if (process.env.NODE_ENV !== "production" && existsSync(".env")) process.loadEnvFile(".env");
 
 const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v)) ? Number(v) : d);
 
-const licensePrivateKeyB64 = process.env.LICENSE_PRIVATE_KEY_B64 ?? "";
+const databasePath = process.env.DATABASE_PATH ?? "./data/sweepr.db";
+
+export function loadOrPersistFallbackSecrets(dbPath: string): {
+  licensePrivateKeyB64: string;
+  sessionSecret: string;
+} {
+  let envLicenseKey = (process.env.LICENSE_PRIVATE_KEY_B64 ?? "").trim();
+  let envSessionSecret = (process.env.SESSION_SECRET ?? "").trim();
+
+  if (envLicenseKey && envSessionSecret) {
+    return { licensePrivateKeyB64: envLicenseKey, sessionSecret: envSessionSecret };
+  }
+
+  if (!dbPath || dbPath === ":memory:") {
+    const fallbackSession =
+      envSessionSecret ||
+      (envLicenseKey
+        ? createHash("sha256").update(`sweepr-session:${envLicenseKey}`).digest("hex")
+        : randomBytes(32).toString("hex"));
+    return { licensePrivateKeyB64: envLicenseKey, sessionSecret: fallbackSession };
+  }
+
+  const secretsFile = join(dirname(dbPath), ".server-secrets.json");
+  let persisted: { licensePrivateKeyB64?: string; sessionSecret?: string } = {};
+  try {
+    if (existsSync(secretsFile)) {
+      persisted = JSON.parse(readFileSync(secretsFile, "utf8")) || {};
+    }
+  } catch {
+    persisted = {};
+  }
+
+  let updated = false;
+  if (!envLicenseKey) {
+    if (persisted.licensePrivateKeyB64) {
+      envLicenseKey = persisted.licensePrivateKeyB64;
+    } else {
+      const { privateKey } = generateKeyPairSync("ed25519");
+      envLicenseKey = (privateKey.export({ format: "der", type: "pkcs8" }) as Buffer).toString("base64");
+      persisted.licensePrivateKeyB64 = envLicenseKey;
+      updated = true;
+    }
+  }
+
+  if (!envSessionSecret) {
+    if (persisted.sessionSecret) {
+      envSessionSecret = persisted.sessionSecret;
+    } else {
+      envSessionSecret = envLicenseKey
+        ? createHash("sha256").update(`sweepr-session:${envLicenseKey}`).digest("hex")
+        : randomBytes(32).toString("hex");
+      persisted.sessionSecret = envSessionSecret;
+      updated = true;
+    }
+  }
+
+  if (updated) {
+    try {
+      mkdirSync(dirname(secretsFile), { recursive: true });
+      writeFileSync(secretsFile, JSON.stringify(persisted, null, 2), { mode: 0o600 });
+    } catch {
+      // Ignore write failures in read-only test environments
+    }
+  }
+
+  return { licensePrivateKeyB64: envLicenseKey, sessionSecret: envSessionSecret };
+}
+
+const resolvedSecrets = loadOrPersistFallbackSecrets(databasePath);
+const licensePrivateKeyB64 = resolvedSecrets.licensePrivateKeyB64;
 const crmAdminPassword = process.env.CRM_ADMIN_PASSWORD ?? "";
 
 const resolvedSecretKey = (process.env.STRIPE_SECRET_KEY ?? "").trim();
@@ -26,14 +96,11 @@ function resolvePriceId(envVal: string | undefined, liveDefault: string): string
 export const config = {
   port: num(process.env.PORT, 8787),
   publicUrl: process.env.PUBLIC_URL ?? "http://localhost:8787",
-  databasePath: process.env.DATABASE_PATH ?? "./data/sweepr.db",
+  databasePath,
   licensePrivateKeyB64,
   // Secret for signing the customer portal session cookie. Falls back to a value derived from the licence key,
-  // or a random per-process secret (sessions won't survive restarts) if neither is set.
-  sessionSecret: process.env.SESSION_SECRET
-    || (licensePrivateKeyB64
-      ? createHash("sha256").update(`sweepr-session:${licensePrivateKeyB64}`).digest("hex")
-      : randomBytes(32).toString("hex")),
+  // or a persisted secret in <dbDir>/.server-secrets.json so sessions survive container restarts.
+  sessionSecret: resolvedSecrets.sessionSecret,
   // HTTP Basic credentials protecting /crm, /admin and /api/crm/*. CRM is disabled if the password is unset.
   crmAdminUser: process.env.CRM_ADMIN_USER || "admin",
   crmAdminPassword,

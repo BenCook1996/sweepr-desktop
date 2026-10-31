@@ -79,13 +79,13 @@ class MainActivity : AppCompatActivity() {
 
     /** What the user was trying to do when the paywall opened – resumed after they subscribe. */
     private var afterPurchase: (() -> Unit)? = null
-    private var pendingDeepLinkPair by mutableStateOf<String?>(null)
+    private var incomingDeepLinkPair by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PlayBillingManager.init(this)
         PlayAppUpdateManager.checkAndPrompt(this)
-        extractDeepLinkPair(intent)
+        incomingDeepLinkPair = extractDeepLinkPair(intent)
 
         // Must be created in onCreate. Scanning is free; cleaning is Premium (Google Play
         // subscription via RevenueCat). If they subscribe or restore, carry on with the clean.
@@ -118,14 +118,54 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val vm: DashboardViewModel = viewModel()
-            LaunchedEffect(pendingDeepLinkPair) {
+            val initialDeepLinkPair = incomingDeepLinkPair
+            var pendingDeepLinkPair by remember(initialDeepLinkPair) { mutableStateOf(initialDeepLinkPair) }
+            SweeprTheme {
                 val raw = pendingDeepLinkPair
                 if (!raw.isNullOrBlank()) {
-                    pendingDeepLinkPair = null
-                    vm.handleQrPairInput(raw)
+                    val isChallenge = raw.startsWith("challenge:") ||
+                        raw.startsWith("chk_") ||
+                        raw.contains("mode=approve")
+                    AlertDialog(
+                        onDismissRequest = {
+                            pendingDeepLinkPair = null
+                            incomingDeepLinkPair = null
+                        },
+                        title = {
+                            Text(if (isChallenge) "Approve Desktop Sign-In?" else "Link SWEEPR Account?")
+                        },
+                        text = {
+                            Text(
+                                if (isChallenge) {
+                                    "Approve Desktop Sign-In? A desktop computer is requesting access to your SWEEPR Pro subscription."
+                                } else {
+                                    "Link SWEEPR Account? Do you want to link this device using the pairing link you opened?"
+                                },
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    pendingDeepLinkPair = null
+                                    incomingDeepLinkPair = null
+                                    vm.handleQrPairInput(raw)
+                                },
+                            ) {
+                                Text(if (isChallenge) "Approve" else "Link Device")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    pendingDeepLinkPair = null
+                                    incomingDeepLinkPair = null
+                                },
+                            ) {
+                                Text("Cancel")
+                            }
+                        },
+                    )
                 }
-            }
-            SweeprTheme {
                 SweeprRoot(
                     vm = vm,
                     onShowPaywall = { then ->
@@ -152,19 +192,24 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        extractDeepLinkPair(intent)
+        extractDeepLinkPair(intent)?.let { incomingDeepLinkPair = it }
     }
 
-    private fun extractDeepLinkPair(intent: Intent?) {
-        val data = intent?.data ?: return
-        val isCustomScheme = data.scheme == "sweeprcleaner" && data.host == "pair"
-        val isHttpsAppLink = (data.scheme == "https" || data.scheme == "http") &&
+    private fun extractDeepLinkPair(intent: Intent?): String? {
+        val data = intent?.data ?: return null
+        val scheme = data.scheme?.lowercase() ?: return null
+        if (scheme == "http") return null
+        val isCustomScheme = scheme == "sweeprcleaner" && data.host == "pair"
+        val isHttpsAppLink = scheme == "https" &&
             (data.host == "sweeprcleaner.com" || data.host == "www.sweeprcleaner.com") &&
             (data.path?.startsWith("/pair") == true)
-        if (isCustomScheme || isHttpsAppLink) {
-            val token = data.getQueryParameter("token") ?: data.getQueryParameter("challenge")
-            pendingDeepLinkPair = token?.takeIf { it.isNotBlank() } ?: data.toString()
+        if (!isCustomScheme && !isHttpsAppLink) return null
+        val challenge = data.getQueryParameter("challenge")?.takeIf { it.isNotBlank() }
+        if (challenge != null) {
+            return if (challenge.startsWith("challenge:")) challenge else "challenge:$challenge"
         }
+        val token = data.getQueryParameter("token")?.takeIf { it.isNotBlank() }
+        return token ?: data.toString()
     }
 
     private fun launchPlanPurchase(

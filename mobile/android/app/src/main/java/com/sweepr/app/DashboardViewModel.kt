@@ -106,19 +106,23 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
     private fun isServerAccountCurrentlyEntitled(acc: Prefs.LinkedAccount?): Boolean {
+        val nowSec = System.currentTimeMillis() / 1000L
         return acc != null &&
             acc.isSignedIn &&
             acc.serverActive &&
             !acc.plan.equals("addon_only", ignoreCase = true) &&
-            (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L)
+            acc.expiresAt > nowSec
     }
 
     private fun isServerBatteryCareEntitled(acc: Prefs.LinkedAccount?): Boolean {
+        val nowSec = System.currentTimeMillis() / 1000L
         return acc != null &&
             acc.isSignedIn &&
-            (acc.expiresAt == 0L || acc.expiresAt > System.currentTimeMillis() / 1000L) &&
+            acc.expiresAt > nowSec &&
             (isServerAccountCurrentlyEntitled(acc) || acc.addons.any {
-                it.equals("battery_care", ignoreCase = true) || it.equals("sweepr_secure_bundle", ignoreCase = true)
+                it.equals("battery_care", ignoreCase = true) ||
+                    it.equals("battery_saver", ignoreCase = true) ||
+                    it.equals("sweepr_secure_bundle", ignoreCase = true)
             })
     }
 
@@ -417,7 +421,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val current = _state.value.linkedAccount
         viewModelScope.launch {
             _state.update { it.copy(isWorking = true) }
-            if (trimmed.contains("chk_") || trimmed.contains("mode=approve")) {
+            if (trimmed.startsWith("challenge:") || trimmed.contains("chk_") || trimmed.contains("mode=approve")) {
                 val res = withContext(Dispatchers.IO) {
                     runCatching { SweeprAccountApi.approveDesktopQrChallenge(trimmed, current) }
                 }
@@ -471,37 +475,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         orderId: String? = null,
         isNewPurchase: Boolean = false,
     ) {
-        val isAddonOnly = productId.contains("battery_care", ignoreCase = true)
-        if (!isAddonOnly) {
-            rcActive = true
-        } else {
-            rcBatteryCare = true
-        }
+        val isAddonOnly = productId.contains("battery_care", ignoreCase = true) ||
+            productId.contains("cloud_vault", ignoreCase = true)
         val current = _state.value.linkedAccount
-        val localUpdated = current.copy(
-            serverActive = if (isAddonOnly) current.serverActive else true,
-            plan = if (isAddonOnly) (current.plan ?: "addon_only") else (current.plan ?: productId),
-            expiresAt = if (current.expiresAt > 0L) current.expiresAt else (System.currentTimeMillis() / 1000L + 365L * 86400L),
-            addons = if (isAddonOnly && !current.addons.contains("battery_care")) current.addons + "battery_care" else current.addons,
-        )
-        Prefs.setLinkedAccount(localUpdated)
-        serverActive = isServerAccountCurrentlyEntitled(localUpdated)
-        val immediateActive = rcActive || serverActive
-        val immediateBatActive = immediateActive || rcBatteryCare || isServerBatteryCareEntitled(localUpdated)
-        BatteryCareManager.enforceEntitlement(app, immediateActive || immediateBatActive)
-        _state.update { s ->
-            s.copy(
-                linkedAccount = localUpdated,
-                subscription = s.subscription.copy(
-                    active = immediateActive,
-                    batteryCareActive = immediateBatActive,
-                    productId = if (!isAddonOnly) productId else (s.subscription.productId ?: productId),
-                ),
-                message = locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored),
-            )
-        }
 
         viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
             val res = withContext(Dispatchers.IO) {
                 runCatching {
                     SweeprAccountApi.verifyGooglePlayPurchase(
@@ -513,6 +492,13 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
             res.onSuccess { updated ->
+                if (updated.serverActive) {
+                    if (!isAddonOnly) {
+                        rcActive = true
+                    } else {
+                        rcBatteryCare = true
+                    }
+                }
                 Prefs.setLinkedAccount(updated)
                 serverActive = isServerAccountCurrentlyEntitled(updated)
                 val active = rcActive || serverActive
@@ -520,6 +506,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 BatteryCareManager.enforceEntitlement(app, active || batActive)
                 _state.update { s ->
                     s.copy(
+                        isWorking = false,
                         linkedAccount = updated,
                         subscription = s.subscription.copy(
                             active = active,
@@ -527,6 +514,18 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                             productId = s.subscription.productId ?: updated.plan,
                             expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(updated),
                         ),
+                        message = if (active || batActive) {
+                            locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored)
+                        } else {
+                            s.message
+                        },
+                    )
+                }
+            }.onFailure { err ->
+                _state.update { s ->
+                    s.copy(
+                        isWorking = false,
+                        message = err.message ?: "Could not verify purchase with server.",
                     )
                 }
             }

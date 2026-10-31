@@ -214,24 +214,17 @@ test("checkout activates immediately when an existing subscriber enters their em
   const paidAcc = await (await post("/v1/accounts", { device_id: DEVICE, email: "subscriber@example.com" })).json();
   await post("/dev/grant", { account_id: paidAcc.account_id, status: "active", days: 365 });
 
-  // 1. Fresh anonymous desktop install enters subscriber@example.com in "Activate now" -> unlocks immediately
+  // 1. Fresh anonymous desktop install enters subscriber@example.com in "Activate now" -> requires OTP to prevent account takeover (CRIT-02)
   const newDeviceId = "b".repeat(64);
   const otherAcc = await (await post("/v1/accounts", { device_id: newDeviceId })).json();
   const crossRes = await post("/v1/checkout", { email: "subscriber@example.com", device_id: newDeviceId }, otherAcc.refresh_token);
   assert.equal(crossRes.status, 200);
   const crossBody = await crossRes.json();
-  assert.equal(crossBody.activated, true);
-  assert.equal(crossBody.account_id, paidAcc.account_id);
-  assert.ok(crossBody.refresh_token);
-  assert.ok(crossBody.token);
+  assert.equal(crossBody.activated, false);
+  assert.equal(crossBody.requires_otp, true);
+  assert.equal(crossBody.token, undefined);
 
-  const [ch, cp, cs] = crossBody.token.split(".");
-  assert.ok(verify(null, Buffer.from(`${ch}.${cp}`), publicKey, Buffer.from(cs, "base64url")));
-  const crossClaims = JSON.parse(Buffer.from(cp, "base64url").toString());
-  assert.equal(crossClaims.device_id, newDeviceId);
-  assert.equal(crossClaims.status, "active");
-
-  // 2. Caller already authenticated as paidAcc also activates immediately
+  // 2. Caller already authenticated as paidAcc activates immediately
   const res = await post("/v1/checkout", { email: "subscriber@example.com", device_id: DEVICE }, paidAcc.refresh_token);
   assert.equal(res.status, 200);
   const body = await res.json();
@@ -293,13 +286,19 @@ test("Google Play purchase verification activates entitlement, supports and_ dev
   const DEVICE_B = "b".repeat(64);
 
   const androidDevice = "and_9876543210abcdef";
-  const playRes = await post("/v1/billing/google-play/verify", {
-    product_id: "sweepr_annual_4999",
-    purchase_token: "play_purchase_token_1234567890",
-    order_id: "GPA.3312-4567-8901-23456",
-    device_id: androidDevice,
-    addons: ["battery_care"],
-  });
+  process.env.ALLOW_UNVERIFIED_GOOGLE_PLAY_TEST = "1";
+  let playRes: Response;
+  try {
+    playRes = await post("/v1/billing/google-play/verify", {
+      product_id: "sweepr_annual_4999",
+      purchase_token: "play_purchase_token_1234567890",
+      order_id: "GPA.3312-4567-8901-23456",
+      device_id: androidDevice,
+      addons: ["battery_care"],
+    });
+  } finally {
+    delete process.env.ALLOW_UNVERIFIED_GOOGLE_PLAY_TEST;
+  }
   assert.equal(playRes.status, 200);
   const playBody = await playRes.json();
   assert.equal(playBody.active, true);

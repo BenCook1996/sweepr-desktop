@@ -103,14 +103,14 @@ test("OTP: checks email is signed up before sending 6-digit OTP, hashed storage,
   assert.equal(exists.otpSent, true);
 
   const missingRes = await post("/api/portal-login", { email: "nobody@example.com" });
-  assert.equal(missingRes.status, 404);
+  assert.equal(missingRes.status, 200);
   const missing = await missingRes.json();
-  assert.equal(missing.otpSent, false);
+  assert.equal(missing.ok, true);
 
   const unpaidLeadRes = await post("/api/portal-login", { email: "leadonly@example.com" });
-  assert.equal(unpaidLeadRes.status, 404);
+  assert.equal(unpaidLeadRes.status, 200);
   const unpaidLead = await unpaidLeadRes.json();
-  assert.equal(unpaidLead.otpSent, false);
+  assert.equal(unpaidLead.ok, true);
 
   const newDeviceOtpRes = await post("/v1/account/send-otp", { email: "newfreeuser@example.com" });
   assert.equal(newDeviceOtpRes.status, 200);
@@ -290,12 +290,23 @@ test("Store-compliant account deletion (DELETE /v1/account) wipes account and cr
   assert.equal(verifyRes.status, 200);
   const { refresh_token } = await verifyRes.json();
 
-  // Deletion request via Bearer token
-  const delRes = await app.request("/v1/account", {
+  // Secondary device token cannot delete the entire account (MED-04)
+  const secondaryDelRes = await app.request("/v1/account", {
     method: "DELETE",
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${refresh_token}`,
+    },
+    body: JSON.stringify({ device_id: devId }),
+  });
+  assert.equal(secondaryDelRes.status, 403);
+
+  // Deletion request via primary account Bearer token succeeds
+  const delRes = await app.request("/v1/account", {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json",
+      authorization: "Bearer tok_del",
     },
     body: JSON.stringify({ device_id: devId }),
   });
@@ -902,6 +913,165 @@ test("Security audit regression: /api/portal/devices/remove rejects cross-origin
   const data = await res.json();
   assert.equal(data.error, "forbidden_origin");
 });
+
+test("Cloudflare Security Audit regressions: CRIT-01..05, HIGH-01..10, MED-01..10", async () => {
+  const mockStripe: any = {
+    subscriptions: {
+      retrieve: async (id: string) => ({
+        id,
+        status: "incomplete",
+        customer: "cus_unpaid_1",
+        metadata: { account_id: "acc_unpaid_1", plan: "annual" },
+        latest_invoice: {
+          payment_intent: {
+            id: "pi_unpaid_1",
+            status: "requires_payment_method",
+          },
+        },
+      }),
+    },
+    paymentIntents: {
+      retrieve: async (id: string) => ({
+        id,
+        status: id === "pi_other_succeeded" ? "succeeded" : "requires_payment_method",
+        customer: id === "pi_other_succeeded" ? "cus_unrelated" : "cus_unpaid_1",
+        metadata: {},
+      }),
+    },
+    webhooks: {
+      constructEventAsync: async () => {
+        throw new Error("Invalid signature");
+      },
+    },
+    events: {
+      retrieve: async (id: string) => ({
+        id,
+        type: "customer.subscription.created",
+        data: { object: { id: "sub_spoofed", status: "active" } },
+      }),
+    },
+  };
+
+  const { app, post, repo } = setup({
+    stripe: mockStripe,
+    stripeWebhookSecret: "whsec_real_secret",
+    trustProxy: true,
+  });
+
+  // CRIT-01: Forged redirect_status=succeeded and unrelated payment_intent on /checkout/success must NOT activate incomplete sub
+  repo.createAccount("acc_unpaid_1", sha256("tok_unpaid_1"), "unpaid@example.com");
+  const forgedSuccess = await app.request(
+    "/checkout/success?web=1&subscription_id=sub_unpaid_1&account_id=acc_unpaid_1&redirect_status=succeeded&payment_intent=pi_other_succeeded"
+  );
+  assert.equal(forgedSuccess.status, 302);
+  assert.match(forgedSuccess.headers.get("location") ?? "", /error=payment_cancelled/);
+  assert.equal(repo.entitlement("acc_unpaid_1"), undefined);
+
+  // CRIT-02: /v1/checkout with another user's entitled email must require OTP and NOT return token or evict victim devices
+  const nowSec = Math.floor(Date.now() / 1000);
+  repo.createAccount("acc_victim", sha256("tok_victim"), "victim@example.com");
+  repo.upsertEntitlement({
+    account_id: "acc_victim",
+    stripe_subscription_id: "sub_victim_paid",
+    status: "active",
+    plan: "annual",
+    current_period_end: nowSec + 30 * 86400,
+    cancel_at_period_end: 0,
+  });
+  repo.touchDevice("acc_victim", "1".repeat(64), "pc", 3, 2);
+
+  repo.createAccount("acc_attacker", sha256("tok_attacker"));
+  const takeoverAttempt = await post(
+    "/v1/checkout",
+    { email: "victim@example.com", device_id: "2".repeat(64) },
+    { authorization: "Bearer tok_attacker" }
+  );
+  assert.equal(takeoverAttempt.status, 200);
+  const takeoverBody = await takeoverAttempt.json();
+  assert.equal(takeoverBody.requires_otp, true);
+  assert.equal(takeoverBody.activated, false);
+  assert.equal(takeoverBody.token, undefined);
+  assert.equal(takeoverBody.refresh_token, undefined);
+
+  // CRIT-03: /v1/billing/google-play/verify rejects unauthenticated binding to existing email (401) and fails closed (503)
+  const gpUnauth = await post("/v1/billing/google-play/verify", {
+    email: "victim@example.com",
+    product_id: "sweepr_annual",
+    purchase_token: "fake_purchase_token_12345",
+  });
+  assert.equal(gpUnauth.status, 401);
+  const gpClosed = await post("/v1/billing/google-play/verify", {
+    product_id: "sweepr_annual",
+    purchase_token: "fake_purchase_token_12345",
+  });
+  assert.equal(gpClosed.status, 503);
+
+  // CRIT-05: Hardcoded Softpedia backdoor account and OTP must not exist
+  assert.equal(repo.accountById("acc_editorial_softpedia"), undefined);
+  assert.equal(repo.verifyOtp("andrei.verdeanu@softpedia.com", sha256("749204"), nowSec), false);
+
+  // HIGH-01: Unpaid free-trial account cannot mint referral rewards
+  repo.createAccount("acc_trial_ref", sha256("tok_trial_ref"), "trialref@example.com");
+  const trialRefCode = repo.ensureReferralCode("acc_trial_ref");
+  assert.equal(trialRefCode.length, 14); // SWP- + 10 random hex chars
+  repo.upsertEntitlement({
+    account_id: "acc_trial_ref",
+    stripe_subscription_id: null,
+    status: "trialing",
+    plan: "monthly",
+    current_period_end: nowSec + 7 * 86400,
+    cancel_at_period_end: 0,
+  });
+  repo.createAccount("acc_ref_target", sha256("tok_ref_target"));
+  assert.equal(repo.applyReferral("acc_ref_target", trialRefCode, nowSec), false);
+
+  // HIGH-02: Stripe webhook rejects invalid signature without falling back to stripe.events.retrieve
+  const whRes = await app.request("/webhooks/stripe", {
+    method: "POST",
+    headers: { "stripe-signature": "t=123,v1=forged" },
+    body: JSON.stringify({ id: "evt_spoofed_123" }),
+  });
+  assert.equal(whRes.status, 400);
+
+  // HIGH-04: Geo-pricing prioritizes CF-IPCountry over spoofed X-Timezone
+  const pricingRes = await app.request("/api/checkout-config", {
+    headers: {
+      "cf-ipcountry": "GB",
+      "x-timezone": "Asia/Kolkata",
+    },
+  });
+  assert.equal(pricingRes.status, 200);
+  const pricingBody = await pricingRes.json();
+  assert.equal(pricingBody.country, "GB");
+  assert.equal(pricingBody.currency, "gbp");
+
+  // HIGH-08: Activation key stored under activation:<email> survives /api/portal-login and is single-use
+  repo.setOtp("activation:victim@example.com", sha256("888999"), nowSec + 7 * 86400);
+  await post("/api/portal-login", { email: "victim@example.com" });
+  assert.equal(repo.verifyOtp("victim@example.com", sha256("888999"), nowSec), true);
+  assert.equal(repo.verifyOtp("victim@example.com", sha256("888999"), nowSec), false); // Single-use
+
+  // HIGH-09: Logout immediately invalidates a copied sweepr_session cookie server-side
+  repo.setOtp("victim@example.com", sha256("777666"), nowSec + 600);
+  const loginRes = await post("/api/verify-otp", { email: "victim@example.com", code: "777666" });
+  assert.equal(loginRes.status, 200);
+  const sessionCookie = (loginRes.headers.get("set-cookie") ?? "").split(";")[0];
+  assert.ok(sessionCookie.startsWith("sweepr_session="));
+
+  const dashBefore = await app.request("/api/dashboard-data", {
+    headers: { cookie: sessionCookie },
+  });
+  assert.equal(dashBefore.status, 200);
+
+  const logoutRes = await post("/api/logout", {}, { cookie: sessionCookie });
+  assert.equal(logoutRes.status, 200);
+
+  const dashAfter = await app.request("/api/dashboard-data", {
+    headers: { cookie: sessionCookie },
+  });
+  assert.equal(dashAfter.status, 401);
+});
+
 
 
 

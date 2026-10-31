@@ -156,6 +156,7 @@ object MobileCloudVault {
     private const val IV_LEN = 12
     private const val PBKDF2_ITERATIONS = 120_000
     private const val GCM_TAG_BITS = 128
+    private const val MAX_VAULT_FILE_BYTES = 100L * 1024L * 1024L
 
     data class VaultItem(
         val file: File,
@@ -202,28 +203,48 @@ object MobileCloudVault {
         require(password.length >= 8) { "Password must be at least 8 characters" }
         val resolver = context.contentResolver
         var displayName = "protected_file"
-        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+        var declaredSize = -1L
+        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use { c ->
             if (c.moveToFirst()) {
                 val idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 if (idx >= 0 && !c.isNull(idx)) {
                     displayName = c.getString(idx).take(200)
                 }
+                val sizeIdx = c.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIdx >= 0 && !c.isNull(sizeIdx)) {
+                    declaredSize = c.getLong(sizeIdx)
+                }
             }
         }
-        val payload = resolver.openInputStream(uri)?.use { it.readBytes() }
-            ?: error("Could not read selected file")
+        require(declaredSize <= MAX_VAULT_FILE_BYTES) { "File exceeds the 100 MB vault size limit." }
+        val payload = resolver.openInputStream(uri)?.use { input ->
+            val out = ByteArrayOutputStream()
+            val buf = ByteArray(64 * 1024)
+            var total = 0L
+            while (true) {
+                val read = input.read(buf)
+                if (read < 0) break
+                total += read
+                require(total <= MAX_VAULT_FILE_BYTES) { "File exceeds the 100 MB vault size limit." }
+                out.write(buf, 0, read)
+            }
+            out.toByteArray()
+        } ?: error("Could not read selected file")
         return encryptBytesToDir(vaultDir(context), displayName, payload, password)
     }
 
     fun encryptBytesToDir(dir: File, displayName: String, payload: ByteArray, password: String): VaultItem {
         require(password.length >= 8) { "Password must be at least 8 characters" }
+        require(payload.size.toLong() <= MAX_VAULT_FILE_BYTES) { "File exceeds the 100 MB vault size limit." }
         dir.mkdirs()
         val rng = SecureRandom()
         val salt = ByteArray(SALT_LEN).also(rng::nextBytes)
         val iv = ByteArray(IV_LEN).also(rng::nextBytes)
         val key = deriveKey(password, salt)
 
-        val nameBytes = displayName.toByteArray(Charsets.UTF_8)
+        val rawNameBytes = displayName.toByteArray(Charsets.UTF_8)
+        val nameBytes = if (rawNameBytes.size > 200) rawNameBytes.copyOf(200) else rawNameBytes
+        val safeDisplayName = String(nameBytes, Charsets.UTF_8)
         val plain = ByteBuffer.allocate(2 + nameBytes.size + payload.size)
             .putShort(nameBytes.size.toShort())
             .put(nameBytes)
@@ -245,7 +266,7 @@ object MobileCloudVault {
         val idHex = ByteArray(8).also(rng::nextBytes).joinToString("") { "%02x".format(it) }
         val target = File(dir, "vault_$idHex.swvault")
         target.writeBytes(outBytes)
-        return VaultItem(target, displayName, target.length(), target.lastModified())
+        return VaultItem(target, safeDisplayName, target.length(), target.lastModified())
     }
 
     fun decrypt(file: File, password: String): Pair<String, ByteArray> {
@@ -265,15 +286,20 @@ object MobileCloudVault {
 
         val buf = ByteBuffer.wrap(plain)
         val nameLen = buf.short.toInt() and 0xFFFF
-        require(nameLen in 1..(plain.size - 2)) { "Corrupted vault entry" }
+        if (nameLen <= 0 || nameLen > 1024 || nameLen > buf.remaining()) {
+            error("Corrupted vault entry header.")
+        }
         val nameBytes = ByteArray(nameLen).also { buf.get(it) }
         val body = ByteArray(buf.remaining()).also { buf.get(it) }
         return String(nameBytes, Charsets.UTF_8) to body
     }
 
+    internal fun sanitizeRestoreFileName(originalName: String): String =
+        File(originalName).name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim('.').ifBlank { "restored_file" }
+
     fun restoreToDownloads(context: Context, item: VaultItem, password: String): File {
         val (origName, bytes) = decrypt(item.file, password)
-        val safeName = origName.replace(Regex("[\\\\/:*?\"<>|]"), "_")
+        val safeName = File(origName).name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim('.').ifBlank { "restored_file" }
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             val mediaStoreFile = runCatching {
                 val values = android.content.ContentValues().apply {

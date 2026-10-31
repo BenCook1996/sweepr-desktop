@@ -164,7 +164,12 @@ export function isPublicHttpUrl(raw: string): boolean {
   return true;
 }
 
-export async function fetchPublicUrlSafe(initialUrl: string, timeoutMs: number, maxRedirects = 5): Promise<{ res: Response; finalUrl: string }> {
+export async function fetchPublicUrlSafe(
+  initialUrl: string,
+  timeoutMs: number,
+  maxRedirects = 5,
+  dnsLookup: typeof lookup = lookup
+): Promise<{ res: Response; finalUrl: string }> {
   let currentUrl = initialUrl;
   for (let hop = 0; hop <= maxRedirects; hop++) {
     if (!isPublicHttpUrl(currentUrl)) {
@@ -172,8 +177,11 @@ export async function fetchPublicUrlSafe(initialUrl: string, timeoutMs: number, 
     }
     const u = new URL(currentUrl);
     const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    let fetchTargetUrl = currentUrl;
+    const reqHeaders: Record<string, string> = { ...BROWSER_HEADERS };
+
     if (isIP(host) === 0) {
-      const records = await lookup(host, { all: true });
+      const records = await dnsLookup(host, { all: true });
       if (!records.length) {
         throw new Error("DNS resolution returned no records");
       }
@@ -183,9 +191,28 @@ export async function fetchPublicUrlSafe(initialUrl: string, timeoutMs: number, 
           throw new Error("Resolved IP is not a public address");
         }
       }
+      const pinned = records[0];
+      const pinnedIpLiteral = pinned.family === 6 ? `[${pinned.address}]` : pinned.address;
+      if (u.protocol === "http:") {
+        const pinnedUrl = new URL(currentUrl);
+        pinnedUrl.hostname = pinnedIpLiteral;
+        fetchTargetUrl = pinnedUrl.toString();
+        reqHeaders.Host = u.host;
+      }
+      // Second verification against DNS rebinding (TOCTOU mitigation)
+      const recheckRecords = await dnsLookup(host, { all: true });
+      if (!recheckRecords.length) {
+        throw new Error("DNS resolution returned no records");
+      }
+      for (const rec of recheckRecords) {
+        const ipLiteral = rec.family === 6 ? `[${rec.address}]` : rec.address;
+        if (!isPublicHttpUrl(`${u.protocol}//${ipLiteral}/`)) {
+          throw new Error("Resolved IP is not a public address (DNS rebinding detected)");
+        }
+      }
     }
-    const res = await fetch(currentUrl, {
-      headers: BROWSER_HEADERS,
+    const res = await fetch(fetchTargetUrl, {
+      headers: reqHeaders,
       redirect: "manual",
       signal: AbortSignal.timeout(timeoutMs),
     });

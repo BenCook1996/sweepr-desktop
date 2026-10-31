@@ -7,12 +7,16 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="sweepr_secure_auth.xml" />
         <exclude domain="sharedpref" path="sweepr_prefs.xml" />
+        <exclude domain="sharedpref" path="sweepr_vault_keystore.xml" />
+        <exclude domain="sharedpref" path="sweepr_battery_care.xml" />
         <exclude domain="file" path="cloud_vault" />
         <exclude domain="external" path="Restored" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="sweepr_secure_auth.xml" />
         <exclude domain="sharedpref" path="sweepr_prefs.xml" />
+        <exclude domain="sharedpref" path="sweepr_vault_keystore.xml" />
+        <exclude domain="sharedpref" path="sweepr_battery_care.xml" />
         <exclude domain="file" path="cloud_vault" />
         <exclude domain="external" path="Restored" />
     </device-transfer>

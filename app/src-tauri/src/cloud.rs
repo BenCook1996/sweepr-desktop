@@ -367,7 +367,7 @@ fn scan_local_attachment_roots(exclusions: &[PathBuf]) -> Vec<CloudFile> {
             .max_depth(4)
             .follow_links(false)
             .into_iter()
-            .filter_entry(|e| !safety::is_excluded(e.path(), exclusions));
+            .filter_entry(|e| !safety::is_link_like(e) && !safety::is_excluded(e.path(), exclusions));
         for entry in walker.flatten() {
             if out.len() >= MAX_ITEMS_PER_CATEGORY {
                 break;
@@ -785,13 +785,23 @@ pub fn offload_cloud_files_with_data_dir(paths: &[String], target_dir: &str, dat
                 .ok_or_else(|| AppError::Other("No cloud root".into()))?;
             let rel = src.strip_prefix(&root.path).unwrap_or_else(|_| Path::new(src.file_name().unwrap_or_default()));
             let mut dest = target.join(root.provider_id.as_str()).join(rel);
+            if safety::has_symlink_component(&target, &dest) {
+                return Err(AppError::Other(
+                    "Refusing to offload through a symlink or reparse point directory.".into(),
+                ));
+            }
             if let Some(parent) = dest.parent() {
                 std::fs::create_dir_all(parent)?;
             }
-            if dest.exists() {
+            if dest.exists() || std::fs::symlink_metadata(&dest).is_ok() {
                 let stem = dest.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
                 let ext = dest.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
                 dest.set_file_name(format!("{stem} (offloaded {}){ext}", now_secs()));
+            }
+            if safety::has_symlink_component(&target, &dest) {
+                return Err(AppError::Other(
+                    "Refusing to offload to a symlink or reparse point target.".into(),
+                ));
             }
             let size = std::fs::copy(&src, &dest)?;
             let copied = std::fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);

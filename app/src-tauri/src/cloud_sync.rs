@@ -134,7 +134,12 @@ pub fn run_pair(pair: &SyncPair, include_online_only: bool) -> SyncRunReport {
         return rep;
     }
     let mut seen = 0usize;
-    for entry in WalkDir::new(src_root).follow_links(false).into_iter().flatten() {
+    for entry in WalkDir::new(src_root)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|e| !safety::is_link_like(e))
+        .flatten()
+    {
         seen += 1;
         if seen > MAX_FILES_PER_RUN {
             rep.errors.push(format!("Stopped after {MAX_FILES_PER_RUN} files; run again to continue."));
@@ -149,6 +154,12 @@ pub fn run_pair(pair: &SyncPair, include_online_only: bool) -> SyncRunReport {
         }
         let Ok(rel) = entry.path().strip_prefix(src_root) else { continue };
         let dst = dst_root.join(rel);
+        if safety::has_symlink_component(dst_root, &dst) {
+            if rep.errors.len() < 50 {
+                rep.errors.push(format!("{}: Refusing to sync through symlink or junction", rel.display()));
+            }
+            continue;
+        }
         let Ok(md) = std::fs::symlink_metadata(entry.path()) else { continue };
         if !needs_copy(&md, &dst) {
             rep.files_up_to_date += 1;
@@ -159,8 +170,20 @@ pub fn run_pair(pair: &SyncPair, include_online_only: bool) -> SyncRunReport {
             continue;
         }
         let result = (|| -> std::io::Result<u64> {
+            if safety::has_symlink_component(dst_root, &dst) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Destination contains a symlink or junction",
+                ));
+            }
             if let Some(parent) = dst.parent() {
                 std::fs::create_dir_all(parent)?;
+            }
+            if safety::has_symlink_component(dst_root, &dst) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "Destination contains a symlink or junction",
+                ));
             }
             let tmp = dst.with_file_name(format!(".{}.sweepr-sync", entry.file_name().to_string_lossy()));
             let n = std::fs::copy(entry.path(), &tmp)?;

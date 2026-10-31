@@ -97,23 +97,45 @@ object PlayAppUpdateManager {
         runCatching { manager.registerListener(listener) }
     }
 
+    internal fun isValidStoreUri(uri: String): Boolean {
+        val trimmed = uri.trim()
+        return trimmed.startsWith("market://details?id=") ||
+            trimmed.startsWith("https://play.google.com/store/apps/details?id=")
+    }
+
     fun openPlayStore(
         context: Context,
         marketUri: String = "market://details?id=${context.packageName}",
         webUrl: String = "https://play.google.com/store/apps/details?id=${context.packageName}",
     ) {
+        val safeMarketUri = if (isValidStoreUri(marketUri)) {
+            marketUri.trim()
+        } else {
+            "market://details?id=${context.packageName}"
+        }
+        val safeWebUrl = if (webUrl.trim().startsWith("https://play.google.com/store/apps/details?id=")) {
+            webUrl.trim()
+        } else {
+            "https://play.google.com/store/apps/details?id=${context.packageName}"
+        }
         runCatching {
             context.startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse(marketUri))
+                Intent(Intent.ACTION_VIEW, Uri.parse(safeMarketUri))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }.onFailure {
             runCatching {
                 context.startActivity(
-                    Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))
+                    Intent(Intent.ACTION_VIEW, Uri.parse(safeWebUrl))
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             }
         }
     }
+
+    fun openStorePage(
+        context: Context,
+        marketUri: String = "market://details?id=${context.packageName}",
+        webUrl: String = "https://play.google.com/store/apps/details?id=${context.packageName}",
+    ) = openPlayStore(context, marketUri, webUrl)
 }

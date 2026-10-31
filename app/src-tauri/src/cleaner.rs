@@ -63,7 +63,10 @@ fn save_quarantine_entries(data_dir: &Path, entries: &[QuarantineEntry]) -> std:
     let dir = quarantine_dir(data_dir);
     std::fs::create_dir_all(&dir)?;
     let json = serde_json::to_string_pretty(entries).unwrap_or_else(|_| "[]".into());
-    crate::safety::atomic_write(&quarantine_manifest_path(data_dir), json.as_bytes())
+    let path = quarantine_manifest_path(data_dir);
+    crate::safety::atomic_write(&path, json.as_bytes())?;
+    crate::safety::restrict_file_permissions(&path);
+    Ok(())
 }
 
 fn is_safe_quarantine_id(id: &str) -> bool {
@@ -178,11 +181,20 @@ pub fn restore_quarantine_entry(data_dir: &Path, id: &str) -> AppResult<String> 
     {
         return Err(AppError::Other("Invalid restore destination path".into()));
     }
-    let allowed_root = crate::rules::all_specs()
-        .iter()
-        .filter_map(|s| s.base.resolve())
-        .any(|base| dest.starts_with(&base))
-        || dest.starts_with(std::env::temp_dir());
+    let dest_norm = dest.to_string_lossy().replace('/', "\\").to_ascii_lowercase();
+    if crate::duplicates::is_protected_system_path(&dest)
+        || crate::safety::is_within(&dest, data_dir)
+        || dest_norm.contains("\\start menu\\programs\\startup")
+    {
+        return Err(AppError::Other(
+            "Restore destination is inside a protected system or startup directory.".into(),
+        ));
+    }
+    let allowed_root = crate::rules::all()
+        .into_iter()
+        .flat_map(|r| r.roots)
+        .any(|root| crate::safety::is_within(&dest, &root))
+        || crate::safety::is_within(&dest, &std::env::temp_dir());
     if !allowed_root {
         return Err(AppError::Other(
             "Restore destination is outside allowed cleanup directories.".into(),
@@ -394,24 +406,27 @@ mod tests {
     fn quarantine_roundtrip_and_restore() {
         let dir = std::env::temp_dir().join(format!("sweepr-quarantine-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(dir.join("work")).unwrap();
+        let data_dir = dir.join("data");
+        let work_dir = dir.join("work");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        std::fs::create_dir_all(&work_dir).unwrap();
 
-        let target = dir.join("work").join("sample.tmp");
+        let target = work_dir.join("sample.tmp");
         std::fs::write(&target, b"important cache bytes").unwrap();
 
-        let mut entries = list_quarantine_entries(&dir);
-        assert!(move_to_quarantine(&dir, &target, 21, "temp", &mut entries));
-        save_quarantine_entries(&dir, &entries).unwrap();
+        let mut entries = list_quarantine_entries(&data_dir);
+        assert!(move_to_quarantine(&data_dir, &target, 21, "temp", &mut entries));
+        save_quarantine_entries(&data_dir, &entries).unwrap();
         assert!(!target.exists());
 
-        let loaded = list_quarantine_entries(&dir);
+        let loaded = list_quarantine_entries(&data_dir);
         assert_eq!(loaded.len(), 1);
         assert_eq!(loaded[0].file_name, "sample.tmp");
 
-        let restored_path = restore_quarantine_entry(&dir, &loaded[0].id).unwrap();
+        let restored_path = restore_quarantine_entry(&data_dir, &loaded[0].id).unwrap();
         assert_eq!(PathBuf::from(restored_path), target);
         assert!(target.exists());
-        assert!(list_quarantine_entries(&dir).is_empty());
+        assert!(list_quarantine_entries(&data_dir).is_empty());
 
         // Test refusal to overwrite existing file and unsafe IDs
         assert!(is_safe_quarantine_id("q_1700000000_123_1"));
@@ -420,12 +435,17 @@ mod tests {
         assert!(!is_safe_quarantine_id("sub/file"));
         assert!(!is_safe_quarantine_id(""));
 
-        assert!(move_to_quarantine(&dir, &target, 21, "temp", &mut entries));
-        save_quarantine_entries(&dir, &entries).unwrap();
+        assert!(move_to_quarantine(&data_dir, &target, 21, "temp", &mut entries));
+        save_quarantine_entries(&data_dir, &entries).unwrap();
         // Recreate target file before restore -> restore must refuse to overwrite
         std::fs::write(&target, b"new file at destination").unwrap();
-        assert!(restore_quarantine_entry(&dir, &entries[0].id).is_err());
+        assert!(restore_quarantine_entry(&data_dir, &entries[0].id).is_err());
         assert_eq!(std::fs::read(&target).unwrap(), b"new file at destination");
+
+        // Refuses restoring into app data_dir
+        entries[0].original_path = data_dir.join("account.json").to_string_lossy().into_owned();
+        save_quarantine_entries(&data_dir, &entries).unwrap();
+        assert!(restore_quarantine_entry(&data_dir, &entries[0].id).is_err());
 
         let _ = std::fs::remove_dir_all(&dir);
     }

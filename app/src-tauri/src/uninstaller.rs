@@ -198,16 +198,37 @@ fn resolve_program(uninstall_string: &str) -> AppResult<(std::path::PathBuf, Str
     let (prog, args) = split_command(&expand_env(uninstall_string));
     let mut path = PathBuf::from(&prog);
     if !prog.contains(['\\', '/']) {
-        // Bare name such as MsiExec.exe or RunDll32: only resolve from System32.
+        // Bare name: only allow msiexec / msiexec.exe to resolve from System32.
+        if !prog.eq_ignore_ascii_case("msiexec") && !prog.eq_ignore_ascii_case("msiexec.exe") {
+            return Err(AppError::Other(format!(
+                "Refusing to resolve bare uninstaller binary: {prog}"
+            )));
+        }
         let sys = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".into());
         let base = Path::new(&sys).join("System32");
-        path = base.join(&prog);
-        if !path.is_file() && Path::new(&prog).extension().is_none() {
-            path = base.join(format!("{prog}.exe"));
-        }
+        path = base.join("msiexec.exe");
     }
     if !path.is_absolute() || !path.is_file() {
         return Err(AppError::Other(format!("Uninstaller not found: {}", path.display())));
+    }
+    let file_name_lower = path
+        .file_name()
+        .map(|f| f.to_string_lossy().to_ascii_lowercase())
+        .unwrap_or_default();
+    if matches!(
+        file_name_lower.as_str(),
+        "cmd.exe"
+            | "powershell.exe"
+            | "pwsh.exe"
+            | "mshta.exe"
+            | "wscript.exe"
+            | "cscript.exe"
+            | "rundll32.exe"
+            | "regsvr32.exe"
+    ) {
+        return Err(AppError::Other(format!(
+            "Refusing to execute scripting host as uninstaller: {file_name_lower}"
+        )));
     }
     let is_exe = path
         .extension()
@@ -307,18 +328,14 @@ pub async fn uninstall_app(state: State<'_, AppState>, id: String) -> AppResult<
                 _ => return Err(AppError::Other("Invalid application scope".into())),
             };
             let app_path = base.join(bundle_name);
-            if !app_path.is_dir() {
-                return Err(AppError::NotFound("Application bundle is no longer installed".into()));
+            let md = std::fs::symlink_metadata(&app_path)
+                .map_err(|_| AppError::NotFound("Application bundle is no longer installed".into()))?;
+            if crate::safety::metadata_is_link_like(&md) || !md.is_dir() {
+                return Err(AppError::Other(
+                    "Refusing to uninstall symlink or non-directory bundle".into(),
+                ));
             }
-            let trash_dir = dirs::home_dir()
-                .ok_or_else(|| AppError::Other("Home directory not found".into()))?
-                .join(".Trash");
-            let _ = std::fs::create_dir_all(&trash_dir);
-            let dest = trash_dir.join(bundle_name);
-            if dest.exists() {
-                let _ = std::fs::remove_dir_all(&dest);
-            }
-            std::fs::rename(&app_path, &dest)
+            trash::delete(&app_path)
                 .map_err(|e| AppError::Other(format!("Could not move app to Trash: {e}")))
         })
         .await
@@ -1072,6 +1089,14 @@ mod tests {
         assert!(parse_app_id("HKEY_CLASSES_ROOT:x").is_err());
         assert!(parse_app_id("no-prefix").is_err());
         assert!(parse_app_id("\"C:\\evil.exe\" & calc").is_err());
+        #[cfg(target_os = "windows")]
+        {
+            assert!(resolve_program("MsiExec.exe /X{1234}").is_ok());
+            assert!(resolve_program("powershell.exe -Command calc").is_err());
+            assert!(resolve_program("cmd.exe /c calc").is_err());
+            assert!(resolve_program(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c calc").is_err());
+            assert!(resolve_program(r"C:\Windows\System32\rundll32.exe evil.dll,Entry").is_err());
+        }
     }
 
     #[test]

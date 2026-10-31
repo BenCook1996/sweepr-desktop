@@ -414,11 +414,11 @@ class AppViewModel: ObservableObject {
     private func isServerEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
         guard let acc = acc, acc.isSignedIn, acc.serverActive else { return false }
         let nowSec = Int64(Date().timeIntervalSince1970)
-        return acc.expiresAt == 0 || acc.expiresAt > nowSec
+        return acc.expiresAt > nowSec
     }
 
     private func isServerBatteryCareEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
-        return isServerEntitled(acc)
+        return isServerEntitled(acc) && (acc?.addons.contains("battery_care") == true || acc?.addons.contains("battery_saver") == true)
     }
 
     private func resumePendingIfEntitled() {

@@ -267,5 +267,62 @@ class SweeprFeatureTest {
                 pubKeyB64Url = pubB64Url,
             )
         )
+
+        // Missing device_id or missing project_id must be rejected
+        val missingDevToken = signJws(
+            """{"sub":"acc_1","project_id":"cleaner","status":"active","exp":$futureExp}"""
+        )
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = missingDevToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+        val missingProjToken = signJws(
+            """{"sub":"acc_1","device_id":"dev_1","status":"active","exp":$futureExp}"""
+        )
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = missingProjToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+
+        // Non-EdDSA alg header must be rejected even if signed with Ed25519
+        val wrongAlgHeaderB64 = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("""{"alg":"HS256","typ":"JWT"}""".toByteArray(Charsets.UTF_8))
+        val wrongAlgPayloadB64 = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("""{"sub":"acc_1","device_id":"dev_1","project_id":"cleaner","status":"active","exp":$futureExp}""".toByteArray(Charsets.UTF_8))
+        val wrongAlgInput = "$wrongAlgHeaderB64.$wrongAlgPayloadB64"
+        val sig = java.security.Signature.getInstance("Ed25519")
+        sig.initSign(kp.private)
+        sig.update(wrongAlgInput.toByteArray(Charsets.UTF_8))
+        val wrongAlgSigB64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign())
+        val wrongAlgToken = "$wrongAlgInput.$wrongAlgSigB64"
+        assertFalse(
+            SweeprAccountApi.verifyTokenClaimsForProject(
+                token = wrongAlgToken,
+                expectedProject = "cleaner",
+                expectedDeviceId = "dev_1",
+                pubKeyB64Url = pubB64Url,
+            )
+        )
+    }
+
+    @Test
+    fun logRedaction_and_storeUriAllowlist_blockSensitiveTokensAndArbitrarySchemes() {
+        val redactedPair = LogFiles.redact("Pairing token ptk_secret_987654 and challenge chk_abc123xyz")
+        assertFalse(redactedPair.contains("ptk_secret_987654"))
+        assertFalse(redactedPair.contains("chk_abc123xyz"))
+        assertTrue(redactedPair.contains("[REDACTED]"))
+
+        assertTrue(PlayAppUpdateManager.isValidStoreUri("market://details?id=com.sweepr.app"))
+        assertTrue(PlayAppUpdateManager.isValidStoreUri("https://play.google.com/store/apps/details?id=com.sweepr.app"))
+        assertFalse(PlayAppUpdateManager.isValidStoreUri("http://evil.example.com/sweepr.apk"))
+        assertFalse(PlayAppUpdateManager.isValidStoreUri("intent://scan/#Intent;scheme=sweepr;end"))
     }
 }

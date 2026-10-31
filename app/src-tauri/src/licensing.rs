@@ -123,8 +123,7 @@ fn now() -> u64 {
 }
 
 fn load_or_create_fallback_device_id(data_dir: &Path) -> String {
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
+    use rand::RngCore;
 
     let fallback_path = data_dir.join("device_id.txt");
     if let Ok(existing) = std::fs::read_to_string(&fallback_path) {
@@ -134,22 +133,13 @@ fn load_or_create_fallback_device_id(data_dir: &Path) -> String {
         }
     }
 
-    let r1 = RandomState::new().build_hasher().finish();
-    let r2 = RandomState::new().build_hasher().finish();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let mut h = Sha256::new();
-    h.update(b"sweepr-fallback-device-id-v1:");
-    h.update(r1.to_le_bytes());
-    h.update(r2.to_le_bytes());
-    h.update(nanos.to_le_bytes());
-    h.update(std::process::id().to_le_bytes());
-    let generated: String = h.finalize().iter().map(|b| format!("{b:02x}")).collect();
+    let mut random_bytes = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut random_bytes);
+    let generated: String = random_bytes.iter().map(|b| format!("{b:02x}")).collect();
 
     let _ = std::fs::create_dir_all(data_dir);
-    let _ = std::fs::write(&fallback_path, &generated);
+    let _ = crate::safety::atomic_write(&fallback_path, generated.as_bytes());
+    crate::safety::restrict_file_permissions(&fallback_path);
     generated
 }
 
@@ -343,32 +333,50 @@ struct SealedAccount {
     tag: String,
 }
 
-fn seal_aes_key(device_id: &str) -> [u8; 32] {
+fn load_or_create_keystore_secret(data_dir: &Path) -> [u8; 32] {
+    use rand::RngCore;
+    let ks_path = data_dir.join(".keystore");
+    if let Ok(raw) = std::fs::read(&ks_path) {
+        if raw.len() == 32 {
+            let mut key = [0u8; 32];
+            key.copy_from_slice(&raw);
+            return key;
+        }
+        if let Ok(s) = std::str::from_utf8(&raw) {
+            if let Ok(decoded) = B64.decode(s.trim()) {
+                if decoded.len() == 32 {
+                    let mut key = [0u8; 32];
+                    key.copy_from_slice(&decoded);
+                    return key;
+                }
+            }
+        }
+    }
+    let mut secret = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut secret);
+    let _ = std::fs::create_dir_all(data_dir);
+    let encoded = B64.encode(secret);
+    let _ = crate::safety::atomic_write(&ks_path, encoded.as_bytes());
+    crate::safety::restrict_file_permissions(&ks_path);
+    secret
+}
+
+fn seal_aes_key(device_id: &str, local_secret: Option<&[u8; 32]>) -> [u8; 32] {
     let mut h = Sha256::new();
     h.update(b"sweepr-account-aes-gcm-v2:");
     h.update(device_id.as_bytes());
+    if let Some(sec) = local_secret {
+        h.update(b":ks:");
+        h.update(sec);
+    }
     h.finalize().into()
 }
 
-fn generate_nonce_12(device_id: &str) -> [u8; 12] {
-    use std::collections::hash_map::RandomState;
-    use std::hash::{BuildHasher, Hasher};
-    let r1 = RandomState::new().build_hasher().finish();
-    let r2 = RandomState::new().build_hasher().finish();
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let mut h = Sha256::new();
-    h.update(b"sweepr-nonce-v2:");
-    h.update(device_id.as_bytes());
-    h.update(r1.to_le_bytes());
-    h.update(r2.to_le_bytes());
-    h.update(nanos.to_le_bytes());
-    let digest = h.finalize();
-    let mut out = [0u8; 12];
-    out.copy_from_slice(&digest[..12]);
-    out
+fn generate_nonce_12(_device_id: &str) -> [u8; 12] {
+    use rand::RngCore;
+    let mut nonce = [0u8; 12];
+    rand::thread_rng().fill_bytes(&mut nonce);
+    nonce
 }
 
 fn seal_keystream(device_id: &str, len: usize) -> Vec<u8> {
@@ -396,7 +404,8 @@ fn seal_mac(device_id: &str, ct: &[u8]) -> [u8; 32] {
 
 fn save_account(path: &std::path::Path, acc: &Account, device_id: &str) -> AppResult<()> {
     let plain = serde_json::to_vec(acc)?;
-    let key_bytes = seal_aes_key(device_id);
+    let local_secret = path.parent().map(load_or_create_keystore_secret);
+    let key_bytes = seal_aes_key(device_id, local_secret.as_ref());
     let cipher = Aes256Gcm::new_from_slice(&key_bytes)
         .map_err(|e| AppError::License(format!("cipher init error: {e}")))?;
     let nonce_bytes = generate_nonce_12(device_id);
@@ -410,21 +419,35 @@ fn save_account(path: &std::path::Path, acc: &Account, device_id: &str) -> AppRe
         tag: B64.encode(nonce_bytes),
     };
     crate::safety::atomic_write(path, &serde_json::to_vec(&sealed)?)?;
+    crate::safety::restrict_file_permissions(path);
     Ok(())
 }
 
 fn load_account(path: &std::path::Path, device_id: &str) -> Option<Account> {
     let bytes = std::fs::read(path).ok()?;
+    let local_secret = path.parent().map(load_or_create_keystore_secret);
     if let Ok(sealed) = serde_json::from_slice::<SealedAccount>(&bytes) {
         if sealed.v == 2 {
             let ct = B64.decode(sealed.ct.trim()).ok()?;
             let nonce_bytes = B64.decode(sealed.tag.trim()).ok()?;
             if nonce_bytes.len() == 12 {
-                let key_bytes = seal_aes_key(device_id);
-                let cipher = Aes256Gcm::new_from_slice(&key_bytes).ok()?;
                 let nonce = Nonce::from_slice(&nonce_bytes);
+                if let Some(ref sec) = local_secret {
+                    let key_bytes = seal_aes_key(device_id, Some(sec));
+                    if let Ok(cipher) = Aes256Gcm::new_from_slice(&key_bytes) {
+                        if let Ok(plain) = cipher.decrypt(nonce, ct.as_ref()) {
+                            if let Ok(acc) = serde_json::from_slice::<Account>(&plain) {
+                                return Some(acc);
+                            }
+                        }
+                    }
+                }
+                let legacy_key_bytes = seal_aes_key(device_id, None);
+                let cipher = Aes256Gcm::new_from_slice(&legacy_key_bytes).ok()?;
                 let plain = cipher.decrypt(nonce, ct.as_ref()).ok()?;
-                return serde_json::from_slice(&plain).ok();
+                let acc: Account = serde_json::from_slice(&plain).ok()?;
+                let _ = save_account(path, &acc, device_id);
+                return Some(acc);
             }
         } else if sealed.v == 1 {
             let ct = B64.decode(sealed.ct.trim()).ok()?;
@@ -968,10 +991,12 @@ impl Licensing {
             }))
             .send()
             .await?;
-        resp.error_for_status()?
+        let mut parsed = resp
+            .error_for_status()?
             .json::<QrChallengeResponse>()
-            .await
-            .map_err(Into::into)
+            .await?;
+        sanitize_qr_svg(&mut parsed.qr_svg);
+        Ok(parsed)
     }
 
     /// Flow B — Step 2: Polls the QR challenge and automatically saves sealed credentials + Ed25519 JWS once approved.
@@ -987,16 +1012,26 @@ impl Licensing {
             refresh_token: Option<String>,
             token: Option<String>,
         }
+        let cid = challenge_id.trim();
+        let sec = poll_secret.trim();
+        let is_safe_token = |s: &str| {
+            !s.is_empty()
+                && s.len() <= 128
+                && s.chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        };
+        if !is_safe_token(cid) || !is_safe_token(sec) {
+            return Err(AppError::License("Invalid QR challenge parameters.".into()));
+        }
         let url = format!(
-            "{}/api/device-link/poll?challenge_id={}&poll_secret={}",
-            self.api_base()?,
-            challenge_id.trim(),
-            poll_secret.trim()
+            "{}/api/device-link/poll?challenge_id={cid}&poll_secret={sec}",
+            self.api_base()?
         );
         let resp = self
             .http
             .get(&url)
             .header("x-sweepr-project", PROJECT_ID)
+            .header("X-Poll-Secret", sec)
             .send()
             .await?;
         if !resp.status().is_success() {
@@ -1071,10 +1106,26 @@ impl Licensing {
                 .unwrap_or_else(|| "Maximum of 5 linked devices reached.".into());
             return Err(AppError::License(msg));
         }
-        resp.error_for_status()?
+        let mut parsed = resp
+            .error_for_status()?
             .json::<QrCreateTokenResponse>()
-            .await
-            .map_err(Into::into)
+            .await?;
+        sanitize_qr_svg(&mut parsed.qr_svg);
+        Ok(parsed)
+    }
+}
+
+fn sanitize_qr_svg(qr_svg: &mut String) {
+    let trimmed = qr_svg.trim_start();
+    let lower = trimmed.to_ascii_lowercase();
+    if !lower.starts_with("<svg")
+        || lower.contains("<script")
+        || lower.contains("<foreignobject")
+        || lower.contains("onload=")
+        || lower.contains("onerror=")
+        || lower.contains("javascript:")
+    {
+        qr_svg.clear();
     }
 }
 
@@ -1155,10 +1206,35 @@ mod tests {
             refresh_token: "rt_secret_token_v2".into(),
         };
         save_account(&path, &acc, "device_abc").unwrap();
+        assert!(dir.join(".keystore").exists());
         let loaded = load_account(&path, "device_abc").expect("decrypts with matching device_id");
         assert_eq!(loaded.account_id, "acc_test_99");
         assert_eq!(loaded.refresh_token, "rt_secret_token_v2");
         assert!(load_account(&path, "wrong_device").is_none());
+
+        // Verify backwards-compatible migration from legacy seal_aes_key(device_id, None)
+        let legacy_key = seal_aes_key("device_legacy", None);
+        let legacy_cipher = Aes256Gcm::new_from_slice(&legacy_key).unwrap();
+        let legacy_nonce_bytes = generate_nonce_12("device_legacy");
+        let legacy_ct = legacy_cipher
+            .encrypt(Nonce::from_slice(&legacy_nonce_bytes), serde_json::to_vec(&acc).unwrap().as_ref())
+            .unwrap();
+        let legacy_sealed = SealedAccount {
+            v: 2,
+            ct: B64.encode(&legacy_ct),
+            tag: B64.encode(legacy_nonce_bytes),
+        };
+        std::fs::write(&path, serde_json::to_vec(&legacy_sealed).unwrap()).unwrap();
+        let migrated = load_account(&path, "device_legacy").expect("migrates legacy v2 account");
+        assert_eq!(migrated.account_id, "acc_test_99");
+
+        // Verify QR SVG sanitization
+        let mut good_svg = "<svg viewBox=\"0 0 100 100\"><rect width=\"10\" height=\"10\"/></svg>".to_string();
+        sanitize_qr_svg(&mut good_svg);
+        assert!(!good_svg.is_empty());
+        let mut evil_svg = "<svg onload=\"alert(1)\"></svg>".to_string();
+        sanitize_qr_svg(&mut evil_svg);
+        assert!(evil_svg.is_empty());
 
         // Verify backup key rotation (#32 JWT Rotation)
         let sk_primary = SigningKey::from_bytes(&[21u8; 32]);

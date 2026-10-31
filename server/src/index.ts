@@ -1,5 +1,7 @@
 import { serve } from "@hono/node-server";
 import { generateKeyPairSync } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import Stripe from "stripe";
 import { config } from "./config.js";
 import { openDb } from "./db.js";
@@ -28,8 +30,30 @@ try {
     ? loadSigningKey(config.licensePrivateKeyB64)
     : generateKeyPairSync("ed25519").privateKey;
 } catch (err: any) {
-  console.warn(`[config] LICENSE_PRIVATE_KEY_B64 invalid (${err?.message || err}); falling back to ephemeral Ed25519 signing key.`);
-  signingKey = generateKeyPairSync("ed25519").privateKey;
+  console.warn(`[config] LICENSE_PRIVATE_KEY_B64 invalid (${err?.message || err}); falling back to persisted Ed25519 signing key.`);
+  const secretsFile = join(dirname(config.databasePath), ".server-secrets.json");
+  let persistedKey: string | undefined;
+  try {
+    if (existsSync(secretsFile)) {
+      const parsed = JSON.parse(readFileSync(secretsFile, "utf8")) || {};
+      persistedKey = parsed.fallbackLicensePrivateKeyB64;
+    }
+  } catch {}
+  if (persistedKey) {
+    signingKey = loadSigningKey(persistedKey);
+  } else {
+    signingKey = generateKeyPairSync("ed25519").privateKey;
+    try {
+      mkdirSync(dirname(secretsFile), { recursive: true });
+      const b64 = (signingKey.export({ format: "der", type: "pkcs8" }) as Buffer).toString("base64");
+      let existing: Record<string, any> = {};
+      try {
+        if (existsSync(secretsFile)) existing = JSON.parse(readFileSync(secretsFile, "utf8")) || {};
+      } catch {}
+      existing.fallbackLicensePrivateKeyB64 = b64;
+      writeFileSync(secretsFile, JSON.stringify(existing, null, 2), { mode: 0o600 });
+    } catch {}
+  }
 }
 const stripe = config.stripeSecretKey.startsWith("sk_") && !config.stripeSecretKey.includes("...")
   ? new Stripe(config.stripeSecretKey)

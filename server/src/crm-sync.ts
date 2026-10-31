@@ -70,7 +70,7 @@ export function syncToCentralCrm(path: string, body: Record<string, unknown>): v
       method: "POST",
       headers: crmHeaders(),
       body: JSON.stringify({ project_id: PROJECT_ID, ...body }),
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(8000),
     }).catch(() => {});
   } catch {
     // Non-blocking fire-and-forget sync
@@ -114,7 +114,7 @@ export async function verifyCentralEntitlement(
         key: cleanLookup,
         device_id: deviceId || undefined,
       }),
-      signal: AbortSignal.timeout(4500),
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
       if (res.status >= 500) recordCrmFailure();
@@ -170,7 +170,7 @@ export async function verifyCentralOtp(params: {
         platform: params.platform,
         device_label: params.deviceLabel,
       }),
-      signal: AbortSignal.timeout(4500),
+      signal: AbortSignal.timeout(8000),
     });
     if (res.ok) {
       const data = (await res.json()) as Record<string, any>;

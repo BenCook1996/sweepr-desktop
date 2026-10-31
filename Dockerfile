@@ -15,4 +15,4 @@ ENV NODE_ENV=production
 ENV PORT=8787
 EXPOSE 8787
 
-CMD ["./node_modules/.bin/tsx", "src/index.ts"]
+CMD ["sh", "-c", "mkdir -p /app/server/data && chown -R node:node /app/server/data 2>/dev/null || true; exec su -s /bin/sh node -c './node_modules/.bin/tsx src/index.ts'"]

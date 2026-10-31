@@ -1300,6 +1300,7 @@ fn copy_shared_file(src: &std::path::Path, dst: &std::path::Path) -> std::io::Re
         let _ = std::fs::create_dir_all(parent);
     }
     std::fs::write(dst, &buf)?;
+    crate::safety::restrict_file_permissions(dst);
     Ok(len)
 }
 
@@ -1338,8 +1339,11 @@ fn save_tab_sessions_index(data_dir: &std::path::Path, list: &[TabSessionSnapsho
         .map_err(|e| AppError::Other(format!("Could not create Tab Session Vault directory: {e}")))?;
     let json = serde_json::to_string_pretty(list)
         .map_err(|e| AppError::Other(format!("Could not serialize Tab Session index: {e}")))?;
-    std::fs::write(vault_dir.join("index.json"), json)
-        .map_err(|e| AppError::Other(format!("Could not save Tab Session index: {e}")))
+    let index_path = vault_dir.join("index.json");
+    std::fs::write(&index_path, json)
+        .map_err(|e| AppError::Other(format!("Could not save Tab Session index: {e}")))?;
+    crate::safety::restrict_file_permissions(&index_path);
+    Ok(())
 }
 
 pub fn backup_tab_sessions(

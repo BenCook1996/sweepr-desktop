@@ -81,8 +81,9 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     detectedAddons.add("battery_care");
   }
 
-  // Never let an abandoned checkout (incomplete / incomplete_expired) or a non-active webhook
+  // Never let an abandoned checkout (incomplete) or a non-active webhook
   // for a different subscription ID overwrite an already active/trialing or lifetime entitlement.
+  // However, if the same subscription transitions to incomplete_expired, revoke the provisional entitlement.
   const isExistingActive = existingEnt?.status === "active" || existingEnt?.status === "trialing";
   const isIncomingActive = sub.status === "active" || sub.status === "trialing";
   const shouldUpdateEntitlement =
@@ -90,14 +91,16 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     isIncomingActive ||
     (existingEnt?.stripe_subscription_id === sub.id &&
       existingEnt?.stripe_subscription_id !== "sub_owner_lifetime" &&
-      sub.status !== "incomplete" &&
-      sub.status !== "incomplete_expired");
+      sub.status !== "incomplete");
+
+  const mappedEntStatus: EntStatus =
+    sub.status === "incomplete_expired" ? "canceled" : (sub.status as EntStatus);
 
   if (shouldUpdateEntitlement) {
     repo.upsertEntitlement({
       account_id: account.id,
       stripe_subscription_id: sub.id,
-      status: sub.status as EntStatus,
+      status: mappedEntStatus,
       plan: planName,
       addons_list: Array.from(detectedAddons),
       current_period_end: currentPeriodEnd,
@@ -251,7 +254,7 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
           const { randomInt } = await import("node:crypto");
           const { sha256 } = await import("./tokens.js");
           const activationKey = randomInt(100000, 1000000).toString();
-          repo.setOtp(normEmail, sha256(activationKey), nowSec + 7 * 86400);
+          repo.setOtp(`activation:${normEmail}`, sha256(activationKey), nowSec + 7 * 86400);
           if (accountId) {
             repo.addActivity({
               account_id: accountId,
@@ -324,13 +327,29 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     case "invoice.payment_failed": {
       const inv = event.data.object as Stripe.Invoice;
       const subId = invoiceSubscriptionId(inv);
+      let retrievedSub: Stripe.Subscription | null = null;
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
-        if (sub) syncSubscription(repo, sub);
+        retrievedSub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        if (retrievedSub) syncSubscription(repo, retrievedSub);
       }
       const custId = idOf(inv.customer as any);
-      const account = custId ? repo.accountByCustomer(custId) : undefined;
+      const account =
+        (custId ? repo.accountByCustomer(custId) : undefined) ??
+        (retrievedSub?.metadata?.account_id ? repo.accountById(retrievedSub.metadata.account_id) : undefined);
       if (account) {
+        const existingEnt = repo.entitlement(account.id);
+        if (
+          subId &&
+          existingEnt?.stripe_subscription_id === subId &&
+          existingEnt.stripe_subscription_id !== "sub_owner_lifetime" &&
+          existingEnt.status !== "disputed"
+        ) {
+          const downgradeStatus: EntStatus =
+            retrievedSub?.status === "incomplete_expired" || retrievedSub?.status === "canceled"
+              ? "canceled"
+              : "past_due";
+          repo.setStatus(account.id, downgradeStatus);
+        }
         repo.upsertInvoice({
           id: inv.id,
           account_id: account.id,
@@ -369,23 +388,57 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       const customerId = idOf(charge.customer as any);
       const account = customerId ? repo.accountByCustomer(customerId) : undefined;
       if (account && charge.refunded && (charge.amount_refunded ?? 0) >= (charge.amount ?? 0)) {
-        repo.setStatus(account.id, "canceled");
-        repo.addActivity({
-          account_id: account.id,
-          type: "charge_refunded",
-          title: "Charge Refunded",
-          description: `Full refund processed on charge ${charge.id}. Subscription canceled.`,
-          actor: "stripe",
-          metadata: { charge_id: charge.id, amount_refunded: charge.amount_refunded },
-        });
-        if (account.email) {
-          syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
-            email: account.email,
-            name: account.name,
-            country: account.country,
-            status: "canceled",
-            notes: `Charge refunded in SWEEPR Cleaner Stripe (${charge.id})`,
+        const addonMeta = String(charge.metadata?.sweepr_addon || charge.metadata?.addon || "").toLowerCase();
+        const desc = String(charge.description || "").toLowerCase();
+        const isAddonRefund =
+          addonMeta === "battery_care" ||
+          addonMeta === "cloud_vault" ||
+          desc.includes("battery care") ||
+          desc.includes("cloud vault");
+
+        if (isAddonRefund) {
+          const refundedAddon =
+            addonMeta === "cloud_vault" || desc.includes("cloud vault") ? "cloud_vault" : "battery_care";
+          const currentAddons = repo.addonsForAccount(account.id);
+          repo.setAddons(
+            account.id,
+            currentAddons.filter((a) => a !== refundedAddon)
+          );
+          repo.addActivity({
+            account_id: account.id,
+            type: "addon_refunded",
+            title: "Add-on Refunded",
+            description: `Refund processed on add-on (${refundedAddon}) charge ${charge.id}.`,
+            actor: "stripe",
+            metadata: { charge_id: charge.id, addon: refundedAddon, amount_refunded: charge.amount_refunded },
           });
+        } else {
+          const existingEnt = repo.entitlement(account.id);
+          if (
+            existingEnt?.stripe_subscription_id?.startsWith("sub_") &&
+            !existingEnt.stripe_subscription_id.startsWith("sub_owner") &&
+            typeof (stripe.subscriptions as any)?.cancel === "function"
+          ) {
+            await stripe.subscriptions.cancel(existingEnt.stripe_subscription_id).catch(() => {});
+          }
+          repo.setStatus(account.id, "canceled");
+          repo.addActivity({
+            account_id: account.id,
+            type: "charge_refunded",
+            title: "Charge Refunded",
+            description: `Full refund processed on charge ${charge.id}. Subscription canceled.`,
+            actor: "stripe",
+            metadata: { charge_id: charge.id, amount_refunded: charge.amount_refunded },
+          });
+          if (account.email) {
+            syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+              email: account.email,
+              name: account.name,
+              country: account.country,
+              status: "canceled",
+              notes: `Charge refunded in SWEEPR Cleaner Stripe (${charge.id})`,
+            });
+          }
         }
       }
       break;

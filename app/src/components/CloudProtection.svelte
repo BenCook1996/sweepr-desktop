@@ -1,7 +1,3 @@
-<script module lang="ts">
-  let cachedVaultPassword = "";
-</script>
-
 <script lang="ts">
   import {
     api,
@@ -121,8 +117,8 @@
 
   // ---- vault ----
   let vaultDir = $state("");
-  let password = $state(cachedVaultPassword);
-  let confirmPassword = $state(cachedVaultPassword);
+  let password = $state("");
+  let confirmPassword = $state("");
   let showPassword = $state(false);
   let removeOriginals = $state(true);
   let pendingFiles = $state<string[]>([]);
@@ -166,15 +162,21 @@
 
   async function refreshVault(withPassword = false) {
     try {
-      const pwToUse = withPassword || password.length >= 8 ? password : undefined;
+      const pwToUse = withPassword && password.length >= 8 ? password : undefined;
       entries = await cloudApi.vaultList(vaultDir, pwToUse);
       unlocked = Boolean(pwToUse && entries.some((e) => e.original_name));
-      if (unlocked) {
-        cachedVaultPassword = password;
-      }
     } catch (e) {
       error = errorMessage(e);
     }
+  }
+
+  async function lockVault() {
+    password = "";
+    confirmPassword = "";
+    showPassword = false;
+    entries = [];
+    unlocked = false;
+    await refreshVault(false);
   }
 
   async function addFile() {
@@ -189,7 +191,6 @@
     status = "";
     if (password.length < 8) return void (error = "Please use a password of at least 8 characters.");
     if (needsConfirmPassword && password !== confirmPassword) return void (error = "Your passwords don't match.");
-    cachedVaultPassword = password;
     vaultBusy = true;
     try {
       const rep = await cloudApi.vaultEncrypt(pendingFiles, password, vaultDir || null, removeOriginals);
@@ -330,6 +331,9 @@
           <div class="small muted">Password-locks your private photos and documents so nobody else can open them</div>
         </div>
         <span class="spacer"></span>
+        {#if unlocked}
+          <button class="ghost small-btn" onclick={lockVault}>Lock Vault</button>
+        {/if}
         <button class="ghost small-btn" onclick={addFile}>+ Add File</button>
       </div>
 
@@ -342,7 +346,6 @@
             placeholder="Vault password (8+ chars)"
             bind:value={password}
             oninput={() => {
-              cachedVaultPassword = password;
               if (password.length >= 8 && entries.length > 0) {
                 refreshVault(true);
               }

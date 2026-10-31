@@ -334,7 +334,11 @@
             <div style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
               {#if qrSvg}
                 <div style="width: 150px; height: 150px; background: #fff; padding: 8px; border-radius: 10px;">
-                  {@html qrSvg}
+                  <img
+                    src={`data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`}
+                    alt="Activation QR Code"
+                    style="width:100%;height:100%;display:block;"
+                  />
                 </div>
               {:else}
                 <span style="font-size: 12px; color: var(--muted);">Generating QR code…</span>

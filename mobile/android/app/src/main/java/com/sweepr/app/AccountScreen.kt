@@ -85,9 +85,20 @@ enum class PlanTier(val productId: String, val priceLabel: String) {
 
 const val GOOGLE_PLAY_SUBSCRIPTIONS_URL = "https://play.google.com/store/account/subscriptions"
 
+internal fun isAllowedExternalHttpsUrl(url: String): Boolean {
+    val trimmed = url.trim()
+    if (!trimmed.startsWith("https://", ignoreCase = true)) return false
+    val parsed = runCatching { Uri.parse(trimmed) }.getOrNull() ?: return false
+    return parsed.scheme.equals("https", ignoreCase = true) && !parsed.host.isNullOrBlank()
+}
+
 internal fun Context.openUrl(url: String) {
+    if (!isAllowedExternalHttpsUrl(url)) {
+        android.util.Log.w("AccountScreen", "Blocked non-HTTPS external URL")
+        return
+    }
     runCatching {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trim())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }.onFailure { Toast.makeText(this, getString(R.string.error_no_browser), Toast.LENGTH_SHORT).show() }
 }
 

@@ -294,8 +294,11 @@ export async function sendSupportNotificationEmail(opts: {
     process.env.SMTP_GMAIL_USER?.trim().replace(/^["']|["']$/g, "") ||
     "cookbenjamin1996@gmail.com";
 
-  const emailSubject = `[SWEEPR Support] ${opts.subject} (from ${opts.fromEmail})`;
-  const textBody = `New support message received via SWEEPR Cleaner (${opts.platform}):\n\nFrom: ${opts.fromEmail}\nSubject: ${opts.subject}\nTicket ID: ${opts.ticketId}\n\nMessage:\n${opts.message}\n`;
+  const cleanSubject = String(opts.subject || "").replace(/[\r\n]+/g, " ").trim();
+  const cleanFrom = String(opts.fromEmail || "").replace(/[\r\n]+/g, " ").trim();
+  const emailSubject = `[SWEEPR Support] ${cleanSubject} (from ${cleanFrom})`;
+  const textBody = `New support message received via SWEEPR Cleaner (${opts.platform}):\n\nFrom: ${cleanFrom}\nSubject: ${cleanSubject}\nTicket ID: ${opts.ticketId}\n\nMessage:\n${opts.message}\n`;
+  const htmlBody = `<div style="font-family:sans-serif;font-size:14px;line-height:1.5;color:#111"><p>New support message received via SWEEPR Cleaner (<strong>${escapeHtml(opts.platform)}</strong>):</p><p><strong>From:</strong> ${escapeHtml(cleanFrom)}<br><strong>Subject:</strong> ${escapeHtml(cleanSubject)}<br><strong>Ticket ID:</strong> ${escapeHtml(opts.ticketId)}</p><pre style="background:#f5f5f5;padding:12px;border-radius:6px;white-space:pre-wrap">${escapeHtml(opts.message)}</pre></div>`;
 
   const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
   if (resendApiKey) {
@@ -310,9 +313,10 @@ export async function sendSupportNotificationEmail(opts: {
         body: JSON.stringify({
           from,
           to: [notifyTo],
-          reply_to: opts.fromEmail,
+          reply_to: cleanFrom,
           subject: emailSubject,
           text: textBody,
+          html: htmlBody,
         }),
       });
       if (resp.ok) return;
@@ -338,9 +342,10 @@ export async function sendSupportNotificationEmail(opts: {
       await transporter.sendMail({
         from: `"SWEEPR Support" <${user}>`,
         to: notifyTo,
-        replyTo: opts.fromEmail,
+        replyTo: cleanFrom,
         subject: emailSubject,
         text: textBody,
+        html: htmlBody,
       });
     } catch (err) {
       console.error("[EMAIL] Failed to forward support ticket via Gmail SMTP:", err);

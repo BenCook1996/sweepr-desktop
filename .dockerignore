@@ -9,3 +9,8 @@ server/data
 **/node_modules
 app
 mobile
+*.p12
+*.mobileprovision
+*.pem
+*.key
+*Secrets*.xcconfig

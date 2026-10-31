@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js" integrity="sha384-0v3Wh0ZtiQBYCYywQoeMDA5mAw5Z01p0lhorqy0BlwFrcN6u3lmN7K0U/e1uezmr" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1608,8 +1608,10 @@
           const dedupePill = r.cooldown_active
             ? `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-semibold">Locked (${r.cooldown_remaining_hours}h left)</div><div class="text-[10px] text-slate-500 mt-0.5">Follow-up after ${esc(followUpDate)}</div>`
             : `<div class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold">Follow-Up Eligible</div>`;
-          const portalHtml = r.portal_url
-            ? `<a href="${esc(r.portal_url)}" target="_blank" rel="noopener" class="text-cyan-400 hover:underline font-mono text-[11px] block truncate max-w-[180px]">${esc(r.portal_url.replace(/^https?:\/\//, ''))}</a>`
+          const rawPortalUrl = String(r.portal_url || '').trim();
+          const safePortalUrl = /^https?:\/\//i.test(rawPortalUrl) ? esc(rawPortalUrl) : '';
+          const portalHtml = safePortalUrl
+            ? `<a href="${safePortalUrl}" target="_blank" rel="noopener" class="text-cyan-400 hover:underline font-mono text-[11px] block truncate max-w-[180px]">${esc(rawPortalUrl.replace(/^https?:\/\//i, ''))}</a>`
             : '';
           const replyHtml = r.reply_message_id
             ? `<div class="text-[10px] font-mono text-emerald-400 truncate max-w-[180px]" title="${esc(r.reply_message_id)}">Reply: ${esc(r.reply_message_id)}</div>`
@@ -2610,17 +2612,22 @@
         alert('No outreach rows to export.');
         return;
       }
+      const csvCell = (val) => {
+        const str = String(val ?? '');
+        const safeStr = /^[=+\-@\t\r]/.test(str) ? "'" + str : str;
+        return `"${safeStr.replace(/"/g, '""')}"`;
+      };
       const headers = ['ID', 'Who (Recipient/Contact)', 'Website', 'URL', 'How Reached Out', 'Category', 'Status', 'When (ISO)', 'Message ID'];
       const rows = allOutreachLogs.map(r => [
         r.id,
-        `"${String(r.who || '').replace(/"/g, '""')}"`,
-        `"${String(r.website || '').replace(/"/g, '""')}"`,
-        `"${String(r.url || '').replace(/"/g, '""')}"`,
-        `"${String(r.how || '').replace(/"/g, '""')}"`,
-        `"${String(r.category || '').replace(/"/g, '""')}"`,
-        `"${String(r.status || '').replace(/"/g, '""')}"`,
-        `"${new Date((r.reached_out_at || 0) * 1000).toISOString()}"`,
-        `"${String(r.message_id || '').replace(/"/g, '""')}"`
+        csvCell(r.who),
+        csvCell(r.website),
+        csvCell(r.url),
+        csvCell(r.how),
+        csvCell(r.category),
+        csvCell(r.status),
+        csvCell(new Date((r.reached_out_at || 0) * 1000).toISOString()),
+        csvCell(r.message_id)
       ]);
       const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

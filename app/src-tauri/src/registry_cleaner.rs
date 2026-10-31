@@ -39,7 +39,10 @@ pub fn load_backups(data_dir: &Path) -> Vec<RegistryBackupEntry> {
 pub fn save_backups(data_dir: &Path, entries: &[RegistryBackupEntry]) -> std::io::Result<()> {
     std::fs::create_dir_all(data_dir)?;
     let json = serde_json::to_string_pretty(entries).unwrap_or_else(|_| "[]".into());
-    std::fs::write(backups_file(data_dir), json)
+    let path = backups_file(data_dir);
+    std::fs::write(&path, json)?;
+    crate::safety::restrict_file_permissions(&path);
+    Ok(())
 }
 
 pub fn record_backup(data_dir: &Path, key: &str, name: &str, issue_type: &str, value: &str) -> std::io::Result<RegistryBackupEntry> {

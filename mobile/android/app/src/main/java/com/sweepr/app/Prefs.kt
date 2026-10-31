@@ -54,6 +54,7 @@ object Prefs {
         val addons: List<String> = emptyList(),
         val referralCode: String = "",
         val redeemedReferralCode: String? = null,
+        val signedToken: String? = null,
     ) {
         val isSignedIn: Boolean get() = accountId.isNotBlank() && refreshToken.isNotBlank()
     }
@@ -85,9 +86,11 @@ object Prefs {
     private const val KEY_SERVER_PLAN = "server_plan"
     private const val KEY_SERVER_EXPIRES = "server_expires"
     private const val KEY_SERVER_ADDONS = "server_addons"
+    private const val KEY_SIGNED_TOKEN = "server_signed_token"
     private const val KEY_CLEANUP_COUNT = "cleanup_count"
     private const val KEY_REVIEW_SHOWN = "review_shown"
 
+    internal var appContext: Context? = null
     private lateinit var prefs: SharedPreferences
     private lateinit var secureAuthStore: SharedPreferences
     private val inMemoryAuthPrefs: SharedPreferences by lazy { InMemorySharedPreferences() }
@@ -213,6 +216,7 @@ object Prefs {
     }
 
     fun init(context: Context) {
+        appContext = context.applicationContext ?: context
         prefs = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
         secureAuthStore = secureAuthPrefs(context)
         _theme.value = prefs.getString(KEY_THEME, null)
@@ -251,9 +255,17 @@ object Prefs {
                 prefs.edit().putString(KEY_DEVICE_ID, it).apply()
             }
         val refreshToken = readRefreshTokenSecurely()
-        val rawExpires = secureAuthStore.getLong(KEY_SERVER_EXPIRES, 0L)
-        val expiresSec = if (rawExpires > 10_000_000_000L) rawExpires / 1000L else rawExpires
-        val activeFromSecure = refreshToken.isNotBlank() && secureAuthStore.getBoolean(KEY_SERVER_ACTIVE, false)
+        val signedToken = secureAuthStore.getString(KEY_SIGNED_TOKEN, null)?.takeIf { it.isNotBlank() }
+        val verifiedClaims = if (refreshToken.isNotBlank() && signedToken != null) {
+            SweeprAccountApi.extractVerifiedClaims(
+                token = signedToken,
+                expectedProject = SweeprAccountApi.PROJECT_ID,
+                expectedDeviceId = deviceId,
+            )
+        } else {
+            null
+        }
+        val activeFromSecure = verifiedClaims != null && secureAuthStore.getBoolean(KEY_SERVER_ACTIVE, false)
         val accountId = prefs.getString(KEY_ACCOUNT_ID, "") ?: ""
         val referralCode = prefs.getString(KEY_REFERRAL_CODE, null)?.takeIf { it.isNotBlank() }
             ?: defaultReferralCode(deviceId, accountId)
@@ -264,19 +276,12 @@ object Prefs {
             refreshToken = refreshToken,
             deviceId = deviceId,
             serverActive = activeFromSecure,
-            plan = secureAuthStore.getString(KEY_SERVER_PLAN, null),
-            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (refreshToken.isNotBlank()) {
-                secureAuthStore.getString(KEY_SERVER_ADDONS, "")
-                    ?.split(",")
-                    ?.map { it.trim() }
-                    ?.filter { it.isNotEmpty() }
-                    ?: emptyList()
-            } else {
-                emptyList()
-            },
+            plan = if (activeFromSecure) verifiedClaims?.plan else null,
+            expiresAt = if (activeFromSecure) (verifiedClaims?.expiresAt ?: 0L) else 0L,
+            addons = if (activeFromSecure) (verifiedClaims?.addons ?: emptyList()) else emptyList(),
             referralCode = referralCode,
             redeemedReferralCode = redeemedCode,
+            signedToken = if (activeFromSecure) signedToken else null,
         )
     }
 
@@ -302,6 +307,7 @@ object Prefs {
                 .putString(KEY_SERVER_PLAN, normalized.plan)
                 .putLong(KEY_SERVER_EXPIRES, normalized.expiresAt)
                 .putString(KEY_SERVER_ADDONS, normalized.addons.joinToString(","))
+                .putString(KEY_SIGNED_TOKEN, normalized.signedToken)
                 .apply()
         }
         prefs.edit()
@@ -320,6 +326,7 @@ object Prefs {
     }
 
     fun clearLinkedAccount() {
+        appContext?.let { MobileCloudVault.clearRememberedPassword(it) }
         val currentDevice = _account.value.deviceId
         val cleared = LinkedAccount(
             deviceId = currentDevice,
@@ -413,6 +420,15 @@ object SweeprAccountApi {
         0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00
     )
 
+    internal data class VerifiedTokenClaims(
+        val expiresAt: Long,
+        val plan: String?,
+        val addons: List<String>,
+        val deviceId: String,
+        val projectId: String,
+        val status: String,
+    )
+
     internal fun verifyEd25519Signature(
         signingInput: ByteArray,
         signatureBytes: ByteArray,
@@ -425,13 +441,11 @@ object SweeprAccountApi {
         if (rawPub.size != 32) return false
         val spki = ED25519_SPKI_PREFIX + rawPub
         val spec = java.security.spec.X509EncodedKeySpec(spki)
-        var providerFound = false
         for (alg in listOf("Ed25519", "EdDSA", "1.3.101.112")) {
             try {
                 val kf = java.security.KeyFactory.getInstance(alg)
                 val pubKey = kf.generatePublic(spec)
                 val sig = java.security.Signature.getInstance(alg)
-                providerFound = true
                 sig.initVerify(pubKey)
                 sig.update(signingInput)
                 return sig.verify(signatureBytes)
@@ -441,7 +455,66 @@ object SweeprAccountApi {
                 return false
             }
         }
-        return !providerFound
+        return try {
+            val verifier = org.bouncycastle.crypto.signers.Ed25519Signer()
+            verifier.init(false, org.bouncycastle.crypto.params.Ed25519PublicKeyParameters(rawPub, 0))
+            verifier.update(signingInput, 0, signingInput.size)
+            verifier.verifySignature(signatureBytes)
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    internal fun extractVerifiedClaims(
+        token: String?,
+        expectedProject: String = PROJECT_ID,
+        expectedDeviceId: String? = null,
+        pubKeyB64Url: String = BuildConfig.SWEEPR_LICENSE_PUBKEY,
+    ): VerifiedTokenClaims? {
+        if (token.isNullOrBlank()) return null
+        val parts = token.trim().split(".")
+        if (parts.size != 3) return null
+        return runCatching {
+            val headerBytes = java.util.Base64.getUrlDecoder().decode(parts[0])
+            val header = org.json.JSONObject(String(headerBytes, Charsets.UTF_8))
+            if (header.optString("alg") != "EdDSA") {
+                return@runCatching null
+            }
+            val sigBytes = java.util.Base64.getUrlDecoder().decode(parts[2])
+            val signingInput = "${parts[0]}.${parts[1]}".toByteArray(Charsets.UTF_8)
+            if (!verifyEd25519Signature(signingInput, sigBytes, pubKeyB64Url)) {
+                return@runCatching null
+            }
+            val decoded = java.util.Base64.getUrlDecoder().decode(parts[1])
+            val claims = org.json.JSONObject(String(decoded, Charsets.UTF_8))
+            val exp = claims.optLong("exp", 0L)
+            val nowSec = System.currentTimeMillis() / 1000L
+            if (exp <= nowSec) return@runCatching null
+            val tokenDev = claims.optString("device_id", "").trim()
+            if (tokenDev.isEmpty()) return@runCatching null
+            if (!expectedDeviceId.isNullOrBlank() && tokenDev != expectedDeviceId) {
+                return@runCatching null
+            }
+            val proj = claims.optString("project_id", "").trim()
+            val parsedAddons = parseAddons(claims)
+            val hasBundle = parsedAddons.any { it.equals("sweepr_secure_bundle", ignoreCase = true) }
+            if (proj.isEmpty() || (proj != expectedProject && proj != "all" && !hasBundle)) {
+                return@runCatching null
+            }
+            val status = claims.optString("status", "")
+            if (status != "active" && status != "trialing") {
+                return@runCatching null
+            }
+            val plan = claims.optString("plan", "").trim().takeIf { it.isNotEmpty() }
+            VerifiedTokenClaims(
+                expiresAt = exp,
+                plan = plan,
+                addons = parsedAddons,
+                deviceId = tokenDev,
+                projectId = proj,
+                status = status,
+            )
+        }.getOrNull()
     }
 
     internal fun verifyTokenClaimsForProject(
@@ -449,43 +522,7 @@ object SweeprAccountApi {
         expectedProject: String = PROJECT_ID,
         expectedDeviceId: String? = null,
         pubKeyB64Url: String = BuildConfig.SWEEPR_LICENSE_PUBKEY,
-    ): Boolean {
-        if (token.isNullOrBlank()) return false
-        val parts = token.trim().split(".")
-        if (parts.size != 3) return false
-        return runCatching {
-            val sigBytes = java.util.Base64.getUrlDecoder().decode(parts[2])
-            val signingInput = "${parts[0]}.${parts[1]}".toByteArray(Charsets.UTF_8)
-            if (!verifyEd25519Signature(signingInput, sigBytes, pubKeyB64Url)) {
-                return@runCatching false
-            }
-            val decoded = java.util.Base64.getUrlDecoder().decode(parts[1])
-            val claims = org.json.JSONObject(String(decoded, Charsets.UTF_8))
-            val exp = claims.optLong("exp", 0L)
-            val nowSec = System.currentTimeMillis() / 1000L
-            if (exp <= nowSec) return@runCatching false
-            if (!expectedDeviceId.isNullOrBlank()) {
-                val tokenDev = claims.optString("device_id", "")
-                if (tokenDev.isNotBlank() && tokenDev != expectedDeviceId) {
-                    return@runCatching false
-                }
-            }
-            val proj = claims.optString("project_id", expectedProject).ifBlank { expectedProject }
-            val addonsArr = claims.optJSONArray("addons")
-            var hasBundle = false
-            if (addonsArr != null) {
-                for (i in 0 until addonsArr.length()) {
-                    if (addonsArr.optString(i).equals("sweepr_secure_bundle", ignoreCase = true)) {
-                        hasBundle = true
-                        break
-                    }
-                }
-            }
-            if (proj != expectedProject && proj != "all" && !hasBundle) return@runCatching false
-            val status = claims.optString("status", "")
-            status == "active" || status == "trialing"
-        }.getOrDefault(false)
-    }
+    ): Boolean = extractVerifiedClaims(token, expectedProject, expectedDeviceId, pubKeyB64Url) != null
 
     fun sendOtp(email: String) {
         val body = org.json.JSONObject()
@@ -504,10 +541,10 @@ object SweeprAccountApi {
             .put("project_id", PROJECT_ID)
             .put("device_label", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
         val res = postJson("/v1/account/verify-otp", body)
-        val expiresSec = res.optLong("expires_at", 0L)
         val token = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
-        val isActive = rawActive && token.isNotEmpty() && verifyTokenClaimsForProject(token, PROJECT_ID, deviceId)
+        val verified = if (rawActive && token.isNotEmpty()) extractVerifiedClaims(token, PROJECT_ID, deviceId) else null
+        val isActive = verified != null
         val accountId = res.getString("account_id")
         return LinkedAccount(
             accountId = accountId,
@@ -515,11 +552,12 @@ object SweeprAccountApi {
             refreshToken = res.getString("refresh_token"),
             deviceId = deviceId,
             serverActive = isActive,
-            plan = res.optString("plan").takeIf { it.isNotBlank() },
-            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (isActive) parseAddons(res) else emptyList(),
+            plan = verified?.plan,
+            expiresAt = verified?.expiresAt ?: 0L,
+            addons = verified?.addons ?: emptyList(),
             referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
                 ?: Prefs.defaultReferralCode(deviceId, accountId),
+            signedToken = if (isActive) token else null,
         )
     }
 
@@ -558,21 +596,11 @@ object SweeprAccountApi {
             .put("device_id", authed.deviceId)
             .put("account_id", authed.accountId)
             .put("project_id", PROJECT_ID)
-        val res = postJson("/v1/referral/apply", body, bearerToken = authed.refreshToken)
-        val status = res.optString("status", "")
-        val expiresAt = res.optLong("expires_at", 0L)
-        val trialGranted = status == "trialing" || status == "active" || expiresAt > (System.currentTimeMillis() / 1000L)
+        postJson("/v1/referral/apply", body, bearerToken = authed.refreshToken)
         val baseUpdated = authed.copy(
             redeemedReferralCode = trimmed,
-            serverActive = if (trialGranted) true else authed.serverActive,
-            plan = if (trialGranted) (authed.plan ?: "monthly") else authed.plan,
-            expiresAt = if (expiresAt > 0L) expiresAt else authed.expiresAt,
         )
-        return runCatching {
-            refreshEntitlement(baseUpdated)
-        }.getOrElse {
-            baseUpdated
-        }
+        return refreshEntitlement(baseUpdated)
     }
 
     fun refreshEntitlement(current: LinkedAccount): LinkedAccount {
@@ -585,21 +613,22 @@ object SweeprAccountApi {
             postJson("/v1/entitlement", body, bearerToken = current.refreshToken)
         } catch (e: ApiException) {
             if (e.statusCode == 401 || e.statusCode == 403) {
-                return current.copy(serverActive = false, expiresAt = 0L, addons = emptyList())
+                return current.copy(serverActive = false, expiresAt = 0L, addons = emptyList(), signedToken = null)
             }
             throw e
         }
         val status = res.optString("status", "")
         val token = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", status == "active" || status == "trialing")
-        val isActive = rawActive && token.isNotEmpty() && verifyTokenClaimsForProject(token, PROJECT_ID, current.deviceId)
-        val expiresSec = res.optLong("expires_at", 0L)
+        val verified = if (rawActive && token.isNotEmpty()) extractVerifiedClaims(token, PROJECT_ID, current.deviceId) else null
+        val isActive = verified != null
         return current.copy(
             email = res.optString("email", current.email).ifBlank { current.email },
             serverActive = isActive,
-            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: current.plan,
-            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (isActive || res.optJSONArray("addons") != null) parseAddons(res, current.addons) else emptyList(),
+            plan = verified?.plan,
+            expiresAt = verified?.expiresAt ?: 0L,
+            addons = verified?.addons ?: emptyList(),
+            signedToken = if (isActive) token else null,
         )
     }
 
@@ -626,10 +655,10 @@ object SweeprAccountApi {
             .put("project_id", PROJECT_ID)
         val res = postJson("/api/device-link/redeem", body)
         val resolvedDeviceId = res.optString("device_id").ifBlank { deviceId }
-        val expiresSec = res.optLong("expires_at", 0L)
         val jwsToken = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
-        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, resolvedDeviceId))
+        val verified = if (rawActive && jwsToken.isNotEmpty()) extractVerifiedClaims(jwsToken, PROJECT_ID, resolvedDeviceId) else null
+        val isActive = verified != null
         val accountId = res.getString("account_id")
         return LinkedAccount(
             accountId = accountId,
@@ -637,24 +666,24 @@ object SweeprAccountApi {
             refreshToken = res.getString("refresh_token"),
             deviceId = resolvedDeviceId,
             serverActive = isActive,
-            plan = res.optString("plan").takeIf { it.isNotBlank() },
-            expiresAt = if (expiresSec > 0L) expiresSec else 0L,
-            addons = if (isActive || res.optJSONArray("addons") != null) parseAddons(res) else emptyList(),
+            plan = verified?.plan,
+            expiresAt = verified?.expiresAt ?: 0L,
+            addons = verified?.addons ?: emptyList(),
             referralCode = res.optString("referral_code").takeIf { it.isNotBlank() }
                 ?: Prefs.defaultReferralCode(resolvedDeviceId, accountId),
+            signedToken = if (isActive) jwsToken else null,
         )
     }
 
     /** Flow B: Approve an unactivated PC's QR challenge (`chk_...` or `/pair?mode=approve&challenge=chk_...`) from this signed-in Android phone. */
     fun approveDesktopQrChallenge(rawInput: String, current: LinkedAccount): String {
         require(current.isSignedIn) { "Sign in on this phone first before approving a PC QR code." }
-        val trimmed = rawInput.trim()
+        val trimmed = rawInput.trim().removePrefix("challenge:").trim()
         val match = Regex("chk_[A-Za-z0-9_-]{20,64}").find(trimmed)
         val challengeId = match?.value ?: trimmed
         require(challengeId.startsWith("chk_")) { "Invalid desktop QR challenge." }
         val body = org.json.JSONObject()
             .put("challenge_id", challengeId)
-            .put("refresh_token", current.refreshToken)
             .put("project_id", PROJECT_ID)
         val res = postJson("/api/device-link/approve", body, bearerToken = current.refreshToken)
         return res.optString("device_name", "Desktop PC").ifBlank { "Desktop PC" }
@@ -686,10 +715,10 @@ object SweeprAccountApi {
             bearerToken = authed.refreshToken.takeIf { it.isNotBlank() },
         )
         val resolvedDeviceId = res.optString("device_id").ifBlank { authed.deviceId }
-        val expiresSec = res.optLong("expires_at", 0L)
         val jwsToken = res.optString("token", "").trim()
         val rawActive = res.optBoolean("active", true)
-        val isActive = rawActive && (jwsToken.isEmpty() || verifyTokenClaimsForProject(jwsToken, PROJECT_ID, resolvedDeviceId))
+        val verified = if (rawActive && jwsToken.isNotEmpty()) extractVerifiedClaims(jwsToken, PROJECT_ID, resolvedDeviceId) else null
+        val isActive = verified != null
         val accountId = res.optString("account_id").ifBlank { authed.accountId }
         val refreshToken = res.optString("refresh_token").ifBlank { authed.refreshToken }
         return authed.copy(
@@ -697,9 +726,10 @@ object SweeprAccountApi {
             refreshToken = refreshToken,
             deviceId = resolvedDeviceId,
             serverActive = isActive,
-            plan = res.optString("plan").takeIf { it.isNotBlank() } ?: authed.plan,
-            expiresAt = if (expiresSec > 0L) expiresSec else authed.expiresAt,
-            addons = parseAddons(res, authed.addons),
+            plan = verified?.plan,
+            expiresAt = verified?.expiresAt ?: 0L,
+            addons = verified?.addons ?: emptyList(),
+            signedToken = if (isActive) jwsToken else null,
         )
     }
 

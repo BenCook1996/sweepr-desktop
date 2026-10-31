@@ -254,6 +254,7 @@ fn specs() -> Vec<Spec> {
     ]
 }
 
+#[allow(dead_code)]
 pub fn all_specs() -> Vec<Spec> {
     specs()
 }

@@ -17,7 +17,8 @@
     const d = new Date();
     d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
     const expires = 'expires=' + d.toUTCString();
-    document.cookie = name + '=' + encodeURIComponent(JSON.stringify(value)) + ';' + expires + ';path=/;SameSite=Lax';
+    const secureAttr = window.location.protocol === 'https:' ? ';Secure' : '';
+    document.cookie = name + '=' + encodeURIComponent(JSON.stringify(value)) + ';' + expires + ';path=/;SameSite=Lax' + secureAttr;
   }
 
   function getCookie(name) {

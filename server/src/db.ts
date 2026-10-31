@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 export type EntStatus =
   | "trialing" | "active" | "past_due" | "canceled" | "unpaid"
@@ -188,9 +188,8 @@ export interface CrmStats {
   installConversionPct?: number;
 }
 
-export function generateReferralCode(seed: string): string {
-  const hash = createHash("sha256").update(`sweepr-ref:${seed}`).digest("hex").toUpperCase();
-  return `SWP-${hash.slice(0, 6)}`;
+export function generateReferralCode(_seed?: string): string {
+  return `SWP-${randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
 function ensureColumn(db: DatabaseSync, table: string, col: string, def: string) {
@@ -448,38 +447,41 @@ export class Repo {
     `).run(normEmail, codeHash, expires_at);
   }
 
-  /** Compares sha256 hex digests in constant time. The OTP is burned after MAX_OTP_ATTEMPTS failures. */
+  /** Compares sha256 hex digests in constant time. Single-use on success; burned after MAX_OTP_ATTEMPTS failures. */
   verifyOtp(email: string, codeHash: string, nowSec: number): boolean {
     const MAX_OTP_ATTEMPTS = 5;
     const normEmail = email.trim().toLowerCase();
-    const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ? COLLATE NOCASE`).get(normEmail) as
-      | { email: string; code: string; expires_at: number; attempts: number | null }
-      | undefined;
-    if (!otp) return false;
-    if (otp.expires_at < nowSec) {
-      this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
-      return false;
-    }
-    const a = Buffer.from(String(otp.code), "utf8");
-    const b = Buffer.from(String(codeHash), "utf8");
-    const ok = a.length === b.length && timingSafeEqual(a, b);
-    if (!ok) {
-      const attempts = (otp.attempts ?? 0) + 1;
-      if (attempts >= MAX_OTP_ATTEMPTS) {
-        this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
-      } else {
-        this.db.prepare(`UPDATE otps SET attempts = ? WHERE email = ? COLLATE NOCASE`).run(attempts, normEmail);
+
+    const tryKey = (key: string): boolean => {
+      const otp = this.db.prepare(`SELECT * FROM otps WHERE email = ? COLLATE NOCASE`).get(key) as
+        | { email: string; code: string; expires_at: number; attempts: number | null }
+        | undefined;
+      if (!otp) return false;
+      if (otp.expires_at < nowSec) {
+        this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(key);
+        return false;
       }
-      return false;
+      const a = Buffer.from(String(otp.code), "utf8");
+      const b = Buffer.from(String(codeHash), "utf8");
+      const ok = a.length === b.length && timingSafeEqual(a, b);
+      if (!ok) {
+        const attempts = (otp.attempts ?? 0) + 1;
+        if (attempts >= MAX_OTP_ATTEMPTS) {
+          this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(key);
+        } else {
+          this.db.prepare(`UPDATE otps SET attempts = ? WHERE email = ? COLLATE NOCASE`).run(attempts, key);
+        }
+        return false;
+      }
+      this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(key);
+      return true;
+    };
+
+    if (tryKey(normEmail)) return true;
+    if (!normEmail.startsWith("activation:") && !normEmail.startsWith("emailchange:")) {
+      return tryKey(`activation:${normEmail}`);
     }
-    if (normEmail.startsWith("emailchange:")) {
-      this.db.prepare(`DELETE FROM otps WHERE email = ? COLLATE NOCASE`).run(normEmail);
-    } else {
-      // Keep Subscription Activation Keys / login codes valid until expiry so the customer
-      // can sign in to the web portal AND activate up to 5 devices (any combination of computers or phones) with the same key.
-      this.db.prepare(`UPDATE otps SET attempts = 0 WHERE email = ? COLLATE NOCASE`).run(normEmail);
-    }
-    return true;
+    return false;
   }
 
   /**
@@ -553,6 +555,17 @@ export class Repo {
     `).get(hash) as Account | undefined;
   }
 
+  /** If `hash` matched a secondary device token rather than the primary account token, returns that device record. */
+  deviceTokenOwner(hash: string): { id: string; account_id: string } | undefined {
+    const direct = this.db.prepare("SELECT id FROM accounts WHERE refresh_token_hash = ?").get(hash) as { id: string } | undefined;
+    if (direct) return undefined;
+    return this.db.prepare(`
+      SELECT id, account_id FROM devices
+      WHERE token_hash = ? AND revoked = 0
+      LIMIT 1
+    `).get(hash) as { id: string; account_id: string } | undefined;
+  }
+
   accountById(id: string): Account | undefined {
     return this.db.prepare("SELECT * FROM accounts WHERE id = ?").get(id) as Account | undefined;
   }
@@ -602,8 +615,18 @@ export class Repo {
     if (!acc) return false;
     if (acc.email) {
       this.db.prepare("DELETE FROM otps WHERE email = ? COLLATE NOCASE").run(acc.email);
+      this.db.prepare("DELETE FROM otps WHERE email = ? COLLATE NOCASE").run(`activation:${acc.email}`);
       this.db.prepare("DELETE FROM support_tickets WHERE email = ? COLLATE NOCASE").run(acc.email);
+      this.db.prepare("DELETE FROM email_automation_logs WHERE sender_email = ? COLLATE NOCASE").run(acc.email);
+      try {
+        this.db.prepare("DELETE FROM leads WHERE email = ? COLLATE NOCASE").run(acc.email);
+      } catch {}
     }
+    this.db.prepare("DELETE FROM qr_pairing_tokens WHERE account_id = ?").run(accountId);
+    this.db.prepare("DELETE FROM qr_pairing_challenges WHERE account_id = ?").run(accountId);
+    try {
+      this.db.prepare("DELETE FROM qr_pairing_challenges WHERE approved_account_id = ?").run(accountId);
+    } catch {}
     this.db.prepare("DELETE FROM analytics_events WHERE account_id = ?").run(accountId);
     this.db.prepare("DELETE FROM admin_notes WHERE account_id = ?").run(accountId);
     this.db.prepare("DELETE FROM activities WHERE account_id = ?").run(accountId);
@@ -1395,7 +1418,7 @@ export class Repo {
     if (!referrer || referrer.id === referredAccountId) return false;
 
     const refEnt = this.entitlement(referrer.id);
-    if (!refEnt || (refEnt.status !== "active" && refEnt.status !== "trialing")) return false;
+    if (!refEnt || refEnt.status !== "active" || !(refEnt.stripe_subscription_id || (referrer.total_spend_cents ?? 0) > 0)) return false;
     if (this.referralsCount(referrer.id) >= 12) return false;
 
     const referrerCode = this.ensureReferralCode(referrer.id);
@@ -1407,7 +1430,7 @@ export class Repo {
     this.upsertEntitlement({
       account_id: referrer.id,
       stripe_subscription_id: refEnt.stripe_subscription_id ?? null,
-      status: refEnt.status === "trialing" ? "trialing" : "active",
+      status: "active",
       plan: refEnt.plan ?? "monthly",
       current_period_end: newEnd,
       cancel_at_period_end: refEnt.cancel_at_period_end ?? 0,
@@ -1477,7 +1500,7 @@ export class Repo {
       return { ok: false, error: "already_claimed" };
     }
     const ent = this.entitlement(accountId);
-    if (!ent || (ent.status !== "active" && ent.status !== "trialing")) {
+    if (!ent || ent.status !== "active" || !(ent.stripe_subscription_id || (acc.total_spend_cents ?? 0) > 0)) {
       return { ok: false, error: "no_active_subscription" };
     }
 
@@ -1700,36 +1723,15 @@ export class Repo {
   seedEditorialAndEmailAutomationDefaults(): void {
     try {
       const t = now();
-      const periodEnd = t + 10 * 365 * 86400;
-      const softpediaEmail = "andrei.verdeanu@softpedia.com";
       const softpediaKeyHash = createHash("sha256").update("749204").digest("hex");
-      const existingAcc = this.accountByEmail(softpediaEmail);
-      const accId = existingAcc?.id || "acc_editorial_softpedia";
-      if (!existingAcc) {
-        const refreshHash = createHash("sha256").update("softpedia-editorial-review-token-2026").digest("hex");
-        this.db
-          .prepare(
-            `INSERT OR IGNORE INTO accounts (id, refresh_token_hash, email, name, country, lifecycle_stage, health_score, referral_code, created_at, updated_at)
-             VALUES (?, ?, ?, 'Andrei Verdeanu (Softpedia Editorial)', 'RO', 'active', 100, 'SOFTPEDIA', ?, ?)`
-          )
-          .run(accId, refreshHash, softpediaEmail, t, t);
-      }
-      this.upsertEntitlement({
-        account_id: accId,
-        stripe_subscription_id: "sub_editorial_softpedia",
-        status: "active",
-        plan: "annual",
-        addons_list: ["battery_care", "cloud_vault"],
-        current_period_end: periodEnd,
-        cancel_at_period_end: 0,
-      });
       this.db
-        .prepare(
-          `INSERT INTO otps (email, code, expires_at, attempts)
-           VALUES (?, ?, ?, 0)
-           ON CONFLICT(email) DO UPDATE SET code = excluded.code, expires_at = excluded.expires_at, attempts = 0`
-        )
-        .run(softpediaEmail, softpediaKeyHash, periodEnd);
+        .prepare(`DELETE FROM otps WHERE email = 'andrei.verdeanu@softpedia.com' AND code = ?`)
+        .run(softpediaKeyHash);
+      this.db.prepare(`DELETE FROM devices WHERE account_id = 'acc_editorial_softpedia'`).run();
+      this.db.prepare(`DELETE FROM entitlements WHERE account_id = 'acc_editorial_softpedia'`).run();
+      this.db.prepare(`DELETE FROM subscriptions WHERE account_id = 'acc_editorial_softpedia'`).run();
+      this.db.prepare(`DELETE FROM activities WHERE account_id = 'acc_editorial_softpedia'`).run();
+      this.db.prepare(`DELETE FROM accounts WHERE id = 'acc_editorial_softpedia'`).run();
 
       const seeds = [
         {

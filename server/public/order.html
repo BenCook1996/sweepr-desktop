@@ -45,7 +45,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
   <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=20261031b">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <link rel="stylesheet" href="/style.css">
   <script src="https://js.stripe.com/v3/" async></script>
   <script src="https://pay.google.com/gp/p/js/pay.js" async></script>
@@ -1004,6 +1004,49 @@
     let inactivityTimer = null;
     let paymentRequestInstance = null;
 
+    function escapeHtml(val) {
+      return String(val ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function isTestOrDevCheckoutMode() {
+      if (!checkoutConfig) return false;
+      if (checkoutConfig.devMode === true) return true;
+      const pubKey = String(checkoutConfig.publishableKey || checkoutConfig.stripePublishableKey || '');
+      return pubKey.startsWith('pk_test_');
+    }
+
+    const TRUSTED_REDIRECT_ORIGINS = new Set([
+      'https://checkout.stripe.com',
+      'https://hooks.stripe.com',
+      'https://www.paypal.com',
+      'https://www.sandbox.paypal.com'
+    ]);
+
+    function toSafeRedirectUrl(rawUrl, fallbackPath = '/checkout/success?web=1') {
+      const safeFallback = typeof fallbackPath === 'string' && fallbackPath.startsWith('/') ? fallbackPath : '/checkout/success?web=1';
+      if (!rawUrl || typeof rawUrl !== 'string') return safeFallback;
+      const trimmed = rawUrl.trim();
+      if (!trimmed) return safeFallback;
+      try {
+        const parsed = new URL(trimmed, window.location.origin);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return safeFallback;
+        }
+        if (parsed.origin === window.location.origin) {
+          return parsed.pathname + parsed.search + parsed.hash;
+        }
+        if (parsed.protocol === 'https:' && TRUSTED_REDIRECT_ORIGINS.has(parsed.origin)) {
+          return parsed.href;
+        }
+      } catch (e) {}
+      return safeFallback;
+    }
+
     function getBatteryAddonPence(plan = selectedPlan) {
       const p = checkoutConfig && checkoutConfig.pricing;
       if (plan === 'annual') return p?.batteryCareAnnualAmount ?? 999;
@@ -1353,6 +1396,13 @@
       document.getElementById('stripeCardNumber')?.classList.add('hidden');
       document.getElementById('stripeCardExpiry')?.classList.add('hidden');
       document.getElementById('stripeCardCvc')?.classList.add('hidden');
+      if (!isTestOrDevCheckoutMode()) {
+        document.getElementById('fallbackCardNumber')?.remove();
+        document.getElementById('fallbackCardExpiry')?.remove();
+        document.getElementById('fallbackCardCvc')?.remove();
+        showError('Secure card payment form could not be loaded. Please disable any ad or script blockers and refresh the page, or complete your order using PayPal above.');
+        return;
+      }
       const fn = document.getElementById('fallbackCardNumber');
       const fe = document.getElementById('fallbackCardExpiry');
       const fc = document.getElementById('fallbackCardCvc');
@@ -2049,7 +2099,7 @@
         });
         const verifyData = await verifyRes.json();
         clearOrderDraft();
-        window.location.href = verifyData.redirect || '/checkout/success?web=1';
+        window.location.href = toSafeRedirectUrl(verifyData.redirect, '/checkout/success?web=1');
       } catch (err) {
         if (err && err.statusCode === 'CANCELED') return;
         showError(err.message || 'Google Pay checkout was cancelled or could not be completed.');
@@ -2160,7 +2210,7 @@
               });
               const verifyData = await verifyRes.json();
               clearOrderDraft();
-              window.location.href = verifyData.redirect || '/checkout/success?web=1';
+              window.location.href = toSafeRedirectUrl(verifyData.redirect, '/checkout/success?web=1');
             } catch (err) {
               ev.complete('fail');
               showError('Connection error during wallet checkout.');
@@ -2278,8 +2328,8 @@
       // Update Header Banner (Obsidian & Emerald brand styling)
       const bannerTitle = document.getElementById('bannerTitle');
       const bannerSubtitle = document.getElementById('bannerSubtitle');
-      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for ${introFmt}</span>`;
-      if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Clean up to 5 devices. Renews at standard ${monthlyFmt}/mo; cancel anytime in 1 click.`;
+      if (bannerTitle) bannerTitle.innerHTML = `Special Introductory Offer - <span class="text-emerald-400 font-black">1st Month for ${escapeHtml(introFmt)}</span>`;
+      if (bannerSubtitle) bannerSubtitle.innerHTML = `⚡ Clean up to 5 devices. Renews at standard ${escapeHtml(monthlyFmt)}/mo; cancel anytime in 1 click.`;
 
       // Update monthly card pill & details
       const monthlyIntroPill = document.getElementById('monthlyIntroPill');
@@ -2287,7 +2337,7 @@
       const monthlySubDisplay = document.getElementById('monthlySubDisplay');
       const monthlyPlanDesc = document.getElementById('monthlyPlanDesc');
       if (monthlyIntroPill) monthlyIntroPill.classList.remove('hidden');
-      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `${introFmt}<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
+      if (monthlyPriceDisplay) monthlyPriceDisplay.innerHTML = `${escapeHtml(introFmt)}<span class="text-xs font-medium text-gray-500"> 1st mo</span>`;
       if (monthlySubDisplay) monthlySubDisplay.textContent = `renews ${monthlyFmt}/mo`;
       if (monthlyPlanDesc) monthlyPlanDesc.textContent = `Special 1st-month introductory rate • Renews standard ${monthlyFmt}/mo`;
 
@@ -2495,7 +2545,7 @@
           }
 
           if (paypalPopup && !paypalPopup.closed) {
-            paypalPopup.location.href = subData.redirectUrl;
+            paypalPopup.location.href = toSafeRedirectUrl(subData.approveUrl || subData.redirectUrl, '/order?error=payment_incomplete');
             paypalPopup.focus();
 
             let completed = false;
@@ -2516,7 +2566,7 @@
                 cleanup();
                 clearOrderDraft();
                 try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
-                window.location.href = payload.redirectUrl || `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`;
+                window.location.href = toSafeRedirectUrl(payload.redirectUrl, `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`);
               } else if (payload.type === 'paypal_cancelled') {
                 completed = true;
                 cleanup();
@@ -2577,7 +2627,7 @@
                       cleanup();
                       clearOrderDraft();
                       try { if (paypalPopup && !paypalPopup.closed) paypalPopup.close(); } catch (e) {}
-                      window.location.href = verifyData.redirect || `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`;
+                      window.location.href = toSafeRedirectUrl(verifyData.redirect, `/checkout/success?web=1&subscription_id=${encodeURIComponent(subData.subscriptionId)}&account_id=${encodeURIComponent(subData.accountId)}`);
                       return;
                     }
                     if (verifyData.status === 'canceled' || verifyData.status === 'incomplete_expired') {
@@ -2606,7 +2656,7 @@
             return;
           }
 
-          window.location.href = subData.redirectUrl;
+          window.location.href = toSafeRedirectUrl(subData.approveUrl || subData.redirectUrl || subData.url, '/order?error=payment_incomplete');
           return;
         }
 
@@ -2641,7 +2691,7 @@
           if (subData.redirectUrl.includes('/checkout/success')) {
             clearOrderDraft();
           }
-          window.location.href = subData.redirectUrl;
+          window.location.href = toSafeRedirectUrl(subData.approveUrl || subData.redirectUrl || subData.url, '/order?error=payment_incomplete');
           return;
         }
 
@@ -2709,11 +2759,14 @@
           });
           const confirmData = await confirmRes.json();
           clearOrderDraft();
-          window.location.href = confirmData.redirect || '/checkout/success?web=1';
+          window.location.href = toSafeRedirectUrl(confirmData.redirect || confirmData.url, '/checkout/success?web=1');
           return;
         }
 
-        // Case C: On-page Card / Wallet confirmation without Stripe Hosted Checkout
+        // Case C: On-page Card / Wallet confirmation without Stripe Hosted Checkout (Dev/Test Mode ONLY)
+        if (!isTestOrDevCheckoutMode()) {
+          throw new Error('Secure card payment form is unavailable. Please disable any ad or script blockers and refresh the page, or complete your order with PayPal.');
+        }
         let rawNum = '';
         if (method === 'card') {
           if (!cardName) {
@@ -2755,7 +2808,7 @@
             country: checkoutConfig?.country,
             paymentMethod: method,
             confirmOnServer: true,
-            cardNumber: rawNum || undefined
+            cardNumber: isTestOrDevCheckoutMode() ? (rawNum || undefined) : undefined
           })
         });
 
@@ -2764,7 +2817,7 @@
           if (subData.redirectUrl.includes('/checkout/success')) {
             clearOrderDraft();
           }
-          window.location.href = subData.redirectUrl;
+          window.location.href = toSafeRedirectUrl(subData.approveUrl || subData.redirectUrl || subData.url, '/order?error=payment_incomplete');
           return;
         } else {
           throw new Error(subData.error || 'Unable to process payment. Please verify your payment details.');
@@ -2788,13 +2841,14 @@
     const ORDER_DRAFT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
     function clearOrderDraft() {
+      try { sessionStorage.removeItem(ORDER_DRAFT_KEY); } catch (e) {}
       try { localStorage.removeItem(ORDER_DRAFT_KEY); } catch (e) {}
-      try { document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax'; } catch (e) {}
+      try { document.cookie = 'sweepr_order_draft=; path=/; max-age=0; SameSite=Lax' + (window.location.protocol === 'https:' ? '; Secure' : ''); } catch (e) {}
     }
 
     function getOrderDraft() {
       try {
-        const raw = localStorage.getItem(ORDER_DRAFT_KEY);
+        const raw = sessionStorage.getItem(ORDER_DRAFT_KEY);
         if (!raw) return null;
         const draft = JSON.parse(raw);
         if (!draft || !draft.updatedAt) {
@@ -2849,8 +2903,9 @@
           cloudVaultAddon: Boolean(isCloudVaultAddonSelected),
           updatedAt
         };
-        localStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify(payload));
-        document.cookie = `sweepr_order_draft=1; path=/; max-age=${remainingSec}; SameSite=Lax`;
+        try { localStorage.removeItem(ORDER_DRAFT_KEY); } catch (e) {}
+        sessionStorage.setItem(ORDER_DRAFT_KEY, JSON.stringify(payload));
+        document.cookie = `sweepr_order_draft=1; path=/; max-age=${remainingSec}; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
       } catch (e) {}
     }
 

@@ -255,7 +255,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     if (customer.email && status === "active") {
       const activationKey = randomInt(100000, 1000000).toString();
-      repo.setOtp(customer.email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      repo.setOtp(`activation:${customer.email.trim().toLowerCase()}`, sha256(activationKey), now() + 7 * 86400);
       syncSubscriptionToCentralCrm({
         email: customer.email,
         name: customer.name,
@@ -431,7 +431,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     if (email && status === "active") {
       const activationKey = randomInt(100000, 1000000).toString();
-      repo.setOtp(email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      repo.setOtp(`activation:${email.trim().toLowerCase()}`, sha256(activationKey), now() + 7 * 86400);
       sendSubscriptionEmail(email, "activated", plan, name, activationKey).catch(console.error);
     }
 
@@ -568,7 +568,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     if (email) {
       const activationKey = randomInt(100000, 1000000).toString();
-      repo.setOtp(email.trim().toLowerCase(), sha256(activationKey), now() + 7 * 86400);
+      repo.setOtp(`activation:${email.trim().toLowerCase()}`, sha256(activationKey), now() + 7 * 86400);
       sendSubscriptionEmail(email, "activated", plan, name, activationKey).catch(console.error);
     }
 
@@ -769,13 +769,21 @@ export function createCrmRouter(deps: CrmRouterDeps) {
 
     if (deps.config.sessionSecret) {
       const isHttps = /^https:/i.test(deps.config.publicUrl);
-      await setSignedCookie(c, "sweepr_session", customer.id, deps.config.sessionSecret, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "Lax",
-        secure: isHttps,
-        maxAge: 86400 * 30,
-      });
+      const expSec = now() + 86400 * 30;
+      const hashPrefix = (customer.refresh_token_hash || "").slice(0, 16);
+      await setSignedCookie(
+        c,
+        "sweepr_session",
+        `${customer.id}.${expSec}.${hashPrefix}`,
+        deps.config.sessionSecret,
+        {
+          path: "/",
+          httpOnly: true,
+          sameSite: "Lax",
+          secure: isHttps,
+          maxAge: 86400 * 30,
+        }
+      );
     }
 
     return c.json({ ok: true, redirect: "/dashboard" });

@@ -915,12 +915,6 @@ export async function resolvePricingForRequest(
     return getPricingForCountryOrCurrency(queryCountry, queryCurrency);
   }
 
-  const tzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
-  const tzCountry = countryFromTimezone(tzHint);
-  if (tzCountry) {
-    return getPricingForCountryOrCurrency(tzCountry, null);
-  }
-
   const isCloudProxyEnv = Boolean(
     bodyOverride?.trustProxy ||
       process.env.TRUST_PROXY === "1" ||
@@ -934,8 +928,12 @@ export async function resolvePricingForRequest(
   );
 
   if (isCloudProxyEnv) {
+    const trustCloudflareHeader =
+      process.env.TRUST_CLOUDFLARE === "1" ||
+      process.env.TRUST_CLOUDFLARE === "true" ||
+      (!process.env.RAILWAY_ENVIRONMENT && !process.env.RENDER && process.env.TRUST_CLOUDFLARE !== "0");
     const headerCountry =
-      c.req.header("cf-ipcountry") ||
+      (trustCloudflareHeader ? c.req.header("cf-ipcountry") : undefined) ||
       c.req.header("x-vercel-ip-country") ||
       c.req.header("cloudfront-viewer-country") ||
       c.req.header("x-country-code") ||
@@ -949,13 +947,18 @@ export async function resolvePricingForRequest(
   // Extract visitor IP from proxy headers when behind a trusted proxy
   let ip = "";
   if (isCloudProxyEnv) {
-    const cfIp = c.req.header("cf-connecting-ip")?.trim() || c.req.header("true-client-ip")?.trim() || "";
+    const trustCloudflareIp =
+      process.env.TRUST_CLOUDFLARE === "1" || process.env.TRUST_CLOUDFLARE === "true";
+    const cfIp = trustCloudflareIp
+      ? c.req.header("cf-connecting-ip")?.trim() || c.req.header("true-client-ip")?.trim() || ""
+      : "";
     const xff = c.req.header("x-forwarded-for");
     const publicXff = xff
       ? xff
           .split(",")
           .map((s) => s.trim())
-          .find((s) => Boolean(s) && !isPrivateOrLoopbackIp(s)) || ""
+          .filter((s) => Boolean(s) && !isPrivateOrLoopbackIp(s))
+          .at(-1) || ""
       : "";
     const realIp = c.req.header("x-real-ip")?.trim() || "";
     ip =
@@ -974,6 +977,12 @@ export async function resolvePricingForRequest(
   const lookedUp = await lookupCountryByIp(ip);
   if (lookedUp) {
     return getPricingForCountryOrCurrency(lookedUp, null);
+  }
+
+  const tzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
+  const tzCountry = countryFromTimezone(tzHint);
+  if (tzCountry) {
+    return getPricingForCountryOrCurrency(tzCountry, null);
   }
 
   const acceptLang = c.req.header("accept-language") || "";

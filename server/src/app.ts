@@ -6,7 +6,7 @@ import { getCookie, setCookie, getSignedCookie, setSignedCookie, deleteCookie } 
 import { bodyLimit } from "hono/body-limit";
 import { readFileSync, existsSync, statSync, createReadStream } from "node:fs";
 import { Readable } from "node:stream";
-import { randomInt } from "node:crypto";
+import { createSign, randomInt } from "node:crypto";
 import type { Context } from "hono";
 import type Stripe from "stripe";
 import type { KeyObject } from "node:crypto";
@@ -208,6 +208,7 @@ export function createApp(deps: AppDeps) {
   const limitTelemetry = createRateLimiter(120, HOUR);
   const limitSupport = createRateLimiter(10, HOUR);
   const limitBreach = createRateLimiter(60, HOUR);
+  const limitReferral = createRateLimiter(10, 15 * 60 * 1000);
 
   const isHttps = config.publicUrl.startsWith("https://");
   const sessionSecret =
@@ -217,10 +218,35 @@ export function createApp(deps: AppDeps) {
   const trustProxy = config.trustProxy ?? false;
   const clientIp = makeClientIp(trustProxy);
 
+  const issuePortalSessionCookie = async (c: Context, accountId: string) => {
+    const acc = repo.accountById(accountId);
+    const expSec = now() + 86400 * 30;
+    const hashPrefix = (acc?.refresh_token_hash || "").slice(0, 16);
+    await setSignedCookie(c, SESSION_COOKIE, `${accountId}.${expSec}.${hashPrefix}`, sessionSecret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: isHttps,
+      maxAge: 86400 * 30,
+    });
+  };
+
   /** Account id from the signed portal session cookie, or null. */
   const sessionAccountId = async (c: Context): Promise<string | null> => {
     const v = await getSignedCookie(c, sessionSecret, SESSION_COOKIE);
-    return typeof v === "string" && v.length > 0 ? v : null;
+    if (typeof v !== "string" || v.length === 0) return null;
+    const parts = v.split(".");
+    if (parts.length === 3) {
+      const [accId, expStr, hashPrefix] = parts;
+      const expSec = Number(expStr);
+      if (!accId || !Number.isFinite(expSec) || expSec <= now()) return null;
+      const acc = repo.accountById(accId);
+      if (!acc) return null;
+      const currentPrefix = (acc.refresh_token_hash || "").slice(0, 16);
+      if (currentPrefix !== hashPrefix) return null;
+      return acc.id;
+    }
+    return null;
   };
 
   const auth = async (c: Context, next: () => Promise<void>) => {
@@ -363,16 +389,25 @@ export function createApp(deps: AppDeps) {
   const seoStore = new SeoStore(repo.db);
   seoStore.pruneBotHits(90);
   let botHitsSincePrune = 0;
+  const recentBotHitMap = new Map<string, number>();
   // Record claimed search-engine / AI-crawler visits (by User-Agent) for the CRM "Crawlers & AI" view.
   app.use("*", async (c, next) => {
     await next();
+    if (c.res.status !== 200) return;
     const bot = detectBot(c.req.header("user-agent"));
-    if (!bot || !isTrackablePath(c.req.path)) return;
+    const reqPath = c.req.path.slice(0, 200);
+    if (!bot || !isTrackablePath(reqPath)) return;
+    const nowMs = Date.now();
+    const dedupKey = `${bot}:${reqPath}`;
+    const lastLogged = recentBotHitMap.get(dedupKey) ?? 0;
+    if (nowMs - lastLogged < 60_000) return;
+    if (recentBotHitMap.size > 2000) recentBotHitMap.clear();
+    recentBotHitMap.set(dedupKey, nowMs);
     try {
-      seoStore.recordBotHit(bot, c.req.path, c.res.status);
+      seoStore.recordBotHit(bot, reqPath, c.res.status);
       syncToCentralCrm("/api/crm/seo/bot-hit?project=cleaner", {
-        user_agent: c.req.header("user-agent") || "",
-        path: c.req.path,
+        user_agent: (c.req.header("user-agent") || "").slice(0, 250),
+        path: reqPath,
         status: c.res.status,
       });
       if (++botHitsSincePrune >= 5000) {
@@ -445,8 +480,9 @@ export function createApp(deps: AppDeps) {
   app.get("/admin", (c) => c.redirect("/crm"));
 
   // If a visitor filled out checkout details on /order in the last 30 minutes (sweepr_order_draft=1 cookie),
-  // redirect any public HTML page revisit straight back to /order with their prefilled details.
-  const ORDER_DRAFT_REDIRECT_PATHS = /^\/+(?:|(?:de|fr|es)(?:\/+pricing)?|pricing(?:\.html)?|login(?:\.html)?|terms(?:\.html)?|privacy(?:\.html)?|support(?:\.html)?|refund(?:\.html)?|vs\/+[^/]+|alternatives\/+[^/]+|clean(?:\/+[^/]+\/+[^/]+)?)$/i;
+  // redirect public marketing page revisits straight back to /order with their prefilled details.
+  // Never redirect legal pages (/privacy, /terms, /refund), /support, or /login.
+  const ORDER_DRAFT_REDIRECT_PATHS = /^\/+(?:|(?:de|fr|es)(?:\/+pricing)?|pricing(?:\.html)?|vs\/+[^/]+|alternatives\/+[^/]+|clean(?:\/+[^/]+\/+[^/]+)?)$/i;
   app.use("*", async (c, next) => {
     if (c.req.method === "GET" && ORDER_DRAFT_REDIRECT_PATHS.test(c.req.path)) {
       const ua = c.req.header("user-agent");
@@ -919,7 +955,10 @@ export function createApp(deps: AppDeps) {
     const ua = c.req.header("user-agent")?.toLowerCase() || "";
     const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
     const chMobile = c.req.header("sec-ch-ua-mobile")?.toLowerCase() || "";
-    const host = c.req.header("host") || "sweeprcleaner.com";
+    let host = "sweeprcleaner.com";
+    try {
+      host = new URL(config.publicUrl).host || "sweeprcleaner.com";
+    } catch {}
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
@@ -929,6 +968,7 @@ export function createApp(deps: AppDeps) {
         : detectPlatform(ua, chPlatform, chMobile);
 
     if (!platform || requested === "picker") {
+      c.header("Cache-Control", "private, no-store");
       return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device platform:", ua, host));
     }
 
@@ -951,6 +991,7 @@ export function createApp(deps: AppDeps) {
     } catch {}
 
     if (!hasFile) {
+      c.header("Cache-Control", "private, no-store");
       return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`, ua, host));
     }
 
@@ -1341,11 +1382,18 @@ export function createApp(deps: AppDeps) {
     }
 
     const existing = repo.accountByEmail(email);
+    const callerSessionAccId = await sessionAccountId(c);
+    const isAuthenticatedOwner = Boolean(existing && callerSessionAccId === existing.id);
     let accountId: string;
     if (existing) {
       accountId = existing.id;
-      repo.setAccountLeadMeta(accountId, { country, lead_device: leadDevice });
-      if (name && !existing.name) {
+      if (isAuthenticatedOwner || !existing.country || !existing.lead_device) {
+        repo.setAccountLeadMeta(accountId, {
+          country: existing.country ? (isAuthenticatedOwner ? country : existing.country) : country,
+          lead_device: existing.lead_device ? (isAuthenticatedOwner ? leadDevice : existing.lead_device) : leadDevice,
+        });
+      }
+      if (name && (isAuthenticatedOwner || !existing.name)) {
         repo.updateAccountProfile(accountId, { name });
       }
     } else {
@@ -1417,9 +1465,16 @@ export function createApp(deps: AppDeps) {
       }
     }
     let accountId: string;
+    const callerSessionAccId = await sessionAccountId(c);
+    const isAuthenticatedOwner = Boolean(existing && callerSessionAccId === existing.id);
     if (existing) {
       accountId = existing.id;
-      repo.setAccountLeadMeta(accountId, { country: localizedPricing.country, lead_device: leadDevice });
+      if (isAuthenticatedOwner || !existing.country || !existing.lead_device) {
+        repo.setAccountLeadMeta(accountId, {
+          country: existing.country && !isAuthenticatedOwner ? existing.country : localizedPricing.country,
+          lead_device: existing.lead_device && !isAuthenticatedOwner ? existing.lead_device : leadDevice,
+        });
+      }
     } else {
       accountId = `acc_web_${randomToken(8)}`;
       const refreshToken = randomToken(32);
@@ -1794,7 +1849,7 @@ export function createApp(deps: AppDeps) {
 
     const activationKey = randomInt(100000, 1000000).toString();
     const expiresAt = now() + 7 * 86400; // 7 days validity for subscription activation key
-    repo.setOtp(email, sha256(activationKey), expiresAt);
+    repo.setOtp(`activation:${email}`, sha256(activationKey), expiresAt);
 
     const { sendSubscriptionEmail } = await import("./email.js");
     const dispatch = await sendSubscriptionEmail(
@@ -1886,9 +1941,16 @@ export function createApp(deps: AppDeps) {
     const leadDevice = detectLeadDevice(c, typeof body.device === "string" ? body.device : "web");
 
     let accountId: string;
+    const callerSessionAccId = await sessionAccountId(c);
+    const isAuthenticatedOwner = Boolean(existing && callerSessionAccId === existing.id);
     if (existing) {
       accountId = existing.id;
-      repo.setAccountLeadMeta(accountId, { country: localizedPricing.country, lead_device: leadDevice });
+      if (isAuthenticatedOwner || !existing.country || !existing.lead_device) {
+        repo.setAccountLeadMeta(accountId, {
+          country: existing.country && !isAuthenticatedOwner ? existing.country : localizedPricing.country,
+          lead_device: existing.lead_device && !isAuthenticatedOwner ? existing.lead_device : leadDevice,
+        });
+      }
     } else {
       accountId = `acc_web_${randomToken(8)}`;
       const refreshToken = randomToken(32);
@@ -1897,8 +1959,13 @@ export function createApp(deps: AppDeps) {
         lead_device: leadDevice,
       });
     }
-    if (name) {
-      repo.updateAccountProfile(accountId, { name, email, country: localizedPricing.country, lead_device: leadDevice });
+    if (name && (!existing || isAuthenticatedOwner || !existing.name)) {
+      repo.updateAccountProfile(accountId, {
+        name,
+        email,
+        country: existing?.country && !isAuthenticatedOwner ? existing.country : localizedPricing.country,
+        lead_device: existing?.lead_device && !isAuthenticatedOwner ? existing.lead_device : leadDevice,
+      });
     }
 
     // Ensure Stripe Customer exists with billing details
@@ -1909,8 +1976,8 @@ export function createApp(deps: AppDeps) {
         try {
           await stripe.customers.update(customerId, {
             ...(providedEmail ? { email: providedEmail } : {}),
-            ...(name ? { name } : {}),
-            ...(addressLine1 || postalCode
+            ...(name && (!existing || isAuthenticatedOwner || !existing.name) ? { name } : {}),
+            ...((addressLine1 || postalCode) && (!existing || isAuthenticatedOwner)
               ? { address: { line1: addressLine1 || undefined, postal_code: postalCode || undefined } }
               : {}),
             metadata: attributionMeta,
@@ -2165,13 +2232,9 @@ export function createApp(deps: AppDeps) {
 
         const resolvedAccount = repo.accountById(accountId);
         if (resolvedAccount) {
-          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "Lax",
-            secure: isHttps,
-            maxAge: 86400 * 30,
-          });
+          if (!existing || isAuthenticatedOwner) {
+            await issuePortalSessionCookie(c, resolvedAccount.id);
+          }
           const planLabel =
             plan === "annual" ? "Annual" : plan === "six_month" ? "6-Month" : "Pro";
           await dispatchActivationEmail(resolvedAccount, planLabel);
@@ -2250,13 +2313,9 @@ export function createApp(deps: AppDeps) {
           if (confirmedPi?.status === "succeeded" || confirmedPi?.status === "processing") {
             const updatedSub = await retrieveSubscriptionSafe(subscription.id).catch(() => subscription);
             syncSubscription(repo, { ...updatedSub, status: "active" } as Stripe.Subscription, accountId);
-            await setSignedCookie(c, SESSION_COOKIE, accountId, sessionSecret, {
-              path: "/",
-              httpOnly: true,
-              sameSite: "Lax",
-              secure: isHttps,
-              maxAge: 86400 * 30,
-            });
+            if (!existing || isAuthenticatedOwner) {
+              await issuePortalSessionCookie(c, accountId);
+            }
             return c.json({
               redirectUrl: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`,
               subscriptionId: subscription.id,
@@ -2298,6 +2357,19 @@ export function createApp(deps: AppDeps) {
         });
       }
 
+      // Reject server-side raw card PAN submission in live/production mode (PCI-DSS SAQ-A enforcement)
+      const isLiveStripe = Boolean(
+        config.stripePublishableKey?.startsWith("pk_live_") ||
+          process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_") ||
+          paymentIntent?.livemode
+      );
+      if ((confirmOnServer || typeof body.cardNumber === "string") && isLiveStripe) {
+        return c.json(
+          { error: "Direct card numbers are not accepted on the server. Please use Stripe Elements." },
+          400
+        );
+      }
+
       // Direct Card / Wallet confirmation on server when Stripe Elements is not mounted (test mode)
       if (confirmOnServer && paymentIntent.livemode === false) {
         const rawCard = typeof body.cardNumber === "string" ? body.cardNumber.replace(/\D/g, "") : "";
@@ -2326,13 +2398,9 @@ export function createApp(deps: AppDeps) {
 
         const updatedSub = await stripe.subscriptions.retrieve(subscription.id);
         syncSubscription(repo, updatedSub, accountId);
-        await setSignedCookie(c, SESSION_COOKIE, accountId, sessionSecret, {
-          path: "/",
-          httpOnly: true,
-          sameSite: "Lax",
-          secure: isHttps,
-          maxAge: 86400 * 30,
-        });
+        if (!existing || isAuthenticatedOwner) {
+          await issuePortalSessionCookie(c, accountId);
+        }
 
         return c.json({
           redirectUrl: `/checkout/success?web=1&subscription_id=${encodeURIComponent(subscription.id)}&account_id=${encodeURIComponent(accountId)}`,
@@ -2416,13 +2484,7 @@ export function createApp(deps: AppDeps) {
       if (resolvedAccount) {
         const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
         if (isFreshSub) {
-          await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "Lax",
-            secure: isHttps,
-            maxAge: 86400 * 30,
-          });
+          await issuePortalSessionCookie(c, resolvedAccount.id);
         }
         const planLabel =
           sub.metadata?.plan === "annual"
@@ -2444,7 +2506,7 @@ export function createApp(deps: AppDeps) {
     }
   });
 
-  // Checks that the email is already signed up before sending a 6-digit OTP email.
+  // Checks that the email is already signed up before sending a 6-digit OTP email (with generic 200 response to prevent enumeration).
   app.post("/api/portal-login", async (c) => {
     if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "Too many requests. Please try again later." }, 429);
     const body = await c.req.json().catch(() => ({}));
@@ -2457,11 +2519,11 @@ export function createApp(deps: AppDeps) {
     if (!account) {
       return c.json(
         {
-          ok: false,
-          otpSent: false,
-          error: "No account found for this email address. Please sign up first or check your email.",
+          ok: true,
+          otpSent: true,
+          message: "If an account exists for that email, a 6-digit login code has been sent.",
         },
-        404
+        200
       );
     }
 
@@ -2520,20 +2582,18 @@ export function createApp(deps: AppDeps) {
       description: `Verified 6-digit OTP code and signed in to customer dashboard`,
       actor: "customer",
     });
-    await setSignedCookie(c, SESSION_COOKIE, account.id, sessionSecret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "Lax",
-      secure: isHttps,
-      maxAge: 86400 * 30,
-    });
+    await issuePortalSessionCookie(c, account.id);
 
     return c.json({ ok: true, redirect: "/dashboard" });
   });
 
-  app.post("/api/logout", (c) => {
+  app.post("/api/logout", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
       return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const accountId = await sessionAccountId(c);
+    if (accountId) {
+      repo.rotateAccountTokenHash(accountId, sha256(randomToken(32)));
     }
     deleteCookie(c, SESSION_COOKIE, { path: "/", secure: isHttps, httpOnly: true, sameSite: "Lax" });
     return c.json({ ok: true });
@@ -2781,8 +2841,9 @@ export function createApp(deps: AppDeps) {
         const firstPrice = sub.items?.data?.[0]?.price;
         const interval = firstPrice?.recurring?.interval ?? (ent.plan === "annual" ? "year" : "month");
         const intervalCount = firstPrice?.recurring?.interval_count ?? (ent.plan === "six_month" ? 6 : 1);
-        const currency = firstPrice?.currency || localizedPricing.currency;
-        const tierPricing = getPricingForCountryOrCurrency(account.country, currency);
+        const rawCurrency = firstPrice?.currency || localizedPricing.currency;
+        const tierPricing = getPricingForCountryOrCurrency(account.country, rawCurrency);
+        const currency = tierPricing.currency;
         const unitAmount =
           addon === "cloud_vault"
             ? interval === "year"
@@ -3673,6 +3734,10 @@ export function createApp(deps: AppDeps) {
 
   // Flow A — Step 1: Authenticated Website Portal generates a 120-second one-time QR token (ptk_...)
   app.post("/api/device-link/create-token", async (c) => {
+    const authHeader = c.req.header("authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ") && !isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ ok: false, error: "forbidden_origin", message: "Cross-origin request blocked" }, 403);
+    }
     if (!limitQrCreate.hit(clientIp(c))) {
       return c.json({ ok: false, error: "rate_limited" }, 429);
     }
@@ -3849,7 +3914,12 @@ export function createApp(deps: AppDeps) {
       return c.json({ ok: false, error: "rate_limited" }, 429);
     }
     const challengeId = String(c.req.query("challenge_id") ?? "").trim();
-    const pollSecret = String(c.req.query("poll_secret") ?? "").trim();
+    const pollSecret = (
+      c.req.header("x-poll-secret") ||
+      c.req.query("poll_secret") ||
+      c.req.query("secret") ||
+      ""
+    ).trim();
     if (!/^chk_[A-Za-z0-9_-]{20,64}$/.test(challengeId) || !/^psec_[A-Za-z0-9_-]{20,64}$/.test(pollSecret)) {
       return c.json({ ok: false, error: "invalid_challenge" }, 400);
     }
@@ -3912,6 +3982,10 @@ export function createApp(deps: AppDeps) {
 
   // Flow B — Step 3: Phone / Portal approves the waiting Desktop/Mobile challenge
   app.post("/api/device-link/approve", async (c) => {
+    const authHeader = c.req.header("authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ") && !isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ ok: false, error: "forbidden_origin", message: "Cross-origin request blocked" }, 403);
+    }
     if (!limitQrRedeem.hit(clientIp(c))) {
       return c.json({ ok: false, error: "rate_limited" }, 429);
     }
@@ -3966,13 +4040,7 @@ export function createApp(deps: AppDeps) {
       )
       .run(account.id, cred.refresh_token, cred.token, challengeId);
 
-    await setSignedCookie(c, SESSION_COOKIE, account.id, sessionSecret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "Lax",
-      secure: isHttps,
-      maxAge: 86400 * 30,
-    });
+    await issuePortalSessionCookie(c, account.id);
 
     return c.json({
       ok: true,
@@ -4407,7 +4475,7 @@ export function createApp(deps: AppDeps) {
     }
 
     const code = randomInt(100000, 1000000).toString();
-    const expiresAt = now() + 7 * 86400;
+    const expiresAt = now() + 15 * 60;
     repo.setOtp(email, sha256(code), expiresAt);
     const { sendSubscriptionEmail } = await import("./email.js");
     const dispatch = await sendSubscriptionEmail(email, "otp", code);
@@ -4520,6 +4588,12 @@ export function createApp(deps: AppDeps) {
 
   // Apple App Store (Guideline 5.1.1(v)) & Google Play Account Deletion compliance endpoint.
   app.delete("/v1/account", auth, async (c) => {
+    const h = c.req.header("authorization") ?? "";
+    const bearerTok = h.startsWith("Bearer ") ? h.slice(7) : "";
+    const matchedDev = bearerTok ? repo.deviceTokenOwner(sha256(bearerTok)) : undefined;
+    if (matchedDev) {
+      return c.json({ error: "Account deletion requires primary account authentication or portal login." }, 403);
+    }
     const account = c.get("account");
     if (stripe && account.stripe_customer_id) {
       const ent = repo.entitlement(account.id);
@@ -4551,6 +4625,12 @@ export function createApp(deps: AppDeps) {
         ? "mobile"
         : "pc";
     if (!DEVICE_RE.test(deviceId)) return c.json({ error: "invalid device_id" }, 400);
+    const h = c.req.header("authorization") ?? "";
+    const bearerTok = h.startsWith("Bearer ") ? h.slice(7) : "";
+    const matchedDev = bearerTok ? repo.deviceTokenOwner(sha256(bearerTok)) : undefined;
+    if (matchedDev && matchedDev.id !== deviceId) {
+      return c.json({ error: "device_token_mismatch" }, 403);
+    }
     if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
@@ -4644,6 +4724,7 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/v1/referral/apply", auth, async (c) => {
+    if (!limitReferral.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     const account = c.get("account");
     const t = now();
     const body = await c.req.json().catch(() => ({}));
@@ -4660,6 +4741,54 @@ export function createApp(deps: AppDeps) {
       expires_at: updatedEnt?.current_period_end ?? t + 30 * 86400,
     });
   });
+
+  async function resolveGooglePlayAccessToken(): Promise<string | null> {
+    const direct = (process.env.GOOGLE_PLAY_ACCESS_TOKEN || "").trim();
+    if (direct) return direct;
+    const rawSa = (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON || "").trim();
+    if (!rawSa) return null;
+    try {
+      let jsonStr = rawSa;
+      if (!rawSa.startsWith("{")) {
+        if (existsSync(rawSa)) {
+          jsonStr = readFileSync(rawSa, "utf8");
+        } else {
+          jsonStr = Buffer.from(rawSa, "base64").toString("utf8");
+        }
+      }
+      const sa = JSON.parse(jsonStr);
+      if (!sa?.client_email || !sa?.private_key) return null;
+      const iat = Math.floor(Date.now() / 1000);
+      const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+      const claim = Buffer.from(
+        JSON.stringify({
+          iss: sa.client_email,
+          scope: "https://www.googleapis.com/auth/androidpublisher",
+          aud: "https://oauth2.googleapis.com/token",
+          iat,
+          exp: iat + 3600,
+        })
+      ).toString("base64url");
+      const signer = createSign("RSA-SHA256");
+      signer.update(`${header}.${claim}`);
+      const sig = signer.sign(sa.private_key, "base64url");
+      const assertion = `${header}.${claim}.${sig}`;
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+          assertion,
+        }).toString(),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!tokenRes.ok) return null;
+      const tokenData: any = await tokenRes.json().catch(() => null);
+      return typeof tokenData?.access_token === "string" ? tokenData.access_token : null;
+    } catch {
+      return null;
+    }
+  }
 
   // Direct Google Play Billing Verification & Immediate Central CRM Sync
   app.post("/v1/billing/google-play/verify", async (c) => {
@@ -4681,37 +4810,64 @@ export function createApp(deps: AppDeps) {
 
     let account = await resolvePortalOrBearerOrOtpAccount(c, body);
     const email = normalizeEmail(body?.email) ?? account?.email ?? undefined;
-    if (!account && email) {
-      account = repo.accountByEmail(email) ?? null;
-    }
-    if (!account && typeof body?.account_id === "string" && body.account_id.trim()) {
-      account = repo.accountById(body.account_id.trim()) ?? null;
+    // Never allow unauthenticated binding to an existing account by email or account_id
+    if (!account) {
+      if (
+        (email && repo.accountByEmail(email)) ||
+        (typeof body?.account_id === "string" && body.account_id.trim())
+      ) {
+        return c.json(
+          {
+            error: "authentication_required",
+            requires_otp: true,
+            message: "Please authenticate with your account or 6-digit login code to link this purchase.",
+          },
+          401
+        );
+      }
     }
 
     // Prevent replay of the same Google Play purchase token / order ID across different accounts
     const existingSubOwner = repo.db
       .prepare("SELECT account_id FROM entitlements WHERE stripe_subscription_id = ? LIMIT 1")
       .get(subRefId) as { account_id: string } | undefined;
-    if (existingSubOwner && account && existingSubOwner.account_id !== account.id) {
-      return c.json({ error: "duplicate_purchase_token" }, 409);
-    }
-    if (existingSubOwner && !account) {
-      account = repo.accountById(existingSubOwner.account_id) ?? null;
+    if (existingSubOwner) {
+      if (!account || existingSubOwner.account_id !== account.id) {
+        return c.json({ error: "duplicate_purchase_token" }, 409);
+      }
     }
 
-    // Optional live Google Play Developer API verification when GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is configured
-    if (process.env.GOOGLE_PLAY_ACCESS_TOKEN) {
+    // Fail-closed Google Play Developer API verification (unless explicitly overridden in local unit test env)
+    const allowUnverifiedTest = process.env.ALLOW_UNVERIFIED_GOOGLE_PLAY_TEST === "1";
+    const gpAccessToken = await resolveGooglePlayAccessToken();
+    if (!gpAccessToken && !allowUnverifiedTest) {
+      return c.json({ error: "google_play_verification_unconfigured" }, 503);
+    }
+    if (gpAccessToken) {
       try {
-        const pkg = String(body?.package_name || "com.sweepr.app");
+        const pkg = "com.sweepr.app";
         const verifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(pkg)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
         const gpRes = await fetch(verifyUrl, {
-          headers: { Authorization: `Bearer ${process.env.GOOGLE_PLAY_ACCESS_TOKEN}` },
+          headers: { Authorization: `Bearer ${gpAccessToken}` },
+          signal: AbortSignal.timeout(8000),
         });
-        if (gpRes.status === 404 || gpRes.status === 410) {
-          return c.json({ error: "google_play_token_rejected" }, 402);
+        if (!gpRes.ok) {
+          return c.json({ error: "invalid_google_play_receipt" }, 402);
         }
-      } catch (err) {
-        console.warn("[google-play] Developer API check warning:", err);
+        const gpData: any = await gpRes.json().catch(() => null);
+        const state = String(gpData?.subscriptionState ?? "");
+        if (state !== "SUBSCRIPTION_STATE_ACTIVE" && state !== "SUBSCRIPTION_STATE_IN_GRACE_PERIOD") {
+          return c.json({ error: "invalid_google_play_receipt" }, 402);
+        }
+        if (
+          Array.isArray(gpData?.lineItems) &&
+          gpData.lineItems.length > 0 &&
+          !gpData.lineItems.some((li: any) => li?.productId === productId)
+        ) {
+          return c.json({ error: "invalid_google_play_receipt" }, 402);
+        }
+      } catch {
+        return c.json({ error: "invalid_google_play_receipt" }, 402);
       }
     }
 
@@ -4760,6 +4916,10 @@ export function createApp(deps: AppDeps) {
 
     const existingEnt = repo.entitlement(account.id);
     const effectivePeriodEnd = Math.max(existingEnt?.current_period_end ?? 0, periodEnd);
+    const hasActiveStripeSub = Boolean(
+      existingEnt?.stripe_subscription_id?.startsWith("sub_") && existingEnt.status === "active"
+    );
+    const resolvedSubId = hasActiveStripeSub ? existingEnt!.stripe_subscription_id : subRefId;
     // When purchasing or upgrading a base plan, always apply the newly purchased plan tier!
     // When purchasing an add-on alone, preserve the existing base plan (or "addon_only" if none).
     const hasBasePro = Boolean(
@@ -4777,7 +4937,7 @@ export function createApp(deps: AppDeps) {
 
     repo.upsertEntitlement({
       account_id: account.id,
-      stripe_subscription_id: subRefId,
+      stripe_subscription_id: resolvedSubId,
       status: effectiveStatus,
       plan: effectivePlan,
       current_period_end: effectivePeriodEnd,
@@ -4848,34 +5008,37 @@ export function createApp(deps: AppDeps) {
       country: typeof body?.country === "string" ? body.country : undefined,
       currency: typeof body?.currency === "string" ? body.currency : undefined,
       trustProxy,
-      allowQueryOverride: true,
+      allowQueryOverride: false,
     });
     repo.setAccountLeadMeta(account.id, {
       country: localizedPricing.country,
       lead_device: detectLeadDevice(c, body?.device_type || "pc"),
     });
 
-    // If the entered email already has an active subscription, auto-activate this desktop device immediately
-    // and return the entitled account's credentials + signed Ed25519 entitlement token.
+    // If the entered email already has an active subscription, only auto-link if the caller is already authenticated as that account.
+    // Otherwise require OTP verification via /v1/account/send-otp & /v1/account/verify-otp to prevent account takeover.
     if (email) {
       const entitledAcc = await findOrSyncEntitledAccountByEmail(email);
       if (entitledAcc) {
         const ent = repo.entitlement(entitledAcc.id);
         const t = now();
         if (ent && isEntitled(ent, t, config.pastDueGraceDays) && DEVICE_RE.test(deviceId)) {
+          if (entitledAcc.id !== account.id) {
+            return c.json({
+              already_active: false,
+              activated: false,
+              requires_otp: true,
+              email: entitledAcc.email ?? email,
+              message:
+                "An active subscription already exists for this email. Please verify with a 6-digit login code to link this device.",
+            });
+          }
           const checkoutDeviceType =
             body?.device_type === "mobile" || body?.platform === "android" || body?.platform === "ios"
               ? "mobile"
               : "pc";
           if (!repo.touchDevice(entitledAcc.id, deviceId, checkoutDeviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
-            const oldest = repo.db
-              .prepare("SELECT id FROM devices WHERE account_id = ? AND revoked = 0 ORDER BY last_seen ASC LIMIT 1")
-              .get(entitledAcc.id) as { id: string } | undefined;
-            if (oldest) {
-              repo.db.prepare("DELETE FROM devices WHERE id = ? AND account_id = ?").run(oldest.id, entitledAcc.id);
-            }
-            repo.db.prepare("UPDATE devices SET revoked = 0 WHERE id = ? AND account_id = ?").run(deviceId, entitledAcc.id);
-            repo.touchDevice(entitledAcc.id, deviceId, checkoutDeviceType, config.maxDevicesPc, config.maxDevicesMobile);
+            return c.json({ error: "device_limit", status: "device_limit" }, 403);
           }
           const refreshToken = randomToken(32);
           repo.setDeviceTokenHash(entitledAcc.id, deviceId, sha256(refreshToken));
@@ -4895,6 +5058,7 @@ export function createApp(deps: AppDeps) {
             exp,
           });
           return c.json({
+            already_active: true,
             activated: true,
             account_id: entitledAcc.id,
             refresh_token: refreshToken,
@@ -5080,6 +5244,21 @@ export function createApp(deps: AppDeps) {
     if (!res.ok) {
       return c.json({ error: res.error || "unable_to_claim" }, res.error === "already_claimed" ? 409 : 400);
     }
+    if (stripe && res.current_period_end) {
+      const ent = repo.entitlement(accountId);
+      if (
+        ent?.stripe_subscription_id?.startsWith("sub_") &&
+        !ent.stripe_subscription_id.startsWith("sub_owner") &&
+        typeof (stripe.subscriptions as any)?.update === "function"
+      ) {
+        await stripe.subscriptions
+          .update(ent.stripe_subscription_id, {
+            trial_end: res.current_period_end,
+            proration_behavior: "none",
+          } as any)
+          .catch(() => {});
+      }
+    }
     return c.json({ ok: true, current_period_end: res.current_period_end, status: res.status });
   });
 
@@ -5222,6 +5401,7 @@ export function createApp(deps: AppDeps) {
     "purchase_completed",
     "clean_completed",
   ]);
+  let lastCrashEmailSentAt = 0;
   app.post("/v1/telemetry/crash", async (c) => {
     if (!limitTelemetry.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     const body = await c.req.json().catch(() => ({}));
@@ -5240,18 +5420,22 @@ export function createApp(deps: AppDeps) {
       message: body.message || body.error_type || "crash",
       stack_trace: body.stack || null,
     });
-    // Automated incident alert notification (#26 Alerts)
-    import("./email.js")
-      .then(({ sendSupportNotificationEmail }) =>
-        sendSupportNotificationEmail({
-          fromEmail: "alerts@sweeprcleaner.com",
-          subject: `[SWEEPR CRASH ALERT] v${body.app_version || "0.1.0"} on ${body.platform || "windows"}`,
-          message: `Crash Report #${id}: ${body.error_type || "panic"} — ${body.message || ""}\n\n${body.stack || ""}`,
-          platform: String(body.platform || "windows"),
-          ticketId: `crash_${id}`,
-        })
-      )
-      .catch(() => {});
+    // Automated incident alert notification (#26 Alerts) — throttled to at most 1 email per 15 minutes
+    const nowMs = Date.now();
+    if (nowMs - lastCrashEmailSentAt >= 15 * 60_000) {
+      lastCrashEmailSentAt = nowMs;
+      import("./email.js")
+        .then(({ sendSupportNotificationEmail }) =>
+          sendSupportNotificationEmail({
+            fromEmail: "alerts@sweeprcleaner.com",
+            subject: `[SWEEPR CRASH ALERT] v${body.app_version || "0.1.0"} on ${body.platform || "windows"}`,
+            message: `Crash Report #${id}: ${body.error_type || "panic"} — ${body.message || ""}\n\n${body.stack || ""}`,
+            platform: String(body.platform || "windows"),
+            ticketId: `crash_${id}`,
+          })
+        )
+        .catch(() => {});
+    }
     return c.json({ ok: true, id });
   });
   app.post("/v1/telemetry/event", async (c) => {
@@ -5346,24 +5530,8 @@ export function createApp(deps: AppDeps) {
         }
       }
     }
-    // Fallback when multiple Stripe webhook endpoints exist with distinct signing secrets:
-    // verify the event ID directly against Stripe's API (`stripe.events.retrieve`) using STRIPE_SECRET_KEY.
-    if (!event && sig && typeof (stripe.events as any)?.retrieve === "function") {
-      try {
-        const parsed = JSON.parse(raw);
-        const evtId = typeof parsed?.id === "string" ? parsed.id.trim() : "";
-        if (/^evt_[A-Za-z0-9_]+$/.test(evtId)) {
-          const verified = await stripe.events.retrieve(evtId);
-          if (verified && verified.id === evtId) {
-            event = verified;
-          }
-        }
-      } catch {
-        event = null;
-      }
-    }
     if (!event) {
-      return c.json({ error: "invalid signature" }, 400);
+      return c.json({ error: "invalid_signature" }, 400);
     }
     if (!repo.markEventProcessed(event.id)) return c.json({ received: true, duplicate: true });
     try {
@@ -5487,17 +5655,55 @@ export function createApp(deps: AppDeps) {
     if (subscriptionId && !subscriptionId.startsWith("cs_") && stripe) {
       try {
         let sub = await retrieveSubscriptionSafe(subscriptionId);
-        let piSucceeded = redirectStatus === "succeeded";
-        if (!piSucceeded && paymentIntentId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
-          const piObj = await stripe.paymentIntents.retrieve(paymentIntentId).catch(() => null);
-          if (piObj && (piObj.status === "succeeded" || piObj.status === "processing")) {
-            piSucceeded = true;
+        const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
+        if (!metaAccountId || (accountId && metaAccountId !== accountId)) {
+          if (isPopup) {
+            return c.html(popupClosePage("cancelled", "/order?error=payment_incomplete"));
           }
+          return c.redirect("/order?error=payment_incomplete");
         }
-        // If PayPal redirect just succeeded, Stripe may take a brief moment to settle the invoice status from incomplete -> active
+
+        // Verify payment status strictly from the subscription's own invoice PaymentIntent or a verified linked PaymentIntent
+        const extractSubPiStatus = async (s: Stripe.Subscription): Promise<string> => {
+          const latestInv: any = s.latest_invoice;
+          const invPi: any =
+            latestInv?.payment_intent ??
+            latestInv?.payments?.data?.[0]?.payment?.payment_intent ??
+            null;
+          const invPiId = typeof invPi === "string" ? invPi : invPi?.id ?? "";
+          let status = typeof invPi === "object" && invPi ? String(invPi.status || "") : "";
+          if (!status && invPiId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
+            const fetched = await stripe.paymentIntents.retrieve(invPiId).catch(() => null);
+            if (fetched) status = String(fetched.status || "");
+          }
+          if (!status && paymentIntentId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
+            const subCustId = typeof s.customer === "string" ? s.customer : (s.customer as any)?.id ?? "";
+            const fetched = await stripe.paymentIntents.retrieve(paymentIntentId).catch(() => null);
+            const piCustId =
+              typeof fetched?.customer === "string" ? fetched.customer : (fetched?.customer as any)?.id ?? "";
+            const piMetaAcc =
+              fetched?.metadata?.account_id || (fetched?.metadata as any)?.sweepr_account_id || "";
+            if (
+              fetched &&
+              ((invPiId && fetched.id === invPiId) ||
+                (subCustId && piCustId === subCustId) ||
+                (piMetaAcc && piMetaAcc === metaAccountId))
+            ) {
+              status = String(fetched.status || "");
+            }
+          }
+          return status;
+        };
+
+        let piStatus = await extractSubPiStatus(sub);
+        let piSucceeded = piStatus === "succeeded" || piStatus === "processing";
+
+        // If redirect just succeeded on Stripe's side, Stripe may take a brief moment to settle the invoice status from incomplete -> active
         if (sub.status === "incomplete" && piSucceeded) {
           await new Promise((r) => setTimeout(r, 800));
           sub = await retrieveSubscriptionSafe(subscriptionId).catch(() => sub);
+          piStatus = await extractSubPiStatus(sub);
+          piSucceeded = piStatus === "succeeded" || piStatus === "processing";
         }
         if (
           (sub.status === "incomplete" && !piSucceeded) ||
@@ -5509,8 +5715,7 @@ export function createApp(deps: AppDeps) {
           }
           return c.redirect("/order?error=payment_cancelled");
         }
-        const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
-        if (metaAccountId && accountId && metaAccountId === accountId) {
+        if (metaAccountId && (!accountId || metaAccountId === accountId)) {
           await syncPayPalCustomerEmail(sub, metaAccountId);
           const effectiveSub =
             sub.status === "incomplete" && piSucceeded ? ({ ...sub, status: "active" } as Stripe.Subscription) : sub;
@@ -5521,13 +5726,7 @@ export function createApp(deps: AppDeps) {
           if (resolvedAccount && (effectiveSub.status === "active" || effectiveSub.status === "trialing")) {
             const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
             if (isFreshSub) {
-              await setSignedCookie(c, SESSION_COOKIE, resolvedAccount.id, sessionSecret, {
-                path: "/",
-                httpOnly: true,
-                sameSite: "Lax",
-                secure: isHttps,
-                maxAge: 86400 * 30,
-              });
+              await issuePortalSessionCookie(c, resolvedAccount.id);
             }
             const planLabel =
               sub.metadata?.plan === "annual"
@@ -5578,8 +5777,12 @@ export function createApp(deps: AppDeps) {
       }
       const clampedDays = Math.max(1, Math.min(Number(days) || 7, 3650));
       repo.upsertEntitlement({
-        account_id, stripe_subscription_id: null, status, plan: "monthly",
-        current_period_end: now() + clampedDays * 86400, cancel_at_period_end: 0,
+        account_id,
+        stripe_subscription_id: status === "active" ? `sub_dev_${account_id}` : null,
+        status,
+        plan: "monthly",
+        current_period_end: now() + clampedDays * 86400,
+        cancel_at_period_end: 0,
       });
       return c.json({ ok: true });
     });

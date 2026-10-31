@@ -98,13 +98,15 @@ object LogFiles {
         "((?:[A-Za-z_]*token|receipt|signature|code)\\s*[=:]\\s*\"?)[^\\s\",;}]+",
         RegexOption.IGNORE_CASE,
     )
+    private val PAIR_CHALLENGE_TOKEN = Regex("\\b(ptk|chk)_[A-Za-z0-9_-]+")
 
-    private fun redact(line: String): String {
+    internal fun redact(line: String): String {
         val jsonMasked = SENSITIVE_LOG_PATTERN.replace(line) { match ->
             val keyPart = match.value.substringBefore(":")
             "$keyPart:\"[REDACTED]\""
         }
-        val masked = TOKEN_VALUE.replace(jsonMasked) { "${it.groupValues[1]}[REDACTED]" }
+        val tokenMasked = TOKEN_VALUE.replace(jsonMasked) { "${it.groupValues[1]}[REDACTED]" }
+        val masked = PAIR_CHALLENGE_TOKEN.replace(tokenMasked, "[REDACTED]")
         return if (SENSITIVE_LINE.containsMatchIn(masked)) "[line redacted: billing data]" else masked
     }
 

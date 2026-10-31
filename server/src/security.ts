@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
 import { getConnInfo } from "@hono/node-server/conninfo";
+import { isPrivateOrLoopbackIp } from "./pricing.js";
 
 /** Constant-time string comparison (compares sha256 digests so lengths never leak). */
 export function safeEqual(a: string, b: string): boolean {
@@ -97,12 +98,13 @@ export function createRateLimiter(limit: number, windowMs: number, maxKeys = 10_
  * server is explicitly configured to sit behind a trusted proxy (TRUST_PROXY=1).
  */
 export function makeClientIp(trustProxy: boolean) {
-  const trustCloudflare = process.env.TRUST_CLOUDFLARE === "1";
   return (c: Context): string => {
     if (trustProxy) {
+      const trustCloudflare =
+        process.env.TRUST_CLOUDFLARE === "1" || process.env.TRUST_CLOUDFLARE === "true";
       if (trustCloudflare) {
         const cfIp = c.req.header("cf-connecting-ip")?.trim();
-        if (cfIp) return cfIp;
+        if (cfIp && !isPrivateOrLoopbackIp(cfIp)) return cfIp;
       }
       const xff = c.req.header("x-forwarded-for");
       if (xff) {
@@ -110,7 +112,8 @@ export function makeClientIp(trustProxy: boolean) {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
-        const rightmost = hops.at(-1);
+        const publicHops = hops.filter((ip) => !isPrivateOrLoopbackIp(ip));
+        const rightmost = publicHops.at(-1) ?? hops.at(-1);
         if (rightmost) return rightmost;
       }
     }
@@ -176,18 +179,26 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
     if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
       const fetchSite = c.req.header("sec-fetch-site");
       if (fetchSite === "cross-site") return c.text("Forbidden (cross-site)", 403);
+      if (fetchSite && fetchSite !== "same-origin" && fetchSite !== "same-site" && fetchSite !== "none") {
+        return c.text("Forbidden (cross-site)", 403);
+      }
       const origin = c.req.header("origin");
       if (origin && origin !== "null") {
-        const host = (opts.trustProxy && c.req.header("x-forwarded-host")) || c.req.header("host") || "";
+        const host = c.req.header("host") || "";
         let ok = opts.allowedOrigins.includes(origin);
         try {
-          ok ||= new URL(origin).host === host || origin === new URL(c.req.url).origin;
+          ok ||= (Boolean(host) && new URL(origin).host === host) || origin === new URL(c.req.url).origin;
         } catch {
           ok = false;
         }
         if (!ok) return c.text("Forbidden (bad origin)", 403);
       } else if (origin === "null") {
         return c.text("Forbidden (bad origin)", 403);
+      } else if (!fetchSite) {
+        const ua = c.req.header("user-agent") || "";
+        if (ua.includes("Mozilla/")) {
+          return c.text("Forbidden (missing origin)", 403);
+        }
       }
       // Reject simple HTML form submissions without same-origin Fetch Metadata
       const ct = (c.req.header("content-type") || "").toLowerCase();
@@ -196,7 +207,7 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
         ct.startsWith("multipart/form-data") ||
         ct.startsWith("text/plain")
       ) {
-        if (fetchSite !== "same-origin" && fetchSite !== "same-site") {
+        if (fetchSite !== "same-origin") {
           return c.text("Forbidden (form CSRF)", 403);
         }
       }
@@ -210,14 +221,17 @@ export function adminBasicAuth(opts: AdminAuthOptions): MiddlewareHandler {
  * CSRF check for cookie-authenticated endpoints. Rejects explicit cross-site Fetch Metadata
  * (`Sec-Fetch-Site: cross-site`), foreign `Origin` headers, and originless form posts.
  */
-export function isSameOriginRequest(c: Context, publicUrl: string, trustProxy: boolean): boolean {
+export function isSameOriginRequest(c: Context, publicUrl: string, _trustProxy?: boolean): boolean {
   const fetchSite = c.req.header("sec-fetch-site");
   if (fetchSite === "cross-site") return false;
+  if (fetchSite && fetchSite !== "same-origin" && fetchSite !== "same-site" && fetchSite !== "none") {
+    return false;
+  }
 
   const origin = c.req.header("origin");
   if (origin === "null") return false;
   if (origin) {
-    const host = (trustProxy && c.req.header("x-forwarded-host")) || c.req.header("host") || "";
+    const host = c.req.header("host") || "";
     try {
       const originUrl = new URL(origin);
       if (host && originUrl.host === host) return true;
@@ -229,17 +243,21 @@ export function isSameOriginRequest(c: Context, publicUrl: string, trustProxy: b
     return false;
   }
 
-  // Reject simple HTML form submissions without explicit same-origin/same-site Fetch Metadata
+  // Reject simple HTML form submissions without explicit same-origin Fetch Metadata
   const ct = (c.req.header("content-type") || "").toLowerCase();
   if (
     ct.startsWith("application/x-www-form-urlencoded") ||
     ct.startsWith("multipart/form-data") ||
     ct.startsWith("text/plain")
   ) {
-    if (fetchSite !== "same-origin" && fetchSite !== "same-site") {
+    if (fetchSite !== "same-origin") {
       return false;
     }
   } else if (!fetchSite) {
+    const ua = c.req.header("user-agent") || "";
+    if (ua.includes("Mozilla/")) {
+      return false;
+    }
     // If both Origin and Sec-Fetch-Site are omitted on a state-changing request, require JSON content-type or X-Requested-With
     const xrw = c.req.header("x-requested-with");
     if (!ct.startsWith("application/json") && !xrw) {
