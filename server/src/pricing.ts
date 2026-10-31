@@ -974,6 +974,12 @@ export async function resolvePricingForRequest(
     }
   }
 
+  const tier1TzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
+  const tier1TzCountry = countryFromTimezone(tier1TzHint);
+  if (tier1TzCountry && ["GB", "IE", "DE", "CH", "SE", "NO", "DK", "US", "CA", "AU", "NZ", "JP", "KR", "SG", "HK", "TW", "AE", "SA"].includes(tier1TzCountry)) {
+    return getPricingForCountryOrCurrency(tier1TzCountry, null);
+  }
+
   const lookedUp = await lookupCountryByIp(ip);
   if (lookedUp) {
     return getPricingForCountryOrCurrency(lookedUp, null);
