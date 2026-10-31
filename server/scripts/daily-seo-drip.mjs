@@ -45,6 +45,31 @@ const PAD_PATH = path.resolve(__dirname, "../public/pad.xml");
 const INDEXING_QUEUE_PATH = path.resolve(__dirname, "../src/data/indexing-queue.json");
 const INDEXNOW_KEY = "8f9a2b4c6d1e3f5a7b9c0d2e4f6a8b0c";
 
+function safeWriteJsonSync(filePath, data) {
+  const content = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    try {
+      fs.writeFileSync(filePath, content, "utf8");
+      return;
+    } catch (err) {
+      lastErr = err;
+      try {
+        const tmpPath = `${filePath}.tmp.${Date.now()}`;
+        fs.writeFileSync(tmpPath, content, "utf8");
+        fs.copyFileSync(tmpPath, filePath);
+        fs.unlinkSync(tmpPath);
+        return;
+      } catch (tmpErr) {
+        lastErr = tmpErr;
+      }
+      const end = Date.now() + 350;
+      while (Date.now() < end) {}
+    }
+  }
+  throw lastErr;
+}
+
 const LANGUAGES = [
   { code: "EN", prefix: "Windows 11 Storage Optimization Guide:", cta: "SWEEPR Cleaner — Native Rust Windows 10/11 PC Cleaner" },
   { code: "DE", prefix: "Windows 11 Speicherplatz sicher bereinigen:", cta: "SWEEPR Cleaner — Nativer Rust PC-Cleaner für Windows 11" },
@@ -384,6 +409,9 @@ async function runBacklinksWorkflow(targetCount = 300) {
 
     const currentBatch = Math.floor(attempts / BATCH_SIZE);
     const estTotalBatches = Math.ceil(targetCount / BATCH_SIZE);
+    if (completed > 0 && completed % 50 === 0 && valid.length > 0) {
+      safeWriteJsonSync(SEED_PATH, seed);
+    }
     if (currentBatch % 5 === 0 || completed >= targetCount) {
       console.log(`[Batch ${currentBatch}/${estTotalBatches}] Progress: ${completed}/${targetCount} published (${((completed / targetCount) * 100).toFixed(1)}%)`);
     }
@@ -393,7 +421,7 @@ async function runBacklinksWorkflow(targetCount = 300) {
     }
   }
 
-  fs.writeFileSync(SEED_PATH, JSON.stringify(seed, null, 2), "utf8");
+  safeWriteJsonSync(SEED_PATH, seed);
   console.log(`[Backlink Syndication Complete] Published ${completed} new dofollow backlinks. Total seed count: ${seed.length}`);
 
   // Trigger CRM backlink import & verification
@@ -468,7 +496,7 @@ async function runIndexingWorkflow() {
   const outstandingGsc = sitemapUrls.filter((u) => !gscDone.has(u));
   const outstandingBing = sitemapUrls.filter((u) => !bingDone.has(u));
 
-  fs.writeFileSync(INDEXING_QUEUE_PATH, JSON.stringify(queue, null, 2), "utf8");
+  safeWriteJsonSync(INDEXING_QUEUE_PATH, queue);
 
   console.log(`[IndexNow Submissions] Submitted ${sitemapUrls.length} sitemap URLs:`);
   console.log(`  - www.bing.com/indexnow: ${bingRes}`);
