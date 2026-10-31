@@ -986,7 +986,6 @@
         <div class="w3-cta-row">
           <a href="/download?platform=windows" id="primaryDownloadCta" class="btn-primary-os btn-press">
             <span id="primaryDownloadLabel">Download Free for Windows</span>
-            <span class="mono" style="font-size:0.78rem;opacity:0.88;" id="primaryDownloadMeta">Quick 10-second install</span>
           </a>
           <a href="/order?plan=annual" id="secondaryOrderCta" class="btn-secondary-os btn-press">
             <span>Cover All 5 Devices</span>
@@ -1332,7 +1331,6 @@
         windows: {
           badge: 'For Windows 11 & 10',
           ctaLabel: 'Download Free for Windows',
-          ctaMeta: 'Quick 10-second install',
           href: '/download?platform=windows',
           path1: 'Old temporary files and leftover Chrome, Edge & Brave browser clutter',
           path2: 'Old Windows Update files and leftover junk from deleted apps',
@@ -1341,7 +1339,6 @@
         mac: {
           badge: 'For Mac (Apple Silicon & Intel)',
           ctaLabel: 'Download Free for Mac',
-          ctaMeta: 'Universal Mac Installer',
           href: '/download?platform=mac',
           path1: 'Old temporary files and leftover Safari & Chrome browser clutter',
           path2: 'Leftover files from deleted Mac apps and old system logs',
@@ -1350,7 +1347,6 @@
         ios: {
           badge: 'For iPhone & iPad',
           ctaLabel: 'Get SWEEPR Cleaner for iPhone',
-          ctaMeta: 'iPhone & iPad App',
           href: '/download?platform=ios',
           path1: 'Similar burst photos, blurry pictures & duplicate screenshots',
           path2: 'Large videos & chat clips (shrinks file size without losing quality)',
@@ -1359,7 +1355,6 @@
         android: {
           badge: 'For Android Phones & Tablets',
           ctaLabel: 'Get SWEEPR Cleaner for Android',
-          ctaMeta: 'Android App · Fast & Light',
           href: '/download?platform=android',
           path1: 'Hidden app cache clutter & old leftover installer files',
           path2: 'Camera & WhatsApp duplicate photos, blurry shots & old screenshots',
@@ -1368,7 +1363,6 @@
         linux: {
           badge: 'For Linux Computers',
           ctaLabel: 'Download Free for Linux',
-          ctaMeta: 'AppImage / DEB',
           href: '/download?platform=linux',
           path1: 'Browser cache clutter & old temporary trash files',
           path2: 'Old system logs and leftover package files',
@@ -1424,7 +1418,6 @@
         var badge = document.getElementById('detectedDeviceBadge');
         var cta = document.getElementById('primaryDownloadCta');
         var label = document.getElementById('primaryDownloadLabel');
-        var meta = document.getElementById('primaryDownloadMeta');
         var path1 = document.getElementById('auditPath1');
         var path2 = document.getElementById('auditPath2');
         var path3 = document.getElementById('auditPath3');
@@ -1432,7 +1425,6 @@
         if (badge) badge.textContent = p.badge;
         if (cta) cta.setAttribute('href', p.href);
         if (label) label.textContent = p.ctaLabel;
-        if (meta) meta.textContent = p.ctaMeta;
         if (path1) path1.textContent = p.path1;
         if (path2) path2.textContent = p.path2;
         if (path3) path3.textContent = p.path3;
