@@ -221,10 +221,10 @@ export function renderPseoDirectory(): string {
       },
     ],
   })}</script>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
-  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
-  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
+  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
@@ -420,10 +420,10 @@ export function renderPseoPage(item: CleanItem): string {
     ],
   })}</script>
 
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
-  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
-  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
+  <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
+  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
   <script src="https://cdn.tailwindcss.com/3.4.5"></script>
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>

@@ -29,14 +29,14 @@ function Draw-Mascot($g, $centerX, $topY) {
     $frameY = $topY
 
     # Screen Fill & Border
-    $screenBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#e2f4ea"))
-    $screenPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml("#059669")), 3.5
+    $screenBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#e3ede7"))
+    $screenPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml("#0d6847")), 3.5
     Draw-RoundedRect $g $screenBrush $screenPen $frameX $frameY $frameW $frameH 16
     $screenBrush.Dispose()
     $screenPen.Dispose()
 
     # Stand
-    $standBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#047857"))
+    $standBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#145c3e"))
     $standPath = New-Object System.Drawing.Drawing2D.GraphicsPath
     $pt1 = New-Object System.Drawing.PointF ($centerX - 14), ($frameY + $frameH)
     $pt2 = New-Object System.Drawing.PointF ($centerX + 14), ($frameY + $frameH)
@@ -77,11 +77,11 @@ function Draw-Mascot($g, $centerX, $topY) {
 
 # Helper: Draw Sidebar Content
 function Draw-Sidebar($g, $width, $height) {
-    # 1. Emerald Gradient Background
+    # 1. Forest-Sage Green Gradient Background
     $pTop = New-Object System.Drawing.PointF 0, 0
     $pBottom = New-Object System.Drawing.PointF 0, $height
-    $cTop = [System.Drawing.ColorTranslator]::FromHtml("#059669")
-    $cBottom = [System.Drawing.ColorTranslator]::FromHtml("#064e3b")
+    $cTop = [System.Drawing.ColorTranslator]::FromHtml("#145c3e")
+    $cBottom = [System.Drawing.ColorTranslator]::FromHtml("#073825")
     $bgBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush $pTop, $pBottom, $cTop, $cBottom
     $g.FillRectangle($bgBrush, 0, 0, $width, $height)
     $bgBrush.Dispose()
@@ -111,7 +111,7 @@ function Draw-Sidebar($g, $width, $height) {
 
     # Subtitle
     $subFont = New-Object System.Drawing.Font $fontFamily, 7.5, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-    $mintBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#a7f3d0"))
+    $mintBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#9adbc0"))
     $subRect = New-Object System.Drawing.RectangleF 0, 82, $width, 16
     $g.DrawString("PC CLEANER & OPTIMIZER", $subFont, $mintBrush, $subRect, $centerFormat)
     $subFont.Dispose()
@@ -121,19 +121,19 @@ function Draw-Sidebar($g, $width, $height) {
     Draw-Mascot $g ([int]($width / 2)) 102
 
     # 5. Features Divider & Bullet Points
-    $divPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml("#047857")), 1
+    $divPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml("#0d6847")), 1
     $g.DrawLine($divPen, 18, 196, ($width - 18), 196)
     $divPen.Dispose()
 
     $checkFont = New-Object System.Drawing.Font $fontFamily, 8.5, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-    $checkBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#34d399"))
+    $checkBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#9adbc0"))
     $bulletFont = New-Object System.Drawing.Font $fontFamily, 8, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
-    $bulletBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#f0fdf4"))
+    $bulletBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#f4f5f3"))
 
     $features = @(
         "Safe Junk Cleaning",
         "Memory & App Boost",
-        "DoD File Shredder"
+        "Secure File Shredder"
     )
 
     $yOffset = 206
@@ -240,13 +240,13 @@ $sLogo.Dispose()
 
 $fontFamily = New-Object System.Drawing.FontFamily("Segoe UI")
 $bTitleFont = New-Object System.Drawing.Font $fontFamily, 11.5, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-$bTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#064e3b"))
+$bTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#073825"))
 $gBanner.DrawString("SWEEPR Cleaner", $bTitleFont, $bTitleBrush, 344, 12)
 $bTitleFont.Dispose()
 $bTitleBrush.Dispose()
 
 $bSubFont = New-Object System.Drawing.Font $fontFamily, 8.5, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
-$bSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#059669"))
+$bSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#0d6847"))
 $gBanner.DrawString("Setup Wizard", $bSubFont, $bSubBrush, 344, 29)
 $bSubFont.Dispose()
 $bSubBrush.Dispose()
@@ -315,13 +315,13 @@ $sLogo.Dispose()
 
 $fontFamily = New-Object System.Drawing.FontFamily("Segoe UI")
 $headTitleFont = New-Object System.Drawing.Font $fontFamily, 11, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-$headTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#064e3b"))
+$headTitleBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#073825"))
 $gNsisHead.DrawString("SWEEPR Cleaner", $headTitleFont, $headTitleBrush, 10, 12)
 $headTitleFont.Dispose()
 $headTitleBrush.Dispose()
 
 $headSubFont = New-Object System.Drawing.Font $fontFamily, 8.5, ([System.Drawing.FontStyle]::Regular), ([System.Drawing.GraphicsUnit]::Pixel)
-$headSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#059669"))
+$headSubBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml("#0d6847"))
 $gNsisHead.DrawString("Setup Wizard", $headSubFont, $headSubBrush, 10, 29)
 $headSubFont.Dispose()
 $headSubBrush.Dispose()

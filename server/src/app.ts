@@ -270,9 +270,14 @@ export function createApp(deps: AppDeps) {
     }
     if (c.res.headers.has("Cache-Control")) return;
 
-    if (p.endsWith(".css") || p.endsWith(".js")) {
+    if (
+      /^\/+(?:favicon(?:-dark)?\.(?:svg|png|ico)|padlock-favicon\.svg|apple-touch-icon\.png|icon-(?:32x32|192|512)\.png|logo-(?:emerald|mint-glass)\.svg|manifest\.webmanifest)$/i.test(p) ||
+      /\.(exe|msi|dmg|apk|mobileconfig|appimage)$/i.test(p)
+    ) {
+      c.res.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+    } else if (p.endsWith(".css") || p.endsWith(".js")) {
       c.res.headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-    } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf|exe|msi|dmg|apk|mobileconfig)$/.test(p)) {
+    } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf)$/.test(p)) {
       c.res.headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
     } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml" || p.endsWith(".txt")) {
       c.res.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
@@ -561,7 +566,7 @@ export function createApp(deps: AppDeps) {
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.
   const page = (rawTitle: string, msg: string, downloadLink = false) => {
     const title = escapeHtml(rawTitle);
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate icon" type="image/png" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#ffffff;background-image:radial-gradient(circle at 10% 20%, rgba(220, 255, 230, 0.4) 0%, rgba(255, 255, 255, 1) 40%),radial-gradient(circle at 90% 80%, rgba(240, 255, 250, 0.5) 0%, rgba(255, 255, 255, 1) 40%);color:#1f2937;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:rgba(255,255,255,0.85);backdrop-filter:blur(24px);border:1px solid rgba(0,0,0,0.06);border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#6b7280;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#10b981;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(16,185,129,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b"><link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b"><link rel="shortcut icon" href="/favicon.ico?v=20261031b"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b"></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#f4f5f3;color:#111613;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:20px;box-shadow:0 8px 32px rgba(17,22,19,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#4b554e;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#0d6847;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(13,104,71,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
@@ -588,7 +593,7 @@ export function createApp(deps: AppDeps) {
 
   const pickerPage = (heading: string, msg: string, ua = "", host = "sweeprcleaner.com") => {
     const btn = (href: string, text: string, primary = true) =>
-      `<a href="${href}" style="display:block;margin-top:10px;background:${primary ? "#10b981" : "#0f172a"};color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
+      `<a href="${href}" style="display:block;margin-top:10px;background:${primary ? "#0d6847" : "#111613"};color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
     const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
     const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const hasAndroid = existsSync("./public/SWEEPRCleaner.apk");
@@ -596,9 +601,9 @@ export function createApp(deps: AppDeps) {
     const isAndroidWebView = /android/.test(ua) && /\bwv\b|instagram|fban|fbav|tiktok|bytedancewebview|line\/|micromessenger|reddit/.test(ua);
     const cleanHost = host.replace(/^https?:\/\//, "");
     const assistBanner = isNonSafariIos
-      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #10b981;background:#ecfdf5;text-align:left;font-size:13px;color:#064e3b;"><strong>📱 iPhone / iPad Detected:</strong> Apple requires iOS Configuration Profiles to be opened in Safari, or you can launch the iOS app directly:${btn(`x-safari-https://${cleanHost}/download?platform=ios&direct=1`, "🧭 Open in Safari & Install iOS App", true)}${btn("/ios-app", "🚀 Launch SWEEPR Cleaner iOS App", false)}</div>`
+      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #0d6847;background:#e3ede7;text-align:left;font-size:13px;color:#073825;"><strong>📱 iPhone / iPad Detected:</strong> Apple requires iOS Configuration Profiles to be opened in Safari, or you can launch the iOS app directly:${btn(`x-safari-https://${cleanHost}/download?platform=ios&direct=1`, "🧭 Open in Safari & Install iOS App", true)}${btn("/ios-app", "🚀 Launch SWEEPR Cleaner iOS App", false)}</div>`
       : isAndroidWebView
-      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #10b981;background:#ecfdf5;text-align:left;font-size:13px;color:#064e3b;"><strong>📱 Android Detected:</strong> Downloading SWEEPRCleaner.apk... If your in-app browser blocks APK installs, tap below to open in Chrome:${btn(`intent://${cleanHost}/download?platform=android&direct=1#Intent;scheme=https;package=com.android.chrome;end`, "🌐 Open in Chrome & Install APK", true)}<iframe src="/download?platform=android&direct=1" style="display:none"></iframe></div>`
+      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #0d6847;background:#e3ede7;text-align:left;font-size:13px;color:#073825;"><strong>📱 Android Detected:</strong> Downloading SWEEPRCleaner.apk... If your in-app browser blocks APK installs, tap below to open in Chrome:${btn(`intent://${cleanHost}/download?platform=android&direct=1#Intent;scheme=https;package=com.android.chrome;end`, "🌐 Open in Chrome & Install APK", true)}<iframe src="/download?platform=android&direct=1" style="display:none"></iframe></div>`
       : "";
     const links =
       assistBanner +
@@ -608,7 +613,7 @@ export function createApp(deps: AppDeps) {
       btn("/download?platform=windows", "💻 Download for Windows 10 & 11 (.exe)", true) +
       (hasMac ? btn("/download?platform=mac", "🍏 Download for Mac — macOS 11+ Universal (.dmg)", true) : "") +
       (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)", false) : "") +
-      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b5563;">Already purchased on another device? Log in to your Customer Portal to activate this device via QR code:<a href="/login" style="display:block;margin-top:10px;background:#111827;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Customer Login &amp; QR Activation &rarr;</a><a href="/" style="display:inline-block;margin-top:12px;color:#059669;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b554e;">Already purchased on another device? Log in to your Customer Portal to activate this device via QR code:<a href="/login" style="display:block;margin-top:10px;background:#111613;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Customer Login &amp; QR Activation &rarr;</a><a href="/" style="display:inline-block;margin-top:12px;color:#0d6847;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
@@ -621,7 +626,7 @@ export function createApp(deps: AppDeps) {
         "Content-Type": type,
         "Content-Length": String(stat.size),
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "public, max-age=3600, s-maxage=86400",
+        "Cache-Control": "public, max-age=0, must-revalidate",
       },
     });
   };
@@ -639,10 +644,17 @@ export function createApp(deps: AppDeps) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0d6847">
 <title>SWEEPR Cleaner</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+<link rel="icon" type="image/png" href="/favicon.png?v=20261031b">
+<link rel="shortcut icon" href="/favicon.ico?v=20261031b">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261031b">
+<link rel="manifest" href="/manifest.webmanifest?v=20261031b">
 <style>
-  :root[data-theme="light"]{--bg:#f8fafc;--card:#ffffff;--card-sub:#f1f5f9;--glass:rgba(255,255,255,.94);--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--border-strong:#cbd5e1;--accent:#059669;--accent-soft:#d1fae5;--accent-fg:#065f46;--accent-border:#10b981;--orb-bg:radial-gradient(circle at 30% 30%,#10b981,#059669);--orb-border:#34d399;--orb-ring:rgba(16,185,129,.16);--shadow:0 8px 24px rgba(15,23,42,.06);--input-bg:#ffffff}
-  :root[data-theme="dark"]{--bg:#070b14;--card:#0f172a;--card-sub:#1e293b;--glass:rgba(15,23,42,.94);--text:#f8fafc;--muted:#94a3b8;--border:rgba(148,163,184,.16);--border-strong:rgba(148,163,184,.32);--accent:#10b981;--accent-soft:rgba(16,185,129,.16);--accent-fg:#34d399;--accent-border:rgba(52,211,153,.45);--orb-bg:radial-gradient(circle at 30% 30%,#34d399,#059669);--orb-border:#6ee7b7;--orb-ring:rgba(16,185,129,.22);--shadow:0 12px 30px rgba(0,0,0,.4);--input-bg:#090d16}
+  :root[data-theme="light"]{--bg:#f4f5f3;--card:#ffffff;--card-sub:#eceee9;--glass:rgba(244,245,243,.94);--text:#111613;--muted:#4b554e;--border:#d6dad5;--border-strong:#b8c0b8;--accent:#0d6847;--accent-soft:#e3ede7;--accent-fg:#0d6847;--accent-border:#9adbc0;--orb-bg:radial-gradient(circle at 30% 30%,#145c3e,#0d6847 60%,#073825);--orb-border:#9adbc0;--orb-ring:rgba(13,104,71,.16);--shadow:0 8px 24px rgba(17,22,19,.06);--input-bg:#ffffff}
+  :root[data-theme="dark"]{--bg:#0d1411;--card:#131d18;--card-sub:#1b2922;--glass:rgba(19,29,24,.94);--text:#f4f5f3;--muted:#9aa59e;--border:rgba(154,219,192,.18);--border-strong:rgba(154,219,192,.32);--accent:#0d6847;--accent-soft:rgba(13,104,71,.24);--accent-fg:#9adbc0;--accent-border:rgba(154,219,192,.45);--orb-bg:radial-gradient(circle at 30% 30%,#145c3e,#0d6847 60%,#073825);--orb-border:#9adbc0;--orb-ring:rgba(13,104,71,.26);--shadow:0 12px 30px rgba(0,0,0,.4);--input-bg:#0a100d}
   *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;-webkit-tap-highlight-color:transparent}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
   body{background:var(--bg);color:var(--text);min-height:100vh;padding:66px 16px 86px;display:flex;flex-direction:column}
@@ -652,10 +664,10 @@ export function createApp(deps: AppDeps) {
   .view{display:none;flex-direction:column;flex:1;max-width:460px;width:100%;margin:0 auto;gap:14px}
   .view.active{display:flex}
   .c3-orb-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0}
-  .c3-power-orb{width:156px;height:156px;border-radius:999px;border:5px solid var(--orb-border);background:var(--orb-bg);color:#fff;box-shadow:0 18px 44px rgba(16,185,129,.36),0 0 0 14px var(--orb-ring);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+  .c3-power-orb{width:156px;height:156px;border-radius:999px;border:5px solid var(--orb-border);background:var(--orb-bg);color:#fff;box-shadow:0 18px 44px rgba(13,104,71,.32),0 0 0 14px var(--orb-ring);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer}
   .card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
   .input{width:100%;padding:12px 14px;border-radius:13px;border:1px solid var(--border-strong);background:var(--input-bg);color:var(--text);font-size:13.5px;margin-top:8px}
-  .btn-primary{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:900;font-size:14px;margin-top:12px;cursor:pointer}
+  .btn-primary{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#145c3e,#0d6847);color:#fff;font-weight:900;font-size:14px;margin-top:12px;cursor:pointer}
   .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--glass);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);padding:6px 10px 10px;gap:6px;z-index:100}
   .nav-tab{border:none;background:transparent;color:var(--muted);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;cursor:pointer}
   .nav-tab.active{color:var(--accent-fg);background:var(--accent-soft)}
@@ -664,8 +676,8 @@ export function createApp(deps: AppDeps) {
 <body>
   <header class="topbar">
     <div style="display:flex;align-items:center;gap:8px;font-weight:900;font-size:16px">
-      <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;display:flex;align-items:center;justify-content:center">S</div>
-      <span>SWEEPR <span style="color:var(--accent)">Cleaner</span></span>
+      <img src="/favicon.svg?v=20261031b" alt="SWEEPR" width="30" height="30" style="border-radius:8px;display:block">
+      <span>SWEEPR <span style="color:var(--accent-fg)">Cleaner</span></span>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span id="proBadge" class="badge">Ready</span>
@@ -675,9 +687,9 @@ export function createApp(deps: AppDeps) {
 
   <main id="view-home" class="view active">
     <div style="text-align:center;padding-top:10px">
-      <div class="badge" style="display:inline-block">SMART STORAGE SHIELD</div>
-      <div id="scanHeadline" style="font-size:22px;font-weight:900;margin-top:12px">Tap Orb to Smart Scan</div>
-      <div id="scanOut" style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Finds duplicate photos, burst shots &amp; cache</div>
+      <div class="badge" style="display:inline-block">PHONE STORAGE CLEANER</div>
+      <div id="scanHeadline" style="font-size:22px;font-weight:900;margin-top:12px">Tap to Scan Storage</div>
+      <div id="scanOut" style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Finds duplicate photos, large videos &amp; temporary app files</div>
     </div>
 
     <div class="c3-orb-stage">
@@ -689,19 +701,19 @@ export function createApp(deps: AppDeps) {
 
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
       <input id="iosFilePicker" type="file" multiple accept="image/*,video/*,*/*" style="display:none" onchange="onIosFilesSelected(this.files)" />
-      <button id="pickFilesBtn" onclick="document.getElementById('iosFilePicker').click()" class="card" style="padding:11px 14px;border-radius:14px;font-size:12.5px;font-weight:800;text-align:center;cursor:pointer;color:var(--accent-fg)">Select Photos / Videos to Check for Real Duplicates (SHA-256)</button>
+      <button id="pickFilesBtn" onclick="document.getElementById('iosFilePicker').click()" class="card" style="padding:11px 14px;border-radius:14px;font-size:12.5px;font-weight:800;text-align:center;cursor:pointer;color:var(--accent-fg)">Select Photos or Videos to Check for Exact Duplicates</button>
       <details class="card" style="padding:11px 14px;border-radius:14px;font-size:12px">
-        <summary style="cursor:pointer;font-weight:800;display:flex;justify-content:space-between;align-items:center;list-style:none"><span>App, Game &amp; Browser Cache Targets</span><span class="mono" style="color:var(--accent-fg);font-size:11px">View ▾</span></summary>
+        <summary style="cursor:pointer;font-weight:800;display:flex;justify-content:space-between;align-items:center;list-style:none"><span>What We Check for You</span><span class="mono" style="color:var(--accent-fg);font-size:11px">View ▾</span></summary>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;color:var(--muted);line-height:1.4">
-          <div>• <strong>Browsers:</strong> Safari, Chrome, Brave, Opera GX &amp; Arc Service Worker / WebGPU cache</div>
-          <div>• <strong>Games:</strong> Genshin Impact / HoYoPlay update staging &amp; Roblox HTTP texture cache</div>
-          <div>• <strong>Creator &amp; Chat:</strong> CapCut, Discord, WhatsApp &amp; Telegram media exports</div>
+          <div>• <strong>Web Browsers:</strong> Saved website files from Safari, Chrome, Brave &amp; Arc</div>
+          <div>• <strong>Photos &amp; Videos:</strong> Identical duplicate photos, burst shots &amp; large video clips</div>
+          <div>• <strong>Chat &amp; Social Apps:</strong> Leftover media copies from WhatsApp, Telegram &amp; Discord</div>
         </div>
       </details>
-      <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Web Cache &amp; Duplicate Report</button>
+      <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Temporary Files &amp; Duplicate Report</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Engine</span><span class="mono">SHA-256 + Quota</span></div>
-        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Reclaimable</span><span id="targetBytesLabel" class="mono" style="color:var(--accent-fg)">Tap Scan</span></div>
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Check Method</span><span class="mono">Exact Match</span></div>
+        <div class="card" style="padding:11px 14px;border-radius:16px;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:var(--muted)">Can Be Freed</span><span id="targetBytesLabel" class="mono" style="color:var(--accent-fg)">Tap Scan</span></div>
       </div>
     </div>
   </main>
@@ -2907,13 +2919,15 @@ export function createApp(deps: AppDeps) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delete Account &amp; Data — SWEEPR Cleaner</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b">
+  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
   <div class="w-full max-w-md bg-slate-900 border border-red-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/40 flex items-center justify-center text-red-400 font-black text-lg">S</div>
+      <img src="/favicon.svg?v=20261031b" alt="SWEEPR" class="w-10 h-10 rounded-xl shrink-0">
       <div>
         <div class="text-xs font-extrabold uppercase tracking-wider text-red-400">SWEEPR Cleaner — Data Privacy</div>
         <h1 class="text-lg font-extrabold text-white">Delete Your Account &amp; Data</h1>
@@ -3995,13 +4009,15 @@ export function createApp(deps: AppDeps) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Link Device via QR — SWEEPR Cleaner</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b">
+  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans">
   <div class="w-full max-w-md bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-2xl">
     <div class="flex items-center gap-3 mb-5">
-      <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-lg">S</div>
+      <img src="/favicon.svg?v=20261031b" alt="SWEEPR" class="w-10 h-10 rounded-xl shrink-0">
       <div>
         <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">SWEEPR Cleaner Pro</div>
         <h1 class="text-lg font-extrabold text-white">${isApproveMode ? "Approve Device Link" : "Link This Device"}</h1>

@@ -202,14 +202,15 @@ $root = "c:\Users\Benjamin\Downloads\desktop_cleaner"
 # 1. Master App Icons (1024x1024)
 Save-Png -Path "$root\app\s-logo.png" -Size 1024 -Theme "emerald" -Shape "squircle"
 Save-Png -Path "$root\app\app-icon.png" -Size 1024 -Theme "emerald" -Shape "squircle"
-Save-Png -Path "$root\app\app-icon-mint-glass.png" -Size 1024 -Theme "mint" -Shape "squircle"
+Save-Png -Path "$root\app\app-icon-mint-glass.png" -Size 1024 -Theme "emerald" -Shape "squircle"
 
-# 2. Website Favicons (Emerald Fill + Dark Mode Mint Glass)
+# 2. Website Favicons (Forest-Sage Green across Light + Dark Mode)
 Save-Png -Path "$root\server\public\favicon.png" -Size 64 -Theme "emerald" -Shape "squircle"
-Save-Png -Path "$root\server\public\favicon-dark.png" -Size 64 -Theme "mint" -Shape "squircle"
+Save-Png -Path "$root\server\public\favicon-dark.png" -Size 64 -Theme "emerald" -Shape "squircle"
 Save-Png -Path "$root\server\public\icon-32x32.png" -Size 32 -Theme "emerald" -Shape "squircle"
 Save-Png -Path "$root\server\public\icon-192.png" -Size 192 -Theme "emerald" -Shape "squircle"
 Save-Png -Path "$root\server\public\icon-512.png" -Size 512 -Theme "emerald" -Shape "squircle"
+Save-Png -Path "$root\server\public\apple-touch-icon.png" -Size 180 -Theme "emerald" -Shape "fullbleed"
 Save-MultiSizeIco -Path "$root\server\public\favicon.ico" -Theme "emerald"
 
 # 3. Tauri Desktop App Bundle Icons
@@ -260,10 +261,10 @@ foreach ($kv in $tauriIosIcons.GetEnumerator()) {
     Save-Png -Path "$root\app\src-tauri\icons\ios\$($kv.Key)" -Size $kv.Value -Theme "emerald" -Shape "fullbleed"
 }
 
-# 4. Mobile iOS Asset Catalog (Light = Emerald Fill, Dark = Mint Glass)
+# 4. Mobile iOS Asset Catalog (Light & Dark = Forest-Sage Green)
 $iosIconSet = "$root\mobile\ios\Sources\Assets.xcassets\AppIcon.appiconset"
 Save-Png -Path "$iosIconSet\AppIcon-Light.png" -Size 1024 -Theme "emerald" -Shape "fullbleed"
-Save-Png -Path "$iosIconSet\AppIcon-Dark.png"  -Size 1024 -Theme "mint"    -Shape "fullbleed"
+Save-Png -Path "$iosIconSet\AppIcon-Dark.png"  -Size 1024 -Theme "emerald" -Shape "fullbleed"
 
 # 5. Mobile Android Mipmaps (Native Android + Tauri Android icons)
 $androidMipmaps = @{
