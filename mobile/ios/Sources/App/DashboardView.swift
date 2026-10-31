@@ -5,6 +5,7 @@ import UIKit
 struct DashboardView: View {
     @ObservedObject var vm: AppViewModel
     @ObservedObject var batteryMonitor = BatteryCareMonitor.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let onShowPaywall: () -> Void
     /// Switches the root tab / split selection (Swipe Photo Deck card, Battery Care card).
     var onSelectTab: (SweeprNavigationItem) -> Void = { _ in }
@@ -82,6 +83,8 @@ struct DashboardView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
+                    .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.isScanning)
+                    .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.hasScanned)
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -92,6 +95,7 @@ struct DashboardView: View {
                                 Task { await vm.performSmartCleanAll() }
                             } label: {
                                 Text("Clean +\(formatByteCount(vm.mediaResult.totalReclaimableBytes))")
+                                    .contentTransition(.numericText())
                             }
                             .buttonStyle(SweeprPrimaryButtonStyle())
 
@@ -109,7 +113,7 @@ struct DashboardView: View {
                                         Capsule().stroke(Color.sweeprLine, lineWidth: 1)
                                     )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(SweeprTactileButtonStyle())
                         }
                     }
                 }
@@ -216,12 +220,13 @@ struct DashboardView: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .frame(width: 184, height: 184)
+                .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: activeFraction)
 
             // Inner Glass Core Button
             Button(action: quickCleanTapped) {
                 quickCleanCore
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SweeprTactileButtonStyle(pressedScale: 0.95))
             .disabled(vm.isScanning)
             .accessibilityLabel(quickCleanAccessibilityLabel)
             .accessibilityHint(
@@ -275,6 +280,8 @@ struct DashboardView: View {
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
+                    .contentTransition(.numericText())
+                    .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.mediaResult.totalReclaimableBytes)
 
                     Text(vm.hasScanned ? "Duplicates, blur & shots" : "Find junk & duplicates")
                         .font(.system(size: 10, weight: .medium))
@@ -344,6 +351,8 @@ struct DashboardView: View {
                         Text("\(formatByteCount(vm.storage.usedBytes)) of \(formatByteCount(vm.storage.totalBytes)) Used (\(usedPercent)%)")
                             .font(.system(size: 13, weight: .heavy))
                             .foregroundColor(.primary)
+                            .contentTransition(.numericText())
+                            .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.storage.usedBytes)
                         let cloudSavings = CloudSavings.breakdown(result: vm.mediaResult).reclaimBytes
                         Text(
                             vm.hasScanned && cloudSavings > 0
@@ -353,6 +362,8 @@ struct DashboardView: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.sweeprMutedText)
                         .lineLimit(1)
+                        .contentTransition(.numericText())
+                        .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: cloudSavings)
                     }
                     Spacer()
                     Button {
@@ -371,7 +382,7 @@ struct DashboardView: View {
                         .clipShape(Capsule())
                         .overlay(Capsule().stroke(Color.sweeprLine, lineWidth: 1))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SweeprTactileButtonStyle())
                     .disabled(vm.isScanning)
                     .accessibilityLabel("Rescan library and contacts")
                 }
@@ -411,7 +422,7 @@ struct DashboardView: View {
             .sweeprCard(cornerRadius: 18)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SweeprTactileButtonStyle())
     }
 
     private func storageLegendDot(color: Color, label: String) -> some View {
@@ -529,7 +540,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SweeprTactileButtonStyle())
     }
 
     // MARK: - Swipe Photo Deck Promo Card
@@ -707,6 +718,7 @@ private struct BentoCategoryCard: View {
                     .foregroundColor(tint)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
+                    .contentTransition(.numericText())
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(tint.opacity(0.14))
@@ -723,6 +735,7 @@ private struct BentoCategoryCard: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.sweeprMutedText)
                     .lineLimit(1)
+                    .contentTransition(.numericText())
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

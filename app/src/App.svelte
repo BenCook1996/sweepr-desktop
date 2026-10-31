@@ -20,6 +20,7 @@
 
   type Tab = "cleaner" | "speed" | "space" | "apps" | "privacy" | "account";
   let tab = $state<Tab>("cleaner");
+  const activeTab = $derived(tab);
   let speedMode = $state<"pc" | "battery">("pc");
   let toolsMode = $state<"privacy" | "apps" | "space">("privacy");
   let accountSection = $state<"schedule" | "account">("account");
@@ -642,7 +643,7 @@
 
       <nav class="side-groups" aria-label="Main navigation">
         <button
-          class="nav-tab"
+          class="nav-tab nav-item"
           class:active={tab === "cleaner"}
           aria-current={tab === "cleaner" ? "page" : undefined}
           onclick={() => (tab = "cleaner")}
@@ -656,7 +657,7 @@
         </button>
 
         <button
-          class="nav-tab"
+          class="nav-tab nav-item"
           class:active={tab === "speed"}
           aria-current={tab === "speed" ? "page" : undefined}
           onclick={() => (tab = "speed")}
@@ -670,7 +671,7 @@
         </button>
 
         <button
-          class="nav-tab"
+          class="nav-tab nav-item"
           class:active={tab === "space" || tab === "apps" || tab === "privacy"}
           aria-current={tab === "space" || tab === "apps" || tab === "privacy" ? "page" : undefined}
           onclick={() => (tab = toolsMode)}
@@ -686,7 +687,7 @@
 
       <div class="sidebar-footer">
         <button
-          class="nav-tab"
+          class="nav-tab nav-item"
           title={`Undo (${modKeyLabel}Z)`}
           onclick={openUndoDrawer}
         >
@@ -700,7 +701,7 @@
 
         <div class="footer-row">
           <button
-            class="nav-tab account-pill"
+            class="nav-tab nav-item account-pill"
             class:active={tab === "account"}
             onclick={() => {
               tab = "account";
@@ -804,7 +805,7 @@
       </div>
     {/if}
 
-    <main class="main-content">
+    <main class="main-content content-area">
       {#if tab === "space" || tab === "apps" || tab === "privacy"}
         <div class="tools-subbar">
           <button
@@ -831,51 +832,55 @@
         </div>
       {/if}
 
-      {#if tab === "cleaner"}
-        <Cleaner
-          {license}
-          {info}
-          onLicenseChange={refreshLicense}
-          onOpenTool={(tool) => {
-            if (tool === "memory") {
-              speedMode = "pc";
-              tab = "speed";
-            } else if (tool === "battery") {
-              speedMode = "battery";
-              tab = "speed";
-            } else if (tool === "storage") {
-              toolsMode = "space";
-              tab = "space";
-            } else if (tool === "apps") {
-              toolsMode = "apps";
-              tab = "apps";
-            } else if (tool === "privacy" || tool === "shredder") {
-              toolsMode = "privacy";
-              tab = "privacy";
-            } else if (tool === "schedule") {
-              accountSection = "schedule";
-              tab = "account";
-            }
-          }}
-        />
-      {:else if tab === "speed"}
-        <Performance {license} {info} bind:viewMode={speedMode} />
-      {:else if tab === "space"}
-        <Duplicates {license} {info} />
-      {:else if tab === "apps"}
-        <Apps {license} />
-      {:else if tab === "privacy"}
-        <Privacy {license} />
-      {:else if tab === "account"}
-        <Account
-          {license}
-          {info}
-          {theme}
-          onToggleTheme={toggleTheme}
-          onRefresh={() => refreshLicense(true)}
-          bind:section={accountSection}
-        />
-      {/if}
+      {#key activeTab}
+        <div class="view-enter">
+          {#if tab === "cleaner"}
+            <Cleaner
+              {license}
+              {info}
+              onLicenseChange={refreshLicense}
+              onOpenTool={(tool) => {
+                if (tool === "memory") {
+                  speedMode = "pc";
+                  tab = "speed";
+                } else if (tool === "battery") {
+                  speedMode = "battery";
+                  tab = "speed";
+                } else if (tool === "storage") {
+                  toolsMode = "space";
+                  tab = "space";
+                } else if (tool === "apps") {
+                  toolsMode = "apps";
+                  tab = "apps";
+                } else if (tool === "privacy" || tool === "shredder") {
+                  toolsMode = "privacy";
+                  tab = "privacy";
+                } else if (tool === "schedule") {
+                  accountSection = "schedule";
+                  tab = "account";
+                }
+              }}
+            />
+          {:else if tab === "speed"}
+            <Performance {license} {info} bind:viewMode={speedMode} />
+          {:else if tab === "space"}
+            <Duplicates {license} {info} />
+          {:else if tab === "apps"}
+            <Apps {license} />
+          {:else if tab === "privacy"}
+            <Privacy {license} />
+          {:else if tab === "account"}
+            <Account
+              {license}
+              {info}
+              {theme}
+              onToggleTheme={toggleTheme}
+              onRefresh={() => refreshLicense(true)}
+              bind:section={accountSection}
+            />
+          {/if}
+        </div>
+      {/key}
     </main>
     </div>
 
@@ -1019,6 +1024,14 @@
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
+    transition:
+      transform 120ms var(--ease-out),
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+  button.tools-pill:active:not(:disabled) {
+    transform: scale(0.98);
+    transition-duration: 80ms;
   }
   button.tools-pill.active {
     background: rgba(13, 104, 71, 0.14);
@@ -1209,7 +1222,8 @@
     color: #22996b;
   }
 
-  button.nav-tab {
+  button.nav-tab,
+  button.nav-item {
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -1221,34 +1235,48 @@
     gap: 9px;
     font-weight: 600;
     font-size: 12.5px;
-    transition: background-color 0.12s ease, color 0.12s ease;
+    transition:
+      transform 150ms var(--ease-out),
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
     box-shadow: none;
     white-space: nowrap;
     cursor: pointer;
     width: 100%;
     text-align: left;
   }
-  .side-nav.collapsed button.nav-tab {
+  .side-nav.collapsed button.nav-tab,
+  .side-nav.collapsed button.nav-item {
     justify-content: center;
     padding: 8px;
   }
-  button.nav-tab svg {
+  button.nav-tab svg,
+  button.nav-item svg {
     color: var(--muted);
     flex-shrink: 0;
+    transition: color 150ms var(--ease-out), stroke 150ms var(--ease-out);
   }
-  button.nav-tab:hover:not(:disabled) {
+  button.nav-tab:hover:not(:disabled),
+  button.nav-item:hover:not(:disabled) {
     color: var(--text);
     background: var(--panel-2);
-    transform: none;
     box-shadow: none;
   }
-  button.nav-tab.active {
+  button.nav-tab:active:not(:disabled),
+  button.nav-item:active:not(:disabled) {
+    transform: scale(0.98);
+    transition-duration: 80ms;
+  }
+  button.nav-tab.active,
+  button.nav-item.active {
     background: rgba(13, 104, 71, 0.14);
     color: var(--accent);
     font-weight: 700;
     box-shadow: inset 3px 0 0 var(--accent);
   }
-  button.nav-tab.active svg {
+  button.nav-tab.active svg,
+  button.nav-item.active svg {
     stroke: var(--accent);
     color: var(--accent);
   }
@@ -1336,10 +1364,32 @@
     box-shadow: none;
   }
 
-  .main-content {
+  .main-content,
+  .content-area {
     flex: 1;
     overflow-y: auto;
     padding: 16px 20px 24px 20px;
+  }
+
+  @keyframes view-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .view-enter {
+    animation: view-enter 140ms var(--ease-out) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .view-enter {
+      animation: none;
+    }
   }
 
   /* Native Desktop Status Bar */

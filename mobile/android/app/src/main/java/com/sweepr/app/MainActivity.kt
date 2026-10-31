@@ -14,6 +14,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -52,7 +60,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -619,8 +629,20 @@ fun SweeprRoot(
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
-            when (current) {
-                Screen.Dashboard -> DashboardScreen(
+            AnimatedContent(
+                targetState = current,
+                transitionSpec = {
+                    if (areAnimationsEnabled()) {
+                        (fadeIn(tween(180)) + slideInVertically(tween(200)) { it / 20 }) togetherWith
+                            fadeOut(tween(120))
+                    } else {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    }
+                },
+                label = "tabTransition",
+            ) { targetScreen ->
+                when (targetScreen) {
+                    Screen.Dashboard -> DashboardScreen(
                     state = state,
                     permissions = permissions,
                     onScan = requestAccessAndScan,
@@ -749,6 +771,7 @@ fun SweeprRoot(
                     onDeleteCalendarEvents = handleDeleteCalendarEvents,
                     onBack = goBack,
                 )
+                }
             }
 
             // Sits above the sticky Clean Up Now / Move to trash buttons.
@@ -774,6 +797,7 @@ private val NAV_TABS = listOf(
 
 @Composable
 private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
+    val haptics = LocalHapticFeedback.current
     androidx.compose.foundation.layout.Column {
         androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         NavigationBar(
@@ -786,7 +810,10 @@ private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
                 val iconTint = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurfaceVariant
                 NavigationBarItem(
                     selected = isSelected,
-                    onClick = { onSelect(tab.screen) },
+                    onClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onSelect(tab.screen)
+                    },
                     icon = {
                         SweeprVectorIcon(
                             kind = tab.iconKind,

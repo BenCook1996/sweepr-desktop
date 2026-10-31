@@ -1,11 +1,18 @@
 package com.sweepr.app
 
+import android.animation.ValueAnimator
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +34,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +47,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,6 +63,62 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
 import kotlin.math.sin
+
+/**
+ * Reduced-motion awareness helper: checks whether Android system animators are enabled.
+ * When disabled in Android Accessibility settings, transitions fall back to instant/crossfade
+ * and continuous animations pause cleanly.
+ */
+fun areAnimationsEnabled(): Boolean =
+    runCatching { ValueAnimator.areAnimatorsEnabled() }.getOrDefault(true)
+
+/**
+ * Reusable tactile spring press modifier with HapticFeedbackType.TextHandleMove and
+ * reduced-motion awareness.
+ */
+@Composable
+fun Modifier.sweeprTactileClickable(
+    enabled: Boolean = true,
+    pressedScale: Float = 0.97f,
+    role: Role? = Role.Button,
+    onClickLabel: String? = null,
+    onClick: () -> Unit,
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val animationsEnabled = areAnimationsEnabled()
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(isPressed, enabled) {
+        if (isPressed && enabled) {
+            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+    }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && enabled && animationsEnabled) pressedScale else 1f,
+        animationSpec = if (animationsEnabled) {
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow,
+            )
+        } else {
+            snap()
+        },
+        label = "tactilePressScale",
+    )
+    return this
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .clickable(
+            interactionSource = interactionSource,
+            indication = LocalIndication.current,
+            enabled = enabled,
+            onClickLabel = onClickLabel,
+            role = role,
+            onClick = onClick,
+        )
+}
 
 /*
  * Shared building blocks for Candidate 5: SWEEPR Signature Hybrid (Desktop + Mobile Flagship):
@@ -129,7 +197,7 @@ fun PlanPill(isPro: Boolean, onClick: (() -> Unit)? = null) {
                 if (isPro) SweeprGreen.copy(alpha = 0.40f) else MaterialTheme.colorScheme.outline,
                 RoundedCornerShape(999.dp),
             )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.sweeprTactileClickable(pressedScale = 0.97f, onClick = onClick) else Modifier)
             .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
@@ -147,9 +215,10 @@ fun QuickCleanRing(
     onClickLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val animationsEnabled = areAnimationsEnabled()
     val animated by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(900),
+        animationSpec = if (animationsEnabled) tween(900) else snap(),
         label = "quickCleanRing",
     )
     val trackColor = Slate400.copy(alpha = 0.16f)
@@ -222,7 +291,12 @@ fun QuickCleanRing(
         }
         val coreSize = size - 54.dp
         val click = if (onClick != null) {
-            Modifier.clickable(onClickLabel = onClickLabel, role = Role.Button, onClick = onClick)
+            Modifier.sweeprTactileClickable(
+                pressedScale = 0.95f,
+                onClickLabel = onClickLabel,
+                role = Role.Button,
+                onClick = onClick,
+            )
         } else Modifier
         Column(
             modifier = Modifier
@@ -264,7 +338,7 @@ fun EmeraldButton(
                 if (enabled) Color.White.copy(alpha = 0.22f) else Color.Transparent,
                 shape,
             )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .sweeprTactileClickable(enabled = enabled, pressedScale = 0.97f, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = text },
         contentAlignment = Alignment.Center,
     ) {
@@ -362,7 +436,7 @@ fun SweeprPanel(
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(if (onClick != null) Modifier.sweeprTactileClickable(pressedScale = 0.97f, onClick = onClick) else Modifier),
         content = content,
     )
 }

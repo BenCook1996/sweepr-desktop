@@ -1,0 +1,2115 @@
+{
+ "url": "http://localhost:8788/order-redesigns.html",
+ "at": "2026-10-31T11:37:05.511Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 6,
+   "filled": [
+    0.93,
+    0.87,
+    0.93,
+    0.83,
+    0.93,
+    0.68
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 4958,
+     "screens": 5.5,
+     "words": 1106,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 0,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 1,
+     "size": 26,
+     "vw": 1.8,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 154,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "lines": 1,
+     "size": 26,
+     "font": "Schibsted Grotesk"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.9,
+       "mono": false
+      },
+      {
+       "family": "Schibsted Grotesk",
+       "share": 0.09,
+       "mono": false
+      },
+      {
+       "family": "monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      21,
+      22,
+      24,
+      26
+     ],
+     "sizeCount": 11,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 13,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 8.4
+     },
+     "measureChars": 79,
+     "max": {
+      "size": 26,
+      "vw": 1.8,
+      "font": "Schibsted Grotesk",
+      "text": "5 Order Page Redesigns (`/order`)"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0,
+     "monoFamilies": [
+      "monospace"
+     ],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.12,
+     "smallText": 27
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f4f5f3",
+     "bodyBgHsl": {
+      "h": 90,
+      "s": 0.09,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 372,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f4f5f3",
+       "top": 488,
+       "hsl": {
+        "h": 90,
+        "s": 0.09,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#eff1ee",
+       "top": 1492,
+       "hsl": {
+        "h": 100,
+        "s": 0.1,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f2f3f1",
+       "top": 2487,
+       "hsl": {
+        "h": 90,
+        "s": 0.08,
+        "l": 0.95
+       }
+      },
+      {
+       "color": "#0b0d10",
+       "top": 3806,
+       "hsl": {
+        "h": 216,
+        "s": 0.19,
+        "l": 0.05
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#3f4743",
+       "share": 0.44
+      },
+      {
+       "color": "#0c0f0e",
+       "share": 0.36
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.06
+      },
+      {
+       "color": "#073825",
+       "share": 0.05
+      },
+      {
+       "color": "#b4b8c2",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 49,
+     "inHero": 16,
+     "radius": 8,
+     "height": 46,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to Order Page Designs",
+      "All 5 Designs",
+      "O1 · W3 Split Receipt",
+      "O2 · 1-Column Express",
+      "O3 · Storage Proof CRO"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 14,
+     "hairlineSamples": [
+      "header.master-chrome 1440px",
+      "div.stage-meta 1338px",
+      "div.o1-topbar 1240px",
+      "div 600px",
+      "div.stage-meta 1338px"
+     ],
+     "outlinedBoxes": 27,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 27,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 109,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "schibsted grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 4958,
+    "margins": {
+     "left": 75,
+     "right": 75
+    },
+    "sections": [
+     {
+      "sel": "section.intro-banner",
+      "tag": "section",
+      "top": 133,
+      "height": 203,
+      "words": 77,
+      "media": 0,
+      "middle": 30,
+      "heading": {
+       "text": "5 Order Page Redesigns (`/order`)",
+       "size": 26,
+       "tag": "h1"
+      },
+      "left": 75,
+      "right": 139,
+      "textLeft": 75,
+      "textRight": 139,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o1.design-stage",
+      "tag": "article",
+      "top": 372,
+      "height": 968,
+      "words": 249,
+      "media": 0,
+      "middle": 64,
+      "heading": {
+       "text": "Clean 3 Computers + 2 Phones",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 75,
+      "right": 75,
+      "textLeft": 75,
+      "textRight": 88,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o2.design-stage",
+      "tag": "article",
+      "top": 1376,
+      "height": 959,
+      "words": 122,
+      "media": 0,
+      "middle": 230,
+      "heading": null,
+      "left": 75,
+      "right": 75,
+      "textLeft": 75,
+      "textRight": 88,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o3.design-stage",
+      "tag": "article",
+      "top": 2371,
+      "height": 660,
+      "words": 156,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "£69.97",
+       "size": 22,
+       "tag": "strong"
+      },
+      "left": 75,
+      "right": 75,
+      "textLeft": 75,
+      "textRight": 88,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o4.design-stage",
+      "tag": "article",
+      "top": 3067,
+      "height": 607,
+      "words": 144,
+      "media": 0,
+      "middle": 54,
+      "heading": {
+       "text": "£69.97",
+       "size": 22,
+       "tag": "strong"
+      },
+      "left": 75,
+      "right": 75,
+      "textLeft": 75,
+      "textRight": 88,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o5.design-stage",
+      "tag": "article",
+      "top": 3710,
+      "height": 591,
+      "words": 117,
+      "media": 0,
+      "middle": 21,
+      "heading": {
+       "text": "£69.97",
+       "size": 24,
+       "tag": "strong"
+      },
+      "left": 75,
+      "right": 75,
+      "textLeft": 75,
+      "textRight": 88,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "section#stage-audit.design-stage",
+      "tag": "section",
+      "top": 4336,
+      "height": 462,
+      "words": 154,
+      "media": 0,
+      "middle": 37,
+      "heading": null,
+      "left": 75,
+      "right": 97,
+      "textLeft": 75,
+      "textRight": 97,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "5 Order Page Redesigns (`/order`)",
+      "size": 26,
+      "top": 154,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 100,
+      "n": 6
+     },
+     {
+      "x": 75,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 13,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0.08,
+    "voidBox": {
+     "x": 660,
+     "y": 360,
+     "w": 540,
+     "h": 180
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f4f5f3",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 75,
+     "right": 75
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 1,
+     "size": 26,
+     "vw": 1.8,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 154,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 7,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 41,
+     "radii": [
+      [
+       12,
+       25
+      ],
+      [
+       0,
+       10
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 7,
+     "tabularShare": 1,
+     "kpiMax": 24
+    },
+    "rows": {
+     "count": 5,
+     "median": 63
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.17,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      21,
+      22,
+      24,
+      26
+     ]
+    },
+    "title": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "size": 26,
+     "top": 154
+    },
+    "colourShare": 0.007
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.81,
+    0.93,
+    0.93,
+    0.93,
+    0.87,
+    0.87,
+    0.87,
+    0.81
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 7430,
+     "screens": 7.3,
+     "words": 1106,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 0,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 1,
+     "size": 20,
+     "vw": 2.6,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 232,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "lines": 1,
+     "size": 20,
+     "font": "Schibsted Grotesk"
+    },
+    "headings": [],
+    "headingSummary": {
+     "count": 0,
+     "maxLines": 0,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": null,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.9,
+       "mono": false
+      },
+      {
+       "family": "Schibsted Grotesk",
+       "share": 0.09,
+       "mono": false
+      },
+      {
+       "family": "monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      20,
+      21,
+      22,
+      24
+     ],
+     "sizeCount": 11,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 13,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 8.4
+     },
+     "measureChars": 79,
+     "max": {
+      "size": 24,
+      "vw": 3.1,
+      "font": "Schibsted Grotesk",
+      "text": "£69.97"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0,
+     "monoFamilies": [
+      "monospace"
+     ],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.12,
+     "smallText": 27
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f4f5f3",
+     "bodyBgHsl": {
+      "h": 90,
+      "s": 0.09,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 479,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f4f5f3",
+       "top": 643,
+       "hsl": {
+        "h": 90,
+        "s": 0.09,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#eff1ee",
+       "top": 1508,
+       "hsl": {
+        "h": 100,
+        "s": 0.1,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f2f3f1",
+       "top": 3458,
+       "hsl": {
+        "h": 90,
+        "s": 0.08,
+        "l": 0.95
+       }
+      },
+      {
+       "color": "#0b0d10",
+       "top": 5823,
+       "hsl": {
+        "h": 216,
+        "s": 0.19,
+        "l": 0.05
+       }
+      },
+      {
+       "color": "#13171d",
+       "top": 5847,
+       "hsl": {
+        "h": 216,
+        "s": 0.21,
+        "l": 0.09
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#3f4743",
+       "share": 0.44
+      },
+      {
+       "color": "#0c0f0e",
+       "share": 0.36
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.06
+      },
+      {
+       "color": "#073825",
+       "share": 0.05
+      },
+      {
+       "color": "#b4b8c2",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 49,
+     "inHero": 12,
+     "radius": 8,
+     "height": 46,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to Order Page Designs",
+      "All 5 Designs",
+      "O1 · W3 Split Receipt",
+      "O2 · 1-Column Express",
+      "O3 · Storage Proof CRO"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 14,
+     "hairlineSamples": [
+      "header.master-chrome 768px",
+      "div.stage-meta 726px",
+      "div.o1-topbar 628px",
+      "div 594px",
+      "div.stage-meta 726px"
+     ],
+     "outlinedBoxes": 27,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 27,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 4685
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 187,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "schibsted grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 7430,
+    "margins": {
+     "left": 45,
+     "right": 62
+    },
+    "sections": [
+     {
+      "sel": "header.master-chrome",
+      "tag": "header",
+      "top": 0,
+      "height": 187,
+      "words": 42,
+      "media": 0,
+      "middle": 6,
+      "heading": null,
+      "left": 24,
+      "right": 140,
+      "textLeft": 24,
+      "textRight": 153,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": true
+     },
+     {
+      "sel": "section.intro-banner",
+      "tag": "section",
+      "top": 211,
+      "height": 232,
+      "words": 77,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "5 Order Page Redesigns (`/order`)",
+       "size": 20,
+       "tag": "h1"
+      },
+      "left": 45,
+      "right": 97,
+      "textLeft": 45,
+      "textRight": 97,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.stage-meta",
+      "tag": "div",
+      "top": 480,
+      "height": 163,
+      "words": 53,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 144,
+      "textLeft": 45,
+      "textRight": 144,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.o1-frame",
+      "tag": "div",
+      "top": 643,
+      "height": 1546,
+      "words": 196,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Clean 3 Computers + 2 Phones",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 70,
+      "right": 77,
+      "textLeft": 70,
+      "textRight": 87,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o2.design-stage",
+      "tag": "article",
+      "top": 2226,
+      "height": 1007,
+      "words": 122,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 111,
+      "textLeft": 45,
+      "textRight": 111,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o3.design-stage",
+      "tag": "article",
+      "top": 3269,
+      "height": 1216,
+      "words": 156,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Reclaim Free Space Today",
+       "size": 21,
+       "tag": "h2"
+      },
+      "left": 45,
+      "right": 70,
+      "textLeft": 45,
+      "textRight": 70,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o4.design-stage",
+      "tag": "article",
+      "top": 4521,
+      "height": 1122,
+      "words": 144,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 62,
+      "textLeft": 45,
+      "textRight": 62,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o5.design-stage",
+      "tag": "article",
+      "top": 5679,
+      "height": 968,
+      "words": 117,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Unlock Full Sweepr Pro",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 45,
+      "right": 70,
+      "textLeft": 45,
+      "textRight": 70,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section#stage-audit.design-stage",
+      "tag": "section",
+      "top": 6683,
+      "height": 588,
+      "words": 154,
+      "media": 0,
+      "middle": 22,
+      "heading": null,
+      "left": 45,
+      "right": 56,
+      "textLeft": 45,
+      "textRight": 56,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "5 Order Page Redesigns (`/order`)",
+      "size": 20,
+      "top": 232,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 70,
+      "n": 6
+     },
+     {
+      "x": 45,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 13,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f4f5f3",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 32,
+     "right": 62
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 1,
+     "size": 20,
+     "vw": 2.6,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 232,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 8,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 42,
+     "radii": [
+      [
+       12,
+       26
+      ],
+      [
+       0,
+       10
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#e5e7e4 on #0c0f0e (15.48:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 7,
+     "tabularShare": 1,
+     "kpiMax": 24
+    },
+    "rows": {
+     "count": 5,
+     "median": 84
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.17,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      20,
+      21,
+      22,
+      24
+     ]
+    },
+    "title": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "size": 20,
+     "top": 232
+    },
+    "colourShare": 0.004
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 12,
+   "filled": [
+    0.95,
+    0.9,
+    0.9,
+    0.88,
+    0.95,
+    0.95,
+    0.89,
+    0.87,
+    0.86,
+    0.95,
+    0.96,
+    0.77
+   ],
+   "motion": {
+    "elements": 0,
+    "css": 0,
+    "transitions": 0,
+    "scripted": 0,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 9889,
+     "screens": 11.7,
+     "words": 1106,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 0,
+     "sections": 2,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 1,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 2,
+     "size": 20,
+     "vw": 5.1,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 360,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "lines": 2,
+     "size": 20,
+     "font": "Schibsted Grotesk"
+    },
+    "headings": [
+     {
+      "text": "Clean 3 Computers + 2 Phones",
+      "words": 6,
+      "chars": 28,
+      "lines": 2,
+      "size": 22,
+      "vw": 5.6,
+      "font": "Schibsted Grotesk",
+      "weight": 800,
+      "tracking": -0.02,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.74,
+      "top": 1277,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "£69.97",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Schibsted Grotesk",
+      "weight": 800,
+      "tracking": 0,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.23,
+      "top": 2195,
+      "tag": "strong",
+      "kind": "heading"
+     },
+     {
+      "text": "Instant Checkout £69.97",
+      "words": 3,
+      "chars": 23,
+      "lines": 1,
+      "size": 22,
+      "vw": 5.6,
+      "font": "Manrope",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.64,
+      "top": 5317,
+      "tag": "div",
+      "kind": "heading"
+     },
+     {
+      "text": "£69.97",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 22,
+      "vw": 5.6,
+      "font": "Schibsted Grotesk",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.21,
+      "top": 6879,
+      "tag": "strong",
+      "kind": "heading"
+     },
+     {
+      "text": "Unlock Full Sweepr Pro",
+      "words": 4,
+      "chars": 22,
+      "lines": 2,
+      "size": 22,
+      "vw": 5.6,
+      "font": "Schibsted Grotesk",
+      "weight": 800,
+      "tracking": 0,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.64,
+      "top": 7730,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "£69.97",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Manrope",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1.5,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.21,
+      "top": 8214,
+      "tag": "strong",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 6,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 3,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Manrope",
+       "share": 0.9,
+       "mono": false
+      },
+      {
+       "family": "Schibsted Grotesk",
+       "share": 0.09,
+       "mono": false
+      },
+      {
+       "family": "monospace",
+       "share": 0.01,
+       "mono": false
+      }
+     ],
+     "familyCount": 3,
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      20,
+      21,
+      22,
+      24
+     ],
+     "sizeCount": 11,
+     "notLoaded": [],
+     "body": {
+      "font": "Manrope",
+      "size": 13,
+      "leading": 1.5,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 8.4
+     },
+     "measureChars": 46,
+     "max": {
+      "size": 24,
+      "vw": 6.2,
+      "font": "Schibsted Grotesk",
+      "text": "£69.97"
+     },
+     "monoShare": 0.01,
+     "monoProseShare": 0,
+     "monoFamilies": [
+      "monospace"
+     ],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0,
+     "centerShare": 0.12,
+     "smallText": 27
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f4f5f3",
+     "bodyBgHsl": {
+      "h": 90,
+      "s": 0.09,
+      "l": 0.96
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 0,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#f4f5f3",
+       "top": 1059,
+       "hsl": {
+        "h": 90,
+        "s": 0.09,
+        "l": 0.96
+       }
+      },
+      {
+       "color": "#eff1ee",
+       "top": 2280,
+       "hsl": {
+        "h": 100,
+        "s": 0.1,
+        "l": 0.94
+       }
+      },
+      {
+       "color": "#f2f3f1",
+       "top": 4526,
+       "hsl": {
+        "h": 90,
+        "s": 0.08,
+        "l": 0.95
+       }
+      },
+      {
+       "color": "#0b0d10",
+       "top": 7619,
+       "hsl": {
+        "h": 216,
+        "s": 0.19,
+        "l": 0.05
+       }
+      },
+      {
+       "color": "#13171d",
+       "top": 7643,
+       "hsl": {
+        "h": 216,
+        "s": 0.21,
+        "l": 0.09
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#3f4743",
+       "share": 0.44
+      },
+      {
+       "color": "#0c0f0e",
+       "share": 0.36
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.06
+      },
+      {
+       "color": "#073825",
+       "share": 0.05
+      },
+      {
+       "color": "#b4b8c2",
+       "share": 0.03
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#ffffff"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 42,
+     "inHero": 10,
+     "radius": 8,
+     "height": 46,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Skip to Order Page Designs",
+      "All 5 Designs",
+      "O1 · W3 Split Receipt",
+      "O2 · 1-Column Express",
+      "O3 · Storage Proof CRO"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 12,
+     "hairlineSamples": [
+      "header.master-chrome 390px",
+      "div.stage-meta 348px",
+      "div.o1-topbar 250px",
+      "div 255px",
+      "div.stage-meta 348px"
+     ],
+     "outlinedBoxes": 32,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 32,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": [
+      {
+       "count": 7,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 339
+      },
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 1430
+      },
+      {
+       "count": 3,
+       "iconTopped": false,
+       "rounded": true,
+       "top": 6096
+      }
+     ]
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 0,
+     "fixed": true,
+     "height": 315,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "manrope",
+     "schibsted grotesk"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 9889,
+    "margins": {
+     "left": 37,
+     "right": 21
+    },
+    "sections": [
+     {
+      "sel": "header.master-chrome",
+      "tag": "header",
+      "top": 0,
+      "height": 315,
+      "words": 42,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 24,
+      "right": 30,
+      "textLeft": 24,
+      "textRight": 39,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": true
+     },
+     {
+      "sel": "section.intro-banner",
+      "tag": "section",
+      "top": 339,
+      "height": 430,
+      "words": 77,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "5 Order Page Redesigns (`/order`)",
+       "size": 20,
+       "tag": "h1"
+      },
+      "left": 45,
+      "right": 50,
+      "textLeft": 45,
+      "textRight": 50,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.stage-meta",
+      "tag": "div",
+      "top": 806,
+      "height": 253,
+      "words": 53,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 49,
+      "textLeft": 45,
+      "textRight": 49,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.o1-frame",
+      "tag": "div",
+      "top": 1059,
+      "height": 1951,
+      "words": 196,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Clean 3 Computers + 2 Phones",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 70,
+      "right": 38,
+      "textLeft": 70,
+      "textRight": 41,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o2.design-stage",
+      "tag": "article",
+      "top": 3047,
+      "height": 1208,
+      "words": 122,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 46,
+      "textLeft": 45,
+      "textRight": 46,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.stage-meta",
+      "tag": "div",
+      "top": 4291,
+      "height": 235,
+      "words": 45,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 48,
+      "textLeft": 45,
+      "textRight": 48,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.o3-wrap",
+      "tag": "div",
+      "top": 4526,
+      "height": 1279,
+      "words": 111,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Reclaim Free Space Today",
+       "size": 21,
+       "tag": "h2"
+      },
+      "left": 70,
+      "right": 70,
+      "textLeft": 70,
+      "textRight": 70,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.stage-meta",
+      "tag": "div",
+      "top": 5843,
+      "height": 234,
+      "words": 38,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 55,
+      "textLeft": 45,
+      "textRight": 55,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.o4-wrap",
+      "tag": "div",
+      "top": 6076,
+      "height": 1272,
+      "words": 106,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 62,
+      "right": 9,
+      "textLeft": 62,
+      "textRight": 24,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "article#stage-o5.design-stage",
+      "tag": "article",
+      "top": 7385,
+      "height": 1274,
+      "words": 117,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Unlock Full Sweepr Pro",
+       "size": 22,
+       "tag": "h2"
+      },
+      "left": 45,
+      "right": 47,
+      "textLeft": 45,
+      "textRight": 47,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section#stage-audit.design-stage",
+      "tag": "section",
+      "top": 8695,
+      "height": 1034,
+      "words": 116,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 21,
+      "textLeft": 45,
+      "textRight": 21,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "5 Order Page Redesigns (`/order`)",
+      "size": 20,
+      "top": 360,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 70,
+      "n": 6
+     },
+     {
+      "x": 45,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 7,
+    "bodySize": 13,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f4f5f3",
+    "sidebar": null,
+    "topbar": null,
+    "canvas": {
+     "left": 24,
+     "right": -80
+    },
+    "hero": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "words": 5,
+     "chars": 33,
+     "lines": 2,
+     "size": 20,
+     "vw": 5.1,
+     "font": "Schibsted Grotesk",
+     "weight": 800,
+     "tracking": -0.02,
+     "leading": 1.2,
+     "top": 360,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 8,
+     "firstScreen": 1,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 44,
+     "radii": [
+      [
+       12,
+       31
+      ],
+      [
+       0,
+       11
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "heavyBorders": 1,
+     "borderSamples": [
+      "#e5e7e4 on #0c0f0e (15.48:1)"
+     ],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 0,
+     "leftAligned": 0,
+     "figures": 7,
+     "tabularShare": 1,
+     "kpiMax": 24
+    },
+    "rows": {
+     "count": 5,
+     "median": 147
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.17,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      20,
+      21,
+      22,
+      24
+     ]
+    },
+    "title": {
+     "text": "5 Order Page Redesigns (`/order`)",
+     "size": 20,
+     "top": 360
+    },
+    "colourShare": 0.001
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "below-fold",
+   "width": 1440,
+   "message": "Only 2 of 7 blocks start on the first 1440px screen.",
+   "fix": "Every block the brief names shows its header and first rows on the first desktop screen: size the headline block to its question, cap long lists with \"View all\", and put time-sensitive blocks before long tables."
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\desktop-fold.jpg",
+   "pages": [
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\desktop-page-01.jpg",
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\desktop-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\tablet-fold.jpg",
+   "pages": [
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\tablet-page-01.jpg",
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\tablet-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\mobile-fold.jpg",
+   "pages": [
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\mobile-page-01.jpg",
+    "C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\.taste-skill\\order-inspect\\mobile-page-02.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

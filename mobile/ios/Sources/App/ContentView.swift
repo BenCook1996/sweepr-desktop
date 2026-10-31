@@ -73,6 +73,27 @@ extension View {
     }
 }
 
+/// Tactile spring button style with Reduce Motion support.
+struct SweeprTactileButtonStyle: ButtonStyle {
+    var pressedScale: CGFloat = 0.97
+
+    func makeBody(configuration: Configuration) -> some View {
+        SweeprTactileButtonBody(configuration: configuration, pressedScale: pressedScale)
+    }
+
+    private struct SweeprTactileButtonBody: View {
+        let configuration: ButtonStyleConfiguration
+        let pressedScale: CGFloat
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            configuration.label
+                .scaleEffect(configuration.isPressed && !reduceMotion ? pressedScale : 1.0)
+                .animation(.spring(duration: 0.16, bounce: 0.15), value: configuration.isPressed)
+        }
+    }
+}
+
 /// Full-width emerald gradient pill button.
 struct SweeprPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -82,6 +103,7 @@ struct SweeprPrimaryButtonStyle: ButtonStyle {
     private struct SweeprPrimaryButtonBody: View {
         let configuration: ButtonStyleConfiguration
         @Environment(\.isEnabled) private var isEnabled
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
         var body: some View {
             configuration.label
@@ -103,6 +125,8 @@ struct SweeprPrimaryButtonStyle: ButtonStyle {
                 )
                 .shadow(color: Color.sweeprEmerald.opacity(isEnabled ? 0.4 : 0), radius: 12, x: 0, y: 6)
                 .opacity(isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.45)
+                .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1.0)
+                .animation(.spring(duration: 0.16, bounce: 0.15), value: configuration.isPressed)
         }
     }
 }
@@ -207,7 +231,7 @@ struct SweeprWordmarkHeaderView: View {
                             .stroke(Color.sweeprEmerald.opacity(0.42), lineWidth: 1)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SweeprTactileButtonStyle())
             .accessibilityLabel(vm.hasPremium ? "SWEEPR Pro Active" : "Free Plan, tap to upgrade to Pro")
         }
     }
@@ -950,6 +974,7 @@ struct AssetThumbnailView: View {
 struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var vm = AppViewModel()
     @State private var selectedTab: SweeprNavigationItem = .dashboard
     @State private var splitSelection: SweeprNavigationItem? = .dashboard
@@ -983,6 +1008,9 @@ struct ContentView: View {
                 }
             }
         }
+        .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: selectedTab)
+        .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: splitSelection)
+        .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.isScanning)
         .tint(.sweeprEmerald)
         .task {
             BatteryCareMonitor.shared.refresh()
@@ -1047,6 +1075,7 @@ struct AlertItem: Identifiable {
 struct SwipeReviewView: View {
     @ObservedObject var vm: AppViewModel
     let onShowPaywall: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @SceneStorage("sweepr_swipe_index") private var currentIndex = 0
     @State private var selectedFilter: String = "All Media"
     @State private var offset: CGSize = .zero
@@ -1139,6 +1168,8 @@ struct SwipeReviewView: View {
                             )
                             .font(.caption)
                             .foregroundColor(.sweeprMutedText)
+                            .contentTransition(.numericText())
+                            .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: currentIndex)
                         }
                         Spacer()
 
@@ -1156,7 +1187,7 @@ struct SwipeReviewView: View {
                                     Capsule().stroke(Color.sweeprEmerald.opacity(0.42), lineWidth: 1)
                                 )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SweeprTactileButtonStyle())
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
@@ -1170,7 +1201,7 @@ struct SwipeReviewView: View {
                                 ForEach(filterOptions, id: \.key) { option in
                                     let isSelected = selectedFilter == option.key
                                     Button {
-                                        withAnimation(.easeInOut(duration: 0.18)) {
+                                        withAnimation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1)) {
                                             selectedFilter = option.key
                                             currentIndex = 0
                                             offset = .zero
@@ -1179,6 +1210,7 @@ struct SwipeReviewView: View {
                                         Text("\(option.label) (\(option.count))")
                                             .font(.system(size: 12, weight: .bold))
                                             .foregroundColor(isSelected ? .white : .sweeprMutedText)
+                                            .contentTransition(.numericText())
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 7)
                                             .background(isSelected ? Color.sweeprEmerald : Color.sweeprPanel)
@@ -1188,7 +1220,7 @@ struct SwipeReviewView: View {
                                                     .stroke(isSelected ? Color.sweeprEmerald : Color.sweeprLine, lineWidth: 1)
                                             )
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(SweeprTactileButtonStyle())
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -1350,18 +1382,19 @@ struct SwipeReviewView: View {
                                             offset = gesture.translation
                                         }
                                         .onEnded { gesture in
+                                            let springAnim: Animation? = reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1)
                                             if gesture.translation.width > 110 {
-                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                withAnimation(springAnim) {
                                                     offset = CGSize(width: 500, height: 0)
                                                 }
                                                 keepCurrent(item: item)
                                             } else if gesture.translation.width < -110 {
-                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                withAnimation(springAnim) {
                                                     offset = CGSize(width: -500, height: 0)
                                                 }
                                                 markForTrash(item: item)
                                             } else {
-                                                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                                                withAnimation(springAnim) {
                                                     offset = .zero
                                                 }
                                             }
@@ -1383,6 +1416,7 @@ struct SwipeReviewView: View {
                                             .font(.system(size: 14, weight: .heavy))
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
+                                            .contentTransition(.numericText())
                                     }
                                     .foregroundColor(.sweeprRose)
                                     .frame(maxWidth: .infinity, minHeight: 56)
@@ -1393,7 +1427,7 @@ struct SwipeReviewView: View {
                                             .stroke(Color.sweeprRose.opacity(0.35), lineWidth: 1)
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(SweeprTactileButtonStyle())
                                 .accessibilityLabel("Mark current photo for Trash")
 
                                 if !history.isEmpty {
@@ -1411,7 +1445,7 @@ struct SwipeReviewView: View {
                                                     .stroke(Color.sweeprLine, lineWidth: 1)
                                             )
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(SweeprTactileButtonStyle())
                                     .accessibilityLabel("Undo last swipe")
                                 }
 
@@ -1431,7 +1465,7 @@ struct SwipeReviewView: View {
                                     .background(Color.sweeprEmerald)
                                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(SweeprTactileButtonStyle())
                                 .accessibilityLabel("Keep current photo")
                             }
                             .padding(.horizontal, 16)
@@ -1454,6 +1488,8 @@ struct SwipeReviewView: View {
                                         .font(.subheadline.weight(.heavy))
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
+                                        .contentTransition(.numericText())
+                                        .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: markedCount)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -1469,6 +1505,7 @@ struct SwipeReviewView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 .shadow(color: Color.sweeprEmerald.opacity(0.35), radius: 10, x: 0, y: 4)
                             }
+                            .buttonStyle(SweeprTactileButtonStyle())
                             .disabled(vm.isWorking)
 
                             Button {
@@ -1486,7 +1523,7 @@ struct SwipeReviewView: View {
                                             .stroke(Color.sweeprRose.opacity(0.45), lineWidth: 1)
                                     )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(SweeprTactileButtonStyle())
                         }
                         .padding(.horizontal, 16)
                     }

@@ -152,7 +152,7 @@
       padding: 0.75rem 0.875rem;
       font-size: 1rem;
       line-height: 1.25rem;
-      transition: all 0.15s ease-in-out;
+      transition: border-color 140ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     @media (min-width: 640px) {
       .stripe-input-box {
@@ -207,17 +207,17 @@
     }
     .btn-purchase {
       background: linear-gradient(135deg, #145c3e 0%, #0d6847 50%, #094f35 100%);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 90ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1), background-color 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease;
       animation: greenPulse 3s infinite;
       box-shadow: 0 4px 20px rgba(13, 104, 71, 0.35), 0 0 0 1px rgba(13, 104, 71, 0.15);
     }
-    .btn-purchase:hover {
+    .btn-purchase:hover:not(:disabled) {
       background: linear-gradient(135deg, #0d6847 0%, #073825 100%);
       transform: translateY(-1px);
       box-shadow: 0 8px 30px rgba(13, 104, 71, 0.5), 0 0 0 2px rgba(13, 104, 71, 0.3);
     }
-    .btn-purchase:active {
-      transform: translateY(1px);
+    .btn-purchase:active:not(:disabled) {
+      transform: scale(0.98) translateY(0.5px);
     }
 
     /* Discount Modal Transition */
@@ -286,6 +286,81 @@
       height: 4px;
       background: #27272a;
       border-radius: 0 0 4px 4px;
+    }
+    /* Tactile Responsiveness & Spatial Continuity Tokens (Motion Audit) */
+    :root {
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-in: cubic-bezier(0.64, 0, 0.78, 0);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
+    }
+    #planCardAnnual,
+    #planCardSixMonth,
+    #planCardMonthly,
+    #o2MobilePlanAnnual,
+    #o2MobilePlanMonthly,
+    #batteryCareBumpCard,
+    #cloudVaultBumpCard,
+    #o2MobileBatCard,
+    #o2MobileCloudCard,
+    #paymentLogoStripBar button,
+    #expressPaymentRow button {
+      transition: transform 90ms var(--ease-out), background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out), box-shadow 150ms var(--ease-out), opacity 150ms var(--ease-out) !important;
+      will-change: transform;
+    }
+    #planCardAnnual:active:not(:disabled),
+    #planCardSixMonth:active:not(:disabled),
+    #planCardMonthly:active:not(:disabled),
+    #o2MobilePlanAnnual:active:not(:disabled),
+    #o2MobilePlanMonthly:active:not(:disabled),
+    #paymentLogoStripBar button:active:not(:disabled),
+    #expressPaymentRow button:active:not(:disabled) {
+      transform: scale(0.975);
+    }
+    #batteryCareBumpCard:hover,
+    #cloudVaultBumpCard:hover {
+      border-color: #9adbc0;
+      box-shadow: 0 4px 14px rgba(13, 104, 71, 0.07);
+    }
+    #batteryCareBumpCard:active,
+    #cloudVaultBumpCard:active,
+    #o2MobileBatCard:active,
+    #o2MobileCloudCard:active {
+      transform: scale(0.988);
+    }
+    @keyframes orderCheckPop {
+      0% { transform: scale(0.8); }
+      55% { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+    #batteryCareCheckbox:checked,
+    #cloudVaultCheckbox:checked,
+    #o2MobileBatCheckbox:checked,
+    #o2MobileCloudCheckbox:checked,
+    #termsConsent:checked,
+    #legalConsent:checked {
+      animation: orderCheckPop 200ms var(--spring);
+    }
+    @keyframes orderRowSlideIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #addonSummaryRow:not(.hidden),
+    #cloudVaultSummaryRow:not(.hidden),
+    #discountSummaryRow:not(.hidden),
+    #checkoutError:not(.hidden),
+    #sepaOnlyFields:not(.hidden) {
+      animation: orderRowSlideIn 180ms var(--ease-out);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .btn-purchase {
+        animation: none !important;
+      }
     }
   </style>
   <script src="/analytics.js" defer></script>

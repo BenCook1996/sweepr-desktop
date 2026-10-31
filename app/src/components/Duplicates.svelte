@@ -419,8 +419,8 @@
         </div>
 
         <div class="grid">
-          {#each groups as g (g.hash)}
-            <div class="card item">
+          {#each groups as g, i (g.hash)}
+            <div class="card item" style={`--stagger-i: ${Math.min(i, 7)};`}>
               <div class="row" style="margin-bottom: 6px;">
                 <strong style="font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   {fileNameOf(g.files[0])}
@@ -472,8 +472,8 @@
             <div class="muted small">None over {minSizeMb} MB.</div>
           {:else}
             <div class="large-list">
-              {#each largeReport.top_files as lf (lf.path)}
-                <div class="row large-file-row">
+              {#each largeReport.top_files as lf, i (lf.path)}
+                <div class="row large-file-row" style={`--stagger-i: ${Math.min(i, 7)};`}>
                   <div style="flex: 1; min-width: 0;">
                     <strong style="font-size: 14px; display: block;">{lf.name}</strong>
                     <div
@@ -553,6 +553,17 @@
     color: var(--muted);
     cursor: pointer;
     box-shadow: none;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
+  }
+  .source-btn:active:not(:disabled),
+  .subtab-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
   }
   .source-btn.active,
   .subtab-btn.active {
@@ -596,6 +607,16 @@
     align-items: center;
     gap: 6px;
     cursor: pointer;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      border-color 140ms var(--ease-out),
+      color 140ms var(--ease-out);
+  }
+  .folder-chip:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
   }
   .folder-chip.active {
     background: var(--accent-light);
@@ -614,6 +635,15 @@
     padding: 10px 22px;
     border-radius: 9999px;
     font-weight: 700;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
+  }
+  .scan-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
   }
   .toolbar-card {
     padding: 16px 22px;
@@ -652,6 +682,16 @@
     flex-direction: column;
     align-items: center;
   }
+  @keyframes dup-stagger-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -661,6 +701,8 @@
     padding: 18px;
     display: flex;
     flex-direction: column;
+    animation: dup-stagger-enter 200ms var(--ease-out) both;
+    animation-delay: calc(var(--stagger-i, 0) * 28ms);
   }
   .cluster-size {
     font-size: 22px;
@@ -681,6 +723,11 @@
     border: 1px solid var(--border);
     background: var(--panel-2);
     gap: 12px;
+    animation: dup-stagger-enter 200ms var(--ease-out) both;
+    animation-delay: calc(var(--stagger-i, 0) * 28ms);
+    transition:
+      background-color 140ms var(--ease-out),
+      border-color 140ms var(--ease-out);
   }
   .files {
     background: var(--panel-2);
@@ -719,5 +766,22 @@
     padding: 7px 15px;
     font-size: 12.5px;
     border-radius: 9999px;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      border-color 140ms var(--ease-out),
+      color 140ms var(--ease-out);
+  }
+  .small-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .item,
+    .large-file-row {
+      animation: none !important;
+      transform: none !important;
+    }
   }
 </style>

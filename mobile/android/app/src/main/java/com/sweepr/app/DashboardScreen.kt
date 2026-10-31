@@ -159,7 +159,7 @@ fun DashboardScreen(
                             .height(48.dp)
                             .clip(RoundedCornerShape(999.dp))
                             .background(EmeraldGradient)
-                            .clickable(enabled = !state.isBusy, onClick = onCleanUp)
+                            .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onCleanUp)
                             .padding(horizontal = 14.dp),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -177,7 +177,7 @@ fun DashboardScreen(
                             .clip(RoundedCornerShape(999.dp))
                             .background(MaterialTheme.colorScheme.surface)
                             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
-                            .clickable(enabled = !state.isBusy, onClick = onOpenReview)
+                            .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onOpenReview)
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -416,7 +416,7 @@ private fun QuickCleanBlock(
                             .clip(RoundedCornerShape(999.dp))
                             .background(SweeprGreen.copy(alpha = 0.14f))
                             .border(1.dp, SweeprGreen.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
-                            .clickable(onClick = onScan)
+                            .sweeprTactileClickable(pressedScale = 0.97f, onClick = onScan)
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                     ) {
                         Text(

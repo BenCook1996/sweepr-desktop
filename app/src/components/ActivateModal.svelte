@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { fade, scale } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
   import { api, errorMessage } from "../lib/api";
 
   let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
@@ -224,9 +226,21 @@
 <svelte:window onkeydown={onWindowKeydown} />
 
 {#if open}
-  <div class="modal-backdrop" onclick={close} role="presentation">
+  <div
+    class="modal-backdrop"
+    onclick={close}
+    role="presentation"
+    transition:fade={{ duration: 160 }}
+  >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="modal-sheet card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
+    <div
+      class="modal-sheet modal card"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      transition:scale={{ duration: 220, start: 0.96, opacity: 0, easing: cubicOut }}
+    >
       <button class="close-btn" onclick={close} aria-label="Close">✕</button>
 
       {#if unlockedSuccess}
@@ -409,7 +423,8 @@
     padding: 20px;
   }
 
-  .modal-sheet {
+  .modal-sheet,
+  .modal {
     position: relative;
     width: 100%;
     max-width: 440px;
@@ -420,7 +435,6 @@
     padding: 24px 24px 20px 24px;
     display: flex;
     flex-direction: column;
-    animation: popIn 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .close-btn {
@@ -440,11 +454,18 @@
     font-size: 12px;
     padding: 0;
     box-shadow: none;
-    transition: background-color 140ms ease, color 140ms ease;
+    transition:
+      transform 120ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      color 140ms var(--ease-out);
   }
   .close-btn:hover {
     background: var(--border);
     color: var(--text);
+  }
+  .close-btn:active:not(:disabled) {
+    transform: scale(0.96);
+    transition-duration: 80ms;
   }
 
   .modal-body {
@@ -510,10 +531,17 @@
     cursor: pointer;
     text-align: left;
     box-shadow: none;
-    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), border-color 140ms ease, background-color 140ms ease;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      border-color 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
   }
-  .plan-card-btn:active {
-    transform: scale(0.985);
+  .plan-card-btn:active:not(:disabled) {
+    transform: scale(0.98);
+    transition-duration: 80ms;
   }
   .plan-card-btn:hover {
     border-color: rgba(16, 185, 129, 0.55);
@@ -545,7 +573,10 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: border-color 140ms ease, background-color 140ms ease;
+    transition:
+      border-color 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
   }
   .plan-card-btn.selected .radio-dot {
     border-color: #10b981;
@@ -595,6 +626,20 @@
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      border-color 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
+  }
+  .addon-row-pill:hover {
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+  .addon-row-pill:active:not(:disabled) {
+    transform: scale(0.98);
+    transition-duration: 80ms;
   }
   .addon-row-left {
     display: inline-flex;
@@ -624,7 +669,9 @@
     font-size: 13px;
     color: var(--text);
     outline: none;
-    transition: border-color 140ms ease, box-shadow 140ms ease;
+    transition:
+      border-color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out);
   }
   .neutral-input:focus {
     border-color: #64748b;
@@ -646,13 +693,19 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), filter 140ms ease;
+    transition:
+      transform 140ms var(--ease-out),
+      opacity 140ms var(--ease-out),
+      background-color 140ms var(--ease-out),
+      box-shadow 140ms var(--ease-out),
+      filter 140ms var(--ease-out);
   }
   .begin-btn:hover:not(:disabled) {
     filter: brightness(1.05);
   }
   .begin-btn:active:not(:disabled) {
-    transform: scale(0.985);
+    transform: scale(0.98);
+    transition-duration: 80ms;
   }
   .btn-arrow {
     color: #d1fae5;

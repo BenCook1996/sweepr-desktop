@@ -609,7 +609,7 @@
     cursor: pointer;
     inset: 0;
     background-color: #cbd5e1;
-    transition: 0.2s;
+    transition: background-color 180ms var(--ease-out);
     border-radius: 9999px;
   }
   .slider:before {
@@ -620,7 +620,7 @@
     left: 3px;
     bottom: 3px;
     background-color: white;
-    transition: 0.2s;
+    transition: transform 180ms var(--ease-out);
     border-radius: 50%;
   }
   input:checked + .slider {

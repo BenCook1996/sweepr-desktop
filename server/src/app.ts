@@ -705,8 +705,14 @@ export function createApp(deps: AppDeps) {
   .input{width:100%;padding:12px 14px;border-radius:13px;border:1px solid var(--border-strong);background:var(--input-bg);color:var(--text);font-size:13.5px;margin-top:8px}
   .btn-primary{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#145c3e,#0d6847);color:#fff;font-weight:900;font-size:14px;margin-top:12px;cursor:pointer}
   .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--glass);backdrop-filter:blur(14px);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);padding:6px 10px 10px;gap:6px;z-index:100}
-  .nav-tab{border:none;background:transparent;color:var(--muted);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;cursor:pointer}
+  .nav-tab{border:none;background:transparent;color:var(--muted);border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;cursor:pointer;transition:transform 90ms cubic-bezier(.22,1,.36,1),background-color 150ms cubic-bezier(.22,1,.36,1),color 150ms cubic-bezier(.22,1,.36,1)}
   .nav-tab.active{color:var(--accent-fg);background:var(--accent-soft)}
+  .c3-power-orb,.btn-primary,.icon-btn{transition:transform 90ms cubic-bezier(.22,1,.36,1),box-shadow 160ms cubic-bezier(.22,1,.36,1),background-color 150ms ease}
+  .c3-power-orb:active:not(:disabled){transform:scale(.95)}
+  .btn-primary:active:not(:disabled),.icon-btn:active:not(:disabled),.nav-tab:active:not(:disabled){transform:scale(.97)}
+  @keyframes iosViewIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  .view.active{display:flex;animation:iosViewIn 170ms cubic-bezier(.22,1,.36,1)}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>

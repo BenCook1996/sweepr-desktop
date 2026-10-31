@@ -443,7 +443,15 @@
     border: 1.5px solid #e2e8f0;
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+      transform 140ms var(--ease-out),
+      background-color 150ms var(--ease-out),
+      border-color 150ms var(--ease-out),
+      box-shadow 150ms var(--ease-out);
+  }
+  .option-card:active:not(:disabled) {
+    transform: scale(0.985);
+    transition-duration: 80ms;
   }
   .option-card:hover {
     border-color: #cbd5e1;
