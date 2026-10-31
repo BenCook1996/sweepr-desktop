@@ -10,6 +10,36 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    private static var currencyCode: String {
+        Locale.current.currencyCode ?? "GBP"
+    }
+
+    static func formatLocalCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale.current
+        formatter.currencyCode = currencyCode
+        if currencyCode == "JPY" || currencyCode == "INR" || currencyCode == "SEK" || currencyCode == "NOK" || currencyCode == "DKK" {
+            formatter.maximumFractionDigits = 0
+        } else {
+            formatter.maximumFractionDigits = 2
+            formatter.minimumFractionDigits = 2
+        }
+        return formatter.string(from: NSNumber(value: amount)) ?? String(format: "£%.2f", amount)
+    }
+
+    static var localizedAddonYearlyPrice: String {
+        switch currencyCode {
+        case "SEK", "NOK": return formatLocalCurrency(99)
+        case "DKK": return formatLocalCurrency(69)
+        case "PLN": return formatLocalCurrency(39.99)
+        case "JPY": return formatLocalCurrency(1500)
+        case "INR": return formatLocalCurrency(799)
+        case "BRL": return formatLocalCurrency(49.90)
+        default: return formatLocalCurrency(9.99)
+        }
+    }
+
     var fallbackTitle: String {
         switch self {
         case .monthly: return "Monthly"
@@ -19,18 +49,68 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
     }
 
     var fallbackPrice: String {
+        let code = Self.currencyCode
         switch self {
-        case .monthly: return "£1.99"
-        case .sixMonth: return "£38.99"
-        case .annual: return "£49.99"
+        case .monthly:
+            switch code {
+            case "USD": return Self.formatLocalCurrency(12.99)
+            case "EUR", "CHF": return Self.formatLocalCurrency(11.99)
+            case "CAD", "SGD": return Self.formatLocalCurrency(16.99)
+            case "AUD": return Self.formatLocalCurrency(18.99)
+            case "NZD": return Self.formatLocalCurrency(19.99)
+            case "SEK", "NOK": return Self.formatLocalCurrency(129)
+            case "DKK": return Self.formatLocalCurrency(89)
+            case "PLN": return Self.formatLocalCurrency(49.99)
+            case "JPY": return Self.formatLocalCurrency(1980)
+            case "INR": return Self.formatLocalCurrency(599)
+            case "BRL": return Self.formatLocalCurrency(49.90)
+            default: return Self.formatLocalCurrency(9.99)
+            }
+        case .sixMonth:
+            switch code {
+            case "USD": return Self.formatLocalCurrency(49.99)
+            case "EUR", "CHF": return Self.formatLocalCurrency(44.99)
+            case "CAD", "SGD": return Self.formatLocalCurrency(64.99)
+            case "AUD": return Self.formatLocalCurrency(74.99)
+            case "NZD": return Self.formatLocalCurrency(79.99)
+            case "SEK", "NOK": return Self.formatLocalCurrency(499)
+            case "DKK": return Self.formatLocalCurrency(349)
+            case "PLN": return Self.formatLocalCurrency(189.99)
+            case "JPY": return Self.formatLocalCurrency(7400)
+            case "INR": return Self.formatLocalCurrency(2199)
+            case "BRL": return Self.formatLocalCurrency(189.90)
+            default: return Self.formatLocalCurrency(38.99)
+            }
+        case .annual:
+            switch code {
+            case "USD": return Self.formatLocalCurrency(64.99)
+            case "EUR", "CHF": return Self.formatLocalCurrency(59.99)
+            case "CAD": return Self.formatLocalCurrency(89.99)
+            case "AUD": return Self.formatLocalCurrency(99.99)
+            case "NZD": return Self.formatLocalCurrency(109.99)
+            case "SGD": return Self.formatLocalCurrency(84.99)
+            case "SEK", "NOK": return Self.formatLocalCurrency(649)
+            case "DKK": return Self.formatLocalCurrency(449)
+            case "PLN": return Self.formatLocalCurrency(249.99)
+            case "JPY": return Self.formatLocalCurrency(9800)
+            case "INR": return Self.formatLocalCurrency(2999)
+            case "BRL": return Self.formatLocalCurrency(249.90)
+            default: return Self.formatLocalCurrency(49.99)
+            }
         }
     }
 
     var fallbackSubtitle: String {
+        let code = Self.currencyCode
         switch self {
-        case .monthly: return "1st mo, then £9.99"
-        case .sixMonth: return "Save 35% (£6.50/mo)"
-        case .annual: return "Save 58% (£4.16/mo)"
+        case .monthly:
+            return "Billed monthly · Cancel anytime"
+        case .sixMonth:
+            let eq: Double = (code == "USD") ? 8.33 : ((code == "EUR" || code == "CHF") ? 7.50 : 6.50)
+            return "Save 35% (\(Self.formatLocalCurrency(eq))/mo)"
+        case .annual:
+            let eq: Double = (code == "USD") ? 5.42 : ((code == "EUR" || code == "CHF") ? 5.00 : 4.16)
+            return "Save 58% (\(Self.formatLocalCurrency(eq))/mo)"
         }
     }
 
@@ -46,7 +126,9 @@ struct PaywallView: View {
     @ObservedObject var vm: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var packages: [Package] = []
-    @State private var selectedPlan: SubscriptionPlanOption = .monthly
+    @State private var selectedPlan: SubscriptionPlanOption = .annual
+    @State private var includeBatteryAddon = false
+    @State private var includeCloudAddon = false
     @State private var isLoadingPackages = true
     @State private var isPurchasing = false
 
@@ -75,7 +157,7 @@ struct PaywallView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 16) {
                 // Brand Pill
                 HStack(spacing: 6) {
                     Circle()
@@ -98,16 +180,59 @@ struct PaywallView: View {
                     Text("Clean & speed up in 1 click")
                         .font(.system(size: 22, weight: .heavy))
                         .foregroundColor(.primary)
-                    Text("Try your first month for £1.99. Cancel anytime.")
+                    Text("Choose a plan below, or save 58% with Yearly. Cancel anytime.")
                         .font(.system(size: 13.5))
                         .foregroundColor(.secondary)
                 }
 
-                // 3-Plan Radio Grid (Concept A)
+                // 3-Plan Radio Grid (Concept A / W3)
                 HStack(spacing: 8) {
                     ForEach(SubscriptionPlanOption.allCases) { option in
                         planSelectorCard(option: option)
                     }
+                }
+
+                // Consistent 9.99/yr Optional Add-on Toggles
+                VStack(spacing: 8) {
+                    Toggle(isOn: $includeBatteryAddon) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Battery Health Saver")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text("80% charge reminder & overheating protection")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                                .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                                .foregroundColor(.sweeprEmerald)
+                        }
+                    }
+                    .tint(.sweeprEmerald)
+                    .padding(10)
+                    .sweeprCard(cornerRadius: 12)
+
+                    Toggle(isOn: $includeCloudAddon) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Private File Lockbox & Cloud Backup")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.primary)
+                                Text("Password-locks private photos & backs up automatically")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                                .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                                .foregroundColor(.sweeprEmerald)
+                        }
+                    }
+                    .tint(.sweeprEmerald)
+                    .padding(10)
+                    .sweeprCard(cornerRadius: 12)
                 }
 
                 // Primary CTA
@@ -292,6 +417,14 @@ struct PaywallView: View {
         do {
             let res = try await Purchases.shared.purchase(package: pkg)
             if !res.userCancelled {
+                if includeBatteryAddon,
+                   let batPkg = packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("battery") }) {
+                    _ = try? await Purchases.shared.purchase(package: batPkg)
+                }
+                if includeCloudAddon,
+                   let cloudPkg = packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("cloud") || $0.identifier.localizedCaseInsensitiveContains("vault") }) {
+                    _ = try? await Purchases.shared.purchase(package: cloudPkg)
+                }
                 vm.checkSubscription()
                 dismiss()
             }

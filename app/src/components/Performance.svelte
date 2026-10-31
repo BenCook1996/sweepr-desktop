@@ -57,11 +57,30 @@
   let error = $state<string | null>(null);
 
   const isPro = $derived(!!license && (license.dev_unlock || license.active));
+  const hasBatteryCareAddon = $derived(
+    Boolean(
+      license?.dev_unlock ||
+        license?.addons?.some((a) => a.toLowerCase() === "battery_care")
+    )
+  );
   const usedPct = $derived(mem ? Math.round((mem.used_bytes / mem.total_bytes) * 100) : 0);
   const topFiveApps = $derived(mem ? mem.top_apps.slice(0, 5) : []);
   const toggleableStartup = $derived(
     startup.filter((s) => s.scope === "Current user" || s.scope.includes("HKCU"))
   );
+
+  async function unlockBatteryAddon() {
+    error = null;
+    if (isPro) {
+      try {
+        await api.startAddonCheckout("battery_care");
+      } catch {
+        requestActivation();
+      }
+    } else {
+      requestActivation();
+    }
+  }
 
   async function load() {
     try {
@@ -139,8 +158,8 @@
 
       boostNotice =
         totalFreed > 0
-          ? `Freed ${formatBytes(totalFreed)} RAM`
-          : "Memory optimized";
+          ? `Freed ${formatBytes(totalFreed)} of memory`
+          : "Memory sped up";
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -155,9 +174,9 @@
   async function toggleChargeLimit(enabled: boolean, evt?: Event) {
     const input = evt?.currentTarget as HTMLInputElement | undefined;
     const prev = diag?.config.charge_limit_enabled ?? false;
-    if (enabled && !isPro) {
+    if (enabled && !hasBatteryCareAddon) {
       if (input) input.checked = prev;
-      requestActivation();
+      await unlockBatteryAddon();
       return;
     }
     busyAutopilot = "limit";
@@ -170,7 +189,7 @@
       }
     } catch (e) {
       if (input) input.checked = prev;
-      if (isPaymentRequired(e)) requestActivation();
+      if (isPaymentRequired(e)) await unlockBatteryAddon();
       else error = errorMessage(e);
     } finally {
       busyAutopilot = null;
@@ -180,9 +199,9 @@
   async function toggleThermal(enabled: boolean, evt?: Event) {
     const input = evt?.currentTarget as HTMLInputElement | undefined;
     const prev = diag?.config.thermal_throttling_enabled ?? false;
-    if (enabled && !isPro) {
+    if (enabled && !hasBatteryCareAddon) {
       if (input) input.checked = prev;
-      requestActivation();
+      await unlockBatteryAddon();
       return;
     }
     busyAutopilot = "thermal";
@@ -195,7 +214,7 @@
       }
     } catch (e) {
       if (input) input.checked = prev;
-      if (isPaymentRequired(e)) requestActivation();
+      if (isPaymentRequired(e)) await unlockBatteryAddon();
       else error = errorMessage(e);
     } finally {
       busyAutopilot = null;
@@ -205,9 +224,9 @@
   async function toggleSleepTabs(enabled: boolean, evt?: Event) {
     const input = evt?.currentTarget as HTMLInputElement | undefined;
     const prev = diag?.config.auto_hibernate_tabs ?? false;
-    if (enabled && !isPro) {
+    if (enabled && !hasBatteryCareAddon) {
       if (input) input.checked = prev;
-      requestActivation();
+      await unlockBatteryAddon();
       return;
     }
     busyAutopilot = "tabs";
@@ -223,7 +242,7 @@
       }
     } catch (e) {
       if (input) input.checked = prev;
-      if (isPaymentRequired(e)) requestActivation();
+      if (isPaymentRequired(e)) await unlockBatteryAddon();
       else error = errorMessage(e);
     } finally {
       busyAutopilot = null;
@@ -348,7 +367,7 @@
     <div>
       <h1 class="speed-title">{t("speed.title", $lang)}</h1>
       <span class="speed-sub">
-        {mem ? `${usedPct}% RAM in use` : "Checking memory…"}
+        {mem ? `${usedPct}% memory in use` : "Checking memory…"}
         {#if diag?.has_battery && diag.charge_percent != null}
           · {diag.charge_percent}% Battery
         {/if}
@@ -356,7 +375,7 @@
     </div>
 
     <button class="primary boost-btn" disabled={boosting} onclick={runOneClickSpeedBoost}>
-      {boosting ? "Boosting…" : t("speed.boostRam", $lang)}
+      {boosting ? "Speeding up…" : t("speed.boostRam", $lang)}
     </button>
   </div>
 
@@ -370,15 +389,24 @@
   <!-- Section 1: Autopilot -->
   <section class="group-section" class:battery-highlight={viewMode === "battery"}>
     <div class="group-label" style="display: flex; justify-content: space-between; align-items: center;">
-      <span>{viewMode === "battery" ? "Battery Care & Power Saver" : "Autopilot"}</span>
-      <div style="display: flex; gap: 4px;">
+      <span>{viewMode === "battery" ? "Battery Health Saver" : "Automatic Battery & Speed Care"}</span>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        {#if !hasBatteryCareAddon}
+          <button
+            type="button"
+            class="primary mini-btn"
+            onclick={unlockBatteryAddon}
+          >
+            Unlock Battery Saver (+£9.99/yr)
+          </button>
+        {/if}
         <button
           type="button"
           class="ghost mini-btn"
           style={viewMode === "pc" ? "color: var(--accent); font-weight: 800;" : ""}
           onclick={() => (viewMode = "pc")}
         >
-          RAM &amp; PC
+          Speed &amp; Memory
         </button>
         <button
           type="button"
@@ -392,7 +420,10 @@
     </div>
     <div class="row-list">
       <label class="line-row">
-        <span class="row-name">80% Battery Limit</span>
+        <div>
+          <span class="row-name">80% Charge Alert (Protects Battery Lifespan)</span>
+          <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Reminds you to unplug at 80% so your laptop battery lasts years longer</div>
+        </div>
         <input
           type="checkbox"
           class="toggle-switch"
@@ -403,7 +434,10 @@
       </label>
 
       <label class="line-row">
-        <span class="row-name">Sleep Idle Browser Tabs</span>
+        <div>
+          <span class="row-name">Pause Unused Browser Tabs</span>
+          <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Puts background browser tabs to sleep so they stop draining battery and memory</div>
+        </div>
         <input
           type="checkbox"
           class="toggle-switch"
@@ -414,7 +448,10 @@
       </label>
 
       <label class="line-row">
-        <span class="row-name">Cool &amp; Quiet Mode</span>
+        <div>
+          <span class="row-name">Cool &amp; Quiet Laptop Mode</span>
+          <div style="font-size: 11.5px; color: var(--muted); margin-top: 2px;">Slows down heavy background apps when your laptop gets hot or noisy</div>
+        </div>
         <input
           type="checkbox"
           class="toggle-switch"

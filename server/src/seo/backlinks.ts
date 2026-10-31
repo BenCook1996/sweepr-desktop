@@ -41,6 +41,56 @@ function isPrivateIpv4Parts(a: number, b: number, c = 0): boolean {
   );
 }
 
+function parseIpv6Words(h: string): number[] | null {
+  let ipStr = h;
+  const lastColon = ipStr.lastIndexOf(":");
+  if (lastColon >= 0) {
+    const tail = ipStr.slice(lastColon + 1);
+    if (tail.includes(".")) {
+      const parts = tail.split(".").map(Number);
+      if (parts.length === 4 && parts.every((p) => Number.isInteger(p) && p >= 0 && p <= 255)) {
+        const hi = (parts[0] << 8) | parts[1];
+        const lo = (parts[2] << 8) | parts[3];
+        ipStr = `${ipStr.slice(0, lastColon)}:${hi.toString(16)}:${lo.toString(16)}`;
+      }
+    }
+  }
+
+  const doubleColon = ipStr.indexOf("::");
+  let leftParts: string[] = [];
+  let rightParts: string[] = [];
+
+  if (doubleColon >= 0) {
+    const left = ipStr.slice(0, doubleColon);
+    const right = ipStr.slice(doubleColon + 2);
+    leftParts = left ? left.split(":") : [];
+    rightParts = right ? right.split(":") : [];
+  } else {
+    leftParts = ipStr.split(":");
+  }
+
+  const totalKnown = leftParts.length + rightParts.length;
+  if (totalKnown > 8) return null;
+  const missing = 8 - totalKnown;
+  const words: number[] = [];
+
+  for (const part of leftParts) {
+    const val = Number.parseInt(part, 16);
+    if (Number.isNaN(val) || val < 0 || val > 0xffff) return null;
+    words.push(val);
+  }
+  for (let i = 0; i < missing; i++) {
+    words.push(0);
+  }
+  for (const part of rightParts) {
+    const val = Number.parseInt(part, 16);
+    if (Number.isNaN(val) || val < 0 || val > 0xffff) return null;
+    words.push(val);
+  }
+
+  return words.length === 8 ? words : null;
+}
+
 /** Rejects internal, loopback, link-local, multicast, and IPv4-mapped IPv6 targets so admin/SEO tools cannot be used for SSRF. */
 export function isPublicHttpUrl(raw: string): boolean {
   let u: URL;
@@ -50,6 +100,12 @@ export function isPublicHttpUrl(raw: string): boolean {
     return false;
   }
   if (!/^https?:$/.test(u.protocol)) return false;
+  if (u.port) {
+    const portNum = Number.parseInt(u.port, 10);
+    if (portNum !== 80 && portNum !== 443 && portNum !== 8080 && portNum !== 8443) {
+      return false;
+    }
+  }
   const h = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (
     !h ||
@@ -67,34 +123,42 @@ export function isPublicHttpUrl(raw: string): boolean {
   // Rejects hex/octal or integer decimal representations (e.g. 0x7f000001 or 2130706433)
   if (/^(0x[0-9a-f]+|\d+)$/i.test(h)) return false;
 
+  // Reject non-standard dotted notations (octal segments with leading zeros, hex segments, or <4 segments e.g. 127.1, 0177.0.0.1)
+  const dotted = h.split(".");
+  if (dotted.length >= 1 && dotted.length <= 4 && dotted.every((p) => /^(0x[0-9a-f]+|\d+)$/i.test(p))) {
+    if (dotted.length !== 4) return false;
+    if (dotted.some((p) => /^0[0-9]+$/.test(p) || /^0x/i.test(p))) return false;
+  }
+
   const ipv = isIP(h);
   if (ipv === 4) {
     const [a, b, c] = h.split(".").map(Number);
     if (isPrivateIpv4Parts(a, b, c)) return false;
   } else if (ipv === 6) {
-    if (
-      h === "::1" ||
-      h === "::" ||
-      h.startsWith("fc") ||
-      h.startsWith("fd") ||
-      h.startsWith("fe8") ||
-      h.startsWith("fe9") ||
-      h.startsWith("fea") ||
-      h.startsWith("feb") ||
-      h.startsWith("fec") ||
-      h.startsWith("fed") ||
-      h.startsWith("fee") ||
-      h.startsWith("fef") ||
-      h.startsWith("ff") ||
-      h.startsWith("100:") ||
-      h.startsWith("2001:db8") ||
-      h.startsWith("2001:0db8")
-    ) {
-      return false;
-    }
-    // Block IPv4-mapped or IPv4-compatible IPv6 addresses (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1)
-    if (h.startsWith("::ffff:") || h.includes("ffff:") || h.startsWith("::")) {
-      return false;
+    const words = parseIpv6Words(h);
+    if (!words) return false;
+    // Unspecified (::)
+    if (words.every((w) => w === 0)) return false;
+    // Loopback (::1, 0:0:0:0:0:0:0:1, etc.)
+    if (words.slice(0, 7).every((w) => w === 0) && words[7] === 1) return false;
+    // Unique-local (fc00::/7)
+    if ((words[0] & 0xfe00) === 0xfc00) return false;
+    // Link-local (fe80::/10) and deprecated Site-local (fec0::/10)
+    if ((words[0] & 0xfe00) === 0xfe00) return false;
+    // Multicast (ff00::/8)
+    if ((words[0] & 0xff00) === 0xff00) return false;
+    // Discard prefix (100::/64)
+    if (words[0] === 0x0100 && words[1] === 0 && words[2] === 0 && words[3] === 0) return false;
+    // Documentation (2001:db8::/32) and Benchmarking (2001:2::/48)
+    if (words[0] === 0x2001 && (words[1] === 0x0db8 || (words[1] === 0x0002 && words[2] === 0))) return false;
+    // IPv4-mapped (::ffff:0:0/96) and IPv4-compatible (::/96)
+    const isMapped = words.slice(0, 5).every((w) => w === 0) && words[5] === 0xffff;
+    const isCompatible = words.slice(0, 6).every((w) => w === 0);
+    if (isMapped || isCompatible) {
+      const a = (words[6] >> 8) & 0xff;
+      const b = words[6] & 0xff;
+      const c = (words[7] >> 8) & 0xff;
+      if (isPrivateIpv4Parts(a, b, c)) return false;
     }
   }
   return true;

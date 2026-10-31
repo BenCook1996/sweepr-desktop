@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import type { Context } from "hono";
 import { getConnInfo } from "@hono/node-server/conninfo";
 
@@ -667,15 +668,115 @@ function setGeoCache(key: string, country: string, expiresAt: number, nowMs: num
   ipCountryCache.set(key, { country, expiresAt });
 }
 
-function isPrivateOrLoopbackIp(ip: string): boolean {
-  const clean = ip.replace(/^::ffff:/i, "").trim();
-  if (!clean || clean === "local" || clean === "127.0.0.1" || clean === "::1" || clean === "0.0.0.0") {
-    return true;
+function isPrivateIpv4Parts(a: number, b: number, c = 0): boolean {
+  return (
+    a === 10 ||
+    a === 127 ||
+    a === 0 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    a >= 224 ||
+    (a === 192 && b === 0 && c === 2) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 192 && b === 88 && c === 99)
+  );
+}
+
+function parseIpv6Words(h: string): number[] | null {
+  let ipStr = h;
+  const lastColon = ipStr.lastIndexOf(":");
+  if (lastColon >= 0) {
+    const tail = ipStr.slice(lastColon + 1);
+    if (tail.includes(".")) {
+      const parts = tail.split(".").map(Number);
+      if (parts.length === 4 && parts.every((p) => Number.isInteger(p) && p >= 0 && p <= 255)) {
+        const hi = (parts[0] << 8) | parts[1];
+        const lo = (parts[2] << 8) | parts[3];
+        ipStr = `${ipStr.slice(0, lastColon)}:${hi.toString(16)}:${lo.toString(16)}`;
+      }
+    }
   }
-  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/.test(clean)) {
-    return true;
+
+  const doubleColon = ipStr.indexOf("::");
+  let leftParts: string[] = [];
+  let rightParts: string[] = [];
+
+  if (doubleColon >= 0) {
+    const left = ipStr.slice(0, doubleColon);
+    const right = ipStr.slice(doubleColon + 2);
+    leftParts = left ? left.split(":") : [];
+    rightParts = right ? right.split(":") : [];
+  } else {
+    leftParts = ipStr.split(":");
   }
-  return false;
+
+  const totalKnown = leftParts.length + rightParts.length;
+  if (totalKnown > 8) return null;
+  const missing = 8 - totalKnown;
+  const words: number[] = [];
+
+  for (const part of leftParts) {
+    const val = Number.parseInt(part, 16);
+    if (Number.isNaN(val) || val < 0 || val > 0xffff) return null;
+    words.push(val);
+  }
+  for (let i = 0; i < missing; i++) {
+    words.push(0);
+  }
+  for (const part of rightParts) {
+    const val = Number.parseInt(part, 16);
+    if (Number.isNaN(val) || val < 0 || val > 0xffff) return null;
+    words.push(val);
+  }
+
+  return words.length === 8 ? words : null;
+}
+
+export function isPrivateOrLoopbackIp(ip: string): boolean {
+  const clean = ip.replace(/^::ffff:/i, "").replace(/^\[|\]$/g, "").trim().toLowerCase();
+  if (!clean || clean === "local") return true;
+
+  const ipv = isIP(clean);
+  if (ipv === 4) {
+    const parts = clean.split(".").map(Number);
+    if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
+      return true;
+    }
+    return isPrivateIpv4Parts(parts[0], parts[1], parts[2]);
+  } else if (ipv === 6) {
+    const words = parseIpv6Words(clean);
+    if (!words) return true;
+    // Unspecified (::)
+    if (words.every((w) => w === 0)) return true;
+    // Loopback (::1, 0:0:0:0:0:0:0:1, etc.)
+    if (words.slice(0, 7).every((w) => w === 0) && words[7] === 1) return true;
+    // Unique-local (fc00::/7)
+    if ((words[0] & 0xfe00) === 0xfc00) return true;
+    // Link-local (fe80::/10) and Site-local (fec0::/10)
+    if ((words[0] & 0xfe00) === 0xfe00) return true;
+    // Multicast (ff00::/8)
+    if ((words[0] & 0xff00) === 0xff00) return true;
+    // Discard prefix (100::/64)
+    if (words[0] === 0x0100 && words[1] === 0 && words[2] === 0 && words[3] === 0) return true;
+    // Documentation (2001:db8::/32) and Benchmarking (2001:2::/48)
+    if (words[0] === 0x2001 && (words[1] === 0x0db8 || (words[1] === 0x0002 && words[2] === 0))) return true;
+    // IPv4-mapped (::ffff:0:0/96) and IPv4-compatible (::/96)
+    const isMapped = words.slice(0, 5).every((w) => w === 0) && words[5] === 0xffff;
+    const isCompatible = words.slice(0, 6).every((w) => w === 0);
+    if (isMapped || isCompatible) {
+      const a = (words[6] >> 8) & 0xff;
+      const b = words[6] & 0xff;
+      const c = (words[7] >> 8) & 0xff;
+      return isPrivateIpv4Parts(a, b, c);
+    }
+    return false;
+  }
+  // Not a valid IP literal: treat as local/invalid to prevent outbound requests with invalid targets
+  return true;
 }
 
 export async function lookupCountryByIp(rawIp: string): Promise<string | null> {

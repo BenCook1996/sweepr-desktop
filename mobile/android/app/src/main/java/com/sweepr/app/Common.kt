@@ -80,25 +80,25 @@ import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 
-// ---------- Candidate 5: SWEEPR Signature Hybrid Theme ----------
+// ---------- M3 Warm Stone-Sage & Forest Green Theme ----------
 
-val SweeprGreen = Color(0xFF10B981)
-val SweeprGreenDark = Color(0xFF047857)
-val DangerRed = Color(0xFFEF4444)
+val SweeprGreen = Color(0xFF0D6847)
+val SweeprGreenDark = Color(0xFF073825)
+val DangerRed = Color(0xFFB91C1C)
 
-// Signature Hybrid Palette (Obsidian Dark + Mint-Pearl Light + Cyan-Emerald Bioluminescence)
-val Emerald400 = Color(0xFF34D399)
-val Emerald600 = Color(0xFF059669)
-val SweeprTeal = Color(0xFF0D9488)
-val SweeprCyan = Color(0xFF06B6D4)
-val SweeprIndigo = Color(0xFF6366F1)
-val SweeprAmber = Color(0xFFF59E0B)
-val SweeprMint = Color(0xFFECFDF5)
-val SweeprRose = Color(0xFFF43F5E)
-val Slate900 = Color(0xFF0F172A)
-val Slate800 = Color(0xFF1E293B)
-val Slate700 = Color(0xFF334155)
-val Slate400 = Color(0xFF94A3B8)
+// M3 Forest-Sage & Stone Palette
+val Emerald400 = Color(0xFF9ADBC0)
+val Emerald600 = Color(0xFF094F35)
+val SweeprTeal = Color(0xFF145C3E)
+val SweeprCyan = Color(0xFF0A2870)
+val SweeprIndigo = Color(0xFF3C1766)
+val SweeprAmber = Color(0xFFB85D00)
+val SweeprMint = Color(0xFFE1F3EC)
+val SweeprRose = Color(0xFFB91C1C)
+val Slate900 = Color(0xFF0F1210)
+val Slate800 = Color(0xFF1F2622)
+val Slate700 = Color(0xFF2E3531)
+val Slate400 = Color(0xFF9AA59E)
 
 /** True when the app is currently rendering its dark theme (respects the in-app Theme setting). */
 @Composable
@@ -111,7 +111,7 @@ fun isSweeprDark(): Boolean {
     }
 }
 
-/** Emerald accent for text on the current background: emerald-400 in dark, emerald-700 in light. */
+/** Emerald accent for text on the current background: mint-sage in dark, deep forest ink in light. */
 @Composable
 fun emeraldText(): Color = if (isSweeprDark()) Emerald400 else SweeprGreenDark
 
@@ -123,23 +123,23 @@ fun SweeprTheme(content: @Composable () -> Unit) {
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
     }
-    // Candidate 5 Signature Hybrid:
-    // - Dark: Deep Obsidian (#070B14) canvas with Frosted Slate Glass (#101829) cards
-    // - Light: Daylight Mint-Pearl (#F4FBF7) canvas with Crisp White (#FFFFFF) cards & Mint borders
+    // M3 Warm Stone-Sage & Forest Green:
+    // - Dark: Forest Charcoal (#0F1311) canvas with Elevated Slate (#171D1A) cards
+    // - Light: Warm Stone-Sage (#F4F5F3) canvas with Crisp White (#FFFFFF) cards & Sage borders
     val colorScheme = if (dark) {
         darkColorScheme(
-            primary = SweeprGreen,
+            primary = Color(0xFF22996B),
             onPrimary = Color.White,
             secondary = Emerald400,
             tertiary = SweeprCyan,
-            background = Color(0xFF070B14),
-            onBackground = Color(0xFFF8FAFC),
-            surface = Color(0xFF101829),
-            onSurface = Color(0xFFF8FAFC),
-            surfaceVariant = Color(0xFF162138),
+            background = Color(0xFF0F1311),
+            onBackground = Color(0xFFF3F6F4),
+            surface = Color(0xFF171D1A),
+            onSurface = Color(0xFFF3F6F4),
+            surfaceVariant = Color(0xFF1F2622),
             onSurfaceVariant = Slate400,
-            outline = Color(0x2894A3B8),
-            outlineVariant = Color(0x1E94A3B8),
+            outline = Color(0xFF2C3530),
+            outlineVariant = Color(0xFF242C28),
         )
     } else {
         lightColorScheme(
@@ -147,14 +147,14 @@ fun SweeprTheme(content: @Composable () -> Unit) {
             onPrimary = Color.White,
             secondary = SweeprGreenDark,
             tertiary = SweeprTeal,
-            background = Color(0xFFF4FBF7),
-            onBackground = Color(0xFF062C1E),
+            background = Color(0xFFF4F5F3),
+            onBackground = Color(0xFF0F1210),
             surface = Color.White,
             onSurface = Slate900,
-            surfaceVariant = Color(0xFFECFDF5),
-            onSurfaceVariant = Color(0xFF475569),
-            outline = Color(0xFFD1FAE5),
-            outlineVariant = Color(0xFFE2E8F0),
+            surfaceVariant = Color(0xFFECEEE9),
+            onSurfaceVariant = Color(0xFF4B544E),
+            outline = Color(0xFFD5D9D4),
+            outlineVariant = Color(0xFFE2E6E1),
         )
     }
 
@@ -502,12 +502,12 @@ fun SweeprBrushLogo(modifier: Modifier = Modifier.size(30.dp)) {
     }
     androidx.compose.foundation.Canvas(modifier = modifier) {
         val s = size.minDimension / 100f
-        val bgStart = if (dark) Color(0xFF10B981) else Color(0xFF10B981)
-        val bgEnd = if (dark) Color(0xFF047857) else Color(0xFF047857)
-        val fgPrimary = Color.White
-        val fgSecondary = Color(0xFFA7F3D0)
-        val slitColor = Color(0xFF047857)
-        val sparkleColor = Color.White
+        val bgStart = if (dark) Color(0xFFE1F3EC) else Color(0xFF145C3E)
+        val bgEnd = if (dark) Color(0xFFC5E8DA) else Color(0xFF073825)
+        val fgPrimary = if (dark) Color(0xFF0D6847) else Color.White
+        val fgSecondary = if (dark) Color(0xFF145C3E) else Color(0xFF9ADBC0)
+        val slitColor = if (dark) Color(0xFFC5E8DA) else Color(0xFF073825)
+        val sparkleColor = if (dark) Color(0xFF073825) else Color.White
 
         drawRoundRect(
             brush = androidx.compose.ui.graphics.Brush.linearGradient(listOf(bgStart, bgEnd)),

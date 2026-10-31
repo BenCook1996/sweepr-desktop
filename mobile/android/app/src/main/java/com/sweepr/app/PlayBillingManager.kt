@@ -46,6 +46,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
     private const val SKU_SIX_MONTH = "sweepr_six_month_3899"
     private const val SKU_ANNUAL = "sweepr_annual_4999"
     private const val SKU_BATTERY_CARE = "sweepr_battery_care_999"
+    private const val SKU_CLOUD_VAULT = "sweepr_cloud_vault_999"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     @Volatile
@@ -62,41 +63,53 @@ object PlayBillingManager : PurchasesUpdatedListener {
     private fun defaultLocalePrices(locale: Locale = Locale.getDefault()): Map<String, PlayProductPrice> {
         val currency = runCatching { Currency.getInstance(locale) }.getOrNull()
         val code = currency?.currencyCode ?: "GBP"
-        val isUsd = code == "USD" || code == "CAD" || code == "AUD"
-        val isEur = code == "EUR"
 
-        fun fmt(gbpAmount: Double, usdAmount: Double, eurAmount: Double): String {
-            val amount = when {
-                isUsd -> usdAmount
-                isEur -> eurAmount
-                else -> gbpAmount
-            }
-            return runCatching {
-                val nf = NumberFormat.getCurrencyInstance(locale)
-                if (currency != null) nf.currency = currency
-                nf.format(amount)
-            }.getOrElse {
-                when {
-                    isUsd -> "$%.2f".format(Locale.US, usdAmount)
-                    isEur -> "€%.2f".format(Locale.US, eurAmount)
-                    else -> "£%.2f".format(Locale.UK, gbpAmount)
-                }
-            }
+        data class TierAmounts(
+            val intro: Double,
+            val monthly: Double,
+            val sixMo: Double,
+            val sixEq: Double,
+            val annual: Double,
+            val annualEq: Double,
+            val addon: Double,
+        )
+
+        val amounts = when (code) {
+            "USD" -> TierAmounts(1.99, 12.99, 49.99, 8.33, 64.99, 5.42, 9.99)
+            "EUR" -> TierAmounts(1.99, 11.99, 44.99, 7.50, 59.99, 5.00, 9.99)
+            "CAD" -> TierAmounts(2.99, 16.99, 64.99, 10.83, 89.99, 7.50, 9.99)
+            "AUD" -> TierAmounts(2.99, 18.99, 74.99, 12.50, 99.99, 8.33, 9.99)
+            "NZD" -> TierAmounts(2.99, 19.99, 79.99, 13.33, 109.99, 9.17, 9.99)
+            "CHF" -> TierAmounts(1.99, 11.99, 44.99, 7.50, 59.99, 5.00, 9.99)
+            "SEK", "NOK" -> TierAmounts(25.0, 129.0, 499.0, 83.0, 649.0, 54.0, 99.0)
+            "DKK" -> TierAmounts(15.0, 89.0, 349.0, 58.0, 449.0, 37.0, 69.0)
+            "PLN" -> TierAmounts(9.99, 49.99, 189.99, 31.67, 249.99, 20.83, 39.99)
+            "JPY" -> TierAmounts(300.0, 1980.0, 7400.0, 1233.0, 9800.0, 817.0, 1500.0)
+            "INR" -> TierAmounts(199.0, 599.0, 2199.0, 367.0, 2999.0, 250.0, 799.0)
+            "SGD" -> TierAmounts(2.99, 16.99, 64.99, 10.83, 84.99, 7.08, 9.99)
+            "BRL" -> TierAmounts(9.90, 49.90, 189.90, 31.65, 249.90, 20.83, 49.90)
+            else -> TierAmounts(1.99, 9.99, 38.99, 6.50, 49.99, 4.16, 9.99)
         }
 
-        val monthlyIntro = fmt(1.99, 1.99, 1.99)
-        val monthlyRenew = fmt(9.99, 9.99, 9.99)
-        val sixMonth = fmt(38.99, 38.99, 38.99)
-        val sixMonthPerMo = fmt(6.50, 6.50, 6.50)
-        val annual = fmt(49.99, 49.99, 49.99)
-        val annualPerMo = fmt(4.16, 4.16, 4.16)
-        val batteryCare = fmt(9.99, 9.99, 9.99)
+        fun fmt(amount: Double): String = runCatching {
+            val nf = NumberFormat.getCurrencyInstance(locale)
+            if (currency != null) nf.currency = currency
+            nf.format(amount)
+        }.getOrElse { "£%.2f".format(Locale.UK, amount) }
+
+        val monthlyIntro = fmt(amounts.intro)
+        val monthlyRenew = fmt(amounts.monthly)
+        val sixMonth = fmt(amounts.sixMo)
+        val sixMonthPerMo = fmt(amounts.sixEq)
+        val annual = fmt(amounts.annual)
+        val annualPerMo = fmt(amounts.annualEq)
+        val addonFormatted = fmt(amounts.addon)
 
         return mapOf(
             "sweepr_monthly_999" to PlayProductPrice(
                 productId = "sweepr_monthly_999",
-                formattedPrice = monthlyIntro,
-                subtitle = "1st mo, then $monthlyRenew",
+                formattedPrice = monthlyRenew,
+                subtitle = "Billed monthly · Cancel anytime",
                 currencyCode = code,
             ),
             "sweepr_six_month_3899" to PlayProductPrice(
@@ -113,8 +126,14 @@ object PlayBillingManager : PurchasesUpdatedListener {
             ),
             "sweepr_battery_care_999" to PlayProductPrice(
                 productId = "sweepr_battery_care_999",
-                formattedPrice = batteryCare,
-                subtitle = "$batteryCare/yr",
+                formattedPrice = addonFormatted,
+                subtitle = "$addonFormatted/yr",
+                currencyCode = code,
+            ),
+            "sweepr_cloud_vault_999" to PlayProductPrice(
+                productId = "sweepr_cloud_vault_999",
+                formattedPrice = addonFormatted,
+                subtitle = "$addonFormatted/yr",
                 currencyCode = code,
             ),
         )
@@ -139,11 +158,19 @@ object PlayBillingManager : PurchasesUpdatedListener {
         val current = Prefs.account.value
         val isBatteryAddon = prodId.equals(SKU_BATTERY_CARE, ignoreCase = true) ||
             prodId.contains("battery_care", ignoreCase = true)
+        val isCloudAddon = prodId.equals(SKU_CLOUD_VAULT, ignoreCase = true) ||
+            prodId.contains("cloud_vault", ignoreCase = true)
+        val isAddonOnly = isBatteryAddon || isCloudAddon
+        val nextAddons = buildList {
+            addAll(current.addons)
+            if (isBatteryAddon && !contains("battery_care")) add("battery_care")
+            if (isCloudAddon && !contains("cloud_vault")) add("cloud_vault")
+        }
         val localFallback = current.copy(
-            serverActive = if (isBatteryAddon) current.serverActive else true,
-            plan = if (isBatteryAddon) (current.plan ?: "addon_only") else (current.plan ?: prodId),
+            serverActive = if (isAddonOnly) current.serverActive else true,
+            plan = if (isAddonOnly) (current.plan ?: "addon_only") else (current.plan ?: prodId),
             expiresAt = if (current.expiresAt > 0L) current.expiresAt else (System.currentTimeMillis() / 1000L + 365L * 86400L),
-            addons = if (isBatteryAddon && !current.addons.contains("battery_care")) current.addons + "battery_care" else current.addons,
+            addons = nextAddons,
         )
         val updated = runCatching {
             SweeprAccountApi.verifyGooglePlayPurchase(
@@ -265,6 +292,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
             "sweepr_six_month_3899",
             "sweepr_annual_4999",
             "sweepr_battery_care_999",
+            "sweepr_cloud_vault_999",
         ).map { id ->
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(id)

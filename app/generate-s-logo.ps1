@@ -19,19 +19,19 @@ function New-SparkleBrushBitmap {
     $s = $Size / 100.0
 
     if ($Theme -eq "mint") {
-        $bgStart = [System.Drawing.ColorTranslator]::FromHtml("#ecfdf5")
-        $bgEnd   = [System.Drawing.ColorTranslator]::FromHtml("#d1fae5")
-        $fgPrim  = [System.Drawing.ColorTranslator]::FromHtml("#059669")
-        $fgSec   = [System.Drawing.ColorTranslator]::FromHtml("#10b981")
-        $slitCol = [System.Drawing.ColorTranslator]::FromHtml("#d1fae5")
-        $starCol = [System.Drawing.ColorTranslator]::FromHtml("#047857")
-        $borderCol = [System.Drawing.Color]::FromArgb(64, 5, 150, 105)
+        $bgStart = [System.Drawing.ColorTranslator]::FromHtml("#e1f3ec")
+        $bgEnd   = [System.Drawing.ColorTranslator]::FromHtml("#c5e8da")
+        $fgPrim  = [System.Drawing.ColorTranslator]::FromHtml("#0d6847")
+        $fgSec   = [System.Drawing.ColorTranslator]::FromHtml("#145c3e")
+        $slitCol = [System.Drawing.ColorTranslator]::FromHtml("#c5e8da")
+        $starCol = [System.Drawing.ColorTranslator]::FromHtml("#073825")
+        $borderCol = [System.Drawing.Color]::FromArgb(72, 13, 104, 71)
     } else {
-        $bgStart = [System.Drawing.ColorTranslator]::FromHtml("#10b981")
-        $bgEnd   = [System.Drawing.ColorTranslator]::FromHtml("#047857")
+        $bgStart = [System.Drawing.ColorTranslator]::FromHtml("#145c3e")
+        $bgEnd   = [System.Drawing.ColorTranslator]::FromHtml("#073825")
         $fgPrim  = [System.Drawing.Color]::White
-        $fgSec   = [System.Drawing.ColorTranslator]::FromHtml("#a7f3d0")
-        $slitCol = [System.Drawing.ColorTranslator]::FromHtml("#047857")
+        $fgSec   = [System.Drawing.ColorTranslator]::FromHtml("#9adbc0")
+        $slitCol = [System.Drawing.ColorTranslator]::FromHtml("#073825")
         $starCol = [System.Drawing.Color]::White
         $borderCol = [System.Drawing.Color]::FromArgb(56, 255, 255, 255)
     }
@@ -207,6 +207,9 @@ Save-Png -Path "$root\app\app-icon-mint-glass.png" -Size 1024 -Theme "mint" -Sha
 # 2. Website Favicons (Emerald Fill + Dark Mode Mint Glass)
 Save-Png -Path "$root\server\public\favicon.png" -Size 64 -Theme "emerald" -Shape "squircle"
 Save-Png -Path "$root\server\public\favicon-dark.png" -Size 64 -Theme "mint" -Shape "squircle"
+Save-Png -Path "$root\server\public\icon-32x32.png" -Size 32 -Theme "emerald" -Shape "squircle"
+Save-Png -Path "$root\server\public\icon-192.png" -Size 192 -Theme "emerald" -Shape "squircle"
+Save-Png -Path "$root\server\public\icon-512.png" -Size 512 -Theme "emerald" -Shape "squircle"
 Save-MultiSizeIco -Path "$root\server\public\favicon.ico" -Theme "emerald"
 
 # 3. Tauri Desktop App Bundle Icons

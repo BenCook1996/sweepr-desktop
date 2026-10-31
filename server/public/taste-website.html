@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Cleaner Website — 4 Taste-Skill Redesigns (Hick's, Fitts's, Doherty, Jakob's Laws)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       4 WEBSITE REDESIGNS · TASTE-SKILL + 4 CORE UX LAWS
+       - Hick's Law: Progressive disclosure, <=3 choices, pre-selected defaults
+       - Fitts's Law: Oversized 52-60px primary targets in natural focal/cursor path
+       - Doherty Threshold (<400ms): <16ms zero-latency interactive DOM updates
+       - Jakob's Law: Familiar OS storage bar, standard pricing table, native idioms
+       ========================================================================== */
+    :root {
+      --bg: #f4f5f3;
+      --surface: #e7e9e6;
+      --card: #ffffff;
+      --ink: #0c0f0e;
+      --muted: #525a56;
+      --accent: #0f6e4b;
+      --accent-soft: #e3f3ec;
+      --accent-ink: #093d29;
+      --cobalt: #1447c9;
+      --cobalt-soft: #e6effc;
+      --sand-bg: #f6f3ec;
+      --sand-surface: #ebe6db;
+      --navy-ink: #0f172a;
+      --font-dm: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-barlow-cond: "Barlow Condensed", sans-serif;
+      --font-barlow: "Barlow", sans-serif;
+      --font-schibsted: "Schibsted Grotesk", sans-serif;
+      --font-archivo: "Archivo", sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-dm);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100svh;
+      overflow-x: hidden;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button, input, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    /* ==========================================================================
+       STICKY VARIATION SWITCHER & UX LAW INSPECTOR (DATA-UI CHROME)
+       ========================================================================== */
+    .ux-switcher-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background-color: #0c0f0e;
+      color: #f4f5f3;
+      padding: 10px 24px;
+    }
+
+    .ux-switcher-top {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .ux-switcher-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ux-var-btn {
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 6px;
+      border: none;
+      background-color: #1c2220;
+      color: #b7c0bc;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+
+    .ux-var-btn:hover {
+      background-color: #2a322f;
+      color: #ffffff;
+    }
+
+    .ux-var-btn.active {
+      background-color: #0f6e4b;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .ux-law-strip {
+      max-width: 1380px;
+      margin: 8px auto 0;
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      font-size: 12px;
+      color: #b7c0bc;
+    }
+
+    .ux-law-chip {
+      background-color: #161b19;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .ux-law-chip strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 12px;
+    }
+
+    /* Design Pane Visibility */
+    .web-design-pane {
+      display: none;
+    }
+
+    .web-design-pane.active {
+      display: block;
+    }
+
+    body.stack-all-mode .web-design-pane {
+      display: block;
+      margin-bottom: 64px;
+    }
+
+    .design-banner-tag {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 14px 28px;
+      background-color: #e3f3ec;
+      color: #093d29;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       SHARED 12-COLUMN GRID & UI FRAGMENT STYLES
+       ========================================================================== */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 24px;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding-inline: clamp(20px, 4vw, 56px);
+    }
+
+    /* Fitts's Law: High-contrast oversized buttons (min 52px height) */
+    .btn-fitts-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 0 28px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--accent);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    .btn-fitts-primary:hover {
+      opacity: 0.94;
+    }
+
+    .btn-fitts-primary:active {
+      transform: scale(0.99);
+    }
+
+    .btn-fitts-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 54px;
+      padding: 0 22px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--surface);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Doherty Telemetry Pill */
+    .doherty-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background-color: var(--accent-soft);
+      color: var(--accent-ink);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       DESIGN 1: "THE PRODUCT PERFORMS" (Seed 608219781 · Stone-Sage & Emerald)
+       ========================================================================== */
+    .d1-wrap {
+      background-color: var(--bg);
+      color: var(--ink);
+      padding-bottom: 72px;
+    }
+
+    .d1-nav {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 20px clamp(20px, 4vw, 56px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .d1-hero {
+      padding-top: 28px;
+      padding-bottom: 56px;
+    }
+
+    .d1-hero-head {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .d1-h1 {
+      font-size: clamp(2.5rem, 4.8vw, 4.25rem);
+      font-weight: 700;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      max-width: 16ch;
+    }
+
+    .d1-cta-cluster {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 320px;
+    }
+
+    /* Live Product Fragment [data-ui] */
+    [data-ui] {
+      background-color: #ffffff;
+      border: 1px solid #d5d9d4;
+      border-radius: 10px;
+      box-shadow: 0 18px 40px -20px rgba(12, 15, 14, 0.14);
+      overflow: hidden;
+    }
+
+    .ui-bar {
+      padding: 14px 20px;
+      background-color: #f8f9f7;
+      border-bottom: 1px solid #e4e7e2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ui-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .ui-table th {
+      padding: 10px 20px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      border-bottom: 1px solid #e4e7e2;
+    }
+
+    .ui-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #eef0ec;
+      font-size: 14px;
+    }
+
+    .ui-table th.num,
+    .ui-table td.num {
+      text-align: right;
+    }
+
+    .ui-table tbody tr {
+      cursor: pointer;
+    }
+
+    .ui-table tbody tr:hover {
+      background-color: #f4f5f3;
+    }
+
+    .ui-bottom-action {
+      padding: 16px 20px;
+      background-color: #f8f9f7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Large Plan Table */
+    .plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .plan-table th,
+    .plan-table td {
+      padding: 18px 22px;
+      text-align: left;
+      border-bottom: 1px solid #e4e7e2;
+    }
+
+    .plan-table th {
+      background-color: #eceee9;
+    }
+
+    /* ==========================================================================
+       DESIGN 2: "THE SENTENCE IS THE LAYOUT" (Seed 101 · Cobalt on Warm Sand)
+       Extreme Hick's Law: 1 interactive sentence + oversized Fitts target
+       ========================================================================== */
+    .d2-wrap {
+      background-color: var(--sand-bg);
+      color: #141413;
+      font-family: var(--font-barlow);
+      padding-bottom: 72px;
+    }
+
+    .d2-sentence-hero {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 48px clamp(20px, 4vw, 56px);
+    }
+
+    .d2-madlib {
+      font-family: var(--font-barlow-cond);
+      font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      text-transform: uppercase;
+    }
+
+    .d2-inline-select {
+      display: inline-block;
+      padding: 2px 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--cobalt);
+      color: #ffffff;
+      font-family: var(--font-barlow-cond);
+      font-size: inherit;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .d2-switch-sentence-list {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .d2-switch-tile {
+      min-height: 68px;
+      padding: 16px 20px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--sand-surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      text-align: left;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+
+    .d2-switch-tile.active {
+      background-color: var(--cobalt);
+      color: #ffffff;
+    }
+
+    .d2-fitts-bar {
+      margin-top: 32px;
+      padding: 24px 28px;
+      border-radius: 10px;
+      background-color: #141413;
+      color: #f6f3ec;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .d2-mega-btn {
+      min-height: 60px;
+      min-width: 340px;
+      padding: 0 32px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--cobalt);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       DESIGN 3: "ONE MOTIF / GIANT PRICE" (Seed 202 · Schibsted Grotesk)
+       Binary Hick's Law choice (£1.99 Trial vs £49.99 Annual + £9.99 Add-ons)
+       ========================================================================== */
+    .d3-wrap {
+      background-color: #fafaf7;
+      color: #111614;
+      font-family: var(--font-schibsted);
+      padding-bottom: 72px;
+    }
+
+    .d3-stage {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px clamp(20px, 4vw, 56px);
+      display: grid;
+      grid-template-columns: 6fr 6fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .d3-giant-price-box {
+      padding: 32px;
+      border-radius: 12px;
+      background-color: #eff1ed;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .d3-binary-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 8px;
+      background-color: #dfe3dc;
+    }
+
+    .d3-bin-btn {
+      min-height: 48px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .d3-bin-btn.active {
+      background-color: #111614;
+      color: #ffffff;
+    }
+
+    .d3-giant-figure {
+      font-size: clamp(3.5rem, 6vw, 5.2rem);
+      font-weight: 700;
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+    }
+
+    .d3-addon-pill {
+      min-height: 54px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background-color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       DESIGN 4: "TYPE & DIAGNOSTIC LEDGER" (Seed 303 · Archivo · High-Contrast)
+       ========================================================================== */
+    .d4-wrap {
+      background-color: #f1f3f5;
+      color: var(--navy-ink);
+      font-family: var(--font-archivo);
+      padding-bottom: 72px;
+    }
+
+    .d4-compare-hero {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 40px clamp(20px, 4vw, 56px);
+    }
+
+    .d4-two-words {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .d4-word-panel {
+      padding: 32px;
+      border-radius: 10px;
+      background-color: #e2e6ea;
+    }
+
+    .d4-word-panel.after {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+
+    .d4-big-stat {
+      font-size: clamp(2.8rem, 5.2vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 960px) {
+      .ux-law-strip,
+      .d2-switch-sentence-list,
+      .d3-stage,
+      .d4-two-words {
+        grid-template-columns: 1fr;
+      }
+      .d2-mega-btn {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STICKY VARIATION SWITCHER & 4 UX LAWS INSPECTOR -->
+  <header class="ux-switcher-chrome" data-ui>
+    <div class="ux-switcher-top">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <strong style="font-size:14px; color:#ffffff;">SWEEPR Website · 4 Redesigns</strong>
+        <div class="ux-switcher-pills" role="tablist" aria-label="Website design variations">
+          <button type="button" class="ux-var-btn active" onclick="selectWebDesign(1, this)">Design 1: Live Product Hero</button>
+          <button type="button" class="ux-var-btn" onclick="selectWebDesign(2, this)">Design 2: 1-Sentence Funnel</button>
+          <button type="button" class="ux-var-btn" onclick="selectWebDesign(3, this)">Design 3: Giant Price &amp; Binary Choice</button>
+          <button type="button" class="ux-var-btn" onclick="selectWebDesign(4, this)">Design 4: Before/After Diagnostic</button>
+          <button type="button" class="ux-var-btn" onclick="toggleStackAll(this)" id="stackToggleBtn">Compare All 4 Stacked</button>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+        <a href="/taste-redesigns.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">All Platforms Hub</a>
+        <a href="/taste-desktop-app.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Desktop App (4)</a>
+        <a href="/taste-mobile-app.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Mobile Apps (4)</a>
+      </div>
+    </div>
+
+    <div class="ux-law-strip" id="uxLawStrip">
+      <div class="ux-law-chip">
+        <strong>Hick's Law (Fewer Choices)</strong>
+        <span id="lawHick">Auto-detects Windows 11 so there is only 1 primary download button and 4 pre-checked safe cleanup rows.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Fitts's Law (Target Size &amp; Reach)</strong>
+        <span id="lawFitts">54px-tall primary CTA button + full-row clickable table checkboxes right in the center focal zone.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Doherty Threshold (&lt;400ms)</strong>
+        <span id="lawDoherty">Zero-latency (&lt;8ms) interactive storage table in the hero recalculates gigabytes on every click.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Jakob's Law (Familiar Mental Model)</strong>
+        <span id="lawJakob">Uses the familiar Windows/macOS segmented storage bar (Used / Reclaimable / Free) and 3-column plan table.</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       DESIGN 1: THE PRODUCT PERFORMS (Seed 608219781 · Live Product in Hero)
+       ======================================================================== -->
+  <section id="web-design-1" class="web-design-pane active d1-wrap" aria-label="Website Design 1">
+    <div class="design-banner-tag">
+      <span>Design 1 · Direction: <code>product-performs</code> (Seed 608219781) · Live 1:1 Interactive Cleaner UI in Hero</span>
+      <span class="num">Doherty Response: &lt;8ms live DOM sync</span>
+    </div>
+
+    <nav class="d1-nav" aria-label="Design 1 navigation">
+      <div style="font-weight:700; font-size:18px;">SWEEPR Cleaner</div>
+      <!-- Hick's Law: Only 3 top-level links -->
+      <div style="display:flex; gap:28px; font-size:14px; font-weight:500; color:var(--muted);">
+        <a href="#d1-live-ui">Interactive Preview</a>
+        <a href="#d1-plans">Plans &amp; £9.99 Add-ons</a>
+        <a href="/dashboard">Customer Portal</a>
+      </div>
+      <a href="/order?plan=monthly&amp;discount=1" class="btn-fitts-primary" style="min-height:44px; padding:0 18px; font-size:14px;">Start £1.99 Trial</a>
+    </nav>
+
+    <div class="page-grid d1-hero">
+      <div class="d1-hero-head">
+        <div>
+          <span class="doherty-pill num" id="d1LatencyBadge">Scan preview ready in 6ms · Windows 11 (64-bit) detected</span>
+          <h1 class="d1-h1 num" style="margin-top:12px;">Reclaim <span id="d1HeadlineGb">33.7</span> GB in one click.</h1>
+        </div>
+
+        <!-- Fitts's Law: Large 54px target right in the primary action zone -->
+        <div class="d1-cta-cluster">
+          <a href="/download" class="btn-fitts-primary">Download Free Scan for Windows</a>
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted);">
+            <span>Also for macOS, iOS &amp; Android</span>
+            <a href="/order?plan=monthly&amp;discount=1" style="font-weight:600; color:var(--ink);">Or get Pro from £1.99</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1:1 Live Product Fragment -->
+      <div id="d1-live-ui" data-ui style="grid-column: 1 / -1;">
+        <div class="ui-bar">
+          <div>
+            <strong style="font-size:14px;">Alex's ThinkPad X1 · Local NVMe (C:\) &amp; OneDrive</strong>
+            <span class="num" style="font-size:12px; color:var(--muted); margin-left:10px;">512.00 GB Total · 412.40 GB Used</span>
+          </div>
+          <span class="doherty-pill num" id="d1StatusPill">4 safe categories pre-selected (Hick's Law default)</span>
+        </div>
+
+        <!-- Jakob's Law: Native OS Storage Bar -->
+        <div style="padding:16px 20px; border-bottom:1px solid #eef0ec;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+            <span>Drive Usage Breakdown (Familiar OS Storage Bar)</span>
+            <strong class="num" id="d1AfterText">After sweep: 378.70 GB used (133.30 GB free)</strong>
+          </div>
+          <div style="height:12px; border-radius:6px; background:#e7e9e6; overflow:hidden; display:flex;">
+            <div id="d1BarUsed" style="width:74.0%; background:#0c0f0e; transition:width 140ms ease;"></div>
+            <div id="d1BarReclaim" style="width:6.6%; background:#0f6e4b; transition:width 140ms ease;"></div>
+          </div>
+        </div>
+
+        <table class="ui-table" aria-label="Interactive cleanup categories">
+          <thead>
+            <tr>
+              <th style="width:52%;">Category &amp; Verified Path (Click any row to toggle)</th>
+              <th style="width:20%;">Safety Rule</th>
+              <th class="num" style="width:14%;">Files</th>
+              <th class="num" style="width:14%;">Reclaimable</th>
+            </tr>
+          </thead>
+          <tbody id="d1TableBody"></tbody>
+        </table>
+
+        <div class="ui-bottom-action">
+          <span style="font-size:13px; color:var(--muted);">100% reversible via 14-day Recycle Bin &amp; SHA-256 manifest log.</span>
+          <button type="button" class="btn-fitts-primary num" id="d1SweepBtn" onclick="d1RunSweep()">
+            Sweep 33.70 GB Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Jakob's Law: Familiar 3-Column Comparison Table with £9.99/yr Add-ons -->
+      <div id="d1-plans" style="grid-column: 1 / -1; margin-top:48px;">
+        <h2 style="font-size:28px; font-weight:700; letter-spacing:-0.02em;">Simple, transparent plans across 3 PCs + 3 Phones.</h2>
+        <table class="plan-table">
+          <thead>
+            <tr>
+              <th style="width:28%;">Feature / Entitlement</th>
+              <th style="width:24%;">Free Diagnostic · <span class="num">£0.00</span></th>
+              <th style="width:24%;">Monthly Pro · <span class="num">£1.99</span> 1st mo</th>
+              <th style="width:24%; background:#e3f3ec; color:#093d29;">Annual Pro · <span class="num">£49.99/yr</span> (Recommended)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Disk, Browser &amp; Temp Cache Sweep</td>
+              <td>Scan &amp; inspect paths</td>
+              <td>Unlimited 1-click sweep</td>
+              <td style="font-weight:600;">Unlimited 1-click sweep</td>
+            </tr>
+            <tr>
+              <td>Duplicate Photo Best-Shot Keeper</td>
+              <td>Preview burst groups</td>
+              <td>Auto-keep sharpest frame</td>
+              <td style="font-weight:600;">Auto-keep sharpest frame</td>
+            </tr>
+            <tr>
+              <td>Total Battery Care Add-on (80% Charge Guard)</td>
+              <td>Not included</td>
+              <td class="num">+ £1.99/month</td>
+              <td class="num" style="font-weight:600;">+ £9.99/year (£0.83/mo eq.)</td>
+            </tr>
+            <tr>
+              <td>SWEEPR Cloud Protection Add-on (AES-256 Vault)</td>
+              <td>Not included</td>
+              <td class="num">+ £1.99/month</td>
+              <td class="num" style="font-weight:600;">+ £9.99/year (£0.83/mo eq.)</td>
+            </tr>
+            <tr>
+              <td>Action (Fitts's Law full-width targets)</td>
+              <td><a href="/download" class="btn-fitts-secondary" style="width:100%; min-height:46px;">Download Free</a></td>
+              <td><a href="/order?plan=monthly&amp;discount=1" class="btn-fitts-secondary" style="width:100%; min-height:46px;">Start £1.99 Month</a></td>
+              <td><a href="/order?plan=annual" class="btn-fitts-primary" style="width:100%; min-height:46px;">Get Annual Pro</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESIGN 2: THE SENTENCE IS THE LAYOUT (Seed 101 · Cobalt on Sand)
+       Extreme Hick's Law: One interactive sentence + switches + giant Fitts button
+       ======================================================================== -->
+  <section id="web-design-2" class="web-design-pane d2-wrap" aria-label="Website Design 2">
+    <div class="design-banner-tag" style="background:#e6effc; color:#0f3570;">
+      <span>Design 2 · Direction: <code>the-sentence-is-the-layout</code> (Seed 101) · Single Interactive Sentence + Giant Fitts CTA</span>
+      <span class="num">Hick's Law: 1 Sentence Configurator</span>
+    </div>
+
+    <div class="d2-sentence-hero">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <strong style="font-size:18px;">SWEEPR CLEANER</strong>
+        <span class="doherty-pill num" style="background:#e6effc; color:#0f3570;" id="d2DohertyTag">Response time: 4ms · Instant recalculation</span>
+      </div>
+
+      <!-- Interactive Sentence Hero -->
+      <h2 class="d2-madlib">
+        Clean my
+        <label for="d2OsSelect" style="position:absolute; width:1px; height:1px; overflow:hidden;">Select device</label>
+        <select id="d2OsSelect" class="d2-inline-select" onchange="d2UpdateSentence()">
+          <option value="win">Windows 11 PC</option>
+          <option value="mac">MacBook Pro</option>
+          <option value="ios">iPhone 16 Pro</option>
+          <option value="and">Android Phone</option>
+        </select>
+        and recover
+        <span class="num" id="d2TotalGbText" style="color:var(--cobalt); text-decoration:underline;">33.70 GB</span>
+        of clutter today.
+      </h2>
+
+      <p style="margin-top:16px; font-size:18px; color:#4b4944; max-width:62ch;">
+        Toggle what you want SWEEPR to handle below. Every switch updates your projected space recovery and plan in under 10 milliseconds.
+      </p>
+
+      <!-- Sentences with Switches (Large 68px Fitts's Law tiles) -->
+      <div class="d2-switch-sentence-list" role="group" aria-label="Capability switches">
+        <button type="button" class="d2-switch-tile active" onclick="d2ToggleTile(0, this)">
+          <span>Sweep temp AppData, installer &amp; browser caches</span>
+          <strong class="num">+19.14 GB · ON</strong>
+        </button>
+
+        <button type="button" class="d2-switch-tile active" onclick="d2ToggleTile(1, this)">
+          <span>Group duplicate photos &amp; keep sharpest shot</span>
+          <strong class="num">+8.14 GB · ON</strong>
+        </button>
+
+        <button type="button" class="d2-switch-tile active" onclick="d2ToggleTile(2, this)">
+          <span>Remove expired Windows.old &amp; update rollbacks</span>
+          <strong class="num">+6.42 GB · ON</strong>
+        </button>
+
+        <button type="button" class="d2-switch-tile active" onclick="d2ToggleTile(3, this)">
+          <span>Hold battery at 80% desk limit &amp; lock Cloud Vault (+£9.99/yr each)</span>
+          <strong class="num">2 Add-ons · ON</strong>
+        </button>
+      </div>
+
+      <!-- Fitts's Law: Giant 60px high-contrast action bar directly below -->
+      <div class="d2-fitts-bar">
+        <div>
+          <div style="font-size:13px; color:#b8b4aa;">Recommended for your selection (3 PCs + 3 Phones · 14-day refund guarantee)</div>
+          <div class="num" style="font-size:24px; font-weight:700; margin-top:4px;" id="d2PlanSummary">
+            Start at £1.99 first month (or £49.99/yr Annual Pro + £9.99/yr add-ons)
+          </div>
+        </div>
+
+        <a href="/order?plan=monthly&amp;discount=1" class="d2-mega-btn num" id="d2PrimaryCta" style="display:inline-flex; align-items:center; justify-content:center;">
+          Claim 33.70 GB Clean · £1.99
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESIGN 3: ONE MOTIF / GIANT PRICE (Seed 202 · Binary Choice + Add-ons)
+       ======================================================================== -->
+  <section id="web-design-3" class="web-design-pane d3-wrap" aria-label="Website Design 3">
+    <div class="design-banner-tag">
+      <span>Design 3 · Direction: <code>one-motif</code> (Seed 202) · Binary Pricing Switcher + 1-Click £9.99 Add-ons</span>
+      <span class="num">Hick's Law: Binary Plan Decision</span>
+    </div>
+
+    <div class="d3-stage">
+      <!-- Left Column: Product Motif & 3-Stage Scrubber -->
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <span class="doherty-pill num" style="align-self:flex-start;">Jakob's Law: Familiar 3-step utility workflow</span>
+        <h2 style="font-size:clamp(2.2rem, 4vw, 3.4rem); font-weight:700; line-height:1.04; letter-spacing:-0.03em;">
+          One cleaner for your PC, Mac, iPhone, and Android.
+        </h2>
+        <p style="font-size:17px; color:#4b534f;">
+          Instead of forcing you through five pricing tiers and twenty checkboxes, SWEEPR gives you one cross-platform license and a 3-stage interactive preview.
+        </p>
+
+        <div data-ui style="padding:20px;">
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:16px;">
+            <button type="button" class="btn-fitts-secondary" style="min-height:44px; font-size:13px; background:#0f6e4b; color:#fff;" onclick="d3SetStage(0, this)">1. Scan (18s)</button>
+            <button type="button" class="btn-fitts-secondary" style="min-height:44px; font-size:13px;" onclick="d3SetStage(1, this)">2. Best Photo</button>
+            <button type="button" class="btn-fitts-secondary" style="min-height:44px; font-size:13px;" onclick="d3SetStage(2, this)">3. 80% Battery</button>
+          </div>
+          <div id="d3StageBox" style="padding:18px; border-radius:8px; background:#f4f5f3;">
+            <div style="font-size:13px; color:#525a56;">Stage 1 · Instant Path Audit</div>
+            <div class="num" style="font-size:26px; font-weight:700; margin-top:4px;">33.70 GB verified safe to remove</div>
+            <div style="font-size:13px; color:#525a56; margin-top:6px;">AppData Temp (14.28 GB) · Duplicate Photos (8.14 GB) · Windows.old (6.42 GB) · Browser Cache (4.86 GB)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: The Giant Price & Binary Switcher -->
+      <div class="d3-giant-price-box">
+        <div class="d3-binary-tabs" role="tablist">
+          <button type="button" class="d3-bin-btn active" onclick="d3SelectBilling('annual', this)">Annual Pro (Save 58%)</button>
+          <button type="button" class="d3-bin-btn" onclick="d3SelectBilling('monthly', this)">£1.99 First Month Trial</button>
+        </div>
+
+        <div>
+          <div style="font-size:13px; font-weight:600; color:#525a56;" id="d3PriceCaption">ANNUAL PRO · COVERS 3 PCs + 3 PHONES</div>
+          <div class="d3-giant-figure num" id="d3GiantFigure">£49.99<span style="font-size:22px; font-weight:500; color:#525a56;">/yr</span></div>
+          <div class="num" style="font-size:14px; color:#0f6e4b; font-weight:600; margin-top:6px;" id="d3SubPriceNote">Equivalent to £4.16/month · 14-day full refund guarantee</div>
+        </div>
+
+        <!-- Optional £9.99/yr Add-ons (Large 54px touch/click targets) -->
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="d3-addon-pill">
+            <span style="display:flex; align-items:center; gap:10px;">
+              <input type="checkbox" id="d3AddonBattery" checked onchange="d3RecalcTotal()" style="width:18px; height:18px; accent-color:#0f6e4b;" />
+              <span>
+                <strong style="display:block; font-size:14px;">Total Battery &amp; Phone Care</strong>
+                <span style="font-size:12px; color:#525a56;">80% desk charge limit, overheat guard &amp; drainer sleep</span>
+              </span>
+            </span>
+            <strong class="num" style="font-size:14px; color:#0f6e4b;">+ £9.99/yr</strong>
+          </label>
+
+          <label class="d3-addon-pill">
+            <span style="display:flex; align-items:center; gap:10px;">
+              <input type="checkbox" id="d3AddonCloud" checked onchange="d3RecalcTotal()" style="width:18px; height:18px; accent-color:#0f6e4b;" />
+              <span>
+                <strong style="display:block; font-size:14px;">SWEEPR Cloud Protection</strong>
+                <span style="font-size:12px; color:#525a56;">AES-256 Private Vault &amp; multi-cloud duplicate cleaner</span>
+              </span>
+            </span>
+            <strong class="num" style="font-size:14px; color:#0f6e4b;">+ £9.99/yr</strong>
+          </label>
+        </div>
+
+        <a href="/order?plan=annual&amp;addons=battery_care,cloud_vault" id="d3CheckoutBtn" class="btn-fitts-primary num" style="width:100%; min-height:58px; font-size:17px;">
+          Continue to Express Checkout · £69.97/yr
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESIGN 4: TYPE & DIAGNOSTIC LEDGER (Seed 303 · Two Giant Words Compared)
+       ======================================================================== -->
+  <section id="web-design-4" class="web-design-pane d4-wrap" aria-label="Website Design 4">
+    <div class="design-banner-tag" style="background:#dbeafe; color:#1e3a8a;">
+      <span>Design 4 · Direction: <code>type-and-nothing-else</code> (Seed 303) · Before/After Diagnostic Benchmark</span>
+      <span class="num">Doherty Threshold: 120ms Live Benchmark</span>
+    </div>
+
+    <div class="d4-compare-hero">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+        <h2 style="font-size:clamp(2rem, 3.8vw, 3.2rem); font-weight:700; letter-spacing:-0.03em;">Before &amp; After SWEEPR.</h2>
+        <button type="button" class="btn-fitts-primary" style="background:#1447c9; min-height:48px;" onclick="d4RunBenchmark()">
+          Run 120ms Live Diagnostic Simulation
+        </button>
+      </div>
+
+      <!-- Showcase: Two Giant Words / States Compared -->
+      <div class="d4-two-words">
+        <div class="d4-word-panel">
+          <div style="font-size:13px; font-weight:600; color:#475569;">BEFORE SWEEPR · CLUTTERED DRIVE</div>
+          <div class="d4-big-stat num" id="d4BeforeStat">412.40 GB</div>
+          <div class="num" style="font-size:15px; color:#475569; margin-top:10px;">
+            Only 99.60 GB free · 10,490 orphaned cache &amp; duplicate files slowing indexing
+          </div>
+        </div>
+
+        <div class="d4-word-panel after">
+          <div style="font-size:13px; font-weight:600; color:#93c5fd;">AFTER 1-CLICK SWEEP · RECLAIMED</div>
+          <div class="d4-big-stat num" id="d4AfterStat">378.70 GB</div>
+          <div class="num" style="font-size:15px; color:#cbd5e1; margin-top:10px;" id="d4AfterSub">
+            133.30 GB free (+33.70 GB recovered in 120ms) · Battery held at 80%
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <a href="/download" class="btn-fitts-secondary" style="min-height:58px; background:#e2e6ea; font-size:16px;">
+          Download Free Diagnostic Installer (Windows &amp; Mac)
+        </a>
+        <a href="/order?plan=monthly&amp;discount=1" class="btn-fitts-primary" style="min-height:58px; background:#1447c9; font-size:16px;">
+          Start Full Cleanup · £1.99 First Month
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const WEB_LAW_NOTES = {
+      1: {
+        hick: 'Auto-detects Windows 11 so there is only 1 primary download button and 4 pre-checked safe cleanup rows.',
+        fitts: '54px-tall primary CTA button + full-row clickable table checkboxes right in the center focal zone.',
+        doherty: 'Zero-latency (<8ms) interactive storage table in the hero recalculates gigabytes on every click.',
+        jakob: 'Uses the familiar Windows/macOS segmented storage bar (Used / Reclaimable / Free) and 3-column plan table.'
+      },
+      2: {
+        hick: 'Replaces multi-menu navigation with 1 interactive Mad-Libs sentence and 4 binary capability switches.',
+        fitts: 'Giant 60px-tall x 340px-wide primary CTA button anchored in the high-contrast bottom action bar.',
+        doherty: 'Toggling any switch recalculates total gigabytes and updates the checkout CTA in 4ms.',
+        jakob: 'Works like a familiar Apple hardware configurator with transparent add-on pricing (£9.99/yr).'
+      },
+      3: {
+        hick: 'Eliminates multi-tier confusion with a binary choice: Annual Pro (£49.99/yr) vs £1.99 First Month Trial.',
+        fitts: 'Whole-row 54px clickable add-on pills for Battery Care (£9.99/yr) & Cloud Protection (£9.99/yr).',
+        doherty: 'Instant 3-stage interactive preview scrubber (Scan -> Best Photo -> 80% Battery) with zero reload.',
+        jakob: 'Mirrors familiar App Store / Setapp checkout cards with 1-click add-on checkboxes.'
+      },
+      4: {
+        hick: 'Focuses decision-making on a stark two-column Before (412.40 GB) vs After (378.70 GB) comparison.',
+        fitts: 'Two edge-to-edge 58px action buttons spanning 6 columns each for immediate cursor acquisition.',
+        doherty: 'Interactive 120ms simulated scan benchmark demonstrates sub-400ms Doherty responsiveness live.',
+        jakob: 'High-contrast diagnostic ledger familiar from developer & system benchmark utilities.'
+      }
+    };
+
+    function selectWebDesign(num, btnEl) {
+      document.body.classList.remove('stack-all-mode');
+      document.getElementById('stackToggleBtn').textContent = 'Compare All 4 Stacked';
+      document.querySelectorAll('.ux-var-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      document.querySelectorAll('.web-design-pane').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`web-design-${num}`);
+      if (target) target.classList.add('active');
+
+      const laws = WEB_LAW_NOTES[num];
+      if (laws) {
+        document.getElementById('lawHick').textContent = laws.hick;
+        document.getElementById('lawFitts').textContent = laws.fitts;
+        document.getElementById('lawDoherty').textContent = laws.doherty;
+        document.getElementById('lawJakob').textContent = laws.jakob;
+      }
+    }
+
+    function toggleStackAll(btnEl) {
+      const isStacked = document.body.classList.toggle('stack-all-mode');
+      document.querySelectorAll('.ux-var-btn').forEach(b => b.classList.remove('active'));
+      if (isStacked) {
+        btnEl.classList.add('active');
+        btnEl.textContent = 'Showing All 4 Stacked';
+      } else {
+        selectWebDesign(1, document.querySelector('.ux-var-btn'));
+      }
+    }
+
+    /* Design 1 Interactive Table Logic */
+    const D1_ROWS = [
+      { name: 'AppData & Installer Cache', path: 'C:\\Users\\Alex\\AppData\\Local\\Temp', rule: 'Orphaned build/temp only', files: 4812, gb: 14.28, checked: true },
+      { name: 'Duplicate & Burst Photos', path: 'OneDrive\\Pictures\\Camera Roll', rule: 'Sharpest frame preserved', files: 618, gb: 8.14, checked: true },
+      { name: 'Windows Update & Rollback Logs', path: 'C:\\Windows.old · SoftwareDistribution', rule: 'Expired 24H2 setup cache', files: 1940, gb: 6.42, checked: true },
+      { name: 'Browser & Electron GPU Shader Cache', path: 'Chrome · Edge · Discord · VS Code', rule: 'Active logins untouched', files: 3120, gb: 4.86, checked: true }
+    ];
+
+    function renderD1Table() {
+      const t0 = performance.now();
+      const tbody = document.getElementById('d1TableBody');
+      let sumGb = 0;
+      tbody.innerHTML = D1_ROWS.map((r, i) => {
+        if (r.checked) sumGb += r.gb;
+        return `
+          <tr onclick="toggleD1Row(${i})">
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <input type="checkbox" ${r.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleD1Row(${i})" style="width:18px; height:18px; accent-color:#0f6e4b;" />
+                <div>
+                  <strong style="display:block;">${r.name}</strong>
+                  <span style="font-size:12px; color:#525a56;">${r.path}</span>
+                </div>
+              </div>
+            </td>
+            <td style="color:#0f6e4b; font-weight:500;">${r.rule}</td>
+            <td class="num">${r.files.toLocaleString('en-GB')}</td>
+            <td class="num" style="font-weight:700;">${r.gb.toFixed(2)} GB</td>
+          </tr>
+        `;
+      }).join('');
+
+      const afterUsed = (412.40 - sumGb).toFixed(2);
+      const afterFree = (99.60 + sumGb).toFixed(2);
+      document.getElementById('d1HeadlineGb').textContent = sumGb.toFixed(1);
+      document.getElementById('d1AfterText').textContent = `After sweep: ${afterUsed} GB used (${afterFree} GB free)`;
+      document.getElementById('d1SweepBtn').textContent = sumGb > 0 ? `Sweep ${sumGb.toFixed(2)} GB Now` : 'Select a Category Above';
+      document.getElementById('d1BarReclaim').style.width = `${((sumGb / 512) * 100).toFixed(1)}%`;
+      const elapsed = Math.max(1, Math.round(performance.now() - t0));
+      document.getElementById('d1LatencyBadge').textContent = `Doherty response: ${elapsed}ms (<400ms threshold) · Windows 11 detected`;
+    }
+
+    function toggleD1Row(idx) {
+      D1_ROWS[idx].checked = !D1_ROWS[idx].checked;
+      renderD1Table();
+    }
+
+    function d1RunSweep() {
+      document.getElementById('d1StatusPill').textContent = 'Cleaned 33.70 GB in 140ms · Moved to 14-day Recycle Bin';
+      document.getElementById('d1SweepBtn').textContent = 'Cleaned 33.70 GB · Verified';
+      document.getElementById('d1BarReclaim').style.width = '0%';
+    }
+
+    /* Design 2 Sentence Configurator Logic */
+    const d2TileValues = [19.14, 8.14, 6.42, 0];
+    const d2TileActive = [true, true, true, true];
+
+    function d2ToggleTile(idx, btnEl) {
+      d2TileActive[idx] = !d2TileActive[idx];
+      btnEl.classList.toggle('active', d2TileActive[idx]);
+      d2UpdateSentence();
+    }
+
+    function d2UpdateSentence() {
+      const total = d2TileValues.reduce((s, v, i) => s + (d2TileActive[i] ? v : 0), 0);
+      document.getElementById('d2TotalGbText').textContent = `${total.toFixed(2)} GB`;
+      document.getElementById('d2PrimaryCta').textContent = `Claim ${total.toFixed(2)} GB Clean · £1.99`;
+      document.getElementById('d2DohertyTag').textContent = 'Response time: 3ms · Instant recalculation';
+    }
+
+    /* Design 3 Binary Price & Stage Scrubber */
+    let d3Mode = 'annual';
+    const D3_STAGES = [
+      { title: 'Stage 1 · Instant Path Audit', head: '33.70 GB verified safe to remove', sub: 'AppData Temp (14.28 GB) · Duplicate Photos (8.14 GB) · Windows.old (6.42 GB) · Browser Cache (4.86 GB)' },
+      { title: 'Stage 2 · Best-Shot Photo Keeper', head: '618 burst groups · 8.14 GB saved', sub: 'Scores sharpness and open eyes locally so your best shot in every burst is never deleted.' },
+      { title: 'Stage 3 · 80% Desk Charge Guard (£9.99/yr)', head: '65.0 W USB-C -> Held at 80.0% · 38 °C', sub: 'Prevents continuous 100% trickle voltage while docked and sleeps background battery drainers.' }
+    ];
+
+    function d3SetStage(idx, btnEl) {
+      btnEl.parentElement.querySelectorAll('button').forEach(b => {
+        b.style.background = '#e7e9e6';
+        b.style.color = '#0c0f0e';
+      });
+      btnEl.style.background = '#0f6e4b';
+      btnEl.style.color = '#ffffff';
+      const st = D3_STAGES[idx];
+      document.getElementById('d3StageBox').innerHTML = `
+        <div style="font-size:13px; color:#525a56;">${st.title}</div>
+        <div class="num" style="font-size:26px; font-weight:700; margin-top:4px;">${st.head}</div>
+        <div style="font-size:13px; color:#525a56; margin-top:6px;">${st.sub}</div>
+      `;
+    }
+
+    function d3SelectBilling(mode, btnEl) {
+      d3Mode = mode;
+      document.querySelectorAll('.d3-bin-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      d3RecalcTotal();
+    }
+
+    function d3RecalcTotal() {
+      const bat = document.getElementById('d3AddonBattery').checked;
+      const cld = document.getElementById('d3AddonCloud').checked;
+      if (d3Mode === 'annual') {
+        const total = 49.99 + (bat ? 9.99 : 0) + (cld ? 9.99 : 0);
+        document.getElementById('d3PriceCaption').textContent = 'ANNUAL PRO · COVERS 3 PCs + 3 PHONES';
+        document.getElementById('d3GiantFigure').innerHTML = `£49.99<span style="font-size:22px; font-weight:500; color:#525a56;">/yr</span>`;
+        document.getElementById('d3SubPriceNote').textContent = 'Equivalent to £4.16/month · 14-day full refund guarantee';
+        document.getElementById('d3CheckoutBtn').textContent = `Continue to Express Checkout · £${total.toFixed(2)}/yr`;
+      } else {
+        const total = 1.99 + (bat ? 1.99 : 0) + (cld ? 1.99 : 0);
+        document.getElementById('d3PriceCaption').textContent = 'FIRST MONTH TRIAL · THEN £9.99/MO';
+        document.getElementById('d3GiantFigure').innerHTML = `£1.99<span style="font-size:22px; font-weight:500; color:#525a56;"> 1st mo</span>`;
+        document.getElementById('d3SubPriceNote').textContent = 'Cancel anytime in 1 click inside Customer Portal';
+        document.getElementById('d3CheckoutBtn').textContent = `Start Trial Checkout · £${total.toFixed(2)} Today`;
+      }
+    }
+
+    /* Design 4 Benchmark Simulation */
+    function d4RunBenchmark() {
+      document.getElementById('d4AfterStat').textContent = 'Scanning...';
+      setTimeout(() => {
+        document.getElementById('d4AfterStat').textContent = '378.70 GB';
+        document.getElementById('d4AfterSub').textContent = 'Completed in 118ms (Doherty <400ms verified) · 33.70 GB staged for removal';
+      }, 118);
+    }
+
+    renderD1Table();
+  </script>
+</body>
+</html>

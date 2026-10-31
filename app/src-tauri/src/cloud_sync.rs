@@ -65,6 +65,12 @@ pub fn add_pair(data_dir: &Path, source: &str, destination: &str) -> AppResult<V
     if !dst.is_absolute() || !dst.is_dir() {
         return Err(AppError::Other("Choose an existing destination folder.".into()));
     }
+    if crate::duplicates::is_protected_system_path(&src) || !safety::is_safe_root(&src) || safety::is_within(&src, data_dir) {
+        return Err(AppError::Other("Source cannot be a system, protected, or application data directory.".into()));
+    }
+    if crate::duplicates::is_protected_system_path(&dst) || !safety::is_safe_root(&dst) || safety::is_within(&dst, data_dir) {
+        return Err(AppError::Other("Destination cannot be a system, protected, or application data directory.".into()));
+    }
     if safety::is_within(&dst, &src) || safety::is_within(&src, &dst) {
         return Err(AppError::Other("Source and destination must not be inside each other.".into()));
     }
@@ -219,6 +225,8 @@ mod tests {
         assert_eq!(again[0].files_copied, 0);
         assert_eq!(again[0].files_up_to_date, 1);
         assert!(add_pair(&data, &src.to_string_lossy(), &src.join("tax").to_string_lossy()).is_err());
+        assert!(add_pair(&data, &data.to_string_lossy(), &dst.to_string_lossy()).is_err());
+        assert!(add_pair(&data, &src.to_string_lossy(), &data.to_string_lossy()).is_err());
         let _ = std::fs::remove_dir_all(&base);
     }
 }

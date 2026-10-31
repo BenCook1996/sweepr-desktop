@@ -78,7 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 enum class PlanTier(val productId: String, val priceLabel: String) {
-    MONTHLY("sweepr_monthly_999", "£1.99"),
+    MONTHLY("sweepr_monthly_999", "£9.99"),
     SIX_MONTH("sweepr_six_month_3899", "£38.99"),
     ANNUAL("sweepr_annual_4999", "£49.99"),
 }
@@ -113,12 +113,13 @@ fun AccountScreen(
     val linked = state.linkedAccount
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
-    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "1st mo, then £9.99"
+    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
     val sixMonthPrice = prices[PlanTier.SIX_MONTH.productId]?.formattedPrice ?: PlanTier.SIX_MONTH.priceLabel
     val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
     val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel
     val annualSub = prices[PlanTier.ANNUAL.productId]?.subtitle ?: "Save 58% (£4.16/mo)"
     val batteryAddonPrice = prices["sweepr_battery_care_999"]?.formattedPrice ?: "£9.99"
+    val cloudAddonPrice = prices["sweepr_cloud_vault_999"]?.formattedPrice ?: batteryAddonPrice
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
@@ -466,7 +467,7 @@ fun AccountScreen(
                         )
                     }
                     Text(
-                        "80% charge-limit unplug alert, thermal overheat guard, and 1-tap background cache cool-down.",
+                        "Reminds you to unplug at 80%, alerts you if your phone gets too hot, and clears background app clutter.",
                         color = Color.Gray,
                         fontSize = 12.sp,
                     )
@@ -479,6 +480,60 @@ fun AccountScreen(
                         ) {
                             Text("Add Battery Care ($batteryAddonPrice/yr)", fontWeight = FontWeight.Bold)
                         }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // SWEEPR Cloud Protection Add-on Card (Consistent 9.99/yr rate)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF8B5CF6).copy(alpha = 0.08f),
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    Color(0xFF8B5CF6).copy(alpha = 0.45f),
+                ),
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "SWEEPR Cloud Protection",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "+$cloudAddonPrice/yr",
+                            color = Color(0xFF6D28D9),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                    Text(
+                        "Locks private photos and documents with your own password and backs up important folders automatically.",
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = { onUpgrade("sweepr_cloud_vault_999") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Add Cloud Protection ($cloudAddonPrice/yr)", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -795,7 +850,7 @@ fun PaywallModalSheet(
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.MONTHLY) }
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
-    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "1st mo, then £9.99"
+    val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
     val sixMonthPrice = prices[PlanTier.SIX_MONTH.productId]?.formattedPrice ?: PlanTier.SIX_MONTH.priceLabel
     val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
     val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel

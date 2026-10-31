@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Cleaner — 5 Evolved Order Page Redesigns (O1–O5)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Schibsted+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       EVOLVED ORDER PAGE DESIGN SYSTEM TOKENS
+       Skills Applied:
+       1. design-taste-frontend (framed-sheet, achromatic-ledger, product-performs, dense-tiles)
+       2. superfuture-design-review (10-dimension craft rubric, 4/8px spacing, 45-70ch measure)
+       3. better-interface (better-accessibility, better-layout, better-writing, better-typography, better-colors, better-ui)
+       4. find-animation-opportunities (Emil Kowalski · 4-question gate, 150ms press scale 0.96)
+       5. accessibility-review (WCAG 2.2 AA · :focus-visible 3:1, role="status", 16px mobile inputs, reduced-motion)
+       6. conversion-funnel-cro (Price anchoring, Alternative D payment methods, 14-day risk reversal)
+       UX Laws Applied:
+       - Hick's Law · Fitts's Law · Doherty Threshold (<400ms) · Jakob's Law
+       ========================================================================== */
+    :root {
+      --bg-ground: #f4f5f3;
+      --bg-surface: #ffffff;
+      --bg-subtle: #eff1ee;
+      --bg-active: #e3e7e2;
+      --ink-1: #0c0f0e;
+      --ink-2: #3f4743;
+      --ink-3: #505854;
+      --line: #e5e7e4;
+      --line-soft: #eceee9;
+
+      /* WCAG 2.2 AA Verified Accent & Semantic Pairs (>=4.5:1 text, >=3:1 UI) */
+      --accent: #0d6847;
+      --accent-hover: #095237;
+      --accent-soft: #e6f4ee;
+      --accent-ink: #073825;
+
+      --cobalt: #1344bf;
+      --cobalt-soft: #e6effe;
+      --cobalt-ink: #0a2870;
+
+      --focus-ring: #1344bf;
+
+      /* Emil Kowalski Shared Motion Vocabulary */
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+      /* Strictly 2 Typefaces (Manrope + Schibsted Grotesk) */
+      --font-body: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Schibsted Grotesk", "Manrope", sans-serif;
+    }
+
+    body[data-theme="dark"] {
+      --bg-ground: #09090b;
+      --bg-surface: #111114;
+      --bg-subtle: #18181c;
+      --bg-active: #242429;
+      --ink-1: #f4f4f6;
+      --ink-2: #b4b8c2;
+      --ink-3: #969ba6;
+      --line: #222328;
+      --line-soft: #1b1c20;
+      --accent: #22996b;
+      --accent-hover: #1b8059;
+      --accent-soft: #122920;
+      --accent-ink: #92e8c5;
+      --cobalt: #4785eb;
+      --cobalt-soft: #13223b;
+      --cobalt-ink: #b0ceff;
+      --focus-ring: #6ba1ff;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-ground);
+      color: var(--ink-1);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      scroll-padding-block-start: 100px;
+    }
+
+    body {
+      min-height: 100svh;
+      padding-bottom: 96px;
+      overflow-x: hidden;
+      font-family: var(--font-body);
+    }
+
+    button, input, select {
+      font-family: var(--font-body);
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .grid-2col-sm {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 640px) {
+      .grid-2col-sm {
+        grid-template-columns: 1fr;
+      }
+      .master-chrome {
+        position: static;
+        padding: 12px 16px;
+      }
+    }
+
+    /* Accessibility: Skip Link & 3:1 Focus Ring */
+    .skip-link {
+      position: fixed;
+      top: -100px;
+      left: 16px;
+      z-index: 9999;
+      background: var(--ink-1);
+      color: var(--bg-surface);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      top: 12px;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+
+    /* Interactive press feedback (better-ui: scale 0.96 over 150ms ease-out) */
+    @media (prefers-reduced-motion: no-preference) {
+      .btn-press {
+        transition: transform 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, opacity 150ms ease-out;
+      }
+      .btn-press:active:not(:disabled) {
+        transform: scale(0.96);
+      }
+    }
+
+    /* Sticky Master Showcase Navigation Chrome */
+    .master-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 24px;
+    }
+    .chrome-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .chrome-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+    .chrome-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+    }
+
+    .jump-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .jump-pill {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+    .jump-pill[aria-selected="true"],
+    .jump-pill.active {
+      background: var(--ink-1);
+      color: var(--bg-surface);
+      border-color: var(--ink-1);
+    }
+
+    .chrome-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .currency-select {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg-subtle);
+      color: var(--ink-1);
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    /* Container & Section Headers */
+    .showcase-wrap {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .intro-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .intro-title {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 2.2vw, 26px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .intro-sub {
+      color: var(--ink-2);
+      font-size: 14px;
+      margin-top: 6px;
+      max-width: 68ch;
+    }
+    .law-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .law-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--bg-subtle);
+      color: var(--ink-1);
+      border: 1px solid var(--line);
+    }
+
+    /* Design Stage Wrapper (Strictly 12px panel radius, 8px control radius) */
+    .design-stage {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .design-stage.hidden-stage {
+      display: none !important;
+    }
+    .stage-meta {
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .stage-code {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .stage-tag {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+    }
+    .stage-desc {
+      font-size: 13px;
+      color: var(--ink-2);
+      max-width: 65ch;
+      margin-top: 2px;
+    }
+
+    /* Shared Checkout Primitives (WCAG 2.2 AA & Fitts's Law Compliant) */
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: inherit;
+      margin-bottom: 6px;
+    }
+    .field-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 16px; /* Prevents iOS auto-zoom (better-typography) */
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink-1);
+    }
+    .field-input::placeholder {
+      color: var(--ink-3);
+    }
+
+    /* Full-row clickable add-on label (Fitts's Law: zero dead zone, whisper border) */
+    .addon-row-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 150ms ease-out;
+    }
+    .addon-row-label.checked {
+      background: var(--accent-soft);
+    }
+    .addon-checkbox {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Express Wallet Buttons (Fitts's Law: min-height 46px, 8px radius) */
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .wallet-btn {
+      min-height: 46px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 0 10px;
+    }
+    .wallet-apple {
+      background: #000000;
+      color: #ffffff;
+    }
+    .wallet-gpay {
+      background: #1f2023;
+      color: #ffffff;
+    }
+    .wallet-paypal {
+      background: #ffc439;
+      color: #003087;
+    }
+
+    /* Alternative D Payment Method Tabs ("Card", "Bank", "Klarna") */
+    .pm-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      background: var(--bg-subtle);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    .pm-tab {
+      min-height: 38px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .pm-tab[aria-selected="true"] {
+      background: var(--bg-surface);
+      color: var(--ink-1);
+    }
+
+    /* Primary Submit CTA (Fitts's Law: 54px height, full-width, flat fill) */
+    .cta-primary {
+      width: 100%;
+      min-height: 54px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+    }
+    .cta-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    /* ==========================================================================
+       DESIGN O1: W3 EDITORIAL SPLIT-RECEIPT (Matches W3 Website Winner)
+       ========================================================================== */
+    .o1-frame {
+      background: var(--bg-ground);
+      padding: 20px;
+    }
+    .o1-sheet {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px;
+    }
+    .o1-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line-soft);
+      margin-bottom: 24px;
+    }
+    .o1-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .o1-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==========================================================================
+       DESIGN O2: SINGLE-COLUMN EXPRESS SHEET (Maximum Hick's & Fitts's Law)
+       ========================================================================== */
+    .o2-wrap {
+      background: var(--bg-subtle);
+      padding: 28px 16px;
+    }
+    .o2-column {
+      max-width: 560px;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ==========================================================================
+       DESIGN O3: BEFORE & AFTER STORAGE PROOF CHECKOUT (CRO Loss Aversion)
+       ========================================================================== */
+    .o3-wrap {
+      background: #f2f3f1;
+      color: #141413;
+      padding: 24px;
+    }
+    body[data-theme="dark"] .o3-wrap {
+      background: #121316;
+      color: #f4f4f6;
+    }
+    .o3-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .o3-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==========================================================================
+       DESIGN O4: BENTO BOARD CHECKOUT (12-Column Modular Tiles)
+       ========================================================================== */
+    .o4-wrap {
+      background: var(--bg-ground);
+      padding: 20px;
+    }
+    .o4-bento {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .o4-tile {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .o4-span-7 { grid-column: span 7; }
+    .o4-span-5 { grid-column: span 5; }
+    .o4-span-12 { grid-column: span 12; }
+    @media (max-width: 900px) {
+      .o4-span-7, .o4-span-5 { grid-column: span 12; }
+    }
+
+    /* ==========================================================================
+       DESIGN O5: STUDIO DARK HARDWARE CHECKOUT (Seamless In-App -> Web Handoff)
+       ========================================================================== */
+    .o5-wrap {
+      background: #0b0d10;
+      color: #f3f5f7;
+      padding: 24px;
+    }
+    .o5-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .o5-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .o5-card {
+      background: #13171d;
+      border: 1px solid #202630;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .o5-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #262e3a;
+      background: #0b0d10;
+      color: #f3f5f7;
+    }
+
+    /* Live Confirmation Toast (Doherty Threshold <400ms, quiet border) */
+    .toast-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(140%);
+      z-index: 999;
+      background: var(--ink-1);
+      color: var(--bg-surface);
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: transform 280ms var(--ease-out);
+      max-width: calc(100% - 32px);
+    }
+    .toast-bar.visible {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast-undo-btn {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Screen-reader polite status */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <a href="#main-showcase" class="skip-link">Skip to Order Page Designs</a>
+  <div id="srStatus" role="status" aria-live="polite" class="sr-only"></div>
+
+  <!-- STICKY MASTER TOOLBAR -->
+  <header class="master-chrome" role="banner">
+    <div class="chrome-inner">
+      <div class="chrome-brand">
+        <span>SWEEPR Cleaner</span>
+        <span class="chrome-badge">5 Order Page Redesigns (O1–O5)</span>
+      </div>
+
+      <!-- Design Switcher Tabs -->
+      <div class="jump-bar" role="tablist" aria-label="Filter Order Page Designs">
+        <button type="button" class="jump-pill btn-press active" role="tab" aria-selected="true" onclick="filterOrderDesign('all', this)">All 5 Designs</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('o1', this)">O1 · W3 Split Receipt</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('o2', this)">O2 · 1-Column Express</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('o3', this)">O3 · Storage Proof CRO</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('o4', this)">O4 · Bento Board</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('o5', this)">O5 · Studio Dark</button>
+        <button type="button" class="jump-pill btn-press" role="tab" aria-selected="false" onclick="filterOrderDesign('audit', this)">Craft &amp; UX Audit</button>
+      </div>
+
+      <!-- Global Currency & Theme Controls -->
+      <div class="chrome-controls">
+        <label for="globalCurrSelect" class="sr-only">Select Currency</label>
+        <select id="globalCurrSelect" class="currency-select" onchange="setOrderCurrency(this.value)">
+          <option value="gbp">GBP (£) · UK</option>
+          <option value="usd">USD ($) · US</option>
+          <option value="eur">EUR (€) · EU</option>
+          <option value="cad">CAD (CA$) · CA</option>
+          <option value="aud">AUD (A$) · AU</option>
+          <option value="jpy">JPY (¥) · JP</option>
+          <option value="chf">CHF · CH</option>
+          <option value="pln">PLN (zł) · PL</option>
+        </select>
+        <button type="button" id="themeToggleBtn" class="jump-pill btn-press" onclick="toggleOrderTheme()">Theme: Light</button>
+        <a href="/taste-redesigns.html" class="jump-pill btn-press" style="text-decoration:none; display:inline-flex; align-items:center;">Back to W3/D3/M3 Suite</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-showcase" class="showcase-wrap">
+
+    <!-- OVERVIEW BANNER -->
+    <section class="intro-banner" aria-labelledby="introHeading">
+      <div>
+        <h1 id="introHeading" class="intro-title">5 Order Page Redesigns (`/order`)</h1>
+        <p class="intro-sub">
+          Designed and audited using <strong>taste-skill</strong>, <strong>superfuture-design-review</strong>, <strong>better-interface</strong>, <strong>find-animation-opportunities</strong>, and <strong>accessibility-review</strong>. Every design uses plain everyday English, standard <strong>£9.99/mo Monthly</strong> vs <strong>£49.99/yr Yearly</strong> pricing (no £1.99 trial), live <strong>+£9.99/yr Battery &amp; Cloud Lockbox add-ons</strong>, and <strong>Alternative D</strong> payment tabs.
+        </p>
+        <div class="law-pills">
+          <span class="law-pill">Hick's Law: Binary Plan Toggle &amp; Max 2 Add-Ons</span>
+          <span class="law-pill">Fitts's Law: 54px CTAs &amp; Full-Row Add-On Labels</span>
+          <span class="law-pill">Doherty Threshold: &lt;150ms Live Receipt Math</span>
+          <span class="law-pill">Jakob's Law: Familiar Express Wallets + Card/Bank/Klarna</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         DESIGN O1: W3 EDITORIAL SPLIT-RECEIPT (Framed-Sheet · Matches W3 Winner)
+         ======================================================================== -->
+    <article id="stage-o1" class="design-stage" aria-labelledby="title-o1">
+      <div class="stage-meta">
+        <div>
+          <div class="stage-code">
+            <span id="title-o1">O1 — The W3 Editorial Split-Receipt</span>
+            <span class="stage-tag">Recommended · Matches W3 Website Winner</span>
+          </div>
+          <p class="stage-desc">
+            Built with the exact <code>framed-sheet</code> art direction as your chosen W3 homepage. Left side shows a live itemized receipt with 1-click plan and add-on toggles; right side holds 1-click Express Wallets and Alternative D payment tabs.
+          </p>
+        </div>
+        <button type="button" class="jump-pill btn-press" onclick="simulateOrderComplete('O1 (W3 Editorial Split-Receipt)')">Test Instant Checkout</button>
+      </div>
+
+      <div class="o1-frame">
+        <div class="o1-sheet">
+          <!-- Minimal Tunnel-Vision Checkout Header -->
+          <div class="o1-topbar">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:28px; height:28px; border-radius:8px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;">S</div>
+              <span style="font-family:var(--font-display); font-weight:800; font-size:17px;">Sweepr Cleaner</span>
+              <span style="color:var(--ink-2); font-size:13px;">· Official Secure Checkout</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px; font-size:13px; color:var(--ink-2); font-weight:600;">
+              <span>Encrypted Payment</span>
+              <span>·</span>
+              <span>14-Day Full Refund Guarantee</span>
+            </div>
+          </div>
+
+          <div class="o1-grid">
+            <!-- LEFT: LIVE ITEMIZED RECEIPT & ADD-ONS -->
+            <div style="display:flex; flex-direction:column; gap:20px;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--accent);">Step 1 · Choose your plan</div>
+                <h2 style="font-family:var(--font-display); font-size:22px; font-weight:800; letter-spacing:-0.02em; margin-top:4px;">Clean 3 Computers + 2 Phones</h2>
+                <p style="font-size:14px; color:var(--ink-2); margin-top:4px;">Clears leftover junk files, removes duplicate photos, and speeds up slow startup times safely.</p>
+              </div>
+
+              <!-- Binary Plan Switcher (Yearly vs Monthly — No £1.99 Trial) -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--bg-subtle); padding:6px; border-radius:12px; border:1px solid var(--line);" role="radiogroup" aria-label="Billing Plan">
+                <button type="button" id="o1BtnAnnual" class="btn-press" onclick="setPlan('o1', 'annual')" style="min-height:48px; border-radius:8px; border:none; background:var(--ink-1); color:var(--bg-surface); font-weight:700; font-size:13px; cursor:pointer; padding:8px 12px; text-align:left; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                  <span>Yearly (Save 58%)</span>
+                  <span class="num" id="o1TabAnnualPrice" style="background:var(--accent); color:#fff; padding:2px 8px; border-radius:999px; font-size:12px;">£49.99/yr</span>
+                </button>
+                <button type="button" id="o1BtnMonthly" class="btn-press" onclick="setPlan('o1', 'monthly')" style="min-height:48px; border-radius:8px; border:none; background:transparent; color:var(--ink-2); font-weight:700; font-size:13px; cursor:pointer; padding:8px 12px; text-align:left; display:flex; align-items:center; justify-content:space-between;">
+                  <span>Monthly Plan</span>
+                  <span class="num" id="o1TabMonthlyPrice" style="font-size:12px;">£9.99/mo</span>
+                </button>
+              </div>
+
+              <!-- Included Free Everyday Features -->
+              <div style="background:var(--bg-subtle); border-radius:12px; padding:14px 16px; border:1px solid var(--line-soft);">
+                <div style="font-size:13px; font-weight:700; color:var(--ink-2); margin-bottom:8px;">Included in your plan</div>
+                <ul style="list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px; font-weight:600;">
+                  <li>Safe Junk &amp; Temp File Cleaner</li>
+                  <li>Duplicate Photo &amp; File Finder</li>
+                  <li>Slow Startup Speed Booster</li>
+                  <li>30-Day Undo Recovery Box</li>
+                </ul>
+              </div>
+
+              <!-- Optional 1-Click Add-Ons (+£9.99/yr each) -->
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <div style="font-size:13px; font-weight:700; color:var(--ink-2);">Optional protection add-ons (Click to include)</div>
+
+                <label id="o1BatLabel" class="addon-row-label checked">
+                  <input type="checkbox" id="o1Bat" class="addon-checkbox" checked onchange="updateCheckoutState('o1')" />
+                  <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong style="font-size:14px;">Battery Health Saver</strong>
+                      <span class="num" data-addon-badge style="font-size:12px; font-weight:700; color:var(--accent);">+£9.99/yr</span>
+                    </div>
+                    <p style="font-size:13px; color:var(--ink-2); margin-top:2px;">Stops your laptop and phone battery from wearing out early when plugged in at your desk.</p>
+                  </div>
+                </label>
+
+                <label id="o1CldLabel" class="addon-row-label checked">
+                  <input type="checkbox" id="o1Cld" class="addon-checkbox" checked onchange="updateCheckoutState('o1')" />
+                  <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong style="font-size:14px;">Private File Lockbox &amp; Cloud Backup</strong>
+                      <span class="num" data-addon-badge style="font-size:12px; font-weight:700; color:var(--accent);">+£9.99/yr</span>
+                    </div>
+                    <p style="font-size:13px; color:var(--ink-2); margin-top:2px;">Password-protected folder for private photos &amp; documents + automatic cloud backup.</p>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Live Itemized Receipt Summary -->
+              <div style="background:var(--bg-subtle); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                  <span id="o1RecPlanName">Sweepr Cleaner Pro (Yearly Plan · Save 58%)</span>
+                  <strong class="num" id="o1RecPlanPrice">£49.99</strong>
+                </div>
+                <div id="o1RecBatRow" style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-2);">
+                  <span>+ Battery Health Saver Add-On</span>
+                  <span class="num" data-addon-line>+£9.99</span>
+                </div>
+                <div id="o1RecCldRow" style="display:flex; justify-content:space-between; font-size:13px; color:var(--ink-2);">
+                  <span>+ Private File Lockbox &amp; Cloud Backup</span>
+                  <span class="num" data-addon-line>+£9.99</span>
+                </div>
+                <div style="border-top:1px solid var(--line); padding-top:10px; margin-top:4px; display:flex; justify-content:space-between; align-items:baseline;">
+                  <span style="font-weight:700; font-size:15px;">Total Due Today</span>
+                  <strong class="num" id="o1RecTotal" style="font-family:var(--font-display); font-size:24px; font-weight:800;">£69.97</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: EXPRESS WALLETS & ALTERNATIVE D PAYMENT FORM -->
+            <div style="background:var(--bg-subtle); border:1px solid var(--line); border-radius:12px; padding:24px; display:flex; flex-direction:column; gap:18px;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--ink-2); margin-bottom:8px;">1-Click Express Checkout</div>
+                <div class="wallet-grid">
+                  <button type="button" class="wallet-btn wallet-apple btn-press" onclick="simulateOrderComplete('O1 · Apple Pay')">Apple Pay</button>
+                  <button type="button" class="wallet-btn wallet-gpay btn-press" onclick="simulateOrderComplete('O1 · Google Pay')">Google Pay</button>
+                  <button type="button" class="wallet-btn wallet-paypal btn-press" onclick="simulateOrderComplete('O1 · PayPal')">PayPal</button>
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:12px; color:var(--ink-2); font-size:12px; font-weight:600;">
+                <span style="flex:1; height:1px; background:var(--line);"></span>
+                <span>Or pay with</span>
+                <span style="flex:1; height:1px; background:var(--line);"></span>
+              </div>
+
+              <!-- Email Input -->
+              <div>
+                <label class="field-label" for="o1Email">Where should we send your receipt &amp; activation key?</label>
+                <input type="email" id="o1Email" class="field-input" placeholder="you@example.com" autocomplete="email" />
+              </div>
+
+              <!-- Alternative D Payment Tabs -->
+              <div>
+                <div class="field-label">Payment Method</div>
+                <div class="pm-tabs" role="tablist" aria-label="Payment Method">
+                  <button type="button" class="pm-tab" role="tab" aria-selected="true" onclick="switchPmTab('o1', 'card', this)">Card</button>
+                  <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o1', 'bank', this)" data-local-bank-label>Bank</button>
+                  <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o1', 'klarna', this)">Klarna</button>
+                </div>
+              </div>
+
+              <!-- Card Panel -->
+              <div id="o1-pm-card" style="display:flex; flex-direction:column; gap:10px;">
+                <div>
+                  <label class="field-label" for="o1CardNum">Card Number</label>
+                  <input type="text" id="o1CardNum" class="field-input num" inputmode="numeric" placeholder="1234 5678 9012 3456" autocomplete="cc-number" />
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <div>
+                    <label class="field-label" for="o1Exp">Expiry Date</label>
+                    <input type="text" id="o1Exp" class="field-input num" placeholder="MM / YY" autocomplete="cc-exp" />
+                  </div>
+                  <div>
+                    <label class="field-label" for="o1Cvc">Security Code</label>
+                    <input type="text" id="o1Cvc" class="field-input num" placeholder="CVC" autocomplete="cc-csc" />
+                  </div>
+                </div>
+              </div>
+
+              <div id="o1-pm-bank" style="display:none; padding:14px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--line); font-size:13px; color:var(--ink-2);">
+                Pay safely directly from your bank account. Your Sweepr activation key unlocks immediately after approval.
+              </div>
+
+              <div id="o1-pm-klarna" style="display:none; padding:14px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--line); font-size:13px; color:var(--ink-2);">
+                Split your purchase into 3 interest-free payments with Klarna. Instant activation today.
+              </div>
+
+              <button type="button" id="o1SubmitBtn" class="cta-primary btn-press num" onclick="simulateOrderComplete('O1 (W3 Split Receipt)')">
+                Complete Order &amp; Unlock Instantly · £69.97
+              </button>
+
+              <p style="font-size:12px; color:var(--ink-2); text-align:center;">
+                <strong>14-Day Money-Back Guarantee:</strong> Try Sweepr risk-free. Cancel or refund in 1 click anytime from My Account.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========================================================================
+         DESIGN O2: SINGLE-COLUMN EXPRESS SHEET (Achromatic-Ledger · Zero Clutter)
+         ======================================================================== -->
+    <article id="stage-o2" class="design-stage" aria-labelledby="title-o2">
+      <div class="stage-meta">
+        <div>
+          <div class="stage-code">
+            <span id="title-o2">O2 — The Single-Column Express Sheet</span>
+            <span class="stage-tag">Lowest Friction · Apple Pay / Stripe Link Style</span>
+          </div>
+          <p class="stage-desc">
+            Uses <code>achromatic-ledger</code> principles and strict Hick's Law: one centered 560px column so the eye moves straight down from plan choice to 1-click payment in under 15 seconds.
+          </p>
+        </div>
+        <button type="button" class="jump-pill btn-press" onclick="simulateOrderComplete('O2 (Single-Column Express Sheet)')">Test Instant Checkout</button>
+      </div>
+
+      <div class="o2-wrap">
+        <div class="o2-column">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line-soft); padding-bottom:14px;">
+            <strong style="font-family:var(--font-display); font-size:18px;">Sweepr Cleaner Pro</strong>
+            <span style="font-size:12px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:4px 10px; border-radius:999px;">3 Computers + 2 Phones</span>
+          </div>
+
+          <!-- 1-Tap Express Wallets Right at the Top -->
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--ink-2); margin-bottom:8px;">Express 1-Click Checkout</div>
+            <div class="wallet-grid">
+              <button type="button" class="wallet-btn wallet-apple btn-press" onclick="simulateOrderComplete('O2 · Apple Pay')">Apple Pay</button>
+              <button type="button" class="wallet-btn wallet-gpay btn-press" onclick="simulateOrderComplete('O2 · Google Pay')">Google Pay</button>
+              <button type="button" class="wallet-btn wallet-paypal btn-press" onclick="simulateOrderComplete('O2 · PayPal')">PayPal</button>
+            </div>
+          </div>
+
+          <!-- Compact Plan Toggle -->
+          <div>
+            <div class="field-label">1. Choose Billing Cycle</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <button type="button" id="o2BtnAnnual" class="btn-press" onclick="setPlan('o2', 'annual')" style="padding:12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-subtle); color:var(--ink-1); text-align:left; cursor:pointer;">
+                <div style="font-size:12px; font-weight:700; color:var(--accent);">Save 58%</div>
+                <div style="font-weight:800; font-size:15px; margin-top:2px;">Yearly Plan</div>
+                <div class="num" id="o2AnnualLabel" style="font-size:13px; color:var(--ink-2);">£49.99 / year</div>
+              </button>
+              <button type="button" id="o2BtnMonthly" class="btn-press" onclick="setPlan('o2', 'monthly')" style="padding:12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-surface); color:var(--ink-1); text-align:left; cursor:pointer;">
+                <div style="font-size:12px; font-weight:700; color:var(--ink-2);">Cancel anytime</div>
+                <div style="font-weight:800; font-size:15px; margin-top:2px;">Monthly Plan</div>
+                <div class="num" id="o2MonthlyLabel" style="font-size:13px; color:var(--ink-2);">£9.99 / month</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Compact Add-On Checkboxes -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="field-label" style="margin-bottom:2px;">2. Optional Add-Ons (+<span data-addon-unit>£9.99/yr</span> each)</div>
+            <label id="o2BatLabel" class="addon-row-label checked" style="padding:10px 14px;">
+              <input type="checkbox" id="o2Bat" class="addon-checkbox" checked onchange="updateCheckoutState('o2')" />
+              <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px;">
+                <span><strong>Battery Health Saver</strong> (Stops early battery wear)</span>
+                <strong class="num" data-addon-badge>+£9.99/yr</strong>
+              </div>
+            </label>
+            <label id="o2CldLabel" class="addon-row-label checked" style="padding:10px 14px;">
+              <input type="checkbox" id="o2Cld" class="addon-checkbox" checked onchange="updateCheckoutState('o2')" />
+              <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px;">
+                <span><strong>Private File Lockbox</strong> (Password folder + backup)</span>
+                <strong class="num" data-addon-badge>+£9.99/yr</strong>
+              </div>
+            </label>
+          </div>
+
+          <!-- Email + Alternative D Card Inputs -->
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label class="field-label" for="o2Email">3. Email &amp; Payment</label>
+              <input type="email" id="o2Email" class="field-input" placeholder="Email address for your activation key" />
+            </div>
+            <div class="pm-tabs" role="tablist" aria-label="Payment Method">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true" onclick="switchPmTab('o2', 'card', this)">Card</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o2', 'bank', this)" data-local-bank-label>Bank</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o2', 'klarna', this)">Klarna</button>
+            </div>
+            <div id="o2-pm-card" style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px;">
+              <input type="text" class="field-input num" placeholder="Card number" aria-label="Card number" />
+              <input type="text" class="field-input num" placeholder="MM/YY" aria-label="Expiry" />
+              <input type="text" class="field-input num" placeholder="CVC" aria-label="Security code" />
+            </div>
+            <div id="o2-pm-bank" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Instant bank payment selected.</div>
+            <div id="o2-pm-klarna" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Klarna 3 interest-free installments selected.</div>
+          </div>
+
+          <button type="button" id="o2SubmitBtn" class="cta-primary btn-press num" style="background:var(--ink-1); color:var(--bg-surface);" onclick="simulateOrderComplete('O2 (Single-Column Express)')">
+            Pay £69.97 &amp; Unlock Sweepr Now
+          </button>
+
+          <div style="display:flex; justify-content:center; gap:16px; font-size:12px; color:var(--ink-2);">
+            <span>14-Day Money-Back Guarantee</span>
+            <span>·</span>
+            <span>Cancel Anytime in 1 Click</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========================================================================
+         DESIGN O3: BEFORE & AFTER STORAGE PROOF CHECKOUT (Product-Performs CRO)
+         ======================================================================== -->
+    <article id="stage-o3" class="design-stage" aria-labelledby="title-o3">
+      <div class="stage-meta">
+        <div>
+          <div class="stage-code">
+            <span id="title-o3">O3 — The "Before &amp; After" Storage Proof Checkout</span>
+            <span class="stage-tag">CRO Loss-Aversion Anchor · Product-Performs</span>
+          </div>
+          <p class="stage-desc">
+            Uses <code>conversion-funnel-cro</code> Lever 1 (Quantified Storage Value): reminds the buyer of the exact clutter they are clearing with a visual Before/After disk bar right beside the checkout form.
+          </p>
+        </div>
+        <button type="button" class="jump-pill btn-press" onclick="simulateOrderComplete('O3 (Storage Proof Checkout)')">Test Instant Checkout</button>
+      </div>
+
+      <div class="o3-wrap">
+        <div class="o3-grid">
+          <!-- LEFT: VISUAL BEFORE/AFTER STORAGE BAR + PLAIN ENGLISH BENEFITS -->
+          <div style="background:var(--bg-surface); border:1px solid var(--line); border-radius:12px; padding:24px; color:var(--ink-1); display:flex; flex-direction:column; gap:18px;">
+            <div>
+              <span style="font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--cobalt-soft); color:var(--cobalt-ink);">Your Clean Computer &amp; Phone Summary</span>
+              <h2 style="font-family:var(--font-display); font-size:21px; font-weight:800; margin-top:10px;">Reclaim Free Space Today</h2>
+              <p style="font-size:14px; color:var(--ink-2); margin-top:4px;">Every item Sweepr cleans is placed in a 30-day recovery box first, so you never lose a personal photo or document.</p>
+            </div>
+
+            <!-- Visual Storage Bar -->
+            <div style="background:var(--bg-subtle); border:1px solid var(--line); border-radius:12px; padding:16px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:8px;">
+                <span>Typical Space Recovered on First Clean</span>
+                <span class="num" style="color:var(--accent);">+33.7 GB Freed</span>
+              </div>
+              <div style="height:12px; background:var(--line); border-radius:999px; overflow:hidden; display:flex;">
+                <div style="width:52%; background:var(--ink-2);" title="Your Personal Files (Untouched)"></div>
+                <div style="width:28%; background:var(--accent);" title="33.7 GB Clutter Ready to Clean"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2); margin-top:8px;">
+                <span>Your Personal Files (100% Untouched)</span>
+                <span style="color:var(--accent); font-weight:700;">Hidden Junk &amp; Duplicates Removed</span>
+              </div>
+            </div>
+
+            <!-- Plan Selector -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button type="button" id="o3BtnAnnual" class="btn-press" onclick="setPlan('o3', 'annual')" style="padding:12px; border-radius:8px; border:1px solid var(--line); background:var(--cobalt-soft); color:var(--cobalt-ink); font-weight:700; font-size:13px; cursor:pointer; text-align:left;">
+                <div>Yearly Plan (Save 58%)</div>
+                <div class="num" id="o3AnnualPrice" style="font-size:16px; font-weight:800; margin-top:2px;">£49.99/yr</div>
+              </button>
+              <button type="button" id="o3BtnMonthly" class="btn-press" onclick="setPlan('o3', 'monthly')" style="padding:12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-surface); color:var(--ink-1); font-weight:700; font-size:13px; cursor:pointer; text-align:left;">
+                <div>Monthly Plan</div>
+                <div class="num" id="o3MonthlyPrice" style="font-size:16px; font-weight:800; margin-top:2px;">£9.99/mo</div>
+              </button>
+            </div>
+
+            <!-- Add-Ons -->
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <label id="o3BatLabel" class="addon-row-label checked">
+                <input type="checkbox" id="o3Bat" class="addon-checkbox" checked onchange="updateCheckoutState('o3')" />
+                <div style="flex:1; display:flex; justify-content:space-between; font-size:13px;">
+                  <span><strong>Battery Health Saver</strong> · Protects laptop &amp; phone battery life</span>
+                  <strong class="num" data-addon-badge>+£9.99/yr</strong>
+                </div>
+              </label>
+              <label id="o3CldLabel" class="addon-row-label checked">
+                <input type="checkbox" id="o3Cld" class="addon-checkbox" checked onchange="updateCheckoutState('o3')" />
+                <div style="flex:1; display:flex; justify-content:space-between; font-size:13px;">
+                  <span><strong>Private File Lockbox</strong> · Password-protected folder &amp; backup</span>
+                  <strong class="num" data-addon-badge>+£9.99/yr</strong>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- RIGHT: CHECKOUT BOX -->
+          <div style="background:var(--bg-surface); border:1px solid var(--line); border-radius:12px; padding:24px; color:var(--ink-1); display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="font-size:17px;">Instant Checkout</strong>
+              <strong class="num" id="o3RecTotal" style="font-size:22px; color:var(--cobalt);">£69.97</strong>
+            </div>
+
+            <div class="wallet-grid">
+              <button type="button" class="wallet-btn wallet-apple btn-press" onclick="simulateOrderComplete('O3 · Apple Pay')">Apple Pay</button>
+              <button type="button" class="wallet-btn wallet-gpay btn-press" onclick="simulateOrderComplete('O3 · Google Pay')">Google Pay</button>
+              <button type="button" class="wallet-btn wallet-paypal btn-press" onclick="simulateOrderComplete('O3 · PayPal')">PayPal</button>
+            </div>
+
+            <div>
+              <label class="field-label" for="o3Email">Email Address</label>
+              <input type="email" id="o3Email" class="field-input" placeholder="you@example.com" />
+            </div>
+
+            <div class="pm-tabs" role="tablist" aria-label="Payment Method">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true" onclick="switchPmTab('o3', 'card', this)">Card</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o3', 'bank', this)" data-local-bank-label>Bank</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o3', 'klarna', this)">Klarna</button>
+            </div>
+
+            <div id="o3-pm-card" style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px;">
+              <input type="text" class="field-input num" placeholder="Card number" aria-label="Card number" />
+              <input type="text" class="field-input num" placeholder="MM/YY" aria-label="Expiry" />
+              <input type="text" class="field-input num" placeholder="CVC" aria-label="Security code" />
+            </div>
+            <div id="o3-pm-bank" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Direct bank transfer selected.</div>
+            <div id="o3-pm-klarna" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Klarna Pay in 3 selected.</div>
+
+            <button type="button" id="o3SubmitBtn" class="cta-primary btn-press num" style="background:var(--cobalt);" onclick="simulateOrderComplete('O3 (Storage Proof CRO)')">
+              Unlock Sweepr &amp; Clean Now · £69.97
+            </button>
+
+            <p style="font-size:12px; color:var(--ink-2); text-align:center;">
+              Protected by our 14-day full refund guarantee. Cancel anytime with 1 click.
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========================================================================
+         DESIGN O4: BENTO BOARD CHECKOUT (Dense-Tiles · Scannable 12-Col Grid)
+         ======================================================================== -->
+    <article id="stage-o4" class="design-stage" aria-labelledby="title-o4">
+      <div class="stage-meta">
+        <div>
+          <div class="stage-code">
+            <span id="title-o4">O4 — The Modular Bento Board Checkout</span>
+            <span class="stage-tag">Dense-Tiles · Scannable Modular Grid</span>
+          </div>
+          <p class="stage-desc">
+            Uses <code>dense-tiles</code> composition: every decision (Plan, Add-Ons, 14-Day Refund Promise, and Payment) sits in its own clearly bounded tile with zero visual clutter.
+          </p>
+        </div>
+        <button type="button" class="jump-pill btn-press" onclick="simulateOrderComplete('O4 (Bento Board Checkout)')">Test Instant Checkout</button>
+      </div>
+
+      <div class="o4-wrap">
+        <div class="o4-bento">
+          <!-- Left Stack (7 cols): Plan Tile + Add-Ons Tile + Guarantee Tile -->
+          <div class="o4-span-7" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="o4-tile">
+              <div style="font-size:13px; font-weight:700; color:var(--ink-2); margin-bottom:10px;">Tile 01 · Select your plan</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button type="button" id="o4BtnAnnual" class="btn-press" onclick="setPlan('o4', 'annual')" style="padding:14px; border-radius:8px; border:1px solid var(--line); background:var(--accent-soft); color:var(--accent-ink); text-align:left; cursor:pointer;">
+                  <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px;">
+                    <span>Yearly Plan</span>
+                    <span class="num" id="o4AnnualPrice">£49.99/yr</span>
+                  </div>
+                  <div style="font-size:12px; margin-top:4px;">Save 58% · Covers 3 computers + 2 phones</div>
+                </button>
+                <button type="button" id="o4BtnMonthly" class="btn-press" onclick="setPlan('o4', 'monthly')" style="padding:14px; border-radius:8px; border:1px solid var(--line); background:var(--bg-surface); color:var(--ink-1); text-align:left; cursor:pointer;">
+                  <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px;">
+                    <span>Monthly Plan</span>
+                    <span class="num" id="o4MonthlyPrice">£9.99/mo</span>
+                  </div>
+                  <div style="font-size:12px; color:var(--ink-2); margin-top:4px;">Billed monthly · Cancel anytime in 1 click</div>
+                </button>
+              </div>
+            </div>
+
+            <div class="o4-tile">
+              <div style="font-size:13px; font-weight:700; color:var(--ink-2); margin-bottom:10px;">Tile 02 · Optional protection add-ons (+<span data-addon-unit>£9.99/yr</span> each)</div>
+              <div class="grid-2col-sm">
+                <label id="o4BatLabel" class="addon-row-label checked">
+                  <input type="checkbox" id="o4Bat" class="addon-checkbox" checked onchange="updateCheckoutState('o4')" />
+                  <div>
+                    <div style="font-weight:700; font-size:14px;">Battery Health Saver</div>
+                    <div class="num" data-addon-badge style="font-size:12px; font-weight:700; color:var(--accent);">+£9.99/yr</div>
+                    <p style="font-size:12px; color:var(--ink-2); margin-top:4px;">Keeps your laptop &amp; phone battery healthy longer.</p>
+                  </div>
+                </label>
+                <label id="o4CldLabel" class="addon-row-label checked">
+                  <input type="checkbox" id="o4Cld" class="addon-checkbox" checked onchange="updateCheckoutState('o4')" />
+                  <div>
+                    <div style="font-weight:700; font-size:14px;">Private File Lockbox</div>
+                    <div class="num" data-addon-badge style="font-size:12px; font-weight:700; color:var(--accent);">+£9.99/yr</div>
+                    <p style="font-size:12px; color:var(--ink-2); margin-top:4px;">Password-protected folder &amp; automatic cloud backup.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="o4-tile" style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--bg-subtle);">
+              <div>
+                <strong style="font-size:14px;">14-Day No-Questions-Asked Refund Guarantee</strong>
+                <p style="font-size:13px; color:var(--ink-2); margin-top:2px;">If your computer or phone doesn't feel noticeably cleaner and faster, get a full refund in 1 click.</p>
+              </div>
+              <span style="font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--line); white-space:nowrap;">100% Risk-Free</span>
+            </div>
+          </div>
+
+          <!-- Right Tile (5 cols): Express & Card Payment -->
+          <div class="o4-tile o4-span-5" style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line-soft); padding-bottom:10px;">
+              <span style="font-size:13px; font-weight:700; color:var(--ink-2);">Tile 03 · Payment</span>
+              <strong class="num" id="o4RecTotal" style="font-size:22px; font-family:var(--font-display);">£69.97</strong>
+            </div>
+
+            <div class="wallet-grid">
+              <button type="button" class="wallet-btn wallet-apple btn-press" onclick="simulateOrderComplete('O4 · Apple Pay')">Apple Pay</button>
+              <button type="button" class="wallet-btn wallet-gpay btn-press" onclick="simulateOrderComplete('O4 · Google Pay')">Google Pay</button>
+              <button type="button" class="wallet-btn wallet-paypal btn-press" onclick="simulateOrderComplete('O4 · PayPal')">PayPal</button>
+            </div>
+
+            <div>
+              <label class="field-label" for="o4Email">Email for Receipt &amp; Key</label>
+              <input type="email" id="o4Email" class="field-input" placeholder="you@example.com" />
+            </div>
+
+            <div class="pm-tabs" role="tablist" aria-label="Payment Method">
+              <button type="button" class="pm-tab" role="tab" aria-selected="true" onclick="switchPmTab('o4', 'card', this)">Card</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o4', 'bank', this)" data-local-bank-label>Bank</button>
+              <button type="button" class="pm-tab" role="tab" aria-selected="false" onclick="switchPmTab('o4', 'klarna', this)">Klarna</button>
+            </div>
+
+            <div id="o4-pm-card" style="display:flex; flex-direction:column; gap:8px;">
+              <input type="text" class="field-input num" placeholder="Card number" aria-label="Card number" />
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <input type="text" class="field-input num" placeholder="MM / YY" aria-label="Expiry" />
+                <input type="text" class="field-input num" placeholder="CVC" aria-label="Security code" />
+              </div>
+            </div>
+            <div id="o4-pm-bank" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Bank payment ready.</div>
+            <div id="o4-pm-klarna" style="display:none; font-size:13px; color:var(--ink-2); padding:10px; background:var(--bg-subtle); border-radius:8px;">Klarna 3 payments ready.</div>
+
+            <button type="button" id="o4SubmitBtn" class="cta-primary btn-press num" onclick="simulateOrderComplete('O4 (Bento Board)')">
+              Complete Order · £69.97
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========================================================================
+         DESIGN O5: STUDIO DARK HARDWARE CHECKOUT (Matches Desktop App Paywall)
+         ======================================================================== -->
+    <article id="stage-o5" class="design-stage" aria-labelledby="title-o5">
+      <div class="stage-meta">
+        <div>
+          <div class="stage-code">
+            <span id="title-o5">O5 — The Studio Dark In-App Handoff Checkout</span>
+            <span class="stage-tag">Matches Dark Desktop &amp; Mobile App UI</span>
+          </div>
+          <p class="stage-desc">
+            Designed for users clicking "Unlock Pro" from inside the dark-mode Desktop (D3) or Mobile (M3) app so there is zero blinding white flash when opening checkout.
+          </p>
+        </div>
+        <button type="button" class="jump-pill btn-press" onclick="simulateOrderComplete('O5 (Studio Dark Checkout)')">Test Instant Checkout</button>
+      </div>
+
+      <div class="o5-wrap">
+        <div class="o5-grid">
+          <!-- Left Dark Summary Card -->
+          <div class="o5-card" style="display:flex; flex-direction:column; gap:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:#6ee7b7; background:#112a22; padding:4px 10px; border-radius:999px;">Instant App Unlock</span>
+              <span style="font-size:13px; color:#b4b8c2;">Covers 3 Computers + 2 Phones</span>
+            </div>
+
+            <div>
+              <h2 style="font-family:var(--font-display); font-size:22px; font-weight:800; color:#ffffff;">Unlock Full Sweepr Pro</h2>
+              <p style="font-size:14px; color:#b4b8c2; margin-top:4px;">Activates your desktop and phone apps right away — no need to reinstall anything.</p>
+            </div>
+
+            <!-- Plan Toggle -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <button type="button" id="o5BtnAnnual" class="btn-press" onclick="setPlan('o5', 'annual')" style="padding:12px; border-radius:8px; border:1px solid #202630; background:#162923; color:#ffffff; text-align:left; cursor:pointer;">
+                <div style="font-size:12px; font-weight:700; color:#6ee7b7;">Save 58%</div>
+                <div style="font-weight:800; font-size:15px;">Yearly Plan</div>
+                <div class="num" id="o5AnnualPrice" style="font-size:13px; color:#d1d5db;">£49.99/yr</div>
+              </button>
+              <button type="button" id="o5BtnMonthly" class="btn-press" onclick="setPlan('o5', 'monthly')" style="padding:12px; border-radius:8px; border:1px solid #202630; background:#0b0d10; color:#ffffff; text-align:left; cursor:pointer;">
+                <div style="font-size:12px; font-weight:700; color:#b4b8c2;">Cancel anytime</div>
+                <div style="font-weight:800; font-size:15px;">Monthly Plan</div>
+                <div class="num" id="o5MonthlyPrice" style="font-size:13px; color:#d1d5db;">£9.99/mo</div>
+              </button>
+            </div>
+
+            <!-- Add-Ons -->
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <label id="o5BatLabel" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px; border:1px solid #202630; background:#162923; cursor:pointer;">
+                <input type="checkbox" id="o5Bat" class="addon-checkbox" checked onchange="updateCheckoutState('o5')" />
+                <div style="flex:1; display:flex; justify-content:space-between; font-size:13px; color:#f3f5f7;">
+                  <span><strong>Battery Health Saver</strong> (Stops early battery wear)</span>
+                  <strong class="num" data-addon-badge style="color:#6ee7b7;">+£9.99/yr</strong>
+                </div>
+              </label>
+              <label id="o5CldLabel" style="display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px; border:1px solid #202630; background:#162923; cursor:pointer;">
+                <input type="checkbox" id="o5Cld" class="addon-checkbox" checked onchange="updateCheckoutState('o5')" />
+                <div style="flex:1; display:flex; justify-content:space-between; font-size:13px; color:#f3f5f7;">
+                  <span><strong>Private File Lockbox</strong> (Password folder &amp; backup)</span>
+                  <strong class="num" data-addon-badge style="color:#6ee7b7;">+£9.99/yr</strong>
+                </div>
+              </label>
+            </div>
+
+            <div style="border-top:1px solid #202630; padding-top:14px; display:flex; justify-content:space-between; align-items:baseline;">
+              <span style="font-size:14px; color:#b4b8c2;">Total Today (Includes 14-Day Refund Guarantee)</span>
+              <strong class="num" id="o5RecTotal" style="font-size:24px; color:#6ee7b7;">£69.97</strong>
+            </div>
+          </div>
+
+          <!-- Right Dark Payment Card -->
+          <div class="o5-card" style="display:flex; flex-direction:column; gap:14px;">
+            <div class="wallet-grid">
+              <button type="button" class="wallet-btn btn-press" style="background:#ffffff; color:#000000;" onclick="simulateOrderComplete('O5 · Apple Pay')">Apple Pay</button>
+              <button type="button" class="wallet-btn btn-press" style="background:#262c36; color:#ffffff; border:1px solid #323a46;" onclick="simulateOrderComplete('O5 · Google Pay')">Google Pay</button>
+              <button type="button" class="wallet-btn wallet-paypal btn-press" onclick="simulateOrderComplete('O5 · PayPal')">PayPal</button>
+            </div>
+
+            <div>
+              <label class="field-label" for="o5Email" style="color:#d1d5db;">Email Address</label>
+              <input type="email" id="o5Email" class="o5-input" placeholder="you@example.com" />
+            </div>
+
+            <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px;">
+              <input type="text" class="o5-input num" placeholder="Card number" aria-label="Card number" />
+              <input type="text" class="o5-input num" placeholder="MM/YY" aria-label="Expiry" />
+              <input type="text" class="o5-input num" placeholder="CVC" aria-label="Security code" />
+            </div>
+
+            <button type="button" id="o5SubmitBtn" class="cta-primary btn-press num" style="background:#10b981; color:#042f2e; font-weight:800;" onclick="simulateOrderComplete('O5 (Studio Dark Checkout)')">
+              Activate Sweepr Pro Now · £69.97
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========================================================================
+         SKILL AUDIT & COMPARISON SCORECARD
+         ======================================================================== -->
+    <section id="stage-audit" class="design-stage" aria-labelledby="title-audit">
+      <div class="stage-meta">
+        <div class="stage-code" id="title-audit">Multi-Skill Craft, Accessibility &amp; CRO Audit Rubric</div>
+      </div>
+      <div style="padding:24px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--line);">
+              <th style="padding:10px;">Design</th>
+              <th style="padding:10px;">Best For</th>
+              <th style="padding:10px;">Hick's &amp; Fitts's Law</th>
+              <th style="padding:10px;">Plain-English &amp; WCAG 2.2 AA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--line-soft);">
+              <td style="padding:10px;"><strong>O1 · W3 Split-Receipt (Recommended)</strong></td>
+              <td style="padding:10px;">Seamless match with W3 Homepage &amp; Pricing page</td>
+              <td style="padding:10px;">Binary Yearly/Monthly toggle + full-row add-on cards</td>
+              <td style="padding:10px;">100% plain English · <code>tabular-nums</code> · 16px mobile inputs</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--line-soft);">
+              <td style="padding:10px;"><strong>O2 · 1-Column Express</strong></td>
+              <td style="padding:10px;">Mobile traffic &amp; fastest 1-thumb Apple/Google Pay</td>
+              <td style="padding:10px;">Single 560px column · Zero horizontal eye movement</td>
+              <td style="padding:10px;">Zero jargon · High-contrast ink primary button</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--line-soft);">
+              <td style="padding:10px;"><strong>O3 · Storage Proof CRO</strong></td>
+              <td style="padding:10px;">Cold ad traffic needing a reminder of what gets cleaned</td>
+              <td style="padding:10px;">Visual 33.7 GB Before/After bar + 1-click wallets</td>
+              <td style="padding:10px;">Explains 30-day recovery box in everyday terms</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--line-soft);">
+              <td style="padding:10px;"><strong>O4 · Bento Board</strong></td>
+              <td style="padding:10px;">Desktop buyers who like structured, numbered steps</td>
+              <td style="padding:10px;">3 numbered tiles (Plan, Add-Ons, Payment)</td>
+              <td style="padding:10px;">Dedicated 14-day refund guarantee tile</td>
+            </tr>
+            <tr>
+              <td style="padding:10px;"><strong>O5 · Studio Dark</strong></td>
+              <td style="padding:10px;">In-app upgrade clicks from Desktop (D3) &amp; Mobile (M3)</td>
+              <td style="padding:10px;">Matches dark app chrome · Instant key unlock</td>
+              <td style="padding:10px;">WCAG AA verified emerald-on-obsidian contrast</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- LIVE CONFIRMATION TOAST (Doherty Threshold <400ms) -->
+  <div id="orderToast" class="toast-bar" role="status" aria-live="polite">
+    <span id="orderToastText">Order completed in 120ms. Instant license key unlocked.</span>
+    <button type="button" class="toast-undo-btn" onclick="hideOrderToast()">Dismiss</button>
+  </div>
+
+  <script>
+    const ORDER_CURRENCIES = {
+      gbp: { sym: '£', annual: 49.99, monthly: 9.99, addon: 9.99, bankLabel: 'Faster Payments', fmt: v => '£' + v.toFixed(2) },
+      usd: { sym: '$', annual: 64.99, monthly: 12.99, addon: 9.99, bankLabel: 'ACH Bank', fmt: v => '$' + v.toFixed(2) },
+      eur: { sym: '€', annual: 59.99, monthly: 11.99, addon: 9.99, bankLabel: 'iDEAL / SEPA', fmt: v => '€' + v.toFixed(2) },
+      cad: { sym: 'CA$', annual: 89.99, monthly: 16.99, addon: 9.99, bankLabel: 'Interac / Bank', fmt: v => 'CA$' + v.toFixed(2) },
+      aud: { sym: 'A$', annual: 99.99, monthly: 18.99, addon: 9.99, bankLabel: 'PayID / Bank', fmt: v => 'A$' + v.toFixed(2) },
+      jpy: { sym: '¥', annual: 9800, monthly: 1980, addon: 1500, bankLabel: 'Furikomi Bank', fmt: v => '¥' + Math.round(v).toLocaleString() },
+      chf: { sym: 'CHF ', annual: 59.99, monthly: 11.99, addon: 9.99, bankLabel: 'TWINT / Bank', fmt: v => 'CHF ' + v.toFixed(2) },
+      pln: { sym: 'zł', annual: 249.00, monthly: 49.99, addon: 49.99, bankLabel: 'BLIK / Bank', fmt: v => v.toFixed(2) + ' zł' }
+    };
+
+    let currentCurr = 'gbp';
+    const designPlans = { o1: 'annual', o2: 'annual', o3: 'annual', o4: 'annual', o5: 'annual' };
+
+    function announce(msg) {
+      const el = document.getElementById('srStatus');
+      if (el) el.textContent = msg;
+    }
+
+    function setOrderCurrency(code) {
+      if (!ORDER_CURRENCIES[code]) code = 'gbp';
+      currentCurr = code;
+      const c = ORDER_CURRENCIES[code];
+
+      document.querySelectorAll('[data-addon-badge]').forEach(el => {
+        el.textContent = `+${c.fmt(c.addon)}/yr`;
+      });
+      document.querySelectorAll('[data-addon-line]').forEach(el => {
+        el.textContent = `+${c.fmt(c.addon)}`;
+      });
+      document.querySelectorAll('[data-addon-unit]').forEach(el => {
+        el.textContent = `${c.fmt(c.addon)}/yr`;
+      });
+      document.querySelectorAll('[data-local-bank-label]').forEach(el => {
+        el.textContent = c.bankLabel;
+      });
+
+      ['o1', 'o2', 'o3', 'o4', 'o5'].forEach(id => updateCheckoutState(id));
+      announce(`Updated currency to ${code.toUpperCase()}`);
+    }
+
+    function setPlan(designId, mode) {
+      designPlans[designId] = mode;
+      updateCheckoutState(designId);
+    }
+
+    function updateCheckoutState(id) {
+      const c = ORDER_CURRENCIES[currentCurr];
+      const mode = designPlans[id];
+      const batEl = document.getElementById(`${id}Bat`);
+      const cldEl = document.getElementById(`${id}Cld`);
+      const bat = batEl ? batEl.checked : false;
+      const cld = cldEl ? cldEl.checked : false;
+
+      const batLabel = document.getElementById(`${id}BatLabel`);
+      const cldLabel = document.getElementById(`${id}CldLabel`);
+      if (batLabel && id !== 'o5') batLabel.classList.toggle('checked', bat);
+      if (cldLabel && id !== 'o5') cldLabel.classList.toggle('checked', cld);
+
+      const base = mode === 'annual' ? c.annual : c.monthly;
+      const total = base + (bat ? c.addon : 0) + (cld ? c.addon : 0);
+
+      if (id === 'o1') {
+        document.getElementById('o1TabAnnualPrice').textContent = `${c.fmt(c.annual)}/yr`;
+        document.getElementById('o1TabMonthlyPrice').textContent = `${c.fmt(c.monthly)}/mo`;
+        const bAnn = document.getElementById('o1BtnAnnual');
+        const bMon = document.getElementById('o1BtnMonthly');
+        bAnn.style.background = mode === 'annual' ? 'var(--ink-1)' : 'transparent';
+        bAnn.style.color = mode === 'annual' ? 'var(--bg-surface)' : 'var(--ink-2)';
+        bMon.style.background = mode === 'monthly' ? 'var(--ink-1)' : 'transparent';
+        bMon.style.color = mode === 'monthly' ? 'var(--bg-surface)' : 'var(--ink-2)';
+
+        document.getElementById('o1RecPlanName').textContent = mode === 'annual'
+          ? 'Sweepr Cleaner Pro (Yearly Plan · Save 58%)'
+          : 'Sweepr Cleaner Pro (Monthly Plan · Cancel anytime)';
+        document.getElementById('o1RecPlanPrice').textContent = c.fmt(base);
+        document.getElementById('o1RecBatRow').style.display = bat ? 'flex' : 'none';
+        document.getElementById('o1RecCldRow').style.display = cld ? 'flex' : 'none';
+        document.getElementById('o1RecTotal').textContent = c.fmt(total);
+        document.getElementById('o1SubmitBtn').textContent = `Complete Order & Unlock Instantly · ${c.fmt(total)}`;
+      }
+
+      if (id === 'o2') {
+        document.getElementById('o2AnnualLabel').textContent = `${c.fmt(c.annual)} / year`;
+        document.getElementById('o2MonthlyLabel').textContent = `${c.fmt(c.monthly)} / month`;
+        document.getElementById('o2BtnAnnual').style.background = mode === 'annual' ? 'var(--bg-subtle)' : 'var(--bg-surface)';
+        document.getElementById('o2BtnMonthly').style.background = mode === 'monthly' ? 'var(--bg-subtle)' : 'var(--bg-surface)';
+        document.getElementById('o2SubmitBtn').textContent = `Pay ${c.fmt(total)} & Unlock Sweepr Now`;
+      }
+
+      if (id === 'o3') {
+        document.getElementById('o3AnnualPrice').textContent = `${c.fmt(c.annual)}/yr`;
+        document.getElementById('o3MonthlyPrice').textContent = `${c.fmt(c.monthly)}/mo`;
+        document.getElementById('o3BtnAnnual').style.background = mode === 'annual' ? 'var(--cobalt-soft)' : 'var(--bg-surface)';
+        document.getElementById('o3BtnMonthly').style.background = mode === 'monthly' ? 'var(--cobalt-soft)' : 'var(--bg-surface)';
+        document.getElementById('o3RecTotal').textContent = c.fmt(total);
+        document.getElementById('o3SubmitBtn').textContent = `Unlock Sweepr & Clean Now · ${c.fmt(total)}`;
+      }
+
+      if (id === 'o4') {
+        document.getElementById('o4AnnualPrice').textContent = `${c.fmt(c.annual)}/yr`;
+        document.getElementById('o4MonthlyPrice').textContent = `${c.fmt(c.monthly)}/mo`;
+        document.getElementById('o4BtnAnnual').style.background = mode === 'annual' ? 'var(--accent-soft)' : 'var(--bg-surface)';
+        document.getElementById('o4BtnMonthly').style.background = mode === 'monthly' ? 'var(--accent-soft)' : 'var(--bg-surface)';
+        document.getElementById('o4RecTotal').textContent = c.fmt(total);
+        document.getElementById('o4SubmitBtn').textContent = `Complete Order · ${c.fmt(total)}`;
+      }
+
+      if (id === 'o5') {
+        document.getElementById('o5AnnualPrice').textContent = `${c.fmt(c.annual)}/yr`;
+        document.getElementById('o5MonthlyPrice').textContent = `${c.fmt(c.monthly)}/mo`;
+        document.getElementById('o5BtnAnnual').style.background = mode === 'annual' ? '#162923' : '#0b0d10';
+        document.getElementById('o5BtnMonthly').style.background = mode === 'monthly' ? '#162923' : '#0b0d10';
+        document.getElementById('o5RecTotal').textContent = c.fmt(total);
+        document.getElementById('o5SubmitBtn').textContent = `Activate Sweepr Pro Now · ${c.fmt(total)}`;
+      }
+    }
+
+    function switchPmTab(designId, tabName, btnEl) {
+      const parent = btnEl.closest('[role="tablist"]');
+      if (parent) {
+        parent.querySelectorAll('[role="tab"]').forEach(t => t.setAttribute('aria-selected', 'false'));
+      }
+      btnEl.setAttribute('aria-selected', 'true');
+      ['card', 'bank', 'klarna'].forEach(k => {
+        const panel = document.getElementById(`${designId}-pm-${k}`);
+        if (panel) {
+          panel.style.display = k === tabName ? (designId === 'o1' || designId === 'o4' ? 'flex' : 'grid') : 'none';
+        }
+      });
+    }
+
+    function filterOrderDesign(target, btnEl) {
+      document.querySelectorAll('.jump-bar .jump-pill').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      if (btnEl) {
+        btnEl.classList.add('active');
+        btnEl.setAttribute('aria-selected', 'true');
+      }
+      ['o1', 'o2', 'o3', 'o4', 'o5', 'audit'].forEach(k => {
+        const el = document.getElementById(`stage-${k}`);
+        if (!el) return;
+        el.classList.toggle('hidden-stage', target !== 'all' && target !== k);
+      });
+      announce(`Showing ${target === 'all' ? 'all 5 order page designs' : target.toUpperCase()}`);
+    }
+
+    function toggleOrderTheme() {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      document.getElementById('themeToggleBtn').textContent = next === 'dark' ? 'Theme: Dark' : 'Theme: Light';
+      announce(`Switched to ${next} theme`);
+    }
+
+    let toastTimer = null;
+    function simulateOrderComplete(label) {
+      const toast = document.getElementById('orderToast');
+      const text = document.getElementById('orderToastText');
+      text.textContent = `${label}: Instant checkout verified in 110ms. License key ready.`;
+      toast.classList.add('visible');
+      announce(text.textContent);
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideOrderToast, 4500);
+    }
+
+    function hideOrderToast() {
+      document.getElementById('orderToast').classList.remove('visible');
+    }
+
+    // Initialize all 5 designs
+    setOrderCurrency('gbp');
+  </script>
+</body>
+</html>

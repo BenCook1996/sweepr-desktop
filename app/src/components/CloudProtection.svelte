@@ -24,7 +24,10 @@
   let scheduleSync = $state(false);
   let scheduleFreq = $state("daily");
   const hasCloudBundle = $derived(
-    Boolean(license?.dev_unlock || license?.active)
+    Boolean(
+      license?.dev_unlock ||
+        license?.addons?.some((a) => a.toLowerCase() === "cloud_vault")
+    )
   );
 
   $effect(() => {
@@ -53,7 +56,15 @@
 
   async function unlockBundle() {
     error = "";
-    requestActivation();
+    if (license?.active) {
+      try {
+        await api.startAddonCheckout("cloud_vault");
+      } catch {
+        requestActivation();
+      }
+    } else {
+      requestActivation();
+    }
   }
 
   async function toggleScheduleSync(enabled: boolean, inputEl?: HTMLInputElement) {
@@ -262,12 +273,25 @@
     s ? new Date(s * 1000).toLocaleString("en-GB") : "Never";
 </script>
 
-<section class="protect" aria-label="Private Vault and Cloud Backup">
+<section class="protect" aria-label="Private File Lockbox and Automatic Cloud Backup">
   {#if error}<div class="card error-banner" role="alert">{error}</div>{/if}
   {#if status}<div class="card status-box" role="status">{status}</div>{/if}
 
+  {#if !hasCloudBundle}
+    <div class="card bundle-head">
+      <div>
+        <div class="eyebrow">Optional Add-On · £9.99/yr</div>
+        <h3>Private File Lockbox &amp; Automatic Folder Backup</h3>
+        <p class="small muted">Lock personal photos and documents with your own password, and back up important folders automatically.</p>
+      </div>
+      <button class="primary" onclick={unlockBundle}>
+        Unlock Cloud Protection (+£9.99/yr)
+      </button>
+    </div>
+  {/if}
+
   <div class="grid">
-    <!-- 1. Private File Vault -->
+    <!-- 1. Private File Lockbox -->
     <div
       class="card"
       style={vaultDragOver ? "border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent);" : ""}
@@ -278,10 +302,13 @@
       ondragleave={() => (vaultDragOver = false)}
       ondrop={handleVaultDrop}
       role="region"
-      aria-label="Private File Vault"
+      aria-label="Private File Lockbox"
     >
       <div class="row">
-        <strong>Private Vault</strong>
+        <div>
+          <strong>Private File Lockbox</strong>
+          <div class="small muted">Password-locks your private photos and documents so nobody else can open them</div>
+        </div>
         <span class="spacer"></span>
         <button class="ghost small-btn" onclick={addFile}>+ Add File</button>
       </div>
@@ -379,7 +406,10 @@
     <!-- 2. Automatic Cloud Backup -->
     <div class="card">
       <div class="row">
-        <strong>Cloud Backup</strong>
+        <div>
+          <strong>Automatic Folder Backup</strong>
+          <div class="small muted">Automatically copies important folders to OneDrive, Google Drive, Dropbox, or iCloud</div>
+        </div>
       </div>
 
       <div class="field">

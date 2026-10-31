@@ -692,7 +692,7 @@ impl Licensing {
 
     pub async fn require_addon(&self, addon: &str) -> AppResult<()> {
         let st = self.status(false).await?;
-        if st.dev_unlock || st.active || st.addons.iter().any(|a| a.eq_ignore_ascii_case(addon)) {
+        if st.dev_unlock || st.addons.iter().any(|a| a.eq_ignore_ascii_case(addon)) {
             Ok(())
         } else {
             Err(AppError::PaymentRequired)
@@ -724,12 +724,19 @@ impl Licensing {
         {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
         }
-        let wanted_addon = addon.map(str::trim).filter(|a| !a.is_empty());
-        if let Some(a) = wanted_addon {
-            map.insert("addons".into(), serde_json::json!([a]));
-            if a.eq_ignore_ascii_case("battery_care") {
+        let wanted_addons: Vec<String> = addon
+            .unwrap_or("")
+            .split(',')
+            .map(str::trim)
+            .filter(|a| !a.is_empty())
+            .map(|a| a.to_ascii_lowercase())
+            .collect();
+        if !wanted_addons.is_empty() {
+            map.insert("addons".into(), serde_json::json!(wanted_addons));
+            if wanted_addons.iter().any(|a| a == "battery_care") {
                 map.insert("batteryCareAddon".into(), serde_json::Value::Bool(true));
-            } else if a.eq_ignore_ascii_case("cloud_vault") {
+            }
+            if wanted_addons.iter().any(|a| a == "cloud_vault") {
                 map.insert("cloudVaultAddon".into(), serde_json::Value::Bool(true));
             }
         }
@@ -738,8 +745,11 @@ impl Licensing {
         let mut st = self.state.lock().await;
         if let Some((_, c)) = &st.token {
             if c.exp > now() {
-                if let Some(req_addon) = wanted_addon {
-                    if c.addons.iter().any(|a| a.eq_ignore_ascii_case(req_addon)) {
+                if !wanted_addons.is_empty() {
+                    if wanted_addons
+                        .iter()
+                        .all(|req| c.addons.iter().any(|a| a.eq_ignore_ascii_case(req)))
+                    {
                         return Ok(None);
                     }
                 } else {
@@ -834,8 +844,9 @@ impl Licensing {
                     url = format!("{url}{sep}email={encoded}");
                     sep = '&';
                 }
-                if let Some(a) = wanted_addon {
-                    url = format!("{url}{sep}addon={a}");
+                if !wanted_addons.is_empty() {
+                    let joined = wanted_addons.join(",");
+                    url = format!("{url}{sep}addons={joined}");
                 }
                 Ok(Some(url))
             }

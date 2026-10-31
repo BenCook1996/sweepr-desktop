@@ -3547,6 +3547,9 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/api/portal/devices/remove", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
     const body = await c.req.json().catch(() => ({}));
     const account = await resolvePortalOrBearerOrOtpAccount(c, body);
     if (!account) return c.json({ ok: false, error: "unauthorized" }, 401);
@@ -4973,7 +4976,10 @@ export function createApp(deps: AppDeps) {
     ];
 
     try {
-      const applyMonthlyIntro = plan === "monthly" && !alreadyPro;
+      const applyMonthlyIntro =
+        Boolean((body as Record<string, unknown>)?.intro === true || (body as Record<string, unknown>)?.intro === "1") &&
+        plan === "monthly" &&
+        !alreadyPro;
       const introCouponId = applyMonthlyIntro
         ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
         : null;
@@ -5010,10 +5016,11 @@ export function createApp(deps: AppDeps) {
 
     const params = new URLSearchParams();
     params.set("plan", plan);
-    if (plan === "monthly" && !alreadyPro) params.set("intro", "1");
     if (email) params.set("email", email);
-    if (includeCloudVault) params.set("addon", "cloud_vault");
-    else if (includeBatteryCare) params.set("addon", "battery_care");
+    if (chosenAddons.length > 0) {
+      params.set("addons", chosenAddons.join(","));
+      if (chosenAddons.length === 1) params.set("addon", chosenAddons[0]);
+    }
     const qs = params.toString();
     const fallbackUrl = `${config.publicUrl}/order${qs ? `?${qs}` : ""}`;
     return c.json({ url: fallbackUrl });

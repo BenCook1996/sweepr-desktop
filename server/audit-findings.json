@@ -1,28 +1,45 @@
 {
   "result": {
     "run_id": 1,
-    "pages": 987,
-    "html_pages": 987,
+    "pages": 1087,
+    "html_pages": 1087,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
-    "notices": 0,
+    "notices": 1,
     "truncated": false
   },
   "run": {
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1793262537,
-    "finished_at": 1793262549,
-    "pages": 987,
+    "started_at": 1793430301,
+    "finished_at": 1793430310,
+    "pages": 1087,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
-    "notices": 0,
+    "notices": 1,
     "site_issues_json": "[]",
     "status": "done"
   },
-  "issuesSummary": {},
-  "pagesWithIssues": []
+  "issuesSummary": {
+    "slow_response": 1
+  },
+  "pagesWithIssues": [
+    {
+      "path": "/clean",
+      "status": 200,
+      "score": 99,
+      "issues": [
+        {
+          "code": "slow_response",
+          "severity": "notice",
+          "finding": "Slow response (2068 ms)",
+          "evidence": "2068 ms server time",
+          "fix": "Cache or optimise this route (TTFB target < 600 ms)."
+        }
+      ]
+    }
+  ]
 }

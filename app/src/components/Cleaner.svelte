@@ -23,7 +23,7 @@
     type RunningAppConflict,
     type ScanProgress,
   } from "../lib/api";
-  import { formatBytes, formatCount, shortenPath } from "../lib/format";
+  import { formatBytes } from "../lib/format";
   import { addLifetimeStats, syncLifetimeStatsFromBackend } from "../lib/store";
   import { lang, t } from "../lib/i18n";
 
@@ -61,6 +61,10 @@
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let pendingCleanAfterAuth = $state(false);
 
+  // Dynamic OS Disk Label & Localized Add-on Price (D3 Architecture)
+  let osDiskLabel = $state("Local Disk (C:) · NVMe");
+  let localizedAddonPrice = $state("£9.99/yr");
+
   const nonEmpty = $derived(report?.categories.filter((c) => c.bytes > 0) ?? []);
 
   const SYS_BROWSER_RE =
@@ -72,13 +76,15 @@
   const sysBrowserBytes = $derived(sysBrowserCats.reduce((s, c) => s + c.bytes, 0));
   const appCacheBytes = $derived(appCacheCats.reduce((s, c) => s + c.bytes, 0));
   const remnantsBytes = $derived(remnants.reduce((s, r) => s + r.bytes, 0));
+  const appAndRemnantsBytes = $derived(appCacheBytes + remnantsBytes);
   const enabledStartups = $derived(startups.filter((s) => s.enabled));
 
   const sysBrowserChecked = $derived(
     sysBrowserCats.length > 0 && sysBrowserCats.some((c) => selected[c.id])
   );
   const appCacheChecked = $derived(
-    appCacheCats.length > 0 && appCacheCats.some((c) => selected[c.id])
+    (appCacheCats.length > 0 && appCacheCats.some((c) => selected[c.id])) ||
+      (remnants.length > 0 && includeRemnants)
   );
 
   const selectedCats = $derived(nonEmpty.filter((c) => selected[c.id]));
@@ -89,6 +95,19 @@
   const targetHeroBytes = $derived(selectedBytes > 0 ? selectedBytes : totalFoundBytes);
   let displayedHeroBytes = $state(0);
   let depletingBytes = $state(0);
+
+  // Segmented Native Storage Bar Fractions
+  const sysSegmentPct = $derived(
+    totalFoundBytes > 0
+      ? Math.min(34, Math.max(8, Math.round((sysBrowserBytes / Math.max(1, totalFoundBytes)) * 38)))
+      : 14
+  );
+  const appSegmentPct = $derived(
+    totalFoundBytes > 0
+      ? Math.min(28, Math.max(6, Math.round((appAndRemnantsBytes / Math.max(1, totalFoundBytes)) * 32)))
+      : 10
+  );
+  const dupSegmentPct = $derived(8);
 
   $effect(() => {
     const target = targetHeroBytes;
@@ -128,6 +147,14 @@
     }
     selected = next;
     cachedSelected = next;
+  }
+
+  function toggleAppAndRemnants(checked: boolean) {
+    toggleGroup(appCacheCats, checked);
+    if (remnants.length > 0) {
+      includeRemnants = checked;
+      cachedIncludeRemnants = checked;
+    }
   }
 
   async function scan() {
@@ -189,6 +216,18 @@
       return;
     }
     void executeClean();
+  }
+
+  function cleanSpecificCategoryGroup(cats: CategoryResult[], withRemnants = false) {
+    const next: Record<string, boolean> = {};
+    for (const c of nonEmpty) {
+      next[c.id] = cats.some((target) => target.id === c.id);
+    }
+    selected = next;
+    cachedSelected = next;
+    includeRemnants = withRemnants;
+    cachedIncludeRemnants = withRemnants;
+    requestClean();
   }
 
   async function executeClean() {
@@ -324,6 +363,42 @@
   }
 
   onMount(() => {
+    // Detect host OS for D3 Native Storage Bar
+    try {
+      const ua = (navigator.userAgent || "").toLowerCase();
+      if (ua.includes("mac")) {
+        osDiskLabel = "Mac Hard Drive";
+      } else if (ua.includes("linux")) {
+        osDiskLabel = "Computer Storage";
+      } else {
+        osDiskLabel = "Windows Hard Drive (C:)";
+      }
+
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const loc = navigator.language || "en-GB";
+      if (tz.startsWith("America/") || loc === "en-US") {
+        localizedAddonPrice = "$9.99/yr";
+      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
+        localizedAddonPrice = "€9.99/yr";
+      }
+    } catch {}
+
+    // Fetch live localized pricing from server
+    api
+      .appInfo()
+      .then((inf) => {
+        const base = (inf.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+        return fetch(`${base}/api/pricing`);
+      })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const p = d?.pricing;
+        if (p?.batteryCareAnnualFormatted) {
+          localizedAddonPrice = `${p.batteryCareAnnualFormatted}/yr`;
+        }
+      })
+      .catch(() => {});
+
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
     if (!cachedReport) {
       scan();
@@ -357,235 +432,317 @@
 
 <svelte:window onkeydown={onWindowKeydown} />
 
-<div class="clean-shell">
+<div class="d3-shell">
   {#if error}
-    <div class="error-banner">{error}</div>
+    <div class="error-banner" role="alert">{error}</div>
   {/if}
 
-  <div class="clean-stage">
-    {#if phase === "scanning"}
-      <div class="center-state">
-        <div class="spinner" aria-hidden="true"></div>
-        <div class="hero-number">
-          {progress ? formatBytes(progress.bytes_so_far) : "Scanning…"}
+  <!-- 1. D3 Top Native OS Storage Bar & Primary Fitts's Law Action -->
+  <header class="d3-storage-card">
+    <div class="d3-storage-top">
+      <div class="d3-disk-meta">
+        <div class="d3-disk-kicker">
+          <span class="d3-os-pill">{osDiskLabel}</span>
+          {#if phase === "scanning"}
+            <span class="d3-status-text">Scanning: {progress ? progress.category_name : "System paths…"}</span>
+          {:else if phase === "cleaning"}
+            <span class="d3-status-text">Reclaiming space safely…</span>
+          {:else if phase === "done"}
+            <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files)</span>
+          {:else}
+            <span class="d3-status-text">Personal files &amp; active logins untouched</span>
+          {/if}
         </div>
-        <p class="hero-sub">
-          {progress ? progress.category_name : "Checking cache, leftovers, and startup apps"}
+
+        <div class="d3-hero-row">
+          {#if phase === "scanning"}
+            <span class="d3-hero-metric">{progress ? formatBytes(progress.bytes_so_far) : "Scanning…"}</span>
+          {:else if phase === "cleaning"}
+            <span class="d3-hero-metric">{formatBytes(depletingBytes)}</span>
+          {:else if phase === "done"}
+            <span class="d3-hero-metric">{formatBytes(freedTotal)} Freed</span>
+          {:else if report && totalFoundBytes > 0}
+            <span class="d3-hero-metric">{formatBytes(displayedHeroBytes)}</span>
+            <span class="d3-hero-unit">reclaimable junk selected</span>
+          {:else}
+            <span class="d3-hero-metric">Ready to Scan</span>
+          {/if}
+        </div>
+
+        {#if runningConflicts.length > 0}
+          <div class="d3-conflict-note">
+            Active apps ({runningConflicts.map((rc) => rc.app_name).join(", ")}) will be safely skipped.
+          </div>
+        {/if}
+      </div>
+
+      <div class="d3-header-actions">
+        <button
+          type="button"
+          class="d3-rescan-btn"
+          disabled={phase === "scanning" || phase === "cleaning"}
+          onclick={scan}
+        >
+          {t("action.rescan", $lang)}
+        </button>
+
+        {#if phase === "done"}
+          <button type="button" class="d3-primary-btn" onclick={scan}>
+            {t("action.scan", $lang)}
+          </button>
+        {:else if report && selectedBytes > 0}
+          <button
+            type="button"
+            class="d3-primary-btn"
+            disabled={phase === "scanning" || phase === "cleaning"}
+            onclick={requestClean}
+          >
+            {t("action.clean", $lang)} {formatBytes(selectedBytes)}
+          </button>
+        {:else}
+          <button
+            type="button"
+            class="d3-primary-btn"
+            disabled={phase === "scanning" || phase === "cleaning"}
+            onclick={scan}
+          >
+            {t("action.scan", $lang)}
+          </button>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Segmented OS Storage Bar -->
+    <div class="d3-bar-track" aria-label="Storage allocation breakdown">
+      <div class="d3-seg d3-seg-used" style="width: 38%;" title="Protected OS & Personal Files"></div>
+      <div class="d3-seg d3-seg-green" style={`width: ${sysSegmentPct}%;`} title="Safe Temp & Browser Cache"></div>
+      <div class="d3-seg d3-seg-cobalt" style={`width: ${appSegmentPct}%;`} title="App Cache & Leftovers"></div>
+      <div class="d3-seg d3-seg-amber" style={`width: ${dupSegmentPct}%;`} title="Duplicates & Startup"></div>
+    </div>
+
+    <div class="d3-bar-legend">
+      <span class="d3-legend-item"><i class="d3-dot d3-dot-used"></i>Your Personal Files (Safe)</span>
+      <span class="d3-legend-item"><i class="d3-dot d3-dot-green"></i>Temp &amp; Browser ({formatBytes(sysBrowserBytes)})</span>
+      <span class="d3-legend-item"><i class="d3-dot d3-dot-cobalt"></i>App Junk &amp; Leftovers ({formatBytes(appAndRemnantsBytes)})</span>
+      <span class="d3-legend-item"><i class="d3-dot d3-dot-amber"></i>Duplicates &amp; Startup ({enabledStartups.length})</span>
+    </div>
+  </header>
+
+  <!-- 2. D3 4 Semantic Pastel-Tinted Category Tiles (Every figure sits inside the card that explains it) -->
+  <div class="d3-tiles-grid">
+    <!-- Tile 1: Safe Temp & Browser Cache (Green Tint) -->
+    <article class="d3-tile d3-tile-green">
+      <div>
+        <div class="d3-tile-head">
+          <label class="d3-tile-check">
+            <input
+              type="checkbox"
+              checked={sysBrowserChecked}
+              disabled={sysBrowserCats.length === 0}
+              onchange={(e) =>
+                toggleGroup(sysBrowserCats, (e.currentTarget as HTMLInputElement).checked)}
+            />
+            <span class="d3-tile-kicker">TEMP FILES &amp; BROWSER CLUTTER</span>
+          </label>
+          {#if sysBrowserCats.length > 0}
+            <button
+              type="button"
+              class="d3-inspect-btn"
+              onclick={() => (expandedGroup = expandedGroup === "sys" ? null : "sys")}
+            >
+              {expandedGroup === "sys" ? "Hide Details" : `Details (${sysBrowserCats.length})`}
+            </button>
+          {/if}
+        </div>
+
+        <div class="d3-tile-metric">{formatBytes(sysBrowserBytes)}</div>
+        <h3 class="d3-tile-title">Temporary Files &amp; Browser Clutter</h3>
+        <p class="d3-tile-desc">
+          Old temporary files and leftover web browser clutter from Chrome, Edge, Brave &amp; Safari. Your saved passwords and logins stay safe.
+        </p>
+
+        {#if expandedGroup === "sys" && sysBrowserCats.length > 0}
+          <div class="d3-path-drawer">
+            {#each sysBrowserCats as c (c.id)}
+              <label class="d3-path-item">
+                <input type="checkbox" bind:checked={selected[c.id]} />
+                <span class="d3-path-name">{c.name}</span>
+                <span class="d3-path-size">{formatBytes(c.bytes)}</span>
+              </label>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <button
+        type="button"
+        class="d3-tile-action"
+        disabled={sysBrowserBytes === 0 || phase === "scanning" || phase === "cleaning"}
+        onclick={() => cleanSpecificCategoryGroup(sysBrowserCats, false)}
+      >
+        <span>{sysBrowserBytes > 0 ? `Clean ${formatBytes(sysBrowserBytes)}` : "All Clean"}</span>
+        <span>→</span>
+      </button>
+    </article>
+
+    <!-- Tile 2: App Cache & Uninstalled Leftovers (Cobalt Tint) -->
+    <article class="d3-tile d3-tile-cobalt">
+      <div>
+        <div class="d3-tile-head">
+          <label class="d3-tile-check">
+            <input
+              type="checkbox"
+              checked={appCacheChecked}
+              disabled={appCacheCats.length === 0 && remnants.length === 0}
+              onchange={(e) =>
+                toggleAppAndRemnants((e.currentTarget as HTMLInputElement).checked)}
+            />
+            <span class="d3-tile-kicker">APP JUNK &amp; LEFTOVERS</span>
+          </label>
+          {#if appCacheCats.length > 0}
+            <button
+              type="button"
+              class="d3-inspect-btn"
+              onclick={() => (expandedGroup = expandedGroup === "app" ? null : "app")}
+            >
+              {expandedGroup === "app" ? "Hide Details" : `Details (${appCacheCats.length})`}
+            </button>
+          {/if}
+        </div>
+
+        <div class="d3-tile-metric">{formatBytes(appAndRemnantsBytes)}</div>
+        <h3 class="d3-tile-title">App Junk, Trash &amp; Leftovers</h3>
+        <p class="d3-tile-desc">
+          Leftover files from deleted apps ({remnants.length} folder{remnants.length === 1 ? "" : "s"}), Recycle Bin clutter, and old temporary files from Discord, Spotify &amp; Steam.
+        </p>
+
+        {#if expandedGroup === "app" && appCacheCats.length > 0}
+          <div class="d3-path-drawer">
+            {#each appCacheCats as c (c.id)}
+              <label class="d3-path-item">
+                <input type="checkbox" bind:checked={selected[c.id]} />
+                <span class="d3-path-name">{c.name}</span>
+                <span class="d3-path-size">{formatBytes(c.bytes)}</span>
+              </label>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <button
+        type="button"
+        class="d3-tile-action"
+        disabled={phase === "scanning" || phase === "cleaning"}
+        onclick={() => {
+          if (appAndRemnantsBytes > 0) {
+            cleanSpecificCategoryGroup(appCacheCats, remnants.length > 0);
+          } else {
+            onOpenTool?.("apps");
+          }
+        }}
+      >
+        <span>{appAndRemnantsBytes > 0 ? `Clean ${formatBytes(appAndRemnantsBytes)}` : "Open App Uninstaller"}</span>
+        <span>→</span>
+      </button>
+    </article>
+
+    <!-- Tile 3: Duplicates & Startup Launchers (Amber Tint) -->
+    <article class="d3-tile d3-tile-amber">
+      <div>
+        <div class="d3-tile-head">
+          <span class="d3-tile-kicker">DUPLICATES &amp; STARTUP SPEED</span>
+          <button
+            type="button"
+            class="d3-inspect-btn"
+            onclick={() => onOpenTool?.("memory")}
+          >
+            {enabledStartups.length} Startup Apps
+          </button>
+        </div>
+
+        <div class="d3-tile-metric">Duplicates · {enabledStartups.length} Startup</div>
+        <h3 class="d3-tile-title">Duplicate Files &amp; Startup Speed</h3>
+        <p class="d3-tile-desc">
+          Finds identical copies of photos and documents (always keeps your original safe) and stops unnecessary apps from slowing down startup.
         </p>
       </div>
-    {:else if phase === "cleaning"}
-      <div class="center-state">
-        <div class="spinner" aria-hidden="true"></div>
-        <div class="hero-number">{formatBytes(depletingBytes)}</div>
-        <p class="hero-sub">Reclaiming space • Open files skipped automatically</p>
+
+      <div class="d3-dual-actions">
+        <button
+          type="button"
+          class="d3-tile-action"
+          onclick={() => onOpenTool?.("storage")}
+        >
+          <span>Find Duplicates</span>
+          <span>→</span>
+        </button>
+        <button
+          type="button"
+          class="d3-tile-action"
+          onclick={() => onOpenTool?.("memory")}
+        >
+          <span>Startup ({enabledStartups.length})</span>
+          <span>→</span>
+        </button>
       </div>
-    {:else if phase === "done"}
-      <div class="center-state">
-        <div class="done-badge" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-            <path class="done-check-path" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <div class="hero-number">{formatBytes(freedTotal)} Cleaned</div>
-        <p class="hero-sub undo-safety-pill">Protected by 7-Day Safety Undo</p>
-      </div>
-    {:else if report && totalFoundBytes > 0}
-      <!-- Minimalist Results View (<30 Words on Screen) -->
-      <div class="results-stage">
-        <div class="hero-header">
-          <div class="hero-number">
-            {formatBytes(displayedHeroBytes)}
-          </div>
-          <p class="hero-sub">Personal files and logins stay untouched</p>
-          {#if runningConflicts.length > 0}
-            <div style="margin-top: 6px; font-size: 11.5px; color: var(--warn, #f59e0b); font-weight: 600;">
-              Open apps detected ({runningConflicts.map((rc) => rc.app_name).join(", ")}) — active files will be safely skipped.
-            </div>
-          {/if}
+    </article>
+
+    <!-- Tile 4: Battery Care (80% Saver) & Private Lockbox (Plum Tint) -->
+    <article class="d3-tile d3-tile-plum">
+      <div>
+        <div class="d3-tile-head">
+          <span class="d3-tile-kicker">BATTERY &amp; FILE PROTECTION</span>
+          <span class="d3-inspect-btn">{license?.addons?.length ? "ADD-ON ACTIVE" : `+${localizedAddonPrice}`}</span>
         </div>
 
-        <div class="rows-stack">
-          {#if sysBrowserBytes > 0}
-            <div class="clean-row-card">
-              <div class="clean-row-main">
-                <label class="row-check-label">
-                  <input
-                    type="checkbox"
-                    checked={sysBrowserChecked}
-                    onchange={(e) =>
-                      toggleGroup(sysBrowserCats, (e.currentTarget as HTMLInputElement).checked)}
-                  />
-                  <span class="row-title">System &amp; Browser Cache</span>
-                </label>
-                <div class="row-right">
-                  <span class="row-size">{formatBytes(sysBrowserBytes)}</span>
-                  <button
-                    type="button"
-                    class="row-expand-btn"
-                    onclick={() =>
-                      (expandedGroup = expandedGroup === "sys" ? null : "sys")}
-                    aria-label="Details"
-                  >
-                    <svg class="row-expand-chevron" class:open={expandedGroup === "sys"} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              {#if expandedGroup === "sys"}
-                <div class="row-details">
-                  {#each sysBrowserCats as c (c.id)}
-                    <label class="detail-item">
-                      <input type="checkbox" bind:checked={selected[c.id]} />
-                      <span class="detail-name">{c.name}</span>
-                      <span class="detail-bytes">{formatBytes(c.bytes)}</span>
-                    </label>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/if}
-
-          {#if appCacheBytes > 0}
-            <div class="clean-row-card">
-              <div class="clean-row-main">
-                <label class="row-check-label">
-                  <input
-                    type="checkbox"
-                    checked={appCacheChecked}
-                    onchange={(e) =>
-                      toggleGroup(appCacheCats, (e.currentTarget as HTMLInputElement).checked)}
-                  />
-                  <span class="row-title">App Cache &amp; Trash</span>
-                </label>
-                <div class="row-right">
-                  <span class="row-size">{formatBytes(appCacheBytes)}</span>
-                  <button
-                    type="button"
-                    class="row-expand-btn"
-                    onclick={() =>
-                      (expandedGroup = expandedGroup === "app" ? null : "app")}
-                    aria-label="Details"
-                  >
-                    <svg class="row-expand-chevron" class:open={expandedGroup === "app"} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              {#if expandedGroup === "app"}
-                <div class="row-details">
-                  {#each appCacheCats as c (c.id)}
-                    <label class="detail-item">
-                      <input type="checkbox" bind:checked={selected[c.id]} />
-                      <span class="detail-name">{c.name}</span>
-                      <span class="detail-bytes">{formatBytes(c.bytes)}</span>
-                    </label>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-          {/if}
-
-          {#if remnantsBytes > 0}
-            <div class="clean-row-card">
-              <div class="clean-row-main">
-                <label class="row-check-label">
-                  <input
-                    type="checkbox"
-                    bind:checked={includeRemnants}
-                    onchange={() => (cachedIncludeRemnants = includeRemnants)}
-                  />
-                  <span class="row-title">App Leftovers</span>
-                </label>
-                <div class="row-right">
-                  <span class="row-size">{formatBytes(remnantsBytes)}</span>
-                </div>
-              </div>
-            </div>
-          {/if}
-
-          <div class="clean-row-card">
-            <div class="clean-row-main">
-              <button
-                type="button"
-                class="row-link-btn"
-                onclick={() => onOpenTool?.("storage")}
-              >
-                <span class="row-title">Duplicate Files</span>
-                <span class="row-muted">Scan folders →</span>
-              </button>
-            </div>
-          </div>
-
-          {#if enabledStartups.length > 0}
-            <div class="clean-row-card">
-              <div class="clean-row-main">
-                <button
-                  type="button"
-                  class="row-link-btn"
-                  onclick={() => onOpenTool?.("memory")}
-                >
-                  <span class="row-title">Startup Apps</span>
-                  <span class="row-muted">{enabledStartups.length} apps →</span>
-                </button>
-              </div>
-            </div>
-          {/if}
-        </div>
+        <div class="d3-tile-metric">80% Battery Saver</div>
+        <h3 class="d3-tile-title">Battery Saver &amp; Private Lockbox</h3>
+        <p class="d3-tile-desc">
+          Alerts you at 80% charge so your laptop battery lasts years longer, cools down hot apps, and password-locks private files ({localizedAddonPrice}).
+        </p>
       </div>
-    {:else}
-      <!-- Minimalist Idle / All Clean State -->
-      <div class="center-state">
-        <div class="done-badge" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
-        </div>
-        <div class="hero-number">Ready to Scan</div>
-        <p class="hero-sub">Checks cache, duplicates, leftovers, and startup apps</p>
+
+      <div class="d3-dual-actions">
+        <button
+          type="button"
+          class="d3-tile-action"
+          onclick={() => onOpenTool?.("battery")}
+        >
+          <span>Battery Saver</span>
+          <span>→</span>
+        </button>
+        <button
+          type="button"
+          class="d3-tile-action"
+          onclick={() => onOpenTool?.("cloud")}
+        >
+          <span>Private Lockbox</span>
+          <span>→</span>
+        </button>
       </div>
-    {/if}
+    </article>
   </div>
 
-  <!-- Anchored Bottom Fitts's Law Action Bar (0px Vertical Drift) -->
-  <footer class="anchored-footer">
-    <button
-      type="button"
-      class="ghost rescan-link"
-      disabled={phase === "scanning" || phase === "cleaning"}
-      onclick={scan}
-    >
-      {t("action.rescan", $lang)}
-    </button>
+  <!-- 3. Persistent D3 Undo Recovery Toast Bar (role="status") -->
+  <footer class="d3-undo-bar" role="status" aria-live="polite">
+    <div class="d3-undo-left">
+      <span class="d3-undo-badge">7-Day Undo</span>
+      <span class="d3-undo-text">
+        {#if quarantine.length > 0}
+          {quarantine.length} recently cleaned file{quarantine.length === 1 ? "" : "s"} can be put right back where they were in 1 click.
+        {:else}
+          All cleaned files are kept safely for 7 days so you can put any file back in 1 click.
+        {/if}
+      </span>
+    </div>
 
-    {#if phase === "done"}
-      <button type="button" class="primary cta-btn" onclick={scan}>
-        {t("action.scan", $lang)}
-      </button>
-    {:else if report && selectedBytes > 0}
-      <button
-        type="button"
-        class="primary cta-btn"
-        disabled={phase === "scanning" || phase === "cleaning"}
-        onclick={requestClean}
-      >
-        {t("action.clean", $lang)} {formatBytes(selectedBytes)}
-      </button>
-    {:else}
-      <button
-        type="button"
-        class="primary cta-btn"
-        disabled={phase === "scanning" || phase === "cleaning"}
-        onclick={scan}
-      >
-        {t("action.scan", $lang)}
-      </button>
-    {/if}
+    <button type="button" class="d3-undo-btn" onclick={openUndoModal}>
+      Restore Files ({quarantine.length})
+    </button>
   </footer>
 </div>
 
-<!-- Minimalist 7-Day Safety Undo Modal (Always 100% Free) -->
+<!-- 7-Day Safety Undo Modal (Always 100% Free) -->
 {#if showQuarantine}
   <div class="undo-backdrop" onclick={() => (showQuarantine = false)} role="presentation">
     <div
@@ -594,10 +751,11 @@
       onkeydown={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
+      aria-label="Recently Cleaned Files (7-Day Undo)"
       tabindex="-1"
     >
       <div class="undo-head">
-        <h3 class="undo-title">7-Day Undo</h3>
+        <h3 class="undo-title">Recently Cleaned Files (7-Day Undo)</h3>
         <button type="button" class="close-x" onclick={() => (showQuarantine = false)}>✕</button>
       </div>
 
@@ -609,7 +767,7 @@
         <input
           type="text"
           bind:value={undoSearch}
-          placeholder="Search files…"
+          placeholder="Search recently cleaned files…"
           class="undo-search"
         />
 
@@ -640,309 +798,431 @@
           {restoringAll ? "Restoring…" : "Restore All"}
         </button>
       {:else}
-        <div class="undo-empty">No files in 7-day undo.</div>
+        <div class="undo-empty">No files currently in 7-day undo quarantine.</div>
       {/if}
     </div>
   </div>
 {/if}
 
 <style>
-  .clean-shell {
-    height: calc(100vh - 48px);
-    max-width: 680px;
+  /* D3 Pastel-Consumer Tokens (Light + Dark Adaptive) */
+  .d3-shell {
+    --d3-green-bg: #e1f3ec;
+    --d3-green-ink: #073825;
+    --d3-green-border: #b7e2d1;
+    --d3-cobalt-bg: #e2edff;
+    --d3-cobalt-ink: #0a2870;
+    --d3-cobalt-border: #bdd4ff;
+    --d3-amber-bg: #f7ebd2;
+    --d3-amber-ink: #5e3704;
+    --d3-amber-border: #ebd19e;
+    --d3-plum-bg: #eee4fa;
+    --d3-plum-ink: #3c1766;
+    --d3-plum-border: #d7bef5;
+
+    min-height: calc(100vh - 48px);
+    max-width: 1040px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 2px 10px 2px;
   }
 
-  .clean-stage {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 12px 4px;
+  :global(body[data-theme="dark"]) .d3-shell,
+  :global(.dark) .d3-shell {
+    --d3-green-bg: rgba(16, 185, 129, 0.14);
+    --d3-green-ink: #bbf7d0;
+    --d3-green-border: rgba(16, 185, 129, 0.34);
+    --d3-cobalt-bg: rgba(59, 130, 246, 0.15);
+    --d3-cobalt-ink: #bfdbfe;
+    --d3-cobalt-border: rgba(59, 130, 246, 0.34);
+    --d3-amber-bg: rgba(245, 158, 11, 0.15);
+    --d3-amber-ink: #fde68a;
+    --d3-amber-border: rgba(245, 158, 11, 0.34);
+    --d3-plum-bg: rgba(168, 85, 247, 0.15);
+    --d3-plum-ink: #e9d5ff;
+    --d3-plum-border: rgba(168, 85, 247, 0.34);
   }
 
-  .center-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 8px;
-    margin: auto 0;
-  }
-
-  .done-badge {
-    width: 52px;
-    height: 52px;
+  /* 1. Top Native OS Storage Bar Card */
+  .d3-storage-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    background: rgba(16, 185, 129, 0.14);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: var(--accent);
-    display: grid;
-    place-items: center;
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 6px;
-    animation: badgeLockIn 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .done-check-path {
-    stroke-dasharray: 24;
-    stroke-dashoffset: 24;
-    animation: drawCheck 140ms cubic-bezier(0.16, 1, 0.3, 1) 40ms forwards;
-  }
-
-  .undo-safety-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 11px;
-    border-radius: 999px;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.32);
-    color: #34d399;
-    font-weight: 700;
-    animation: badgeLockIn 160ms cubic-bezier(0.16, 1, 0.3, 1) 30ms both;
-  }
-
-  @keyframes badgeLockIn {
-    from { opacity: 0; transform: scale(0.94) translateY(3px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  @keyframes drawCheck {
-    to { stroke-dashoffset: 0; }
-  }
-
-  .results-stage {
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    width: 100%;
-    max-width: 480px;
-    margin: auto;
+    gap: 12px;
   }
 
-  .hero-header {
-    text-align: center;
+  .d3-storage-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .d3-disk-meta {
     display: flex;
     flex-direction: column;
     gap: 4px;
   }
 
-  .hero-number {
-    font-size: 46px;
+  .d3-disk-kicker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .d3-os-pill {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--d3-green-bg);
+    color: var(--d3-green-ink);
+    border: 1px solid var(--d3-green-border);
+  }
+
+  .d3-status-text {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .d3-hero-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .d3-hero-metric {
+    font-size: 32px;
     font-weight: 800;
-    letter-spacing: -1.5px;
+    letter-spacing: -0.03em;
     line-height: 1.05;
     color: var(--text);
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
   }
 
-  .hero-sub {
-    margin: 0;
-    font-size: 12.5px;
+  .d3-hero-unit {
+    font-size: 13px;
+    font-weight: 600;
     color: var(--muted);
   }
 
-  .rows-stack {
+  .d3-conflict-note {
+    font-size: 11.5px;
+    color: #f59e0b;
+    font-weight: 600;
+  }
+
+  .d3-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .d3-rescan-btn {
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .d3-rescan-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .d3-primary-btn {
+    min-height: 46px;
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: none;
+    background: #0a7c52;
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms ease;
+  }
+  .d3-primary-btn:hover:not(:disabled) {
+    background: #086341;
+  }
+  .d3-primary-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Segmented Bar */
+  .d3-bar-track {
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+  }
+  .d3-seg {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .d3-seg-used { background: #64748b; }
+  .d3-seg-green { background: #0a7c52; }
+  .d3-seg-cobalt { background: #1e4fd6; }
+  .d3-seg-amber { background: #d97706; }
+
+  .d3-bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .d3-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .d3-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .d3-dot-used { background: #64748b; }
+  .d3-dot-green { background: #0a7c52; }
+  .d3-dot-cobalt { background: #1e4fd6; }
+  .d3-dot-amber { background: #d97706; }
+
+  /* 2. 4 Semantic Pastel-Tinted Category Tiles */
+  .d3-tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    flex: 1;
+  }
+
+  .d3-tile {
+    border-radius: 16px;
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid transparent;
   }
 
-  .clean-row-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 11px 15px;
-    transition: border-color 140ms cubic-bezier(0.16, 1, 0.3, 1), transform 75ms cubic-bezier(0.16, 1, 0.3, 1);
-    animation: rowCascadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  .d3-tile-green {
+    background: var(--d3-green-bg);
+    color: var(--d3-green-ink);
+    border-color: var(--d3-green-border);
   }
-  .clean-row-card:nth-child(2) { animation-delay: 20ms; }
-  .clean-row-card:nth-child(3) { animation-delay: 40ms; }
-  .clean-row-card:nth-child(4) { animation-delay: 60ms; }
-  .clean-row-card:nth-child(5) { animation-delay: 80ms; }
-  .clean-row-card:hover {
-    border-color: rgba(16, 185, 129, 0.35);
+  .d3-tile-cobalt {
+    background: var(--d3-cobalt-bg);
+    color: var(--d3-cobalt-ink);
+    border-color: var(--d3-cobalt-border);
+  }
+  .d3-tile-amber {
+    background: var(--d3-amber-bg);
+    color: var(--d3-amber-ink);
+    border-color: var(--d3-amber-border);
+  }
+  .d3-tile-plum {
+    background: var(--d3-plum-bg);
+    color: var(--d3-plum-ink);
+    border-color: var(--d3-plum-border);
   }
 
-  @keyframes rowCascadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .clean-row-main {
+  .d3-tile-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
+    margin-bottom: 6px;
   }
 
-  .row-check-label {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    cursor: pointer;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .row-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .row-right {
-    display: flex;
+  .d3-tile-check {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
   }
 
-  .row-size {
-    font-size: 13px;
+  .d3-tile-kicker {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .d3-inspect-btn {
+    background: rgba(255, 255, 255, 0.55);
+    color: inherit;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 11px;
     font-weight: 700;
-    color: var(--accent);
+    cursor: pointer;
+  }
+  :global(body[data-theme="dark"]) .d3-inspect-btn,
+  :global(.dark) .d3-inspect-btn {
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  .d3-tile-metric {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
     font-variant-numeric: tabular-nums;
   }
 
-  .row-muted {
+  .d3-tile-title {
+    margin: 4px 0 4px 0;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .d3-tile-desc {
+    margin: 0;
     font-size: 12px;
-    color: var(--muted);
+    line-height: 1.45;
+    opacity: 0.9;
   }
 
-  .row-expand-btn {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    color: var(--muted);
-    padding: 4px 6px;
-    font-size: 11px;
-    cursor: pointer;
-    display: inline-grid;
-    place-items: center;
-    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), color 140ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .row-expand-btn:active {
-    transform: scale(0.94);
-  }
-  .row-expand-chevron {
-    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .row-expand-chevron.open {
-    transform: rotate(180deg);
-  }
-
-  .row-link-btn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    color: var(--text);
-  }
-
-  .row-details {
+  .d3-path-drawer {
     margin-top: 10px;
     padding-top: 8px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid currentColor;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    animation: detailsReveal 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    gap: 5px;
+    max-height: 125px;
+    overflow-y: auto;
   }
 
-  @keyframes detailsReveal {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .detail-item {
+  .d3-path-item {
     display: flex;
     align-items: center;
-    gap: 9px;
-    font-size: 12px;
-    color: var(--text-secondary);
+    gap: 8px;
+    font-size: 11.5px;
     cursor: pointer;
   }
-  .detail-name {
+  .d3-path-name {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .detail-bytes {
-    font-weight: 600;
-    color: var(--muted);
+  .d3-path-size {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Anchored Bottom Fitts's Law Footer */
-  .anchored-footer {
+  .d3-dual-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .d3-tile-action {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 14px;
+    border-radius: 11px;
+    border: 1px solid currentColor;
+    background: rgba(255, 255, 255, 0.68);
+    color: inherit;
+    font-size: 12.5px;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 4px 4px 4px;
-    border-top: 1px solid var(--border);
-  }
-
-  .rescan-link {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    color: var(--muted);
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 8px 12px;
     cursor: pointer;
-    transition: color 140ms cubic-bezier(0.16, 1, 0.3, 1), transform 75ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), background-color 140ms ease;
   }
-  .rescan-link:hover:not(:disabled) {
-    color: var(--text);
+  :global(body[data-theme="dark"]) .d3-tile-action,
+  :global(.dark) .d3-tile-action {
+    background: rgba(15, 23, 42, 0.55);
   }
-  .rescan-link:active:not(:disabled) {
-    transform: scale(0.985);
+  .d3-tile-action:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .d3-tile-action:disabled {
+    opacity: 0.55;
+    cursor: default;
   }
 
-  .cta-btn {
-    padding: 11px 28px;
-    border-radius: 12px;
-    font-size: 13.5px;
+  /* 3. Persistent Bottom Undo Recovery Toast Bar */
+  .d3-undo-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .d3-undo-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .d3-undo-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
     font-weight: 700;
-    background: #10b981;
-    color: #070a0d;
-    border: none;
-    box-shadow: 0 8px 26px rgba(16, 185, 129, 0.25);
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-    transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), background-color 140ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-  }
-  .cta-btn:hover:not(:disabled) {
-    background: #34d399;
-    transform: translateY(-1px);
-  }
-  .cta-btn:active:not(:disabled) {
-    transform: scale(0.985);
+    padding: 3px 8px;
+    border-radius: 7px;
+    background: var(--d3-green-bg);
+    color: var(--d3-green-ink);
   }
 
-  /* Minimalist 7-Day Undo Modal */
+  .d3-undo-text {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .d3-undo-btn {
+    min-height: 38px;
+    padding: 6px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* 7-Day Undo Modal */
   .undo-backdrop {
     position: fixed;
     inset: 0;
     background: rgba(7, 10, 13, 0.76);
-    backdrop-filter: blur(6px);
     display: grid;
     place-items: center;
     z-index: 220;
@@ -950,7 +1230,7 @@
   }
   .undo-modal {
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     padding: 20px 22px;
     border-radius: 18px;
     background: var(--panel-solid);
@@ -972,7 +1252,6 @@
   .close-x {
     background: transparent;
     border: none;
-    box-shadow: none;
     color: var(--muted);
     padding: 4px 8px;
     cursor: pointer;
@@ -985,7 +1264,6 @@
     border: 1px solid var(--border);
     font-size: 12.5px;
     color: var(--text);
-    outline: none;
   }
   .undo-rows {
     display: flex;
@@ -1026,7 +1304,6 @@
   .restore-link {
     background: transparent;
     border: none;
-    box-shadow: none;
     color: #10b981;
     font-weight: 700;
     font-size: 12px;
@@ -1039,8 +1316,8 @@
     border-radius: 10px;
     font-size: 12.5px;
     font-weight: 700;
-    background: #10b981;
-    color: #070a0d;
+    background: #0a7c52;
+    color: #ffffff;
     border: none;
   }
   .undo-empty {
@@ -1054,18 +1331,6 @@
     color: #10b981;
     font-weight: 600;
   }
-
-  .spinner {
-    width: 34px;
-    height: 34px;
-    border: 3px solid var(--border);
-    border-top-color: #10b981;
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-    margin-bottom: 8px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
   .error-banner {
     padding: 10px 14px;
     border-radius: 10px;
@@ -1073,5 +1338,11 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: var(--danger);
     font-size: 12.5px;
+  }
+
+  @media (max-width: 720px) {
+    .d3-tiles-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

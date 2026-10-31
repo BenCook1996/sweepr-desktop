@@ -2135,8 +2135,19 @@ fn normalize_domain(raw: &str) -> Option<String> {
         s.truncate(idx);
     }
     let s = s.trim().trim_start_matches('.').to_string();
-    if s.is_empty() || !s.contains('.') || s.contains(char::is_whitespace) {
+    if s.is_empty() || !s.contains('.') || s.len() > 253 {
         return None;
+    }
+    for label in s.split('.') {
+        if label.is_empty() || label.len() > 63 {
+            return None;
+        }
+        if label.starts_with('-') || label.ends_with('-') {
+            return None;
+        }
+        if !label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+            return None;
+        }
     }
     Some(s)
 }
@@ -2804,7 +2815,17 @@ pub fn reveal_in_folder(path: String) -> AppResult<()> {
     }
     #[cfg(target_os = "windows")]
     {
-        let _ = std::process::Command::new("explorer")
+        let explorer = if let Some(root) = std::env::var_os("SystemRoot") {
+            let candidate = std::path::PathBuf::from(root).join("explorer.exe");
+            if candidate.exists() {
+                candidate
+            } else {
+                std::path::PathBuf::from("explorer.exe")
+            }
+        } else {
+            std::path::PathBuf::from(r"C:\Windows\explorer.exe")
+        };
+        let _ = std::process::Command::new(explorer)
             .arg(format!("/select,{}", p.display()))
             .spawn();
     }
@@ -2862,6 +2883,15 @@ mod tests {
         assert_eq!(saved, vec!["example.com".to_string(), "github.com".to_string()]);
         let reloaded = load_cookie_allowlist_from(&dir);
         assert_eq!(reloaded, saved);
+
+        // Security regression: normalize_domain strictly rejects invalid characters and SQL injection attempts
+        assert_eq!(normalize_domain("evil.com'--"), None);
+        assert_eq!(normalize_domain("bad_domain.com%"), None);
+        assert_eq!(normalize_domain("-leading.com"), None);
+        assert_eq!(normalize_domain("trailing-.com"), None);
+        assert_eq!(normalize_domain("foo..bar.com"), None);
+        assert_eq!(normalize_domain("https://Valid-Domain.123.com/path"), Some("valid-domain.123.com".to_string()));
+
         let _ = std::fs::remove_dir_all(&dir);
     }
 

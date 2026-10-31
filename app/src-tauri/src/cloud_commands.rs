@@ -77,7 +77,8 @@ pub async fn cloud_delete_files(state: State<'_, AppState>, paths: Vec<String>) 
 #[tauri::command]
 pub async fn cloud_offload_files(state: State<'_, AppState>, paths: Vec<String>, target_dir: String) -> AppResult<CloudActionReport> {
     state.licensing.require_active().await?;
-    blocking(move || cloud::offload_cloud_files(&paths, &target_dir)).await
+    let data_dir = state.data_dir.clone();
+    blocking(move || cloud::offload_cloud_files_with_data_dir(&paths, &target_dir, Some(&data_dir))).await
 }
 
 // --- Vault ---------------------------------------------------------------------

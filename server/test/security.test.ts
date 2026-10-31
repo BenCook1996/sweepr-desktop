@@ -6,6 +6,7 @@ import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { sha256 } from "../src/tokens.js";
 import { createRateLimiter, escapeHtml, normalizeEmail } from "../src/security.js";
+import { isPrivateOrLoopbackIp } from "../src/pricing.js";
 
 const { privateKey } = generateKeyPairSync("ed25519");
 const RC_SECRET = "rc-test-secret";
@@ -831,6 +832,75 @@ test("Alternative D geo-targeted payment profiles & auto-renewing SEPA / iDEAL /
   assert.deepEqual(lastSubPaymentMethodTypes, ["revolut_pay"]);
   assert.equal(lastConfirmedPmType, "revolut_pay");
   assert.equal(revData.redirectUrl, "https://hooks.stripe.com/redirect/revolut_pay");
+});
+
+test("Security audit regression: isPrivateOrLoopbackIp full-spectrum IPv4 and IPv6 filtering", () => {
+  // IPv4 Loopback & Special
+  assert.equal(isPrivateOrLoopbackIp("127.0.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("127.0.0.2"), true);
+  assert.equal(isPrivateOrLoopbackIp("127.255.255.254"), true);
+  assert.equal(isPrivateOrLoopbackIp("0.0.0.0"), true);
+  assert.equal(isPrivateOrLoopbackIp("0.1.2.3"), true);
+
+  // Private RFC 1918 & CGNAT & Link-Local
+  assert.equal(isPrivateOrLoopbackIp("10.0.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("172.16.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("172.31.255.255"), true);
+  assert.equal(isPrivateOrLoopbackIp("192.168.1.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("100.64.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("100.127.255.255"), true);
+  assert.equal(isPrivateOrLoopbackIp("169.254.1.1"), true);
+
+  // Multicast / Reserved / Docs
+  assert.equal(isPrivateOrLoopbackIp("224.0.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("240.0.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("255.255.255.255"), true);
+  assert.equal(isPrivateOrLoopbackIp("192.0.2.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("198.51.100.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("203.0.113.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("198.18.0.1"), true);
+
+  // IPv6 Loopback, Unspecified, Unique-Local, Link-Local, Multicast
+  assert.equal(isPrivateOrLoopbackIp("::1"), true);
+  assert.equal(isPrivateOrLoopbackIp("0:0:0:0:0:0:0:1"), true);
+  assert.equal(isPrivateOrLoopbackIp("::"), true);
+  assert.equal(isPrivateOrLoopbackIp("fc00::1"), true);
+  assert.equal(isPrivateOrLoopbackIp("fd12:3456:789a::1"), true);
+  assert.equal(isPrivateOrLoopbackIp("fe80::1"), true);
+  assert.equal(isPrivateOrLoopbackIp("ff02::1"), true);
+
+  // IPv4-Mapped & IPv4-Compatible
+  assert.equal(isPrivateOrLoopbackIp("::ffff:127.0.0.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("::ffff:192.168.1.1"), true);
+  assert.equal(isPrivateOrLoopbackIp("::127.0.0.1"), true);
+
+  // Invalid / non-IP strings
+  assert.equal(isPrivateOrLoopbackIp("local"), true);
+  assert.equal(isPrivateOrLoopbackIp(""), true);
+  assert.equal(isPrivateOrLoopbackIp("not-an-ip"), true);
+
+  // Valid public IPs
+  assert.equal(isPrivateOrLoopbackIp("8.8.8.8"), false);
+  assert.equal(isPrivateOrLoopbackIp("1.1.1.1"), false);
+  assert.equal(isPrivateOrLoopbackIp("93.184.216.34"), false);
+  assert.equal(isPrivateOrLoopbackIp("2606:4700:4700::1111"), false);
+});
+
+test("Security audit regression: /api/portal/devices/remove rejects cross-origin CSRF", async () => {
+  const { app, post } = setup();
+
+  // Cross-origin request with foreign origin must be rejected with 403
+  const res = await post(
+    "/api/portal/devices/remove",
+    { device_id: "test-dev-123" },
+    {
+      origin: "https://attacker.evil.com",
+      "sec-fetch-site": "cross-site",
+    }
+  );
+  assert.equal(res.status, 403);
+  const data = await res.json();
+  assert.equal(data.error, "forbidden_origin");
 });
 
 

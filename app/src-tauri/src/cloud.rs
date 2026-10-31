@@ -754,11 +754,24 @@ pub fn delete_cloud_files(paths: &[String]) -> CloudActionReport {
 /// Moves files out of the cloud into a local / external folder, preserving
 /// `<target>/<provider>/<relative path>`. Online-only files are downloaded
 /// first by the provider when they are read.
+#[allow(dead_code)]
 pub fn offload_cloud_files(paths: &[String], target_dir: &str) -> AppResult<CloudActionReport> {
+    offload_cloud_files_with_data_dir(paths, target_dir, None)
+}
+
+pub fn offload_cloud_files_with_data_dir(paths: &[String], target_dir: &str, data_dir: Option<&Path>) -> AppResult<CloudActionReport> {
     let roots = detect_cloud_roots();
     let target = PathBuf::from(target_dir.trim());
     if !target.is_absolute() || !target.is_dir() {
         return Err(AppError::Other("Choose an existing destination folder.".into()));
+    }
+    if crate::duplicates::is_protected_system_path(&target) || !safety::is_safe_root(&target) {
+        return Err(AppError::Other("Destination cannot be a system or protected directory.".into()));
+    }
+    if let Some(dd) = data_dir {
+        if safety::is_within(&target, dd) {
+            return Err(AppError::Other("Destination cannot be inside application data directory.".into()));
+        }
     }
     if roots.iter().any(|r| safety::is_within(&target, Path::new(&r.path))) {
         return Err(AppError::Other("The destination is itself a cloud folder. Pick a local or external drive.".into()));

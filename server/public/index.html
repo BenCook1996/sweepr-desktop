@@ -1,527 +1,1621 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta name="color-scheme" content="light">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster</title>
-  <meta name="description" content="Free up gigabytes of wasted space, remove stubborn apps, and speed up a slow PC in 60 seconds. Tiny &lt;15MB download, 7-day undo, and zero popups. Try it free.">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <link rel="canonical" href="https://sweeprcleaner.com/">
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
-  <link rel="dns-prefetch" href="https://translate.google.com">
-  <link rel="dns-prefetch" href="https://translate.googleapis.com">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Cleaner: Fast PC, Mac &amp; Phone Cleaner (Windows 11, macOS, iOS, Android)</title>
+  <meta name="description" content="Reclaim gigabytes of lost storage in 60 seconds across Windows 10/11, macOS, iPhone, and Android. Inspect every file path before cleaning, keep your sharpest photos, and protect battery health." />
+  <meta name="keywords" content="PC cleaner, Windows 11 cleaner, Mac cleaner, iPhone photo cleaner, Android cleaner, disk cleanup, duplicate file finder, battery care, CCleaner alternative, SWEEPR Cleaner" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <link rel="canonical" href="https://sweeprcleaner.com/" />
+  <link rel="alternate" hreflang="en" href="https://sweeprcleaner.com/" />
+  <link rel="alternate" hreflang="de" href="https://sweeprcleaner.com/de/" />
+  <link rel="alternate" hreflang="fr" href="https://sweeprcleaner.com/fr/" />
+  <link rel="alternate" hreflang="es" href="https://sweeprcleaner.com/es/" />
+  <link rel="alternate" hreflang="x-default" href="https://sweeprcleaner.com/" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
 
-  <!-- Open Graph / Social Meta -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="SWEEPR Cleaner">
-  <meta property="og:locale" content="en_GB">
-  <meta property="og:url" content="https://sweeprcleaner.com/">
-  <meta property="og:title" content="SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster">
-  <meta property="og:description" content="Free up wasted storage and make your PC start faster—without annoying popups or background slowdowns.">
-  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="SWEEPR Cleaner PC scan showing 12.4 GB of removable junk">
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SWEEPR Cleaner" />
+  <meta property="og:title" content="SWEEPR Cleaner: One Cleaner for Your PC, Mac, iPhone &amp; Android" />
+  <meta property="og:description" content="Reclaim gigabytes of hidden system cache, duplicate bursts, and leftover app bloat in under 60 seconds. Zero background bloatware." />
+  <meta property="og:url" content="https://sweeprcleaner.com/" />
+  <meta property="og:image" content="https://sweeprcleaner.com/og-card.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="SWEEPR Cleaner: Fast PC, Mac &amp; Mobile Cleaner" />
+  <meta name="twitter:description" content="Reclaim gigabytes of lost storage, merge duplicate photos, and protect battery health across 5 devices." />
+  <meta name="twitter:image" content="https://sweeprcleaner.com/og-card.png" />
 
-  <!-- Twitter Meta -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://sweeprcleaner.com/">
-  <meta name="twitter:title" content="SWEEPR Cleaner — Fast, Safe PC Cleaner &amp; Speed Booster">
-  <meta name="twitter:description" content="Free up wasted storage and speed up your PC in under 60 seconds. Simple, fast, and no junkware.">
-  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
-
-  <!-- Structured Data (JSON-LD) for Search Rich Snippets -->
+  <!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@graph": [
+    "@type": "SoftwareApplication",
+    "name": "SWEEPR Cleaner",
+    "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android, iOS",
+    "applicationCategory": "UtilitiesApplication",
+    "description": "Fast, safe computer and phone cleaner, duplicate photo finder, 80% battery health saver, and storage optimizer for Windows, Mac, iOS, and Android.",
+    "url": "https://sweeprcleaner.com/",
+    "downloadUrl": "https://sweeprcleaner.com/download",
+    "softwareVersion": "1.1.0",
+    "fileSize": "14MB",
+    "offers": [
       {
-        "@type": "Organization",
-        "@id": "https://sweeprcleaner.com/#organization",
-        "name": "SWEEPR Cleaner Inc.",
-        "url": "https://sweeprcleaner.com/",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://sweeprcleaner.com/logo-emerald.svg"
-        },
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer support",
-          "url": "https://sweeprcleaner.com/support",
-          "availableLanguage": ["en", "de", "fr", "es", "it", "pt", "nl", "ja"]
-        }
+        "@type": "Offer",
+        "name": "SWEEPR Cleaner Pro — Annual Plan (Save 58%)",
+        "price": "49.99",
+        "priceCurrency": "GBP",
+        "availability": "https://schema.org/InStock",
+        "url": "https://sweeprcleaner.com/order?plan=annual"
       },
       {
-        "@type": "WebSite",
-        "@id": "https://sweeprcleaner.com/#website",
-        "url": "https://sweeprcleaner.com/",
-        "name": "SWEEPR Cleaner",
-        "publisher": {
-          "@id": "https://sweeprcleaner.com/#organization"
-        }
-      },
-      {
-        "@type": "SoftwareApplication",
-        "name": "SWEEPR Cleaner",
-        "softwareVersion": "0.1.0",
-        "operatingSystem": "Windows 10, Windows 11, macOS, Linux, iOS, Android",
-        "applicationCategory": "UtilitiesApplication",
-        "fileSize": "5.4MB",
-        "downloadUrl": "https://sweeprcleaner.com/download",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "ratingCount": "1420",
-          "bestRating": "5",
-          "worstRating": "1"
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": "1.99",
-          "priceCurrency": "GBP",
-          "validFrom": "2026-01-01",
-          "priceValidUntil": "2027-12-31",
-          "availability": "https://schema.org/InStock",
-          "url": "https://sweeprcleaner.com/order?plan=monthly",
-          "description": "Free full system diagnostic scan. Optional Pro access: 1st month £1.99, then £9.99/month, or £49.99/year (Save 58%). Cancel anytime."
-        }
-      },
-      {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How is SWEEPR Cleaner different from CCleaner or other cleaners?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "SWEEPR Cleaner is tiny (under 15 MB) and super fast. It never slows down your computer in the background, never bundles unwanted extra apps, and always shows you exactly what will be cleaned before deleting anything."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Will SWEEPR Cleaner delete any of my personal photos, documents, or saved passwords?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Never. SWEEPR Cleaner specifically isolates scratch buffers, redundant driver staging packages, build artifacts, shader caches, and temporary web assets. Your personal documents, desktop files, browser login cookies, and media libraries are strictly protected."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How many devices does one SWEEPR Cleaner license cover?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Every SWEEPR Cleaner Pro license covers up to 3 Desktop PCs (Windows, Mac, Linux)."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Does SWEEPR Cleaner run in the background or slow down my PC?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Zero background overhead. When you close SWEEPR Cleaner, it releases all system memory and terminates cleanly. We do not register persistent startup services, system tray monitors, or scheduled popup nags."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I cancel my subscription anytime?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes, you can cancel in one click from your online account at any time—no hoops to jump through, plus a 14-day money-back guarantee."
-            }
-          }
-        ]
+        "@type": "Offer",
+        "name": "SWEEPR Cleaner Pro — Monthly Plan",
+        "price": "9.99",
+        "priceCurrency": "GBP",
+        "availability": "https://schema.org/InStock",
+        "url": "https://sweeprcleaner.com/order?plan=monthly"
       }
     ]
   }
   </script>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
-  <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
-  <link rel="stylesheet" href="/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "SWEEPR Cleaner",
+    "url": "https://sweeprcleaner.com",
+    "logo": "https://sweeprcleaner.com/icon-512.png",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "support@sweeprcleaner.com",
+      "contactType": "customer support"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What makes SWEEPR Cleaner safer than legacy PC and phone cleaners?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "SWEEPR Cleaner is lightweight (~14 MB download) with zero background pop-ups or slowdown. Every folder and file location is shown before cleanup, and cleaned computer files can be restored anytime from the 7-day Undo Safety Net."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many devices does one SWEEPR Cleaner Pro plan cover?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A single SWEEPR Cleaner Pro plan covers up to 5 devices simultaneously: up to 3 desktop computers (Windows, macOS, or Linux) plus 2 mobile devices (iPhone, iPad, or Android)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are the Total Battery Care and SWEEPR Cloud Protection add-ons?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each optional add-on is £9.99/yr (localized to your currency). Total Battery Care enforces an 80% charge ceiling alert and thermal guard, while SWEEPR Cloud Protection provides a zero-knowledge encrypted backup vault."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
+  <script src="/i18n.js" defer></script>
   <script src="/nav.js" defer></script>
+
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --surface: #efece4;
+      --surface-elevated: #ffffff;
+      --text: #131614;
+      --muted: #4a524d;
+      --accent: #0d6847;
+      --accent-hover: #094f35;
+      --accent-soft: #e1f3ec;
+      --accent-ink: #073825;
+      --cobalt-soft: #e2edff;
+      --cobalt-ink: #0a2870;
+      --amber-soft: #f7ebd2;
+      --amber-ink: #5e3704;
+      --plum-soft: #eee4fa;
+      --plum-ink: #3c1766;
+      --border: #d6d2c7;
+      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button, input, select {
+      font: inherit;
+      color: inherit;
+    }
+
+    /* WCAG 2.2 AA Focus Ring */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Tactile 140ms Press Feedback */
+    .btn-press {
+      transition: transform 140ms var(--ease-out), background-color 140ms var(--ease-out), border-color 140ms var(--ease-out);
+      cursor: pointer;
+    }
+    .btn-press:active {
+      transform: scale(0.97);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* Skip Link */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 8px;
+      z-index: 999;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .skip-link:focus {
+      left: 16px;
+    }
+
+    /* Top Navigation Bar (Jakob's Law Familiar Utility Header) */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 12px clamp(1rem, 3vw, 2.5rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent-ink);
+      background: var(--accent-soft);
+      padding: 2px 7px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .nav-link {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--muted);
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .nav-link:hover {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .region-select {
+      min-height: 40px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .header-cta {
+      min-height: 42px;
+      padding: 8px 16px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-cta:hover {
+      background: var(--accent-hover);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 3.5vw, 3rem) clamp(1rem, 3vw, 2.5rem);
+    }
+
+    /* W3 Split Hero & Binary Plan Stage */
+    .w3-stage {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: clamp(1.5rem, 3vw, 2.75rem);
+      align-items: start;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .device-switcher-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .os-chip {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      min-height: 28px;
+    }
+    .os-chip[aria-pressed="true"] {
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .w3-headline {
+      font-family: var(--font-display);
+      font-size: clamp(2.25rem, 4.1vw, 3.55rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.032em;
+      text-wrap: balance;
+      margin-bottom: 14px;
+    }
+    .w3-headline em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+    }
+    .w3-lead {
+      font-size: clamp(1rem, 1.15vw, 1.12rem);
+      color: var(--muted);
+      max-width: 60ch;
+      margin-bottom: 22px;
+    }
+
+    /* Primary Fitts's Law Download + Action Row */
+    .w3-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .btn-primary-os {
+      min-height: 54px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid var(--accent);
+    }
+    .btn-primary-os:hover {
+      background: var(--accent-hover);
+    }
+    .btn-secondary-os {
+      min-height: 54px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      font-size: 0.94rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-secondary-os:hover {
+      background: var(--surface);
+    }
+
+    .trust-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    /* 3-Stage Interactive Preview Scrubber (Doherty <16ms) */
+    .scrubber-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .scrubber-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--surface);
+      padding: 5px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .scrubber-tab {
+      min-height: 44px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: left;
+      cursor: pointer;
+    }
+    .scrubber-tab[aria-selected="true"] {
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .scrubber-panel {
+      display: none;
+    }
+    .scrubber-panel.active {
+      display: block;
+    }
+    .path-audit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .path-audit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.84rem;
+    }
+    .path-tag {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+      word-break: break-all;
+    }
+    .path-size {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 9px;
+      border-radius: 7px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      white-space: nowrap;
+    }
+
+    /* Right Column: W3 Giant Price & Binary Plan Switcher Card */
+    .w3-pricing-card {
+      background: var(--surface-elevated);
+      border: 2px solid var(--text);
+      border-radius: 20px;
+      padding: clamp(1.35rem, 2.5vw, 2rem);
+      position: sticky;
+      top: 84px;
+    }
+    .pricing-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .pricing-tag {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+
+    /* Binary Plan Switcher (Hick's Law: 2 Primary Choices) */
+    .binary-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: var(--surface);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+    .plan-switch-btn {
+      min-height: 48px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .plan-switch-btn[aria-selected="true"] {
+      background: var(--text);
+      color: #ffffff;
+    }
+    .plan-switch-sub {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    /* Giant Tabular Price Motif */
+    .giant-price-stage {
+      padding: 14px 0 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .giant-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .giant-price-figure {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 5.2vw, 4.4rem);
+      font-weight: 800;
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .giant-price-period {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .giant-price-strike {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+    .giant-price-caption {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    /* Full-Row <label> Add-on Pills (+9.99/yr each, min-height 54px) */
+    .addons-heading {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .addon-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .addon-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 56px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      user-select: none;
+    }
+    .addon-pill:hover {
+      border-color: var(--accent);
+    }
+    .addon-pill:has(input:checked) {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+    .addon-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .addon-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .addon-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      display: block;
+    }
+    .addon-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: block;
+    }
+    .addon-price-tag {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent-ink);
+      background: var(--surface-elevated);
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* Primary Checkout CTA inside W3 Card */
+    .w3-checkout-btn {
+      width: 100%;
+      min-height: 56px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .w3-checkout-btn:hover {
+      background: var(--accent-hover);
+    }
+    .w3-checkout-meta {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.73rem;
+      color: var(--muted);
+    }
+
+    /* Cross-Platform D3 + M3 Section */
+    .section-block {
+      margin-top: clamp(3rem, 6vw, 5rem);
+      padding-top: clamp(2.5rem, 5vw, 4rem);
+      border-top: 1px solid var(--border);
+    }
+    .section-header {
+      max-width: 68ch;
+      margin-bottom: 28px;
+    }
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: clamp(1.65rem, 2.8vw, 2.35rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    /* 4 Semantic Tinted Tiles Preview (Matches D3 Desktop & M3 Mobile) */
+    .semantic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .semantic-tile {
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .tile-green { background: var(--accent-soft); color: var(--accent-ink); }
+    .tile-cobalt { background: var(--cobalt-soft); color: var(--cobalt-ink); }
+    .tile-amber { background: var(--amber-soft); color: var(--amber-ink); }
+    .tile-plum { background: var(--plum-soft); color: var(--plum-ink); }
+
+    .tile-metric {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .tile-title {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+    .tile-body {
+      font-size: 0.84rem;
+      opacity: 0.9;
+      line-height: 1.45;
+    }
+    .tile-badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.75);
+      align-self: flex-start;
+    }
+
+    /* Comparison & FAQ Grid */
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .info-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .faq-item:last-child {
+      border-bottom: none;
+    }
+    .faq-summary {
+      font-weight: 700;
+      font-size: 0.96rem;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .faq-answer {
+      margin-top: 8px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      max-width: 65ch;
+    }
+
+    /* Footer */
+    .site-footer {
+      margin-top: 64px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 40px clamp(1rem, 3vw, 2.5rem);
+    }
+    .footer-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 24px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-links a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 1024px) {
+      .w3-stage {
+        grid-template-columns: 1fr;
+      }
+      .w3-pricing-card {
+        position: static;
+      }
+      .semantic-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .scrubber-tabs {
+        grid-template-columns: 1fr;
+      }
+      .semantic-grid {
+        grid-template-columns: 1fr;
+      }
+      .btn-primary-os, .btn-secondary-os {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
-<body class="text-gray-800">
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- Navigation -->
-  <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3 md:gap-8">
-      <a href="/" class="flex items-center gap-3 text-inherit no-underline">
-        <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
+  <!-- Familiar Utility Top Header (Jakob's Law) -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="/" class="brand-link" aria-label="SWEEPR Cleaner Home">
+        <span class="brand-mark" aria-hidden="true" style="background:transparent;padding:0;">
+          <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <linearGradient id="hdrBrandBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#145c3e" />
+                <stop offset="50%" stop-color="#0d6847" />
+                <stop offset="100%" stop-color="#073825" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="92" height="92" rx="22" fill="url(#hdrBrandBg)" stroke="rgba(255,255,255,0.22)" stroke-width="2" />
+            <line x1="76" y1="24" x2="53" y2="47" stroke="#9adbc0" stroke-width="8" stroke-linecap="round" />
+            <path d="M 42 40 L 60 58 L 55 64 L 36 45 Z" fill="#ffffff" />
+            <path d="M 34 48 L 52 66 L 38 82 C 30 78, 22 70, 18 62 Z" fill="#ffffff" />
+            <line x1="34" y1="76" x2="43" y2="63" stroke="#073825" stroke-width="3" stroke-linecap="round" />
+            <line x1="27" y1="69" x2="36" y2="56" stroke="#073825" stroke-width="3" stroke-linecap="round" />
+            <path d="M 74 56 Q 74 65 83 65 Q 74 65 74 74 Q 74 65 65 65 Q 74 65 74 56 Z" fill="#ffffff" />
+            <circle cx="62" cy="79" r="3.5" fill="#9adbc0" />
+          </svg>
+        </span>
+        <span>SWEEPR Cleaner</span>
       </a>
-      <div class="hidden md:flex items-center gap-2">
-        <a href="/#features" class="btn btn-ghost text-sm">Features</a>
-        <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
-        <!-- Consolidated Compare & Guides Menu -->
-        <div class="relative inline-block text-left" id="navDropdownContainer">
-          <button type="button" id="navDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 cursor-pointer font-medium" aria-expanded="false" aria-haspopup="true">
-            <span>Compare &amp; Guides</span>
-            <svg id="navDropdownChevron" class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-          
-          <!-- Dropdown Flyout with Visual Tiles -->
-          <div id="navDropdownMenu" class="hidden absolute left-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-[340px] sm:w-[420px] bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-2xl p-2.5 z-50 transition-all">
-            <div class="grid grid-cols-1 gap-1.5">
-              <!-- Tile 1: SWEEPR Cleaner vs CCleaner -->
-              <a href="/vs/ccleaner" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-1 mb-0.5">
-                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">SWEEPR Cleaner vs CCleaner</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Comparison</span>
-                  </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">See how SWEEPR Cleaner compares on speed, ease of use, and privacy.</p>
-                </div>
-              </a>
 
-              <!-- Tile 2: CCleaner Alternatives -->
-              <a href="/alternatives/ccleaner" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-1 mb-0.5">
-                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">CCleaner Alternatives</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">2026 Guide</span>
-                  </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">The 5 best easy-to-use PC cleaners for Windows in 2026.</p>
-                </div>
-              </a>
+      <nav class="header-nav" aria-label="Primary Navigation">
+        <a href="#preview-stage" class="nav-link">How It Works</a>
+        <a href="/pricing" class="nav-link">Pricing</a>
+        <a href="/dashboard" class="nav-link">My Account</a>
+      </nav>
 
-              <!-- Tile 3: Storage & Cache Directory -->
-              <a href="/clean" class="flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all text-inherit no-underline group">
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                  </svg>
+      <div class="header-controls">
+        <label for="globalCurrencySelect" class="mono" style="font-size:0.74rem;color:var(--muted);">Currency:</label>
+        <select id="globalCurrencySelect" class="region-select" aria-label="Select currency and location">
+          <option value="gbp">GBP (£) · UK</option>
+          <option value="usd">USD ($) · US</option>
+          <option value="eur">EUR (€) · EU</option>
+          <option value="cad">CAD (CA$) · CA</option>
+          <option value="aud">AUD (A$) · AU</option>
+          <option value="nzd">NZD (NZ$) · NZ</option>
+          <option value="chf">CHF · CH</option>
+          <option value="sek">SEK (kr) · SE</option>
+          <option value="nok">NOK (kr) · NO</option>
+          <option value="dkk">DKK (kr) · DK</option>
+          <option value="pln">PLN (zł) · PL</option>
+          <option value="jpy">JPY (¥) · JP</option>
+          <option value="inr">INR (₹) · IN</option>
+          <option value="sgd">SGD (S$) · SG</option>
+          <option value="brl">BRL (R$) · BR</option>
+        </select>
+        <a href="/download" id="headerDownloadBtn" class="header-cta btn-press">Free Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="container">
+    <!-- W3 SPLIT STAGE: Cross-Platform Value + Giant Tabular Price & Binary Switcher -->
+    <section class="w3-stage" aria-labelledby="hero-heading">
+      <!-- Left Column: Device-Adaptive Headline, CTA & 3-Stage Interactive Scrubber -->
+      <div>
+        <div class="status-row">
+          <span class="status-pill" id="detectedDeviceBadge">For Windows 11 &amp; 10</span>
+          <div class="device-switcher-bar" role="group" aria-label="Preview operating system">
+            <button type="button" class="os-chip" data-os="windows" aria-pressed="true">Windows</button>
+            <button type="button" class="os-chip" data-os="mac" aria-pressed="false">Mac</button>
+            <button type="button" class="os-chip" data-os="ios" aria-pressed="false">iPhone</button>
+            <button type="button" class="os-chip" data-os="android" aria-pressed="false">Android</button>
+            <button type="button" class="os-chip" data-os="linux" aria-pressed="false">Linux</button>
+          </div>
+        </div>
+
+        <h1 id="hero-heading" class="w3-headline">
+          One simple cleaner for your <em>PC, Mac, iPhone,</em> and Android.
+        </h1>
+
+        <p class="w3-lead" id="heroLeadText">
+          A lightweight, fast app that clears hidden junk files, finds duplicate photos, and speeds up your computer or phone in one click. It only runs when you open it, and never touches your personal files or saved passwords.
+        </p>
+
+        <div class="w3-cta-row">
+          <a href="/download?platform=windows" id="primaryDownloadCta" class="btn-primary-os btn-press">
+            <span id="primaryDownloadLabel">Download Free for Windows</span>
+            <span class="mono" style="font-size:0.78rem;opacity:0.88;" id="primaryDownloadMeta">Quick 10-second install</span>
+          </a>
+          <a href="/order?plan=annual" id="secondaryOrderCta" class="btn-secondary-os btn-press">
+            <span>Cover All 5 Devices</span>
+            <span class="mono" id="secondaryOrderPriceBadge">£49.99/yr</span>
+          </a>
+        </div>
+
+        <div class="trust-strip" aria-label="Key guarantees">
+          <span>60-Second Quick Scan</span>
+          <span>7-Day Undo Safety Net</span>
+          <span>14-Day Money-Back Guarantee</span>
+          <span>Covers 3 Computers + 2 Phones</span>
+        </div>
+
+        <!-- 3-Stage Interactive Preview Scrubber (Doherty Threshold <16ms) -->
+        <div id="preview-stage" class="scrubber-card" aria-label="Interactive feature preview">
+          <div class="scrubber-tabs" role="tablist" aria-label="Preview stages">
+            <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="true" aria-controls="panel-audit" id="tab-audit" data-stage="audit">
+              1. What We Clean
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">14.8 GB Free Space Found</span>
+            </button>
+            <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="false" aria-controls="panel-photos" id="tab-photos" data-stage="photos">
+              2. Duplicate Photo Cleaner
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">Keep Best Photo</span>
+            </button>
+            <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="false" aria-controls="panel-guard" id="tab-guard" data-stage="guard">
+              3. Battery &amp; File Protection
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">80% Battery Saver</span>
+            </button>
+          </div>
+
+          <!-- Stage 1: What We Clean -->
+          <div id="panel-audit" class="scrubber-panel active" role="tabpanel" aria-labelledby="tab-audit">
+            <div class="path-audit-list" id="osPathAuditList">
+              <div class="path-audit-row">
+                <div>
+                  <strong>Temporary Files &amp; Web Browser Clutter</strong>
+                  <span class="path-tag" id="auditPath1">Old temporary files and leftover web browser clutter (keeps your logins &amp; passwords safe)</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-1 mb-0.5">
-                    <span class="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Storage &amp; Cache Directory</span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">40+ Guides</span>
-                  </div>
-                  <p class="text-xs text-gray-500 leading-snug line-clamp-2">Simple guides showing which hidden Windows folders and app files are safe to delete.</p>
+                <span class="path-size">6.4 GB</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Leftover Files from Old Updates &amp; Apps</strong>
+                  <span class="path-tag" id="auditPath2">Old system update installers and leftover junk from uninstalled apps</span>
                 </div>
-              </a>
+                <span class="path-size">5.1 GB</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Identical Duplicate Photos &amp; Downloads</strong>
+                  <span class="path-tag" id="auditPath3">Extra copies of the exact same photo or file (always keeps your original safe)</span>
+                </div>
+                <span class="path-size">3.3 GB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 2: Duplicate Photo Cleaner -->
+          <div id="panel-photos" class="scrubber-panel" role="tabpanel" aria-labelledby="tab-photos">
+            <div class="path-audit-list">
+              <div class="path-audit-row">
+                <div>
+                  <strong>Picks Your Sharpest Photo Automatically</strong>
+                  <span class="path-tag">Spots blurry repeat shots and keeps your clearest, sharpest photo</span>
+                </div>
+                <span class="path-size">Keep Best</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Simple Swipe-to-Clean Photo Cards</strong>
+                  <span class="path-tag">Swipe left to remove clutter or swipe right to keep — review a month of photos in 45 seconds</span>
+                </div>
+                <span class="path-size">4.2 GB Saved</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Large Video &amp; Screenshot Shrinker</strong>
+                  <span class="path-tag">Shrinks huge video files so they take up less room without looking blurry</span>
+                </div>
+                <span class="path-size">3.8 GB Saved</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stage 3: Battery & File Protection -->
+          <div id="panel-guard" class="scrubber-panel" role="tabpanel" aria-labelledby="tab-guard">
+            <div class="path-audit-list">
+              <div class="path-audit-row">
+                <div>
+                  <strong>80% Battery Health Saver &amp; Cooling Alert</strong>
+                  <span class="path-tag">Reminds you to unplug at 80% and stops apps from overheating your battery so it lasts longer</span>
+                </div>
+                <span class="path-size" id="scrubberBatteryPrice">+£9.99/yr</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Private File Lockbox &amp; Automatic Backup</strong>
+                  <span class="path-tag">Password-locks your private photos and documents and backs up important folders automatically</span>
+                </div>
+                <span class="path-size" id="scrubberCloudPrice">+£9.99/yr</span>
+              </div>
+              <div class="path-audit-row">
+                <div>
+                  <strong>Easy 1-Scan Phone &amp; Computer Linking</strong>
+                  <span class="path-tag">Connect up to 3 computers and 2 phones by scanning a simple QR code</span>
+                </div>
+                <span class="path-size">5 Devices</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="flex gap-2 md:gap-3 items-center">
-      <!-- Language Selector Dropdown -->
-      <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
-          <span class="text-base" id="currentLangFlag">🇬🇧</span>
-          <span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
-          <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
 
-        <!-- Dropdown Menu -->
-        <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all">
-          <div class="space-y-0.5 text-xs">
-            <button type="button" onclick="setLanguage('en')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">EN</span>
-            </button>
-            <button type="button" onclick="setLanguage('de')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇩🇪</span> <span>Deutsch</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">DE</span>
-            </button>
-            <button type="button" onclick="setLanguage('fr')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇫🇷</span> <span>Français</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">FR</span>
-            </button>
-            <button type="button" onclick="setLanguage('es')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer">
-              <span class="flex items-center gap-2"><span>🇪🇸</span> <span>Español</span></span>
-              <span class="text-[10px] text-gray-400 font-mono">ES</span>
-            </button>
+      <!-- Right Column: W3 Giant Tabular Price & Binary Plan Switcher -->
+      <aside class="w3-pricing-card" id="pricing" aria-label="Plan and Add-on Configurator">
+        <div class="pricing-card-top">
+          <span class="pricing-tag">Choose Your Plan</span>
+          <span class="mono" style="font-size:0.75rem;color:var(--muted);" id="detectedLocationLabel">Region: United Kingdom (GBP)</span>
+        </div>
+
+        <!-- Binary Plan Switcher (Hick's Law: 2 Primary Choices) -->
+        <div class="binary-switcher" role="tablist" aria-label="Choose billing plan">
+          <button type="button" class="plan-switch-btn btn-press" role="tab" id="planTabAnnual" aria-selected="true" data-plan="annual">
+            <span>Yearly Plan · Save 58%</span>
+            <span class="plan-switch-sub" id="switchAnnualSub">£4.16/mo equivalent</span>
+          </button>
+          <button type="button" class="plan-switch-btn btn-press" role="tab" id="planTabMonthly" aria-selected="false" data-plan="monthly">
+            <span>Monthly Plan</span>
+            <span class="plan-switch-sub" id="switchMonthlySub">£9.99/month · Cancel anytime</span>
+          </button>
+        </div>
+
+        <!-- Giant Price Motif -->
+        <div class="giant-price-stage" aria-live="polite">
+          <div class="giant-price-row">
+            <span class="giant-price-figure" id="giantPriceFigure">£49.99</span>
+            <span class="giant-price-period" id="giantPricePeriod">/year</span>
+            <span class="giant-price-strike" id="giantPriceStrike">£119.88/yr</span>
           </div>
+          <p class="giant-price-caption" id="giantPriceCaption">
+            Covers up to 3 Computers (PC/Mac) + 2 Phones (iPhone/Android). Billed yearly (£4.16/mo equivalent). Cancel anytime in 1 click.
+          </p>
+        </div>
+
+        <!-- Full-Row <label> Add-on Pills (Fitts's Law 56px targets, 9.99 each) -->
+        <div class="addons-heading">Optional Add-Ons (9.99/yr each)</div>
+        <div class="addon-list">
+          <label class="addon-pill" for="addonBatteryCheckbox">
+            <span class="addon-left">
+              <input type="checkbox" id="addonBatteryCheckbox" class="addon-checkbox" value="battery_care" />
+              <span>
+                <span class="addon-title">Battery Health Saver</span>
+                <span class="addon-desc">80% charge alert, overheating protection &amp; background battery saver</span>
+              </span>
+            </span>
+            <span class="addon-price-tag" id="addonBatteryPriceTag">+£9.99/yr</span>
+          </label>
+
+          <label class="addon-pill" for="addonCloudCheckbox">
+            <span class="addon-left">
+              <input type="checkbox" id="addonCloudCheckbox" class="addon-checkbox" value="cloud_vault" />
+              <span>
+                <span class="addon-title">Private File Lockbox &amp; Cloud Backup</span>
+                <span class="addon-desc">Password-locks private files &amp; automatically backs up your folders</span>
+              </span>
+            </span>
+            <span class="addon-price-tag" id="addonCloudPriceTag">+£9.99/yr</span>
+          </label>
+        </div>
+
+        <!-- Primary Checkout CTA -->
+        <a href="/order?plan=annual" id="w3CheckoutBtn" class="w3-checkout-btn btn-press">
+          <span id="w3CheckoutBtnLabel">Continue to Checkout</span>
+          <span class="mono" id="w3CheckoutBtnTotal">£49.99/yr →</span>
+        </a>
+
+        <div class="w3-checkout-meta">
+          <span>Secure Stripe Checkout</span>
+          <span>Instant Activation</span>
+          <a href="/pricing" style="text-decoration:underline;">See 6-Month Plan &amp; Full Details</a>
+        </div>
+      </aside>
+    </section>
+
+    <!-- D3 DESKTOP & M3 MOBILE ARCHITECTURE PREVIEW -->
+    <section class="section-block" aria-labelledby="unified-architecture-heading">
+      <div class="section-header">
+        <div class="section-tag">Works Across Your Computer &amp; Phone</div>
+        <h2 id="unified-architecture-heading" class="section-title">
+          See what's taking up space — and clean it safely in one click.
+        </h2>
+        <p style="color:var(--muted);">
+          No confusing error codes or scary fake warnings. Whether you use Windows, Mac, iPhone, or Android, SWEEPR organizes your clutter into four simple categories.
+        </p>
+      </div>
+
+      <div class="semantic-grid">
+        <article class="semantic-tile tile-green">
+          <div>
+            <div class="tile-metric">6.4 GB</div>
+            <h3 class="tile-title">Temporary Files &amp; Browser Clutter</h3>
+          </div>
+          <p class="tile-body">
+            Clears old temporary files and web browser clutter from Chrome, Edge, and Safari without logging you out of websites or erasing saved passwords.
+          </p>
+          <span class="tile-badge">Windows · Mac · Android</span>
+        </article>
+
+        <article class="semantic-tile tile-cobalt">
+          <div>
+            <div class="tile-metric">4.2 GB</div>
+            <h3 class="tile-title">Duplicate Photos &amp; Large Videos</h3>
+          </div>
+          <p class="tile-body">
+            Finds identical copies of files on your computer and lets you swipe through duplicate or blurry photos on your iPhone or Android in seconds.
+          </p>
+          <span class="tile-badge">iPhone · Android · Computer</span>
+        </article>
+
+        <article class="semantic-tile tile-amber">
+          <div>
+            <div class="tile-metric">3.1 GB</div>
+            <h3 class="tile-title">Old App Leftovers &amp; Slow Startups</h3>
+          </div>
+          <p class="tile-body">
+            Removes leftover folders from deleted apps, clears old system update files, and stops unnecessary apps from slowing down your computer when it turns on.
+          </p>
+          <span class="tile-badge">7-Day Undo Safety Net</span>
+        </article>
+
+        <article class="semantic-tile tile-plum">
+          <div>
+            <div class="tile-metric" id="tilePlumPrice">+£9.99/yr</div>
+            <h3 class="tile-title">Battery Saver &amp; Private File Lockbox</h3>
+          </div>
+          <p class="tile-body">
+            Optional 80% charge alerts to help your laptop and phone battery last years longer, plus a password-locked folder and automatic cloud backup.
+          </p>
+          <span class="tile-badge">Optional 9.99 Add-ons</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- TRANSPARENT COMPARISON & FAQ -->
+    <section class="section-block" aria-labelledby="faq-heading">
+      <div class="two-col-grid">
+        <div class="info-card">
+          <div class="section-tag">Why People Switch to SWEEPR</div>
+          <h2 class="section-title" style="font-size:1.45rem;">Never slows down your computer. Shows you everything before cleaning.</h2>
+          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:16px;">
+            Old-fashioned cleaners install annoying pop-ups and run constantly in the background, slowing down the very computer they promised to speed up. SWEEPR only runs when you open it.
+          </p>
+          <div class="path-audit-list">
+            <div class="path-audit-row">
+              <span><strong>Tiny, Fast Download</strong></span>
+              <span class="mono">Installs in 10 seconds · No extra junk</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>7-Day Undo Safety Net</strong></span>
+              <span class="mono">Put back any cleaned file in 1 click</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>One Account for Everything</strong></span>
+              <span class="mono">3 Computers + 2 Phones Included</span>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+            <a href="/vs/ccleaner" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">SWEEPR vs CCleaner →</a>
+            <a href="/alternatives/ccleaner" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">Compare Other Cleaners →</a>
+          </div>
+        </div>
+
+        <div class="info-card" id="faq-heading">
+          <div class="section-tag">Common Questions</div>
+          <h2 class="section-title" style="font-size:1.45rem;">Plans, safety &amp; how it works</h2>
+          <details class="faq-item" open>
+            <summary class="faq-summary">What is the difference between the Yearly and Monthly plans?</summary>
+            <p class="faq-answer" id="faqPlanAnswer">
+              Both plans give you full access on up to 3 computers and 2 phones. The Yearly plan is £49.99/year (saving 58%, or £4.16/month), while the Monthly plan is £9.99/month with no long-term commitment. You can cancel anytime in one click.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-summary">Can I get a file back if I clean it by mistake?</summary>
+            <p class="faq-answer">
+              Yes! On Windows, Mac, and Linux, cleaned files are kept safely in SWEEPR's 7-Day Undo folder so you can put any file right back where it was in one click. On iPhone and Android, deleted photos stay in your phone's Recently Deleted album for 30 days.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-summary">How do the Battery Health Saver and Cloud Protection add-ons work?</summary>
+            <p class="faq-answer" id="faqAddonAnswer">
+              Each optional add-on is £9.99/year. Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders to OneDrive, Google Drive, Dropbox, or iCloud.
+            </p>
+          </details>
         </div>
       </div>
-      <a href="/login" class="btn btn-ghost text-sm">Login</a>
-      <a href="/download" class="hidden md:inline-flex btn btn-go gap-2">
-        <span>Get SWEEPR Cleaner</span>
-        <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-      </a>
-    </div>
-  </nav>
-
-  <!-- Hero Section (Variation D: Centered All-in-One Dock) -->
-  <main class="flex-1 pt-28 md:pt-36 pb-16 md:pb-24 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-    <h1 class="text-4xl sm:text-5xl lg:text-[54px] font-black mb-4 leading-[1.08] tracking-tight text-gray-900">
-      Revive your PC. <span style="color: var(--accent);">In 60 seconds.</span>
-    </h1>
-
-    <p class="text-base sm:text-lg text-gray-600 mb-7 max-w-2xl mx-auto leading-relaxed">
-      One-click cleaner for Windows, Mac &amp; Linux that clears hidden junk, duplicate files, and startup lag.
-    </p>
-
-    <div class="flex flex-wrap items-center justify-center gap-6 mb-9">
-      <a href="/download" id="downloadBtn" class="btn-primary px-8 py-4 rounded-full text-base sm:text-lg font-extrabold flex items-center justify-center gap-2.5 shadow-lg cursor-pointer">
-        <span id="downloadBtnLabel">Download Free Scanner</span>
-        <span aria-hidden="true">&rarr;</span>
-      </a>
-      <a href="/order?plan=annual" class="text-base font-extrabold text-gray-900 hover:text-emerald-700 border-b-2 border-gray-900 hover:border-emerald-700 pb-0.5 transition-colors">
-        Get Pro Access
-      </a>
-    </div>
-    <script>
-      (function() {
-        var ua = (navigator.userAgent || '').toLowerCase();
-        var isIpadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-        var isIos = /iphone|ipad|ipod/.test(ua) || isIpadOs;
-        var isAndroid = ua.indexOf('android') !== -1 || (ua.indexOf('linux') !== -1 && navigator.maxTouchPoints > 0);
-        var isMobile = isIos || isAndroid || /mobile|iemobile|opera mini/.test(ua);
-        var btn = document.getElementById('downloadBtn');
-        var lbl = document.getElementById('downloadBtnLabel');
-        if (isMobile) {
-          if (lbl) lbl.textContent = 'Install Now';
-          if (btn) btn.setAttribute('href', isIos ? '/download?platform=ios&direct=1' : '/download?platform=android&direct=1');
-        } else if (btn && (ua.indexOf('macintosh') !== -1 || ua.indexOf('mac os x') !== -1)) {
-          btn.setAttribute('href', '/download?platform=mac');
-        }
-      })();
-    </script>
-
-    <!-- Unified Bento Dock: Left = Sample Scan Result Card | Right = 3 Metric Badges -->
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-left items-stretch">
-      <div class="md:col-span-7 glass-card p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 shadow-lg border-emerald-500/25 cursor-pointer select-none" onclick="replayHeroScanPreview()" title="Click to replay 60-sec scan preview">
-        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex flex-col items-center justify-center shrink-0 shadow-md ring-4 ring-emerald-500/15">
-          <span class="text-xl font-black leading-none tabular-nums" id="heroScanTotalGb">12.4 GB</span>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-100 mt-1">Found</span>
-        </div>
-        <div class="space-y-2 text-sm flex-1 w-full">
-          <div class="flex items-center justify-between">
-            <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Sample 60-Sec Scan Result</div>
-            <span class="text-[10px] font-bold text-emerald-600/80">↻ Replay</span>
-          </div>
-          <div class="w-full h-1.5 bg-emerald-100 rounded-full overflow-hidden">
-            <div id="heroScanBarFill" class="scan-bar-fill"></div>
-          </div>
-          <div class="scan-row-item flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700" id="heroScanRow1">
-            <span>&#10003; System &amp; Update Junk</span>
-            <span class="font-extrabold text-emerald-700 tabular-nums">6.8 GB</span>
-          </div>
-          <div class="scan-row-item flex items-center justify-between py-1 border-b border-gray-100 font-semibold text-gray-700" id="heroScanRow2">
-            <span>&#10003; Browser Cache</span>
-            <span class="font-extrabold text-emerald-700 tabular-nums">3.4 GB</span>
-          </div>
-          <div class="scan-row-item flex items-center justify-between py-1 font-semibold text-gray-700" id="heroScanRow3">
-            <span>&#10003; Duplicate Files</span>
-            <span class="font-extrabold text-emerald-700 tabular-nums">2.2 GB</span>
-          </div>
-        </div>
-      </div>
-      <script>
-        function replayHeroScanPreview() {
-          if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-          var numEl = document.getElementById('heroScanTotalGb');
-          var barEl = document.getElementById('heroScanBarFill');
-          var rows = [
-            document.getElementById('heroScanRow1'),
-            document.getElementById('heroScanRow2'),
-            document.getElementById('heroScanRow3')
-          ];
-          if (barEl) {
-            barEl.style.transition = 'none';
-            barEl.style.transform = 'scaleX(0)';
-          }
-          rows.forEach(function(r) {
-            if (r) {
-              r.style.transition = 'none';
-              r.style.opacity = '0';
-              r.style.transform = 'translateY(4px)';
-            }
-          });
-          requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-              if (barEl) {
-                barEl.style.transition = 'transform 180ms cubic-bezier(0.16, 1, 0.3, 1)';
-                barEl.style.transform = 'scaleX(1)';
-              }
-              rows.forEach(function(r, idx) {
-                setTimeout(function() {
-                  if (r) {
-                    r.style.transition = 'opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1)';
-                    r.style.opacity = '1';
-                    r.style.transform = 'translateY(0)';
-                  }
-                }, idx * 20);
-              });
-            });
-          });
-          if (numEl) {
-            var start = performance.now();
-            var duration = 180;
-            function tick(now) {
-              var t = Math.min(1, (now - start) / duration);
-              var eased = 1 - Math.pow(1 - t, 4);
-              numEl.textContent = (12.4 * eased).toFixed(1) + ' GB';
-              if (t < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-          }
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(replayHeroScanPreview, 80);
-        });
-      </script>
-
-      <div class="md:col-span-5 grid grid-rows-3 gap-3">
-        <div class="bg-white/95 px-5 py-3.5 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
-          <span class="text-sm font-bold text-gray-700">Hidden Junk Cleared</span>
-          <span class="text-base font-black text-emerald-600">15&ndash;30 GB</span>
-        </div>
-        <div class="bg-white/95 px-5 py-3.5 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
-          <span class="text-sm font-bold text-gray-700">Full System Scan</span>
-          <span class="text-base font-black text-emerald-600">60 Sec</span>
-        </div>
-        <div class="bg-white/95 px-5 py-3.5 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
-          <span class="text-sm font-bold text-gray-700">100% Safe Guarantee</span>
-          <span class="text-base font-black text-emerald-600">7-Day Undo</span>
-        </div>
-      </div>
-    </div>
+    </section>
   </main>
 
-  <!-- 3-Pillar Section (Simple, Everyday-Friendly Copy for Windows, Mac & Linux) -->
-  <section id="purchase" class="py-16 px-6 bg-white/60 border-t border-emerald-100/80">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-2">SIMPLE 3-IN-1 CLEANUP FOR WINDOWS, MAC &amp; LINUX</div>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Everything You Need to Clean, Speed Up &amp; Protect Your Computer</h2>
-        <p class="text-sm sm:text-base text-gray-600 mt-2">Built for everyday users on Windows, Mac, and Linux—no technical knowledge required.</p>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>SWEEPR Cleaner Inc.</strong> · Fast, safe cleanup for Windows, Mac, Linux, iPhone &amp; Android.<br />
+        <span>© 2026 SWEEPR Cleaner Inc. All rights reserved.</span>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-        <!-- Pillar 1 -->
-        <div class="glass-card p-6 sm:p-7">
-          <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-4 shadow-2xs">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </div>
-          <h3 class="font-extrabold text-lg mb-2 text-gray-900">1. Deep Junk &amp; Clutter Clean</h3>
-          <p class="text-sm text-gray-600 leading-relaxed">Safely clear out old temporary files, system leftovers, browser clutter, and hidden files from apps like Teams, Zoom, Slack, and Discord in one click.</p>
-        </div>
-
-        <!-- Pillar 2 -->
-        <div class="glass-card p-6 sm:p-7">
-          <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-4 shadow-2xs">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <h3 class="font-extrabold text-lg mb-2 text-gray-900">2. Faster Startup &amp; App Uninstaller</h3>
-          <p class="text-sm text-gray-600 leading-relaxed">Stop background apps that slow down your computer when it turns on, free up memory for smoother browsing and gaming, and completely remove unwanted programs.</p>
-        </div>
-
-        <!-- Pillar 3 -->
-        <div class="glass-card p-6 sm:p-7">
-          <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-4 shadow-2xs">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          </div>
-          <h3 class="font-extrabold text-lg mb-2 text-gray-900">3. 7-Day Safety Undo, Duplicates &amp; Privacy</h3>
-          <p class="text-sm text-gray-600 leading-relaxed">Every cleanup is backed by a 7-day undo safety net so nothing important is ever lost. Spot duplicate photos and large files, shred private documents, and clear tracking cookies.</p>
-        </div>
+      <div class="footer-links">
+        <a href="/pricing">Pricing</a>
+        <a href="/download">Download</a>
+        <a href="/vs/ccleaner">vs CCleaner</a>
+        <a href="/alternatives/ccleaner">Alternatives</a>
+        <a href="/clean">Cleanup Guides</a>
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/refund">Refund Policy</a>
       </div>
-    </div>
-  </section>
-
-  <!-- Frequently Asked Questions & Technical Specifications -->
-  <section id="faq" class="py-16 px-6 bg-white/40 border-t border-emerald-100/60">
-    <div class="max-w-4xl mx-auto">
-      <div class="text-center max-w-2xl mx-auto mb-10">
-        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-2">COMMON QUESTIONS &amp; ARCHITECTURE</div>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Frequently Asked Questions</h2>
-        <p class="text-sm sm:text-base text-gray-600 mt-2">Everything you need to know about safety, licensing, and system performance.</p>
-      </div>
-
-      <div class="space-y-4 text-left">
-        <details class="glass-card p-5 rounded-2xl group cursor-pointer" open>
-          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
-            <span>How is SWEEPR Cleaner different from CCleaner or other legacy cleaners?</span>
-            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
-          </summary>
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            SWEEPR Cleaner is a lightweight, high-performance native utility (under 15 MB) engineered in Rust. Unlike legacy cleaners that install persistent background daemons, upsell third-party toolbars, or collect intrusive telemetry, SWEEPR operates strictly on demand. It analyzes over 400 deep Windows system caches and application bloat repositories, displays transparent file paths before cleanup, and creates a 7-day safety restore point so you stay in total control.
-          </p>
-        </details>
-
-        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
-          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
-            <span>Will SWEEPR Cleaner delete any of my personal photos, documents, or saved passwords?</span>
-            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
-          </summary>
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            Never. SWEEPR Cleaner specifically isolates scratch buffers, redundant driver staging packages, build artifacts, shader caches, and temporary web assets. Your personal documents, desktop files, browser login cookies, and media libraries are strictly protected by our safety engine. Furthermore, our built-in 7-day undo safety net ensures any cleaned item can be restored instantly with a single click.
-          </p>
-        </details>
-
-        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
-          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
-            <span>How many devices does one SWEEPR Cleaner license cover?</span>
-            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
-          </summary>
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            Every SWEEPR Cleaner Pro license covers up to 3 Desktop PCs across Windows 11, Windows 10, macOS, and Linux. You can manage or reassign active device activations anytime through your secure web account portal without contacting support.
-          </p>
-        </details>
-
-        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
-          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
-            <span>Does SWEEPR Cleaner run in the background or slow down my PC?</span>
-            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
-          </summary>
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            Zero background overhead. When you close SWEEPR Cleaner, it releases all system memory and terminates cleanly. We do not register persistent startup services, system tray monitors, or scheduled popup nags that drain CPU cycles and battery life.
-          </p>
-        </details>
-
-        <details class="glass-card p-5 rounded-2xl group cursor-pointer">
-          <summary class="font-extrabold text-base text-gray-900 list-none flex items-center justify-between">
-            <span>Can I cancel my subscription anytime?</span>
-            <span class="text-emerald-600 font-bold transition-transform group-open:rotate-180">&darr;</span>
-          </summary>
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            Yes. You can cancel your subscription with a single click inside your online dashboard at any time with no questions asked or phone calls required. All orders are backed by an unconditional 14-day money-back guarantee.
-          </p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="mt-auto py-8 text-center text-gray-500 text-sm border-t border-gray-100">
-    <div class="flex flex-wrap justify-center gap-4 sm:gap-6 px-4 mb-4">
-      <a href="/clean/folder/windows-temp" class="hover:text-emerald-600 transition-colors">Windows Temp Cleanup Guide</a>
-      <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
-      <a href="/terms" class="hover:text-emerald-600 transition-colors">EULA &amp; Terms of Service</a>
-      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Uninstall Help</a>
-    </div>
-    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
-    <div class="mt-3 flex justify-center">
-      <a href="https://sitepatent.com/?utm_source=sweeprcleaner.com&utm_medium=badge" target="_blank" rel="nofollow noopener noreferrer">
-        <img src="https://sitepatent.com/api/badge?style=classic" alt="Featured tool on SitePatent" width="155" height="36" class="h-9 opacity-80 hover:opacity-100 transition-opacity" loading="lazy" />
-      </a>
     </div>
   </footer>
 
-  <div id="google_translate_element" style="display:none !important;"></div>
-  <script src="/i18n.js" defer></script>
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
+  <!-- Dynamic Geo-Currency, Device/OS & Add-On Pricing Engine -->
+  <script>
+    (function () {
+      // 1. Complete Multi-Currency Fallback Catalog (Matches server/src/pricing.ts 1:1)
+      var FALLBACK_PRICING = {
+        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', intro: 1.99, monthly: 9.99, addonAnnual: 9.99, fmt: function(v) { return '£' + v.toFixed(2); } },
+        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.42', annualStrike: '$155.88', intro: 1.99, monthly: 12.99, addonAnnual: 9.99, fmt: function(v) { return '$' + v.toFixed(2); } },
+        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€5.00', annualStrike: '€143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, fmt: function(v) { return '€' + v.toFixed(2); } },
+        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.50', annualStrike: 'CA$203.88', intro: 2.99, monthly: 16.99, addonAnnual: 9.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
+        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$227.88', intro: 2.99, monthly: 18.99, addonAnnual: 9.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
+        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.17', annualStrike: 'NZ$239.88', intro: 2.99, monthly: 19.99, addonAnnual: 9.99, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
+        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 5.00', annualStrike: 'CHF 143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
+        sek: { code: 'sek', symbol: 'kr', label: 'Sweden (SEK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', intro: 25, monthly: 129, addonAnnual: 99, fmt: function(v) { return Math.round(v) + ' kr'; } },
+        nok: { code: 'nok', symbol: 'kr', label: 'Norway (NOK)', annual: 649, annualEq: '54 kr', annualStrike: '1 548 kr', intro: 25, monthly: 129, addonAnnual: 99, fmt: function(v) { return Math.round(v) + ' kr'; } },
+        dkk: { code: 'dkk', symbol: 'kr.', label: 'Denmark (DKK)', annual: 449, annualEq: '37 kr.', annualStrike: '1 068 kr.', intro: 15, monthly: 89, addonAnnual: 69, fmt: function(v) { return Math.round(v) + ' kr.'; } },
+        pln: { code: 'pln', symbol: 'zł', label: 'Poland (PLN)', annual: 249.99, annualEq: '20.83 zł', annualStrike: '599.88 zł', intro: 9.99, monthly: 49.99, addonAnnual: 39.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
+        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9800, annualEq: '¥817', annualStrike: '¥23,760', intro: 300, monthly: 1980, addonAnnual: 1500, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
+        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 2999, annualEq: '₹250', annualStrike: '₹7,188', intro: 199, monthly: 599, addonAnnual: 799, fmt: function(v) { return '₹' + Math.round(v).toLocaleString(); } },
+        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$203.88', intro: 2.99, monthly: 16.99, addonAnnual: 9.99, fmt: function(v) { return 'S$' + v.toFixed(2); } },
+        brl: { code: 'brl', symbol: 'R$', label: 'Brazil (BRL)', annual: 249.90, annualEq: 'R$20.83', annualStrike: 'R$598.80', intro: 9.90, monthly: 49.90, addonAnnual: 49.90, fmt: function(v) { return 'R$' + v.toFixed(2); } }
+      };
+
+      var OS_PROFILES = {
+        windows: {
+          badge: 'For Windows 11 & 10',
+          ctaLabel: 'Download Free for Windows',
+          ctaMeta: 'Quick 10-second install',
+          href: '/download?platform=windows',
+          path1: 'Old temporary files and leftover Chrome, Edge & Brave browser clutter',
+          path2: 'Old Windows Update files and leftover junk from deleted apps',
+          path3: 'Extra copies of identical photos and files in Pictures & Downloads'
+        },
+        mac: {
+          badge: 'For Mac (Apple Silicon & Intel)',
+          ctaLabel: 'Download Free for Mac',
+          ctaMeta: 'Universal Mac Installer',
+          href: '/download?platform=mac',
+          path1: 'Old temporary files and leftover Safari & Chrome browser clutter',
+          path2: 'Leftover files from deleted Mac apps and old system logs',
+          path3: 'Extra copies of identical photos and files in Pictures & Downloads'
+        },
+        ios: {
+          badge: 'For iPhone & iPad',
+          ctaLabel: 'Get SWEEPR Cleaner for iPhone',
+          ctaMeta: 'iPhone & iPad App',
+          href: '/download?platform=ios',
+          path1: 'Similar burst photos, blurry pictures & duplicate screenshots',
+          path2: 'Large videos & chat clips (shrinks file size without losing quality)',
+          path3: 'Duplicate contacts cleanup & 80% battery health charge alert'
+        },
+        android: {
+          badge: 'For Android Phones & Tablets',
+          ctaLabel: 'Get SWEEPR Cleaner for Android',
+          ctaMeta: 'Android App · Fast & Light',
+          href: '/download?platform=android',
+          path1: 'Hidden app cache clutter & old leftover installer files',
+          path2: 'Camera & WhatsApp duplicate photos, blurry shots & old screenshots',
+          path3: 'Phone cooling alert & 80% battery health charge reminder'
+        },
+        linux: {
+          badge: 'For Linux Computers',
+          ctaLabel: 'Download Free for Linux',
+          ctaMeta: 'AppImage / DEB',
+          href: '/download?platform=linux',
+          path1: 'Browser cache clutter & old temporary trash files',
+          path2: 'Old system logs and leftover package files',
+          path3: 'Extra copies of identical files in your Downloads & Home folders'
+        }
+      };
+
+      var state = {
+        currency: 'gbp',
+        plan: 'annual',
+        os: 'windows',
+        apiPricing: null
+      };
+
+      function detectInitialOS() {
+        var ua = (navigator.userAgent || '').toLowerCase();
+        if (/iphone|ipad|ipod/.test(ua)) return 'ios';
+        if (/android/.test(ua)) return 'android';
+        if (/macintosh|mac os x/.test(ua)) return 'mac';
+        if (/linux/.test(ua)) return 'linux';
+        return 'windows';
+      }
+
+      function detectInitialCurrencyByLocale() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var qCurr = (params.get('currency') || '').toLowerCase();
+          if (qCurr && FALLBACK_PRICING[qCurr]) return qCurr;
+          var saved = (localStorage.getItem('sweepr_currency') || '').toLowerCase();
+          if (saved && FALLBACK_PRICING[saved]) return saved;
+          var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
+          if (tz.indexOf('london') !== -1 || tz.indexOf('belfast') !== -1) return 'gbp';
+          if (tz.indexOf('tokyo') !== -1) return 'jpy';
+          if (tz.indexOf('kolkata') !== -1 || tz.indexOf('calcutta') !== -1) return 'inr';
+          if (tz.indexOf('sydney') !== -1 || tz.indexOf('melbourne') !== -1) return 'aud';
+          if (tz.indexOf('auckland') !== -1) return 'nzd';
+          if (tz.indexOf('toronto') !== -1 || tz.indexOf('vancouver') !== -1) return 'cad';
+          if (tz.indexOf('zurich') !== -1) return 'chf';
+          if (tz.indexOf('stockholm') !== -1) return 'sek';
+          if (tz.indexOf('oslo') !== -1) return 'nok';
+          if (tz.indexOf('copenhagen') !== -1) return 'dkk';
+          if (tz.indexOf('warsaw') !== -1) return 'pln';
+          if (tz.indexOf('europe/') === 0) return 'eur';
+          if (tz.indexOf('america/') === 0) return 'usd';
+        } catch (e) {}
+        return 'gbp';
+      }
+
+      function applyOS(osKey) {
+        if (!OS_PROFILES[osKey]) osKey = 'windows';
+        state.os = osKey;
+        var p = OS_PROFILES[osKey];
+        var badge = document.getElementById('detectedDeviceBadge');
+        var cta = document.getElementById('primaryDownloadCta');
+        var label = document.getElementById('primaryDownloadLabel');
+        var meta = document.getElementById('primaryDownloadMeta');
+        var path1 = document.getElementById('auditPath1');
+        var path2 = document.getElementById('auditPath2');
+        var path3 = document.getElementById('auditPath3');
+
+        if (badge) badge.textContent = p.badge;
+        if (cta) cta.setAttribute('href', p.href);
+        if (label) label.textContent = p.ctaLabel;
+        if (meta) meta.textContent = p.ctaMeta;
+        if (path1) path1.textContent = p.path1;
+        if (path2) path2.textContent = p.path2;
+        if (path3) path3.textContent = p.path3;
+
+        var chips = document.querySelectorAll('.os-chip');
+        for (var i = 0; i < chips.length; i++) {
+          var isMatch = chips[i].getAttribute('data-os') === osKey;
+          chips[i].setAttribute('aria-pressed', isMatch ? 'true' : 'false');
+        }
+      }
+
+      function renderPricing() {
+        var c = FALLBACK_PRICING[state.currency] || FALLBACK_PRICING.gbp;
+        var api = state.apiPricing && state.apiPricing.currency === state.currency ? state.apiPricing : null;
+
+        var annualBase = api ? api.annualAmountMajor : c.annual;
+        var monthlyBase = api && api.monthlyAmountMajor ? api.monthlyAmountMajor : c.monthly;
+        var monthlyRenew = api ? api.monthlyFormatted : c.fmt(c.monthly);
+        var annualEq = api ? api.annualMonthlyEqFormatted : c.annualEq;
+        var annualStrike = api ? api.annualCompareAtFormatted : c.annualStrike;
+        var addonRate = api && api.batteryCareAnnualAmountMajor ? api.batteryCareAnnualAmountMajor : c.addonAnnual;
+        var addonFormatted = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : c.fmt(c.addonAnnual);
+
+        var batteryChecked = document.getElementById('addonBatteryCheckbox') && document.getElementById('addonBatteryCheckbox').checked;
+        var cloudChecked = document.getElementById('addonCloudCheckbox') && document.getElementById('addonCloudCheckbox').checked;
+        var addonCount = (batteryChecked ? 1 : 0) + (cloudChecked ? 1 : 0);
+
+        var baseToday = state.plan === 'annual' ? annualBase : monthlyBase;
+        var totalToday = baseToday + addonCount * addonRate;
+        var formattedTotal = c.fmt(totalToday);
+
+        var figEl = document.getElementById('giantPriceFigure');
+        var perEl = document.getElementById('giantPricePeriod');
+        var strikeEl = document.getElementById('giantPriceStrike');
+        var capEl = document.getElementById('giantPriceCaption');
+        var locEl = document.getElementById('detectedLocationLabel');
+        var swAnnualSub = document.getElementById('switchAnnualSub');
+        var swMonthlySub = document.getElementById('switchMonthlySub');
+        var addonBatTag = document.getElementById('addonBatteryPriceTag');
+        var addonCloudTag = document.getElementById('addonCloudPriceTag');
+        var scrubBat = document.getElementById('scrubberBatteryPrice');
+        var scrubCloud = document.getElementById('scrubberCloudPrice');
+        var tilePlum = document.getElementById('tilePlumPrice');
+        var secBadge = document.getElementById('secondaryOrderPriceBadge');
+        var checkoutBtn = document.getElementById('w3CheckoutBtn');
+        var checkoutTotal = document.getElementById('w3CheckoutBtnTotal');
+        var faqPlan = document.getElementById('faqPlanAnswer');
+        var faqAddon = document.getElementById('faqAddonAnswer');
+
+        if (locEl) locEl.textContent = 'Region: ' + c.label;
+        if (swAnnualSub) swAnnualSub.textContent = annualEq + '/mo equivalent';
+        if (swMonthlySub) swMonthlySub.textContent = monthlyRenew + '/month · Cancel anytime';
+        if (addonBatTag) addonBatTag.textContent = '+' + addonFormatted + '/yr';
+        if (addonCloudTag) addonCloudTag.textContent = '+' + addonFormatted + '/yr';
+        if (scrubBat) scrubBat.textContent = '+' + addonFormatted + '/yr';
+        if (scrubCloud) scrubCloud.textContent = '+' + addonFormatted + '/yr';
+        if (tilePlum) tilePlum.textContent = '+' + addonFormatted + '/yr';
+        if (secBadge) secBadge.textContent = c.fmt(annualBase) + '/yr';
+
+        if (state.plan === 'annual') {
+          if (figEl) figEl.textContent = formattedTotal;
+          if (perEl) perEl.textContent = addonCount > 0 ? '/year (with ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '') + ')' : '/year';
+          if (strikeEl) {
+            strikeEl.style.display = '';
+            strikeEl.textContent = annualStrike + '/yr';
+          }
+          if (capEl) {
+            capEl.textContent = 'Covers up to 3 Computers (PC/Mac) + 2 Phones (iPhone/Android). Billed yearly (' + annualEq + '/mo equivalent). Cancel anytime in 1 click.';
+          }
+          if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/yr →';
+        } else {
+          if (figEl) figEl.textContent = formattedTotal;
+          if (perEl) perEl.textContent = addonCount > 0 ? 'today (monthly + ' + addonCount + ' add-on' + (addonCount > 1 ? 's' : '') + ')' : '/month';
+          if (strikeEl) {
+            strikeEl.style.display = 'none';
+          }
+          if (capEl) {
+            capEl.textContent = 'Billed monthly at ' + monthlyRenew + '/mo' + (addonCount > 0 ? ' (+ ' + addonCount + ' yearly add-on' + (addonCount > 1 ? 's' : '') + ')' : '') + '. Covers up to 3 Computers + 2 Phones. Cancel anytime in 1 click.';
+          }
+          if (checkoutTotal) checkoutTotal.textContent = (addonCount > 0 ? formattedTotal + ' today →' : monthlyRenew + '/mo →');
+        }
+
+        if (faqPlan) {
+          faqPlan.textContent = 'Both plans give you full access on up to 3 computers and 2 phones. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving 58%, or ' + annualEq + '/month), while the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
+        }
+        if (faqAddon) {
+          faqAddon.textContent = 'Each optional add-on is ' + addonFormatted + '/year. Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';
+        }
+
+        // Update deep links to /order with selected plan, currency & add-ons
+        var addonsArr = [];
+        if (batteryChecked) addonsArr.push('battery_care');
+        if (cloudChecked) addonsArr.push('cloud_vault');
+        var orderHref = '/order?plan=' + encodeURIComponent(state.plan) + '&currency=' + encodeURIComponent(state.currency);
+        if (addonsArr.length > 0) {
+          orderHref += '&addons=' + encodeURIComponent(addonsArr.join(','));
+        }
+        if (checkoutBtn) checkoutBtn.setAttribute('href', orderHref);
+        var secCta = document.getElementById('secondaryOrderCta');
+        if (secCta) secCta.setAttribute('href', orderHref);
+      }
+
+      function fetchServerGeoPricing(currencyOverride) {
+        var url = '/api/pricing' + (currencyOverride ? '?currency=' + encodeURIComponent(currencyOverride) : '');
+        fetch(url, { credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data || !data.pricing) return;
+            var p = data.pricing;
+            var curr = (p.currency || '').toLowerCase();
+            if (curr && FALLBACK_PRICING[curr]) {
+              state.currency = curr;
+              state.apiPricing = p;
+              var sel = document.getElementById('globalCurrencySelect');
+              if (sel) sel.value = curr;
+              renderPricing();
+            }
+          })
+          .catch(function () {});
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        // 1. OS Detection & Switcher
+        applyOS(detectInitialOS());
+        var osBtns = document.querySelectorAll('.os-chip');
+        for (var i = 0; i < osBtns.length; i++) {
+          osBtns[i].addEventListener('click', function () {
+            applyOS(this.getAttribute('data-os'));
+          });
+        }
+
+        // 2. 3-Stage Scrubber Tabs
+        var scrubTabs = document.querySelectorAll('.scrubber-tab');
+        for (var j = 0; j < scrubTabs.length; j++) {
+          scrubTabs[j].addEventListener('click', function () {
+            var stage = this.getAttribute('data-stage');
+            for (var k = 0; k < scrubTabs.length; k++) {
+              scrubTabs[k].setAttribute('aria-selected', scrubTabs[k] === this ? 'true' : 'false');
+            }
+            var panels = document.querySelectorAll('.scrubber-panel');
+            for (var m = 0; m < panels.length; m++) {
+              panels[m].classList.toggle('active', panels[m].id === 'panel-' + stage);
+            }
+          });
+        }
+
+        // 3. Binary Plan Switcher
+        var tabAnnual = document.getElementById('planTabAnnual');
+        var tabMonthly = document.getElementById('planTabMonthly');
+        function setPlan(planKey) {
+          state.plan = planKey;
+          if (tabAnnual) tabAnnual.setAttribute('aria-selected', planKey === 'annual' ? 'true' : 'false');
+          if (tabMonthly) tabMonthly.setAttribute('aria-selected', planKey === 'monthly' ? 'true' : 'false');
+          renderPricing();
+        }
+        if (tabAnnual) tabAnnual.addEventListener('click', function () { setPlan('annual'); });
+        if (tabMonthly) tabMonthly.addEventListener('click', function () { setPlan('monthly'); });
+
+        // 4. Add-on Checkboxes
+        var batBox = document.getElementById('addonBatteryCheckbox');
+        var cloudBox = document.getElementById('addonCloudCheckbox');
+        if (batBox) batBox.addEventListener('change', renderPricing);
+        if (cloudBox) cloudBox.addEventListener('change', renderPricing);
+
+        // 5. Currency Selector + Instant Geo-Hydration
+        state.currency = detectInitialCurrencyByLocale();
+        var sel = document.getElementById('globalCurrencySelect');
+        if (sel && FALLBACK_PRICING[state.currency]) {
+          sel.value = state.currency;
+        }
+        if (sel) {
+          sel.addEventListener('change', function () {
+            state.currency = this.value;
+            try { localStorage.setItem('sweepr_currency', state.currency); } catch (e) {}
+            renderPricing();
+            fetchServerGeoPricing(state.currency);
+          });
+        }
+
+        renderPricing();
+        fetchServerGeoPricing( new URLSearchParams(window.location.search).get('currency') || '' );
+      });
+    })();
+  </script>
 </body>
 </html>

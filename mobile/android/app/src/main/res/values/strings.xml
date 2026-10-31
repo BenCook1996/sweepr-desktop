@@ -523,7 +523,7 @@
     <string name="cloud_sync_note">Deleting duplicates on your phone also frees that space in your cloud backup.</string>
     <string name="vault_eyebrow">PRIVATE FILE VAULT</string>
     <string name="vault_title">Private Photo &amp; Document Vault</string>
-    <string name="vault_subtitle">Lock sensitive photos, IDs &amp; documents with local AES-256 encryption.</string>
+    <string name="vault_subtitle">Lock sensitive photos, IDs &amp; documents with a private password only you know.</string>
     <string name="vault_password_label">Your vault password (at least 8 characters)</string>
     <string name="vault_show">Show</string>
     <string name="vault_hide">Hide</string>

@@ -5,39 +5,39 @@ import StoreKit
 import SwiftUI
 import UIKit
 
-// MARK: - Color Palette (Candidate 5: SWEEPR Signature Hybrid — Obsidian Dark & Mint-Pearl Light)
+// MARK: - Color Palette (M3 Warm Stone-Sage & Forest Green Theme)
 extension Color {
-    static let sweeprEmerald = Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
-    static let sweeprDarkEmerald = Color(red: 5 / 255, green: 150 / 255, blue: 105 / 255)
-    static let cardBackground = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x101829)
+    static let sweeprEmerald = Color.sweeprAdaptive(light: 0x0D6847, dark: 0x22996B)
+    static let sweeprDarkEmerald = Color(red: 9 / 255, green: 79 / 255, blue: 53 / 255)
+    static let cardBackground = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x171D1A)
 
-    /// Emerald 700 (#047857): gradient end stop.
-    static let sweeprDeepEmerald = Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
-    /// Emerald 400 (#34d399): highlights on dark surfaces.
-    static let sweeprLightEmerald = Color(red: 52 / 255, green: 211 / 255, blue: 153 / 255)
-    /// Cyan (#06b6d4): secondary bioluminescent accent.
-    static let sweeprCyan = Color(red: 6 / 255, green: 182 / 255, blue: 212 / 255)
-    /// Indigo (#6366f1): Contacts & Apps storage segment accent.
-    static let sweeprIndigo = Color(red: 99 / 255, green: 102 / 255, blue: 241 / 255)
-    /// Amber (#f59e0b): Battery Care & warning accent.
-    static let sweeprAmber = Color(red: 245 / 255, green: 158 / 255, blue: 11 / 255)
-    /// Teal (#0d9488): secondary chart / callout colour.
-    static let sweeprTeal = Color(red: 13 / 255, green: 148 / 255, blue: 136 / 255)
-    /// Mint (#ecfdf5): light-mode tinted surfaces.
-    static let sweeprMint = Color(red: 236 / 255, green: 253 / 255, blue: 245 / 255)
-    /// Rose (#f43f5e): destructive / trash highlight.
-    static let sweeprRose = Color(red: 244 / 255, green: 63 / 255, blue: 94 / 255)
+    /// Deep Forest Ink (#073825): gradient end stop.
+    static let sweeprDeepEmerald = Color(red: 7 / 255, green: 56 / 255, blue: 37 / 255)
+    /// Soft Sage Mint (#9ADBC0): highlights on dark surfaces & brush handle.
+    static let sweeprLightEmerald = Color(red: 154 / 255, green: 219 / 255, blue: 192 / 255)
+    /// Cyan (#0A2870 / #3B82F6): secondary cobalt accent.
+    static let sweeprCyan = Color(red: 10 / 255, green: 40 / 255, blue: 112 / 255)
+    /// Indigo (#3C1766): Contacts & Apps storage segment accent.
+    static let sweeprIndigo = Color(red: 60 / 255, green: 23 / 255, blue: 102 / 255)
+    /// Amber (#B85D00): Battery Care & warning accent.
+    static let sweeprAmber = Color(red: 184 / 255, green: 93 / 255, blue: 0 / 255)
+    /// Teal (#145C3E): secondary chart / callout colour.
+    static let sweeprTeal = Color(red: 20 / 255, green: 92 / 255, blue: 62 / 255)
+    /// Soft Sage (#E1F3EC): light-mode tinted surfaces.
+    static let sweeprMint = Color(red: 225 / 255, green: 243 / 255, blue: 236 / 255)
+    /// Rose (#B91C1C): destructive / trash highlight.
+    static let sweeprRose = Color(red: 185 / 255, green: 28 / 255, blue: 28 / 255)
 
-    // Candidate 5 Adaptive Surfaces: Obsidian Dark (#070B14 / #101829) & Mint-Pearl Light (#F4FBF7 / #FFFFFF)
-    static let sweeprCanvas = Color.sweeprAdaptive(light: 0xF4FBF7, dark: 0x070B14)
-    static let sweeprPanel = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x101829)
-    static let sweeprPanelAlt = Color.sweeprAdaptive(light: 0xECFDF5, dark: 0x162138)
-    static let sweeprAccentText = Color.sweeprAdaptive(light: 0x047857, dark: 0x34D399)
-    static let sweeprMutedText = Color.sweeprAdaptive(light: 0x475569, dark: 0x94A3B8)
+    // M3 Adaptive Surfaces: Warm Stone-Sage Light (#F4F5F3 / #FFFFFF) & Forest Charcoal Dark (#0F1311 / #171D1A)
+    static let sweeprCanvas = Color.sweeprAdaptive(light: 0xF4F5F3, dark: 0x0F1311)
+    static let sweeprPanel = Color.sweeprAdaptive(light: 0xFFFFFF, dark: 0x171D1A)
+    static let sweeprPanelAlt = Color.sweeprAdaptive(light: 0xECEEE9, dark: 0x1F2622)
+    static let sweeprAccentText = Color.sweeprAdaptive(light: 0x073825, dark: 0x92E8C5)
+    static let sweeprMutedText = Color.sweeprAdaptive(light: 0x4B544E, dark: 0x9AA59E)
     static let sweeprLine = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
-            ? UIColor(sweeprHex: 0x94A3B8, alpha: 0.16)
-            : UIColor(sweeprHex: 0xD1FAE5)
+            ? UIColor(sweeprHex: 0x2C3530, alpha: 1.0)
+            : UIColor(sweeprHex: 0xD5D9D4)
     })
 
     static func sweeprAdaptive(light: UInt32, dark: UInt32) -> Color {
@@ -223,22 +223,22 @@ struct SweeprLogoView: View {
         Canvas { context, canvasSize in
             let s = min(canvasSize.width, canvasSize.height) / 100.0
             let bgStart = isDark
-                ? Color(red: 236 / 255, green: 253 / 255, blue: 245 / 255)
-                : Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
+                ? Color(red: 225 / 255, green: 243 / 255, blue: 236 / 255)
+                : Color(red: 20 / 255, green: 92 / 255, blue: 62 / 255)
             let bgEnd = isDark
-                ? Color(red: 209 / 255, green: 250 / 255, blue: 229 / 255)
-                : Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+                ? Color(red: 197 / 255, green: 232 / 255, blue: 218 / 255)
+                : Color(red: 7 / 255, green: 56 / 255, blue: 37 / 255)
             let fgPrimary = isDark
-                ? Color(red: 5 / 255, green: 150 / 255, blue: 105 / 255)
+                ? Color(red: 13 / 255, green: 104 / 255, blue: 71 / 255)
                 : Color.white
             let fgSecondary = isDark
-                ? Color(red: 16 / 255, green: 185 / 255, blue: 129 / 255)
-                : Color(red: 167 / 255, green: 243 / 255, blue: 208 / 255)
+                ? Color(red: 20 / 255, green: 92 / 255, blue: 62 / 255)
+                : Color(red: 154 / 255, green: 219 / 255, blue: 192 / 255)
             let slitColor = isDark
-                ? Color(red: 209 / 255, green: 250 / 255, blue: 229 / 255)
-                : Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+                ? Color(red: 197 / 255, green: 232 / 255, blue: 218 / 255)
+                : Color(red: 7 / 255, green: 56 / 255, blue: 37 / 255)
             let sparkleColor = isDark
-                ? Color(red: 4 / 255, green: 120 / 255, blue: 87 / 255)
+                ? Color(red: 7 / 255, green: 56 / 255, blue: 37 / 255)
                 : Color.white
 
             // 1. Squircle Container
@@ -632,7 +632,7 @@ class AppViewModel: ObservableObject {
         isWorking = false
         refreshStorage()
         if optimizedCount > 0 {
-            let gpsNote = strippedCount > 0 ? " · Stripped GPS from \(strippedCount) photos" : ""
+            let gpsNote = strippedCount > 0 ? " · Removed map location from \(strippedCount) photos" : ""
             alertMessage = "Optimized \(optimizedCount) photos! Saved \(formatByteCount(savedBytesTotal))\(gpsNote)."
             requestAppStoreReview()
         } else {
@@ -735,7 +735,7 @@ class AppViewModel: ObservableObject {
             let result = try await PhotoScanner.compressVideo(assetId: id, deleteOriginal: true, preset: preset)
             mediaResult = mediaResult.removing(ids: [id])
             selectedMediaIDs.remove(id)
-            alertMessage = "Video compressed (\(preset.title))! Saved \(formatByteCount(result.savedBytes)) using hardware encoder."
+            alertMessage = "Video compressed (\(preset.title))! Saved \(formatByteCount(result.savedBytes)) without losing quality."
             requestAppStoreReview()
         } catch {
             CrashLogger.recordError("CompressVideo", error: error)
@@ -1126,7 +1126,7 @@ struct SwipeReviewView: View {
                 Color.sweeprCanvas.ignoresSafeArea()
 
                 VStack(spacing: 12) {
-                    // Top Header Bar with PRO/FREE Badge (Undo is at bottom-center)
+                    // Top Header Bar with Staged Counter + PRO/FREE Badge (M3 Architecture)
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Swipe Photo Deck")
@@ -1371,72 +1371,70 @@ struct SwipeReviewView: View {
                             .padding(.horizontal, 16)
                             .padding(.bottom, 10)
 
-                            // Tactile Action Controls (Remove | Undo | Keep)
-                            HStack(spacing: 28) {
+                            // M3 Binary 56pt Thumb Action Row (Bin vs. Keep Photo) + Undo
+                            HStack(spacing: 10) {
                                 Button {
                                     markForTrash(item: item)
                                 } label: {
-                                    VStack(spacing: 4) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color.sweeprRose.opacity(0.14))
-                                                .overlay(Circle().stroke(Color.sweeprRose.opacity(0.45), lineWidth: 1.5))
-                                                .frame(width: 56, height: 56)
-                                            Image(systemName: "xmark")
-                                                .font(.system(size: 20, weight: .black))
-                                                .foregroundColor(.sweeprRose)
-                                        }
-                                        Text("Remove")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.sweeprRose)
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "trash")
+                                            .font(.system(size: 14, weight: .bold))
+                                        Text("Bin (-\(formatByteCount(item.estimatedBytes)))")
+                                            .font(.system(size: 14, weight: .heavy))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
                                     }
+                                    .foregroundColor(.sweeprRose)
+                                    .frame(maxWidth: .infinity, minHeight: 56)
+                                    .background(Color.sweeprRose.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .stroke(Color.sweeprRose.opacity(0.35), lineWidth: 1)
+                                    )
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("Mark current photo for Trash")
 
-                                Button {
-                                    undoLastSwipe()
-                                } label: {
-                                    VStack(spacing: 4) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color.sweeprPanel)
-                                                .overlay(Circle().stroke(Color.sweeprLine, lineWidth: 1))
-                                                .frame(width: 46, height: 46)
-                                            Image(systemName: "arrow.uturn.backward")
-                                                .font(.system(size: 16, weight: .bold))
-                                                .foregroundColor(history.isEmpty ? .sweeprMutedText.opacity(0.4) : .primary)
-                                        }
-                                        Text("Undo")
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .foregroundColor(.sweeprMutedText)
+                                if !history.isEmpty {
+                                    Button {
+                                        undoLastSwipe()
+                                    } label: {
+                                        Image(systemName: "arrow.uturn.backward")
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundColor(.primary)
+                                            .frame(width: 48, height: 56)
+                                            .background(Color.sweeprPanel)
+                                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                    .stroke(Color.sweeprLine, lineWidth: 1)
+                                            )
                                     }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Undo last swipe")
                                 }
-                                .buttonStyle(.plain)
-                                .disabled(history.isEmpty)
-                                .accessibilityLabel("Undo last swipe")
 
                                 Button {
                                     keepCurrent(item: item)
                                 } label: {
-                                    VStack(spacing: 4) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color.sweeprEmerald.opacity(0.15))
-                                                .overlay(Circle().stroke(Color.sweeprEmerald.opacity(0.5), lineWidth: 1.5))
-                                                .frame(width: 56, height: 56)
-                                            Image(systemName: "checkmark")
-                                                .font(.system(size: 20, weight: .black))
-                                                .foregroundColor(.sweeprEmerald)
-                                        }
-                                        Text("Keep")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.sweeprEmerald)
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 14, weight: .bold))
+                                        Text(item.isVideo ? "Keep Video" : "Keep Photo")
+                                            .font(.system(size: 14, weight: .heavy))
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
                                     }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity, minHeight: 56)
+                                    .background(Color.sweeprEmerald)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel("Keep current photo")
                             }
+                            .padding(.horizontal, 16)
                             .padding(.top, 4)
                         }
                     }

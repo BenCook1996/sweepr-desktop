@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Desktop App — 4 Taste-Skill Redesigns (Windows 11 &amp; macOS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       4 DESKTOP APP REDESIGNS · TASTE-SKILL + 4 CORE UX LAWS
+       1. Achromatic Ledger / Framed Sheet (Seed 270323531 / 404)
+       2. Editorial Greeting / 1-Button Smart Sweep (Seed 505)
+       3. Native OS Storage Bar & Tinted Category Tiles (Seed 606)
+       4. Master-Detail Dual-Pane Inspector (Windows Explorer / Finder idiom)
+       ========================================================================== */
+    :root {
+      --bg-ground: #f4f5f3;
+      --bg-surface: #ffffff;
+      --bg-subtle: #eceee9;
+      --bg-active: #e2e5e0;
+      --ink-1: #0c0f0e;
+      --ink-2: #525a56;
+      --ink-3: #838b87;
+      --line: #dcdfda;
+      --line-soft: #eceee9;
+      --accent: #0f6e4b;
+      --accent-soft: #e3f3ec;
+      --accent-ink: #093d29;
+      --cobalt-tint: #dcf1ff;
+      --cobalt-ink: #0a3a80;
+      --amber-tint: #f7ecd5;
+      --amber-ink: #6e4208;
+      --plum-tint: #efe6fa;
+      --plum-ink: #431c70;
+      --positive: #247b50;
+      --danger: #b9252b;
+      --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body[data-theme="dark"] {
+      --bg-ground: #09090b;
+      --bg-surface: #111113;
+      --bg-subtle: #18181b;
+      --bg-active: #222226;
+      --ink-1: #f4f4f6;
+      --ink-2: #9ca0a8;
+      --ink-3: #686c75;
+      --line: #232329;
+      --line-soft: #1b1b20;
+      --accent: #249c6e;
+      --accent-soft: #112920;
+      --accent-ink: #8ce5c0;
+      --cobalt-tint: #132238;
+      --cobalt-ink: #a3c6ff;
+      --amber-tint: #2b2112;
+      --amber-ink: #f2c078;
+      --plum-tint: #231733;
+      --plum-ink: #d4b8ff;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      background-color: var(--bg-ground);
+      color: var(--ink-1);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button, input {
+      font: inherit;
+      color: inherit;
+    }
+
+    /* Sticky Top Switcher & 4 UX Laws Bar */
+    .ux-switcher-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background-color: #0c0f0e;
+      color: #f4f5f3;
+      padding: 10px 24px;
+      border-bottom: 1px solid #232329;
+    }
+
+    .ux-switcher-top {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ux-switcher-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ux-var-btn {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: none;
+      background-color: #1c2220;
+      color: #b7c0bc;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .ux-var-btn.active {
+      background-color: #0f6e4b;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .ux-law-strip {
+      max-width: 1440px;
+      margin: 8px auto 0;
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      font-size: 12px;
+      color: #b7c0bc;
+    }
+
+    .ux-law-chip {
+      background-color: #161b19;
+      padding: 7px 11px;
+      border-radius: 6px;
+    }
+
+    .ux-law-chip strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    /* Desktop Variation Panes */
+    .desk-design-pane {
+      display: none;
+      max-width: 1440px;
+      margin: 16px auto 36px;
+      padding: 0 16px;
+    }
+
+    .desk-design-pane.active {
+      display: block;
+    }
+
+    body.stack-all-mode .desk-design-pane {
+      display: block;
+      margin-bottom: 48px;
+    }
+
+    .window-frame {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background-color: var(--bg-ground);
+      overflow: hidden;
+    }
+
+    .window-titlebar {
+      height: 38px;
+      padding: 0 16px;
+      background-color: var(--bg-subtle);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-2);
+    }
+
+    /* Fitts's Law Primary Action Buttons */
+    .btn-fitts-sweep {
+      min-height: 44px;
+      padding: 0 20px;
+      border-radius: 7px;
+      border: none;
+      background-color: var(--accent);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-fitts-ghost {
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-surface);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       DESIGN 1: ACHROMATIC LEDGER / FRAMED SHEET (Seed 270323531 / 404)
+       ========================================================================== */
+    .d1-shell {
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+      min-height: 680px;
+    }
+
+    .d1-sidebar {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .d1-nav-btn {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--ink-2);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+
+    .d1-nav-btn.active {
+      background-color: var(--bg-active);
+      color: var(--ink-1);
+      font-weight: 600;
+    }
+
+    .d1-sheet {
+      margin: 8px 8px 8px 0;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .d1-topbar {
+      height: 56px;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-strip-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .kpi-cell {
+      padding: 14px 18px;
+    }
+
+    .kpi-cell + .kpi-cell {
+      border-left: 1px solid var(--line);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      padding: 10px 18px;
+      text-align: left;
+      font-size: 12px;
+      color: var(--ink-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .data-table td {
+      height: 48px;
+      padding: 8px 18px;
+      border-bottom: 1px solid var(--line-soft);
+      font-size: 13px;
+    }
+
+    .data-table th.num,
+    .data-table td.num {
+      text-align: right;
+    }
+
+    .data-table tbody tr {
+      cursor: pointer;
+    }
+
+    .data-table tbody tr:hover {
+      background-color: var(--bg-subtle);
+    }
+
+    /* ==========================================================================
+       DESIGN 2: EDITORIAL GREETING / 1-BUTTON SMART SWEEP (Seed 505)
+       Zero-friction Hick's Law home: Centred 1100px 12-col grid + tonal panels
+       ========================================================================== */
+    .d2-canvas {
+      background-color: var(--bg-surface);
+      padding: 36px 28px 44px;
+    }
+
+    .d2-centered {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .d2-greeting-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .d2-tonal-panel {
+      grid-column: span 4;
+      min-height: 156px;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .d2-tonal-panel.selected {
+      background-color: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .d2-main-chart-panel {
+      grid-column: span 8;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-surface);
+    }
+
+    .d2-side-power-panel {
+      grid-column: span 4;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* ==========================================================================
+       DESIGN 3: NATIVE OS STORAGE BAR & TINTED CATEGORY TILES (Seed 606)
+       Jakob's Law: Mirrors Windows 11 Storage Settings & macOS System Settings
+       ========================================================================== */
+    .d3-canvas {
+      background-color: var(--bg-surface);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .d3-os-storage-header {
+      padding: 20px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-subtle);
+    }
+
+    .d3-segmented-bar {
+      height: 18px;
+      border-radius: 9px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      display: flex;
+      margin: 14px 0 12px;
+    }
+
+    .d3-seg-piece {
+      height: 100%;
+      cursor: pointer;
+      transition: opacity 120ms ease;
+    }
+
+    .d3-seg-piece:hover {
+      opacity: 0.82;
+    }
+
+    .d3-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .d3-pastel-tile {
+      padding: 22px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 220px;
+    }
+
+    .d3-tile-green {
+      background-color: var(--accent-soft);
+      color: var(--accent-ink);
+    }
+
+    .d3-tile-cobalt {
+      background-color: var(--cobalt-tint);
+      color: var(--cobalt-ink);
+    }
+
+    .d3-tile-amber {
+      background-color: var(--amber-tint);
+      color: var(--amber-ink);
+    }
+
+    .d3-tile-plum {
+      background-color: var(--plum-tint);
+      color: var(--plum-ink);
+    }
+
+    .d3-tile-btn {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--bg-surface);
+      color: var(--ink-1);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       DESIGN 4: MASTER-DETAIL DUAL-PANE INSPECTOR (Power-User Zero-Modal Split)
+       ========================================================================== */
+    .d4-split-shell {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      min-height: 620px;
+      background-color: var(--bg-surface);
+    }
+
+    .d4-master-list {
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .d4-master-row {
+      width: 100%;
+      min-height: 68px;
+      padding: 14px 20px;
+      border: none;
+      border-bottom: 1px solid var(--line-soft);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .d4-master-row.active {
+      background-color: var(--accent-soft);
+      color: var(--accent-ink);
+    }
+
+    .d4-detail-pane {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 1024px) {
+      .ux-law-strip,
+      .d1-shell,
+      .d3-tile-grid,
+      .d4-split-shell {
+        grid-template-columns: 1fr;
+      }
+      .d2-tonal-panel,
+      .d2-main-chart-panel,
+      .d2-side-power-panel {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <!-- STICKY VARIATION SWITCHER & 4 UX LAWS INSPECTOR -->
+  <header class="ux-switcher-chrome">
+    <div class="ux-switcher-top">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="font-size:14px; color:#ffffff;">SWEEPR Desktop App · 4 Redesigns</strong>
+        <div class="ux-switcher-pills" role="tablist" aria-label="Desktop app design variations">
+          <button type="button" class="ux-var-btn active" onclick="selectDeskDesign(1, this)">Design 1: Framed Ledger</button>
+          <button type="button" class="ux-var-btn" onclick="selectDeskDesign(2, this)">Design 2: 1-Button Smart Sweep</button>
+          <button type="button" class="ux-var-btn" onclick="selectDeskDesign(3, this)">Design 3: OS Storage Bar &amp; Tiles</button>
+          <button type="button" class="ux-var-btn" onclick="selectDeskDesign(4, this)">Design 4: Dual-Pane Inspector</button>
+          <button type="button" class="ux-var-btn" onclick="toggleDeskStack(this)" id="deskStackBtn">Compare All 4 Stacked</button>
+          <button type="button" class="ux-var-btn" onclick="toggleDeskTheme()" id="deskThemeBtn">True-Black Dark</button>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+        <a href="/taste-redesigns.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">All Platforms Hub</a>
+        <a href="/taste-website.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Website (4)</a>
+        <a href="/taste-mobile-app.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Mobile Apps (4)</a>
+      </div>
+    </div>
+
+    <div class="ux-law-strip">
+      <div class="ux-law-chip">
+        <strong>Hick's Law (Fewer Choices)</strong>
+        <span id="deskLawHick">4 top-level sidebar destinations; all safe cleanup directories are pre-selected by default.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Fitts's Law (Target Size &amp; Reach)</strong>
+        <span id="deskLawFitts">Persistent top-right 44px Sweep button + full-row 48px clickable table targets.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Doherty Threshold (&lt;400ms)</strong>
+        <span id="deskLawDoherty">&lt;6ms synchronous KPI &amp; storage bar reconciliation when toggling any directory row.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Jakob's Law (Familiar Mental Model)</strong>
+        <span id="deskLawJakob">Linear/macOS System Settings framed-sheet layout with right-hand inspector &amp; OS switcher.</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       DESKTOP DESIGN 1: ACHROMATIC LEDGER / FRAMED SHEET (Seed 270323531 / 404)
+       ======================================================================== -->
+  <section id="desk-design-1" class="desk-design-pane active" aria-label="Desktop Design 1">
+    <div class="window-frame">
+      <div class="window-titlebar">
+        <span><strong>Design 1 · Framed Sheet Ledger</strong> (<code>achromatic-ledger</code> · Seed 270323531) · Click OS switcher in sidebar to test Windows 11 vs macOS</span>
+        <span class="num" id="d1LatencyText">Doherty response: 4ms · 3 PCs + 3 Phones Pro License</span>
+      </div>
+
+      <div class="d1-shell">
+        <aside class="d1-sidebar">
+          <div>
+            <button type="button" class="btn-fitts-ghost" style="width:100%; text-align:left; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;" onclick="toggleD1Os()">
+              <span>
+                <strong style="display:block; font-size:13px;" id="d1DeviceLabel">Alex's ThinkPad X1</strong>
+                <span class="num" style="font-size:11px; color:var(--ink-2);" id="d1DriveLabel">C:\ NVMe · 512.00 GB</span>
+              </span>
+              <span style="font-size:11px; font-weight:600; color:var(--accent);" id="d1OsBadge">Win 11</span>
+            </button>
+
+            <button type="button" class="d1-nav-btn active">
+              <span>1. Disk &amp; Cloud Overview</span>
+              <span class="num" id="d1NavGb">33.7 GB</span>
+            </button>
+            <button type="button" class="d1-nav-btn" onclick="selectDeskDesign(4, document.querySelectorAll('.ux-var-btn')[3])">
+              <span>2. Duplicate Photo Keeper</span>
+              <span class="num">618</span>
+            </button>
+            <button type="button" class="d1-nav-btn" onclick="selectDeskDesign(3, document.querySelectorAll('.ux-var-btn')[2])">
+              <span>3. Battery Care (£9.99/yr)</span>
+              <span class="num">80%</span>
+            </button>
+            <button type="button" class="d1-nav-btn">
+              <span>4. Cloud Vault (£9.99/yr)</span>
+              <span class="num">18.4 GB</span>
+            </button>
+          </div>
+
+          <div style="padding-top:12px; border-top:1px solid var(--line); font-size:12px; color:var(--ink-2);">
+            <div style="display:flex; justify-content:space-between;">
+              <span>Annual Pro + 2 Add-ons</span>
+              <strong style="color:var(--accent);">Active</strong>
+            </div>
+            <div class="num" style="margin-top:4px;">14-day Recycle Bin backup on</div>
+          </div>
+        </aside>
+
+        <div class="d1-sheet">
+          <div class="d1-topbar">
+            <div>
+              <strong style="font-size:16px;">Disk, Photo &amp; Battery Ledger</strong>
+              <span class="num" style="font-size:12px; color:var(--ink-2); margin-left:10px;">4 safe categories pre-checked</span>
+            </div>
+            <button type="button" class="btn-fitts-sweep num" id="d1MainSweepBtn" onclick="runD1Sweep()">
+              Sweep 33.70 GB Now
+            </button>
+          </div>
+
+          <div style="padding:20px 22px; display:flex; flex-direction:column; gap:18px;">
+            <div class="kpi-strip-4">
+              <div class="kpi-cell">
+                <div style="font-size:12px; color:var(--ink-2);">Reclaimable Clutter</div>
+                <div class="num" style="font-size:24px; font-weight:600; margin-top:2px;" id="d1KpiReclaim">33.70 GB</div>
+              </div>
+              <div class="kpi-cell">
+                <div style="font-size:12px; color:var(--ink-2);">Drive Used (512 GB)</div>
+                <div class="num" style="font-size:24px; font-weight:600; margin-top:2px;" id="d1KpiUsed">412.40 GB</div>
+              </div>
+              <div class="kpi-cell">
+                <div style="font-size:12px; color:var(--ink-2);">Duplicate Photo Sets</div>
+                <div class="num" style="font-size:24px; font-weight:600; margin-top:2px;">618 · 8.14 GB</div>
+              </div>
+              <div class="kpi-cell">
+                <div style="font-size:12px; color:var(--ink-2);">Power Flow (USB-C 65W)</div>
+                <div class="num" style="font-size:24px; font-weight:600; color:var(--positive); margin-top:2px;">Held at 80%</div>
+              </div>
+            </div>
+
+            <div style="border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:48%;">Category &amp; Verified Path</th>
+                    <th style="width:22%;">Safety Guarantee</th>
+                    <th class="num" style="width:15%;">Files</th>
+                    <th class="num" style="width:15%;">Reclaimable</th>
+                  </tr>
+                </thead>
+                <tbody id="d1TableRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESKTOP DESIGN 2: EDITORIAL GREETING / 1-BUTTON SMART SWEEP (Seed 505)
+       Extreme Hick's Law: Zero table clutter, 3 big tonal panels + 1 giant button
+       ======================================================================== -->
+  <section id="desk-design-2" class="desk-design-pane" aria-label="Desktop Design 2">
+    <div class="window-frame">
+      <div class="window-titlebar">
+        <span><strong>Design 2 · Editorial Greeting &amp; 1-Button Smart Sweep</strong> (<code>editorial-greeting</code> · Seed 505) · Maximum Hick's Law Simplicity</span>
+        <span class="num">3 Tonal Pillars · 1 Primary Action</span>
+      </div>
+
+      <div class="d2-canvas">
+        <div class="d2-centered">
+          <div class="d2-greeting-row">
+            <div>
+              <h2 class="num" style="font-size:30px; font-weight:600; letter-spacing:-0.025em;" id="d2GreetingHeadline">
+                Good morning, Alex. 33.70 GB is ready to sweep safely.
+              </h2>
+              <p style="font-size:14px; color:var(--ink-2); margin-top:4px;">
+                Scan completed in 140ms across C:\ NVMe and OneDrive Camera Roll. All personal documents and active logins are excluded.
+              </p>
+            </div>
+
+            <!-- Fitts's Law: Giant 56px primary button in the focal header -->
+            <button type="button" class="btn-fitts-sweep num" style="min-height:56px; padding:0 32px; font-size:16px;" id="d2BigSweepBtn" onclick="runD2SmartSweep()">
+              Smart Sweep 33.70 GB in 1 Click
+            </button>
+          </div>
+
+          <!-- 3 Tonal Panels (Span 4 + 4 + 4 on 12-col grid) -->
+          <button type="button" class="d2-tonal-panel selected" onclick="toggleD2Pillar(0, this)">
+            <div>
+              <div style="font-size:12px; color:var(--ink-2); font-weight:600;">PILLAR 1 · SYSTEM &amp; BROWSER CACHE</div>
+              <div class="num" style="font-size:32px; font-weight:400; margin-top:6px;">25.56 GB</div>
+            </div>
+            <div style="font-size:13px; color:var(--ink-2);">
+              AppData Temp (14.28 GB), Windows.old 24H2 (6.42 GB) &amp; Chrome/Edge GPU shaders (4.86 GB).
+            </div>
+          </button>
+
+          <button type="button" class="d2-tonal-panel selected" onclick="toggleD2Pillar(1, this)">
+            <div>
+              <div style="font-size:12px; color:var(--ink-2); font-weight:600;">PILLAR 2 · DUPLICATE PHOTO KEEPER</div>
+              <div class="num" style="font-size:32px; font-weight:400; margin-top:6px;">8.14 GB</div>
+            </div>
+            <div style="font-size:13px; color:var(--ink-2);">
+              618 duplicate &amp; burst clusters in OneDrive/Photos. Keeps sharpest frame with open eyes automatically.
+            </div>
+          </button>
+
+          <button type="button" class="d2-tonal-panel selected" onclick="toggleD2Pillar(2, this)">
+            <div>
+              <div style="font-size:12px; color:var(--ink-2); font-weight:600;">PILLAR 3 · BATTERY &amp; CLOUD ADD-ONS (£9.99/YR)</div>
+              <div class="num" style="font-size:32px; font-weight:400; margin-top:6px;">80.0% · AES</div>
+            </div>
+            <div style="font-size:13px; color:var(--ink-2);">
+              Desk charge ceiling held at 80% (38.0 °C) + 18.40 GB protected in AES-256 Private Cloud Vault.
+            </div>
+          </button>
+
+          <!-- Row 2: 8-col White Chart Card + 4-col Power Flow Card -->
+          <div class="d2-main-chart-panel">
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <strong>30-Day Reclaimable Storage Ledger (GB)</strong>
+              <span class="num" style="font-size:12px; color:var(--ink-2);">19 Oct Windows 24H2 Update added +6.42 GB</span>
+            </div>
+            <svg viewBox="0 0 600 140" style="width:100%; height:140px;">
+              <line x1="36" y1="20" x2="580" y2="20" stroke="var(--line-soft)" />
+              <line x1="36" y1="70" x2="580" y2="70" stroke="var(--line-soft)" />
+              <line x1="36" y1="120" x2="580" y2="120" stroke="var(--line-soft)" />
+              <text x="28" y="24" text-anchor="end" font-size="11" fill="var(--ink-3)">36G</text>
+              <text x="28" y="74" text-anchor="end" font-size="11" fill="var(--ink-3)">18G</text>
+              <text x="28" y="124" text-anchor="end" font-size="11" fill="var(--ink-3)">0G</text>
+              <path d="M40,104 L140,96 L240,88 L330,48 L450,36 L570,24 L570,120 L40,120 Z" fill="var(--accent)" fill-opacity="0.09" />
+              <path d="M40,104 L140,96 L240,88 L330,48 L450,36 L570,24" fill="none" stroke="var(--accent)" stroke-width="2" />
+              <circle cx="570" cy="24" r="4" fill="var(--accent)" />
+            </svg>
+          </div>
+
+          <div class="d2-side-power-panel">
+            <div>
+              <strong style="font-size:14px;">Live Power Flow Balance</strong>
+              <p style="font-size:12px; color:var(--ink-2); margin-top:4px;">Total Battery Care (£9.99/yr)</p>
+            </div>
+            <div class="num" style="display:flex; flex-direction:column; gap:6px; font-size:13px;">
+              <div style="display:flex; justify-content:space-between;"><span>USB-C PD Input</span><strong>65.0 W</strong></div>
+              <div style="display:flex; justify-content:space-between;"><span>System Load</span><strong>18.4 W</strong></div>
+              <div style="display:flex; justify-content:space-between; color:var(--positive);"><span>Battery Cell (Bypass)</span><strong>0.0 W (80%)</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESKTOP DESIGN 3: NATIVE OS STORAGE BAR & TINTED TILES (Seed 606)
+       Jakob's Law: Mirrors Windows 11 Storage Settings & macOS System Settings
+       ======================================================================== -->
+  <section id="desk-design-3" class="desk-design-pane" aria-label="Desktop Design 3">
+    <div class="window-frame">
+      <div class="window-titlebar">
+        <span><strong>Design 3 · Native OS Storage Bar &amp; Semantic Category Tiles</strong> (<code>pastel-consumer</code> · Seed 606) · Maximum Jakob's Law Familiarity</span>
+        <span class="num">Click any bar segment or tile button</span>
+      </div>
+
+      <div class="d3-canvas">
+        <!-- Familiar Windows 11 / macOS Storage Bar Header -->
+        <div class="d3-os-storage-header">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:12px;">
+            <div>
+              <strong style="font-size:18px;">Local Disk (C:\ NVMe) &amp; Connected Cloud</strong>
+              <span class="num" style="font-size:13px; color:var(--ink-2); margin-left:10px;" id="d3StorageText">
+                412.40 GB used of 512.00 GB · 33.70 GB reclaimable now
+              </span>
+            </div>
+            <button type="button" class="btn-fitts-sweep num" style="min-height:48px; padding:0 26px;" id="d3CleanAllBtn" onclick="d3CleanAll()">
+              Clean All 33.70 GB Staged
+            </button>
+          </div>
+
+          <div class="d3-segmented-bar" role="group" aria-label="Storage allocation segments">
+            <div class="d3-seg-piece" style="width:65.5%; background:var(--ink-1);" title="Protected OS & Personal Files: 378.70 GB"></div>
+            <div class="d3-seg-piece" id="d3SegGreen" style="width:4.8%; background:#0f6e4b;" title="AppData & Browser Cache: 19.14 GB"></div>
+            <div class="d3-seg-piece" id="d3SegBlue" style="width:3.2%; background:#1447c9;" title="Duplicate Photos: 8.14 GB"></div>
+            <div class="d3-seg-piece" id="d3SegAmber" style="width:2.5%; background:#b86b14;" title="Windows Update Logs: 6.42 GB"></div>
+          </div>
+
+          <div class="num" style="display:flex; gap:24px; font-size:12px; color:var(--ink-2); flex-wrap:wrap;">
+            <span>Protected Apps &amp; Docs: <strong>378.70 GB</strong></span>
+            <span style="color:var(--accent);">Temp &amp; Browser Cache: <strong>19.14 GB</strong></span>
+            <span style="color:var(--cobalt-ink);">Duplicate Photos: <strong>8.14 GB</strong></span>
+            <span style="color:var(--amber-ink);">OS Update Logs: <strong>6.42 GB</strong></span>
+            <span>Free Space: <strong>99.60 GB</strong></span>
+          </div>
+        </div>
+
+        <!-- 4 Color-Coded Category Tiles (Each headline sum sits inside the card that explains it) -->
+        <div class="d3-tile-grid">
+          <div class="d3-pastel-tile d3-tile-green">
+            <div>
+              <div style="font-size:12px; font-weight:700;">SAFE TEMP &amp; BROWSER CACHE</div>
+              <div class="num" style="font-size:34px; font-weight:700; margin-top:6px;">19.14 GB</div>
+              <p style="font-size:13px; margin-top:8px;">
+                7,932 orphaned files in AppData\Local\Temp, Chrome, Edge, Discord &amp; VS Code. Keeps active logins.
+              </p>
+            </div>
+            <button type="button" class="d3-tile-btn num" onclick="this.textContent='Cleaned 19.14 GB'">Clean 19.14 GB</button>
+          </div>
+
+          <div class="d3-pastel-tile d3-tile-cobalt">
+            <div>
+              <div style="font-size:12px; font-weight:700;">DUPLICATE &amp; BURST PHOTOS</div>
+              <div class="num" style="font-size:34px; font-weight:700; margin-top:6px;">8.14 GB</div>
+              <p style="font-size:13px; margin-top:8px;">
+                618 duplicate &amp; burst groups across OneDrive &amp; Pictures. Sharpest shot is automatically preserved.
+              </p>
+            </div>
+            <button type="button" class="d3-tile-btn num" onclick="this.textContent='618 Best Shots Kept'">Clean 618 Duplicate Sets</button>
+          </div>
+
+          <div class="d3-pastel-tile d3-tile-amber">
+            <div>
+              <div style="font-size:12px; font-weight:700;">EXPIRED OS UPDATE LOGS</div>
+              <div class="num" style="font-size:34px; font-weight:700; margin-top:6px;">6.42 GB</div>
+              <p style="font-size:13px; margin-top:8px;">
+                1,940 installer stubs in Windows.old &amp; SoftwareDistribution from the 24H2 feature update.
+              </p>
+            </div>
+            <button type="button" class="d3-tile-btn num" onclick="this.textContent='Cleaned 6.42 GB'">Clean 6.42 GB</button>
+          </div>
+
+          <div class="d3-pastel-tile d3-tile-plum">
+            <div>
+              <div style="font-size:12px; font-weight:700;">BATTERY &amp; CLOUD GUARD (£9.99/YR)</div>
+              <div class="num" style="font-size:34px; font-weight:700; margin-top:6px;">80% · 18.4G</div>
+              <p style="font-size:13px; margin-top:8px;">
+                Desk charge ceiling active at 80% (38 °C) + 18.40 GB encrypted in AES-256 Private Cloud Vault.
+              </p>
+            </div>
+            <button type="button" class="d3-tile-btn num" onclick="this.textContent='All Guards Verified'">Manage £9.99/yr Add-ons</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DESKTOP DESIGN 4: MASTER-DETAIL DUAL-PANE INSPECTOR
+       Zero modals, <5ms row inspection, Fitts's Law bottom-right corner CTA
+       ======================================================================== -->
+  <section id="desk-design-4" class="desk-design-pane" aria-label="Desktop Design 4">
+    <div class="window-frame">
+      <div class="window-titlebar">
+        <span><strong>Design 4 · Master-Detail Dual-Pane Inspector</strong> (Windows Explorer / macOS Finder Split Pattern)</span>
+        <span class="num" id="d4DohertyBadge">Inspector switch latency: 2ms (Zero spinners)</span>
+      </div>
+
+      <div class="d4-split-shell">
+        <!-- Left 42%: Oversized 68px Category Rows -->
+        <div class="d4-master-list">
+          <div>
+            <div style="padding:14px 20px; border-bottom:1px solid var(--line); font-size:12px; font-weight:600; color:var(--ink-2);">
+              SELECT A CATEGORY TO INSPECT LARGEST FILES &amp; RULES
+            </div>
+
+            <button type="button" class="d4-master-row active" onclick="d4InspectCategory(0, this)">
+              <div>
+                <strong style="font-size:14px; display:block;">1. AppData &amp; Installer Cache</strong>
+                <span style="font-size:12px; color:var(--ink-2);">C:\Users\Alex\AppData\Local\Temp · 4,812 files</span>
+              </div>
+              <strong class="num" style="font-size:16px;">14.28 GB</strong>
+            </button>
+
+            <button type="button" class="d4-master-row" onclick="d4InspectCategory(1, this)">
+              <div>
+                <strong style="font-size:14px; display:block;">2. Duplicate Photo Best-Shot Keeper</strong>
+                <span style="font-size:12px; color:var(--ink-2);">OneDrive\Pictures\Camera Roll · 618 burst groups</span>
+              </div>
+              <strong class="num" style="font-size:16px;">8.14 GB</strong>
+            </button>
+
+            <button type="button" class="d4-master-row" onclick="d4InspectCategory(2, this)">
+              <div>
+                <strong style="font-size:14px; display:block;">3. Windows Update &amp; Setup Logs</strong>
+                <span style="font-size:12px; color:var(--ink-2);">C:\Windows.old · 1,940 files</span>
+              </div>
+              <strong class="num" style="font-size:16px;">6.42 GB</strong>
+            </button>
+
+            <button type="button" class="d4-master-row" onclick="d4InspectCategory(3, this)">
+              <div>
+                <strong style="font-size:14px; display:block;">4. Total Battery Care &amp; Cloud Vault (£9.99/yr)</strong>
+                <span style="font-size:12px; color:var(--ink-2);">80% Charge Ceiling + AES-256 Private Vault</span>
+              </div>
+              <strong class="num" style="font-size:16px;">80% · 18.4G</strong>
+            </button>
+          </div>
+
+          <div style="padding:16px 20px; border-top:1px solid var(--line); background:var(--bg-subtle); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:12px; color:var(--ink-2);">All 4 safe categories selected</span>
+            <strong class="num">Total: 33.70 GB</strong>
+          </div>
+        </div>
+
+        <!-- Right 58%: Instant Live Inspector + Pinned Bottom-Right Fitts Button -->
+        <div class="d4-detail-pane">
+          <div id="d4DetailContent">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;">
+              <h3 style="font-size:20px; font-weight:600;">AppData &amp; Installer Cache</h3>
+              <span class="num" style="font-size:13px; color:var(--positive); font-weight:600;">Safe · 100% Orphaned Cache</span>
+            </div>
+            <p style="font-size:13px; color:var(--ink-2); margin-top:4px;">
+              Path: C:\Users\Alex\AppData\Local\Temp · Excludes any file modified in the last 24 hours or locked by a running process.
+            </p>
+
+            <div style="margin-top:20px; border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Verified File / Subfolder</th>
+                    <th>Last Accessed</th>
+                    <th class="num">Size</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>nvShaderCache_v24.bin</strong></td>
+                    <td class="num">42 days ago</td>
+                    <td class="num">3.84 GB</td>
+                  </tr>
+                  <tr>
+                    <td><strong>node-gyp-cache-archive.tar</strong></td>
+                    <td class="num">68 days ago</td>
+                    <td class="num">2.91 GB</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Adobe_MediaCache_2026.db</strong></td>
+                    <td class="num">19 days ago</td>
+                    <td class="num">2.45 GB</td>
+                  </tr>
+                  <tr>
+                    <td><strong>pip-http-wheels-cache (1,412 files)</strong></td>
+                    <td class="num">31 days ago</td>
+                    <td class="num">5.08 GB</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Fitts's Law: Bottom-right corner anchored action bar -->
+          <div style="padding-top:18px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:16px;">
+            <span style="font-size:12px; color:var(--ink-2);">14-day Recycle Bin rollback enabled</span>
+            <button type="button" class="btn-fitts-sweep num" style="min-height:52px; min-width:260px; font-size:15px;" onclick="this.textContent='Cleaned 33.70 GB · Verified'">
+              Sweep Selected (33.70 GB)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const DESK_LAW_NOTES = {
+      1: {
+        hick: '4 top-level sidebar destinations; all safe cleanup directories are pre-selected by default.',
+        fitts: 'Persistent top-right 44px Sweep button + full-row 48px clickable table targets.',
+        doherty: '<6ms synchronous KPI & storage bar reconciliation when toggling any directory row.',
+        jakob: 'Linear/macOS System Settings framed-sheet layout with right-hand inspector & OS switcher.'
+      },
+      2: {
+        hick: 'Replaces multi-column file tables with 1 typeset status greeting and 3 tonal category pillars.',
+        fitts: 'Oversized 56px-tall Smart Sweep primary button + 156px-tall whole-card click targets.',
+        doherty: 'Single-click Smart Sweep updates all 3 pillars and chart telemetry in <10ms.',
+        jakob: 'Mirrors CleanMyMac Smart Scan & Windows Security Home one-button mental model.'
+      },
+      3: {
+        hick: 'Groups 10,490 files into 4 color-coded semantic tiles with the GB sum inside the card that explains it.',
+        fitts: 'Every category tile has its own 44px full-width action button plus a 48px top Clean All button.',
+        doherty: 'Immediate visual feedback on the segmented storage bar when cleaning any category.',
+        jakob: 'Directly matches Windows 11 Settings -> Storage and macOS System Settings -> Storage.'
+      },
+      4: {
+        hick: 'Eliminates modal popups by keeping the 4-item Master list and Detail inspector side-by-side.',
+        fitts: '68px-tall master category rows on the left + 52px x 260px bottom-right corner Sweep CTA.',
+        doherty: '2ms zero-spinner inspector switching when clicking between Disk, Photos, Updates & Battery.',
+        jakob: 'Classic Windows File Explorer / macOS Finder dual-pane master-detail architecture.'
+      }
+    };
+
+    function selectDeskDesign(num, btnEl) {
+      document.body.classList.remove('stack-all-mode');
+      document.getElementById('deskStackBtn').textContent = 'Compare All 4 Stacked';
+      document.querySelectorAll('.ux-var-btn').forEach(b => {
+        if (b.id !== 'deskThemeBtn') b.classList.remove('active');
+      });
+      if (btnEl) btnEl.classList.add('active');
+
+      document.querySelectorAll('.desk-design-pane').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`desk-design-${num}`);
+      if (target) target.classList.add('active');
+
+      const laws = DESK_LAW_NOTES[num];
+      if (laws) {
+        document.getElementById('deskLawHick').textContent = laws.hick;
+        document.getElementById('deskLawFitts').textContent = laws.fitts;
+        document.getElementById('deskLawDoherty').textContent = laws.doherty;
+        document.getElementById('deskLawJakob').textContent = laws.jakob;
+      }
+    }
+
+    function toggleDeskStack(btnEl) {
+      const stacked = document.body.classList.toggle('stack-all-mode');
+      document.querySelectorAll('.ux-var-btn').forEach(b => {
+        if (b.id !== 'deskThemeBtn') b.classList.remove('active');
+      });
+      if (stacked) {
+        btnEl.classList.add('active');
+        btnEl.textContent = 'Showing All 4 Stacked';
+      } else {
+        selectDeskDesign(1, document.querySelector('.ux-var-btn'));
+      }
+    }
+
+    function toggleDeskTheme() {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      document.getElementById('deskThemeBtn').textContent = next === 'dark' ? 'Stone-Sage Light' : 'True-Black Dark';
+    }
+
+    /* Design 1 Table Logic */
+    let d1Mac = false;
+    const D1_DATA = [
+      { name: 'AppData & Installer Cache', win: 'C:\\Users\\Alex\\AppData\\Local\\Temp', mac: '~/Library/Caches · Xcode DerivedData', safe: 'Orphaned cache only', files: 4812, gb: 14.28, checked: true },
+      { name: 'Duplicate & Burst Photos', win: 'OneDrive\\Pictures\\Camera Roll', mac: '~/Pictures/Photos Library.photoslibrary', safe: 'Sharpest shot kept', files: 618, gb: 8.14, checked: true },
+      { name: 'OS Update & Rollback Logs', win: 'C:\\Windows.old · SoftwareDistribution', mac: '/Library/Updates · macOS Sequoia', safe: 'Rollback expired', files: 1940, gb: 6.42, checked: true },
+      { name: 'Browser & Electron GPU Cache', win: 'Chrome · Edge · Discord · VS Code', mac: 'Safari · Chrome · Arc · Discord', safe: 'Logins preserved', files: 3120, gb: 4.86, checked: true }
+    ];
+
+    function renderD1Rows() {
+      const tbody = document.getElementById('d1TableRows');
+      let sum = 0;
+      tbody.innerHTML = D1_DATA.map((r, i) => {
+        if (r.checked) sum += r.gb;
+        return `
+          <tr onclick="toggleD1Check(${i})">
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" ${r.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleD1Check(${i})" style="width:16px; height:16px; accent-color:#0f6e4b;" />
+                <div>
+                  <strong style="display:block;">${r.name}</strong>
+                  <span style="font-size:12px; color:var(--ink-2);">${d1Mac ? r.mac : r.win}</span>
+                </div>
+              </div>
+            </td>
+            <td style="color:var(--positive); font-weight:500;">${r.safe}</td>
+            <td class="num">${r.files.toLocaleString('en-GB')}</td>
+            <td class="num" style="font-weight:600;">${r.gb.toFixed(2)} GB</td>
+          </tr>
+        `;
+      }).join('');
+      document.getElementById('d1KpiReclaim').textContent = `${sum.toFixed(2)} GB`;
+      document.getElementById('d1NavGb').textContent = `${sum.toFixed(1)} GB`;
+      document.getElementById('d1MainSweepBtn').textContent = sum > 0 ? `Sweep ${sum.toFixed(2)} GB Now` : 'Select a Category';
+    }
+
+    function toggleD1Check(idx) {
+      D1_DATA[idx].checked = !D1_DATA[idx].checked;
+      renderD1Rows();
+    }
+
+    function toggleD1Os() {
+      d1Mac = !d1Mac;
+      document.getElementById('d1DeviceLabel').textContent = d1Mac ? "Alex's MacBook Pro M3" : "Alex's ThinkPad X1";
+      document.getElementById('d1DriveLabel').textContent = d1Mac ? 'Macintosh HD · 512.00 GB' : 'C:\\ NVMe · 512.00 GB';
+      document.getElementById('d1OsBadge').textContent = d1Mac ? 'macOS 15' : 'Win 11';
+      renderD1Rows();
+    }
+
+    function runD1Sweep() {
+      document.getElementById('d1KpiReclaim').textContent = '0.00 GB';
+      document.getElementById('d1KpiUsed').textContent = '378.70 GB';
+      document.getElementById('d1MainSweepBtn').textContent = 'Cleaned 33.70 GB · Verified';
+    }
+
+    /* Design 2 Smart Sweep Logic */
+    const d2Vals = [25.56, 8.14, 0];
+    const d2Selected = [true, true, true];
+
+    function toggleD2Pillar(idx, btnEl) {
+      d2Selected[idx] = !d2Selected[idx];
+      btnEl.classList.toggle('selected', d2Selected[idx]);
+      const sum = d2Vals.reduce((s, v, i) => s + (d2Selected[i] ? v : 0), 0);
+      document.getElementById('d2GreetingHeadline').textContent = `Good morning, Alex. ${sum.toFixed(2)} GB is ready to sweep safely.`;
+      document.getElementById('d2BigSweepBtn').textContent = `Smart Sweep ${sum.toFixed(2)} GB in 1 Click`;
+    }
+
+    function runD2SmartSweep() {
+      document.getElementById('d2GreetingHeadline').textContent = 'Drive clean. 33.70 GB moved to 14-day Recycle Bin.';
+      document.getElementById('d2BigSweepBtn').textContent = 'Sweep Complete · Undo Available';
+    }
+
+    /* Design 3 OS Storage Bar Logic */
+    function d3CleanAll() {
+      document.getElementById('d3SegGreen').style.width = '0%';
+      document.getElementById('d3SegBlue').style.width = '0%';
+      document.getElementById('d3SegAmber').style.width = '0%';
+      document.getElementById('d3StorageText').textContent = '378.70 GB used of 512.00 GB · 133.30 GB free (+33.70 GB reclaimed)';
+      document.getElementById('d3CleanAllBtn').textContent = 'Cleaned 33.70 GB · Verified';
+    }
+
+    /* Design 4 Master-Detail Inspector Logic */
+    const D4_PANES = [
+      {
+        title: 'AppData & Installer Cache (14.28 GB)',
+        badge: 'Safe · 100% Orphaned Cache',
+        desc: 'Path: C:\\Users\\Alex\\AppData\\Local\\Temp · Excludes any file modified in the last 24 hours.',
+        rows: [['nvShaderCache_v24.bin', '42 days ago', '3.84 GB'], ['node-gyp-cache-archive.tar', '68 days ago', '2.91 GB'], ['Adobe_MediaCache_2026.db', '19 days ago', '2.45 GB']]
+      },
+      {
+        title: 'Duplicate Photo Best-Shot Keeper (8.14 GB)',
+        badge: '618 Burst Sets · Sharpest Frame Kept',
+        desc: 'Scores local Laplacian sharpness and face focus so the clearest shot in every burst stays in your album.',
+        rows: [['Lake_District_Burst (Keep IMG_4821.HEIC)', 'Sharpness 96.4', '1.82 GB'], ['4K_ScreenRecording_Drafts (Keep v3.mp4)', '60fps Master kept', '2.64 GB'], ['WhatsApp_Forwarded_Duplicates', 'Exact SHA-256 match', '3.68 GB']]
+      },
+      {
+        title: 'Windows Update & Setup Logs (6.42 GB)',
+        badge: 'Safe · Rollback Window Expired',
+        desc: 'Path: C:\\Windows.old · Previous Windows 11 24H2 installation archive older than 10 days.',
+        rows: [['Windows11_24H2_Rollback.wim', '21 days ago', '4.18 GB'], ['Package_for_RollupFix_KB5044284.cab', '21 days ago', '1.34 GB'], ['Setupact_Diagnostic_Logs.etl', '21 days ago', '0.90 GB']]
+      },
+      {
+        title: 'Total Battery Care & Cloud Protection (£9.99/yr each)',
+        badge: '80% Desk Guard + AES-256 Vault Active',
+        desc: 'Holds battery at 80.0% ceiling while plugged into 65W USB-C PD and encrypts 18.40 GB in Private Cloud Vault.',
+        rows: [['USB-C PD Power Flow Bypass', '65.0W in -> 0.0W cell (38 °C)', 'Held at 80%'], ['Vault: Tax & Company Filings', 'AES-256-GCM Encrypted', '4.12 GB'], ['Vault: Family Archive RAW Originals', 'AES-256-GCM Encrypted', '14.28 GB']]
+      }
+    ];
+
+    function d4InspectCategory(idx, btnEl) {
+      document.querySelectorAll('.d4-master-row').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      const p = D4_PANES[idx];
+      document.getElementById('d4DetailContent').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <h3 style="font-size:20px; font-weight:600;">${p.title}</h3>
+          <span class="num" style="font-size:13px; color:var(--positive); font-weight:600;">${p.badge}</span>
+        </div>
+        <p style="font-size:13px; color:var(--ink-2); margin-top:4px;">${p.desc}</p>
+        <div style="margin-top:20px; border:1px solid var(--line); border-radius:8px; overflow:hidden;">
+          <table class="data-table">
+            <thead><tr><th>Item / Cluster</th><th>Status / Detail</th><th class="num">Size / Value</th></tr></thead>
+            <tbody>
+              ${p.rows.map(([a, b, c]) => `<tr><td><strong>${a}</strong></td><td class="num">${b}</td><td class="num">${c}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    renderD1Rows();
+  </script>
+</body>
+</html>

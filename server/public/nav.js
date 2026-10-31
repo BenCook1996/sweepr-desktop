@@ -112,32 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
       drawer.style.zIndex = '9999';
       drawer.innerHTML = `
         <div class="grid grid-cols-1 gap-1 text-sm font-semibold text-gray-800">
-          <a href="/#features" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>⚡ Features &amp; Overview</span>
+          <a href="/#preview-stage" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
+            <span>⚡ How It Works</span>
             <span class="text-gray-400">&rarr;</span>
           </a>
           <a href="/pricing" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>💎 Pricing &amp; Pro Plans</span>
+            <span>💎 Pricing</span>
             <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">Save 58%</span>
           </a>
-          <a href="/clean" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>🗂️ Storage &amp; Cache Directory</span>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">40+ Guides</span>
-          </a>
-          <a href="/vs/ccleaner" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>⚖️ SWEEPR vs CCleaner</span>
-            <span class="text-gray-400">&rarr;</span>
-          </a>
-          <a href="/alternatives/ccleaner" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>🏆 Top CCleaner Alternatives</span>
-            <span class="text-gray-400">&rarr;</span>
-          </a>
-          <a href="/support" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>🛟 Support &amp; Help Center</span>
-            <span class="text-gray-400">&rarr;</span>
-          </a>
-          <a href="/login" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
-            <span>🔑 Customer Portal Sign In</span>
+          <a href="/dashboard" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors no-underline text-gray-800">
+            <span>🔑 My Account</span>
             <span class="text-gray-400">&rarr;</span>
           </a>
         </div>
@@ -147,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </a>
           <a href="/download" class="btn w-full justify-center bg-white border border-gray-300 text-gray-800 text-sm py-2.5">
-            <span>Install Now</span>
+            <span>Free Download</span>
           </a>
         </div>
       `;

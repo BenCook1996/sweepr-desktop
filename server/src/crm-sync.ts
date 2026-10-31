@@ -31,7 +31,13 @@ function recordCrmFailure(): void {
 }
 
 function getCrmUrl(): string {
-  return (process.env.SWEEPR_CRM_URL || "").trim().replace(/\/+$/, "");
+  const url = (process.env.SWEEPR_CRM_URL || "").trim().replace(/\/+$/, "");
+  if (!url) return "";
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd && !url.startsWith("https://")) {
+    return "";
+  }
+  return url;
 }
 
 function getCrmApiKey(): string {

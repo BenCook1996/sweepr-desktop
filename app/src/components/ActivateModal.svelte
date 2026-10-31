@@ -25,6 +25,10 @@
   let sixMonthPerMoLabel = $state("£6.50");
   let annualLabel = $state("£49.99");
   let annualPerMoLabel = $state("£4.16");
+  let batteryAddonLabel = $state("£9.99");
+  let cloudAddonLabel = $state("£9.99");
+  let addBatteryCare = $state(false);
+  let addCloudVault = $state(false);
 
   $effect(() => {
     try {
@@ -32,46 +36,69 @@
       const loc = navigator.language || "en-GB";
       if (tz.startsWith("America/") || loc === "en-US") {
         monthlyIntroLabel = "$1.99";
-        monthlyRenewLabel = "$9.99";
-        sixMonthLabel = "$38.99";
-        sixMonthPerMoLabel = "$6.50";
-        annualLabel = "$49.99";
-        annualPerMoLabel = "$4.16";
+        monthlyRenewLabel = "$12.99";
+        sixMonthLabel = "$49.99";
+        sixMonthPerMoLabel = "$8.33";
+        annualLabel = "$64.99";
+        annualPerMoLabel = "$5.42";
+        batteryAddonLabel = "$9.99";
+        cloudAddonLabel = "$9.99";
       } else if (tz.startsWith("Europe/") && !tz.includes("London") && !loc.endsWith("GB")) {
         monthlyIntroLabel = "€1.99";
-        monthlyRenewLabel = "€9.99";
-        sixMonthLabel = "€38.99";
-        sixMonthPerMoLabel = "€6.50";
-        annualLabel = "€49.99";
-        annualPerMoLabel = "€4.16";
+        monthlyRenewLabel = "€11.99";
+        sixMonthLabel = "€44.99";
+        sixMonthPerMoLabel = "€7.50";
+        annualLabel = "€59.99";
+        annualPerMoLabel = "€5.00";
+        batteryAddonLabel = "€9.99";
+        cloudAddonLabel = "€9.99";
       }
     } catch {}
     api
       .appInfo()
       .then((info) => {
         const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-        return fetch(`${base}/api/checkout-config`);
+        return fetch(`${base}/api/pricing`);
       })
       .then((r) => (r.ok ? r.json() : null))
       .then((cfg) => {
         const p = cfg?.pricing;
         if (!p) return;
-        if (p.monthlyIntroFormatted) monthlyIntroLabel = p.monthlyIntroFormatted;
+        if (p.introMonthlyFormatted || p.monthlyIntroFormatted) {
+          monthlyIntroLabel = p.introMonthlyFormatted || p.monthlyIntroFormatted;
+        }
         if (p.monthlyFormatted) monthlyRenewLabel = p.monthlyFormatted;
         if (p.sixMonthFormatted) sixMonthLabel = p.sixMonthFormatted;
-        if (p.sixMonthPerMonthFormatted) sixMonthPerMoLabel = p.sixMonthPerMonthFormatted;
+        if (p.sixMonthMonthlyEqFormatted || p.sixMonthPerMonthFormatted) {
+          sixMonthPerMoLabel = p.sixMonthMonthlyEqFormatted || p.sixMonthPerMonthFormatted;
+        }
         if (p.annualFormatted) annualLabel = p.annualFormatted;
-        if (p.annualPerMonthFormatted) annualPerMoLabel = p.annualPerMonthFormatted;
+        if (p.annualMonthlyEqFormatted || p.annualPerMonthFormatted) {
+          annualPerMoLabel = p.annualMonthlyEqFormatted || p.annualPerMonthFormatted;
+        }
+        if (p.batteryCareAnnualFormatted) batteryAddonLabel = p.batteryCareAnnualFormatted;
+        if (p.cloudVaultAnnualFormatted) cloudAddonLabel = p.cloudVaultAnnualFormatted;
       })
       .catch(() => {});
   });
 
-  const ctaPriceLabel = $derived(
+  const selectedAddons = $derived([
+    ...(addBatteryCare ? ["battery_care"] : []),
+    ...(addCloudVault ? ["cloud_vault"] : []),
+  ]);
+
+  const basePlanLabel = $derived(
     selectedPlan === "monthly"
-      ? monthlyIntroLabel
+      ? `${monthlyRenewLabel}/mo`
       : selectedPlan === "six_month"
       ? sixMonthLabel
       : annualLabel
+  );
+
+  const ctaPriceLabel = $derived(
+    selectedAddons.length > 0
+      ? `${basePlanLabel} + ${selectedAddons.length} add-on${selectedAddons.length > 1 ? "s" : ""}`
+      : basePlanLabel
   );
 
   function stopPolling() {
@@ -152,7 +179,10 @@
     busy = true;
     try {
       const emailArg = trimmedEmail ? trimmedEmail : undefined;
-      const activatedImmediately = await api.startCheckout(emailArg, selectedPlan);
+      const activatedImmediately =
+        selectedAddons.length > 0
+          ? await api.startAddonCheckout(selectedAddons.join(","), emailArg, selectedPlan)
+          : await api.startCheckout(emailArg, selectedPlan);
       if (activatedImmediately || (await checkLicense())) {
         notifyActivated();
         return;
@@ -218,7 +248,7 @@
           </div>
 
           <h2 class="modal-title">Clean &amp; speed up in 1 click</h2>
-          <p class="prompt-text">Try your first month for {monthlyIntroLabel}. Cancel anytime.</p>
+          <p class="prompt-text">Choose a plan below. Cancel anytime in 1 click.</p>
 
           <div class="plan-grid">
             <button
@@ -231,8 +261,8 @@
                 <span class="plan-label">Monthly</span>
                 <span class="radio-dot" aria-hidden="true"></span>
               </div>
-              <span class="plan-price">{monthlyIntroLabel}</span>
-              <span class="plan-sub">1st mo, then {monthlyRenewLabel}</span>
+              <span class="plan-price">{monthlyRenewLabel}</span>
+              <span class="plan-sub">Billed monthly · cancel anytime</span>
             </button>
 
             <button
@@ -262,6 +292,23 @@
               <span class="plan-price">{annualLabel}</span>
               <span class="plan-sub highlight">Save 58% ({annualPerMoLabel}/mo)</span>
             </button>
+          </div>
+
+          <div class="addon-rows">
+            <label class="addon-row-pill">
+              <span class="addon-row-left">
+                <input type="checkbox" bind:checked={addBatteryCare} />
+                <span>Battery Health Saver (80% Charge Alert &amp; Cooling)</span>
+              </span>
+              <span class="addon-row-price">+{batteryAddonLabel}/yr</span>
+            </label>
+            <label class="addon-row-pill">
+              <span class="addon-row-left">
+                <input type="checkbox" bind:checked={addCloudVault} />
+                <span>Private File Lockbox &amp; Automatic Cloud Backup</span>
+              </span>
+              <span class="addon-row-price">+{cloudAddonLabel}/yr</span>
+            </label>
           </div>
 
           {#if showSignIn}
@@ -520,6 +567,42 @@
     font-weight: 700;
   }
   :global(.dark) .plan-sub.highlight {
+    color: #34d399;
+  }
+
+  .addon-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 14px;
+  }
+  .addon-row-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .addon-row-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .addon-row-price {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #059669;
+  }
+  :global(.dark) .addon-row-price {
     color: #34d399;
   }
 

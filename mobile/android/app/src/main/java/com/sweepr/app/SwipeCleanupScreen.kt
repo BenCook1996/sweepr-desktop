@@ -459,16 +459,17 @@ fun SwipeCleanupScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // 4. Tactile Glass Action Buttons (Trash | Undo | Keep)
+            // 4. M3 Gesture-First Binary Thumb Controls (56dp Fitts's Law Targets: Bin (-X MB) | Undo | Keep)
+            val topSizeLabel = deck.firstOrNull()?.let { " (-${formatBytes(it.size)})" } ?: ""
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Trash Left Button
+                // Bin Left Button (Shows exact MB reclaimed)
                 TactileDeckButton(
                     icon = Icons.Default.Delete,
-                    label = stringResource(R.string.triage_btn_trash),
+                    label = "${stringResource(R.string.triage_btn_trash)}$topSizeLabel",
                     tint = SweeprRose,
                     bgBrush = Brush.linearGradient(
                         listOf(SweeprRose.copy(alpha = 0.18f), SweeprRose.copy(alpha = 0.10f)),
@@ -479,7 +480,7 @@ fun SwipeCleanupScreen(
                     onClick = { if (deck.isNotEmpty()) delete(deck.first()) },
                 )
 
-                // Center Undo Circle
+                // Center Undo Circle (48dp Target)
                 Surface(
                     onClick = { undo() },
                     enabled = historyUriStrings.isNotEmpty(),
@@ -498,7 +499,7 @@ fun SwipeCleanupScreen(
                     }
                 }
 
-                // Keep Right Button
+                // Keep Right Button (56dp Target)
                 TactileDeckButton(
                     icon = Icons.Default.Check,
                     label = stringResource(R.string.triage_btn_keep),
@@ -529,7 +530,7 @@ private fun TactileDeckButton(
     val shape = RoundedCornerShape(16.dp)
     Row(
         modifier = modifier
-            .height(50.dp)
+            .height(56.dp)
             .alpha(if (enabled) 1f else 0.45f)
             .clip(shape)
             .background(bgBrush)

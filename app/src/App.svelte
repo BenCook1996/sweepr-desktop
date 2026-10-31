@@ -615,12 +615,13 @@
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
               <defs>
                 <linearGradient id="appEmeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#10b981" />
-                  <stop offset="100%" stop-color="#047857" />
+                  <stop offset="0%" stop-color="#145c3e" />
+                  <stop offset="50%" stop-color="#0d6847" />
+                  <stop offset="100%" stop-color="#073825" />
                 </linearGradient>
                 <linearGradient id="appMintBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#ecfdf5" />
-                  <stop offset="100%" stop-color="#d1fae5" />
+                  <stop offset="0%" stop-color="#e1f3ec" />
+                  <stop offset="100%" stop-color="#c5e8da" />
                 </linearGradient>
               </defs>
               <rect class="logo-bg-rect" x="2" y="2" width="96" height="96" rx="24" stroke-width="2" />
@@ -1020,7 +1021,7 @@
     cursor: pointer;
   }
   button.tools-pill.active {
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(13, 104, 71, 0.14);
     color: var(--accent);
     font-weight: 700;
   }
@@ -1140,7 +1141,7 @@
     border-radius: 7px;
     display: grid;
     place-items: center;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 6px rgba(13, 104, 71, 0.28);
     overflow: hidden;
     flex-shrink: 0;
   }
@@ -1157,36 +1158,36 @@
     fill: #ffffff;
   }
   .logo-handle {
-    stroke: #a7f3d0;
+    stroke: #9adbc0;
   }
   .logo-slit {
-    stroke: #047857;
+    stroke: #073825;
   }
   .logo-sparkle {
     fill: #ffffff;
   }
   .logo-dot {
-    fill: #a7f3d0;
+    fill: #9adbc0;
   }
 
   :global(.dark) .logo-bg-rect {
     fill: url(#appMintBg);
-    stroke: rgba(5, 150, 105, 0.25);
+    stroke: rgba(13, 104, 71, 0.28);
   }
   :global(.dark) .logo-primary {
-    fill: #059669;
+    fill: #0d6847;
   }
   :global(.dark) .logo-handle {
-    stroke: #10b981;
+    stroke: #145c3e;
   }
   :global(.dark) .logo-slit {
-    stroke: #d1fae5;
+    stroke: #c5e8da;
   }
   :global(.dark) .logo-sparkle {
-    fill: #047857;
+    fill: #073825;
   }
   :global(.dark) .logo-dot {
-    fill: #10b981;
+    fill: #145c3e;
   }
   .brand-text {
     display: flex;
@@ -1201,11 +1202,11 @@
     white-space: nowrap;
   }
   .brand-accent {
-    color: #059669;
+    color: #0d6847;
     font-weight: 800;
   }
   :global(.dark) .brand-accent {
-    color: #34d399;
+    color: #22996b;
   }
 
   button.nav-tab {
@@ -1242,10 +1243,10 @@
     box-shadow: none;
   }
   button.nav-tab.active {
-    background: rgba(16, 185, 129, 0.14);
+    background: rgba(13, 104, 71, 0.14);
     color: var(--accent);
     font-weight: 700;
-    box-shadow: inset 3px 0 0 #10b981;
+    box-shadow: inset 3px 0 0 var(--accent);
   }
   button.nav-tab.active svg {
     stroke: var(--accent);
@@ -1280,9 +1281,9 @@
     border: 1px solid rgba(245, 158, 11, 0.3);
   }
   .tier-badge.pro {
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(13, 104, 71, 0.14);
     color: var(--accent);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(13, 104, 71, 0.3);
   }
 
   .auto-update-banner {
@@ -1293,8 +1294,8 @@
     margin: 10px 20px 0 20px;
     padding: 7px 14px;
     border-radius: 10px;
-    background: rgba(16, 185, 129, 0.14);
-    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: rgba(13, 104, 71, 0.14);
+    border: 1px solid rgba(13, 104, 71, 0.35);
     color: var(--text);
     font-size: 12px;
     flex-shrink: 0;
@@ -1316,7 +1317,7 @@
     flex-shrink: 0;
   }
   .auto-update-btn {
-    background: #10b981;
+    background: #0d6847;
     color: #ffffff;
     border: none;
     border-radius: 6px;

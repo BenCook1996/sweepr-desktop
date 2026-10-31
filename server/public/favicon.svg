@@ -1,28 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
     <linearGradient id="emeraldBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#047857" />
+      <stop offset="0%" stop-color="#145c3e" />
+      <stop offset="50%" stop-color="#0d6847" />
+      <stop offset="100%" stop-color="#073825" />
     </linearGradient>
     <linearGradient id="mintBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ecfdf5" />
-      <stop offset="100%" stop-color="#d1fae5" />
+      <stop offset="0%" stop-color="#e1f3ec" />
+      <stop offset="100%" stop-color="#c5e8da" />
     </linearGradient>
     <style>
       .bg-rect { fill: url(#emeraldBg); stroke: rgba(255, 255, 255, 0.22); }
       .fg-primary { fill: #ffffff; }
-      .fg-secondary-stroke { stroke: #a7f3d0; }
-      .fg-secondary-fill { fill: #a7f3d0; }
-      .slit-stroke { stroke: #047857; }
+      .fg-secondary-stroke { stroke: #9adbc0; }
+      .fg-secondary-fill { fill: #9adbc0; }
+      .slit-stroke { stroke: #073825; }
       .sparkle-fill { fill: #ffffff; }
 
       @media (prefers-color-scheme: dark) {
-        .bg-rect { fill: url(#mintBg); stroke: rgba(5, 150, 105, 0.25); }
-        .fg-primary { fill: #059669; }
-        .fg-secondary-stroke { stroke: #10b981; }
-        .fg-secondary-fill { fill: #10b981; }
-        .slit-stroke { stroke: #d1fae5; }
-        .sparkle-fill { fill: #047857; }
+        .bg-rect { fill: url(#mintBg); stroke: rgba(13, 104, 71, 0.28); }
+        .fg-primary { fill: #0d6847; }
+        .fg-secondary-stroke { stroke: #145c3e; }
+        .fg-secondary-fill { fill: #145c3e; }
+        .slit-stroke { stroke: #c5e8da; }
+        .sparkle-fill { fill: #073825; }
       }
     </style>
   </defs>

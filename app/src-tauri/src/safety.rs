@@ -74,14 +74,7 @@ pub fn is_safe_scan_root(root: &Path, min_age_hours: u64) -> bool {
 }
 
 fn paths_equal(a: &Path, b: &Path) -> bool {
-    #[cfg(windows)]
-    {
-        a.to_string_lossy().trim_end_matches('\\').eq_ignore_ascii_case(b.to_string_lossy().trim_end_matches('\\'))
-    }
-    #[cfg(not(windows))]
-    {
-        a == b
-    }
+    normalise_for_compare(a) == normalise_for_compare(b)
 }
 
 /// True for symlinks and (on Windows) any reparse point such as junctions or
@@ -275,6 +268,14 @@ mod tests {
         assert!(!is_safe_root(Path::new("C:\\")));
         #[cfg(unix)]
         assert!(!is_safe_root(Path::new("/")));
+    }
+
+    #[test]
+    fn paths_equal_handles_mixed_separators() {
+        if let Some(h) = dirs::home_dir() {
+            let forward = h.to_string_lossy().replace('\\', "/");
+            assert!(!is_safe_root(Path::new(&forward)));
+        }
     }
 
     #[test]

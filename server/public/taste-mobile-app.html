@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Mobile Apps — 4 Taste-Skill Redesigns (iOS &amp; Android)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..600&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       4 MOBILE APP REDESIGNS (iOS & ANDROID) · TASTE-SKILL §12 + 4 UX LAWS
+       1. Achromatic Ledger Mobile (2x2 KPI Grid + Two-Line Rows)
+       2. Thumb-Zone One-Tap Smart Sweep (Zero-Decision Hero + Bottom Thumb Arc)
+       3. Gesture-First Photo & Video Swipe Deck (Binary 1-Card-at-a-Time)
+       4. Native iOS Storage & Android Files by Google Idiom (Max Jakob's Law)
+       ========================================================================== */
+    :root {
+      --bg-ground: #f4f5f3;
+      --bg-surface: #ffffff;
+      --bg-subtle: #eceee9;
+      --bg-active: #e2e5e0;
+      --ink-1: #0c0f0e;
+      --ink-2: #525a56;
+      --ink-3: #838b87;
+      --line: #dcdfda;
+      --line-soft: #eceee9;
+      --accent-ios: #0f6e4b;
+      --accent-ios-soft: #e3f3ec;
+      --accent-ios-ink: #093d29;
+      --accent-and: #1447c9;
+      --accent-and-soft: #dcf1ff;
+      --accent-and-ink: #0a3a80;
+      --positive: #247b50;
+      --danger: #b9252b;
+      --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body[data-theme="dark"] {
+      --bg-ground: #09090b;
+      --bg-surface: #111113;
+      --bg-subtle: #18181b;
+      --bg-active: #232329;
+      --ink-1: #f4f4f6;
+      --ink-2: #9ca0a8;
+      --ink-3: #686c75;
+      --line: #232329;
+      --line-soft: #1b1b20;
+      --accent-ios: #249c6e;
+      --accent-ios-soft: #112920;
+      --accent-ios-ink: #8ce5c0;
+      --accent-and: #4b89e8;
+      --accent-and-soft: #132238;
+      --accent-and-ink: #a3c6ff;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      background-color: var(--bg-ground);
+      color: var(--ink-1);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    /* Sticky Top Switcher & 4 UX Laws Bar */
+    .ux-switcher-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background-color: #0c0f0e;
+      color: #f4f5f3;
+      padding: 10px 24px;
+      border-bottom: 1px solid #232329;
+    }
+
+    .ux-switcher-top {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ux-switcher-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ux-var-btn {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: none;
+      background-color: #1c2220;
+      color: #b7c0bc;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .ux-var-btn.active {
+      background-color: #0f6e4b;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .ux-law-strip {
+      max-width: 1380px;
+      margin: 8px auto 0;
+      padding-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      font-size: 12px;
+      color: #b7c0bc;
+    }
+
+    .ux-law-chip {
+      background-color: #161b19;
+      padding: 7px 11px;
+      border-radius: 6px;
+    }
+
+    .ux-law-chip strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+    }
+
+    /* Mobile Design Variation Containers */
+    .mob-design-pane {
+      display: none;
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 24px 20px 44px;
+    }
+
+    .mob-design-pane.active {
+      display: block;
+    }
+
+    body.stack-all-mode .mob-design-pane {
+      display: block;
+      margin-bottom: 36px;
+    }
+
+    .pair-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 390px);
+      justify-content: center;
+      gap: 36px;
+    }
+
+    .device-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .device-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-2);
+      padding: 0 4px;
+    }
+
+    /* 390 x 800 Phone Viewport (§12 Rules) */
+    .phone-frame {
+      width: 390px;
+      min-height: 780px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .phone-topbar {
+      height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .phone-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .phone-bottom-nav {
+      height: 58px;
+      border-top: 1px solid var(--line);
+      background-color: var(--bg-surface);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      flex-shrink: 0;
+    }
+
+    .bottom-tab {
+      min-height: 48px;
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--ink-3);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .bottom-tab.active {
+      color: var(--ink-1);
+      font-weight: 600;
+    }
+
+    /* 2x2 KPI Grid (§12) */
+    .kpi-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .kpi-2x2-cell {
+      padding: 11px 13px;
+    }
+
+    .kpi-2x2-cell:nth-child(2),
+    .kpi-2x2-cell:nth-child(4) {
+      border-left: 1px solid var(--line);
+    }
+
+    .kpi-2x2-cell:nth-child(3),
+    .kpi-2x2-cell:nth-child(4) {
+      border-top: 1px solid var(--line);
+    }
+
+    /* Two-Line Rows (§12) */
+    .two-line-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .two-line-item {
+      width: 100%;
+      min-height: 56px;
+      padding: 10px 14px;
+      border: none;
+      border-bottom: 1px solid var(--line-soft);
+      background-color: var(--bg-surface);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .two-line-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Fitts's Law >=48px Thumb Buttons */
+    .thumb-cta-btn {
+      width: 100%;
+      min-height: 50px;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: none;
+      background-color: var(--accent-ios);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .thumb-cta-btn.android {
+      background-color: var(--accent-and);
+    }
+
+    .thumb-pill-toggle {
+      width: 100%;
+      min-height: 52px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background-color: var(--bg-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .thumb-pill-toggle.active {
+      background-color: var(--accent-ios-soft);
+      color: var(--accent-ios-ink);
+      border-color: var(--accent-ios);
+    }
+
+    .thumb-pill-toggle.active-and {
+      background-color: var(--accent-and-soft);
+      color: var(--accent-and-ink);
+      border-color: var(--accent-and);
+    }
+
+    @media (max-width: 840px) {
+      .ux-law-strip {
+        grid-template-columns: 1fr;
+      }
+      .pair-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <!-- STICKY VARIATION SWITCHER & 4 UX LAWS INSPECTOR -->
+  <header class="ux-switcher-chrome">
+    <div class="ux-switcher-top">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="font-size:14px; color:#ffffff;">SWEEPR Mobile Apps · 4 Redesigns (iOS &amp; Android)</strong>
+        <div class="ux-switcher-pills" role="tablist" aria-label="Mobile design variations">
+          <button type="button" class="ux-var-btn active" onclick="selectMobDesign(1, this)">Design 1: Ledger &amp; 2-Line Rows</button>
+          <button type="button" class="ux-var-btn" onclick="selectMobDesign(2, this)">Design 2: Thumb-Zone 1-Tap Sweep</button>
+          <button type="button" class="ux-var-btn" onclick="selectMobDesign(3, this)">Design 3: Binary Photo Swipe Deck</button>
+          <button type="button" class="ux-var-btn" onclick="selectMobDesign(4, this)">Design 4: Native iOS / Android Clone</button>
+          <button type="button" class="ux-var-btn" onclick="toggleMobStack(this)" id="mobStackBtn">Compare All 4 Stacked</button>
+          <button type="button" class="ux-var-btn" onclick="toggleMobTheme()" id="mobThemeBtn">True-Black Dark</button>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+        <a href="/taste-redesigns.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">All Platforms Hub</a>
+        <a href="/taste-website.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Website (4)</a>
+        <a href="/taste-desktop-app.html" style="padding:6px 10px; border-radius:5px; background:#1c2220;">Desktop App (4)</a>
+      </div>
+    </div>
+
+    <div class="ux-law-strip">
+      <div class="ux-law-chip">
+        <strong>Hick's Law (Fewer Choices)</strong>
+        <span id="mobLawHick">Replaces wide tables with 4 two-line category rows and pre-selected safe defaults.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Fitts's Law (Thumb Zone &amp; Size)</strong>
+        <span id="mobLawFitts">50px full-width primary Sweep button pinned directly above the 5-tab bottom bar.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Doherty Threshold (&lt;400ms)</strong>
+        <span id="mobLawDoherty">&lt;6ms synchronous GB counter &amp; storage bar updates on every tap.</span>
+      </div>
+      <div class="ux-law-chip">
+        <strong>Jakob's Law (Familiar Mental Model)</strong>
+        <span id="mobLawJakob">Follows iOS SwiftUI &amp; Android Jetpack Compose 48px top bar + 5-tab bottom bar conventions.</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       MOBILE DESIGN 1: ACHROMATIC LEDGER MOBILE (§12 2x2 KPI + Two-Line Rows)
+       ======================================================================== -->
+  <section id="mob-design-1" class="mob-design-pane active" aria-label="Mobile Design 1">
+    <div class="pair-grid">
+      <!-- iOS iPhone 16 Pro -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 1 · iOS (iPhone 16 Pro)</strong><span class="num">2×2 KPI + 2-Line Rows</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>SWEEPR iOS</strong>
+            <span class="num" style="font-size:12px; color:var(--ink-2);">iPhone 16 Pro · 256 GB</span>
+          </header>
+
+          <div class="phone-body">
+            <div class="kpi-2x2">
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Reclaimable</div>
+                <div class="num" style="font-size:21px; font-weight:600;" id="m1IosReclaim">14.82 GB</div>
+                <div style="font-size:11px; color:var(--positive);">4 safe groups</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Used of 256 GB</div>
+                <div class="num" style="font-size:21px; font-weight:600;" id="m1IosUsed">198.4 GB</div>
+                <div class="num" style="font-size:11px; color:var(--ink-2);">77.5% full</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Duplicate Sets</div>
+                <div class="num" style="font-size:21px; font-weight:600;">312</div>
+                <div class="num" style="font-size:11px; color:var(--positive);">Keep sharpest</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Battery Care (£9.99/yr)</div>
+                <div class="num" style="font-size:21px; font-weight:600;">80% Limit</div>
+                <div class="num" style="font-size:11px; color:var(--positive);">96% health · 35 °C</div>
+              </div>
+            </div>
+
+            <div class="two-line-box">
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>Duplicate &amp; Burst Photos</span><span class="num">6.48 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>312 burst sets · Best HEIC kept</span><span class="num">948 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>4K Videos &amp; Screen Recordings</span><span class="num">4.92 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>18 clips over 200 MB</span><span class="num">18 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>Old Screenshots &amp; Receipts</span><span class="num">2.18 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>Older than 90 days · Unstarred</span><span class="num">614 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>Cloud Vault (£9.99/yr Add-on)</span><span class="num">1.24 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>AES-256 Private Album + Contacts</span><span>Face ID Locked</span></div>
+              </div>
+            </div>
+
+            <button type="button" class="thumb-cta-btn num" style="margin-top:auto;" onclick="this.textContent='Cleaned 14.82 GB in 90ms'; document.getElementById('m1IosReclaim').textContent='0.00 GB'; document.getElementById('m1IosUsed').textContent='183.6 GB';">
+              Sweep 14.82 GB Safely
+            </button>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Overview</span></button>
+            <button type="button" class="bottom-tab" onclick="selectMobDesign(3, document.querySelectorAll('.ux-var-btn')[2])"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Photos</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Android Pixel 9 Pro -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 1 · Android (Pixel 9 Pro)</strong><span class="num">2×2 KPI + 2-Line Rows</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>SWEEPR Android</strong>
+            <span class="num" style="font-size:12px; color:var(--ink-2);">Pixel 9 Pro · 256 GB</span>
+          </header>
+
+          <div class="phone-body">
+            <div class="kpi-2x2">
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Reclaimable</div>
+                <div class="num" style="font-size:21px; font-weight:600;" id="m1AndReclaim">16.40 GB</div>
+                <div style="font-size:11px; color:var(--positive);">4 safe groups</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Used of 256 GB</div>
+                <div class="num" style="font-size:21px; font-weight:600;" id="m1AndUsed">184.2 GB</div>
+                <div class="num" style="font-size:11px; color:var(--ink-2);">71.9% full</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Orphaned APKs</div>
+                <div class="num" style="font-size:21px; font-weight:600;">5.84 GB</div>
+                <div class="num" style="font-size:11px; color:var(--positive);">14 old installers</div>
+              </div>
+              <div class="kpi-2x2-cell">
+                <div style="font-size:11px; color:var(--ink-2);">Battery Care (£9.99/yr)</div>
+                <div class="num" style="font-size:21px; font-weight:600;">80% Guard</div>
+                <div class="num" style="font-size:11px; color:var(--positive);">3 drainers slept</div>
+              </div>
+            </div>
+
+            <div class="two-line-box">
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>App Cache &amp; Obsolete APKs</span><span class="num">5.84 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>Android/data cache + 14 .apk files</span><span class="num">2,410 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>WhatsApp &amp; Telegram Media</span><span class="num">4.76 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>Forwarded duplicate videos</span><span class="num">842 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>Duplicate &amp; Burst Camera Roll</span><span class="num">3.90 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>246 sets · Best Top Shot kept</span><span class="num">612 files</span></div>
+              </div>
+              <div class="two-line-item">
+                <div style="display:flex; justify-content:space-between; font-weight:600;"><span>Downloads &amp; Stale Thumbnails</span><span class="num">1.90 GB</span></div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);"><span>/sdcard/Download older than 60d</span><span class="num">390 files</span></div>
+              </div>
+            </div>
+
+            <button type="button" class="thumb-cta-btn android num" style="margin-top:auto;" onclick="this.textContent='Cleaned 16.40 GB in 85ms'; document.getElementById('m1AndReclaim').textContent='0.00 GB'; document.getElementById('m1AndUsed').textContent='167.8 GB';">
+              Sweep 16.40 GB Safely
+            </button>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Overview</span></button>
+            <button type="button" class="bottom-tab" onclick="selectMobDesign(3, document.querySelectorAll('.ux-var-btn')[2])"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Duplicates</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MOBILE DESIGN 2: THUMB-ZONE ONE-TAP SMART SWEEP (Fitts's + Hick's Law)
+       Single big focal number at top + all interactive targets in bottom thumb arc
+       ======================================================================== -->
+  <section id="mob-design-2" class="mob-design-pane" aria-label="Mobile Design 2">
+    <div class="pair-grid">
+      <!-- iOS Thumb-Zone Design -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 2 · iOS Thumb-Zone Smart Sweep</strong><span>Bottom 45% Thumb Arc</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>SWEEPR Smart Sweep</strong>
+            <span class="num" style="font-size:12px; color:var(--positive);">Doherty: 4ms</span>
+          </header>
+
+          <div class="phone-body" style="justify-content:space-between;">
+            <!-- Top Eye Zone: Zero clutter, 1 giant figure -->
+            <div style="padding:20px 4px;">
+              <div style="font-size:12px; font-weight:600; color:var(--ink-2);">READY TO RECLAIM SAFELY</div>
+              <div class="num" style="font-size:46px; font-weight:700; letter-spacing:-0.035em; line-height:1.05; margin-top:4px;" id="m2IosBigTotal">
+                14.82 GB
+              </div>
+              <p style="font-size:13px; color:var(--ink-2); margin-top:8px;">
+                Free space rises from 57.6 GB to 72.4 GB. Sharpest photos and active logins are untouched.
+              </p>
+            </div>
+
+            <!-- Bottom Thumb Arc: Large >=52px Toggle Pills + 56px Primary Button -->
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:11px; font-weight:600; color:var(--ink-2);">TAP IN THUMB ZONE TO ADJUST SCOPE</div>
+
+              <button type="button" class="thumb-pill-toggle active" onclick="toggleM2Pill('ios', 0, this)">
+                <span>Duplicate Photos &amp; Screenshots</span>
+                <strong class="num">8.66 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-pill-toggle active" onclick="toggleM2Pill('ios', 1, this)">
+                <span>Large 4K Videos (18 clips)</span>
+                <strong class="num">4.92 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-pill-toggle active" onclick="toggleM2Pill('ios', 2, this)">
+                <span>Merged Contacts &amp; Mail Cache</span>
+                <strong class="num">1.24 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-cta-btn num" style="min-height:56px; font-size:16px; margin-top:6px;" id="m2IosBtn" onclick="this.textContent='Cleaned 14.82 GB · Undo Available'">
+                One-Tap Clean 14.82 GB
+              </button>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Smart Clean</span></button>
+            <button type="button" class="bottom-tab"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+            <button type="button" class="bottom-tab"><span>Plan</span></button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Android Thumb-Zone Design -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 2 · Android Thumb-Zone Smart Sweep</strong><span>Bottom 45% Thumb Arc</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>SWEEPR Smart Sweep</strong>
+            <span class="num" style="font-size:12px; color:var(--positive);">Pixel 9 Pro</span>
+          </header>
+
+          <div class="phone-body" style="justify-content:space-between;">
+            <div style="padding:20px 4px;">
+              <div style="font-size:12px; font-weight:600; color:var(--ink-2);">READY TO RECLAIM SAFELY</div>
+              <div class="num" style="font-size:46px; font-weight:700; letter-spacing:-0.035em; line-height:1.05; margin-top:4px;" id="m2AndBigTotal">
+                16.40 GB
+              </div>
+              <p style="font-size:13px; color:var(--ink-2); margin-top:8px;">
+                Clears orphaned APKs, WhatsApp duplicate media, and sleeps 3 background battery drainers.
+              </p>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:11px; font-weight:600; color:var(--ink-2);">TAP IN THUMB ZONE TO ADJUST SCOPE</div>
+
+              <button type="button" class="thumb-pill-toggle active-and" onclick="toggleM2Pill('and', 0, this)">
+                <span>App Cache &amp; Obsolete APKs</span>
+                <strong class="num">5.84 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-pill-toggle active-and" onclick="toggleM2Pill('and', 1, this)">
+                <span>WhatsApp &amp; Camera Duplicates</span>
+                <strong class="num">8.66 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-pill-toggle active-and" onclick="toggleM2Pill('and', 2, this)">
+                <span>Stale Downloads &amp; Thumbnails</span>
+                <strong class="num">1.90 GB</strong>
+              </button>
+
+              <button type="button" class="thumb-cta-btn android num" style="min-height:56px; font-size:16px; margin-top:6px;" id="m2AndBtn" onclick="this.textContent='Cleaned 16.40 GB · Undo Available'">
+                One-Tap Clean 16.40 GB
+              </button>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Smart Clean</span></button>
+            <button type="button" class="bottom-tab"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+            <button type="button" class="bottom-tab"><span>Plan</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MOBILE DESIGN 3: BINARY PHOTO & VIDEO SWIPE DECK (Hick's Law = 2 Choices)
+       ======================================================================== -->
+  <section id="mob-design-3" class="mob-design-pane" aria-label="Mobile Design 3">
+    <div class="pair-grid">
+      <!-- iOS Swipe Deck -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 3 · iOS Binary Swipe Deck</strong><span>Hick's Law: Bin vs Keep</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>October Camera Roll</strong>
+            <span class="num" style="font-size:12px; font-weight:600; color:var(--positive);" id="m3IosStaged">Staged: 142.4 MB</span>
+          </header>
+
+          <div class="phone-body" style="justify-content:space-between;">
+            <div style="border:1px solid var(--line); border-radius:14px; padding:18px; background:var(--bg-subtle); flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);">
+                <span>Card <strong class="num" id="m3IosIdx">1</strong> of 24</span>
+                <span class="num">18.4 MB · HEIC Live Photo</span>
+              </div>
+
+              <div style="padding:28px 16px; border-radius:10px; background:var(--bg-surface); border:1px solid var(--line); text-align:center;">
+                <div style="font-size:11px; font-weight:700; color:var(--danger);">BLURRY FRAME DETECTED (SHARPNESS 58.2)</div>
+                <div style="font-size:22px; font-weight:700; margin-top:8px;" id="m3IosFile">IMG_8841.HEIC</div>
+                <div class="num" style="font-size:12px; color:var(--ink-2); margin-top:6px;">14 Oct 2026 · 4032 × 3024 · ISO 400</div>
+              </div>
+
+              <div style="font-size:12px; color:var(--ink-2); text-align:center;">
+                Sharpest frame in this burst (IMG_8840.HEIC) is already protected.
+              </div>
+            </div>
+
+            <!-- Fitts's Law: Two giant 56px thumb buttons -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <button type="button" class="thumb-cta-btn num" style="min-height:56px; background:var(--bg-subtle); color:var(--danger); border:1px solid var(--line);" onclick="m3Swipe('ios', true)">
+                Bin (-18.4 MB)
+              </button>
+              <button type="button" class="thumb-cta-btn num" style="min-height:56px;" onclick="m3Swipe('ios', false)">
+                Keep Photo
+              </button>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab"><span>Overview</span></button>
+            <button type="button" class="bottom-tab active"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Photos</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Android Swipe Deck -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 3 · Android Binary Swipe Deck</strong><span>Hick's Law: Bin vs Keep</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>WhatsApp &amp; 4K Videos</strong>
+            <span class="num" style="font-size:12px; font-weight:600; color:var(--positive);" id="m3AndStaged">Staged: 218.0 MB</span>
+          </header>
+
+          <div class="phone-body" style="justify-content:space-between;">
+            <div style="border:1px solid var(--line); border-radius:14px; padding:18px; background:var(--bg-subtle); flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-2);">
+                <span>Card <strong class="num" id="m3AndIdx">1</strong> of 38</span>
+                <span class="num">42.6 MB · 1080p MP4</span>
+              </div>
+
+              <div style="padding:28px 16px; border-radius:10px; background:var(--bg-surface); border:1px solid var(--line); text-align:center;">
+                <div style="font-size:11px; font-weight:700; color:var(--accent-and);">FORWARDED 3 TIMES IN CHATS</div>
+                <div style="font-size:20px; font-weight:700; margin-top:8px;" id="m3AndFile">VID-20261018-WA0014.mp4</div>
+                <div class="num" style="font-size:12px; color:var(--ink-2); margin-top:6px;">Saved in /Android/media/com.whatsapp</div>
+              </div>
+
+              <div style="font-size:12px; color:var(--ink-2); text-align:center;">
+                Original copy in DCIM/Camera is preserved.
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <button type="button" class="thumb-cta-btn num" style="min-height:56px; background:var(--bg-subtle); color:var(--danger); border:1px solid var(--line);" onclick="m3Swipe('and', true)">
+                Bin (-42.6 MB)
+              </button>
+              <button type="button" class="thumb-cta-btn android num" style="min-height:56px;" onclick="m3Swipe('and', false)">
+                Keep Video
+              </button>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab"><span>Overview</span></button>
+            <button type="button" class="bottom-tab active"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Duplicates</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MOBILE DESIGN 4: NATIVE iOS STORAGE & ANDROID FILES BY GOOGLE CLONE
+       Maximum Jakob's Law: Works identically to the built-in OS Storage screen
+       ======================================================================== -->
+  <section id="mob-design-4" class="mob-design-pane" aria-label="Mobile Design 4">
+    <div class="pair-grid">
+      <!-- iOS Settings -> General -> iPhone Storage Mental Model -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 4 · Native iOS Storage Idiom</strong><span>Jakob's Law: iPhone Storage</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>iPhone Storage &amp; Care</strong>
+            <span class="num" style="font-size:12px; color:var(--ink-2);">SWEEPR Pro</span>
+          </header>
+
+          <div class="phone-body">
+            <!-- Native iOS Segmented Storage Bar Card -->
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); background:var(--bg-subtle);">
+              <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <strong>iPhone 16 Pro</strong>
+                <span class="num" id="m4IosRatio">198.4 GB of 256.0 GB Used</span>
+              </div>
+              <div style="height:12px; border-radius:6px; background:var(--bg-surface); overflow:hidden; display:flex; margin:10px 0;">
+                <div style="width:62%; background:var(--ink-1);"></div>
+                <div id="m4IosSegDup" style="width:9%; background:var(--accent-ios);"></div>
+                <div style="width:6%; background:#b86b14;"></div>
+              </div>
+              <div class="num" style="font-size:11px; color:var(--ink-2);">Apps &amp; iOS (183.6 GB) · Reclaimable Photos &amp; 4K (14.82 GB)</div>
+            </div>
+
+            <div style="font-size:12px; font-weight:600; color:var(--ink-2);">RECOMMENDATIONS (ORDERED BY SIZE)</div>
+
+            <!-- 3 Native Recommendation Cards -->
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>Auto-Clean Duplicate Bursts</strong>
+                <span class="num" style="font-weight:700; color:var(--accent-ios);">Save 6.48 GB</span>
+              </div>
+              <p style="font-size:12px; color:var(--ink-2);">Keeps the sharpest HEIC frame in 312 burst sets and moves 636 duplicates to Recently Deleted.</p>
+              <button type="button" class="thumb-cta-btn num" style="min-height:44px; font-size:13px;" onclick="this.textContent='Cleaned 6.48 GB'; document.getElementById('m4IosSegDup').style.width='0%'; document.getElementById('m4IosRatio').textContent='191.9 GB of 256.0 GB Used';">
+                Clean 6.48 GB Duplicates
+              </button>
+            </div>
+
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>Compress 18 Large 4K Videos</strong>
+                <span class="num" style="font-weight:700; color:var(--accent-ios);">Save 4.92 GB</span>
+              </div>
+              <p style="font-size:12px; color:var(--ink-2);">Lossless HEVC re-encode keeps 60fps clarity at half the file size.</p>
+              <button type="button" class="thumb-cta-btn num" style="min-height:44px; font-size:13px; background:var(--bg-subtle); color:var(--ink-1); border:1px solid var(--line);" onclick="this.textContent='Compressed 18 Videos (-4.92 GB)'">
+                Compress &amp; Save 4.92 GB
+              </button>
+            </div>
+
+            <div style="padding:12px 14px; border-radius:10px; background:var(--accent-ios-soft); color:var(--accent-ios-ink); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong style="font-size:13px; display:block;">Battery Care &amp; Cloud Vault</strong>
+                <span class="num" style="font-size:11px;">80% Charge Guard + AES-256 Vault (£9.99/yr each)</span>
+              </div>
+              <strong style="font-size:12px;">Active</strong>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Storage</span></button>
+            <button type="button" class="bottom-tab"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+            <button type="button" class="bottom-tab"><span>Account</span></button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Android Files by Google / Device Care Mental Model -->
+      <div class="device-col">
+        <div class="device-label"><strong>Design 4 · Native Android Files Idiom</strong><span>Jakob's Law: Files by Google</span></div>
+        <div class="phone-frame">
+          <header class="phone-topbar">
+            <strong>Device Storage &amp; Care</strong>
+            <span class="num" style="font-size:12px; color:var(--ink-2);">Pixel 9 Pro</span>
+          </header>
+
+          <div class="phone-body">
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); background:var(--bg-subtle);">
+              <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <strong>Internal Storage (UFS 4.0)</strong>
+                <span class="num" id="m4AndRatio">184.2 GB of 256.0 GB Used</span>
+              </div>
+              <div style="height:12px; border-radius:6px; background:var(--bg-surface); overflow:hidden; display:flex; margin:10px 0;">
+                <div style="width:58%; background:var(--ink-1);"></div>
+                <div id="m4AndSegJunk" style="width:10%; background:var(--accent-and);"></div>
+                <div style="width:4%; background:#247b50;"></div>
+              </div>
+              <div class="num" style="font-size:11px; color:var(--ink-2);">System &amp; Apps (167.8 GB) · Junk, APKs &amp; Duplicates (16.40 GB)</div>
+            </div>
+
+            <div style="font-size:12px; font-weight:600; color:var(--ink-2);">CLEANUP SUGGESTIONS</div>
+
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>Junk Cache &amp; Installed APKs</strong>
+                <span class="num" style="font-weight:700; color:var(--accent-and);">Save 5.84 GB</span>
+              </div>
+              <p style="font-size:12px; color:var(--ink-2);">Removes residual Android/data cache and 14 obsolete .apk installers.</p>
+              <button type="button" class="thumb-cta-btn android num" style="min-height:44px; font-size:13px;" onclick="this.textContent='Cleaned 5.84 GB'; document.getElementById('m4AndSegJunk').style.width='0%'; document.getElementById('m4AndRatio').textContent='178.4 GB of 256.0 GB Used';">
+                Clean 5.84 GB Junk
+              </button>
+            </div>
+
+            <div style="padding:14px; border-radius:10px; border:1px solid var(--line); display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>WhatsApp &amp; Camera Duplicates</strong>
+                <span class="num" style="font-weight:700; color:var(--accent-and);">Save 8.66 GB</span>
+              </div>
+              <p style="font-size:12px; color:var(--ink-2);">Deduplicates forwarded chat videos and keeps the sharpest Pixel Top Shot.</p>
+              <button type="button" class="thumb-cta-btn android num" style="min-height:44px; font-size:13px; background:var(--bg-subtle); color:var(--ink-1); border:1px solid var(--line);" onclick="this.textContent='Cleaned 8.66 GB Duplicates'">
+                Review &amp; Clean 8.66 GB
+              </button>
+            </div>
+
+            <div style="padding:12px 14px; border-radius:10px; background:var(--accent-and-soft); color:var(--accent-and-ink); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong style="font-size:13px; display:block;">Battery Care &amp; Cloud Vault</strong>
+                <span class="num" style="font-size:11px;">80% Charge Guard + Wakelock Killer (£9.99/yr each)</span>
+              </div>
+              <strong style="font-size:12px;">Active</strong>
+            </div>
+          </div>
+
+          <nav class="phone-bottom-nav">
+            <button type="button" class="bottom-tab active"><span>Clean</span></button>
+            <button type="button" class="bottom-tab"><span>Swipe</span></button>
+            <button type="button" class="bottom-tab"><span>Battery</span></button>
+            <button type="button" class="bottom-tab"><span>Vault</span></button>
+            <button type="button" class="bottom-tab"><span>Account</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const MOB_LAW_NOTES = {
+      1: {
+        hick: 'Replaces wide tables with 4 two-line category rows and pre-selected safe defaults.',
+        fitts: '50px full-width primary Sweep button pinned directly above the 5-tab bottom bar.',
+        doherty: '<6ms synchronous GB counter & storage bar updates on every tap.',
+        jakob: 'Follows iOS SwiftUI & Android Jetpack Compose 48px top bar + 5-tab bottom bar conventions.'
+      },
+      2: {
+        hick: 'Reduces launch cognitive load to 1 headline figure (14.82 GB) and 3 scope toggle pills.',
+        fitts: 'Places all interactive toggles and the 56px One-Tap Clean button inside the bottom 45% thumb arc.',
+        doherty: '4ms instant recalculation of total reclaimable space when toggling any thumb pill.',
+        jakob: 'Mirrors Cash App / Revolut / Apple Fitness single-focus mobile utility home screens.'
+      },
+      3: {
+        hick: 'Turns reviewing 1,500 photos into a binary 2-choice decision: Bin (Left) or Keep (Right).',
+        fitts: 'Two oversized 56px thumb buttons positioned directly under the left and right thumbs.',
+        doherty: 'Pre-rendered card deck advances to the next photo/video in <6ms with live MB tally.',
+        jakob: 'Uses the universal Tinder / Apple Photos card-swipe mental model.'
+      },
+      4: {
+        hick: 'Orders 3 action cards strictly by gigabyte impact (6.48 GB -> 4.92 GB -> £9.99/yr Guards).',
+        fitts: '44px full-width action buttons inside each recommendation card for immediate tapping.',
+        doherty: 'Cleaning a card shrinks the colored segment of the top storage bar in real time.',
+        jakob: 'Matches iOS Settings -> iPhone Storage on iPhone and Files by Google -> Clean on Android.'
+      }
+    };
+
+    function selectMobDesign(num, btnEl) {
+      document.body.classList.remove('stack-all-mode');
+      document.getElementById('mobStackBtn').textContent = 'Compare All 4 Stacked';
+      document.querySelectorAll('.ux-var-btn').forEach(b => {
+        if (b.id !== 'mobThemeBtn') b.classList.remove('active');
+      });
+      if (btnEl) btnEl.classList.add('active');
+
+      document.querySelectorAll('.mob-design-pane').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`mob-design-${num}`);
+      if (target) target.classList.add('active');
+
+      const laws = MOB_LAW_NOTES[num];
+      if (laws) {
+        document.getElementById('mobLawHick').textContent = laws.hick;
+        document.getElementById('mobLawFitts').textContent = laws.fitts;
+        document.getElementById('mobLawDoherty').textContent = laws.doherty;
+        document.getElementById('mobLawJakob').textContent = laws.jakob;
+      }
+    }
+
+    function toggleMobStack(btnEl) {
+      const stacked = document.body.classList.toggle('stack-all-mode');
+      document.querySelectorAll('.ux-var-btn').forEach(b => {
+        if (b.id !== 'mobThemeBtn') b.classList.remove('active');
+      });
+      if (stacked) {
+        btnEl.classList.add('active');
+        btnEl.textContent = 'Showing All 4 Stacked';
+      } else {
+        selectMobDesign(1, document.querySelector('.ux-var-btn'));
+      }
+    }
+
+    function toggleMobTheme() {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      document.getElementById('mobThemeBtn').textContent = next === 'dark' ? 'Stone-Sage Light' : 'True-Black Dark';
+    }
+
+    /* Design 2 Thumb Pill Logic */
+    const m2IosVals = [8.66, 4.92, 1.24];
+    const m2IosOn = [true, true, true];
+    const m2AndVals = [5.84, 8.66, 1.90];
+    const m2AndOn = [true, true, true];
+
+    function toggleM2Pill(os, idx, btnEl) {
+      if (os === 'ios') {
+        m2IosOn[idx] = !m2IosOn[idx];
+        btnEl.classList.toggle('active', m2IosOn[idx]);
+        const sum = m2IosVals.reduce((s, v, i) => s + (m2IosOn[i] ? v : 0), 0);
+        document.getElementById('m2IosBigTotal').textContent = `${sum.toFixed(2)} GB`;
+        document.getElementById('m2IosBtn').textContent = `One-Tap Clean ${sum.toFixed(2)} GB`;
+      } else {
+        m2AndOn[idx] = !m2AndOn[idx];
+        btnEl.classList.toggle('active-and', m2AndOn[idx]);
+        const sum = m2AndVals.reduce((s, v, i) => s + (m2AndOn[i] ? v : 0), 0);
+        document.getElementById('m2AndBigTotal').textContent = `${sum.toFixed(2)} GB`;
+        document.getElementById('m2AndBtn').textContent = `One-Tap Clean ${sum.toFixed(2)} GB`;
+      }
+    }
+
+    /* Design 3 Swipe Deck Logic */
+    let m3IosCount = 1;
+    let m3IosSaved = 142.4;
+    let m3AndCount = 1;
+    let m3AndSaved = 218.0;
+
+    function m3Swipe(os, binned) {
+      if (os === 'ios') {
+        m3IosCount = (m3IosCount % 24) + 1;
+        if (binned) m3IosSaved += 18.4;
+        document.getElementById('m3IosIdx').textContent = String(m3IosCount);
+        document.getElementById('m3IosFile').textContent = `IMG_${8840 + m3IosCount}.HEIC`;
+        document.getElementById('m3IosStaged').textContent = `Staged: ${m3IosSaved.toFixed(1)} MB`;
+      } else {
+        m3AndCount = (m3AndCount % 38) + 1;
+        if (binned) m3AndSaved += 42.6;
+        document.getElementById('m3AndIdx').textContent = String(m3AndCount);
+        document.getElementById('m3AndFile').textContent = `VID-20261018-WA00${13 + m3AndCount}.mp4`;
+        document.getElementById('m3AndStaged').textContent = `Staged: ${m3AndSaved.toFixed(1)} MB`;
+      }
+    }
+  </script>
+</body>
+</html>

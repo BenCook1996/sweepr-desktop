@@ -58,9 +58,9 @@ import kotlin.math.sin
  * with the Smart Clean core, emerald pill buttons, sticky bottom docks, size badges and stat rows.
  */
 
-/** Emerald → teal-emerald gradient used by the primary pill buttons and the Smart Clean core. */
+/** Forest-sage gradient used by the primary pill buttons and the Smart Clean core. */
 val EmeraldGradient: Brush
-    get() = Brush.linearGradient(listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857)))
+    get() = Brush.linearGradient(listOf(Color(0xFF145C3E), Color(0xFF0D6847), Color(0xFF073825)))
 
 /** Splits a formatted size like "3.2 GB" into ("3.2", "GB") so the unit can be drawn smaller. */
 fun splitSize(formatted: String): Pair<String, String> {
