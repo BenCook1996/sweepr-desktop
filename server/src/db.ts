@@ -1538,6 +1538,7 @@ export class Repo {
   }
 
   seedOutreachLogs(seedItems: Array<{
+    project_id?: string;
     who: string;
     website: string;
     url: string;
@@ -1547,6 +1548,25 @@ export class Repo {
     message_id?: string | null;
     reached_out_at?: number;
   }>): number {
+    try {
+      this.db
+        .prepare(
+          `DELETE FROM outreach_logs
+           WHERE LOWER(COALESCE(category, '')) LIKE '%[sweepr vpn]%'
+              OR LOWER(COALESCE(category, '')) LIKE '%[sweepr deepblock]%'
+              OR LOWER(COALESCE(category, '')) LIKE '%sweeprvpn.com%'
+              OR LOWER(COALESCE(category, '')) LIKE '%sweeprdeepblock.com%'
+              OR LOWER(COALESCE(url, '')) LIKE '%werbeblocker%'
+              OR LOWER(COALESCE(url, '')) LIKE '%manifest-v3%'
+              OR LOWER(COALESCE(url, '')) LIKE '%adblocker%'
+              OR LOWER(COALESCE(url, '')) LIKE '%wireguard-vpn%'
+              OR LOWER(COALESCE(message_id, '')) LIKE 'vpn-%'
+              OR LOWER(COALESCE(message_id, '')) LIKE 'deepblock-%'`
+        )
+        .run();
+    } catch {
+      /* ignore */
+    }
     const countRow = this.db.prepare("SELECT COUNT(*) as c FROM outreach_logs").get() as { c: number };
     if (Number(countRow?.c || 0) > 0) return 0;
 
@@ -1559,6 +1579,7 @@ export class Repo {
     this.db.exec("BEGIN");
     try {
       for (const item of seedItems) {
+        if (item.project_id && item.project_id !== "cleaner") continue;
         stmt.run(
           String(item.who || "").trim(),
           String(item.website || "").trim(),

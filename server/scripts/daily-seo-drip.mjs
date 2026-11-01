@@ -43,7 +43,7 @@ const CLEAN_ITEMS_PATH = path.resolve(__dirname, "../src/data/clean-items.json")
 const SITEMAP_PATH = path.resolve(__dirname, "../public/sitemap.xml");
 const PAD_PATH = path.resolve(__dirname, "../public/pad.xml");
 const INDEXING_QUEUE_PATH = path.resolve(__dirname, "../src/data/indexing-queue.json");
-const INDEXNOW_KEY = "8f9a2b4c6d1e3f5a7b9c0d2e4f6a8b0c";
+const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
 
 function safeWriteJsonSync(filePath, data) {
   const content = typeof data === "string" ? data : JSON.stringify(data, null, 2);
@@ -462,12 +462,12 @@ async function runIndexingWorkflow() {
 
   const indexNowPayload = {
     host: "sweeprcleaner.com",
-    key: queue.indexnow_key || INDEXNOW_KEY,
-    keyLocation: `https://sweeprcleaner.com/${queue.indexnow_key || INDEXNOW_KEY}.txt`,
+    key: INDEXNOW_KEY,
+    keyLocation: `https://sweeprcleaner.com/${INDEXNOW_KEY}.txt`,
     urlList: sitemapUrls
   };
 
-  const [bingRes, indexNowRes, googlePing, bingPing] = await Promise.all([
+  const [bingRes, indexNowRes, yandexRes, seznamRes, googlePing, bingPing] = await Promise.all([
     fetch("https://www.bing.com/indexnow", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -475,6 +475,18 @@ async function runIndexingWorkflow() {
       signal: AbortSignal.timeout(15000)
     }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
     fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(indexNowPayload),
+      signal: AbortSignal.timeout(15000)
+    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
+    fetch("https://yandex.com/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(indexNowPayload),
+      signal: AbortSignal.timeout(15000)
+    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
+    fetch("https://search.seznam.cz/indexnow", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(indexNowPayload),
@@ -488,6 +500,7 @@ async function runIndexingWorkflow() {
     }).then(r => `HTTP ${r.status}`).catch(e => `Err: ${e.message}`)
   ]);
 
+  queue.indexnow_key = INDEXNOW_KEY;
   queue.last_indexnow_ping = new Date().toISOString();
   queue.last_sitemap_ping = new Date().toISOString();
 
@@ -501,6 +514,8 @@ async function runIndexingWorkflow() {
   console.log(`[IndexNow Submissions] Submitted ${sitemapUrls.length} sitemap URLs:`);
   console.log(`  - www.bing.com/indexnow: ${bingRes}`);
   console.log(`  - api.indexnow.org/indexnow: ${indexNowRes}`);
+  console.log(`  - yandex.com/indexnow: ${yandexRes}`);
+  console.log(`  - search.seznam.cz/indexnow: ${seznamRes}`);
   console.log(`[Sitemap Pings]:`);
   console.log(`  - Google Sitemap Ping: ${googlePing}`);
   console.log(`  - Bing Sitemap Ping: ${bingPing}`);

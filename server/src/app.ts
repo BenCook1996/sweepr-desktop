@@ -644,6 +644,7 @@ export function createApp(deps: AppDeps) {
       : isAndroidWebView
       ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #0d6847;background:#e3ede7;text-align:left;font-size:13px;color:#073825;"><strong>📱 Android Detected:</strong> Downloading SWEEPRCleaner.apk... If your in-app browser blocks APK installs, tap below to open in Chrome:${btn(`intent://${cleanHost}/download?platform=android&direct=1#Intent;scheme=https;package=com.android.chrome;end`, "🌐 Open in Chrome & Install APK", true)}<iframe src="/download?platform=android&direct=1" style="display:none"></iframe></div>`
       : "";
+    const smartScreenGuide = `<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 First-Launch Guide:</strong><br>Because v0.1.0 is a freshly compiled 5 MB native Rust binary, if Windows SmartScreen appears on first launch: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>.</div>`;
     const links =
       assistBanner +
       (hasAndroid ? btn("/download?platform=android&direct=1", "📱 Download for Android (.apk)", true) : "") +
@@ -652,7 +653,8 @@ export function createApp(deps: AppDeps) {
       btn("/download?platform=windows", "💻 Download for Windows 10 & 11 (.exe)", true) +
       (hasMac ? btn("/download?platform=mac", "🍏 Download for Mac — macOS 11+ Universal (.dmg)", true) : "") +
       (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)", false) : "") +
-      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b554e;">Already purchased on another device? Log in to your Customer Portal to activate this device via QR code:<a href="/login" style="display:block;margin-top:10px;background:#111613;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Customer Login &amp; QR Activation &rarr;</a><a href="/" style="display:inline-block;margin-top:12px;color:#0d6847;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
+      smartScreenGuide +
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b554e;">Want instant 5-device Pro access across Windows, Mac, Android &amp; iOS?<a href="/order?plan=annual" style="display:block;margin-top:8px;background:#0d6847;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Activate Pro License (5 Devices) &rarr;</a><div style="margin-top:12px;">Already purchased on another device? Log in to your Customer Portal to activate this device via QR code:</div><a href="/login" style="display:block;margin-top:8px;background:#111613;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Customer Login &amp; QR Activation &rarr;</a><a href="/" style="display:inline-block;margin-top:12px;color:#0d6847;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
@@ -5784,7 +5786,7 @@ export function createApp(deps: AppDeps) {
       return c.html(
         page(
           "You're Activated 🎉",
-          `Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.${clearDraftScript}`,
+          `Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 First-Launch Tip:</strong> If Windows SmartScreen appears when opening <code>SWEEPRCleaner.exe</code>: <strong>1. Click &ldquo;More info&rdquo;</strong> &rarr; <strong>2. Click &ldquo;Run anyway&rdquo;</strong>.</div>${clearDraftScript}`,
           true
         )
       );

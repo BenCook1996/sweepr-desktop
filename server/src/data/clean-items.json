@@ -218,8 +218,8 @@
     "path": "C:\\Program Files (x86)\\Steam\\depotcache",
     "safeToDelete": true,
     "avgSpace": "2.0 GB – 20.0 GB",
-    "whatIsIt": "Steam stores compressed patch manifests and incomplete delta update chunks in depotcache and steamapps\\downloading.",
-    "whatHappens": "When no game updates are actively paused or downloading, clearing orphaned depotcache chunks reclaims up to 20 GB safely.",
+    "whatIsIt": "What is depotcache in Steam? It is the folder at C:\\Program Files (x86)\\Steam\\depotcache where Steam stores compressed patch manifests (.manifest) and incomplete delta update chunks while staging game updates.",
+    "whatHappens": "Can you delete Steam depotcache? Yes—when no game updates are actively paused or downloading, deleting orphaned depotcache files and steamapps\\downloading staging chunks is 100% safe and reclaims up to 20 GB without affecting installed games or saves.",
     "manualSteps": [
       "Ensure no games are currently downloading or paused in your Steam Library.",
       "Open Steam > Settings > Downloads and click 'Clear Download Cache'.",
@@ -278,8 +278,8 @@
     "path": "%LocalAppData%\\Riot Games\\Riot Client\\Data\\Logs and %LocalAppData%\\VALORANT\\Saved\\Logs",
     "safeToDelete": true,
     "avgSpace": "1.0 GB – 6.5 GB",
-    "whatIsIt": "Valorant, League of Legends, and the Riot Client write verbose match logs, crash dumps, and CEF webcaches after every session.",
-    "whatHappens": "100% safe to clean when Riot games are closed. Frees up gigabytes of SSD space while preserving all keybinds and settings.",
+    "whatIsIt": "How to clear VALORANT and Riot Client cache: VALORANT, League of Legends, and the Riot Client write verbose match logs, crash dumps, and Chromium (CEF) webcaches into %LocalAppData%\\VALORANT\\Saved and %LocalAppData%\\Riot Games after every session.",
+    "whatHappens": "100% safe to delete when Riot games are closed. Clearing VALORANT and Riot Client caches frees up 1–6.5 GB of SSD space and resolves launcher stutter while preserving all crosshairs, keybinds, and account settings.",
     "manualSteps": [
       "Exit Riot Client and any running Riot games.",
       "Press Windows Key + R, type %localappdata%\\VALORANT\\Saved and press Enter.",
@@ -1225,8 +1225,8 @@
     "path": "C:\\ProgramData\\LGHUB\\depots",
     "safeToDelete": true,
     "avgSpace": "1.0 GB – 6.0 GB",
-    "whatIsIt": "Logitech G HUB stores downloaded update depots and diagnostic logs inside C:\\ProgramData\\LGHUB.",
-    "whatHappens": "Removing old depot archives frees disk space without deleting your mouse/keyboard profiles in %LocalAppData%\\LGHUB\\settings.db.",
+    "whatIsIt": "Logitech G HUB (LGHUB) stores multi-gigabyte downloaded update depots, installer archives, and crash dumps inside C:\\ProgramData\\LGHUB\\depots that are never automatically deleted after updates finish.",
+    "whatHappens": "Clearing old LGHUB cache and depot archives frees 1–6 GB of disk space and fixes infinite loading logo loops without deleting your mouse DPI, G-Shift macros, or lighting profiles stored in %LocalAppData%\\LGHUB\\settings.db.",
     "manualSteps": [
       "Verify G HUB is not actively updating.",
       "Check C:\\ProgramData\\LGHUB and remove stale log or temp files (keep settings.db in LocalAppData)."
@@ -1591,8 +1591,8 @@
     "path": "C:\\Windows\\LiveKernelReports",
     "safeToDelete": true,
     "avgSpace": "1.0 GB – 8.0 GB",
-    "whatIsIt": "When a display driver (TDR) or hardware component briefly hangs and recovers without a blue screen, Windows writes a large .dmp file into C:\\Windows\\LiveKernelReports.",
-    "whatHappens": "100% safe to delete. Reclaims gigabytes of hidden GPU/kernel watchdog dumps.",
+    "whatIsIt": "What is C:\\Windows\\LiveKernelReports? When a GPU display driver (TDR) or hardware component briefly hangs and recovers without a full blue screen, Windows writes a massive memory dump (.dmp) file into C:\\Windows\\LiveKernelReports\\WATCHDOG.",
+    "whatHappens": "Is C:\\Windows\\LiveKernelReports safe to delete? Yes, 100% safe to delete. Removing old WATCHDOG and PoW32kWatchdog .dmp files reclaims 1–8 GB of hidden system drive space immediately.",
     "manualSteps": [
       "Press Windows Key + R, type C:\\Windows\\LiveKernelReports and press Enter (as Admin).",
       "Delete all .dmp files inside the WATCHDOG and PoW32kWatchdog subfolders."
@@ -2072,8 +2072,8 @@
     "safeToDelete": false,
     "warning": "Deleting active installer caches manually can prevent Visual Studio or WiX MSI apps from repairing or uninstalling cleanly. Use SWEEPR Cleaner to target only orphaned caches.",
     "avgSpace": "3.0 GB – 18.0 GB",
-    "whatIsIt": "Burn/WiX installers (Visual C++ Redistributables, Visual Studio, Python, Node.js) keep duplicate .msi and .cab copies inside C:\\ProgramData\\Package Cache.",
-    "whatHappens": "Removing orphaned caches from already-uninstalled software reclaims gigabytes while preserving active uninstaller metadata.",
+    "whatIsIt": "Can you delete C:\\ProgramData\\Package Cache? Burn and WiX installers (Visual C++ Redistributables, Visual Studio, Python, Node.js, Windows SDKs) store duplicate .msi and .cab installer copies inside C:\\ProgramData\\Package Cache so apps can repair or uninstall offline.",
+    "whatHappens": "Removing orphaned Package Cache folders left behind by already-uninstalled or superseded software safely reclaims 3–18 GB while preserving active uninstaller metadata for currently installed programs.",
     "manualSteps": [
       "Open Settings > Apps > Installed Apps and uninstall old SDKs or redistributables first.",
       "Inspect C:\\ProgramData\\Package Cache sorted by Date Modified.",

@@ -359,9 +359,22 @@ export function ensureSeoSchema(db: DatabaseSync) {
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
+const CROSS_PROJECT_BACKLINK_RE =
+  /manifest-v3|mv3|werbeblocker|adblocker|bloqueur|bloqueador|cookie-rejector|cookie-blocker|auto-reject-cookie|deepblock|sweeprdeepblock|bloqueio-de-an|advertentieblokker|広告ブロッカー|wireguard-vpn|sweeprvpn|vpn-drip/i;
+
+export function isCrossProjectBacklink(raw: string): boolean {
+  if (!raw) return false;
+  try {
+    return CROSS_PROJECT_BACKLINK_RE.test(decodeURIComponent(raw));
+  } catch {
+    return CROSS_PROJECT_BACKLINK_RE.test(raw);
+  }
+}
+
 export class SeoStore {
   constructor(readonly db: DatabaseSync, private readonly now: () => number = nowSec) {
     ensureSeoSchema(db);
+    this.purgeCrossProjectBacklinks();
   }
 
   // ---------- settings ----------
@@ -640,7 +653,31 @@ export class SeoStore {
   }
 
   // ---------- backlinks ----------
+  purgeCrossProjectBacklinks(): number {
+    let removed = 0;
+    try {
+      const all = this.db.prepare("SELECT id, source_url FROM seo_backlinks").all() as Array<{ id: number; source_url: string }>;
+      const badIds = all.filter((r) => isCrossProjectBacklink(r.source_url)).map((r) => r.id);
+      if (badIds.length > 0) {
+        const del = this.db.prepare("DELETE FROM seo_backlinks WHERE id = ?");
+        this.db.exec("BEGIN");
+        try {
+          for (const id of badIds) {
+            removed += Number(del.run(id).changes || 0);
+          }
+          this.db.exec("COMMIT");
+        } catch (err) {
+          this.db.exec("ROLLBACK");
+          throw err;
+        }
+      }
+    } catch {
+      /* ignore if table not ready */
+    }
+    return removed;
+  }
   listBacklinks(status?: string): BacklinkRow[] {
+    this.purgeCrossProjectBacklinks();
     if (status && status !== "all") {
       return this.db
         .prepare("SELECT * FROM seo_backlinks WHERE status = ? ORDER BY source_domain")
@@ -652,6 +689,7 @@ export class SeoStore {
     return this.db.prepare("SELECT * FROM seo_backlinks WHERE id = ?").get(id) as BacklinkRow | undefined;
   }
   addBacklink(sourceUrl: string, targetDomain: string, outreachId: number | null = null): BacklinkRow | undefined {
+    if (isCrossProjectBacklink(sourceUrl)) return undefined;
     let u: URL;
     try {
       u = new URL(sourceUrl);
@@ -701,11 +739,22 @@ export class SeoStore {
     return Number(this.db.prepare("DELETE FROM seo_backlinks WHERE id = ?").run(id).changes) > 0;
   }
   importOutreachAsBacklinks(targetDomain: string): number {
-    const rows = this.db.prepare("SELECT id, url FROM outreach_logs").all() as Array<{ id: number; url: string }>;
+    this.purgeCrossProjectBacklinks();
+    const rows = this.db
+      .prepare("SELECT id, url, category, who, message_id FROM outreach_logs")
+      .all() as Array<{ id: number; url: string; category?: string | null; who?: string | null; message_id?: string | null }>;
     let added = 0;
     this.db.exec("BEGIN");
     try {
       for (const r of rows) {
+        if (
+          isCrossProjectBacklink(r.url) ||
+          isCrossProjectBacklink(r.category || "") ||
+          isCrossProjectBacklink(r.who || "") ||
+          isCrossProjectBacklink(r.message_id || "")
+        ) {
+          continue;
+        }
         const exists = this.db.prepare("SELECT 1 FROM seo_backlinks WHERE outreach_id = ?").get(r.id);
         if (exists) continue;
         const before = this.db.prepare("SELECT COUNT(*) AS c FROM seo_backlinks").get() as { c: number };
@@ -721,6 +770,7 @@ export class SeoStore {
     return added;
   }
   backlinkSummary() {
+    this.purgeCrossProjectBacklinks();
     const byStatus = this.db
       .prepare("SELECT status, COUNT(*) AS c FROM seo_backlinks GROUP BY status")
       .all() as Array<{ status: string; c: number }>;
