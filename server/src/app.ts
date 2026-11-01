@@ -25,7 +25,7 @@ import {
   safeEqual,
   securityHeaders,
 } from "./security.js";
-import { cleanItems, getCleanItems, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import { cleanItems, getCleanItems, getCleanItemBySlug, renderPseoDirectory, renderPseoPage } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
@@ -510,8 +510,11 @@ export function createApp(deps: AppDeps) {
 
   for (const loc of ["de", "fr", "es"] as const) {
     app.get(`/${loc}`, (c) => renderHtmlFileWithLocale(c, "./public/index.html", loc));
+    app.get(`/${loc}/`, (c) => c.redirect(`/${loc}`, 301));
     app.get(`/${loc}/pricing`, (c) => renderHtmlFileWithLocale(c, "./public/pricing.html", loc));
+    app.get(`/${loc}/pricing/`, (c) => c.redirect(`/${loc}/pricing`, 301));
     app.get(`/${loc}/order`, (c) => renderHtmlFileWithLocale(c, "./public/order.html", loc));
+    app.get(`/${loc}/order/`, (c) => c.redirect(`/${loc}/order`, 301));
   }
 
   const handleOrderRoute = (c: Context) => {
@@ -595,7 +598,7 @@ export function createApp(deps: AppDeps) {
       return c.redirect(`/clean/${category}/${cleanSlug}`, 301);
     }
 
-    const item = getCleanItems().find((i) => i.category === category && i.slug === cleanSlug);
+    const item = getCleanItemBySlug(category, cleanSlug) ?? getCleanItems().find((i) => i.category === category && i.slug === cleanSlug);
     if (!item) return c.notFound();
     return c.html(renderPseoPage(item));
   });

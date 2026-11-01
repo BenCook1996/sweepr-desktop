@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-10-31T07:00:18.724Z",
+  "lastRunAt": "2026-11-01T06:20:22.129Z",
   "lastCount": 50,
-  "totalCleanItems": 1078,
+  "totalCleanItems": 1128,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/proton-drive-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/craft-docs-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/craft-docs-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/craft-docs-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/craft-docs-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/craft-docs-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/skype-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/skype-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/skype-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/skype-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/skype-desktop-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/stremio-desktop-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/stremio-desktop-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/stremio-desktop-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/stremio-desktop-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/stremio-desktop-media-blob-storage"
   ]
 }

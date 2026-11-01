@@ -1,45 +1,134 @@
 {
+  "timestamp": "2026-11-01T06:20:52.525Z",
   "result": {
     "run_id": 1,
-    "pages": 1087,
-    "html_pages": 1087,
+    "pages": 1137,
+    "html_pages": 1137,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
-    "notices": 1,
+    "notices": 0,
     "truncated": false
   },
   "run": {
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1793430301,
-    "finished_at": 1793430310,
-    "pages": 1087,
+    "started_at": 1793514049,
+    "finished_at": 1793514051,
+    "pages": 1137,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
-    "notices": 1,
+    "notices": 0,
     "site_issues_json": "[]",
     "status": "done"
   },
-  "issuesSummary": {
-    "slow_response": 1
-  },
-  "pagesWithIssues": [
+  "issuesSummary": {},
+  "pagesWithIssues": [],
+  "benchmarks": [
+    {
+      "path": "/",
+      "status": 200,
+      "ms": 4.27,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/pricing",
+      "status": 200,
+      "ms": 3.17,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/support",
+      "status": 200,
+      "ms": 1.26,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/refund",
+      "status": 200,
+      "ms": 1.12,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/privacy",
+      "status": 200,
+      "ms": 1.12,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/terms",
+      "status": 200,
+      "ms": 1.13,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/vs/ccleaner",
+      "status": 200,
+      "ms": 1.32,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/alternatives/ccleaner",
+      "status": 200,
+      "ms": 1.24,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
     {
       "path": "/clean",
       "status": 200,
-      "score": 99,
-      "issues": [
-        {
-          "code": "slow_response",
-          "severity": "notice",
-          "finding": "Slow response (2068 ms)",
-          "evidence": "2068 ms server time",
-          "fix": "Cache or optimise this route (TTFB target < 600 ms)."
-        }
-      ]
+      "ms": 11.61,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/clean",
+      "status": 200,
+      "ms": 11.76,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/clean/app/standard-notes-media-blob-storage",
+      "status": 200,
+      "ms": 1.28,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/clean/folder/delivery-optimization-cache",
+      "status": 200,
+      "ms": 0.91,
+      "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "ms": 2.7,
+      "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "ms": 4.97,
+      "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/llms.txt",
+      "status": 200,
+      "ms": 3.23,
+      "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
+    },
+    {
+      "path": "/pad.xml",
+      "status": 200,
+      "ms": 2.2,
+      "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
-  ]
+  ],
+  "indexing": {
+    "sitemapUrlCount": 1138,
+    "bingIndexNowStatus": "HTTP 403",
+    "apiIndexNowStatus": "HTTP 403",
+    "googlePingStatus": "HTTP 404",
+    "bingPingStatus": "HTTP 410"
+  }
 }

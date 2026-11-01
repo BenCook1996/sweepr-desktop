@@ -1628,7 +1628,27 @@ const APP_MATRIX_APPS = [
   { key: "mullvad-vpn", label: "Mullvad VPN Desktop", baseDir: "%LocalAppData%\\Mullvad VPN", proc: "mullvad-gui.exe" },
   { key: "yaak-api", label: "Yaak REST and GraphQL Client", baseDir: "%AppData%\\yaak", proc: "yaak.exe" },
   { key: "zulip-desktop", label: "Zulip Team Chat", baseDir: "%AppData%\\Zulip", proc: "Zulip.exe" },
-  { key: "standard-notes", label: "Standard Notes Desktop", baseDir: "%AppData%\\Standard Notes", proc: "Standard Notes.exe" }
+  { key: "standard-notes", label: "Standard Notes Desktop", baseDir: "%AppData%\\Standard Notes", proc: "Standard Notes.exe" },
+  { key: "skype-desktop", label: "Skype for Desktop", baseDir: "%AppData%\\Microsoft\\Skype for Desktop", proc: "Skype.exe" },
+  { key: "stremio-desktop", label: "Stremio Streaming App", baseDir: "%AppData%\\stremio", proc: "stremio.exe" },
+  { key: "kodi-media-center", label: "Kodi Home Theater", baseDir: "%AppData%\\Kodi", proc: "kodi.exe" },
+  { key: "anki-desktop", label: "Anki Flashcard System", baseDir: "%AppData%\\Anki2", proc: "anki.exe" },
+  { key: "jellyfin-media-player", label: "Jellyfin Media Player", baseDir: "%LocalAppData%\\JellyfinMediaPlayer", proc: "JellyfinMediaPlayer.exe" },
+  { key: "camtasia-studio", label: "TechSmith Camtasia Studio", baseDir: "%LocalAppData%\\TechSmith\\Camtasia Studio", proc: "CamtasiaStudio.exe" },
+  { key: "mailspring-client", label: "Mailspring Email Client", baseDir: "%AppData%\\Mailspring", proc: "mailspring.exe" },
+  { key: "itch-io-app", label: "itch.io Desktop App", baseDir: "%AppData%\\itch", proc: "itch.exe" },
+  { key: "alacritty-terminal", label: "Alacritty GPU Terminal", baseDir: "%AppData%\\alacritty", proc: "alacritty.exe" },
+  { key: "musicbee-player", label: "MusicBee Media Player", baseDir: "%AppData%\\MusicBee", proc: "MusicBee.exe" },
+  { key: "foobar2000-audio", label: "foobar2000 Audio Player", baseDir: "%AppData%\\foobar2000", proc: "foobar2000.exe" },
+  { key: "paint-net", label: "Paint.NET Image Editor", baseDir: "%LocalAppData%\\paint.net", proc: "paintdotnet.exe" },
+  { key: "lightworks-video", label: "Lightworks Video Editor", baseDir: "%LocalAppData%\\Lightworks", proc: "lightworks.exe" },
+  { key: "snagit-capture", label: "TechSmith Snagit Screen Capture", baseDir: "%LocalAppData%\\TechSmith\\Snagit", proc: "Snagit32.exe" },
+  { key: "screen-to-gif", label: "ScreenToGif Screen Recorder", baseDir: "%AppData%\\ScreenToGif", proc: "ScreenToGif.exe" },
+  { key: "wire-messenger", label: "Wire Private Messenger", baseDir: "%AppData%\\Wire", proc: "Wire.exe" },
+  { key: "wezterm-terminal", label: "WezTerm GPU Terminal", baseDir: "%UserProfile%\\.config\\wezterm", proc: "wezterm-gui.exe" },
+  { key: "ghostty-terminal", label: "Ghostty Fast Terminal", baseDir: "%AppData%\\ghostty", proc: "ghostty.exe" },
+  { key: "lapce-editor", label: "Lapce Code Editor", baseDir: "%AppData%\\lapce", proc: "lapce.exe" },
+  { key: "geany-editor", label: "Geany Lightweight IDE", baseDir: "%AppData%\\geany", proc: "geany.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [

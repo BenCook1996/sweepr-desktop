@@ -23,6 +23,22 @@ export interface CleanItem {
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
 let lastMtimeMs = 0;
+const cleanItemsMap = new Map<string, CleanItem>();
+let cachedDirectoryHtml: string | null = null;
+let cachedDirectoryMtime = 0;
+
+function rebuildCleanItemsMap() {
+  cleanItemsMap.clear();
+  for (const item of cleanItems) {
+    cleanItemsMap.set(`${item.category}:${item.slug}`, item);
+  }
+}
+rebuildCleanItemsMap();
+
+export function getCleanItemBySlug(category: string, slug: string): CleanItem | undefined {
+  getCleanItems();
+  return cleanItemsMap.get(`${category}:${slug}`);
+}
 
 export function getCleanItems(): CleanItem[] {
   try {
@@ -31,6 +47,8 @@ export function getCleanItems(): CleanItem[] {
       const fresh = JSON.parse(readFileSync(CLEAN_ITEMS_FILE, "utf8")) as CleanItem[];
       if (Array.isArray(fresh) && fresh.length > 0) {
         cleanItems.splice(0, cleanItems.length, ...fresh);
+        rebuildCleanItemsMap();
+        cachedDirectoryHtml = null;
         lastMtimeMs = st.mtimeMs;
       }
     }
@@ -133,7 +151,17 @@ function buildPseoDescription(item: CleanItem): string {
 }
 
 export function renderPseoDirectory(): string {
-  const items = getCleanItems();
+  getCleanItems();
+  try {
+    const st = statSync(CLEAN_ITEMS_FILE);
+    if (cachedDirectoryHtml && st.mtimeMs === cachedDirectoryMtime) {
+      return cachedDirectoryHtml;
+    }
+    cachedDirectoryMtime = st.mtimeMs;
+  } catch {
+    if (cachedDirectoryHtml) return cachedDirectoryHtml;
+  }
+  const items = cleanItems;
   const appItems = items.filter((i) => i.category === "app");
   const folderItems = items.filter((i) => i.category === "folder");
 
@@ -153,7 +181,7 @@ export function renderPseoDirectory(): string {
     </a>
   `;
 
-  return `<!DOCTYPE html>
+  const htmlResult = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta name="color-scheme" content="light">
@@ -299,6 +327,8 @@ export function renderPseoDirectory(): string {
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>`;
+  cachedDirectoryHtml = htmlResult;
+  return htmlResult;
 }
 
 export function renderPseoPage(item: CleanItem): string {
