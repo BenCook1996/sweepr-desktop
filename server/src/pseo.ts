@@ -145,6 +145,7 @@ export function buildPseoTitle(item: CleanItem): string {
   }
 
   const cleanName = item.name
+    .replace(/TechSmith Snagit Screen Capture/g, "Snagit Capture")
     .replace(/Roblox Engine & Player/g, "Roblox Player")
     .replace(/RetroArch Multi-System Emulator/g, "RetroArch")
     .replace(/\s*\([^)]*\)/g, "")
@@ -160,10 +161,13 @@ export function buildPseoTitle(item: CleanItem): string {
     candidates.push(cleanName.replace("Service Worker CacheStorage", "Service Worker Cache"));
     const swPart = cleanName.split("&")[0].replace("Service Worker CacheStorage", "Service Worker Cache").trim();
     if (swPart.length >= 10) candidates.push(swPart);
+    candidates.push(cleanName.replace(/Service Worker CacheStorage & Offline Blobs/g, "Service Worker Cache"));
   }
-  if (cleanName.includes("Crashpad Diagnostic Crash Dumps")) {
-    candidates.push(cleanName.replace("Crashpad Diagnostic Crash Dumps & Error Logs", "Crash Dumps"));
-    candidates.push(cleanName.replace("Crashpad Diagnostic Crash Dumps & Error Logs", "Crashpad Logs"));
+  if (cleanName.includes("Crashpad")) {
+    candidates.push(cleanName.replace(/Crashpad Diagnostic Crash Dumps & Error Logs/g, "Crash Dumps"));
+    candidates.push(cleanName.replace(/Crashpad Diagnostic Crash Dumps & Error Logs/g, "Crashpad Logs"));
+    candidates.push(cleanName.replace(/Crashpad Reports & Diagnostic DMP Logs/g, "Crashpad Logs"));
+    candidates.push(cleanName.replace(/Crashpad Reports & Diagnostic DMP Logs/g, "Crash Dumps"));
   }
 
   const brands = [

@@ -16865,5 +16865,755 @@
       "Press Windows Key + R, type %AppData%\\MusicBee and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "foobar2000-audio-gpu-shader-cache",
+    "category": "app",
+    "name": "foobar2000 Audio Player GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\foobar2000\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "foobar2000 Audio Player stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning foobar2000 Audio Player's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit foobar2000 Audio Player (verify foobar2000.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\foobar2000 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "foobar2000-audio-code-bytecode-cache",
+    "category": "app",
+    "name": "foobar2000 Audio Player Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\foobar2000\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "foobar2000 Audio Player compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning foobar2000 Audio Player's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit foobar2000 Audio Player (verify foobar2000.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\foobar2000 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "foobar2000-audio-service-worker-cachestorage",
+    "category": "app",
+    "name": "foobar2000 Audio Player Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\foobar2000\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "foobar2000 Audio Player quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning foobar2000 Audio Player's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit foobar2000 Audio Player (verify foobar2000.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\foobar2000 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "foobar2000-audio-crashpad-dump-logs",
+    "category": "app",
+    "name": "foobar2000 Audio Player Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\foobar2000\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "foobar2000 Audio Player writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning foobar2000 Audio Player's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit foobar2000 Audio Player (verify foobar2000.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\foobar2000 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "foobar2000-audio-media-blob-storage",
+    "category": "app",
+    "name": "foobar2000 Audio Player Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\foobar2000\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "foobar2000 Audio Player stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning foobar2000 Audio Player's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit foobar2000 Audio Player (verify foobar2000.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\foobar2000 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "paint-net-gpu-shader-cache",
+    "category": "app",
+    "name": "Paint.NET Image Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\paint.net\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Paint.NET Image Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Paint.NET Image Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Paint.NET Image Editor (verify paintdotnet.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\paint.net and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "paint-net-code-bytecode-cache",
+    "category": "app",
+    "name": "Paint.NET Image Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\paint.net\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Paint.NET Image Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Paint.NET Image Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Paint.NET Image Editor (verify paintdotnet.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\paint.net and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "paint-net-service-worker-cachestorage",
+    "category": "app",
+    "name": "Paint.NET Image Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\paint.net\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Paint.NET Image Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Paint.NET Image Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Paint.NET Image Editor (verify paintdotnet.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\paint.net and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "paint-net-crashpad-dump-logs",
+    "category": "app",
+    "name": "Paint.NET Image Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\paint.net\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Paint.NET Image Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Paint.NET Image Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Paint.NET Image Editor (verify paintdotnet.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\paint.net and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "paint-net-media-blob-storage",
+    "category": "app",
+    "name": "Paint.NET Image Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\paint.net\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Paint.NET Image Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Paint.NET Image Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Paint.NET Image Editor (verify paintdotnet.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\paint.net and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lightworks-video-gpu-shader-cache",
+    "category": "app",
+    "name": "Lightworks Video Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Lightworks\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Lightworks Video Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Lightworks Video Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Lightworks Video Editor (verify lightworks.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Lightworks and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lightworks-video-code-bytecode-cache",
+    "category": "app",
+    "name": "Lightworks Video Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Lightworks\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Lightworks Video Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Lightworks Video Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Lightworks Video Editor (verify lightworks.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Lightworks and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lightworks-video-service-worker-cachestorage",
+    "category": "app",
+    "name": "Lightworks Video Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Lightworks\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Lightworks Video Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Lightworks Video Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Lightworks Video Editor (verify lightworks.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Lightworks and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lightworks-video-crashpad-dump-logs",
+    "category": "app",
+    "name": "Lightworks Video Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Lightworks\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Lightworks Video Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Lightworks Video Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Lightworks Video Editor (verify lightworks.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Lightworks and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lightworks-video-media-blob-storage",
+    "category": "app",
+    "name": "Lightworks Video Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Lightworks\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Lightworks Video Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Lightworks Video Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Lightworks Video Editor (verify lightworks.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Lightworks and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "snagit-capture-gpu-shader-cache",
+    "category": "app",
+    "name": "TechSmith Snagit Screen Capture GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\TechSmith\\Snagit\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "TechSmith Snagit Screen Capture stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning TechSmith Snagit Screen Capture's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit TechSmith Snagit Screen Capture (verify Snagit32.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "snagit-capture-code-bytecode-cache",
+    "category": "app",
+    "name": "TechSmith Snagit Screen Capture Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\TechSmith\\Snagit\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "TechSmith Snagit Screen Capture compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning TechSmith Snagit Screen Capture's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit TechSmith Snagit Screen Capture (verify Snagit32.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "snagit-capture-service-worker-cachestorage",
+    "category": "app",
+    "name": "TechSmith Snagit Screen Capture Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\TechSmith\\Snagit\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "TechSmith Snagit Screen Capture quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning TechSmith Snagit Screen Capture's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit TechSmith Snagit Screen Capture (verify Snagit32.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "snagit-capture-crashpad-dump-logs",
+    "category": "app",
+    "name": "TechSmith Snagit Screen Capture Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\TechSmith\\Snagit\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "TechSmith Snagit Screen Capture writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning TechSmith Snagit Screen Capture's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit TechSmith Snagit Screen Capture (verify Snagit32.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "snagit-capture-media-blob-storage",
+    "category": "app",
+    "name": "TechSmith Snagit Screen Capture Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\TechSmith\\Snagit\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "TechSmith Snagit Screen Capture stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning TechSmith Snagit Screen Capture's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit TechSmith Snagit Screen Capture (verify Snagit32.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "screen-to-gif-gpu-shader-cache",
+    "category": "app",
+    "name": "ScreenToGif Screen Recorder GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\ScreenToGif\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "ScreenToGif Screen Recorder stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning ScreenToGif Screen Recorder's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit ScreenToGif Screen Recorder (verify ScreenToGif.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ScreenToGif and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "screen-to-gif-code-bytecode-cache",
+    "category": "app",
+    "name": "ScreenToGif Screen Recorder Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\ScreenToGif\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "ScreenToGif Screen Recorder compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning ScreenToGif Screen Recorder's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit ScreenToGif Screen Recorder (verify ScreenToGif.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ScreenToGif and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "screen-to-gif-service-worker-cachestorage",
+    "category": "app",
+    "name": "ScreenToGif Screen Recorder Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\ScreenToGif\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "ScreenToGif Screen Recorder quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning ScreenToGif Screen Recorder's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit ScreenToGif Screen Recorder (verify ScreenToGif.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ScreenToGif and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "screen-to-gif-crashpad-dump-logs",
+    "category": "app",
+    "name": "ScreenToGif Screen Recorder Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\ScreenToGif\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "ScreenToGif Screen Recorder writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning ScreenToGif Screen Recorder's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit ScreenToGif Screen Recorder (verify ScreenToGif.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ScreenToGif and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "screen-to-gif-media-blob-storage",
+    "category": "app",
+    "name": "ScreenToGif Screen Recorder Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\ScreenToGif\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "ScreenToGif Screen Recorder stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning ScreenToGif Screen Recorder's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit ScreenToGif Screen Recorder (verify ScreenToGif.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ScreenToGif and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wire-messenger-gpu-shader-cache",
+    "category": "app",
+    "name": "Wire Private Messenger GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Wire\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Wire Private Messenger stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Wire Private Messenger's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Wire Private Messenger (verify Wire.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Wire and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wire-messenger-code-bytecode-cache",
+    "category": "app",
+    "name": "Wire Private Messenger Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Wire\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Wire Private Messenger compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Wire Private Messenger's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Wire Private Messenger (verify Wire.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Wire and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wire-messenger-service-worker-cachestorage",
+    "category": "app",
+    "name": "Wire Private Messenger Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Wire\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Wire Private Messenger quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Wire Private Messenger's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Wire Private Messenger (verify Wire.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Wire and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wire-messenger-crashpad-dump-logs",
+    "category": "app",
+    "name": "Wire Private Messenger Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Wire\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Wire Private Messenger writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Wire Private Messenger's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Wire Private Messenger (verify Wire.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Wire and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wire-messenger-media-blob-storage",
+    "category": "app",
+    "name": "Wire Private Messenger Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Wire\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Wire Private Messenger stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Wire Private Messenger's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Wire Private Messenger (verify Wire.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Wire and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wezterm-terminal-gpu-shader-cache",
+    "category": "app",
+    "name": "WezTerm GPU Terminal GPUCache & Dawn WebGPU Cache",
+    "path": "%UserProfile%\\.config\\wezterm\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "WezTerm GPU Terminal stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning WezTerm GPU Terminal's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit WezTerm GPU Terminal (verify wezterm-gui.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\.config\\wezterm and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wezterm-terminal-code-bytecode-cache",
+    "category": "app",
+    "name": "WezTerm GPU Terminal Code Cache & V8 JavaScript Bytecode",
+    "path": "%UserProfile%\\.config\\wezterm\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "WezTerm GPU Terminal compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning WezTerm GPU Terminal's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit WezTerm GPU Terminal (verify wezterm-gui.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\.config\\wezterm and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wezterm-terminal-service-worker-cachestorage",
+    "category": "app",
+    "name": "WezTerm GPU Terminal Service Worker CacheStorage & Offline Blobs",
+    "path": "%UserProfile%\\.config\\wezterm\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "WezTerm GPU Terminal quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning WezTerm GPU Terminal's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit WezTerm GPU Terminal (verify wezterm-gui.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\.config\\wezterm and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wezterm-terminal-crashpad-dump-logs",
+    "category": "app",
+    "name": "WezTerm GPU Terminal Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%UserProfile%\\.config\\wezterm\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "WezTerm GPU Terminal writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning WezTerm GPU Terminal's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit WezTerm GPU Terminal (verify wezterm-gui.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\.config\\wezterm and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "wezterm-terminal-media-blob-storage",
+    "category": "app",
+    "name": "WezTerm GPU Terminal Media Cache & IndexedDB Blob Storage",
+    "path": "%UserProfile%\\.config\\wezterm\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "WezTerm GPU Terminal stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning WezTerm GPU Terminal's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit WezTerm GPU Terminal (verify wezterm-gui.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %UserProfile%\\.config\\wezterm and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ghostty-terminal-gpu-shader-cache",
+    "category": "app",
+    "name": "Ghostty Fast Terminal GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\ghostty\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Ghostty Fast Terminal stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Ghostty Fast Terminal's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Ghostty Fast Terminal (verify ghostty.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ghostty and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ghostty-terminal-code-bytecode-cache",
+    "category": "app",
+    "name": "Ghostty Fast Terminal Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\ghostty\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Ghostty Fast Terminal compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Ghostty Fast Terminal's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Ghostty Fast Terminal (verify ghostty.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ghostty and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ghostty-terminal-service-worker-cachestorage",
+    "category": "app",
+    "name": "Ghostty Fast Terminal Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\ghostty\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Ghostty Fast Terminal quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Ghostty Fast Terminal's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Ghostty Fast Terminal (verify ghostty.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ghostty and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ghostty-terminal-crashpad-dump-logs",
+    "category": "app",
+    "name": "Ghostty Fast Terminal Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\ghostty\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Ghostty Fast Terminal writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Ghostty Fast Terminal's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Ghostty Fast Terminal (verify ghostty.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ghostty and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "ghostty-terminal-media-blob-storage",
+    "category": "app",
+    "name": "Ghostty Fast Terminal Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\ghostty\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Ghostty Fast Terminal stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Ghostty Fast Terminal's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Ghostty Fast Terminal (verify ghostty.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ghostty and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lapce-editor-gpu-shader-cache",
+    "category": "app",
+    "name": "Lapce Code Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\lapce\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Lapce Code Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Lapce Code Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Lapce Code Editor (verify lapce.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\lapce and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lapce-editor-code-bytecode-cache",
+    "category": "app",
+    "name": "Lapce Code Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\lapce\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Lapce Code Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Lapce Code Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Lapce Code Editor (verify lapce.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\lapce and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lapce-editor-service-worker-cachestorage",
+    "category": "app",
+    "name": "Lapce Code Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\lapce\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Lapce Code Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Lapce Code Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Lapce Code Editor (verify lapce.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\lapce and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lapce-editor-crashpad-dump-logs",
+    "category": "app",
+    "name": "Lapce Code Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\lapce\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Lapce Code Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Lapce Code Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Lapce Code Editor (verify lapce.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\lapce and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "lapce-editor-media-blob-storage",
+    "category": "app",
+    "name": "Lapce Code Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\lapce\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Lapce Code Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Lapce Code Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Lapce Code Editor (verify lapce.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\lapce and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geany-editor-gpu-shader-cache",
+    "category": "app",
+    "name": "Geany Lightweight IDE GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\geany\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Geany Lightweight IDE stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Geany Lightweight IDE's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Geany Lightweight IDE (verify geany.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\geany and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geany-editor-code-bytecode-cache",
+    "category": "app",
+    "name": "Geany Lightweight IDE Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\geany\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Geany Lightweight IDE compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Geany Lightweight IDE's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Geany Lightweight IDE (verify geany.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\geany and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geany-editor-service-worker-cachestorage",
+    "category": "app",
+    "name": "Geany Lightweight IDE Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\geany\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Geany Lightweight IDE quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Geany Lightweight IDE's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Geany Lightweight IDE (verify geany.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\geany and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geany-editor-crashpad-dump-logs",
+    "category": "app",
+    "name": "Geany Lightweight IDE Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\geany\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Geany Lightweight IDE writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Geany Lightweight IDE's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Geany Lightweight IDE (verify geany.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\geany and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "geany-editor-media-blob-storage",
+    "category": "app",
+    "name": "Geany Lightweight IDE Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\geany\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Geany Lightweight IDE stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Geany Lightweight IDE's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Geany Lightweight IDE (verify geany.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\geany and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

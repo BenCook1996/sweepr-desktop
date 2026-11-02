@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-11-01T06:20:52.525Z",
+  "timestamp": "2026-11-02T04:23:15.384Z",
   "result": {
     "run_id": 1,
-    "pages": 1137,
-    "html_pages": 1137,
+    "pages": 1187,
+    "html_pages": 1187,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -14,9 +14,9 @@
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1793514049,
-    "finished_at": 1793514051,
-    "pages": 1137,
+    "started_at": 1793593390,
+    "finished_at": 1793593394,
+    "pages": 1187,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -30,104 +30,104 @@
     {
       "path": "/",
       "status": 200,
-      "ms": 4.27,
+      "ms": 2.85,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pricing",
       "status": 200,
-      "ms": 3.17,
+      "ms": 1.53,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/support",
       "status": 200,
-      "ms": 1.26,
+      "ms": 2.63,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/refund",
       "status": 200,
-      "ms": 1.12,
+      "ms": 2.35,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/privacy",
       "status": 200,
-      "ms": 1.12,
+      "ms": 2.57,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/terms",
       "status": 200,
-      "ms": 1.13,
+      "ms": 2.39,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/vs/ccleaner",
       "status": 200,
-      "ms": 1.32,
+      "ms": 2.94,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/alternatives/ccleaner",
       "status": 200,
-      "ms": 1.24,
+      "ms": 2.68,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 11.61,
+      "ms": 12.19,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 11.76,
+      "ms": 12.53,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/app/standard-notes-media-blob-storage",
       "status": 200,
-      "ms": 1.28,
+      "ms": 1.84,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/folder/delivery-optimization-cache",
       "status": 200,
-      "ms": 0.91,
+      "ms": 2.08,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/robots.txt",
       "status": 200,
-      "ms": 2.7,
+      "ms": 4.62,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "ms": 4.97,
+      "ms": 4.67,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/llms.txt",
       "status": 200,
-      "ms": 3.23,
+      "ms": 3.01,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pad.xml",
       "status": 200,
-      "ms": 2.2,
+      "ms": 2.16,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
   ],
   "indexing": {
-    "sitemapUrlCount": 1138,
-    "bingIndexNowStatus": "HTTP 403",
-    "apiIndexNowStatus": "HTTP 403",
+    "sitemapUrlCount": 1188,
+    "bingIndexNowStatus": "HTTP 200",
+    "apiIndexNowStatus": "HTTP 200",
     "googlePingStatus": "HTTP 404",
     "bingPingStatus": "HTTP 410"
   }

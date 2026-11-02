@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (1128 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (1178 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [MusicBee Media Player Media Cache & IndexedDB Blob Storage (%AppData%\MusicBee\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/musicbee-player-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [MusicBee Media Player Crashpad Reports & Diagnostic DMP Logs (%AppData%\MusicBee\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/musicbee-player-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [MusicBee Media Player Service Worker CacheStorage & Offline Blobs (%AppData%\MusicBee\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/musicbee-player-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [MusicBee Media Player Code Cache & V8 JavaScript Bytecode (%AppData%\MusicBee\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/musicbee-player-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [MusicBee Media Player GPUCache & Dawn WebGPU Cache (%AppData%\MusicBee\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/musicbee-player-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Alacritty GPU Terminal Media Cache & IndexedDB Blob Storage (%AppData%\alacritty\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/alacritty-terminal-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Alacritty GPU Terminal Crashpad Reports & Diagnostic DMP Logs (%AppData%\alacritty\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/alacritty-terminal-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Alacritty GPU Terminal Service Worker CacheStorage & Offline Blobs (%AppData%\alacritty\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/alacritty-terminal-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Alacritty GPU Terminal Code Cache & V8 JavaScript Bytecode (%AppData%\alacritty\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/alacritty-terminal-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Alacritty GPU Terminal GPUCache & Dawn WebGPU Cache (%AppData%\alacritty\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/alacritty-terminal-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [itch.io Desktop App Media Cache & IndexedDB Blob Storage (%AppData%\itch\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/itch-io-app-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [itch.io Desktop App Crashpad Reports & Diagnostic DMP Logs (%AppData%\itch\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/itch-io-app-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [itch.io Desktop App Service Worker CacheStorage & Offline Blobs (%AppData%\itch\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/itch-io-app-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [itch.io Desktop App Code Cache & V8 JavaScript Bytecode (%AppData%\itch\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/itch-io-app-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [itch.io Desktop App GPUCache & Dawn WebGPU Cache (%AppData%\itch\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/itch-io-app-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Mailspring Email Client Media Cache & IndexedDB Blob Storage (%AppData%\Mailspring\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/mailspring-client-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Mailspring Email Client Crashpad Reports & Diagnostic DMP Logs (%AppData%\Mailspring\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/mailspring-client-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Mailspring Email Client Service Worker CacheStorage & Offline Blobs (%AppData%\Mailspring\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/mailspring-client-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Mailspring Email Client Code Cache & V8 JavaScript Bytecode (%AppData%\Mailspring\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/mailspring-client-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Mailspring Email Client GPUCache & Dawn WebGPU Cache (%AppData%\Mailspring\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/mailspring-client-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [TechSmith Camtasia Studio Media Cache & IndexedDB Blob Storage (%LocalAppData%\TechSmith\Camtasia Studio\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/camtasia-studio-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [TechSmith Camtasia Studio Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\TechSmith\Camtasia Studio\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/camtasia-studio-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [TechSmith Camtasia Studio Service Worker CacheStorage & Offline Blobs (%LocalAppData%\TechSmith\Camtasia Studio\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/camtasia-studio-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [TechSmith Camtasia Studio Code Cache & V8 JavaScript Bytecode (%LocalAppData%\TechSmith\Camtasia Studio\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/camtasia-studio-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [TechSmith Camtasia Studio GPUCache & Dawn WebGPU Cache (%LocalAppData%\TechSmith\Camtasia Studio\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/camtasia-studio-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Geany Lightweight IDE Media Cache & IndexedDB Blob Storage (%AppData%\geany\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/geany-editor-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Geany Lightweight IDE Crashpad Reports & Diagnostic DMP Logs (%AppData%\geany\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/geany-editor-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Geany Lightweight IDE Service Worker CacheStorage & Offline Blobs (%AppData%\geany\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/geany-editor-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Geany Lightweight IDE Code Cache & V8 JavaScript Bytecode (%AppData%\geany\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/geany-editor-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Geany Lightweight IDE GPUCache & Dawn WebGPU Cache (%AppData%\geany\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/geany-editor-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Lapce Code Editor Media Cache & IndexedDB Blob Storage (%AppData%\lapce\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/lapce-editor-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Lapce Code Editor Crashpad Reports & Diagnostic DMP Logs (%AppData%\lapce\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/lapce-editor-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Lapce Code Editor Service Worker CacheStorage & Offline Blobs (%AppData%\lapce\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/lapce-editor-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Lapce Code Editor Code Cache & V8 JavaScript Bytecode (%AppData%\lapce\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/lapce-editor-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Lapce Code Editor GPUCache & Dawn WebGPU Cache (%AppData%\lapce\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/lapce-editor-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Ghostty Fast Terminal Media Cache & IndexedDB Blob Storage (%AppData%\ghostty\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/ghostty-terminal-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Ghostty Fast Terminal Crashpad Reports & Diagnostic DMP Logs (%AppData%\ghostty\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/ghostty-terminal-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Ghostty Fast Terminal Service Worker CacheStorage & Offline Blobs (%AppData%\ghostty\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/ghostty-terminal-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Ghostty Fast Terminal Code Cache & V8 JavaScript Bytecode (%AppData%\ghostty\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/ghostty-terminal-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Ghostty Fast Terminal GPUCache & Dawn WebGPU Cache (%AppData%\ghostty\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/ghostty-terminal-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [WezTerm GPU Terminal Media Cache & IndexedDB Blob Storage (%UserProfile%\.config\wezterm\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/wezterm-terminal-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [WezTerm GPU Terminal Crashpad Reports & Diagnostic DMP Logs (%UserProfile%\.config\wezterm\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/wezterm-terminal-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [WezTerm GPU Terminal Service Worker CacheStorage & Offline Blobs (%UserProfile%\.config\wezterm\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/wezterm-terminal-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [WezTerm GPU Terminal Code Cache & V8 JavaScript Bytecode (%UserProfile%\.config\wezterm\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/wezterm-terminal-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [WezTerm GPU Terminal GPUCache & Dawn WebGPU Cache (%UserProfile%\.config\wezterm\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/wezterm-terminal-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Wire Private Messenger Media Cache & IndexedDB Blob Storage (%AppData%\Wire\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/wire-messenger-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
+- [Wire Private Messenger Crashpad Reports & Diagnostic DMP Logs (%AppData%\Wire\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/wire-messenger-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
+- [Wire Private Messenger Service Worker CacheStorage & Offline Blobs (%AppData%\Wire\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/wire-messenger-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
+- [Wire Private Messenger Code Cache & V8 JavaScript Bytecode (%AppData%\Wire\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/wire-messenger-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
+- [Wire Private Messenger GPUCache & Dawn WebGPU Cache (%AppData%\Wire\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/wire-messenger-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB

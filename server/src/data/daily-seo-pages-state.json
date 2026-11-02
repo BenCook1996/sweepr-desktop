@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-11-01T06:20:22.129Z",
+  "lastRunAt": "2026-11-02T04:18:29.510Z",
   "lastCount": 50,
-  "totalCleanItems": 1128,
+  "totalCleanItems": 1178,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/skype-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/skype-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/skype-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/skype-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/skype-desktop-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/stremio-desktop-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/stremio-desktop-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/stremio-desktop-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/stremio-desktop-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/stremio-desktop-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/foobar2000-audio-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/foobar2000-audio-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/foobar2000-audio-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/foobar2000-audio-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/foobar2000-audio-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/paint-net-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/paint-net-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/paint-net-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/paint-net-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/paint-net-media-blob-storage"
   ]
 }
