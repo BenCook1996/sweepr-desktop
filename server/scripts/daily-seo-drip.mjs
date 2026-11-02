@@ -299,12 +299,17 @@ async function publishGuide(item, lang, idx, dateTag) {
 
 async function fetchCleanerCrmState(seed = []) {
   const headers = { Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" };
-  const [lOutreach, cOutreach, lBacklinks] = await Promise.all([
+  const [lOutreach, cOutreach, lBacklinks, cBacklinks] = await Promise.all([
     fetch(`${LOCAL_CRM}/api/crm/outreach?project=cleaner&limit=5000`, { headers, signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : { rows: [] }).catch(() => ({ rows: [] })),
     fetch(`${CRM_BASE}/api/crm/outreach?limit=5000`, { headers, signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : { rows: [] }).catch(() => ({ rows: [] })),
-    fetch(`${LOCAL_CRM}/api/crm/seo/backlinks?project=cleaner`, { headers, signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : { backlinks: [] }).catch(() => ({ backlinks: [] }))
+    fetch(`${LOCAL_CRM}/api/crm/seo/backlinks?project=cleaner`, { headers, signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : { backlinks: [] }).catch(() => ({ backlinks: [] })),
+    fetch(`${CRM_BASE}/api/crm/seo/backlinks?project=cleaner`, { headers, signal: AbortSignal.timeout(6000) }).then(r => r.ok ? r.json() : { backlinks: [] }).catch(() => ({ backlinks: [] }))
   ]);
-  const allRows = [...(lOutreach.rows || []), ...(cOutreach.rows || []), ...seed];
+  const allRows = [
+    ...(lOutreach.rows || lOutreach.items || []),
+    ...(cOutreach.rows || cOutreach.items || []),
+    ...seed
+  ];
   const postedUrls = new Set();
   const postedCombos = new Set();
   const postedDirectoryDomains = new Set();
@@ -325,10 +330,10 @@ async function fetchCleanerCrmState(seed = []) {
       postedCombos.add(`${site}|${langMatch[1]}|${targetMatch[1].trim()}`);
     }
   }
-  for (const b of lBacklinks.backlinks || []) {
+  for (const b of [...(lBacklinks.backlinks || []), ...(cBacklinks.backlinks || [])]) {
     if (b?.source_url) postedUrls.add(String(b.source_url).trim());
   }
-  return { postedUrls, postedCombos, postedDirectoryDomains, localCrmCount: (lOutreach.rows || []).length };
+  return { postedUrls, postedCombos, postedDirectoryDomains, localCrmCount: (lOutreach.rows || lOutreach.items || []).length };
 }
 
 async function runBacklinksWorkflow(targetCount = 300) {
