@@ -118,7 +118,7 @@ async function verifyAndProbePadXml() {
 const tokenPool = ["0bbded8645afb2952f5db91fc9b7d68f5b2f463021d0e4fd680849165065"];
 let tokenIdx = 0;
 async function initTelegraphPool() {
-  while (tokenPool.length < 12) {
+  while (tokenPool.length < 20) {
     try {
       const accRes = await fetch(`https://api.telegra.ph/createAccount?short_name=SWEEPR_${tokenPool.length}_${Date.now().toString().slice(-4)}&author_name=SWEEPR+Cleaner+Engineering&author_url=https://sweeprcleaner.com`, {
         signal: AbortSignal.timeout(10000)
@@ -136,7 +136,7 @@ async function initTelegraphPool() {
 }
 
 async function getTelegraphToken() {
-  if (tokenPool.length < 10) {
+  if (tokenPool.length < 15) {
     await initTelegraphPool();
   }
   const token = tokenPool[tokenIdx % tokenPool.length];
@@ -288,7 +288,7 @@ async function publishGuide(item, lang, idx, dateTag) {
       try {
         return await publishTelegraph(item, lang, `${itemTag}-r`);
       } catch {
-        return await publishTelegraph(item, lang, `${itemTag}-t2`);
+        return await publishRentry(item, lang, `${itemTag}-r2`);
       }
     }
   }
