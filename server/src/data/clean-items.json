@@ -17615,5 +17615,755 @@
       "Press Windows Key + R, type %AppData%\\geany and press Enter.",
       "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
     ]
+  },
+  {
+    "slug": "rekordbox-dj-gpu-shader-cache",
+    "category": "app",
+    "name": "Pioneer Rekordbox DJ Software GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\Pioneer\\rekordbox\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Pioneer Rekordbox DJ Software stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Pioneer Rekordbox DJ Software's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Pioneer Rekordbox DJ Software (verify rekordbox.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rekordbox-dj-code-bytecode-cache",
+    "category": "app",
+    "name": "Pioneer Rekordbox DJ Software Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\Pioneer\\rekordbox\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Pioneer Rekordbox DJ Software compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Pioneer Rekordbox DJ Software's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Pioneer Rekordbox DJ Software (verify rekordbox.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rekordbox-dj-service-worker-cachestorage",
+    "category": "app",
+    "name": "Pioneer Rekordbox DJ Software Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\Pioneer\\rekordbox\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Pioneer Rekordbox DJ Software quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Pioneer Rekordbox DJ Software's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Pioneer Rekordbox DJ Software (verify rekordbox.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rekordbox-dj-crashpad-dump-logs",
+    "category": "app",
+    "name": "Pioneer Rekordbox DJ Software Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\Pioneer\\rekordbox\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Pioneer Rekordbox DJ Software writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Pioneer Rekordbox DJ Software's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Pioneer Rekordbox DJ Software (verify rekordbox.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "rekordbox-dj-media-blob-storage",
+    "category": "app",
+    "name": "Pioneer Rekordbox DJ Software Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\Pioneer\\rekordbox\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Pioneer Rekordbox DJ Software stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Pioneer Rekordbox DJ Software's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Pioneer Rekordbox DJ Software (verify rekordbox.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "serato-dj-pro-gpu-shader-cache",
+    "category": "app",
+    "name": "Serato DJ Pro GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Serato\\SeratoDJPro\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Serato DJ Pro stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Serato DJ Pro's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Serato DJ Pro (verify SeratoDJPro.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Serato\\SeratoDJPro and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "serato-dj-pro-code-bytecode-cache",
+    "category": "app",
+    "name": "Serato DJ Pro Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Serato\\SeratoDJPro\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Serato DJ Pro compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Serato DJ Pro's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Serato DJ Pro (verify SeratoDJPro.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Serato\\SeratoDJPro and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "serato-dj-pro-service-worker-cachestorage",
+    "category": "app",
+    "name": "Serato DJ Pro Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Serato\\SeratoDJPro\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Serato DJ Pro quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Serato DJ Pro's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Serato DJ Pro (verify SeratoDJPro.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Serato\\SeratoDJPro and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "serato-dj-pro-crashpad-dump-logs",
+    "category": "app",
+    "name": "Serato DJ Pro Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Serato\\SeratoDJPro\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Serato DJ Pro writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Serato DJ Pro's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Serato DJ Pro (verify SeratoDJPro.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Serato\\SeratoDJPro and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "serato-dj-pro-media-blob-storage",
+    "category": "app",
+    "name": "Serato DJ Pro Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Serato\\SeratoDJPro\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Serato DJ Pro stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Serato DJ Pro's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Serato DJ Pro (verify SeratoDJPro.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Serato\\SeratoDJPro and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "musescore-studio-gpu-shader-cache",
+    "category": "app",
+    "name": "MuseScore Studio Notation Software GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\MuseScore\\MuseScore4\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "MuseScore Studio Notation Software stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning MuseScore Studio Notation Software's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit MuseScore Studio Notation Software (verify MuseScore4.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\MuseScore\\MuseScore4 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "musescore-studio-code-bytecode-cache",
+    "category": "app",
+    "name": "MuseScore Studio Notation Software Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\MuseScore\\MuseScore4\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "MuseScore Studio Notation Software compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning MuseScore Studio Notation Software's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit MuseScore Studio Notation Software (verify MuseScore4.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\MuseScore\\MuseScore4 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "musescore-studio-service-worker-cachestorage",
+    "category": "app",
+    "name": "MuseScore Studio Notation Software Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\MuseScore\\MuseScore4\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "MuseScore Studio Notation Software quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning MuseScore Studio Notation Software's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit MuseScore Studio Notation Software (verify MuseScore4.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\MuseScore\\MuseScore4 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "musescore-studio-crashpad-dump-logs",
+    "category": "app",
+    "name": "MuseScore Studio Notation Software Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\MuseScore\\MuseScore4\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "MuseScore Studio Notation Software writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning MuseScore Studio Notation Software's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit MuseScore Studio Notation Software (verify MuseScore4.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\MuseScore\\MuseScore4 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "musescore-studio-media-blob-storage",
+    "category": "app",
+    "name": "MuseScore Studio Notation Software Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\MuseScore\\MuseScore4\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "MuseScore Studio Notation Software stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning MuseScore Studio Notation Software's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit MuseScore Studio Notation Software (verify MuseScore4.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\MuseScore\\MuseScore4 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "bandicam-recorder-gpu-shader-cache",
+    "category": "app",
+    "name": "Bandicam Screen Recorder GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\Bandicam\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Bandicam Screen Recorder stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Bandicam Screen Recorder's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Bandicam Screen Recorder (verify bdcam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Bandicam and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "bandicam-recorder-code-bytecode-cache",
+    "category": "app",
+    "name": "Bandicam Screen Recorder Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\Bandicam\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Bandicam Screen Recorder compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Bandicam Screen Recorder's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Bandicam Screen Recorder (verify bdcam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Bandicam and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "bandicam-recorder-service-worker-cachestorage",
+    "category": "app",
+    "name": "Bandicam Screen Recorder Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\Bandicam\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Bandicam Screen Recorder quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Bandicam Screen Recorder's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Bandicam Screen Recorder (verify bdcam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Bandicam and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "bandicam-recorder-crashpad-dump-logs",
+    "category": "app",
+    "name": "Bandicam Screen Recorder Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\Bandicam\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Bandicam Screen Recorder writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Bandicam Screen Recorder's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Bandicam Screen Recorder (verify bdcam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Bandicam and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "bandicam-recorder-media-blob-storage",
+    "category": "app",
+    "name": "Bandicam Screen Recorder Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\Bandicam\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Bandicam Screen Recorder stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Bandicam Screen Recorder's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Bandicam Screen Recorder (verify bdcam.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\Bandicam and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "viber-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "Viber Messenger Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\ViberPC\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Viber Messenger Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Viber Messenger Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Viber Messenger Desktop (verify Viber.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ViberPC and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "viber-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "Viber Messenger Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\ViberPC\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Viber Messenger Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Viber Messenger Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Viber Messenger Desktop (verify Viber.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ViberPC and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "viber-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "Viber Messenger Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\ViberPC\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Viber Messenger Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Viber Messenger Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Viber Messenger Desktop (verify Viber.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ViberPC and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "viber-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "Viber Messenger Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\ViberPC\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Viber Messenger Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Viber Messenger Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Viber Messenger Desktop (verify Viber.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ViberPC and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "viber-desktop-media-blob-storage",
+    "category": "app",
+    "name": "Viber Messenger Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\ViberPC\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Viber Messenger Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Viber Messenger Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Viber Messenger Desktop (verify Viber.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\ViberPC and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "line-desktop-gpu-shader-cache",
+    "category": "app",
+    "name": "LINE Messenger Desktop GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\LINE\\Data\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "LINE Messenger Desktop stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning LINE Messenger Desktop's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit LINE Messenger Desktop (verify LINE.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\LINE\\Data and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "line-desktop-code-bytecode-cache",
+    "category": "app",
+    "name": "LINE Messenger Desktop Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\LINE\\Data\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "LINE Messenger Desktop compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning LINE Messenger Desktop's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit LINE Messenger Desktop (verify LINE.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\LINE\\Data and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "line-desktop-service-worker-cachestorage",
+    "category": "app",
+    "name": "LINE Messenger Desktop Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\LINE\\Data\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "LINE Messenger Desktop quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning LINE Messenger Desktop's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit LINE Messenger Desktop (verify LINE.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\LINE\\Data and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "line-desktop-crashpad-dump-logs",
+    "category": "app",
+    "name": "LINE Messenger Desktop Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\LINE\\Data\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "LINE Messenger Desktop writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning LINE Messenger Desktop's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit LINE Messenger Desktop (verify LINE.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\LINE\\Data and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "line-desktop-media-blob-storage",
+    "category": "app",
+    "name": "LINE Messenger Desktop Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\LINE\\Data\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "LINE Messenger Desktop stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning LINE Messenger Desktop's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit LINE Messenger Desktop (verify LINE.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\LINE\\Data and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "internet-download-manager-gpu-shader-cache",
+    "category": "app",
+    "name": "Internet Download Manager (IDM) GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\IDM\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Internet Download Manager (IDM) stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Internet Download Manager (IDM)'s GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Internet Download Manager (IDM) (verify IDMan.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\IDM and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "internet-download-manager-code-bytecode-cache",
+    "category": "app",
+    "name": "Internet Download Manager (IDM) Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\IDM\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Internet Download Manager (IDM) compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Internet Download Manager (IDM)'s Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Internet Download Manager (IDM) (verify IDMan.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\IDM and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "internet-download-manager-service-worker-cachestorage",
+    "category": "app",
+    "name": "Internet Download Manager (IDM) Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\IDM\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Internet Download Manager (IDM) quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Internet Download Manager (IDM)'s Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Internet Download Manager (IDM) (verify IDMan.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\IDM and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "internet-download-manager-crashpad-dump-logs",
+    "category": "app",
+    "name": "Internet Download Manager (IDM) Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\IDM\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Internet Download Manager (IDM) writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Internet Download Manager (IDM)'s Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Internet Download Manager (IDM) (verify IDMan.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\IDM and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "internet-download-manager-media-blob-storage",
+    "category": "app",
+    "name": "Internet Download Manager (IDM) Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\IDM\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Internet Download Manager (IDM) stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Internet Download Manager (IDM)'s Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Internet Download Manager (IDM) (verify IDMan.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\IDM and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "inkscape-vector-gpu-shader-cache",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Editor GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\inkscape\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "Inkscape Vector Graphics Editor stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning Inkscape Vector Graphics Editor's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit Inkscape Vector Graphics Editor (verify inkscape.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\inkscape and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "inkscape-vector-code-bytecode-cache",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Editor Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\inkscape\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "Inkscape Vector Graphics Editor compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning Inkscape Vector Graphics Editor's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit Inkscape Vector Graphics Editor (verify inkscape.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\inkscape and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "inkscape-vector-service-worker-cachestorage",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Editor Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\inkscape\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "Inkscape Vector Graphics Editor quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning Inkscape Vector Graphics Editor's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit Inkscape Vector Graphics Editor (verify inkscape.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\inkscape and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "inkscape-vector-crashpad-dump-logs",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Editor Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\inkscape\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "Inkscape Vector Graphics Editor writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning Inkscape Vector Graphics Editor's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit Inkscape Vector Graphics Editor (verify inkscape.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\inkscape and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "inkscape-vector-media-blob-storage",
+    "category": "app",
+    "name": "Inkscape Vector Graphics Editor Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\inkscape\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "Inkscape Vector Graphics Editor stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning Inkscape Vector Graphics Editor's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit Inkscape Vector Graphics Editor (verify inkscape.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\inkscape and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mobaxterm-terminal-gpu-shader-cache",
+    "category": "app",
+    "name": "MobaXterm SSH and X Server GPUCache & Dawn WebGPU Cache",
+    "path": "%AppData%\\MobaXterm\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "MobaXterm SSH and X Server stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning MobaXterm SSH and X Server's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit MobaXterm SSH and X Server (verify MobaXterm.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MobaXterm and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mobaxterm-terminal-code-bytecode-cache",
+    "category": "app",
+    "name": "MobaXterm SSH and X Server Code Cache & V8 JavaScript Bytecode",
+    "path": "%AppData%\\MobaXterm\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "MobaXterm SSH and X Server compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning MobaXterm SSH and X Server's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit MobaXterm SSH and X Server (verify MobaXterm.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MobaXterm and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mobaxterm-terminal-service-worker-cachestorage",
+    "category": "app",
+    "name": "MobaXterm SSH and X Server Service Worker CacheStorage & Offline Blobs",
+    "path": "%AppData%\\MobaXterm\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "MobaXterm SSH and X Server quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning MobaXterm SSH and X Server's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit MobaXterm SSH and X Server (verify MobaXterm.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MobaXterm and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mobaxterm-terminal-crashpad-dump-logs",
+    "category": "app",
+    "name": "MobaXterm SSH and X Server Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%AppData%\\MobaXterm\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "MobaXterm SSH and X Server writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning MobaXterm SSH and X Server's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit MobaXterm SSH and X Server (verify MobaXterm.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MobaXterm and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "mobaxterm-terminal-media-blob-storage",
+    "category": "app",
+    "name": "MobaXterm SSH and X Server Media Cache & IndexedDB Blob Storage",
+    "path": "%AppData%\\MobaXterm\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "MobaXterm SSH and X Server stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning MobaXterm SSH and X Server's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit MobaXterm SSH and X Server (verify MobaXterm.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %AppData%\\MobaXterm and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jdownloader-client-gpu-shader-cache",
+    "category": "app",
+    "name": "JDownloader 2 Download Manager GPUCache & Dawn WebGPU Cache",
+    "path": "%LocalAppData%\\JDownloader 2.0\\GPUCache and DawnCache",
+    "safeToDelete": true,
+    "avgSpace": "0.8 GB – 4.5 GB",
+    "whatIsIt": "JDownloader 2 Download Manager stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
+    "whatHappens": "Cleaning JDownloader 2 Download Manager's GPUCache & Dawn WebGPU Cache frees hidden C: drive space and resolves black-screen rendering glitches without logging you out.",
+    "manualSteps": [
+      "Completely quit JDownloader 2 Download Manager (verify JDownloader2.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JDownloader 2.0 and press Enter.",
+      "Locate GPUCache and DawnCache, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jdownloader-client-code-bytecode-cache",
+    "category": "app",
+    "name": "JDownloader 2 Download Manager Code Cache & V8 JavaScript Bytecode",
+    "path": "%LocalAppData%\\JDownloader 2.0\\Code Cache\\js and Code Cache\\wasm",
+    "safeToDelete": true,
+    "avgSpace": "1.0 GB – 5.2 GB",
+    "whatIsIt": "JDownloader 2 Download Manager compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
+    "whatHappens": "Cleaning JDownloader 2 Download Manager's Code Cache & V8 JavaScript Bytecode reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts.",
+    "manualSteps": [
+      "Completely quit JDownloader 2 Download Manager (verify JDownloader2.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JDownloader 2.0 and press Enter.",
+      "Locate Code Cache\\js and Code Cache\\wasm, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jdownloader-client-service-worker-cachestorage",
+    "category": "app",
+    "name": "JDownloader 2 Download Manager Service Worker CacheStorage & Offline Blobs",
+    "path": "%LocalAppData%\\JDownloader 2.0\\Service Worker\\CacheStorage",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 8.5 GB",
+    "whatIsIt": "JDownloader 2 Download Manager quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
+    "whatHappens": "Cleaning JDownloader 2 Download Manager's Service Worker CacheStorage & Offline Blobs wipes bloated offline storage immediately while keeping your active login cookies and preferences intact.",
+    "manualSteps": [
+      "Completely quit JDownloader 2 Download Manager (verify JDownloader2.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JDownloader 2.0 and press Enter.",
+      "Locate Service Worker\\CacheStorage, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jdownloader-client-crashpad-dump-logs",
+    "category": "app",
+    "name": "JDownloader 2 Download Manager Crashpad Reports & Diagnostic DMP Logs",
+    "path": "%LocalAppData%\\JDownloader 2.0\\Crashpad\\reports and logs",
+    "safeToDelete": true,
+    "avgSpace": "0.6 GB – 3.8 GB",
+    "whatIsIt": "JDownloader 2 Download Manager writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
+    "whatHappens": "Cleaning JDownloader 2 Download Manager's Crashpad Reports & Diagnostic DMP Logs permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality.",
+    "manualSteps": [
+      "Completely quit JDownloader 2 Download Manager (verify JDownloader2.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JDownloader 2.0 and press Enter.",
+      "Locate Crashpad\\reports and logs, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
+  },
+  {
+    "slug": "jdownloader-client-media-blob-storage",
+    "category": "app",
+    "name": "JDownloader 2 Download Manager Media Cache & IndexedDB Blob Storage",
+    "path": "%LocalAppData%\\JDownloader 2.0\\Cache\\Cache_Data and IndexedDB",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 12.0 GB",
+    "whatIsIt": "JDownloader 2 Download Manager stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
+    "whatHappens": "Cleaning JDownloader 2 Download Manager's Media Cache & IndexedDB Blob Storage immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand.",
+    "manualSteps": [
+      "Completely quit JDownloader 2 Download Manager (verify JDownloader2.exe is closed in Task Manager).",
+      "Press Windows Key + R, type %LocalAppData%\\JDownloader 2.0 and press Enter.",
+      "Locate Cache\\Cache_Data and IndexedDB, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner)."
+    ]
   }
 ]

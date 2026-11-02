@@ -1648,7 +1648,17 @@ const APP_MATRIX_APPS = [
   { key: "wezterm-terminal", label: "WezTerm GPU Terminal", baseDir: "%UserProfile%\\.config\\wezterm", proc: "wezterm-gui.exe" },
   { key: "ghostty-terminal", label: "Ghostty Fast Terminal", baseDir: "%AppData%\\ghostty", proc: "ghostty.exe" },
   { key: "lapce-editor", label: "Lapce Code Editor", baseDir: "%AppData%\\lapce", proc: "lapce.exe" },
-  { key: "geany-editor", label: "Geany Lightweight IDE", baseDir: "%AppData%\\geany", proc: "geany.exe" }
+  { key: "geany-editor", label: "Geany Lightweight IDE", baseDir: "%AppData%\\geany", proc: "geany.exe" },
+  { key: "rekordbox-dj", label: "Pioneer Rekordbox DJ Software", baseDir: "%AppData%\\Pioneer\\rekordbox", proc: "rekordbox.exe" },
+  { key: "serato-dj-pro", label: "Serato DJ Pro", baseDir: "%LocalAppData%\\Serato\\SeratoDJPro", proc: "SeratoDJPro.exe" },
+  { key: "musescore-studio", label: "MuseScore Studio Notation Software", baseDir: "%LocalAppData%\\MuseScore\\MuseScore4", proc: "MuseScore4.exe" },
+  { key: "bandicam-recorder", label: "Bandicam Screen Recorder", baseDir: "%LocalAppData%\\Bandicam", proc: "bdcam.exe" },
+  { key: "viber-desktop", label: "Viber Messenger Desktop", baseDir: "%AppData%\\ViberPC", proc: "Viber.exe" },
+  { key: "line-desktop", label: "LINE Messenger Desktop", baseDir: "%LocalAppData%\\LINE\\Data", proc: "LINE.exe" },
+  { key: "internet-download-manager", label: "Internet Download Manager (IDM)", baseDir: "%AppData%\\IDM", proc: "IDMan.exe" },
+  { key: "inkscape-vector", label: "Inkscape Vector Graphics Editor", baseDir: "%AppData%\\inkscape", proc: "inkscape.exe" },
+  { key: "mobaxterm-terminal", label: "MobaXterm SSH and X Server", baseDir: "%AppData%\\MobaXterm", proc: "MobaXterm.exe" },
+  { key: "jdownloader-client", label: "JDownloader 2 Download Manager", baseDir: "%LocalAppData%\\JDownloader 2.0", proc: "JDownloader2.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [
