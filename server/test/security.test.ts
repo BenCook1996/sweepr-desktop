@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, generateKeyPairSync } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { sha256 } from "../src/tokens.js";

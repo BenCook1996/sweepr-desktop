@@ -20,6 +20,9 @@ export interface CleanItem {
   whatIsIt: string;
   whatHappens: string;
   manualSteps: string[];
+  metaTitle?: string;
+  metaDescription?: string;
+  customFaqs?: Array<{ q: string; a: string }>;
 }
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
@@ -105,11 +108,24 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "opera-gx-cache": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
   "medal-tv-cache": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
   "capcut-desktop-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
+  "capcut-pc-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
   "winsxs": "Windows WinSxS Folder Cleanup: Safe to Delete? | SWEEPR",
   "obs-studio-logs-crashes": "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
   "adobe-media-cache": "Adobe Premiere & Media Cache: Safe to Delete? | SWEEPR",
   "creative-cloud-installer-cache": "Adobe Creative Cloud Cache: Safe to Delete? (2026) | SWEEPR",
   "nvidia-dxcache": "NVIDIA DXCache & GLCache Folder: Safe to Delete? | SWEEPR",
+  "npm-cache": "Clear npm-cache Folder on Windows 11 Safely (2026) | SWEEPR",
+  "gradle-wrapper-caches": "Clear .gradle Caches & Wrapper Dists on Windows | SWEEPR",
+  "localappdata-crashdumps": "AppData\\Local\\CrashDumps: Safe to Delete? (2026) | SWEEPR",
+  "hiberfil-sys": "C:\\hiberfil.sys on Windows 11: Safe to Delete? | SWEEPR",
+  "windows-old": "Delete C:\\Windows.old Safely on Windows 11 (2026) | SWEEPR",
+  "pip-cache": "How to Clear Python pip Cache on Windows 11 | SWEEPR",
+  "delivery-optimization": "Clear Delivery Optimization Cache on Windows 11 | SWEEPR",
+  "c-drive-filling-up-by-itself-windows-11": "C Drive Filling Up By Itself on Windows 11? Fix It | SWEEPR",
+  "system-and-reserved-storage-100gb-windows-11": "System & Reserved Storage Taking 100GB Windows 11 | SWEEPR",
+  "appdata-local-folder-huge-windows-11": "AppData\\Local Folder Huge on Windows 11? Safe Clean | SWEEPR",
+  "windows-11-24h2-update-cache-8gb-bug": "Fix Windows 11 24H2 8.63 GB Undeletable Update Cache | SWEEPR",
+  "other-storage-full-windows-11-cleanup": "Clean 'Other' & Temporary Files on Windows 11 | SWEEPR",
 };
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
@@ -133,6 +149,8 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
   "capcut-desktop-cache":
     "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
+  "capcut-pc-cache":
+    "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
   "winsxs":
     "Can you delete C:\\Windows\\WinSxS? Learn how to safely clean the Windows Side-by-Side Component Store using DISM or SWEEPR Cleaner to reclaim 6–18 GB.",
   "obs-studio-logs-crashes":
@@ -143,6 +161,30 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "Is Adobe Creative Cloud cache safe to delete? Reclaim 2–12 GB of CoreSync, RIBS installer staging, and Service Worker cache without signing out of Adobe apps.",
   "nvidia-dxcache":
     "Is NVIDIA DXCache and GLCache safe to delete? Clear 2–15 GB of stale DirectX 12 & Vulkan compiled shader binaries on Windows 10/11 to fix disk bloat & stutter.",
+  "npm-cache":
+    "How to clear %LocalAppData%\\npm-cache on Windows 10/11 safely. Reclaim 2–18 GB of cached Node.js tarballs using npm cache clean --force or SWEEPR Cleaner.",
+  "gradle-wrapper-caches":
+    "Is %UserProfile%\\.gradle\\caches safe to delete? Reclaim 5–35 GB of orphaned Android Studio & Java Gradle wrapper distributions and build caches in 1 click.",
+  "localappdata-crashdumps":
+    "Is %LocalAppData%\\CrashDumps safe to delete on Windows 11? Yes—safely remove 1–15 GB of old application .dmp crash files without affecting installed apps.",
+  "hiberfil-sys":
+    "What is C:\\hiberfil.sys on Windows 11 and can you delete it? Reclaim 8–32 GB of SSD space using powercfg -h off or SWEEPR Cleaner's safe system audit.",
+  "windows-old":
+    "How to delete C:\\Windows.old on Windows 11 safely and reclaim 15–40 GB after an OS update without running into TrustedInstaller permission errors.",
+  "pip-cache":
+    "How to clear %LocalAppData%\\pip\\Cache on Windows 11. Safely delete 2–20 GB of cached Python wheel (.whl) and PyTorch packages in 1 click.",
+  "delivery-optimization":
+    "Is Windows Update Delivery Optimization cache safe to delete? Reclaim 3–20 GB in ServiceProfiles\\NetworkService\\AppData\\Local\\Microsoft\\Windows\\DeliveryOptimization.",
+  "c-drive-filling-up-by-itself-windows-11":
+    "Why is your C: drive filling up by itself on Windows 11? Find and purge hidden WinSxS, Temp, Package Cache, DXCache, and crash dumps to reclaim 12–65 GB.",
+  "system-and-reserved-storage-100gb-windows-11":
+    "Fix System & Reserved storage taking 80GB–100GB+ on Windows 11. Safely clean WinSxS component bloat, Windows Update staging, and hiberfil.sys in minutes.",
+  "appdata-local-folder-huge-windows-11":
+    "AppData\\Local folder taking 50GB+ on Windows 11? Learn which Cache, GPUCache, Temp, and D3DSCache subfolders are 100% safe to delete without losing logins.",
+  "windows-11-24h2-update-cache-8gb-bug":
+    "How to fix the Windows 11 24H2 8.63 GB undeletable Windows Update cache bug in WinSxS\\Temp\\PendingDeletes and C:\\$Windows.~BT using DISM and SWEEPR.",
+  "other-storage-full-windows-11-cleanup":
+    "Temporary files & 'Other' storage full on Windows 11? Safely clean hidden ProgramData\\Package Cache, .cache, and GPU shader folders to free 6–45 GB.",
 };
 
 export type PseoClusterId =
@@ -419,8 +461,8 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
 }
 
 export function buildPseoTitle(item: CleanItem): string {
-  const custom = CUSTOM_GSC_TITLES[item.slug];
-  if (custom && custom.length >= 50 && custom.length <= 60) {
+  const custom = item.metaTitle || CUSTOM_GSC_TITLES[item.slug];
+  if (custom && custom.length >= 30 && custom.length <= 60) {
     return custom;
   }
 
@@ -501,7 +543,7 @@ export function buildPseoTitle(item: CleanItem): string {
 }
 
 function buildPseoDescription(item: CleanItem): string {
-  const customDesc = CUSTOM_GSC_DESCRIPTIONS[item.slug];
+  const customDesc = item.metaDescription || CUSTOM_GSC_DESCRIPTIONS[item.slug];
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }
@@ -834,6 +876,7 @@ export function renderPseoPage(item: CleanItem): string {
       q: `Where is ${item.name} located on Windows 10 and Windows 11?`,
       a: `It is stored at ${item.path}. You can paste that path directly into the Windows Run dialog (Win + R) or File Explorer address bar to inspect it.`,
     },
+    ...(Array.isArray(item.customFaqs) ? item.customFaqs.filter((f) => f && f.q && f.a) : []),
   ];
 
   const siblingTableSection =
