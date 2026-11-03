@@ -272,7 +272,7 @@ ${item.whatHappens}
 }
 
 async function publishGuide(item, lang, idx, dateTag) {
-  // Alternate between Telegraph (DR 89) and Rentry (DR 79) with automatic fallback
+  // Alternate between Telegraph (DR 89), Rentry (DR 79), and DPaste (DR 74) with automatic fallback
   const itemTag = `${dateTag}-${String(idx).padStart(3, "0")}`;
   if (idx % 2 === 0) {
     try {
@@ -281,7 +281,11 @@ async function publishGuide(item, lang, idx, dateTag) {
       try {
         return await publishRentry(item, lang, `${itemTag}-r`);
       } catch {
-        return await publishTelegraph(item, lang, `${itemTag}-t2`);
+        try {
+          return await publishDpaste(item, lang, `${itemTag}-d`);
+        } catch {
+          return await publishTelegraph(item, lang, `${itemTag}-t2`);
+        }
       }
     }
   } else {
@@ -291,7 +295,11 @@ async function publishGuide(item, lang, idx, dateTag) {
       try {
         return await publishTelegraph(item, lang, `${itemTag}-r`);
       } catch {
-        return await publishRentry(item, lang, `${itemTag}-r2`);
+        try {
+          return await publishDpaste(item, lang, `${itemTag}-d`);
+        } catch {
+          return await publishRentry(item, lang, `${itemTag}-r2`);
+        }
       }
     }
   }
@@ -357,7 +365,7 @@ async function runBacklinksWorkflow(targetCount = 300) {
   const startOffset = seed.length;
   let completed = 0;
   const newLinks = [];
-  const BATCH_SIZE = 4;
+  const BATCH_SIZE = 6;
   let attempts = 0;
   const maxAttempts = Math.max(targetCount * 3, 600);
 
