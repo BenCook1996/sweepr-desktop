@@ -625,18 +625,25 @@ async function runIndexingWorkflow() {
   queue.indexnow_key = INDEXNOW_KEY;
   queue.submitted_indexnow_urls = [...submittedSet];
 
-  // Ensure pendingUrls contains only canonical 200 OK URLs (preserving Strike-Zone priority order at head)
-  const existingPending = (queue.pendingUrls || []).filter(isCanonicalUrl);
-  const pendingSet = new Set(existingPending);
-  for (const u of sitemapUrls) pendingSet.add(u);
-  queue.pendingUrls = [...pendingSet];
-
   const gscDone = new Set((queue.gsc_requested || []).filter(isCanonicalUrl));
   const bingDone = new Set((queue.bing_requested || []).filter(isCanonicalUrl));
   queue.gsc_requested = [...gscDone];
   queue.bing_requested = [...bingDone];
-  const outstandingGsc = queue.pendingUrls.filter((u) => !gscDone.has(u));
-  const outstandingBing = queue.pendingUrls.filter((u) => !bingDone.has(u));
+
+  // Ensure pendingUrls contains only canonical 200 OK URLs NOT yet requested in GSC,
+  // with Competitor (/vs/*, /alternatives/*) and Strike-Zone URLs prioritized at the head
+  const existingPending = (queue.pendingUrls || []).filter((u) => isCanonicalUrl(u) && !gscDone.has(u));
+  const priorityHead = [
+    ...COMPETITOR_URLS,
+    ...STRIKE_ZONE_TARGETS.map((t) => t.url)
+  ].filter((u) => isCanonicalUrl(u) && !gscDone.has(u));
+  const pendingSet = new Set([...priorityHead, ...existingPending]);
+  for (const u of sitemapUrls) {
+    if (!gscDone.has(u)) pendingSet.add(u);
+  }
+  queue.pendingUrls = [...pendingSet];
+  const outstandingGsc = queue.pendingUrls;
+  const outstandingBing = sitemapUrls.filter((u) => !bingDone.has(u));
 
   safeWriteJsonSync(INDEXING_QUEUE_PATH, queue);
 

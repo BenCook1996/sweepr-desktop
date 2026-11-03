@@ -491,6 +491,51 @@ test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and inde
   const cfRes = await app.request("/cdn-cgi/l/email-protection");
   assert.equal(cfRes.status, 301);
   assert.equal(cfRes.headers.get("location"), "/support");
+
+  // 4. 100% Catalog-Wide Title & Meta Description Uniqueness + Sub-Folders Breakdown Table Assertion
+  const { getCleanItems, buildPseoTitle, buildPseoDescription, renderPseoPage } = await import("../src/pseo.js");
+  const allItems = getCleanItems();
+  assert.ok(allItems.length >= 350, `Expected at least 350 canonical clean items, found ${allItems.length}`);
+
+  const seenTitles = new Map<string, string>();
+  const seenDescs = new Map<string, string>();
+  for (const item of allItems) {
+    const title = buildPseoTitle(item);
+    const desc = buildPseoDescription(item);
+    assert.ok(
+      title.length >= 30 && title.length <= 60,
+      `Item ${item.slug} title length ${title.length} out of bounds [30..60]: "${title}"`
+    );
+    assert.ok(
+      desc.length >= 70 && desc.length <= 160,
+      `Item ${item.slug} description length ${desc.length} out of bounds [70..160]: "${desc}"`
+    );
+    assert.equal(
+      seenTitles.has(title),
+      false,
+      `Duplicate pSEO title "${title}" between ${seenTitles.get(title)} and ${item.slug}`
+    );
+    seenTitles.set(title, item.slug);
+    assert.equal(
+      seenDescs.has(desc),
+      false,
+      `Duplicate pSEO description "${desc}" between ${seenDescs.get(desc)} and ${item.slug}`
+    );
+    seenDescs.set(desc, item.slug);
+  }
+
+  // Verify Consolidated Master Pages render the Sub-Folders & Cache Locations Breakdown Table
+  const operaItem = allItems.find((i) => i.slug === "opera-gx-cache")!;
+  assert.ok(operaItem, "opera-gx-cache master guide must exist");
+  const operaHtml = renderPseoPage(operaItem);
+  assert.ok(
+    operaHtml.includes('id="subfolders-breakdown-table"'),
+    "Consolidated master page must include id=\"subfolders-breakdown-table\""
+  );
+  assert.ok(
+    operaHtml.includes("Sub-Folders &amp; Cache Locations Breakdown"),
+    "Consolidated master page must include Sub-Folders & Cache Locations Breakdown heading"
+  );
 });
 
 

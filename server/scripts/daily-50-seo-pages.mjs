@@ -2368,6 +2368,155 @@ const GSC_STRIKE_ZONE_SLUGS = [
 
 const CTR_COOLDOWN_DAYS = 14;
 
+const STRIKE_ZONE_ENRICHMENTS = {
+  "steam-depotcache": {
+    metaTitle: "Steam depotcache Folder: Safe to Delete? | SWEEPR Cleaner",
+    metaDescription: "Yes, Steam depotcache is 100% safe to delete when no updates are paused. Reclaim 2–20 GB in C:\\Program Files (x86)\\Steam\\depotcache manually or in 1 click.",
+    customFaqs: [
+      {
+        q: "What is depotcache in Steam and can I delete it?",
+        a: "Steam's depotcache folder stores encrypted delta-patch chunks (.csd and .csm) downloaded during game updates. Once your game patches finish installing, deleting files inside Steam\\depotcache is 100% safe and never deletes your installed games or Steam Cloud saves."
+      }
+    ]
+  },
+  "riot-client-logs": {
+    metaTitle: "Clear VALORANT & Riot Client Cache Safely (2026) | SWEEPR",
+    metaDescription: "How to clear VALORANT & Riot Client cache safely on Windows 10/11. Reclaim 1–6.5 GB from %LocalAppData%\\VALORANT\\Saved\\Logs while keeping all settings safe.",
+    customFaqs: [
+      {
+        q: "How do I clear VALORANT cache files without resetting my crosshair or keybinds?",
+        a: "Delete only the Logs, Crashes, and webcache subfolders inside %LocalAppData%\\VALORANT\\Saved and %LocalAppData%\\Riot Games\\Riot Client\\Logs. Your crosshair profiles and keybinds are stored on Riot's servers and inside Config, which remain completely untouched."
+      }
+    ]
+  },
+  "programdata-package-cache": {
+    metaTitle: "ProgramData Package Cache: Safe to Delete? (2026) | SWEEPR",
+    metaDescription: "Can you delete C:\\ProgramData\\Package Cache? Learn which orphaned Visual C++ & MSI caches are safe to remove to free 3–18 GB without breaking uninstallers.",
+    customFaqs: [
+      {
+        q: "Why does deleting C:\\ProgramData\\Package Cache manually break Visual Studio or Visual C++ uninstallers?",
+        a: "WiX Burn and Visual Studio installers cache active .msi/.cab repair payloads inside Package Cache. Blindly deleting the entire folder causes 'The feature you are trying to use is on a network resource that is unavailable' errors—whereas SWEEPR Cleaner only removes superseded, orphaned package GUID folders."
+      }
+    ]
+  },
+  "winsxs": {
+    metaTitle: "Windows WinSxS Folder Cleanup: Safe to Delete? | SWEEPR",
+    metaDescription: "Can you delete C:\\Windows\\WinSxS? Learn how to safely clean the Windows Side-by-Side Component Store using DISM or SWEEPR Cleaner to reclaim 6–18 GB.",
+    customFaqs: [
+      {
+        q: "What is the difference between DISM /StartComponentCleanup and /ResetBase on WinSxS?",
+        a: "Running Dism.exe /Online /Cleanup-Image /StartComponentCleanup safely removes superseded component revisions older than 30 days while keeping recent update rollback ability. Adding /ResetBase immediately purges all superseded versions to free maximum SSD space, at the cost of making currently installed cumulative updates permanent."
+      }
+    ]
+  },
+  "logitech-ghub-installer-cache": {
+    metaTitle: "LGHUB Cache & Depots: Safe to Delete? (2026) | SWEEPR",
+    metaDescription: "Is C:\\ProgramData\\LGHUB\\depots safe to delete? Clear 1–6 GB of Logitech G HUB installer cache and crash dumps while keeping your mouse DPI & macros intact.",
+    customFaqs: [
+      {
+        q: "Where does Logitech G HUB store its mouse DPI profiles and macros when cleaning LGHUB cache?",
+        a: "Your G HUB profiles and macros live in %LocalAppData%\\LGHUB\\settings.db. Cleaning C:\\ProgramData\\LGHUB\\depots and %LocalAppData%\\LGHUB\\cache reclaims 1–6 GB of orphaned update payloads without touching settings.db."
+      }
+    ]
+  },
+  "capcut-pc-cache": {
+    metaTitle: "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
+    metaDescription: "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
+    customFaqs: [
+      {
+        q: "Will clearing CapCut PC cache delete my video editing drafts or templates?",
+        a: "No. CapCut project drafts are stored inside CapCut Drafts, whereas %LocalAppData%\\CapCut\\User Data\\Cache holds temporary render previews, proxy clips, and Service Worker web blobs that safely regenerate if you re-open an old timeline."
+      }
+    ]
+  },
+  "medal-tv-cache": {
+    metaTitle: "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
+    metaDescription: "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
+    customFaqs: [
+      {
+        q: "Does clearing %AppData%\\Medal\\Cache delete my recorded Medal gaming clips?",
+        a: "No. Recorded video clips are saved in your dedicated Medal Clips capture directory (typically C:\\Medal\\Clips or Videos\\Medal). Purging %AppData%\\Medal\\Cache, GPUCache, and Service Worker CacheStorage only removes launcher UI and thumbnail bloat."
+      }
+    ]
+  },
+  "windows-livekernelreports": {
+    metaTitle: "C:\\Windows\\LiveKernelReports: Safe to Delete? | SWEEPR",
+    metaDescription: "Is C:\\Windows\\LiveKernelReports safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU crash dump (.dmp) files on Windows 10/11 safely in 1 click.",
+    customFaqs: [
+      {
+        q: "What are WATCHDOG-*.dmp files inside C:\\Windows\\LiveKernelReports?",
+        a: "WATCHDOG dump files are written by the Windows Display Driver Model (WDDM) Timeout Detection and Recovery (TDR) subsystem whenever your NVIDIA, AMD, or Intel GPU driver briefly freezes and recovers. Once your PC is running normally, these multi-gigabyte .dmp snapshots are 100% safe to delete."
+      }
+    ]
+  },
+  "obs-studio-logs-crashes": {
+    metaTitle: "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
+    metaDescription: "How to clear OBS Studio logs, Crashpad dumps, and browser-source CEF cache on Windows 10/11. Reclaim 500 MB–4 GB in %AppData%\\obs-studio safely in 1 click.",
+    customFaqs: [
+      {
+        q: "How do I clear OBS Studio cache without losing my scenes, sources, or stream keys?",
+        a: "Your OBS scenes and profiles are stored in %AppData%\\obs-studio\\basic\\scenes and basic\\profiles. Cleaning %AppData%\\obs-studio\\logs, crashes, and plugin_config\\obs-browser\\Cache frees disk space and fixes laggy browser overlays without touching any scene collections."
+      }
+    ]
+  },
+  "opera-gx-cache": {
+    metaTitle: "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
+    metaDescription: "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
+    customFaqs: [
+      {
+        q: "Why does Opera GX still use 5GB+ of disk space after running the built-in GX Cleaner?",
+        a: "The built-in GX Cleaner often leaves behind multi-gigabyte Service Worker\\CacheStorage blobs, Dawn/ANGLE GPU shader caches, and old Crashpad dumps inside %LocalAppData%\\Opera Software\\Opera GX Stable. Purging those subdirectories reclaims full SSD space while keeping open workspaces and logins safe."
+      }
+    ]
+  },
+  "npm-cache": {
+    metaTitle: "Clear npm-cache Folder on Windows 11 Safely (2026) | SWEEPR",
+    metaDescription: "How to clear %LocalAppData%\\npm-cache on Windows 10/11 safely. Reclaim 2–18 GB of cached Node.js tarballs using npm cache clean --force or SWEEPR Cleaner.",
+    customFaqs: [
+      {
+        q: "Does deleting %LocalAppData%\\npm-cache break existing node_modules folders in my projects?",
+        a: "No. %LocalAppData%\\npm-cache (_cacache) is strictly a global download cache of compressed package tarballs. Your project node_modules directories are completely independent and will continue to run normally."
+      }
+    ]
+  },
+  "gradle-wrapper-caches": {
+    metaTitle: "Clear .gradle Caches & Wrapper Dists on Windows | SWEEPR",
+    metaDescription: "Is %UserProfile%\\.gradle\\caches safe to delete? Reclaim 5–35 GB of orphaned Android Studio & Java Gradle wrapper distributions and build caches in 1 click.",
+    customFaqs: [
+      {
+        q: "Can I delete old Gradle versions inside %UserProfile%\\.gradle\\wrapper\\dists?",
+        a: "Yes. Every time an Android Studio or Java project updates its gradle-wrapper.properties version, Gradle downloads a new ~150 MB distribution zip and leaves every older version on disk forever. Deleting unused versions in wrapper\\dists and caches\\build-cache-* safely recovers 5–35 GB."
+      }
+    ]
+  }
+};
+
+function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const enrichedSlugs = [];
+  for (const entry of batch) {
+    const slug = entry.slug;
+    const item = items.find((i) => i.slug.toLowerCase() === slug || (slug === "capcut-pc-cache" && i.slug.toLowerCase() === "capcut-desktop-cache"));
+    if (!item) continue;
+    const preset = STRIKE_ZONE_ENRICHMENTS[slug];
+    if (preset) {
+      if (preset.metaTitle) item.metaTitle = preset.metaTitle;
+      if (preset.metaDescription) item.metaDescription = preset.metaDescription;
+      if (Array.isArray(preset.customFaqs)) item.customFaqs = preset.customFaqs;
+    } else if (!item.customFaqs || item.customFaqs.length === 0) {
+      item.customFaqs = [
+        {
+          q: `Can I automate cleaning ${item.name} on Windows 11 without manual terminal commands?`,
+          a: `Yes. SWEEPR Cleaner automatically detects ${item.path}, skips any files locked by active processes, and reclaims ${item.avgSpace} in a single click while protecting user settings.`
+        }
+      ];
+    }
+    ctrOptimizedAt[slug] = todayIso;
+    enrichedSlugs.push(slug);
+  }
+  return enrichedSlugs;
+}
+
 function computeNextStrikeZoneBatch(ctrOptimizedAt = {}, batchSize = 4) {
   const nowMs = Date.now();
   const eligible = [];
@@ -2510,16 +2659,25 @@ function updateIndexingQueue(newUrls, redirectedSlugs = {}) {
     if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => slug.endsWith(suf))) return false;
     return true;
   };
-  const pendingSet = new Set((queue.pendingUrls || []).filter(isCanonicalUrl));
-  for (const u of newUrls) {
-    if (isCanonicalUrl(u)) pendingSet.add(u);
-  }
+  const gscRequestedSet = new Set((queue.gsc_requested || []).map((u) => String(u).trim()));
+  const existingPending = (queue.pendingUrls || []).filter((u) => isCanonicalUrl(u) && !gscRequestedSet.has(u));
+
+  // Prepend newly published URLs and unrequested Competitor (/vs/*, /alternatives/*) & Strike-Zone URLs to the head of pendingUrls
+  const priorityHead = [
+    ...newUrls.filter((u) => isCanonicalUrl(u) && !gscRequestedSet.has(u)),
+    ...COMPETITOR_URLS.filter((u) => !gscRequestedSet.has(u)),
+    ...existingPending.filter((u) => {
+      const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
+      return m && GSC_STRIKE_ZONE_SLUGS.includes(m[1].toLowerCase());
+    })
+  ];
+  const orderedPendingSet = new Set([...priorityHead, ...existingPending]);
   const submittedSet = new Set(queue.submitted_indexnow_urls || []);
   const deltaUrls = newUrls.filter((u) => isCanonicalUrl(u) && !submittedSet.has(u));
   for (const u of deltaUrls) submittedSet.add(u);
 
   queue.updatedAt = new Date().toISOString();
-  queue.pendingUrls = [...pendingSet];
+  queue.pendingUrls = [...orderedPendingSet];
   queue.submitted_indexnow_urls = [...submittedSet];
   fs.writeFileSync(INDEXING_QUEUE_PATH, JSON.stringify(queue, null, 2) + "\n", "utf8");
   return deltaUrls;
@@ -2618,6 +2776,11 @@ async function main() {
   const redirectedSlugs = fs.existsSync(PSEO_REDIRECTS_PATH)
     ? JSON.parse(fs.readFileSync(PSEO_REDIRECTS_PATH, "utf8"))
     : {};
+  const autoEnrichedSlugs = applyStrikeZoneBatchEnrichment(existingItems, nextStrikeZoneBatch, ctrOptimizedAt);
+  if (autoEnrichedSlugs.length > 0) {
+    console.log(`[GSC Strike-Zone Auto-Enricher] Upgraded CTR meta & FAQs on ${autoEnrichedSlugs.length} Strike-Zone pages: ${autoEnrichedSlugs.join(", ")}`);
+  }
+  const followUpStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4);
   const existingSlugs = new Set(existingItems.map((i) => i.slug.toLowerCase()));
   const existingPaths = new Set(existingItems.map((i) => normalizeWinPath(i.path)));
 
@@ -2642,6 +2805,9 @@ async function main() {
 
   if (selected.length === 0) {
     console.log("[Daily Pillar SEO] All distinct canonical pillar topics are already published in clean-items.json (0 synthetic bloat pages added).");
+    if (autoEnrichedSlugs.length > 0) {
+      fs.writeFileSync(CLEAN_ITEMS_PATH, JSON.stringify(existingItems, null, 2) + "\n", "utf8");
+    }
     updateIndexingQueue([], redirectedSlugs);
     fs.writeFileSync(
       DAILY_STATE_PATH,
@@ -2650,7 +2816,8 @@ async function main() {
           ...prevState,
           ctrCooldownDays: CTR_COOLDOWN_DAYS,
           ctrOptimizedAt,
-          nextStrikeZoneBatch: nextStrikeZoneBatch.map((t) => t.slug)
+          lastCtrEnrichedSlugs: autoEnrichedSlugs,
+          nextStrikeZoneBatch: followUpStrikeZoneBatch.map((t) => t.slug)
         },
         null,
         2
@@ -2679,7 +2846,8 @@ async function main() {
         sampleUrls: newUrls.slice(0, 10),
         ctrCooldownDays: CTR_COOLDOWN_DAYS,
         ctrOptimizedAt,
-        nextStrikeZoneBatch: nextStrikeZoneBatch.map((t) => t.slug)
+        lastCtrEnrichedSlugs: autoEnrichedSlugs,
+        nextStrikeZoneBatch: followUpStrikeZoneBatch.map((t) => t.slug)
       },
       null,
       2

@@ -23,6 +23,7 @@ export interface CleanItem {
   metaTitle?: string;
   metaDescription?: string;
   customFaqs?: Array<{ q: string; a: string }>;
+  subLocations?: Array<{ subPath: string; role: string; avgSpace: string; safe: string }>;
 }
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
@@ -433,6 +434,79 @@ export function describeCacheVariantRole(slug: string): string {
   return "Primary Application & System Storage Cache";
 }
 
+export function buildSubLocationsForItem(
+  item: CleanItem,
+  clusterId: PseoClusterId
+): Array<{ subPath: string; role: string; avgSpace: string; safe: string }> {
+  if (Array.isArray(item.subLocations) && item.subLocations.length > 0) {
+    return item.subLocations;
+  }
+  const basePath = item.path.split(/\s+(?:or|and|&)\s+/i)[0].trim().replace(/\\+$/, "");
+  switch (clusterId) {
+    case "gaming":
+      return [
+        { subPath: `${basePath}`, role: "Primary Update Staging, Patch Depots & Chunk Cache", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (When Game Closed)" : "⚠️ Caution" },
+        { subPath: `${basePath}\\ShaderCache / GPUCache`, role: "Compiled DirectX 12 / Vulkan / CEF Shader Pipelines", avgSpace: "350 MB – 3.5 GB", safe: "🟢 100% Safe (Rebuilds on Launch)" },
+        { subPath: `${basePath}\\webcache / Service Worker\\CacheStorage`, role: "Embedded Launcher Storefront & News Feed Web Assets", avgSpace: "250 MB – 2.0 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\Logs & Crashpad\\reports`, role: "Rotating Session Telemetry & Crash Minidumps (.dmp)", avgSpace: "150 MB – 4.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "%UserProfile%\\Saved Games & Config.json", role: "Player Save Files, Keybinds, Profiles & Loadouts", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "gpu":
+      return [
+        { subPath: `${basePath} (*.bin / *.toc / *.nvph)`, role: "Compiled DirectX 11/12 & Vulkan Shader Pipeline Binaries", avgSpace: item.avgSpace, safe: "🟢 100% Safe (Unlocked Entries)" },
+        { subPath: "%LocalAppData%\\D3DSCache", role: "Windows Direct3D Shared Driver Shader Cache", avgSpace: "500 MB – 4.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "%LocalAppData%\\NVIDIA\\GLCache / AMD\\GLCache", role: "OpenGL & Legacy Shader Compilation Cache", avgSpace: "250 MB – 2.5 GB", safe: "🟢 100% Safe" },
+        { subPath: "Driver Display Profiles & Control Panel Settings", role: "Custom 3D Settings, G-Sync/FreeSync & Color Calibration", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "creative":
+      return [
+        { subPath: `${basePath}`, role: "Primary Media Cache, Proxy Scratch & Render Previews", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Re-renders on Demand)" : "⚠️ Caution" },
+        { subPath: `${basePath}\\Media Cache Files (*.cfa, *.pek)`, role: "Conformed Audio Waveforms & Timeline Peak Files", avgSpace: "2.0 GB – 25.0 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\GPUCache & Code Cache`, role: "Hardware-Accelerated Viewport & UI Plugin Cache", avgSpace: "300 MB – 3.0 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\logs & Crashpad\\reports`, role: "Render Session Logs & Crash Dump Archives (.dmp)", avgSpace: "200 MB – 4.5 GB", safe: "🟢 100% Safe" },
+        { subPath: "Project Timelines (.prproj / .drp / .blend) & LUTs", role: "Source Footage, Edit Timelines, Presets & Exported Renders", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "devtools":
+      return [
+        { subPath: `${basePath}`, role: "Content-Addressable Package Tarballs, Wheels & Build Artifacts", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Re-downloads on Build)" : "⚠️ Caution" },
+        { subPath: `${basePath}\\wrapper\\dists / _cacache`, role: "Historical Toolchain Distributions & Integrity Blobs", avgSpace: "1.5 GB – 15.0 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\logs & crashpad`, role: "Compiler Diagnostics, Daemon Logs & Crash Snapshots", avgSpace: "150 MB – 2.5 GB", safe: "🟢 100% Safe" },
+        { subPath: "Source Repositories, .env Files & SSH/API Keys", role: "Working Git Trees, Local Databases & Credentials", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "win_update":
+      return [
+        { subPath: `${basePath}`, role: "Superseded Component Packages & Update Staging Payloads", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe" : "⚠️ Use DISM / SWEEPR Orphan Rule" },
+        { subPath: "C:\\Windows\\SoftwareDistribution\\Download", role: "Downloaded Windows Update CAB/ESD Installation Packages", avgSpace: "2.0 GB – 16.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "C:\\Windows\\WinSxS\\Temp\\PendingDeletes", role: "Orphaned Servicing Checkpoint Staging Files", avgSpace: "1.0 GB – 9.0 GB", safe: "🟢 100% Safe via DISM" },
+        { subPath: "Active Windows 11 System32 Binaries & MSI Manifests", role: "Live OS Kernel Files & Active Uninstaller Packages", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "win_crash_logs":
+      return [
+        { subPath: `${basePath} (*.dmp / *.hdmp / *.mdmp)`, role: "Uncompressed Kernel & User-Mode Memory Crash Dumps", avgSpace: item.avgSpace, safe: "🟢 100% Safe" },
+        { subPath: "C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive", role: "Queued & Archived Windows Error Reporting Bundles", avgSpace: "300 MB – 4.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "C:\\Windows\\Logs\\CBS & DISM", role: "Rotated Servicing & Component Store Text Logs", avgSpace: "250 MB – 3.5 GB", safe: "🟢 100% Safe" },
+        { subPath: "Active Windows Drivers & Event Viewer Channels", role: "Live System Services & Security Audit Configuration", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "win_system":
+      return [
+        { subPath: `${basePath}`, role: "Primary System Scratch, Thumbnail/Icon DB or Virtual Allocation", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Unlocked Files)" : "⚠️ System Managed" },
+        { subPath: "%LocalAppData%\\Temp & C:\\Windows\\Temp", role: "Orphaned Installer Extraction & Session Scratch Files", avgSpace: "1.5 GB – 18.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "%LocalAppData%\\Microsoft\\Windows\\Explorer (thumbcache_*.db)", role: "Cached File Explorer Image & Video Thumbnail Databases", avgSpace: "250 MB – 3.0 GB", safe: "🟢 100% Safe (Rebuilds Automatically)" },
+        { subPath: "User Documents, Desktop & Registry Hives", role: "Personal Files, Boot Configuration & System Certificates", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+    case "browsers_chat":
+    default:
+      return [
+        { subPath: `${basePath}\\Cache\\Cache_Data`, role: "HTTP Disk Cache, Web Bundles & Static Media Chunks", avgSpace: item.avgSpace, safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\Service Worker\\CacheStorage`, role: "Offline PWA Assets, Background Sync & Media Blob Storage", avgSpace: "500 MB – 6.5 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\Code Cache\\js & wasm`, role: "V8 Compiled JavaScript & WebAssembly Bytecode Cache", avgSpace: "250 MB – 2.5 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\GPUCache & DawnCache`, role: "Chromium Skia/ANGLE/WebGPU Compiled Shader Cache", avgSpace: "200 MB – 2.0 GB", safe: "🟢 100% Safe" },
+        { subPath: `${basePath}\\Crashpad\\reports`, role: "Historical Process Minidump (.dmp) Telemetry Files", avgSpace: "150 MB – 3.0 GB", safe: "🟢 100% Safe" },
+        { subPath: "Cookies, Login Data, Bookmarks & Local Storage (leveldb)", role: "Active Account Sessions, Saved Passwords & User Preferences", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
+      ];
+  }
+}
+
 export function getSiblingAndRelatedItems(item: CleanItem): {
   siblings: CleanItem[];
   related: CleanItem[];
@@ -542,7 +616,7 @@ export function buildPseoTitle(item: CleanItem): string {
   return `How to Clean ${target} | SWEEPR Cleaner`.slice(0, 60);
 }
 
-function buildPseoDescription(item: CleanItem): string {
+export function buildPseoDescription(item: CleanItem): string {
   const customDesc = item.metaDescription || CUSTOM_GSC_DESCRIPTIONS[item.slug];
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
@@ -879,35 +953,36 @@ export function renderPseoPage(item: CleanItem): string {
     ...(Array.isArray(item.customFaqs) ? item.customFaqs.filter((f) => f && f.q && f.a) : []),
   ];
 
-  const siblingTableSection =
-    siblings.length > 0
-      ? `
-    <!-- Sibling App-Cache Comparison Table -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">All Companion Cache &amp; Log Folders for This App</h2>
+  const subLocations = buildSubLocationsForItem(item, clusterId);
+  const siblingTableSection = `
+    <!-- Sub-Folders & Cache Locations Breakdown Table -->
+    <div id="subfolders-breakdown-table" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-2">Sub-Folders &amp; Cache Locations Breakdown for ${item.name}</h2>
       <p class="text-xs text-gray-600 mb-4">
-        Modern Windows applications split their disk footprint across multiple sub-cache directories. Compare how <strong>${item.name}</strong> differs from its companion caches below:
+        Modern Windows applications and system services split their disk footprint across multiple sub-directories (` + "`Cache_Data`" + `, ` + "`Service Worker\\CacheStorage`" + `, ` + "`Code Cache`" + `, ` + "`GPUCache`" + `, and ` + "`Crashpad\\reports`" + `). Review which sub-folders inside <strong>${item.name}</strong> are safe to purge and which files remain protected:
       </p>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="border-b border-gray-200">
-              <th class="py-2.5 pr-3 font-bold text-gray-700">Cache Variant &amp; Guide</th>
+              <th class="py-2.5 pr-3 font-bold text-gray-700">Sub-Folder / Cache Location</th>
               <th class="py-2.5 pr-3 font-bold text-gray-700">Storage Role</th>
-              <th class="py-2.5 pr-3 font-bold text-gray-700">Avg Space</th>
-              <th class="py-2.5 font-bold text-gray-700">Safety</th>
+              <th class="py-2.5 pr-3 font-bold text-gray-700">Typical Footprint</th>
+              <th class="py-2.5 font-bold text-gray-700">Deletion Safety</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 text-gray-600">
-            <tr class="bg-emerald-50/50">
-              <td class="py-2.5 pr-3 font-semibold text-gray-900">
-                ${item.name} <span class="ml-1 text-[10px] uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Current</span>
-                <div class="font-mono text-[11px] text-gray-500 truncate max-w-xs">${item.path}</div>
-              </td>
-              <td class="py-2.5 pr-3">${describeCacheVariantRole(item.slug)}</td>
-              <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${item.avgSpace}</td>
-              <td class="py-2.5 whitespace-nowrap">${item.safeToDelete ? "🟢 100% Safe" : "⚠️ Caution"}</td>
-            </tr>
+            ${subLocations
+              .map(
+                (loc, idx) => `
+            <tr class="${idx === 0 ? "bg-emerald-50/50" : loc.safe.includes("Protected") ? "bg-gray-50/80" : ""}">
+              <td class="py-2.5 pr-3 font-mono text-[11px] font-semibold text-gray-900 break-all max-w-xs">${loc.subPath}</td>
+              <td class="py-2.5 pr-3">${loc.role}</td>
+              <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${loc.avgSpace}</td>
+              <td class="py-2.5 whitespace-nowrap font-semibold">${loc.safe}</td>
+            </tr>`
+              )
+              .join("")}
             ${siblings
               .map(
                 (s) => `
@@ -919,15 +994,13 @@ export function renderPseoPage(item: CleanItem): string {
               <td class="py-2.5 pr-3">${describeCacheVariantRole(s.slug)}</td>
               <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${s.avgSpace}</td>
               <td class="py-2.5 whitespace-nowrap">${s.safeToDelete ? "🟢 100% Safe" : "⚠️ Caution"}</td>
-            </tr>
-            `
+            </tr>`
               )
               .join("")}
           </tbody>
         </table>
       </div>
-    </div>`
-      : "";
+    </div>`;
 
   const relatedSection =
     related.length > 0

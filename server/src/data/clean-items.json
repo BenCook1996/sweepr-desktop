@@ -512,6 +512,14 @@
       "To clean manually: quit CapCut.exe completely, press Windows Key + R, and enter %LocalAppData%\\CapCut\\User Data\\Cache.",
       "Delete the contents of the Cache, effect, and SmartMatting cache folders (do NOT delete the Projects\\com.lveditor.draft folder unless you want to remove old drafts).",
       "Use SWEEPR Cleaner to automatically purge CapCut PC render scratch and Service Worker bloat while protecting your active drafts."
+    ],
+    "metaTitle": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
+    "metaDescription": "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
+    "customFaqs": [
+      {
+        "q": "Will clearing CapCut PC cache delete my video editing drafts or templates?",
+        "a": "No. CapCut project drafts are stored inside CapCut Drafts, whereas %LocalAppData%\\CapCut\\User Data\\Cache holds temporary render previews, proxy clips, and Service Worker web blobs that safely regenerate if you re-open an old timeline."
+      }
     ]
   },
   {
@@ -1239,6 +1247,14 @@
       "Press Windows Key + R, type C:\\ProgramData\\LGHUB\\depots and press Enter, then delete old numbered update depot folders.",
       "Open %LocalAppData%\\LGHUB and clear the cache and GPUCache folders (do NOT delete settings.db or settings.json so your macros stay intact).",
       "Relaunch G HUB or use SWEEPR Cleaner to safely purge LGHUB depots and cache in 1 click."
+    ],
+    "metaTitle": "LGHUB Cache & Depots: Safe to Delete? (2026) | SWEEPR",
+    "metaDescription": "Is C:\\ProgramData\\LGHUB\\depots safe to delete? Clear 1–6 GB of Logitech G HUB installer cache and crash dumps while keeping your mouse DPI & macros intact.",
+    "customFaqs": [
+      {
+        "q": "Where does Logitech G HUB store its mouse DPI profiles and macros when cleaning LGHUB cache?",
+        "a": "Your G HUB profiles and macros live in %LocalAppData%\\LGHUB\\settings.db. Cleaning C:\\ProgramData\\LGHUB\\depots and %LocalAppData%\\LGHUB\\cache reclaims 1–6 GB of orphaned update payloads without touching settings.db."
+      }
     ]
   },
   {
@@ -1608,6 +1624,14 @@
       "Press Windows Key + R, type C:\\Windows\\LiveKernelReports and press Enter (click Continue if prompted for Administrator permission).",
       "Open the WATCHDOG subfolder and any sibling folders, select all .dmp files, and press Shift + Delete.",
       "Alternatively, run Disk Cleanup as Administrator or use SWEEPR Cleaner to purge all kernel and user-mode crash dumps in 1 click."
+    ],
+    "metaTitle": "C:\\Windows\\LiveKernelReports: Safe to Delete? | SWEEPR",
+    "metaDescription": "Is C:\\Windows\\LiveKernelReports safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU crash dump (.dmp) files on Windows 10/11 safely in 1 click.",
+    "customFaqs": [
+      {
+        "q": "What are WATCHDOG-*.dmp files inside C:\\Windows\\LiveKernelReports?",
+        "a": "WATCHDOG dump files are written by the Windows Display Driver Model (WDDM) Timeout Detection and Recovery (TDR) subsystem whenever your NVIDIA, AMD, or Intel GPU driver briefly freezes and recovers. Once your PC is running normally, these multi-gigabyte .dmp snapshots are 100% safe to delete."
+      }
     ]
   },
   {
@@ -3382,6 +3406,14 @@
       "Press Windows Key + R, type %AppData%\\Medal and press Enter.",
       "Delete the contents of the Cache\\Cache_Data, Code Cache, GPUCache, and logs directories (your actual recorded video clips live in your configured Medal Clips folder and are not affected).",
       "Run SWEEPR Cleaner to clear Medal.tv cache bloat in 1 click."
+    ],
+    "metaTitle": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
+    "metaDescription": "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
+    "customFaqs": [
+      {
+        "q": "Does clearing %AppData%\\Medal\\Cache delete my recorded Medal gaming clips?",
+        "a": "No. Recorded video clips are saved in your dedicated Medal Clips capture directory (typically C:\\Medal\\Clips or Videos\\Medal). Purging %AppData%\\Medal\\Cache, GPUCache, and Service Worker CacheStorage only removes launcher UI and thumbnail bloat."
+      }
     ]
   },
   {
@@ -5570,6 +5602,36 @@
       "Open Windows Terminal (Admin) and run: Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore",
       "If 'Component Store Cleanup Recommended' is Yes, run: Dism.exe /Online /Cleanup-Image /StartComponentCleanup",
       "If you do not use Hibernate on a desktop PC, run powercfg -h off to reclaim your full RAM size from C:\\hiberfil.sys."
+    ]
+  },
+  {
+    "slug": "appdata-local-folder-huge-windows-11",
+    "category": "folder",
+    "name": "AppData\\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide)",
+    "path": "%LocalAppData%\\Packages & %LocalAppData%\\Temp & %LocalAppData%\\D3DSCache",
+    "safeToDelete": true,
+    "avgSpace": "8.0 GB – 75.0 GB",
+    "whatIsIt": "C:\\Users\\<Username>\\AppData\\Local is the default dump location for unindexed application caches: browser Cache_Data, Discord/Slack/Teams media blobs, CapCut/Premiere video proxies, npm/pip/gradle package caches, and DirectX/NVIDIA shader caches.",
+    "whatHappens": "Never delete the entire AppData\\Local folder directly (which holds browser profiles and app settings). Selectively purging only the Cache, GPUCache, Code Cache, and Temp subfolders inside AppData\\Local safely recovers 8–75 GB with zero data loss.",
+    "manualSteps": [
+      "Press Win + R, enter %LocalAppData%, and sort subfolders by size or inspect Temp, D3DSCache, and CrashDumps.",
+      "Clear only verified cache subdirectories (such as Cache_Data, GPUCache, and Service Worker\\CacheStorage) while leaving User Data\\Default\\Bookmarks and Login Data untouched.",
+      "Use SWEEPR Cleaner to automatically target only safe-to-delete cache subfolders inside %LocalAppData% and %AppData%."
+    ]
+  },
+  {
+    "slug": "windows-11-24h2-update-cache-8gb-bug",
+    "category": "folder",
+    "name": "Windows 11 24H2 8.63 GB Undeletable Update Cache Fix",
+    "path": "C:\\Windows\\WinSxS\\Temp\\PendingDeletes & C:\\$Windows.~BT",
+    "safeToDelete": true,
+    "avgSpace": "8.6 GB – 18.0 GB",
+    "whatIsIt": "Following the Windows 11 24H2 feature update, checkpoint cumulative updates can leave 8.63 GB+ of orphaned staging data inside WinSxS\\Temp\\PendingDeletes and $Windows.~BT that legacy Disk Cleanup (cleanmgr.exe) fails to remove or misreports.",
+    "whatHappens": "Running component store cleanup alongside safe staging purge clears the orphaned 24H2 checkpoint staging files and restores accurate free-space reporting in Windows Storage Sense.",
+    "manualSteps": [
+      "Open Command Prompt or PowerShell as Administrator.",
+      "Run Dism.exe /Online /Cleanup-Image /StartComponentCleanup to release unlocked WinSxS\\Temp\\PendingDeletes files.",
+      "Remove leftover C:\\$Windows.~BT staging folders once your 24H2 upgrade stability is confirmed."
     ]
   }
 ]
