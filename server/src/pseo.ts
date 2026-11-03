@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLEAN_ITEMS_FILE = join(__dirname, "data", "clean-items.json");
 const cleanItemsData = require("./data/clean-items.json");
+const pseoRedirectsData: Record<string, string> = require("./data/pseo-redirects.json");
 
 export interface CleanItem {
   slug: string;
@@ -40,6 +41,41 @@ export function getCleanItemBySlug(category: string, slug: string): CleanItem | 
   return cleanItemsMap.get(`${category}:${slug}`);
 }
 
+const RETIRED_VARIANT_SUFFIX_RE =
+  /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs)$/;
+
+export function getPseoRedirectTarget(category: string, slug: string): string | undefined {
+  getCleanItems();
+  const key = `${category}:${slug}`;
+  if (cleanItemsMap.has(key)) {
+    return undefined;
+  }
+  const direct = pseoRedirectsData[key];
+  if (direct) {
+    return direct;
+  }
+  if (slug === "nvidia-shader-cache" || slug === "nvidia-dx-cache") {
+    return "/clean/app/nvidia-dxcache";
+  }
+  // Cross-category canonical redirect (e.g. /clean/folder/<slug> when item is /clean/app/<slug>)
+  const otherCategory = category === "app" ? "folder" : "app";
+  const crossMatch = cleanItemsMap.get(`${otherCategory}:${slug}`);
+  if (crossMatch) {
+    return `/clean/${crossMatch.category}/${crossMatch.slug}`;
+  }
+  if (RETIRED_VARIANT_SUFFIX_RE.test(slug)) {
+    const base = slug.replace(RETIRED_VARIANT_SUFFIX_RE, "");
+    const candidates = [`${base}-cache`, base, `${base}-logs`, `${base}-installer-cache`];
+    for (const cand of candidates) {
+      const match = cleanItemsMap.get(`app:${cand}`) || cleanItemsMap.get(`folder:${cand}`);
+      if (match) {
+        return `/clean/${match.category}/${match.slug}`;
+      }
+    }
+  }
+  return undefined;
+}
+
 export function getCleanItems(): CleanItem[] {
   try {
     const st = statSync(CLEAN_ITEMS_FILE);
@@ -63,14 +99,17 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "programdata-package-cache": "ProgramData Package Cache: Safe to Delete? (2026) | SWEEPR",
   "riot-client-logs": "Clear VALORANT & Riot Client Cache Safely (2026) | SWEEPR",
   "logitech-ghub-installer-cache": "LGHUB Cache & Depots: Safe to Delete? (2026) | SWEEPR",
+  "logitech-options-plus-cache": "Logi Options+ Cache & Depots: Safe to Delete? | SWEEPR",
+  "elgato-streamdeck-cache": "Elgato Stream Deck Cache & Logs: Safe to Delete? | SWEEPR",
   "windows-livekernelreports": "C:\\Windows\\LiveKernelReports: Safe to Delete? | SWEEPR",
-  "opera-gx-service-worker-cachestorage": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
-  "medal-tv-media-blob-storage": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
-  "capcut-pc-service-worker-cachestorage": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
+  "opera-gx-cache": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
+  "medal-tv-cache": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
+  "capcut-desktop-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
   "winsxs": "Windows WinSxS Folder Cleanup: Safe to Delete? | SWEEPR",
-  "adobe-creative-cloud-service-worker-cachestorage": "Adobe Creative Cloud Cache: Safe to Delete? (2026) | SWEEPR",
-  "adobe-creative-cloud-media-blob-storage": "Clear Adobe Creative Cloud Media Cache Safely | SWEEPR",
-  "adobe-creative-cloud-crashpad-dump-logs": "Delete Adobe Creative Cloud Crashpad Logs Safely | SWEEPR",
+  "obs-studio-logs-crashes": "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
+  "adobe-media-cache": "Adobe Premiere & Media Cache: Safe to Delete? | SWEEPR",
+  "creative-cloud-installer-cache": "Adobe Creative Cloud Cache: Safe to Delete? (2026) | SWEEPR",
+  "nvidia-dxcache": "NVIDIA DXCache & GLCache Folder: Safe to Delete? | SWEEPR",
 };
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
@@ -82,34 +121,273 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "How to clear VALORANT & Riot Client cache safely on Windows 10/11. Reclaim 1–6.5 GB from %LocalAppData%\\VALORANT\\Saved\\Logs while keeping all settings safe.",
   "logitech-ghub-installer-cache":
     "Is C:\\ProgramData\\LGHUB\\depots safe to delete? Clear 1–6 GB of Logitech G HUB installer cache and crash dumps while keeping your mouse DPI & macros intact.",
+  "logitech-options-plus-cache":
+    "Is C:\\ProgramData\\Logishrd\\LogiOptionsPlus\\depots safe to delete? Reclaim 1–4.5 GB of Logitech Options+ installer depots while keeping MX Master mappings safe.",
+  "elgato-streamdeck-cache":
+    "How to clear Elgato Stream Deck cache and rotating logs on Windows 10/11. Safely delete 500 MB–3.5 GB in %AppData%\\Elgato\\StreamDeck without losing profiles.",
   "windows-livekernelreports":
     "Is C:\\Windows\\LiveKernelReports safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU crash dump (.dmp) files on Windows 10/11 safely in 1 click.",
-  "opera-gx-service-worker-cachestorage":
-    "How to clear Opera GX Service Worker CacheStorage on Windows 10/11. Safely delete 1.5–8.5 GB of offline browser blobs while keeping tabs and logins intact.",
-  "medal-tv-media-blob-storage":
+  "opera-gx-cache":
+    "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
+  "medal-tv-cache":
     "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
-  "capcut-pc-service-worker-cachestorage":
-    "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 1.5–8.5 GB of Service Worker CacheStorage and render scratch blobs.",
+  "capcut-desktop-cache":
+    "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
   "winsxs":
     "Can you delete C:\\Windows\\WinSxS? Learn how to safely clean the Windows Side-by-Side Component Store using DISM or SWEEPR Cleaner to reclaim 6–18 GB.",
+  "obs-studio-logs-crashes":
+    "How to clear OBS Studio logs, Crashpad dumps, and browser-source CEF cache on Windows 10/11. Reclaim 500 MB–4 GB in %AppData%\\obs-studio safely in 1 click.",
+  "adobe-media-cache":
+    "How to clear Adobe Media Cache Files (.cfa, .pek) on Windows 10/11. Reclaim 10–80 GB for Premiere Pro & After Effects without affecting project timelines.",
+  "creative-cloud-installer-cache":
+    "Is Adobe Creative Cloud cache safe to delete? Reclaim 2–12 GB of CoreSync, RIBS installer staging, and Service Worker cache without signing out of Adobe apps.",
+  "nvidia-dxcache":
+    "Is NVIDIA DXCache and GLCache safe to delete? Clear 2–15 GB of stale DirectX 12 & Vulkan compiled shader binaries on Windows 10/11 to fix disk bloat & stutter.",
 };
 
+export type PseoClusterId =
+  | "gaming"
+  | "gpu"
+  | "creative"
+  | "devtools"
+  | "browsers_chat"
+  | "win_update"
+  | "win_crash_logs"
+  | "win_system";
+
+export function classifyPseoCluster(item: CleanItem): PseoClusterId {
+  const s = `${item.slug} ${item.name} ${item.path}`.toLowerCase();
+  if (item.category === "folder") {
+    if (
+      /winsxs|softwaredistribution|package-cache|installer-patch|delivery-optimization|windows-old|catroot2|servicing|wuau|rempl|sihclient|usoclient|waasmedic/.test(
+        s
+      )
+    ) {
+      return "win_update";
+    }
+    if (/livekernelreports|wer|minidump|memory-dmp|crashdumps|cbs-logs|panther|dism-logs|winevt|sru|perflogs|etl/.test(s)) {
+      return "win_crash_logs";
+    }
+    return "win_system";
+  }
+
+  if (
+    /nvidia|amd-dx|intel-shader|directx-shader|vulkan|shader|geforce|adrenalin|msi-afterburner|rivatuner|3dmark|furmark/.test(
+      s
+    )
+  ) {
+    return "gpu";
+  }
+  if (
+    /steam|epic-games|riot|valorant|battlenet|ea-app|ubisoft|gog-galaxy|xbox|minecraft|roblox|genshin|honkai|fortnite|call-of-duty|apex|overwatch|fivem|curseforge|overwolf|modrinth|vortex|nexus-mods|playnite|retroarch|rpcs3|yuzu|ryujinx|dolphin|pcsx2|cemu|ppsspp|duckstation|medal|parsec|moonlight|sunshine|razer|corsair|steelseries|logitech-ghub|armoury-crate|nzxt|lian-li|signalrgb|openrgb|vrchat|oculus|steamvr|faceit|esea|we-mod|plitch/.test(
+      s
+    )
+  ) {
+    return "gaming";
+  }
+  if (
+    /adobe|creative-cloud|premiere|after-effects|photoshop|lightroom|illustrator|indesign|audition|davinci|capcut|obs-studio|streamlabs|elgato|figma|canva|affinity|blender|unreal-engine|unity|godot|maya|3ds-max|cinema-4d|zbrush|substance|houdini|autocad|revit|solidworks|sketchup|rhino|lumion|enscape|twinmotion|handbrake|topaz|vlc|plex|jellyfin|kodi|ableton|fl-studio|reaper|cubase|studio-one|pro-tools|native-instruments|splice|musescore|audacity|kdenlive|shotcut|clip-studio|krita|gimp|inkscape|pureref|eagle|gyroflow|snagit|camtasia/.test(
+      s
+    )
+  ) {
+    return "creative";
+  }
+  if (
+    /npm|pnpm|yarn|bun|pip|conda|poetry|uv-python|cargo|rustup|go-build|gradle|maven|nuget|composer|cocoapods|vcpkg|conan|huggingface|ollama|lm-studio|pytorch|vs-code|cursor|windsurf|zed|visual-studio|jetbrains|intellij|pycharm|webstorm|rider|clion|goland|android-studio|docker|podman|vagrant|virtualbox|vmware|wsl|gitkraken|sourcetree|github-desktop|fork|postman|insomnia|bruno|dbeaver|datagrip|pgadmin|mongodb|tableplus|wireshark|fiddler|charles|ngrok|Tailscale|cloudflare|putty|mobaxterm|winscp|filezilla|termius|tabby|wezterm|alacritty|cypress|playwright|puppeteer|electron-cache|node-gyp|storybook|nx-workspace|turborepo|expo/.test(
+      s
+    )
+  ) {
+    return "devtools";
+  }
+  return "browsers_chat";
+}
+
+interface ClusterProfile {
+  id: PseoClusterId;
+  label: string;
+  badge: string;
+  sectionTitle: (item: CleanItem) => string;
+  leadParagraph: (item: CleanItem) => string;
+  mechanicsParagraph: (item: CleanItem) => string;
+  protectedSummary: string;
+  removedSummary: string;
+  extraFaq: (item: CleanItem) => { q: string; a: string };
+}
+
+const CLUSTER_PROFILES: Record<PseoClusterId, ClusterProfile> = {
+  gaming: {
+    id: "gaming",
+    label: "PC Gaming Launchers, Depots & Peripherals",
+    badge: "🎮 Gaming & Launcher Storage",
+    sectionTitle: (item) => `Why ${item.name} Balloons After Game Patches & Season Updates`,
+    leadParagraph: (item) =>
+      `Modern PC game launchers, anti-cheat engines, and peripheral daemons write encrypted chunk depots, delta-patch staging archives, and Embedded Chromium (CEF) storefront assets directly into ${item.path}. Whenever a download pauses, switches branches, or applies a major seasonal update, uncommitted delta chunks and superseded installer archives are frequently left orphaned on disk because launchers prioritize patch speed over post-install garbage collection.`,
+    mechanicsParagraph: (item) =>
+      `Leaving ${item.avgSpace} of stale depot chunks and session telemetry sitting on your primary NVMe SSD reduces free block headroom and slows down Steam/Epic/Riot delta-patching I/O. Purging ${item.name} while no game update is actively downloading frees ${item.avgSpace} immediately without touching installed game binaries, local save files, or controller/mouse macro profiles.`,
+    protectedSummary:
+      "Installed games, Steam Cloud / local save files, keybinds, mouse DPI stages, and anti-cheat certificates stay 100% untouched.",
+    removedSummary:
+      "Orphaned depot chunk files (.chunk), uncommitted patch staging archives, CEF storefront webcache, and old match/session logs.",
+    extraFaq: (item) => ({
+      q: `Will cleaning ${item.name} force my games to re-download or reset my settings?`,
+      a: `No. Game binaries live in your main library directory (such as steamapps\\common) and user settings live in separate configuration profiles. Deleting ${item.name} only removes temporary update staging chunks, cached storefront media, and rotated session logs.`,
+    }),
+  },
+  gpu: {
+    id: "gpu",
+    label: "GPU Shader Caches & Graphics Drivers",
+    badge: "🖥️ DirectX / Vulkan GPU Cache",
+    sectionTitle: (item) => `How Compiled DirectX 12, Vulkan & Driver Pipelines Accumulate in ${item.name}`,
+    leadParagraph: (item) =>
+      `Every time a modern DirectX 12, Vulkan, or OpenGL title launches, your graphics driver compiles hardware-specific Pipeline State Objects (PSOs) and compute shaders into binary cache buckets at ${item.path}. Across dozens of driver updates and game patches, shaders compiled for retired driver versions remain on disk alongside active pipelines—and corrupted shader buckets are a primary cause of micro-stutter and DXGI_ERROR_DEVICE_HUNG crashes.`,
+    mechanicsParagraph: (item) =>
+      `When you clear ${item.name}, the graphics driver automatically allocates a clean, defragmented shader cache directory on next launch and compiles only the active pipeline states required by your current driver version. Note that any files locked by the Desktop Window Manager (dwm.exe) or active tray overlays are safely skipped.`,
+    protectedSummary:
+      "Display driver installations, custom resolution profiles, G-SYNC / FreeSync settings, and fan curves remain completely intact.",
+    removedSummary:
+      "Superseded DirectX 11/12 bytecode (.bin/.toc), Vulkan pipeline caches, WebGPU Dawn blobs, and unpacked driver installer folders.",
+    extraFaq: (item) => ({
+      q: `Will deleting ${item.name} cause shader compilation stutter in games?`,
+      a: `Only briefly on the very first launch of a game while your GPU compiles fresh shaders for your current driver version. In fact, clearing bloated or corrupted shader caches often resolves persistent frame-time spikes and driver crashes after GPU driver updates.`,
+    }),
+  },
+  creative: {
+    id: "creative",
+    label: "Video Editing, Streaming, 3D & Creative Apps",
+    badge: "🎬 Creative & Media Scratch",
+    sectionTitle: (item) => `How Timeline Previews, Conform Audio & Render Scratch Fill ${item.name}`,
+    leadParagraph: (item) =>
+      `Non-linear video editors (NLEs), streaming encoders, 3D DCC tools, and DAWs continuously write uncompressed audio conform files (.cfa), waveform peak indexes (.pek), proxy transcodes, and frame-accurate undo scratch into ${item.path}. Even after you finish exporting and archiving a client project, gigabytes of intermediate timeline render caches remain permanently allocated on your scratch disk.`,
+    mechanicsParagraph: (item) =>
+      `On 4K/8K timelines or multi-scene streaming setups, ${item.name} routinely consumes ${item.avgSpace} of high-speed SSD space. Safely pruning stale media caches reclaims scratch bandwidth immediately; if you ever reopen an older project file, the application simply regenerates audio waveforms and timeline previews in the background.`,
+    protectedSummary:
+      "Project files (.prproj, .drp, .blend, .als), original camera footage, exported renders, LUTs, plugins, and scene collections are never touched.",
+    removedSummary:
+      "Conformed audio (.cfa), waveform peaks (.pek), orphaned timeline render previews, browser-source CEF caches, and crash minidumps.",
+    extraFaq: (item) => ({
+      q: `Will clearing ${item.name} delete my video projects, drafts, or saved recordings?`,
+      a: `No. Project timelines, source media clips, and exported videos are stored in your project folders—not in ${item.path}. If you reopen an active project after cleaning, the software automatically rebuilds any needed waveform peaks or preview frames.`,
+    }),
+  },
+  devtools: {
+    id: "devtools",
+    label: "Developer Package Managers, IDEs & Containers",
+    badge: "🛠️ Developer & Build Cache",
+    sectionTitle: (item) => `Why Package Tarballs, Symbol Indexes & Build Artifacts Pile Up in ${item.name}`,
+    leadParagraph: (item) =>
+      `Developer toolchains, language package managers, and modern IDEs cache every downloaded dependency version, pre-compiled wheel/crate tarball, C++/Rust incremental build target, and Language Server Protocol (LSP) AST index inside ${item.path}. Because dependency lockfiles evolve every week, historical versions from old branches remain cached indefinitely—turning ${item.name} into a multi-gigabyte graveyard of thousands of small files.`,
+    mechanicsParagraph: (item) =>
+      `Thousands of small cache entries inside ${item.path} also degrade Windows Defender real-time filesystem scanning and slow down backup indexing. Cleaning ${item.name} reclaims ${item.avgSpace} of SSD capacity while preserving your active source code repositories, .env secrets, SSH keys, and workspace configurations.`,
+    protectedSummary:
+      "Source code repositories, uncommitted Git changes, .env files, SSH keys, IDE keymaps, and active project node_modules/venvs stay safe.",
+    removedSummary:
+      "Cached registry tarballs/wheels, orphaned content-addressable store blobs, stale LSP symbol indexes, and old extension versions.",
+    extraFaq: (item) => ({
+      q: `Will cleaning ${item.name} break my active local development projects?`,
+      a: `No. Installed dependencies inside your project workspaces remain intact. Cleaning ${item.name} only clears the global download cache and historical build artifacts; any package needed in the future is transparently fetched on demand.`,
+    }),
+  },
+  browsers_chat: {
+    id: "browsers_chat",
+    label: "Browsers, Desktop Chat & Productivity Apps",
+    badge: "🌐 Chromium / Electron App Cache",
+    sectionTitle: (item) => `How Embedded Chromium (Electron / CEF) Caches Bloated ${item.name}`,
+    leadParagraph: (item) =>
+      `Modern web browsers and desktop apps built on Electron, Chromium Embedded Framework (CEF), or WebView2 run a full browser storage engine inside ${item.path}. Every inline video preview, animated sticker, PWA offline bundle, and compiled V8 JavaScript script is written into disk-backed Cache_Data, Code Cache, Service Worker CacheStorage, and IndexedDB LevelDB tables without strict disk quotas.`,
+    mechanicsParagraph: (item) =>
+      `Over months of daily usage, ${item.name} accumulates ${item.avgSpace} of expired media blobs and stale Service Worker caches that are never evicted automatically. Clearing these cache subdirectories forces a clean storage state without deleting your saved passwords, active session cookies, bookmarks, or local databases.`,
+    protectedSummary:
+      "Saved logins, session cookies, bookmarks, open tabs, local notes/databases, and workspace preferences remain 100% intact.",
+    removedSummary:
+      "HTTP media cache blobs, Service Worker CacheStorage offline bundles, compiled V8 bytecode caches, and Dawn/GPU shader caches.",
+    extraFaq: (item) => ({
+      q: `Will clearing ${item.name} sign me out of my accounts or delete my chat history?`,
+      a: `No. Authentication tokens, cookies, and bookmarks live in separate profile files (such as Cookies, Login Data, and Local Storage). Cleaning the cache subfolders inside ${item.path} only removes temporary media and script caches.`,
+    }),
+  },
+  win_update: {
+    id: "win_update",
+    label: "Windows Update, Servicing & Installer Caches",
+    badge: "🪟 Windows Servicing & Update Store",
+    sectionTitle: (item) => `How Windows Servicing & Installer Packages Accumulate in ${item.name}`,
+    leadParagraph: (item) =>
+      `Windows Component-Based Servicing (CBS), the Windows Update Agent (wuauserv), and WiX/Burn MSI bootstrapper engines stage compressed cabinet (.cab), express delta (.esd), and superseded side-by-side assemblies inside ${item.path}. Windows retains many of these payload packages so you can roll back recent cumulative updates or repair installed Visual C++ / .NET runtimes without internet access.`,
+    mechanicsParagraph: (item) =>
+      `However, once cumulative updates are superseded by newer monthly rollups—or after MSI applications are uninstalled—gigabytes of orphaned payloads remain behind in ${item.path}. Following the verified cleanup procedure for ${item.name} reclaims ${item.avgSpace} while preserving active servicing manifests and currently registered uninstaller packages.`,
+    protectedSummary:
+      "Active Windows system binaries, registered MSI repair manifests for installed apps, and current security update state stay intact.",
+    removedSummary:
+      "Superseded WinSxS component versions, downloaded SoftwareDistribution update payloads, Delivery Optimization P2P caches, and orphaned installer caches.",
+    extraFaq: (item) => ({
+      q: `Can I simply press Shift+Delete on ${item.name} in File Explorer?`,
+      a: item.safeToDelete
+        ? `Yes, once any associated Windows Update or Delivery Optimization service handles are released, the cached payload files in ${item.path} can be safely removed.`
+        : `No—do not blindly delete the entire folder. ${item.warning || "Always use the built-in Windows servicing command (such as DISM /Cleanup-Image) or SWEEPR Cleaner's orphan-aware rules so active uninstaller and servicing links remain intact."}`,
+    }),
+  },
+  win_crash_logs: {
+    id: "win_crash_logs",
+    label: "Windows Kernel Dumps, Crash Reports & Diagnostics",
+    badge: "🩺 Windows Crash Dumps & Telemetry",
+    sectionTitle: (item) => `Why Kernel Minidumps, WER Archives & ETW Traces Fill ${item.name}`,
+    leadParagraph: (item) =>
+      `Whenever a hardware driver times out (TDR), a background service faults, or Windows Servicing installs a patch, the Windows Error Reporting (WER) pipeline and kernel crash handler write uncompressed memory snapshots (.dmp) and verbose text logs into ${item.path}. A single full or kernel memory dump or LiveKernelReports WATCHDOG snapshot can consume 500 MB to 4 GB of disk space immediately.`,
+    mechanicsParagraph: (item) =>
+      `Unless you are actively debugging a recurring Blue Screen of Death (BSOD) with WinDbg right now, historical crash dumps and rotated CBS/DISM log archives inside ${item.path} serve zero runtime purpose. Deleting ${item.name} safely reclaims ${item.avgSpace} without affecting Windows stability or future error reporting.`,
+    protectedSummary:
+      "Active Windows kernel drivers, system services, Event Viewer configuration, and OS stability are completely unaffected.",
+    removedSummary:
+      "Historical kernel/user minidumps (.dmp), WATCHDOG GPU timeout snapshots, Windows Error Reporting (.wer) queues, and rotated servicing logs.",
+    extraFaq: (item) => ({
+      q: `Does Windows need the files in ${item.name} to boot or run properly?`,
+      a: `No. Files inside ${item.path} are strictly post-mortem diagnostic snapshots and historical logs written for troubleshooting. Windows never reads them during normal startup or runtime operation.`,
+    }),
+  },
+  win_system: {
+    id: "win_system",
+    label: "Hidden Windows System Folders & Virtual Storage",
+    badge: "🗄️ Windows System & Storage Internals",
+    sectionTitle: (item) => `How Windows Manages ${item.name} on NTFS & NVMe Drives`,
+    leadParagraph: (item) =>
+      `Windows 10 and Windows 11 maintain hidden system directories and root-level allocation files at ${item.path} to handle shell thumbnail databases, prefetcher launch traces, hibernation power states, and user-profile scratch storage. Because many of these paths are marked with +H (Hidden) or +S (System) attributes or guarded by SYSTEM ACL permissions, standard folder size scans often miss them entirely.`,
+    mechanicsParagraph: (item) =>
+      `Over time, orphaned temporary files, stale Explorer DataCache_* buckets, and uncompacted virtual storage allocations inside ${item.path} lock up ${item.avgSpace} of primary C: drive space. Cleaning ${item.name} using the proper administrative method restores drive headroom safely.`,
+    protectedSummary:
+      "User documents, desktop files, Windows registry hives, boot configuration, and active system locks remain 100% protected.",
+    removedSummary:
+      "Unlocked temporary scratch files, stale Explorer thumbnail/icon caches, obsolete prefetch traces, and reclaimable system allocations.",
+    extraFaq: (item) => ({
+      q: `Why does Windows say some files in ${item.name} are "In Use" when I try to delete them?`,
+      a: `Active background processes (such as explorer.exe, svchost.exe, or running desktop apps) hold open file handles to current session scratch files. Skipping locked files—or letting SWEEPR Cleaner clean unlocked items automatically—is normal and completely safe.`,
+    }),
+  },
+};
+
+function buildPowerShellInspectionSnippet(item: CleanItem): string {
+  const rawPath = item.path.split(/\s+(?:or|and)\s+/i)[0].trim();
+  const psPath = rawPath
+    .replace(/%LocalAppData%/gi, "$env:LOCALAPPDATA")
+    .replace(/%AppData%/gi, "$env:APPDATA")
+    .replace(/%ProgramData%/gi, "$env:ProgramData")
+    .replace(/%WinDir%/gi, "$env:windir")
+    .replace(/%Temp%/gi, "$env:TEMP")
+    .replace(/%UserProfile%/gi, "$env:USERPROFILE")
+    .replace(/<[^>]+>/g, "*");
+  return `# Inspect current disk footprint of ${item.name} (Read-Only)\n$target = "${psPath}"\nGet-ChildItem -Path $target -Recurse -Force -ErrorAction SilentlyContinue |\n  Measure-Object -Property Length -Sum |\n  Select-Object Count, @{Name="SizeGB";Expression={[math]::Round($_.Sum / 1GB, 2)}}`;
+}
+
 const VARIANT_SUFFIX_RE =
-  /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs|installer-cache|shader-cache|webcache|logs|cache|temp)$/;
+  /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs|installer-cache|shader-cache|webcache|logs-crashes|logs|cache|temp)$/;
 
 export function getAppFamilyKey(slug: string): string {
   return slug.replace(VARIANT_SUFFIX_RE, "");
 }
 
 export function describeCacheVariantRole(slug: string): string {
-  if (slug.endsWith("-service-worker-cachestorage")) return "Offline Web App & PWA Service Worker Blobs";
-  if (slug.endsWith("-media-blob-storage")) return "IndexedDB & Streaming Media Blob Cache";
-  if (slug.endsWith("-code-bytecode-cache")) return "Compiled V8 JavaScript / WASM Bytecode";
-  if (slug.endsWith("-gpu-shader-cache")) return "DirectX 12 / Vulkan / Dawn GPU Shaders";
-  if (slug.endsWith("-crashpad-dump-logs")) return "Crashpad Minidump (.dmp) & Error Telemetry";
   if (slug.endsWith("-installer-cache")) return "Downloaded Update Depots & Patch Staging";
+  if (slug.endsWith("-shader-cache")) return "DirectX 12 / Vulkan / Dawn GPU Shaders";
   if (slug.endsWith("-webcache")) return "Embedded Chromium (CEF) Browser Cache";
-  if (slug.endsWith("-logs")) return "Session Diagnostic & Match Event Logs";
+  if (slug.endsWith("-logs-crashes") || slug.endsWith("-logs")) return "Diagnostic Logs & Crashpad Minidumps (.dmp)";
   return "Primary Application & System Storage Cache";
 }
 
@@ -123,12 +401,14 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
   const siblingSlugs = new Set(siblings.map((s) => s.slug));
   siblingSlugs.add(item.slug);
 
-  const sameCat = all.filter((i) => i.category === item.category);
-  const myIdx = Math.max(0, sameCat.findIndex((i) => i.slug === item.slug));
+  const myCluster = classifyPseoCluster(item);
+  const clusterPeers = all.filter((i) => classifyPseoCluster(i) === myCluster);
+  const pool = clusterPeers.length >= 7 ? clusterPeers : all.filter((i) => i.category === item.category);
+  const myIdx = Math.max(0, pool.findIndex((i) => i.slug === item.slug));
   const related: CleanItem[] = [];
 
-  for (let offset = 1; offset < sameCat.length && related.length < 6; offset++) {
-    const candidate = sameCat[(myIdx + offset * 7) % sameCat.length];
+  for (let offset = 1; offset < pool.length && related.length < 6; offset++) {
+    const candidate = pool[(myIdx + offset * 3) % pool.length];
     if (candidate && !siblingSlugs.has(candidate.slug)) {
       siblingSlugs.add(candidate.slug);
       related.push(candidate);
@@ -157,18 +437,6 @@ export function buildPseoTitle(item: CleanItem): string {
   if (cleanName.includes("&")) {
     const parts = cleanName.split("&").map((s) => s.trim());
     if (parts[0] && parts[0].length >= 10) candidates.push(parts[0]);
-  }
-  if (cleanName.includes("Service Worker CacheStorage")) {
-    candidates.push(cleanName.replace("Service Worker CacheStorage", "Service Worker Cache"));
-    const swPart = cleanName.split("&")[0].replace("Service Worker CacheStorage", "Service Worker Cache").trim();
-    if (swPart.length >= 10) candidates.push(swPart);
-    candidates.push(cleanName.replace(/Service Worker CacheStorage & Offline Blobs/g, "Service Worker Cache"));
-  }
-  if (cleanName.includes("Crashpad")) {
-    candidates.push(cleanName.replace(/Crashpad Diagnostic Crash Dumps & Error Logs/g, "Crash Dumps"));
-    candidates.push(cleanName.replace(/Crashpad Diagnostic Crash Dumps & Error Logs/g, "Crashpad Logs"));
-    candidates.push(cleanName.replace(/Crashpad Reports & Diagnostic DMP Logs/g, "Crashpad Logs"));
-    candidates.push(cleanName.replace(/Crashpad Reports & Diagnostic DMP Logs/g, "Crash Dumps"));
   }
 
   const brands = [
@@ -249,11 +517,14 @@ const FEATURED_GSC_SLUGS = [
   "programdata-package-cache",
   "riot-client-logs",
   "logitech-ghub-installer-cache",
+  "logitech-options-plus-cache",
+  "elgato-streamdeck-cache",
   "windows-livekernelreports",
-  "opera-gx-service-worker-cachestorage",
-  "medal-tv-media-blob-storage",
-  "capcut-pc-service-worker-cachestorage",
+  "opera-gx-cache",
+  "medal-tv-cache",
+  "capcut-desktop-cache",
   "winsxs",
+  "obs-studio-logs-crashes",
 ];
 
 export function renderPseoDirectory(): string {
@@ -273,6 +544,21 @@ export function renderPseoDirectory(): string {
   const featuredItems = FEATURED_GSC_SLUGS.map((s) => items.find((i) => i.slug === s)).filter(
     (i): i is CleanItem => Boolean(i)
   );
+
+  const siloOrder: PseoClusterId[] = [
+    "gaming",
+    "gpu",
+    "creative",
+    "devtools",
+    "browsers_chat",
+    "win_update",
+    "win_crash_logs",
+    "win_system",
+  ];
+  const siloGroups = siloOrder.map((cid) => ({
+    profile: CLUSTER_PROFILES[cid],
+    items: items.filter((i) => classifyPseoCluster(i) === cid),
+  }));
 
   const renderCard = (i: CleanItem) => `
     <a href="/clean/${i.category}/${i.slug}" class="block bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md hover:border-emerald-400 transition-all text-inherit no-underline">
@@ -399,11 +685,19 @@ export function renderPseoDirectory(): string {
   </nav>
 
   <main class="max-w-5xl mx-auto px-6 py-12">
-    <div class="text-center mb-12">
+    <div class="text-center mb-10">
       <h1 class="text-3xl md:text-5xl font-black text-gray-900 mb-4">Windows Storage &amp; Cache Directory</h1>
-      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-        Wondering what is filling up your hard drive? Click any app or Windows folder below to see what it does, whether it is safe to delete, and how much space you can get back.
+      <p class="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
+        Wondering what is filling up your hard drive? Browse ${items.length} verified Windows 10 &amp; 11 cleanup guides organized by technical domain (${appItems.length} application caches &amp; ${folderItems.length} system folders).
       </p>
+      <div class="flex flex-wrap justify-center gap-2">
+        ${siloGroups
+          .map(
+            (g) =>
+              `<a href="#silo-${g.profile.id}" class="text-xs font-bold px-3 py-1.5 rounded-full bg-white border border-gray-200 hover:border-emerald-500 text-gray-700 hover:text-emerald-700 no-underline transition-all">${g.profile.badge} (${g.items.length})</a>`
+          )
+          .join("")}
+      </div>
     </div>
 
     ${
@@ -436,23 +730,45 @@ export function renderPseoDirectory(): string {
         : ""
     }
 
-    <div class="mb-12">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-        <span>📦 Popular App Leftovers &amp; Caches</span>
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        ${appItems.map(renderCard).join("")}
+    ${siloGroups
+      .map(
+        (g) => `
+    <section id="silo-${g.profile.id}" class="mb-12 scroll-mt-24">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <span>${g.profile.label}</span>
+        </h2>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">${g.items.length} Verified Guides</span>
       </div>
-    </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${g.items.map(renderCard).join("")}
+      </div>
+    </section>
+    `
+      )
+      .join("")}
 
-    <div class="mb-12">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-        <span>🗂️ Hidden Windows Folders</span>
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        ${folderItems.map(renderCard).join("")}
+    <!-- Competitor Comparison & Switcher Hub -->
+    <section class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900 mb-2">Compare SWEEPR Cleaner vs. Legacy PC Cleaners (2026 Benchmarks)</h2>
+      <p class="text-xs text-gray-600 mb-5">
+        See how SWEEPR's 5 MB native Rust engine compares against legacy Windows cleaners across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+        <a href="/vs/ccleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CCleaner &rarr;</a>
+        <a href="/vs/bleachbit" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. BleachBit &rarr;</a>
+        <a href="/vs/cleanmypc" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CleanMyPC &rarr;</a>
+        <a href="/vs/avast-cleanup" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Avast Cleanup &rarr;</a>
+        <a href="/vs/wise-disk-cleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Wise Disk Cleaner &rarr;</a>
+        <a href="/vs/glary-utilities" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Glary Utilities &rarr;</a>
+        <a href="/alternatives/ccleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CCleaner Alternative (2026) &rarr;</a>
+        <a href="/alternatives/bleachbit" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best BleachBit Alternative (2026) &rarr;</a>
+        <a href="/alternatives/cleanmypc" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CleanMyPC Alternative (2026) &rarr;</a>
+        <a href="/alternatives/avast-cleanup" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Avast Cleanup Alternative &rarr;</a>
+        <a href="/alternatives/wise-disk-cleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Wise Disk Cleaner Alternative &rarr;</a>
+        <a href="/alternatives/glary-utilities" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Glary Utilities Alternative &rarr;</a>
       </div>
-    </div>
+    </section>
 
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center mt-12">
       <h3 class="text-2xl font-bold mb-2">Want to clean all of these in 60 seconds?</h3>
@@ -483,6 +799,9 @@ export function renderPseoDirectory(): string {
 }
 
 export function renderPseoPage(item: CleanItem): string {
+  const clusterId = classifyPseoCluster(item);
+  const cluster = CLUSTER_PROFILES[clusterId];
+  const psSnippet = buildPowerShellInspectionSnippet(item);
   const stepsList = item.manualSteps
     .map(
       (s, idx) => `
@@ -504,22 +823,16 @@ export function renderPseoPage(item: CleanItem): string {
       q: `Is it safe to delete ${item.name}?`,
       a: item.warning
         ? `Exercise caution: ${item.warning}`
-        : `Yes, 100% safe. ${item.whatHappens} It cleans only temporary cache files, compiled scratch buffers, or stale update artifacts without modifying your personal documents.`,
+        : `Yes, 100% safe. ${item.whatHappens}`,
     },
     {
       q: `How much storage space will cleaning ${item.name} free up?`,
-      a: `Users typically reclaim between ${item.avgSpace} on Windows 10 and Windows 11 systems. On high-churn systems with frequent updates or heavy usage, savings can be significantly higher.`,
+      a: `Users typically reclaim ${item.avgSpace} on Windows 10 and Windows 11 systems depending on update frequency and active cache retention in ${item.path}.`,
     },
+    cluster.extraFaq(item),
     {
-      q: `Will deleting this cache remove my personal accounts, saved games, or logins?`,
-      a: item.safeToDelete
-        ? `No. Personal documents, desktop shortcuts, account credentials, and game saves are stored in dedicated profile directories and remain completely untouched.`
-        : item.warning ||
-          `Personal files remain safe, but be sure to follow the manual instructions closely or use SWEEPR Cleaner's verified safe cleaning rules.`,
-    },
-    {
-      q: `Where is ${item.name} located on Windows?`,
-      a: `It is stored at ${item.path}. Windows marks many of these directories as hidden system folders by default, requiring hidden files to be visible in File Explorer to inspect manually.`,
+      q: `Where is ${item.name} located on Windows 10 and Windows 11?`,
+      a: `It is stored at ${item.path}. You can paste that path directly into the Windows Run dialog (Win + R) or File Explorer address bar to inspect it.`,
     },
   ];
 
@@ -729,7 +1042,11 @@ export function renderPseoPage(item: CleanItem): string {
 
   <main class="max-w-3xl mx-auto px-6 py-12">
     <div class="mb-8">
-      <a href="/clean" class="text-xs font-bold text-emerald-600 uppercase tracking-wider hover:underline">&larr; Back to Clean Directory</a>
+      <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-600 uppercase tracking-wider">
+        <a href="/clean" class="hover:underline">&larr; Clean Directory</a>
+        <span class="text-gray-300">/</span>
+        <a href="/clean#silo-${cluster.id}" class="hover:underline">${cluster.badge}</a>
+      </div>
       <h1 class="text-3xl md:text-4xl font-black text-gray-900 mt-2 mb-3">How to Clean ${item.name}</h1>
       <div class="flex flex-wrap gap-3 items-center text-sm">
         <span class="px-3 py-1 rounded-full font-bold text-xs ${
@@ -767,21 +1084,25 @@ export function renderPseoPage(item: CleanItem): string {
 
     <!-- Technical Architecture & Cache Mechanics -->
     <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-3">Why Does This Storage Cache Balloon Over Time?</h2>
+      <h2 class="text-xl font-bold text-gray-900 mb-3">${cluster.sectionTitle(item)}</h2>
       <p class="text-gray-600 text-sm leading-relaxed mb-4">
-        On modern Windows 10 and Windows 11 systems, modern desktop applications, GPU graphics drivers, and system update components continuously generate temporary compilation artifacts, pre-rendered frame caches, and diagnostic logs to accelerate repeat operations. However, most software lacks an automated background pruning routine. As applications update or configurations change, superseded files remain orphaned on disk indefinitely.
+        ${cluster.leadParagraph(item)}
       </p>
       <p class="text-gray-600 text-sm leading-relaxed mb-4">
-        When drive capacity exceeds 80% utilization, Solid State Drives (SSDs and NVMe drives) experience increased write amplification, slower random I/O throughput, and elevated wear. Safely purging ${item.name} restores essential drive headroom, accelerates File Explorer search indexing, and frees up <strong>${item.avgSpace}</strong> of disk capacity.
+        ${cluster.mechanicsParagraph(item)}
       </p>
+      <div class="mt-4 mb-5">
+        <div class="text-xs font-bold text-gray-700 mb-1.5">PowerShell Size Verification (Read-Only Check):</div>
+        <pre class="bg-gray-900 text-emerald-300 font-mono text-[11px] p-3.5 rounded-xl overflow-x-auto leading-relaxed">${psSnippet}</pre>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100 text-xs">
         <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
           <span class="font-bold text-gray-900 block mb-1">🛡️ What Stays 100% Protected</span>
-          <span class="text-gray-600">Personal files, documents, saved game progress, browser bookmarks, and application licenses are stored in separate directories and are never touched.</span>
+          <span class="text-gray-600">${cluster.protectedSummary}</span>
         </div>
         <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
           <span class="font-bold text-gray-900 block mb-1">⚡ What Gets Safely Removed</span>
-          <span class="text-gray-600">Stale compilation bytecode, old error minidumps, downloaded patch staging files, and orphaned thumbnail indexes.</span>
+          <span class="text-gray-600">${cluster.removedSummary}</span>
         </div>
       </div>
     </div>

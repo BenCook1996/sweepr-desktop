@@ -436,3 +436,57 @@ test("SEO Phase 3: DataForSEO syncs keywords, domain overview, backlinks, link g
   await assert.rejects(() => syncDfsKeywords(store, cfg, mockDfsFetch), /spend cap reached/i);
 });
 
+test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and index hygiene", async () => {
+  const { app } = setup();
+
+  // 1. Retired 5-variant boilerplate slugs 301-redirect to canonical parent guides
+  const retiredChecks: Array<[string, string]> = [
+    ["/clean/app/opera-gx-service-worker-cachestorage", "/clean/app/opera-gx-cache"],
+    ["/clean/app/medal-tv-media-blob-storage", "/clean/app/medal-tv-cache"],
+    ["/clean/app/capcut-pc-service-worker-cachestorage", "/clean/app/capcut-desktop-cache"],
+    ["/clean/app/adobe-creative-cloud-service-worker-cachestorage", "/clean/app/creative-cloud-installer-cache"],
+    ["/clean/app/elgato-stream-deck-crashpad-dump-logs", "/clean/app/elgato-streamdeck-cache"],
+    ["/clean/folder/nvidia-shader-cache", "/clean/app/nvidia-dxcache"],
+    ["/clean/folder/package-cache-programdata", "/clean/folder/programdata-package-cache"],
+  ];
+  for (const [oldPath, expectedTarget] of retiredChecks) {
+    const res = await app.request(oldPath);
+    assert.equal(res.status, 301, `${oldPath} should 301 redirect`);
+    assert.equal(res.headers.get("location"), expectedTarget);
+    const targetRes = await app.request(expectedTarget);
+    assert.equal(targetRes.status, 200, `${expectedTarget} should return 200 OK`);
+  }
+
+  // 2. New competitor comparison and alternative pages return 200 OK with valid schema
+  const compPaths = [
+    "/vs/ccleaner",
+    "/vs/bleachbit",
+    "/vs/cleanmypc",
+    "/vs/avast-cleanup",
+    "/vs/wise-disk-cleaner",
+    "/vs/glary-utilities",
+    "/alternatives/ccleaner",
+    "/alternatives/bleachbit",
+    "/alternatives/cleanmypc",
+    "/alternatives/avast-cleanup",
+    "/alternatives/wise-disk-cleaner",
+    "/alternatives/glary-utilities",
+  ];
+  for (const p of compPaths) {
+    const res = await app.request(p);
+    assert.equal(res.status, 200, `${p} should return 200`);
+    const parsed = parseHtml(await res.text());
+    assert.ok(parsed.title && parsed.title.length >= 40, `${p} title present`);
+    assert.ok(parsed.canonical?.endsWith(p), `${p} canonical matches`);
+    assert.equal(parsed.jsonLdErrors, 0, `${p} JSON-LD valid`);
+  }
+
+  // 3. Checkout parameter URLs carry X-Robots-Tag: noindex, nofollow & Cloudflare email link 301s
+  const orderRes = await app.request("/order?plan=annual");
+  assert.equal(orderRes.headers.get("x-robots-tag"), "noindex, nofollow");
+  const cfRes = await app.request("/cdn-cgi/l/email-protection");
+  assert.equal(cfRes.status, 301);
+  assert.equal(cfRes.headers.get("location"), "/support");
+});
+
+

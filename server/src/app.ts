@@ -25,7 +25,7 @@ import {
   safeEqual,
   securityHeaders,
 } from "./security.js";
-import { cleanItems, getCleanItems, getCleanItemBySlug, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import { cleanItems, getCleanItems, getCleanItemBySlug, getPseoRedirectTarget, renderPseoDirectory, renderPseoPage } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
@@ -513,11 +513,15 @@ export function createApp(deps: AppDeps) {
     app.get(`/${loc}/`, (c) => c.redirect(`/${loc}`, 301));
     app.get(`/${loc}/pricing`, (c) => renderHtmlFileWithLocale(c, "./public/pricing.html", loc));
     app.get(`/${loc}/pricing/`, (c) => c.redirect(`/${loc}/pricing`, 301));
-    app.get(`/${loc}/order`, (c) => renderHtmlFileWithLocale(c, "./public/order.html", loc));
+    app.get(`/${loc}/order`, (c) => {
+      c.header("X-Robots-Tag", "noindex, nofollow");
+      return renderHtmlFileWithLocale(c, "./public/order.html", loc);
+    });
     app.get(`/${loc}/order/`, (c) => c.redirect(`/${loc}/order`, 301));
   }
 
   const handleOrderRoute = (c: Context) => {
+    c.header("X-Robots-Tag", "noindex, nofollow");
     const file = "./public/order.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   };
@@ -549,6 +553,7 @@ export function createApp(deps: AppDeps) {
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/support.html", (c) => c.redirect("/support", 301));
+  app.get("/cdn-cgi/l/email-protection", (c) => c.redirect("/support", 301));
   app.get("/refund", (c) => {
     const file = "./public/refund.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
@@ -592,6 +597,11 @@ export function createApp(deps: AppDeps) {
     }
     if (category === "folder" && cleanSlug.startsWith("recycle-bin-hidden")) {
       cleanSlug = "recycle-bin-hidden-folder";
+    }
+
+    const consolidatedTarget = getPseoRedirectTarget(category, cleanSlug);
+    if (consolidatedTarget) {
+      return c.redirect(consolidatedTarget, 301);
     }
 
     if (rawSlug !== cleanSlug) {
