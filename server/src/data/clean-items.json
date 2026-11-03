@@ -5511,5 +5511,35 @@
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Trimble SketchUp Pro 3D (or use SWEEPR Cleaner to purge all Trimble SketchUp Pro 3D cache directories automatically in one click)."
     ]
+  },
+  {
+    "slug": "windows-search-edb-index",
+    "category": "folder",
+    "name": "Windows Search Index Database (Windows.edb / Windows.db)",
+    "path": "C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows",
+    "safeToDelete": true,
+    "avgSpace": "2.5 GB – 25.0 GB",
+    "whatIsIt": "The Windows Search service maintains an indexed database (Windows.edb or Windows.db) that can balloon to 20GB+ due to file churn and Outlook mail indexing.",
+    "whatHappens": "Stopping the WSearch service and rebuilding the index shrinks the database by up to 85% without losing a single personal file.",
+    "manualSteps": [
+      "Open Terminal (Admin) and run: net stop WSearch",
+      "Delete Windows.edb / Windows.db inside C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows.",
+      "Run: net start WSearch to rebuild a compact, fast search index."
+    ]
+  },
+  {
+    "slug": "gradle-wrapper-cache",
+    "category": "app",
+    "name": "Gradle Build & Dependency Wrapper Cache",
+    "path": "%UserProfile%\\.gradle\\caches",
+    "safeToDelete": true,
+    "avgSpace": "4.0 GB – 30.0 GB",
+    "whatIsIt": "Gradle stores downloaded JAR dependencies, daemon logs, and incremental transform caches inside your user directory.",
+    "whatHappens": "Reclaims massive disk space from old build artifacts. Active projects will re-fetch only the latest dependencies on next build.",
+    "manualSteps": [
+      "Close Android Studio and IntelliJ IDEA.",
+      "Open %userprofile%\\.gradle\\caches in File Explorer.",
+      "Delete old 'modules-2', 'transforms-3', and 'jars-9' folders."
+    ]
   }
 ]

@@ -35,30 +35,30 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (1278 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (363 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
-- [Trimble SketchUp Pro 3D Media Cache & IndexedDB Blob Storage (%AppData%\SketchUp\SketchUp 2024\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Trimble SketchUp Pro 3D Crashpad Reports & Diagnostic DMP Logs (%AppData%\SketchUp\SketchUp 2024\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Trimble SketchUp Pro 3D Service Worker CacheStorage & Offline Blobs (%AppData%\SketchUp\SketchUp 2024\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Trimble SketchUp Pro 3D Code Cache & V8 JavaScript Bytecode (%AppData%\SketchUp\SketchUp 2024\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Trimble SketchUp Pro 3D GPUCache & Dawn WebGPU Cache (%AppData%\SketchUp\SketchUp 2024\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Autodesk Fusion 360 CAD/CAM Media Cache & IndexedDB Blob Storage (%LocalAppData%\Autodesk\webdeploy\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Autodesk Fusion 360 CAD/CAM Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Autodesk\webdeploy\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Autodesk Fusion 360 CAD/CAM Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Autodesk\webdeploy\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Autodesk Fusion 360 CAD/CAM Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Autodesk\webdeploy\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Autodesk Fusion 360 CAD/CAM GPUCache & Dawn WebGPU Cache (%LocalAppData%\Autodesk\webdeploy\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [LibreWolf Privacy Browser Media Cache & IndexedDB Blob Storage (%AppData%\librewolf\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/librewolf-browser-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [LibreWolf Privacy Browser Crashpad Reports & Diagnostic DMP Logs (%AppData%\librewolf\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/librewolf-browser-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [LibreWolf Privacy Browser Service Worker CacheStorage & Offline Blobs (%AppData%\librewolf\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/librewolf-browser-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [LibreWolf Privacy Browser Code Cache & V8 JavaScript Bytecode (%AppData%\librewolf\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/librewolf-browser-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [LibreWolf Privacy Browser GPUCache & Dawn WebGPU Cache (%AppData%\librewolf\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/librewolf-browser-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Roon Audiophile Music Player Media Cache & IndexedDB Blob Storage (%LocalAppData%\Roon\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/roon-music-player-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Roon Audiophile Music Player Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Roon\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/roon-music-player-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Roon Audiophile Music Player Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Roon\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/roon-music-player-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Roon Audiophile Music Player Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Roon\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/roon-music-player-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Roon Audiophile Music Player GPUCache & Dawn WebGPU Cache (%LocalAppData%\Roon\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/roon-music-player-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
-- [Native Instruments Traktor Pro Media Cache & IndexedDB Blob Storage (%LocalAppData%\Native Instruments\Traktor Pro\Cache\Cache_Data and IndexedDB)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-media-blob-storage): Reclaim 2.0 GB – 12.0 GB
-- [Native Instruments Traktor Pro Crashpad Reports & Diagnostic DMP Logs (%LocalAppData%\Native Instruments\Traktor Pro\Crashpad\reports and logs)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-crashpad-dump-logs): Reclaim 0.6 GB – 3.8 GB
-- [Native Instruments Traktor Pro Service Worker CacheStorage & Offline Blobs (%LocalAppData%\Native Instruments\Traktor Pro\Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-service-worker-cachestorage): Reclaim 1.5 GB – 8.5 GB
-- [Native Instruments Traktor Pro Code Cache & V8 JavaScript Bytecode (%LocalAppData%\Native Instruments\Traktor Pro\Code Cache\js and Code Cache\wasm)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-code-bytecode-cache): Reclaim 1.0 GB – 5.2 GB
-- [Native Instruments Traktor Pro GPUCache & Dawn WebGPU Cache (%LocalAppData%\Native Instruments\Traktor Pro\GPUCache and DawnCache)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-gpu-shader-cache): Reclaim 0.8 GB – 4.5 GB
+- [Gradle Build & Dependency Wrapper Cache (%UserProfile%\.gradle\caches)](https://sweeprcleaner.com/clean/app/gradle-wrapper-cache): Reclaim 4.0 GB – 30.0 GB
+- [Windows Search Index Database (Windows.edb / Windows.db) (C:\ProgramData\Microsoft\Search\Data\Applications\Windows)](https://sweeprcleaner.com/clean/folder/windows-search-edb-index): Reclaim 2.5 GB – 25.0 GB
+- [Trimble SketchUp Pro 3D Cache & Temporary Files (%AppData%\SketchUp\SketchUp 2024\cache, temp, and crash_logs)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-cache): Reclaim 1.5 GB – 9.5 GB
+- [Autodesk Fusion 360 CAD/CAM Cache & Temporary Files (%LocalAppData%\Autodesk\webdeploy\cache, temp, and crash_logs)](https://sweeprcleaner.com/clean/app/autodesk-fusion-360-cache): Reclaim 1.5 GB – 9.5 GB
+- [LibreWolf Privacy Browser Cache & Temporary Files (%AppData%\librewolf\Cache\Cache_Data, Code Cache, and Service Worker\CacheStorage)](https://sweeprcleaner.com/clean/app/librewolf-browser-cache): Reclaim 1.5 GB – 9.5 GB
+- [Roon Audiophile Music Player Cache & Temporary Files (%LocalAppData%\Roon\Cache and Logs)](https://sweeprcleaner.com/clean/app/roon-music-player-cache): Reclaim 1.5 GB – 9.5 GB
+- [Native Instruments Traktor Pro Cache & Temporary Files (%LocalAppData%\Native Instruments\Traktor Pro\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/traktor-pro-dj-cache): Reclaim 1.5 GB – 9.5 GB
+- [Sourcetree Git Client Cache & Temporary Files (%LocalAppData%\Atlassian\SourceTree\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/sourcetree-git-cache): Reclaim 1.5 GB – 9.5 GB
+- [Parsec Remote Desktop Cache & Temporary Files (%AppData%\Parsec\cache, shaders, and logs)](https://sweeprcleaner.com/clean/app/parsec-gaming-cache): Reclaim 1.5 GB – 9.5 GB
+- [Topaz Video AI Upscaler Cache & Temporary Files (%AppData%\Topaz Labs LLC\Topaz Video AI\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/topaz-video-ai-cache): Reclaim 1.5 GB – 9.5 GB
+- [Wondershare Filmora Video Editor Cache & Temporary Files (%LocalAppData%\Wondershare\Wondershare Filmora\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/wondershare-filmora-cache): Reclaim 1.5 GB – 9.5 GB
+- [JDownloader 2 Download Manager Cache & Temporary Files (%LocalAppData%\JDownloader 2.0\Cache and Logs)](https://sweeprcleaner.com/clean/app/jdownloader-client-cache): Reclaim 1.5 GB – 9.5 GB
+- [MobaXterm SSH and X Server Cache & Temporary Files (%AppData%\MobaXterm\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/mobaxterm-terminal-cache): Reclaim 1.5 GB – 9.5 GB
+- [Internet Download Manager (IDM) Cache & Temporary Files (%AppData%\IDM\Cache and Logs)](https://sweeprcleaner.com/clean/app/internet-download-manager-cache): Reclaim 1.5 GB – 9.5 GB
+- [LINE Messenger Desktop Cache & Temporary Files (%LocalAppData%\LINE\Data\Cache and Logs)](https://sweeprcleaner.com/clean/app/line-desktop-cache): Reclaim 1.5 GB – 9.5 GB
+- [Viber Messenger Desktop Cache & Temporary Files (%AppData%\ViberPC\Cache and Logs)](https://sweeprcleaner.com/clean/app/viber-desktop-cache): Reclaim 1.5 GB – 9.5 GB
+- [Bandicam Screen Recorder Cache & Temporary Files (%LocalAppData%\Bandicam\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/bandicam-recorder-cache): Reclaim 1.5 GB – 9.5 GB
+- [MuseScore Studio Notation Software Cache & Temporary Files (%LocalAppData%\MuseScore\MuseScore4\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/musescore-studio-cache): Reclaim 1.5 GB – 9.5 GB
+- [Serato DJ Pro Cache & Temporary Files (%LocalAppData%\Serato\SeratoDJPro\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/serato-dj-pro-cache): Reclaim 1.5 GB – 9.5 GB
+- [Pioneer Rekordbox DJ Software Cache & Temporary Files (%AppData%\Pioneer\rekordbox\Cache, MediaCache, and Logs)](https://sweeprcleaner.com/clean/app/rekordbox-dj-cache): Reclaim 1.5 GB – 9.5 GB
+- [Geany Lightweight IDE Cache & Temporary Files (%AppData%\geany\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/geany-editor-cache): Reclaim 1.5 GB – 9.5 GB
+- [Lapce Code Editor Cache & Temporary Files (%AppData%\lapce\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/lapce-editor-cache): Reclaim 1.5 GB – 9.5 GB
+- [Ghostty Fast Terminal Cache & Temporary Files (%AppData%\ghostty\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/ghostty-terminal-cache): Reclaim 1.5 GB – 9.5 GB
+- [WezTerm GPU Terminal Cache & Temporary Files (%UserProfile%\.config\wezterm\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/wezterm-terminal-cache): Reclaim 1.5 GB – 9.5 GB
+- [Wire Private Messenger Cache & Temporary Files (%AppData%\Wire\Cache and Logs)](https://sweeprcleaner.com/clean/app/wire-messenger-cache): Reclaim 1.5 GB – 9.5 GB
