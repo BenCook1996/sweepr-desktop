@@ -1,17 +1,17 @@
 {
-  "lastRunAt": "2026-11-02T06:20:06.629Z",
+  "lastRunAt": "2026-11-03T06:23:03.645Z",
   "lastCount": 50,
-  "totalCleanItems": 1228,
+  "totalCleanItems": 1278,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/app/rekordbox-dj-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/rekordbox-dj-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/rekordbox-dj-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/rekordbox-dj-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/rekordbox-dj-media-blob-storage",
-    "https://sweeprcleaner.com/clean/app/serato-dj-pro-gpu-shader-cache",
-    "https://sweeprcleaner.com/clean/app/serato-dj-pro-code-bytecode-cache",
-    "https://sweeprcleaner.com/clean/app/serato-dj-pro-service-worker-cachestorage",
-    "https://sweeprcleaner.com/clean/app/serato-dj-pro-crashpad-dump-logs",
-    "https://sweeprcleaner.com/clean/app/serato-dj-pro-media-blob-storage"
+    "https://sweeprcleaner.com/clean/app/wondershare-filmora-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/wondershare-filmora-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/wondershare-filmora-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/wondershare-filmora-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/wondershare-filmora-media-blob-storage",
+    "https://sweeprcleaner.com/clean/app/topaz-video-ai-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/topaz-video-ai-code-bytecode-cache",
+    "https://sweeprcleaner.com/clean/app/topaz-video-ai-service-worker-cachestorage",
+    "https://sweeprcleaner.com/clean/app/topaz-video-ai-crashpad-dump-logs",
+    "https://sweeprcleaner.com/clean/app/topaz-video-ai-media-blob-storage"
   ]
 }

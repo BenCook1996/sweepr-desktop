@@ -1658,7 +1658,17 @@ const APP_MATRIX_APPS = [
   { key: "internet-download-manager", label: "Internet Download Manager (IDM)", baseDir: "%AppData%\\IDM", proc: "IDMan.exe" },
   { key: "inkscape-vector", label: "Inkscape Vector Graphics Editor", baseDir: "%AppData%\\inkscape", proc: "inkscape.exe" },
   { key: "mobaxterm-terminal", label: "MobaXterm SSH and X Server", baseDir: "%AppData%\\MobaXterm", proc: "MobaXterm.exe" },
-  { key: "jdownloader-client", label: "JDownloader 2 Download Manager", baseDir: "%LocalAppData%\\JDownloader 2.0", proc: "JDownloader2.exe" }
+  { key: "jdownloader-client", label: "JDownloader 2 Download Manager", baseDir: "%LocalAppData%\\JDownloader 2.0", proc: "JDownloader2.exe" },
+  { key: "wondershare-filmora", label: "Wondershare Filmora Video Editor", baseDir: "%LocalAppData%\\Wondershare\\Wondershare Filmora", proc: "Filmora.exe" },
+  { key: "topaz-video-ai", label: "Topaz Video AI Upscaler", baseDir: "%AppData%\\Topaz Labs LLC\\Topaz Video AI", proc: "Topaz Video AI.exe" },
+  { key: "substance-3d-painter", label: "Adobe Substance 3D Painter", baseDir: "%AppData%\\Adobe\\Adobe Substance 3D Painter", proc: "Adobe Substance 3D Painter.exe" },
+  { key: "parsec-gaming", label: "Parsec Remote Desktop", baseDir: "%AppData%\\Parsec", proc: "parsecd.exe" },
+  { key: "sourcetree-git", label: "Sourcetree Git Client", baseDir: "%LocalAppData%\\Atlassian\\SourceTree", proc: "SourceTree.exe" },
+  { key: "traktor-pro-dj", label: "Native Instruments Traktor Pro", baseDir: "%LocalAppData%\\Native Instruments\\Traktor Pro", proc: "Traktor.exe" },
+  { key: "roon-music-player", label: "Roon Audiophile Music Player", baseDir: "%LocalAppData%\\Roon", proc: "Roon.exe" },
+  { key: "librewolf-browser", label: "LibreWolf Privacy Browser", baseDir: "%AppData%\\librewolf", proc: "librewolf.exe" },
+  { key: "autodesk-fusion-360", label: "Autodesk Fusion 360 CAD/CAM", baseDir: "%LocalAppData%\\Autodesk\\webdeploy", proc: "Fusion360.exe" },
+  { key: "sketchup-pro-3d", label: "Trimble SketchUp Pro 3D", baseDir: "%AppData%\\SketchUp\\SketchUp 2024", proc: "SketchUp.exe" }
 ];
 
 const APP_CACHE_COMPONENTS = [

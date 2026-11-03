@@ -146,6 +146,7 @@ export function buildPseoTitle(item: CleanItem): string {
 
   const cleanName = item.name
     .replace(/TechSmith Snagit Screen Capture/g, "Snagit Capture")
+    .replace(/MuseScore Studio Notation Software/g, "MuseScore Studio")
     .replace(/Roblox Engine & Player/g, "Roblox Player")
     .replace(/RetroArch Multi-System Emulator/g, "RetroArch")
     .replace(/\s*\([^)]*\)/g, "")
