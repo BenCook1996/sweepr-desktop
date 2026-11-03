@@ -40,10 +40,49 @@ const AUTH_HEADER = "Basic " + Buffer.from(`${CRM_USER}:${CRM_PASS}`).toString("
 
 const SEED_PATH = path.resolve(__dirname, "../src/outreach-seed.json");
 const CLEAN_ITEMS_PATH = path.resolve(__dirname, "../src/data/clean-items.json");
+const PSEO_REDIRECTS_PATH = path.resolve(__dirname, "../src/data/pseo-redirects.json");
 const SITEMAP_PATH = path.resolve(__dirname, "../public/sitemap.xml");
 const PAD_PATH = path.resolve(__dirname, "../public/pad.xml");
 const INDEXING_QUEUE_PATH = path.resolve(__dirname, "../src/data/indexing-queue.json");
 const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
+
+const COMPETITOR_LINKS = [
+  { url: "https://sweeprcleaner.com/vs/ccleaner", label: "SWEEPR Cleaner vs CCleaner Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/ccleaner", label: "Best CCleaner Alternative for Windows 11" },
+  { url: "https://sweeprcleaner.com/vs/bleachbit", label: "SWEEPR Cleaner vs BleachBit Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/bleachbit", label: "Safe BleachBit Alternative with 7-Day Undo" },
+  { url: "https://sweeprcleaner.com/vs/cleanmypc", label: "SWEEPR Cleaner vs CleanMyPC Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/cleanmypc", label: "Best CleanMyPC Alternative for Windows 11" },
+  { url: "https://sweeprcleaner.com/vs/avast-cleanup", label: "SWEEPR Cleaner vs Avast Cleanup Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/avast-cleanup", label: "Zero-Telemetry Avast Cleanup Alternative" },
+  { url: "https://sweeprcleaner.com/vs/wise-disk-cleaner", label: "SWEEPR Cleaner vs Wise Disk Cleaner Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/wise-disk-cleaner", label: "Ad-Free Wise Disk Cleaner Alternative" },
+  { url: "https://sweeprcleaner.com/vs/glary-utilities", label: "SWEEPR Cleaner vs Glary Utilities Comparison" },
+  { url: "https://sweeprcleaner.com/alternatives/glary-utilities", label: "Lightweight Glary Utilities Alternative" }
+];
+
+const SILO_HUB_LINKS = [
+  { url: "https://sweeprcleaner.com/clean#silo-gaming", label: "Windows Gaming & Anti-Cheat Cache Directory" },
+  { url: "https://sweeprcleaner.com/clean#silo-gpu", label: "DirectX, NVIDIA & AMD GPU Shader Cache Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-creative", label: "Video Editing, 3D & Creative Scratch Disk Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-devtools", label: "Developer Tools, Docker, WSL2 & Local LLM Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-browsers_chat", label: "Browser, Discord & Electron App Cache Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-win_update", label: "Windows Update, WinSxS & Installer Cache Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-win_crash_logs", label: "Windows Crash Dumps & Diagnostics Cleanup Hub" },
+  { url: "https://sweeprcleaner.com/clean#silo-win_system", label: "Windows Temp, Hibernation & System Storage Hub" }
+];
+
+function pickCompetitorLink(seedStr) {
+  let h = 0;
+  for (let i = 0; i < seedStr.length; i++) h = (h * 31 + seedStr.charCodeAt(i)) >>> 0;
+  return COMPETITOR_LINKS[h % COMPETITOR_LINKS.length];
+}
+
+function pickSiloHubLink(seedStr) {
+  let h = 0;
+  for (let i = 0; i < seedStr.length; i++) h = (h * 37 + seedStr.charCodeAt(i)) >>> 0;
+  return SILO_HUB_LINKS[h % SILO_HUB_LINKS.length];
+}
 
 function safeWriteJsonSync(filePath, data) {
   const content = typeof data === "string" ? data : JSON.stringify(data, null, 2);
@@ -152,6 +191,8 @@ async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
 
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
+  const compLink = pickCompetitorLink(`${item.slug}-${dateTag}`);
+  const siloLink = pickSiloHubLink(`${item.slug}-${lang.code}`);
 
   const content = [
     {
@@ -170,8 +211,9 @@ async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
       tag: "ul",
       children: [
         { tag: "li", children: [{ tag: "a", attrs: { href: targetUrl }, children: [`${item.name} Cleanup Guide (${item.path})`] }] },
+        { tag: "li", children: [{ tag: "a", attrs: { href: siloLink.url }, children: [siloLink.label] }] },
         { tag: "li", children: [{ tag: "a", attrs: { href: "https://sweeprcleaner.com/download" }, children: ["Download SWEEPR Cleaner Free Scanner (<15MB)"] }] },
-        { tag: "li", children: [{ tag: "a", attrs: { href: "https://sweeprcleaner.com/vs/ccleaner" }, children: ["SWEEPR Cleaner vs CCleaner Comparison"] }] }
+        { tag: "li", children: [{ tag: "a", attrs: { href: compLink.url }, children: [compLink.label] }] }
       ]
     }
   ];
@@ -208,12 +250,15 @@ async function publishTelegraph(item, lang, dateTag, retryCount = 0) {
 async function publishRentry(item, lang, dateTag) {
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
+  const compLink = pickCompetitorLink(`${item.slug}-${dateTag}`);
+  const siloLink = pickSiloHubLink(`${item.slug}-${lang.code}`);
   const md = `# ${title}
 
 - **Official Site:** [${lang.cta}](https://sweeprcleaner.com)
 - **Step-by-Step Guide:** [${item.name} (${item.path})](${targetUrl})
+- **Category Directory:** [${siloLink.label}](${siloLink.url})
 - **Free Download (<15MB):** [Download SWEEPR Cleaner](https://sweeprcleaner.com/download)
-- **CCleaner Comparison:** [SWEEPR Cleaner vs CCleaner](https://sweeprcleaner.com/vs/ccleaner)
+- **Cleaner Comparison:** [${compLink.label}](${compLink.url})
 
 ${item.whatIsIt}
 
@@ -241,12 +286,15 @@ ${item.whatHappens}
 async function publishDpaste(item, lang, dateTag) {
   const targetUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const title = `[${lang.code}] ${lang.prefix} ${item.name} (${dateTag})`;
+  const compLink = pickCompetitorLink(`${item.slug}-${dateTag}`);
+  const siloLink = pickSiloHubLink(`${item.slug}-${lang.code}`);
   const md = `# ${title}
 
 - **Official Site:** [${lang.cta}](https://sweeprcleaner.com)
 - **Step-by-Step Guide:** [${item.name} (${item.path})](${targetUrl})
+- **Category Directory:** [${siloLink.label}](${siloLink.url})
 - **Free Download (<15MB):** [Download SWEEPR Cleaner](https://sweeprcleaner.com/download)
-- **CCleaner Comparison:** [SWEEPR Cleaner vs CCleaner](https://sweeprcleaner.com/vs/ccleaner)
+- **Cleaner Comparison:** [${compLink.label}](${compLink.url})
 
 ${item.whatIsIt}
 
@@ -460,13 +508,33 @@ async function runBacklinksWorkflow(targetCount = 300) {
 
 async function runIndexingWorkflow() {
   console.log("\n=======================================================");
-  console.log("  3. SEARCH ENGINE INDEXING & INDEXNOW PRIORITY PIPELINE");
+  console.log("  3. SEARCH ENGINE INDEXING & INDEXNOW DELTA PIPELINE");
   console.log("=======================================================");
 
   const sitemapXml = fs.readFileSync(SITEMAP_PATH, "utf8");
-  const sitemapUrls = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim());
+  const redirectedSlugs = fs.existsSync(PSEO_REDIRECTS_PATH)
+    ? JSON.parse(fs.readFileSync(PSEO_REDIRECTS_PATH, "utf8"))
+    : {};
+  const isCanonicalUrl = (u) => {
+    const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
+    if (!m) return true;
+    const slug = m[1].toLowerCase();
+    return !redirectedSlugs[slug];
+  };
+  const sitemapUrls = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)]
+    .map((m) => m[1].trim())
+    .filter(isCanonicalUrl);
 
-  let queue = { indexnow_key: INDEXNOW_KEY, gsc_requested: [], bing_requested: [], last_indexnow_ping: null, last_sitemap_ping: null };
+  let queue = {
+    updatedAt: new Date().toISOString(),
+    indexnow_key: INDEXNOW_KEY,
+    pendingUrls: [],
+    submitted_indexnow_urls: [],
+    gsc_requested: [],
+    bing_requested: [],
+    last_indexnow_ping: null,
+    last_sitemap_ping: null
+  };
   if (fs.existsSync(INDEXING_QUEUE_PATH)) {
     try {
       const parsed = JSON.parse(fs.readFileSync(INDEXING_QUEUE_PATH, "utf8"));
@@ -476,71 +544,64 @@ async function runIndexingWorkflow() {
     } catch {}
   }
 
-  const indexNowPayload = {
-    host: "sweeprcleaner.com",
-    key: INDEXNOW_KEY,
-    keyLocation: `https://sweeprcleaner.com/${INDEXNOW_KEY}.txt`,
-    urlList: sitemapUrls
-  };
+  const submittedSet = new Set((queue.submitted_indexnow_urls || []).filter(isCanonicalUrl));
+  const deltaUrls = sitemapUrls.filter((u) => !submittedSet.has(u));
 
-  const [bingRes, indexNowRes, yandexRes, seznamRes, googlePing, bingPing] = await Promise.all([
-    fetch("https://www.bing.com/indexnow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(indexNowPayload),
-      signal: AbortSignal.timeout(15000)
-    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
-    fetch("https://api.indexnow.org/indexnow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(indexNowPayload),
-      signal: AbortSignal.timeout(15000)
-    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
-    fetch("https://yandex.com/indexnow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(indexNowPayload),
-      signal: AbortSignal.timeout(15000)
-    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
-    fetch("https://search.seznam.cz/indexnow", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify(indexNowPayload),
-      signal: AbortSignal.timeout(15000)
-    }).then(r => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
-    fetch("https://www.google.com/ping?sitemap=https://sweeprcleaner.com/sitemap.xml", {
-      signal: AbortSignal.timeout(10000)
-    }).then(r => `HTTP ${r.status}`).catch(e => `Err: ${e.message}`),
-    fetch("https://www.bing.com/ping?sitemap=https://sweeprcleaner.com/sitemap.xml", {
-      signal: AbortSignal.timeout(10000)
-    }).then(r => `HTTP ${r.status}`).catch(e => `Err: ${e.message}`)
-  ]);
+  let bingRes = "Skipped (0 delta URLs)";
+  let indexNowRes = "Skipped (0 delta URLs)";
 
+  if (deltaUrls.length > 0) {
+    const indexNowPayload = {
+      host: "sweeprcleaner.com",
+      key: INDEXNOW_KEY,
+      keyLocation: `https://sweeprcleaner.com/${INDEXNOW_KEY}.txt`,
+      urlList: deltaUrls
+    };
+    [bingRes, indexNowRes] = await Promise.all([
+      fetch("https://www.bing.com/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(indexNowPayload),
+        signal: AbortSignal.timeout(15000)
+      }).then((r) => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`),
+      fetch("https://api.indexnow.org/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(indexNowPayload),
+        signal: AbortSignal.timeout(15000)
+      }).then((r) => `HTTP ${r.status}`).catch((e) => `Err: ${e.message}`)
+    ]);
+    for (const u of deltaUrls) submittedSet.add(u);
+    queue.last_indexnow_ping = new Date().toISOString();
+  }
+
+  queue.updatedAt = new Date().toISOString();
   queue.indexnow_key = INDEXNOW_KEY;
-  queue.last_indexnow_ping = new Date().toISOString();
-  queue.last_sitemap_ping = new Date().toISOString();
+  queue.submitted_indexnow_urls = [...submittedSet];
 
-  const gscDone = new Set(queue.gsc_requested || []);
-  const bingDone = new Set(queue.bing_requested || []);
-  const outstandingGsc = sitemapUrls.filter((u) => !gscDone.has(u));
-  const outstandingBing = sitemapUrls.filter((u) => !bingDone.has(u));
+  // Ensure pendingUrls contains only canonical 200 OK URLs (preserving Strike-Zone priority order at head)
+  const existingPending = (queue.pendingUrls || []).filter(isCanonicalUrl);
+  const pendingSet = new Set(existingPending);
+  for (const u of sitemapUrls) pendingSet.add(u);
+  queue.pendingUrls = [...pendingSet];
+
+  const gscDone = new Set((queue.gsc_requested || []).filter(isCanonicalUrl));
+  const bingDone = new Set((queue.bing_requested || []).filter(isCanonicalUrl));
+  queue.gsc_requested = [...gscDone];
+  queue.bing_requested = [...bingDone];
+  const outstandingGsc = queue.pendingUrls.filter((u) => !gscDone.has(u));
+  const outstandingBing = queue.pendingUrls.filter((u) => !bingDone.has(u));
 
   safeWriteJsonSync(INDEXING_QUEUE_PATH, queue);
 
-  console.log(`[IndexNow Submissions] Submitted ${sitemapUrls.length} sitemap URLs:`);
+  console.log(`[IndexNow Delta Submissions] ${deltaUrls.length} delta URLs (of ${sitemapUrls.length} canonical sitemap URLs):`);
   console.log(`  - www.bing.com/indexnow: ${bingRes}`);
   console.log(`  - api.indexnow.org/indexnow: ${indexNowRes}`);
-  console.log(`  - yandex.com/indexnow: ${yandexRes}`);
-  console.log(`  - search.seznam.cz/indexnow: ${seznamRes}`);
-  console.log(`[Sitemap Pings]:`);
-  console.log(`  - Google Sitemap Ping: ${googlePing}`);
-  console.log(`  - Bing Sitemap Ping: ${bingPing}`);
-  console.log(`[GSC Queue Status] ${outstandingGsc.length}/${sitemapUrls.length} remaining.`);
-  console.log(`[Bing Queue Status] ${outstandingBing.length}/${sitemapUrls.length} remaining.`);
+  console.log(`[GSC Queue Status] ${outstandingGsc.length}/${sitemapUrls.length} canonical URLs remaining.`);
+  console.log(`[Bing Queue Status] ${outstandingBing.length}/${sitemapUrls.length} canonical URLs remaining.`);
 
-  return { sitemapUrls: sitemapUrls.length, bingRes, indexNowRes, outstandingGsc: outstandingGsc.length };
+  return { sitemapUrls: sitemapUrls.length, deltaUrls: deltaUrls.length, bingRes, indexNowRes, outstandingGsc: outstandingGsc.length };
 }
-
 async function main() {
   const countArg = Number(process.argv[2]) || 300;
   console.log("==========================================================================");

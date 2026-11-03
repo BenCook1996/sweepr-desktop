@@ -28,15 +28,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_ROOT = path.resolve(__dirname, "..");
 const REPO_ROOT = path.resolve(SERVER_ROOT, "..");
 const CLEAN_ITEMS_PATH = path.join(SERVER_ROOT, "src", "data", "clean-items.json");
+const PSEO_REDIRECTS_PATH = path.join(SERVER_ROOT, "src", "data", "pseo-redirects.json");
 const INDEXING_QUEUE_PATH = path.join(SERVER_ROOT, "src", "data", "indexing-queue.json");
 const DAILY_STATE_PATH = path.join(SERVER_ROOT, "src", "data", "daily-seo-pages-state.json");
 const SITEMAP_PATH = path.join(SERVER_ROOT, "public", "sitemap.xml");
 const LLMS_PATH = path.join(SERVER_ROOT, "public", "llms.txt");
-const INDEXNOW_KEY = "8f9a2b4c6d1e3f5a7b9c0d2e4f6a8b0c";
+const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
 
 const CRM_URLS = [
-  process.env.SWEEPR_CRM_URL || "https://sweepr-crm-production.up.railway.app",
-  "https://sweeprcleaner.com",
+  process.env.SWEEPR_CRM_BASE || "https://sweeprcleaner.com",
 ];
 const CRM_USER = process.env.CRM_ADMIN_USER || "admin";
 const CRM_PASS = process.env.CRM_ADMIN_PASSWORD || "";
@@ -2245,32 +2245,43 @@ const WINDOWS_FOLDER_MATRIX = [
   }
 ];
 
-function buildAllCandidateItems() {
-  const candidates = [...CURATED_TOPICS, ...WINDOWS_FOLDER_MATRIX.map((f) => ({ ...f, category: "folder" }))];
+const RETIRED_CARTESIAN_SUFFIXES = [
+  "-service-worker-cachestorage",
+  "-media-blob-storage",
+  "-code-bytecode-cache",
+  "-gpu-shader-cache",
+  "-crashpad-dump-logs"
+];
 
-  for (const app of APP_MATRIX_APPS) {
-    for (const comp of APP_CACHE_COMPONENTS) {
-      const slug = `${app.key}-${comp.subSlug}`;
-      candidates.push({
-        slug,
-        category: "app",
-        name: `${app.label} ${comp.subName}`,
-        path: `${app.baseDir}\\${comp.subPath}`,
-        safeToDelete: true,
-        avgSpace: comp.avgSpace,
-        whatIsIt: `${app.label} ${comp.whatSuffix}`,
-        whatHappens: `Cleaning ${app.label}'s ${comp.subName} ${comp.happensSuffix}`,
-        manualSteps: [
-          `Completely quit ${app.label} (verify ${app.proc} is closed in Task Manager).`,
-          `Press Windows Key + R, type ${app.baseDir} and press Enter.`,
-          `Locate ${comp.subPath}, select all cached files (Ctrl+A), and press Delete (or clean in 1 click with SWEEPR Cleaner).`
-        ]
-      });
-    }
-  }
-
-  return candidates;
+function normalizeWinPath(p) {
+  return String(p || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\//g, "\\")
+    .replace(/\\+$/, "");
 }
+
+function buildAllCandidateItems() {
+  // GSC Crawl-Budget & Anti-Cannibalization Guardrail:
+  // Strictly return distinct, curated applications and Windows system folders (1 canonical guide per app/folder).
+  // Never generate the 5x synthetic sub-cache Cartesian variants.
+  return [...CURATED_TOPICS, ...WINDOWS_FOLDER_MATRIX.map((f) => ({ ...f, category: "folder" }))];
+}
+
+const COMPETITOR_URLS = [
+  "https://sweeprcleaner.com/vs/ccleaner",
+  "https://sweeprcleaner.com/alternatives/ccleaner",
+  "https://sweeprcleaner.com/vs/bleachbit",
+  "https://sweeprcleaner.com/alternatives/bleachbit",
+  "https://sweeprcleaner.com/vs/cleanmypc",
+  "https://sweeprcleaner.com/alternatives/cleanmypc",
+  "https://sweeprcleaner.com/vs/avast-cleanup",
+  "https://sweeprcleaner.com/alternatives/avast-cleanup",
+  "https://sweeprcleaner.com/vs/wise-disk-cleaner",
+  "https://sweeprcleaner.com/alternatives/wise-disk-cleaner",
+  "https://sweeprcleaner.com/vs/glary-utilities",
+  "https://sweeprcleaner.com/alternatives/glary-utilities"
+];
 
 function updateSitemapXml(items) {
   const today = new Date().toISOString().slice(0, 10);
@@ -2280,6 +2291,17 @@ function updateSitemapXml(items) {
   );
 
   const additions = [];
+  for (const compUrl of COMPETITOR_URLS) {
+    if (!existingLocs.has(compUrl)) {
+      existingLocs.add(compUrl);
+      additions.push(`  <url>
+    <loc>${compUrl}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`);
+    }
+  }
   for (const item of items) {
     const url = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
     if (!existingLocs.has(url)) {
@@ -2323,29 +2345,55 @@ ${topGuides}
   fs.writeFileSync(LLMS_PATH, content, "utf8");
 }
 
-function updateIndexingQueue(newUrls) {
-  let queue = { updatedAt: new Date().toISOString(), pendingUrls: [] };
+function updateIndexingQueue(newUrls, redirectedSlugs = {}) {
+  let queue = {
+    updatedAt: new Date().toISOString(),
+    indexnow_key: INDEXNOW_KEY,
+    pendingUrls: [],
+    submitted_indexnow_urls: [],
+    gsc_requested: [],
+    bing_requested: []
+  };
   if (fs.existsSync(INDEXING_QUEUE_PATH)) {
     try {
       const parsed = JSON.parse(fs.readFileSync(INDEXING_QUEUE_PATH, "utf8"));
       if (Array.isArray(parsed)) {
         queue.pendingUrls = parsed;
-      } else if (parsed && Array.isArray(parsed.pendingUrls)) {
-        queue = parsed;
+      } else if (parsed && typeof parsed === "object") {
+        queue = { ...queue, ...parsed };
       }
     } catch {
       /* reset corrupt queue */
     }
   }
-  const set = new Set(queue.pendingUrls || []);
-  for (const u of newUrls) set.add(u);
+  const isCanonicalUrl = (u) => {
+    const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
+    if (!m) return true;
+    const slug = m[1].toLowerCase();
+    if (redirectedSlugs[slug]) return false;
+    if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => slug.endsWith(suf))) return false;
+    return true;
+  };
+  const pendingSet = new Set((queue.pendingUrls || []).filter(isCanonicalUrl));
+  for (const u of newUrls) {
+    if (isCanonicalUrl(u)) pendingSet.add(u);
+  }
+  const submittedSet = new Set(queue.submitted_indexnow_urls || []);
+  const deltaUrls = newUrls.filter((u) => isCanonicalUrl(u) && !submittedSet.has(u));
+  for (const u of deltaUrls) submittedSet.add(u);
+
   queue.updatedAt = new Date().toISOString();
-  queue.pendingUrls = [...set];
-  fs.writeFileSync(INDEXING_QUEUE_PATH, JSON.stringify(queue, null, 2), "utf8");
+  queue.pendingUrls = [...pendingSet];
+  queue.submitted_indexnow_urls = [...submittedSet];
+  fs.writeFileSync(INDEXING_QUEUE_PATH, JSON.stringify(queue, null, 2) + "\n", "utf8");
+  return deltaUrls;
 }
 
 async function pingIndexNow(urls) {
-  if (urls.length === 0) return;
+  if (urls.length === 0) {
+    console.log("[IndexNow] 0 delta-new URLs to submit (crawl budget protected).");
+    return;
+  }
   const payload = {
     host: "sweeprcleaner.com",
     key: INDEXNOW_KEY,
@@ -2360,7 +2408,7 @@ async function pingIndexNow(urls) {
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(10000)
       });
-      console.log(`[IndexNow] ${endpoint} -> HTTP ${res.status} (${urls.length} URLs)`);
+      console.log(`[IndexNow] ${endpoint} -> HTTP ${res.status} (${urls.length} delta URLs)`);
     } catch (e) {
       console.warn(`[IndexNow] ${endpoint} skipped:`, e.message);
     }
@@ -2393,8 +2441,9 @@ async function syncKeywordsToCrm(newItems) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const countArg = Number(args.find((a) => !a.startsWith("-")) || 50);
-  const targetCount = Math.max(1, Math.min(200, countArg));
+  const countArg = Number(args.find((a) => !a.startsWith("-")) || 2);
+  // Cap daily net-new canonical pillar additions to <= 5 to protect Googlebot crawl budget
+  const targetCount = Math.max(1, Math.min(5, countArg));
   const force = args.includes("--force");
 
   if (!force && fs.existsSync(DAILY_STATE_PATH)) {
@@ -2404,7 +2453,7 @@ async function main() {
       const hoursSince = (Date.now() - lastRunMs) / (1000 * 3600);
       if (hoursSince < 20) {
         console.log(
-          `[Daily 50 SEO Pages] Already generated ${state.lastCount || 50} pages ${hoursSince.toFixed(1)}h ago (${state.lastRunAt}). Pass --force to run immediately.`
+          `[Daily Pillar SEO] Already ran ${hoursSince.toFixed(1)}h ago (${state.lastRunAt}). Pass --force to run immediately.`
         );
         return;
       }
@@ -2414,24 +2463,34 @@ async function main() {
   }
 
   const existingItems = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8"));
+  const redirectedSlugs = fs.existsSync(PSEO_REDIRECTS_PATH)
+    ? JSON.parse(fs.readFileSync(PSEO_REDIRECTS_PATH, "utf8"))
+    : {};
   const existingSlugs = new Set(existingItems.map((i) => i.slug.toLowerCase()));
+  const existingPaths = new Set(existingItems.map((i) => normalizeWinPath(i.path)));
 
   const allCandidates = buildAllCandidateItems();
   const selected = [];
   for (const cand of allCandidates) {
     if (selected.length >= targetCount) break;
     const normSlug = cand.slug.toLowerCase();
+    const normPath = normalizeWinPath(cand.path);
     if (existingSlugs.has(normSlug)) continue;
+    if (redirectedSlugs[normSlug]) continue;
+    if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => normSlug.endsWith(suf))) continue;
+    if (normPath && existingPaths.has(normPath)) continue;
     // Validate required fields
     if (!cand.name || !cand.path || !cand.whatIsIt || !cand.whatHappens || !Array.isArray(cand.manualSteps) || cand.manualSteps.length < 2) {
       continue;
     }
     existingSlugs.add(normSlug);
+    if (normPath) existingPaths.add(normPath);
     selected.push(cand);
   }
 
   if (selected.length === 0) {
-    console.log("[Daily 50 SEO Pages] All candidate topics are already published in clean-items.json.");
+    console.log("[Daily Pillar SEO] All distinct canonical pillar topics are already published in clean-items.json (0 synthetic bloat pages added).");
+    updateIndexingQueue([], redirectedSlugs);
     return;
   }
 
@@ -2442,7 +2501,7 @@ async function main() {
   updateLlmsTxt(updatedItems);
 
   const newUrls = selected.map((i) => `https://sweeprcleaner.com/clean/${i.category}/${i.slug}`);
-  updateIndexingQueue(newUrls);
+  const deltaUrls = updateIndexingQueue(newUrls, redirectedSlugs);
 
   fs.writeFileSync(
     DAILY_STATE_PATH,
@@ -2459,8 +2518,8 @@ async function main() {
     "utf8"
   );
 
-  console.log(`[Daily 50 SEO Pages] Generated ${selected.length} new keyword-researched SEO pages (Total: ${updatedItems.length} pages, +${sitemapAdded} in sitemap.xml).`);
-  await pingIndexNow(newUrls);
+  console.log(`[Daily Pillar SEO] Published ${selected.length} distinct canonical pillar pages (Total: ${updatedItems.length} pages, +${sitemapAdded} in sitemap.xml).`);
+  await pingIndexNow(deltaUrls);
   await syncKeywordsToCrm(selected);
 
   if (!process.argv.includes("--no-push")) {
@@ -2480,18 +2539,18 @@ async function main() {
       );
       execFileSync(
         "git",
-        ["commit", "-m", `chore(seo): publish ${selected.length} daily keyword-researched SEO pages (total ${updatedItems.length})`],
+        ["commit", "-m", `chore(seo): publish ${selected.length} distinct canonical pillar SEO pages (total ${updatedItems.length})`],
         { cwd: REPO_ROOT, stdio: "inherit" }
       );
       execFileSync("git", ["push", "origin", "main"], { cwd: REPO_ROOT, stdio: "inherit" });
-      console.log("[Daily 50 SEO Pages] Committed and pushed to GitHub (origin/main) -> Railway auto-deploy triggered.");
+      console.log("[Daily Pillar SEO] Committed and pushed to GitHub (origin/main) -> Railway auto-deploy triggered.");
     } catch (gitErr) {
-      console.warn("[Daily 50 SEO Pages] Git auto-push skipped or failed:", gitErr?.message || gitErr);
+      console.warn("[Daily Pillar SEO] Git auto-push skipped or failed:", gitErr?.message || gitErr);
     }
   }
 }
 
 main().catch((err) => {
-  console.error("[Daily 50 SEO Pages] Error:", err);
+  console.error("[Daily Pillar SEO] Error:", err);
   process.exit(1);
 });
