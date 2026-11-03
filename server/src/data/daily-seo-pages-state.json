@@ -1,22 +1,32 @@
 {
-  "lastRunAt": "2026-11-03T22:45:19.208Z",
+  "lastRunAt": "2026-11-03T22:59:23.849Z",
   "lastCount": 2,
-  "totalCleanItems": 365,
+  "totalCleanItems": 367,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11",
-    "https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11"
+    "https://sweeprcleaner.com/clean/folder/appdata-local-folder-huge-windows-11",
+    "https://sweeprcleaner.com/clean/folder/windows-11-24h2-update-cache-8gb-bug"
   ],
   "ctrCooldownDays": 14,
   "ctrOptimizedAt": {
     "steam-depotcache": "2026-11-03",
     "riot-client-logs": "2026-11-03",
     "programdata-package-cache": "2026-11-03",
-    "winsxs": "2026-11-03"
+    "winsxs": "2026-11-03",
+    "logitech-ghub-installer-cache": "2026-11-03",
+    "capcut-pc-cache": "2026-11-03",
+    "medal-tv-cache": "2026-11-03",
+    "windows-livekernelreports": "2026-11-03"
   },
-  "nextStrikeZoneBatch": [
+  "lastCtrEnrichedSlugs": [
     "logitech-ghub-installer-cache",
     "capcut-pc-cache",
     "medal-tv-cache",
     "windows-livekernelreports"
+  ],
+  "nextStrikeZoneBatch": [
+    "obs-studio-logs-crashes",
+    "opera-gx-cache",
+    "npm-cache",
+    "gradle-wrapper-caches"
   ]
 }
