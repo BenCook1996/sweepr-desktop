@@ -1,9 +1,22 @@
 {
-  "lastRunAt": "2026-11-03T22:24:41.959Z",
+  "lastRunAt": "2026-11-03T22:45:19.208Z",
   "lastCount": 2,
-  "totalCleanItems": 363,
+  "totalCleanItems": 365,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/folder/windows-search-edb-index",
-    "https://sweeprcleaner.com/clean/app/gradle-wrapper-cache"
+    "https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11",
+    "https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11"
+  ],
+  "ctrCooldownDays": 14,
+  "ctrOptimizedAt": {
+    "steam-depotcache": "2026-11-03",
+    "riot-client-logs": "2026-11-03",
+    "programdata-package-cache": "2026-11-03",
+    "winsxs": "2026-11-03"
+  },
+  "nextStrikeZoneBatch": [
+    "logitech-ghub-installer-cache",
+    "capcut-pc-cache",
+    "medal-tv-cache",
+    "windows-livekernelreports"
   ]
 }

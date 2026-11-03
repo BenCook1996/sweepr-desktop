@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T22:24:41.956Z",
+  "updatedAt": "2026-11-03T22:45:19.206Z",
   "indexnow_key": "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b",
   "pendingUrls": [
     "https://sweeprcleaner.com/clean/folder/programdata-package-cache",
@@ -383,7 +383,9 @@
     "https://sweeprcleaner.com/clean/app/autodesk-fusion-360-cache",
     "https://sweeprcleaner.com/clean/app/sketchup-pro-3d-cache",
     "https://sweeprcleaner.com/clean/folder/windows-search-edb-index",
-    "https://sweeprcleaner.com/clean/app/gradle-wrapper-cache"
+    "https://sweeprcleaner.com/clean/app/gradle-wrapper-cache",
+    "https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11",
+    "https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11"
   ],
   "submitted_indexnow_urls": [
     "https://sweeprcleaner.com/clean/folder/programdata-package-cache",
@@ -767,7 +769,9 @@
     "https://sweeprcleaner.com/clean/app/autodesk-fusion-360-cache",
     "https://sweeprcleaner.com/clean/app/sketchup-pro-3d-cache",
     "https://sweeprcleaner.com/clean/folder/windows-search-edb-index",
-    "https://sweeprcleaner.com/clean/app/gradle-wrapper-cache"
+    "https://sweeprcleaner.com/clean/app/gradle-wrapper-cache",
+    "https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11",
+    "https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11"
   ],
   "gsc_requested": [],
   "bing_requested": [],

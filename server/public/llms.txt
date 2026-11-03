@@ -35,8 +35,10 @@
 - Download: https://sweeprcleaner.com/download
 - Support: https://sweeprcleaner.com/support
 
-## Programmatic Windows Storage & App Cache Guides (363 Verified Guides)
+## Programmatic Windows Storage & App Cache Guides (365 Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
+- [System & Reserved Storage Taking 80GB–100GB+ on Windows 11 (C:\Windows\WinSxS & C:\Windows\SoftwareDistribution\Download)](https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11): Reclaim 10.0 GB – 55.0 GB
+- [C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup) (C:\Windows\Temp & %LocalAppData%\Temp & C:\ProgramData\Package Cache)](https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11): Reclaim 12.0 GB – 65.0 GB
 - [Gradle Build & Dependency Wrapper Cache (%UserProfile%\.gradle\caches)](https://sweeprcleaner.com/clean/app/gradle-wrapper-cache): Reclaim 4.0 GB – 30.0 GB
 - [Windows Search Index Database (Windows.edb / Windows.db) (C:\ProgramData\Microsoft\Search\Data\Applications\Windows)](https://sweeprcleaner.com/clean/folder/windows-search-edb-index): Reclaim 2.5 GB – 25.0 GB
 - [Trimble SketchUp Pro 3D Cache & Temporary Files (%AppData%\SketchUp\SketchUp 2024\cache, temp, and crash_logs)](https://sweeprcleaner.com/clean/app/sketchup-pro-3d-cache): Reclaim 1.5 GB – 9.5 GB
@@ -60,5 +62,3 @@
 - [Geany Lightweight IDE Cache & Temporary Files (%AppData%\geany\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/geany-editor-cache): Reclaim 1.5 GB – 9.5 GB
 - [Lapce Code Editor Cache & Temporary Files (%AppData%\lapce\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/lapce-editor-cache): Reclaim 1.5 GB – 9.5 GB
 - [Ghostty Fast Terminal Cache & Temporary Files (%AppData%\ghostty\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/ghostty-terminal-cache): Reclaim 1.5 GB – 9.5 GB
-- [WezTerm GPU Terminal Cache & Temporary Files (%UserProfile%\.config\wezterm\Cache, Code Cache, and logs)](https://sweeprcleaner.com/clean/app/wezterm-terminal-cache): Reclaim 1.5 GB – 9.5 GB
-- [Wire Private Messenger Cache & Temporary Files (%AppData%\Wire\Cache and Logs)](https://sweeprcleaner.com/clean/app/wire-messenger-cache): Reclaim 1.5 GB – 9.5 GB

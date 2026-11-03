@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateKeyPairSync } from "node:crypto";
-import { existsSync, statSync } from "node:fs";
+import { createHash, generateKeyPairSync } from "node:crypto";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { sha256 } from "../src/tokens.js";
@@ -166,15 +166,43 @@ test("security headers present; HSTS only for https", async () => {
   assert.ok((await https.app.request("/health")).headers.get("strict-transport-security"));
 });
 
-test("download streams installer with Content-Length", async () => {
+test("download streams installer with Content-Length and Authenticode + manifest SHA-256 parity", async () => {
   const { app } = setup();
   const res = await app.request("/download?platform=windows");
   if (existsSync("./public/SWEEPRCleaner.exe")) {
+    const exeStat = statSync("./public/SWEEPRCleaner.exe");
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get("content-length"), String(statSync("./public/SWEEPRCleaner.exe").size));
+    assert.equal(res.headers.get("content-length"), String(exeStat.size));
     assert.equal(res.headers.get("content-disposition"), 'attachment; filename="SWEEPRCleaner.exe"');
     const buf = Buffer.from(await res.arrayBuffer());
-    assert.equal(buf.length, statSync("./public/SWEEPRCleaner.exe").size);
+    assert.equal(buf.length, exeStat.size);
+
+    // Verify embedded SSL.com Authenticode signature & RFC 3161 timestamp in the tail of the PE binary
+    const tailText = buf.subarray(Math.max(0, buf.length - 32768)).toString("latin1");
+    assert.ok(
+      tailText.includes("SSL.com Code Signing Intermediate CA"),
+      "SWEEPRCleaner.exe must contain an embedded SSL.com Authenticode signature"
+    );
+    assert.ok(
+      tailText.includes("SSL.com Timestamping Unit"),
+      "SWEEPRCleaner.exe must contain an embedded RFC 3161 timestamp"
+    );
+
+    // Verify byte-size parity with server/public/pad.xml
+    if (existsSync("./public/pad.xml")) {
+      const padXml = readFileSync("./public/pad.xml", "utf8");
+      const padBytes = (padXml.match(/<File_Size_Bytes>(\d+)<\/File_Size_Bytes>/) || [])[1];
+      assert.equal(padBytes, String(exeStat.size), "pad.xml <File_Size_Bytes> must match SWEEPRCleaner.exe size");
+    }
+
+    // Verify SHA-256 parity with winget installer manifest
+    const wingetPath = "../winget-manifests/s/SWEEPR/Cleaner/0.1.0/SWEEPR.Cleaner.installer.yaml";
+    if (existsSync(wingetPath)) {
+      const wingetYaml = readFileSync(wingetPath, "utf8");
+      const manifestSha = (wingetYaml.match(/InstallerSha256:\s*([A-Fa-f0-9]{64})/) || [])[1]?.toUpperCase();
+      const actualSha = createHash("sha256").update(buf).digest("hex").toUpperCase();
+      assert.equal(manifestSha, actualSha, "Winget InstallerSha256 must match signed SWEEPRCleaner.exe SHA-256");
+    }
   } else {
     assert.equal(res.status, 200); // "coming soon" picker page
   }

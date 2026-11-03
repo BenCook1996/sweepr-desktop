@@ -5541,5 +5541,35 @@
       "Open %userprofile%\\.gradle\\caches in File Explorer.",
       "Delete old 'modules-2', 'transforms-3', and 'jars-9' folders."
     ]
+  },
+  {
+    "slug": "c-drive-filling-up-by-itself-windows-11",
+    "category": "folder",
+    "name": "C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup)",
+    "path": "C:\\Windows\\Temp & %LocalAppData%\\Temp & C:\\ProgramData\\Package Cache",
+    "safeToDelete": true,
+    "avgSpace": "12.0 GB – 65.0 GB",
+    "whatIsIt": "When your Windows 11 C: drive loses gigabytes daily without installing new programs, runaway background caches—including Windows Update Delivery Optimization staging, Chromium Service Worker CacheStorage, GPU DXCache rebuilds, and LiveKernelReports WATCHDOG dumps—are silently expanding in hidden system directories.",
+    "whatHappens": "Auditing and purging these orphaned background caches immediately stops daily free-space bleed and reclaims 12–65 GB without affecting personal documents, installed applications, or Windows stability.",
+    "manualSteps": [
+      "Press Win + R, type %LocalAppData%\\Temp, and delete unlocked temporary staging files.",
+      "Open Administrator PowerShell and run Dism.exe /Online /Cleanup-Image /StartComponentCleanup to prune superseded WinSxS packages.",
+      "Check C:\\Windows\\LiveKernelReports and %LocalAppData%\\CrashDumps for multi-gigabyte .dmp files, or run SWEEPR Cleaner to scan all hidden growth vectors at once."
+    ]
+  },
+  {
+    "slug": "system-and-reserved-storage-100gb-windows-11",
+    "category": "folder",
+    "name": "System & Reserved Storage Taking 80GB–100GB+ on Windows 11",
+    "path": "C:\\Windows\\WinSxS & C:\\Windows\\SoftwareDistribution\\Download",
+    "safeToDelete": true,
+    "avgSpace": "10.0 GB – 55.0 GB",
+    "whatIsIt": "Windows 11 Settings > System > Storage frequently reports 80 GB to 120 GB under 'System & reserved' due to accumulated WinSxS component store revisions, stuck Windows Update ESD packages, hibernation reserve (hiberfil.sys), and unpurged Windows.old rollback trees.",
+    "whatHappens": "Cleaning superseded component packages and orphaned update staging shrinks System & Reserved storage by 10–55 GB while keeping active Windows 11 system binaries and drivers intact.",
+    "manualSteps": [
+      "Open Windows Terminal (Admin) and run: Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore",
+      "If 'Component Store Cleanup Recommended' is Yes, run: Dism.exe /Online /Cleanup-Image /StartComponentCleanup",
+      "If you do not use Hibernate on a desktop PC, run powercfg -h off to reclaim your full RAM size from C:\\hiberfil.sys."
+    ]
   }
 ]

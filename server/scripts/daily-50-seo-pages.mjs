@@ -2253,6 +2253,138 @@ const RETIRED_CARTESIAN_SUFFIXES = [
   "-crashpad-dump-logs"
 ];
 
+// Phase 4: High-intent symptom-based Windows 11 storage troubleshooting guides
+// Targets searchers who know their C: drive is full ("C drive filling up by itself", "System & Reserved 100GB") before they know the folder name.
+const SYMPTOM_TROUBLESHOOTING_PILLARS = [
+  {
+    slug: "c-drive-filling-up-by-itself-windows-11",
+    category: "folder",
+    name: "C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup)",
+    path: "C:\\Windows\\Temp & %LocalAppData%\\Temp & C:\\ProgramData\\Package Cache",
+    safeToDelete: true,
+    avgSpace: "12.0 GB – 65.0 GB",
+    whatIsIt: "When your Windows 11 C: drive loses gigabytes daily without installing new programs, runaway background caches—including Windows Update Delivery Optimization staging, Chromium Service Worker CacheStorage, GPU DXCache rebuilds, and LiveKernelReports WATCHDOG dumps—are silently expanding in hidden system directories.",
+    whatHappens: "Auditing and purging these orphaned background caches immediately stops daily free-space bleed and reclaims 12–65 GB without affecting personal documents, installed applications, or Windows stability.",
+    manualSteps: [
+      "Press Win + R, type %LocalAppData%\\Temp, and delete unlocked temporary staging files.",
+      "Open Administrator PowerShell and run Dism.exe /Online /Cleanup-Image /StartComponentCleanup to prune superseded WinSxS packages.",
+      "Check C:\\Windows\\LiveKernelReports and %LocalAppData%\\CrashDumps for multi-gigabyte .dmp files, or run SWEEPR Cleaner to scan all hidden growth vectors at once."
+    ]
+  },
+  {
+    slug: "system-and-reserved-storage-100gb-windows-11",
+    category: "folder",
+    name: "System & Reserved Storage Taking 80GB–100GB+ on Windows 11",
+    path: "C:\\Windows\\WinSxS & C:\\Windows\\SoftwareDistribution\\Download",
+    safeToDelete: true,
+    avgSpace: "10.0 GB – 55.0 GB",
+    whatIsIt: "Windows 11 Settings > System > Storage frequently reports 80 GB to 120 GB under 'System & reserved' due to accumulated WinSxS component store revisions, stuck Windows Update ESD packages, hibernation reserve (hiberfil.sys), and unpurged Windows.old rollback trees.",
+    whatHappens: "Cleaning superseded component packages and orphaned update staging shrinks System & Reserved storage by 10–55 GB while keeping active Windows 11 system binaries and drivers intact.",
+    manualSteps: [
+      "Open Windows Terminal (Admin) and run: Dism.exe /Online /Cleanup-Image /AnalyzeComponentStore",
+      "If 'Component Store Cleanup Recommended' is Yes, run: Dism.exe /Online /Cleanup-Image /StartComponentCleanup",
+      "If you do not use Hibernate on a desktop PC, run powercfg -h off to reclaim your full RAM size from C:\\hiberfil.sys."
+    ]
+  },
+  {
+    slug: "appdata-local-folder-huge-windows-11",
+    category: "folder",
+    name: "AppData\\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide)",
+    path: "%LocalAppData%\\Packages & %LocalAppData%\\Temp & %LocalAppData%\\D3DSCache",
+    safeToDelete: true,
+    avgSpace: "8.0 GB – 75.0 GB",
+    whatIsIt: "C:\\Users\\<Username>\\AppData\\Local is the default dump location for unindexed application caches: browser Cache_Data, Discord/Slack/Teams media blobs, CapCut/Premiere video proxies, npm/pip/gradle package caches, and DirectX/NVIDIA shader caches.",
+    whatHappens: "Never delete the entire AppData\\Local folder directly (which holds browser profiles and app settings). Selectively purging only the Cache, GPUCache, Code Cache, and Temp subfolders inside AppData\\Local safely recovers 8–75 GB with zero data loss.",
+    manualSteps: [
+      "Press Win + R, enter %LocalAppData%, and sort subfolders by size or inspect Temp, D3DSCache, and CrashDumps.",
+      "Clear only verified cache subdirectories (such as Cache_Data, GPUCache, and Service Worker\\CacheStorage) while leaving User Data\\Default\\Bookmarks and Login Data untouched.",
+      "Use SWEEPR Cleaner to automatically target only safe-to-delete cache subfolders inside %LocalAppData% and %AppData%."
+    ]
+  },
+  {
+    slug: "windows-11-24h2-update-cache-8gb-bug",
+    category: "folder",
+    name: "Windows 11 24H2 8.63 GB Undeletable Update Cache Fix",
+    path: "C:\\Windows\\WinSxS\\Temp\\PendingDeletes & C:\\$Windows.~BT",
+    safeToDelete: true,
+    avgSpace: "8.6 GB – 18.0 GB",
+    whatIsIt: "Following the Windows 11 24H2 feature update, checkpoint cumulative updates can leave 8.63 GB+ of orphaned staging data inside WinSxS\\Temp\\PendingDeletes and $Windows.~BT that legacy Disk Cleanup (cleanmgr.exe) fails to remove or misreports.",
+    whatHappens: "Running component store cleanup alongside safe staging purge clears the orphaned 24H2 checkpoint staging files and restores accurate free-space reporting in Windows Storage Sense.",
+    manualSteps: [
+      "Open Command Prompt or PowerShell as Administrator.",
+      "Run Dism.exe /Online /Cleanup-Image /StartComponentCleanup to release unlocked WinSxS\\Temp\\PendingDeletes files.",
+      "Remove leftover C:\\$Windows.~BT staging folders once your 24H2 upgrade stability is confirmed."
+    ]
+  },
+  {
+    slug: "other-storage-full-windows-11-cleanup",
+    category: "folder",
+    name: "Temporary Files & 'Other' Storage Full on Windows 11 (Deep Clean)",
+    path: "C:\\ProgramData & %UserProfile%\\.cache & %LocalAppData%\\NVIDIA\\DXCache",
+    safeToDelete: true,
+    avgSpace: "6.0 GB – 45.0 GB",
+    whatIsIt: "Windows 11 groups unrecognized developer caches (.gradle, .cargo, .cache, HuggingFace/Ollama LLM weights), installer depot caches (ProgramData\\Package Cache, LGHUB\\depots, Steam\\depotcache), and GPU shader pipelines into 'Other' or 'Temporary files' that standard Storage Sense skips.",
+    whatHappens: "Reclaims gigabytes of hidden SSD space from orphaned installer depots, shader caches, and CLI package stores without touching active projects or installed software.",
+    manualSteps: [
+      "Inspect %UserProfile%\\.cache, %LocalAppData%\\NVIDIA\\DXCache, and C:\\ProgramData\\Package Cache for orphaned multi-gigabyte folders.",
+      "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner."
+    ]
+  }
+];
+
+// Phase 3: Top 30 GSC Strike-Zone canonical slugs (Positions 6–35) tracked with a 14-day CTR optimization cooldown
+const GSC_STRIKE_ZONE_SLUGS = [
+  "steam-depotcache",
+  "riot-client-logs",
+  "programdata-package-cache",
+  "winsxs",
+  "logitech-ghub-installer-cache",
+  "capcut-pc-cache",
+  "medal-tv-cache",
+  "windows-livekernelreports",
+  "obs-studio-logs-crashes",
+  "opera-gx-cache",
+  "npm-cache",
+  "gradle-wrapper-caches",
+  "elgato-streamdeck-cache",
+  "localappdata-crashdumps",
+  "nvidia-dxcache",
+  "hiberfil-sys",
+  "windows-old",
+  "pip-cache",
+  "delivery-optimization",
+  "logitech-options-plus-cache",
+  "discord-cache",
+  "spotify-storage-cache",
+  "google-chrome-cache",
+  "microsoft-teams-cache",
+  "adobe-media-cache",
+  "davinci-resolve-cacheclip",
+  "docker-desktop-wsl-vhdx",
+  "huggingface-hub-cache",
+  "windows-prefetch",
+  "windows-softwaredistribution-download"
+];
+
+const CTR_COOLDOWN_DAYS = 14;
+
+function computeNextStrikeZoneBatch(ctrOptimizedAt = {}, batchSize = 4) {
+  const nowMs = Date.now();
+  const eligible = [];
+  for (const slug of GSC_STRIKE_ZONE_SLUGS) {
+    const lastIso = ctrOptimizedAt[slug];
+    if (!lastIso) {
+      eligible.push({ slug, lastOptimizedAt: null, daysSince: null });
+      continue;
+    }
+    const daysSince = (nowMs - new Date(lastIso).getTime()) / (1000 * 3600 * 24);
+    if (daysSince >= CTR_COOLDOWN_DAYS) {
+      eligible.push({ slug, lastOptimizedAt: lastIso, daysSince: Math.round(daysSince * 10) / 10 });
+    }
+  }
+  return eligible.slice(0, batchSize);
+}
+
 function normalizeWinPath(p) {
   return String(p || "")
     .trim()
@@ -2263,9 +2395,13 @@ function normalizeWinPath(p) {
 
 function buildAllCandidateItems() {
   // GSC Crawl-Budget & Anti-Cannibalization Guardrail:
-  // Strictly return distinct, curated applications and Windows system folders (1 canonical guide per app/folder).
+  // Prioritize Phase 4 symptom-based troubleshooting pillars first, followed by curated standalone apps/folders.
   // Never generate the 5x synthetic sub-cache Cartesian variants.
-  return [...CURATED_TOPICS, ...WINDOWS_FOLDER_MATRIX.map((f) => ({ ...f, category: "folder" }))];
+  return [
+    ...SYMPTOM_TROUBLESHOOTING_PILLARS,
+    ...CURATED_TOPICS,
+    ...WINDOWS_FOLDER_MATRIX.map((f) => ({ ...f, category: "folder" }))
+  ];
 }
 
 const COMPETITOR_URLS = [
@@ -2445,20 +2581,36 @@ async function main() {
   // Cap daily net-new canonical pillar additions to <= 5 to protect Googlebot crawl budget
   const targetCount = Math.max(1, Math.min(5, countArg));
   const force = args.includes("--force");
+  const markCtrArg = args.find((a) => a.startsWith("--mark-ctr="));
 
-  if (!force && fs.existsSync(DAILY_STATE_PATH)) {
+  let prevState = {};
+  if (fs.existsSync(DAILY_STATE_PATH)) {
     try {
-      const state = JSON.parse(fs.readFileSync(DAILY_STATE_PATH, "utf8"));
-      const lastRunMs = new Date(state.lastRunAt || 0).getTime();
-      const hoursSince = (Date.now() - lastRunMs) / (1000 * 3600);
-      if (hoursSince < 20) {
-        console.log(
-          `[Daily Pillar SEO] Already ran ${hoursSince.toFixed(1)}h ago (${state.lastRunAt}). Pass --force to run immediately.`
-        );
-        return;
-      }
+      prevState = JSON.parse(fs.readFileSync(DAILY_STATE_PATH, "utf8")) || {};
     } catch {
-      /* continue */
+      prevState = {};
+    }
+  }
+  const ctrOptimizedAt = { ...(prevState.ctrOptimizedAt || {}) };
+  if (markCtrArg) {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    for (const s of markCtrArg.slice("--mark-ctr=".length).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean)) {
+      ctrOptimizedAt[s] = todayIso;
+    }
+  }
+  const nextStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4);
+  console.log(
+    `[GSC Strike-Zone 14-Day Cooldown] Eligible next targets (${nextStrikeZoneBatch.length}): ${nextStrikeZoneBatch.map((t) => t.slug).join(", ") || "all on cooldown"}`
+  );
+
+  if (!force && prevState.lastRunAt && !markCtrArg) {
+    const lastRunMs = new Date(prevState.lastRunAt || 0).getTime();
+    const hoursSince = (Date.now() - lastRunMs) / (1000 * 3600);
+    if (hoursSince < 20) {
+      console.log(
+        `[Daily Pillar SEO] Already ran ${hoursSince.toFixed(1)}h ago (${prevState.lastRunAt}). Pass --force to run immediately.`
+      );
+      return;
     }
   }
 
@@ -2491,6 +2643,20 @@ async function main() {
   if (selected.length === 0) {
     console.log("[Daily Pillar SEO] All distinct canonical pillar topics are already published in clean-items.json (0 synthetic bloat pages added).");
     updateIndexingQueue([], redirectedSlugs);
+    fs.writeFileSync(
+      DAILY_STATE_PATH,
+      JSON.stringify(
+        {
+          ...prevState,
+          ctrCooldownDays: CTR_COOLDOWN_DAYS,
+          ctrOptimizedAt,
+          nextStrikeZoneBatch: nextStrikeZoneBatch.map((t) => t.slug)
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
     return;
   }
 
@@ -2510,11 +2676,14 @@ async function main() {
         lastRunAt: new Date().toISOString(),
         lastCount: selected.length,
         totalCleanItems: updatedItems.length,
-        sampleUrls: newUrls.slice(0, 10)
+        sampleUrls: newUrls.slice(0, 10),
+        ctrCooldownDays: CTR_COOLDOWN_DAYS,
+        ctrOptimizedAt,
+        nextStrikeZoneBatch: nextStrikeZoneBatch.map((t) => t.slug)
       },
       null,
       2
-    ),
+    ) + "\n",
     "utf8"
   );
 

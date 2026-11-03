@@ -392,17 +392,60 @@ async function fetchCleanerCrmState(seed = []) {
   return { postedUrls, postedCombos, postedDirectoryDomains, localCrmCount: (lOutreach.rows || lOutreach.items || []).length };
 }
 
+const GSC_STRIKE_ZONE_PRIORITY_SLUGS = new Set([
+  "steam-depotcache",
+  "riot-client-logs",
+  "programdata-package-cache",
+  "winsxs",
+  "logitech-ghub-installer-cache",
+  "capcut-pc-cache",
+  "medal-tv-cache",
+  "windows-livekernelreports",
+  "obs-studio-logs-crashes",
+  "opera-gx-cache",
+  "npm-cache",
+  "gradle-wrapper-caches",
+  "elgato-streamdeck-cache",
+  "localappdata-crashdumps",
+  "nvidia-dxcache",
+  "hiberfil-sys",
+  "windows-old",
+  "pip-cache",
+  "delivery-optimization",
+  "logitech-options-plus-cache",
+  "discord-cache",
+  "spotify-storage-cache",
+  "google-chrome-cache",
+  "microsoft-teams-cache",
+  "adobe-media-cache",
+  "davinci-resolve-cacheclip",
+  "docker-desktop-wsl-vhdx",
+  "huggingface-hub-cache",
+  "windows-prefetch",
+  "windows-softwaredistribution-download",
+  "c-drive-filling-up-by-itself-windows-11",
+  "system-and-reserved-storage-100gb-windows-11",
+  "appdata-local-folder-huge-windows-11",
+  "windows-11-24h2-update-cache-8gb-bug",
+  "other-storage-full-windows-11-cleanup"
+]);
+
 async function runBacklinksWorkflow(targetCount = 300) {
   console.log("\n=======================================================");
   console.log(`  2. 300-SITE HIGH-DR BACKLINKS SYNDICATION (${targetCount} GUIDES)`);
   console.log("=======================================================");
 
-  const cleanItems = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8"));
+  const rawCleanItems = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8"));
+  const redirectedSlugs = fs.existsSync(PSEO_REDIRECTS_PATH)
+    ? JSON.parse(fs.readFileSync(PSEO_REDIRECTS_PATH, "utf8"))
+    : {};
+  const cleanItems = rawCleanItems.filter((i) => !redirectedSlugs[String(i.slug || "").toLowerCase()]);
+  const strikeZoneItems = cleanItems.filter((i) => GSC_STRIKE_ZONE_PRIORITY_SLUGS.has(String(i.slug || "").toLowerCase()));
   const seed = JSON.parse(fs.readFileSync(SEED_PATH, "utf8"));
   const crmState = await fetchCleanerCrmState(seed);
 
   console.log(
-    `[CRM Deduplication Check] Local CRM Rows: ${crmState.localCrmCount} | Seed Entries: ${seed.length} | Unique URLs: ${crmState.postedUrls.size} | Unique Combos: ${crmState.postedCombos.size}`
+    `[CRM Deduplication Check] Local CRM Rows: ${crmState.localCrmCount} | Seed Entries: ${seed.length} | Unique URLs: ${crmState.postedUrls.size} | Strike-Zone Pool: ${strikeZoneItems.length}/${cleanItems.length}`
   );
 
   await initTelegraphPool();
@@ -426,7 +469,10 @@ async function runBacklinksWorkflow(targetCount = 300) {
 
     const results = await Promise.all(
       indices.map(async (idx) => {
-        const item = cleanItems[(startOffset + idx) % cleanItems.length];
+        // Weight 70% of published guides toward GSC Strike-Zone & symptom troubleshooting pillars
+        const useStrikePool = strikeZoneItems.length > 0 && idx % 10 < 7;
+        const pool = useStrikePool ? strikeZoneItems : cleanItems;
+        const item = pool[(startOffset + idx) % pool.length];
         const lang = LANGUAGES[(startOffset + idx) % LANGUAGES.length];
         return await publishGuide(item, lang, idx, dateTag).catch(() => null);
       })
