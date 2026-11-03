@@ -521,11 +521,87 @@ export function createApp(deps: AppDeps) {
   });
 
   // Explicit HTML page routes for clean URLs
+  const LOCALIZED_META: Record<
+    string,
+    Record<"home" | "pricing", { title: string; description: string; canonicalPath: string }>
+  > = {
+    de: {
+      home: {
+        title: "SWEEPR Cleaner: Schneller PC-, Mac- & Handy-Cleaner (2026)",
+        description:
+          "Gewinnen Sie in 60 Sekunden Gigabytes Speicherplatz auf Windows 11/10, Mac, iPhone & Android zurück. Sicher bereinigen mit 7-Tage-Wiederherstellung.",
+        canonicalPath: "/de",
+      },
+      pricing: {
+        title: "SWEEPR Cleaner Pro Preise: PC-, Mac- & Smartphone-Schutz",
+        description:
+          "Vergleichen Sie SWEEPR Cleaner Free und Pro. Wählen Sie das Jahresabo (58% sparen) für bis zu 5 Geräte inklusive 14-Tage-Geld-zurück-Garantie.",
+        canonicalPath: "/de/pricing",
+      },
+    },
+    fr: {
+      home: {
+        title: "SWEEPR Cleaner : Nettoyeur Rapide PC, Mac, iPhone & Android",
+        description:
+          "Libérez des gigaoctets d'espace disque en 60 secondes sur Windows 11/10, Mac, iPhone et Android. Nettoyage sûr sans bloatware avec restauration 7 jours.",
+        canonicalPath: "/fr",
+      },
+      pricing: {
+        title: "Tarifs SWEEPR Cleaner Pro : Licences PC, Mac & Mobile (2026)",
+        description:
+          "Comparez les offres SWEEPR Cleaner Gratuit et Pro. Économisez 58 % avec le forfait annuel pour protéger jusqu'à 5 appareils (garantie 14 jours).",
+        canonicalPath: "/fr/pricing",
+      },
+    },
+    es: {
+      home: {
+        title: "SWEEPR Cleaner: Limpiador Rápido para PC, Mac y Móvil (2026)",
+        description:
+          "Recupera gigabytes de espacio en 60 segundos en Windows 11/10, Mac, iPhone y Android. Limpieza segura sin bloatware y con restauración de 7 días.",
+        canonicalPath: "/es",
+      },
+      pricing: {
+        title: "Precios de SWEEPR Cleaner Pro: Limpiador PC, Mac y Móvil",
+        description:
+          "Compara los planes SWEEPR Cleaner Gratis y Pro. Ahorra un 58% con el plan Anual Pro para limpiar hasta 5 dispositivos con garantía de 14 días.",
+        canonicalPath: "/es/pricing",
+      },
+    },
+  };
+
   const renderHtmlFileWithLocale = (c: Context, file: string, lang = "en") => {
     if (!existsSync(file)) return c.notFound();
     let html = readFileSync(file, "utf-8");
     if (lang !== "en") {
       html = html.replace(/<html\s+lang="en"/i, `<html lang="${escapeHtml(lang)}"`);
+      const locMeta = LOCALIZED_META[lang];
+      const pageKey = file.includes("pricing.html") ? "pricing" : file.includes("index.html") ? "home" : null;
+      if (locMeta && pageKey) {
+        const m = locMeta[pageKey];
+        const fullUrl = `https://sweeprcleaner.com${m.canonicalPath}`;
+        html = html
+          .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(m.title)}</title>`)
+          .replace(
+            /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
+            `<meta name="description" content="${escapeHtml(m.description)}" />`
+          )
+          .replace(
+            /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
+            `<link rel="canonical" href="${fullUrl}" />`
+          )
+          .replace(
+            /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i,
+            `<meta property="og:url" content="${fullUrl}" />`
+          )
+          .replace(
+            /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
+            `<meta property="og:title" content="${escapeHtml(m.title)}" />`
+          )
+          .replace(
+            /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i,
+            `<meta property="og:description" content="${escapeHtml(m.description)}" />`
+          );
+      }
     }
     return c.html(html);
   };
@@ -641,7 +717,10 @@ export function createApp(deps: AppDeps) {
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.
   const page = (rawTitle: string, msg: string, downloadLink = false) => {
     const title = escapeHtml(rawTitle);
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b"><link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b"><link rel="shortcut icon" href="/favicon.ico?v=20261031b"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b"></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#f4f5f3;color:#111613;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:20px;box-shadow:0 8px 32px rgba(17,22,19,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#4b554e;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#0d6847;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(13,104,71,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
+    const fullTitle = rawTitle.length < 30 ? `${title} — SWEEPR Cleaner Official Platform Hub` : title;
+    const desc =
+      "Download or activate SWEEPR Cleaner across Windows 11/10, macOS, Android, and iPhone/iPad. Digitally signed native cleaner with 14-day money-back guarantee.";
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${fullTitle}</title><meta name="description" content="${desc}"><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://sweeprcleaner.com/download"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b"><link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b"><link rel="shortcut icon" href="/favicon.ico?v=20261031b"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b"><script src="/analytics.js" defer></script></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#f4f5f3;color:#111613;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:20px;box-shadow:0 8px 32px rgba(17,22,19,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#4b554e;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#0d6847;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(13,104,71,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
@@ -5817,7 +5896,8 @@ export function createApp(deps: AppDeps) {
       return c.html(popupClosePage("success", successTargetUrl));
     }
 
-    const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';}catch(e){}</script>`;
+    const safeTxId = escapeHtml(subscriptionId || sessionId || accountId || `tx_${now()}`);
+    const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';window.SWEEPR_PURCHASE_EVENT={transaction_id:${JSON.stringify(safeTxId)},value:49.99,currency:'GBP',plan:'SWEEPR Cleaner Pro'};}catch(e){}</script>`;
     if (isWeb) {
       return c.html(
         page(

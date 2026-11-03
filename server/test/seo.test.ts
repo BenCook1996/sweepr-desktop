@@ -536,6 +536,45 @@ test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and inde
     operaHtml.includes("Sub-Folders &amp; Cache Locations Breakdown"),
     "Consolidated master page must include Sub-Folders & Cache Locations Breakdown heading"
   );
+
+  // 5. Localized routes (/de, /fr, /es, /:loc/pricing) serve self-referencing canonicals & native metadata
+  for (const [locPath, expectedCanon] of [
+    ["/de", "https://sweeprcleaner.com/de"],
+    ["/fr", "https://sweeprcleaner.com/fr"],
+    ["/es", "https://sweeprcleaner.com/es"],
+    ["/de/pricing", "https://sweeprcleaner.com/de/pricing"],
+    ["/fr/pricing", "https://sweeprcleaner.com/fr/pricing"],
+    ["/es/pricing", "https://sweeprcleaner.com/es/pricing"],
+  ] as const) {
+    const locRes = await app.request(locPath);
+    assert.equal(locRes.status, 200);
+    const parsedLoc = parseHtml(await locRes.text());
+    assert.equal(parsedLoc.canonical, expectedCanon, `${locPath} must self-canonicalize to ${expectedCanon}`);
+    assert.ok(
+      parsedLoc.title && parsedLoc.title.length >= 30 && parsedLoc.title.length <= 60,
+      `${locPath} title length in bounds: "${parsedLoc.title}"`
+    );
+    assert.ok(
+      parsedLoc.metaDescription && parsedLoc.metaDescription.length >= 70 && parsedLoc.metaDescription.length <= 160,
+      `${locPath} description length in bounds`
+    );
+  }
+
+  // 6. /download picker and /checkout/success include canonical/noindex & GA4 purchase event
+  const dlPickerRes = await app.request("/download?platform=picker");
+  assert.equal(dlPickerRes.status, 200);
+  assert.equal(dlPickerRes.headers.get("x-robots-tag"), "noindex, nofollow");
+  const dlPickerHtml = await dlPickerRes.text();
+  const parsedDl = parseHtml(dlPickerHtml);
+  assert.equal(parsedDl.canonical, "https://sweeprcleaner.com/download");
+  assert.ok(/noindex/i.test(parsedDl.metaRobots ?? ""), "/download picker must include meta noindex");
+  assert.ok(dlPickerHtml.includes('/analytics.js'), "/download picker must load /analytics.js");
+
+  const successRes = await app.request("/checkout/success?web=1&subscription_id=sub_ga4_test");
+  assert.equal(successRes.status, 200);
+  const successHtml = await successRes.text();
+  assert.ok(successHtml.includes('/analytics.js'), "/checkout/success must load /analytics.js");
+  assert.ok(successHtml.includes("SWEEPR_PURCHASE_EVENT"), "/checkout/success must inject SWEEPR_PURCHASE_EVENT");
 });
 
 

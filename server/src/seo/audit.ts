@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { parseHtml, parseSitemap, type ParsedPage } from "./html.js";
 import type { AuditIssue, IssueSeverity, SeoStore } from "./store.js";
 
@@ -31,6 +32,19 @@ interface CrawledPage {
 
 const SKIP_PREFIXES = ["/api/", "/v1/", "/crm", "/admin", "/dashboard", "/checkout", "/webhooks", "/dev/", "/r/", "/portal"];
 const NON_HTML_EXT = /\.(exe|msi|apk|dmg|appimage|zip|png|jpe?g|gif|svg|webp|ico|css|js|json|xml|txt|pdf|woff2?|mp4)$/i;
+const INTENTIONAL_NOINDEX_PATHS = new Set([
+  "/order",
+  "/order.html",
+  "/de/order",
+  "/fr/order",
+  "/es/order",
+  "/checkout",
+  "/login",
+  "/login.html",
+  "/download",
+  "/ios-app",
+]);
+const RETIRED_5X_SUFFIX_RE = /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs)$/i;
 
 export const AUDIT_USER_AGENT = "SweeprSEOAudit/1.0 (+https://sweeprcleaner.com)";
 
@@ -120,6 +134,90 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
   const llms = await readText("/llms.txt");
   if (llms.status !== 200) {
     siteIssues.push(issue("notice", "llms_missing", "No llms.txt for AI answer engines", `GET /llms.txt -> HTTP ${llms.status}`, "Publish /llms.txt summarising the product for LLM crawlers."));
+  }
+
+  // ---- Anti-Cannibalization & 301 Consolidation Integrity Check ----
+  try {
+    const cleanItemsFile = existsSync("./src/data/clean-items.json")
+      ? "./src/data/clean-items.json"
+      : existsSync("./server/src/data/clean-items.json")
+      ? "./server/src/data/clean-items.json"
+      : null;
+    const redirectsFile = existsSync("./src/data/pseo-redirects.json")
+      ? "./src/data/pseo-redirects.json"
+      : existsSync("./server/src/data/pseo-redirects.json")
+      ? "./server/src/data/pseo-redirects.json"
+      : null;
+
+    if (cleanItemsFile) {
+      const items = JSON.parse(readFileSync(cleanItemsFile, "utf8")) as Array<{ slug: string; category: string; path: string }>;
+      const slugSet = new Set(items.map((i) => i.slug.toLowerCase()));
+      const retiredFound = items.filter((i) => RETIRED_5X_SUFFIX_RE.test(i.slug)).map((i) => i.slug);
+      if (retiredFound.length > 0) {
+        siteIssues.push(
+          issue(
+            "error",
+            "pseo_retired_5x_variants",
+            `${retiredFound.length} retired 5x sub-cache variant(s) present in clean-items.json`,
+            retiredFound.slice(0, 5).join(", "),
+            "Move 5x sub-cache variants out of clean-items.json into pseo-redirects.json."
+          )
+        );
+      }
+      const normPath = (p: string) =>
+        String(p || "")
+          .toLowerCase()
+          .replace(/\//g, "\\")
+          .replace(/\\+/g, "\\")
+          .replace(/\\$/, "")
+          .trim();
+      const seenPaths = new Map<string, string>();
+      const dupPaths: string[] = [];
+      for (const item of items) {
+        const np = normPath(item.path);
+        if (!np) continue;
+        if (seenPaths.has(np)) {
+          dupPaths.push(`${item.slug} duplicates ${seenPaths.get(np)} (${item.path})`);
+        } else {
+          seenPaths.set(np, item.slug);
+        }
+      }
+      if (dupPaths.length > 0) {
+        siteIssues.push(
+          issue(
+            "error",
+            "pseo_duplicate_paths",
+            `${dupPaths.length} duplicate Windows path(s) in clean-items.json`,
+            dupPaths.slice(0, 4).join("; "),
+            "Consolidate duplicate Windows path entries and 301-redirect the secondary slug."
+          )
+        );
+      }
+      if (redirectsFile) {
+        const redirects = JSON.parse(readFileSync(redirectsFile, "utf8")) as Record<string, string>;
+        const badTargets: string[] = [];
+        for (const [oldSlug, targetPath] of Object.entries(redirects)) {
+          const m = String(targetPath).match(/^\/clean\/(?:app|folder)\/([^/?#]+)$/);
+          const targetSlug = m ? m[1].toLowerCase() : "";
+          if (!targetSlug || !slugSet.has(targetSlug) || redirects[targetSlug]) {
+            badTargets.push(`${oldSlug} -> ${targetPath}`);
+          }
+        }
+        if (badTargets.length > 0) {
+          siteIssues.push(
+            issue(
+              "error",
+              "pseo_broken_redirects",
+              `${badTargets.length} redirect(s) in pseo-redirects.json do not resolve in 1 hop to a canonical item`,
+              badTargets.slice(0, 5).join(", "),
+              "Ensure every target in pseo-redirects.json points directly to an active item in clean-items.json."
+            )
+          );
+        }
+      }
+    }
+  } catch {
+    /* ignore file parse errors in isolated environments */
   }
 
   const isAllowed = (p: string) =>
@@ -281,8 +379,23 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
           issues.push(issue("warning", "canonical_invalid", "Canonical URL is invalid", pp.canonical, "Use an absolute URL."));
         }
       }
-      if (noindex) issues.push(issue("warning", "noindex", "Page is marked noindex", `meta robots: ${pp.metaRobots}`, "Remove noindex if this page should rank."));
-      if (!inSitemap && !noindex) issues.push(issue("warning", "not_in_sitemap", "Indexable page missing from sitemap.xml", `${p.path} not in sitemap`, "Add it to sitemap.xml."));
+      const isIntentionalNoindex = INTENTIONAL_NOINDEX_PATHS.has(p.path);
+      if (isIntentionalNoindex && !noindex) {
+        issues.push(
+          issue(
+            "error",
+            "transactional_indexable",
+            "Transactional or utility route is missing noindex",
+            `GET ${p.path} has meta robots: ${pp.metaRobots ?? "none"}`,
+            "Add <meta name=\"robots\" content=\"noindex, nofollow\"> and X-Robots-Tag: noindex, nofollow."
+          )
+        );
+      } else if (!isIntentionalNoindex && noindex) {
+        issues.push(issue("warning", "noindex", "Page is marked noindex", `meta robots: ${pp.metaRobots}`, "Remove noindex if this page should rank."));
+      }
+      if (!inSitemap && !noindex && !isIntentionalNoindex) {
+        issues.push(issue("warning", "not_in_sitemap", "Indexable page missing from sitemap.xml", `${p.path} not in sitemap`, "Add it to sitemap.xml."));
+      }
       if (inSitemap && linksIn === 0 && p.path !== "/") issues.push(issue("warning", "orphan", "Orphan page: in sitemap but no internal links point to it", "0 inbound internal links", "Link to it from a hub page (e.g. /clean directory or footer)."));
       if (pp.wordCount < 300) issues.push(issue("notice", "thin_content", `Low word count (${pp.wordCount})`, `${pp.wordCount} words of visible text`, "Expand with unique, useful content if this page targets search traffic."));
       if (pp.imagesMissingAlt > 0) issues.push(issue("warning", "img_alt_missing", `${pp.imagesMissingAlt} image(s) missing alt text`, `${pp.imagesMissingAlt}/${pp.imageCount} images`, "Add descriptive alt attributes."));

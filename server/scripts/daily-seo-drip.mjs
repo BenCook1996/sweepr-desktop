@@ -633,9 +633,13 @@ async function runIndexingWorkflow() {
   // Ensure pendingUrls contains only canonical 200 OK URLs NOT yet requested in GSC,
   // with Competitor (/vs/*, /alternatives/*) and Strike-Zone URLs prioritized at the head
   const existingPending = (queue.pendingUrls || []).filter((u) => isCanonicalUrl(u) && !gscDone.has(u));
+  const strikeZoneUrls = sitemapUrls.filter((u) => {
+    const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
+    return m && GSC_STRIKE_ZONE_PRIORITY_SLUGS.has(m[1].toLowerCase());
+  });
   const priorityHead = [
-    ...COMPETITOR_URLS,
-    ...STRIKE_ZONE_TARGETS.map((t) => t.url)
+    ...COMPETITOR_LINKS.map((c) => c.url),
+    ...strikeZoneUrls
   ].filter((u) => isCanonicalUrl(u) && !gscDone.has(u));
   const pendingSet = new Set([...priorityHead, ...existingPending]);
   for (const u of sitemapUrls) {

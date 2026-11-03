@@ -2488,6 +2488,186 @@ const STRIKE_ZONE_ENRICHMENTS = {
         a: "Yes. Every time an Android Studio or Java project updates its gradle-wrapper.properties version, Gradle downloads a new ~150 MB distribution zip and leaves every older version on disk forever. Deleting unused versions in wrapper\\dists and caches\\build-cache-* safely recovers 5–35 GB."
       }
     ]
+  },
+  "elgato-streamdeck-cache": {
+    metaTitle: "Clear Elgato Stream Deck App Cache & Logs (PC) | SWEEPR",
+    metaDescription: "How to clear Elgato Stream Deck software cache, QtWebEngine blobs, and plugin logs in %AppData%\\Elgato\\StreamDeck on Windows 10/11 without losing button profiles.",
+    customFaqs: [
+      {
+        q: "Will clearing %AppData%\\Elgato\\StreamDeck\\logs and cache delete my button profiles or icons?",
+        a: "No. Your custom Stream Deck profiles and icon packs live inside %AppData%\\Elgato\\StreamDeck\\ProfilesV2. Cleaning the logs, Crashpad dumps, and QtWebEngine cache only removes background software telemetry and plugin debug bloat."
+      }
+    ]
+  },
+  "localappdata-crashdumps": {
+    metaTitle: "AppData\\Local\\CrashDumps: Safe to Delete on PC? | SWEEPR",
+    metaDescription: "Is %LocalAppData%\\CrashDumps safe to delete on Windows 10/11? Yes—reclaim 1–12 GB by removing old application .dmp crash files safely with 1-click cleanup.",
+    customFaqs: [
+      {
+        q: "Why is %LocalAppData%\\CrashDumps suddenly taking up gigabytes on my C: drive?",
+        a: "Windows Error Reporting (WER) writes a full or mini user-mode memory dump (.dmp) into %LocalAppData%\\CrashDumps whenever a game, browser, or creative app crashes on exit. Unless you are actively debugging a crash in WinDbg, these .dmp files are 100% safe to delete."
+      }
+    ]
+  },
+  "nvidia-dxcache": {
+    metaTitle: "Clear NVIDIA DXCache & GLCache (Fix Stutter) | SWEEPR",
+    metaDescription: "Is %LocalAppData%\\NVIDIA\\DXCache safe to delete? Yes—reclaim 1–8 GB of old shader cache files on Windows 10/11 and fix post-update game frame-time stutters.",
+    customFaqs: [
+      {
+        q: "Why does Windows say 'File In Use' when I try to delete files in NVIDIA\\DXCache?",
+        a: "Desktop Window Manager (dwm.exe), browsers with hardware acceleration, and NVIDIA background containers keep active locks on the current driver's .bin/.toc shader files. SWEEPR Cleaner automatically skips locked active files and purges all orphaned shader generations."
+      }
+    ]
+  },
+  "hiberfil-sys": {
+    metaTitle: "How to Delete hiberfil.sys on Windows 11 Safely | SWEEPR",
+    metaDescription: "What is C:\\hiberfil.sys and can you delete it? Learn how to disable Windows Hibernation (powercfg -h off) or switch to Reduced mode to free 6–32 GB on SSDs.",
+    customFaqs: [
+      {
+        q: "Can I shrink hiberfil.sys without losing Windows 11 Fast Startup?",
+        a: "Yes. Running powercfg /h /type reduced in an Administrator terminal shrinks C:\\hiberfil.sys by 50% (from 40% of RAM down to 20% of RAM) while preserving Windows 11 Fast Startup."
+      }
+    ]
+  },
+  "windows-old": {
+    metaTitle: "Delete Windows.old Folder Safely on Windows 11 | SWEEPR",
+    metaDescription: "Is C:\\Windows.old safe to delete after a Windows 11 update? Reclaim 15–35 GB safely without permission errors using Dism /Cleanup-Image or SWEEPR Cleaner.",
+    customFaqs: [
+      {
+        q: "Why can't I delete C:\\Windows.old directly in File Explorer?",
+        a: "C:\\Windows.old is owned by the TrustedInstaller system account and contains thousands of hard-linked system binaries. Use Settings -> System -> Storage -> Temporary files ('Previous Windows installation(s)') or SWEEPR Cleaner to remove it cleanly."
+      }
+    ]
+  },
+  "pip-cache": {
+    metaTitle: "How to Clear Python pip Cache on Windows 11/10 | SWEEPR",
+    metaDescription: "How to clear %LocalAppData%\\pip\\Cache on Windows 10/11. Reclaim 2–15 GB of cached Python wheel (.whl) and PyTorch/CUDA downloads using pip cache purge.",
+    customFaqs: [
+      {
+        q: "Will clearing %LocalAppData%\\pip\\Cache break my Python virtual environments (venv or conda)?",
+        a: "No. Installed packages live inside each environment's Lib\\site-packages directory. %LocalAppData%\\pip\\Cache only stores downloaded .whl archives and HTTP responses used during installation."
+      }
+    ]
+  },
+  "delivery-optimization": {
+    metaTitle: "Clear Windows Delivery Optimization Cache Safely | SWEEPR",
+    metaDescription: "How to delete Windows 11 Delivery Optimization cache in ServiceProfiles\\NetworkService. Reclaim 2–15 GB of peer-to-peer update staging files in 1 click.",
+    customFaqs: [
+      {
+        q: "What is the Windows Delivery Optimization cache folder used for?",
+        a: "Delivery Optimization stores downloaded Windows Update and Microsoft Store chunks so your PC can share them with other PCs on your local network. Clearing it frees 2–15 GB immediately without rolling back any installed updates."
+      }
+    ]
+  },
+  "logitech-options-plus-cache": {
+    metaTitle: "Clear Logi Options+ Cache & Crash Dumps on PC | SWEEPR",
+    metaDescription: "How to clear Logitech Logi Options+ cache, updater installers, and Crashpad dumps on Windows 10/11. Reclaim 500 MB–4 GB while keeping MX mouse gestures safe.",
+    customFaqs: [
+      {
+        q: "Does clearing Logi Options+ cache reset my MX Master mouse button mappings?",
+        a: "No. Your custom MX Master and MX Keys button assignments are saved in settings.db and synced to your Logi ID. Purging WebCache, GPUCache, and Crashpad dumps only removes temporary updater and Electron cache files."
+      }
+    ]
+  },
+  "discord-cache": {
+    metaTitle: "How to Clear Discord Cache on Windows 11 Safely | SWEEPR",
+    metaDescription: "How to clear %AppData%\\Discord\\Cache, Code Cache, and GPUCache on Windows 10/11. Reclaim 1–10 GB of cached images and videos without logging out of Discord.",
+    customFaqs: [
+      {
+        q: "Will deleting %AppData%\\Discord\\Cache_Data log me out or delete my Discord messages?",
+        a: "No. All Discord messages and server history live on Discord's cloud servers, and your session token is stored separately. Clearing Cache_Data, Code Cache, and GPUCache frees disk space and fixes laggy server switching."
+      }
+    ]
+  },
+  "spotify-storage-cache": {
+    metaTitle: "How to Clear Spotify Storage Cache on Windows | SWEEPR",
+    metaDescription: "Why is %LocalAppData%\\Spotify\\Storage taking 10GB+? Learn how to clear Spotify desktop audio & Browser cache on Windows 10/11 while keeping playlists safe.",
+    customFaqs: [
+      {
+        q: "Does clearing %LocalAppData%\\Spotify\\Storage delete my Spotify playlists or liked songs?",
+        a: "No. Your playlists and library are stored in your Spotify cloud account. %LocalAppData%\\Spotify\\Storage and Data hold encrypted stream chunks from recently played tracks that safely regenerate as you listen."
+      }
+    ]
+  },
+  "google-chrome-cache": {
+    metaTitle: "Clear Chrome Cache_Data & Service Worker Bloat | SWEEPR",
+    metaDescription: "How to clear Google Chrome Cache_Data, Code Cache, and Service Worker CacheStorage on Windows 10/11. Reclaim 2–15 GB without deleting saved passwords or tabs.",
+    customFaqs: [
+      {
+        q: "Why does Google Chrome still use 10GB+ on disk after clearing browsing data in settings?",
+        a: "Chrome's built-in Clear Browsing Data dialog often leaves orphaned Service Worker\\CacheStorage folders, File System API blobs, and multi-profile GPUCache directories in %LocalAppData%\\Google\\Chrome\\User Data."
+      }
+    ]
+  },
+  "microsoft-teams-cache": {
+    metaTitle: "How to Clear Microsoft Teams Cache (New Teams) | SWEEPR",
+    metaDescription: "How to clear New Microsoft Teams (MSTeams_8wekyb3d8bbwe) and Classic Teams cache on Windows 11/10. Fix Teams startup freezes and reclaim 1–8 GB safely.",
+    customFaqs: [
+      {
+        q: "Where is the cache folder for the New Microsoft Teams app on Windows 11?",
+        a: "New Teams (WebView2) stores its cache inside %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView, whereas Classic Teams uses %AppData%\\Microsoft\\Teams. SWEEPR Cleaner cleans both automatically."
+      }
+    ]
+  },
+  "adobe-media-cache": {
+    metaTitle: "Clear Adobe Media Cache Files Safely on Windows | SWEEPR",
+    metaDescription: "How to clear %AppData%\\Adobe\\Common\\Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Will deleting Adobe Media Cache Files (.cfa and .pek) break my Premiere Pro project?",
+        a: "No. .cfa (conformed audio) and .pek (waveform peak) files are temporary cache assets. Premiere Pro and After Effects automatically rebuild them only for the active timeline you open next."
+      }
+    ]
+  },
+  "battlenet-cache": {
+    metaTitle: "Clear Blizzard Battle.net Cache & Logs on PC | SWEEPR",
+    metaDescription: "How to clear C:\\ProgramData\\Battle.net\\Cache and Blizzard Entertainment logs on Windows 10/11. Fix stuck game updates and reclaim 1–6 GB of SSD space safely.",
+    customFaqs: [
+      {
+        q: "Does deleting C:\\ProgramData\\Battle.net and Blizzard Entertainment cache uninstall my games?",
+        a: "No. Cleaning %ProgramData%\\Blizzard Entertainment\\Battle.net\\Cache only resets the launcher's local configuration and download manifest cache, fixing stuck 'Initializing' update loops."
+      }
+    ]
+  },
+  "epic-games-webcache": {
+    metaTitle: "Clear Epic Games Launcher webcache on Windows | SWEEPR",
+    metaDescription: "How to clear %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 on Windows 10/11. Fix black screen launcher bugs and reclaim 1–5 GB of SSD space safely.",
+    customFaqs: [
+      {
+        q: "Why are there multiple webcache_4147 and webcache_4430 folders in EpicGamesLauncher\\Saved?",
+        a: "Every time Epic Games Launcher updates its embedded Chromium Embedded Framework (CEF) build, it creates a new versioned webcache_* folder and abandons the old one. Deleting old webcache_* folders is 100% safe."
+      }
+    ]
+  },
+  "valorant-shader-cache": {
+    metaTitle: "Clear VALORANT Crashes, Logs & Cache on PC | SWEEPR",
+    metaDescription: "How to clear %LocalAppData%\\VALORANT\\Saved\\Crashes, Logs, and webcache on Windows 10/11. Reclaim 1–6 GB and fix post-patch micro-stutters safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Will clearing %LocalAppData%\\VALORANT\\Saved\\Logs and Crashes reset my crosshair or sensitivity?",
+        a: "No. Your crosshair profiles and sensitivity are synced to Riot's servers and stored inside the Config subfolder. Cleaning Logs, Crashes, and webcache only removes diagnostic dumps."
+      }
+    ]
+  },
+  "docker-desktop-vhdx-wsl-disk": {
+    metaTitle: "Shrink Docker Desktop docker_data.vhdx on PC | SWEEPR",
+    metaDescription: "Why is %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx taking 50GB+ on Windows 11? Learn how to prune dangling images and compact WSL2 virtual disks safely.",
+    customFaqs: [
+      {
+        q: "Why doesn't docker system prune shrink the ext4.vhdx file size in Windows Explorer?",
+        a: "WSL2 Hyper-V virtual disks (ext4.vhdx / docker_data.vhdx) grow dynamically when containers write data, but do not automatically release zeroed blocks back to Windows NTFS until fstrim orOptimize-VHD / diskpart compact vdisk is run."
+      }
+    ]
+  },
+  "vscode-cachedextensions": {
+    metaTitle: "Clear VS Code CachedExtensionVSIXs & Cache | SWEEPR",
+    metaDescription: "How to clear %AppData%\\Code\\CachedExtensionVSIXs, CachedData, and GPUCache on Windows 10/11. Reclaim 1–8 GB of old VS Code update binaries safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Does deleting %AppData%\\Code\\CachedExtensionVSIXs uninstall my active VS Code extensions?",
+        a: "No. Installed extensions run from %UserProfile%\\.vscode\\extensions. CachedExtensionVSIXs and CachedData only hold downloaded .vsix installer archives and V8 bytecode from previous VS Code releases."
+      }
+    ]
   }
 };
 

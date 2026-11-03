@@ -21,6 +21,27 @@
 
   let isInitialized = false;
 
+  function isBotOrAutomatedVisitor() {
+    try {
+      if (navigator.webdriver === true) return true;
+      const ua = navigator.userAgent || '';
+      if (
+        /(HeadlessChrome|PhantomJS|Playwright|Puppeteer|Slurp|bingbot|Googlebot|AhrefsBot|SemrushBot|PTST|Lighthouse|Chrome-Lighthouse|PageSpeed|GTmetrix|Pingdom|UptimeRobot|SweeprSEOAudit)/i.test(
+          ua
+        )
+      ) {
+        return true;
+      }
+      if (
+        window.location.search.includes('no_track=1') ||
+        localStorage.getItem('sweepr_ignore_analytics') === '1'
+      ) {
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
   function log(...args) {
     if (window.SWEEPR_ANALYTICS_CONFIG.debug || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       console.log('%c[Sweepr Analytics]', 'color: #10b981; font-weight: bold;', ...args);
@@ -58,6 +79,7 @@
    * Dispatches events to GA4, Meta Pixel, Microsoft Clarity, and local attribution engine.
    */
   window.sweeprTrack = function (eventName, params = {}) {
+    if (isBotOrAutomatedVisitor()) return;
     const attr = window.sweeprAttribution ? window.sweeprAttribution.getPayload() : {};
     const enrichedParams = Object.assign(
       {
@@ -93,13 +115,15 @@
           case 'view_pricing':
             window.fbq('trackCustom', 'ViewPricing', enrichedParams);
             break;
+          case 'begin_checkout':
           case 'initiate_checkout':
             window.fbq('track', 'InitiateCheckout', {
               content_name: enrichedParams.plan || 'Sweepr Cleaner Pro',
               currency: enrichedParams.currency || 'GBP',
-              value: enrichedParams.value || 1.99
+              value: enrichedParams.value || 49.99
             });
             break;
+          case 'generate_lead':
           case 'lead':
             window.fbq('track', 'Lead', enrichedParams);
             break;
@@ -107,7 +131,7 @@
             window.fbq('track', 'Purchase', {
               content_name: enrichedParams.plan || 'Sweepr Cleaner Pro',
               currency: enrichedParams.currency || 'GBP',
-              value: enrichedParams.value || 1.99
+              value: enrichedParams.value || 49.99
             });
             break;
           case 'download_click':
@@ -135,6 +159,11 @@
   function initProviders(cfg) {
     if (isInitialized) return;
     isInitialized = true;
+
+    if (isBotOrAutomatedVisitor()) {
+      log('Skipping analytics initialization for bot or automated visitor.');
+      return;
+    }
 
     const attr = window.sweeprAttribution ? window.sweeprAttribution.getPayload() : {};
 
@@ -182,8 +211,58 @@
       if (attr.ref) window.clarity('set', 'referral', attr.ref);
     }
 
-    // Fire initial page view
-    window.sweeprTrack('page_view');
+    // Note: Do NOT call window.sweeprTrack('page_view') here because gtag('config', ..., { send_page_view: true })
+    // and fbq('track', 'PageView') above already send the initial page view. Calling sweeprTrack('page_view')
+    // here previously caused duplicate page_view events (2.00 views/user) on every page load.
+
+    // 4. Fire page-entry funnel events AFTER providers are initialized
+    const path = window.location.pathname || '/';
+    if (/^\/(?:de\/|fr\/|es\/)?pricing(?:\.html)?$/i.test(path)) {
+      window.sweeprTrack('view_pricing', { transport_type: 'beacon' });
+    }
+    if (/^\/(?:de\/|fr\/|es\/)?(?:order|checkout)(?:\.html)?$/i.test(path)) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedPlan = urlParams.get('plan') || 'annual';
+      const defaultVal = selectedPlan === 'monthly' ? 9.99 : selectedPlan === 'six_month' ? 29.99 : 49.99;
+      window.sweeprTrack('begin_checkout', {
+        plan: selectedPlan,
+        currency: 'GBP',
+        value: defaultVal,
+        items: [{ item_id: `sweepr_${selectedPlan}`, item_name: `SWEEPR Cleaner Pro (${selectedPlan})`, price: defaultVal, quantity: 1 }],
+        transport_type: 'beacon'
+      });
+      window.sweeprTrack('initiate_checkout', {
+        plan: `SWEEPR Cleaner Pro (${selectedPlan})`,
+        currency: 'GBP',
+        value: defaultVal,
+        transport_type: 'beacon'
+      });
+    }
+
+    // 5. Fire purchase event on /checkout/success if server injected window.SWEEPR_PURCHASE_EVENT
+    if (window.SWEEPR_PURCHASE_EVENT && typeof window.SWEEPR_PURCHASE_EVENT === 'object') {
+      const p = window.SWEEPR_PURCHASE_EVENT;
+      const txId = String(p.transaction_id || p.subscription_id || ('tx_' + Date.now()));
+      const dedupKey = 'sweepr_ga4_purchased_' + txId;
+      let alreadyTracked = false;
+      try {
+        alreadyTracked = sessionStorage.getItem(dedupKey) === '1';
+        if (!alreadyTracked) sessionStorage.setItem(dedupKey, '1');
+      } catch (e) {}
+      if (!alreadyTracked) {
+        const val = Number(p.value) || 49.99;
+        const curr = String(p.currency || 'GBP').toUpperCase();
+        const planName = String(p.plan || 'SWEEPR Cleaner Pro');
+        window.sweeprTrack('purchase', {
+          transaction_id: txId,
+          value: val,
+          currency: curr,
+          plan: planName,
+          items: [{ item_id: 'sweepr_pro', item_name: planName, price: val, quantity: 1 }],
+          transport_type: 'beacon'
+        });
+      }
+    }
   }
 
   /**
@@ -248,25 +327,61 @@
       const href = target.getAttribute('href') || '';
       const text = (target.innerText || target.textContent || '').trim().slice(0, 50);
 
-      // Download Buttons
-      if (href === '/download' || href.includes('SWEEPRCleaner.exe') || href.includes('Sweepr_Setup.exe') || href.includes('.apk')) {
+      // Download Buttons (matches /download, /download?platform=*, direct installer links, and Play Beta)
+      if (
+        href === '/download' ||
+        href.startsWith('/download?') ||
+        href.includes('SWEEPRCleaner.') ||
+        href.includes('Sweepr_Setup.') ||
+        href.includes('.apk') ||
+        href.includes('.dmg') ||
+        href.includes('play.google.com/apps/testing/com.sweepr.app')
+      ) {
+        const platMatch = href.match(/[?&]platform=([a-z0-9_-]+)/i);
+        const platform = platMatch
+          ? platMatch[1].toLowerCase()
+          : href.includes('play.google.com') || href.includes('.apk')
+          ? 'android'
+          : href.includes('.dmg')
+          ? 'mac'
+          : 'windows';
         window.sweeprTrack('download_click', {
           button_text: text,
-          href: href
+          button_id: target.id || '',
+          href: href,
+          platform: platform,
+          transport_type: 'beacon'
+        });
+        window.sweeprTrack('file_download', {
+          file_name: href,
+          file_extension: platform,
+          link_text: text,
+          link_url: href,
+          transport_type: 'beacon'
         });
       }
 
       // Order / Checkout CTAs
-      else if (href.startsWith('/order') || target.id === 'checkoutBtn' || target.id === 'submitBtn') {
+      else if (
+        href.startsWith('/order') ||
+        href.includes('/order?') ||
+        target.id === 'checkoutBtn' ||
+        target.id === 'submitBtn'
+      ) {
         window.sweeprTrack('checkout_cta_click', {
           button_text: text,
-          href: href
+          button_id: target.id || '',
+          href: href,
+          transport_type: 'beacon'
         });
       }
 
       // Pricing Page Navigation
-      else if (href === '/pricing') {
-        window.sweeprTrack('view_pricing_click', { button_text: text });
+      else if (href === '/pricing' || href.endsWith('/pricing')) {
+        window.sweeprTrack('view_pricing_click', {
+          button_text: text,
+          transport_type: 'beacon'
+        });
       }
 
       // Exit Modal CTA: CLAIM DISCOUNT
@@ -275,30 +390,25 @@
       }
     });
 
-    // 4. Special Page Detectors
-    const path = window.location.pathname;
-
-    // Pricing Page view
-    if (path === '/pricing') {
-      window.sweeprTrack('view_pricing');
-    }
-
-    // Checkout Page view -> Initiate Checkout
-    if (path === '/order') {
-      window.sweeprTrack('initiate_checkout', {
-        plan: 'Sweepr Cleaner Pro',
-        currency: 'GBP',
-        value: 1.99
-      });
-
-      // Track email input completion
+    // 4. Checkout Email Lead Listener
+    const path = window.location.pathname || '/';
+    if (/^\/(?:de\/|fr\/|es\/)?(?:order|checkout)(?:\.html)?$/i.test(path)) {
       const emailInput = document.getElementById('email');
       if (emailInput) {
         emailInput.addEventListener(
           'blur',
           function () {
             if (emailInput.value && emailInput.value.includes('@')) {
-              window.sweeprTrack('lead', { form: 'checkout_email' });
+              window.sweeprTrack('generate_lead', {
+                form: 'checkout_email',
+                currency: 'GBP',
+                value: 49.99,
+                transport_type: 'beacon'
+              });
+              window.sweeprTrack('lead', {
+                form: 'checkout_email',
+                transport_type: 'beacon'
+              });
             }
           },
           { once: true }
