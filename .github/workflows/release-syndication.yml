@@ -3,6 +3,8 @@ name: "A5 Release Syndication (PAD XML, Winget, Chocolatey & Listing Audit)"
 on:
   release:
     types: [published]
+  schedule:
+    - cron: "0 9 * * 1"
   workflow_dispatch:
     inputs:
       version:
@@ -66,3 +68,17 @@ jobs:
         run: |
           choco pack sweepr-cleaner.nuspec
           choco push "sweepr-cleaner.${{ steps.sync.outputs.version }}.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+
+      - name: Trigger Weekly / Post-Release Listing Freshness Audit on Production CRM
+        if: env.CRM_ADMIN_PASSWORD != ''
+        env:
+          CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
+        shell: pwsh
+        run: |
+          $headers = @{
+            "Authorization" = "Bearer $env:CRM_ADMIN_PASSWORD"
+            "Content-Type"  = "application/json"
+          }
+          $body = @{ expected_version = "${{ steps.sync.outputs.version }}" } | ConvertTo-Json
+          $res = Invoke-RestMethod -Method Post -Uri "https://sweeprcleaner.com/api/crm/seo/listings/check" -Headers $headers -Body $body
+          Write-Host "Listing audit: checked=$($res.checked), current=$($res.current_count), stale=$($res.stale_count), open_tasks=$($res.open_crm_tasks)"

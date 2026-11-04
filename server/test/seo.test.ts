@@ -739,6 +739,50 @@ test("SEO A4 Bloat Watch Detector & A5 Listing Freshness Monitor", async () => {
   assert.equal(checkStaleJson.listings[0].detected_version, "0.0.9");
   assert.equal(checkStaleJson.listings[0].crm_task_status, "open");
   assert.ok(checkStaleJson.listings[0].crm_task_note.includes("v0.0.9"));
+
+  // Check "v0.1.0 unsigned" detection on softpedia -> even if version string is 0.1.0, unsigned flag triggers stale + open CRM task
+  const checkUnsignedRes = await post("/api/crm/seo/listings/check", {
+    platform_id: "softpedia",
+    expected_version: "0.1.0",
+    mock_html: {
+      softpedia: {
+        html: '<html><body><h1>SWEEPR Cleaner v0.1.0 unsigned</h1><p>Note: Unknown Publisher warning</p><span itemprop="ratingValue">4.8</span><a href="https://sweeprcleaner.com">Website</a></body></html>',
+        httpStatus: 200,
+        hasBacklink: true,
+      },
+    },
+  });
+  assert.equal(checkUnsignedRes.status, 200);
+  const checkUnsignedJson = (await checkUnsignedRes.json()) as any;
+  assert.equal(checkUnsignedJson.listings[0].version_status, "stale");
+  assert.equal(checkUnsignedJson.listings[0].detected_version, "0.1.0");
+  assert.equal(checkUnsignedJson.listings[0].detected_rating, "4.8/5");
+  assert.equal(checkUnsignedJson.listings[0].crm_task_status, "open");
+  assert.ok(checkUnsignedJson.listings[0].crm_task_note.includes("STALE UNSIGNED LISTING"));
+
+  // Verify CRM tasks endpoint returns both open listing rows and synced outreach_logs rows
+  const tasksRes = await get("/api/crm/seo/listings/tasks");
+  assert.equal(tasksRes.status, 200);
+  const tasksJson = (await tasksRes.json()) as any;
+  assert.ok(tasksJson.open_count >= 2);
+  assert.ok(tasksJson.crm_outreach_tasks.some((t: any) => t.who.includes("[A5 Listing: softpedia]")));
+
+  // Resolve softpedia once updated to signed v0.1.0
+  const checkResolvedRes = await post("/api/crm/seo/listings/check", {
+    platform_id: "softpedia",
+    expected_version: "0.1.0",
+    mock_html: {
+      softpedia: {
+        html: '<html><body><h1>SWEEPR Cleaner v0.1.0 (Authenticode Signed)</h1><span itemprop="ratingValue">4.9</span><a href="https://sweeprcleaner.com">Website</a></body></html>',
+        httpStatus: 200,
+        hasBacklink: true,
+      },
+    },
+  });
+  assert.equal(checkResolvedRes.status, 200);
+  const checkResolvedJson = (await checkResolvedRes.json()) as any;
+  assert.equal(checkResolvedJson.listings[0].version_status, "current");
+  assert.equal(checkResolvedJson.listings[0].crm_task_status, "resolved");
 });
 
 test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", async () => {
@@ -806,8 +850,12 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   const packJson = (await packRes.json()) as any;
   assert.equal(packJson.release_version, "0.1.0");
   assert.equal(
+    packJson.hashes.windows_exe_sha256,
+    "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA"
+  );
+  assert.equal(
     packJson.hashes.windows_msi_sha256,
-    "38E5CDF3D69D53BBDAAEEB5CCDC12E222E0D4CD5DB3E214F93DF6F38D73CA172"
+    "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A"
   );
   assert.ok(packJson.wave_1_channels.length >= 7);
 

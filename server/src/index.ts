@@ -8,6 +8,8 @@ import { openDb } from "./db.js";
 import { loadSigningKey } from "./tokens.js";
 import { createApp } from "./app.js";
 import { reconcileStripeSubscriptions } from "./stripe.js";
+import { SeoStore } from "./seo/store.js";
+import { checkDirectoryListings } from "./seo/listings.js";
 
 process.on("uncaughtException", (err) => {
   console.error("[fatal-guard] Uncaught exception:", err);
@@ -179,4 +181,21 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       }
     }, 3000);
   }
+
+  // A5: Weekly Listing Freshness & Auto-Publish Crawler
+  // Runs once 20s after boot and then every 7 days to check AlternativeTo, SaaSHub, Softpedia, MajorGeeks,
+  // Microsoft Store, Winget, Chocolatey, and GitHub Releases for version string, unsigned flags, rating, and backlink.
+  const runWeeklyListingAudit = async () => {
+    try {
+      const seoStore = new SeoStore(repo.db);
+      const res = await checkDirectoryListings(seoStore, { targetDomain: "sweeprcleaner.com" });
+      console.log(
+        `[a5-listings] Weekly directory audit complete (v${res.expected_version}): ${res.current_count} current, ${res.stale_count} stale, ${res.open_crm_tasks} open CRM tasks.`
+      );
+    } catch (err: any) {
+      console.warn(`[a5-listings] Directory listing audit warning: ${err?.message || err}`);
+    }
+  };
+  setTimeout(runWeeklyListingAudit, 20_000).unref?.();
+  setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000).unref?.();
 });

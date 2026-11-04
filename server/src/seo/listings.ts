@@ -96,6 +96,7 @@ export function readCurrentReleaseVersion(): string {
 export function extractVersionAndRatingFromHtml(html: string): {
   detected_version: string | null;
   detected_rating: string | null;
+  has_unsigned_flag: boolean;
 } {
   let detectedVersion: string | null = null;
   let detectedRating: string | null = null;
@@ -113,6 +114,7 @@ export function extractVersionAndRatingFromHtml(html: string): {
   }
   const ratingMatch =
     html.match(/"ratingValue"\s*:\s*"?([0-9]+(?:\.[0-9]+)?)"?/i) ||
+    html.match(/itemprop=["']ratingValue["'][^>]*>\s*([0-9]+(?:\.[0-9]+)?)\s*</i) ||
     html.match(/([0-9]\.[0-9])\s*\/\s*5(?:\s*stars)?/i);
   if (ratingMatch?.[1]) {
     detectedRating = `${ratingMatch[1]}/5`;
@@ -126,7 +128,16 @@ export function extractVersionAndRatingFromHtml(html: string): {
     if (verMatch?.[1]) detectedVersion = verMatch[1];
   }
 
-  return { detected_version: detectedVersion, detected_rating: detectedRating };
+  // 4. Detect stale "v0.1.0 unsigned" or "Unknown Publisher" warnings on directory pages
+  const hasUnsignedFlag = /\b(?:v?[0-9]+\.[0-9]+\.[0-9]+\s+unsigned|unsigned\s+(?:binary|build|installer|version|executable)|unknown\s+publisher|unverified\s+publisher)\b/i.test(
+    html
+  );
+
+  return {
+    detected_version: detectedVersion,
+    detected_rating: detectedRating,
+    has_unsigned_flag: hasUnsignedFlag,
+  };
 }
 
 export function ensureDirectoryListingsSeeded(store: SeoStore) {
@@ -212,6 +223,7 @@ export async function checkDirectoryListings(
   for (const row of all) {
     let detectedVersion: string | null = null;
     let detectedRating: string | null = null;
+    let hasUnsignedFlag = false;
     let backlinkStatus = row.backlink_status;
     let foundHref: string | null = row.found_href;
     let httpStatus: number | null = row.http_status;
@@ -221,6 +233,7 @@ export async function checkDirectoryListings(
       const parsed = extractVersionAndRatingFromHtml(injected.html);
       detectedVersion = parsed.detected_version;
       detectedRating = parsed.detected_rating;
+      hasUnsignedFlag = parsed.has_unsigned_flag;
       httpStatus = injected.httpStatus ?? 200;
       backlinkStatus = injected.hasBacklink ? "live" : "missing";
       foundHref = injected.foundHref ?? (injected.hasBacklink ? `https://${targetDomain}` : null);
@@ -228,6 +241,7 @@ export async function checkDirectoryListings(
       const xml = readFileSync(PAD_XML_PATH, "utf8");
       const parsed = extractVersionAndRatingFromHtml(xml);
       detectedVersion = parsed.detected_version;
+      hasUnsignedFlag = parsed.has_unsigned_flag;
       httpStatus = 200;
       backlinkStatus = xml.includes(targetDomain) ? "live" : "missing";
       foundHref = `https://${targetDomain}/SWEEPRCleaner.exe`;
@@ -243,6 +257,7 @@ export async function checkDirectoryListings(
           const parsed = extractVersionAndRatingFromHtml(text);
           detectedVersion = parsed.detected_version;
           detectedRating = parsed.detected_rating;
+          hasUnsignedFlag = parsed.has_unsigned_flag;
         }
       } catch {
         /* ignore fetch error */
@@ -257,6 +272,12 @@ export async function checkDirectoryListings(
       versionStatus = "blocked";
       crmTaskStatus = "open";
       crmTaskNote = `Verify ${row.platform_name} manually in browser (WAF challenge encountered) and confirm v${expectedVersion}.`;
+    } else if (hasUnsignedFlag) {
+      versionStatus = "stale";
+      crmTaskStatus = "open";
+      crmTaskNote = `STALE UNSIGNED LISTING on ${row.platform_name}: page still flags 'v${detectedVersion || expectedVersion} unsigned' / unknown publisher. Submit signed v${expectedVersion} installer and PAD XML (https://${targetDomain}/pad.xml).`;
+      staleCount += 1;
+      tasksCreated += 1;
     } else if (detectedVersion === expectedVersion) {
       versionStatus = "current";
       crmTaskStatus = "resolved";
@@ -309,27 +330,32 @@ export async function checkDirectoryListings(
         row.platform_id
       );
 
-    // Sync stale listings into outreach_logs as actionable CRM tasks
-    if (versionStatus === "stale") {
-      try {
-        const existingLog = store.db
-          .prepare("SELECT id FROM outreach_logs WHERE url = ? LIMIT 1")
-          .get(row.listing_url) as { id: number } | undefined;
+    // Step 4: Sync stale / pending listings into outreach_logs as actionable CRM tasks (and resolve when current)
+    try {
+      const existingLog = store.db
+        .prepare("SELECT id FROM outreach_logs WHERE url = ? AND how = 'A5 Listing Freshness Monitor' LIMIT 1")
+        .get(row.listing_url) as { id: number } | undefined;
+      if (crmTaskStatus === "open") {
+        const outStatus = versionStatus === "stale" ? "stale_version" : "pending_submission";
         if (existingLog) {
           store.db
-            .prepare("UPDATE outreach_logs SET status = 'stale_version', category = ? WHERE id = ?")
-            .run(crmTaskNote, existingLog.id);
+            .prepare("UPDATE outreach_logs SET status = ?, category = ?, reached_out_at = ? WHERE id = ?")
+            .run(outStatus, crmTaskNote, now, existingLog.id);
         } else {
           store.db
             .prepare(
               `INSERT INTO outreach_logs (who, website, url, how, category, status, reached_out_at)
-               VALUES (?, ?, ?, 'A5 Listing Freshness Monitor', ?, 'stale_version', ?)`
+               VALUES (?, ?, ?, 'A5 Listing Freshness Monitor', ?, ?, ?)`
             )
-            .run(row.platform_name, new URL(row.listing_url).hostname, row.listing_url, crmTaskNote, now);
+            .run(`[A5 Listing: ${row.platform_id}] ${row.platform_name}`, new URL(row.listing_url).hostname, row.listing_url, crmTaskNote, outStatus, now);
         }
-      } catch {
-        /* ignore if outreach_logs schema differs */
+      } else if (versionStatus === "current" && existingLog) {
+        store.db
+          .prepare("UPDATE outreach_logs SET status = 'delivered', category = ? WHERE id = ?")
+          .run(crmTaskNote, existingLog.id);
       }
+    } catch {
+      /* ignore if outreach_logs schema differs */
     }
 
     results.push({
@@ -358,10 +384,32 @@ export async function checkDirectoryListings(
   };
 }
 
+export function listListingCrmTasks(store: SeoStore) {
+  const listings = listDirectoryListings(store);
+  const openTasks = listings.filter((l) => l.crm_task_status === "open");
+  let outreachTasks: Array<Record<string, unknown>> = [];
+  try {
+    outreachTasks = store.db
+      .prepare("SELECT * FROM outreach_logs WHERE how = 'A5 Listing Freshness Monitor' ORDER BY reached_out_at DESC")
+      .all() as Array<Record<string, unknown>>;
+  } catch {
+    /* ignore */
+  }
+  return {
+    expected_version: readCurrentReleaseVersion(),
+    open_count: openTasks.length,
+    stale_count: openTasks.filter((t) => t.version_status === "stale").length,
+    pending_submission_count: openTasks.filter((t) => t.version_status === "pending_submission").length,
+    tasks: openTasks,
+    crm_outreach_tasks: outreachTasks,
+  };
+}
+
 export function getDirectorySubmissionPack(store: SeoStore) {
   const version = readCurrentReleaseVersion();
   const listings = listDirectoryListings(store);
-  const sha256Msi = "38E5CDF3D69D53BBDAAEEB5CCDC12E222E0D4CD5DB3E214F93DF6F38D73CA172";
+  const sha256Exe = "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA";
+  const sha256Msi = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
 
   return {
     release_version: version,
@@ -373,6 +421,7 @@ export function getDirectorySubmissionPack(store: SeoStore) {
       android_apk: "https://sweeprcleaner.com/SWEEPRCleaner.apk",
     },
     hashes: {
+      windows_exe_sha256: sha256Exe,
       windows_msi_sha256: sha256Msi,
       product_code: "{07521DB8-EE40-4826-A28D-E29EC366DFBE}",
     },
@@ -388,8 +437,8 @@ export function getDirectorySubmissionPack(store: SeoStore) {
       {
         platform_id: "winget",
         name: "Windows Package Manager (Winget)",
-        manifest_dir: `winget-manifests/m/Makeur/SweeprCleaner/${version}/`,
-        command: `wingetcreate submit --token $GITHUB_TOKEN winget-manifests/m/Makeur/SweeprCleaner/${version}`,
+        manifest_dir: `winget-manifests/s/SWEEPR/Cleaner/${version}/`,
+        command: `wingetcreate update SWEEPR.Cleaner --version ${version} --urls https://sweeprcleaner.com/SWEEPRCleaner.exe https://sweeprcleaner.com/Sweepr_Setup.msi --token $WINGET_TOKEN --submit`,
         submission_url: "https://github.com/microsoft/winget-pkgs/pulls",
       },
       {

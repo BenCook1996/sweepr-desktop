@@ -39,6 +39,7 @@ import {
   checkDirectoryListings,
   getDirectorySubmissionPack,
   listDirectoryListings,
+  listListingCrmTasks,
   readCurrentReleaseVersion,
   upsertDirectoryListing,
 } from "./listings.js";
@@ -838,6 +839,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   // ---------------- A5: Listing Freshness & Auto-Publish ----------------
   router.get("/listings/submission-pack", (c) => {
     return c.json(getDirectorySubmissionPack(store));
+  });
+
+  router.get("/listings/tasks", (c) => {
+    return c.json(listListingCrmTasks(store));
   });
 
   router.get("/listings", (c) => {
