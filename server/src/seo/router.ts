@@ -27,6 +27,20 @@ import {
   executeIntentGapAutomation,
   loadVerifiedGscSeedRows,
 } from "./intent-gap.js";
+import {
+  BLOAT_WATCH_FEEDS,
+  getBloatWatchPost,
+  listBloatWatchPosts,
+  publishBloatWatchPost,
+  scanBloatWatchSignals,
+  updateBloatWatchMeasurements,
+} from "./bloat-watch.js";
+import {
+  checkDirectoryListings,
+  listDirectoryListings,
+  readCurrentReleaseVersion,
+  upsertDirectoryListing,
+} from "./listings.js";
 import type { SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -755,6 +769,112 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     const days = Math.min(Math.max(Number(c.req.query("days")) || 30, 1), 90);
     const s = store.botSummary(days);
     return c.json({ ...s, by_bot: s.by_bot.map((b) => ({ ...b, type: AI_BOTS.has(b.bot) ? "ai" : "search" })) });
+  });
+
+  // ---------------- A4: Bloat Watch Detector ----------------
+  router.get("/bloat-watch", (c) => {
+    const status = c.req.query("status");
+    const posts = listBloatWatchPosts(store, status);
+    return c.json({
+      posts,
+      counts: {
+        total: posts.length,
+        published: posts.filter((p) => p.status === "published").length,
+        draft: posts.filter((p) => p.status === "draft" || p.status === "measured").length,
+      },
+      feeds: BLOAT_WATCH_FEEDS,
+    });
+  });
+
+  router.get("/bloat-watch/:slug", (c) => {
+    const post = getBloatWatchPost(store, c.req.param("slug"));
+    return post ? c.json({ post }) : c.json({ error: "not_found" }, 404);
+  });
+
+  router.post("/bloat-watch/scan", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = await scanBloatWatchSignals(store, {
+      custom_signals: Array.isArray(body.signals) ? body.signals : undefined,
+      fetch_live_feeds: Boolean(body.fetch_live_feeds),
+      min_score: body.min_score != null ? Number(body.min_score) : 7,
+    });
+    return c.json({ ok: true, ...res, posts: listBloatWatchPosts(store) });
+  });
+
+  const handleMeasureBloatWatch = async (c: any) => {
+    const slug = c.req.param("slug");
+    const body = await c.req.json().catch(() => ({}));
+    const updated = updateBloatWatchMeasurements(store, slug, {
+      before_gb: body.before_gb != null ? Number(body.before_gb) : undefined,
+      after_gb: body.after_gb != null ? Number(body.after_gb) : undefined,
+      reclaimed_gb: body.reclaimed_gb != null ? Number(body.reclaimed_gb) : undefined,
+      tested_os_build: body.tested_os_build,
+      app_version: body.app_version,
+      safe_verdict: body.safe_verdict,
+      vm_notes: body.vm_notes,
+      title: body.title,
+      summary: body.summary,
+    });
+    if (!updated) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true, post: updated });
+  };
+  router.put("/bloat-watch/:slug/measure", handleMeasureBloatWatch);
+  router.post("/bloat-watch/:slug/measure", handleMeasureBloatWatch);
+
+  router.post("/bloat-watch/:slug/publish", async (c) => {
+    const slug = c.req.param("slug");
+    const body = await c.req.json().catch(() => ({}));
+    const res = await publishBloatWatchPost(store, slug, providers.siteUrl, body.ping_indexnow !== false);
+    if (!res) return c.json({ error: "not_found" }, 404);
+    return c.json({
+      ok: true,
+      ...res,
+      reddit_reply_draft: res.post.reddit_reply_draft,
+      press_pitch_draft: res.post.press_pitch_draft,
+    });
+  });
+
+  // ---------------- A5: Listing Freshness & Auto-Publish ----------------
+  router.get("/listings", (c) => {
+    const listings = listDirectoryListings(store);
+    return c.json({
+      expected_version: readCurrentReleaseVersion(),
+      listings,
+      summary: {
+        total: listings.length,
+        current: listings.filter((l) => l.version_status === "current").length,
+        stale: listings.filter((l) => l.version_status === "stale").length,
+        open_tasks: listings.filter((l) => l.crm_task_status === "open").length,
+      },
+    });
+  });
+
+  const handleUpsertListing = async (c: any) => {
+    const body = await c.req.json().catch(() => ({}));
+    const platformId = String(body.platform_id ?? "").trim();
+    const listingUrl = String(body.listing_url ?? "").trim();
+    if (!platformId || !listingUrl) return c.json({ error: "platform_id_and_listing_url_required" }, 400);
+    if (!isPublicHttpUrl(listingUrl)) return c.json({ error: "invalid_public_url" }, 400);
+    const row = upsertDirectoryListing(store, {
+      platform_id: platformId,
+      platform_name: body.platform_name ? String(body.platform_name) : undefined,
+      listing_url: listingUrl,
+      expected_version: body.expected_version ? String(body.expected_version) : undefined,
+    });
+    return c.json({ ok: true, listing: row });
+  };
+  router.put("/listings", handleUpsertListing);
+  router.post("/listings", handleUpsertListing);
+
+  router.post("/listings/check", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = await checkDirectoryListings(store, {
+      targetDomain: siteHost,
+      expectedVersion: body.expected_version ? String(body.expected_version) : undefined,
+      platformId: body.platform_id ? String(body.platform_id) : undefined,
+      customHtmlByPlatform: body.mock_html && typeof body.mock_html === "object" ? body.mock_html : undefined,
+    });
+    return c.json({ ok: true, ...res });
   });
 
   return router;

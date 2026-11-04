@@ -318,6 +318,42 @@ export function ensureSeoSchema(db: DatabaseSync) {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS seo_bloat_watch_posts (
+      slug TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      source_name TEXT NOT NULL,
+      source_url TEXT NOT NULL,
+      relevance_score INTEGER NOT NULL DEFAULT 7,
+      clean_item_slug TEXT NOT NULL,
+      clean_item_category TEXT NOT NULL DEFAULT 'app',
+      affected_path TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      measurement_checklist_json TEXT NOT NULL DEFAULT '[]',
+      measurements_json TEXT NOT NULL DEFAULT '{}',
+      article_markdown TEXT NOT NULL DEFAULT '',
+      reddit_reply_draft TEXT NOT NULL DEFAULT '',
+      press_pitch_draft TEXT NOT NULL DEFAULT '',
+      published_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS seo_directory_listings (
+      platform_id TEXT PRIMARY KEY,
+      platform_name TEXT NOT NULL,
+      listing_url TEXT NOT NULL,
+      expected_version TEXT NOT NULL DEFAULT '0.1.0',
+      detected_version TEXT,
+      version_status TEXT NOT NULL DEFAULT 'unverified',
+      detected_rating TEXT,
+      backlink_status TEXT NOT NULL DEFAULT 'unverified',
+      found_href TEXT,
+      http_status INTEGER,
+      crm_task_status TEXT NOT NULL DEFAULT 'none',
+      crm_task_note TEXT,
+      last_checked_at INTEGER,
+      updated_at INTEGER NOT NULL
+    );
   `);
 
   // Idempotent column migrations for databases created under Phase 1/2.

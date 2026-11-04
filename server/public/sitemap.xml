@@ -2316,4 +2316,24 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/windows-11-24h2-8gb-update-cache-bug</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/nvidia-rtx-shader-cache-10gb-limit-fix</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/steam-depotcache-orphaned-chunks-spike</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
 </urlset>

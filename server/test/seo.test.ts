@@ -645,5 +645,102 @@ test("SEO GSC Server Connection & Inpages S1/S2 Intent-Gap Automation", async ()
   assert.ok(ov.gsc.intent_gap_last_run !== null);
 });
 
+test("SEO A4 Bloat Watch Detector & A5 Listing Freshness Monitor", async () => {
+  const { app, get, post } = setup();
+
+  // --- A4: Bloat Watch Detector ---
+  // 1. Public /bloat-watch hub and published post return 200 OK with valid JSON-LD
+  const hubRes = await app.request("/bloat-watch");
+  assert.equal(hubRes.status, 200);
+  const parsedHub = parseHtml(await hubRes.text());
+  assert.equal(parsedHub.jsonLdErrors, 0);
+  assert.ok(parsedHub.title?.includes("Bloat Watch"));
+
+  const postRes = await app.request("/bloat-watch/windows-11-24h2-8gb-update-cache-bug");
+  assert.equal(postRes.status, 200);
+  const parsedPost = parseHtml(await postRes.text());
+  assert.equal(parsedPost.jsonLdErrors, 0);
+  assert.deepEqual(parsedPost.jsonLdTypes.sort(), ["Dataset", "Organization", "TechArticle"]);
+
+  // Draft post is not publicly visible before approval/publish
+  const draftPublicRes = await app.request("/bloat-watch/logitech-ghub-2026-media-blob-leak");
+  assert.equal(draftPublicRes.status, 404);
+
+  // 2. Scan incoming signal -> scores >= 7 -> creates draft with 5-step VM checklist
+  const scanRes = await post("/api/crm/seo/bloat-watch/scan", {
+    signals: [
+      {
+        title: "Discord Update Leaves 12.4 GB GPUCache & Code Cache on C Drive After Patch",
+        summary: "Users report C: drive full after update due to orphaned %AppData%\\discord\\Cache and GPUCache files.",
+        source_name: "Reddit r/discordapp",
+        source_url: "https://www.reddit.com/r/discordapp/",
+      },
+    ],
+    fetch_live_feeds: false,
+  });
+  assert.equal(scanRes.status, 200);
+  const scanJson = (await scanRes.json()) as any;
+  assert.equal(scanJson.ok, true);
+  assert.equal(scanJson.drafts_created, 1);
+  assert.ok(scanJson.evaluated[0].relevance_score >= 7);
+  const createdSlug = scanJson.evaluated[0].slug;
+
+  // 3. Record VM measurements -> interpolates numbers into article, Reddit reply, and press pitch
+  const measureRes = await post(`/api/crm/seo/bloat-watch/${createdSlug}/measure`, {
+    before_gb: 12.4,
+    after_gb: 0.5,
+    tested_os_build: "Windows 11 24H2 (Build 26100)",
+    app_version: "Discord Stable 2026.11",
+    safe_verdict: "SAFE TO DELETE",
+  });
+  assert.equal(measureRes.status, 200);
+  const measureJson = (await measureRes.json()) as any;
+  assert.equal(measureJson.post.measurements.reclaimed_gb, 11.9);
+  assert.ok(measureJson.post.reddit_reply_draft.includes("11.9 GB"));
+  assert.ok(measureJson.post.press_pitch_draft.includes("11.9 GB"));
+
+  // 4. Publish draft -> now live at /bloat-watch/:slug
+  const pubRes = await post(`/api/crm/seo/bloat-watch/${createdSlug}/publish`, { ping_indexnow: false });
+  assert.equal(pubRes.status, 200);
+  const pubLiveRes = await app.request(`/bloat-watch/${createdSlug}`);
+  assert.equal(pubLiveRes.status, 200);
+
+  // --- A5: Listing Freshness & Auto-Publish Monitor ---
+  const listRes = await get("/api/crm/seo/listings");
+  assert.equal(listRes.status, 200);
+  const listJson = (await listRes.json()) as any;
+  assert.equal(listJson.expected_version, "0.1.0");
+  assert.ok(listJson.listings.length >= 8);
+
+  // Check pad_xml (current v0.1.0) and simulated stale listing on alternativeto (v0.0.9)
+  const checkPadRes = await post("/api/crm/seo/listings/check", {
+    platform_id: "pad_xml",
+    expected_version: "0.1.0",
+  });
+  assert.equal(checkPadRes.status, 200);
+  const checkPadJson = (await checkPadRes.json()) as any;
+  assert.equal(checkPadJson.listings[0].version_status, "current");
+  assert.equal(checkPadJson.listings[0].detected_version, "0.1.0");
+
+  const checkStaleRes = await post("/api/crm/seo/listings/check", {
+    platform_id: "alternativeto",
+    expected_version: "0.1.0",
+    mock_html: {
+      alternativeto: {
+        html: '<html><body><h1>SWEEPR Cleaner v0.0.9</h1><a href="https://sweeprcleaner.com">Website</a></body></html>',
+        httpStatus: 200,
+        hasBacklink: true,
+      },
+    },
+  });
+  assert.equal(checkStaleRes.status, 200);
+  const checkStaleJson = (await checkStaleRes.json()) as any;
+  assert.equal(checkStaleJson.listings[0].version_status, "stale");
+  assert.equal(checkStaleJson.listings[0].detected_version, "0.0.9");
+  assert.equal(checkStaleJson.listings[0].crm_task_status, "open");
+  assert.ok(checkStaleJson.listings[0].crm_task_note.includes("v0.0.9"));
+});
+
+
 
 

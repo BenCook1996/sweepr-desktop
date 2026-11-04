@@ -1,0 +1,68 @@
+name: "A5 Release Syndication (PAD XML, Winget, Chocolatey & Listing Audit)"
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 0.1.0)"
+        required: false
+        default: "0.1.0"
+
+jobs:
+  syndicate-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Update PAD XML, Winget Manifests & Chocolatey Checksums
+        shell: pwsh
+        run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($ver) -and "${{ github.event.release.tag_name }}") {
+            $ver = "${{ github.event.release.tag_name }}".TrimStart("v")
+          }
+          if ([string]::IsNullOrWhiteSpace($ver)) { $ver = "0.1.0" }
+          node server/scripts/update-release-listings.mjs "--version=$ver"
+          "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        id: sync
+
+      - name: Commit Updated PAD XML & Package Manifests
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add server/public/pad.xml chocolatey/ winget-manifests/
+          git diff --staged --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "chore(release): sync PAD XML, Winget & Chocolatey manifests for v${{ steps.sync.outputs.version }} [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          }
+
+      - name: Submit Winget Manifest via wingetcreate (when WINGET_TOKEN is configured)
+        if: env.WINGET_TOKEN != ''
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          ./wingetcreate.exe update SWEEPR.Cleaner --version "${{ steps.sync.outputs.version }}" --urls "https://sweeprcleaner.com/SWEEPRCleaner.exe" "https://sweeprcleaner.com/Sweepr_Setup.msi" --token $env:WINGET_TOKEN --submit
+
+      - name: Pack & Push Chocolatey Package (when CHOCOLATEY_API_KEY is configured)
+        if: env.CHOCOLATEY_API_KEY != ''
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        shell: pwsh
+        working-directory: ./chocolatey
+        run: |
+          choco pack sweepr-cleaner.nuspec
+          choco push "sweepr-cleaner.${{ steps.sync.outputs.version }}.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY

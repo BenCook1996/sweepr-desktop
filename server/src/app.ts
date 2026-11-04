@@ -28,6 +28,7 @@ import {
 import { cleanItems, getCleanItems, getCleanItemBySlug, getPseoRedirectTarget, renderPseoDirectory, renderPseoPage } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
+import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
@@ -682,6 +683,13 @@ export function createApp(deps: AppDeps) {
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
+  app.get("/bloat-watch", (c) => c.html(renderBloatWatchIndexHtml(seoStore)));
+  app.get("/bloat-watch/:slug", (c) => {
+    const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const post = getBloatWatchPost(seoStore, slug);
+    if (!post || post.status !== "published") return c.notFound();
+    return c.html(renderBloatWatchPostHtml(post));
+  });
   app.get("/clean/:category/:slug", (c) => {
     const category = String(c.req.param("category") ?? "").toLowerCase();
     const rawSlug = String(c.req.param("slug") ?? "");
