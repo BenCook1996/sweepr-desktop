@@ -75,8 +75,10 @@ jobs:
           CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
         shell: pwsh
         run: |
+          $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("admin:$env:CRM_ADMIN_PASSWORD"))
           $headers = @{
-            "Authorization" = "Bearer $env:CRM_ADMIN_PASSWORD"
+            "Authorization" = "Basic $b64"
+            "Origin"        = "https://sweeprcleaner.com"
             "Content-Type"  = "application/json"
           }
           $body = @{ expected_version = "${{ steps.sync.outputs.version }}" } | ConvertTo-Json

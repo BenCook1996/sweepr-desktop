@@ -250,17 +250,19 @@ export async function checkDirectoryListings(
       backlinkStatus = bl.status;
       foundHref = bl.found_href;
       httpStatus = bl.http_status;
-      try {
-        const { res } = await fetchPublicUrlSafe(row.listing_url, 8000, 3);
-        if (res.ok) {
-          const text = await res.text();
-          const parsed = extractVersionAndRatingFromHtml(text);
-          detectedVersion = parsed.detected_version;
-          detectedRating = parsed.detected_rating;
-          hasUnsignedFlag = parsed.has_unsigned_flag;
+      if (backlinkStatus !== "needs_listing_url") {
+        try {
+          const { res } = await fetchPublicUrlSafe(row.listing_url, 8000, 3);
+          if (res.ok) {
+            const text = await res.text();
+            const parsed = extractVersionAndRatingFromHtml(text);
+            detectedVersion = parsed.detected_version;
+            detectedRating = parsed.detected_rating;
+            hasUnsignedFlag = parsed.has_unsigned_flag;
+          }
+        } catch {
+          /* ignore fetch error */
         }
-      } catch {
-        /* ignore fetch error */
       }
     }
 
