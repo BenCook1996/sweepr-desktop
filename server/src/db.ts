@@ -1954,6 +1954,26 @@ export class Repo {
           actioned_at: 1792934350,
           follow_up_after_ts: 1792934350 + 30 * 86400,
         },
+        {
+          thread_id: "FMfcgzQjggsXVWjDCrrlqdLgRHkvlGCV",
+          message_id: "<gsc-merchant-listings-sweeprcleaner-10030322@google.com>",
+          project_id: "cleaner",
+          sender_email: "sc-noreply@google.com",
+          sender_name: "Google Search Console Team",
+          subject: "New Merchant listings structured data issues detected for sweeprcleaner.com",
+          received_at: 1793778780,
+          category: "seo_alert",
+          status: "code_fixed",
+          action_type: "code_fix",
+          action_summary: "Added missing 'image', 'hasMerchantReturnPolicy', and 'shippingDetails' JSON-LD fields across pricing.html, index.html, and safe-to-delete.ts + upgraded SEO auditor",
+          action_detail:
+            "Resolved all 3 GSC Merchant Listings structured data issues ([WNC-10030322]: critical Missing field 'image', and non-critical Missing field 'hasMerchantReturnPolicy' and 'shippingDetails' in 'offers') across server/public/pricing.html, server/public/index.html, and server/src/safe-to-delete.ts, and added automated merchant_listing_schema_incomplete enforcement to server/src/seo/html.ts, server/src/seo/audit.ts, and the daily 04:15 AM Technical SEO Audit sidecar.",
+          portal_url: "https://search.google.com/search-console",
+          reply_message_id: null,
+          last_inbound_msg_id: "<gsc-merchant-listings-sweeprcleaner-10030322@google.com>",
+          actioned_at: 1793779600,
+          follow_up_after_ts: 1793779600 + 7 * 86400,
+        },
       ];
 
       const stmt = this.db.prepare(`

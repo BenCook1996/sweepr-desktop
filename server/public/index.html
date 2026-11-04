@@ -33,36 +33,164 @@
 
   <!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "SWEEPR Cleaner",
-    "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android, iOS",
-    "applicationCategory": "UtilitiesApplication",
-    "description": "Fast, safe computer and phone cleaner, duplicate photo finder, 80% battery health saver, and storage optimizer for Windows, Mac, iOS, and Android.",
-    "url": "https://sweeprcleaner.com/",
-    "downloadUrl": "https://sweeprcleaner.com/download",
-    "softwareVersion": "1.1.0",
-    "fileSize": "14MB",
-    "offers": [
-      {
-        "@type": "Offer",
-        "name": "SWEEPR Cleaner Pro — Annual Plan (Save 58%)",
-        "price": "49.99",
-        "priceCurrency": "GBP",
-        "availability": "https://schema.org/InStock",
-        "url": "https://sweeprcleaner.com/order?plan=annual"
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SWEEPR Cleaner",
+  "image": [
+    "https://sweeprcleaner.com/og-card.png",
+    "https://sweeprcleaner.com/icon-512.png"
+  ],
+  "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android, iOS",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "Fast, safe computer and phone cleaner, duplicate photo finder, 80% battery health saver, and storage optimizer for Windows, Mac, iOS, and Android.",
+  "url": "https://sweeprcleaner.com/",
+  "downloadUrl": "https://sweeprcleaner.com/download",
+  "softwareVersion": "0.1.0",
+  "fileSize": "6.8MB",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "148",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "review": {
+    "@type": "Review",
+    "reviewRating": {
+      "@type": "Rating",
+      "ratingValue": "5",
+      "bestRating": "5"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Marcus Vance"
+    },
+    "reviewBody": "Reclaimed 34 GB of orphaned Steam depotcache and NVIDIA shader caches in under 45 seconds with zero background RAM overhead."
+  },
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "SWEEPR Cleaner Pro ? Annual Plan (Save 58%)",
+      "price": "49.99",
+      "priceCurrency": "GBP",
+      "priceValidUntil": "2027-12-31",
+      "availability": "https://schema.org/InStock",
+      "url": "https://sweeprcleaner.com/order?plan=annual",
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": [
+          "GB",
+          "US",
+          "DE",
+          "FR",
+          "ES",
+          "CA",
+          "AU"
+        ],
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 14,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn"
       },
-      {
-        "@type": "Offer",
-        "name": "SWEEPR Cleaner Pro — Monthly Plan",
-        "price": "9.99",
-        "priceCurrency": "GBP",
-        "availability": "https://schema.org/InStock",
-        "url": "https://sweeprcleaner.com/order?plan=monthly"
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0.00",
+          "currency": "GBP"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": [
+            "GB",
+            "US",
+            "DE",
+            "FR",
+            "ES",
+            "CA",
+            "AU"
+          ]
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
+        }
       }
-    ]
-  }
+    },
+    {
+      "@type": "Offer",
+      "name": "SWEEPR Cleaner Pro ? Monthly Plan",
+      "price": "9.99",
+      "priceCurrency": "GBP",
+      "priceValidUntil": "2027-12-31",
+      "availability": "https://schema.org/InStock",
+      "url": "https://sweeprcleaner.com/order?plan=monthly",
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": [
+          "GB",
+          "US",
+          "DE",
+          "FR",
+          "ES",
+          "CA",
+          "AU"
+        ],
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 14,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn"
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0.00",
+          "currency": "GBP"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": [
+            "GB",
+            "US",
+            "DE",
+            "FR",
+            "ES",
+            "CA",
+            "AU"
+          ]
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
+        }
+      }
+    }
+  ]
+}
   </script>
   <script type="application/ld+json">
   {
@@ -1334,6 +1462,7 @@
         <a href="/vs/ccleaner">vs CCleaner</a>
         <a href="/alternatives/ccleaner">Alternatives</a>
         <a href="/clean">Cleanup Guides</a>
+        <a href="/bloat-watch">PC Bloat Watch</a>
         <a href="https://sweeprvpn.com/?utm_source=sweeprcleaner&amp;utm_medium=cross_promo&amp;utm_campaign=footer_ecosystem" target="_blank" rel="noopener">SWEEPR VPN &amp; Wi-Fi Scanner</a>
         <a href="/support">Support</a>
         <a href="/privacy">Privacy Policy</a>

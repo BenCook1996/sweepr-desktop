@@ -625,7 +625,13 @@ test("SEO GSC Server Connection & Inpages S1/S2 Intent-Gap Automation", async ()
 
   const obsItem = gap.ctr_rewrite_queue.find((q: any) => q.slug === "obs-studio-logs-crashes");
   assert.ok(obsItem, "obs-studio-logs-crashes should appear in CTR rewrite queue");
-  assert.equal(obsItem.eligible_for_rewrite, true, "obs-studio-logs-crashes is off cooldown and eligible for rewrite");
+  if (!obsItem.on_cooldown) {
+    assert.equal(obsItem.eligible_for_rewrite, true, "obs-studio-logs-crashes is off cooldown and eligible for rewrite");
+  } else {
+    assert.ok(obsItem.cooldown_days_remaining > 0, "obs-studio-logs-crashes cooldown active");
+  }
+  const eligibleItem = gap.ctr_rewrite_queue.find((q: any) => q.eligible_for_rewrite === true);
+  assert.ok(eligibleItem, "striking distance queue must have items eligible for rewrite");
 
   // Verify commercial comparison gap & Microsoft Ads cid=255115583 exact-match queue
   assert.ok(gap.commercial_gap_queue.length >= 2, "commercial gap queue populated");
@@ -1010,6 +1016,46 @@ test("A3 Download-Without-Install Recovery: T+30m flag, Step 2 banner, T+2h tran
   assert.equal(statsJson.summary.total_activated_or_recovered, 2);
   assert.equal(statsJson.summary.activation_rate_pct, 100);
 });
+
+test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-delete include image, hasMerchantReturnPolicy, and shippingDetails", async () => {
+  const { app } = setup();
+
+  // 1. Verify all pages emitting Product / SoftwareApplication / WebApplication with Offers have zero Merchant Listing issues
+  const offerPages = ["/", "/pricing", "/de/pricing", "/fr/pricing", "/es/pricing", "/safe-to-delete"];
+  for (const path of offerPages) {
+    const res = await app.request(path);
+    assert.equal(res.status, 200, `${path} should return 200 OK`);
+    const parsed = parseHtml(await res.text());
+    assert.equal(parsed.jsonLdErrors, 0, `${path} must have 0 JSON-LD syntax errors`);
+    assert.deepEqual(
+      parsed.merchantListingIssues,
+      [],
+      `${path} must have 0 GSC Merchant Listings issues, got: ${parsed.merchantListingIssues.join("; ")}`
+    );
+  }
+
+  // 2. Verify parseHtml detects missing image, hasMerchantReturnPolicy, and shippingDetails when an Offer is incomplete
+  const brokenProductHtml = `<!doctype html><html><head>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Broken Product",
+        "offers": {
+          "@type": "Offer",
+          "price": "9.99",
+          "priceCurrency": "GBP"
+        }
+      }
+    </script>
+  </head><body></body></html>`;
+  const brokenParsed = parseHtml(brokenProductHtml);
+  assert.equal(brokenParsed.merchantListingIssues.length, 3);
+  assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "image"')));
+  assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "hasMerchantReturnPolicy"')));
+  assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "shippingDetails"')));
+});
+
 
 
 

@@ -294,6 +294,7 @@ export function renderSafeToDeletePageHtml(initialQuery = ""): string {
       "@type": "WebApplication",
       name: "SWEEPR Windows 'Is It Safe to Delete?' Path & Cache Checker",
       url: "https://sweeprcleaner.com/safe-to-delete",
+      image: ["https://sweeprcleaner.com/og-card.png", "https://sweeprcleaner.com/icon-512.png"],
       applicationCategory: "UtilitiesApplication",
       operatingSystem: "Windows 11, Windows 10",
       description:
@@ -302,6 +303,43 @@ export function renderSafeToDeletePageHtml(initialQuery = ""): string {
         "@type": "Offer",
         price: "0",
         priceCurrency: "GBP",
+        availability: "https://schema.org/InStock",
+        url: "https://sweeprcleaner.com/safe-to-delete",
+        hasMerchantReturnPolicy: {
+          "@type": "MerchantReturnPolicy",
+          applicableCountry: "GB",
+          returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+          merchantReturnDays: 14,
+          returnMethod: "https://schema.org/ReturnByMail",
+          returnFees: "https://schema.org/FreeReturn",
+        },
+        shippingDetails: {
+          "@type": "OfferShippingDetails",
+          shippingRate: {
+            "@type": "MonetaryAmount",
+            value: "0.00",
+            currency: "GBP",
+          },
+          shippingDestination: {
+            "@type": "DefinedRegion",
+            addressCountry: "GB",
+          },
+          deliveryTime: {
+            "@type": "ShippingDeliveryTime",
+            handlingTime: {
+              "@type": "QuantitativeValue",
+              minValue: 0,
+              maxValue: 0,
+              unitCode: "DAY",
+            },
+            transitTime: {
+              "@type": "QuantitativeValue",
+              minValue: 0,
+              maxValue: 0,
+              unitCode: "DAY",
+            },
+          },
+        },
       },
     },
     {

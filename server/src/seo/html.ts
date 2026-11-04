@@ -25,6 +25,7 @@ export interface ParsedPage {
   imageCount: number;
   jsonLdTypes: string[];
   jsonLdErrors: number;
+  merchantListingIssues: string[];
   hreflangCount: number;
 }
 
@@ -58,17 +59,63 @@ function metaContent(html: string, key: "name" | "property", value: string): str
   return null;
 }
 
-function collectTypes(node: unknown, out: Set<string>) {
+function collectTypes(node: unknown, out: Set<string>, merchantIssues?: Set<string>) {
   if (Array.isArray(node)) {
-    for (const n of node) collectTypes(n, out);
+    for (const n of node) collectTypes(n, out, merchantIssues);
     return;
   }
   if (node && typeof node === "object") {
     const o = node as Record<string, unknown>;
     const t = o["@type"];
-    if (typeof t === "string") out.add(t);
-    else if (Array.isArray(t)) t.forEach((x) => typeof x === "string" && out.add(x));
-    for (const v of Object.values(o)) if (v && typeof v === "object") collectTypes(v, out);
+    const nodeTypes: string[] = [];
+    if (typeof t === "string") {
+      out.add(t);
+      nodeTypes.push(t);
+    } else if (Array.isArray(t)) {
+      t.forEach((x) => {
+        if (typeof x === "string") {
+          out.add(x);
+          nodeTypes.push(x);
+        }
+      });
+    }
+
+    // Validate Google Search Console Merchant Listings structured data requirements
+    // on Product, SoftwareApplication, and WebApplication entities that declare offers (or any Product).
+    if (
+      merchantIssues &&
+      (nodeTypes.includes("Product") ||
+        ((nodeTypes.includes("SoftwareApplication") || nodeTypes.includes("WebApplication")) && o.offers != null))
+    ) {
+      const img = o.image;
+      const hasImage =
+        (typeof img === "string" && img.trim().length > 0) ||
+        (Array.isArray(img) && img.length > 0) ||
+        (img != null && typeof img === "object");
+      if (!hasImage) {
+        merchantIssues.add('Missing field "image"');
+      }
+
+      const rawOffers = o.offers;
+      const offerList = Array.isArray(rawOffers)
+        ? rawOffers
+        : rawOffers && typeof rawOffers === "object"
+        ? [rawOffers]
+        : [];
+      for (const off of offerList) {
+        if (off && typeof off === "object") {
+          const offObj = off as Record<string, unknown>;
+          if (!offObj.hasMerchantReturnPolicy) {
+            merchantIssues.add('Missing field "hasMerchantReturnPolicy" (in "offers")');
+          }
+          if (!offObj.shippingDetails) {
+            merchantIssues.add('Missing field "shippingDetails" (in "offers")');
+          }
+        }
+      }
+    }
+
+    for (const v of Object.values(o)) if (v && typeof v === "object") collectTypes(v, out, merchantIssues);
   }
 }
 
@@ -81,11 +128,12 @@ export function parseHtml(html: string): ParsedPage {
 
   // JSON-LD before stripping scripts.
   const types = new Set<string>();
+  const merchantIssues = new Set<string>();
   let jsonLdErrors = 0;
   const ldRe = /<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   for (const m of html.matchAll(ldRe)) {
     try {
-      collectTypes(JSON.parse(m[1].trim()), types);
+      collectTypes(JSON.parse(m[1].trim()), types, merchantIssues);
     } catch {
       jsonLdErrors++;
     }
@@ -131,6 +179,7 @@ export function parseHtml(html: string): ParsedPage {
     imageCount: imgs.length,
     jsonLdTypes: [...types],
     jsonLdErrors,
+    merchantListingIssues: [...merchantIssues],
     hreflangCount,
   };
 }

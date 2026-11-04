@@ -401,6 +401,17 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
       if (pp.imagesMissingAlt > 0) issues.push(issue("warning", "img_alt_missing", `${pp.imagesMissingAlt} image(s) missing alt text`, `${pp.imagesMissingAlt}/${pp.imageCount} images`, "Add descriptive alt attributes."));
       if (pp.jsonLdErrors > 0) issues.push(issue("error", "jsonld_invalid", `${pp.jsonLdErrors} JSON-LD block(s) fail to parse`, "JSON.parse error", "Fix the structured data syntax."));
       else if (pp.jsonLdTypes.length === 0) issues.push(issue("notice", "jsonld_missing", "No structured data", "No application/ld+json", "Add relevant schema (FAQPage, HowTo, SoftwareApplication, BreadcrumbList)."));
+      if (pp.merchantListingIssues && pp.merchantListingIssues.length > 0) {
+        issues.push(
+          issue(
+            "error",
+            "merchant_listing_schema_incomplete",
+            `GSC Merchant listings structured data issue(s): ${pp.merchantListingIssues.join("; ")}`,
+            pp.merchantListingIssues.join(" | "),
+            'Add "image" on Product/SoftwareApplication/WebApplication and "hasMerchantReturnPolicy" + "shippingDetails" inside each Offer.'
+          )
+        );
+      }
       if (!pp.lang) issues.push(issue("notice", "lang_missing", "<html> has no lang attribute", "lang attribute absent", 'Add <html lang="en">.'));
       if (!pp.hasViewport) issues.push(issue("warning", "viewport_missing", "No mobile viewport meta", "No <meta name=viewport>", "Add a responsive viewport meta tag."));
       if (d !== null && d > 3) issues.push(issue("notice", "deep_page", `Page is ${d} clicks from the homepage`, `click depth ${d}`, "Link it from a shallower hub page."));
