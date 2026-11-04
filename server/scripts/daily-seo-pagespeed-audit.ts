@@ -6,19 +6,22 @@ import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { SeoStore } from "../src/seo/store.js";
 import { runSiteAudit, AUDIT_USER_AGENT } from "../src/seo/audit.js";
+import { runKeywordDiscoveryPipeline } from "../src/seo/keywords.js";
+import { TRANSACTIONAL_TOOLS } from "../src/transactional-tools.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_ROOT = path.resolve(__dirname, "..");
+process.chdir(SERVER_ROOT);
 
 const SITEMAP_PATH = path.join(SERVER_ROOT, "public", "sitemap.xml");
 const ROBOTS_PATH = path.join(SERVER_ROOT, "public", "robots.txt");
 const LLMS_PATH = path.join(SERVER_ROOT, "public", "llms.txt");
 const PAD_PATH = path.join(SERVER_ROOT, "public", "pad.xml");
-const INDEXNOW_KEY_PATH = path.join(SERVER_ROOT, "public", "8f9a2b4c6d1e3f5a7b9c0d2e4f6a8b0c.txt");
+const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
+const INDEXNOW_KEY_PATH = path.join(SERVER_ROOT, "public", `${INDEXNOW_KEY}.txt`);
 const INDEXING_QUEUE_PATH = path.join(SERVER_ROOT, "src", "data", "indexing-queue.json");
+const DAILY_STATE_PATH = path.join(SERVER_ROOT, "src", "data", "daily-seo-pages-state.json");
 const AUDIT_OUTPUT_PATH = path.join(SERVER_ROOT, "audit-findings.json");
-
-const INDEXNOW_KEY = "8f9a2b4c6d1e3f5a7b9c0d2e4f6a8b0c";
 
 interface BenchmarkResult {
   path: string;
@@ -106,6 +109,28 @@ async function main() {
   });
 
   const store = new SeoStore(repo.db);
+  const dailyState = fs.existsSync(DAILY_STATE_PATH)
+    ? JSON.parse(fs.readFileSync(DAILY_STATE_PATH, "utf8"))
+    : {};
+  const recentSamplePaths: string[] = Array.isArray(dailyState.sampleUrls)
+    ? dailyState.sampleUrls
+        .map((u: string) => {
+          try {
+            return new URL(u).pathname;
+          } catch {
+            return "";
+          }
+        })
+        .filter(Boolean)
+    : [];
+  const seedPaths = [
+    "/tools",
+    "/safe-to-delete",
+    "/bloat-watch",
+    ...TRANSACTIONAL_TOOLS.map((t) => `/tools/${t.slug}`),
+    ...recentSamplePaths,
+  ];
+
   const crawlStart = Date.now();
   const result = await runSiteAudit(store, {
     siteUrl: "https://sweeprcleaner.com",
@@ -113,6 +138,7 @@ async function main() {
     source: "local",
     concurrency: 4,
     maxPages: 3000,
+    seedPaths,
     fetcher: async (p) => app.request(p, { headers: { "user-agent": AUDIT_USER_AGENT } }),
   });
   const crawlElapsed = Date.now() - crawlStart;
@@ -155,6 +181,25 @@ async function main() {
   }
 
   // ---------------------------------------------------------------------------
+  // Step 2.5: Keyword Research & Opportunity Quality Gate Verification
+  // ---------------------------------------------------------------------------
+  console.log("\n--- 2.5. Automated Keyword Research & Quality Gate Audit ---");
+  const kwReport = await runKeywordDiscoveryPipeline(store, undefined, {
+    fetch_autocomplete: false,
+    enrich_dfs: false,
+    persistReport: true,
+  });
+  console.log(
+    `  - Evaluated Queries:            ${kwReport.summary.total_evaluated} (${kwReport.summary.low_competition_count} low-competition)`
+  );
+  console.log(`  - Avg Opportunity Score:        ${kwReport.summary.avg_opportunity_score}/100`);
+  console.log(
+    `  - Ready Net-New pSEO Blueprints:${kwReport.summary.new_pseo_ready_count} (100% passed 6 SEO & safety gates)`
+  );
+  console.log(`  - Strike-Zone CTR Enrichments:  ${kwReport.summary.ctr_enrichment_ready_count}`);
+  console.log(`  - Transactional Tool Gaps:      ${kwReport.summary.transactional_tool_candidates_count}`);
+
+  // ---------------------------------------------------------------------------
   // Step 3: PageSpeed & TTFB Latency Benchmark
   // ---------------------------------------------------------------------------
   console.log("\n--- 3. PageSpeed & TTFB Latency Benchmark ---");
@@ -169,8 +214,11 @@ async function main() {
     "/alternatives/ccleaner",
     "/clean",
     "/clean", // 2nd hit for cache verification
-    "/clean/app/standard-notes-media-blob-storage",
+    "/clean/app/standard-notes-cache",
     "/clean/folder/delivery-optimization-cache",
+    "/tools",
+    "/tools/discord-cache-cleaner",
+    "/safe-to-delete",
     "/robots.txt",
     "/sitemap.xml",
     "/llms.txt",
@@ -200,61 +248,50 @@ async function main() {
 
   const sitemapXml = fs.readFileSync(SITEMAP_PATH, "utf8");
   const sitemapUrls = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim());
+  const submittedSet = new Set<string>(Array.isArray(queue.submitted_indexnow_urls) ? queue.submitted_indexnow_urls : []);
+  const deltaUrls = sitemapUrls.filter((u) => !submittedSet.has(u)).slice(0, 100);
 
-  const indexNowPayload = {
-    host: "sweeprcleaner.com",
-    key: queue.indexnow_key || INDEXNOW_KEY,
-    keyLocation: `https://sweeprcleaner.com/${queue.indexnow_key || INDEXNOW_KEY}.txt`,
-    urlList: sitemapUrls.slice(0, 1000), // First 1,000 URLs per IndexNow batch
-  };
-
-  let bingIndexNowStatus = "pending";
-  let apiIndexNowStatus = "pending";
+  let bingIndexNowStatus = "skipped (0 delta URLs)";
+  let apiIndexNowStatus = "skipped (0 delta URLs)";
   let googlePingStatus = "pending";
   let bingPingStatus = "pending";
 
-  try {
-    const [bRes, aRes, gPing, bPing] = await Promise.all([
-      fetch("https://www.bing.com/indexnow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify(indexNowPayload),
-        signal: AbortSignal.timeout(10000),
-      })
-        .then((r) => `HTTP ${r.status}`)
-        .catch((e) => `Network (${e.message})`),
-      fetch("https://api.indexnow.org/indexnow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify(indexNowPayload),
-        signal: AbortSignal.timeout(10000),
-      })
-        .then((r) => `HTTP ${r.status}`)
-        .catch((e) => `Network (${e.message})`),
-      fetch("https://www.google.com/ping?sitemap=https://sweeprcleaner.com/sitemap.xml", {
-        signal: AbortSignal.timeout(8000),
-      })
-        .then((r) => `HTTP ${r.status}`)
-        .catch((e) => `Network (${e.message})`),
-      fetch("https://www.bing.com/ping?sitemap=https://sweeprcleaner.com/sitemap.xml", {
-        signal: AbortSignal.timeout(8000),
-      })
-        .then((r) => `HTTP ${r.status}`)
-        .catch((e) => `Network (${e.message})`),
-    ]);
+  if (deltaUrls.length > 0) {
+    const indexNowPayload = {
+      host: "sweeprcleaner.com",
+      key: queue.indexnow_key || INDEXNOW_KEY,
+      keyLocation: `https://sweeprcleaner.com/${queue.indexnow_key || INDEXNOW_KEY}.txt`,
+      urlList: deltaUrls,
+    };
 
-    bingIndexNowStatus = bRes;
-    apiIndexNowStatus = aRes;
-    googlePingStatus = gPing;
-    bingPingStatus = bPing;
-
-    console.log(`  - Bing IndexNow (www.bing.com/indexnow):       ${bingIndexNowStatus}`);
-    console.log(`  - IndexNow Hub (api.indexnow.org/indexnow):   ${apiIndexNowStatus}`);
-    console.log(`  - Google Sitemap Ping:                        ${googlePingStatus}`);
-    console.log(`  - Bing Sitemap Ping:                          ${bingPingStatus}`);
-  } catch (err: any) {
-    console.log(`  - IndexNow network probe completed: ${err.message}`);
+    try {
+      const [bRes, aRes] = await Promise.all([
+        fetch("https://www.bing.com/indexnow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify(indexNowPayload),
+          signal: AbortSignal.timeout(10000),
+        })
+          .then((r) => `HTTP ${r.status} (${deltaUrls.length} delta URLs)`)
+          .catch((e) => `Network (${e.message})`),
+        fetch("https://api.indexnow.org/indexnow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify(indexNowPayload),
+          signal: AbortSignal.timeout(10000),
+        })
+          .then((r) => `HTTP ${r.status} (${deltaUrls.length} delta URLs)`)
+          .catch((e) => `Network (${e.message})`),
+      ]);
+      bingIndexNowStatus = bRes;
+      apiIndexNowStatus = aRes;
+      for (const u of deltaUrls) submittedSet.add(u);
+      queue.submitted_indexnow_urls = [...submittedSet];
+    } catch {}
   }
+
+  console.log(`  - Bing IndexNow (www.bing.com/indexnow):       ${bingIndexNowStatus}`);
+  console.log(`  - IndexNow Hub (api.indexnow.org/indexnow):   ${apiIndexNowStatus}`);
 
   queue.last_audit = new Date().toISOString();
   queue.last_indexnow_ping = new Date().toISOString();

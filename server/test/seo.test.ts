@@ -1467,6 +1467,137 @@ test("Phase 2 & 3 Builds: Action 2.7 (10 Transactional Tool Pages), Action 2.2 (
   assert.equal(dupRecap.skipped_duplicate, true);
 });
 
+test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source discovery, OpportunityScore (0-100), 4-stage anti-cannibalization, 6 quality gates & CRM endpoints", async () => {
+  const {
+    scoreKeywordOpportunity,
+    resolveKeywordAgainstCorpus,
+    validateCandidateCleanItem,
+    WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY,
+    LOCKED_TEST_TITLE_SLUGS,
+  } = await import("../src/seo/keywords.js");
+
+  // 1. Mathematical OpportunityScore calibration: low-comp transactional/problem queries vs high-KD head terms
+  const lowCompToolScore = scoreKeywordOpportunity({
+    keyword: "marvel rivals shader cache cleaner",
+    googleAutocompleteRank: 2,
+    bingAutocompleteRank: 1,
+    avgSpaceGb: 12,
+    isCuratedEcosystemSeed: true,
+  });
+  assert.ok(
+    lowCompToolScore.opportunity_score >= 90,
+    `Expected low-comp tool query >= 90, got ${lowCompToolScore.opportunity_score}`
+  );
+  assert.equal(lowCompToolScore.is_low_competition, true);
+
+  const strikeZoneScore = scoreKeywordOpportunity({
+    keyword: "can i delete steam depotcache",
+    gscImpressions28d: 12,
+    gscPosition: 11.0,
+    dfsKd: 18,
+  });
+  assert.ok(
+    strikeZoneScore.opportunity_score >= 85,
+    `Expected strike-zone query >= 85, got ${strikeZoneScore.opportunity_score}`
+  );
+
+  const headTermScore = scoreKeywordOpportunity({
+    keyword: "pc cleaner",
+    dfsSearchVolume: 40500,
+    dfsKd: 74,
+  });
+  assert.ok(
+    headTermScore.opportunity_score < 75,
+    `Expected high-KD head term < 75, got ${headTermScore.opportunity_score}`
+  );
+  assert.equal(headTermScore.is_low_competition, false);
+
+  // 2. 4-Stage Anti-Cannibalization & Entity Resolver
+  const discordRes = resolveKeywordAgainstCorpus(
+    "clear discord gpu cache",
+    "%AppData%\\discord\\Cache\\Cache_Data"
+  );
+  assert.equal(discordRes.matched, true);
+  assert.equal(discordRes.recommendedAction, "enrich_existing_page");
+
+  // Catches category-prefixed redirect ("app:nuget-package-cache" -> "/clean/app/nuget-packages-http-cache")
+  const nugetRes = resolveKeywordAgainstCorpus("nuget package cache");
+  assert.equal(nugetRes.matched, true);
+  assert.equal(nugetRes.matchType, "SLUG_OR_REDIRECT_FAMILY");
+  assert.equal(nugetRes.recommendedAction, "enrich_existing_page");
+
+  // Routes net-new uncaptured 2025/2026 app to create_pseo_app
+  const marvelRes = resolveKeywordAgainstCorpus("marvel rivals shader cache");
+  assert.equal(marvelRes.matched, false);
+  assert.equal(marvelRes.recommendedAction, "create_pseo_app");
+
+  // 3. 6 Mandatory Pre-Write Quality Gates
+  assert.equal(LOCKED_TEST_TITLE_SLUGS.has("steam-depotcache"), true);
+  assert.equal(WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY.length, 32);
+
+  for (const spec of WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY) {
+    const gate = validateCandidateCleanItem(spec);
+    assert.equal(
+      gate.valid,
+      true,
+      `Registry candidate ${spec.slug} failed quality gates: ${gate.errors.join(", ")}`
+    );
+    assert.ok(gate.computedTitle.length >= 30 && gate.computedTitle.length <= 60);
+    assert.ok(gate.computedDescription.length >= 70 && gate.computedDescription.length <= 158);
+  }
+
+  // Blocks OS-critical C:\Windows\System32 path
+  const badCandidate = validateCandidateCleanItem({
+    slug: "delete-system32-dlls",
+    category: "folder",
+    name: "Windows System32 Core DLLs",
+    path: "C:\\Windows\\System32",
+    safeToDelete: true,
+    avgSpace: "10 GB",
+    whatIsIt: "Core operating system binaries required for Windows boot and kernel execution.",
+    whatHappens: "Deleting System32 destroys the Windows installation immediately.",
+    manualSteps: ["Do not delete System32.", "Use sfc /scannow instead."],
+  });
+  assert.equal(badCandidate.valid, false);
+  assert.ok(badCandidate.errors.some((e) => e.startsWith("critical_os_path_blocked")));
+
+  // 4. End-to-End CRM Router Endpoints (/keywords/discover, /keywords/opportunities, /keywords/opportunities/publish)
+  const { get, post } = setup();
+
+  const discRes = await post("/api/crm/seo/keywords/discover", {
+    seeds: ["marvel rivals shader", "windsurf ide"],
+    fetch_autocomplete: true,
+    enrich_dfs: false,
+    limit: 25,
+    persist_report: false,
+  });
+  assert.equal(discRes.status, 200);
+  const discJson = (await discRes.json()) as any;
+  assert.equal(discJson.ok, true);
+  assert.ok(discJson.summary.total_evaluated >= 32);
+  assert.equal(discJson.summary.new_pseo_ready_count, 32);
+  assert.ok(discJson.top_opportunities.length > 0);
+  assert.ok(discJson.ctr_enrichment_candidates.length > 0);
+
+  const oppRes = await get("/api/crm/seo/keywords/opportunities?min_score=75&low_comp_only=true");
+  assert.equal(oppRes.status, 200);
+  const oppJson = (await oppRes.json()) as any;
+  assert.equal(oppJson.ok, true);
+  assert.ok(oppJson.opportunities.length > 0);
+  assert.ok(oppJson.opportunities.every((o: any) => o.opportunity_score >= 75));
+
+  const pubDryRes = await post("/api/crm/seo/keywords/opportunities/publish", {
+    slug: "marvel-rivals-shader-cache",
+    dry_run: true,
+  });
+  assert.equal(pubDryRes.status, 200);
+  const pubDryJson = (await pubDryRes.json()) as any;
+  assert.equal(pubDryJson.ok, true);
+  assert.equal(pubDryJson.target_url, "/clean/app/marvel-rivals-shader-cache");
+  assert.equal(pubDryJson.validation.valid, true);
+});
+
+
 
 
 

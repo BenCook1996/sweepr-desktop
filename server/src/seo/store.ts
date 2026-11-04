@@ -103,6 +103,16 @@ export interface KeywordRow {
   serp_etv: number | null;
   monthly_searches_json: string | null;
   dfs_updated_at: number | null;
+  opportunity_score: number | null;
+  demand_score: number | null;
+  low_comp_score: number | null;
+  intent_multiplier: number | null;
+  discovery_source: string | null;
+  autocomplete_rank: number | null;
+  autocomplete_sources: string | null;
+  recommended_action: string | null;
+  candidate_json: string | null;
+  scored_at: number | null;
   created_at: number;
 }
 
@@ -377,6 +387,16 @@ export function ensureSeoSchema(db: DatabaseSync) {
     ["serp_etv", "REAL"],
     ["monthly_searches_json", "TEXT"],
     ["dfs_updated_at", "INTEGER"],
+    ["opportunity_score", "INTEGER"],
+    ["demand_score", "REAL"],
+    ["low_comp_score", "REAL"],
+    ["intent_multiplier", "REAL"],
+    ["discovery_source", "TEXT"],
+    ["autocomplete_rank", "INTEGER"],
+    ["autocomplete_sources", "TEXT"],
+    ["recommended_action", "TEXT"],
+    ["candidate_json", "TEXT"],
+    ["scored_at", "INTEGER"],
   ];
   for (const [col, def] of kwCols) addColumnIfMissing(db, "seo_keywords", col, def);
 
@@ -500,6 +520,101 @@ export class SeoStore {
         t,
         kw
       );
+  }
+
+  upsertKeywordOpportunity(input: {
+    keyword: string;
+    cluster?: string;
+    target_path?: string | null;
+    search_intent?: string | null;
+    opportunity_score: number;
+    demand_score: number;
+    low_comp_score: number;
+    intent_multiplier: number;
+    discovery_source?: string | null;
+    autocomplete_rank?: number | null;
+    autocomplete_sources?: string[] | null;
+    recommended_action?: string | null;
+    candidate_json?: unknown;
+    serp_position?: number | null;
+    serp_url?: string | null;
+  }): KeywordRow | undefined {
+    const kw = input.keyword.trim().toLowerCase().replace(/\s+/g, " ").slice(0, 200);
+    if (!kw) return undefined;
+    const t = this.now();
+    this.addKeyword(kw, input.cluster || "general", input.target_path ?? null);
+    this.db
+      .prepare(
+        `UPDATE seo_keywords SET
+           cluster = COALESCE(?, cluster),
+           target_path = COALESCE(?, target_path),
+           search_intent = COALESCE(?, search_intent),
+           opportunity_score = ?,
+           demand_score = ?,
+           low_comp_score = ?,
+           intent_multiplier = ?,
+           discovery_source = COALESCE(?, discovery_source),
+           autocomplete_rank = COALESCE(?, autocomplete_rank),
+           autocomplete_sources = COALESCE(?, autocomplete_sources),
+           recommended_action = COALESCE(?, recommended_action),
+           candidate_json = COALESCE(?, candidate_json),
+           serp_position = COALESCE(?, serp_position),
+           serp_url = COALESCE(?, serp_url),
+           scored_at = ?
+         WHERE keyword = ? COLLATE NOCASE`
+      )
+      .run(
+        input.cluster ? input.cluster.slice(0, 40) : null,
+        input.target_path ?? null,
+        input.search_intent ?? null,
+        Math.round(input.opportunity_score),
+        Number(input.demand_score.toFixed(2)),
+        Number(input.low_comp_score.toFixed(2)),
+        Number(input.intent_multiplier.toFixed(3)),
+        input.discovery_source ?? null,
+        input.autocomplete_rank ?? null,
+        input.autocomplete_sources ? JSON.stringify(input.autocomplete_sources) : null,
+        input.recommended_action ?? null,
+        input.candidate_json !== undefined && input.candidate_json !== null
+          ? typeof input.candidate_json === "string"
+            ? input.candidate_json
+            : JSON.stringify(input.candidate_json)
+          : null,
+        input.serp_position ?? null,
+        input.serp_url ?? null,
+        t,
+        kw
+      );
+    return this.db.prepare("SELECT * FROM seo_keywords WHERE keyword = ? COLLATE NOCASE").get(kw) as KeywordRow | undefined;
+  }
+
+  listKeywordOpportunities(opts?: {
+    minScore?: number;
+    intent?: string;
+    lowCompOnly?: boolean;
+    action?: string;
+    limit?: number;
+  }): KeywordRow[] {
+    const minScore = opts?.minScore ?? 0;
+    const limit = Math.min(500, Math.max(1, opts?.limit ?? 200));
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM seo_keywords
+         WHERE opportunity_score IS NOT NULL AND opportunity_score >= ?
+         ORDER BY opportunity_score DESC, low_comp_score DESC, demand_score DESC
+         LIMIT ?`
+      )
+      .all(minScore, limit) as unknown as KeywordRow[];
+    return rows.filter((r) => {
+      if (opts?.intent && (r.search_intent || "").toLowerCase() !== opts.intent.toLowerCase()) return false;
+      if (opts?.action && (r.recommended_action || "").toLowerCase() !== opts.action.toLowerCase()) return false;
+      if (opts?.lowCompOnly) {
+        const kdOk = r.kd === null || r.kd === undefined || r.kd <= 35;
+        const lowCompOk = (r.low_comp_score ?? 0) >= 65;
+        if (!kdOk || !lowCompOk) return false;
+      }
+      return true;
+    });
   }
 
   // ---------- Google Search Console rows ----------

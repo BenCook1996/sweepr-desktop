@@ -199,7 +199,10 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
         for (const [oldSlug, targetPath] of Object.entries(redirects)) {
           const m = String(targetPath).match(/^\/clean\/(?:app|folder)\/([^/?#]+)$/);
           const targetSlug = m ? m[1].toLowerCase() : "";
-          if (!targetSlug || !slugSet.has(targetSlug) || redirects[targetSlug]) {
+          const chainsFurther = Boolean(
+            redirects[targetSlug] || redirects[`app:${targetSlug}`] || redirects[`folder:${targetSlug}`]
+          );
+          if (!targetSlug || !slugSet.has(targetSlug) || chainsFurther) {
             badTargets.push(`${oldSlug} -> ${targetPath}`);
           }
         }

@@ -50,6 +50,11 @@ import {
   refreshAllTelemetryTruthCache,
   TELEMETRY_TRUTH_MIN_SAMPLES,
 } from "./telemetry-truth.js";
+import {
+  publishDiscoveredCleanItem,
+  runKeywordDiscoveryPipeline,
+  WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY,
+} from "./keywords.js";
 import type { SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -350,6 +355,60 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     let added = 0;
     for (const q of top) if (store.addKeyword(q.query, "gsc-discovered", null)) added++;
     return c.json({ considered: top.length, added });
+  });
+
+  // Automated Keyword Research & Low-Competition Opportunity Engine endpoints
+  router.get("/keywords/opportunities", async (c) => {
+    const minScore = Number(c.req.query("min_score") ?? 70);
+    const intent = c.req.query("intent") || undefined;
+    const lowCompOnly = c.req.query("low_comp_only") !== "false";
+    const action = c.req.query("action") || undefined;
+    const limit = Number(c.req.query("limit") ?? 50);
+
+    let stored = store.listKeywordOpportunities({ minScore, intent, lowCompOnly, action, limit });
+    const report = await runKeywordDiscoveryPipeline(store, providers, {
+      fetch_autocomplete: false,
+      enrich_dfs: false,
+      limit,
+      persistReport: false,
+    });
+    if (stored.length === 0) {
+      stored = store.listKeywordOpportunities({ minScore, intent, lowCompOnly, action, limit });
+    }
+    return c.json({
+      ok: true,
+      summary: report.summary,
+      opportunities: stored,
+      new_pseo_candidates: report.new_pseo_candidates,
+      ctr_enrichment_candidates: report.ctr_enrichment_candidates,
+      transactional_tool_candidates: report.transactional_tool_candidates,
+      ad_exact_match_candidates: report.ad_exact_match_candidates,
+      ecosystem_registry_total: WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY.length,
+    });
+  });
+
+  router.post("/keywords/discover", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const report = await runKeywordDiscoveryPipeline(store, providers, {
+      seeds: Array.isArray(body.seeds) ? body.seeds.map(String) : undefined,
+      fetch_autocomplete: Boolean(body.fetch_autocomplete),
+      enrich_dfs: Boolean(body.enrich_dfs),
+      limit: Number(body.limit) || 60,
+      fetchImpl: dfsFetch,
+      persistReport: body.persist_report !== false,
+    });
+    return c.json(report);
+  });
+
+  router.post("/keywords/opportunities/publish", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const slug = String(body.slug || "").trim().toLowerCase();
+    if (!slug) return c.json({ ok: false, error: "slug_required" }, 400);
+    const result = publishDiscoveredCleanItem(store, slug, {
+      dryRun: body.dry_run !== false,
+    });
+    if (!result.ok) return c.json(result, 400);
+    return c.json(result);
   });
 
   router.get("/gsc/config", (c) =>

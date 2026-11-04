@@ -507,6 +507,8 @@ export function createApp(deps: AppDeps) {
         "/alternatives/wise-disk-cleaner",
         "/vs/glary-utilities",
         "/alternatives/glary-utilities",
+        "/tools",
+        ...TRANSACTIONAL_TOOLS.map((t) => `/tools/${t.slug}`),
         ...getCleanItems().map((i) => `/clean/${i.category}/${i.slug}`),
       ],
       defaultKeywords: [

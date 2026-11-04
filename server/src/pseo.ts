@@ -979,6 +979,9 @@ export function renderPseoDirectory(): string {
           </div>
         </div>
       </div>
+      <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
+      <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
+      <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
       <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Download Free Scan</a>
@@ -1383,6 +1386,9 @@ export function renderPseoPage(item: CleanItem): string {
           </div>
         </div>
       </div>
+      <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
+      <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
+      <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
       <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Get SWEEPR Cleaner</a>

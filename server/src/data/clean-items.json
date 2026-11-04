@@ -581,6 +581,14 @@
       "Press Windows Key + R, type %AppData%\\obs-studio and press Enter.",
       "Delete old files inside the logs and crashes folders.",
       "To clear the OBS Browser Source cache, navigate to %AppData%\\obs-studio\\plugin_config\\obs-browser\\Cache and delete its contents (leave your basic\\scenes and basic\\profiles folders untouched)."
+    ],
+    "metaTitle": "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
+    "metaDescription": "How to clear OBS Studio logs, Crashpad dumps, and browser-source CEF cache on Windows 10/11. Reclaim 500 MB–4 GB in %AppData%\\obs-studio safely in 1 click.",
+    "customFaqs": [
+      {
+        "q": "How do I clear OBS Studio cache without losing my scenes, sources, or stream keys?",
+        "a": "Your OBS scenes and profiles are stored in %AppData%\\obs-studio\\basic\\scenes and basic\\profiles. Cleaning %AppData%\\obs-studio\\logs, crashes, and plugin_config\\obs-browser\\Cache frees disk space and fixes laggy browser overlays without touching any scene collections."
+      }
     ]
   },
   {
@@ -807,6 +815,14 @@
       "Press Windows Key + R, type %LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and delete all cached files.",
       "Next, press Windows Key + R, type %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage and delete the bloated subfolder caches.",
       "Or run SWEEPR Cleaner to deep-clean Opera GX caches that the built-in GX Cleaner misses."
+    ],
+    "metaTitle": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
+    "metaDescription": "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
+    "customFaqs": [
+      {
+        "q": "Why does Opera GX still use 5GB+ of disk space after running the built-in GX Cleaner?",
+        "a": "The built-in GX Cleaner often leaves behind multi-gigabyte Service Worker\\CacheStorage blobs, Dawn/ANGLE GPU shader caches, and old Crashpad dumps inside %LocalAppData%\\Opera Software\\Opera GX Stable. Purging those subdirectories reclaims full SSD space while keeping open workspaces and logins safe."
+      }
     ]
   },
   {
@@ -970,6 +986,14 @@
     "manualSteps": [
       "Open Terminal or PowerShell and run: npm cache clean --force.",
       "Or navigate to %localappdata%\\npm-cache and delete '_cacache' and '_npx'."
+    ],
+    "metaTitle": "Clear npm-cache Folder on Windows 11 Safely (2026) | SWEEPR",
+    "metaDescription": "How to clear %LocalAppData%\\npm-cache on Windows 10/11 safely. Reclaim 2–18 GB of cached Node.js tarballs using npm cache clean --force or SWEEPR Cleaner.",
+    "customFaqs": [
+      {
+        "q": "Does deleting %LocalAppData%\\npm-cache break existing node_modules folders in my projects?",
+        "a": "No. %LocalAppData%\\npm-cache (_cacache) is strictly a global download cache of compressed package tarballs. Your project node_modules directories are completely independent and will continue to run normally."
+      }
     ]
   },
   {
@@ -1056,6 +1080,14 @@
       "Close Android Studio and run 'gradle --stop' to stop background daemons.",
       "Navigate to %userprofile%\\.gradle.",
       "Delete old daemon logs and unused transform caches inside .gradle\\caches."
+    ],
+    "metaTitle": "Clear .gradle Caches & Wrapper Dists on Windows | SWEEPR",
+    "metaDescription": "Is %UserProfile%\\.gradle\\caches safe to delete? Reclaim 5–35 GB of orphaned Android Studio & Java Gradle wrapper distributions and build caches in 1 click.",
+    "customFaqs": [
+      {
+        "q": "Can I delete old Gradle versions inside %UserProfile%\\.gradle\\wrapper\\dists?",
+        "a": "Yes. Every time an Android Studio or Java project updates its gradle-wrapper.properties version, Gradle downloads a new ~150 MB distribution zip and leaves every older version on disk forever. Deleting unused versions in wrapper\\dists and caches\\build-cache-* safely recovers 5–35 GB."
+      }
     ]
   },
   {
@@ -2057,21 +2089,6 @@
     ]
   },
   {
-    "slug": "windows-11-24h2-checkpoint-cache",
-    "category": "folder",
-    "name": "Windows 11 24H2 Cumulative Checkpoint Update Cache",
-    "path": "C:\\Windows\\SoftwareDistribution\\Download",
-    "safeToDelete": true,
-    "avgSpace": "4.0 GB – 16.0 GB",
-    "whatIsIt": "Windows 11 24H2 stores differential checkpoint update payloads and uncompressed cab/msu staging files in SoftwareDistribution\\Download.",
-    "whatHappens": "Safely reclaims gigabytes of C: drive space after updates finish installing and resolves stuck Windows Update error codes.",
-    "manualSteps": [
-      "Open Terminal (Admin) and run: net stop wuauserv",
-      "Open C:\\Windows\\SoftwareDistribution\\Download and delete all files inside.",
-      "Restart the Windows Update service with: net start wuauserv"
-    ]
-  },
-  {
     "slug": "programdata-package-cache",
     "category": "folder",
     "name": "Windows ProgramData Package Cache (C:\\ProgramData\\Package Cache)",
@@ -2428,21 +2445,6 @@
       "Close the Xbox App and terminate GamingServices in Task Manager.",
       "Open %localappdata%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe\\LocalCache.",
       "Select and delete all cached temporary files."
-    ]
-  },
-  {
-    "slug": "windows-bluetooth-logs",
-    "category": "folder",
-    "name": "Windows Bluetooth Pairing Logs & Diagnostic Traces",
-    "path": "C:\\Windows\\System32\\Winevt\\Logs",
-    "safeToDelete": true,
-    "avgSpace": "0.5 GB – 3.0 GB",
-    "whatIsIt": "Windows logs Bluetooth LE connection attempts, RFCOMM socket events, and audio packet drops into dedicated event log files.",
-    "whatHappens": "Clearing historical Bluetooth logs frees drive space without unpairing any of your connected wireless devices.",
-    "manualSteps": [
-      "Open Windows Event Viewer as Administrator.",
-      "Navigate to Applications and Services Logs > Microsoft > Windows > Bluetooth.",
-      "Right-click operational logs and select 'Clear Log'."
     ]
   },
   {
@@ -3128,21 +3130,6 @@
     "manualSteps": [
       "Open your DaVinci Resolve Project Settings > Master Settings.",
       "Check Working Folders > Gallery Stills Location and purge unused gallery stills."
-    ]
-  },
-  {
-    "slug": "premiere-pro-media-cache-files",
-    "category": "folder",
-    "name": "Adobe Premiere Pro Media Cache Files (.mcf and .pek)",
-    "path": "%AppData%\\Adobe\\Common\\Media Cache Files",
-    "safeToDelete": true,
-    "avgSpace": "10.0 GB – 85.0 GB",
-    "whatIsIt": "Premiere Pro creates peak (.pek) waveform files and conformed video streams in Media Cache Files for every imported video.",
-    "whatHappens": "Completely safe to delete. Premiere Pro easily regenerates audio waveforms when projects are reopened.",
-    "manualSteps": [
-      "In Premiere Pro, go to Edit > Preferences > Media Cache.",
-      "Click 'Delete' next to Remove Media Cache Files, choosing 'Delete all media cache files'.",
-      "Or delete the contents of %AppData%\\Adobe\\Common\\Media Cache Files manually."
     ]
   },
   {
@@ -5632,6 +5619,20 @@
       "Open Command Prompt or PowerShell as Administrator.",
       "Run Dism.exe /Online /Cleanup-Image /StartComponentCleanup to release unlocked WinSxS\\Temp\\PendingDeletes files.",
       "Remove leftover C:\\$Windows.~BT staging folders once your 24H2 upgrade stability is confirmed."
+    ]
+  },
+  {
+    "slug": "other-storage-full-windows-11-cleanup",
+    "category": "folder",
+    "name": "Temporary Files & 'Other' Storage Full on Windows 11 (Deep Clean)",
+    "path": "C:\\ProgramData & %UserProfile%\\.cache & %LocalAppData%\\NVIDIA\\DXCache",
+    "safeToDelete": true,
+    "avgSpace": "6.0 GB – 45.0 GB",
+    "whatIsIt": "Windows 11 groups unrecognized developer caches (.gradle, .cargo, .cache, HuggingFace/Ollama LLM weights), installer depot caches (ProgramData\\Package Cache, LGHUB\\depots, Steam\\depotcache), and GPU shader pipelines into 'Other' or 'Temporary files' that standard Storage Sense skips.",
+    "whatHappens": "Reclaims gigabytes of hidden SSD space from orphaned installer depots, shader caches, and CLI package stores without touching active projects or installed software.",
+    "manualSteps": [
+      "Inspect %UserProfile%\\.cache, %LocalAppData%\\NVIDIA\\DXCache, and C:\\ProgramData\\Package Cache for orphaned multi-gigabyte folders.",
+      "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner."
     ]
   }
 ]

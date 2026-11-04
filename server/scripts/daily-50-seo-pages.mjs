@@ -23,6 +23,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  LOCKED_TEST_TITLE_SLUGS,
+  isSlugInRedirects,
+  validateCandidateCleanItemMjs,
+  runKeywordResearchEngine,
+} from "./keyword-research-engine.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_ROOT = path.resolve(__dirname, "..");
@@ -2678,10 +2684,15 @@ function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
     const slug = entry.slug;
     const item = items.find((i) => i.slug.toLowerCase() === slug || (slug === "capcut-pc-cache" && i.slug.toLowerCase() === "capcut-desktop-cache"));
     if (!item) continue;
+    const isTitleLocked = LOCKED_TEST_TITLE_SLUGS.has(item.slug.toLowerCase()) || LOCKED_TEST_TITLE_SLUGS.has(slug);
     const preset = STRIKE_ZONE_ENRICHMENTS[slug];
     if (preset) {
-      if (preset.metaTitle) item.metaTitle = preset.metaTitle;
-      if (preset.metaDescription) item.metaDescription = preset.metaDescription;
+      if (preset.metaTitle && !isTitleLocked && preset.metaTitle.length >= 30 && preset.metaTitle.length <= 60) {
+        item.metaTitle = preset.metaTitle;
+      }
+      if (preset.metaDescription && preset.metaDescription.length >= 70 && preset.metaDescription.length <= 158) {
+        item.metaDescription = preset.metaDescription;
+      }
       if (Array.isArray(preset.customFaqs)) item.customFaqs = preset.customFaqs;
     } else if (!item.customFaqs || item.customFaqs.length === 0) {
       item.customFaqs = [
@@ -2835,7 +2846,7 @@ function updateIndexingQueue(newUrls, redirectedSlugs = {}) {
     const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
     if (!m) return true;
     const slug = m[1].toLowerCase();
-    if (redirectedSlugs[slug]) return false;
+    if (isSlugInRedirects(slug, redirectedSlugs)) return false;
     if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => slug.endsWith(suf))) return false;
     return true;
   };
@@ -2973,18 +2984,26 @@ async function main() {
   const existingSlugs = new Set(existingItems.map((i) => i.slug.toLowerCase()));
   const existingPaths = new Set(existingItems.map((i) => normalizeWinPath(i.path)));
 
-  const allCandidates = buildAllCandidateItems();
+  // Run Automated Keyword Research & Low-Competition Opportunity Engine first
+  const kwReport = await runKeywordResearchEngine({ persistReport: true });
+  const researchedCandidates = (kwReport.new_pseo_candidates || []).map((c) => c.item);
+  console.log(
+    `[Keyword Research Engine] Discovered ${researchedCandidates.length} validated low-competition pSEO candidates (avg OpportunityScore: ${kwReport.summary.avg_opportunity_score}).`
+  );
+
+  const allCandidates = [...researchedCandidates, ...buildAllCandidateItems()];
   const selected = [];
   for (const cand of allCandidates) {
     if (selected.length >= targetCount) break;
     const normSlug = cand.slug.toLowerCase();
     const normPath = normalizeWinPath(cand.path);
     if (existingSlugs.has(normSlug)) continue;
-    if (redirectedSlugs[normSlug]) continue;
+    if (isSlugInRedirects(normSlug, redirectedSlugs)) continue;
     if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => normSlug.endsWith(suf))) continue;
     if (normPath && existingPaths.has(normPath)) continue;
-    // Validate required fields
-    if (!cand.name || !cand.path || !cand.whatIsIt || !cand.whatHappens || !Array.isArray(cand.manualSteps) || cand.manualSteps.length < 2) {
+    // Enforce all 6 mandatory pre-write SEO & safety quality gates
+    const gate = validateCandidateCleanItemMjs(cand, [...existingItems, ...selected], redirectedSlugs);
+    if (!gate.valid) {
       continue;
     }
     existingSlugs.add(normSlug);
