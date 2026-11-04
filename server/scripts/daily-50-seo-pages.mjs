@@ -2907,6 +2907,15 @@ async function syncKeywordsToCrm(newItems) {
           signal: AbortSignal.timeout(6000)
         }).catch(() => {});
       }
+      await fetch(`${base}/api/crm/seo/gsc/intent-gap/execute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: AUTH_HEADER
+        },
+        body: JSON.stringify({ use_seed: true, persist_state: false }),
+        signal: AbortSignal.timeout(8000)
+      }).catch(() => {});
     } catch {
       /* ignore offline CRM */
     }

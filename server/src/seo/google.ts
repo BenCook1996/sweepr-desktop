@@ -28,20 +28,36 @@ interface ServiceAccount {
   token_uri?: string;
 }
 
-export function loadServiceAccount(raw: string | undefined): ServiceAccount | null {
+interface OAuthRefreshCredential {
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+  token_uri?: string;
+}
+
+function parseCredentialText(raw: string | undefined): string | null {
   const v = (raw ?? "").trim();
   if (!v) return null;
-  let text = v;
-  if (!v.startsWith("{")) {
-    if (existsSync(v)) text = readFileSync(v, "utf8");
-    else {
-      try {
-        text = Buffer.from(v, "base64").toString("utf8");
-      } catch {
-        return null;
-      }
+  if (v.startsWith("{")) return v;
+  if (existsSync(v)) {
+    try {
+      return readFileSync(v, "utf8");
+    } catch {
+      return null;
     }
   }
+  try {
+    const decoded = Buffer.from(v, "base64").toString("utf8");
+    if (decoded.trim().startsWith("{")) return decoded;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+export function loadServiceAccount(raw: string | undefined): ServiceAccount | null {
+  const text = parseCredentialText(raw);
+  if (!text) return null;
   try {
     const j = JSON.parse(text);
     if (typeof j.client_email === "string" && typeof j.private_key === "string") return j as ServiceAccount;
@@ -51,16 +67,79 @@ export function loadServiceAccount(raw: string | undefined): ServiceAccount | nu
   return null;
 }
 
-export function providerStatus(cfg: SeoProviderConfig) {
-  const sa = loadServiceAccount(cfg.gscServiceAccountJson);
+export function loadOAuthRefreshCredential(raw: string | undefined): OAuthRefreshCredential | null {
+  const text = parseCredentialText(raw);
+  if (!text) return null;
+  try {
+    const j = JSON.parse(text);
+    if (
+      typeof j.client_id === "string" &&
+      typeof j.client_secret === "string" &&
+      typeof j.refresh_token === "string"
+    ) {
+      return j as OAuthRefreshCredential;
+    }
+  } catch {
+    /* fallthrough */
+  }
+  return null;
+}
+
+export function resolveGscConfig(cfg: SeoProviderConfig, store?: SeoStore) {
+  const runtimeSiteUrl = store?.getSetting<string>("gsc_site_url", "")?.trim() || "";
+  const defaultDomainProp = cfg.siteUrl?.includes("sweeprcleaner.com") ? "sc-domain:sweeprcleaner.com" : "";
+  const siteUrl = runtimeSiteUrl || (cfg.gscSiteUrl ?? "").trim() || defaultDomainProp;
+
+  const runtimeCredRaw = store?.getSetting<string>("gsc_service_account_json", "")?.trim() || "";
+  const credRaw = runtimeCredRaw || (cfg.gscServiceAccountJson ?? "").trim();
+
+  const sa = loadServiceAccount(credRaw);
+  const oauth = sa ? null : loadOAuthRefreshCredential(credRaw);
+  const rows = store?.gscRowCount() ?? 0;
+  const latestDate = store?.gscLatestDate() ?? null;
+  const apiConfigured = Boolean((sa || oauth) && siteUrl);
+  const configured = Boolean(apiConfigured || (rows > 0 && siteUrl));
+  const authMode: "service_account" | "oauth_refresh_token" | "ingest_bridge" | "none" = sa
+    ? "service_account"
+    : oauth
+      ? "oauth_refresh_token"
+      : rows > 0
+        ? "ingest_bridge"
+        : "none";
+
+  return {
+    siteUrl,
+    sa,
+    oauth,
+    rows,
+    latestDate,
+    apiConfigured,
+    configured,
+    authMode,
+  };
+}
+
+export function providerStatus(cfg: SeoProviderConfig, store?: SeoStore) {
+  const gsc = resolveGscConfig(cfg, store);
   const dfsConfigured = Boolean((cfg.dataForSeoLogin ?? "").trim() && (cfg.dataForSeoPassword ?? "").trim());
   return {
     site_url: cfg.siteUrl,
     gsc: {
-      configured: Boolean(sa && cfg.gscSiteUrl),
-      site_url: cfg.gscSiteUrl || null,
-      service_account: sa?.client_email ?? null,
-      missing: [!sa ? "GSC_SERVICE_ACCOUNT_JSON" : null, !cfg.gscSiteUrl ? "GSC_SITE_URL" : null].filter(Boolean),
+      configured: gsc.configured,
+      api_credentials_configured: gsc.apiConfigured,
+      auth_mode: gsc.authMode,
+      site_url: gsc.siteUrl || null,
+      service_account:
+        gsc.sa?.client_email ??
+        (gsc.oauth ? "oauth_authorized_user" : gsc.rows > 0 ? "verified_gsc_telemetry_bridge" : null),
+      rows: gsc.rows,
+      latest_date: gsc.latestDate,
+      missing: gsc.configured
+        ? []
+        : [
+            !gsc.sa && !gsc.oauth ? "GSC_SERVICE_ACCOUNT_JSON" : null,
+            !gsc.siteUrl ? "GSC_SITE_URL" : null,
+          ].filter(Boolean),
     },
     pagespeed: { configured: true, keyed: Boolean(cfg.googleApiKey), note: cfg.googleApiKey ? null : "Works without a key at low quota; set GOOGLE_API_KEY for 25k/day." },
     crux: { configured: Boolean(cfg.googleApiKey), missing: cfg.googleApiKey ? [] : ["GOOGLE_API_KEY"] },
@@ -86,7 +165,7 @@ export function providerStatus(cfg: SeoProviderConfig) {
   };
 }
 
-// ---------------- Google OAuth (service account JWT, RS256) ----------------
+// ---------------- Google OAuth (service account JWT RS256 + OAuth2 refresh token) ----------------
 const b64url = (b: Buffer | string) => Buffer.from(b).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 let cachedToken: { token: string; exp: number; email: string } | null = null;
 
@@ -111,16 +190,50 @@ async function googleAccessToken(sa: ServiceAccount, scope: string): Promise<str
   return j.access_token;
 }
 
+async function googleOAuthRefreshToken(oauth: OAuthRefreshCredential): Promise<string> {
+  const nowS = Math.floor(Date.now() / 1000);
+  const cacheKey = `oauth:${oauth.client_id}`;
+  if (cachedToken && cachedToken.email === cacheKey && cachedToken.exp - 60 > nowS) return cachedToken.token;
+  const tokenUri = oauth.token_uri || "https://oauth2.googleapis.com/token";
+  const res = await fetch(tokenUri, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: oauth.client_id,
+      client_secret: oauth.client_secret,
+      refresh_token: oauth.refresh_token,
+      grant_type: "refresh_token",
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  const j = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error_description?: string; error?: string };
+  if (!res.ok || !j.access_token) throw new Error(`Google OAuth refresh failed: ${j.error_description || j.error || res.status}`);
+  cachedToken = { token: j.access_token, exp: nowS + (j.expires_in ?? 3600), email: cacheKey };
+  return j.access_token;
+}
+
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
 /** Pulls date x query x page rows from Search Console into seo_gsc_rows. */
 export async function syncSearchConsole(store: SeoStore, cfg: SeoProviderConfig, days = 90, onProgress?: (rows: number) => void) {
-  const sa = loadServiceAccount(cfg.gscServiceAccountJson);
-  if (!sa || !cfg.gscSiteUrl) throw new Error("Search Console not configured (set GSC_SERVICE_ACCOUNT_JSON and GSC_SITE_URL)");
-  const token = await googleAccessToken(sa, "https://www.googleapis.com/auth/webmasters.readonly");
+  const gsc = resolveGscConfig(cfg, store);
+  if ((!gsc.sa && !gsc.oauth) || !gsc.siteUrl) {
+    if (gsc.rows > 0 && gsc.siteUrl) {
+      return {
+        rows: gsc.rows,
+        start: isoDay(new Date(Date.now() - 28 * 86400000)),
+        end: gsc.latestDate ?? isoDay(new Date()),
+        mode: "ingest_bridge",
+      };
+    }
+    throw new Error("Search Console not configured (set GSC_SERVICE_ACCOUNT_JSON and GSC_SITE_URL or POST /api/crm/seo/gsc/ingest)");
+  }
+  const token = gsc.sa
+    ? await googleAccessToken(gsc.sa, "https://www.googleapis.com/auth/webmasters.readonly")
+    : await googleOAuthRefreshToken(gsc.oauth!);
   const end = new Date(Date.now() - 2 * 86400000); // GSC data lags ~2 days
   const start = new Date(end.getTime() - (Math.min(Math.max(days, 1), 480) - 1) * 86400000);
-  const endpoint = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(cfg.gscSiteUrl)}/searchAnalytics/query`;
+  const endpoint = `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(gsc.siteUrl)}/searchAnalytics/query`;
   const pageSize = 25000;
   let startRow = 0;
   let total = 0;
@@ -142,7 +255,7 @@ export async function syncSearchConsole(store: SeoStore, cfg: SeoProviderConfig,
     if (rows.length < pageSize) break;
     startRow += pageSize;
   }
-  return { rows: total, start: isoDay(start), end: isoDay(end) };
+  return { rows: total, start: isoDay(start), end: isoDay(end), mode: gsc.authMode };
 }
 
 // ---------------- PageSpeed Insights ----------------

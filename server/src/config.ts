@@ -151,7 +151,7 @@ export const config = {
   seo: {
     siteUrl: process.env.SEO_SITE_URL || "https://sweeprcleaner.com",
     // e.g. "sc-domain:sweeprcleaner.com" or "https://sweeprcleaner.com/"
-    gscSiteUrl: process.env.GSC_SITE_URL ?? "",
+    gscSiteUrl: process.env.GSC_SITE_URL || "sc-domain:sweeprcleaner.com",
     // Service-account JSON: raw JSON, base64 of it, or a file path. Add the account's email as a user on the GSC property.
     gscServiceAccountJson: process.env.GSC_SERVICE_ACCOUNT_JSON ?? "",
     // Google Cloud API key with PageSpeed Insights + Chrome UX Report APIs enabled.

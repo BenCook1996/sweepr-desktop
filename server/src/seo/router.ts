@@ -12,7 +12,21 @@ import {
   syncDfsKeywords,
   type FetchLike,
 } from "./dataforseo.js";
-import { providerStatus, refreshOpenPageRank, runCrux, runPageSpeed, syncSearchConsole, type SeoProviderConfig } from "./google.js";
+import {
+  loadOAuthRefreshCredential,
+  loadServiceAccount,
+  providerStatus,
+  refreshOpenPageRank,
+  runCrux,
+  runPageSpeed,
+  syncSearchConsole,
+  type SeoProviderConfig,
+} from "./google.js";
+import {
+  computeIntentGapReport,
+  executeIntentGapAutomation,
+  loadVerifiedGscSeedRows,
+} from "./intent-gap.js";
 import type { SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -75,6 +89,23 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     } catch (e) {
       store.db.exec("ROLLBACK");
       throw e;
+    }
+  }
+
+  if (Boolean(providers.gscSiteUrl) && store.gscRowCount() === 0 && !store.getSetting("gsc_seed_applied", false)) {
+    const seedRows = loadVerifiedGscSeedRows();
+    if (seedRows.length > 0) {
+      store.upsertGscRows(seedRows);
+      store.setSetting("gsc_seed_applied", true);
+      const latest = store.gscLatestDate();
+      if (latest) {
+        executeIntentGapAutomation(store, {
+          from: addDays(latest, -27),
+          to: latest,
+          siteUrl: providers.siteUrl,
+          persistState: false,
+        });
+      }
     }
   }
 
@@ -157,7 +188,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
 
   // ---------------- Overview ----------------
   router.get("/overview", (c) => {
-    const status = providerStatus(providers);
+    const status = providerStatus(providers, store);
     const competitors = store.getSetting<string[]>("competitors", DEFAULT_COMPETITORS);
     const metrics = store.domainMetrics([siteHost, ...competitors]);
     const own = metrics.find((m) => m.domain === siteHost) ?? null;
@@ -193,6 +224,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     return c.json({
       site: providers.siteUrl,
       providers: status,
+      gsc: {
+        ...status.gsc,
+        intent_gap_last_run: store.getSetting<Record<string, unknown> | null>("intent_gap_last_run", null),
+      },
       dfs: {
         configured: status.dataforseo.configured,
         login: status.dataforseo.login,
@@ -257,7 +292,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     });
   });
 
-  router.get("/providers", (c) => c.json(providerStatus(providers)));
+  router.get("/providers", (c) => c.json(providerStatus(providers, store)));
 
   // ---------------- Jobs ----------------
   router.get("/jobs", (c) => c.json({ jobs: [...jobs.values()].sort((a, b) => b.started_at - a.started_at) }));
@@ -272,7 +307,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       keywords: keywordMetrics(),
       gsc_window: gscWindow(),
       gsc_rows: store.gscRowCount(),
-      dfs_configured: providerStatus(providers).dataforseo.configured,
+      dfs_configured: providerStatus(providers, store).dataforseo.configured,
     })
   );
   router.post("/keywords", async (c) => {
@@ -294,6 +329,113 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     return c.json({ considered: top.length, added });
   });
 
+  router.get("/gsc/config", (c) =>
+    c.json({
+      ...providerStatus(providers, store).gsc,
+      intent_gap_last_run: store.getSetting<Record<string, unknown> | null>("intent_gap_last_run", null),
+    })
+  );
+
+  const handleGscConfigUpdate = async (c: any) => {
+    const body = await c.req.json().catch(() => ({}));
+    if (typeof body.site_url === "string" && body.site_url.trim()) {
+      store.setSetting("gsc_site_url", body.site_url.trim());
+    }
+    if (body.service_account_json !== undefined) {
+      const raw =
+        typeof body.service_account_json === "string"
+          ? body.service_account_json.trim()
+          : JSON.stringify(body.service_account_json);
+      if (raw) {
+        const sa = loadServiceAccount(raw);
+        const oauth = sa ? null : loadOAuthRefreshCredential(raw);
+        if (!sa && !oauth) {
+          return c.json(
+            {
+              error: "invalid_gsc_credential",
+              message:
+                "Provide a valid Google Service Account JSON (client_email + private_key) or OAuth2 Authorized User JSON (client_id + client_secret + refresh_token).",
+            },
+            400
+          );
+        }
+        store.setSetting("gsc_service_account_json", raw);
+      } else {
+        store.setSetting("gsc_service_account_json", "");
+      }
+    }
+    return c.json({ ok: true, gsc: providerStatus(providers, store).gsc });
+  };
+  router.put("/gsc/config", handleGscConfigUpdate);
+  router.post("/gsc/config", handleGscConfigUpdate);
+
+  router.post("/gsc/ingest", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const rawRows: Array<Record<string, unknown>> = body.use_seed
+      ? loadVerifiedGscSeedRows()
+      : Array.isArray(body.rows)
+        ? body.rows
+        : [];
+    if (!rawRows.length) {
+      return c.json({ error: "rows_required", message: "Pass rows: [...] or use_seed: true" }, 400);
+    }
+    const normalized = rawRows
+      .map((r) => {
+        const clicks = Math.max(0, Number(r.clicks ?? 0));
+        const impressions = Math.max(0, Number(r.impressions ?? 0));
+        const ctr = r.ctr !== undefined ? Number(r.ctr) : impressions > 0 ? clicks / impressions : 0;
+        const position = Number(r.position ?? 0);
+        return {
+          date: String(r.date ?? new Date().toISOString().slice(0, 10)).slice(0, 10),
+          query: String(r.query ?? "").trim().toLowerCase(),
+          page: String(r.page ?? "").trim(),
+          clicks,
+          impressions,
+          ctr,
+          position,
+        };
+      })
+      .filter((r) => r.date && r.query && r.page && r.position > 0);
+
+    if (!normalized.length) {
+      return c.json({ error: "no_valid_rows" }, 400);
+    }
+    if (typeof body.site_url === "string" && body.site_url.trim()) {
+      store.setSetting("gsc_site_url", body.site_url.trim());
+    } else if (!store.getSetting("gsc_site_url", "") && !providers.gscSiteUrl) {
+      store.setSetting("gsc_site_url", "sc-domain:sweeprcleaner.com");
+    }
+
+    store.upsertGscRows(normalized);
+
+    let intentGapSummary: unknown = null;
+    if (body.run_intent_gap !== false) {
+      const w = gscWindow();
+      if (w) {
+        const execRes = executeIntentGapAutomation(store, {
+          from: w.from,
+          to: w.to,
+          siteUrl: providers.siteUrl,
+          persistState: Boolean(body.persist_state),
+        });
+        intentGapSummary = {
+          keywords_classified_and_synced: execRes.keywords_classified_and_synced,
+          queued_ctr_rewrite_slugs: execRes.queued_ctr_rewrite_slugs,
+          intent_distribution: execRes.intent_distribution,
+        };
+      }
+    }
+
+    return c.json({
+      ok: true,
+      ingested: normalized.length,
+      total_rows: store.gscRowCount(),
+      latest_date: store.gscLatestDate(),
+      gsc: providerStatus(providers, store).gsc,
+      intent_gap: intentGapSummary,
+    });
+  });
+
   router.get("/gsc/insights", (c) => {
     const w = gscWindow();
     if (!w) return c.json({ window: null, queries: [], pages: [], cannibalisation: [], opportunities: [] });
@@ -307,9 +449,56 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     return c.json({ window: w, queries: queries.slice(0, 100), pages: store.gscTopPages(w.from, w.to, 50), cannibalisation: store.gscCannibalisation(w.from, w.to), opportunities });
   });
 
+  router.get("/gsc/intent-gap", (c) => {
+    const w = gscWindow();
+    if (!w) {
+      return c.json({
+        configured: providerStatus(providers, store).gsc.configured,
+        window: null,
+        intent_distribution: [],
+        ctr_rewrite_queue: [],
+        commercial_gap_queue: [],
+        transactional_ad_queue: [],
+        last_run: store.getSetting("intent_gap_last_run", null),
+      });
+    }
+    const report = computeIntentGapReport(store, {
+      from: w.from,
+      to: w.to,
+      siteUrl: providers.siteUrl,
+    });
+    return c.json({
+      configured: providerStatus(providers, store).gsc.configured,
+      ...report,
+      last_run: store.getSetting("intent_gap_last_run", null),
+    });
+  });
+
+  router.post("/gsc/intent-gap/execute", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    let w = gscWindow();
+    if (!w && body.use_seed !== false) {
+      const seedRows = loadVerifiedGscSeedRows();
+      if (seedRows.length > 0) {
+        store.upsertGscRows(seedRows);
+        w = gscWindow();
+      }
+    }
+    if (!w) {
+      return c.json({ error: "no_gsc_data", message: "Ingest or sync Search Console data first." }, 400);
+    }
+    const result = executeIntentGapAutomation(store, {
+      from: w.from,
+      to: w.to,
+      siteUrl: providers.siteUrl,
+      persistState: body.persist_state !== false,
+    });
+    return c.json(result);
+  });
+
   router.post("/gsc/sync", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    if (!providerStatus(providers).gsc.configured) return c.json({ error: "gsc_not_configured", providers: providerStatus(providers) }, 400);
+    if (!providerStatus(providers, store).gsc.configured) return c.json({ error: "gsc_not_configured", providers: providerStatus(providers, store) }, 400);
     const days = Math.min(Math.max(Number(body.days) || 90, 7), 480);
     return jobResponse(
       c,

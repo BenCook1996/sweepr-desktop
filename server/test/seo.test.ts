@@ -577,4 +577,73 @@ test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and inde
   assert.ok(successHtml.includes("SWEEPR_PURCHASE_EVENT"), "/checkout/success must inject SWEEPR_PURCHASE_EVENT");
 });
 
+test("SEO GSC Server Connection & Inpages S1/S2 Intent-Gap Automation", async () => {
+  const { app, get, post } = setup();
+
+  // 1. Runtime GSC config endpoint accepts site_url and validates credentials
+  const cfgRes = await post("/api/crm/seo/gsc/config", {
+    site_url: "sc-domain:sweeprcleaner.com",
+    service_account_json: {
+      client_email: "gsc-bot@sweepr-seo.iam.gserviceaccount.com",
+      private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC\n-----END PRIVATE KEY-----\n",
+    },
+  });
+  assert.equal(cfgRes.status, 200);
+  const cfgJson = (await cfgRes.json()) as any;
+  assert.equal(cfgJson.ok, true);
+  assert.equal(cfgJson.gsc.configured, true);
+  assert.equal(cfgJson.gsc.api_credentials_configured, true);
+  assert.equal(cfgJson.gsc.auth_mode, "service_account");
+  assert.equal(cfgJson.gsc.site_url, "sc-domain:sweeprcleaner.com");
+  assert.equal(cfgJson.gsc.service_account, "gsc-bot@sweepr-seo.iam.gserviceaccount.com");
+
+  // 2. Ingest verified sc-domain:sweeprcleaner.com seed rows & run Intent-Gap classifier
+  const ingestRes = await post("/api/crm/seo/gsc/ingest", {
+    use_seed: true,
+    run_intent_gap: true,
+    persist_state: false,
+  });
+  assert.equal(ingestRes.status, 200);
+  const ingestJson = (await ingestRes.json()) as any;
+  assert.equal(ingestJson.ok, true);
+  assert.ok(ingestJson.ingested >= 30, `Expected >= 30 seeded GSC rows, got ${ingestJson.ingested}`);
+  assert.equal(ingestJson.gsc.configured, true);
+
+  // 3. Verify GET /api/crm/seo/gsc/intent-gap returns 4-intent distribution & queues
+  const gapRes = await get("/api/crm/seo/gsc/intent-gap");
+  assert.equal(gapRes.status, 200);
+  const gap = (await gapRes.json()) as any;
+  assert.equal(gap.configured, true);
+  assert.equal(gap.intent_distribution.length, 4);
+  const intents = gap.intent_distribution.map((d: any) => d.intent);
+  assert.deepEqual(intents, ["informational", "navigational", "commercial", "transactional"]);
+
+  // Verify 14-day CTR cooldown guard is respected
+  const steamItem = gap.ctr_rewrite_queue.find((q: any) => q.slug === "steam-depotcache");
+  assert.ok(steamItem, "steam-depotcache should appear in CTR rewrite queue");
+  assert.equal(steamItem.on_cooldown, true, "steam-depotcache was recently optimized and must be on 14d cooldown");
+
+  const obsItem = gap.ctr_rewrite_queue.find((q: any) => q.slug === "obs-studio-logs-crashes");
+  assert.ok(obsItem, "obs-studio-logs-crashes should appear in CTR rewrite queue");
+  assert.equal(obsItem.eligible_for_rewrite, true, "obs-studio-logs-crashes is off cooldown and eligible for rewrite");
+
+  // Verify commercial comparison gap & Microsoft Ads cid=255115583 exact-match queue
+  assert.ok(gap.commercial_gap_queue.length >= 2, "commercial gap queue populated");
+  assert.ok(gap.transactional_ad_queue.length >= 5, "Microsoft Ads exact-match queue populated");
+  assert.equal(gap.transactional_ad_queue[0].microsoft_ads_customer_id, "255115583");
+
+  // 4. Verify POST /api/crm/seo/gsc/intent-gap/execute syncs search_intent to seo_keywords
+  const execRes = await post("/api/crm/seo/gsc/intent-gap/execute", { persist_state: false });
+  assert.equal(execRes.status, 200);
+  const execJson = (await execRes.json()) as any;
+  assert.equal(execJson.ok, true);
+  assert.ok(execJson.keywords_classified_and_synced >= 25);
+
+  const ovRes = await get("/api/crm/seo/overview");
+  const ov = (await ovRes.json()) as any;
+  assert.equal(ov.providers.gsc.configured, true);
+  assert.ok(ov.gsc.intent_gap_last_run !== null);
+});
+
+
 
