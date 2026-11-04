@@ -694,8 +694,32 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
   return { siblings, related };
 }
 
+const approvedIntentGapOverrides = new Map<string, { title?: string; metaDescription?: string; approvedAt: string }>();
+
+export function setApprovedIntentGapSeoOverride(
+  slug: string,
+  opts: { title?: string; metaDescription?: string; approvedAt?: string }
+) {
+  const cleanSlug = String(slug || "").trim().toLowerCase();
+  if (!cleanSlug) return;
+  const existing = approvedIntentGapOverrides.get(cleanSlug) ?? { approvedAt: new Date().toISOString() };
+  approvedIntentGapOverrides.set(cleanSlug, {
+    title: opts.title && opts.title.length >= 30 && opts.title.length <= 60 ? opts.title : existing.title,
+    metaDescription:
+      opts.metaDescription && opts.metaDescription.length >= 70 && opts.metaDescription.length <= 160
+        ? opts.metaDescription
+        : existing.metaDescription,
+    approvedAt: opts.approvedAt || new Date().toISOString(),
+  });
+}
+
+export function getApprovedIntentGapSeoOverride(slug: string) {
+  return approvedIntentGapOverrides.get(String(slug || "").trim().toLowerCase()) ?? null;
+}
+
 export function buildPseoTitle(item: CleanItem): string {
-  const custom = CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
+  const approved = approvedIntentGapOverrides.get(item.slug)?.title;
+  const custom = approved || CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
   if (custom && custom.length >= 30 && custom.length <= 60) {
     return custom;
   }
@@ -777,7 +801,8 @@ export function buildPseoTitle(item: CleanItem): string {
 }
 
 export function buildPseoDescription(item: CleanItem): string {
-  const customDesc = CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
+  const approvedDesc = approvedIntentGapOverrides.get(item.slug)?.metaDescription;
+  const customDesc = approvedDesc || CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }

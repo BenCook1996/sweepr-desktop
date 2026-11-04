@@ -25,12 +25,32 @@ import {
   safeEqual,
   securityHeaders,
 } from "./security.js";
-import { cleanItems, getCleanItems, getCleanItemBySlug, getPseoRedirectTarget, renderPseoDirectory, renderPseoPage } from "./pseo.js";
+import {
+  cleanItems,
+  getCleanItems,
+  getCleanItemBySlug,
+  getPseoRedirectTarget,
+  renderPseoDirectory,
+  renderPseoPage,
+  setApprovedIntentGapSeoOverride,
+} from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
 import { ingestScanCompletedTelemetry, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
 import { analyzeSafeToDeleteInput, renderSafeToDeletePageHtml } from "./safe-to-delete.js";
+import {
+  getTransactionalToolBySlug,
+  renderTransactionalToolPage,
+  renderTransactionalToolsHub,
+  TRANSACTIONAL_TOOLS,
+} from "./transactional-tools.js";
+import {
+  ACTIVE_EXPERIMENTS,
+  assignExperimentVariant,
+  getExperimentSummary,
+} from "./experiments.js";
+import { getAccountStorageRecap, processAnnualRenewalRecap } from "./renewal-recap.js";
 import {
   associateCheckoutLeadWithRecovery,
   getVisitorRecoveryStatus,
@@ -410,6 +430,17 @@ export function createApp(deps: AppDeps) {
   seoStore.pruneBotHits(90);
   try {
     refreshAllTelemetryTruthCache(seoStore);
+    const savedOverrides =
+      seoStore.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
+    for (const [slug, ov] of Object.entries(savedOverrides)) {
+      if (ov && ov.status === "approved") {
+        setApprovedIntentGapSeoOverride(slug, {
+          title: ov.title || undefined,
+          metaDescription: ov.meta_description || undefined,
+          approvedAt: ov.approved_at || undefined,
+        });
+      }
+    }
   } catch {}
   let botHitsSincePrune = 0;
   const recentBotHitMap = new Map<string, number>();
@@ -709,7 +740,24 @@ export function createApp(deps: AppDeps) {
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
   app.get("/safe-to-delete", (c) => {
     const q = c.req.query("q") || c.req.query("path") || "";
-    return c.html(renderSafeToDeletePageHtml(q));
+    const visitorKey =
+      c.req.query("visitor_id") ||
+      getCookie(c, "sweepr_attr_id") ||
+      clientIp(c) ||
+      "anon";
+    return c.html(renderSafeToDeletePageHtml(q, visitorKey));
+  });
+  app.get("/tools", (c) => c.html(renderTransactionalToolsHub()));
+  app.get("/tools/:slug", (c) => {
+    const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const tool = getTransactionalToolBySlug(slug);
+    if (!tool) return c.notFound();
+    const visitorKey =
+      c.req.query("visitor_id") ||
+      getCookie(c, "sweepr_attr_id") ||
+      clientIp(c) ||
+      "anon";
+    return c.html(renderTransactionalToolPage(tool, visitorKey));
   });
   app.post("/api/safe-to-delete/check", async (c) => {
     const body = await c.req.json().catch(() => ({}));
@@ -3738,6 +3786,68 @@ export function createApp(deps: AppDeps) {
     });
   });
 
+  // 3c-2. A6 Step 4: Switch to Monthly Plan instead of Cancelling (Cancel-Save Downsell)
+  app.post("/api/portal/switch-to-monthly", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
+      return c.json({ error: "forbidden_origin" }, 403);
+    }
+    const accountId = await sessionAccountId(c);
+    if (!accountId) return c.json({ error: "unauthorized" }, 401);
+    const account = repo.accountById(accountId);
+    if (!account) return c.json({ error: "account_not_found" }, 404);
+
+    const ent = repo.entitlement(accountId);
+    if (!ent || (ent.status !== "active" && ent.status !== "trialing" && ent.status !== "past_due")) {
+      return c.json({ error: "No active subscription found." }, 400);
+    }
+
+    if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
+      try {
+        await stripe.subscriptions.update(ent.stripe_subscription_id, {
+          cancel_at_period_end: false,
+          metadata: {
+            plan: "monthly",
+            switched_from: ent.plan || "annual",
+            cancel_save_flow: "switch_to_monthly",
+          },
+        });
+      } catch (err: any) {
+        console.warn("[portal] stripe switch-to-monthly warning:", err?.message || err);
+      }
+    }
+
+    const updatedPeriodEnd = ent.current_period_end ?? now() + 30 * 86400;
+    repo.upsertEntitlement({
+      ...ent,
+      plan: "monthly",
+      current_period_end: updatedPeriodEnd,
+      cancel_at_period_end: 0,
+    });
+
+    repo.addActivity({
+      account_id: account.id,
+      type: "switched_to_monthly_save",
+      title: "Customer Switched to Monthly (Cancel-Save)",
+      description: `Switched from ${ent.plan || "annual"} to flexible Monthly billing instead of cancelling`,
+      actor: "customer",
+      metadata: { previous_plan: ent.plan || "annual", new_plan: "monthly" },
+    });
+
+    repo.recordAnalyticsEvent({
+      event_name: "switched_to_monthly_save",
+      platform: "windows",
+      account_id: account.id,
+      metadata: { previous_plan: ent.plan || "annual", new_plan: "monthly" },
+    });
+
+    return c.json({
+      ok: true,
+      plan: "monthly",
+      cancel_at_period_end: false,
+      current_period_end: updatedPeriodEnd,
+    });
+  });
+
   // 3d. Update Billing Information (Name & Address)
   app.post("/api/portal/billing-info", async (c) => {
     if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) {
@@ -5797,6 +5907,10 @@ export function createApp(deps: AppDeps) {
     "smartscreen_recovery_email_sent",
     "smartscreen_recovery_completed",
     "safe_to_delete_audit",
+    "experiment_exposure",
+    "experiment_conversion",
+    "annual_renewal_recap_sent",
+    "switched_to_monthly_save",
   ]);
   let lastCrashEmailSentAt = 0;
   app.post("/v1/telemetry/crash", async (c) => {
@@ -5918,6 +6032,80 @@ export function createApp(deps: AppDeps) {
       sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
     const status = await getVisitorRecoveryStatus(repo, attrId, now());
     return c.json(status);
+  });
+
+  // Action 3.1: A/B Experiment Assignment & Exposure Tracking
+  const handleExperimentAssign = async (c: Context) => {
+    const body = c.req.method === "POST" ? await c.req.json().catch(() => ({})) : {};
+    const visitorKey =
+      String(
+        body?.visitor_id ||
+          c.req.query("visitor_id") ||
+          body?.attribution_id ||
+          c.req.query("attribution_id") ||
+          getCookie(c, "sweepr_attr_id") ||
+          clientIp(c) ||
+          "anon"
+      ).trim() || "anon";
+
+    const recordExposure = body?.record_exposure !== false && c.req.query("record_exposure") !== "0";
+    const assignments: Record<string, { variant: "A" | "B"; label: string; copy: string }> = {};
+
+    for (const exp of Object.values(ACTIVE_EXPERIMENTS)) {
+      const variant = assignExperimentVariant(exp.id, visitorKey);
+      assignments[exp.id] = {
+        variant,
+        label: exp.variants[variant].label,
+        copy: exp.variants[variant].copy,
+      };
+      if (recordExposure) {
+        repo.recordAnalyticsEvent({
+          event_name: "experiment_exposure",
+          platform: "windows",
+          metadata: {
+            experiment: exp.id,
+            variant,
+            visitor_key: visitorKey,
+          },
+        });
+      }
+    }
+
+    return c.json({
+      ok: true,
+      visitor_key: visitorKey,
+      assignments,
+    });
+  };
+  app.get("/api/experiments/assign", handleExperimentAssign);
+  app.post("/api/experiments/assign", handleExperimentAssign);
+
+  // Admin CRM Experiment Summary (Action 3.1)
+  app.get("/api/crm/experiments", (c) => {
+    return c.json(getExperimentSummary(repo));
+  });
+
+  // Action 3.4: A6 Annual-Renewal Value Recap CRM Preview & Trigger
+  app.get("/api/crm/renewal-recap/:accountId", (c) => {
+    const accountId = c.req.param("accountId");
+    const recap = getAccountStorageRecap(repo, accountId, now());
+    if (!recap) return c.json({ ok: false, error: "account_not_found" }, 404);
+    return c.json({ ok: true, recap });
+  });
+
+  app.post("/api/crm/renewal-recap/trigger", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const accountId = String(body?.account_id ?? "").trim();
+    if (!accountId) return c.json({ ok: false, error: "account_id_required" }, 400);
+    const res = await processAnnualRenewalRecap(repo, {
+      accountId,
+      invoiceId: typeof body.invoice_id === "string" ? body.invoice_id : undefined,
+      renewalTs: Number.isFinite(Number(body.renewal_ts)) ? Number(body.renewal_ts) : undefined,
+      nowSec: now(),
+      force: Boolean(body.force),
+    });
+    if (!res.ok) return c.json(res, 404);
+    return c.json(res);
   });
 
   app.post("/api/affiliate/click", async (c) => {

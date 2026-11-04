@@ -1,5 +1,6 @@
 import { getCleanItems, type CleanItem } from "./pseo.js";
 import { escapeHtml } from "./security.js";
+import { ACTIVE_EXPERIMENTS, assignExperimentVariant } from "./experiments.js";
 
 export interface SafeToDeleteMatchResult {
   input: string;
@@ -272,7 +273,9 @@ export function analyzeSafeToDeleteInput(rawInput: string): SafeToDeleteAnalysis
   };
 }
 
-export function renderSafeToDeletePageHtml(initialQuery = ""): string {
+export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon"): string {
+  const ctaVariant = assignExperimentVariant("checker_cta_copy_v1", visitorKey);
+  const ctaButtonCopy = ACTIVE_EXPERIMENTS.checker_cta_copy_v1.variants[ctaVariant].copy;
   const defaultSample =
     initialQuery.trim() ||
     [
@@ -531,9 +534,9 @@ export function renderSafeToDeletePageHtml(initialQuery = ""): string {
           SWEEPR Cleaner automatically skips files locked by active games or Windows processes, preserves all logins &amp; save files, and reclaims 10&ndash;65 GB in one click.
         </p>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;">
-        <a href="/order?plan=annual&utm_source=safe_to_delete_cta" class="btn-primary" style="background:#ffffff;color:#073825 !important;font-weight:800;">Unlock SWEEPR Pro (5 Devices) &rarr;</a>
-        <a href="/download?platform=windows" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);">Download Free Scanner (.exe)</a>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;" data-experiment-id="checker_cta_copy_v1" data-experiment-variant="${ctaVariant}">
+        <a href="/order?plan=annual&utm_source=safe_to_delete_cta&exp_var=${ctaVariant}" id="checkerMainProCta" class="btn-primary" style="background:#ffffff;color:#073825 !important;font-weight:800;" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual'})">${escapeHtml(ctaButtonCopy)}</a>
+        <a href="/download?platform=windows" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
       </div>
     </div>
 

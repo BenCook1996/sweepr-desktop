@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import type { EntStatus, Repo } from "./db.js";
 import { syncToCentralCrm } from "./crm-sync.js";
+import { processAnnualRenewalRecap } from "./renewal-recap.js";
 
 // Stripe moved some fields between API versions (e.g. current_period_end moved
 // onto subscription items; invoice.subscription moved under invoice.parent).
@@ -411,6 +412,28 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     case "customer.subscription.trial_will_end": {
       const sub = event.data.object as Stripe.Subscription;
       await sendRenewalReminder(sub);
+      break;
+    }
+    case "invoice.upcoming": {
+      const inv = event.data.object as Stripe.Invoice;
+      const custId = idOf(inv.customer as any);
+      const custEmail =
+        typeof (inv as any).customer_email === "string"
+          ? (inv as any).customer_email.trim().toLowerCase()
+          : "";
+      const account =
+        (custId ? repo.accountByCustomer(custId) : undefined) ||
+        (custEmail ? repo.accountByEmail(custEmail) : undefined);
+      if (account) {
+        const renewalTs =
+          Number((inv as any).next_payment_attempt || (inv as any).period_end || 0) ||
+          Math.floor(Date.now() / 1000) + 14 * 86400;
+        await processAnnualRenewalRecap(repo, {
+          accountId: account.id,
+          invoiceId: inv.id || "inv_upcoming",
+          renewalTs,
+        }).catch(() => {});
+      }
       break;
     }
     case "charge.refunded": {

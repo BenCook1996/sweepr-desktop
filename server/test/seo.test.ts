@@ -1306,6 +1306,168 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   );
 });
 
+test("Phase 2 & 3 Builds: Action 2.7 (10 Transactional Tool Pages), Action 2.2 (A2 One-Click Approve), Action 3.1 (A/B Experiments) & Action 3.4 (A6 Annual Renewal Recap)", async () => {
+  const { app, get, post } = setup();
+
+  // --- Action 2.7: 10 App-Specific Transactional Cleaner Tool Pages (/tools & /tools/:slug) ---
+  const hubRes = await app.request("/tools");
+  assert.equal(hubRes.status, 200);
+  const hubHtml = await hubRes.text();
+
+  const toolSlugs = [
+    "discord-cache-cleaner",
+    "steam-cache-cleaner",
+    "logitech-ghub-cleaner",
+    "elgato-streamdeck-cleaner",
+    "valorant-logs-cleaner",
+    "nvidia-shader-cleaner",
+    "adobe-media-cache-cleaner",
+    "jetbrains-gradle-cleaner",
+    "windows-24h2-update-cleaner",
+    "ai-model-cache-cleaner",
+  ];
+
+  for (const slug of toolSlugs) {
+    assert.ok(hubHtml.includes(`/tools/${slug}`), `/tools hub links to /tools/${slug}`);
+    const tRes = await app.request(`/tools/${slug}`);
+    assert.equal(tRes.status, 200, `/tools/${slug} returns 200 OK`);
+    const tHtml = await tRes.text();
+    const parsed = parseHtml(tHtml);
+    const title = parsed.title ?? "";
+    const desc = parsed.metaDescription ?? "";
+    assert.ok(title.length >= 30 && title.length <= 60, `/tools/${slug} title length (${title.length}) in 30-60 chars`);
+    assert.ok(desc.length >= 70 && desc.length <= 160, `/tools/${slug} description length (${desc.length}) in 70-160 chars`);
+    assert.equal(parsed.jsonLdErrors, 0, `/tools/${slug} has valid JSON-LD`);
+    assert.deepEqual(parsed.merchantListingIssues, [], `/tools/${slug} has 0 GSC Merchant Listing issues`);
+    assert.ok(tHtml.includes('id="interactive-tool-auditor"'), `/tools/${slug} renders interactive path auditor`);
+  }
+
+  // --- Action 2.2: A2 Intent-Gap One-Click Approve & Microsoft Ads Export ---
+  const approveCtrRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    action_type: "ctr_rewrite",
+    decision: "approve",
+    slug: "vrchat-cache",
+    title: "VRChat Cache Folder: Safe to Delete? Free 10–30 GB Fast",
+    meta_description:
+      "Is %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer safe to delete? Yes—reclaim 10–30 GB of cached VRChat worlds & avatars in 1 click without sign-outs.",
+  });
+  assert.equal(approveCtrRes.status, 200);
+  const vrchatHtml = await (await app.request("/clean/app/vrchat-cache")).text();
+  const vrchatParsed = parseHtml(vrchatHtml);
+  assert.equal(
+    vrchatParsed.title,
+    "VRChat Cache Folder: Safe to Delete? Free 10–30 GB Fast",
+    "Approving a ctr_rewrite in A2 immediately updates the live pSEO page title"
+  );
+
+  const approveAdRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    action_type: "transactional_ad",
+    decision: "approve",
+    query: "discord cache cleaner",
+    max_cpc_gbp: 0.45,
+    target_url: "https://sweeprcleaner.com/tools/discord-cache-cleaner",
+  });
+  assert.equal(approveAdRes.status, 200);
+
+  const adsExportRes = await get("/api/crm/seo/gsc/intent-gap/ads-export");
+  assert.equal(adsExportRes.status, 200);
+  const adsExportJson = (await adsExportRes.json()) as any;
+  assert.equal(adsExportJson.approved_count, 1);
+  assert.ok(adsExportJson.csv.includes('"discord cache cleaner",Exact,0.45'));
+
+  const approveCommRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    action_type: "commercial_gap",
+    decision: "approve",
+    query: "ccleaner alternative windows 11",
+    target_url: "/vs/ccleaner",
+  });
+  assert.equal(approveCommRes.status, 200);
+
+  // --- Action 3.1: Conversion A/B Testing Engine ---
+  const assignRes = await app.request("/api/experiments/assign?visitor_id=vis_alpha_101");
+  assert.equal(assignRes.status, 200);
+  const assignJson = (await assignRes.json()) as any;
+  const assignedVariant = assignJson.assignments.checker_cta_copy_v1.variant;
+  assert.ok(assignedVariant === "A" || assignedVariant === "B");
+
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "experiment_conversion",
+      platform: "windows",
+      metadata: {
+        experiment: "checker_cta_copy_v1",
+        variant: assignedVariant,
+        action: "order_annual",
+      },
+    }),
+  });
+
+  const expSummaryRes = await get("/api/crm/experiments");
+  assert.equal(expSummaryRes.status, 200);
+  const expSummary = (await expSummaryRes.json()) as any;
+  const checkerExp = expSummary.experiments.find((e: any) => e.id === "checker_cta_copy_v1");
+  assert.ok(checkerExp, "checker_cta_copy_v1 is returned in /api/crm/experiments");
+  assert.equal(checkerExp.variants[assignedVariant].conversions, 1);
+  assert.equal(checkerExp.winning_variant, assignedVariant);
+
+  // --- Action 3.4: A6 Annual-Renewal Value Recap (Active vs Dormant Segmentation & Idempotency) ---
+  // Create an account and simulate scan + clean telemetry (18.5 GB reclaimed)
+  const acctRes = await app.request("/v1/accounts", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      device_id: "d".repeat(32),
+      device_type: "pc",
+      email: "annual.active@example.com",
+    }),
+  });
+  assert.equal(acctRes.status, 200);
+  const acctJson = (await acctRes.json()) as any;
+  const activeAccountId = acctJson.account_id;
+
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "scan_completed",
+      platform: "windows",
+      account_id: activeAccountId,
+      metadata: { total_bytes: 20 * 1024 * 1024 * 1024 },
+    }),
+  });
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "clean_completed",
+      platform: "windows",
+      account_id: activeAccountId,
+      metadata: { cleaned_bytes: 18.5 * 1024 * 1024 * 1024, files_removed: 4120 },
+    }),
+  });
+
+  const triggerRecapRes = await post("/api/crm/renewal-recap/trigger", {
+    account_id: activeAccountId,
+  });
+  assert.equal(triggerRecapRes.status, 200);
+  const triggerRecap = (await triggerRecapRes.json()) as any;
+  assert.equal(triggerRecap.skipped_duplicate, false);
+  assert.equal(triggerRecap.recap.segment, "active");
+  assert.equal(triggerRecap.recap.total_cleaned_gb, 18.5);
+  assert.ok(triggerRecap.subject.includes("You reclaimed 18.5 GB this year"));
+
+  // Second trigger within 25 days is skipped via idempotency guard
+  const dupRecapRes = await post("/api/crm/renewal-recap/trigger", {
+    account_id: activeAccountId,
+  });
+  assert.equal(dupRecapRes.status, 200);
+  const dupRecap = (await dupRecapRes.json()) as any;
+  assert.equal(dupRecap.skipped_duplicate, true);
+});
+
+
 
 
 

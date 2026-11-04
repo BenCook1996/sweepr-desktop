@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { setApprovedIntentGapSeoOverride } from "../pseo.js";
 import type { SeoStore } from "./store.js";
 
 export type SearchIntentType = "informational" | "navigational" | "commercial" | "transactional";
@@ -255,6 +256,7 @@ export function computeIntentGapReport(
 
       return {
         slug: item.slug,
+        category: item.category,
         path: item.path,
         url: item.url,
         clicks: item.clicks,
@@ -419,3 +421,173 @@ export function executeIntentGapAutomation(
     report,
   };
 }
+
+export interface ApproveIntentGapInput {
+  action_type: "ctr_rewrite" | "commercial_gap" | "transactional_ad";
+  decision?: "approve" | "reject";
+  slug?: string;
+  title?: string;
+  meta_description?: string;
+  query?: string;
+  target_url?: string;
+  max_cpc_gbp?: number;
+}
+
+export function approveIntentGapRecommendation(
+  store: SeoStore,
+  input: ApproveIntentGapInput
+) {
+  const decision = input.decision === "reject" ? "reject" : "approve";
+  const nowIso = new Date().toISOString();
+
+  if (input.action_type === "ctr_rewrite") {
+    const slug = String(input.slug || "").trim().toLowerCase();
+    if (!slug) {
+      return { ok: false, error: "slug_required" };
+    }
+    const existingOverrides =
+      store.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
+
+    if (decision === "reject") {
+      existingOverrides[slug] = {
+        slug,
+        status: "rejected",
+        updated_at: nowIso,
+      };
+      store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
+      return { ok: true, action_type: "ctr_rewrite", decision: "rejected", slug };
+    }
+
+    const title = String(input.title || "").trim();
+    const metaDescription = String(input.meta_description || "").trim();
+    if (title && (title.length < 30 || title.length > 60)) {
+      return { ok: false, error: "title_must_be_30_to_60_chars" };
+    }
+    if (metaDescription && (metaDescription.length < 70 || metaDescription.length > 160)) {
+      return { ok: false, error: "meta_description_must_be_70_to_160_chars" };
+    }
+
+    setApprovedIntentGapSeoOverride(slug, {
+      title: title || undefined,
+      metaDescription: metaDescription || undefined,
+      approvedAt: nowIso,
+    });
+
+    existingOverrides[slug] = {
+      slug,
+      status: "approved",
+      title: title || null,
+      meta_description: metaDescription || null,
+      approved_at: nowIso,
+    };
+    store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
+
+    // Record 14-day cooldown window in daily-seo-pages-state.json (non-fatal on read-only fs)
+    try {
+      if (existsSync(DAILY_STATE_PATH)) {
+        const state = readDailyState();
+        state.ctrOptimizedAt = state.ctrOptimizedAt || {};
+        state.ctrOptimizedAt[slug] = nowIso.slice(0, 10);
+        writeFileSync(DAILY_STATE_PATH, JSON.stringify(state, null, 2) + "\n", "utf8");
+      }
+    } catch {}
+
+    return {
+      ok: true,
+      action_type: "ctr_rewrite",
+      decision: "approved",
+      slug,
+      applied_override: existingOverrides[slug],
+    };
+  }
+
+  if (input.action_type === "transactional_ad") {
+    const query = String(input.query || "").trim().toLowerCase();
+    if (!query) {
+      return { ok: false, error: "query_required" };
+    }
+    const existingAds =
+      store.getSetting<Array<any>>("intent_gap_approved_ads", []) ?? [];
+    const filtered = existingAds.filter((a) => a.query !== query);
+
+    if (decision === "approve") {
+      const entry = {
+        query,
+        exact_match_keyword: `[${query}]`,
+        phrase_match_keyword: `"${query}"`,
+        max_cpc_gbp: Number.isFinite(Number(input.max_cpc_gbp)) ? Number(input.max_cpc_gbp) : 0.45,
+        final_url:
+          input.target_url ||
+          `https://sweeprcleaner.com/tools?utm_source=bing&utm_medium=cpc&utm_campaign=gsc_intent_gap`,
+        microsoft_ads_customer_id: "255115583",
+        status: "approved",
+        approved_at: nowIso,
+      };
+      filtered.push(entry);
+      store.setSetting("intent_gap_approved_ads", filtered);
+      return {
+        ok: true,
+        action_type: "transactional_ad",
+        decision: "approved",
+        ad_candidate: entry,
+        total_approved_ads: filtered.length,
+      };
+    } else {
+      store.setSetting("intent_gap_approved_ads", filtered);
+      return {
+        ok: true,
+        action_type: "transactional_ad",
+        decision: "rejected",
+        query,
+      };
+    }
+  }
+
+  if (input.action_type === "commercial_gap") {
+    const query = String(input.query || "").trim();
+    if (!query) {
+      return { ok: false, error: "query_required" };
+    }
+    const existingComm =
+      store.getSetting<Array<any>>("intent_gap_approved_commercial", []) ?? [];
+    const entry = {
+      query,
+      target_url: input.target_url || "/vs/ccleaner",
+      status: decision === "approve" ? "approved" : "rejected",
+      updated_at: nowIso,
+    };
+    const next = existingComm.filter((c) => c.query !== query);
+    next.push(entry);
+    store.setSetting("intent_gap_approved_commercial", next);
+    return {
+      ok: true,
+      action_type: "commercial_gap",
+      decision: entry.status,
+      item: entry,
+    };
+  }
+
+  return { ok: false, error: "unsupported_action_type" };
+}
+
+export function getApprovedIntentGapAdsExport(store: SeoStore) {
+  const ads = store.getSetting<Array<any>>("intent_gap_approved_ads", []) ?? [];
+  const csvHeader = "Type,Status,Campaign,Ad Group,Keyword,Match Type,Bid,Final URL";
+  const csvRows: string[] = [csvHeader];
+  for (const ad of ads) {
+    if (ad.status !== "approved") continue;
+    const safeKw = String(ad.query || "").replace(/"/g, '""');
+    const safeUrl = String(ad.final_url || "https://sweeprcleaner.com/pricing").replace(/"/g, '""');
+    const bid = Number(ad.max_cpc_gbp || 0.45).toFixed(2);
+    csvRows.push(`Keyword,Active,"SWEEPR Transactional Search","GSC Intent Gap","${safeKw}",Exact,${bid},"${safeUrl}"`);
+    csvRows.push(`Keyword,Active,"SWEEPR Transactional Search","GSC Intent Gap","${safeKw}",Phrase,${bid},"${safeUrl}"`);
+  }
+  return {
+    ok: true,
+    microsoft_ads_customer_id: "255115583",
+    approved_count: ads.length,
+    approved_ads: ads,
+    csv: csvRows.join("\n"),
+  };
+}
+

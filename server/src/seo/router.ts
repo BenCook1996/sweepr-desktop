@@ -23,8 +23,10 @@ import {
   type SeoProviderConfig,
 } from "./google.js";
 import {
+  approveIntentGapRecommendation,
   computeIntentGapReport,
   executeIntentGapAutomation,
+  getApprovedIntentGapAdsExport,
   loadVerifiedGscSeedRows,
 } from "./intent-gap.js";
 import {
@@ -515,6 +517,32 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       persistState: body.persist_state !== false,
     });
     return c.json(result);
+  });
+
+  router.post("/gsc/intent-gap/approve", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = approveIntentGapRecommendation(store, {
+      action_type: body.action_type,
+      decision: body.decision,
+      slug: body.slug,
+      title: body.title,
+      meta_description: body.meta_description,
+      query: body.query,
+      target_url: body.target_url,
+      max_cpc_gbp: body.max_cpc_gbp !== undefined ? Number(body.max_cpc_gbp) : undefined,
+    });
+    if (!res.ok) return c.json(res, 400);
+    return c.json(res);
+  });
+
+  router.get("/gsc/intent-gap/ads-export", (c) => {
+    const exportData = getApprovedIntentGapAdsExport(store);
+    if (c.req.query("format") === "csv") {
+      c.header("Content-Type", "text/csv; charset=utf-8");
+      c.header("Content-Disposition", 'attachment; filename="sweepr-microsoft-ads-intent-gap.csv"');
+      return c.body(exportData.csv);
+    }
+    return c.json(exportData);
   });
 
   router.post("/gsc/sync", async (c) => {

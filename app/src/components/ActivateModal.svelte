@@ -10,12 +10,37 @@
 
   let email = $state("");
   let selectedPlan = $state<PlanId>("annual");
+  let experimentVariant = $state<"A" | "B">("A");
   let lastTrackedOpen = false;
 
   $effect(() => {
     if (open && !lastTrackedOpen) {
       lastTrackedOpen = true;
-      trackAppEvent("paywall_viewed", { plan: selectedPlan });
+      api
+        .appInfo()
+        .then((info) => {
+          const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+          const uid = encodeURIComponent(info.machine_id || "desktop");
+          return fetch(`${base}/api/experiments/assign?experiment=paywall_anchor_v1&uid=${uid}`);
+        })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((exp) => {
+          if (exp?.variant === "B") {
+            experimentVariant = "B";
+            selectedPlan = "monthly";
+          } else {
+            experimentVariant = "A";
+            selectedPlan = "annual";
+          }
+          trackAppEvent("paywall_viewed", {
+            plan: selectedPlan,
+            experiment_id: "paywall_anchor_v1",
+            variant: experimentVariant,
+          });
+        })
+        .catch(() => {
+          trackAppEvent("paywall_viewed", { plan: selectedPlan, experiment_id: "paywall_anchor_v1", variant: "A" });
+        });
     } else if (!open && lastTrackedOpen) {
       lastTrackedOpen = false;
     }
