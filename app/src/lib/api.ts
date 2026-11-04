@@ -171,6 +171,59 @@ export const requestActivation = () => window.dispatchEvent(new CustomEvent(ACTI
 /** Ask the Home screen to open its "Recently Cleaned / Undo" drawer (used by the quick rail). */
 export const OPEN_UNDO_EVENT = "sweepr-open-undo";
 
+let cachedAppInfoPromise: Promise<AppInfo> | null = null;
+
+function getTelemetryClientId(): string {
+  try {
+    const key = "sweepr_telemetry_client_id";
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = `dt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return "dt_anon";
+  }
+}
+
+/**
+ * Privacy-friendly funnel & scan telemetry event dispatcher (`POST /v1/telemetry/event`).
+ * Non-blocking and never throws.
+ */
+export function trackAppEvent(eventName: string, metadata?: Record<string, unknown>): void {
+  try {
+    if (!cachedAppInfoPromise) {
+      cachedAppInfoPromise = invoke<AppInfo>("app_info").catch(() => ({
+        version: "0.1.0",
+        platform: "windows",
+        api_url: "https://sweeprcleaner.com",
+      }));
+    }
+    const clientId = getTelemetryClientId();
+    void cachedAppInfoPromise.then((info) => {
+      const base = (info?.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
+      const platform = (info?.platform || "windows").toLowerCase();
+      return fetch(`${base}/v1/telemetry/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event_name: eventName,
+          platform,
+          attribution_id: clientId,
+          metadata: {
+            app_version: info?.version || "0.1.0",
+            client_id: clientId,
+            ...(metadata ?? {}),
+          },
+        }),
+      }).catch(() => {});
+    });
+  } catch {
+    // Ignore telemetry network errors
+  }
+}
+
 export const api = {
   fetchApps: () => invoke<InstalledApp[]>("fetch_apps"),
   /** Only the app id is sent; Rust looks up the uninstaller in the registry. */

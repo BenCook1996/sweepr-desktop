@@ -29,6 +29,7 @@ import { cleanItems, getCleanItems, getCleanItemBySlug, getPseoRedirectTarget, r
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
+import { ingestScanCompletedTelemetry, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
 import { analyzeSafeToDeleteInput, renderSafeToDeletePageHtml } from "./safe-to-delete.js";
 import {
   associateCheckoutLeadWithRecovery,
@@ -407,6 +408,9 @@ export function createApp(deps: AppDeps) {
   // ---------- SEO Intelligence suite ----------
   const seoStore = new SeoStore(repo.db);
   seoStore.pruneBotHits(90);
+  try {
+    refreshAllTelemetryTruthCache(seoStore);
+  } catch {}
   let botHitsSincePrune = 0;
   const recentBotHitMap = new Map<string, number>();
   // Record claimed search-engine / AI-crawler visits (by User-Agent) for the CRM "Crawlers & AI" view.
@@ -4658,6 +4662,18 @@ export function createApp(deps: AppDeps) {
         email,
         source: "v1_accounts",
         nowSec: now(),
+        allowRecentWindowsFallback: deviceType === "pc",
+      });
+      repo.recordAnalyticsEvent({
+        event_name: "app_installed",
+        platform: deviceType === "mobile" ? "android" : "windows",
+        account_id: accountId,
+        metadata: {
+          device_id: deviceId,
+          device_type: deviceType,
+          country: localizedPricing.country,
+          source: "v1_accounts",
+        },
       });
     } catch {}
     syncToCentralCrm("/v1/telemetry/event", {
@@ -5852,6 +5868,14 @@ export function createApp(deps: AppDeps) {
           accountId: resolvedAccountId,
           email: resolvedEmail,
           source: eventName,
+          nowSec: now(),
+          allowRecentWindowsFallback: String(body.platform || "windows").toLowerCase() === "windows",
+        });
+      } else if (eventName === "scan_completed") {
+        ingestScanCompletedTelemetry(seoStore, {
+          platform: body.platform || "windows",
+          ruleBytes: body?.metadata?.rule_bytes ?? body?.rule_bytes ?? null,
+          samples: body?.metadata?.samples ?? body?.samples ?? null,
           nowSec: now(),
         });
       } else if (eventName === "smartscreen_recovery_shown") {

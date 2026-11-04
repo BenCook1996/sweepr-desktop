@@ -43,6 +43,11 @@ import {
   readCurrentReleaseVersion,
   upsertDirectoryListing,
 } from "./listings.js";
+import {
+  ingestScanCompletedTelemetry,
+  refreshAllTelemetryTruthCache,
+  TELEMETRY_TRUTH_MIN_SAMPLES,
+} from "./telemetry-truth.js";
 import type { SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -885,6 +890,34 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       customHtmlByPlatform: body.mock_html && typeof body.mock_html === "object" ? body.mock_html : undefined,
     });
     return c.json({ ok: true, ...res });
+  });
+
+  // ---------------- A1: Telemetry -> Content Truth Loop ----------------
+  router.get("/telemetry-truth", (c) => {
+    const summaries = refreshAllTelemetryTruthCache(store);
+    const qualified = summaries.filter((s) => s.qualifies_k_anonymity);
+    return c.json({
+      ok: true,
+      k_anonymity_floor: TELEMETRY_TRUTH_MIN_SAMPLES,
+      total_slugs_with_samples: summaries.length,
+      qualified_slugs_count: qualified.length,
+      qualified_slugs: qualified,
+      all_slugs: summaries,
+    });
+  });
+
+  router.post("/telemetry-truth/ingest", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = ingestScanCompletedTelemetry(store, {
+      platform: typeof body.platform === "string" ? body.platform : "windows",
+      ruleBytes: body.rule_bytes && typeof body.rule_bytes === "object" ? body.rule_bytes : null,
+      samples: Array.isArray(body.samples) ? body.samples : null,
+    });
+    return c.json({
+      ok: true,
+      k_anonymity_floor: TELEMETRY_TRUTH_MIN_SAMPLES,
+      ...res,
+    });
   });
 
   return router;

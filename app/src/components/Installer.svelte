@@ -1,6 +1,6 @@
 <script lang="ts">
   import { openUrl } from "@tauri-apps/plugin-opener";
-  import { api } from "../lib/api";
+  import { api, trackAppEvent } from "../lib/api";
 
   type Step = "welcome" | "options" | "installing";
   let {
@@ -54,6 +54,12 @@
           } catch {
             // Continue even if shortcut helper fails
           }
+          trackAppEvent("app_installed", {
+            source: "installer_ui",
+            desktop_shortcut: desktopShortcut,
+            start_menu_shortcut: startMenuShortcut,
+            launch_on_startup: launchOnStartup,
+          });
           if (onComplete) onComplete();
         }, 450);
       }

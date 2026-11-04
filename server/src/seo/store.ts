@@ -354,6 +354,14 @@ export function ensureSeoSchema(db: DatabaseSync) {
       last_checked_at INTEGER,
       updated_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS seo_telemetry_scan_samples (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL,
+      bytes INTEGER NOT NULL,
+      platform TEXT NOT NULL DEFAULT 'windows',
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_seo_telemetry_scan_slug ON seo_telemetry_scan_samples(slug, created_at);
   `);
 
   // Idempotent column migrations for databases created under Phase 1/2.

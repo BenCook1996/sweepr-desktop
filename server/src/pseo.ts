@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { getActiveTelemetryTruthForSlug } from "./seo/telemetry-truth.js";
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -61,6 +62,15 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
   if (slug === "nvidia-shader-cache" || slug === "nvidia-dx-cache") {
     return "/clean/app/nvidia-dxcache";
   }
+  if (slug === "vivaldi-cache") {
+    return "/clean/app/vivaldi-browser-cache";
+  }
+  if (slug === "intellij-idea-caches" || slug === "intellij-cache") {
+    return "/clean/app/jetbrains-intellij-cache";
+  }
+  if (slug === "elgato-stream-deck-cache") {
+    return "/clean/app/elgato-streamdeck-cache";
+  }
   // Cross-category canonical redirect (e.g. /clean/folder/<slug> when item is /clean/app/<slug>)
   const otherCategory = category === "app" ? "folder" : "app";
   const crossMatch = cleanItemsMap.get(`${otherCategory}:${slug}`);
@@ -99,13 +109,19 @@ export function getCleanItems(): CleanItem[] {
 }
 
 const CUSTOM_GSC_TITLES: Record<string, string> = {
-  "steam-depotcache": "Steam depotcache Folder: Safe to Delete? | SWEEPR Cleaner",
+  "steam-depotcache": "What Is Steam depotcache? Safe to Delete? (2026 Guide)",
   "programdata-package-cache": "ProgramData Package Cache: Safe to Delete? (2026) | SWEEPR",
-  "riot-client-logs": "Clear VALORANT & Riot Client Cache Safely (2026) | SWEEPR",
-  "logitech-ghub-installer-cache": "LGHUB Cache & Depots: Safe to Delete? (2026) | SWEEPR",
-  "logitech-options-plus-cache": "Logi Options+ Cache & Depots: Safe to Delete? | SWEEPR",
-  "elgato-streamdeck-cache": "Elgato Stream Deck Cache & Logs: Safe to Delete? | SWEEPR",
-  "windows-livekernelreports": "C:\\Windows\\LiveKernelReports: Safe to Delete? | SWEEPR",
+  "riot-client-logs": "How to Clear Valorant & Riot Client Cache Files (2026)",
+  "logitech-ghub-installer-cache": "LGHUB Depots & Media Blob Cache: Safe to Delete? (2026)",
+  "logitech-options-plus-cache": "Logi Options+ Depots & Media Blob Cache: Safe to Delete?",
+  "elgato-streamdeck-cache": "How to Clean Stream Deck (App Cache & LCD Keys Guide)",
+  "windows-livekernelreports": "LiveKernelReports WATCHDOG Dumps: Safe to Delete? (2026)",
+  "vivaldi-browser-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
+  "vivaldi-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
+  "jetbrains-intellij-cache": "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
+  "intellij-idea-caches": "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
+  "dolphin-emulator-cache": "Dolphin Emulator Shader & Media Blob Cache Guide (2026)",
+  "zen-browser-cache": "Clear Zen Browser Cache & Media Blob Storage (2026)",
   "opera-gx-cache": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
   "medal-tv-cache": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
   "capcut-desktop-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
@@ -134,26 +150,37 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "chrome-gpu-shader-cache": "Chrome GPUCache & GrShaderCache: Safe to Delete? | SWEEPR",
   "amd-shader-cache": "AMD DxCache & VkCache Folder: Safe to Delete? | SWEEPR",
   "vrchat-cache": "How to Clear VRChat Cache Folder Safely (2026) | SWEEPR",
-  "intellij-idea-caches": "JetBrains & IntelliJ IDEA Caches: Safe to Delete? | SWEEPR",
   "comfyui-temp-output-cache": "ComfyUI Temp & Output Cache Cleanup Guide (2026) | SWEEPR",
   "lm-studio-models-cache": "LM Studio Models & GGUF Cache: Safe to Delete? | SWEEPR",
 };
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "steam-depotcache":
-    "Yes, Steam depotcache is 100% safe to delete when no updates are paused. Reclaim 2–20 GB in C:\\Program Files (x86)\\Steam\\depotcache manually or in 1 click.",
+    "What is the Steam depotcache folder and is it safe to delete? Yes—reclaim 2–20 GB of orphaned .csd/.csm chunks in C:\\Program Files (x86)\\Steam\\depotcache.",
   "programdata-package-cache":
     "Can you delete C:\\ProgramData\\Package Cache? Learn which orphaned Visual C++ & MSI caches are safe to remove to free 3–18 GB without breaking uninstallers.",
   "riot-client-logs":
-    "How to clear VALORANT & Riot Client cache safely on Windows 10/11. Reclaim 1–6.5 GB from %LocalAppData%\\VALORANT\\Saved\\Logs while keeping all settings safe.",
+    "How to clear Valorant cache files and Riot Client logs on Windows 10/11. Safely delete 1–6.5 GB in %LocalAppData%\\VALORANT\\Saved\\Logs without FPS drops.",
   "logitech-ghub-installer-cache":
-    "Is C:\\ProgramData\\LGHUB\\depots safe to delete? Clear 1–6 GB of Logitech G HUB installer cache and crash dumps while keeping your mouse DPI & macros intact.",
+    "Is C:\\ProgramData\\LGHUB\\depots and LGHUB Media Blob Storage safe to delete? Clear 1–6 GB of Logitech G HUB cache while keeping mouse DPI & macros intact.",
   "logitech-options-plus-cache":
-    "Is C:\\ProgramData\\Logishrd\\LogiOptionsPlus\\depots safe to delete? Reclaim 1–4.5 GB of Logitech Options+ installer depots while keeping MX Master mappings safe.",
+    "Is Logi Options+ depots and Media Blob Storage safe to delete? Reclaim 1–4.5 GB in C:\\ProgramData\\Logishrd\\LogiOptionsPlus while keeping button mappings.",
   "elgato-streamdeck-cache":
-    "How to clear Elgato Stream Deck cache and rotating logs on Windows 10/11. Safely delete 500 MB–3.5 GB in %AppData%\\Elgato\\StreamDeck without losing profiles.",
+    "How to clean Elgato Stream Deck: safely clear 500 MB–3.5 GB in %AppData%\\Elgato\\StreamDeck cache & logs, plus how to clean physical LCD keys without damage.",
   "windows-livekernelreports":
-    "Is C:\\Windows\\LiveKernelReports safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU crash dump (.dmp) files on Windows 10/11 safely in 1 click.",
+    "Is C:\\Windows\\LiveKernelReports\\WATCHDOG safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU timeout minidump (.dmp) files on Windows 10 & 11.",
+  "vivaldi-browser-cache":
+    "How to clear Vivaldi WebGPU DawnCache, GPUCache, and browser cache on Windows 10/11. Reclaim 1–6 GB in %LocalAppData%\\Vivaldi\\User Data without sign-outs.",
+  "vivaldi-cache":
+    "How to clear Vivaldi WebGPU DawnCache, GPUCache, and browser cache on Windows 10/11. Reclaim 1–6 GB in %LocalAppData%\\Vivaldi\\User Data without sign-outs.",
+  "jetbrains-intellij-cache":
+    "How to clean IntelliJ IDEA launcher caches, old JVM indexes, and logs in %LocalAppData%\\JetBrains on Windows 10/11 to reclaim 5–25 GB safely in 1 click.",
+  "intellij-idea-caches":
+    "How to clean IntelliJ IDEA launcher caches, old JVM indexes, and logs in %LocalAppData%\\JetBrains on Windows 10/11 to reclaim 5–25 GB safely in 1 click.",
+  "dolphin-emulator-cache":
+    "How to clear Dolphin Emulator ShaderCache, Ubershaders, and Media Blob Storage on Windows 10/11. Safely free 500 MB–6 GB without losing GameCube/Wii saves.",
+  "zen-browser-cache":
+    "How to clear Zen Browser cache2, Media Blob Storage, and Service Worker storage on Windows 10/11. Reclaim 1–6 GB without losing Workspaces or saved logins.",
   "opera-gx-cache":
     "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
   "medal-tv-cache":
@@ -210,8 +237,6 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "Is %LocalAppData%\\AMD\\DxCache and VkCache safe to delete? Clear 2–12 GB of compiled Radeon DirectX & Vulkan shader binaries to fix disk bloat & stutter.",
   "vrchat-cache":
     "Is %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer safe to delete? Reclaim 10–30 GB of cached avatar and world bundles without losing your account.",
-  "intellij-idea-caches":
-    "How to clear %LocalAppData%\\JetBrains caches and old IDE version indexes on Windows 10/11. Reclaim 5–25 GB of stale JVM & Gradle index storage safely.",
   "comfyui-temp-output-cache":
     "How to clear ComfyUI temp preview tensors, custom_nodes pip cache, and intermediate diffusion latents on Windows 11 to reclaim 5–40 GB of NVMe space.",
   "lm-studio-models-cache":
@@ -458,10 +483,115 @@ export function getAppFamilyKey(slug: string): string {
 
 export function describeCacheVariantRole(slug: string): string {
   if (slug.endsWith("-installer-cache")) return "Downloaded Update Depots & Patch Staging";
-  if (slug.endsWith("-shader-cache")) return "DirectX 12 / Vulkan / Dawn GPU Shaders";
+  if (slug.endsWith("-shader-cache") || slug.endsWith("-gpu-shader-cache")) return "DirectX 12 / Vulkan / Dawn GPU Shaders";
   if (slug.endsWith("-webcache")) return "Embedded Chromium (CEF) Browser Cache";
-  if (slug.endsWith("-logs-crashes") || slug.endsWith("-logs")) return "Diagnostic Logs & Crashpad Minidumps (.dmp)";
+  if (slug.endsWith("-service-worker-cachestorage")) return "Service Worker CacheStorage & Offline PWA Bundles";
+  if (slug.endsWith("-media-blob-storage")) return "Media Blob Storage & IndexedDB LevelDB Assets";
+  if (slug.endsWith("-code-bytecode-cache")) return "V8 Compiled JavaScript & WebAssembly Code/Bytecode Cache";
+  if (slug.endsWith("-logs-crashes") || slug.endsWith("-logs") || slug.endsWith("-crashpad-dump-logs"))
+    return "Diagnostic Logs & Crashpad Minidumps (.dmp)";
   return "Primary Application & System Storage Cache";
+}
+
+export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
+  slug: string;
+  label: string;
+  subPath: string;
+  role: string;
+}> {
+  const canonicalTarget = `/clean/${item.category}/${item.slug}`;
+  const matchedSlugs: string[] = [];
+  for (const [key, target] of Object.entries(pseoRedirectsData)) {
+    if (target === canonicalTarget) {
+      const idx = key.indexOf(":");
+      const s = idx >= 0 ? key.slice(idx + 1) : key;
+      matchedSlugs.push(s);
+    }
+  }
+  const basePath = item.path.split(/\s+(?:or|and|&)\s+/i)[0].trim().replace(/\\+$/, "");
+  const variants: Array<{ slug: string; label: string; subPath: string; role: string }> = [];
+  const seenLabels = new Set<string>();
+
+  const addVariant = (slug: string, label: string, subPath: string, role: string) => {
+    if (seenLabels.has(label)) return;
+    seenLabels.add(label);
+    variants.push({ slug, label, subPath, role });
+  };
+
+  for (const s of matchedSlugs) {
+    if (s.endsWith("-media-blob-storage")) {
+      addVariant(
+        s,
+        "Media Blob Storage",
+        `${basePath}\\blob_storage & IndexedDB`,
+        "Cached video/audio media blobs, high-DPI icon previews, and IndexedDB binary attachments"
+      );
+    } else if (s.endsWith("-service-worker-cachestorage")) {
+      addVariant(
+        s,
+        "Service Worker CacheStorage",
+        `${basePath}\\Service Worker\\CacheStorage`,
+        "Offline web bundles, background-sync assets, and embedded CEF/WebView2 storefront scripts"
+      );
+    } else if (s.endsWith("-code-bytecode-cache")) {
+      addVariant(
+        s,
+        "Code & Bytecode Cache",
+        `${basePath}\\Code Cache\\js & wasm`,
+        "Precompiled V8 JavaScript bytecode and WebAssembly execution caches"
+      );
+    } else if (s.endsWith("-gpu-shader-cache")) {
+      addVariant(
+        s,
+        "GPU Shader Cache",
+        `${basePath}\\GPUCache, GrShaderCache & DawnCache`,
+        "Hardware-accelerated Skia, ANGLE, DirectX, and WebGPU Dawn compiled shader pipelines"
+      );
+    } else if (s.endsWith("-crashpad-dump-logs")) {
+      addVariant(
+        s,
+        "Crashpad Dump Logs",
+        `${basePath}\\Crashpad\\reports & Logs`,
+        "Post-mortem process minidumps (.dmp) and rotating session diagnostic telemetry"
+      );
+    }
+  }
+
+  if (item.category === "app" && variants.length === 0) {
+    const prefix = getAppFamilyKey(item.slug);
+    addVariant(
+      `${prefix}-media-blob-storage`,
+      "Media Blob Storage",
+      `${basePath}\\blob_storage & IndexedDB`,
+      "Cached media blobs, thumbnail previews, and IndexedDB binary objects"
+    );
+    addVariant(
+      `${prefix}-service-worker-cachestorage`,
+      "Service Worker CacheStorage",
+      `${basePath}\\Service Worker\\CacheStorage`,
+      "Offline PWA bundles and embedded Chromium Service Worker caches"
+    );
+    addVariant(
+      `${prefix}-code-bytecode-cache`,
+      "Code & Bytecode Cache",
+      `${basePath}\\Code Cache\\js & wasm`,
+      "Precompiled V8 JavaScript and WebAssembly bytecode"
+    );
+    addVariant(
+      `${prefix}-gpu-shader-cache`,
+      "GPU Shader Cache",
+      `${basePath}\\GPUCache & DawnCache`,
+      "Compiled DirectX / Vulkan / WebGPU UI shader pipelines"
+    );
+    addVariant(
+      `${prefix}-crashpad-dump-logs`,
+      "Crashpad Dump Logs",
+      `${basePath}\\Crashpad\\reports & Logs`,
+      "Historical crash minidump (.dmp) snapshots and rotating logs"
+    );
+  }
+
+  return variants;
 }
 
 export function buildSubLocationsForItem(
@@ -565,7 +695,7 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
 }
 
 export function buildPseoTitle(item: CleanItem): string {
-  const custom = item.metaTitle || CUSTOM_GSC_TITLES[item.slug];
+  const custom = CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
   if (custom && custom.length >= 30 && custom.length <= 60) {
     return custom;
   }
@@ -647,7 +777,7 @@ export function buildPseoTitle(item: CleanItem): string {
 }
 
 export function buildPseoDescription(item: CleanItem): string {
-  const customDesc = item.metaDescription || CUSTOM_GSC_DESCRIPTIONS[item.slug];
+  const customDesc = CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }
@@ -963,6 +1093,9 @@ export function renderPseoPage(item: CleanItem): string {
   const pageDesc = buildPseoDescription(item);
   const canonicalUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const { siblings, related } = getSiblingAndRelatedItems(item);
+  const absorbedVariants = getAbsorbedRedirectVariants(item);
+  const telemetryTruth = getActiveTelemetryTruthForSlug(item.slug);
+  const isStreamDeck = item.slug === "elgato-streamdeck-cache";
 
   const faqItems = [
     {
@@ -973,23 +1106,67 @@ export function renderPseoPage(item: CleanItem): string {
     },
     {
       q: `How much storage space will cleaning ${item.name} free up?`,
-      a: `Users typically reclaim ${item.avgSpace} on Windows 10 and Windows 11 systems depending on update frequency and active cache retention in ${item.path}.`,
+      a: telemetryTruth?.badge_text
+        ? `${telemetryTruth.badge_text}. Across Windows 10 and Windows 11 PCs, users typically reclaim ${item.avgSpace} in ${item.path}.`
+        : `Users typically reclaim ${item.avgSpace} on Windows 10 and Windows 11 systems depending on update frequency and active cache retention in ${item.path}.`,
     },
     cluster.extraFaq(item),
     {
       q: `Where is ${item.name} located on Windows 10 and Windows 11?`,
       a: `It is stored at ${item.path}. You can paste that path directly into the Windows Run dialog (Win + R) or File Explorer address bar to inspect it.`,
     },
+    ...(absorbedVariants.length > 0
+      ? [
+          {
+            q: `Can I also delete Media Blob Storage, Service Worker CacheStorage, Code Cache, GPU Shader Cache, and Crashpad Dump Logs for ${item.name}?`,
+            a: `Yes. All sub-cache modules associated with ${item.name}—including Media Blob Storage (blob_storage / IndexedDB), Service Worker CacheStorage, V8 Code & Bytecode Cache, GPU Shader Cache (GPUCache / DawnCache), and Crashpad Dump Logs (.dmp)—are 100% safe to delete when the app is closed and rebuild automatically on demand without resetting your profiles or logins.`,
+          },
+        ]
+      : []),
+    ...(isStreamDeck
+      ? [
+          {
+            q: "How do I clean physical Elgato Stream Deck LCD keys vs. the Windows Stream Deck app cache?",
+            a: "To clean the Windows software cache (500 MB–3.5 GB), quit the Stream Deck tray app and clear %AppData%\\Elgato\\StreamDeck\\logs, Cache, Service Worker\\CacheStorage, and Media Blob Storage (your button profiles in ProfilesV2 stay 100% safe). To clean physical Stream Deck LCD keys and housing, unplug the USB cable first and gently wipe the keys with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol—never spray liquid directly onto the LCD keys or seams.",
+          },
+        ]
+      : []),
     ...(Array.isArray(item.customFaqs) ? item.customFaqs.filter((f) => f && f.q && f.a) : []),
   ];
 
   const subLocations = buildSubLocationsForItem(item, clusterId);
+  const consolidatedSubCacheHtml =
+    absorbedVariants.length > 0
+      ? `
+      <div id="consolidated-subcache-modules" class="mt-6 pt-6 border-t border-gray-100">
+        <h3 class="text-sm font-bold text-gray-900 mb-2">Consolidated Sub-Cache Modules: Media Blob Storage, Service Worker CacheStorage &amp; Shader Caches</h3>
+        <p class="text-xs text-gray-600 mb-3">
+          This canonical guide also covers all sub-cache directories for <strong>${item.name}</strong>. Every sub-module below is scanned and safely cleaned by SWEEPR Cleaner without affecting your saved settings or accounts:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          ${absorbedVariants
+            .map(
+              (v) => `
+          <div class="p-3 rounded-xl bg-gray-50 border border-gray-200/80">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="font-bold text-gray-900">${v.label}</span>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">🟢 Safe</span>
+            </div>
+            <div class="font-mono text-[11px] text-gray-500 truncate mb-1">${v.subPath}</div>
+            <div class="text-[11px] text-gray-600 leading-snug">${v.role}</div>
+          </div>`
+            )
+            .join("")}
+        </div>
+      </div>`
+      : "";
+
   const siblingTableSection = `
     <!-- Sub-Folders & Cache Locations Breakdown Table -->
     <div id="subfolders-breakdown-table" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
       <h2 class="text-lg font-bold text-gray-900 mb-2">Sub-Folders &amp; Cache Locations Breakdown for ${item.name}</h2>
       <p class="text-xs text-gray-600 mb-4">
-        Modern Windows applications and system services split their disk footprint across multiple sub-directories (` + "`Cache_Data`" + `, ` + "`Service Worker\\CacheStorage`" + `, ` + "`Code Cache`" + `, ` + "`GPUCache`" + `, and ` + "`Crashpad\\reports`" + `). Review which sub-folders inside <strong>${item.name}</strong> are safe to purge and which files remain protected:
+        Modern Windows applications and system services split their disk footprint across multiple sub-directories (` + "`Cache_Data`" + `, ` + "`Service Worker\\CacheStorage`" + `, ` + "`Media Blob Storage`" + `, ` + "`Code Cache`" + `, ` + "`GPUCache`" + `, and ` + "`Crashpad\\reports`" + `). Review which sub-folders inside <strong>${item.name}</strong> are safe to purge and which files remain protected:
       </p>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse">
@@ -1030,6 +1207,7 @@ export function renderPseoPage(item: CleanItem): string {
           </tbody>
         </table>
       </div>
+      ${consolidatedSubCacheHtml}
     </div>`;
 
   const relatedSection =
@@ -1205,8 +1383,15 @@ export function renderPseoPage(item: CleanItem): string {
     </div>
 
     <!-- Quick Verdict Box (GEO / AI Snippet Optimized) -->
-    <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-6 shadow-sm mb-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">Location &amp; Quick Verdict</h2>
+    <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-6 shadow-sm mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <h2 class="text-lg font-bold text-gray-900">Location &amp; Quick Verdict</h2>
+        ${
+          telemetryTruth?.badge_text
+            ? `<span id="telemetry-truth-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">${telemetryTruth.badge_text}</span>`
+            : ""
+        }
+      </div>
       <p class="font-mono text-xs bg-gray-100 p-2.5 rounded-lg text-gray-800 break-all mb-4">
         ${item.path}
       </p>
@@ -1218,17 +1403,104 @@ export function renderPseoPage(item: CleanItem): string {
           ? `<div class="bg-red-50 border-l-4 border-red-500 p-3 text-red-800 text-xs mb-4"><strong>Warning:</strong> ${item.warning}</div>`
           : `<div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 text-emerald-800 text-xs mb-4"><strong>Safety confirmation:</strong> ${item.whatHappens}</div>`
       }
+      ${
+        isStreamDeck
+          ? `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 mb-4 leading-relaxed">
+              <strong class="text-slate-900 block mb-1">💡 Cleaning Physical Stream Deck LCD Keys vs. Windows App Cache:</strong>
+              <span><strong>1. Windows App Cache (500 MB–3.5 GB):</strong> Quit Stream Deck from the system tray and clean <code>%AppData%\\Elgato\\StreamDeck\\logs</code>, <code>Cache</code>, <code>Service Worker\\CacheStorage</code>, and <code>Media Blob Storage</code> (your <code>ProfilesV2</code> button layouts stay 100% untouched).<br><strong>2. Physical LCD Keys:</strong> Unplug the USB cable first, then wipe the LCD keycaps with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</span>
+            </div>`
+          : ""
+      }
       <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go text-xs py-2 px-4">
-          Activate 1-Click Pro Cleaner (5 Devices) &rarr;
+        <a href="/download?platform=windows&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" class="btn btn-go text-xs py-2 px-4">
+          Download Free 60-Second Windows Scan (.exe) &rarr;
         </a>
-        <a href="/download" class="text-xs font-bold text-emerald-700 hover:underline">
-          Or Download Free Diagnostic Scan (.exe / .dmg / .apk)
+        <a href="/order?plan=annual&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="text-xs font-bold text-emerald-700 hover:underline">
+          Or Activate 1-Click Pro Cleaner (5 Devices) &rarr;
         </a>
         <a href="/safe-to-delete" class="text-xs font-bold text-gray-700 hover:underline">
-          🔍 Check Other Folders in Interactive Path Checker
+          🔍 Open Multi-Folder Batch Checker
         </a>
       </div>
+    </div>
+
+    <!-- Above-the-Fold Interactive "Safe-to-Delete + 1-Click Clean" Conversion Widget -->
+    <div id="sweepr-inline-checker-widget" class="bg-gradient-to-br from-emerald-950 via-gray-900 to-gray-900 text-white rounded-2xl p-6 shadow-md mb-8 border border-emerald-500/30">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">⚡ Instant Folder Safety Verifier &amp; 1-Click Cleaner</span>
+        <span class="text-[11px] text-gray-300">5 MB Native Rust Engine · 7-Day Undo Quarantine</span>
+      </div>
+      <h2 class="text-base md:text-lg font-extrabold text-white mb-1.5">Verify Any Windows Folder Path or Clean ${item.name} in 1 Click</h2>
+      <p class="text-xs text-gray-300 mb-3">
+        Paste any <code>C:\\</code>, <code>%LocalAppData%</code>, or <code>%AppData%</code> path below to check if it is safe to delete—or download SWEEPR Cleaner to scan all 40+ hidden cache locations automatically:
+      </p>
+      <div class="flex flex-col sm:flex-row gap-2 mb-3">
+        <input
+          id="inlineSafeCheckInput"
+          type="text"
+          value="${item.path.split(/\s+(?:or|and)\s+/i)[0].trim().replace(/"/g, "&quot;")}"
+          aria-label="Windows folder path to verify"
+          class="flex-1 px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white font-mono text-xs focus:outline-none focus:border-emerald-400"
+        />
+        <button
+          id="inlineSafeCheckBtn"
+          type="button"
+          class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-xs cursor-pointer transition whitespace-nowrap"
+        >
+          Verify Path Safety
+        </button>
+      </div>
+      <div id="inlineSafeCheckResult" class="hidden rounded-xl bg-white/10 border border-white/15 p-3.5 text-xs mb-3"></div>
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="/download?platform=windows&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" class="inline-flex items-center gap-1.5 font-extrabold text-emerald-300 hover:text-emerald-200 underline">
+            💻 Download Free Windows Scan (Reclaim ${item.avgSpace}) &rarr;
+          </a>
+          <a href="/order?plan=annual&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="inline-flex items-center gap-1 font-bold text-white/90 hover:text-white">
+            🔑 Unlock 5-Device Pro
+          </a>
+        </div>
+        <span class="text-[11px] text-gray-400">Protected: saves, logins &amp; personal files untouched</span>
+      </div>
+      <script>
+        (function() {
+          var btn = document.getElementById('inlineSafeCheckBtn');
+          var inp = document.getElementById('inlineSafeCheckInput');
+          var out = document.getElementById('inlineSafeCheckResult');
+          if (!btn || !inp || !out) return;
+          btn.addEventListener('click', function() {
+            var val = (inp.value || '').trim();
+            if (!val) return;
+            btn.disabled = true;
+            btn.textContent = 'Checking…';
+            fetch('/api/safe-to-delete/check', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ input: val })
+            })
+              .then(function(r) { return r.json(); })
+              .then(function(d) {
+                btn.disabled = false;
+                btn.textContent = 'Verify Path Safety';
+                var first = d && d.results && d.results[0];
+                if (!first) return;
+                out.classList.remove('hidden');
+                var badgeColor = first.verdict === 'SAFE_TO_DELETE' ? '#34d399' : first.verdict === 'DO_NOT_DELETE' ? '#f87171' : '#fbbf24';
+                out.innerHTML =
+                  '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
+                  '<strong style="color:' + badgeColor + ';">' + (first.verdict_label || first.verdict) + ' — ' + (first.matched_name || '') + '</strong>' +
+                  '<span style="font-weight:700;color:#d1fae5;">Typical Space: ' + (first.avg_space || '${item.avgSpace}') + '</span>' +
+                  '</div>' +
+                  '<div style="color:#e2e8f0;line-height:1.45;margin-bottom:6px;">' + (first.explanation || '') + '</div>' +
+                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${item.slug}" style="color:#34d399;font-weight:800;text-decoration:underline;">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
+              })
+              .catch(function() {
+                btn.disabled = false;
+                btn.textContent = 'Verify Path Safety';
+              });
+          });
+        })();
+      </script>
     </div>
 
     <!-- Technical Architecture & Cache Mechanics -->

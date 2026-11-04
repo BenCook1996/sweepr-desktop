@@ -1136,6 +1136,177 @@ test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-P
   assert.equal(statusJson.window_open, false);
 });
 
+test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30), 301 Sub-Variant Modules, CTR Rescue Titles, Bloat Watch Benchmarks & Inline Safe-to-Delete Widget", async () => {
+  const { app, get, post } = setup();
+
+  // --- Update 1A: Desktop POST /v1/accounts records app_installed & links to recent Windows download ---
+  const dlAttr = "attr_desktop_bridge_test";
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "installer_downloaded",
+      platform: "windows",
+      attribution_id: dlAttr,
+    }),
+  });
+
+  // Desktop app launches and calls POST /v1/accounts (without browser cookie attribution_id)
+  const acctRes = await app.request("/v1/accounts", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      device_id: "c".repeat(32),
+      device_type: "pc",
+      platform: "windows",
+      version: "0.2.0",
+    }),
+  });
+  assert.equal(acctRes.status, 200);
+
+  // Verify A3 recovery session was matched via allowRecentWindowsFallback
+  const recStatusRes = await app.request(`/api/telemetry/recovery-status?attribution_id=${dlAttr}`);
+  assert.equal(recStatusRes.status, 200);
+  const recStatus = (await recStatusRes.json()) as any;
+  assert.equal(recStatus.installed, true, "POST /v1/accounts should mark the recent Windows download session as installed");
+
+  // --- Update 1B: A1 Telemetry -> Content Truth Loop enforces k-anonymity floor (n >= 30) ---
+  // Ingest 29 scan samples for steam-depotcache -> below n=30 floor, badge must NOT render
+  const samples29 = Array.from({ length: 29 }, (_, idx) => ({
+    slug: "steam-depotcache",
+    bytes: (4 + (idx % 12)) * 1024 * 1024 * 1024, // 4 GB to 15 GB
+  }));
+  const ingest29Res = await post("/api/crm/seo/telemetry-truth/ingest", {
+    samples: samples29,
+  });
+  assert.equal(ingest29Res.status, 200);
+  const ingest29Json = (await ingest29Res.json()) as any;
+  assert.equal(ingest29Json.ingested, 29);
+  assert.equal(ingest29Json.summaries[0].sample_count, 29);
+  assert.equal(ingest29Json.summaries[0].qualifies_k_anonymity, false, "Below k-anonymity floor (29 < 30), stat must not be active");
+
+  const steamBefore30Html = await (await app.request("/clean/app/steam-depotcache")).text();
+  assert.ok(!steamBefore30Html.includes('id="telemetry-truth-badge"'), "Must not render telemetry badge when n < 30");
+
+  // Ingest 30th sample via live POST /v1/telemetry/event (scan_completed)
+  const scanEventRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "scan_completed",
+      platform: "windows",
+      attribution_id: "anon_client_29",
+      metadata: {
+        total_bytes: 9 * 1024 * 1024 * 1024,
+        rule_bytes: {
+          "steam-depotcache": 9 * 1024 * 1024 * 1024,
+        },
+      },
+    }),
+  });
+  assert.equal(scanEventRes.status, 200);
+
+  const steamAfter30Html = await (await app.request("/clean/app/steam-depotcache")).text();
+  assert.ok(steamAfter30Html.includes('id="telemetry-truth-badge"'), "Renders telemetry badge once n >= 30");
+  assert.ok(
+    steamAfter30Html.includes("Measured across 30 Sweepr scans: median"),
+    "Displays live median & p90 callout once n >= 30"
+  );
+
+  // --- Update 2: 301 Sub-Variant Keyword Preservation on canonical pSEO pages ---
+  const logiHtml = await (await app.request("/clean/app/logitech-options-plus-cache")).text();
+  assert.ok(logiHtml.includes('id="consolidated-subcache-modules"'), "Logitech Options+ page renders consolidated sub-cache section");
+  assert.ok(logiHtml.includes("Media Blob Storage"), "Covers -media-blob sub-variant");
+  assert.ok(logiHtml.includes("Service Worker CacheStorage"), "Covers -service-worker sub-variant");
+  assert.ok(logiHtml.includes("Code & Bytecode Cache"), "Covers -code-cache sub-variant");
+  assert.ok(logiHtml.includes("GPU Shader Cache"), "Covers -gpu-cache sub-variant");
+  assert.ok(logiHtml.includes("Crashpad Dump Logs"), "Covers -crashpad sub-variant");
+
+  // --- Update 3: CTR Rescue Titles & Descriptions + Dual-Intent Stream Deck FAQ ---
+  const ctrTargets = [
+    {
+      path: "/clean/app/steam-depotcache",
+      expectedTitle: "What Is Steam depotcache? Safe to Delete? (2026 Guide)",
+    },
+    {
+      path: "/clean/app/riot-client-logs",
+      expectedTitle: "How to Clear Valorant & Riot Client Cache Files (2026)",
+    },
+    {
+      path: "/clean/app/elgato-streamdeck-cache",
+      expectedTitle: "How to Clean Stream Deck (App Cache & LCD Keys Guide)",
+    },
+    {
+      path: "/clean/folder/windows-livekernelreports",
+      expectedTitle: "LiveKernelReports WATCHDOG Dumps: Safe to Delete? (2026)",
+    },
+    {
+      path: "/clean/app/vivaldi-browser-cache",
+      expectedTitle: "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
+    },
+    {
+      path: "/clean/app/jetbrains-intellij-cache",
+      expectedTitle: "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
+    },
+  ];
+
+  for (const target of ctrTargets) {
+    const res = await app.request(target.path);
+    assert.equal(res.status, 200, `${target.path} should return 200`);
+    const html = await res.text();
+    const parsed = parseHtml(html);
+    const titleStr = parsed.title ?? "";
+    const descStr = parsed.metaDescription ?? "";
+    assert.equal(titleStr, target.expectedTitle, `${target.path} title matches CTR rescue title`);
+    assert.ok(
+      titleStr.length >= 30 && titleStr.length <= 60,
+      `${target.path} title length (${titleStr.length}) within 30-60 chars`
+    );
+    assert.ok(
+      descStr.length >= 70 && descStr.length <= 160,
+      `${target.path} description length (${descStr.length}) within 70-160 chars`
+    );
+  }
+
+  // Verify redirect aliases for vivaldi-cache and intellij-idea-caches
+  const vivaldiRedirect = await app.request("/clean/app/vivaldi-cache", { redirect: "manual" });
+  assert.equal(vivaldiRedirect.status, 301);
+  assert.equal(vivaldiRedirect.headers.get("location"), "/clean/app/vivaldi-browser-cache");
+
+  const intellijRedirect = await app.request("/clean/app/intellij-idea-caches", { redirect: "manual" });
+  assert.equal(intellijRedirect.status, 301);
+  assert.equal(intellijRedirect.headers.get("location"), "/clean/app/jetbrains-intellij-cache");
+
+  // Verify Stream Deck page includes physical LCD hardware cleaning guidance alongside software cache
+  const streamDeckHtml = await (await app.request("/clean/app/elgato-streamdeck-cache")).text();
+  assert.ok(
+    streamDeckHtml.includes("physical Elgato Stream Deck LCD keys") && streamDeckHtml.includes("70% isopropyl alcohol"),
+    "Stream Deck page addresses both software cache and physical LCD key cleaning intent"
+  );
+
+  // --- Update 4: Bloat Watch Published Gamer/AI/Dev Benchmarks ---
+  const bloatSlugs = [
+    "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026",
+    "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026",
+    "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026",
+  ];
+  for (const bPath of bloatSlugs) {
+    const bRes = await app.request(bPath);
+    assert.equal(bRes.status, 200, `${bPath} should be published and return 200 OK`);
+    const bParsed = parseHtml(await bRes.text());
+    assert.equal(bParsed.jsonLdErrors, 0, `${bPath} must have valid JSON-LD`);
+  }
+
+  // --- Update 5: Above-the-Fold Interactive "Safe-to-Delete + 1-Click Clean" Conversion Widget ---
+  assert.ok(
+    steamAfter30Html.includes('id="sweepr-inline-checker-widget"') &&
+      steamAfter30Html.includes('id="inlineSafeCheckInput"') &&
+      steamAfter30Html.includes('id="inlineSafeCheckBtn"'),
+    "pSEO pages render the above-the-fold interactive Safe-to-Delete + 1-Click Clean widget"
+  );
+});
+
+
 
 
 

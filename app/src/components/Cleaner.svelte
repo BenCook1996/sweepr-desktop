@@ -17,6 +17,7 @@
     isPaymentRequired,
     OPEN_UNDO_EVENT,
     requestActivation,
+    trackAppEvent,
     type AppInfo,
     type CategoryResult,
     type CleanReport,
@@ -166,6 +167,7 @@
     error = null;
     phase = "scanning";
     progress = null;
+    trackAppEvent("scan_started");
     const unlisten = await api.onScanProgress((p) => (progress = p));
     try {
       const [scanRes, remRes, startRes] = await Promise.allSettled([
@@ -181,7 +183,19 @@
         const sel = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
         selected = sel;
         cachedSelected = sel;
-        const activeIds = r.categories.filter((c) => c.bytes > 0).map((c) => c.id);
+        const activeCats = r.categories.filter((c) => c.bytes > 0);
+        const activeIds = activeCats.map((c) => c.id);
+        const ruleBytes: Record<string, number> = {};
+        for (const c of activeCats) {
+          ruleBytes[c.id] = c.bytes;
+        }
+        trackAppEvent("scan_completed", {
+          total_bytes: r.total_bytes,
+          total_files: r.total_files,
+          duration_ms: r.duration_ms,
+          item_count: activeCats.length,
+          rule_bytes: ruleBytes,
+        });
         api
           .checkRunningApps(activeIds)
           .then((conflicts) => (runningConflicts = conflicts))
@@ -293,6 +307,11 @@
         "Recently Cleaned (7-day undo)",
         false
       );
+      trackAppEvent("clean_completed", {
+        cleaned_bytes: freedTotal,
+        files_removed: removedTotal,
+        categories: catIds,
+      });
       await syncLifetimeStatsFromBackend().catch(() => {});
       api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
       phase = "done";
@@ -406,6 +425,12 @@
       .catch(() => {});
 
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+    try {
+      if (!localStorage.getItem("sweepr_installed_telemetry_v1")) {
+        localStorage.setItem("sweepr_installed_telemetry_v1", "1");
+        trackAppEvent("app_installed", { source: "first_launch" });
+      }
+    } catch {}
     if (!cachedReport) {
       scan();
     }

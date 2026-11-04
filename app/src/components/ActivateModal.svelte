@@ -2,7 +2,7 @@
   import { onDestroy } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import { api, errorMessage } from "../lib/api";
+  import { api, errorMessage, trackAppEvent } from "../lib/api";
 
   let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
 
@@ -10,6 +10,16 @@
 
   let email = $state("");
   let selectedPlan = $state<PlanId>("annual");
+  let lastTrackedOpen = false;
+
+  $effect(() => {
+    if (open && !lastTrackedOpen) {
+      lastTrackedOpen = true;
+      trackAppEvent("paywall_viewed", { plan: selectedPlan });
+    } else if (!open && lastTrackedOpen) {
+      lastTrackedOpen = false;
+    }
+  });
   let showSignIn = $state(false);
   let showQrScan = $state(false);
   let qrSvg = $state<string | null>(null);

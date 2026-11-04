@@ -336,6 +336,7 @@ export function recordAppInstalledForRecovery(
     email?: string | null;
     source?: string;
     nowSec?: number;
+    allowRecentWindowsFallback?: boolean;
   }
 ): DownloadRecoverySession | null {
   const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
@@ -360,6 +361,13 @@ export function recordAppInstalledForRecovery(
         "SELECT * FROM download_recovery_sessions WHERE lower(email) = lower(?) ORDER BY downloaded_at DESC LIMIT 1"
       )
       .get(opts.email) as DownloadRecoverySession | undefined;
+  }
+  if (!session && opts.allowRecentWindowsFallback && (!attrId || attrId.startsWith("dt_"))) {
+    session = repo.db
+      .prepare(
+        "SELECT * FROM download_recovery_sessions WHERE installed_at IS NULL AND platform = 'windows' AND downloaded_at >= ? ORDER BY downloaded_at DESC LIMIT 1"
+      )
+      .get(nowSec - 86400) as DownloadRecoverySession | undefined;
   }
 
   if (!session) return null;
