@@ -38,6 +38,15 @@ import {
   recordRecoveryBannerInteraction,
   sanitizeAttributionId,
 } from "./download-recovery.js";
+import {
+  buildGiveawayReadmeTxt,
+  DEFAULT_GOTD_UPGRADE_COUPON,
+  getGiveawayConfig,
+  isGiveawayCodeMatch,
+  isGiveawayWindowOpen,
+  redeemGiveawayLicense,
+  renderGiveawayPageHtml,
+} from "./giveaway.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
@@ -1302,6 +1311,82 @@ export function createApp(deps: AppDeps) {
     }
   }
 
+  async function getOrCreateGotdUpgradeCoupon(pct = 50): Promise<string> {
+    const couponId = `SWEEPR_GOTD_${pct}_OFF`;
+    if (!stripe) return couponId;
+    if (cachedIntroCoupons.has(couponId)) return cachedIntroCoupons.get(couponId)!;
+    try {
+      const existing = await stripe.coupons.retrieve(couponId);
+      if (existing && existing.id) {
+        cachedIntroCoupons.set(couponId, existing.id);
+        return existing.id;
+      }
+    } catch {}
+    try {
+      const created = await stripe.coupons.create({
+        id: couponId,
+        percent_off: pct,
+        duration: "once",
+        name: `Giveaway of the Day ${pct}% Upgrade Offer`,
+      });
+      cachedIntroCoupons.set(couponId, created.id);
+      return created.id;
+    } catch {
+      return stripeCoupon;
+    }
+  }
+
+  // Giveaway of the Day (24-Hour 6-Month Pro License Redemption & 50% Upgrade Page)
+  const serveGiveawayPage = (c: Context) => {
+    c.header("X-Robots-Tag", "noindex, follow");
+    c.header("Cache-Control", "no-store, no-cache, must-revalidate");
+    const cfg = getGiveawayConfig(repo, now());
+    return c.html(renderGiveawayPageHtml(cfg, now()));
+  };
+  app.get("/giveaway", serveGiveawayPage);
+  app.get("/redeem/gotd", serveGiveawayPage);
+
+  app.get("/giveaway/readme.txt", (c) => {
+    const cfg = getGiveawayConfig(repo, now());
+    c.header("Content-Type", "text/plain; charset=utf-8");
+    c.header("Cache-Control", "no-store");
+    return c.body(buildGiveawayReadmeTxt(cfg));
+  });
+
+  app.post("/api/giveaway/redeem", async (c) => {
+    if (!limitOtpVerifyIp.hit(clientIp(c))) {
+      return c.json({ ok: false, error: "rate_limited", message: "Too many attempts. Please try again shortly." }, 429);
+    }
+    const body = await c.req.json().catch(() => ({}));
+    const email = normalizeEmail(body?.email);
+    const code = String(body?.code ?? body?.key ?? "").trim();
+    const deviceId = typeof body?.device_id === "string" && DEVICE_RE.test(body.device_id) ? body.device_id : undefined;
+    if (!email || !code) {
+      return c.json({ ok: false, error: "missing_fields", message: "Please enter your email address and Giveaway key." }, 400);
+    }
+    const res = redeemGiveawayLicense(repo, {
+      email,
+      code,
+      deviceId,
+      ipHash: sha256(clientIp(c)),
+      nowSec: now(),
+    });
+    if (!res.ok) {
+      return c.json(res, 400);
+    }
+    if (res.account_id) {
+      await issuePortalSessionCookie(c, res.account_id);
+      syncSubscriptionToCentralCrm({
+        email,
+        accountId: res.account_id,
+        plan: "giveaway_6m",
+        status: "active",
+        notes: "Activated 6-Month (1-PC) Giveaway of the Day Pro License",
+      });
+    }
+    return c.json(res);
+  });
+
   // Currencies supported by Stripe's recurring PayPal integration
   const SUPPORTED_PAYPAL_CURRENCIES = new Set([
     "gbp", "eur", "usd", "aud", "cad", "chf", "czk", "dkk", "hkd",
@@ -1760,10 +1845,17 @@ export function createApp(deps: AppDeps) {
       }
 
       const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
-      const introCouponId =
-        !isAnnual && !isSixMonth && applyDiscount
-          ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
-          : "";
+      const requestedCoupon = String(body?.coupon ?? c.req.query("coupon") ?? "").trim().toUpperCase();
+      const gotdCfg = getGiveawayConfig(repo, now());
+      const isGotdUpgradeCoupon =
+        requestedCoupon === DEFAULT_GOTD_UPGRADE_COUPON ||
+        requestedCoupon === gotdCfg.upgrade_coupon.toUpperCase();
+
+      const introCouponId = isGotdUpgradeCoupon
+        ? await getOrCreateGotdUpgradeCoupon(gotdCfg.upgrade_discount_pct)
+        : !isAnnual && !isSixMonth && applyDiscount
+        ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
+        : "";
       let subscription: any = null;
       try {
         subscription = await stripe.subscriptions.create({
@@ -2258,10 +2350,17 @@ export function createApp(deps: AppDeps) {
         });
       }
 
-      const introCouponId =
-        !isAnnual && !isSixMonth && applyDiscount
-          ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
-          : "";
+      const requestedCoupon = String(body?.coupon ?? c.req.query("coupon") ?? "").trim().toUpperCase();
+      const gotdCfg = getGiveawayConfig(repo, now());
+      const isGotdUpgradeCoupon =
+        requestedCoupon === DEFAULT_GOTD_UPGRADE_COUPON ||
+        requestedCoupon === gotdCfg.upgrade_coupon.toUpperCase();
+
+      const introCouponId = isGotdUpgradeCoupon
+        ? await getOrCreateGotdUpgradeCoupon(gotdCfg.upgrade_discount_pct)
+        : !isAnnual && !isSixMonth && applyDiscount
+        ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
+        : "";
 
       if (Boolean(body.hostedCheckoutFallback) && paymentMethod === "card") {
         const checkoutSession = await createRedirectCheckoutSessionFallback({
@@ -2777,7 +2876,24 @@ export function createApp(deps: AppDeps) {
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "Too many attempts. Please try again later." }, 429);
     if (!/^\d{6}$/.test(code)) return invalid();
 
-    let valid = repo.verifyRecentEmailCode(email, code, sha256(code), Math.floor(Date.now() / 1000));
+    const nowSec = Math.floor(Date.now() / 1000);
+    let valid = repo.verifyRecentEmailCode(email, code, sha256(code), nowSec);
+    if (!valid) {
+      const gotdCfg = getGiveawayConfig(repo, nowSec);
+      if (isGiveawayCodeMatch(gotdCfg, code)) {
+        const gotdRes = redeemGiveawayLicense(repo, {
+          email,
+          code,
+          ipHash: sha256(clientIp(c)),
+          nowSec,
+        });
+        if (gotdRes.ok) {
+          valid = true;
+        } else if (gotdRes.error === "giveaway_window_closed") {
+          return c.json({ error: gotdRes.message || "Giveaway window has closed." }, 400);
+        }
+      }
+    }
     if (!valid) {
       const centralOtp = await verifyCentralOtp({ email, code, deviceType: "pc" });
       if (centralOtp?.valid) {
@@ -4742,6 +4858,23 @@ export function createApp(deps: AppDeps) {
     const t = now();
     let localOtpValid = repo.verifyRecentEmailCode(email, code, sha256(code), t);
     if (!localOtpValid) {
+      const gotdCfg = getGiveawayConfig(repo, t);
+      if (isGiveawayCodeMatch(gotdCfg, code)) {
+        const gotdRes = redeemGiveawayLicense(repo, {
+          email,
+          code,
+          deviceId,
+          ipHash: sha256(clientIp(c)),
+          nowSec: t,
+        });
+        if (gotdRes.ok) {
+          localOtpValid = true;
+        } else if (gotdRes.error === "giveaway_window_closed") {
+          return c.json({ error: "giveaway_window_closed", message: gotdRes.message }, 400);
+        }
+      }
+    }
+    if (!localOtpValid) {
       const centralOtp = await verifyCentralOtp({
         email,
         code,
@@ -4761,8 +4894,18 @@ export function createApp(deps: AppDeps) {
     if (!account) {
       return c.json({ error: "invalid_or_expired_code" }, 400);
     }
-    if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
-      return c.json({ error: "device_limit", status: "device_limit" }, 403);
+    const preEnt = repo.entitlement(account.id);
+    const isGiveawayPlan = preEnt?.plan === "giveaway_6m";
+    const maxPcForAccount = isGiveawayPlan ? 1 : config.maxDevicesPc;
+    const maxMobForAccount = isGiveawayPlan ? 0 : config.maxDevicesMobile;
+    if (!repo.touchDevice(account.id, deviceId, deviceType, maxPcForAccount, maxMobForAccount)) {
+      return c.json({
+        error: "device_limit",
+        status: "device_limit",
+        message: isGiveawayPlan
+          ? "Giveaway of the Day licenses cover 1 Windows PC. Upgrade to the 5-Device Annual Pro Plan for 50% off at https://sweeprcleaner.com/giveaway"
+          : undefined,
+      }, 403);
     }
     if (!account.country || !account.lead_device) {
       const localizedPricing = await resolvePricingForRequest(c, {
@@ -4859,7 +5002,11 @@ export function createApp(deps: AppDeps) {
     if (matchedDev && matchedDev.id !== deviceId) {
       return c.json({ error: "device_token_mismatch" }, 403);
     }
-    if (!repo.touchDevice(account.id, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile)) {
+    const existingEntForLimit = repo.entitlement(account.id);
+    const isGiveawayEnt = existingEntForLimit?.plan === "giveaway_6m";
+    const maxPcLimit = isGiveawayEnt ? 1 : config.maxDevicesPc;
+    const maxMobLimit = isGiveawayEnt ? 0 : config.maxDevicesMobile;
+    if (!repo.touchDevice(account.id, deviceId, deviceType, maxPcLimit, maxMobLimit)) {
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {

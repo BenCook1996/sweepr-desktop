@@ -1090,8 +1090,8 @@ export class Repo {
     const counts = this.db.prepare(`
       SELECT
         COUNT(DISTINCT a.id) as total_customers,
-        SUM(CASE WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead' THEN 1 ELSE 0 END) as leads_count,
-        SUM(CASE WHEN e.status = 'active' THEN 1 ELSE 0 END) as active_subs,
+        SUM(CASE WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead' OR e.plan = 'giveaway_6m' THEN 1 ELSE 0 END) as leads_count,
+        SUM(CASE WHEN e.status = 'active' AND COALESCE(e.plan, '') != 'giveaway_6m' THEN 1 ELSE 0 END) as active_subs,
         SUM(CASE WHEN e.status = 'trialing' THEN 1 ELSE 0 END) as trialing_subs,
         SUM(CASE WHEN e.status = 'past_due' THEN 1 ELSE 0 END) as past_due_subs,
         SUM(CASE WHEN e.status IN ('canceled', 'unpaid') THEN 1 ELSE 0 END) as canceled_subs,
@@ -1993,6 +1993,26 @@ export class Repo {
           last_inbound_msg_id: "<gsc-product-snippets-sweeprcleaner-10030322@google.com>",
           actioned_at: 1793780400,
           follow_up_after_ts: 1793780400 + 7 * 86400,
+        },
+        {
+          thread_id: "FMfcgzQjggsXfnZTCsckPBChNhqkJjnM",
+          message_id: "<gotd-cooperation-offer-ticket-1@giveawayoftheday.com>",
+          project_id: "cleaner",
+          sender_email: "helen@giveawayoftheday.com",
+          sender_name: "Helen (Giveaway of the Day)",
+          subject: "[SWEEPR Support] Cooperation offer (from helen@giveawayoftheday.com)",
+          received_at: 1793786280,
+          category: "partnership_outreach",
+          status: "replied",
+          action_type: "email_reply_and_code",
+          action_summary: "Accepted Giveaway of the Day cooperation offer, replied to helen@giveawayoftheday.com & deployed 24-hour 6-Month/1-PC Giveaway activation engine (/giveaway, key 662026, coupon GOTD50)",
+          action_detail:
+            "Replied to Helen at Giveaway of the Day (helen@giveawayoftheday.com) accepting the 24-hour featured giveaway cooperation for SWEEPR Cleaner (6-Month, 1-PC Pro License via key 662026 + 50% off 5-Device Annual Pro upgrade via coupon GOTD50 + cross-promotion for SWEEPR Deepblock & SWEEPR VPN) and wired server/src/giveaway.ts into server/src/app.ts and server/src/crm.ts.",
+          portal_url: "https://www.giveawayoftheday.com/for-developers/",
+          reply_message_id: "<sweepr-gotd-reply-20261104@sweeprcleaner.com>",
+          last_inbound_msg_id: "<gotd-cooperation-offer-ticket-1@giveawayoftheday.com>",
+          actioned_at: 1793824600,
+          follow_up_after_ts: 1793824600 + 3 * 86400,
         },
       ];
 

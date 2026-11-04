@@ -12,6 +12,12 @@ import { sendSubscriptionEmail, verifySmtp } from "./email.js";
 import { resolvePricingForRequest, detectLeadDevice } from "./pricing.js";
 import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
 import { evaluateDownloadRecoverySessions, getDownloadRecoveryStats } from "./download-recovery.js";
+import {
+  buildGiveawayReadmeTxt,
+  getGiveawayConfig,
+  getGiveawayStats,
+  updateGiveawayConfig,
+} from "./giveaway.js";
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -1407,6 +1413,53 @@ export function createCrmRouter(deps: CrmRouterDeps) {
         "content-type": "text/csv; charset=utf-8",
         "content-disposition": `attachment; filename="sweepr-email-portal-actions-${new Date().toISOString().slice(0, 10)}.csv"`,
       },
+    });
+  });
+
+  // Giveaway of the Day (24-Hour Campaign Management & Readme Generator)
+  router.get("/giveaway/status", (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    return c.json({ ok: true, ...getGiveawayStats(repo, nowSec) });
+  });
+
+  router.post("/giveaway/window", async (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const body = await c.req.json().catch(() => ({}));
+    const patch: Record<string, unknown> = {};
+    if (typeof body.campaign_id === "string" && body.campaign_id.trim()) patch.campaign_id = body.campaign_id.trim();
+    if (typeof body.partner_name === "string" && body.partner_name.trim()) patch.partner_name = body.partner_name.trim();
+    if (typeof body.master_key_6digit === "string" && /^\d{6}$/.test(body.master_key_6digit.trim())) {
+      patch.master_key_6digit = body.master_key_6digit.trim();
+    }
+    if (typeof body.promo_code === "string" && body.promo_code.trim()) patch.promo_code = body.promo_code.trim();
+    if (typeof body.upgrade_coupon === "string" && body.upgrade_coupon.trim()) {
+      patch.upgrade_coupon = body.upgrade_coupon.trim().toUpperCase();
+    }
+    if (typeof body.upgrade_discount_pct === "number" && body.upgrade_discount_pct > 0 && body.upgrade_discount_pct <= 90) {
+      patch.upgrade_discount_pct = body.upgrade_discount_pct;
+    }
+    if (typeof body.license_duration_days === "number" && body.license_duration_days >= 1) {
+      patch.license_duration_days = body.license_duration_days;
+    }
+    if (typeof body.max_devices_pc === "number" && body.max_devices_pc >= 1) {
+      patch.max_devices_pc = body.max_devices_pc;
+    }
+    if (typeof body.window_start_ts === "number") patch.window_start_ts = body.window_start_ts;
+    if (typeof body.window_end_ts === "number") patch.window_end_ts = body.window_end_ts;
+    if (typeof body.allow_preview_redemption === "boolean") {
+      patch.allow_preview_redemption = body.allow_preview_redemption;
+    }
+    const updated = updateGiveawayConfig(repo, patch as any, nowSec);
+    return c.json({ ok: true, config: updated, readme_txt: buildGiveawayReadmeTxt(updated) });
+  });
+
+  router.get("/giveaway/readme", (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const cfg = getGiveawayConfig(repo, nowSec);
+    return c.json({
+      ok: true,
+      config: cfg,
+      readme_txt: buildGiveawayReadmeTxt(cfg),
     });
   });
 

@@ -1058,6 +1058,85 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "shippingDetails"')));
 });
 
+test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-PC license key 662026, 1-PC device limit, and window closure", async () => {
+  const { app, get, post } = setup();
+
+  // 1. Public /giveaway and /giveaway/readme.txt routes render 200 OK
+  const pageRes = await app.request("/giveaway");
+  assert.equal(pageRes.status, 200);
+  const pageHtml = await pageRes.text();
+  assert.ok(pageHtml.includes("Giveaway of the Day"), "/giveaway page mentions Giveaway of the Day");
+  assert.ok(pageHtml.includes("662026"), "/giveaway page displays 6-digit key 662026");
+  assert.ok(pageHtml.includes("GOTD50"), "/giveaway page includes 50% off upgrade coupon GOTD50");
+
+  const readmeRes = await app.request("/giveaway/readme.txt");
+  assert.equal(readmeRes.status, 200);
+  const readmeTxt = await readmeRes.text();
+  assert.ok(readmeTxt.includes("662026") && readmeTxt.includes("GOTD50"), "readme.txt contains key and upgrade coupon");
+
+  // 2. Redeem via Desktop App OTP endpoint (/v1/account/verify-otp) using 6-digit Giveaway key 662026
+  const dev1 = "a".repeat(32);
+  const dev2 = "b".repeat(32);
+  const verifyDev1Res = await app.request("/v1/account/verify-otp", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "gotd.user1@example.com",
+      code: "662026",
+      device_id: dev1,
+      platform: "windows",
+    }),
+  });
+  assert.equal(verifyDev1Res.status, 200);
+  const verifyDev1 = (await verifyDev1Res.json()) as any;
+  assert.equal(verifyDev1.active, true);
+  assert.equal(verifyDev1.plan, "giveaway_6m");
+  assert.ok(verifyDev1.token, "Issues signed Ed25519 entitlement token for PC #1");
+
+  // 3. Enforce 1-PC device limit on giveaway_6m plan (2nd PC is rejected with 403 device_limit)
+  const verifyDev2Res = await app.request("/v1/account/verify-otp", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "gotd.user1@example.com",
+      code: "662026",
+      device_id: dev2,
+      platform: "windows",
+    }),
+  });
+  assert.equal(verifyDev2Res.status, 403);
+  const verifyDev2 = (await verifyDev2Res.json()) as any;
+  assert.equal(verifyDev2.error, "device_limit");
+
+  // 4. Close the 24-hour window via CRM endpoint and verify new redemptions are rejected with giveaway_window_closed
+  const closeWinRes = await post("/api/crm/giveaway/window", {
+    window_start_ts: 1000,
+    window_end_ts: 2000,
+    allow_preview_redemption: false,
+  });
+  assert.equal(closeWinRes.status, 200);
+
+  const expiredRes = await app.request("/api/giveaway/redeem", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "late.visitor@example.com",
+      code: "662026",
+    }),
+  });
+  assert.equal(expiredRes.status, 400);
+  const expiredJson = (await expiredRes.json()) as any;
+  assert.equal(expiredJson.error, "giveaway_window_closed");
+
+  // 5. Verify CRM giveaway status endpoint reports total redemptions
+  const statusRes = await get("/api/crm/giveaway/status");
+  assert.equal(statusRes.status, 200);
+  const statusJson = (await statusRes.json()) as any;
+  assert.equal(statusJson.total_redemptions, 1);
+  assert.equal(statusJson.window_open, false);
+});
+
+
 
 
 
