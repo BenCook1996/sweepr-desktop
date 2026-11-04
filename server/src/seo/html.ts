@@ -80,7 +80,7 @@ function collectTypes(node: unknown, out: Set<string>, merchantIssues?: Set<stri
       });
     }
 
-    // Validate Google Search Console Merchant Listings structured data requirements
+    // Validate Google Search Console Merchant Listings & Product Snippets structured data requirements
     // on Product, SoftwareApplication, and WebApplication entities that declare offers (or any Product).
     if (
       merchantIssues &&
@@ -94,6 +94,12 @@ function collectTypes(node: unknown, out: Set<string>, merchantIssues?: Set<stri
         (img != null && typeof img === "object");
       if (!hasImage) {
         merchantIssues.add('Missing field "image"');
+      }
+      if (!o.aggregateRating || typeof o.aggregateRating !== "object") {
+        merchantIssues.add('Missing field "aggregateRating"');
+      }
+      if (!o.review || (typeof o.review !== "object" && !Array.isArray(o.review))) {
+        merchantIssues.add('Missing field "review"');
       }
 
       const rawOffers = o.offers;

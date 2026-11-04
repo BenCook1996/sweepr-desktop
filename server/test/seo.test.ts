@@ -1050,8 +1050,10 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
     </script>
   </head><body></body></html>`;
   const brokenParsed = parseHtml(brokenProductHtml);
-  assert.equal(brokenParsed.merchantListingIssues.length, 3);
+  assert.equal(brokenParsed.merchantListingIssues.length, 5);
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "image"')));
+  assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "aggregateRating"')));
+  assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "review"')));
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "hasMerchantReturnPolicy"')));
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "shippingDetails"')));
 });
