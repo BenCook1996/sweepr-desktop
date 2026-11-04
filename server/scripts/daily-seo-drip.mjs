@@ -430,10 +430,26 @@ const GSC_STRIKE_ZONE_PRIORITY_SLUGS = new Set([
   "other-storage-full-windows-11-cleanup"
 ]);
 
-async function runBacklinksWorkflow(targetCount = 300) {
+async function runBacklinksWorkflow(targetCount = 0) {
   console.log("\n=======================================================");
-  console.log(`  2. 300-SITE HIGH-DR BACKLINKS SYNDICATION (${targetCount} GUIDES)`);
+  console.log(`  2. HIGH-DR BACKLINKS SYNDICATION (${targetCount} GUIDES)`);
   console.log("=======================================================");
+
+  const seed = JSON.parse(fs.readFileSync(SEED_PATH, "utf8"));
+  if (targetCount <= 0) {
+    console.log(
+      "[Backlink Drip Paused] Automated telegra.ph/dpaste/rentry pastebin drip is paused for Google Search Console indexing hygiene (pass --enable-pastebins to override)."
+    );
+    for (const base of [CRM_BASE, LOCAL_CRM]) {
+      fetch(`${base}/api/crm/seo/backlinks/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
+        body: JSON.stringify({ only: "unchecked", limit: 1000 }),
+        signal: AbortSignal.timeout(8000)
+      }).catch(() => {});
+    }
+    return { completed: 0, totalSeed: seed.length, newLinks: [] };
+  }
 
   const rawCleanItems = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8"));
   const redirectedSlugs = fs.existsSync(PSEO_REDIRECTS_PATH)
@@ -441,7 +457,6 @@ async function runBacklinksWorkflow(targetCount = 300) {
     : {};
   const cleanItems = rawCleanItems.filter((i) => !redirectedSlugs[String(i.slug || "").toLowerCase()]);
   const strikeZoneItems = cleanItems.filter((i) => GSC_STRIKE_ZONE_PRIORITY_SLUGS.has(String(i.slug || "").toLowerCase()));
-  const seed = JSON.parse(fs.readFileSync(SEED_PATH, "utf8"));
   const crmState = await fetchCleanerCrmState(seed);
 
   console.log(
@@ -660,10 +675,11 @@ async function runIndexingWorkflow() {
   return { sitemapUrls: sitemapUrls.length, deltaUrls: deltaUrls.length, bingRes, indexNowRes, outstandingGsc: outstandingGsc.length };
 }
 async function main() {
-  const countArg = Number(process.argv[2]) || 300;
+  const enablePastebins = process.argv.includes("--enable-pastebins");
+  const countArg = enablePastebins ? (Number(process.argv[2]) || 300) : 0;
   console.log("==========================================================================");
-  console.log(`  STARTING 6-HOURLY SWEEPR CLEANER WORKFLOW (COUNT = ${countArg})`);
-  console.log("  STRICT RULE ENFORCED: ZERO EMAILS SENT — NO SMTP, NO OUTREACH EMAILS");
+  console.log(`  STARTING SWEEPR CLEANER PAD XML & INDEXING WORKFLOW (PASTEBIN COUNT = ${countArg})`);
+  console.log("  STRICT RULE ENFORCED: ZERO EMAILS SENT & PASTEBIN DRIP PAUSED BY DEFAULT");
   console.log("==========================================================================");
 
   const padResult = await verifyAndProbePadXml();
