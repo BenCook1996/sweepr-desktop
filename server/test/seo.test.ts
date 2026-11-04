@@ -741,6 +741,100 @@ test("SEO A4 Bloat Watch Detector & A5 Listing Freshness Monitor", async () => {
   assert.ok(checkStaleJson.listings[0].crm_task_note.includes("v0.0.9"));
 });
 
+test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", async () => {
+  const { app, get, post } = setup();
+
+  // Action 1.1: End-to-End Measurement & £0 Probe Verification
+  const verifyRes = await post("/api/crm/verify-measurement", {
+    utm_source: "bing",
+    utm_medium: "cpc",
+    msclkid: "msclkid_test_phase1",
+  });
+  assert.equal(verifyRes.status, 200);
+  const verifyJson = (await verifyRes.json()) as any;
+  assert.equal(verifyJson.ok, true);
+  assert.equal(verifyJson.zero_pound_probe_verified, true);
+  assert.equal(verifyJson.ga4_purchase_event_contract.verified, true);
+  assert.ok(verifyJson.attribution_fields_verified.includes("msclkid"));
+
+  // Action 1.5: Top 30+ Strike-Zone Title & Meta Rewrite (10 new off-cooldown GSC pages added -> 37 total)
+  const webviewRes = await app.request("/clean/folder/localappdata-webview2-ebwebview-cache");
+  assert.equal(webviewRes.status, 200);
+  const parsedWebview = parseHtml(await webviewRes.text());
+  assert.equal(parsedWebview.title, "WebView2 EBWebView Cache: Safe to Delete? (2026) | SWEEPR");
+  assert.ok((parsedWebview.title?.length ?? 0) >= 30 && (parsedWebview.title?.length ?? 0) <= 60);
+  assert.ok((parsedWebview.metaDescription?.length ?? 0) >= 70 && (parsedWebview.metaDescription?.length ?? 0) <= 160);
+
+  const genshinRes = await app.request("/clean/app/genshin-impact-update-cache");
+  assert.equal(genshinRes.status, 200);
+  const parsedGenshin = parseHtml(await genshinRes.text());
+  assert.equal(parsedGenshin.title, "Genshin Impact Update Cache: Safe to Delete? | SWEEPR");
+
+  // Action 1.6: /safe-to-delete Interactive Checker (Campaign 1 MVP)
+  const stdPageRes = await app.request("/safe-to-delete");
+  assert.equal(stdPageRes.status, 200);
+  const parsedStd = parseHtml(await stdPageRes.text());
+  assert.equal(parsedStd.jsonLdErrors, 0);
+  assert.ok((parsedStd.title?.length ?? 0) >= 30 && (parsedStd.title?.length ?? 0) <= 60);
+  assert.ok((parsedStd.metaDescription?.length ?? 0) >= 70 && (parsedStd.metaDescription?.length ?? 0) <= 160);
+  assert.ok(parsedStd.jsonLdTypes.includes("WebApplication"));
+
+  const stdApiRes = await app.request("/api/safe-to-delete/check", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      input: [
+        "C:\\Program Files (x86)\\Steam\\depotcache, 14.5 GB",
+        "C:\\Users\\Benjamin\\AppData\\Local\\NVIDIA\\DXCache, 6.2 GB",
+        "C:\\ProgramData\\Package Cache, 9.0 GB",
+        "C:\\Windows\\System32",
+      ].join("\n"),
+    }),
+  });
+  assert.equal(stdApiRes.status, 200);
+  const stdApiJson = (await stdApiRes.json()) as any;
+  assert.equal(stdApiJson.ok, true);
+  assert.equal(stdApiJson.total_inputs, 4);
+  assert.equal(stdApiJson.safe_count, 2);
+  assert.equal(stdApiJson.caution_count, 1);
+  assert.equal(stdApiJson.danger_count, 1);
+  assert.equal(stdApiJson.estimated_reclaimable_gb, 29.7);
+
+  // Action 1.7: Campaign 3 Wave 1 Submission Pack
+  const packRes = await get("/api/crm/seo/listings/submission-pack");
+  assert.equal(packRes.status, 200);
+  const packJson = (await packRes.json()) as any;
+  assert.equal(packJson.release_version, "0.1.0");
+  assert.equal(
+    packJson.hashes.windows_msi_sha256,
+    "38E5CDF3D69D53BBDAAEEB5CCDC12E222E0D4CD5DB3E214F93DF6F38D73CA172"
+  );
+  assert.ok(packJson.wave_1_channels.length >= 7);
+
+  // Action 1.8: A3 Download-Without-Install SmartScreen Recovery Telemetry
+  const recoveryEventRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "smartscreen_recovery_shown",
+      platform: "windows",
+      metadata: { page: "/download" },
+    }),
+  });
+  assert.equal(recoveryEventRes.status, 200);
+  const recoveryClickRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "smartscreen_recovery_clicked",
+      platform: "windows",
+      metadata: { action: "web_checkout_fallback" },
+    }),
+  });
+  assert.equal(recoveryClickRes.status, 200);
+});
+
+
 
 
 

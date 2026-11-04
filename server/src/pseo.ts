@@ -127,6 +127,16 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "appdata-local-folder-huge-windows-11": "AppData\\Local Folder Huge on Windows 11? Safe Clean | SWEEPR",
   "windows-11-24h2-update-cache-8gb-bug": "Fix Windows 11 24H2 8.63 GB Undeletable Update Cache | SWEEPR",
   "other-storage-full-windows-11-cleanup": "Clean 'Other' & Temporary Files on Windows 11 | SWEEPR",
+  "localappdata-webview2-ebwebview-cache": "WebView2 EBWebView Cache: Safe to Delete? (2026) | SWEEPR",
+  "genshin-impact-update-cache": "Genshin Impact Update Cache: Safe to Delete? | SWEEPR",
+  "ea-app-cache": "How to Clear EA App Cache & Logs Safely (2026) | SWEEPR",
+  "epic-games-webcache": "Epic Games Launcher Webcache: Safe to Delete? | SWEEPR",
+  "chrome-gpu-shader-cache": "Chrome GPUCache & GrShaderCache: Safe to Delete? | SWEEPR",
+  "amd-shader-cache": "AMD DxCache & VkCache Folder: Safe to Delete? | SWEEPR",
+  "vrchat-cache": "How to Clear VRChat Cache Folder Safely (2026) | SWEEPR",
+  "intellij-idea-caches": "JetBrains & IntelliJ IDEA Caches: Safe to Delete? | SWEEPR",
+  "comfyui-temp-output-cache": "ComfyUI Temp & Output Cache Cleanup Guide (2026) | SWEEPR",
+  "lm-studio-models-cache": "LM Studio Models & GGUF Cache: Safe to Delete? | SWEEPR",
 };
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
@@ -186,6 +196,26 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "How to fix the Windows 11 24H2 8.63 GB undeletable Windows Update cache bug in WinSxS\\Temp\\PendingDeletes and C:\\$Windows.~BT using DISM and SWEEPR.",
   "other-storage-full-windows-11-cleanup":
     "Temporary files & 'Other' storage full on Windows 11? Safely clean hidden ProgramData\\Package Cache, .cache, and GPU shader folders to free 6–45 GB.",
+  "localappdata-webview2-ebwebview-cache":
+    "Is Microsoft Edge WebView2 EBWebView cache safe to delete? Reclaim 1–8 GB of embedded Chromium cache on Windows 10/11 without breaking desktop apps.",
+  "genshin-impact-update-cache":
+    "How to clear Genshin Impact & HoYoPlay update staging cache on Windows 10/11. Safely delete 4–25 GB of leftover .zip_tmp patch archives after updates.",
+  "ea-app-cache":
+    "Is %LocalAppData%\\Electronic Arts\\EA Desktop cache safe to delete? Clear 1–6 GB of EA App installer staging and CEF cache to fix stuck game updates.",
+  "epic-games-webcache":
+    "How to clear %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache on Windows 10/11. Safely remove 1–5 GB of CEF storefront bloat and fix blank launcher UI.",
+  "chrome-gpu-shader-cache":
+    "Is Google Chrome GPUCache, GrShaderCache, and DawnCache safe to delete? Reclaim 1–6 GB in %LocalAppData%\\Google\\Chrome\\User Data without losing logins.",
+  "amd-shader-cache":
+    "Is %LocalAppData%\\AMD\\DxCache and VkCache safe to delete? Clear 2–12 GB of compiled Radeon DirectX & Vulkan shader binaries to fix disk bloat & stutter.",
+  "vrchat-cache":
+    "Is %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer safe to delete? Reclaim 10–30 GB of cached avatar and world bundles without losing your account.",
+  "intellij-idea-caches":
+    "How to clear %LocalAppData%\\JetBrains caches and old IDE version indexes on Windows 10/11. Reclaim 5–25 GB of stale JVM & Gradle index storage safely.",
+  "comfyui-temp-output-cache":
+    "How to clear ComfyUI temp preview tensors, custom_nodes pip cache, and intermediate diffusion latents on Windows 11 to reclaim 5–40 GB of NVMe space.",
+  "lm-studio-models-cache":
+    "Where does LM Studio store GGUF models on Windows 11? Safely audit and clean %UserProfile%\\.cache\\lm-studio to reclaim 10–80 GB of unused LLM weights.",
 };
 
 export type PseoClusterId =
@@ -1194,6 +1224,9 @@ export function renderPseoPage(item: CleanItem): string {
         </a>
         <a href="/download" class="text-xs font-bold text-emerald-700 hover:underline">
           Or Download Free Diagnostic Scan (.exe / .dmg / .apk)
+        </a>
+        <a href="/safe-to-delete" class="text-xs font-bold text-gray-700 hover:underline">
+          🔍 Check Other Folders in Interactive Path Checker
         </a>
       </div>
     </div>

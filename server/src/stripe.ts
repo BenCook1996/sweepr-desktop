@@ -19,6 +19,18 @@ const idOf = (v: string | { id: string } | null | undefined) => (typeof v === "s
 
 export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountIdHint?: string | null) {
   const customerId = idOf(sub.customer as any);
+  const expandedCustomer =
+    typeof sub.customer === "object" && sub.customer && !(sub.customer as any).deleted
+      ? (sub.customer as Stripe.Customer)
+      : null;
+  const customerObjEmail =
+    typeof expandedCustomer?.email === "string" && expandedCustomer.email.trim()
+      ? expandedCustomer.email.trim().toLowerCase()
+      : "";
+  const customerObjName =
+    typeof expandedCustomer?.name === "string" && expandedCustomer.name.trim()
+      ? expandedCustomer.name.trim()
+      : "";
   const metaAccountId = typeof sub.metadata?.account_id === "string" ? sub.metadata.account_id.trim() : "";
   const hint = typeof accountIdHint === "string" ? accountIdHint.trim() : "";
   if (metaAccountId && hint && metaAccountId !== hint) {
@@ -28,19 +40,24 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     (metaAccountId && repo.accountById(metaAccountId)) ||
     (hint && repo.accountById(hint)) ||
     (customerId && repo.accountByCustomer(customerId)) ||
+    (customerObjEmail && repo.accountByEmail(customerObjEmail)) ||
     undefined;
   if (!account) {
     const fallbackAccountId = metaAccountId || hint || (customerId ? `acc_stripe_${customerId}` : "");
     if (fallbackAccountId) {
       const fallbackEmail =
-        (typeof (sub as any).customer_email === "string" && (sub as any).customer_email.trim()) ||
-        (typeof sub.metadata?.email === "string" && sub.metadata.email.trim()) ||
+        customerObjEmail ||
+        (typeof (sub as any).customer_email === "string" && (sub as any).customer_email.trim().toLowerCase()) ||
+        (typeof sub.metadata?.email === "string" && sub.metadata.email.trim().toLowerCase()) ||
         `${fallbackAccountId}@pending.sweeprcleaner.com`;
       try {
         repo.createAccount(fallbackAccountId, `wh_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`, fallbackEmail, customerId);
         account = repo.accountById(fallbackAccountId);
       } catch {
-        account = (customerId && repo.accountByCustomer(customerId)) || repo.accountById(fallbackAccountId);
+        account =
+          (customerId && repo.accountByCustomer(customerId)) ||
+          (customerObjEmail && repo.accountByEmail(customerObjEmail)) ||
+          repo.accountById(fallbackAccountId);
       }
     }
   }
@@ -49,6 +66,22 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     return;
   }
   if (customerId && !account.stripe_customer_id) repo.setCustomer(account.id, customerId);
+  if (customerObjEmail || customerObjName || sub.status === "active" || sub.status === "trialing") {
+    const shouldUpdateEmail =
+      customerObjEmail && (!account.email || account.email.endsWith("@pending.sweeprcleaner.com"));
+    const shouldUpdateName = customerObjName && !account.name;
+    const isActiveSub = sub.status === "active" || sub.status === "trialing";
+    if (shouldUpdateEmail || shouldUpdateName || (isActiveSub && account.lifecycle_stage !== "customer")) {
+      try {
+        repo.updateAccountProfile(account.id, {
+          ...(shouldUpdateEmail ? { email: customerObjEmail } : {}),
+          ...(shouldUpdateName ? { name: customerObjName } : {}),
+          ...(isActiveSub ? { lifecycle_stage: "customer", health_score: 100 } : {}),
+        });
+        account = repo.accountById(account.id) || account;
+      } catch {}
+    }
+  }
 
   const existingEnt = repo.entitlement(account.id);
   // Never let a later webhook overwrite a dispute-based revocation.
@@ -479,4 +512,93 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
 /** Hook up your email provider (Postmark, Resend, SES...) here. */
 async function sendRenewalReminder(sub: Stripe.Subscription) {
   console.log(`[reminder] email customer ${String(sub.customer)}: Trial ending. Paid renewal starts on ${new Date((sub.trial_end ?? 0) * 1000).toISOString()}.`);
+}
+
+/**
+ * Reconciles active/recent Stripe subscriptions & paid invoices into SQLite on server startup
+ * or on-demand via /api/crm/reconcile-stripe so container redeploys never zero out CRM stats.
+ */
+export async function reconcileStripeSubscriptions(repo: Repo, stripe: Stripe | null) {
+  if (!stripe || typeof (stripe.subscriptions as any)?.list !== "function") {
+    return {
+      ok: false,
+      configured: false,
+      synced: 0,
+      active: 0,
+      stats: repo.getCrmStats(),
+    };
+  }
+  try {
+    const listRes = await stripe.subscriptions.list({
+      status: "all",
+      limit: 100,
+      expand: ["data.customer", "data.latest_invoice"],
+    });
+    const subs = Array.isArray(listRes?.data) ? listRes.data : [];
+    // Process non-active subscriptions first, then active/trialing ones so active entitlements win
+    const sorted = [...subs].sort((a, b) => {
+      const aActive = a.status === "active" || a.status === "trialing" ? 1 : 0;
+      const bActive = b.status === "active" || b.status === "trialing" ? 1 : 0;
+      if (aActive !== bActive) return aActive - bActive;
+      return (a.created || 0) - (b.created || 0);
+    });
+    let synced = 0;
+    let activeCount = 0;
+    for (const sub of sorted) {
+      // Skip incomplete subscriptions that never completed payment unless they are the only record
+      if (sub.status === "incomplete" || sub.status === "incomplete_expired") continue;
+      try {
+        await syncPayPalEmailFromSubscription(stripe, repo, sub);
+        syncSubscription(repo, sub);
+        synced++;
+        if (sub.status === "active" || sub.status === "trialing") {
+          activeCount++;
+        }
+        const inv =
+          typeof sub.latest_invoice === "object" && sub.latest_invoice
+            ? (sub.latest_invoice as Stripe.Invoice)
+            : null;
+        const custId = idOf(sub.customer as any);
+        const acc =
+          (typeof sub.metadata?.account_id === "string" && repo.accountById(sub.metadata.account_id.trim())) ||
+          (custId && repo.accountByCustomer(custId)) ||
+          undefined;
+        if (inv && acc && inv.status === "paid") {
+          repo.upsertInvoice({
+            id: inv.id,
+            account_id: acc.id,
+            stripe_invoice_id: inv.id,
+            amount_cents: inv.total ?? inv.amount_paid ?? 0,
+            amount_paid_cents: inv.amount_paid ?? inv.total ?? 0,
+            currency: inv.currency || sub.currency || "gbp",
+            status: "paid",
+            due_date: inv.due_date ?? null,
+            paid_at: (inv as any).status_transitions?.paid_at ?? inv.created ?? Math.floor(Date.now() / 1000),
+            hosted_invoice_url: inv.hosted_invoice_url ?? null,
+            pdf_url: inv.invoice_pdf ?? null,
+            created_at: inv.created ?? Math.floor(Date.now() / 1000),
+          });
+        }
+      } catch (err: any) {
+        console.warn(`[stripe-reconcile] Failed syncing sub ${sub.id}:`, err?.message || err);
+      }
+    }
+    return {
+      ok: true,
+      configured: true,
+      synced,
+      active: activeCount,
+      stats: repo.getCrmStats(),
+    };
+  } catch (err: any) {
+    console.warn(`[stripe-reconcile] Could not list Stripe subscriptions:`, err?.message || err);
+    return {
+      ok: false,
+      configured: true,
+      error: err?.message || String(err),
+      synced: 0,
+      active: 0,
+      stats: repo.getCrmStats(),
+    };
+  }
 }

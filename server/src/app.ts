@@ -29,6 +29,7 @@ import { cleanItems, getCleanItems, getCleanItemBySlug, getPseoRedirectTarget, r
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
+import { analyzeSafeToDeleteInput, renderSafeToDeletePageHtml } from "./safe-to-delete.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
@@ -440,6 +441,8 @@ export function createApp(deps: AppDeps) {
       seedPaths: [
         "/",
         "/clean",
+        "/safe-to-delete",
+        "/bloat-watch",
         "/vs/ccleaner",
         "/alternatives/ccleaner",
         "/vs/bleachbit",
@@ -683,6 +686,21 @@ export function createApp(deps: AppDeps) {
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
+  app.get("/safe-to-delete", (c) => {
+    const q = c.req.query("q") || c.req.query("path") || "";
+    return c.html(renderSafeToDeletePageHtml(q));
+  });
+  app.post("/api/safe-to-delete/check", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const raw =
+      typeof body.input === "string"
+        ? body.input
+        : Array.isArray(body.paths)
+        ? body.paths.join("\n")
+        : String(body.path ?? "");
+    const analysis = analyzeSafeToDeleteInput(raw);
+    return c.json({ ok: true, ...analysis });
+  });
   app.get("/bloat-watch", (c) => c.html(renderBloatWatchIndexHtml(seoStore)));
   app.get("/bloat-watch/:slug", (c) => {
     const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -5555,6 +5573,9 @@ export function createApp(deps: AppDeps) {
     "checkout_started",
     "purchase_completed",
     "clean_completed",
+    "smartscreen_recovery_shown",
+    "smartscreen_recovery_clicked",
+    "safe_to_delete_audit",
   ]);
   let lastCrashEmailSentAt = 0;
   app.post("/v1/telemetry/crash", async (c) => {

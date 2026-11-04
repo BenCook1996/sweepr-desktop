@@ -357,3 +357,79 @@ export async function checkDirectoryListings(
     listings: results,
   };
 }
+
+export function getDirectorySubmissionPack(store: SeoStore) {
+  const version = readCurrentReleaseVersion();
+  const listings = listDirectoryListings(store);
+  const sha256Msi = "38E5CDF3D69D53BBDAAEEB5CCDC12E222E0D4CD5DB3E214F93DF6F38D73CA172";
+
+  return {
+    release_version: version,
+    pad_xml_url: "https://sweeprcleaner.com/pad.xml",
+    installer_urls: {
+      windows_exe: "https://sweeprcleaner.com/SWEEPRCleaner.exe",
+      windows_msi: "https://sweeprcleaner.com/Sweepr_Setup.msi",
+      macos_dmg: "https://sweeprcleaner.com/SWEEPRCleaner.dmg",
+      android_apk: "https://sweeprcleaner.com/SWEEPRCleaner.apk",
+    },
+    hashes: {
+      windows_msi_sha256: sha256Msi,
+      product_code: "{07521DB8-EE40-4826-A28D-E29EC366DFBE}",
+    },
+    canonical_copy: {
+      title_short: "SWEEPR Cleaner",
+      tagline_80: "Privacy-first 5 MB native Rust PC & cross-platform disk cleaner with 7-day rollback.",
+      description_250:
+        "SWEEPR Cleaner is a lightweight 5 MB native Rust & Tauri v2 disk cleaner for Windows 11/10, macOS, Android, and iOS. Safely reclaim 10–65 GB across 367 audited AppData, Steam, NVIDIA DXCache, Adobe, and Windows Update caches with zero telemetry.",
+      categories: ["System Utilities", "Disk Cleaners", "PC Optimization", "Privacy & Security"],
+      competitor_alternatives: ["CCleaner", "BleachBit", "CleanMyPC", "Wise Disk Cleaner", "Avast Cleanup", "Glary Utilities"],
+    },
+    wave_1_channels: [
+      {
+        platform_id: "winget",
+        name: "Windows Package Manager (Winget)",
+        manifest_dir: `winget-manifests/m/Makeur/SweeprCleaner/${version}/`,
+        command: `wingetcreate submit --token $GITHUB_TOKEN winget-manifests/m/Makeur/SweeprCleaner/${version}`,
+        submission_url: "https://github.com/microsoft/winget-pkgs/pulls",
+      },
+      {
+        platform_id: "chocolatey",
+        name: "Chocolatey Community Repository",
+        manifest_dir: "chocolatey/",
+        command: `choco pack chocolatey/sweepr-cleaner.nuspec && choco push sweepr-cleaner.${version}.nupkg --source https://push.chocolatey.org/`,
+        submission_url: "https://community.chocolatey.org/packages/sweepr-cleaner",
+      },
+      {
+        platform_id: "microsoft_wdsi",
+        name: "Microsoft Security Intelligence (WDSI SmartScreen File Submission)",
+        submission_url: "https://www.microsoft.com/en-us/wdsi/filesubmission",
+        instructions:
+          "Submit SWEEPRCleaner.exe and Sweepr_Setup.msi as Software Developer -> Incorrectly detected as PUA/SmartScreen unknown publisher alongside SSL.com OV/EV ticket #151810941.",
+      },
+      {
+        platform_id: "softpedia",
+        name: "Softpedia Windows System Utilities (PAD XML Import)",
+        submission_url: "https://www.softpedia.com/user/pad_submit.shtml",
+        pad_feed: "https://sweeprcleaner.com/pad.xml",
+      },
+      {
+        platform_id: "alternativeto",
+        name: "AlternativeTo (CCleaner & BleachBit Alternatives)",
+        submission_url: "https://alternativeto.net/software/sweepr-cleaner/about/",
+        target_alternatives: ["ccleaner", "bleachbit", "cleanmypc", "wise-disk-cleaner"],
+      },
+      {
+        platform_id: "saashub",
+        name: "SaaSHub Software Directory",
+        submission_url: "https://www.saashub.com/sweepr-cleaner-alternatives",
+      },
+      {
+        platform_id: "majorgeeks",
+        name: "MajorGeeks Drive Cleaners",
+        submission_url: "https://www.majorgeeks.com/content/page/aboutcontact_us.html",
+        pad_feed: "https://sweeprcleaner.com/pad.xml",
+      },
+    ],
+    tracked_listings: listings,
+  };
+}

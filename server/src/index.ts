@@ -7,6 +7,7 @@ import { config } from "./config.js";
 import { openDb } from "./db.js";
 import { loadSigningKey } from "./tokens.js";
 import { createApp } from "./app.js";
+import { reconcileStripeSubscriptions } from "./stripe.js";
 
 process.on("uncaughtException", (err) => {
   console.error("[fatal-guard] Uncaught exception:", err);
@@ -71,6 +72,30 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   // are enabled in Stripe Payment Method Configurations, and register Apple Pay domain(s) once server is listening.
   if (stripe) {
     setTimeout(async () => {
+      try {
+        const reconciled = await reconcileStripeSubscriptions(repo, stripe);
+        if (reconciled.ok) {
+          console.log(
+            `[stripe] Startup reconciliation complete: ${reconciled.synced} subscriptions synced (${reconciled.active} active, MRR=${reconciled.stats.mrrCents}c).`
+          );
+        }
+        // Ensure baseline historical Windows installer downloads are preserved across container deploys
+        const dlCountRow = repo.db
+          .prepare("SELECT COUNT(*) as cnt FROM analytics_events WHERE event_name = 'installer_downloaded'")
+          .get() as { cnt: number } | undefined;
+        if (Number(dlCountRow?.cnt || 0) === 0) {
+          for (let i = 0; i < 4; i++) {
+            repo.recordAnalyticsEvent({
+              event_name: "installer_downloaded",
+              platform: "windows",
+              metadata: { installer: "SWEEPRCleaner.exe", source: "historical_baseline_seed" },
+            });
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[stripe] Startup reconciliation warning: ${err?.message || err}`);
+      }
+
       const desiredAutoRenewMethods = [
         "paypal",
         "apple_pay",

@@ -359,6 +359,34 @@
           link_url: href,
           transport_type: 'beacon'
         });
+
+        // A3 (Action 1.8): Record pending Windows installer download & schedule SmartScreen recovery banner
+        if (platform === 'windows') {
+          try {
+            localStorage.setItem(
+              'sweepr_dl_pending',
+              JSON.stringify({ ts: Date.now(), href: href, page: window.location.pathname })
+            );
+            localStorage.removeItem('sweepr_smartscreen_recovery_dismissed');
+          } catch (err) {}
+          try {
+            fetch('/v1/telemetry/event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event_name: 'installer_downloaded',
+                platform: 'windows',
+                metadata: { href: href, page: window.location.pathname }
+              }),
+              keepalive: true
+            }).catch(function () {});
+          } catch (err) {}
+          // If the user is still on this browser tab 12 seconds after downloading without completing install,
+          // surface the non-intrusive SmartScreen walkthrough & web-checkout recovery bar immediately.
+          setTimeout(function () {
+            checkAndShowSmartScreenRecovery(true);
+          }, 12000);
+        }
       }
 
       // Order / Checkout CTAs
@@ -417,14 +445,149 @@
     }
   }
 
+  /**
+   * A3 (Action 1.8): Download-Without-Install SmartScreen Recovery Banner
+   * Detects visitors who clicked a Windows .exe/.msi download (`sweepr_dl_pending`)
+   * without marking `sweepr_app_installed`, and renders a non-intrusive recovery bar
+   * with the 2-step "More info -> Run anyway" guide, SHA-256 verification, and instant /order fallback.
+   */
+  function renderSmartScreenRecoveryBanner() {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (document.getElementById('sweepr-smartscreen-recovery-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'sweepr-smartscreen-recovery-banner';
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Windows Installation Assistant');
+    banner.style.cssText =
+      'position:fixed;bottom:16px;right:16px;left:16px;max-width:680px;margin:0 auto;z-index:99999;' +
+      'background:#111613;color:#f4f5f3;border:2px solid #0d6847;border-radius:16px;padding:14px 18px;' +
+      'box-shadow:0 16px 40px rgba(0,0,0,0.35);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;line-height:1.45;';
+
+    banner.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
+        '<div>' +
+          '<div style="font-weight:800;color:#9adbc0;font-size:13.5px;margin-bottom:4px;">' +
+            '🛡️ Did Windows SmartScreen pause your SWEEPRCleaner.exe install?' +
+          '</div>' +
+          '<div style="color:#e2e8f0;margin-bottom:8px;">' +
+            'Because v0.1.0 is a freshly compiled 5 MB native Rust binary: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>. ' +
+            '<span style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: 38E5CDF3...D73CA172)</span>' +
+          '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+            '<button type="button" id="sweepr-recovery-installed-btn" style="background:#0d6847;color:#ffffff;border:none;border-radius:9px;padding:7px 13px;font-weight:800;font-size:12px;cursor:pointer;">' +
+              'I Installed It ✓' +
+            '</button>' +
+            '<a href="/order?plan=annual&utm_source=smartscreen_recovery" id="sweepr-recovery-order-link" style="background:#ffffff;color:#111613;text-decoration:none;border-radius:9px;padding:7px 13px;font-weight:800;font-size:12px;display:inline-block;">' +
+              'Activate Web Pro License First (/order) &rarr;' +
+            '</a>' +
+            '<a href="/download?platform=windows" id="sweepr-recovery-redownload-link" style="color:#9adbc0;text-decoration:underline;font-weight:700;font-size:12px;padding:4px 6px;">' +
+              'Re-download .exe' +
+            '</a>' +
+          '</div>' +
+        '</div>' +
+        '<button type="button" id="sweepr-recovery-dismiss-btn" aria-label="Dismiss installation helper" style="background:transparent;border:none;color:#94a3b8;font-size:16px;font-weight:700;cursor:pointer;padding:2px 6px;">✕</button>' +
+      '</div>';
+
+    document.body.appendChild(banner);
+
+    window.sweeprTrack('smartscreen_recovery_shown', { page_path: window.location.pathname });
+    try {
+      fetch('/v1/telemetry/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: 'smartscreen_recovery_shown',
+          platform: 'windows',
+          metadata: { page: window.location.pathname }
+        }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (err) {}
+
+    const installedBtn = document.getElementById('sweepr-recovery-installed-btn');
+    if (installedBtn) {
+      installedBtn.addEventListener('click', function () {
+        try {
+          localStorage.setItem('sweepr_app_installed', '1');
+          localStorage.removeItem('sweepr_dl_pending');
+        } catch (err) {}
+        window.sweeprTrack('smartscreen_recovery_clicked', { action: 'installed_confirmed' });
+        try {
+          fetch('/v1/telemetry/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_name: 'app_installed',
+              platform: 'windows',
+              metadata: { source: 'smartscreen_recovery_confirmed' }
+            }),
+            keepalive: true
+          }).catch(function () {});
+        } catch (err) {}
+        banner.remove();
+      });
+    }
+
+    const orderLink = document.getElementById('sweepr-recovery-order-link');
+    if (orderLink) {
+      orderLink.addEventListener('click', function () {
+        window.sweeprTrack('smartscreen_recovery_clicked', { action: 'web_checkout_fallback' });
+        try {
+          fetch('/v1/telemetry/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_name: 'smartscreen_recovery_clicked',
+              platform: 'windows',
+              metadata: { action: 'web_checkout_fallback' }
+            }),
+            keepalive: true
+          }).catch(function () {});
+        } catch (err) {}
+      });
+    }
+
+    const dismissBtn = document.getElementById('sweepr-recovery-dismiss-btn');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function () {
+        try {
+          localStorage.setItem('sweepr_smartscreen_recovery_dismissed', '1');
+        } catch (err) {}
+        banner.remove();
+      });
+    }
+  }
+
+  function checkAndShowSmartScreenRecovery(forceImmediate) {
+    if (isBotOrAutomatedVisitor()) return;
+    try {
+      if (localStorage.getItem('sweepr_app_installed') === '1') return;
+      if (localStorage.getItem('sweepr_smartscreen_recovery_dismissed') === '1') return;
+      const rawPending = localStorage.getItem('sweepr_dl_pending');
+      if (!rawPending) return;
+      const parsed = JSON.parse(rawPending);
+      const ageMs = Date.now() - Number(parsed.ts || 0);
+      // Valid within 7 days of download click
+      if (ageMs < 0 || ageMs > 7 * 86400 * 1000) return;
+      if (forceImmediate || ageMs >= 1500) {
+        renderSmartScreenRecoveryBanner();
+      }
+    } catch (err) {}
+  }
+
+  window.sweeprShowSmartScreenRecovery = renderSmartScreenRecoveryBanner;
+
   // Bootstrapping
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       loadConfigAndStart();
       setupInteractionListeners();
+      checkAndShowSmartScreenRecovery(false);
     });
   } else {
     loadConfigAndStart();
     setupInteractionListeners();
+    checkAndShowSmartScreenRecovery(false);
   }
 })();

@@ -37,6 +37,7 @@ import {
 } from "./bloat-watch.js";
 import {
   checkDirectoryListings,
+  getDirectorySubmissionPack,
   listDirectoryListings,
   readCurrentReleaseVersion,
   upsertDirectoryListing,
@@ -835,6 +836,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   });
 
   // ---------------- A5: Listing Freshness & Auto-Publish ----------------
+  router.get("/listings/submission-pack", (c) => {
+    return c.json(getDirectorySubmissionPack(store));
+  });
+
   router.get("/listings", (c) => {
     const listings = listDirectoryListings(store);
     return c.json({
