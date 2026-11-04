@@ -10,6 +10,7 @@ import { createApp } from "./app.js";
 import { reconcileStripeSubscriptions } from "./stripe.js";
 import { SeoStore } from "./seo/store.js";
 import { checkDirectoryListings } from "./seo/listings.js";
+import { evaluateDownloadRecoverySessions } from "./download-recovery.js";
 
 process.on("uncaughtException", (err) => {
   console.error("[fatal-guard] Uncaught exception:", err);
@@ -198,4 +199,20 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   };
   setTimeout(runWeeklyListingAudit, 20_000).unref?.();
   setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000).unref?.();
+
+  // A3: Download-Without-Install Recovery Evaluator
+  // Runs every 5 minutes to flag visitors at T+30m (no app_installed) and dispatch T+2h transactional SmartScreen help emails.
+  const runA3RecoverySweep = async () => {
+    try {
+      const res = await evaluateDownloadRecoverySessions(repo);
+      if (res.newly_flagged_30m > 0 || res.emails_sent_2h > 0) {
+        console.log(
+          `[a3-recovery] Evaluated ${res.evaluated} pending downloads: ${res.newly_flagged_30m} flagged at T+30m, ${res.emails_sent_2h} transactional help emails sent at T+2h.`
+        );
+      }
+    } catch (err: any) {
+      console.warn(`[a3-recovery] Sweep warning: ${err?.message || err}`);
+    }
+  };
+  setInterval(runA3RecoverySweep, 5 * 60_000).unref?.();
 });

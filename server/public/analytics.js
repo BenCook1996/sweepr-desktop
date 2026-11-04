@@ -362,10 +362,14 @@
 
         // A3 (Action 1.8): Record pending Windows installer download & schedule SmartScreen recovery banner
         if (platform === 'windows') {
+          const attrId =
+            window.sweeprAttribution && typeof window.sweeprAttribution.getAttributionId === 'function'
+              ? window.sweeprAttribution.getAttributionId()
+              : '';
           try {
             localStorage.setItem(
               'sweepr_dl_pending',
-              JSON.stringify({ ts: Date.now(), href: href, page: window.location.pathname })
+              JSON.stringify({ ts: Date.now(), href: href, page: window.location.pathname, attribution_id: attrId })
             );
             localStorage.removeItem('sweepr_smartscreen_recovery_dismissed');
           } catch (err) {}
@@ -376,7 +380,8 @@
               body: JSON.stringify({
                 event_name: 'installer_downloaded',
                 platform: 'windows',
-                metadata: { href: href, page: window.location.pathname }
+                attribution_id: attrId || undefined,
+                metadata: { href: href, page: window.location.pathname, attribution_id: attrId || undefined }
               }),
               keepalive: true
             }).catch(function () {});
@@ -427,6 +432,10 @@
           'blur',
           function () {
             if (emailInput.value && emailInput.value.includes('@')) {
+              const attrId =
+                window.sweeprAttribution && typeof window.sweeprAttribution.getAttributionId === 'function'
+                  ? window.sweeprAttribution.getAttributionId()
+                  : '';
               window.sweeprTrack('generate_lead', {
                 form: 'checkout_email',
                 currency: 'GBP',
@@ -437,6 +446,17 @@
                 form: 'checkout_email',
                 transport_type: 'beacon'
               });
+              try {
+                fetch('/api/lead', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    email: emailInput.value.trim(),
+                    attribution_id: attrId || undefined
+                  }),
+                  keepalive: true
+                }).catch(function () {});
+              } catch (err) {}
             }
           },
           { once: true }
@@ -464,15 +484,20 @@
       'background:#111613;color:#f4f5f3;border:2px solid #0d6847;border-radius:16px;padding:14px 18px;' +
       'box-shadow:0 16px 40px rgba(0,0,0,0.35);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;line-height:1.45;';
 
+    const attrId =
+      window.sweeprAttribution && typeof window.sweeprAttribution.getAttributionId === 'function'
+        ? window.sweeprAttribution.getAttributionId()
+        : '';
+
     banner.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">' +
         '<div>' +
           '<div style="font-weight:800;color:#9adbc0;font-size:13.5px;margin-bottom:4px;">' +
-            '🛡️ Did Windows SmartScreen pause your SWEEPRCleaner.exe install?' +
+            '🛡️ Did Windows stop the install? (SWEEPRCleaner.exe)' +
           '</div>' +
           '<div style="color:#e2e8f0;margin-bottom:8px;">' +
             'Because v0.1.0 is a freshly compiled 5 MB native Rust binary: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>. ' +
-            '<span style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: 38E5CDF3...D73CA172)</span>' +
+            '<span title="38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA" style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: 38E5CDF3...F77544AA)</span>' +
           '</div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
             '<button type="button" id="sweepr-recovery-installed-btn" style="background:#0d6847;color:#ffffff;border:none;border-radius:9px;padding:7px 13px;font-weight:800;font-size:12px;cursor:pointer;">' +
@@ -499,7 +524,8 @@
         body: JSON.stringify({
           event_name: 'smartscreen_recovery_shown',
           platform: 'windows',
-          metadata: { page: window.location.pathname }
+          attribution_id: attrId || undefined,
+          metadata: { page: window.location.pathname, attribution_id: attrId || undefined }
         }),
         keepalive: true
       }).catch(function () {});
@@ -520,7 +546,8 @@
             body: JSON.stringify({
               event_name: 'app_installed',
               platform: 'windows',
-              metadata: { source: 'smartscreen_recovery_confirmed' }
+              attribution_id: attrId || undefined,
+              metadata: { source: 'smartscreen_recovery_confirmed', attribution_id: attrId || undefined }
             }),
             keepalive: true
           }).catch(function () {});
@@ -540,7 +567,8 @@
             body: JSON.stringify({
               event_name: 'smartscreen_recovery_clicked',
               platform: 'windows',
-              metadata: { action: 'web_checkout_fallback' }
+              attribution_id: attrId || undefined,
+              metadata: { action: 'web_checkout_fallback', attribution_id: attrId || undefined }
             }),
             keepalive: true
           }).catch(function () {});
@@ -554,6 +582,19 @@
         try {
           localStorage.setItem('sweepr_smartscreen_recovery_dismissed', '1');
         } catch (err) {}
+        try {
+          fetch('/v1/telemetry/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_name: 'smartscreen_recovery_clicked',
+              platform: 'windows',
+              attribution_id: attrId || undefined,
+              metadata: { action: 'dismissed', attribution_id: attrId || undefined }
+            }),
+            keepalive: true
+          }).catch(function () {});
+        } catch (err) {}
         banner.remove();
       });
     }
@@ -565,13 +606,30 @@
       if (localStorage.getItem('sweepr_app_installed') === '1') return;
       if (localStorage.getItem('sweepr_smartscreen_recovery_dismissed') === '1') return;
       const rawPending = localStorage.getItem('sweepr_dl_pending');
-      if (!rawPending) return;
-      const parsed = JSON.parse(rawPending);
-      const ageMs = Date.now() - Number(parsed.ts || 0);
-      // Valid within 7 days of download click
-      if (ageMs < 0 || ageMs > 7 * 86400 * 1000) return;
-      if (forceImmediate || ageMs >= 1500) {
-        renderSmartScreenRecoveryBanner();
+      if (rawPending) {
+        const parsed = JSON.parse(rawPending);
+        const ageMs = Date.now() - Number(parsed.ts || 0);
+        if (ageMs >= 0 && ageMs <= 7 * 86400 * 1000 && (forceImmediate || ageMs >= 1500)) {
+          renderSmartScreenRecoveryBanner();
+          return;
+        }
+      }
+      // Step 2: Also check server-side attribution recovery status (for visitors flagged at T+30m returning on a new session)
+      const attrId =
+        window.sweeprAttribution && typeof window.sweeprAttribution.getAttributionId === 'function'
+          ? window.sweeprAttribution.getAttributionId()
+          : '';
+      if (attrId) {
+        fetch('/api/telemetry/recovery-status?attribution_id=' + encodeURIComponent(attrId))
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (data) {
+            if (data && data.should_show_banner) {
+              renderSmartScreenRecoveryBanner();
+            }
+          })
+          .catch(function () {});
       }
     } catch (err) {}
   }

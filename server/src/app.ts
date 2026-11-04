@@ -30,6 +30,14 @@ import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
 import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
 import { analyzeSafeToDeleteInput, renderSafeToDeletePageHtml } from "./safe-to-delete.js";
+import {
+  associateCheckoutLeadWithRecovery,
+  getVisitorRecoveryStatus,
+  recordAppInstalledForRecovery,
+  recordInstallerDownloaded,
+  recordRecoveryBannerInteraction,
+  sanitizeAttributionId,
+} from "./download-recovery.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
@@ -1102,7 +1110,7 @@ export function createApp(deps: AppDeps) {
 </body></html>`);
   });
 
-  app.get("/download", (c) => {
+  app.get("/download", async (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
     const ua = c.req.header("user-agent")?.toLowerCase() || "";
     const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
@@ -1129,16 +1137,39 @@ export function createApp(deps: AppDeps) {
     const hasFile = existsSync(installerPath);
 
     try {
+      let attrId =
+        sanitizeAttributionId(c.req.query("attribution_id")) ||
+        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+      if (!attrId) {
+        attrId = `attr_dl_${randomToken(8)}`;
+        setCookie(c, "sweepr_attr_id", attrId, {
+          httpOnly: false,
+          sameSite: "Lax",
+          secure: isHttps,
+          path: "/",
+          maxAge: 90 * 86400,
+        });
+      }
+      const sessAccId = await sessionAccountId(c);
+      recordInstallerDownloaded(repo, {
+        attributionId: attrId,
+        platform,
+        installerFile: file,
+        accountId: sessAccId,
+        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+        nowSec: now(),
+      });
       repo.recordAnalyticsEvent({
         event_name: "installer_downloaded",
         platform,
-        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+        account_id: sessAccId,
+        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: attrId },
       });
       syncToCentralCrm("/v1/telemetry/event", {
         event_name: "installer_downloaded",
         category: "funnel",
         os: platform,
-        properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+        properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: attrId },
       });
     } catch {}
 
@@ -1562,6 +1593,18 @@ export function createApp(deps: AppDeps) {
     }
 
     const acc = repo.accountById(accountId);
+    try {
+      const attrId =
+        sanitizeAttributionId(body?.attribution_id) ||
+        sanitizeAttributionId(body?.attribution?.attribution_id) ||
+        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+      associateCheckoutLeadWithRecovery(repo, {
+        attributionId: attrId,
+        email,
+        accountId,
+        nowSec: now(),
+      });
+    } catch {}
     syncToCentralCrm("/v1/leads/capture", {
       email,
       name: name || undefined,
@@ -4489,6 +4532,18 @@ export function createApp(deps: AppDeps) {
       created_at: now(),
     });
     repo.touchDevice(accountId, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile);
+    try {
+      const attrId =
+        sanitizeAttributionId(body.attribution_id) ||
+        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+      recordAppInstalledForRecovery(repo, {
+        attributionId: attrId,
+        accountId,
+        email,
+        source: "v1_accounts",
+        nowSec: now(),
+      });
+    } catch {}
     syncToCentralCrm("/v1/telemetry/event", {
       event_name: "app_installed",
       category: "funnel",
@@ -5575,6 +5630,9 @@ export function createApp(deps: AppDeps) {
     "clean_completed",
     "smartscreen_recovery_shown",
     "smartscreen_recovery_clicked",
+    "smartscreen_recovery_flagged",
+    "smartscreen_recovery_email_sent",
+    "smartscreen_recovery_completed",
     "safe_to_delete_audit",
   ]);
   let lastCrashEmailSentAt = 0;
@@ -5621,20 +5679,74 @@ export function createApp(deps: AppDeps) {
     if (!ALLOWED_FUNNEL_EVENTS.has(eventName)) {
       return c.json({ error: "unsupported_event" }, 400);
     }
+    const attrId =
+      sanitizeAttributionId(body?.attribution_id) ||
+      sanitizeAttributionId(body?.metadata?.attribution_id) ||
+      sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+    const sessAccId = await sessionAccountId(c);
+    const resolvedAccountId =
+      typeof body.account_id === "string" ? body.account_id.slice(0, 64) : sessAccId;
+    const resolvedEmail = normalizeEmail(body?.email ?? body?.metadata?.email) || undefined;
+
+    try {
+      if (eventName === "installer_downloaded") {
+        recordInstallerDownloaded(repo, {
+          attributionId: attrId || `attr_ev_${randomToken(8)}`,
+          platform: body.platform || "windows",
+          installerFile: typeof body?.metadata?.installer === "string" ? body.metadata.installer : "SWEEPRCleaner.exe",
+          accountId: resolvedAccountId,
+          email: resolvedEmail,
+          metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : null,
+          nowSec: now(),
+        });
+      } else if (eventName === "app_installed" || eventName === "first_launch") {
+        recordAppInstalledForRecovery(repo, {
+          attributionId: attrId,
+          accountId: resolvedAccountId,
+          email: resolvedEmail,
+          source: eventName,
+          nowSec: now(),
+        });
+      } else if (eventName === "smartscreen_recovery_shown") {
+        recordRecoveryBannerInteraction(repo, {
+          attributionId: attrId,
+          interaction: "shown",
+          page: typeof body?.metadata?.page === "string" ? body.metadata.page : undefined,
+          nowSec: now(),
+        });
+      } else if (eventName === "smartscreen_recovery_clicked") {
+        recordRecoveryBannerInteraction(repo, {
+          attributionId: attrId,
+          interaction: "clicked",
+          action: typeof body?.metadata?.action === "string" ? body.metadata.action : undefined,
+          page: typeof body?.metadata?.page === "string" ? body.metadata.page : undefined,
+          nowSec: now(),
+        });
+      }
+    } catch {}
+
     const id = repo.recordAnalyticsEvent({
       event_name: eventName,
       platform: body.platform,
-      account_id: typeof body.account_id === "string" ? body.account_id.slice(0, 64) : null,
+      account_id: resolvedAccountId,
       metadata: body.metadata,
     });
     syncToCentralCrm("/v1/telemetry/event", {
       event_name: eventName,
       category: "funnel",
       os: body.platform || "windows",
-      account_id: typeof body.account_id === "string" ? body.account_id.slice(0, 64) : null,
+      account_id: resolvedAccountId,
       properties: body.metadata || null,
     });
-    return c.json({ ok: true, id });
+    return c.json({ ok: true, id, attribution_id: attrId || null });
+  });
+
+  app.get("/api/telemetry/recovery-status", async (c) => {
+    const attrId =
+      sanitizeAttributionId(c.req.query("attribution_id")) ||
+      sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+    const status = await getVisitorRecoveryStatus(repo, attrId, now());
+    return c.json(status);
   });
 
   app.post("/api/affiliate/click", async (c) => {

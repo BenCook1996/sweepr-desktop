@@ -11,6 +11,7 @@ import { periodEnd, reconcileStripeSubscriptions, syncSubscription } from "./str
 import { sendSubscriptionEmail, verifySmtp } from "./email.js";
 import { resolvePricingForRequest, detectLeadDevice } from "./pricing.js";
 import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
+import { evaluateDownloadRecoverySessions, getDownloadRecoveryStats } from "./download-recovery.js";
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -213,6 +214,33 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       ...summary,
       tickets,
       support_tickets: tickets,
+    });
+  });
+
+  // 1c. A3: Download-Without-Install Recovery Stats & Evaluator (T+30m flag -> Step 2 Banner -> T+2h Transactional Email -> Step 4 Outcome)
+  router.get("/recovery/stats", (c) => {
+    return c.json(getDownloadRecoveryStats(repo));
+  });
+
+  router.post("/recovery/evaluate", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const customNowSec =
+      typeof body?.now_sec === "number" && Number.isFinite(body.now_sec)
+        ? Math.floor(body.now_sec)
+        : typeof body?.advance_seconds === "number" && Number.isFinite(body.advance_seconds)
+        ? now() + Math.floor(body.advance_seconds)
+        : now();
+    const sendEmails = typeof body?.send_emails === "boolean" ? body.send_emails : undefined;
+    const result = await evaluateDownloadRecoverySessions(repo, {
+      nowSec: customNowSec,
+      sendEmails,
+      attributionId: typeof body?.attribution_id === "string" ? body.attribution_id : undefined,
+    });
+    return c.json({
+      ok: true,
+      evaluated_at_sec: customNowSec,
+      ...result,
+      stats: getDownloadRecoveryStats(repo).summary,
     });
   });
 

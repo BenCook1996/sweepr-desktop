@@ -882,6 +882,135 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   assert.equal(recoveryClickRes.status, 200);
 });
 
+test("A3 Download-Without-Install Recovery: T+30m flag, Step 2 banner, T+2h transactional email & Step 4 outcome logging", async () => {
+  const { app, get, post } = setup();
+
+  // 1. Visitor A downloads SWEEPRCleaner.exe and also has an email known from a started checkout (/api/lead)
+  const attrA = "attr_a3_prospect_alpha";
+  const dlResA = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "installer_downloaded",
+      platform: "windows",
+      attribution_id: attrA,
+      metadata: { installer: "SWEEPRCleaner.exe", page: "/download" },
+    }),
+  });
+  assert.equal(dlResA.status, 200);
+
+  const leadResA = await app.request("/api/lead", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "prospect.alpha@example.com",
+      attribution_id: attrA,
+    }),
+  });
+  assert.equal(leadResA.status, 200);
+
+  // 2. Visitor B downloads and installs within 5 minutes (< 30m) -> never flagged, email skipped
+  const attrB = "attr_a3_fast_beta";
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "installer_downloaded",
+      platform: "windows",
+      attribution_id: attrB,
+    }),
+  });
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "app_installed",
+      platform: "windows",
+      attribution_id: attrB,
+    }),
+  });
+
+  const statusBRes = await app.request(`/api/telemetry/recovery-status?attribution_id=${attrB}`);
+  assert.equal(statusBRes.status, 200);
+  const statusB = (await statusBRes.json()) as any;
+  assert.equal(statusB.installed, true);
+  assert.equal(statusB.should_show_banner, false);
+  assert.equal(statusB.recovery_outcome, "installed_within_30m");
+
+  // 3. Step 1: Evaluate at T+31m -> Visitor A is flagged (no app_installed within 30 min)
+  const eval30mRes = await post("/api/crm/recovery/evaluate", {
+    advance_seconds: 31 * 60,
+    send_emails: true,
+  });
+  assert.equal(eval30mRes.status, 200);
+  const eval30m = (await eval30mRes.json()) as any;
+  assert.equal(eval30m.newly_flagged_30m, 1);
+  assert.equal(eval30m.emails_sent_2h, 0);
+
+  // 4. Step 2: On Visitor A's next site visit, recovery-status triggers the "Did Windows stop the install?" banner
+  const statusARes = await app.request(`/api/telemetry/recovery-status?attribution_id=${attrA}`);
+  assert.equal(statusARes.status, 200);
+  const statusA = (await statusARes.json()) as any;
+  assert.equal(statusA.tracked, true);
+  assert.equal(statusA.flagged, true);
+  assert.equal(statusA.should_show_banner, true);
+  assert.equal(statusA.recovery_outcome, "flagged_uninstalled");
+  assert.equal(statusA.sha256_exe, "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA");
+  assert.ok(Array.isArray(statusA.smartscreen_steps) && statusA.smartscreen_steps.length === 2);
+
+  // Banner shown on next site visit
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "smartscreen_recovery_shown",
+      platform: "windows",
+      attribution_id: attrA,
+      metadata: { page: "/pricing" },
+    }),
+  });
+
+  // 5. Step 3: Evaluate at T+2h (125m) -> sends ONE transactional help email to prospect.alpha@example.com
+  const eval2hRes = await post("/api/crm/recovery/evaluate", {
+    advance_seconds: 125 * 60,
+    send_emails: true,
+  });
+  assert.equal(eval2hRes.status, 200);
+  const eval2h = (await eval2hRes.json()) as any;
+  assert.equal(eval2h.emails_sent_2h, 1);
+
+  // Calling evaluate again at T+3h sends 0 duplicate emails
+  const eval3hRes = await post("/api/crm/recovery/evaluate", {
+    advance_seconds: 180 * 60,
+    send_emails: true,
+  });
+  const eval3h = (await eval3hRes.json()) as any;
+  assert.equal(eval3h.emails_sent_2h, 0);
+
+  // 6. Step 4: Visitor A launches the installer after the recovery flow -> logs outcome `recovered_after_email`
+  await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "app_installed",
+      platform: "windows",
+      attribution_id: attrA,
+    }),
+  });
+
+  const statsRes = await get("/api/crm/recovery/stats");
+  assert.equal(statsRes.status, 200);
+  const statsJson = (await statsRes.json()) as any;
+  assert.equal(statsJson.summary.tracked_recovery_sessions, 2);
+  assert.equal(statsJson.summary.flagged_30m_count, 1);
+  assert.equal(statsJson.summary.banner_shown_count, 1);
+  assert.equal(statsJson.summary.transactional_emails_sent_2h, 1);
+  assert.equal(statsJson.summary.installed_within_30m, 1);
+  assert.equal(statsJson.summary.recovered_after_email, 1);
+  assert.equal(statsJson.summary.total_activated_or_recovered, 2);
+  assert.equal(statsJson.summary.activation_rate_pct, 100);
+});
+
 
 
 

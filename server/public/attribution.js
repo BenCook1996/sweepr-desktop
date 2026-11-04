@@ -1,11 +1,13 @@
 /**
  * Sweepr First-Party Marketing Attribution Engine
  * Captures UTM parameters, ad click IDs (Google Ads, Meta, Microsoft/Bing, TikTok, Impact),
+ * persistent first-party attribution_id (for A3 Download-Without-Install Recovery),
  * and Sweepr referral codes across user sessions with 90-day persistence.
  */
 (function () {
   const STORAGE_KEY_FIRST = 'sweepr_first_touch';
   const STORAGE_KEY_LAST = 'sweepr_last_touch';
+  const STORAGE_KEY_ATTR_ID = 'sweepr_attr_id';
   const COOKIE_DAYS = 90;
 
   function getQueryParam(name) {
@@ -18,7 +20,8 @@
     d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
     const expires = 'expires=' + d.toUTCString();
     const secureAttr = window.location.protocol === 'https:' ? ';Secure' : '';
-    document.cookie = name + '=' + encodeURIComponent(JSON.stringify(value)) + ';' + expires + ';path=/;SameSite=Lax' + secureAttr;
+    const encoded = typeof value === 'string' ? encodeURIComponent(value) : encodeURIComponent(JSON.stringify(value));
+    document.cookie = name + '=' + encoded + ';' + expires + ';path=/;SameSite=Lax' + secureAttr;
   }
 
   function getCookie(name) {
@@ -28,19 +31,44 @@
     for (let i = 0; i < ca.length; i++) {
       let c = ca[i].trim();
       if (c.indexOf(cname) === 0) {
+        const raw = c.substring(cname.length);
         try {
-          return JSON.parse(c.substring(cname.length));
+          return JSON.parse(raw);
         } catch {
-          return null;
+          return raw || null;
         }
       }
     }
     return null;
   }
 
+  function ensureAttributionId() {
+    const urlAttr = getQueryParam('attribution_id').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 80);
+    let attrId = urlAttr.length >= 6 ? urlAttr : '';
+    if (!attrId) {
+      try {
+        attrId = (localStorage.getItem(STORAGE_KEY_ATTR_ID) || '').trim();
+      } catch {}
+    }
+    if (!attrId) {
+      const ck = getCookie(STORAGE_KEY_ATTR_ID);
+      if (typeof ck === 'string' && ck.length >= 6) attrId = ck;
+    }
+    if (!attrId) {
+      const rand = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 8);
+      attrId = 'attr_' + Date.now().toString(36) + '_' + rand;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY_ATTR_ID, attrId);
+    } catch {}
+    setCookie(STORAGE_KEY_ATTR_ID, attrId, COOKIE_DAYS);
+    return attrId;
+  }
+
   function captureCurrentTouch() {
     const params = new URLSearchParams(window.location.search);
     const touch = {
+      attribution_id: ensureAttributionId(),
       utm_source: params.get('utm_source') || '',
       utm_medium: params.get('utm_medium') || '',
       utm_campaign: params.get('utm_campaign') || '',
@@ -88,8 +116,9 @@
     try {
       firstTouch = JSON.parse(localStorage.getItem(STORAGE_KEY_FIRST));
     } catch {}
-    if (!firstTouch) {
-      firstTouch = getCookie(STORAGE_KEY_FIRST);
+    if (!firstTouch || typeof firstTouch !== 'object') {
+      const ckFirst = getCookie(STORAGE_KEY_FIRST);
+      if (ckFirst && typeof ckFirst === 'object') firstTouch = ckFirst;
     }
     if (!firstTouch) {
       firstTouch = touch;
@@ -108,9 +137,13 @@
     }
   }
 
+  const activeAttributionId = ensureAttributionId();
   captureCurrentTouch();
 
   window.sweeprAttribution = {
+    getAttributionId: function () {
+      return ensureAttributionId() || activeAttributionId;
+    },
     getFirstTouch: function () {
       try {
         return JSON.parse(localStorage.getItem(STORAGE_KEY_FIRST)) || getCookie(STORAGE_KEY_FIRST) || {};
@@ -129,6 +162,7 @@
       const last = this.getLastTouch();
       const first = this.getFirstTouch();
       return {
+        attribution_id: this.getAttributionId(),
         utm_source: last.utm_source || first.utm_source || '',
         utm_medium: last.utm_medium || first.utm_medium || '',
         utm_campaign: last.utm_campaign || first.utm_campaign || '',

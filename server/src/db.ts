@@ -376,6 +376,25 @@ export function openDb(path: string) {
       created_at INTEGER NOT NULL,
       expires_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS download_recovery_sessions (
+      attribution_id TEXT PRIMARY KEY,
+      account_id TEXT,
+      email TEXT,
+      platform TEXT NOT NULL DEFAULT 'windows',
+      installer_file TEXT NOT NULL DEFAULT 'SWEEPRCleaner.exe',
+      downloaded_at INTEGER NOT NULL,
+      flagged_at INTEGER,
+      installed_at INTEGER,
+      banner_shown_at INTEGER,
+      banner_action TEXT,
+      email_status TEXT NOT NULL DEFAULT 'pending',
+      email_sent_at INTEGER,
+      recovery_outcome TEXT NOT NULL DEFAULT 'pending',
+      metadata_json TEXT,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_dl_recovery_email ON download_recovery_sessions(lower(email));
+    CREATE INDEX IF NOT EXISTS idx_dl_recovery_outcome ON download_recovery_sessions(recovery_outcome, downloaded_at);
   `);
 
   // Ensure extended CRM columns on accounts table
