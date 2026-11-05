@@ -127,6 +127,7 @@ async function main() {
     "/tools",
     "/safe-to-delete",
     "/bloat-watch",
+    "/state-of-windows-storage",
     ...TRANSACTIONAL_TOOLS.map((t) => `/tools/${t.slug}`),
     ...recentSamplePaths,
   ];
@@ -219,6 +220,7 @@ async function main() {
     "/tools",
     "/tools/discord-cache-cleaner",
     "/safe-to-delete",
+    "/state-of-windows-storage",
     "/robots.txt",
     "/sitemap.xml",
     "/llms.txt",

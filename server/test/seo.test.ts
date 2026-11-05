@@ -1475,6 +1475,7 @@ test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source 
     WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY,
     LOCKED_TEST_TITLE_SLUGS,
   } = await import("../src/seo/keywords.js");
+  const { getCleanItems } = await import("../src/pseo.js");
 
   // 1. Mathematical OpportunityScore calibration: low-comp transactional/problem queries vs high-KD head terms
   const lowCompToolScore = scoreKeywordOpportunity({
@@ -1535,8 +1536,10 @@ test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source 
   assert.equal(LOCKED_TEST_TITLE_SLUGS.has("steam-depotcache"), true);
   assert.equal(WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY.length, 32);
 
+  const baseCleanItems = getCleanItems();
   for (const spec of WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY) {
-    const gate = validateCandidateCleanItem(spec);
+    const existingWithoutSelf = baseCleanItems.filter((i) => i.slug.toLowerCase() !== spec.slug.toLowerCase());
+    const gate = validateCandidateCleanItem(spec, existingWithoutSelf);
     assert.equal(
       gate.valid,
       true,
@@ -1596,6 +1599,313 @@ test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source 
   assert.equal(pubDryJson.target_url, "/clean/app/marvel-rivals-shader-cache");
   assert.equal(pubDryJson.validation.valid, true);
 });
+
+test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 65% Reinvestment, A9 Z-Test, A10 Giveaway/Abandonment, A11 State of Windows Storage & Unified Status", async () => {
+  const { repo, app, get, post } = setup();
+
+  // 1. A1 Telemetry Truth: Verify all 23 Windows + macOS Rust rules map to valid CleanItems & A11 /state-of-windows-storage renders
+  const { RULE_ID_TO_CLEAN_SLUG, computeStateOfWindowsStorageReport } = await import("../src/seo/telemetry-truth.js");
+  const { getCleanItems } = await import("../src/pseo.js");
+  const allSlugs = new Set(getCleanItems().map((i) => i.slug));
+  for (const [ruleId, mappedSlug] of Object.entries(RULE_ID_TO_CLEAN_SLUG)) {
+    assert.equal(allSlugs.has(mappedSlug), true, `Rule ${ruleId} mapped to unknown slug ${mappedSlug}`);
+  }
+  assert.ok(Object.keys(RULE_ID_TO_CLEAN_SLUG).length >= 23);
+
+  const storageRes = await app.request("/state-of-windows-storage");
+  assert.equal(storageRes.status, 200);
+  const storageHtml = await storageRes.text();
+  assert.ok(storageHtml.includes("State of Windows Storage"));
+  assert.ok(storageHtml.includes('"@type":"Dataset"'));
+  assert.ok(storageHtml.includes("copyCitationMarkdownBtn"));
+
+  const storageApiRes = await get("/api/crm/seo/state-of-windows-storage");
+  assert.equal(storageApiRes.status, 200);
+  const storageApiJson = (await storageApiRes.json()) as any;
+  assert.equal(storageApiJson.ok, true);
+  assert.ok(storageApiJson.silos.length >= 6);
+  assert.ok(storageApiJson.top_15_heaviest_folders.length === 15);
+
+  // 2. A7 (Action 3.6): 90-Day Zero-Impression Page Retirement (retire_noindex / retire_merge) + Sitemap Exclusion
+  const execGapRes = await post("/api/crm/seo/gsc/intent-gap/execute", {
+    use_seed: true,
+    persist_state: false,
+  });
+  assert.equal(execGapRes.status, 200);
+  const execGapJson = (await execGapRes.json()) as any;
+  assert.equal(execGapJson.ok, true);
+  assert.ok(Array.isArray(execGapJson.report.retirement_candidates_90d));
+  assert.ok(Array.isArray(execGapJson.report.winner_promotion_queue));
+  assert.ok(execGapJson.report.retirement_candidates_90d.length > 0);
+
+  const retireTarget = execGapJson.report.retirement_candidates_90d[0];
+  const approveMergeRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    action_type: "retire_merge",
+    decision: "approved",
+    slug: retireTarget.slug,
+    merge_into_slug: retireTarget.suggested_merge_into_slug || "discord-cache",
+    reason: "Zero GSC impressions over 90 days — consolidated into cluster anchor",
+  });
+  assert.equal(approveMergeRes.status, 200);
+
+  const retiredPageRes = await app.request(retireTarget.url);
+  assert.equal(retiredPageRes.status, 200);
+  const retiredHtml = await retiredPageRes.text();
+  assert.ok(retiredHtml.includes('<meta name="robots" content="noindex, follow">'));
+  assert.ok(retiredHtml.includes('id="soft-merge-consolidation-banner"'));
+
+  const sitemapRes = await app.request("/sitemap.xml");
+  assert.equal(sitemapRes.status, 200);
+  const sitemapXml = await sitemapRes.text();
+  assert.equal(sitemapXml.includes(retireTarget.url), false, "Noindexed slug should be dynamically filtered from /sitemap.xml");
+
+  // Clean up override so subsequent tests aren't affected
+  const { setApprovedIntentGapSeoOverride } = await import("../src/pseo.js");
+  setApprovedIntentGapSeoOverride(retireTarget.slug, null);
+
+  // 3. A8 (Action 3.2): Paid Ads ROAS & v3 65% Reinvestment Engine
+  const reallocateRes = await post("/api/crm/ads/reallocate", {
+    auto_adjust_bids: true,
+    keyword_overrides: [
+      {
+        query: "sweepr cleaner pro",
+        channel: "bing",
+        clicks: 45,
+        installs: 20,
+        scans: 16,
+        checkouts: 6,
+        conversions: 3,
+        spend_gbp: 22.5,
+        revenue_gbp: 71.97,
+        max_cpc_gbp: 0.55,
+      },
+      {
+        query: "generic free disk utility",
+        channel: "bing",
+        clicks: 40,
+        installs: 4,
+        scans: 1,
+        checkouts: 0,
+        conversions: 0,
+        spend_gbp: 24.0,
+        revenue_gbp: 0,
+        max_cpc_gbp: 0.6,
+      },
+    ],
+  });
+  assert.equal(reallocateRes.status, 200);
+  const reallocateJson = (await reallocateRes.json()) as any;
+  assert.equal(reallocateJson.ok, true);
+  assert.ok(reallocateJson.bids_adjusted >= 1);
+  assert.ok(reallocateJson.losers_paused >= 1);
+  assert.equal(reallocateJson.report.totals.qualifies_for_65pct_reinvestment, true);
+  assert.ok(reallocateJson.report.totals.reinvestment_unlock_gbp > 0);
+
+  // 4. A9 (Action 3.1): Two-Proportion Z-Test Statistical Significance & Auto-Promotion at n >= 100
+  const { computeTwoProportionZTest } = await import("../src/experiments.js");
+  const lowSampleZ = computeTwoProportionZTest(20, 2, 20, 8);
+  assert.equal(lowSampleZ.sample_size_reached, false);
+  assert.equal(lowSampleZ.is_statistically_significant, false);
+  assert.equal(lowSampleZ.statistically_significant_winner, null);
+
+  const highSampleZ = computeTwoProportionZTest(150, 12, 150, 33);
+  assert.equal(highSampleZ.sample_size_reached, true);
+  assert.equal(highSampleZ.is_statistically_significant, true);
+  assert.equal(highSampleZ.statistically_significant_winner, "B");
+  assert.ok(highSampleZ.confidence_pct >= 95);
+
+  // 5. A10: High-Intent Scan/Checkout Abandonment & Giveaway GOTD50 Lifecycle Sweep + /v1/conversion/offer
+  const nowSec = Math.floor(Date.now() / 1000);
+  const redeemRes = await app.request("/api/giveaway/redeem", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "gotd-lifecycle@example.com",
+      code: "662026",
+    }),
+  });
+  assert.equal(redeemRes.status, 200);
+  const redeemJson = (await redeemRes.json()) as any;
+  assert.equal(redeemJson.ok, true);
+
+  // Backdate giveaway activation to 4 days ago so T+3d multi-device upsell triggers
+  repo.db
+    .prepare("UPDATE giveaway_redemptions SET created_at = ? WHERE email = ?")
+    .run(nowSec - 4 * 86400, "gotd-lifecycle@example.com");
+
+  const convEvalRes = await post("/api/crm/conversion/evaluate", { now_sec: nowSec });
+  assert.equal(convEvalRes.status, 200);
+  const convEvalJson = (await convEvalRes.json()) as any;
+  assert.equal(convEvalJson.ok, true);
+  assert.equal(convEvalJson.giveaway.nurture_3d_sent, 1);
+
+  const offerRes = await app.request(
+    `/v1/conversion/offer?email=${encodeURIComponent("gotd-lifecycle@example.com")}&bytes_found=${12 * 1024 * 1024 * 1024}`
+  );
+  assert.equal(offerRes.status, 200);
+  const offerJson = (await offerRes.json()) as any;
+  assert.equal(offerJson.ok, true);
+  assert.equal(offerJson.offer_type, "giveaway_5device_upgrade");
+  assert.equal(offerJson.coupon, "GOTD50");
+
+  // 6. Unified CMO Automations Status & Runner (/api/crm/automations/status & /api/crm/automations/run)
+  const runAutoRes = await post("/api/crm/automations/run", { job_id: "A1_telemetry_truth" });
+  assert.equal(runAutoRes.status, 200);
+  const statusRes = await get("/api/crm/automations/status");
+  assert.equal(statusRes.status, 200);
+  const statusJson = (await statusRes.json()) as any;
+  assert.equal(statusJson.ok, true);
+  assert.equal(statusJson.total_jobs, 15);
+  const a1Job = statusJson.jobs.find((j: any) => j.id === "A1_telemetry_truth");
+  assert.equal(a1Job.last_status, "ok");
+});
+
+test("CMO Automations v3: Persistent Storage Ledger, GEO llms.txt, Dunning/Winback, Post-Clean Aha Referral & Leaf-to-Tool Crosslinks", async () => {
+  const { app, repo, get, post } = setup();
+
+  // 1. R1 & A14: Persistent Account Storage Ledger survives 90-day analytics_events TTL & triggers 5 GB Aha referral
+  const ahaDeviceId = "e".repeat(32);
+  const acctRes = await app.request("/v1/accounts", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      device_id: ahaDeviceId,
+      device_type: "pc",
+      email: "aha-milestone@example.com",
+    }),
+  });
+  assert.equal(acctRes.status, 200);
+  const acctJson = (await acctRes.json()) as any;
+  const ahaAccountId = acctJson.account_id as string;
+  const cleanBytes = 6.5 * 1024 * 1024 * 1024; // 6.5 GB
+
+  const telRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      event_name: "clean_completed",
+      platform: "windows",
+      device_id: ahaDeviceId,
+      metadata: {
+        bytes_cleaned: cleanBytes,
+        files_cleaned: 1420,
+      },
+    }),
+  });
+  assert.equal(telRes.status, 200);
+  const telJson = (await telRes.json()) as any;
+  assert.equal(telJson.ok, true);
+  assert.equal(telJson.milestone_unlocked, true);
+  assert.ok(telJson.referral_url);
+
+  // Simulate 90-day analytics_events TTL pruning all events and verify renewal recap retains lifetime bytes
+  repo.db.prepare("DELETE FROM analytics_events WHERE account_id = ?").run(ahaAccountId);
+  const { getAccountStorageRecap } = await import("../src/renewal-recap.js");
+  const recap = getAccountStorageRecap(repo, ahaAccountId);
+  assert.ok(recap);
+  assert.ok(recap.total_cleaned_bytes >= cleanBytes);
+  assert.equal(recap.clean_count, 1);
+
+  // 2. R4: Promo Coupons (GOTD50, SCAN5GB20, STAY30) + Hardware ID Offer Lookup
+  const { resolveCheckoutPromoCoupon } = await import("../src/app.js");
+  assert.deepEqual(resolveCheckoutPromoCoupon("GOTD50"), { code: "GOTD50", discountPct: 50, multiplier: 0.5 });
+  assert.deepEqual(resolveCheckoutPromoCoupon("scan5gb20"), { code: "SCAN5GB20", discountPct: 20, multiplier: 0.8 });
+  assert.deepEqual(resolveCheckoutPromoCoupon("STAY30"), { code: "STAY30", discountPct: 30, multiplier: 0.7 });
+
+  const hwOfferRes = await app.request(
+    `/v1/conversion/offer?hardware_id=${ahaDeviceId}&bytes_found=${8 * 1024 * 1024 * 1024}`
+  );
+  assert.equal(hwOfferRes.status, 200);
+  const hwOfferJson = (await hwOfferRes.json()) as any;
+  assert.equal(hwOfferJson.ok, true);
+  assert.equal(hwOfferJson.coupon, "SCAN5GB20");
+  assert.equal(hwOfferJson.coupon_code, "SCAN5GB20");
+  assert.equal(hwOfferJson.discount_pct, 20);
+
+  // 3. A12: Dynamic GEO /llms.txt and /llms-full.txt
+  const llmsRes = await app.request("/llms.txt");
+  assert.equal(llmsRes.status, 200);
+  const llmsText = await llmsRes.text();
+  assert.ok(llmsText.includes("SWEEPR Cleaner"));
+  assert.ok(llmsText.includes("/state-of-windows-storage"));
+  assert.ok(llmsText.includes("/safe-to-delete"));
+
+  const llmsFullRes = await app.request("/llms-full.txt");
+  assert.equal(llmsFullRes.status, 200);
+  const llmsFullText = await llmsFullRes.text();
+  assert.ok(llmsFullText.includes("Complete Windows 10 & 11 Storage & Cache Encyclopedia"));
+  assert.ok(llmsFullText.includes("/clean/app/discord-cache"));
+
+  // 4. A15: Leaf-to-Tool & Switcher Commercial Crosslinks + Brand Fact Drift Audit
+  const leafRes = await app.request("/clean/app/discord-cache");
+  assert.equal(leafRes.status, 200);
+  const leafHtml = await leafRes.text();
+  assert.ok(leafHtml.includes('id="pseo-commercial-crosslinks"'));
+  assert.ok(leafHtml.includes('/tools/discord-cache-cleaner'));
+  assert.ok(leafHtml.includes('/vs/ccleaner'));
+
+  const { auditInternalBrandFactConsistency } = await import("../src/seo/listings.js");
+  const auditReport = auditInternalBrandFactConsistency({ autoFix: true });
+  assert.equal(auditReport.checked_count, 12);
+  const verifyClean = auditInternalBrandFactConsistency({ autoFix: false });
+  assert.equal(verifyClean.drift_detected_count, 0);
+
+  // 5. A13: Failed-Payment Dunning & Churn Winback Lifecycle
+  repo.createAccount("acc_dunning_1", "hash_dunning", "dunning-user@example.com");
+  const nowSec = Math.floor(Date.now() / 1000);
+  repo.db
+    .prepare(
+      "INSERT OR REPLACE INTO entitlements (account_id, status, plan, current_period_end, updated_at) VALUES (?, 'past_due', 'annual', ?, ?)"
+    )
+    .run("acc_dunning_1", nowSec - 2 * 86400, nowSec - 2 * 86400);
+
+  repo.createAccount("acc_churn_1", "hash_churn", "churned-user@example.com");
+  repo.db
+    .prepare(
+      "INSERT OR REPLACE INTO entitlements (account_id, status, plan, current_period_end, updated_at) VALUES (?, 'canceled', 'annual', ?, ?)"
+    )
+    .run("acc_churn_1", nowSec - 15 * 86400, nowSec - 15 * 86400);
+  repo.recordAccountScanAndCleanProgress("acc_churn_1", {
+    isClean: true,
+    cleanedBytes: 12 * 1024 * 1024 * 1024,
+    cleanedFiles: 950,
+    tsSec: nowSec - 20 * 86400,
+  });
+
+  const dunningEvalRes = await post("/api/crm/automations/run", { job_id: "A13_dunning_winback" });
+  assert.equal(dunningEvalRes.status, 200);
+  const dunningEvalJson = (await dunningEvalRes.json()) as any;
+  assert.equal(dunningEvalJson.ok, true);
+
+  // 6. R7: A2 Rejection Isolation (rejecting ctr_rewrite preserves retire_noindex, and vice versa)
+  const { getCleanItems } = await import("../src/pseo.js");
+  const items = getCleanItems();
+  const targetItem = items[2];
+  const approveRetireRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    slug: targetItem.slug,
+    action_type: "retire_noindex",
+    decision: "approved",
+  });
+  assert.equal(approveRetireRes.status, 200);
+  const rejectCtrRes = await post("/api/crm/seo/gsc/intent-gap/approve", {
+    slug: targetItem.slug,
+    action_type: "ctr_rewrite",
+    decision: "rejected",
+  });
+  assert.equal(rejectCtrRes.status, 200);
+  const checkLeafRes = await app.request(`/clean/${targetItem.category}/${targetItem.slug}`);
+  const checkLeafHtml = await checkLeafRes.text();
+  assert.ok(checkLeafHtml.includes('name="robots" content="noindex, follow"'));
+
+  // Clean up noindex override so subsequent audits see 100% indexable leaves
+  await post("/api/crm/seo/gsc/intent-gap/approve", {
+    slug: targetItem.slug,
+    action_type: "retire_noindex",
+    decision: "rejected",
+  });
+});
+
+
 
 
 

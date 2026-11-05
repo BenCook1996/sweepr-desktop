@@ -267,7 +267,7 @@ const CURATED_TOPICS = [
     ]
   },
   {
-    slug: "windows-search-edb-index",
+    slug: "windows-search-index-edb",
     category: "folder",
     name: "Windows Search Index Database (Windows.edb / Windows.db)",
     path: "C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows",
@@ -297,7 +297,7 @@ const CURATED_TOPICS = [
     ]
   },
   {
-    slug: "gradle-wrapper-cache",
+    slug: "gradle-wrapper-caches",
     category: "app",
     name: "Gradle Build & Dependency Wrapper Cache",
     path: "%UserProfile%\\.gradle\\caches",
@@ -2674,6 +2674,46 @@ const STRIKE_ZONE_ENRICHMENTS = {
         a: "No. Installed extensions run from %UserProfile%\\.vscode\\extensions. CachedExtensionVSIXs and CachedData only hold downloaded .vsix installer archives and V8 bytecode from previous VS Code releases."
       }
     ]
+  },
+  "jetbrains-intellij-cache": {
+    metaTitle: "Clear IntelliJ IDEA Caches & System Logs | SWEEPR",
+    metaDescription: "How to clear IntelliJ IDEA system caches and logs on Windows 10/11 safely. Reclaim 2–15 GB from %LocalAppData%\\JetBrains\\IntelliJIdea* in 1 click.",
+    customFaqs: [
+      {
+        q: "Does clearing IntelliJ IDEA system caches delete my project settings or keymaps?",
+        a: "No. Project settings live in .idea inside your project folder, and custom keymaps live in %AppData%\\JetBrains\\IntelliJIdea*\\keymaps. Purging %LocalAppData%\\JetBrains\\IntelliJIdea*\\caches only clears stale symbol indexes and compiler caches, which safely rebuild on the next build."
+      }
+    ]
+  },
+  "intellij-idea-caches": {
+    metaTitle: "Clear IntelliJ IDEA Caches & System Logs | SWEEPR",
+    metaDescription: "How to clear IntelliJ IDEA system caches and logs on Windows 10/11 safely. Reclaim 2–15 GB from %LocalAppData%\\JetBrains\\IntelliJIdea* in 1 click.",
+    customFaqs: [
+      {
+        q: "Does clearing IntelliJ IDEA system caches delete my project settings or keymaps?",
+        a: "No. Project settings live in .idea inside your project folder, and custom keymaps live in %AppData%\\JetBrains\\IntelliJIdea*\\keymaps. Purging %LocalAppData%\\JetBrains\\IntelliJIdea*\\caches only clears stale symbol indexes and compiler caches, which safely rebuild on the next build."
+      }
+    ]
+  },
+  "comfyui-temp-output-cache": {
+    metaTitle: "Clear ComfyUI Temp Files & Latent Cache | SWEEPR",
+    metaDescription: "How to clear ComfyUI temp files, preview PNGs, and latent cache on Windows 11. Reclaim 2–18 GB from C:\\ComfyUI\\temp safely without losing models.",
+    customFaqs: [
+      {
+        q: "Can I automate cleaning ComfyUI temp files on Windows 11 without manual terminal commands?",
+        a: "Yes. SWEEPR Cleaner automatically detects C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui, skips any files locked by active processes, and reclaims 2.0 GB – 18.0 GB in a single click while protecting user settings."
+      }
+    ]
+  },
+  "lm-studio-models-cache": {
+    metaTitle: "LM Studio Models Cache Location & Cleanup | SWEEPR",
+    metaDescription: "Where is the LM Studio models cache location on Windows? Learn how to delete unused GGUF model weights in %UserProfile%\\.cache\\lm-studio\\models safely.",
+    customFaqs: [
+      {
+        q: "Where does LM Studio store downloaded GGUF models on Windows 11?",
+        a: "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
+      }
+    ]
   }
 };
 
@@ -2682,7 +2722,12 @@ function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
   const enrichedSlugs = [];
   for (const entry of batch) {
     const slug = entry.slug;
-    const item = items.find((i) => i.slug.toLowerCase() === slug || (slug === "capcut-pc-cache" && i.slug.toLowerCase() === "capcut-desktop-cache"));
+    const item = items.find(
+      (i) =>
+        i.slug.toLowerCase() === slug ||
+        (slug === "capcut-pc-cache" && i.slug.toLowerCase() === "capcut-desktop-cache") ||
+        (slug === "intellij-idea-caches" && i.slug.toLowerCase() === "jetbrains-intellij-cache")
+    );
     if (!item) continue;
     const isTitleLocked = LOCKED_TEST_TITLE_SLUGS.has(item.slug.toLowerCase()) || LOCKED_TEST_TITLE_SLUGS.has(slug);
     const preset = STRIKE_ZONE_ENRICHMENTS[slug];
@@ -2708,10 +2753,14 @@ function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
   return enrichedSlugs;
 }
 
-function computeNextStrikeZoneBatch(ctrOptimizedAt = {}, batchSize = 4) {
+function computeNextStrikeZoneBatch(ctrOptimizedAt = {}, batchSize = 4, a2PrioritySlugs = []) {
   const nowMs = Date.now();
   const eligible = [];
-  for (const slug of GSC_STRIKE_ZONE_SLUGS) {
+  const a2List = Array.isArray(a2PrioritySlugs)
+    ? a2PrioritySlugs.map((s) => (typeof s === "string" ? s.toLowerCase() : s?.slug?.toLowerCase())).filter(Boolean)
+    : [];
+  const combinedQueue = [...new Set([...a2List, ...GSC_STRIKE_ZONE_SLUGS])];
+  for (const slug of combinedQueue) {
     const lastIso = ctrOptimizedAt[slug];
     if (!lastIso) {
       eligible.push({ slug, lastOptimizedAt: null, daysSince: null });
@@ -2924,7 +2973,7 @@ async function syncKeywordsToCrm(newItems) {
           "Content-Type": "application/json",
           Authorization: AUTH_HEADER
         },
-        body: JSON.stringify({ use_seed: true, persist_state: false }),
+        body: JSON.stringify({ use_seed: false, persist_state: true }),
         signal: AbortSignal.timeout(8000)
       }).catch(() => {});
     } catch {
@@ -2956,7 +3005,7 @@ async function main() {
       ctrOptimizedAt[s] = todayIso;
     }
   }
-  const nextStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4);
+  const nextStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4, prevState.nextStrikeZoneBatch);
   console.log(
     `[GSC Strike-Zone 14-Day Cooldown] Eligible next targets (${nextStrikeZoneBatch.length}): ${nextStrikeZoneBatch.map((t) => t.slug).join(", ") || "all on cooldown"}`
   );
@@ -2980,7 +3029,7 @@ async function main() {
   if (autoEnrichedSlugs.length > 0) {
     console.log(`[GSC Strike-Zone Auto-Enricher] Upgraded CTR meta & FAQs on ${autoEnrichedSlugs.length} Strike-Zone pages: ${autoEnrichedSlugs.join(", ")}`);
   }
-  const followUpStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4);
+  const followUpStrikeZoneBatch = computeNextStrikeZoneBatch(ctrOptimizedAt, 4, prevState.nextStrikeZoneBatch);
   const existingSlugs = new Set(existingItems.map((i) => i.slug.toLowerCase()));
   const existingPaths = new Set(existingItems.map((i) => normalizeWinPath(i.path)));
 
@@ -3016,12 +3065,13 @@ async function main() {
     if (autoEnrichedSlugs.length > 0) {
       fs.writeFileSync(CLEAN_ITEMS_PATH, JSON.stringify(existingItems, null, 2) + "\n", "utf8");
     }
-    updateIndexingQueue([], redirectedSlugs);
+    const deltaUrls = updateIndexingQueue([], redirectedSlugs);
     fs.writeFileSync(
       DAILY_STATE_PATH,
       JSON.stringify(
         {
           ...prevState,
+          lastRunAt: new Date().toISOString(),
           ctrCooldownDays: CTR_COOLDOWN_DAYS,
           ctrOptimizedAt,
           lastCtrEnrichedSlugs: autoEnrichedSlugs,
@@ -3032,6 +3082,30 @@ async function main() {
       ) + "\n",
       "utf8"
     );
+    await pingIndexNow(deltaUrls);
+    await syncKeywordsToCrm([]);
+    if (!process.argv.includes("--no-push") && autoEnrichedSlugs.length > 0) {
+      try {
+        execFileSync(
+          "git",
+          [
+            "add",
+            "server/src/data/clean-items.json",
+            "server/src/data/indexing-queue.json",
+            "server/src/data/daily-seo-pages-state.json"
+          ],
+          { cwd: REPO_ROOT, stdio: "inherit" }
+        );
+        execFileSync(
+          "git",
+          ["commit", "-m", `chore(seo): enrich CTR meta & FAQs on ${autoEnrichedSlugs.length} Strike-Zone pages`],
+          { cwd: REPO_ROOT, stdio: "inherit" }
+        );
+        execFileSync("git", ["push", "origin", "main"], { cwd: REPO_ROOT, stdio: "inherit" });
+      } catch (gitErr) {
+        console.warn("[Daily Pillar SEO] Git auto-push skipped or failed:", gitErr?.message || gitErr);
+      }
+    }
     return;
   }
 

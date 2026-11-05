@@ -31,6 +31,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/state-of-windows-storage</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/vs/ccleaner</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -2275,18 +2281,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://sweeprcleaner.com/clean/folder/windows-search-edb-index</loc>
-    <lastmod>2026-11-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://sweeprcleaner.com/clean/app/gradle-wrapper-cache</loc>
-    <lastmod>2026-11-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -2311,11 +2305,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://sweeprcleaner.com/bloat-watch</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
     <loc>https://sweeprcleaner.com/bloat-watch/windows-11-24h2-8gb-update-cache-bug</loc>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
@@ -2327,6 +2316,21 @@
   </url>
   <url>
     <loc>https://sweeprcleaner.com/bloat-watch/steam-depotcache-orphaned-chunks-spike</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026</loc>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -2401,5 +2405,17 @@
     <lastmod>2026-11-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/windows-search-edb-index</loc>
+    <lastmod>2026-11-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/gradle-wrapper-cache</loc>
+    <lastmod>2026-11-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

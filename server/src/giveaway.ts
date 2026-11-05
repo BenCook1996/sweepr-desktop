@@ -1,6 +1,7 @@
 import type { Repo, Account } from "./db.js";
 import { randomToken, sha256 } from "./tokens.js";
 import { escapeHtml } from "./security.js";
+import { dispatchTransactionalCustomerEmail } from "./download-recovery.js";
 
 export interface GiveawayConfig {
   campaign_id: string;
@@ -57,9 +58,28 @@ export function ensureGiveawayTables(repo: Repo): void {
       ip_hash TEXT,
       expires_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      upgraded_at INTEGER,
+      nurture_3d_sent_at INTEGER,
+      expiry_14d_sent_at INTEGER,
+      expiry_3d_sent_at INTEGER,
       UNIQUE(campaign_id, email)
     );
   `);
+  const migrations = [
+    "ALTER TABLE giveaway_redemptions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'",
+    "ALTER TABLE giveaway_redemptions ADD COLUMN upgraded_at INTEGER",
+    "ALTER TABLE giveaway_redemptions ADD COLUMN nurture_3d_sent_at INTEGER",
+    "ALTER TABLE giveaway_redemptions ADD COLUMN expiry_14d_sent_at INTEGER",
+    "ALTER TABLE giveaway_redemptions ADD COLUMN expiry_3d_sent_at INTEGER",
+  ];
+  for (const sql of migrations) {
+    try {
+      repo.db.exec(sql);
+    } catch {
+      // Column already exists
+    }
+  }
 }
 
 export function getGiveawayConfig(repo: Repo, nowSec = Math.floor(Date.now() / 1000)): GiveawayConfig {
@@ -275,9 +295,21 @@ export function getGiveawayStats(repo: Repo, nowSec = Math.floor(Date.now() / 10
   const totalRow = repo.db
     .prepare("SELECT COUNT(*) as count FROM giveaway_redemptions WHERE campaign_id = ?")
     .get(cfg.campaign_id) as { count: number };
+  const upgradedRow = repo.db
+    .prepare("SELECT COUNT(*) as count FROM giveaway_redemptions WHERE campaign_id = ? AND status = 'upgraded'")
+    .get(cfg.campaign_id) as { count: number };
+  const nurture3dRow = repo.db
+    .prepare("SELECT COUNT(*) as count FROM giveaway_redemptions WHERE campaign_id = ? AND nurture_3d_sent_at IS NOT NULL")
+    .get(cfg.campaign_id) as { count: number };
+  const expiry14dRow = repo.db
+    .prepare("SELECT COUNT(*) as count FROM giveaway_redemptions WHERE campaign_id = ? AND expiry_14d_sent_at IS NOT NULL")
+    .get(cfg.campaign_id) as { count: number };
+  const expiry3dRow = repo.db
+    .prepare("SELECT COUNT(*) as count FROM giveaway_redemptions WHERE campaign_id = ? AND expiry_3d_sent_at IS NOT NULL")
+    .get(cfg.campaign_id) as { count: number };
   const recent = repo.db
     .prepare(
-      "SELECT id, campaign_id, account_id, email, code_used, device_id, expires_at, created_at FROM giveaway_redemptions ORDER BY created_at DESC LIMIT 50"
+      "SELECT id, campaign_id, account_id, email, code_used, device_id, expires_at, created_at, status, upgraded_at, nurture_3d_sent_at, expiry_14d_sent_at, expiry_3d_sent_at FROM giveaway_redemptions ORDER BY created_at DESC LIMIT 50"
     )
     .all();
 
@@ -285,8 +317,276 @@ export function getGiveawayStats(repo: Repo, nowSec = Math.floor(Date.now() / 10
     config: cfg,
     window_open: isGiveawayWindowOpen(cfg, nowSec),
     total_redemptions: Number(totalRow?.count || 0),
+    upgraded_count: Number(upgradedRow?.count || 0),
+    nurture_3d_sent_count: Number(nurture3dRow?.count || 0),
+    expiry_14d_sent_count: Number(expiry14dRow?.count || 0),
+    expiry_3d_sent_count: Number(expiry3dRow?.count || 0),
     recent_redemptions: recent,
   };
+}
+
+export interface GiveawayLifecycleSweepResult {
+  evaluated: number;
+  reconciled_upgraded: number;
+  nurture_3d_sent: number;
+  expiry_14d_sent: number;
+  expiry_3d_sent: number;
+  expired_marked: number;
+}
+
+/**
+ * A10 Giveaway-to-Pro (GOTD50) Lifecycle Sweep:
+ * - Reconciles users who already upgraded to a paid multi-device plan
+ * - Sends T+3d multi-PC/mobile value upsell (50% off with GOTD50)
+ * - Sends T-14d and T-3d license expiry warnings with 1-click GOTD50 upgrade link
+ */
+export async function runGiveawayUpgradeSweep(
+  repo: Repo,
+  opts?: { nowSec?: number; limit?: number }
+): Promise<GiveawayLifecycleSweepResult> {
+  ensureGiveawayTables(repo);
+  const nowSec = opts?.nowSec ?? Math.floor(Date.now() / 1000);
+  const limit = Math.max(1, Math.min(250, opts?.limit ?? 100));
+  const cfg = getGiveawayConfig(repo, nowSec);
+
+  const rows = repo.db
+    .prepare(
+      `SELECT id, campaign_id, account_id, email, expires_at, created_at, status,
+              nurture_3d_sent_at, expiry_14d_sent_at, expiry_3d_sent_at
+       FROM giveaway_redemptions
+       WHERE status = 'active'
+       ORDER BY created_at ASC
+       LIMIT ?`
+    )
+    .all(limit) as Array<{
+    id: number;
+    campaign_id: string;
+    account_id: string;
+    email: string;
+    expires_at: number;
+    created_at: number;
+    status: string;
+    nurture_3d_sent_at: number | null;
+    expiry_14d_sent_at: number | null;
+    expiry_3d_sent_at: number | null;
+  }>;
+
+  let reconciled_upgraded = 0;
+  let nurture_3d_sent = 0;
+  let expiry_14d_sent = 0;
+  let expiry_3d_sent = 0;
+  let expired_marked = 0;
+
+  for (const r of rows) {
+    const ent = repo.entitlement(r.account_id);
+    if (
+      ent &&
+      (ent.status === "active" || ent.status === "trialing") &&
+      ent.plan &&
+      ent.plan !== "giveaway_6m"
+    ) {
+      repo.db
+        .prepare("UPDATE giveaway_redemptions SET status = 'upgraded', upgraded_at = COALESCE(upgraded_at, ?) WHERE id = ?")
+        .run(nowSec, r.id);
+      reconciled_upgraded += 1;
+      continue;
+    }
+
+    if (r.expires_at <= nowSec) {
+      repo.db
+        .prepare("UPDATE giveaway_redemptions SET status = 'expired' WHERE id = ?")
+        .run(r.id);
+      expired_marked += 1;
+      continue;
+    }
+
+    const upgradeUrl = `https://sweeprcleaner.com/order?plan=annual&coupon=${encodeURIComponent(cfg.upgrade_coupon)}&email=${encodeURIComponent(r.email)}&utm_source=giveaway_lifecycle&utm_campaign=${encodeURIComponent(r.campaign_id)}`;
+    const daysRemaining = Math.max(1, Math.ceil((r.expires_at - nowSec) / 86400));
+
+    // 1. T-3d Final Expiry Reminder (<= 3 days remaining)
+    if (!r.expiry_3d_sent_at && r.expires_at - nowSec <= 3 * 86400) {
+      const dispatch = await dispatchTransactionalCustomerEmail({
+        to: r.email,
+        subject: `Final Reminder: Your 6-Month SWEEPR Cleaner Pro license expires in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} (50% Off Renewal)`,
+        textBody: [
+          "Hi there,",
+          "",
+          `Your 6-Month Giveaway of the Day SWEEPR Cleaner Pro license expires in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}.`,
+          "",
+          `Keep automatic background cleanups active and expand coverage to 5 Devices (Windows, Mac, Android & iOS) for 50% off with your partner code ${cfg.upgrade_coupon}:`,
+          `Upgrade for 50% Off: ${upgradeUrl}`,
+          "",
+          "— The SWEEPR Team",
+        ].join("\n"),
+        htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
+          <h2 style="margin:0 0 12px;">Your 6-Month Pro License Expires in ${daysRemaining} Day${daysRemaining === 1 ? "" : "s"}</h2>
+          <p>Keep automatic background storage cleanup active and protect up to <strong>5 Devices (Windows, Mac, Android &amp; iOS)</strong> for a full year at <strong>${cfg.upgrade_discount_pct}% OFF</strong> with code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+          <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Renew &amp; Unlock 5 Devices (${cfg.upgrade_discount_pct}% Off) &rarr;</a></p>
+        </div>`,
+      });
+      if (dispatch.ok) {
+        repo.db
+          .prepare("UPDATE giveaway_redemptions SET expiry_3d_sent_at = ? WHERE id = ?")
+          .run(nowSec, r.id);
+        repo.addActivity({
+          account_id: r.account_id,
+          type: "giveaway_expiry_3d_sent",
+          title: "Giveaway T-3d Expiry Reminder Sent",
+          description: `Sent 3-day expiry reminder with ${cfg.upgrade_coupon} link to ${r.email}`,
+          actor: "automation",
+          metadata: { campaign_id: r.campaign_id, coupon: cfg.upgrade_coupon, provider: dispatch.provider },
+        });
+        expiry_3d_sent += 1;
+      }
+      continue;
+    }
+
+    // 2. T-14d Expiry Warning (<= 14 days remaining)
+    if (!r.expiry_14d_sent_at && r.expires_at - nowSec <= 14 * 86400) {
+      const dispatch = await dispatchTransactionalCustomerEmail({
+        to: r.email,
+        subject: `Your 6-Month SWEEPR Cleaner Pro license expires in ${daysRemaining} days — claim 50% off Annual Pro`,
+        textBody: [
+          "Hi there,",
+          "",
+          `Your 6-Month Giveaway of the Day SWEEPR Cleaner Pro license expires in ${daysRemaining} days.`,
+          "",
+          `As a Giveaway community member, you can lock in 50% off our 5-Device Annual Pro Plan (Windows, Mac, Android & iOS) using code ${cfg.upgrade_coupon}:`,
+          `Claim 50% Off: ${upgradeUrl}`,
+          "",
+          "— The SWEEPR Team",
+        ].join("\n"),
+        htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
+          <h2 style="margin:0 0 12px;">Your 6-Month License Expires in ${daysRemaining} Days</h2>
+          <p>Lock in <strong>${cfg.upgrade_discount_pct}% OFF</strong> the <strong>5-Device Annual Pro Plan</strong> across Windows, Mac, Android &amp; iOS using your partner code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+          <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Claim ${cfg.upgrade_discount_pct}% Off 5-Device Pro &rarr;</a></p>
+        </div>`,
+      });
+      if (dispatch.ok) {
+        repo.db
+          .prepare("UPDATE giveaway_redemptions SET expiry_14d_sent_at = ? WHERE id = ?")
+          .run(nowSec, r.id);
+        repo.addActivity({
+          account_id: r.account_id,
+          type: "giveaway_expiry_14d_sent",
+          title: "Giveaway T-14d Expiry Warning Sent",
+          description: `Sent 14-day expiry notice with ${cfg.upgrade_coupon} link to ${r.email}`,
+          actor: "automation",
+          metadata: { campaign_id: r.campaign_id, coupon: cfg.upgrade_coupon, provider: dispatch.provider },
+        });
+        expiry_14d_sent += 1;
+      }
+      continue;
+    }
+
+    // 3. T+3d Multi-PC / Mobile Value Upsell (>= 3 days after activation)
+    if (!r.nurture_3d_sent_at && nowSec - r.created_at >= 3 * 86400) {
+      const dispatch = await dispatchTransactionalCustomerEmail({
+        to: r.email,
+        subject: "How is SWEEPR Cleaner Pro running? Unlock 5 Devices for 50% off (GOTD50)",
+        textBody: [
+          "Hi there,",
+          "",
+          "Thank you for activating your 6-Month SWEEPR Cleaner Pro license (1 Windows PC)!",
+          "",
+          `Want to protect your laptop, second PC, Mac, or phone too? Use partner code ${cfg.upgrade_coupon} to upgrade to the 5-Device Annual Pro Plan for 50% off:`,
+          `Upgrade 5 Devices (50% Off): ${upgradeUrl}`,
+          "",
+          "— The SWEEPR Team",
+        ].join("\n"),
+        htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
+          <h2 style="margin:0 0 12px;">Protect Up to 5 Devices Across Windows, Mac, Android &amp; iOS</h2>
+          <p>Your Giveaway license covers <strong>1 Windows PC for 6 months</strong>. Need to clean a laptop, second desktop, or mobile device? Upgrade to the <strong>5-Device Annual Pro Plan</strong> for <strong>${cfg.upgrade_discount_pct}% OFF</strong> with code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+          <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Unlock 5-Device Pro (${cfg.upgrade_discount_pct}% Off) &rarr;</a></p>
+        </div>`,
+      });
+      if (dispatch.ok) {
+        repo.db
+          .prepare("UPDATE giveaway_redemptions SET nurture_3d_sent_at = ? WHERE id = ?")
+          .run(nowSec, r.id);
+        repo.addActivity({
+          account_id: r.account_id,
+          type: "giveaway_nurture_3d_sent",
+          title: "Giveaway T+3d Multi-Device Upsell Sent",
+          description: `Sent 3-day multi-device upgrade offer (${cfg.upgrade_coupon}) to ${r.email}`,
+          actor: "automation",
+          metadata: { campaign_id: r.campaign_id, coupon: cfg.upgrade_coupon, provider: dispatch.provider },
+        });
+        nurture_3d_sent += 1;
+      }
+    }
+  }
+
+  return {
+    evaluated: rows.length,
+    reconciled_upgraded,
+    nurture_3d_sent,
+    expiry_14d_sent,
+    expiry_3d_sent,
+    expired_marked,
+  };
+}
+
+/**
+ * Triggered when a `giveaway_6m` user hits the 1-PC device limit on a 2nd PC.
+ * Sends an idempotent 1-time upgrade email with the 50% off GOTD50 link.
+ */
+export async function triggerGiveawayDeviceLimitUpgradeEmail(
+  repo: Repo,
+  accountId: string,
+  email: string | null | undefined,
+  nowSec = Math.floor(Date.now() / 1000)
+): Promise<{ triggered: boolean; upgrade_url: string }> {
+  const cfg = getGiveawayConfig(repo, nowSec);
+  const safeEmail = String(email || "").trim().toLowerCase();
+  const upgradeUrl = `/order?plan=annual&coupon=${encodeURIComponent(cfg.upgrade_coupon)}${safeEmail ? `&email=${encodeURIComponent(safeEmail)}` : ""}&utm_source=app_device_limit`;
+
+  if (!safeEmail || !safeEmail.includes("@")) {
+    return { triggered: false, upgrade_url: upgradeUrl };
+  }
+
+  const alreadySent = repo.db
+    .prepare(
+      "SELECT id FROM activities WHERE account_id = ? AND type = 'giveaway_device_limit_upsell_sent' LIMIT 1"
+    )
+    .get(accountId) as { id: string } | undefined;
+
+  if (alreadySent) {
+    return { triggered: false, upgrade_url: upgradeUrl };
+  }
+
+  const fullUpgradeUrl = `https://sweeprcleaner.com${upgradeUrl}`;
+  const dispatch = await dispatchTransactionalCustomerEmail({
+    to: safeEmail,
+    subject: "Add your 2nd PC to SWEEPR Cleaner Pro — 50% Off 5-Device Upgrade (GOTD50)",
+    textBody: [
+      "Hi there,",
+      "",
+      "We noticed you tried activating SWEEPR Cleaner Pro on an additional PC.",
+      "Your Giveaway of the Day edition covers 1 Windows PC. You can upgrade to our 5-Device Annual Pro Plan for 50% off with code GOTD50:",
+      `Unlock 5 Devices (50% Off): ${fullUpgradeUrl}`,
+      "",
+      "— The SWEEPR Team",
+    ].join("\n"),
+    htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
+      <h2 style="margin:0 0 12px;">Need SWEEPR Cleaner Pro on a 2nd PC?</h2>
+      <p>Your Giveaway license covers <strong>1 Windows PC</strong>. Upgrade to the <strong>5-Device Annual Pro Plan</strong> right now for <strong>${cfg.upgrade_discount_pct}% OFF</strong> using code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+      <p style="margin:20px 0;"><a href="${escapeHtml(fullUpgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Upgrade to 5 Devices (${cfg.upgrade_discount_pct}% Off) &rarr;</a></p>
+    </div>`,
+  });
+
+  if (dispatch.ok) {
+    repo.addActivity({
+      account_id: accountId,
+      type: "giveaway_device_limit_upsell_sent",
+      title: "Giveaway 2nd-PC Device Limit Upgrade Email Sent",
+      description: `Sent 50% off 5-device upgrade email (${cfg.upgrade_coupon}) after 1-PC limit reached`,
+      actor: "automation",
+      metadata: { coupon: cfg.upgrade_coupon, provider: dispatch.provider },
+    });
+  }
+
+  return { triggered: dispatch.ok, upgrade_url: upgradeUrl };
 }
 
 export function buildGiveawayReadmeTxt(cfg: GiveawayConfig): string {

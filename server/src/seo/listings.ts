@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkBacklink, fetchPublicUrlSafe } from "./backlinks.js";
@@ -484,3 +484,67 @@ export function getDirectorySubmissionPack(store: SeoStore) {
     tracked_listings: listings,
   };
 }
+
+/**
+ * A15: Audits and optionally auto-normalizes internal `/vs/*.html`, `/alternatives/*.html`, and `/llms.txt`
+ * against canonical brand facts (5.8 MB binary size, 5-device license, 365+ verified guides).
+ */
+export function auditInternalBrandFactConsistency(opts: { autoFix?: boolean; totalGuides?: number } = {}) {
+  const publicDir = resolve(__dirname, "../../public");
+  const totalGuides = opts.totalGuides ?? 365;
+  const subdirs = ["vs", "alternatives"];
+  const checkedFiles: Array<{
+    path: string;
+    had_drift: boolean;
+    fixed: boolean;
+    drift_reasons: string[];
+  }> = [];
+
+  for (const dir of subdirs) {
+    const absDir = resolve(publicDir, dir);
+    if (!existsSync(absDir)) continue;
+    for (const file of readdirSync(absDir)) {
+      if (!file.endsWith(".html")) continue;
+      const absFile = resolve(absDir, file);
+      const raw = readFileSync(absFile, "utf8");
+      const reasons: string[] = [];
+      if (/12\s*MB\s*[-–]\s*14\s*MB/i.test(raw)) reasons.push("stale_12_14mb_binary_size");
+      if (/<\s*15\s*MB\s+download/i.test(raw)) reasons.push("stale_15mb_download_claim");
+      if (/\b40\+\s*Guides\b/i.test(raw)) reasons.push("stale_40_guides_count");
+      if (/up to 3 Desktop PCs/i.test(raw)) reasons.push("stale_3_pc_device_limit");
+
+      let fixed = false;
+      if (reasons.length > 0 && opts.autoFix) {
+        const updated = raw
+          .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, "5.8 MB")
+          .replace(/<\s*15\s*MB\s+download/gi, "5.8 MB native Rust download")
+          .replace(/under\s+15\s*MB/gi, "under 6 MB (5.8 MB)")
+          .replace(/\b40\+\s*Guides\b/gi, `${totalGuides}+ Guides`)
+          .replace(/up to 3 Desktop PCs/gi, "up to 5 Devices");
+        if (updated !== raw) {
+          try {
+            writeFileSync(absFile, updated, "utf8");
+            fixed = true;
+          } catch {
+            fixed = false;
+          }
+        }
+      }
+
+      checkedFiles.push({
+        path: `/${dir}/${file.replace(/\.html$/i, "")}`,
+        had_drift: reasons.length > 0,
+        fixed,
+        drift_reasons: reasons,
+      });
+    }
+  }
+
+  return {
+    checked_count: checkedFiles.length,
+    drift_detected_count: checkedFiles.filter((f) => f.had_drift).length,
+    auto_fixed_count: checkedFiles.filter((f) => f.fixed).length,
+    files: checkedFiles,
+  };
+}
+

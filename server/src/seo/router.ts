@@ -46,6 +46,7 @@ import {
   upsertDirectoryListing,
 } from "./listings.js";
 import {
+  computeStateOfWindowsStorageReport,
   ingestScanCompletedTelemetry,
   refreshAllTelemetryTruthCache,
   TELEMETRY_TRUTH_MIN_SAMPLES,
@@ -589,6 +590,8 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       query: body.query,
       target_url: body.target_url,
       max_cpc_gbp: body.max_cpc_gbp !== undefined ? Number(body.max_cpc_gbp) : undefined,
+      merge_into_slug: body.merge_into_slug,
+      reason: body.reason,
     });
     if (!res.ok) return c.json(res, 400);
     return c.json(res);
@@ -612,10 +615,20 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       c,
       startJob("gsc_sync", async (job) => {
         job.message = `Fetching last ${days} days`;
-        return syncSearchConsole(store, providers, days, (rows) => {
+        const syncRes = await syncSearchConsole(store, providers, days, (rows) => {
           job.progress = rows;
           job.message = `${rows} rows imported`;
         });
+        const w = gscWindow();
+        const intentGap = w
+          ? executeIntentGapAutomation(store, {
+              from: w.from,
+              to: w.to,
+              siteUrl: providers.siteUrl,
+              persistState: true,
+            })
+          : null;
+        return { ...syncRes, intent_gap_executed: Boolean(intentGap), intent_gap_summary: intentGap };
       })
     );
   });
@@ -1004,6 +1017,13 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       ok: true,
       k_anonymity_floor: TELEMETRY_TRUTH_MIN_SAMPLES,
       ...res,
+    });
+  });
+
+  router.get("/state-of-windows-storage", (c) => {
+    return c.json({
+      ok: true,
+      ...computeStateOfWindowsStorageReport(store),
     });
   });
 

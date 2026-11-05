@@ -151,6 +151,23 @@
         window.clarity('set', eventName, 'true');
       }
     } catch (e) {}
+
+    // 4. First-party Telemetry Bridge for A/B Experiments (A9)
+    try {
+      if (eventName === 'experiment_exposure' || eventName === 'experiment_conversion') {
+        fetch('/v1/telemetry/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            event_name: eventName,
+            platform: 'web',
+            attribution_id: enrichedParams.attribution_id || undefined,
+            metadata: enrichedParams
+          })
+        }).catch(function () {});
+      }
+    } catch (e) {}
   };
 
   /**

@@ -120,6 +120,11 @@
         <span>Support & Telemetry</span>
       </button>
 
+      <button onclick="switchTab('automations')" id="nav-automations" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+        <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+        <span>Automations &amp; ROAS</span>
+      </button>
+
       <div class="pt-6 text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">Operations</div>
       <button onclick="seedDemoData()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-brand-300 hover:bg-brand-500/10 transition-all">
         <i data-lucide="database" class="w-4 h-4 text-brand-400"></i>
@@ -881,6 +886,97 @@
         </div>
       </section>
 
+      <!-- TAB 9: CMO AUTOMATIONS, ROAS & A/B EXPERIMENTS -->
+      <section id="tab-automations" class="hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <div>
+            <h2 class="text-base font-bold text-white">Autonomous CMO Engine (A1–A15)</h2>
+            <p class="text-xs text-slate-400 mt-1">Persisted automation telemetry, Paid Ads ROAS budget rules, and live A/B funnel experiments.</p>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <button onclick="loadAutomationsDashboard()" class="px-3.5 py-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold">Refresh</button>
+            <button onclick="triggerCmoAutomation('all')" id="btn-run-all-automations" class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-500/20">Run All Automations Now</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white">Paid Ads ROAS &amp; Budget Reallocator (A8)</h3>
+                <p class="text-[11px] text-slate-400" id="roas-summary-line">Loading 14-day ROAS &amp; budget state...</p>
+              </div>
+              <button onclick="triggerRoasReallocation()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 text-xs font-bold">Apply ROAS Rules</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-surface-850 border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                  <tr>
+                    <th class="py-2.5 px-3">Campaign</th>
+                    <th class="py-2.5 px-3">14d Spend</th>
+                    <th class="py-2.5 px-3">14d Rev</th>
+                    <th class="py-2.5 px-3">ROAS</th>
+                    <th class="py-2.5 px-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="roas-campaigns-body" class="divide-y divide-slate-800/80">
+                  <tr><td colspan="5" class="py-6 text-center text-slate-400">Loading campaigns...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-surface-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white">Funnel A/B Experiment Engine (A9)</h3>
+                <p class="text-[11px] text-slate-400">Auto-promotes winning variants at ≥95% two-proportion z-test confidence.</p>
+              </div>
+              <button onclick="triggerExperimentsEval()" class="px-3 py-1.5 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-300 hover:bg-sky-500/30 text-xs font-bold">Evaluate Winners</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-surface-850 border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                  <tr>
+                    <th class="py-2.5 px-3">Experiment</th>
+                    <th class="py-2.5 px-3">Variant A</th>
+                    <th class="py-2.5 px-3">Variant B</th>
+                    <th class="py-2.5 px-3">Confidence</th>
+                    <th class="py-2.5 px-3">Winner</th>
+                  </tr>
+                </thead>
+                <tbody id="experiments-table-body" class="divide-y divide-slate-800/80">
+                  <tr><td colspan="5" class="py-6 text-center text-slate-400">Loading experiments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="font-bold text-white text-sm">CMO Automation Registry (A1–A15)</h3>
+            <span class="text-xs text-slate-400 font-mono">/api/crm/automations/status</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-surface-850 border-b border-slate-800 text-[11px] uppercase text-slate-400">
+                <tr>
+                  <th class="py-3 px-4">ID &amp; Name</th>
+                  <th class="py-3 px-4">Schedule</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Last Run</th>
+                  <th class="py-3 px-4">Latest Summary</th>
+                  <th class="py-3 px-4 text-right">Trigger</th>
+                </tr>
+              </thead>
+              <tbody id="automations-registry-body" class="divide-y divide-slate-800/80">
+                <tr><td colspan="6" class="py-8 text-center text-slate-400">Loading automation registry...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -1750,12 +1846,14 @@
         outreach: "Outreach & Directories Log",
         "email-actions": "Email & Portal Actions Automation Log (48h Scanner + Deduplication)",
         telemetry: "Support Tickets, Funnel & Crash Telemetry",
-        seo: "SEO & Search Intelligence"
+        seo: "SEO & Search Intelligence",
+        automations: "CMO Automations, Paid Ads ROAS & A/B Experiments"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
       if (tab === 'seo') seoShow(seoState.view);
       if (tab === 'email-actions') loadEmailActions();
       if (tab === 'telemetry') loadTelemetry();
+      if (tab === 'automations') loadAutomationsDashboard();
       safeCreateIcons();
     }
 
@@ -3185,7 +3283,7 @@
             seoShow('authority');
           }
         } catch (err) { seoJobPill(null); alert(err.message); }
-        return;
+            return;
       }
       const gapBtn = e.target.closest('[data-seo-gap-outreach]');
       if (gapBtn) {
@@ -3234,6 +3332,106 @@
         }
       } catch (err) { seoJobPill(null); alert(err.message); }
     });
+
+    async function loadAutomationsDashboard() {
+      try {
+        const [autoRes, roasRes, expRes] = await Promise.all([
+          fetch('/api/crm/automations/status'),
+          fetch('/api/crm/ads/roas?days=14'),
+          fetch('/api/crm/experiments')
+        ]);
+        if (autoRes.ok) {
+          const autoData = await autoRes.json();
+          const tbody = document.getElementById('automations-registry-body');
+          if (tbody && Array.isArray(autoData.automations)) {
+            tbody.innerHTML = autoData.automations.map(a => {
+              const lastRun = a.last_run_at ? new Date(a.last_run_at * 1000).toLocaleString() : 'Never';
+              const badge = a.last_status === 'ok'
+                ? '<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">OK</span>'
+                : a.last_status === 'error'
+                ? '<span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold uppercase">Error</span>'
+                : '<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold uppercase">Idle</span>';
+              return `<tr class="hover:bg-slate-800/40">
+                <td class="py-3 px-4 font-semibold text-white"><span class="font-mono text-brand-400 mr-1.5">${esc(a.id)}</span>${esc(a.name)}</td>
+                <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${esc(a.schedule)}</td>
+                <td class="py-3 px-4">${badge}</td>
+                <td class="py-3 px-4 text-slate-300 text-[11px] whitespace-nowrap">${esc(lastRun)}</td>
+                <td class="py-3 px-4 text-slate-400 text-[11px] max-w-md truncate" title="${esc(a.summary || '')}">${esc(a.summary || '—')}</td>
+                <td class="py-3 px-4 text-right"><button onclick="triggerCmoAutomation('${esc(a.id)}')" class="px-2.5 py-1 rounded bg-brand-500/15 hover:bg-brand-500/25 text-brand-300 border border-brand-500/30 text-[11px] font-bold">Run Now</button></td>
+              </tr>`;
+            }).join('');
+          }
+        }
+        if (roasRes.ok) {
+          const roas = await roasRes.json();
+          const sumEl = document.getElementById('roas-summary-line');
+          if (sumEl) {
+            sumEl.textContent = `Daily Budget: £${Number(roas.current_daily_budget_gbp || 5).toFixed(2)}/day · 14d Spend: £${Number(roas.total_spend_gbp || 0).toFixed(2)} · 14d Revenue: £${Number(roas.total_revenue_gbp || 0).toFixed(2)} · Blended ROAS: ${Number(roas.blended_roas || 0).toFixed(2)}x`;
+          }
+          const rBody = document.getElementById('roas-campaigns-body');
+          if (rBody && Array.isArray(roas.campaigns)) {
+            rBody.innerHTML = roas.campaigns.map(c => `<tr class="hover:bg-slate-800/40">
+              <td class="py-2.5 px-3 font-medium text-white">${esc(c.campaign)} <span class="text-[10px] text-slate-400 font-mono">(${esc(c.channel)})</span></td>
+              <td class="py-2.5 px-3 font-mono text-slate-300">£${Number(c.spend_gbp || 0).toFixed(2)}</td>
+              <td class="py-2.5 px-3 font-mono text-emerald-400">£${Number(c.revenue_gbp || 0).toFixed(2)}</td>
+              <td class="py-2.5 px-3 font-mono font-bold text-white">${Number(c.roas || 0).toFixed(2)}x</td>
+              <td class="py-2.5 px-3 text-[11px] font-semibold text-amber-300">${esc(c.recommended_action)}</td>
+            </tr>`).join('');
+          }
+        }
+        if (expRes.ok) {
+          const expData = await expRes.json();
+          const eBody = document.getElementById('experiments-table-body');
+          if (eBody && Array.isArray(expData.experiments)) {
+            eBody.innerHTML = expData.experiments.map(ex => {
+              const va = (ex.variants || []).find(v => v.variant === 'A') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 };
+              const vb = (ex.variants || []).find(v => v.variant === 'B') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 };
+              return `<tr class="hover:bg-slate-800/40">
+                <td class="py-2.5 px-3 font-medium text-white">${esc(ex.name)}<div class="text-[10px] font-mono text-slate-400">${esc(ex.id)}</div></td>
+                <td class="py-2.5 px-3 font-mono text-slate-300">${va.conversions}/${va.exposures} (${va.conversion_rate_pct}%)</td>
+                <td class="py-2.5 px-3 font-mono text-slate-300">${vb.conversions}/${vb.exposures} (${vb.conversion_rate_pct}%)</td>
+                <td class="py-2.5 px-3 font-mono text-sky-300">${Number(ex.confidence_pct || 0).toFixed(1)}%</td>
+                <td class="py-2.5 px-3 font-mono font-bold text-emerald-400">${esc(ex.winning_variant || 'Pending')}</td>
+              </tr>`;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load automations dashboard:', err);
+      }
+    }
+
+    async function triggerCmoAutomation(id) {
+      try {
+        const res = await fetch('/api/crm/automations/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) await loadAutomationsDashboard();
+      } catch (err) {
+        alert('Automation run failed: ' + err.message);
+      }
+    }
+
+    async function triggerRoasReallocation() {
+      try {
+        const res = await fetch('/api/crm/ads/reallocate', { method: 'POST' });
+        if (res.ok) await loadAutomationsDashboard();
+      } catch (err) {
+        alert('ROAS reallocation failed: ' + err.message);
+      }
+    }
+
+    async function triggerExperimentsEval() {
+      try {
+        const res = await fetch('/api/crm/experiments/evaluate', { method: 'POST' });
+        if (res.ok) await loadAutomationsDashboard();
+      } catch (err) {
+        alert('Experiment evaluation failed: ' + err.message);
+      }
+    }
+    
   </script>
 </body>
 </html>

@@ -9,8 +9,20 @@ import { loadSigningKey } from "./tokens.js";
 import { createApp } from "./app.js";
 import { reconcileStripeSubscriptions } from "./stripe.js";
 import { SeoStore } from "./seo/store.js";
-import { checkDirectoryListings } from "./seo/listings.js";
-import { evaluateDownloadRecoverySessions } from "./download-recovery.js";
+import { auditInternalBrandFactConsistency, checkDirectoryListings } from "./seo/listings.js";
+import {
+  evaluateDownloadRecoverySessions,
+  evaluateDunningAndWinbackLifecycle,
+  evaluateHighIntentScanAndCheckoutAbandonment,
+} from "./download-recovery.js";
+import { runGiveawayUpgradeSweep } from "./giveaway.js";
+import { runAnnualRenewalRecapSweep } from "./renewal-recap.js";
+import { refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
+import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
+import { executeIntentGapAutomation } from "./seo/intent-gap.js";
+import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
+import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
+import { recordAutomationRunStatus } from "./crm.js";
 
 process.on("uncaughtException", (err) => {
   console.error("[fatal-guard] Uncaught exception:", err);
@@ -183,36 +195,260 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
     }, 3000);
   }
 
-  // A5: Weekly Listing Freshness & Auto-Publish Crawler
-  // Runs once 20s after boot and then every 7 days to check AlternativeTo, SaaSHub, Softpedia, MajorGeeks,
-  // Microsoft Store, Winget, Chocolatey, and GitHub Releases for version string, unsigned flags, rating, and backlink.
+  // 1. Every 5 minutes (+ T+15s boot): A3 Download-to-Install Recovery + A10 Scan/Checkout & Giveaway GOTD50 Sweep
+  const runFiveMinuteConversionSweeps = async () => {
+    const t0A3 = Date.now();
+    try {
+      const resA3 = await evaluateDownloadRecoverySessions(repo);
+      recordAutomationRunStatus("A3_download_recovery", {
+        status: "ok",
+        durationMs: Date.now() - t0A3,
+        summary: { ...resA3 },
+      });
+      if (resA3.newly_flagged_30m > 0 || resA3.emails_sent_2h > 0) {
+        console.log(
+          `[a3-recovery] Evaluated ${resA3.evaluated} pending downloads: ${resA3.newly_flagged_30m} flagged at T+30m, ${resA3.emails_sent_2h} transactional help emails sent at T+2h.`
+        );
+      }
+    } catch (err: any) {
+      recordAutomationRunStatus("A3_download_recovery", {
+        status: "error",
+        durationMs: Date.now() - t0A3,
+        error: String(err?.message || err),
+      });
+      console.warn(`[a3-recovery] Sweep warning: ${err?.message || err}`);
+    }
+
+    const t0A10 = Date.now();
+    try {
+      const ab = await evaluateHighIntentScanAndCheckoutAbandonment(repo);
+      const gw = await runGiveawayUpgradeSweep(repo);
+      recordAutomationRunStatus("A10_conversion_recovery", {
+        status: "ok",
+        durationMs: Date.now() - t0A10,
+        summary: { abandonment: ab, giveaway: gw },
+      });
+      if (ab.recovery_emails_sent > 0 || gw.nurture_3d_sent > 0 || gw.expiry_14d_sent > 0 || gw.expiry_3d_sent > 0) {
+        console.log(
+          `[a10-conversion] Recovery emails=${ab.recovery_emails_sent}, Giveaway T+3d=${gw.nurture_3d_sent}, T-14d=${gw.expiry_14d_sent}, T-3d=${gw.expiry_3d_sent}.`
+        );
+      }
+    } catch (err: any) {
+      recordAutomationRunStatus("A10_conversion_recovery", {
+        status: "error",
+        durationMs: Date.now() - t0A10,
+        error: String(err?.message || err),
+      });
+      console.warn(`[a10-conversion] Sweep warning: ${err?.message || err}`);
+    }
+
+    const t0A13 = Date.now();
+    try {
+      const dun = await evaluateDunningAndWinbackLifecycle(repo);
+      recordAutomationRunStatus("A13_dunning_winback", {
+        status: "ok",
+        durationMs: Date.now() - t0A13,
+        summary: { ...dun },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A13_dunning_winback", {
+        status: "error",
+        durationMs: Date.now() - t0A13,
+        error: String(err?.message || err),
+      });
+    }
+  };
+  setTimeout(runFiveMinuteConversionSweeps, 15_000).unref?.();
+  setInterval(runFiveMinuteConversionSweeps, 5 * 60_000).unref?.();
+
+  // 2. Every 6 hours (+ T+30s boot): A1 Telemetry Truth Cache Refresh + A4 Bloat Watch Radar & Keyword Discovery
+  const runSixHourSeoIntelligence = async () => {
+    const seoStore = new SeoStore(repo.db);
+    const t0A1 = Date.now();
+    try {
+      const refreshed = refreshAllTelemetryTruthCache(seoStore);
+      recordAutomationRunStatus("A1_telemetry_truth", {
+        status: "ok",
+        durationMs: Date.now() - t0A1,
+        summary: { updated_slugs: refreshed.length },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A1_telemetry_truth", {
+        status: "error",
+        durationMs: Date.now() - t0A1,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A4 = Date.now();
+    try {
+      const bw = await scanBloatWatchSignals(seoStore, { fetch_live_feeds: true, min_score: 7 });
+      recordAutomationRunStatus("A4_bloat_watch", {
+        status: "ok",
+        durationMs: Date.now() - t0A4,
+        summary: {
+          evaluated: bw.evaluated.length,
+          drafts_created: bw.drafts_created,
+          discovered_keywords_added: (bw as any).discovered_keywords_added ?? 0,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A4_bloat_watch", {
+        status: "error",
+        durationMs: Date.now() - t0A4,
+        error: String(err?.message || err),
+      });
+      console.warn(`[a4-bloat-watch] Radar scan warning: ${err?.message || err}`);
+    }
+
+    const t0A12 = Date.now();
+    try {
+      const llmsSync = syncStaticLlmsTxtFile(seoStore);
+      const compAudit = auditInternalBrandFactConsistency({ autoFix: true });
+      recordAutomationRunStatus("A12_geo_llms_index", {
+        status: "ok",
+        durationMs: Date.now() - t0A12,
+        summary: { ...llmsSync },
+      });
+      recordAutomationRunStatus("A15_competitor_freshness", {
+        status: "ok",
+        durationMs: Date.now() - t0A12,
+        summary: {
+          checked_count: compAudit.checked_count,
+          drift_detected_count: compAudit.drift_detected_count,
+          auto_fixed_count: compAudit.auto_fixed_count,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A12_geo_llms_index", {
+        status: "error",
+        durationMs: Date.now() - t0A12,
+        error: String(err?.message || err),
+      });
+    }
+  };
+  setTimeout(runSixHourSeoIntelligence, 30_000).unref?.();
+  setInterval(runSixHourSeoIntelligence, 6 * 3600 * 1000).unref?.();
+
+  // 3. Every 12 hours (+ T+45s boot): A2 Intent-Gap & Strike-Zone CTR + Keyword Discovery + A6 Renewal Recap T-7d Sweep + Stripe Reconcile
+  const runTwelveHourLifecycleAndSeo = async () => {
+    const seoStore = new SeoStore(repo.db);
+    const t0A2 = Date.now();
+    try {
+      const nowMs = Date.now();
+      const toIso = new Date(nowMs).toISOString().slice(0, 10);
+      const fromIso = new Date(nowMs - 28 * 86_400_000).toISOString().slice(0, 10);
+      const ig = executeIntentGapAutomation(seoStore, {
+        from: fromIso,
+        to: toIso,
+        siteUrl: config.publicUrl || "https://sweeprcleaner.com",
+        persistState: true,
+      });
+      recordAutomationRunStatus("A2_intent_gap_ctr", {
+        status: "ok",
+        durationMs: Date.now() - t0A2,
+        summary: {
+          queued_ctr_rewrite_slugs: ig.queued_ctr_rewrite_slugs.length,
+          retirement_candidates_90d_count: ig.retirement_candidates_90d_count,
+          winners_promoted_count: ig.winners_promoted_count,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A2_intent_gap_ctr", {
+        status: "error",
+        durationMs: Date.now() - t0A2,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0Kw = Date.now();
+    try {
+      const kw = await runKeywordDiscoveryPipeline(seoStore, undefined, {
+        fetch_autocomplete: false,
+        enrich_dfs: false,
+        persistReport: true,
+      });
+      recordAutomationRunStatus("A7_keyword_discovery", {
+        status: "ok",
+        durationMs: Date.now() - t0Kw,
+        summary: {
+          total_scored: kw.summary.total_evaluated,
+          net_new: kw.new_pseo_candidates.length,
+          strike_zone: kw.ctr_enrichment_candidates.length,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A7_keyword_discovery", {
+        status: "error",
+        durationMs: Date.now() - t0Kw,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A6 = Date.now();
+    try {
+      const recapRes = await runAnnualRenewalRecapSweep(repo);
+      recordAutomationRunStatus("A6_renewal_recap", {
+        status: "ok",
+        durationMs: Date.now() - t0A6,
+        summary: { ...recapRes },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A6_renewal_recap", {
+        status: "error",
+        durationMs: Date.now() - t0A6,
+        error: String(err?.message || err),
+      });
+    }
+
+    if (stripe) {
+      const t0Stripe = Date.now();
+      try {
+        const rec = await reconcileStripeSubscriptions(repo, stripe);
+        recordAutomationRunStatus("stripe_reconcile", {
+          status: "ok",
+          durationMs: Date.now() - t0Stripe,
+          summary: { synced: rec.synced, active: rec.active },
+        });
+      } catch (err: any) {
+        recordAutomationRunStatus("stripe_reconcile", {
+          status: "error",
+          durationMs: Date.now() - t0Stripe,
+          error: String(err?.message || err),
+        });
+      }
+    }
+  };
+  setTimeout(runTwelveHourLifecycleAndSeo, 45_000).unref?.();
+  setInterval(runTwelveHourLifecycleAndSeo, 12 * 3600 * 1000).unref?.();
+
+  // 4. Every 7 days (+ T+20s boot): A5 Weekly Listing Freshness & Auto-Publish Crawler
   const runWeeklyListingAudit = async () => {
+    const t0A5 = Date.now();
     try {
       const seoStore = new SeoStore(repo.db);
       const res = await checkDirectoryListings(seoStore, { targetDomain: "sweeprcleaner.com" });
+      recordAutomationRunStatus("A5_directory_listings", {
+        status: "ok",
+        durationMs: Date.now() - t0A5,
+        summary: {
+          current_count: res.current_count,
+          stale_count: res.stale_count,
+          open_crm_tasks: res.open_crm_tasks,
+        },
+      });
       console.log(
         `[a5-listings] Weekly directory audit complete (v${res.expected_version}): ${res.current_count} current, ${res.stale_count} stale, ${res.open_crm_tasks} open CRM tasks.`
       );
     } catch (err: any) {
+      recordAutomationRunStatus("A5_directory_listings", {
+        status: "error",
+        durationMs: Date.now() - t0A5,
+        error: String(err?.message || err),
+      });
       console.warn(`[a5-listings] Directory listing audit warning: ${err?.message || err}`);
     }
   };
   setTimeout(runWeeklyListingAudit, 20_000).unref?.();
   setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000).unref?.();
-
-  // A3: Download-Without-Install Recovery Evaluator
-  // Runs every 5 minutes to flag visitors at T+30m (no app_installed) and dispatch T+2h transactional SmartScreen help emails.
-  const runA3RecoverySweep = async () => {
-    try {
-      const res = await evaluateDownloadRecoverySessions(repo);
-      if (res.newly_flagged_30m > 0 || res.emails_sent_2h > 0) {
-        console.log(
-          `[a3-recovery] Evaluated ${res.evaluated} pending downloads: ${res.newly_flagged_30m} flagged at T+30m, ${res.emails_sent_2h} transactional help emails sent at T+2h.`
-        );
-      }
-    } catch (err: any) {
-      console.warn(`[a3-recovery] Sweep warning: ${err?.message || err}`);
-    }
-  };
-  setInterval(runA3RecoverySweep, 5 * 60_000).unref?.();
 });

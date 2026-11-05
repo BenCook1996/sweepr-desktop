@@ -706,6 +706,30 @@ export class SeoStore {
       )
       .all(from, to, limit) as Array<{ page: string; clicks: number; impressions: number; position: number; queries: number }>;
   }
+  gscPageImpressionsInWindow(from: string, to: string) {
+    const rows = this.db
+      .prepare(
+        `SELECT page, COALESCE(SUM(clicks), 0) AS clicks, COALESCE(SUM(impressions), 0) AS impressions,
+                CASE WHEN SUM(impressions) > 0 THEN SUM(position * impressions) / SUM(impressions) ELSE 99 END AS position
+         FROM seo_gsc_rows WHERE date BETWEEN ? AND ? GROUP BY page`
+      )
+      .all(from, to) as Array<{ page: string; clicks: number; impressions: number; position: number }>;
+    const map = new Map<string, { clicks: number; impressions: number; position: number }>();
+    for (const r of rows) {
+      const normalized = String(r.page || "")
+        .replace(/^https?:\/\/[^/]+/i, "")
+        .replace(/\/$/, "")
+        .toLowerCase();
+      if (normalized) {
+        map.set(normalized, {
+          clicks: Number(r.clicks || 0),
+          impressions: Number(r.impressions || 0),
+          position: Number(r.position || 99),
+        });
+      }
+    }
+    return map;
+  }
   /** Queries where 2+ of our URLs each collected a meaningful share of impressions (cannibalisation candidates). */
   gscCannibalisation(from: string, to: string, minShare = 0.2) {
     const rows = this.db

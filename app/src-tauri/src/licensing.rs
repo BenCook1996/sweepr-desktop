@@ -568,6 +568,10 @@ impl Licensing {
         &self.api
     }
 
+    pub fn device_id(&self) -> &str {
+        &self.device_id
+    }
+
     /// The app's private data directory (licence cache etc.).
     pub fn data_dir(&self) -> &std::path::Path {
         &self.data_dir

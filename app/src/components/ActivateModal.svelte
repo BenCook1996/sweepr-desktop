@@ -11,6 +11,13 @@
   let email = $state("");
   let selectedPlan = $state<PlanId>("annual");
   let experimentVariant = $state<"A" | "B">("A");
+  let conversionOffer = $state<{
+    offer_type?: string;
+    coupon_code?: string;
+    discount_pct?: number;
+    headline?: string;
+    subheadline?: string;
+  } | null>(null);
   let lastTrackedOpen = false;
 
   $effect(() => {
@@ -20,12 +27,33 @@
         .appInfo()
         .then((info) => {
           const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-          const uid = encodeURIComponent(info.machine_id || "desktop");
+          const uid = encodeURIComponent(info.device_id || info.machine_id || "desktop");
+          let lastScanBytes = 0;
+          try {
+            lastScanBytes = Number(localStorage.getItem("sweepr_last_scan_bytes") || "0") || 0;
+          } catch {
+            lastScanBytes = 0;
+          }
+          void fetch(`${base}/v1/conversion/offer?hardware_id=${uid}&bytes_found=${lastScanBytes}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((offer) => {
+              if (offer && Number(offer.discount_pct || 0) > 0) {
+                conversionOffer = {
+                  offer_type: String(offer.offer_type || "scan_tier"),
+                  coupon_code: String(offer.coupon_code || offer.coupon || "SCAN5GB20"),
+                  discount_pct: Number(offer.discount_pct || 20),
+                  headline: String(offer.headline || `Save ${offer.discount_pct}% on Annual Pro`),
+                  subheadline: String(offer.subheadline || `Code ${offer.coupon_code || offer.coupon || "SCAN5GB20"} unlocked from your scan`),
+                };
+              }
+            })
+            .catch(() => {});
           return fetch(`${base}/api/experiments/assign?experiment=paywall_anchor_v1&uid=${uid}`);
         })
         .then((r) => (r.ok ? r.json() : null))
         .then((exp) => {
-          if (exp?.variant === "B") {
+          const assignedVariant = exp?.assignments?.paywall_anchor_v1?.variant || exp?.variant;
+          if (assignedVariant === "B") {
             experimentVariant = "B";
             selectedPlan = "monthly";
           } else {
@@ -300,6 +328,18 @@
           <h2 class="modal-title">Clean &amp; speed up in 1 click</h2>
           <p class="prompt-text">Choose a plan below. Cancel anytime in 1 click.</p>
 
+          {#if conversionOffer && (conversionOffer.discount_pct ?? 0) > 0}
+            <div class="conversion-offer-banner" role="status">
+              <span class="offer-badge">{conversionOffer.discount_pct}% OFF</span>
+              <span class="offer-text">
+                <strong>{conversionOffer.headline}</strong>
+                {#if conversionOffer.coupon_code}
+                  · Code <code>{conversionOffer.coupon_code}</code>
+                {/if}
+              </span>
+            </div>
+          {/if}
+
           <div class="plan-grid">
             <button
               type="button"
@@ -545,6 +585,36 @@
     font-size: 13px;
     color: var(--muted);
     margin: 4px 0 18px 0;
+  }
+
+  .conversion-offer-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 11px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+    font-size: 11.5px;
+    color: var(--text);
+    text-align: left;
+  }
+  .offer-badge {
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+  .offer-text code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color: #059669;
   }
 
   .plan-grid {

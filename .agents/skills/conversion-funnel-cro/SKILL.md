@@ -5,32 +5,31 @@ description: Conversion Rate Optimization (CRO) skill for SWEEPR Cleaner's dual 
 
 # Conversion Rate Optimization (CRO) & Dual-Funnel Monetization Skill
 
-Use this skill to audit, diagnose, and optimize conversion rates across SWEEPR Cleaner's web sales channels (`server/public/index.html`, `pricing.html`, `order.html`) and in-app desktop conversion flow (`app/src/components/Paywall.svelte`, `ActivateModal.svelte`).
+Use this skill to audit, diagnose, and optimize conversion rates across SWEEPR Cleaner's web sales channels (`server/public/index.html`, `pricing.html`, `order.html`), in-app desktop activation flow (`app/src/components/ActivateModal.svelte`), and Android Google Play Billing flow (`mobile/android`).
 
 Before running this skill, read `.agents/product-marketing.md`, `server/public/order.html`, `server/public/pricing.html`, and `server/public/analytics.js`.
 
 ---
 
-## 1. Understanding SWEEPR's Dual-Funnel Architecture
+## 1. Understanding SWEEPR's Omni-Channel Funnel Architecture (v2.0)
 
-SWEEPR converts traffic through two complementary sales channels that must be optimized in tandem:
+SWEEPR converts traffic through three synchronized monetization paths:
 
 ```
-                   [ Paid Ads / Organic SEO / Directories ]
-                                      │
-                   ┌──────────────────┴──────────────────┐
-                   ▼                                     ▼
-     FUNNEL A: Direct Web Checkout         FUNNEL B: Freemium Scan-First
-   (/, /pricing, /vs/* -> /order)         (/clean/*, / -> /download .exe/.msi)
-                   │                                     │
-      Low-Friction Intro Offer              60-Sec Local Rust System Scan
-    (£1.99 1st Mo OR £49.99 Annual)       (Shows Exact GBs of Reclaimable Junk)
-                   │                                     │
-         Stripe / Google Pay                  In-App Paywall.svelte Trigger
-                   │                                     │
-                   └──────────────────┬──────────────────┘
-                                      ▼
-                     [ Active Pro License + Instant Clean ]
+                   [ Paid Ads / 1,128 pSEO Guides / Directories / ASO ]
+                                            │
+         ┌──────────────────────────────────┼──────────────────────────────────┐
+         ▼                                  ▼                                  ▼
+FUNNEL A: Direct Web Checkout      FUNNEL B: Desktop Scan-First       FUNNEL C: Mobile & Play Beta
+(/, /pricing -> /order.html)       (/download .exe/.dmg -> Scan)      (Play Beta / APK / iOS Web App)
+         │                                  │                                  │
+Annual £49.99 Default Anchor       60s Rust Scan + 7-Day Undo         Free 30-Day Play Beta OR
++ £9.99/yr Battery & Cloud Bumps   -> ActivateModal.svelte            In-App Play Billing v8.0.0
++ 30s/Exit £1.99 Intro Downsell    (Stripe / Email OTP / QR Pair)     (Links up to 5 Devices)
+         │                                  │                                  │
+         └──────────────────────────────────┼──────────────────────────────────┘
+                                            ▼
+                    [ Unified 5-Device Pro License + Add-On Upsells ]
 ```
 
 ### Funnel Benchmarks & Target Conversion Rates

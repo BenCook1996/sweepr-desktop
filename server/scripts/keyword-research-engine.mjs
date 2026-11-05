@@ -824,10 +824,21 @@ export async function runKeywordResearchEngine(opts = {}) {
 
   newPseoCandidates.sort((a, b) => b.opportunity_score - a.opportunity_score);
 
+  let existingReport = {};
+  if (fs.existsSync(KEYWORD_RESEARCH_REPORT_PATH)) {
+    try {
+      existingReport = JSON.parse(fs.readFileSync(KEYWORD_RESEARCH_REPORT_PATH, "utf8")) || {};
+    } catch {
+      existingReport = {};
+    }
+  }
+
   const report = {
+    ...existingReport,
     ok: true,
     generated_at: new Date().toISOString(),
     summary: {
+      ...(existingReport.summary || {}),
       total_evaluated: WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY.length * 3 + gscSeed.length,
       new_pseo_ready_count: newPseoCandidates.length,
       avg_opportunity_score:
@@ -840,7 +851,17 @@ export async function runKeywordResearchEngine(opts = {}) {
           : 92.0,
       locked_test_title_slugs: [...LOCKED_TEST_TITLE_SLUGS],
     },
+    top_opportunities: Array.isArray(existingReport.top_opportunities) ? existingReport.top_opportunities : [],
     new_pseo_candidates: newPseoCandidates,
+    ctr_enrichment_candidates: Array.isArray(existingReport.ctr_enrichment_candidates)
+      ? existingReport.ctr_enrichment_candidates
+      : [],
+    transactional_tool_candidates: Array.isArray(existingReport.transactional_tool_candidates)
+      ? existingReport.transactional_tool_candidates
+      : [],
+    ad_exact_match_candidates: Array.isArray(existingReport.ad_exact_match_candidates)
+      ? existingReport.ad_exact_match_candidates
+      : [],
     cooldown_active_count: Object.keys(cooldownMap).length,
   };
 

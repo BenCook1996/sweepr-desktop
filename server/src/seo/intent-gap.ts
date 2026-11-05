@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setApprovedIntentGapSeoOverride } from "../pseo.js";
+import { classifyPseoCluster, getCleanItems, setApprovedIntentGapSeoOverride } from "../pseo.js";
+import { scanBloatWatchSignals } from "./bloat-watch.js";
+import { LOCKED_TEST_TITLE_SLUGS } from "./keywords.js";
 import type { SeoStore } from "./store.js";
 
 export type SearchIntentType = "informational" | "navigational" | "commercial" | "transactional";
@@ -337,8 +339,106 @@ export function computeIntentGapReport(
     .sort((a, b) => b.gsc_impressions - a.gsc_impressions)
     .slice(0, 25);
 
+  // 4. Action 3.6 (A7): 90-Day Zero-Impression Page Retirement / Soft-Merge Candidates & Winner Promotion Queue
+  const toDateObj = new Date(`${opts.to}T00:00:00Z`);
+  const from90dDate = Number.isNaN(toDateObj.getTime())
+    ? opts.from
+    : new Date(toDateObj.getTime() - 89 * 86_400_000).toISOString().slice(0, 10);
+  const pageImpressions90d = store.gscPageImpressionsInWindow(from90dDate, opts.to);
+  const querySlugsWithImpressions = new Set<string>();
+  for (const q of classifiedQueries) {
+    const parsedSlug = extractCleanSlug(q.ranking_url)?.slug;
+    if (q.impressions > 0 && parsedSlug) {
+      querySlugsWithImpressions.add(parsedSlug);
+    }
+  }
+
+  const allCleanItems = getCleanItems();
+  const approvedOverrides =
+    store.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
+
+  // Find primary anchor slug per cluster (highest impressions in cluster or first item)
+  const clusterAnchorSlug = new Map<string, string>();
+  for (const item of allCleanItems) {
+    const cid = classifyPseoCluster(item);
+    const pathKey = `/clean/${item.category}/${item.slug}`;
+    const imp = pageImpressions90d.get(pathKey)?.impressions ?? 0;
+    const currentAnchor = clusterAnchorSlug.get(cid);
+    if (!currentAnchor) {
+      clusterAnchorSlug.set(cid, item.slug);
+    } else {
+      const currentAnchorItem = allCleanItems.find((i) => i.slug === currentAnchor);
+      const currentImp = currentAnchorItem
+        ? pageImpressions90d.get(`/clean/${currentAnchorItem.category}/${currentAnchorItem.slug}`)?.impressions ?? 0
+        : 0;
+      if (imp > currentImp) {
+        clusterAnchorSlug.set(cid, item.slug);
+      }
+    }
+  }
+
+  const recentAddedSlugs = new Set<string>(
+    Array.isArray((dailyState as any).lastAddedSlugs) ? (dailyState as any).lastAddedSlugs : []
+  );
+
+  const retirement_candidates_90d = allCleanItems
+    .filter((item) => {
+      if (LOCKED_TEST_TITLE_SLUGS.has(item.slug)) return false;
+      if (recentAddedSlugs.has(item.slug)) return false;
+      const pathKey = `/clean/${item.category}/${item.slug}`;
+      const pageStats = pageImpressions90d.get(pathKey);
+      const totalImp = (pageStats?.impressions ?? 0) + (querySlugsWithImpressions.has(item.slug) ? 1 : 0);
+      return totalImp === 0;
+    })
+    .map((item) => {
+      const cid = classifyPseoCluster(item);
+      const anchorSlug = clusterAnchorSlug.get(cid);
+      const suggestedMergeSlug = anchorSlug && anchorSlug !== item.slug ? anchorSlug : null;
+      const ov = approvedOverrides[item.slug];
+      const status = ov?.noindex
+        ? ov?.merged_into_slug
+          ? "approved_merge"
+          : "approved_noindex"
+        : ov?.status === "rejected"
+          ? "rejected"
+          : "pending_review";
+      return {
+        slug: item.slug,
+        category: item.category,
+        name: item.name,
+        url: `/clean/${item.category}/${item.slug}`,
+        cluster_id: cid,
+        impressions_90d: 0,
+        clicks_90d: 0,
+        recommended_action: suggestedMergeSlug ? ("retire_merge" as const) : ("retire_noindex" as const),
+        suggested_merge_into_slug: suggestedMergeSlug,
+        status,
+      };
+    })
+    .slice(0, 30);
+
+  const winner_promotion_queue = classifiedQueries
+    .filter((q) => q.clicks >= 1 || (q.impressions >= 12 && q.position <= 15))
+    .map((q) => {
+      const parsedSlug = extractCleanSlug(q.ranking_url)?.slug ?? null;
+      return {
+        query: q.query,
+        intent: q.intent,
+        clicks: q.clicks,
+        impressions: q.impressions,
+        position: q.position,
+        ctr_pct: Math.round(q.ctr * 10000) / 100,
+        clean_slug: parsedSlug,
+        ranking_url: q.ranking_url,
+        promote_to_bloat_watch: Boolean(parsedSlug),
+        promote_to_microsoft_ads: q.intent === "transactional" || q.intent === "commercial" || q.clicks >= 1,
+      };
+    })
+    .sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions)
+    .slice(0, 15);
+
   return {
-    window: { from: opts.from, to: opts.to },
+    window: { from: opts.from, to: opts.to, window_90d_from: from90dDate },
     total_queries_analyzed: classifiedQueries.length,
     total_impressions: classifiedQueries.reduce((s, q) => s + q.impressions, 0),
     total_clicks: classifiedQueries.reduce((s, q) => s + q.clicks, 0),
@@ -350,6 +450,8 @@ export function computeIntentGapReport(
     ctr_rewrite_queue,
     commercial_gap_queue,
     transactional_ad_queue,
+    retirement_candidates_90d,
+    winner_promotion_queue,
     queries: classifiedQueries,
   };
 }
@@ -404,6 +506,25 @@ export function executeIntentGapAutomation(
     }
   }
 
+  // 3. Action 3.6 (A7): Automatically feed top GSC winners into Bloat Watch drafts & Microsoft Ads queue
+  const bloatSignalsFromWinners = report.winner_promotion_queue
+    .filter((w) => w.promote_to_bloat_watch && w.clean_slug)
+    .slice(0, 3)
+    .map((w) => ({
+      title: `Search Velocity Spike: "${w.query}" (${w.impressions} GSC impressions at Pos ${w.position}) — Storage Benchmark`,
+      summary: `Triggered automatically by A2/A7 Winner Promotion Loop after "${w.query}" recorded ${w.impressions} impressions and ${w.clicks} clicks on ${w.ranking_url}.`,
+      source_name: "GSC Winner Promotion Loop (A7)",
+      source_url: w.ranking_url || "https://sweeprcleaner.com/clean",
+    }));
+
+  if (bloatSignalsFromWinners.length > 0) {
+    scanBloatWatchSignals(store, {
+      custom_signals: bloatSignalsFromWinners,
+      fetch_live_feeds: false,
+      min_score: 5,
+    }).catch(() => {});
+  }
+
   const summary = {
     executed_at: new Date().toISOString(),
     window: report.window,
@@ -411,6 +532,8 @@ export function executeIntentGapAutomation(
     queued_ctr_rewrite_slugs: eligibleSlugs,
     commercial_gaps_identified: report.commercial_gap_queue.length,
     transactional_ad_candidates_ready: report.transactional_ad_queue.length,
+    retirement_candidates_90d_count: report.retirement_candidates_90d.length,
+    winners_promoted_count: report.winner_promotion_queue.length,
     intent_distribution: report.intent_distribution,
   };
   store.setSetting("intent_gap_last_run", summary);
@@ -423,9 +546,11 @@ export function executeIntentGapAutomation(
 }
 
 export interface ApproveIntentGapInput {
-  action_type: "ctr_rewrite" | "commercial_gap" | "transactional_ad";
+  action_type: "ctr_rewrite" | "commercial_gap" | "transactional_ad" | "retire_noindex" | "retire_merge";
   decision?: "approve" | "reject";
   slug?: string;
+  merge_into_slug?: string;
+  reason?: string;
   title?: string;
   meta_description?: string;
   query?: string;
@@ -449,11 +574,29 @@ export function approveIntentGapRecommendation(
       store.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
 
     if (decision === "reject") {
+      const prev = existingOverrides[slug] || {};
+      const stillNoindex = Boolean(prev.noindex);
       existingOverrides[slug] = {
+        ...prev,
         slug,
-        status: "rejected",
+        title: null,
+        meta_description: null,
+        ctr_status: "rejected",
+        status: stillNoindex ? "approved" : "rejected",
         updated_at: nowIso,
       };
+      if (stillNoindex) {
+        setApprovedIntentGapSeoOverride(slug, {
+          title: undefined,
+          metaDescription: undefined,
+          noindex: true,
+          mergedIntoSlug: prev.merged_into_slug || undefined,
+          retiredReason: prev.retired_reason || undefined,
+          approvedAt: nowIso,
+        });
+      } else {
+        setApprovedIntentGapSeoOverride(slug, null);
+      }
       store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
       return { ok: true, action_type: "ctr_rewrite", decision: "rejected", slug };
     }
@@ -474,7 +617,9 @@ export function approveIntentGapRecommendation(
     });
 
     existingOverrides[slug] = {
+      ...(existingOverrides[slug] || {}),
       slug,
+      ctr_status: "approved",
       status: "approved",
       title: title || null,
       meta_description: metaDescription || null,
@@ -564,6 +709,76 @@ export function approveIntentGapRecommendation(
       action_type: "commercial_gap",
       decision: entry.status,
       item: entry,
+    };
+  }
+
+  if (input.action_type === "retire_noindex" || input.action_type === "retire_merge") {
+    const slug = String(input.slug || "").trim().toLowerCase();
+    if (!slug) {
+      return { ok: false, error: "slug_required" };
+    }
+    const existingOverrides =
+      store.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
+
+    if (decision === "reject") {
+      const prev = existingOverrides[slug] || {};
+      const hasApprovedCtr = Boolean(prev.title || prev.meta_description);
+      existingOverrides[slug] = {
+        ...prev,
+        slug,
+        noindex: false,
+        merged_into_slug: null,
+        noindex_status: "rejected",
+        status: hasApprovedCtr ? "approved" : "rejected",
+        updated_at: nowIso,
+      };
+      if (hasApprovedCtr) {
+        setApprovedIntentGapSeoOverride(slug, {
+          title: prev.title || undefined,
+          metaDescription: prev.meta_description || undefined,
+          noindex: false,
+          mergedIntoSlug: undefined,
+          approvedAt: prev.approved_at || nowIso,
+        });
+      } else {
+        setApprovedIntentGapSeoOverride(slug, null);
+      }
+      store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
+      return { ok: true, action_type: input.action_type, decision: "rejected", slug };
+    }
+
+    const mergeIntoSlug =
+      input.action_type === "retire_merge" && input.merge_into_slug
+        ? String(input.merge_into_slug).trim().toLowerCase()
+        : undefined;
+    const retiredReason = String(input.reason || "90d_zero_impressions_consolidation");
+
+    setApprovedIntentGapSeoOverride(slug, {
+      noindex: true,
+      mergedIntoSlug: mergeIntoSlug,
+      retiredReason,
+      approvedAt: nowIso,
+    });
+
+    existingOverrides[slug] = {
+      ...(existingOverrides[slug] || {}),
+      slug,
+      status: "approved",
+      noindex: true,
+      merged_into_slug: mergeIntoSlug || null,
+      retired_reason: retiredReason,
+      approved_at: nowIso,
+    };
+    store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
+
+    return {
+      ok: true,
+      action_type: input.action_type,
+      decision: "approved",
+      slug,
+      noindex: true,
+      merged_into_slug: mergeIntoSlug || null,
+      applied_override: existingOverrides[slug],
     };
   }
 

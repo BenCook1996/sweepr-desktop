@@ -584,6 +584,28 @@
     </div>
   </header>
 
+  {#if phase === "done" && freedTotal >= 1024 * 1024 * 1024}
+    <div class="a14-referral-banner" role="region" aria-label="Storage milestone reward">
+      <div class="a14-referral-left">
+        <span class="a14-referral-badge">Milestone Unlocked</span>
+        <span class="a14-referral-copy">
+          You reclaimed <strong>{formatBytes(freedTotal)}</strong>! Share SWEEPR with a friend or review us to earn <strong>30 days of Pro free</strong>.
+        </span>
+      </div>
+      <div class="a14-referral-actions">
+        <a
+          href="https://sweeprcleaner.com/?utm_source=desktop_app&utm_medium=referral_aha&utm_campaign=post_clean_5gb"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="a14-referral-link"
+          onclick={() => trackAppEvent("referral_aha_clicked", { bytes_cleaned: freedTotal })}
+        >
+          Share &amp; Claim 30 Days Free →
+        </a>
+      </div>
+    </div>
+  {/if}
+
   <!-- 2. D3 4 Semantic Pastel-Tinted Category Tiles (Every figure sits inside the card that explains it) -->
   <div class="d3-tiles-grid">
     <!-- Tile 1: Safe Temp & Browser Cache (Green Tint) -->
@@ -1680,6 +1702,45 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: var(--danger);
     font-size: 12.5px;
+  }
+
+  .a14-referral-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    background: rgba(16, 185, 129, 0.08);
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .a14-referral-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .a14-referral-badge {
+    background: #10b981;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .a14-referral-link {
+    font-size: 12px;
+    font-weight: 700;
+    color: #059669;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .a14-referral-link:hover {
+    text-decoration: underline;
   }
 
   @media (prefers-reduced-motion: reduce) {

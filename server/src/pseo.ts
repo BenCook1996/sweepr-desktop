@@ -3,6 +3,8 @@ import { readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getActiveTelemetryTruthForSlug } from "./seo/telemetry-truth.js";
+import { getPublishedBloatWatchForCleanSlug } from "./seo/bloat-watch.js";
+import { escapeHtml as esc } from "./security.js";
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +27,9 @@ export interface CleanItem {
   metaDescription?: string;
   customFaqs?: Array<{ q: string; a: string }>;
   subLocations?: Array<{ subPath: string; role: string; avgSpace: string; safe: string }>;
+  noindex?: boolean;
+  mergedIntoSlug?: string;
+  retiredReason?: string;
 }
 
 export const cleanItems: CleanItem[] = cleanItemsData as CleanItem[];
@@ -694,14 +699,34 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
   return { siblings, related };
 }
 
-const approvedIntentGapOverrides = new Map<string, { title?: string; metaDescription?: string; approvedAt: string }>();
+export interface ApprovedIntentGapOverride {
+  title?: string;
+  metaDescription?: string;
+  noindex?: boolean;
+  mergedIntoSlug?: string;
+  retiredReason?: string;
+  approvedAt: string;
+}
+
+const approvedIntentGapOverrides = new Map<string, ApprovedIntentGapOverride>();
 
 export function setApprovedIntentGapSeoOverride(
   slug: string,
-  opts: { title?: string; metaDescription?: string; approvedAt?: string }
+  opts: {
+    title?: string;
+    metaDescription?: string;
+    noindex?: boolean;
+    mergedIntoSlug?: string;
+    retiredReason?: string;
+    approvedAt?: string;
+  } | null
 ) {
   const cleanSlug = String(slug || "").trim().toLowerCase();
   if (!cleanSlug) return;
+  if (!opts) {
+    approvedIntentGapOverrides.delete(cleanSlug);
+    return;
+  }
   const existing = approvedIntentGapOverrides.get(cleanSlug) ?? { approvedAt: new Date().toISOString() };
   approvedIntentGapOverrides.set(cleanSlug, {
     title: opts.title && opts.title.length >= 30 && opts.title.length <= 60 ? opts.title : existing.title,
@@ -709,12 +734,23 @@ export function setApprovedIntentGapSeoOverride(
       opts.metaDescription && opts.metaDescription.length >= 70 && opts.metaDescription.length <= 160
         ? opts.metaDescription
         : existing.metaDescription,
+    noindex: opts.noindex !== undefined ? Boolean(opts.noindex) : existing.noindex,
+    mergedIntoSlug: opts.mergedIntoSlug !== undefined ? opts.mergedIntoSlug : existing.mergedIntoSlug,
+    retiredReason: opts.retiredReason !== undefined ? opts.retiredReason : existing.retiredReason,
     approvedAt: opts.approvedAt || new Date().toISOString(),
   });
 }
 
-export function getApprovedIntentGapSeoOverride(slug: string) {
+export function getApprovedIntentGapSeoOverride(slug: string): ApprovedIntentGapOverride | null {
   return approvedIntentGapOverrides.get(String(slug || "").trim().toLowerCase()) ?? null;
+}
+
+export function isPseoSlugNoindexed(slug: string): boolean {
+  const cleanSlug = String(slug || "").trim().toLowerCase();
+  const override = approvedIntentGapOverrides.get(cleanSlug);
+  if (override?.noindex || override?.mergedIntoSlug) return true;
+  const item = getCleanItems().find((i) => i.slug === cleanSlug);
+  return Boolean(item?.noindex || item?.mergedIntoSlug);
 }
 
 export function buildPseoTitle(item: CleanItem): string {
@@ -806,11 +842,65 @@ export function buildPseoDescription(item: CleanItem): string {
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }
+  const telemetry = getActiveTelemetryTruthForSlug(item.slug);
+  const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : item.avgSpace;
   const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
-  const base = `Step-by-step guide to cleaning ${withoutParens} to reclaim ${item.avgSpace}. Learn whether it is safe to delete and how to clean it safely in 1 click.`;
+  const base = `Step-by-step guide to cleaning ${withoutParens} to reclaim ${spaceLabel}. Learn whether it is safe to delete and how to clean it safely in 1 click.`;
   if (base.length <= 158) return base;
-  const shorter = `How to clean ${withoutParens} and reclaim ${item.avgSpace} safely. Verified Windows cleanup guide with manual steps and 1-click automatic cleaning.`;
+  const shorter = `How to clean ${withoutParens} and reclaim ${spaceLabel} safely. Verified Windows cleanup guide with manual steps and 1-click automatic cleaning.`;
   return shorter.slice(0, 158).trim();
+}
+
+function matchTransactionalToolForItem(
+  item: CleanItem,
+  clusterId: string
+): { slug: string; label: string; savings: string } {
+  const s = item.slug.toLowerCase();
+  const p = item.path.toLowerCase();
+  if (s.includes("discord")) {
+    return { slug: "discord-cache-cleaner", label: "Discord Cache & GPU Blob Cleaner", savings: "2–15 GB" };
+  }
+  if (s.includes("steam") || p.includes("steam")) {
+    return { slug: "steam-cache-cleaner", label: "Steam depotcache & Shader Cache Cleaner", savings: "5–40 GB" };
+  }
+  if (s.includes("logitech") || s.includes("lghub") || p.includes("lghub") || p.includes("logioptions")) {
+    return { slug: "logitech-ghub-cleaner", label: "Logitech G HUB & Options+ Depots Cleaner", savings: "2–10 GB" };
+  }
+  if (s.includes("elgato") || s.includes("streamdeck")) {
+    return { slug: "elgato-streamdeck-cleaner", label: "Elgato Stream Deck Cache & Logs Cleaner", savings: "1–5 GB" };
+  }
+  if (s.includes("riot") || s.includes("valorant") || s.includes("league")) {
+    return { slug: "valorant-logs-cleaner", label: "Valorant & Riot Client Logs Cleaner", savings: "2–12 GB" };
+  }
+  if (s.includes("nvidia") || s.includes("amd-shader") || s.includes("dxcache") || clusterId === "gpu_drivers") {
+    return { slug: "nvidia-shader-cleaner", label: "NVIDIA DXCache & DirectX Shader Cleaner", savings: "2–15 GB" };
+  }
+  if (
+    s.includes("comfyui") ||
+    s.includes("lm-studio") ||
+    s.includes("ollama") ||
+    s.includes("huggingface") ||
+    s.includes("cursor") ||
+    s.includes("vllm") ||
+    s.includes("fooocus") ||
+    s.includes("invokeai") ||
+    s.includes("kobold")
+  ) {
+    return { slug: "ai-model-cache-cleaner", label: "ComfyUI, LM Studio & AI Model Cache Cleaner", savings: "15–90 GB" };
+  }
+  if (s.includes("adobe") || s.includes("davinci") || s.includes("capcut") || clusterId === "creative") {
+    return { slug: "adobe-media-cache-cleaner", label: "Adobe Media Cache & Creative Cloud Cleaner", savings: "10–80 GB" };
+  }
+  if (clusterId === "devtools") {
+    return { slug: "jetbrains-gradle-cleaner", label: "IntelliJ IDEA, Gradle & Developer Cache Cleaner", savings: "10–55 GB" };
+  }
+  if (clusterId === "gaming") {
+    return { slug: "steam-cache-cleaner", label: "Steam & PC Game Shader Cache Cleaner", savings: "5–40 GB" };
+  }
+  if (clusterId === "browsers_comms") {
+    return { slug: "discord-cache-cleaner", label: "Discord & Chromium App Cache Cleaner", savings: "2–15 GB" };
+  }
+  return { slug: "windows-24h2-update-cleaner", label: "Windows 11 24H2 Update & WinSxS Cleaner", savings: "10–45 GB" };
 }
 
 const FEATURED_GSC_SLUGS = [
@@ -982,6 +1072,7 @@ export function renderPseoDirectory(): string {
       <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
       <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
       <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
+      <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
       <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Download Free Scan</a>
@@ -1119,10 +1210,23 @@ export function renderPseoPage(item: CleanItem): string {
 
   const pageTitle = buildPseoTitle(item);
   const pageDesc = buildPseoDescription(item);
-  const canonicalUrl = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+  const seoOverride = getApprovedIntentGapSeoOverride(item.slug);
+  const mergedTargetSlug = seoOverride?.mergedIntoSlug || item.mergedIntoSlug;
+  const mergedTargetItem = mergedTargetSlug
+    ? getCleanItems().find((i) => i.slug === mergedTargetSlug.toLowerCase())
+    : undefined;
+  const isNoindexed = Boolean(item.noindex || seoOverride?.noindex || mergedTargetItem);
+  const robotsMetaContent = isNoindexed
+    ? "noindex, follow"
+    : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+  const canonicalUrl = mergedTargetItem
+    ? `https://sweeprcleaner.com/clean/${mergedTargetItem.category}/${mergedTargetItem.slug}`
+    : `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
   const { siblings, related } = getSiblingAndRelatedItems(item);
   const absorbedVariants = getAbsorbedRedirectVariants(item);
   const telemetryTruth = getActiveTelemetryTruthForSlug(item.slug);
+  const bloatBenchmark = getPublishedBloatWatchForCleanSlug(item.slug);
+  const matchedTool = matchTransactionalToolForItem(item, cluster.id);
   const isStreamDeck = item.slug === "elgato-streamdeck-cache";
 
   const faqItems = [
@@ -1273,7 +1377,7 @@ export function renderPseoPage(item: CleanItem): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${pageTitle}</title>
   <meta name="description" content="${pageDesc}">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="robots" content="${robotsMetaContent}">
   <link rel="canonical" href="${canonicalUrl}">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="dns-prefetch" href="https://translate.google.com">
@@ -1389,6 +1493,7 @@ export function renderPseoPage(item: CleanItem): string {
       <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
       <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
       <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
+      <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
       <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Get SWEEPR Cleaner</a>
@@ -1439,6 +1544,21 @@ export function renderPseoPage(item: CleanItem): string {
           ? `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 mb-4 leading-relaxed">
               <strong class="text-slate-900 block mb-1">💡 Cleaning Physical Stream Deck LCD Keys vs. Windows App Cache:</strong>
               <span><strong>1. Windows App Cache (500 MB–3.5 GB):</strong> Quit Stream Deck from the system tray and clean <code>%AppData%\\Elgato\\StreamDeck\\logs</code>, <code>Cache</code>, <code>Service Worker\\CacheStorage</code>, and <code>Media Blob Storage</code> (your <code>ProfilesV2</code> button layouts stay 100% untouched).<br><strong>2. Physical LCD Keys:</strong> Unplug the USB cable first, then wipe the LCD keycaps with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</span>
+            </div>`
+          : ""
+      }
+      ${
+        mergedTargetItem
+          ? `<div id="soft-merge-consolidation-banner" class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 mb-4 leading-relaxed">
+              <strong>📌 Consolidated Storage Guide:</strong> This folder is part of our primary guide for <a href="/clean/${mergedTargetItem.category}/${mergedTargetItem.slug}" class="font-bold underline hover:text-blue-700">${mergedTargetItem.name} (${mergedTargetItem.path})</a>.
+            </div>`
+          : ""
+      }
+      ${
+        bloatBenchmark
+          ? `<div id="bloat-watch-benchmark-callout" class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-950 mb-4 flex flex-wrap items-center justify-between gap-2">
+              <span>🧪 <strong>Lab VM Benchmark Available:</strong> ${bloatBenchmark.title}${bloatBenchmark.reclaimed_gb ? ` (${bloatBenchmark.reclaimed_gb} GB reclaimed)` : ""}</span>
+              <a href="/bloat-watch/${bloatBenchmark.slug}" class="font-bold text-emerald-800 underline hover:text-emerald-600 whitespace-nowrap">Read Lab Benchmark &rarr;</a>
             </div>`
           : ""
       }
@@ -1628,6 +1748,29 @@ export function renderPseoPage(item: CleanItem): string {
     </div>
 
     ${relatedSection}
+
+    <!-- A15: Matched Transactional Cleaner Tool & Competitor Switcher Hub -->
+    <div id="pseo-commercial-crosslinks" class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6 mb-8">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-emerald-200/70">
+        <div>
+          <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full mb-1.5">⚡ Interactive 1-Click Tool</span>
+          <h2 class="text-base font-extrabold text-gray-900">${esc(matchedTool.label)} (Free ${esc(matchedTool.savings)})</h2>
+          <p class="text-xs text-gray-600 mt-0.5">Paste your PowerShell folder scan output or download the 5.8 MB signed Rust cleaner for ${esc(item.name)}.</p>
+        </div>
+        <a href="/tools/${matchedTool.slug}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs no-underline whitespace-nowrap shadow-sm">
+          Open ${esc(matchedTool.label)} &rarr;
+        </a>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+        <span class="font-semibold text-gray-800">Why Windows 11 users switch to SWEEPR (5.8 MB Rust, Zero Telemetry Bloat):</span>
+        <div class="flex flex-wrap gap-3 font-bold">
+          <a href="/vs/ccleaner" class="text-emerald-700 hover:underline">SWEEPR vs CCleaner</a>
+          <a href="/vs/bleachbit" class="text-emerald-700 hover:underline">SWEEPR vs BleachBit</a>
+          <a href="/safe-to-delete" class="text-emerald-700 hover:underline">Safe-to-Delete Checker</a>
+          <a href="/state-of-windows-storage" class="text-emerald-700 hover:underline">2026 Storage Study</a>
+        </div>
+      </div>
+    </div>
 
     <!-- Automated 1-Click Callout -->
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center shadow-lg">

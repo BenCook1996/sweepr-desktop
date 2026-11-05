@@ -799,14 +799,17 @@ function loadRedirectsMap(): Record<string, string> {
 export function isSlugInRedirects(slug: string, redirects: Record<string, string> = loadRedirectsMap()): string | null {
   const norm = String(slug || "").trim().toLowerCase();
   if (!norm) return null;
-  return (
-    redirects[`app:${norm}`] ||
-    redirects[`folder:${norm}`] ||
-    redirects[norm] ||
-    getPseoRedirectTarget("app", norm) ||
-    getPseoRedirectTarget("folder", norm) ||
-    null
-  );
+  const direct = redirects[`app:${norm}`] || redirects[`folder:${norm}`] || redirects[norm];
+  if (direct) return direct;
+  const appTarget = getPseoRedirectTarget("app", norm);
+  if (appTarget && appTarget !== `/clean/app/${norm}` && appTarget !== `/clean/folder/${norm}`) {
+    return appTarget;
+  }
+  const folderTarget = getPseoRedirectTarget("folder", norm);
+  if (folderTarget && folderTarget !== `/clean/folder/${norm}` && folderTarget !== `/clean/app/${norm}`) {
+    return folderTarget;
+  }
+  return null;
 }
 
 /**
@@ -1542,7 +1545,7 @@ export async function runKeywordDiscoveryPipeline(
     }
   }
 
-  // Source 2: GSC Query & Impression Velocity Mining
+  // Source 2: GSC Query & Impression Velocity Mining (Live SQLite seo_gsc_rows + Verified Seed Fallback)
   const gscRows = loadVerifiedGscSeedRows();
   const byQuery = new Map<
     string,
@@ -1557,6 +1560,37 @@ export async function runKeywordDiscoveryPipeline(
     if (r.date <= "2026-10-22") cur.earlyPos = r.position;
     else cur.latePos = r.position;
     byQuery.set(q, cur);
+  }
+  if (store && store.gscRowCount() > 0) {
+    const latestDate = store.gscLatestDate() ?? new Date().toISOString().slice(0, 10);
+    const fromDate = new Date(new Date(`${latestDate}T00:00:00Z`).getTime() - 27 * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const liveQueries = store.gscTopQueries(fromDate, latestDate, 500);
+    for (const lq of liveQueries) {
+      const q = String(lq.query || "").trim().toLowerCase();
+      if (!q) continue;
+      const existing = byQuery.get(q);
+      if (!existing || lq.impressions > existing.imps) {
+        byQuery.set(q, {
+          imps: Number(lq.impressions || 0),
+          clicks: Number(lq.clicks || 0),
+          weightedPos: Number(lq.position || 50) * Math.max(Number(lq.impressions || 0), 1),
+          earlyPos: existing?.earlyPos ?? null,
+          latePos: Number(lq.position || 50),
+          page: existing?.page ?? "",
+        });
+      }
+    }
+  }
+  if (store) {
+    for (const kwRow of store.listKeywords()) {
+      if (kwRow.cluster === "bloat-watch-discovered") {
+        upsertCandidateInput(kwRow.keyword, {
+          isCuratedEcosystemSeed: true,
+        });
+      }
+    }
   }
   for (const [q, stats] of byQuery.entries()) {
     const avgPos = stats.imps > 0 ? stats.weightedPos / stats.imps : 50;

@@ -1817,6 +1817,8 @@ pub struct AppInfo {
     pub version: String,
     pub platform: String,
     pub api_url: String,
+    pub device_id: String,
+    pub machine_id: String,
     pub installer_mode: bool,
     pub preferences: UiPreferences,
 }
@@ -1832,6 +1834,8 @@ pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
         version: app.package_info().version.to_string(),
         platform: std::env::consts::OS.to_string(),
         api_url: state.licensing.api_url().to_string(),
+        device_id: state.licensing.device_id().to_string(),
+        machine_id: state.licensing.device_id().to_string(),
         installer_mode,
         preferences,
     }

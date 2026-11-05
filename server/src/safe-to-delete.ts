@@ -464,6 +464,7 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
       <div class="nav-links">
         <a href="/clean">367 Folder Encyclopedia</a>
         <a href="/bloat-watch">Bloat Watch</a>
+        <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/vs/ccleaner">SWEEPR vs CCleaner</a>
         <a href="/pricing">Pricing</a>
         <a href="/order?plan=annual" class="btn-primary">Get SWEEPR Pro &rarr;</a>

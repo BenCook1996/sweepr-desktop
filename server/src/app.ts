@@ -14,7 +14,7 @@ import type { Account, Entitlement, Repo } from "./db.js";
 import { randomToken, sha256, signEntitlement } from "./tokens.js";
 import { handleStripeEvent, syncSubscription } from "./stripe.js";
 import { handleRevenueCatWebhook, RevenueCatPayloadError } from "./revenuecat.js";
-import { createCrmRouter } from "./crm.js";
+import { createCrmRouter, hydrateAutomationRegistry } from "./crm.js";
 import {
   adminBasicAuth,
   createRateLimiter,
@@ -30,14 +30,31 @@ import {
   getCleanItems,
   getCleanItemBySlug,
   getPseoRedirectTarget,
+  isPseoSlugNoindexed,
   renderPseoDirectory,
   renderPseoPage,
   setApprovedIntentGapSeoOverride,
 } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
-import { getBloatWatchPost, renderBloatWatchIndexHtml, renderBloatWatchPostHtml } from "./seo/bloat-watch.js";
-import { ingestScanCompletedTelemetry, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
+import {
+  ensureBloatWatchSeeded,
+  getBloatWatchPost,
+  refreshBloatWatchCleanSlugCache,
+  renderBloatWatchIndexHtml,
+  renderBloatWatchPostHtml,
+} from "./seo/bloat-watch.js";
+import {
+  ingestScanCompletedTelemetry,
+  refreshAllTelemetryTruthCache,
+  renderStateOfWindowsStorageHtml,
+} from "./seo/telemetry-truth.js";
+import {
+  normalizeCompetitorHtmlClaims,
+  renderLlmsFullTxt,
+  renderLlmsTxt,
+  syncStaticLlmsTxtFile,
+} from "./seo/llms-index.js";
 import { analyzeSafeToDeleteInput, renderSafeToDeletePageHtml } from "./safe-to-delete.js";
 import {
   getTransactionalToolBySlug,
@@ -48,11 +65,16 @@ import {
 import {
   ACTIVE_EXPERIMENTS,
   assignExperimentVariant,
+  attributeCheckoutToExperiments,
   getExperimentSummary,
+  hydratePromotedExperimentWinners,
+  promoteExperimentWinner,
+  setPromotedWinnersPersistHook,
 } from "./experiments.js";
 import { getAccountStorageRecap, processAnnualRenewalRecap } from "./renewal-recap.js";
 import {
   associateCheckoutLeadWithRecovery,
+  dispatchPostCleanAhaMilestoneEmail,
   getVisitorRecoveryStatus,
   recordAppInstalledForRecovery,
   recordInstallerDownloaded,
@@ -67,6 +89,7 @@ import {
   isGiveawayWindowOpen,
   redeemGiveawayLicense,
   renderGiveawayPageHtml,
+  triggerGiveawayDeviceLimitUpgradeEmail,
 } from "./giveaway.js";
 import { detectBot, isTrackablePath } from "./seo/bots.js";
 import { AUDIT_USER_AGENT } from "./seo/audit.js";
@@ -213,7 +236,20 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
   }
   const resolvedRef = String(refCode || attr.ref || body?.affiliate_code || "").trim();
   if (resolvedRef) meta.ref = resolvedRef.slice(0, 50);
-  const fields = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid", "msclkid", "irclickid"];
+  const fields = [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_content",
+    "utm_term",
+    "gclid",
+    "fbclid",
+    "msclkid",
+    "irclickid",
+    "visitor_id",
+    "attribution_id",
+    "coupon",
+  ];
   for (const f of fields) {
     const val = String(attr[f] ?? body?.[f] ?? "").trim();
     if (val) meta[f] = val.slice(0, 100);
@@ -222,6 +258,18 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
 }
 
 /** Server-side source of truth: is this entitlement currently usable? */
+export function resolveCheckoutPromoCoupon(
+  rawCoupon: unknown
+): { code: "GOTD50" | "SCAN5GB20" | "STAY30"; discountPct: number; multiplier: number } | null {
+  const c = String(rawCoupon ?? "")
+    .trim()
+    .toUpperCase();
+  if (c === "GOTD50") return { code: "GOTD50", discountPct: 50, multiplier: 0.5 };
+  if (c === "SCAN5GB20") return { code: "SCAN5GB20", discountPct: 20, multiplier: 0.8 };
+  if (c === "STAY30") return { code: "STAY30", discountPct: 30, multiplier: 0.7 };
+  return null;
+}
+
 export function isEntitled(e: Entitlement | undefined, now: number, graceDays: number): boolean {
   if (!e) return false;
   if (e.status === "active" || e.status === "trialing") {
@@ -430,6 +478,15 @@ export function createApp(deps: AppDeps) {
   seoStore.pruneBotHits(90);
   try {
     refreshAllTelemetryTruthCache(seoStore);
+    ensureBloatWatchSeeded(seoStore);
+    refreshBloatWatchCleanSlugCache(seoStore);
+    hydrateAutomationRegistry(seoStore);
+    hydratePromotedExperimentWinners(
+      seoStore.getSetting<Record<string, string>>("promoted_experiment_winners", {})
+    );
+    setPromotedWinnersPersistHook((winners) => {
+      seoStore.setSetting("promoted_experiment_winners", winners);
+    });
     const savedOverrides =
       seoStore.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
     for (const [slug, ov] of Object.entries(savedOverrides)) {
@@ -438,9 +495,13 @@ export function createApp(deps: AppDeps) {
           title: ov.title || undefined,
           metaDescription: ov.meta_description || undefined,
           approvedAt: ov.approved_at || undefined,
+          noindex: typeof ov.noindex === "boolean" ? ov.noindex : undefined,
+          mergedIntoSlug: ov.merged_into_slug || undefined,
+          retiredReason: ov.retired_reason || undefined,
         });
       }
     }
+    syncStaticLlmsTxtFile(seoStore);
   } catch {}
   let botHitsSincePrune = 0;
   const recentBotHitMap = new Map<string, number>();
@@ -495,6 +556,7 @@ export function createApp(deps: AppDeps) {
         "/clean",
         "/safe-to-delete",
         "/bloat-watch",
+        "/state-of-windows-storage",
         "/vs/ccleaner",
         "/alternatives/ccleaner",
         "/vs/bleachbit",
@@ -719,6 +781,16 @@ export function createApp(deps: AppDeps) {
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/refund.html", (c) => c.redirect("/refund", 301));
+  app.get("/llms.txt", (c) => {
+    c.header("Content-Type", "text/plain; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    return c.body(renderLlmsTxt(seoStore));
+  });
+  app.get("/llms-full.txt", (c) => {
+    c.header("Content-Type", "text/plain; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    return c.body(renderLlmsFullTxt(seoStore));
+  });
   app.get("/vs/:competitor", (c) => {
     const raw = String(c.req.param("competitor") ?? "");
     if (raw.toLowerCase().endsWith(".html")) {
@@ -727,7 +799,9 @@ export function createApp(deps: AppDeps) {
     }
     const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const file = `./public/vs/${competitor}.html`;
-    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+    return existsSync(file)
+      ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
+      : c.notFound();
   });
   app.get("/alternatives/:competitor", (c) => {
     const raw = String(c.req.param("competitor") ?? "");
@@ -737,7 +811,9 @@ export function createApp(deps: AppDeps) {
     }
     const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
     const file = `./public/alternatives/${competitor}.html`;
-    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+    return existsSync(file)
+      ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
+      : c.notFound();
   });
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
   app.get("/safe-to-delete", (c) => {
@@ -773,6 +849,21 @@ export function createApp(deps: AppDeps) {
     return c.json({ ok: true, ...analysis });
   });
   app.get("/bloat-watch", (c) => c.html(renderBloatWatchIndexHtml(seoStore)));
+  app.get("/state-of-windows-storage", (c) => c.html(renderStateOfWindowsStorageHtml(seoStore)));
+  app.get("/sitemap.xml", (c) => {
+    const file = "./public/sitemap.xml";
+    if (!existsSync(file)) return c.notFound();
+    let xml = readFileSync(file, "utf-8");
+    xml = xml.replace(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>\s*/gi, (block, loc) => {
+      const m = String(loc || "").match(/\/clean\/[^/]+\/([a-z0-9-]+)$/i);
+      if (m && isPseoSlugNoindexed(m[1])) {
+        return "";
+      }
+      return block;
+    });
+    c.header("Content-Type", "application/xml; charset=utf-8");
+    return c.body(xml);
+  });
   app.get("/bloat-watch/:slug", (c) => {
     const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
     const post = getBloatWatchPost(seoStore, slug);
@@ -1390,6 +1481,61 @@ export function createApp(deps: AppDeps) {
     }
   }
 
+  /**
+   * R4: Unified promo coupon resolver for GOTD50 (50% off), SCAN5GB20 (20% off scan recovery),
+   * and STAY30 (30% off renewal loyalty save).
+   */
+  async function resolveCheckoutPromoCoupon(
+    rawCode: string | null | undefined
+  ): Promise<{ code: string; percentOff: number; stripeCouponId: string } | null> {
+    const code = String(rawCode || "").trim().toUpperCase();
+    if (!code) return null;
+    const gotdCfg = getGiveawayConfig(repo, now());
+    let pct = 0;
+    let couponId = "";
+    let label = "";
+    if (code === DEFAULT_GOTD_UPGRADE_COUPON || code === gotdCfg.upgrade_coupon.toUpperCase()) {
+      pct = gotdCfg.upgrade_discount_pct || 50;
+      couponId = await getOrCreateGotdUpgradeCoupon(pct);
+      return { code, percentOff: pct, stripeCouponId: couponId };
+    }
+    if (code === "SCAN5GB20") {
+      pct = 20;
+      couponId = "SWEEPR_SCAN5GB_20_OFF";
+      label = "20% Scan Recovery Discount";
+    } else if (code === "STAY30") {
+      pct = 30;
+      couponId = "SWEEPR_STAY_30_OFF";
+      label = "30% Renewal Loyalty Discount";
+    } else {
+      return null;
+    }
+
+    if (!stripe) return { code, percentOff: pct, stripeCouponId: couponId };
+    if (cachedIntroCoupons.has(couponId)) {
+      return { code, percentOff: pct, stripeCouponId: cachedIntroCoupons.get(couponId)! };
+    }
+    try {
+      const existing = await stripe.coupons.retrieve(couponId);
+      if (existing && existing.id) {
+        cachedIntroCoupons.set(couponId, existing.id);
+        return { code, percentOff: pct, stripeCouponId: existing.id };
+      }
+    } catch {}
+    try {
+      const created = await stripe.coupons.create({
+        id: couponId,
+        percent_off: pct,
+        duration: "once",
+        name: label,
+      });
+      cachedIntroCoupons.set(couponId, created.id);
+      return { code, percentOff: pct, stripeCouponId: created.id };
+    } catch {
+      return { code, percentOff: pct, stripeCouponId: stripeCoupon };
+    }
+  }
+
   // Giveaway of the Day (24-Hour 6-Month Pro License Redemption & 50% Upgrade Page)
   const serveGiveawayPage = (c: Context) => {
     c.header("X-Robots-Tag", "noindex, follow");
@@ -1820,6 +1966,23 @@ export function createApp(deps: AppDeps) {
 
     try {
       const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
+      try {
+        const attrId =
+          sanitizeAttributionId(body?.attribution_id) ||
+          sanitizeAttributionId(body?.attribution?.attribution_id) ||
+          sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+        associateCheckoutLeadWithRecovery(repo, {
+          attributionId: attrId,
+          email,
+          accountId,
+          nowSec: now(),
+        });
+        attributeCheckoutToExperiments(repo, {
+          visitorKey: String(body?.visitor_id || "").trim() || attrId || clientIp(c) || accountId,
+          accountId,
+          plan,
+        });
+      } catch {}
       let customerId = existing?.stripe_customer_id ?? null;
       if (customerId) {
         try {
@@ -1899,14 +2062,11 @@ export function createApp(deps: AppDeps) {
       }
 
       const applyDiscount = Boolean(body.applyDiscount) && plan === "monthly";
-      const requestedCoupon = String(body?.coupon ?? c.req.query("coupon") ?? "").trim().toUpperCase();
-      const gotdCfg = getGiveawayConfig(repo, now());
-      const isGotdUpgradeCoupon =
-        requestedCoupon === DEFAULT_GOTD_UPGRADE_COUPON ||
-        requestedCoupon === gotdCfg.upgrade_coupon.toUpperCase();
+      const requestedCoupon = String(body?.coupon ?? body?.promo_code ?? c.req.query("coupon") ?? "").trim().toUpperCase();
+      const resolvedPromo = await resolveCheckoutPromoCoupon(requestedCoupon);
 
-      const introCouponId = isGotdUpgradeCoupon
-        ? await getOrCreateGotdUpgradeCoupon(gotdCfg.upgrade_discount_pct)
+      const introCouponId = resolvedPromo
+        ? resolvedPromo.stripeCouponId
         : !isAnnual && !isSixMonth && applyDiscount
         ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
         : "";
@@ -2313,6 +2473,23 @@ export function createApp(deps: AppDeps) {
     let customerId = existing?.stripe_customer_id ?? null;
     const attributionMeta = extractAttributionMeta(body, accountId, plan, refCode);
     try {
+      const attrId =
+        sanitizeAttributionId(body?.attribution_id) ||
+        sanitizeAttributionId(body?.attribution?.attribution_id) ||
+        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+      associateCheckoutLeadWithRecovery(repo, {
+        attributionId: attrId,
+        email: providedEmail || email,
+        accountId,
+        nowSec: now(),
+      });
+      attributeCheckoutToExperiments(repo, {
+        visitorKey: String(body?.visitor_id || "").trim() || attrId || clientIp(c) || accountId,
+        accountId,
+        plan,
+      });
+    } catch {}
+    try {
       if (customerId) {
         try {
           await stripe.customers.update(customerId, {
@@ -2404,14 +2581,11 @@ export function createApp(deps: AppDeps) {
         });
       }
 
-      const requestedCoupon = String(body?.coupon ?? c.req.query("coupon") ?? "").trim().toUpperCase();
-      const gotdCfg = getGiveawayConfig(repo, now());
-      const isGotdUpgradeCoupon =
-        requestedCoupon === DEFAULT_GOTD_UPGRADE_COUPON ||
-        requestedCoupon === gotdCfg.upgrade_coupon.toUpperCase();
+      const requestedCoupon = String(body?.coupon ?? body?.promo_code ?? c.req.query("coupon") ?? "").trim().toUpperCase();
+      const resolvedPromo = await resolveCheckoutPromoCoupon(requestedCoupon);
 
-      const introCouponId = isGotdUpgradeCoupon
-        ? await getOrCreateGotdUpgradeCoupon(gotdCfg.upgrade_discount_pct)
+      const introCouponId = resolvedPromo
+        ? resolvedPromo.stripeCouponId
         : !isAnnual && !isSixMonth && applyDiscount
         ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
         : "";
@@ -5135,6 +5309,22 @@ export function createApp(deps: AppDeps) {
     const maxPcLimit = isGiveawayEnt ? 1 : config.maxDevicesPc;
     const maxMobLimit = isGiveawayEnt ? 0 : config.maxDevicesMobile;
     if (!repo.touchDevice(account.id, deviceId, deviceType, maxPcLimit, maxMobLimit)) {
+      if (isGiveawayEnt) {
+        const upg = await triggerGiveawayDeviceLimitUpgradeEmail(repo, account.id, account.email, now());
+        return c.json(
+          {
+            error: "device_limit",
+            status: "device_limit",
+            plan: "giveaway_6m",
+            upgrade_url: upg.upgrade_url,
+            coupon: DEFAULT_GOTD_UPGRADE_COUPON,
+            discount_pct: 50,
+            message:
+              "Your 6-month Giveaway license covers 1 Windows PC. Upgrade to the 5-Device Annual Pro Plan for 50% off with code GOTD50.",
+          },
+          403
+        );
+      }
       return c.json({ error: "device_limit", status: "device_limit" }, 403);
     }
     if (!account.country || !account.lead_device) {
@@ -5685,12 +5875,50 @@ export function createApp(deps: AppDeps) {
       ...(includeCloudVault ? ["cloud_vault"] : []),
     ];
 
+    const v1AttributionMeta = extractAttributionMeta(
+      body,
+      account.id,
+      plan,
+      typeof body?.ref === "string" ? body.ref : typeof body?.referral_code === "string" ? body.referral_code : ""
+    );
+    try {
+      const attrId =
+        sanitizeAttributionId(body?.attribution_id) ||
+        sanitizeAttributionId(body?.attribution?.attribution_id) ||
+        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+      if (email) {
+        associateCheckoutLeadWithRecovery(repo, {
+          attributionId: attrId,
+          email,
+          accountId: account.id,
+          nowSec: now(),
+        });
+      }
+      attributeCheckoutToExperiments(repo, {
+        visitorKey: String(body?.visitor_id || "").trim() || attrId || clientIp(c) || account.id,
+        accountId: account.id,
+        plan,
+      });
+    } catch {}
+
+    const requestedV1Coupon = String(
+      (body as Record<string, unknown>)?.coupon ??
+        (body as Record<string, unknown>)?.promo_code ??
+        c.req.query("coupon") ??
+        ""
+    )
+      .trim()
+      .toUpperCase();
+    const resolvedV1Promo = await resolveCheckoutPromoCoupon(requestedV1Coupon);
+
     try {
       const applyMonthlyIntro =
         Boolean((body as Record<string, unknown>)?.intro === true || (body as Record<string, unknown>)?.intro === "1") &&
         plan === "monthly" &&
         !alreadyPro;
-      const introCouponId = applyMonthlyIntro
+      const introCouponId = resolvedV1Promo
+        ? resolvedV1Promo.stripeCouponId
+        : applyMonthlyIntro
         ? await getOrCreateIntroCoupon(localizedPricing.currency, localizedPricing.introSavingsAmount)
         : null;
       const session = await stripe.checkout.sessions.create({
@@ -5702,13 +5930,15 @@ export function createApp(deps: AppDeps) {
           ? { customer_email: email }
           : {}),
         line_items: lineItems,
+        metadata: v1AttributionMeta,
         subscription_data: {
           metadata: {
+            ...v1AttributionMeta,
             account_id: account.id,
             plan,
             ...(chosenAddons.length > 0 ? { addons: chosenAddons.join(",") } : {}),
             ...(includeBatteryCare ? { battery_care: "1" } : {}),
-            ...(includeCloudVault ? { cloud_vault: "1" } : {}),
+            ...(includeCloudVault ? { battery_care: "1", cloud_vault: "1" } : {}),
           },
         },
         ...(introCouponId
@@ -5718,7 +5948,7 @@ export function createApp(deps: AppDeps) {
         cancel_url: `${config.publicUrl}/checkout/cancel`,
       });
       if (session.url) {
-        return c.json({ url: session.url });
+        return c.json({ url: session.url, coupon_applied: resolvedV1Promo?.code ?? null });
       }
     } catch (err) {
       console.warn("[v1/checkout] Falling back to /order:", err);
@@ -5727,6 +5957,7 @@ export function createApp(deps: AppDeps) {
     const params = new URLSearchParams();
     params.set("plan", plan);
     if (email) params.set("email", email);
+    if (resolvedV1Promo) params.set("coupon", resolvedV1Promo.code);
     if (chosenAddons.length > 0) {
       params.set("addons", chosenAddons.join(","));
       if (chosenAddons.length === 1) params.set("addon", chosenAddons[0]);
@@ -5963,9 +6194,36 @@ export function createApp(deps: AppDeps) {
       sanitizeAttributionId(body?.metadata?.attribution_id) ||
       sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
     const sessAccId = await sessionAccountId(c);
-    const resolvedAccountId =
-      typeof body.account_id === "string" ? body.account_id.slice(0, 64) : sessAccId;
+    const authHeader = c.req.header("authorization") ?? "";
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    const bearerAcc = bearerToken ? repo.accountByTokenHash(sha256(bearerToken)) : undefined;
+    const rawDeviceId = String(
+      body?.device_id ?? body?.hardware_id ?? body?.metadata?.device_id ?? body?.metadata?.hardware_id ?? ""
+    )
+      .trim()
+      .slice(0, 64);
+    let deviceAccountId: string | null = null;
+    if (rawDeviceId) {
+      const devRow = repo.db
+        .prepare("SELECT account_id FROM devices WHERE id = ? AND revoked = 0 ORDER BY last_seen DESC LIMIT 1")
+        .get(rawDeviceId) as { account_id: string } | undefined;
+      if (devRow?.account_id) deviceAccountId = devRow.account_id;
+    }
     const resolvedEmail = normalizeEmail(body?.email ?? body?.metadata?.email) || undefined;
+    const emailAcc = resolvedEmail ? repo.accountByEmail(resolvedEmail) : undefined;
+    const resolvedAccountId =
+      (typeof body.account_id === "string" && body.account_id.trim()
+        ? body.account_id.trim().slice(0, 64)
+        : null) ||
+      bearerAcc?.id ||
+      sessAccId ||
+      deviceAccountId ||
+      emailAcc?.id ||
+      null;
+
+    let ledgerSummary: ReturnType<typeof repo.recordAccountScanAndCleanProgress> = null;
+    let milestoneUnlocked = false;
+    let referralUrl: string | null = null;
 
     try {
       if (eventName === "installer_downloaded") {
@@ -5994,6 +6252,52 @@ export function createApp(deps: AppDeps) {
           samples: body?.metadata?.samples ?? body?.samples ?? null,
           nowSec: now(),
         });
+        const scanBytes = Number(
+          body?.metadata?.total_bytes ??
+            body?.metadata?.reclaimable_bytes ??
+            body?.total_bytes ??
+            body?.reclaimable_bytes ??
+            0
+        );
+        if (resolvedAccountId) {
+          ledgerSummary = repo.recordAccountScanAndCleanProgress(resolvedAccountId, {
+            isScan: true,
+            reclaimableBytes: scanBytes,
+            tsSec: now(),
+          });
+        }
+      } else if (eventName === "clean_completed") {
+        const cleanedBytes = Number(
+          body?.metadata?.cleaned_bytes ??
+            body?.metadata?.bytes_cleaned ??
+            body?.metadata?.total_bytes ??
+            body?.cleaned_bytes ??
+            0
+        );
+        const cleanedFiles = Number(
+          body?.metadata?.files_removed ?? body?.metadata?.cleaned_files ?? body?.files_removed ?? 0
+        );
+        if (resolvedAccountId) {
+          ledgerSummary = repo.recordAccountScanAndCleanProgress(resolvedAccountId, {
+            isClean: true,
+            cleanedBytes,
+            cleanedFiles,
+            tsSec: now(),
+          });
+          if (ledgerSummary?.referral_code) {
+            referralUrl = `https://sweeprcleaner.com/r/${encodeURIComponent(ledgerSummary.referral_code)}`;
+          }
+          const bestBytes = Math.max(cleanedBytes, ledgerSummary?.total_bytes_cleaned ?? 0);
+          if (bestBytes >= 5 * 1024 * 1024 * 1024) {
+            milestoneUnlocked = true;
+            await dispatchPostCleanAhaMilestoneEmail(repo, {
+              accountId: resolvedAccountId,
+              cleanedBytes,
+              lifetimeBytes: ledgerSummary?.total_bytes_cleaned ?? cleanedBytes,
+              nowSec: now(),
+            }).catch(() => {});
+          }
+        }
       } else if (eventName === "smartscreen_recovery_shown") {
         recordRecoveryBannerInteraction(repo, {
           attributionId: attrId,
@@ -6025,7 +6329,22 @@ export function createApp(deps: AppDeps) {
       account_id: resolvedAccountId,
       properties: body.metadata || null,
     });
-    return c.json({ ok: true, id, attribution_id: attrId || null });
+    return c.json({
+      ok: true,
+      id,
+      attribution_id: attrId || null,
+      account_id: resolvedAccountId,
+      ...(ledgerSummary
+        ? {
+            lifetime_bytes_cleaned: ledgerSummary.total_bytes_cleaned,
+            lifetime_cleans_count: ledgerSummary.total_cleans_count,
+            lifetime_scans_count: ledgerSummary.total_scans_count,
+            referral_code: ledgerSummary.referral_code,
+            referral_url: referralUrl,
+            milestone_unlocked: milestoneUnlocked,
+          }
+        : {}),
+    });
   });
 
   app.get("/api/telemetry/recovery-status", async (c) => {
@@ -6085,6 +6404,79 @@ export function createApp(deps: AppDeps) {
   // Admin CRM Experiment Summary (Action 3.1)
   app.get("/api/crm/experiments", (c) => {
     return c.json(getExperimentSummary(repo));
+  });
+
+  app.post("/api/crm/experiments/promote", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const expId = String(body?.experiment_id ?? "").trim() as any;
+    const variant = String(body?.variant ?? "").trim().toUpperCase() as "A" | "B";
+    if (!ACTIVE_EXPERIMENTS[expId as keyof typeof ACTIVE_EXPERIMENTS] || (variant !== "A" && variant !== "B")) {
+      return c.json({ ok: false, error: "invalid_experiment_or_variant" }, 400);
+    }
+    promoteExperimentWinner(expId, variant);
+    return c.json({ ok: true, experiment_id: expId, promoted_variant: variant });
+  });
+
+  // Dynamic In-App & Web Conversion Offer Endpoint (A10 High-Intent Scan & Giveaway Upgrade)
+  app.get("/v1/conversion/offer", async (c) => {
+    const email = normalizeEmail(c.req.query("email"));
+    const accountId = String(c.req.query("account_id") ?? "").trim();
+    const hardwareId = String(c.req.query("hardware_id") ?? c.req.query("device_id") ?? "").trim();
+    let deviceAccId = "";
+    if (hardwareId) {
+      const devRow = repo.db
+        .prepare("SELECT account_id FROM devices WHERE id = ? AND revoked = 0 ORDER BY last_seen DESC LIMIT 1")
+        .get(hardwareId) as { account_id: string } | undefined;
+      if (devRow?.account_id) deviceAccId = devRow.account_id;
+    }
+    const acc =
+      (accountId && repo.accountById(accountId)) ||
+      (deviceAccId && repo.accountById(deviceAccId)) ||
+      (email && repo.accountByEmail(email)) ||
+      undefined;
+    const ent = acc ? repo.entitlement(acc.id) : undefined;
+    const gotdCfg = getGiveawayConfig(repo, now());
+    const isGiveaway = ent?.plan === "giveaway_6m";
+    const explicitBytes = Math.max(0, Number(c.req.query("bytes_found") ?? 0));
+    const storedBytes = Number(acc?.max_scan_reclaimable_bytes ?? 0);
+    const bytesFound = Math.max(explicitBytes, storedBytes);
+    const gbFound = +(bytesFound / (1024 * 1024 * 1024)).toFixed(1);
+
+    if (isGiveaway) {
+      const upgradeUrl = `/order?plan=annual&coupon=${encodeURIComponent(gotdCfg.upgrade_coupon)}${acc?.email ? `&email=${encodeURIComponent(acc.email)}` : ""}&utm_source=app_offer`;
+      return c.json({
+        ok: true,
+        offer_type: "giveaway_5device_upgrade",
+        coupon: gotdCfg.upgrade_coupon,
+        coupon_code: gotdCfg.upgrade_coupon,
+        discount_pct: gotdCfg.upgrade_discount_pct,
+        headline: "Unlock 5-Device Annual Pro for 50% Off",
+        subheadline: "Your Giveaway edition covers 1 Windows PC for 6 months. Upgrade to protect up to 5 PCs, Macs & phones for 12 months.",
+        cta_label: `Claim ${gotdCfg.upgrade_discount_pct}% Off 5-Device Pro`,
+        checkout_url: upgradeUrl,
+      });
+    }
+
+    const emailQuery = (acc?.email || email) ? `&email=${encodeURIComponent((acc?.email || email)!)}` : "";
+    const isHighBloat = bytesFound >= 5 * 1024 * 1024 * 1024;
+    return c.json({
+      ok: true,
+      offer_type: isHighBloat ? "high_bloat_scan_unlock" : "standard_pro_upgrade",
+      gb_found: gbFound,
+      coupon: isHighBloat ? "SCAN5GB20" : null,
+      coupon_code: isHighBloat ? "SCAN5GB20" : null,
+      discount_pct: isHighBloat ? 20 : 0,
+      headline: isHighBloat
+        ? `Reclaim ${gbFound} GB Automatically — Claim 20% Off Annual Pro (SCAN5GB20)`
+        : "Keep Your PC Clean Automatically with SWEEPR Pro",
+      subheadline:
+        "Unlock 1-click scheduled background cleanup, 5-device coverage (Windows, Mac, Android & iOS), and 7-day Trash Vault safety.",
+      cta_label: isHighBloat
+        ? `Claim 20% Off Pro & Clean ${gbFound} GB Now`
+        : "Start Trial ($1 First Month) or Save 58% Annually",
+      checkout_url: `/order?plan=annual${isHighBloat ? "&coupon=SCAN5GB20" : ""}${emailQuery}&utm_source=app_scan_offer`,
+      intro_monthly_url: `/order?plan=monthly&intro=1${emailQuery}&utm_source=app_scan_offer`,
+    });
   });
 
   // Action 3.4: A6 Annual-Renewal Value Recap CRM Preview & Trigger

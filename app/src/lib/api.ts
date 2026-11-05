@@ -93,6 +93,8 @@ export interface AppInfo {
   version: string;
   platform: string;
   api_url: string;
+  device_id?: string;
+  machine_id?: string;
   installer_mode?: boolean;
   preferences?: UiPreferences;
 }
@@ -193,6 +195,16 @@ function getTelemetryClientId(): string {
  */
 export function trackAppEvent(eventName: string, metadata?: Record<string, unknown>): void {
   try {
+    if (eventName === "scan_completed" && metadata) {
+      const scanBytes = Number(metadata.bytes_found ?? metadata.reclaimable_bytes ?? metadata.total_bytes ?? 0);
+      if (Number.isFinite(scanBytes) && scanBytes > 0) {
+        try {
+          localStorage.setItem("sweepr_last_scan_bytes", String(Math.round(scanBytes)));
+        } catch {
+          // Ignore storage errors
+        }
+      }
+    }
     if (!cachedAppInfoPromise) {
       cachedAppInfoPromise = invoke<AppInfo>("app_info").catch(() => ({
         version: "0.1.0",
@@ -204,6 +216,7 @@ export function trackAppEvent(eventName: string, metadata?: Record<string, unkno
     void cachedAppInfoPromise.then((info) => {
       const base = (info?.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
       const platform = (info?.platform || "windows").toLowerCase();
+      const deviceId = info?.device_id || info?.machine_id || undefined;
       return fetch(`${base}/v1/telemetry/event`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -211,9 +224,12 @@ export function trackAppEvent(eventName: string, metadata?: Record<string, unkno
           event_name: eventName,
           platform,
           attribution_id: clientId,
+          device_id: deviceId,
+          hardware_id: deviceId,
           metadata: {
             app_version: info?.version || "0.1.0",
             client_id: clientId,
+            device_id: deviceId,
             ...(metadata ?? {}),
           },
         }),

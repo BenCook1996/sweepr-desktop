@@ -1052,5 +1052,11 @@
   "app:sketchup-pro-3d-code-bytecode-cache": "/clean/app/sketchup-pro-3d-cache",
   "app:sketchup-pro-3d-service-worker-cachestorage": "/clean/app/sketchup-pro-3d-cache",
   "app:sketchup-pro-3d-crashpad-dump-logs": "/clean/app/sketchup-pro-3d-cache",
-  "app:sketchup-pro-3d-media-blob-storage": "/clean/app/sketchup-pro-3d-cache"
+  "app:sketchup-pro-3d-media-blob-storage": "/clean/app/sketchup-pro-3d-cache",
+  "folder:windows-11-24h2-checkpoint-cache": "/clean/folder/software-distribution-download",
+  "app:windows-11-24h2-checkpoint-cache": "/clean/folder/software-distribution-download",
+  "folder:windows-bluetooth-logs": "/clean/folder/windows-system32-winevt-logs",
+  "app:windows-bluetooth-logs": "/clean/folder/windows-system32-winevt-logs",
+  "folder:premiere-pro-media-cache-files": "/clean/app/adobe-premiere-media-cache",
+  "app:premiere-pro-media-cache-files": "/clean/app/adobe-premiere-media-cache"
 }

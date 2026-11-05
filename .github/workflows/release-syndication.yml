@@ -17,6 +17,10 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    env:
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+      CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+      CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +36,10 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($ver) -and "${{ github.event.release.tag_name }}") {
             $ver = "${{ github.event.release.tag_name }}".TrimStart("v")
           }
-          if ([string]::IsNullOrWhiteSpace($ver)) { $ver = "0.1.0" }
+          if ([string]::IsNullOrWhiteSpace($ver)) {
+            $tauriConf = Get-Content "app/src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json
+            $ver = $tauriConf.version
+          }
           node server/scripts/update-release-listings.mjs "--version=$ver"
           "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         id: sync
@@ -52,8 +59,6 @@ jobs:
 
       - name: Submit Winget Manifest via wingetcreate (when WINGET_TOKEN is configured)
         if: env.WINGET_TOKEN != ''
-        env:
-          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
@@ -61,8 +66,6 @@ jobs:
 
       - name: Pack & Push Chocolatey Package (when CHOCOLATEY_API_KEY is configured)
         if: env.CHOCOLATEY_API_KEY != ''
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         shell: pwsh
         working-directory: ./chocolatey
         run: |
@@ -71,8 +74,6 @@ jobs:
 
       - name: Trigger Weekly / Post-Release Listing Freshness Audit on Production CRM
         if: env.CRM_ADMIN_PASSWORD != ''
-        env:
-          CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
         shell: pwsh
         run: |
           $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("admin:$env:CRM_ADMIN_PASSWORD"))

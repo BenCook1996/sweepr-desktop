@@ -686,17 +686,39 @@ async function main() {
   const backlinkResult = await runBacklinksWorkflow(countArg);
   const indexingResult = await runIndexingWorkflow();
 
+  // Trigger A5 Directory Listing Freshness, A4 Bloat Watch RSS/Reddit Scan, and A2 GSC Intent-Gap Sync
+  for (const base of [CRM_BASE, LOCAL_CRM]) {
+    fetch(`${base}/api/crm/seo/listings/check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
+      body: JSON.stringify({}),
+      signal: AbortSignal.timeout(10000)
+    }).catch(() => {});
+    fetch(`${base}/api/crm/seo/bloat-watch/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
+      body: JSON.stringify({ fetch_live_feeds: true }),
+      signal: AbortSignal.timeout(10000)
+    }).catch(() => {});
+    fetch(`${base}/api/crm/seo/gsc/intent-gap/execute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: AUTH_HEADER, "X-Sweepr-Project": "cleaner" },
+      body: JSON.stringify({ use_seed: false, persist_state: true }),
+      signal: AbortSignal.timeout(10000)
+    }).catch(() => {});
+  }
+
   console.log("\n==========================================================================");
   console.log("  6-HOURLY WORKFLOW SUMMARY");
   console.log("==========================================================================");
   console.log(`✓ PAD XML Specification: v${padResult?.version} (${padResult?.sizeBytes} bytes, verified live HTTPS)`);
   console.log(`✓ High-DR Backlinks Generated: ${backlinkResult.completed} new links (Total Seed: ${backlinkResult.totalSeed})`);
   console.log(`✓ Search Indexing: ${indexingResult.sitemapUrls} sitemap URLs submitted via IndexNow (Bing & IndexNow.org)`);
-  console.log(`✓ CRM Sync: Synced to outreach & backlinks log with automatic verification.`);
+  console.log(`✓ CRM Sync: Synced to outreach, backlinks, A5 listings, A4 Bloat Watch & A2 Intent-Gap.`);
   console.log(`✓ STRICT RULE: 0 emails sent. SMTP completely disabled.`);
   console.log("==========================================================================\n");
 
-  if (!process.argv.includes("--no-push") && backlinkResult.completed > 0) {
+  if (!process.argv.includes("--no-push") && (backlinkResult.completed > 0 || indexingResult.deltaUrls > 0)) {
     try {
       execFileSync(
         "git",

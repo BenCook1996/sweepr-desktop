@@ -363,6 +363,7 @@
       }
     }
   </style>
+  <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
 </head>
 <body class="bg-[#f4f5f3] text-[#0c0f0e] min-h-screen flex flex-col font-sans antialiased">
@@ -2628,6 +2629,8 @@
       }
 
       try {
+        const getAttributionPayload = () => (window.sweeprAttribution && typeof window.sweeprAttribution.getPayload === 'function' ? window.sweeprAttribution.getPayload() : {});
+        const activeCouponCode = (new URLSearchParams(window.location.search).get('coupon') || '').trim() || undefined;
         // Case A: Direct PayPal Popup Authorization (Matches competitor PayPal popup UX)
         if (method === 'paypal') {
           const subRes = await fetch('/api/create-subscription', {
@@ -2646,6 +2649,10 @@
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
               paymentMethod: 'paypal',
+              coupon: activeCouponCode,
+              coupon: activeCouponCode,
+              attribution: getAttributionPayload(),
+              ref: getAttributionPayload().ref,
               popup: Boolean(paypalPopup && !paypalPopup.closed)
             })
           });
@@ -2832,6 +2839,7 @@
               addons: getSelectedAddonsList(),
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
+              coupon: activeCouponCode,
               attribution: getAttributionPayload(),
               ref: getAttributionPayload().ref,
               paymentMethod: 'card'
@@ -2950,6 +2958,9 @@
             currency: checkoutConfig?.currency,
             country: checkoutConfig?.country,
             paymentMethod: method,
+            coupon: activeCouponCode,
+            attribution: getAttributionPayload(),
+            ref: getAttributionPayload().ref,
             confirmOnServer: true,
             cardNumber: isTestOrDevCheckoutMode() ? (rawNum || undefined) : undefined
           })

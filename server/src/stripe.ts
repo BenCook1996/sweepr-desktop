@@ -2,6 +2,8 @@ import type Stripe from "stripe";
 import type { EntStatus, Repo } from "./db.js";
 import { syncToCentralCrm } from "./crm-sync.js";
 import { processAnnualRenewalRecap } from "./renewal-recap.js";
+import { dispatchChurnWinbackEmail, dispatchFailedPaymentDunningEmail } from "./download-recovery.js";
+import { attributeCheckoutToExperiments } from "./experiments.js";
 
 // Stripe moved some fields between API versions (e.g. current_period_end moved
 // onto subscription items; invoice.subscription moved under invoice.parent).
@@ -164,14 +166,53 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     trial_end: sub.trial_end ?? null,
   });
 
+  const subMeta = sub.metadata ?? {};
+  const attrPayload = {
+    subscription_id: sub.id,
+    status: sub.status,
+    plan: planName,
+    amount_cents: amountCents,
+    currency: sub.currency || "usd",
+    utm_source: subMeta.utm_source || subMeta.last_utm_source || subMeta.first_utm_source || undefined,
+    utm_medium: subMeta.utm_medium || subMeta.last_utm_medium || subMeta.first_utm_medium || undefined,
+    utm_campaign: subMeta.utm_campaign || subMeta.last_utm_campaign || subMeta.first_utm_campaign || undefined,
+    utm_term: subMeta.utm_term || subMeta.last_utm_term || subMeta.first_utm_term || undefined,
+    utm_content: subMeta.utm_content || undefined,
+    msclkid: subMeta.msclkid || subMeta.last_msclkid || undefined,
+    gclid: subMeta.gclid || subMeta.last_gclid || undefined,
+    fbclid: subMeta.fbclid || undefined,
+  };
+
   repo.addActivity({
     account_id: account.id,
     type: "subscription_synced",
     title: "Subscription Synchronized",
     description: `Status: ${sub.status}, Plan: ${planName}`,
     actor: "stripe",
-    metadata: { subscription_id: sub.id, status: sub.status },
+    metadata: attrPayload,
   });
+
+  if (sub.status === "active" || sub.status === "trialing") {
+    try {
+      repo.db
+        .prepare(
+          "UPDATE giveaway_redemptions SET status = 'upgraded', upgraded_at = COALESCE(upgraded_at, ?) WHERE account_id = ? OR LOWER(email) = LOWER(?)"
+        )
+        .run(Math.floor(Date.now() / 1000), account.id, account.email || "");
+    } catch {
+      /* ignore if giveaway_redemptions table not initialized yet */
+    }
+    try {
+      const visitorKey =
+        subMeta.visitor_id || subMeta.attribution_id || account.id;
+      attributeCheckoutToExperiments(repo, {
+        visitorKey,
+        accountId: account.id,
+        action: "payment_completed",
+        plan: planName,
+      });
+    } catch {}
+  }
 
   if (account.email && !account.email.endsWith("@pending.sweeprcleaner.com")) {
     syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
@@ -318,6 +359,23 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       const fresh = await stripe.subscriptions.retrieve(sub.id).catch(() => sub);
       await syncPayPalEmailFromSubscription(stripe, repo, fresh);
       syncSubscription(repo, fresh);
+      if (
+        event.type === "customer.subscription.deleted" ||
+        fresh.status === "canceled" ||
+        fresh.cancel_at_period_end
+      ) {
+        const custId = idOf(fresh.customer as any);
+        const acc =
+          (custId ? repo.accountByCustomer(custId) : undefined) ??
+          (fresh.metadata?.account_id ? repo.accountById(fresh.metadata.account_id) : undefined);
+        if (acc) {
+          await dispatchChurnWinbackEmail(repo, {
+            accountId: acc.id,
+            subscriptionId: fresh.id,
+            reason: fresh.status === "canceled" ? "canceled" : "cancel_at_period_end",
+          }).catch(() => {});
+        }
+      }
       break;
     }
     case "invoice.paid": {
@@ -406,6 +464,14 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
           actor: "stripe",
           metadata: { invoice_id: inv.id },
         });
+        await dispatchFailedPaymentDunningEmail(repo, {
+          accountId: account.id,
+          invoiceId: inv.id,
+          amountCents: inv.total,
+          currency: inv.currency,
+          hostedInvoiceUrl: inv.hosted_invoice_url ?? null,
+          stage: "t0_immediate",
+        }).catch(() => {});
       }
       break;
     }

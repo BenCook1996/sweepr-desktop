@@ -11,13 +11,133 @@ import { periodEnd, reconcileStripeSubscriptions, syncSubscription } from "./str
 import { sendSubscriptionEmail, verifySmtp } from "./email.js";
 import { resolvePricingForRequest, detectLeadDevice } from "./pricing.js";
 import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
-import { evaluateDownloadRecoverySessions, getDownloadRecoveryStats } from "./download-recovery.js";
+import {
+  evaluateDownloadRecoverySessions,
+  evaluateDunningAndWinbackLifecycle,
+  evaluateHighIntentScanAndCheckoutAbandonment,
+  getDownloadRecoveryStats,
+} from "./download-recovery.js";
 import {
   buildGiveawayReadmeTxt,
   getGiveawayConfig,
   getGiveawayStats,
+  runGiveawayUpgradeSweep,
   updateGiveawayConfig,
 } from "./giveaway.js";
+import { applyRoasReallocation, computeRoasAndBudgetReport } from "./roas.js";
+import { runAnnualRenewalRecapSweep } from "./renewal-recap.js";
+import { getExperimentSummary } from "./experiments.js";
+import { SeoStore } from "./seo/store.js";
+import { computeStateOfWindowsStorageReport, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
+import { executeIntentGapAutomation } from "./seo/intent-gap.js";
+import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
+import { auditInternalBrandFactConsistency, checkDirectoryListings } from "./seo/listings.js";
+import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
+import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
+
+export interface AutomationJobStatus {
+  id: string;
+  name: string;
+  cadence: string;
+  last_run_at: number | null;
+  last_status: "idle" | "ok" | "error";
+  last_duration_ms: number | null;
+  last_summary: Record<string, unknown> | null;
+  last_error: string | null;
+  run_count: number;
+}
+
+const DEFAULT_AUTOMATION_JOBS: Array<{ id: string; name: string; cadence: string }> = [
+  { id: "A1_telemetry_truth", name: "A1 Telemetry Truth & State of Windows Storage Benchmark", cadence: "Every 6h + live on scan_completed" },
+  { id: "A2_intent_gap_ctr", name: "A2 GSC Intent-Gap & Strike-Zone CTR Engine", cadence: "Every 12h + on GSC sync" },
+  { id: "A3_download_recovery", name: "A3 Download-to-Install & SmartScreen Recovery", cadence: "Every 5m" },
+  { id: "A4_bloat_watch", name: "A4 Bloat Watch Radar & Emerging Keyword Discovery", cadence: "Every 6h" },
+  { id: "A5_directory_listings", name: "A5 Software Directory & Winget Listing Monitor", cadence: "Every 7d" },
+  { id: "A6_renewal_recap", name: "A6 Annual-Renewal Value Recap T-7d Sweep", cadence: "Every 12h + Stripe webhook" },
+  { id: "A7_keyword_discovery", name: "Low-Competition Keyword Research & Opportunity Engine", cadence: "Every 12h" },
+  { id: "A8_roas_reallocation", name: "A8 Paid Ads ROAS & v3 65% Reinvestment Engine", cadence: "Continuous + CRM trigger" },
+  { id: "A9_ab_experiments", name: "A9 A/B Experiment Z-Test & Auto-Winner Promotion", cadence: "Continuous + CRM trigger" },
+  { id: "A10_conversion_recovery", name: "A10 High-Intent Scan/Checkout & Giveaway GOTD50 Sweep", cadence: "Every 5m" },
+  { id: "A11_storage_benchmark", name: "A11 State of Windows Storage Benchmark Report", cadence: "Every 6h + live telemetry" },
+  { id: "A12_geo_llms_index", name: "A12 Dynamic GEO / AI Citation Index (/llms.txt & /llms-full.txt)", cadence: "Every 6h" },
+  { id: "A13_dunning_winback", name: "A13 Stripe Failed-Payment Dunning & Churn Winback", cadence: "Every 15m + Stripe webhooks" },
+  { id: "A15_competitor_freshness", name: "A15 Competitor Matrix Claim Normalizer & Internal Link Audit", cadence: "Every 24h" },
+  { id: "stripe_reconcile", name: "Stripe Subscription Reconciliation", cadence: "Every 12h" },
+];
+
+const automationRuntimeRegistry = new Map<string, AutomationJobStatus>();
+let registryPersistStore: SeoStore | null = null;
+
+export function hydrateAutomationRegistry(store: SeoStore) {
+  registryPersistStore = store;
+  try {
+    const saved =
+      store.getSetting<Record<string, AutomationJobStatus>>("automation_runtime_registry", {}) ?? {};
+    for (const [id, st] of Object.entries(saved)) {
+      if (st && typeof st === "object") {
+        automationRuntimeRegistry.set(id, st);
+      }
+    }
+  } catch {}
+}
+
+export function recordAutomationRunStatus(
+  id: string,
+  update: {
+    status: "ok" | "error";
+    durationMs: number;
+    summary?: Record<string, unknown> | null;
+    error?: string | null;
+    nowSec?: number;
+  }
+): AutomationJobStatus {
+  const def = DEFAULT_AUTOMATION_JOBS.find((j) => j.id === id) ?? {
+    id,
+    name: id,
+    cadence: "Custom",
+  };
+  const prev = automationRuntimeRegistry.get(id);
+  const next: AutomationJobStatus = {
+    id: def.id,
+    name: def.name,
+    cadence: def.cadence,
+    last_run_at: update.nowSec ?? Math.floor(Date.now() / 1000),
+    last_status: update.status,
+    last_duration_ms: update.durationMs,
+    last_summary: update.summary ?? null,
+    last_error: update.error ?? null,
+    run_count: (prev?.run_count ?? 0) + 1,
+  };
+  automationRuntimeRegistry.set(id, next);
+  if (registryPersistStore) {
+    try {
+      const obj: Record<string, AutomationJobStatus> = {};
+      for (const [k, v] of automationRuntimeRegistry.entries()) {
+        obj[k] = v;
+      }
+      registryPersistStore.setSetting("automation_runtime_registry", obj);
+    } catch {}
+  }
+  return next;
+}
+
+export function getAutomationStatusList(): AutomationJobStatus[] {
+  return DEFAULT_AUTOMATION_JOBS.map((def) => {
+    const existing = automationRuntimeRegistry.get(def.id);
+    if (existing) return existing;
+    return {
+      id: def.id,
+      name: def.name,
+      cadence: def.cadence,
+      last_run_at: null,
+      last_status: "idle",
+      last_duration_ms: null,
+      last_summary: null,
+      last_error: null,
+      run_count: 0,
+    };
+  });
+}
 
 export interface CrmRouterDeps {
   repo: Repo;
@@ -1460,6 +1580,223 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       ok: true,
       config: cfg,
       readme_txt: buildGiveawayReadmeTxt(cfg),
+    });
+  });
+
+  router.post("/giveaway/evaluate", async (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const body = await c.req.json().catch(() => ({}));
+    const t0 = Date.now();
+    const res = await runGiveawayUpgradeSweep(repo, {
+      nowSec: Number.isFinite(Number(body.now_sec)) ? Number(body.now_sec) : nowSec,
+      limit: Number.isFinite(Number(body.limit)) ? Number(body.limit) : 100,
+    });
+    recordAutomationRunStatus("A10_conversion_recovery", {
+      status: "ok",
+      durationMs: Date.now() - t0,
+      summary: { giveaway_sweep: res },
+      nowSec,
+    });
+    return c.json({ ok: true, ...res });
+  });
+
+  router.post("/conversion/evaluate", async (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const body = await c.req.json().catch(() => ({}));
+    const evalSec = Number.isFinite(Number(body.now_sec)) ? Number(body.now_sec) : nowSec;
+    const t0 = Date.now();
+    const abandonment = await evaluateHighIntentScanAndCheckoutAbandonment(repo, {
+      nowSec: evalSec,
+    });
+    const giveaway = await runGiveawayUpgradeSweep(repo, {
+      nowSec: evalSec,
+      limit: Number.isFinite(Number(body.limit)) ? Number(body.limit) : 100,
+    });
+    recordAutomationRunStatus("A10_conversion_recovery", {
+      status: "ok",
+      durationMs: Date.now() - t0,
+      summary: { abandonment, giveaway },
+      nowSec: evalSec,
+    });
+    return c.json({ ok: true, abandonment, giveaway });
+  });
+
+  // Action 3.2 (A8): Paid Ads ROAS & v3 65% Reinvestment Engine
+  router.get("/ads/roas", (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const seoStore = new SeoStore(repo.db);
+    const t0 = Date.now();
+    const report = computeRoasAndBudgetReport(repo, seoStore);
+    recordAutomationRunStatus("A8_roas_reallocation", {
+      status: "ok",
+      durationMs: Date.now() - t0,
+      summary: {
+        paid_roas: report.totals.paid_roas,
+        paid_revenue_gbp: report.totals.paid_revenue_gbp,
+        reinvestment_unlock_gbp: report.totals.reinvestment_unlock_gbp,
+      },
+      nowSec,
+    });
+    return c.json(report);
+  });
+
+  router.post("/ads/reallocate", async (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const body = await c.req.json().catch(() => ({}));
+    const seoStore = new SeoStore(repo.db);
+    const t0 = Date.now();
+    const result = applyRoasReallocation(repo, seoStore, {
+      keyword_overrides: Array.isArray(body.keyword_overrides) ? body.keyword_overrides : undefined,
+      auto_adjust_bids: body.auto_adjust_bids !== false,
+    });
+    recordAutomationRunStatus("A8_roas_reallocation", {
+      status: "ok",
+      durationMs: Date.now() - t0,
+      summary: {
+        bids_adjusted: result.bids_adjusted,
+        losers_paused: result.losers_paused,
+        paid_roas: result.report.totals.paid_roas,
+        recommended_daily_budget_gbp: result.report.totals.recommended_daily_budget_gbp,
+      },
+      nowSec,
+    });
+    return c.json(result);
+  });
+
+  // Unified CMO Automation Status & On-Demand Runner
+  router.get("/automations/status", (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const jobs = getAutomationStatusList();
+    return c.json({
+      ok: true,
+      generated_at: new Date(nowSec * 1000).toISOString(),
+      total_jobs: jobs.length,
+      jobs,
+    });
+  });
+
+  router.post("/automations/run", async (c) => {
+    const nowSec = deps.now ? deps.now() : Math.floor(Date.now() / 1000);
+    const body = await c.req.json().catch(() => ({}));
+    const jobId = String(body.job_id || body.id || "all").trim();
+    const seoStore = new SeoStore(repo.db);
+    const results: Record<string, unknown> = {};
+
+    const runOne = async (id: string) => {
+      const t0 = Date.now();
+      try {
+        let summary: Record<string, unknown> = {};
+        if (id === "A1_telemetry_truth") {
+          const r = refreshAllTelemetryTruthCache(seoStore);
+          summary = { updated_slugs: r.length };
+        } else if (id === "A2_intent_gap_ctr") {
+          const toIso = new Date(nowSec * 1000).toISOString().slice(0, 10);
+          const fromIso = new Date((nowSec - 28 * 86400) * 1000).toISOString().slice(0, 10);
+          const r = executeIntentGapAutomation(seoStore, {
+            from: fromIso,
+            to: toIso,
+            siteUrl: deps.config.publicUrl || "https://sweeprcleaner.com",
+            persistState: true,
+          });
+          summary = {
+            queued_ctr_rewrite_slugs: r.queued_ctr_rewrite_slugs.length,
+            retirement_candidates_90d_count: r.retirement_candidates_90d_count,
+            winners_promoted_count: r.winners_promoted_count,
+          };
+        } else if (id === "A3_download_recovery") {
+          const r = await evaluateDownloadRecoverySessions(repo, { nowSec });
+          summary = { ...r };
+        } else if (id === "A4_bloat_watch") {
+          const r = await scanBloatWatchSignals(seoStore, { min_score: 7 });
+          summary = { evaluated: r.evaluated.length, drafts_created: r.drafts_created };
+        } else if (id === "A5_directory_listings") {
+          const r = await checkDirectoryListings(seoStore, { targetDomain: "sweeprcleaner.com" });
+          summary = { current_count: r.current_count, stale_count: r.stale_count };
+        } else if (id === "A6_renewal_recap") {
+          const r = await runAnnualRenewalRecapSweep(repo, nowSec);
+          summary = { ...r };
+        } else if (id === "A7_keyword_discovery") {
+          const r = await runKeywordDiscoveryPipeline(seoStore, undefined, {
+            fetch_autocomplete: false,
+            enrich_dfs: false,
+            persistReport: true,
+          });
+          summary = {
+            total_scored: r.summary.total_evaluated,
+            net_new: r.new_pseo_candidates.length,
+            strike_zone: r.ctr_enrichment_candidates.length,
+          };
+        } else if (id === "A8_roas_reallocation") {
+          const r = computeRoasAndBudgetReport(repo, seoStore);
+          summary = {
+            paid_roas: r.totals.paid_roas,
+            reinvestment_unlock_gbp: r.totals.reinvestment_unlock_gbp,
+          };
+        } else if (id === "A9_ab_experiments") {
+          const r = getExperimentSummary(repo);
+          summary = {
+            experiments: r.experiments.length,
+            auto_promoted: r.experiments.filter((e) => e.auto_promoted_variant).length,
+          };
+        } else if (id === "A10_conversion_recovery") {
+          const ab = await evaluateHighIntentScanAndCheckoutAbandonment(repo, { nowSec });
+          const gw = await runGiveawayUpgradeSweep(repo, { nowSec });
+          summary = { abandonment: ab, giveaway: gw };
+        } else if (id === "A11_storage_benchmark") {
+          const r = computeStateOfWindowsStorageReport(seoStore);
+          summary = {
+            total_guides: r.total_canonical_guides,
+            median_per_pc_gb: r.median_reclaimable_per_pc_gb,
+            p90_per_pc_gb: r.p90_reclaimable_per_pc_gb,
+          };
+        } else if (id === "A12_geo_llms_index") {
+          const r = syncStaticLlmsTxtFile(seoStore);
+          summary = { ...r };
+        } else if (id === "A13_dunning_winback") {
+          const r = await evaluateDunningAndWinbackLifecycle(repo, { nowSec });
+          summary = { ...r };
+        } else if (id === "A15_competitor_freshness") {
+          const r = auditInternalBrandFactConsistency({ autoFix: true });
+          summary = {
+            checked_count: r.checked_count,
+            drift_detected_count: r.drift_detected_count,
+            auto_fixed_count: r.auto_fixed_count,
+          };
+        } else if (id === "stripe_reconcile") {
+          const r = await reconcileStripeSubscriptions(repo, deps.stripe);
+          summary = { ...r };
+        } else {
+          throw new Error(`Unknown automation job_id: ${id}`);
+        }
+        results[id] = recordAutomationRunStatus(id, {
+          status: "ok",
+          durationMs: Date.now() - t0,
+          summary,
+          nowSec,
+        });
+      } catch (err: any) {
+        results[id] = recordAutomationRunStatus(id, {
+          status: "error",
+          durationMs: Date.now() - t0,
+          error: String(err?.message || err),
+          nowSec,
+        });
+      }
+    };
+
+    if (jobId === "all") {
+      for (const def of DEFAULT_AUTOMATION_JOBS) {
+        await runOne(def.id);
+      }
+    } else {
+      await runOne(jobId);
+    }
+
+    return c.json({
+      ok: true,
+      executed: Object.keys(results),
+      results,
+      jobs: getAutomationStatusList(),
     });
   });
 

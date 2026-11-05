@@ -1,4 +1,5 @@
 import type { Repo } from "./db.js";
+import { dispatchTransactionalCustomerEmail } from "./download-recovery.js";
 import { escapeHtml } from "./security.js";
 
 export interface AccountStorageRecap {
@@ -64,6 +65,19 @@ export function getAccountStorageRecap(
     .prepare("SELECT COUNT(*) as c FROM devices WHERE account_id = ? AND revoked = 0")
     .get(accountId) as { c: number } | undefined;
   const linkedDevicesCount = Number(devicesRow?.c ?? 0);
+
+  // Merge persistent account storage ledger with analytics_events so 90-day TTL cleanup never wipes out annual totals
+  const persistentScans = Number(account.total_scans_count ?? 0);
+  const persistentCleans = Number(account.total_cleans_count ?? 0);
+  const persistentBytes = Number(account.total_bytes_cleaned ?? 0);
+  const persistentLastScan = Number(account.last_scan_at || account.last_clean_at || 0);
+
+  scanCount = Math.max(scanCount, persistentScans);
+  cleanCount = Math.max(cleanCount, persistentCleans);
+  totalCleanedBytes = Math.max(totalCleanedBytes, persistentBytes);
+  if (persistentLastScan > 0 && (lastScanTs === null || persistentLastScan > lastScanTs)) {
+    lastScanTs = persistentLastScan;
+  }
 
   const daysSinceLastScan =
     lastScanTs !== null ? Math.max(0, Math.floor((nowSec - lastScanTs) / 86400)) : null;
@@ -173,9 +187,24 @@ export async function processAnnualRenewalRecap(
       </a>
     </div>
     <p style="font-size:12.5px;color:#64748b;text-align:center;">
-      Need flexibility? You can manage devices, switch to our flexible Monthly plan, or update billing anytime in your <a href="https://sweeprcleaner.com/login" style="color:#0d6847;font-weight:700;">Customer Portal</a>.
+      Need flexibility? You can manage devices, switch to our flexible Monthly plan, or claim a <a href="https://sweeprcleaner.com/order?plan=annual&amp;coupon=STAY30" style="color:#0d6847;font-weight:700;">30% Renewal Loyalty Discount (STAY30)</a> anytime in your <a href="https://sweeprcleaner.com/login" style="color:#0d6847;font-weight:700;">Customer Portal</a>.
     </p>
   </div>`;
+
+  let emailDispatch: { ok: boolean; provider: string; id?: string; error?: string } = {
+    ok: false,
+    provider: "none",
+    error: "no_email_on_account",
+  };
+  if (recap.email && recap.email.includes("@")) {
+    emailDispatch = await dispatchTransactionalCustomerEmail({
+      to: recap.email,
+      subject,
+      textBody: bodyText,
+      htmlBody,
+      tag: "a6_renewal_recap",
+    });
+  }
 
   repo.addActivity({
     account_id: opts.accountId,
@@ -193,6 +222,8 @@ export async function processAnnualRenewalRecap(
       estimated_buildup_gb: recap.estimated_buildup_gb,
       invoice_id: opts.invoiceId || null,
       renewal_date: renewalDateStr,
+      email_dispatched: emailDispatch.ok,
+      email_provider: emailDispatch.provider,
     },
   });
 
@@ -205,15 +236,59 @@ export async function processAnnualRenewalRecap(
       total_cleaned_gb: recap.total_cleaned_gb,
       estimated_buildup_gb: recap.estimated_buildup_gb,
       renewal_date: renewalDateStr,
+      email_dispatched: emailDispatch.ok,
     },
   });
 
   return {
     ok: true,
     skipped_duplicate: false,
+    email_dispatched: emailDispatch.ok,
+    email_provider: emailDispatch.provider,
     subject,
     text_preview: bodyText,
     html_preview: htmlBody,
     recap,
+  };
+}
+
+/**
+ * Automated T-7d sweep for annual subscriptions approaching `current_period_end`.
+ */
+export async function runAnnualRenewalRecapSweep(
+  repo: Repo,
+  nowSec = Math.floor(Date.now() / 1000)
+): Promise<{ evaluated: number; sent: number; skipped_duplicate: number }> {
+  const windowEnd = nowSec + 7 * 86400;
+  const rows = repo.db
+    .prepare(
+      `SELECT account_id, current_period_end
+       FROM entitlements
+       WHERE status = 'active'
+         AND plan = 'annual'
+         AND cancel_at_period_end = 0
+         AND current_period_end IS NOT NULL
+         AND current_period_end > ?
+         AND current_period_end <= ?
+       LIMIT 200`
+    )
+    .all(nowSec, windowEnd) as Array<{ account_id: string; current_period_end: number }>;
+
+  let sent = 0;
+  let skipped = 0;
+  for (const row of rows) {
+    const res = await processAnnualRenewalRecap(repo, {
+      accountId: row.account_id,
+      renewalTs: row.current_period_end,
+      nowSec,
+    });
+    if (res.skipped_duplicate) skipped += 1;
+    else if (res.ok) sent += 1;
+  }
+
+  return {
+    evaluated: rows.length,
+    sent,
+    skipped_duplicate: skipped,
   };
 }

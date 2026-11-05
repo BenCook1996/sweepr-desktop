@@ -161,6 +161,47 @@ SWEEPR Storage Research Lab`;
   return { article_markdown, reddit_reply_draft, press_pitch_draft };
 }
 
+export interface PublishedBloatWatchRef {
+  slug: string;
+  title: string;
+  reclaimed_gb: number | null;
+}
+
+const publishedBloatWatchByCleanSlug = new Map<string, PublishedBloatWatchRef>();
+
+export function getPublishedBloatWatchForCleanSlug(cleanItemSlug: string): PublishedBloatWatchRef | null {
+  return publishedBloatWatchByCleanSlug.get(String(cleanItemSlug || "").toLowerCase()) ?? null;
+}
+
+export function refreshBloatWatchCleanSlugCache(store: SeoStore): number {
+  publishedBloatWatchByCleanSlug.clear();
+  const rows = store.db
+    .prepare(
+      "SELECT slug, title, clean_item_slug, measurements_json FROM seo_bloat_watch_posts WHERE status = 'published' AND clean_item_slug IS NOT NULL"
+    )
+    .all() as Array<{
+    slug: string;
+    title: string;
+    clean_item_slug: string;
+    measurements_json: string | null;
+  }>;
+  for (const r of rows) {
+    let reclaimedGb: number | null = null;
+    try {
+      const m = r.measurements_json ? JSON.parse(r.measurements_json) : null;
+      if (m && typeof m.reclaimed_gb === "number") reclaimedGb = m.reclaimed_gb;
+    } catch {
+      reclaimedGb = null;
+    }
+    publishedBloatWatchByCleanSlug.set(String(r.clean_item_slug).toLowerCase(), {
+      slug: r.slug,
+      title: r.title,
+      reclaimed_gb: reclaimedGb,
+    });
+  }
+  return publishedBloatWatchByCleanSlug.size;
+}
+
 export function scoreAndMapSignal(raw: {
   title: string;
   summary?: string;
@@ -168,6 +209,7 @@ export function scoreAndMapSignal(raw: {
   source_url?: string;
 }): {
   relevance_score: number;
+  best_match_score: number;
   matched_item: CleanItem;
   slug: string;
   reasons: string[];
@@ -216,6 +258,7 @@ export function scoreAndMapSignal(raw: {
 
   return {
     relevance_score: Math.min(10, Math.max(1, score)),
+    best_match_score: bestMatchScore,
     matched_item: bestItem,
     slug: slugify(raw.title),
     reasons,
@@ -293,6 +336,13 @@ export function upsertBloatWatchPost(store: SeoStore, post: Omit<BloatWatchPost,
       post.created_at ?? now,
       post.updated_at ?? now
     );
+  if (post.status === "published" && post.clean_item_slug) {
+    publishedBloatWatchByCleanSlug.set(post.clean_item_slug.toLowerCase(), {
+      slug: post.slug,
+      title: post.title,
+      reclaimed_gb: post.measurements?.reclaimed_gb ?? null,
+    });
+  }
 }
 
 export function ensureBloatWatchSeeded(store: SeoStore) {
@@ -483,6 +533,7 @@ export function ensureBloatWatchSeeded(store: SeoStore) {
       published_at: s.published_at,
     });
   }
+  refreshBloatWatchCleanSlugCache(store);
 }
 
 export function listBloatWatchPosts(store: SeoStore, status?: string): BloatWatchPost[] {
@@ -569,10 +620,28 @@ export async function scanBloatWatchSignals(
 
   const evaluated = [];
   let draftsCreated = 0;
+  let discoveredKeywordsAdded = 0;
 
   for (const sig of collected) {
     const scored = scoreAndMapSignal(sig);
     const meetsThreshold = scored.relevance_score >= minScore;
+    if (meetsThreshold && scored.best_match_score < 4) {
+      // Emerging bloat signal without a strong existing CleanItem match -> register in seo_keywords for Keyword Discovery
+      const kwCandidate = sig.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s._-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 75);
+      if (kwCandidate.length >= 6) {
+        try {
+          store.addKeyword(kwCandidate, "bloat-watch-discovered", "/bloat-watch");
+          discoveredKeywordsAdded += 1;
+        } catch {
+          /* ignore duplicate keyword */
+        }
+      }
+    }
     if (meetsThreshold) {
       const existing = getBloatWatchPost(store, scored.slug);
       if (!existing) {
@@ -627,6 +696,7 @@ export async function scanBloatWatchSignals(
   return {
     scanned: collected.length,
     drafts_created: draftsCreated,
+    discovered_keywords_added: discoveredKeywordsAdded,
     min_score: minScore,
     evaluated,
   };
@@ -792,6 +862,7 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
         <nav style="display:flex;gap:18px;font-size:14px;">
           <a href="/clean" style="color:#d1fae5;text-decoration:none;">Folder Directory</a>
           <a href="/bloat-watch" style="color:#fff;font-weight:700;text-decoration:none;">PC Bloat Watch</a>
+          <a href="/state-of-windows-storage" style="color:#d1fae5;text-decoration:none;">2026 Storage Study</a>
           <a href="/vs/ccleaner" style="color:#d1fae5;text-decoration:none;">vs CCleaner</a>
           <a href="/order?plan=annual" style="background:#10b981;color:#06281e;padding:6px 14px;border-radius:8px;font-weight:700;text-decoration:none;">Get SWEEPR Pro</a>
         </nav>
@@ -801,7 +872,11 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
       <div style="margin-bottom:28px;">
         <span style="background:#0d6847;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">Empirical Storage Telemetry</span>
         <h1 style="font-size:34px;margin:12px 0 10px;line-height:1.2;">SWEEPR PC Bloat Watch: Update &amp; Cache Benchmarks</h1>
-        <p style="color:#4b554e;font-size:17px;line-height:1.6;margin:0;">Every Windows 11 cumulative update, GPU driver release, and game launcher patch is benchmarked in our clean VM lab to measure exact orphaned gigabytes and verify safe cleanup commands.</p>
+        <p style="color:#4b554e;font-size:17px;line-height:1.6;margin:0 0 14px;">Every Windows 11 cumulative update, GPU driver release, and game launcher patch is benchmarked in our clean VM lab to measure exact orphaned gigabytes and verify safe cleanup commands.</p>
+        <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+          <span style="font-size:14px;color:#065f46;font-weight:600;">📊 Looking for the aggregate 2026 dataset across all 8 Windows storage silos?</span>
+          <a href="/state-of-windows-storage" style="background:#047857;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;">View 2026 State of Windows Storage Report &rarr;</a>
+        </div>
       </div>
       ${cardsHtml}
       <section style="background:#ffffff;border:1px solid #d6dad5;border-radius:16px;padding:28px;margin-top:28px;line-height:1.7;color:#374151;">

@@ -579,6 +579,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         <a href="/safe-to-delete">Safe-to-Delete Checker</a>
         <a href="/clean">367 Folder Guides</a>
         <a href="/bloat-watch">Bloat Watch</a>
+        <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
         <a href="/download?platform=windows" class="btn-primary" style="padding:8px 14px;font-size:13px;">Download Free Scanner</a>
       </div>
@@ -735,9 +736,46 @@ export function renderTransactionalToolsHub(): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Windows 11 App &amp; Game Cache Cleaner Tools (2026) | SWEEPR</title>
-  <meta name="description" content="Free interactive Windows 10/11 cache cleaner tools for Discord, Steam depotcache, Logitech G HUB, Elgato Stream Deck, VALORANT, NVIDIA DXCache, Adobe &amp; AI models.">
+  <meta name="description" content="Free interactive Windows 10/11 cache cleaner tools for Discord, Steam depotcache, Logitech G HUB, Stream Deck, VALORANT, NVIDIA DXCache, Adobe &amp; AI models.">
   <link rel="canonical" href="https://sweeprcleaner.com/tools">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://sweeprcleaner.com/tools#webpage",
+        "url": "https://sweeprcleaner.com/tools",
+        "name": "Windows 11 App & Game Cache Cleaner Tools (2026) | SWEEPR",
+        "description": "Free interactive Windows 10/11 cache cleaner tools for Discord, Steam, Logitech, Stream Deck, VALORANT, NVIDIA, Adobe, and AI dev models.",
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": "https://sweeprcleaner.com/#website",
+          "name": "SWEEPR Cleaner",
+          "url": "https://sweeprcleaner.com"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://sweeprcleaner.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Tools",
+            "item": "https://sweeprcleaner.com/tools"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <style>
@@ -760,6 +798,7 @@ export function renderTransactionalToolsHub(): string {
         <a href="/safe-to-delete">Safe-to-Delete Checker</a>
         <a href="/clean">367 Folder Guides</a>
         <a href="/bloat-watch">Bloat Watch</a>
+        <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
       </div>
     </nav>

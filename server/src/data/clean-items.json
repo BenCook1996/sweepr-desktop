@@ -120,6 +120,14 @@
       "Open Windows Settings > System > Storage.",
       "Click on 'Temporary files'.",
       "Check 'Previous Windows installation(s)' and click 'Remove files'."
+    ],
+    "metaTitle": "Delete Windows.old Folder Safely on Windows 11 | SWEEPR",
+    "metaDescription": "Is C:\\Windows.old safe to delete after a Windows 11 update? Reclaim 15–35 GB safely without permission errors using Dism /Cleanup-Image or SWEEPR Cleaner.",
+    "customFaqs": [
+      {
+        "q": "Why can't I delete C:\\Windows.old directly in File Explorer?",
+        "a": "C:\\Windows.old is owned by the TrustedInstaller system account and contains thousands of hard-linked system binaries. Use Settings -> System -> Storage -> Temporary files ('Previous Windows installation(s)') or SWEEPR Cleaner to remove it cleanly."
+      }
     ]
   },
   {
@@ -1951,6 +1959,14 @@
       "Close LM Studio completely.",
       "Press Windows Key + R, type %userprofile%\\.cache\\lm-studio\\models, and press Enter.",
       "Delete any publisher/model folders you no longer actively run."
+    ],
+    "metaTitle": "LM Studio Models Cache Location & Cleanup | SWEEPR",
+    "metaDescription": "Where is the LM Studio models cache location on Windows? Learn how to delete unused GGUF model weights in %UserProfile%\\.cache\\lm-studio\\models safely.",
+    "customFaqs": [
+      {
+        "q": "Where does LM Studio store downloaded GGUF models on Windows 11?",
+        "a": "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
+      }
     ]
   },
   {
@@ -1981,6 +1997,14 @@
       "Stop the ComfyUI server process.",
       "Open your ComfyUI installation folder and navigate to the 'temp' subfolder.",
       "Select all temporary preview files (Ctrl+A) and delete them."
+    ],
+    "metaTitle": "Clear ComfyUI Temp Files & Latent Cache | SWEEPR",
+    "metaDescription": "How to clear ComfyUI temp files, preview PNGs, and latent cache on Windows 11. Reclaim 2–18 GB from C:\\ComfyUI\\temp safely without losing models.",
+    "customFaqs": [
+      {
+        "q": "Can I automate cleaning ComfyUI temp files on Windows 11 without manual terminal commands?",
+        "a": "Yes. SWEEPR Cleaner automatically detects C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui, skips any files locked by active processes, and reclaims 2.0 GB – 18.0 GB in a single click while protecting user settings."
+      }
     ]
   },
   {
@@ -3433,6 +3457,14 @@
       "Press Windows Key + R, enter %LocalAppData%\\JetBrains and press Enter.",
       "Delete any old versioned JetBrains IntelliJ IDEA folders from previous years, or clear the caches, tmp, and log folders inside your current version directory.",
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
+    ],
+    "metaTitle": "Clear IntelliJ IDEA Caches & System Logs | SWEEPR",
+    "metaDescription": "How to clear IntelliJ IDEA system caches and logs on Windows 10/11 safely. Reclaim 2–15 GB from %LocalAppData%\\JetBrains\\IntelliJIdea* in 1 click.",
+    "customFaqs": [
+      {
+        "q": "Does clearing IntelliJ IDEA system caches delete my project settings or keymaps?",
+        "a": "No. Project settings live in .idea inside your project folder, and custom keymaps live in %AppData%\\JetBrains\\IntelliJIdea*\\keymaps. Purging %LocalAppData%\\JetBrains\\IntelliJIdea*\\caches only clears stale symbol indexes and compiler caches, which safely rebuild on the next build."
+      }
     ]
   },
   {

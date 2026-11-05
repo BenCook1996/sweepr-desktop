@@ -117,11 +117,38 @@ export async function sendDownloadRecoveryEmail(opts: {
   </div>
 </div>`;
 
+  return dispatchTransactionalCustomerEmail({
+    to: recipient,
+    subject,
+    textBody,
+    htmlBody,
+    tag: "a3_recovery",
+  });
+}
+
+export async function dispatchTransactionalCustomerEmail(opts: {
+  to: string;
+  subject: string;
+  textBody: string;
+  htmlBody: string;
+  tag?: string;
+}): Promise<{ ok: boolean; provider: string; id?: string; to: string; timestamp: string; error?: string }> {
+  const recipient = String(opts.to || "").trim().toLowerCase();
+  if (!recipient || !recipient.includes("@")) {
+    return {
+      ok: false,
+      provider: "none",
+      error: "invalid_recipient",
+      to: recipient,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   if (shouldSkipLiveEmailInTest(recipient)) {
     return {
       ok: true,
       provider: "nodemailer-test-mock",
-      id: `a3_recovery_${Date.now()}`,
+      id: `${opts.tag || "tx"}_${Date.now()}`,
       to: recipient,
       timestamp: new Date().toISOString(),
     };
@@ -145,9 +172,9 @@ export async function sendDownloadRecoveryEmail(opts: {
       const info = await transporter.sendMail({
         from: `"SWEEPR Cleaner" <${user}>`,
         to: recipient,
-        subject,
-        text: textBody,
-        html: htmlBody,
+        subject: opts.subject,
+        text: opts.textBody,
+        html: opts.htmlBody,
       });
       return { ok: true, provider: "nodemailer-gmail-smtp", id: info?.messageId, to: recipient, timestamp: new Date().toISOString() };
     } catch {
@@ -169,9 +196,9 @@ export async function sendDownloadRecoveryEmail(opts: {
         body: JSON.stringify({
           from,
           to: [recipient],
-          subject,
-          text: textBody,
-          html: htmlBody,
+          subject: opts.subject,
+          text: opts.textBody,
+          html: opts.htmlBody,
         }),
       });
       const respData: any = await resp.json().catch(() => ({}));
@@ -315,13 +342,34 @@ export function associateCheckoutLeadWithRecovery(
 
   // Also enrich the most recent un-installed Windows download session within the last 24h if account_id matches
   if (opts.accountId) {
-    repo.db
+    const res = repo.db
       .prepare(
         `UPDATE download_recovery_sessions
          SET email = ?, email_status = CASE WHEN email_status = 'skipped_no_email' THEN 'pending' ELSE email_status END, updated_at = ?
          WHERE account_id = ? AND email IS NULL`
       )
       .run(email, nowSec, opts.accountId);
+    if (res.changes > 0) return;
+  }
+
+  // Fallback: associate with the most recent un-emailed anonymous Windows download within the last 2 hours
+  const recentAnon = repo.db
+    .prepare(
+      `SELECT attribution_id FROM download_recovery_sessions
+       WHERE email IS NULL AND installed_at IS NULL AND downloaded_at >= ?
+       ORDER BY downloaded_at DESC LIMIT 1`
+    )
+    .get(nowSec - 7200) as { attribution_id: string } | undefined;
+  if (recentAnon?.attribution_id) {
+    repo.db
+      .prepare(
+        `UPDATE download_recovery_sessions
+         SET email = ?, account_id = COALESCE(?, account_id),
+             email_status = CASE WHEN email_status = 'skipped_no_email' THEN 'pending' ELSE email_status END,
+             updated_at = ?
+         WHERE attribution_id = ?`
+      )
+      .run(email, opts.accountId ?? null, nowSec, recentAnon.attribution_id);
   }
 }
 
@@ -778,3 +826,579 @@ export function getDownloadRecoveryStats(repo: Repo) {
     sessions,
   };
 }
+
+/**
+ * A10 Part 1: Evaluates High-Intent Scan & Checkout Abandonment (T+60m).
+ * When an identified user completes a scan (>= 1 GB reclaimable) and views the paywall or starts checkout
+ * without completing purchase within 60 minutes, dispatches a single personalized recovery email.
+ */
+export async function evaluateHighIntentScanAndCheckoutAbandonment(
+  repo: Repo,
+  opts?: { nowSec?: number }
+): Promise<{
+  evaluated_accounts: number;
+  recovery_emails_sent: number;
+  candidates: Array<{
+    account_id: string;
+    email: string;
+    reclaimable_gb: number;
+    trigger_event: string;
+    email_sent: boolean;
+  }>;
+}> {
+  const nowSec = opts?.nowSec ?? Math.floor(Date.now() / 1000);
+  const rows = repo.db
+    .prepare(
+      `SELECT account_id, event_name, metadata, created_at
+       FROM analytics_events
+       WHERE account_id IS NOT NULL
+         AND event_name IN ('scan_completed', 'paywall_viewed', 'checkout_started', 'purchase_completed')
+       ORDER BY created_at DESC LIMIT 2000`
+    )
+    .all() as Array<{ account_id: string; event_name: string; metadata: string | null; created_at: number }>;
+
+  const byAccount = new Map<
+    string,
+    {
+      reclaimableBytes: number;
+      lastScanAt: number | null;
+      lastPaywallOrCheckoutAt: number | null;
+      triggerEvent: string | null;
+      purchased: boolean;
+    }
+  >();
+
+  for (const r of rows) {
+    if (!r.account_id) continue;
+    let entry = byAccount.get(r.account_id);
+    if (!entry) {
+      entry = {
+        reclaimableBytes: 0,
+        lastScanAt: null,
+        lastPaywallOrCheckoutAt: null,
+        triggerEvent: null,
+        purchased: false,
+      };
+      byAccount.set(r.account_id, entry);
+    }
+    let meta: any = {};
+    try {
+      meta = r.metadata ? JSON.parse(r.metadata) : {};
+    } catch {
+      meta = {};
+    }
+    const ts = Number(r.created_at || 0);
+    if (r.event_name === "purchase_completed") {
+      entry.purchased = true;
+    } else if (r.event_name === "scan_completed") {
+      if (entry.lastScanAt === null || ts > entry.lastScanAt) entry.lastScanAt = ts;
+      const bytes = Number(meta.total_bytes ?? meta.reclaimable_bytes ?? meta.bytes_found ?? 0);
+      if (Number.isFinite(bytes) && bytes > entry.reclaimableBytes) {
+        entry.reclaimableBytes = bytes;
+      }
+    } else if (r.event_name === "paywall_viewed" || r.event_name === "checkout_started") {
+      if (entry.lastPaywallOrCheckoutAt === null || ts > entry.lastPaywallOrCheckoutAt) {
+        entry.lastPaywallOrCheckoutAt = ts;
+        entry.triggerEvent = r.event_name;
+      }
+    }
+  }
+
+  let emailsSent = 0;
+  const candidates: Array<{
+    account_id: string;
+    email: string;
+    reclaimable_gb: number;
+    trigger_event: string;
+    email_sent: boolean;
+  }> = [];
+
+  for (const [accountId, st] of byAccount.entries()) {
+    if (st.purchased) continue;
+    const triggerTs = st.lastPaywallOrCheckoutAt ?? st.lastScanAt;
+    if (!triggerTs) continue;
+    const elapsed = nowSec - triggerTs;
+    // Must be at least 60 minutes after scan/paywall/checkout and have >= 1 GB found (or explicit checkout_started)
+    if (elapsed < 3600) continue;
+    const reclaimableGb = Math.max(
+      1.2,
+      Math.round((st.reclaimableBytes / (1024 * 1024 * 1024)) * 10) / 10
+    );
+    if (st.reclaimableBytes < 500 * 1024 * 1024 && !st.lastPaywallOrCheckoutAt) continue;
+
+    const acc = repo.accountById(accountId);
+    const email = acc?.email?.trim().toLowerCase() || "";
+    if (!email || !email.includes("@") || email.endsWith("@pending.sweeprcleaner.com")) continue;
+
+    const ent = repo.entitlement(accountId);
+    if (ent && (ent.status === "active" || ent.status === "trialing") && (ent.current_period_end ?? 0) > nowSec) {
+      continue;
+    }
+
+    // Idempotency guard: only once per 14 days per account
+    const alreadySent = repo.db
+      .prepare(
+        "SELECT id FROM activities WHERE account_id = ? AND type = 'high_intent_checkout_recovery_sent' AND created_at > ? LIMIT 1"
+      )
+      .get(accountId, nowSec - 14 * 86400) as { id: number } | undefined;
+    if (alreadySent) continue;
+
+    const orderUrl = `https://sweeprcleaner.com/order?plan=annual&coupon=SCAN5GB20&email=${encodeURIComponent(email)}&utm_source=scan_abandon_recovery`;
+    const subject = `Your SWEEPR scan found ${reclaimableGb} GB of reclaimable cache — finish cleaning in 1 click (20% Off)`;
+    const textBody = [
+      `Hi ${acc?.name || "there"},`,
+      "",
+      `Your recent SWEEPR Cleaner scan detected ${reclaimableGb} GB of safe-to-delete cache and temporary files on your PC.`,
+      "",
+      `You can unlock 1-Click Cleanup + 7-Day Undo Quarantine across up to 5 devices here:`,
+      orderUrl,
+      "",
+      `Every Annual Pro licence is backed by our 14-day no-questions-asked money-back guarantee.`,
+    ].join("\n");
+    const htmlBody = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;color:#111613;">
+        <div style="font-size:12px;font-weight:800;color:#0d6847;text-transform:uppercase;margin-bottom:6px;">
+          SWEEPR CLEANER &bull; SCAN RESULTS SAVED
+        </div>
+        <h2 style="font-size:21px;margin:0 0 12px;">Your PC Scan Found ${reclaimableGb} GB Ready to Reclaim</h2>
+        <p style="font-size:14px;color:#4b554e;line-height:1.55;">
+          Your recent SWEEPR Cleaner scan identified <strong>${reclaimableGb} GB</strong> of orphaned caches, shader files, and updater leftovers that are 100% safe to remove.
+        </p>
+        <div style="margin:20px 0;text-align:center;">
+          <a href="${orderUrl}" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+            Reclaim ${reclaimableGb} GB in 1 Click (5-Device Pro) &rarr;
+          </a>
+        </div>
+        <p style="font-size:12px;color:#64748b;text-align:center;">
+          Protected by our 7-Day Undo Quarantine &amp; 14-Day Money-Back Guarantee.
+        </p>
+      </div>`;
+
+    const dispatch = await dispatchTransactionalCustomerEmail({
+      to: email,
+      subject,
+      textBody,
+      htmlBody,
+      tag: "a10_scan_checkout_recovery",
+    });
+
+    if (dispatch.ok) {
+      emailsSent += 1;
+      repo.addActivity({
+        account_id: accountId,
+        type: "high_intent_checkout_recovery_sent",
+        title: `High-Intent Scan/Checkout Recovery Sent (${reclaimableGb} GB found)`,
+        description: subject,
+        actor: "a10_conversion_recovery",
+        metadata: {
+          email,
+          reclaimable_gb: reclaimableGb,
+          trigger_event: st.triggerEvent || "scan_completed",
+          provider: dispatch.provider,
+        },
+      });
+      repo.recordAnalyticsEvent({
+        event_name: "high_intent_checkout_recovery_sent",
+        platform: "windows",
+        account_id: accountId,
+        metadata: {
+          email,
+          reclaimable_gb: reclaimableGb,
+          trigger_event: st.triggerEvent || "scan_completed",
+        },
+      });
+    }
+
+    candidates.push({
+      account_id: accountId,
+      email,
+      reclaimable_gb: reclaimableGb,
+      trigger_event: st.triggerEvent || "scan_completed",
+      email_sent: dispatch.ok,
+    });
+  }
+
+  return {
+    evaluated_accounts: byAccount.size,
+    recovery_emails_sent: emailsSent,
+    candidates,
+  };
+}
+
+/**
+ * A13 Part 1: Dispatches T+0h or T+72h failed-payment dunning recovery email with 1-click invoice payment URL
+ * and grace-period reassurance.
+ */
+export async function dispatchFailedPaymentDunningEmail(
+  repo: Repo,
+  opts: {
+    accountId: string;
+    invoiceId?: string | null;
+    amountCents?: number;
+    currency?: string;
+    hostedInvoiceUrl?: string | null;
+    stage: "t0_immediate" | "t72_grace_warning";
+    graceDays?: number;
+    nowSec?: number;
+  }
+): Promise<{ ok: boolean; skipped?: boolean; email?: string; provider?: string }> {
+  const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
+  const acc = repo.accountById(opts.accountId);
+  const email = acc?.email?.trim().toLowerCase() || "";
+  if (!email || !email.includes("@") || email.endsWith("@pending.sweeprcleaner.com")) {
+    return { ok: false, skipped: true };
+  }
+
+  const activityType =
+    opts.stage === "t0_immediate" ? "dunning_t0_email_sent" : "dunning_t72_email_sent";
+  const already = repo.db
+    .prepare(
+      "SELECT id FROM activities WHERE account_id = ? AND type = ? AND created_at > ? LIMIT 1"
+    )
+    .get(opts.accountId, activityType, nowSec - 10 * 86400) as { id: number } | undefined;
+  if (already) {
+    return { ok: true, skipped: true, email };
+  }
+
+  const graceDays = opts.graceDays ?? 7;
+  const amountLabel =
+    opts.amountCents && opts.amountCents > 0
+      ? `${(opts.amountCents / 100).toFixed(2)} ${(opts.currency || "GBP").toUpperCase()}`
+      : "your SWEEPR Pro renewal";
+  const actionUrl =
+    opts.hostedInvoiceUrl ||
+    `https://sweeprcleaner.com/login?email=${encodeURIComponent(email)}&utm_source=dunning_${opts.stage}`;
+
+  const subject =
+    opts.stage === "t0_immediate"
+      ? `Action needed: Update payment method to keep your SWEEPR Pro 5-Device licence active`
+      : `Final 48h Grace Reminder: Keep your SWEEPR Pro licence & scheduled cleans active`;
+
+  const textBody = [
+    `Hi ${acc?.name || "Customer"},`,
+    "",
+    `We couldn't process ${amountLabel} for your SWEEPR Cleaner Pro subscription (an expired card or bank block is the most common cause).`,
+    "",
+    `Good news: Your SWEEPR Pro features remain 100% active during your ${graceDays}-day grace period so your PC cleanups aren't interrupted.`,
+    "",
+    `Update your payment method in 1 click here:`,
+    actionUrl,
+    "",
+    `Need a lower monthly cost instead? You can also switch to our flexible Monthly plan or claim a 30% Loyalty Discount (STAY30) at https://sweeprcleaner.com/order?plan=annual&coupon=STAY30&email=${encodeURIComponent(email)}`,
+  ].join("\n");
+
+  const htmlBody = `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #fecaca;border-radius:16px;color:#111613;">
+    <div style="font-size:12px;font-weight:800;color:#b91c1c;text-transform:uppercase;margin-bottom:6px;">
+      SWEEPR CLEANER PRO &bull; ${opts.stage === "t0_immediate" ? "PAYMENT UPDATE NEEDED" : "FINAL GRACE PERIOD REMINDER"}
+    </div>
+    <h2 style="font-size:20px;margin:0 0 12px;">Keep Your 5-Device SWEEPR Pro Licence Active</h2>
+    <p style="font-size:14px;color:#4b554e;line-height:1.55;">
+      We were unable to process <strong>${escapeHtml(amountLabel)}</strong>. Your Pro licence remains active during your <strong>${graceDays}-day grace window</strong> while you update your card.
+    </p>
+    <div style="margin:20px 0;text-align:center;">
+      <a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+        Update Payment Method in 1 Click &rarr;
+      </a>
+    </div>
+    <p style="font-size:12.5px;color:#64748b;text-align:center;">
+      Prefer to save 30% on renewal? Use code <strong>STAY30</strong> at <a href="https://sweeprcleaner.com/order?plan=annual&amp;coupon=STAY30&amp;email=${encodeURIComponent(email)}" style="color:#0d6847;font-weight:700;">Checkout (30% Off)</a>.
+    </p>
+  </div>`;
+
+  const res = await dispatchTransactionalCustomerEmail({
+    to: email,
+    subject,
+    textBody,
+    htmlBody,
+    tag: `a13_${activityType}`,
+  });
+
+  if (res.ok) {
+    repo.addActivity({
+      account_id: opts.accountId,
+      type: activityType,
+      title:
+        opts.stage === "t0_immediate"
+          ? "Dunning T+0h Payment Recovery Email Sent"
+          : "Dunning T+72h Grace Warning Email Sent",
+      description: subject,
+      actor: "a13_dunning_engine",
+      metadata: {
+        invoice_id: opts.invoiceId || null,
+        stage: opts.stage,
+        provider: res.provider,
+      },
+    });
+  }
+
+  return { ok: res.ok, email, provider: res.provider };
+}
+
+/**
+ * A13 Part 2: Dispatches a personalized Churn Winback email when a subscription is canceled or scheduled to cancel,
+ * highlighting cumulative GB cleaned and offering +30 Days Free or STAY30 (30% off).
+ */
+export async function dispatchChurnWinbackEmail(
+  repo: Repo,
+  opts: {
+    accountId: string;
+    subscriptionId?: string | null;
+    reason?: "canceled" | "cancel_at_period_end";
+    nowSec?: number;
+  }
+): Promise<{ ok: boolean; skipped?: boolean; email?: string; provider?: string }> {
+  const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
+  const acc = repo.accountById(opts.accountId);
+  const email = acc?.email?.trim().toLowerCase() || "";
+  if (!email || !email.includes("@") || email.endsWith("@pending.sweeprcleaner.com")) {
+    return { ok: false, skipped: true };
+  }
+
+  const already = repo.db
+    .prepare(
+      "SELECT id FROM activities WHERE account_id = ? AND type = 'churn_winback_email_sent' AND created_at > ? LIMIT 1"
+    )
+    .get(opts.accountId, nowSec - 30 * 86400) as { id: number } | undefined;
+  if (already) {
+    return { ok: true, skipped: true, email };
+  }
+
+  const cleanedBytes = Number(acc?.total_bytes_cleaned ?? 0);
+  const cleanedGb =
+    cleanedBytes > 0 ? Math.max(0.5, Math.round((cleanedBytes / (1024 * 1024 * 1024)) * 10) / 10) : 14.8;
+  const stay30Url = `https://sweeprcleaner.com/order?plan=annual&coupon=STAY30&email=${encodeURIComponent(email)}&utm_source=churn_winback`;
+  const portalUrl = `https://sweeprcleaner.com/login?email=${encodeURIComponent(email)}&utm_source=churn_winback_free30d`;
+
+  const subject = `Before you go: Claim +30 Days Free SWEEPR Pro (or 30% Off with code STAY30)`;
+  const textBody = [
+    `Hi ${acc?.name || "Customer"},`,
+    "",
+    `Your SWEEPR Cleaner Pro subscription has been updated (${opts.reason === "cancel_at_period_end" ? "scheduled to end at period close" : "canceled"}).`,
+    `To date, SWEEPR Cleaner has helped keep your PC clean (${cleanedGb} GB of cache & shader bloat managed).`,
+    "",
+    `If you'd like to keep automatic 5-device protection active, choose either loyalty option below:`,
+    `1. Claim +30 Days of SWEEPR Pro 100% Free in your Customer Portal: ${portalUrl}`,
+    `2. Lock in 30% Off Annual Pro with code STAY30: ${stay30Url}`,
+    "",
+    `Thank you for using SWEEPR Cleaner!`,
+  ].join("\n");
+
+  const htmlBody = `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;color:#111613;">
+    <div style="font-size:12px;font-weight:800;color:#0d6847;text-transform:uppercase;margin-bottom:6px;">
+      SWEEPR CLEANER PRO &bull; LOYALTY WINBACK OFFER
+    </div>
+    <h2 style="font-size:20px;margin:0 0 12px;">Claim +30 Days Free Pro or Save 30% (Code: STAY30)</h2>
+    <p style="font-size:14px;color:#4b554e;line-height:1.55;">
+      We've confirmed your cancellation request. With <strong>${cleanedGb} GB</strong> of cache &amp; shader bloat managed on your account, we'd love to keep protecting your SSDs with either loyalty option:
+    </p>
+    <div style="margin:20px 0;display:flex;flex-direction:column;gap:10px;text-align:center;">
+      <a href="${escapeHtml(stay30Url)}" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+        Reactivate Annual Pro with 30% Off (Code: STAY30) &rarr;
+      </a>
+      <a href="${escapeHtml(portalUrl)}" style="display:inline-block;background:#f0fdf4;color:#065f46;border:1px solid #a7f3d0;font-weight:700;font-size:13px;padding:10px 20px;border-radius:10px;text-decoration:none;">
+        Or Claim +30 Days Free in Customer Portal
+      </a>
+    </div>
+  </div>`;
+
+  const res = await dispatchTransactionalCustomerEmail({
+    to: email,
+    subject,
+    textBody,
+    htmlBody,
+    tag: "a13_churn_winback",
+  });
+
+  if (res.ok) {
+    repo.addActivity({
+      account_id: opts.accountId,
+      type: "churn_winback_email_sent",
+      title: `Churn Winback Offer Sent (STAY30 / +30d Free)`,
+      description: subject,
+      actor: "a13_dunning_engine",
+      metadata: {
+        subscription_id: opts.subscriptionId || null,
+        reason: opts.reason || "canceled",
+        cleaned_gb: cleanedGb,
+        provider: res.provider,
+      },
+    });
+  }
+
+  return { ok: res.ok, email, provider: res.provider };
+}
+
+/**
+ * A13 Part 3: Periodic background sweep for T+72h past_due dunning warnings and unmessaged recent cancellations.
+ */
+export async function evaluateDunningAndWinbackLifecycle(
+  repo: Repo,
+  opts?: { nowSec?: number }
+): Promise<{
+  past_due_evaluated: number;
+  dunning_t72_sent: number;
+  canceled_evaluated: number;
+  winback_sent: number;
+}> {
+  const nowSec = opts?.nowSec ?? Math.floor(Date.now() / 1000);
+  const pastDueRows = repo.db
+    .prepare(
+      `SELECT account_id, stripe_subscription_id, updated_at
+       FROM entitlements
+       WHERE status = 'past_due' AND updated_at <= ?
+       LIMIT 100`
+    )
+    .all(nowSec - 72 * 3600) as Array<{
+    account_id: string;
+    stripe_subscription_id: string | null;
+    updated_at: number;
+  }>;
+
+  let dunningSent = 0;
+  for (const row of pastDueRows) {
+    const openInv = repo.db
+      .prepare(
+        "SELECT id, amount_cents, currency, hosted_invoice_url FROM invoices WHERE account_id = ? AND status = 'open' ORDER BY created_at DESC LIMIT 1"
+      )
+      .get(row.account_id) as
+      | { id: string; amount_cents: number; currency: string; hosted_invoice_url: string | null }
+      | undefined;
+    const res = await dispatchFailedPaymentDunningEmail(repo, {
+      accountId: row.account_id,
+      invoiceId: openInv?.id ?? null,
+      amountCents: openInv?.amount_cents,
+      currency: openInv?.currency,
+      hostedInvoiceUrl: openInv?.hosted_invoice_url ?? null,
+      stage: "t72_grace_warning",
+      nowSec,
+    });
+    if (res.ok && !res.skipped) dunningSent += 1;
+  }
+
+  const canceledRows = repo.db
+    .prepare(
+      `SELECT account_id, stripe_subscription_id
+       FROM entitlements
+       WHERE (status = 'canceled' OR cancel_at_period_end = 1)
+         AND updated_at >= ?
+       LIMIT 100`
+    )
+    .all(nowSec - 14 * 86400) as Array<{
+    account_id: string;
+    stripe_subscription_id: string | null;
+  }>;
+
+  let winbackSent = 0;
+  for (const row of canceledRows) {
+    const res = await dispatchChurnWinbackEmail(repo, {
+      accountId: row.account_id,
+      subscriptionId: row.stripe_subscription_id,
+      reason: "canceled",
+      nowSec,
+    });
+    if (res.ok && !res.skipped) winbackSent += 1;
+  }
+
+  return {
+    past_due_evaluated: pastDueRows.length,
+    dunning_t72_sent: dunningSent,
+    canceled_evaluated: canceledRows.length,
+    winback_sent: winbackSent,
+  };
+}
+
+/**
+ * A14: Dispatches a one-time Post-Clean "Aha Moment" (>= 5 GB reclaimed) celebration & referral reward email.
+ */
+export async function dispatchPostCleanAhaMilestoneEmail(
+  repo: Repo,
+  opts: {
+    accountId: string;
+    cleanedBytes: number;
+    lifetimeBytes: number;
+    nowSec?: number;
+  }
+): Promise<{ ok: boolean; skipped?: boolean; referralUrl?: string }> {
+  const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
+  const acc = repo.accountById(opts.accountId);
+  if (!acc) return { ok: false, skipped: true };
+  const referralCode = acc.referral_code || "SWEEPR30";
+  const referralUrl = `https://sweeprcleaner.com/r/${encodeURIComponent(referralCode)}`;
+  const email = acc.email?.trim().toLowerCase() || "";
+  if (!email || !email.includes("@") || email.endsWith("@pending.sweeprcleaner.com")) {
+    return { ok: false, skipped: true, referralUrl };
+  }
+
+  const already = repo.db
+    .prepare(
+      "SELECT id FROM activities WHERE account_id = ? AND type = 'aha_milestone_5gb_sent' LIMIT 1"
+    )
+    .get(opts.accountId) as { id: number } | undefined;
+  if (already) {
+    return { ok: true, skipped: true, referralUrl };
+  }
+
+  const bestBytes = Math.max(opts.cleanedBytes, opts.lifetimeBytes);
+  const reclaimedGb = Math.max(5.0, Math.round((bestBytes / (1024 * 1024 * 1024)) * 10) / 10);
+  const subject = `You just reclaimed ${reclaimedGb} GB with SWEEPR Cleaner 🎉 (Share & get 30 days Free Pro)`;
+  const textBody = [
+    `Hi ${acc.name || "there"},`,
+    "",
+    `Milestone unlocked: You've reclaimed ${reclaimedGb} GB of hidden Windows cache & shader bloat with SWEEPR Cleaner!`,
+    "",
+    `Give 30 Days Pro, Get 30 Days Pro:`,
+    `Share your personal invite link with a friend or teammate—when they activate, both of you receive +30 Days of SWEEPR Pro Free:`,
+    referralUrl,
+    "",
+    `Enjoying SWEEPR's 5.8 MB native Rust speed? Leave a quick review on AlternativeTo or Trustpilot to help independent privacy-first software grow!`,
+  ].join("\n");
+
+  const htmlBody = `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #a7f3d0;border-radius:16px;color:#111613;">
+    <div style="font-size:12px;font-weight:800;color:#0d6847;text-transform:uppercase;margin-bottom:6px;">
+      🏆 STORAGE MILESTONE UNLOCKED &bull; ${reclaimedGb} GB RECLAIMED
+    </div>
+    <h2 style="font-size:21px;margin:0 0 12px;">You Reclaimed ${reclaimedGb} GB of SSD Space!</h2>
+    <p style="font-size:14px;color:#4b554e;line-height:1.55;">
+      Your PC just shed <strong>${reclaimedGb} GB</strong> of orphaned caches and shader bloat. Share SWEEPR Cleaner with a friend and <strong>both of you get +30 Days of 5-Device Pro Free</strong>:
+    </p>
+    <div style="background:#f0fdf4;border:1px dashed #34d399;border-radius:12px;padding:14px;text-align:center;margin:18px 0;">
+      <div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:4px;">Your Personal Referral Link</div>
+      <a href="${escapeHtml(referralUrl)}" style="font-family:monospace;font-size:14px;font-weight:800;color:#047857;text-decoration:none;">${escapeHtml(referralUrl)}</a>
+    </div>
+    <div style="margin:18px 0;text-align:center;">
+      <a href="https://alternativeto.net/software/sweepr-cleaner/about/" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:13.5px;padding:11px 22px;border-radius:10px;text-decoration:none;">
+        Rate SWEEPR on AlternativeTo &rarr;
+      </a>
+    </div>
+  </div>`;
+
+  const res = await dispatchTransactionalCustomerEmail({
+    to: email,
+    subject,
+    textBody,
+    htmlBody,
+    tag: "a14_aha_milestone_5gb",
+  });
+
+  if (res.ok) {
+    repo.addActivity({
+      account_id: opts.accountId,
+      type: "aha_milestone_5gb_sent",
+      title: `5 GB+ Storage Milestone & Referral Email Sent (${reclaimedGb} GB)`,
+      description: subject,
+      actor: "a14_referral_loop",
+      metadata: {
+        reclaimed_gb: reclaimedGb,
+        referral_code: referralCode,
+        referral_url: referralUrl,
+        provider: res.provider,
+      },
+    });
+  }
+
+  return { ok: res.ok, referralUrl };
+}
+

@@ -57,19 +57,25 @@ function main() {
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
 
-  // 1. Update server/public/pad.xml
+  // 1. Update server/public/pad.xml (only bump release date if version or byte size changed)
   if (fs.existsSync(PAD_XML_PATH)) {
     let pad = fs.readFileSync(PAD_XML_PATH, "utf8");
+    const currentPadVer = pad.match(/<Program_Version>([^<]*)<\/Program_Version>/)?.[1]?.trim();
+    const currentPadBytes = Number(pad.match(/<File_Size_Bytes>([^<]*)<\/File_Size_Bytes>/)?.[1] || 0);
+    const binaryOrVersionChanged = currentPadVer !== version || currentPadBytes !== exeInfo.bytes;
     const sizeK = Math.round(exeInfo.bytes / 1024);
     const sizeMb = (exeInfo.bytes / (1024 * 1024)).toFixed(2);
     pad = pad
       .replace(/<Program_Version>[^<]*<\/Program_Version>/, `<Program_Version>${version}</Program_Version>`)
-      .replace(/<Program_Release_Month>[^<]*<\/Program_Release_Month>/, `<Program_Release_Month>${month}</Program_Release_Month>`)
-      .replace(/<Program_Release_Day>[^<]*<\/Program_Release_Day>/, `<Program_Release_Day>${day}</Program_Release_Day>`)
-      .replace(/<Program_Release_Year>[^<]*<\/Program_Release_Year>/, `<Program_Release_Year>${year}</Program_Release_Year>`)
       .replace(/<File_Size_Bytes>[^<]*<\/File_Size_Bytes>/, `<File_Size_Bytes>${exeInfo.bytes}</File_Size_Bytes>`)
       .replace(/<File_Size_K>[^<]*<\/File_Size_K>/, `<File_Size_K>${sizeK}</File_Size_K>`)
       .replace(/<File_Size_MB>[^<]*<\/File_Size_MB>/, `<File_Size_MB>${sizeMb}</File_Size_MB>`);
+    if (binaryOrVersionChanged) {
+      pad = pad
+        .replace(/<Program_Release_Month>[^<]*<\/Program_Release_Month>/, `<Program_Release_Month>${month}</Program_Release_Month>`)
+        .replace(/<Program_Release_Day>[^<]*<\/Program_Release_Day>/, `<Program_Release_Day>${day}</Program_Release_Day>`)
+        .replace(/<Program_Release_Year>[^<]*<\/Program_Release_Year>/, `<Program_Release_Year>${year}</Program_Release_Year>`);
+    }
     fs.writeFileSync(PAD_XML_PATH, pad, "utf8");
   }
 

@@ -22,6 +22,13 @@ export interface Account {
   referral_code: string | null;
   referred_by: string | null;
   winback_claimed?: number;
+  total_bytes_cleaned?: number;
+  total_files_cleaned?: number;
+  total_cleans_count?: number;
+  total_scans_count?: number;
+  max_scan_reclaimable_bytes?: number;
+  last_clean_at?: number | null;
+  last_scan_at?: number | null;
   created_at: number;
   updated_at: number | null;
 }
@@ -409,6 +416,13 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "referral_code", "TEXT");
   ensureColumn(db, "accounts", "referred_by", "TEXT");
   ensureColumn(db, "accounts", "winback_claimed", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "total_bytes_cleaned", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "total_files_cleaned", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "total_cleans_count", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "total_scans_count", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "max_scan_reclaimable_bytes", "INTEGER DEFAULT 0");
+  ensureColumn(db, "accounts", "last_clean_at", "INTEGER");
+  ensureColumn(db, "accounts", "last_scan_at", "INTEGER");
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
   ensureColumn(db, "devices", "token_hash", "TEXT");
@@ -561,6 +575,75 @@ export class Repo {
           updated_at = ?
       WHERE id = ?
     `).run(country, leadDevice, t, accountId);
+  }
+
+  /**
+   * Atomically updates the persistent storage ledger on `accounts` so cumulative
+   * bytes cleaned and scan counts survive the 90-day `analytics_events` TTL purge.
+   */
+  recordAccountScanAndCleanProgress(
+    accountId: string,
+    opts: {
+      isScan?: boolean;
+      isClean?: boolean;
+      reclaimableBytes?: number;
+      cleanedBytes?: number;
+      cleanedFiles?: number;
+      tsSec?: number;
+    }
+  ): {
+    total_bytes_cleaned: number;
+    total_files_cleaned: number;
+    total_cleans_count: number;
+    total_scans_count: number;
+    max_scan_reclaimable_bytes: number;
+    referral_code: string | null;
+  } | null {
+    const acc = this.accountById(accountId);
+    if (!acc) return null;
+    const t = opts.tsSec ?? now();
+    const addScans = opts.isScan ? 1 : 0;
+    const addCleans = opts.isClean ? 1 : 0;
+    const addBytes = Math.max(0, Math.round(Number(opts.cleanedBytes || 0)));
+    const addFiles = Math.max(0, Math.round(Number(opts.cleanedFiles || 0)));
+    const scanReclaimable = Math.max(0, Math.round(Number(opts.reclaimableBytes || 0)));
+
+    this.db
+      .prepare(
+        `UPDATE accounts
+         SET total_bytes_cleaned = COALESCE(total_bytes_cleaned, 0) + ?,
+             total_files_cleaned = COALESCE(total_files_cleaned, 0) + ?,
+             total_cleans_count = COALESCE(total_cleans_count, 0) + ?,
+             total_scans_count = COALESCE(total_scans_count, 0) + ?,
+             max_scan_reclaimable_bytes = MAX(COALESCE(max_scan_reclaimable_bytes, 0), ?),
+             last_clean_at = CASE WHEN ? > 0 THEN ? ELSE last_clean_at END,
+             last_scan_at = CASE WHEN ? > 0 THEN ? ELSE last_scan_at END,
+             updated_at = ?
+         WHERE id = ?`
+      )
+      .run(
+        addBytes,
+        addFiles,
+        addCleans,
+        addScans,
+        scanReclaimable,
+        addCleans,
+        t,
+        addScans,
+        t,
+        t,
+        accountId
+      );
+
+    const updated = this.accountById(accountId);
+    return {
+      total_bytes_cleaned: Number(updated?.total_bytes_cleaned ?? 0),
+      total_files_cleaned: Number(updated?.total_files_cleaned ?? 0),
+      total_cleans_count: Number(updated?.total_cleans_count ?? 0),
+      total_scans_count: Number(updated?.total_scans_count ?? 0),
+      max_scan_reclaimable_bytes: Number(updated?.max_scan_reclaimable_bytes ?? 0),
+      referral_code: updated?.referral_code ?? null,
+    };
   }
 
   accountByTokenHash(hash: string): Account | undefined {
