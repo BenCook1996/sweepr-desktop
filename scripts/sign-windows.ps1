@@ -50,27 +50,20 @@ if ($LASTEXITCODE -ne 0) {
     throw "Signature verification failed on $CleanerExe"
 }
 
-# 3. Update Winget manifest SHA-256 and PAD XML size for SWEEPRCleaner.exe
+# 3. Update Winget manifest SHA-256, Chocolatey, and PAD XML size via A13 release syndication script
 $NewHash = (Get-FileHash -Path $CleanerExe -Algorithm SHA256).Hash.ToUpperInvariant()
-$WingetManifest = Join-Path $RepoRoot "winget-manifests\s\SWEEPR\Cleaner\0.1.0\SWEEPR.Cleaner.installer.yaml"
-if (Test-Path $WingetManifest) {
-    $Content = Get-Content -Path $WingetManifest -Raw
-    $Updated = $Content -replace "(?m)^(\s*InstallerSha256:\s*)[A-F0-9]{64}", "`${1}$NewHash"
-    Set-Content -Path $WingetManifest -Value $Updated -NoNewline
-    Write-Host "`nUpdated Winget InstallerSha256 -> $NewHash" -ForegroundColor Green
+$TauriConfPath = Join-Path $RepoRoot "src-tauri\tauri.conf.json"
+$ReleaseVersion = "0.1.0"
+if (Test-Path $TauriConfPath) {
+    $TauriConf = Get-Content -Path $TauriConfPath -Raw | ConvertFrom-Json
+    if ($TauriConf.version) {
+        $ReleaseVersion = $TauriConf.version
+    }
 }
-
-$PadXml = Join-Path $RepoRoot "server\public\pad.xml"
-if (Test-Path $PadXml) {
-    $SizeBytes = (Get-Item $CleanerExe).Length
-    $SizeKB = [Math]::Round($SizeBytes / 1024)
-    $SizeMB = [Math]::Round($SizeBytes / (1024 * 1024), 2).ToString("0.00", [System.Globalization.CultureInfo]::InvariantCulture)
-    $PadContent = Get-Content -Path $PadXml -Raw
-    $PadContent = $PadContent -replace "<File_Size_Bytes>\d+</File_Size_Bytes>", "<File_Size_Bytes>$SizeBytes</File_Size_Bytes>"
-    $PadContent = $PadContent -replace "<File_Size_K>\d+</File_Size_K>", "<File_Size_K>$SizeKB</File_Size_K>"
-    $PadContent = $PadContent -replace "<File_Size_MB>[0-9.]+</File_Size_MB>", "<File_Size_MB>$SizeMB</File_Size_MB>"
-    Set-Content -Path $PadXml -Value $PadContent -NoNewline
-    Write-Host "Updated server\public\pad.xml -> $SizeBytes bytes ($SizeMB MB)" -ForegroundColor Green
+$UpdateListingsScript = Join-Path $RepoRoot "server\scripts\update-release-listings.mjs"
+if (Test-Path $UpdateListingsScript) {
+    & node $UpdateListingsScript --version $ReleaseVersion --exe-sha256 $NewHash
+    Write-Host "`nUpdated Winget, Chocolatey & PAD XML via A13 update-release-listings.mjs (v$ReleaseVersion, SHA256=$NewHash)" -ForegroundColor Green
 }
 
 Write-Host "`nSWEEPRCleaner.exe signed and verified! Next step: upload signed .exe to https://www.microsoft.com/en-us/wdsi/filesubmission?persona=SoftwareDeveloper" -ForegroundColor Cyan

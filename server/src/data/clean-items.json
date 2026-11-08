@@ -13,6 +13,14 @@
       "Press the Windows Key + R to open the Run dialog.",
       "Type %appdata%\\discord and hit Enter.",
       "Delete the folders named 'Cache', 'Code Cache', and 'GPUCache'."
+    ],
+    "metaTitle": "How to Clear Discord Cache on Windows 11 Safely | SWEEPR",
+    "metaDescription": "How to clear %AppData%\\Discord\\Cache, Code Cache, and GPUCache on Windows 10/11. Reclaim 1–10 GB of cached images and videos without logging out of Discord.",
+    "customFaqs": [
+      {
+        "q": "Will deleting %AppData%\\Discord\\Cache_Data log me out or delete my Discord messages?",
+        "a": "No. All Discord messages and server history live on Discord's cloud servers, and your session token is stored separately. Clearing Cache_Data, Code Cache, and GPUCache frees disk space and fixes laggy server switching."
+      }
     ]
   },
   {
@@ -28,6 +36,14 @@
       "Close Spotify.",
       "Press Windows Key + R, type %localappdata%\\Spotify, and press Enter.",
       "Open the 'Storage' directory, select all files (Ctrl+A), and press Delete."
+    ],
+    "metaTitle": "How to Clear Spotify Storage Cache on Windows | SWEEPR",
+    "metaDescription": "Why is %LocalAppData%\\Spotify\\Storage taking 10GB+? Learn how to clear Spotify desktop audio & Browser cache on Windows 10/11 while keeping playlists safe.",
+    "customFaqs": [
+      {
+        "q": "Does clearing %LocalAppData%\\Spotify\\Storage delete my Spotify playlists or liked songs?",
+        "a": "No. Your playlists and library are stored in your Spotify cloud account. %LocalAppData%\\Spotify\\Storage and Data hold encrypted stream chunks from recently played tracks that safely regenerate as you listen."
+      }
     ]
   },
   {
@@ -143,6 +159,14 @@
       "Close all running games and 3D applications.",
       "Press Windows Key + R, type %localappdata%\\NVIDIA\\DXCache and press Enter.",
       "Select all files (Ctrl+A), press Delete, and click Skip for any files currently locked by the NVIDIA display driver."
+    ],
+    "metaTitle": "Clear NVIDIA DXCache & GLCache (Fix Stutter) | SWEEPR",
+    "metaDescription": "Is %LocalAppData%\\NVIDIA\\DXCache safe to delete? Yes—reclaim 1–8 GB of old shader cache files on Windows 10/11 and fix post-update game frame-time stutters.",
+    "customFaqs": [
+      {
+        "q": "Why does Windows say 'File In Use' when I try to delete files in NVIDIA\\DXCache?",
+        "a": "Desktop Window Manager (dwm.exe), browsers with hardware acceleration, and NVIDIA background containers keep active locks on the current driver's .bin/.toc shader files. SWEEPR Cleaner automatically skips locked active files and purges all orphaned shader generations."
+      }
     ]
   },
   {
@@ -1059,6 +1083,14 @@
     "manualSteps": [
       "Run 'pip cache purge' in Command Prompt or PowerShell.",
       "Or navigate to %localappdata%\\pip\\Cache and delete all files."
+    ],
+    "metaTitle": "How to Clear Python pip Cache on Windows 11/10 | SWEEPR",
+    "metaDescription": "How to clear %LocalAppData%\\pip\\Cache on Windows 10/11. Reclaim 2–15 GB of cached Python wheel (.whl) and PyTorch/CUDA downloads using pip cache purge.",
+    "customFaqs": [
+      {
+        "q": "Will clearing %LocalAppData%\\pip\\Cache break my Python virtual environments (venv or conda)?",
+        "a": "No. Installed packages live inside each environment's Lib\\site-packages directory. %LocalAppData%\\pip\\Cache only stores downloaded .whl archives and HTTP responses used during installation."
+      }
     ]
   },
   {
@@ -1311,6 +1343,12 @@
       "Press Windows Key + R, type %AppData%\\Elgato\\StreamDeck\\logs and press Enter, then delete all old .log files.",
       "Next, press Windows Key + R, type %LocalAppData%\\Elgato\\Stream Deck\\cache and delete the cached Qt WebEngine files (do NOT delete the ProfilesV2 folder).",
       "Or run SWEEPR Cleaner to clear Elgato Stream Deck software logs and cache in 1 click while automatically protecting your ProfilesV2 directory."
+    ],
+    "customFaqs": [
+      {
+        "q": "Will clearing %AppData%\\Elgato\\StreamDeck\\logs and cache delete my button profiles or icons?",
+        "a": "No. Your custom Stream Deck profiles and icon packs live inside %AppData%\\Elgato\\StreamDeck\\ProfilesV2. Cleaning the logs, Crashpad dumps, and QtWebEngine cache only removes background software telemetry and plugin debug bloat."
+      }
     ]
   },
   {
@@ -1428,6 +1466,14 @@
       "Open Settings > System > Storage > Temporary files.",
       "Check 'Delivery Optimization Files'.",
       "Click 'Remove files' at the top."
+    ],
+    "metaTitle": "Clear Windows Delivery Optimization Cache Safely | SWEEPR",
+    "metaDescription": "How to delete Windows 11 Delivery Optimization cache in ServiceProfiles\\NetworkService. Reclaim 2–15 GB of peer-to-peer update staging files in 1 click.",
+    "customFaqs": [
+      {
+        "q": "What is the Windows Delivery Optimization cache folder used for?",
+        "a": "Delivery Optimization stores downloaded Windows Update and Microsoft Store chunks so your PC can share them with other PCs on your local network. Clearing it frees 2–15 GB immediately without rolling back any installed updates."
+      }
     ]
   },
   {
@@ -1474,6 +1520,14 @@
       "Right-click Start and open Terminal (Admin).",
       "To shrink hiberfil.sys by 50% while keeping Fast Startup, run: powercfg /h /type reduced.",
       "To remove hiberfil.sys completely, run: powercfg /h off."
+    ],
+    "metaTitle": "How to Delete hiberfil.sys on Windows 11 Safely | SWEEPR",
+    "metaDescription": "What is C:\\hiberfil.sys and can you delete it? Learn how to disable Windows Hibernation (powercfg -h off) or switch to Reduced mode to free 6–32 GB on SSDs.",
+    "customFaqs": [
+      {
+        "q": "Can I shrink hiberfil.sys without losing Windows 11 Fast Startup?",
+        "a": "Yes. Running powercfg /h /type reduced in an Administrator terminal shrinks C:\\hiberfil.sys by 50% (from 40% of RAM down to 20% of RAM) while preserving Windows 11 Fast Startup."
+      }
     ]
   },
   {
@@ -1564,6 +1618,14 @@
     "manualSteps": [
       "Press Windows Key + R, type %localappdata%\\CrashDumps and press Enter.",
       "Select all .dmp files (Ctrl+A) and press Delete."
+    ],
+    "metaTitle": "AppData\\Local\\CrashDumps: Safe to Delete on PC? | SWEEPR",
+    "metaDescription": "Is %LocalAppData%\\CrashDumps safe to delete on Windows 10/11? Yes—reclaim 1–12 GB by removing old application .dmp crash files safely with 1-click cleanup.",
+    "customFaqs": [
+      {
+        "q": "Why is %LocalAppData%\\CrashDumps suddenly taking up gigabytes on my C: drive?",
+        "a": "Windows Error Reporting (WER) writes a full or mini user-mode memory dump (.dmp) into %LocalAppData%\\CrashDumps whenever a game, browser, or creative app crashes on exit. Unless you are actively debugging a crash in WinDbg, these .dmp files are 100% safe to delete."
+      }
     ]
   },
   {
@@ -4137,6 +4199,14 @@
       "Navigate to C:\\ProgramData\\LogiOptionsPlus\\depots and remove leftover update archive folders.",
       "Navigate to %LocalAppData%\\LogiOptionsPlus and delete the Cache and GPUCache subdirectories (leave settings.db untouched).",
       "Or run SWEEPR Cleaner to clean Logitech Options+ cache safely in one click."
+    ],
+    "metaTitle": "Clear Logi Options+ Cache & Crash Dumps on PC | SWEEPR",
+    "metaDescription": "How to clear Logitech Logi Options+ cache, updater installers, and Crashpad dumps on Windows 10/11. Reclaim 500 MB–4 GB while keeping MX mouse gestures safe.",
+    "customFaqs": [
+      {
+        "q": "Does clearing Logi Options+ cache reset my MX Master mouse button mappings?",
+        "a": "No. Your custom MX Master and MX Keys button assignments are saved in settings.db and synced to your Logi ID. Purging WebCache, GPUCache, and Crashpad dumps only removes temporary updater and Electron cache files."
+      }
     ]
   },
   {
@@ -5665,6 +5735,126 @@
     "manualSteps": [
       "Inspect %UserProfile%\\.cache, %LocalAppData%\\NVIDIA\\DXCache, and C:\\ProgramData\\Package Cache for orphaned multi-gigabyte folders.",
       "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner."
+    ]
+  },
+  {
+    "slug": "vllm-triton-cache",
+    "category": "app",
+    "name": "vLLM & Triton Compiled CUDA Kernel Cache",
+    "path": "%UserProfile%\\.cache\\vllm and %LocalAppData%\\Temp\\triton",
+    "safeToDelete": true,
+    "avgSpace": "3.5 GB – 24.0 GB",
+    "whatIsIt": "vLLM and OpenAI Triton compile custom PTX/CUDA attention kernels and model KV-cache graph binaries into your local user cache directory.",
+    "whatHappens": "Safely frees gigabytes of compiled GPU kernel artifacts. vLLM automatically JIT-compiles active model kernels on the next server launch.",
+    "manualSteps": [
+      "Stop any running Python vLLM or Triton inference servers.",
+      "Press Win + R, type %userprofile%\\.cache\\vllm, and press Enter.",
+      "Delete old compiled kernel folders and clear %localappdata%\\Temp\\triton."
+    ]
+  },
+  {
+    "slug": "tabby-ml-coding-assistant-cache",
+    "category": "app",
+    "name": "TabbyML Self-Hosted AI Coding Model & Index Cache",
+    "path": "%UserProfile%\\.tabby\\models and %UserProfile%\\.tabby\\events",
+    "safeToDelete": true,
+    "avgSpace": "3.5 GB – 28.0 GB",
+    "whatIsIt": "TabbyML downloads local StarCoder/CodeLlama GGUF coding models and Tantivy repository search indexes into %UserProfile%\\.tabby.",
+    "whatHappens": "Removing unused model weights and event logs reclaims 3.5–28 GB of SSD space while preserving your Tabby agent config.toml.",
+    "manualSteps": [
+      "Stop the TabbyML server process.",
+      "Open File Explorer to %userprofile%\\.tabby\\models and delete unused model folders.",
+      "Clear old JSON event logs inside %userprofile%\\.tabby\\events."
+    ]
+  },
+  {
+    "slug": "continue-dev-autocomplete-index-cache",
+    "category": "app",
+    "name": "Continue.dev AI Codebase LanceDB & Tree-Sitter Index Cache",
+    "path": "%UserProfile%\\.continue\\index and %UserProfile%\\.continue\\logs",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 18.0 GB",
+    "whatIsIt": "The Continue.dev AI extension for VS Code and JetBrains builds multi-gigabyte LanceDB vector embeddings and SQLite codebase indexes inside %UserProfile%\\.continue\\index.",
+    "whatHappens": "Deleting .continue\\index and logs frees gigabytes of C: drive space from old repositories while keeping your config.json and model API keys intact.",
+    "manualSteps": [
+      "Close VS Code or JetBrains IDEs.",
+      "Press Win + R, enter %userprofile%\\.continue, and hit Enter.",
+      "Delete the 'index' and 'logs' subfolders (keep config.json)."
+    ]
+  },
+  {
+    "slug": "fooocus-diffusion-temp-cache",
+    "category": "app",
+    "name": "Fooocus Stable Diffusion SDXL Temp & Model Cache",
+    "path": "%LocalAppData%\\Temp\\fooocus",
+    "safeToDelete": true,
+    "avgSpace": "2.5 GB – 19.0 GB",
+    "whatIsIt": "Fooocus writes uncompressed latent preview frames, Gradio UI temporary image uploads, and partial inpainting masks into %LocalAppData%\\Temp\\fooocus.",
+    "whatHappens": "Clearing the Fooocus temp folder reclaims gigabytes of SSD space without touching your SDXL checkpoints, LoRAs, or saved output gallery.",
+    "manualSteps": [
+      "Close the Fooocus command window and browser tab.",
+      "Press Win + R, type %localappdata%\\Temp\\fooocus, and press Enter.",
+      "Select all temporary preview files (Ctrl + A) and delete them."
+    ]
+  },
+  {
+    "slug": "invokeai-models-latents-cache",
+    "category": "app",
+    "name": "InvokeAI Model Convert Cache & Intermediate Latents",
+    "path": "%UserProfile%\\invokeai\\models\\.cache",
+    "safeToDelete": true,
+    "avgSpace": "5.0 GB – 32.0 GB",
+    "whatIsIt": "InvokeAI caches converted Diffusers weights, ONNX ControlNet processors, and temporary latent tensors inside %UserProfile%\\invokeai\\models\\.cache.",
+    "whatHappens": "Purging the .cache directory removes redundant model conversion staging files while keeping your installed models, boards, and workflows safe.",
+    "manualSteps": [
+      "Shut down the InvokeAI launcher and backend server.",
+      "Navigate to %userprofile%\\invokeai\\models\\.cache in File Explorer.",
+      "Delete the cached conversion folders and temporary download locks."
+    ]
+  },
+  {
+    "slug": "koboldcpp-context-cache",
+    "category": "app",
+    "name": "KoboldCpp Context Shift & Temporary Audio/Vision Cache",
+    "path": "%LocalAppData%\\Temp\\koboldcpp",
+    "safeToDelete": true,
+    "avgSpace": "1.2 GB – 11.0 GB",
+    "whatIsIt": "KoboldCpp unpacks temporary CUDA/Vulkan runtime DLLs, Whisper voice buffers, and prompt context cache snapshots into your LocalAppData Temp directory.",
+    "whatHappens": "Safely removes orphaned runtime unpack folders left behind by crashed or updated KoboldCpp sessions.",
+    "manualSteps": [
+      "Exit KoboldCpp completely.",
+      "Press Win + R, enter %localappdata%\\Temp, and look for koboldcpp* or _MEI* unpack folders.",
+      "Delete the temporary KoboldCpp directories."
+    ]
+  },
+  {
+    "slug": "open-webui-pip-cache",
+    "category": "app",
+    "name": "Open WebUI RAG Vector Staging & ChromaDB Temp Cache",
+    "path": "%UserProfile%\\.open-webui\\cache",
+    "safeToDelete": true,
+    "avgSpace": "2.0 GB – 16.0 GB",
+    "whatIsIt": "Open WebUI caches downloaded sentence-transformer embedding weights, OCR staging images, and Whisper TTS audio chunks in .open-webui\\cache.",
+    "whatHappens": "Frees gigabytes of temporary RAG and audio staging files while preserving your SQLite user database and chat history.",
+    "manualSteps": [
+      "Stop the Open WebUI Python process or container.",
+      "Open %userprofile%\\.open-webui\\cache in File Explorer.",
+      "Delete temporary audio, OCR, and outdated embedding cache subdirectories."
+    ]
+  },
+  {
+    "slug": "whisper-faster-huggingface-cache",
+    "category": "app",
+    "name": "Faster-Whisper & CTranslate2 Speech Model Cache",
+    "path": "%UserProfile%\\.cache\\huggingface\\hub\\models--Systran--faster-whisper",
+    "safeToDelete": true,
+    "avgSpace": "1.5 GB – 14.0 GB",
+    "whatIsIt": "Subtitle generators, OBS plugins, and transcription tools download multiple Faster-Whisper CTranslate2 model sizes (tiny, medium, large-v3) into your HuggingFace cache.",
+    "whatHappens": "Removing unused Whisper model revisions reclaims 1.5–14 GB immediately. Your transcription tool will keep using whichever active model remains.",
+    "manualSteps": [
+      "Close any running transcription or subtitle tools.",
+      "Open %userprofile%\\.cache\\huggingface\\hub in File Explorer.",
+      "Delete unused models--Systran--faster-whisper-* folders you no longer use."
     ]
   }
 ]

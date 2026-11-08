@@ -53,9 +53,16 @@ import {
 } from "./telemetry-truth.js";
 import {
   publishDiscoveredCleanItem,
+  resolveKeywordAgainstCorpus,
   runKeywordDiscoveryPipeline,
+  scoreKeywordOpportunity,
   WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY,
 } from "./keywords.js";
+import {
+  harvestCompetitorOrganicPages,
+  runUnderperformerAutoRefresh,
+  teardownCompetitorOrganicPage,
+} from "./competitor-intel.js";
 import type { SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -509,6 +516,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       }
     }
 
+    const ledgerCalibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+      recalibrate: true,
+    });
+
     return c.json({
       ok: true,
       ingested: normalized.length,
@@ -516,6 +527,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       latest_date: store.gscLatestDate(),
       gsc: providerStatus(providers, store).gsc,
       intent_gap: intentGapSummary,
+      strategy_ledger_reconciled: {
+        evaluated_count: ledgerCalibration.evaluated_count,
+        pre_vs_post_summary: ledgerCalibration.pre_vs_post_summary,
+      },
     });
   });
 
@@ -628,7 +643,18 @@ export function createSeoRouter(deps: SeoRouterDeps) {
               persistState: true,
             })
           : null;
-        return { ...syncRes, intent_gap_executed: Boolean(intentGap), intent_gap_summary: intentGap };
+        const ledgerCalibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+          recalibrate: true,
+        });
+        return {
+          ...syncRes,
+          intent_gap_executed: Boolean(intentGap),
+          intent_gap_summary: intentGap,
+          strategy_ledger_reconciled: {
+            evaluated_count: ledgerCalibration.evaluated_count,
+            pre_vs_post_summary: ledgerCalibration.pre_vs_post_summary,
+          },
+        };
       })
     );
   });
@@ -1025,6 +1051,297 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       ok: true,
       ...computeStateOfWindowsStorageReport(store),
     });
+  });
+
+  // ---------------- A16: Competitor Organic SEO & Content Replication Engine ----------------
+  router.get("/competitor-organic-gap", async (c) => {
+    let existing = store.listCompetitorOrganicPages({ limit: 150 });
+    if (existing.length === 0) {
+      await harvestCompetitorOrganicPages(store, providers, { crawl_sitemaps: false });
+      existing = store.listCompetitorOrganicPages({ limit: 150 });
+    }
+    const compFilter = c.req.query("competitor")?.trim();
+    const hubFilter = c.req.query("hub")?.trim();
+    const statusFilter = c.req.query("gap_status")?.trim();
+    const limit = Math.min(200, Math.max(1, Number(c.req.query("limit") || 100)));
+
+    const filtered = store.listCompetitorOrganicPages({
+      competitor_domain: compFilter || undefined,
+      content_hub: hubFilter || undefined,
+      gap_status: statusFilter || undefined,
+      limit,
+    });
+
+    const hubBreakdown: Record<string, number> = {};
+    const statusBreakdown: Record<string, number> = { uncaptured: 0, out_ranked: 0, winning: 0, replicated: 0 };
+    for (const p of existing) {
+      hubBreakdown[p.content_hub] = (hubBreakdown[p.content_hub] ?? 0) + 1;
+      statusBreakdown[p.gap_status] = (statusBreakdown[p.gap_status] ?? 0) + 1;
+    }
+
+    return c.json({
+      ok: true,
+      total_tracked_pages: existing.length,
+      hub_breakdown: hubBreakdown,
+      gap_status_breakdown: statusBreakdown,
+      competitor_pages: filtered,
+      teardowns: store.listCompetitorTeardowns(50),
+    });
+  });
+
+  router.post("/competitor-organic-gap", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = await harvestCompetitorOrganicPages(store, providers, {
+      competitors: Array.isArray(body.competitors) ? body.competitors.map(String) : undefined,
+      crawl_sitemaps: Boolean(body.crawl_sitemaps),
+      enrich_dfs: Boolean(body.enrich_dfs),
+      fetchImpl: dfsFetch,
+    });
+    return c.json(res);
+  });
+
+  router.post("/competitor-organic-teardown", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const url = String(body.url ?? "").trim();
+    if (!url) return c.json({ error: "url_required" }, 400);
+    try {
+      const res = await teardownCompetitorOrganicPage(
+        store,
+        {
+          url,
+          target_keyword: body.target_keyword ? String(body.target_keyword) : undefined,
+          raw_html: body.raw_html ? String(body.raw_html) : undefined,
+          create_ledger_entry: body.create_ledger_entry !== false,
+        },
+        dfsFetch
+      );
+      return c.json(res);
+    } catch (e: any) {
+      return c.json({ error: e?.message ?? String(e) }, 400);
+    }
+  });
+
+  // ---------------- A17: Persistent Strategy Forecast Ledger & Auto-Calibrator ----------------
+  router.get("/strategy-ledger", async (c) => {
+    let entries = store.listStrategyForecastLedger({ limit: 200 });
+    if (entries.length < 10) {
+      await runKeywordDiscoveryPipeline(store, providers, { persistReport: false });
+      entries = store.listStrategyForecastLedger({ limit: 200 });
+    }
+    const gscSeed = loadVerifiedGscSeedRows();
+    const calibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+      seedGscRows: gscSeed,
+      recalibrate: false,
+    });
+
+    const stageFilter = c.req.query("buyer_stage")?.trim();
+    const diffFilter = c.req.query("difficulty_tier")?.trim();
+    const statusFilter = c.req.query("status")?.trim();
+    const limit = Math.min(200, Math.max(1, Number(c.req.query("limit") || 100)));
+
+    const filtered = store.listStrategyForecastLedger({
+      buyer_stage: stageFilter || undefined,
+      difficulty_tier: diffFilter || undefined,
+      status: statusFilter || undefined,
+      limit,
+    });
+
+    const bofuMofuCount = filtered.filter((e) => e.buyer_stage === "BOFU" || e.buyer_stage === "MOFU").length;
+    const bofuMofuSharePct = filtered.length > 0 ? Number(((bofuMofuCount / filtered.length) * 100).toFixed(1)) : 100;
+
+    return c.json({
+      ok: true,
+      summary: {
+        ...calibration,
+        bofu_mofu_share_pct: bofuMofuSharePct,
+      },
+      scoring_weights: store.getScoringWeights(),
+      recommendations: calibration.recommendations,
+      entries: filtered,
+    });
+  });
+
+  router.post("/strategy-ledger", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    if (body.entry && typeof body.entry === "object") {
+      const e = body.entry;
+      store.upsertStrategyForecastLedger({
+        slug: String(e.slug || "custom-target"),
+        target_path: String(e.target_path || `/clean/app/${e.slug || "custom-target"}`),
+        primary_keyword: String(e.primary_keyword || e.slug || "windows 11 cleaner"),
+        cluster: String(e.cluster || "app"),
+        action_type: String(e.action_type || "create_pseo_app"),
+        status: e.status || "forecasted",
+        source_competitor_domain: e.source_competitor_domain ? String(e.source_competitor_domain) : null,
+        source_competitor_url: e.source_competitor_url ? String(e.source_competitor_url) : null,
+        replicated_patterns: Array.isArray(e.replicated_patterns) ? e.replicated_patterns.map(String) : [],
+        transactional_tier: String(e.transactional_tier || "BOFU_Tool_Intent"),
+        buyer_stage: e.buyer_stage === "MOFU" || e.buyer_stage === "TOFU" ? e.buyer_stage : "BOFU",
+        difficulty_tier:
+          e.difficulty_tier === "very_easy" || e.difficulty_tier === "moderate" || e.difficulty_tier === "hard"
+            ? e.difficulty_tier
+            : "easy",
+        forecast_opportunity_score: Number(e.forecast_opportunity_score ?? 85),
+        forecast_demand_score: Number(e.forecast_demand_score ?? 75),
+        forecast_low_comp_score: Number(e.forecast_low_comp_score ?? 82),
+        forecast_kd: Number(e.forecast_kd ?? 22),
+        forecast_est_days_to_top10: Number(e.forecast_est_days_to_top10 ?? 21),
+        forecast_est_days_to_top3: Number(e.forecast_est_days_to_top3 ?? 42),
+        forecast_monthly_volume: Number(e.forecast_monthly_volume ?? 650),
+        forecast_monthly_clicks: Number(e.forecast_monthly_clicks ?? 48),
+        forecast_target_position: Number(e.forecast_target_position ?? 3.5),
+        forecast_transactional_score: Number(e.forecast_transactional_score ?? 1.38),
+        forecast_cvr_pct: Number(e.forecast_cvr_pct ?? 4.1),
+        forecast_monthly_downloads: Number(e.forecast_monthly_downloads ?? 2.0),
+        forecast_monthly_conversions: Number(e.forecast_monthly_conversions ?? 0.3),
+        actual_impressions_28d: e.actual_impressions_28d !== undefined ? Number(e.actual_impressions_28d) : undefined,
+        actual_clicks_28d: e.actual_clicks_28d !== undefined ? Number(e.actual_clicks_28d) : undefined,
+        actual_ctr_28d: e.actual_ctr_28d !== undefined ? Number(e.actual_ctr_28d) : undefined,
+        actual_avg_position: e.actual_avg_position !== undefined ? Number(e.actual_avg_position) : undefined,
+        outcome_verdict: e.outcome_verdict || e.variance_status || undefined,
+        published_at: typeof e.published_at === "number" ? e.published_at : null,
+        notes: e.notes ? String(e.notes) : null,
+      });
+    }
+
+    if (body.recalibrate_weights === false) {
+      return c.json({
+        ok: true,
+        scoring_weights: store.getScoringWeights(),
+        recommendations: [],
+        entries: store.listStrategyForecastLedger({ limit: 100 }),
+      });
+    }
+
+    const gscSeed = loadVerifiedGscSeedRows();
+    const calibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+      seedGscRows: gscSeed,
+      recalibrate: true,
+    });
+
+    return c.json({
+      ok: true,
+      summary: calibration,
+      scoring_weights: store.getScoringWeights(),
+      recommendations: calibration.recommendations,
+      entries: store.listStrategyForecastLedger({ limit: 100 }),
+    });
+  });
+
+  router.post("/strategy-ledger/reconcile", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const gscSeed = loadVerifiedGscSeedRows();
+    const calibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+      seedGscRows: gscSeed,
+      recalibrate: body.recalibrate !== false,
+      actuals_override: Array.isArray(body.actuals_override) ? body.actuals_override : undefined,
+      paidKeywordCvrByTier: body.paid_keyword_cvr_by_tier || undefined,
+    });
+    if (body.persist_json !== false) {
+      store.exportStrategyLedgerToJsonFile();
+    }
+    return c.json({
+      ok: true,
+      ...calibration,
+      summary: calibration,
+      scoring_weights: store.getScoringWeights(),
+      entries: store.listStrategyForecastLedger({ limit: 150 }),
+    });
+  });
+
+  router.post("/forecast-keyword", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const keyword = String(body.keyword ?? "").trim().toLowerCase();
+    if (!keyword || keyword.length < 3) return c.json({ error: "keyword_required" }, 400);
+    const compDomain = body.competitor_domain ? String(body.competitor_domain).trim().toLowerCase() : null;
+    const weights = store.getScoringWeights();
+    const resolution = resolveKeywordAgainstCorpus(keyword);
+    const scored = scoreKeywordOpportunity({
+      keyword,
+      googleAutocompleteRank: typeof body.autocomplete_rank === "number" ? body.autocomplete_rank : 1,
+      bingAutocompleteRank: 1,
+      dfsSearchVolume: typeof body.search_volume === "number" ? body.search_volume : null,
+      dfsKd: typeof body.kd === "number" ? body.kd : null,
+      avgSpaceGb: typeof body.avg_space_gb === "number" ? body.avg_space_gb : 9.0,
+      isCuratedEcosystemSeed: true,
+      competitorSourceDomain: compDomain,
+      scoringWeights: weights,
+      corpusResolution: resolution,
+    });
+
+    if (body.log_to_ledger !== false) {
+      const slug = (scored.target_path || `/clean/app/${keyword.replace(/[^a-z0-9]+/g, "-")}`)
+        .split("/")
+        .filter(Boolean)
+        .pop()!;
+      store.upsertStrategyForecastLedger({
+        slug,
+        target_path: scored.target_path || `/clean/app/${slug}`,
+        primary_keyword: scored.keyword,
+        cluster: scored.recommended_action.replace(/^create_/, ""),
+        action_type: scored.recommended_action,
+        status: "forecasted",
+        source_competitor_domain: compDomain,
+        replicated_patterns: compDomain
+          ? [`Competitor keyword forecast (${compDomain})`, "FAQPage + PowerShell verification"]
+          : ["Direct CRM keyword forecast"],
+        transactional_tier: scored.transactional_tier,
+        buyer_stage: scored.buyer_stage,
+        difficulty_tier: scored.difficulty_tier,
+        forecast_opportunity_score: scored.opportunity_score,
+        forecast_demand_score: scored.demand_score,
+        forecast_low_comp_score: scored.low_comp_score,
+        forecast_kd: scored.forecast.forecast_kd,
+        forecast_est_days_to_top10: scored.forecast.forecast_est_days_to_top10,
+        forecast_est_days_to_top3: scored.forecast.forecast_est_days_to_top3,
+        forecast_monthly_volume: scored.forecast.forecast_monthly_volume,
+        forecast_monthly_clicks: scored.forecast.forecast_monthly_clicks,
+        forecast_target_position: scored.forecast.forecast_target_position,
+        forecast_transactional_score: scored.intent_multiplier,
+        forecast_cvr_pct: scored.forecast.forecast_cvr_pct,
+        forecast_monthly_downloads: scored.forecast.forecast_monthly_downloads,
+        forecast_monthly_conversions: scored.forecast.forecast_monthly_conversions,
+        notes: body.notes ? String(body.notes) : "Forecasted via SWEEPR CRM Keyword Forecaster",
+      });
+    }
+
+    return c.json({
+      ok: true,
+      scored,
+      logged_to_ledger: body.log_to_ledger !== false,
+    });
+  });
+
+  // ---------------- A18: Self-Healing Underperformer Content Refresher ----------------
+  router.post("/underperformer-refresh", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const res = await runUnderperformerAutoRefresh(store, {
+      max_pages: typeof body.max_pages === "number" ? body.max_pages : 8,
+      force: Boolean(body.force),
+      persist_disk: body.persist_disk !== false,
+    });
+    return c.json(res);
+  });
+
+  router.post("/strategy-ledger/baseline", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const slug = String(body.slug ?? "").trim().toLowerCase();
+    if (!slug) return c.json({ error: "slug_required" }, 400);
+    const snapshot = store.captureStrategyBaselineSnapshot({
+      slug,
+      target_path: body.target_path ? String(body.target_path) : undefined,
+      primary_keyword: body.primary_keyword ? String(body.primary_keyword) : undefined,
+      optimization_type: String(body.optimization_type || "manual_optimization"),
+      force_refresh_baseline: Boolean(body.force_refresh_baseline || body.overwrite_baseline),
+      overwrite_baseline: Boolean(body.overwrite_baseline || body.force_refresh_baseline),
+      pre_impressions_28d: body.pre_impressions_28d !== undefined ? Number(body.pre_impressions_28d) : undefined,
+      pre_clicks_28d: body.pre_clicks_28d !== undefined ? Number(body.pre_clicks_28d) : undefined,
+      pre_ctr_28d: body.pre_ctr_28d !== undefined ? Number(body.pre_ctr_28d) : undefined,
+      pre_avg_position: body.pre_avg_position !== undefined ? Number(body.pre_avg_position) : undefined,
+      pre_downloads_28d: body.pre_downloads_28d !== undefined ? Number(body.pre_downloads_28d) : undefined,
+      notes: body.notes ? String(body.notes) : undefined,
+    });
+    return c.json({ ok: true, snapshot, entry: snapshot });
   });
 
   return router;

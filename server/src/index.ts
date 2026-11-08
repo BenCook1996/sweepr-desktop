@@ -17,10 +17,13 @@ import {
 } from "./download-recovery.js";
 import { runGiveawayUpgradeSweep } from "./giveaway.js";
 import { runAnnualRenewalRecapSweep } from "./renewal-recap.js";
-import { refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
+import { applyRoasReallocation } from "./roas.js";
+import { getExperimentLiftMultipliers, getExperimentSummary } from "./experiments.js";
+import { computeStateOfWindowsStorageReport, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
 import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
-import { executeIntentGapAutomation } from "./seo/intent-gap.js";
+import { executeIntentGapAutomation, loadVerifiedGscSeedRows } from "./seo/intent-gap.js";
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
+import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "./seo/competitor-intel.js";
 import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
 import { recordAutomationRunStatus } from "./crm.js";
 
@@ -261,16 +264,22 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   setTimeout(runFiveMinuteConversionSweeps, 15_000).unref?.();
   setInterval(runFiveMinuteConversionSweeps, 5 * 60_000).unref?.();
 
-  // 2. Every 6 hours (+ T+30s boot): A1 Telemetry Truth Cache Refresh + A4 Bloat Watch Radar & Keyword Discovery
+  // 2. Every 6 hours (+ T+30s boot): A1 Telemetry Truth & Storage Benchmark + A4 Bloat Watch + A12 GEO Index + A15 Competitor Freshness
   const runSixHourSeoIntelligence = async () => {
     const seoStore = new SeoStore(repo.db);
     const t0A1 = Date.now();
     try {
       const refreshed = refreshAllTelemetryTruthCache(seoStore);
+      const bench = computeStateOfWindowsStorageReport(seoStore);
       recordAutomationRunStatus("A1_telemetry_truth", {
         status: "ok",
         durationMs: Date.now() - t0A1,
-        summary: { updated_slugs: refreshed.length },
+        summary: {
+          updated_slugs: refreshed.length,
+          total_guides: bench.total_canonical_guides,
+          median_per_pc_gb: bench.median_reclaimable_per_pc_gb,
+          p90_per_pc_gb: bench.p90_reclaimable_per_pc_gb,
+        },
       });
     } catch (err: any) {
       recordAutomationRunStatus("A1_telemetry_truth", {
@@ -304,20 +313,10 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
     const t0A12 = Date.now();
     try {
       const llmsSync = syncStaticLlmsTxtFile(seoStore);
-      const compAudit = auditInternalBrandFactConsistency({ autoFix: true });
       recordAutomationRunStatus("A12_geo_llms_index", {
         status: "ok",
         durationMs: Date.now() - t0A12,
         summary: { ...llmsSync },
-      });
-      recordAutomationRunStatus("A15_competitor_freshness", {
-        status: "ok",
-        durationMs: Date.now() - t0A12,
-        summary: {
-          checked_count: compAudit.checked_count,
-          drift_detected_count: compAudit.drift_detected_count,
-          auto_fixed_count: compAudit.auto_fixed_count,
-        },
       });
     } catch (err: any) {
       recordAutomationRunStatus("A12_geo_llms_index", {
@@ -326,11 +325,31 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
         error: String(err?.message || err),
       });
     }
+
+    const t0A15 = Date.now();
+    try {
+      const compAudit = auditInternalBrandFactConsistency({ autoFix: true });
+      recordAutomationRunStatus("A15_competitor_freshness", {
+        status: "ok",
+        durationMs: Date.now() - t0A15,
+        summary: {
+          checked_count: compAudit.checked_count,
+          drift_detected_count: compAudit.drift_detected_count,
+          auto_fixed_count: compAudit.auto_fixed_count,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A15_competitor_freshness", {
+        status: "error",
+        durationMs: Date.now() - t0A15,
+        error: String(err?.message || err),
+      });
+    }
   };
   setTimeout(runSixHourSeoIntelligence, 30_000).unref?.();
   setInterval(runSixHourSeoIntelligence, 6 * 3600 * 1000).unref?.();
 
-  // 3. Every 12 hours (+ T+45s boot): A2 Intent-Gap & Strike-Zone CTR + Keyword Discovery + A6 Renewal Recap T-7d Sweep + Stripe Reconcile
+  // 3. Every 12 hours (+ T+45s boot): A2 Intent-Gap -> A16 Competitor Intel -> A7 Keyword Discovery -> A17 Forecast Ledger -> A18 Self-Healing Refresh -> A8 ROAS -> A9 Experiments -> A6 Renewal Recap -> Stripe Reconcile
   const runTwelveHourLifecycleAndSeo = async () => {
     const seoStore = new SeoStore(repo.db);
     const t0A2 = Date.now();
@@ -361,6 +380,26 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       });
     }
 
+    const t0A16 = Date.now();
+    try {
+      const compRes = await harvestCompetitorOrganicPages(seoStore, undefined, { crawl_sitemaps: false });
+      recordAutomationRunStatus("A16_competitor_organic_intel", {
+        status: "ok",
+        durationMs: Date.now() - t0A16,
+        summary: {
+          total_tracked_pages: compRes.total_tracked_pages,
+          upserted_count: compRes.upserted_count,
+          uncaptured_gaps: compRes.gap_status_breakdown.uncaptured,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A16_competitor_organic_intel", {
+        status: "error",
+        durationMs: Date.now() - t0A16,
+        error: String(err?.message || err),
+      });
+    }
+
     const t0Kw = Date.now();
     try {
       const kw = await runKeywordDiscoveryPipeline(seoStore, undefined, {
@@ -381,6 +420,94 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       recordAutomationRunStatus("A7_keyword_discovery", {
         status: "error",
         durationMs: Date.now() - t0Kw,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A17 = Date.now();
+    try {
+      const gscSeed = loadVerifiedGscSeedRows();
+      const liftMultipliers = getExperimentLiftMultipliers(repo);
+      const cal = seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+        seedGscRows: gscSeed,
+        experimentLiftMultipliers: liftMultipliers,
+        recalibrate: true,
+      });
+      recordAutomationRunStatus("A17_strategy_forecast_ledger", {
+        status: "ok",
+        durationMs: Date.now() - t0A17,
+        summary: {
+          total_entries: cal.total_entries,
+          evaluated_count: cal.evaluated_count,
+          outperforming_count: cal.outperforming_count,
+          optimized_pages_count: cal.pre_vs_post_summary.optimized_pages_count,
+          avg_clicks_lift_pct: cal.pre_vs_post_summary.avg_clicks_lift_pct,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A17_strategy_forecast_ledger", {
+        status: "error",
+        durationMs: Date.now() - t0A17,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A18 = Date.now();
+    try {
+      const refreshRes = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
+      recordAutomationRunStatus("A18_underperformer_auto_refresh", {
+        status: "ok",
+        durationMs: Date.now() - t0A18,
+        summary: {
+          evaluated_candidates: refreshRes.evaluated_candidates,
+          refreshed_count: refreshRes.refreshed_count,
+          queued_for_indexnow: refreshRes.queued_for_indexnow,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A18_underperformer_auto_refresh", {
+        status: "error",
+        durationMs: Date.now() - t0A18,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A8 = Date.now();
+    try {
+      const roasRes = applyRoasReallocation(repo, seoStore, { auto_adjust_bids: true });
+      recordAutomationRunStatus("A8_roas_reallocation", {
+        status: "ok",
+        durationMs: Date.now() - t0A8,
+        summary: {
+          paid_roas: roasRes.report.totals.paid_roas,
+          reinvestment_unlock_gbp: roasRes.report.totals.reinvestment_unlock_gbp,
+          bids_adjusted: roasRes.bids_adjusted,
+          losers_paused: roasRes.losers_paused,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A8_roas_reallocation", {
+        status: "error",
+        durationMs: Date.now() - t0A8,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A9 = Date.now();
+    try {
+      const expSummary = getExperimentSummary(repo);
+      recordAutomationRunStatus("A9_ab_experiments", {
+        status: "ok",
+        durationMs: Date.now() - t0A9,
+        summary: {
+          experiments: expSummary.experiments.length,
+          auto_promoted: expSummary.experiments.filter((e) => e.auto_promoted_variant).length,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A9_ab_experiments", {
+        status: "error",
+        durationMs: Date.now() - t0A9,
         error: String(err?.message || err),
       });
     }

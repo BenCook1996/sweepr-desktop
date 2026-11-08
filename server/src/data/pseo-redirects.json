@@ -1,13 +1,11 @@
 {
   "folder:defender-scan-history-mplog": "/clean/folder/programdata-windows-defender-scans-history",
   "folder:package-cache-programdata": "/clean/folder/programdata-package-cache",
-  "folder:windows-search-edb-index": "/clean/folder/windows-search-index-edb",
   "folder:windows-logs-cbs-persist": "/clean/folder/windows-cbs-logs",
   "folder:localappdata-d3dscache-directx": "/clean/folder/directx-d3dscache",
   "folder:localappdata-crashdumps-wer": "/clean/folder/localappdata-crashdumps",
   "folder:windows-livekernelreports-watchdog-dumps": "/clean/folder/windows-livekernelreports",
   "app:pip-wheel-cache": "/clean/app/pip-http-wheels-cache",
-  "app:gradle-wrapper-cache": "/clean/app/gradle-wrapper-caches",
   "app:nuget-package-cache": "/clean/app/nuget-packages-http-cache",
   "app:go-build-cache": "/clean/app/go-build-mod-cache",
   "app:pnpm-content-store": "/clean/app/pnpm-store-cache",
@@ -1058,5 +1056,9 @@
   "folder:windows-bluetooth-logs": "/clean/folder/windows-system32-winevt-logs",
   "app:windows-bluetooth-logs": "/clean/folder/windows-system32-winevt-logs",
   "folder:premiere-pro-media-cache-files": "/clean/app/adobe-premiere-media-cache",
-  "app:premiere-pro-media-cache-files": "/clean/app/adobe-premiere-media-cache"
+  "app:premiere-pro-media-cache-files": "/clean/app/adobe-premiere-media-cache",
+  "folder:delivery-optimization": "/clean/folder/delivery-optimization-cache",
+  "app:delivery-optimization": "/clean/folder/delivery-optimization-cache",
+  "app:pip-cache": "/clean/app/pip-http-wheels-cache",
+  "folder:pip-cache": "/clean/app/pip-http-wheels-cache"
 }

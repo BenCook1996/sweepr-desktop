@@ -1,38 +1,55 @@
 {
-  "lastRunAt": "2026-11-05T06:20:40.516Z",
+  "lastRunAt": "2026-11-08T06:20:36.073Z",
   "lastCount": 2,
-  "totalCleanItems": 367,
+  "totalCleanItems": 373,
   "sampleUrls": [
-    "https://sweeprcleaner.com/clean/folder/other-storage-full-windows-11-cleanup",
-    "https://sweeprcleaner.com/clean/app/nuget-packages-http-cache"
+    "https://sweeprcleaner.com/clean/app/open-webui-pip-cache",
+    "https://sweeprcleaner.com/clean/app/whisper-faster-huggingface-cache"
   ],
   "ctrCooldownDays": 14,
   "ctrOptimizedAt": {
     "steam-depotcache": "2026-11-03",
     "riot-client-logs": "2026-11-03",
     "programdata-package-cache": "2026-11-03",
-    "winsxs": "2026-11-03",
-    "logitech-ghub-installer-cache": "2026-11-03",
+    "winsxs": "2026-11-08",
+    "logitech-ghub-installer-cache": "2026-11-08",
     "capcut-pc-cache": "2026-11-03",
     "medal-tv-cache": "2026-11-03",
     "windows-livekernelreports": "2026-11-03",
     "obs-studio-logs-crashes": "2026-11-04",
     "opera-gx-cache": "2026-11-04",
-    "npm-cache": "2026-11-04",
-    "gradle-wrapper-caches": "2026-11-04",
-    "vrchat-cache": "2026-11-05",
-    "steam-shader-cache": "2026-11-05"
+    "npm-cache": "2026-11-08",
+    "gradle-wrapper-caches": "2026-11-08",
+    "vrchat-cache": "2026-11-08",
+    "steam-shader-cache": "2026-11-08",
+    "windows-old": "2026-11-05",
+    "capcut-desktop-cache": "2026-11-05",
+    "intellij-idea-caches": "2026-11-05",
+    "comfyui-temp-output-cache": "2026-11-08",
+    "lm-studio-models-cache": "2026-11-06",
+    "elgato-streamdeck-cache": "2026-11-06",
+    "localappdata-crashdumps": "2026-11-06",
+    "nvidia-dxcache": "2026-11-06",
+    "hiberfil-sys": "2026-11-08",
+    "logitech-options-plus-cache": "2026-11-08",
+    "pip-cache": "2026-11-08",
+    "delivery-optimization": "2026-11-08",
+    "discord-cache": "2026-11-08",
+    "spotify-storage-cache": "2026-11-08",
+    "slack-cache": "2026-11-08",
+    "pip-http-wheels-cache": "2026-11-08",
+    "davinci-resolve-optimized-media": "2026-11-08",
+    "genshin-impact-update-cache": "2026-11-08"
   },
   "lastCtrEnrichedSlugs": [
-    "obs-studio-logs-crashes",
-    "opera-gx-cache",
-    "npm-cache",
-    "gradle-wrapper-caches"
+    "pip-cache",
+    "delivery-optimization",
+    "discord-cache",
+    "spotify-storage-cache"
   ],
   "nextStrikeZoneBatch": [
-    "windows-old",
-    "capcut-desktop-cache",
-    "intellij-idea-caches",
-    "comfyui-temp-output-cache"
+    "microsoft-teams-cache",
+    "adobe-premiere-media-cache",
+    "davinci-resolve-cacheclip"
   ]
 }

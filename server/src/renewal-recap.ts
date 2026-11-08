@@ -146,9 +146,9 @@ export async function processAnnualRenewalRecap(
     }
   }
 
-  const renewalDateStr = opts.renewalTs
-    ? new Date(opts.renewalTs * 1000).toISOString().slice(0, 10)
-    : new Date((nowSec + 14 * 86400) * 1000).toISOString().slice(0, 10);
+  const renewalTsEffective = opts.renewalTs ?? nowSec + 7 * 86400;
+  const renewalDaysOut = Math.max(1, Math.min(30, Math.round((renewalTsEffective - nowSec) / 86400)));
+  const renewalDateStr = new Date(renewalTsEffective * 1000).toISOString().slice(0, 10);
 
   const subject =
     recap.segment === "active"
@@ -164,7 +164,7 @@ export async function processAnnualRenewalRecap(
   const htmlBody = `
   <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;color:#111613;">
     <div style="font-size:12px;font-weight:800;color:#0d6847;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">
-      SWEEPR CLEANER PRO &bull; 14-DAY RENEWAL VALUE RECAP
+      SWEEPR CLEANER PRO &bull; ${renewalDaysOut}-DAY RENEWAL VALUE RECAP
     </div>
     <h2 style="font-size:21px;margin:0 0 12px;">
       ${

@@ -14,7 +14,7 @@ import type { Account, Entitlement, Repo } from "./db.js";
 import { randomToken, sha256, signEntitlement } from "./tokens.js";
 import { handleStripeEvent, syncSubscription } from "./stripe.js";
 import { handleRevenueCatWebhook, RevenueCatPayloadError } from "./revenuecat.js";
-import { createCrmRouter, hydrateAutomationRegistry } from "./crm.js";
+import { createCrmRouter, hydrateAutomationRegistry, recordAutomationRunStatus } from "./crm.js";
 import {
   adminBasicAuth,
   createRateLimiter,
@@ -66,6 +66,7 @@ import {
   ACTIVE_EXPERIMENTS,
   assignExperimentVariant,
   attributeCheckoutToExperiments,
+  getExperimentLiftMultipliers,
   getExperimentSummary,
   hydratePromotedExperimentWinners,
   promoteExperimentWinner,
@@ -798,6 +799,9 @@ export function createApp(deps: AppDeps) {
       return c.redirect(`/vs/${clean}`, 301);
     }
     const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (raw !== competitor) {
+      return c.redirect(`/vs/${competitor}`, 301);
+    }
     const file = `./public/vs/${competitor}.html`;
     return existsSync(file)
       ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
@@ -810,6 +814,9 @@ export function createApp(deps: AppDeps) {
       return c.redirect(`/alternatives/${clean}`, 301);
     }
     const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (raw !== competitor) {
+      return c.redirect(`/alternatives/${competitor}`, 301);
+    }
     const file = `./public/alternatives/${competitor}.html`;
     return existsSync(file)
       ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
@@ -6296,6 +6303,14 @@ export function createApp(deps: AppDeps) {
               lifetimeBytes: ledgerSummary?.total_bytes_cleaned ?? cleanedBytes,
               nowSec: now(),
             }).catch(() => {});
+            recordAutomationRunStatus("A14_aha_referral", {
+              status: "ok",
+              summary: {
+                account_id: resolvedAccountId,
+                cleaned_gb: Number((bestBytes / (1024 * 1024 * 1024)).toFixed(2)),
+                referral_code: ledgerSummary?.referral_code || null,
+              },
+            });
           }
         }
       } else if (eventName === "smartscreen_recovery_shown") {
@@ -6414,7 +6429,37 @@ export function createApp(deps: AppDeps) {
       return c.json({ ok: false, error: "invalid_experiment_or_variant" }, 400);
     }
     promoteExperimentWinner(expId, variant);
+    const liftMultipliers = getExperimentLiftMultipliers(repo);
+    seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+      experimentLiftMultipliers: liftMultipliers,
+      recalibrate: true,
+    });
     return c.json({ ok: true, experiment_id: expId, promoted_variant: variant });
+  });
+
+  app.post("/api/crm/experiments/evaluate", async (c) => {
+    const summary = getExperimentSummary(repo);
+    const liftMultipliers = getExperimentLiftMultipliers(repo);
+    const calibration = seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+      experimentLiftMultipliers: liftMultipliers,
+      recalibrate: true,
+    });
+    recordAutomationRunStatus("A9_ab_experiments", {
+      status: "ok",
+      summary: {
+        experiments: summary.experiments.map((e) => ({
+          id: e.id,
+          z_score: e.z_score,
+          winner: e.statistically_significant_winner,
+        })),
+        calibrated_lifts: liftMultipliers,
+      },
+    });
+    return c.json({
+      ...summary,
+      calibrated_lifts: liftMultipliers,
+      strategy_ledger_reconciled: calibration.evaluated_count,
+    });
   });
 
   // Dynamic In-App & Web Conversion Offer Endpoint (A10 High-Intent Scan & Giveaway Upgrade)

@@ -328,7 +328,27 @@ export function getExperimentSummary(repo: Repo) {
 }
 
 /**
+ * Extracts empirical lift multipliers from A9 A/B experiments for A17 Forecaster calibration.
+ */
+export function getExperimentLiftMultipliers(repo: Repo): {
+  checker_cta_copy_v1: number;
+  paywall_anchor_v1: number;
+} {
+  const summary = getExperimentSummary(repo);
+  const out = { checker_cta_copy_v1: 1.0, paywall_anchor_v1: 1.0 };
+  for (const exp of summary.experiments) {
+    if (exp.relative_lift_pct > 0 && (exp.sample_size_reached || exp.auto_promoted_variant)) {
+      const mult = Number(Math.max(1.0, Math.min(1.45, 1 + exp.relative_lift_pct / 100)).toFixed(2));
+      if (exp.id === "checker_cta_copy_v1") out.checker_cta_copy_v1 = mult;
+      if (exp.id === "paywall_anchor_v1") out.paywall_anchor_v1 = mult;
+    }
+  }
+  return out;
+}
+
+/**
  * Automatically records `experiment_conversion` for active experiments when a visitor starts/completes checkout.
+ * Checks prior `experiment_exposure` events so unexposed visitors do not pollute unrelated experiments.
  */
 export function attributeCheckoutToExperiments(
   repo: Repo,
@@ -336,7 +356,27 @@ export function attributeCheckoutToExperiments(
 ) {
   const cleanKey = String(opts.visitorKey || opts.accountId || "").trim();
   if (!cleanKey) return;
+
+  const exposedExperiments = new Set<string>();
+  try {
+    const expRows = repo.db
+      .prepare(
+        "SELECT metadata FROM analytics_events WHERE event_name = 'experiment_exposure' AND metadata LIKE ? ORDER BY created_at DESC LIMIT 50"
+      )
+      .all(`%${cleanKey}%`) as Array<{ metadata: string | null }>;
+    for (const r of expRows) {
+      if (!r.metadata) continue;
+      try {
+        const parsed = JSON.parse(r.metadata);
+        const expName = parsed.experiment || parsed.metadata?.experiment;
+        if (expName) exposedExperiments.add(String(expName));
+      } catch {}
+    }
+  } catch {}
+
   for (const expId of Object.keys(ACTIVE_EXPERIMENTS) as ExperimentId[]) {
+    // Only attribute if the visitor was exposed to this experiment, OR if no exposures were recorded at all (fallback for direct /pricing checkout on paywall_anchor_v1)
+    if (exposedExperiments.size > 0 && !exposedExperiments.has(expId)) continue;
     const variant = assignExperimentVariant(expId, cleanKey);
     repo.addAnalyticsEvent({
       event_name: "experiment_conversion",

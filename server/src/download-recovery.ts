@@ -1279,7 +1279,7 @@ export async function evaluateDunningAndWinbackLifecycle(
 
   const canceledRows = repo.db
     .prepare(
-      `SELECT account_id, stripe_subscription_id
+      `SELECT account_id, stripe_subscription_id, status
        FROM entitlements
        WHERE (status = 'canceled' OR cancel_at_period_end = 1)
          AND updated_at >= ?
@@ -1288,6 +1288,7 @@ export async function evaluateDunningAndWinbackLifecycle(
     .all(nowSec - 14 * 86400) as Array<{
     account_id: string;
     stripe_subscription_id: string | null;
+    status: string;
   }>;
 
   let winbackSent = 0;
@@ -1295,7 +1296,7 @@ export async function evaluateDunningAndWinbackLifecycle(
     const res = await dispatchChurnWinbackEmail(repo, {
       accountId: row.account_id,
       subscriptionId: row.stripe_subscription_id,
-      reason: "canceled",
+      reason: row.status === "canceled" ? "canceled" : "cancel_at_period_end",
       nowSec,
     });
     if (res.ok && !res.skipped) winbackSent += 1;

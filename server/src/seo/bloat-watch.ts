@@ -342,6 +342,12 @@ export function upsertBloatWatchPost(store: SeoStore, post: Omit<BloatWatchPost,
       title: post.title,
       reclaimed_gb: post.measurements?.reclaimed_gb ?? null,
     });
+    store.captureStrategyBaselineSnapshot({
+      slug: post.clean_item_slug.toLowerCase(),
+      target_path: `/clean/${post.clean_item_category || "app"}/${post.clean_item_slug.toLowerCase()}`,
+      optimization_type: "A4_bloat_watch",
+      notes: `Published Bloat Watch spike callout: ${post.title}`,
+    });
   }
 }
 

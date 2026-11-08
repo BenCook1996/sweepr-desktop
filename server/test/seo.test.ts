@@ -1578,7 +1578,10 @@ test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source 
   const discJson = (await discRes.json()) as any;
   assert.equal(discJson.ok, true);
   assert.ok(discJson.summary.total_evaluated >= 32);
-  assert.equal(discJson.summary.new_pseo_ready_count, 32);
+  const ungeneratedRegistryCount = WINDOWS_ECOSYSTEM_OPPORTUNITY_REGISTRY.filter(
+    (spec) => !baseCleanItems.some((i) => i.slug.toLowerCase() === spec.slug.toLowerCase())
+  ).length;
+  assert.equal(discJson.summary.new_pseo_ready_count, ungeneratedRegistryCount);
   assert.ok(discJson.top_opportunities.length > 0);
   assert.ok(discJson.ctr_enrichment_candidates.length > 0);
 
@@ -1755,7 +1758,7 @@ test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 6
   assert.equal(statusRes.status, 200);
   const statusJson = (await statusRes.json()) as any;
   assert.equal(statusJson.ok, true);
-  assert.equal(statusJson.total_jobs, 15);
+  assert.equal(statusJson.total_jobs, 18);
   const a1Job = statusJson.jobs.find((j: any) => j.id === "A1_telemetry_truth");
   assert.equal(a1Job.last_status, "ok");
 });
@@ -1904,6 +1907,213 @@ test("CMO Automations v3: Persistent Storage Ledger, GEO llms.txt, Dunning/Winba
     decision: "rejected",
   });
 });
+
+test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & A17 Strategy Forecast Ledger", async () => {
+  const { get, post } = setup();
+
+  // 1. Verify 5-Tier Transactional Classifier & Time-to-Rank Forecaster
+  const { classifyTransactionalTier, computeKeywordForecast, scoreKeywordOpportunity } = await import("../src/seo/keywords.js");
+  const switcherClass = classifyTransactionalTier("ccleaner alternative without bloatware windows 11");
+  assert.equal(switcherClass.tier, "BOFU_Switcher");
+  assert.equal(switcherClass.buyerStage, "BOFU");
+  assert.ok(switcherClass.expectedCvrPct >= 5.0);
+
+  const toolClass = classifyTransactionalTier("discord cache cleaner tool windows 11");
+  assert.equal(toolClass.tier, "BOFU_Tool_Intent");
+  assert.equal(toolClass.buyerStage, "BOFU");
+
+  const scoredTool = scoreKeywordOpportunity({
+    keyword: "marvel rivals shader cache cleaner tool windows 11",
+    googleAutocompleteRank: 1,
+    bingAutocompleteRank: 1,
+    avgSpaceGb: 8.5,
+    isCuratedEcosystemSeed: true,
+    competitorSourceDomain: "wisecleaner.com",
+  });
+  assert.equal(scoredTool.buyer_stage, "BOFU");
+  assert.equal(scoredTool.transactional_tier, "BOFU_Tool_Intent");
+  assert.ok(scoredTool.forecast.forecast_kd >= 5 && scoredTool.forecast.forecast_kd <= 50);
+  assert.ok(scoredTool.forecast.forecast_est_days_to_top10 >= 7 && scoredTool.forecast.forecast_est_days_to_top10 <= 90);
+  assert.ok(scoredTool.forecast.forecast_monthly_volume >= 50);
+  assert.ok(scoredTool.forecast.forecast_monthly_clicks >= 4);
+  assert.ok(scoredTool.forecast.forecast_monthly_downloads > 0);
+  assert.ok(scoredTool.forecast.forecast_monthly_conversions > 0);
+
+  // 2. Verify A16 Competitor Organic Gap Harvester & On-Page Structural Teardown
+  const compGapRes = await get("/api/crm/seo/competitor-organic-gap");
+  assert.equal(compGapRes.status, 200);
+  const compGapJson = (await compGapRes.json()) as any;
+  assert.equal(compGapJson.ok, true);
+  assert.ok(compGapJson.total_tracked_pages >= 8);
+  assert.ok(Array.isArray(compGapJson.competitor_pages));
+  assert.ok(Array.isArray(compGapJson.teardowns) && compGapJson.teardowns.length >= 8);
+
+  const teardownRes = await post("/api/crm/seo/competitor-organic-teardown", {
+    url: "https://www.wisecleaner.com/think-tank/999-How-to-Clear-NVIDIA-DXCache-Windows-11.html",
+    target_keyword: "clear nvidia dxcache shader cache cleaner windows 11",
+    raw_html: `<!doctype html><html><head><title>How to Clear NVIDIA DXCache in Windows 11</title><meta name="description" content="Step-by-step guide to clear %LocalAppData%\\NVIDIA\\DXCache safely."></head><body><h1>How to Clear NVIDIA DXCache in Windows 11</h1><h2>Where Is %LocalAppData%\\NVIDIA\\DXCache Located?</h2><h2>Is It Safe to Delete NVIDIA Shader Cache?</h2><ol><li>Open Run dialog</li><li>Delete stale shader files</li></ol></body></html>`,
+    create_ledger_entry: true,
+  });
+  assert.equal(teardownRes.status, 200);
+  const teardownJson = (await teardownRes.json()) as any;
+  assert.equal(teardownJson.ok, true);
+  assert.equal(teardownJson.teardown.competitor_domain, "wisecleaner.com");
+  assert.ok(teardownJson.teardown.extracted_win_paths.includes("%LocalAppData%\\NVIDIA\\DXCache"));
+  assert.ok(teardownJson.teardown.weaknesses.length >= 2);
+  assert.ok(teardownJson.teardown.replication_blueprint.superiority_elements_to_inject.length >= 3);
+
+  // 3. Verify A17 Persistent Strategy Forecast Ledger & Closed-Loop Weight Calibration
+  const ledgerGetRes = await get("/api/crm/seo/strategy-ledger");
+  assert.equal(ledgerGetRes.status, 200);
+  const ledgerGetJson = (await ledgerGetRes.json()) as any;
+  assert.equal(ledgerGetJson.ok, true);
+  assert.ok(ledgerGetJson.entries.length >= 10);
+  assert.ok(ledgerGetJson.summary.evaluated_count >= 1);
+  assert.ok(ledgerGetJson.scoring_weights.low_comp_weight > 0);
+
+  const ledgerPostRes = await post("/api/crm/seo/strategy-ledger", {
+    recalibrate_weights: true,
+    entry: {
+      slug: "steam-depotcache",
+      target_path: "/clean/app/steam-depotcache",
+      primary_keyword: "steam depotcache safe to delete cleaner",
+      buyer_stage: "BOFU",
+      transactional_tier: "BOFU_Tool_Intent",
+      difficulty_tier: "very_easy",
+      forecast_kd: 16,
+      forecast_est_days_to_top10: 18,
+      forecast_monthly_volume: 1200,
+      forecast_monthly_clicks: 85,
+      status: "published",
+    },
+  });
+  assert.equal(ledgerPostRes.status, 200);
+  const ledgerPostJson = (await ledgerPostRes.json()) as any;
+  assert.equal(ledgerPostJson.ok, true);
+  assert.ok(Array.isArray(ledgerPostJson.recommendations) && ledgerPostJson.recommendations.length >= 1);
+
+  // 4. Verify A16 & A17 execute cleanly via /api/crm/automations/run
+  const runA16 = await post("/api/crm/automations/run", { job_id: "A16_competitor_organic_intel" });
+  assert.equal(runA16.status, 200);
+  const runA16Json = (await runA16.json()) as any;
+  assert.equal(runA16Json.ok, true);
+  assert.equal(runA16Json.results.A16_competitor_organic_intel.last_status, "ok");
+
+  const runA17 = await post("/api/crm/automations/run", { job_id: "A17_strategy_forecast_ledger" });
+  assert.equal(runA17.status, 200);
+  const runA17Json = (await runA17.json()) as any;
+  assert.equal(runA17Json.ok, true);
+  assert.equal(runA17Json.results.A17_strategy_forecast_ledger.last_status, "ok");
+
+  // 5. Verify interactive CRM Keyword Forecaster endpoint (/api/crm/seo/forecast-keyword)
+  const fcRes = await post("/api/crm/seo/forecast-keyword", {
+    keyword: "discord cache cleaner tool windows 11",
+    competitor_domain: "ccleaner.com",
+    log_to_ledger: true,
+  });
+  assert.equal(fcRes.status, 200);
+  const fcJson = (await fcRes.json()) as any;
+  assert.equal(fcJson.ok, true);
+  assert.equal(fcJson.logged_to_ledger, true);
+  assert.equal(fcJson.scored.buyer_stage, "BOFU");
+  assert.equal(fcJson.scored.transactional_tier, "BOFU_Tool_Intent");
+  assert.ok(fcJson.scored.forecast.forecast_est_days_to_top10 >= 7);
+  assert.ok(fcJson.scored.forecast.forecast_monthly_volume >= 50);
+
+  // 6. Verify Pre- vs. Post-Optimization Baseline Snapshot & Lift Calibration + A18 Underperformer Auto-Refresh
+  const baselineRes = await post("/api/crm/seo/strategy-ledger/baseline", {
+    slug: "discord-cache",
+    target_path: "/clean/app/discord-cache",
+    optimization_type: "a2_ctr_rewrite",
+    pre_impressions_28d: 800,
+    pre_clicks_28d: 16,
+    pre_ctr_28d: 2.0,
+    pre_avg_position: 9.2,
+    pre_downloads_28d: 1,
+    overwrite_baseline: true,
+  });
+  assert.equal(baselineRes.status, 200);
+  const baselineJson = (await baselineRes.json()) as any;
+  assert.equal(baselineJson.ok, true);
+  assert.equal(baselineJson.entry.pre_clicks_28d, 16);
+  assert.equal(baselineJson.entry.pre_ctr_28d, 2.0);
+  assert.equal(baselineJson.entry.pre_avg_position, 9.2);
+  assert.equal(baselineJson.entry.last_optimization_type, "a2_ctr_rewrite");
+
+  // Reconcile actuals where discord-cache now has higher clicks/CTR and improved position
+  const reconcileRes = await post("/api/crm/seo/strategy-ledger/reconcile", {
+    persist_json: false,
+    actuals_override: [
+      {
+        slug: "discord-cache",
+        impressions_28d: 1200,
+        clicks_28d: 48,
+        ctr_28d: 4.0,
+        avg_position: 4.5,
+        downloads_28d: 3,
+        paid_conversions_28d: 1,
+      },
+    ],
+    paid_keyword_cvr_by_tier: {
+      BOFU_Switcher: { clicks: 120, conversions: 8 },
+    },
+  });
+  assert.equal(reconcileRes.status, 200);
+  const reconcileJson = (await reconcileRes.json()) as any;
+  assert.equal(reconcileJson.ok, true);
+  assert.ok(reconcileJson.pre_vs_post_summary.optimized_pages_count >= 1);
+  const discordRow = reconcileJson.entries.find((e: any) => e.slug === "discord-cache");
+  assert.ok(discordRow);
+  assert.equal(discordRow.post_clicks_lift_pct, 200); // (48 - 16) / 16 = +200%
+  assert.equal(discordRow.post_ctr_lift_pct, 100); // (4.0 - 2.0) / 2.0 = +100%
+  assert.equal(discordRow.post_position_delta, 4.7); // 9.2 - 4.5 = +4.7 spots gained
+  assert.ok(reconcileJson.scoring_weights.calibrated_ctr_lift_multiplier >= 1.0);
+
+  // 7. Verify A18 Self-Healing Underperformer Auto-Refresher (/api/crm/seo/underperformer-refresh & A18 automation job)
+  await post("/api/crm/seo/strategy-ledger", {
+    recalibrate_weights: false,
+    entry: {
+      slug: "slack-cache",
+      target_path: "/clean/app/slack-cache",
+      primary_keyword: "clear slack cache windows 11",
+      buyer_stage: "MOFU",
+      transactional_tier: "MOFU_Action_Cleanup",
+      difficulty_tier: "easy",
+      forecast_kd: 22,
+      forecast_est_days_to_top10: 14,
+      forecast_monthly_volume: 900,
+      forecast_monthly_clicks: 55,
+      actual_impressions_28d: 650,
+      actual_clicks_28d: 5,
+      actual_ctr_28d: 0.77,
+      actual_avg_position: 8.4,
+      variance_status: "underperforming_ctr",
+      status: "published",
+    },
+  });
+  const a18Res = await post("/api/crm/seo/underperformer-refresh", {
+    max_pages: 3,
+    persist_disk: false,
+  });
+  assert.equal(a18Res.status, 200);
+  const a18Json = (await a18Res.json()) as any;
+  assert.equal(a18Json.ok, true);
+  assert.ok(a18Json.refreshed_count >= 1);
+
+  const runA18Job = await post("/api/crm/automations/run", { job_id: "A18_underperformer_auto_refresh" });
+  assert.equal(runA18Job.status, 200);
+  const runA18JobJson = (await runA18Job.json()) as any;
+  assert.equal(runA18JobJson.ok, true);
+  assert.equal(runA18JobJson.results.A18_underperformer_auto_refresh.last_status, "ok");
+
+  // 8. Verify A9 Experiment Evaluation endpoint (/api/crm/experiments/evaluate)
+  const expEvalRes = await post("/api/crm/experiments/evaluate", {});
+  assert.equal(expEvalRes.status, 200);
+  const expEvalJson = (await expEvalRes.json()) as any;
+  assert.equal(expEvalJson.ok, true);
+  assert.ok(Array.isArray(expEvalJson.experiments));
+});
+
 
 
 

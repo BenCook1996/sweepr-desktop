@@ -25,9 +25,11 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   LOCKED_TEST_TITLE_SLUGS,
+  SEO_STRATEGY_LEDGER_PATH,
   isSlugInRedirects,
   validateCandidateCleanItemMjs,
   runKeywordResearchEngine,
+  scoreOpportunityMjs,
 } from "./keyword-research-engine.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1467,260 +1469,8 @@ const CURATED_TOPICS = [
 ];
 
 // -----------------------------------------------------------------------------
-// 2. Combinatorial High-Intent Topic Matrices (900+ Unique Keyword-Researched Pages)
+// 2. High-Intent Windows System Folder Matrix (Standalone Canonical Folders)
 // -----------------------------------------------------------------------------
-const APP_MATRIX_APPS = [
-  { key: "chrome", label: "Google Chrome", baseDir: "%LocalAppData%\\Google\\Chrome\\User Data\\Default", proc: "chrome.exe" },
-  { key: "edge", label: "Microsoft Edge", baseDir: "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default", proc: "msedge.exe" },
-  { key: "brave", label: "Brave Browser", baseDir: "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default", proc: "brave.exe" },
-  { key: "opera-gx", label: "Opera GX Gaming Browser", baseDir: "%LocalAppData%\\Opera Software\\Opera GX Stable", proc: "opera.exe" },
-  { key: "vivaldi", label: "Vivaldi Browser", baseDir: "%LocalAppData%\\Vivaldi\\User Data\\Default", proc: "vivaldi.exe" },
-  { key: "arc-browser", label: "Arc Browser for Windows", baseDir: "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache", proc: "Arc.exe" },
-  { key: "discord", label: "Discord Desktop", baseDir: "%AppData%\\discord", proc: "Discord.exe" },
-  { key: "slack", label: "Slack Desktop", baseDir: "%AppData%\\Slack", proc: "slack.exe" },
-  { key: "teams-work", label: "Microsoft Teams (New Work/School)", baseDir: "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default", proc: "ms-teams.exe" },
-  { key: "vscode", label: "Visual Studio Code", baseDir: "%AppData%\\Code", proc: "Code.exe" },
-  { key: "vscode-insiders", label: "VS Code Insiders", baseDir: "%AppData%\\Code - Insiders", proc: "Code - Insiders.exe" },
-  { key: "cursor-editor", label: "Cursor AI IDE", baseDir: "%AppData%\\Cursor", proc: "Cursor.exe" },
-  { key: "windsurf-ide", label: "Windsurf AI Editor", baseDir: "%AppData%\\Windsurf", proc: "Windsurf.exe" },
-  { key: "notion-app", label: "Notion Desktop App", baseDir: "%AppData%\\Notion", proc: "Notion.exe" },
-  { key: "obsidian-app", label: "Obsidian Markdown App", baseDir: "%AppData%\\obsidian", proc: "Obsidian.exe" },
-  { key: "figma-desktop", label: "Figma Desktop", baseDir: "%AppData%\\Figma", proc: "Figma.exe" },
-  { key: "canva-desktop", label: "Canva Desktop App", baseDir: "%AppData%\\Canva", proc: "Canva.exe" },
-  { key: "postman-app", label: "Postman API Client", baseDir: "%AppData%\\Postman", proc: "Postman.exe" },
-  { key: "whatsapp-desktop", label: "WhatsApp Desktop", baseDir: "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache", proc: "WhatsApp.exe" },
-  { key: "signal-desktop", label: "Signal Private Messenger", baseDir: "%AppData%\\Signal", proc: "Signal.exe" },
-  { key: "telegram-desktop", label: "Telegram Desktop", baseDir: "%AppData%\\Telegram Desktop\\tdata\\user_data", proc: "Telegram.exe" },
-  { key: "spotify-desktop", label: "Spotify Desktop", baseDir: "%LocalAppData%\\Spotify", proc: "Spotify.exe" },
-  { key: "tidal-desktop", label: "TIDAL HiFi Desktop", baseDir: "%AppData%\\TIDAL", proc: "TIDAL.exe" },
-  { key: "steam-client", label: "Steam Client", baseDir: "%LocalAppData%\\Steam\\htmlcache", proc: "steam.exe" },
-  { key: "epic-games", label: "Epic Games Launcher", baseDir: "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430", proc: "EpicGamesLauncher.exe" },
-  { key: "ea-desktop-app", label: "EA App Launcher", baseDir: "%LocalAppData%\\Electronic Arts\\EA Desktop\\cache", proc: "EADesktop.exe" },
-  { key: "ubisoft-connect", label: "Ubisoft Connect PC", baseDir: "%LocalAppData%\\Ubisoft Game Launcher\\spool", proc: "upc.exe" },
-  { key: "gog-galaxy", label: "GOG Galaxy 2.0", baseDir: "%ProgramData%\\GOG.com\\Galaxy\\webcache", proc: "GalaxyClient.exe" },
-  { key: "battlenet-client", label: "Blizzard Battle.net App", baseDir: "%ProgramData%\\Battle.net\\Agent\\data", proc: "Battle.net.exe" },
-  { key: "riot-client", label: "Riot Client", baseDir: "%LocalAppData%\\Riot Games\\Riot Client\\Data\\Logs", proc: "RiotClientServices.exe" },
-  { key: "overwolf-client", label: "Overwolf Gaming Overlay", baseDir: "%LocalAppData%\\Overwolf\\BrowserCache", proc: "Overwolf.exe" },
-  { key: "medal-tv", label: "Medal.tv Game Recorder", baseDir: "%AppData%\\Medal\\Cache", proc: "Medal.exe" },
-  { key: "steelseries-gg", label: "SteelSeries GG", baseDir: "%AppData%\\steelseries-gg-client\\Cache", proc: "SteelSeriesGG.exe" },
-  { key: "razer-synapse-3", label: "Razer Synapse 3", baseDir: "%ProgramData%\\Razer\\Synapse3\\Log", proc: "Razer Synapse 3.exe" },
-  { key: "corsair-icue-5", label: "Corsair iCUE 5 Software", baseDir: "%LocalAppData%\\Corsair\\iCUE5\\cache", proc: "iCUE.exe" },
-  { key: "logitech-ghub", label: "Logitech G HUB", baseDir: "%LocalAppData%\\LGHUB\\cache", proc: "lghub.exe" },
-  { key: "adobe-creative-cloud", label: "Adobe Creative Cloud Desktop", baseDir: "%LocalAppData%\\Adobe\\OOBE\\opm.db", proc: "Creative Cloud.exe" },
-  { key: "premiere-pro-2026", label: "Adobe Premiere Pro", baseDir: "%AppData%\\Adobe\\Common\\Media Cache Files", proc: "Adobe Premiere Pro.exe" },
-  { key: "after-effects-2026", label: "Adobe After Effects", baseDir: "%LocalAppData%\\Temp\\Adobe\\After Effects Disk Cache", proc: "AfterFX.exe" },
-  { key: "davinci-resolve-19", label: "DaVinci Resolve Studio", baseDir: "C:\\Users\\%USERNAME%\\Videos\\CacheClip", proc: "Resolve.exe" },
-  { key: "capcut-pc", label: "CapCut Desktop Video Editor", baseDir: "%LocalAppData%\\CapCut\\User Data\\Cache", proc: "CapCut.exe" },
-  { key: "obs-studio", label: "OBS Studio Browser Source", baseDir: "%AppData%\\obs-studio\\plugin_config\\obs-browser", proc: "obs64.exe" },
-  { key: "blender-3d", label: "Blender 3D", baseDir: "%LocalAppData%\\Temp\\blender_temp", proc: "blender.exe" },
-  { key: "jetbrains-intellij", label: "JetBrains IntelliJ IDEA", baseDir: "%LocalAppData%\\JetBrains\\IntelliJIdea2025.1\\caches", proc: "idea64.exe" },
-  { key: "jetbrains-pycharm", label: "JetBrains PyCharm", baseDir: "%LocalAppData%\\JetBrains\\PyCharm2025.1\\caches", proc: "pycharm64.exe" },
-  { key: "jetbrains-webstorm", label: "JetBrains WebStorm", baseDir: "%LocalAppData%\\JetBrains\\WebStorm2025.1\\caches", proc: "webstorm64.exe" },
-  { key: "jetbrains-rider", label: "JetBrains Rider .NET IDE", baseDir: "%LocalAppData%\\JetBrains\\Rider2025.1\\caches", proc: "rider64.exe" },
-  { key: "android-studio-koala", label: "Android Studio", baseDir: "%LocalAppData%\\Google\\AndroidStudio2024.3\\caches", proc: "studio64.exe" },
-  { key: "docker-desktop-wsl", label: "Docker Desktop Windows", baseDir: "%LocalAppData%\\Docker\\log", proc: "Docker Desktop.exe" },
-  { key: "plex-media-server", label: "Plex Media Server", baseDir: "%LocalAppData%\\Plex Media Server\\Cache\\PhotoTranscoder", proc: "Plex Media Server.exe" },
-  { key: "firefox", label: "Mozilla Firefox", baseDir: "%LocalAppData%\\Mozilla\\Firefox\\Profiles\\Default", proc: "firefox.exe" },
-  { key: "zoom-workplace", label: "Zoom Workplace", baseDir: "%AppData%\\Zoom\\data", proc: "Zoom.exe" },
-  { key: "thunderbird", label: "Mozilla Thunderbird", baseDir: "%LocalAppData%\\Thunderbird\\Profiles\\Default", proc: "thunderbird.exe" },
-  { key: "dropbox-desktop", label: "Dropbox Desktop Client", baseDir: "%LocalAppData%\\Dropbox\\cache", proc: "Dropbox.exe" },
-  { key: "onedrive-sync", label: "Microsoft OneDrive Sync", baseDir: "%LocalAppData%\\Microsoft\\OneDrive\\logs", proc: "OneDrive.exe" },
-  { key: "github-desktop", label: "GitHub Desktop", baseDir: "%AppData%\\GitHub Desktop", proc: "GitHubDesktop.exe" },
-  { key: "insomnia-rest", label: "Insomnia API Client", baseDir: "%AppData%\\Insomnia", proc: "Insomnia.exe" },
-  { key: "dbeaver-db", label: "DBeaver", baseDir: "%AppData%\\DBeaverData\\workspace6\\.metadata", proc: "dbeaver.exe" },
-  { key: "vlc-media-player", label: "VLC Media Player", baseDir: "%AppData%\\vlc\\art", proc: "vlc.exe" },
-  { key: "audacity-audio", label: "Audacity Audio Editor", baseDir: "%AppData%\\audacity\\SessionData", proc: "audacity.exe" },
-  { key: "visual-studio-2022", label: "Visual Studio 2022 IDE", baseDir: "%LocalAppData%\\Microsoft\\VisualStudio\\17.0", proc: "devenv.exe" },
-  { key: "league-of-legends", label: "League of Legends Client", baseDir: "C:\\Riot Games\\League of Legends\\Logs", proc: "LeagueClient.exe" },
-  { key: "geforce-now", label: "NVIDIA GeForce NOW", baseDir: "%LocalAppData%\\NVIDIA Corporation\\GeForceNOW\\cache", proc: "GeForceNOW.exe" },
-  { key: "roblox-player", label: "Roblox Player", baseDir: "%LocalAppData%\\Roblox\\Downloads", proc: "RobloxPlayerBeta.exe" },
-  { key: "tiktok-live-studio", label: "TikTok LIVE Studio", baseDir: "%AppData%\\tiktok-live-studio\\Cache", proc: "TikTok LIVE Studio.exe" },
-  { key: "zen-browser", label: "Zen Browser", baseDir: "%AppData%\\zen\\Profiles", proc: "zen.exe" },
-  { key: "waterfox", label: "Waterfox Browser", baseDir: "%AppData%\\Waterfox\\Profiles", proc: "waterfox.exe" },
-  { key: "floorp-browser", label: "Floorp Browser", baseDir: "%AppData%\\Floorp\\Profiles", proc: "floorp.exe" },
-  { key: "tor-browser", label: "Tor Browser", baseDir: "%LocalAppData%\\Tor Browser\\Browser\\TorBrowser\\Data", proc: "firefox.exe" },
-  { key: "linear-desktop", label: "Linear Desktop App", baseDir: "%AppData%\\Linear", proc: "Linear.exe" },
-  { key: "clickup-desktop", label: "ClickUp Desktop App", baseDir: "%AppData%\\ClickUp", proc: "ClickUp.exe" },
-  { key: "asana-desktop", label: "Asana Desktop App", baseDir: "%AppData%\\Asana", proc: "Asana.exe" },
-  { key: "bitwarden-desktop", label: "Bitwarden Desktop", baseDir: "%AppData%\\Bitwarden", proc: "Bitwarden.exe" },
-  { key: "1password-desktop", label: "1Password Desktop", baseDir: "%LocalAppData%\\1Password", proc: "1Password.exe" },
-  { key: "streamlabs-desktop", label: "Streamlabs Desktop", baseDir: "%AppData%\\slobs-client", proc: "Streamlabs Desktop.exe" },
-  { key: "adobe-photoshop", label: "Adobe Photoshop", baseDir: "%AppData%\\Adobe\\Adobe Photoshop 2025", proc: "Photoshop.exe" },
-  { key: "adobe-illustrator", label: "Adobe Illustrator", baseDir: "%AppData%\\Adobe\\Adobe Illustrator 29 Settings", proc: "Illustrator.exe" },
-  { key: "adobe-lightroom", label: "Adobe Lightroom Classic", baseDir: "%LocalAppData%\\Adobe\\Lightroom\\Caches", proc: "Lightroom.exe" },
-  { key: "adobe-audition", label: "Adobe Audition", baseDir: "%AppData%\\Adobe\\Audition\\25.0", proc: "Adobe Audition.exe" },
-  { key: "google-drive-desktop", label: "Google Drive for Desktop", baseDir: "%LocalAppData%\\Google\\DriveFS", proc: "GoogleDriveFS.exe" },
-  { key: "fl-studio-daw", label: "FL Studio DAW", baseDir: "%Documents%\\Image-Line\\FL Studio", proc: "FL64.exe" },
-  { key: "ableton-live-suite", label: "Ableton Live Suite", baseDir: "%AppData%\\Ableton\\Live 12", proc: "Ableton Live 12 Suite.exe" },
-  { key: "sidefx-houdini", label: "SideFX Houdini 3D", baseDir: "%UserProfile%\\Documents\\houdini20.5", proc: "hindie.exe" },
-  { key: "autodesk-maya", label: "Autodesk Maya", baseDir: "%UserProfile%\\Documents\\maya\\2025", proc: "maya.exe" },
-  { key: "autodesk-3ds-max", label: "Autodesk 3ds Max", baseDir: "%LocalAppData%\\Autodesk\\3dsMax\\2025 - 64bit", proc: "3dsmax.exe" },
-  { key: "rpcs3-ps3-emulator", label: "RPCS3 PS3 Emulator", baseDir: "%AppData%\\rpcs3", proc: "rpcs3.exe" },
-  { key: "dolphin-emulator", label: "Dolphin Emulator", baseDir: "%AppData%\\Dolphin Emulator", proc: "Dolphin.exe" },
-  { key: "retroarch-emu", label: "RetroArch", baseDir: "%AppData%\\RetroArch", proc: "retroarch.exe" },
-  { key: "prism-minecraft", label: "Prism Launcher Minecraft", baseDir: "%AppData%\\PrismLauncher", proc: "prismlauncher.exe" },
-  { key: "jetbrains-clion", label: "JetBrains CLion", baseDir: "%LocalAppData%\\JetBrains\\CLion2025.1\\caches", proc: "clion64.exe" },
-  { key: "jetbrains-datagrip", label: "JetBrains DataGrip", baseDir: "%LocalAppData%\\JetBrains\\DataGrip2025.1\\caches", proc: "datagrip64.exe" },
-  { key: "jetbrains-goland", label: "JetBrains GoLand", baseDir: "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches", proc: "goland64.exe" },
-  { key: "jetbrains-phpstorm", label: "JetBrains PhpStorm", baseDir: "%LocalAppData%\\JetBrains\\PhpStorm2025.1\\caches", proc: "phpstorm64.exe" },
-  { key: "megasync-app", label: "MEGAsync Cloud Storage", baseDir: "%LocalAppData%\\Mega Limited\\MEGAsync", proc: "MEGAsync.exe" },
-  { key: "microsoft-outlook", label: "Microsoft Outlook", baseDir: "%LocalAppData%\\Microsoft\\Outlook", proc: "OUTLOOK.EXE" },
-  { key: "gitkraken", label: "GitKraken Git Client", baseDir: "%AppData%\\GitKraken", proc: "GitKraken.exe" },
-  { key: "vscodium", label: "VSCodium Editor", baseDir: "%AppData%\\VSCodium", proc: "VSCodium.exe" },
-  { key: "bruno-api", label: "Bruno API Client", baseDir: "%AppData%\\bruno", proc: "bruno.exe" },
-  { key: "beekeeper-studio", label: "Beekeeper Studio", baseDir: "%AppData%\\beekeeper-studio", proc: "Beekeeper Studio.exe" },
-  { key: "heroic-games", label: "Heroic Games Launcher", baseDir: "%AppData%\\heroic", proc: "Heroic.exe" },
-  { key: "modrinth-app", label: "Modrinth App Launcher", baseDir: "%AppData%\\ModrinthApp", proc: "ModrinthApp.exe" },
-  { key: "deezer-desktop", label: "Deezer Desktop Music", baseDir: "%AppData%\\Deezer", proc: "Deezer.exe" },
-  { key: "logitech-options-plus", label: "Logitech Options+", baseDir: "%LocalAppData%\\LogiOptionsPlus", proc: "logioptionsplus.exe" },
-  { key: "elgato-stream-deck", label: "Elgato Stream Deck", baseDir: "%AppData%\\Elgato\\StreamDeck", proc: "StreamDeck.exe" },
-  { key: "bambu-studio", label: "Bambu Studio Slicer", baseDir: "%AppData%\\BambuStudio", proc: "bambu-studio.exe" },
-  { key: "chatgpt-desktop", label: "ChatGPT Desktop App", baseDir: "%AppData%\\ChatGPT", proc: "ChatGPT.exe" },
-  { key: "curseforge-app", label: "CurseForge Mod Manager", baseDir: "%AppData%\\curseforge", proc: "CurseForge.exe" },
-  { key: "qbittorrent-app", label: "qBittorrent Client", baseDir: "%LocalAppData%\\qBittorrent", proc: "qbittorrent.exe" },
-  { key: "prusa-slicer", label: "PrusaSlicer 3D Slicer", baseDir: "%AppData%\\PrusaSlicer", proc: "prusa-slicer.exe" },
-  { key: "orca-slicer", label: "OrcaSlicer 3D Slicer", baseDir: "%AppData%\\OrcaSlicer", proc: "orca-slicer.exe" },
-  { key: "ultimaker-cura", label: "UltiMaker Cura Slicer", baseDir: "%AppData%\\cura", proc: "Cura.exe" },
-  { key: "krita-painting", label: "Krita Digital Art", baseDir: "%LocalAppData%\\krita", proc: "krita.exe" },
-  { key: "gimp-editor", label: "GIMP Photo Editor", baseDir: "%AppData%\\GIMP\\2.10", proc: "gimp-2.10.exe" },
-  { key: "anydesk-remote", label: "AnyDesk Remote Desktop", baseDir: "%AppData%\\AnyDesk", proc: "AnyDesk.exe" },
-  { key: "sublime-text", label: "Sublime Text Editor", baseDir: "%AppData%\\Sublime Text", proc: "sublime_text.exe" },
-  { key: "claude-desktop", label: "Claude Desktop App", baseDir: "%AppData%\\Claude", proc: "Claude.exe" },
-  { key: "affinity-photo", label: "Affinity Photo 2", baseDir: "%AppData%\\Affinity\\Photo\\2.0", proc: "Photo.exe" },
-  { key: "affinity-designer", label: "Affinity Designer 2", baseDir: "%AppData%\\Affinity\\Designer\\2.0", proc: "Designer.exe" },
-  { key: "affinity-publisher", label: "Affinity Publisher 2", baseDir: "%AppData%\\Affinity\\Publisher\\2.0", proc: "Publisher.exe" },
-  { key: "kdenlive-video", label: "Kdenlive Video Editor", baseDir: "%LocalAppData%\\kdenlive", proc: "kdenlive.exe" },
-  { key: "handbrake-encoder", label: "HandBrake Video Transcoder", baseDir: "%AppData%\\HandBrake", proc: "HandBrake.exe" },
-  { key: "calibre-ebook", label: "Calibre E-Book Manager", baseDir: "%AppData%\\calibre", proc: "calibre.exe" },
-  { key: "reaper-daw", label: "REAPER Audio Workstation", baseDir: "%AppData%\\REAPER", proc: "reaper.exe" },
-  { key: "freecad-3d", label: "FreeCAD 3D Modeler", baseDir: "%AppData%\\FreeCAD", proc: "FreeCAD.exe" },
-  { key: "shotcut-video", label: "Shotcut Video Editor", baseDir: "%LocalAppData%\\Meltytech\\Shotcut", proc: "shotcut.exe" },
-  { key: "zed-editor", label: "Zed Code Editor", baseDir: "%LocalAppData%\\Zed", proc: "zed.exe" },
-  { key: "trae-ide", label: "Trae AI IDE", baseDir: "%AppData%\\Trae", proc: "trae.exe" },
-  { key: "warp-terminal", label: "Warp AI Terminal", baseDir: "%LocalAppData%\\Warp", proc: "warp.exe" },
-  { key: "fork-git", label: "Fork Git Client", baseDir: "%LocalAppData%\\Fork", proc: "Fork.exe" },
-  { key: "sublime-merge", label: "Sublime Merge", baseDir: "%AppData%\\Sublime Merge", proc: "sublime_merge.exe" },
-  { key: "vegas-pro", label: "VEGAS Pro Video Editor", baseDir: "%AppData%\\VEGAS Pro", proc: "vegas210.exe" },
-  { key: "cubase-daw", label: "Steinberg Cubase DAW", baseDir: "%AppData%\\Steinberg\\Cubase", proc: "Cubase.exe" },
-  { key: "studio-one", label: "PreSonus Studio One DAW", baseDir: "%AppData%\\PreSonus\\Studio One", proc: "Studio One.exe" },
-  { key: "bitwig-studio", label: "Bitwig Studio DAW", baseDir: "%LocalAppData%\\Bitwig Studio", proc: "BitwigStudio.exe" },
-  { key: "duckduckgo-browser", label: "DuckDuckGo Browser", baseDir: "%LocalAppData%\\Packages\\DuckDuckGo.DesktopBrowser_amm1zp6nhjcc0\\LocalCache", proc: "DuckDuckGo.exe" },
-  { key: "lens-k8s", label: "Lens Kubernetes IDE", baseDir: "%AppData%\\Lens", proc: "Lens.exe" },
-  { key: "termius-app", label: "Termius SSH Client", baseDir: "%AppData%\\Termius", proc: "Termius.exe" },
-  { key: "tableplus-db", label: "TablePlus DB Client", baseDir: "%AppData%\\TablePlus", proc: "tableplus.exe" },
-  { key: "miro-desktop", label: "Miro Workspace", baseDir: "%AppData%\\RealtimeBoard", proc: "Miro.exe" },
-  { key: "vortex-mod-manager", label: "Vortex Mod Manager", baseDir: "%AppData%\\Vortex", proc: "Vortex.exe" },
-  { key: "playnite-launcher", label: "Playnite Launcher", baseDir: "%AppData%\\Playnite", proc: "Playnite.DesktopApp.exe" },
-  { key: "amazon-music", label: "Amazon Music Desktop", baseDir: "%LocalAppData%\\Amazon Music\\Data", proc: "Amazon Music.exe" },
-  { key: "maxon-cinema-4d", label: "Maxon Cinema 4D", baseDir: "%AppData%\\Maxon", proc: "CINEMA 4D.exe" },
-  { key: "teamviewer-remote", label: "TeamViewer Remote", baseDir: "%AppData%\\TeamViewer", proc: "TeamViewer.exe" },
-  { key: "darktable-photo", label: "Darktable RAW Editor", baseDir: "%LocalAppData%\\darktable", proc: "darktable.exe" },
-  { key: "mongodb-compass", label: "MongoDB Compass", baseDir: "%AppData%\\MongoDB Compass", proc: "MongoDBCompass.exe" },
-  { key: "redis-insight", label: "RedisInsight GUI", baseDir: "%AppData%\\RedisInsight", proc: "RedisInsight.exe" },
-  { key: "logseq-desktop", label: "Logseq Knowledge Base", baseDir: "%AppData%\\Logseq", proc: "Logseq.exe" },
-  { key: "proton-mail-desktop", label: "Proton Mail Desktop", baseDir: "%AppData%\\Proton Mail", proc: "Proton Mail.exe" },
-  { key: "todoist-desktop", label: "Todoist Desktop App", baseDir: "%AppData%\\Todoist", proc: "Todoist.exe" },
-  { key: "ticktick-desktop", label: "TickTick Desktop App", baseDir: "%AppData%\\TickTick", proc: "TickTick.exe" },
-  { key: "mattermost-desktop", label: "Mattermost Desktop", baseDir: "%AppData%\\Mattermost", proc: "Mattermost.exe" },
-  { key: "element-desktop", label: "Element Messenger", baseDir: "%AppData%\\Element", proc: "Element.exe" },
-  { key: "tabby-terminal", label: "Tabby Terminal", baseDir: "%AppData%\\tabby", proc: "Tabby.exe" },
-  { key: "hoppscotch-desktop", label: "Hoppscotch Desktop", baseDir: "%AppData%\\Hoppscotch", proc: "Hoppscotch.exe" },
-  { key: "proton-drive-desktop", label: "Proton Drive Desktop", baseDir: "%LocalAppData%\\ProtonDrive", proc: "ProtonDrive.exe" },
-  { key: "craft-docs", label: "Craft Docs Desktop", baseDir: "%LocalAppData%\\Craft", proc: "Craft.exe" },
-  { key: "openlens-k8s", label: "OpenLens Kubernetes IDE", baseDir: "%AppData%\\OpenLens", proc: "OpenLens.exe" },
-  { key: "hyper-terminal", label: "Hyper Terminal", baseDir: "%AppData%\\Hyper", proc: "Hyper.exe" },
-  { key: "session-messenger", label: "Session Private Messenger", baseDir: "%AppData%\\Session", proc: "Session.exe" },
-  { key: "keybase-desktop", label: "Keybase Desktop App", baseDir: "%AppData%\\Keybase", proc: "Keybase.exe" },
-  { key: "mullvad-vpn", label: "Mullvad VPN Desktop", baseDir: "%LocalAppData%\\Mullvad VPN", proc: "mullvad-gui.exe" },
-  { key: "yaak-api", label: "Yaak REST and GraphQL Client", baseDir: "%AppData%\\yaak", proc: "yaak.exe" },
-  { key: "zulip-desktop", label: "Zulip Team Chat", baseDir: "%AppData%\\Zulip", proc: "Zulip.exe" },
-  { key: "standard-notes", label: "Standard Notes Desktop", baseDir: "%AppData%\\Standard Notes", proc: "Standard Notes.exe" },
-  { key: "skype-desktop", label: "Skype for Desktop", baseDir: "%AppData%\\Microsoft\\Skype for Desktop", proc: "Skype.exe" },
-  { key: "stremio-desktop", label: "Stremio Streaming App", baseDir: "%AppData%\\stremio", proc: "stremio.exe" },
-  { key: "kodi-media-center", label: "Kodi Home Theater", baseDir: "%AppData%\\Kodi", proc: "kodi.exe" },
-  { key: "anki-desktop", label: "Anki Flashcard System", baseDir: "%AppData%\\Anki2", proc: "anki.exe" },
-  { key: "jellyfin-media-player", label: "Jellyfin Media Player", baseDir: "%LocalAppData%\\JellyfinMediaPlayer", proc: "JellyfinMediaPlayer.exe" },
-  { key: "camtasia-studio", label: "TechSmith Camtasia Studio", baseDir: "%LocalAppData%\\TechSmith\\Camtasia Studio", proc: "CamtasiaStudio.exe" },
-  { key: "mailspring-client", label: "Mailspring Email Client", baseDir: "%AppData%\\Mailspring", proc: "mailspring.exe" },
-  { key: "itch-io-app", label: "itch.io Desktop App", baseDir: "%AppData%\\itch", proc: "itch.exe" },
-  { key: "alacritty-terminal", label: "Alacritty GPU Terminal", baseDir: "%AppData%\\alacritty", proc: "alacritty.exe" },
-  { key: "musicbee-player", label: "MusicBee Media Player", baseDir: "%AppData%\\MusicBee", proc: "MusicBee.exe" },
-  { key: "foobar2000-audio", label: "foobar2000 Audio Player", baseDir: "%AppData%\\foobar2000", proc: "foobar2000.exe" },
-  { key: "paint-net", label: "Paint.NET Image Editor", baseDir: "%LocalAppData%\\paint.net", proc: "paintdotnet.exe" },
-  { key: "lightworks-video", label: "Lightworks Video Editor", baseDir: "%LocalAppData%\\Lightworks", proc: "lightworks.exe" },
-  { key: "snagit-capture", label: "TechSmith Snagit Screen Capture", baseDir: "%LocalAppData%\\TechSmith\\Snagit", proc: "Snagit32.exe" },
-  { key: "screen-to-gif", label: "ScreenToGif Screen Recorder", baseDir: "%AppData%\\ScreenToGif", proc: "ScreenToGif.exe" },
-  { key: "wire-messenger", label: "Wire Private Messenger", baseDir: "%AppData%\\Wire", proc: "Wire.exe" },
-  { key: "wezterm-terminal", label: "WezTerm GPU Terminal", baseDir: "%UserProfile%\\.config\\wezterm", proc: "wezterm-gui.exe" },
-  { key: "ghostty-terminal", label: "Ghostty Fast Terminal", baseDir: "%AppData%\\ghostty", proc: "ghostty.exe" },
-  { key: "lapce-editor", label: "Lapce Code Editor", baseDir: "%AppData%\\lapce", proc: "lapce.exe" },
-  { key: "geany-editor", label: "Geany Lightweight IDE", baseDir: "%AppData%\\geany", proc: "geany.exe" },
-  { key: "rekordbox-dj", label: "Pioneer Rekordbox DJ Software", baseDir: "%AppData%\\Pioneer\\rekordbox", proc: "rekordbox.exe" },
-  { key: "serato-dj-pro", label: "Serato DJ Pro", baseDir: "%LocalAppData%\\Serato\\SeratoDJPro", proc: "SeratoDJPro.exe" },
-  { key: "musescore-studio", label: "MuseScore Studio Notation Software", baseDir: "%LocalAppData%\\MuseScore\\MuseScore4", proc: "MuseScore4.exe" },
-  { key: "bandicam-recorder", label: "Bandicam Screen Recorder", baseDir: "%LocalAppData%\\Bandicam", proc: "bdcam.exe" },
-  { key: "viber-desktop", label: "Viber Messenger Desktop", baseDir: "%AppData%\\ViberPC", proc: "Viber.exe" },
-  { key: "line-desktop", label: "LINE Messenger Desktop", baseDir: "%LocalAppData%\\LINE\\Data", proc: "LINE.exe" },
-  { key: "internet-download-manager", label: "Internet Download Manager (IDM)", baseDir: "%AppData%\\IDM", proc: "IDMan.exe" },
-  { key: "inkscape-vector", label: "Inkscape Vector Graphics Editor", baseDir: "%AppData%\\inkscape", proc: "inkscape.exe" },
-  { key: "mobaxterm-terminal", label: "MobaXterm SSH and X Server", baseDir: "%AppData%\\MobaXterm", proc: "MobaXterm.exe" },
-  { key: "jdownloader-client", label: "JDownloader 2 Download Manager", baseDir: "%LocalAppData%\\JDownloader 2.0", proc: "JDownloader2.exe" },
-  { key: "wondershare-filmora", label: "Wondershare Filmora Video Editor", baseDir: "%LocalAppData%\\Wondershare\\Wondershare Filmora", proc: "Filmora.exe" },
-  { key: "topaz-video-ai", label: "Topaz Video AI Upscaler", baseDir: "%AppData%\\Topaz Labs LLC\\Topaz Video AI", proc: "Topaz Video AI.exe" },
-  { key: "substance-3d-painter", label: "Adobe Substance 3D Painter", baseDir: "%AppData%\\Adobe\\Adobe Substance 3D Painter", proc: "Adobe Substance 3D Painter.exe" },
-  { key: "parsec-gaming", label: "Parsec Remote Desktop", baseDir: "%AppData%\\Parsec", proc: "parsecd.exe" },
-  { key: "sourcetree-git", label: "Sourcetree Git Client", baseDir: "%LocalAppData%\\Atlassian\\SourceTree", proc: "SourceTree.exe" },
-  { key: "traktor-pro-dj", label: "Native Instruments Traktor Pro", baseDir: "%LocalAppData%\\Native Instruments\\Traktor Pro", proc: "Traktor.exe" },
-  { key: "roon-music-player", label: "Roon Audiophile Music Player", baseDir: "%LocalAppData%\\Roon", proc: "Roon.exe" },
-  { key: "librewolf-browser", label: "LibreWolf Privacy Browser", baseDir: "%AppData%\\librewolf", proc: "librewolf.exe" },
-  { key: "autodesk-fusion-360", label: "Autodesk Fusion 360 CAD/CAM", baseDir: "%LocalAppData%\\Autodesk\\webdeploy", proc: "Fusion360.exe" },
-  { key: "sketchup-pro-3d", label: "Trimble SketchUp Pro 3D", baseDir: "%AppData%\\SketchUp\\SketchUp 2024", proc: "SketchUp.exe" }
-];
-
-const APP_CACHE_COMPONENTS = [
-  {
-    subSlug: "gpu-shader-cache",
-    subName: "GPUCache & Dawn WebGPU Cache",
-    subPath: "GPUCache and DawnCache",
-    avgSpace: "0.8 GB – 4.5 GB",
-    whatSuffix: "stores compiled Direct3D/Vulkan shader pipelines and WebGPU Dawn cache files that accumulate across app updates.",
-    happensSuffix: "frees hidden C: drive space and resolves black-screen rendering glitches without logging you out."
-  },
-  {
-    subSlug: "code-bytecode-cache",
-    subSlugAlt: "v8-code-cache",
-    subName: "Code Cache & V8 JavaScript Bytecode",
-    subPath: "Code Cache\\js and Code Cache\\wasm",
-    avgSpace: "1.0 GB – 5.2 GB",
-    whatSuffix: "compiles and caches JavaScript and WebAssembly bytecode locally on disk so UI modules load faster.",
-    happensSuffix: "reclaims gigabytes of stale bytecode from old versions while preserving all user settings and accounts."
-  },
-  {
-    subSlug: "service-worker-cachestorage",
-    subName: "Service Worker CacheStorage & Offline Blobs",
-    subPath: "Service Worker\\CacheStorage",
-    avgSpace: "1.5 GB – 8.5 GB",
-    whatSuffix: "quietly caches offline web assets, media chunks, and background sync blobs inside Service Worker\\CacheStorage.",
-    happensSuffix: "wipes bloated offline storage immediately while keeping your active login cookies and preferences intact."
-  },
-  {
-    subSlug: "crashpad-dump-logs",
-    subName: "Crashpad Reports & Diagnostic DMP Logs",
-    subPath: "Crashpad\\reports and logs",
-    avgSpace: "0.6 GB – 3.8 GB",
-    whatSuffix: "writes uncompressed minidump (.dmp) crash files and verbose diagnostic logs whenever a background renderer process hangs.",
-    happensSuffix: "permanently removes old diagnostic dumps and reclaims SSD space with zero impact on app functionality."
-  },
-  {
-    subSlug: "media-blob-storage",
-    subName: "Media Cache & IndexedDB Blob Storage",
-    subPath: "Cache\\Cache_Data and IndexedDB",
-    avgSpace: "2.0 GB – 12.0 GB",
-    whatSuffix: "stores high-resolution video previews, image thumbnails, and temporary media streams in Cache_Data.",
-    happensSuffix: "immediately frees several gigabytes of wasted disk space; active thumbnails are re-fetched on demand."
-  }
-];
-
 const WINDOWS_FOLDER_MATRIX = [
   {
     slug: "windows-system32-driverstore-temp",
@@ -2717,16 +2467,28 @@ const STRIKE_ZONE_ENRICHMENTS = {
   }
 };
 
+const STRIKE_ZONE_ALIASES = {
+  "capcut-pc-cache": "capcut-desktop-cache",
+  "intellij-idea-caches": "jetbrains-intellij-cache",
+  "pip-cache": "pip-http-wheels-cache",
+  "delivery-optimization": "delivery-optimization-cache",
+  "spotify-storage-cache": "spotify-cache",
+  "google-chrome-cache": "chrome-service-worker-cache",
+  "adobe-media-cache": "adobe-premiere-media-cache",
+  "docker-desktop-wsl-vhdx": "docker-desktop-ext4-disk",
+  "windows-softwaredistribution-download": "software-distribution-download"
+};
+
 function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
   const todayIso = new Date().toISOString().slice(0, 10);
   const enrichedSlugs = [];
   for (const entry of batch) {
     const slug = entry.slug;
+    const targetSlug = STRIKE_ZONE_ALIASES[slug] || slug;
     const item = items.find(
       (i) =>
-        i.slug.toLowerCase() === slug ||
-        (slug === "capcut-pc-cache" && i.slug.toLowerCase() === "capcut-desktop-cache") ||
-        (slug === "intellij-idea-caches" && i.slug.toLowerCase() === "jetbrains-intellij-cache")
+        i.slug.toLowerCase() === targetSlug.toLowerCase() ||
+        i.slug.toLowerCase() === slug
     );
     if (!item) continue;
     const isTitleLocked = LOCKED_TEST_TITLE_SLUGS.has(item.slug.toLowerCase()) || LOCKED_TEST_TITLE_SLUGS.has(slug);
@@ -3035,9 +2797,13 @@ async function main() {
 
   // Run Automated Keyword Research & Low-Competition Opportunity Engine first
   const kwReport = await runKeywordResearchEngine({ persistReport: true });
-  const researchedCandidates = (kwReport.new_pseo_candidates || []).map((c) => c.item);
+  const rawResearched = kwReport.new_pseo_candidates || [];
+  // Prioritize BOFU & MOFU transactional candidates first to guarantee >= 70% high-conversion traffic
+  const bofuMofuResearched = rawResearched.filter((c) => c.buyer_stage === "BOFU" || c.buyer_stage === "MOFU");
+  const tofuResearched = rawResearched.filter((c) => c.buyer_stage !== "BOFU" && c.buyer_stage !== "MOFU");
+  const researchedCandidates = [...bofuMofuResearched, ...tofuResearched].map((c) => c.item);
   console.log(
-    `[Keyword Research Engine] Discovered ${researchedCandidates.length} validated low-competition pSEO candidates (avg OpportunityScore: ${kwReport.summary.avg_opportunity_score}).`
+    `[Keyword Research Engine] Discovered ${researchedCandidates.length} validated low-competition pSEO candidates (avg OpportunityScore: ${kwReport.summary.avg_opportunity_score}, BOFU/MOFU prioritized: ${bofuMofuResearched.length}).`
   );
 
   const allCandidates = [...researchedCandidates, ...buildAllCandidateItems()];
@@ -3059,6 +2825,81 @@ async function main() {
     if (normPath) existingPaths.add(normPath);
     selected.push(cand);
   }
+
+  // Persist Forecast Ledger entries for any newly selected or CTR-enriched pages
+  try {
+    let ledger = { updated_at: new Date().toISOString(), scoring_weights: {}, entries: [] };
+    if (fs.existsSync(SEO_STRATEGY_LEDGER_PATH)) {
+      ledger = JSON.parse(fs.readFileSync(SEO_STRATEGY_LEDGER_PATH, "utf8")) || ledger;
+    }
+    const entryMap = new Map((ledger.entries || []).map((e) => [String(e.slug || "").toLowerCase(), e]));
+    const nowUnix = Math.floor(Date.now() / 1000);
+    // Record Pre-Optimization baseline snapshots for Strike-Zone CTR enriched slugs
+    for (const enrichedSlug of autoEnrichedSlugs) {
+      const slugKey = String(enrichedSlug || "").toLowerCase();
+      const prevEntry = entryMap.get(slugKey);
+      if (prevEntry) {
+        entryMap.set(slugKey, {
+          ...prevEntry,
+          baseline_captured_at: prevEntry.baseline_captured_at || nowUnix,
+          pre_impressions_28d: prevEntry.pre_impressions_28d ?? prevEntry.actual_impressions_28d ?? null,
+          pre_clicks_28d: prevEntry.pre_clicks_28d ?? prevEntry.actual_clicks_28d ?? null,
+          pre_ctr_28d: prevEntry.pre_ctr_28d ?? prevEntry.actual_ctr_28d ?? null,
+          pre_avg_position: prevEntry.pre_avg_position ?? prevEntry.actual_avg_position ?? null,
+          pre_downloads_28d: prevEntry.pre_downloads_28d ?? prevEntry.actual_downloads_28d ?? null,
+          optimization_count: (Number(prevEntry.optimization_count) || 0) + 1,
+          last_optimization_type: "daily_strike_zone_ctr_enrichment",
+          updated_at: nowUnix,
+        });
+      }
+    }
+    for (const item of selected) {
+      const slugKey = item.slug.toLowerCase();
+      const prevEntry = entryMap.get(slugKey) || {};
+      const scored = scoreOpportunityMjs({
+        keyword: `clean ${item.slug.replace(/-/g, " ")} windows 11`,
+        autoRank: 1,
+        dualEngine: true,
+        isNetNew: true,
+        weights: ledger.scoring_weights || {},
+      });
+      entryMap.set(slugKey, {
+        ...prevEntry,
+        slug: slugKey,
+        target_path: `/clean/${item.category}/${slugKey}`,
+        primary_keyword: scored.keyword,
+        cluster: item.category,
+        action_type: `create_pseo_${item.category}`,
+        status: "published",
+        source_competitor_domain: item.competitorBlueprint?.sourceDomain || "wisecleaner.com",
+        replicated_patterns: item.competitorBlueprint?.replicatedPatterns || [],
+        transactional_tier: scored.transactional_tier,
+        buyer_stage: scored.buyer_stage,
+        difficulty_tier: scored.difficulty_tier,
+        forecast_opportunity_score: scored.opportunity_score,
+        forecast_demand_score: scored.demand_score,
+        forecast_low_comp_score: scored.low_comp_score,
+        forecast_kd: scored.forecast.forecast_kd,
+        forecast_est_days_to_top10: scored.forecast.forecast_est_days_to_top10,
+        forecast_est_days_to_top3: scored.forecast.forecast_est_days_to_top3,
+        forecast_monthly_volume: scored.forecast.forecast_monthly_volume,
+        forecast_monthly_clicks: scored.forecast.forecast_monthly_clicks,
+        forecast_target_position: scored.forecast.forecast_target_position,
+        forecast_transactional_score: scored.intent_multiplier,
+        forecast_cvr_pct: scored.forecast.forecast_cvr_pct,
+        forecast_monthly_downloads: scored.forecast.forecast_monthly_downloads,
+        forecast_monthly_conversions: scored.forecast.forecast_monthly_conversions,
+        baseline_captured_at: prevEntry.baseline_captured_at || nowUnix,
+        optimization_count: prevEntry.optimization_count || 0,
+        last_optimization_type: prevEntry.last_optimization_type || "initial_publish",
+        published_at: prevEntry.published_at || nowUnix,
+        updated_at: nowUnix,
+      });
+    }
+    ledger.updated_at = new Date().toISOString();
+    ledger.entries = [...entryMap.values()];
+    fs.writeFileSync(SEO_STRATEGY_LEDGER_PATH, JSON.stringify(ledger, null, 2) + "\n", "utf8");
+  } catch {}
 
   if (selected.length === 0) {
     console.log("[Daily Pillar SEO] All distinct canonical pillar topics are already published in clean-items.json (0 synthetic bloat pages added).");

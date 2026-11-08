@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-11-05T06:34:01.124Z",
+  "timestamp": "2026-11-08T18:16:50.308Z",
   "result": {
     "run_id": 1,
-    "pages": 404,
-    "html_pages": 404,
+    "pages": 412,
+    "html_pages": 412,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -14,9 +14,9 @@
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1793860436,
-    "finished_at": 1793860439,
-    "pages": 404,
+    "started_at": 1794161801,
+    "finished_at": 1794161805,
+    "pages": 412,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -26,130 +26,526 @@
   },
   "issuesSummary": {},
   "pagesWithIssues": [],
+  "redirectAudit": {
+    "totalPseoRules": 1062,
+    "brokenPseoRedirects": 0,
+    "circularPseoRedirects": 0,
+    "liveTestedCount": 35,
+    "livePassedCount": 35,
+    "avgLatencyMs": 0.5,
+    "singleHopCompliance": "100%",
+    "sampleResults": [
+      {
+        "path": "/index.html",
+        "expectedTarget": "/",
+        "actualTarget": "/",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.89,
+        "label": "Root index.html alias",
+        "passed": true
+      },
+      {
+        "path": "/pricing.html",
+        "expectedTarget": "/pricing",
+        "actualTarget": "/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.45,
+        "label": "Pricing HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/login.html",
+        "expectedTarget": "/login",
+        "actualTarget": "/login",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.38,
+        "label": "Login HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/terms.html",
+        "expectedTarget": "/terms",
+        "actualTarget": "/terms",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.42,
+        "label": "Terms HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/privacy.html",
+        "expectedTarget": "/privacy",
+        "actualTarget": "/privacy",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.41,
+        "label": "Privacy HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/refund.html",
+        "expectedTarget": "/refund",
+        "actualTarget": "/refund",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.44,
+        "label": "Refund HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/support.html",
+        "expectedTarget": "/support",
+        "actualTarget": "/support",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.45,
+        "label": "Support HTML alias",
+        "passed": true
+      },
+      {
+        "path": "/cdn-cgi/l/email-protection",
+        "expectedTarget": "/support",
+        "actualTarget": "/support",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.3,
+        "label": "Cloudflare email obfuscation redirect",
+        "passed": true
+      },
+      {
+        "path": "/de/",
+        "expectedTarget": "/de",
+        "actualTarget": "/de",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.4,
+        "label": "German root trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/de/pricing/",
+        "expectedTarget": "/de/pricing",
+        "actualTarget": "/de/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.39,
+        "label": "German pricing trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/de/order/",
+        "expectedTarget": "/de/order",
+        "actualTarget": "/de/order",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.4,
+        "label": "German order trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/fr/",
+        "expectedTarget": "/fr",
+        "actualTarget": "/fr",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.32,
+        "label": "French root trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/fr/pricing/",
+        "expectedTarget": "/fr/pricing",
+        "actualTarget": "/fr/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.33,
+        "label": "French pricing trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/fr/order/",
+        "expectedTarget": "/fr/order",
+        "actualTarget": "/fr/order",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.31,
+        "label": "French order trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/es/",
+        "expectedTarget": "/es",
+        "actualTarget": "/es",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.27,
+        "label": "Spanish root trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/es/pricing/",
+        "expectedTarget": "/es/pricing",
+        "actualTarget": "/es/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.3,
+        "label": "Spanish pricing trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/es/order/",
+        "expectedTarget": "/es/order",
+        "actualTarget": "/es/order",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.26,
+        "label": "Spanish order trailing slash",
+        "passed": true
+      },
+      {
+        "path": "/vs/CCLEANER",
+        "expectedTarget": "/vs/ccleaner",
+        "actualTarget": "/vs/ccleaner",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.39,
+        "label": "Uppercase competitor vs slug",
+        "passed": true
+      },
+      {
+        "path": "/alternatives/CCLEANER",
+        "expectedTarget": "/alternatives/ccleaner",
+        "actualTarget": "/alternatives/ccleaner",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.34,
+        "label": "Uppercase competitor alternatives slug",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/davinci-resolve-render-cache",
+        "expectedTarget": "/clean/folder/davinci-resolve-fusion-cache",
+        "actualTarget": "/clean/folder/davinci-resolve-fusion-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.34,
+        "label": "DaVinci Resolve legacy alias",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/localappdata-explorer-thumbcache-db",
+        "expectedTarget": "/clean/folder/windows-iconcache-db",
+        "actualTarget": "/clean/folder/windows-iconcache-db",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.99,
+        "label": "Iconcache legacy alias",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/recycle-bin-hidden",
+        "expectedTarget": "/clean/folder/recycle-bin-hidden-folder",
+        "actualTarget": "/clean/folder/recycle-bin-hidden-folder",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.65,
+        "label": "Recycle bin legacy alias",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/opera-gx-service-worker-cachestorage",
+        "expectedTarget": "/clean/app/opera-gx-cache",
+        "actualTarget": "/clean/app/opera-gx-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.64,
+        "label": "Opera GX service worker retired suffix",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/medal-tv-media-blob-storage",
+        "expectedTarget": "/clean/app/medal-tv-cache",
+        "actualTarget": "/clean/app/medal-tv-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.96,
+        "label": "Medal.tv media blob retired suffix",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/capcut-pc-service-worker-cachestorage",
+        "expectedTarget": "/clean/app/capcut-desktop-cache",
+        "actualTarget": "/clean/app/capcut-desktop-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.55,
+        "label": "CapCut service worker retired suffix",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/adobe-creative-cloud-service-worker-cachestorage",
+        "expectedTarget": "/clean/app/creative-cloud-installer-cache",
+        "actualTarget": "/clean/app/creative-cloud-installer-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.98,
+        "label": "Adobe CC service worker retired suffix",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/defender-scan-history-mplog",
+        "expectedTarget": "/clean/folder/programdata-windows-defender-scans-history",
+        "actualTarget": "/clean/folder/programdata-windows-defender-scans-history",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.52,
+        "label": "Defender scan history consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/package-cache-programdata",
+        "expectedTarget": "/clean/folder/programdata-package-cache",
+        "actualTarget": "/clean/folder/programdata-package-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.9,
+        "label": "Package cache consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/localappdata-crashdumps-wer",
+        "expectedTarget": "/clean/folder/localappdata-crashdumps",
+        "actualTarget": "/clean/folder/localappdata-crashdumps",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.51,
+        "label": "Crash dumps WER consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/windows-logs-cbs-persist",
+        "expectedTarget": "/clean/folder/windows-cbs-logs",
+        "actualTarget": "/clean/folder/windows-cbs-logs",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.5,
+        "label": "CBS logs consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/folder/localappdata-d3dscache-directx",
+        "expectedTarget": "/clean/folder/directx-d3dscache",
+        "actualTarget": "/clean/folder/directx-d3dscache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.52,
+        "label": "DirectX D3DSCache consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/nvidia-shader-cache",
+        "expectedTarget": "/clean/app/nvidia-dxcache",
+        "actualTarget": "/clean/app/nvidia-dxcache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.5,
+        "label": "NVIDIA shader cache consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/vivaldi-cache",
+        "expectedTarget": "/clean/app/vivaldi-browser-cache",
+        "actualTarget": "/clean/app/vivaldi-browser-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.45,
+        "label": "Vivaldi browser consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/intellij-cache",
+        "expectedTarget": "/clean/app/jetbrains-intellij-cache",
+        "actualTarget": "/clean/app/jetbrains-intellij-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.49,
+        "label": "JetBrains IntelliJ consolidation",
+        "passed": true
+      },
+      {
+        "path": "/clean/app/elgato-stream-deck-cache",
+        "expectedTarget": "/clean/app/elgato-streamdeck-cache",
+        "actualTarget": "/clean/app/elgato-streamdeck-cache",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.52,
+        "label": "Elgato Stream Deck consolidation",
+        "passed": true
+      }
+    ]
+  },
   "benchmarks": [
     {
       "path": "/",
       "status": 200,
-      "ms": 2.9,
+      "ms": 2.79,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pricing",
       "status": 200,
-      "ms": 1.72,
+      "ms": 4.32,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/support",
       "status": 200,
-      "ms": 1.77,
+      "ms": 4.01,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/refund",
       "status": 200,
-      "ms": 1.97,
+      "ms": 3.41,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/privacy",
       "status": 200,
-      "ms": 1.78,
+      "ms": 3.31,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/terms",
       "status": 200,
-      "ms": 1.47,
+      "ms": 3.43,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/vs/ccleaner",
       "status": 200,
-      "ms": 4,
+      "ms": 6.25,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/alternatives/ccleaner",
       "status": 200,
-      "ms": 3.67,
+      "ms": 11.07,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 4.84,
+      "ms": 7.82,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 4.7,
+      "ms": 6.79,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/app/standard-notes-cache",
       "status": 200,
-      "ms": 3.6,
+      "ms": 4.34,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/folder/delivery-optimization-cache",
       "status": 200,
-      "ms": 3.16,
+      "ms": 4.91,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools",
       "status": 200,
-      "ms": 0.73,
+      "ms": 1.34,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools/discord-cache-cleaner",
       "status": 200,
-      "ms": 12.73,
+      "ms": 25.73,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/safe-to-delete",
       "status": 200,
-      "ms": 17.61,
+      "ms": 36.4,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/state-of-windows-storage",
       "status": 200,
-      "ms": 5.57,
+      "ms": 14.93,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/robots.txt",
       "status": 200,
-      "ms": 3.21,
+      "ms": 14.59,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "ms": 21.34,
+      "ms": 74.27,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/llms.txt",
       "status": 200,
-      "ms": 8.14,
+      "ms": 14.96,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pad.xml",
       "status": 200,
-      "ms": 2.63,
+      "ms": 20.52,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
   ],
   "indexing": {
-    "sitemapUrlCount": 404,
+    "sitemapUrlCount": 412,
     "bingIndexNowStatus": "skipped (0 delta URLs)",
     "apiIndexNowStatus": "skipped (0 delta URLs)",
     "googlePingStatus": "pending",

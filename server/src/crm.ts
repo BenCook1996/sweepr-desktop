@@ -26,13 +26,14 @@ import {
 } from "./giveaway.js";
 import { applyRoasReallocation, computeRoasAndBudgetReport } from "./roas.js";
 import { runAnnualRenewalRecapSweep } from "./renewal-recap.js";
-import { getExperimentSummary } from "./experiments.js";
+import { getExperimentLiftMultipliers, getExperimentSummary } from "./experiments.js";
 import { SeoStore } from "./seo/store.js";
 import { computeStateOfWindowsStorageReport, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
-import { executeIntentGapAutomation } from "./seo/intent-gap.js";
+import { executeIntentGapAutomation, loadVerifiedGscSeedRows } from "./seo/intent-gap.js";
 import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
 import { auditInternalBrandFactConsistency, checkDirectoryListings } from "./seo/listings.js";
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
+import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "./seo/competitor-intel.js";
 import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
 
 export interface AutomationJobStatus {
@@ -54,14 +55,17 @@ const DEFAULT_AUTOMATION_JOBS: Array<{ id: string; name: string; cadence: string
   { id: "A4_bloat_watch", name: "A4 Bloat Watch Radar & Emerging Keyword Discovery", cadence: "Every 6h" },
   { id: "A5_directory_listings", name: "A5 Software Directory & Winget Listing Monitor", cadence: "Every 7d" },
   { id: "A6_renewal_recap", name: "A6 Annual-Renewal Value Recap T-7d Sweep", cadence: "Every 12h + Stripe webhook" },
-  { id: "A7_keyword_discovery", name: "Low-Competition Keyword Research & Opportunity Engine", cadence: "Every 12h" },
-  { id: "A8_roas_reallocation", name: "A8 Paid Ads ROAS & v3 65% Reinvestment Engine", cadence: "Continuous + CRM trigger" },
-  { id: "A9_ab_experiments", name: "A9 A/B Experiment Z-Test & Auto-Winner Promotion", cadence: "Continuous + CRM trigger" },
+  { id: "A16_competitor_organic_intel", name: "A16 Competitor Organic SEO & Content Replication Engine", cadence: "Every 12h + daily CI" },
+  { id: "A7_keyword_discovery", name: "A7 Low-Competition Keyword Research & Opportunity Engine", cadence: "Every 12h + daily CI" },
+  { id: "A17_strategy_forecast_ledger", name: "A17 SEO Strategy Forecast Ledger & Pre/Post Calibrator", cadence: "Every 12h + on GSC sync" },
+  { id: "A18_underperformer_auto_refresh", name: "A18 Self-Healing Forecast Underperformer & CTR Auto-Refresher", cadence: "Every 12h + daily CI" },
+  { id: "A8_roas_reallocation", name: "A8 Paid Ads ROAS & v3 65% Reinvestment Engine", cadence: "Every 12h + CRM trigger" },
+  { id: "A9_ab_experiments", name: "A9 A/B Experiment Z-Test & Auto-Winner Promotion", cadence: "Every 12h + CRM trigger" },
   { id: "A10_conversion_recovery", name: "A10 High-Intent Scan/Checkout & Giveaway GOTD50 Sweep", cadence: "Every 5m" },
-  { id: "A11_storage_benchmark", name: "A11 State of Windows Storage Benchmark Report", cadence: "Every 6h + live telemetry" },
   { id: "A12_geo_llms_index", name: "A12 Dynamic GEO / AI Citation Index (/llms.txt & /llms-full.txt)", cadence: "Every 6h" },
-  { id: "A13_dunning_winback", name: "A13 Stripe Failed-Payment Dunning & Churn Winback", cadence: "Every 15m + Stripe webhooks" },
-  { id: "A15_competitor_freshness", name: "A15 Competitor Matrix Claim Normalizer & Internal Link Audit", cadence: "Every 24h" },
+  { id: "A13_dunning_winback", name: "A13 Stripe Failed-Payment Dunning & Churn Winback", cadence: "Every 5m + Stripe webhooks" },
+  { id: "A14_aha_referral", name: "A14 Post-Clean 5GB+ Aha Milestone & Viral Referral Loop", cadence: "Event-driven on clean_completed + 12h sweep" },
+  { id: "A15_competitor_freshness", name: "A15 Competitor Matrix Claim Normalizer & Internal Link Audit", cadence: "Every 6h" },
   { id: "stripe_reconcile", name: "Stripe Subscription Reconciliation", cadence: "Every 12h" },
 ];
 
@@ -85,7 +89,7 @@ export function recordAutomationRunStatus(
   id: string,
   update: {
     status: "ok" | "error";
-    durationMs: number;
+    durationMs?: number;
     summary?: Record<string, unknown> | null;
     error?: string | null;
     nowSec?: number;
@@ -103,7 +107,7 @@ export function recordAutomationRunStatus(
     cadence: def.cadence,
     last_run_at: update.nowSec ?? Math.floor(Date.now() / 1000),
     last_status: update.status,
-    last_duration_ms: update.durationMs,
+    last_duration_ms: update.durationMs ?? 0,
     last_summary: update.summary ?? null,
     last_error: update.error ?? null,
     run_count: (prev?.run_count ?? 0) + 1,
@@ -1672,6 +1676,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       generated_at: new Date(nowSec * 1000).toISOString(),
       total_jobs: jobs.length,
       jobs,
+      automations: jobs,
     });
   });
 
@@ -1686,9 +1691,15 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       const t0 = Date.now();
       try {
         let summary: Record<string, unknown> = {};
-        if (id === "A1_telemetry_truth") {
+        if (id === "A1_telemetry_truth" || id === "A11_storage_benchmark") {
           const r = refreshAllTelemetryTruthCache(seoStore);
-          summary = { updated_slugs: r.length };
+          const bench = computeStateOfWindowsStorageReport(seoStore);
+          summary = {
+            updated_slugs: r.length,
+            total_guides: bench.total_canonical_guides,
+            median_per_pc_gb: bench.median_reclaimable_per_pc_gb,
+            p90_per_pc_gb: bench.p90_reclaimable_per_pc_gb,
+          };
         } else if (id === "A2_intent_gap_ctr") {
           const toIso = new Date(nowSec * 1000).toISOString().slice(0, 10);
           const fromIso = new Date((nowSec - 28 * 86400) * 1000).toISOString().slice(0, 10);
@@ -1727,34 +1738,47 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             strike_zone: r.ctr_enrichment_candidates.length,
           };
         } else if (id === "A8_roas_reallocation") {
-          const r = computeRoasAndBudgetReport(repo, seoStore);
+          const realloc = applyRoasReallocation(repo, seoStore, { auto_adjust_bids: true });
           summary = {
-            paid_roas: r.totals.paid_roas,
-            reinvestment_unlock_gbp: r.totals.reinvestment_unlock_gbp,
+            paid_roas: realloc.report.totals.paid_roas,
+            reinvestment_unlock_gbp: realloc.report.totals.reinvestment_unlock_gbp,
+            bids_adjusted: realloc.bids_adjusted,
+            losers_paused: realloc.losers_paused,
           };
         } else if (id === "A9_ab_experiments") {
           const r = getExperimentSummary(repo);
+          const liftMultipliers = getExperimentLiftMultipliers(repo);
+          seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+            experimentLiftMultipliers: liftMultipliers,
+            recalibrate: true,
+          });
           summary = {
             experiments: r.experiments.length,
             auto_promoted: r.experiments.filter((e) => e.auto_promoted_variant).length,
+            calibrated_lifts: liftMultipliers,
           };
         } else if (id === "A10_conversion_recovery") {
           const ab = await evaluateHighIntentScanAndCheckoutAbandonment(repo, { nowSec });
           const gw = await runGiveawayUpgradeSweep(repo, { nowSec });
           summary = { abandonment: ab, giveaway: gw };
-        } else if (id === "A11_storage_benchmark") {
-          const r = computeStateOfWindowsStorageReport(seoStore);
-          summary = {
-            total_guides: r.total_canonical_guides,
-            median_per_pc_gb: r.median_reclaimable_per_pc_gb,
-            p90_per_pc_gb: r.p90_reclaimable_per_pc_gb,
-          };
         } else if (id === "A12_geo_llms_index") {
           const r = syncStaticLlmsTxtFile(seoStore);
           summary = { ...r };
         } else if (id === "A13_dunning_winback") {
           const r = await evaluateDunningAndWinbackLifecycle(repo, { nowSec });
           summary = { ...r };
+        } else if (id === "A14_aha_referral") {
+          let milestoneCount = 0;
+          try {
+            const row = repo.db
+              .prepare("SELECT COUNT(*) AS c FROM account_storage_ledger WHERE total_bytes_cleaned >= ?")
+              .get(5 * 1024 * 1024 * 1024) as { c: number } | undefined;
+            milestoneCount = Number(row?.c ?? 0);
+          } catch {}
+          summary = {
+            milestone_5gb_accounts: milestoneCount,
+            threshold_gb: 5.0,
+          };
         } else if (id === "A15_competitor_freshness") {
           const r = auditInternalBrandFactConsistency({ autoFix: true });
           summary = {
@@ -1762,13 +1786,48 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             drift_detected_count: r.drift_detected_count,
             auto_fixed_count: r.auto_fixed_count,
           };
+        } else if (id === "A16_competitor_organic_intel") {
+          const r = await harvestCompetitorOrganicPages(seoStore, undefined, { crawl_sitemaps: false });
+          summary = {
+            total_tracked_pages: r.total_tracked_pages,
+            upserted_count: r.upserted_count,
+            uncaptured_gaps: r.gap_status_breakdown.uncaptured,
+            teardowns_ready: r.teardowns.length,
+          };
+        } else if (id === "A17_strategy_forecast_ledger") {
+          if (seoStore.listStrategyForecastLedger({ limit: 15 }).length < 10) {
+            await runKeywordDiscoveryPipeline(seoStore, undefined, { persistReport: true });
+          }
+          const gscSeed = loadVerifiedGscSeedRows();
+          const r = seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+            seedGscRows: gscSeed,
+            recalibrate: true,
+          });
+          summary = {
+            total_entries: r.total_entries,
+            evaluated_count: r.evaluated_count,
+            outperforming_count: r.outperforming_count,
+            on_track_count: r.on_track_count,
+            underperforming_count: r.underperforming_count,
+            optimized_pages_count: r.pre_vs_post_summary.optimized_pages_count,
+            avg_clicks_lift_pct: r.pre_vs_post_summary.avg_clicks_lift_pct,
+            low_comp_weight: r.scoring_weights.low_comp_weight,
+          };
+        } else if (id === "A18_underperformer_auto_refresh") {
+          const r = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
+          summary = {
+            evaluated_candidates: r.evaluated_candidates,
+            refreshed_count: r.refreshed_count,
+            queued_for_indexnow: r.queued_for_indexnow,
+          };
         } else if (id === "stripe_reconcile") {
           const r = await reconcileStripeSubscriptions(repo, deps.stripe);
           summary = { ...r };
         } else {
           throw new Error(`Unknown automation job_id: ${id}`);
         }
-        results[id] = recordAutomationRunStatus(id, {
+        const canonicalId = id === "A11_storage_benchmark" ? "A1_telemetry_truth" : id;
+        results[id] = recordAutomationRunStatus(canonicalId, {
           status: "ok",
           durationMs: Date.now() - t0,
           summary,

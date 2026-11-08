@@ -610,6 +610,14 @@ export function approveIntentGapRecommendation(
       return { ok: false, error: "meta_description_must_be_70_to_160_chars" };
     }
 
+    // Capture pre-optimization baseline in A17 Strategy Forecast Ledger before applying CTR override
+    store.captureStrategyBaselineSnapshot({
+      slug,
+      target_path: `/clean/${slug}`,
+      optimization_type: "A2_ctr_rewrite",
+      notes: `Applied A2 CTR title/meta rewrite: ${title || "meta override"}`,
+    });
+
     setApprovedIntentGapSeoOverride(slug, {
       title: title || undefined,
       metaDescription: metaDescription || undefined,
@@ -752,6 +760,13 @@ export function approveIntentGapRecommendation(
         ? String(input.merge_into_slug).trim().toLowerCase()
         : undefined;
     const retiredReason = String(input.reason || "90d_zero_impressions_consolidation");
+
+    store.captureStrategyBaselineSnapshot({
+      slug,
+      target_path: `/clean/${slug}`,
+      optimization_type: input.action_type === "retire_merge" ? "A2_retire_merge" : "A2_retire_noindex",
+      notes: mergeIntoSlug ? `Consolidated into /clean/${mergeIntoSlug} (${retiredReason})` : `Noindexed (${retiredReason})`,
+    });
 
     setApprovedIntentGapSeoOverride(slug, {
       noindex: true,

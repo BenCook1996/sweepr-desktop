@@ -1,4 +1,5 @@
 import type { Repo } from "./db.js";
+import { classifyTransactionalTier } from "./seo/keywords.js";
 import type { SeoStore } from "./seo/store.js";
 
 export type KeywordRoasStatus = "SCALE_WINNER" | "HOLD_LEARNING" | "PAUSE_LOSER";
@@ -44,6 +45,10 @@ export interface RoasBudgetReport {
   target_roas_floor: number;
   target_cpa_ceiling_gbp: number;
   reinvestment_rate: number;
+  current_daily_budget_gbp: number;
+  total_spend_gbp: number;
+  total_revenue_gbp: number;
+  blended_roas: number;
   totals: {
     paid_spend_gbp: number;
     paid_revenue_gbp: number;
@@ -56,6 +61,17 @@ export interface RoasBudgetReport {
     recommended_weekly_budget_gbp: number;
   };
   channels: ChannelRoasSummary[];
+  campaigns: Array<{
+    campaign: string;
+    query: string;
+    channel: ChannelRoasSummary["channel"];
+    spend_gbp: number;
+    revenue_gbp: number;
+    conversions: number;
+    roas: number;
+    status: KeywordRoasStatus;
+    recommended_action: string;
+  }>;
   keywords: KeywordRoasRow[];
   scale_winners: KeywordRoasRow[];
   pause_losers: KeywordRoasRow[];
@@ -169,9 +185,10 @@ export function computeRoasAndBudgetReport(repo: Repo, seoStore?: SeoStore): Roa
   }
 
   // Scan recent analytics_events for funnel events carrying UTM / click-ID attribution
+  const seenConversionKeys = new Set<string>();
   const events = repo.db
-    .prepare("SELECT event_name as event, metadata as meta FROM analytics_events ORDER BY created_at DESC LIMIT 5000")
-    .all() as Array<{ event: string; meta: string | null }>;
+    .prepare("SELECT account_id, event_name as event, metadata as meta FROM analytics_events ORDER BY created_at DESC LIMIT 5000")
+    .all() as Array<{ account_id: string | null; event: string; meta: string | null }>;
   for (const ev of events) {
     let meta: Record<string, any> = {};
     try {
@@ -201,22 +218,28 @@ export function computeRoasAndBudgetReport(repo: Repo, seoStore?: SeoStore): Roa
     } else if (ev.event === "checkout_started" || ev.event === "paywall_viewed") {
       entry.checkouts += 1;
     } else if (ev.event === "purchase_completed" || ev.event === "subscription_created") {
-      entry.conversions += 1;
-      entry.revenueGbp += estimatePlanRevenueGbp(
-        meta.plan || nested.plan,
-        meta.amount_cents || nested.amount_cents,
-        meta.currency || nested.currency
+      const dedupeKey = String(
+        meta.subscription_id || nested.subscription_id || ev.account_id || meta.account_id || `${entry.query}:${ev.event}:${entry.conversions}`
       );
+      if (!seenConversionKeys.has(dedupeKey)) {
+        seenConversionKeys.add(dedupeKey);
+        entry.conversions += 1;
+        entry.revenueGbp += estimatePlanRevenueGbp(
+          meta.plan || nested.plan,
+          meta.amount_cents || nested.amount_cents,
+          meta.currency || nested.currency
+        );
+      }
     }
   }
 
-  // Scan Stripe `subscription_synced` activities with attribution metadata
+  // Scan Stripe `subscription_synced` activities with attribution metadata (deduplicated against analytics_events)
   try {
     const syncActs = repo.db
       .prepare(
-        "SELECT metadata FROM activities WHERE type = 'subscription_synced' AND metadata IS NOT NULL ORDER BY created_at DESC LIMIT 1000"
+        "SELECT account_id, metadata FROM activities WHERE type = 'subscription_synced' AND metadata IS NOT NULL ORDER BY created_at DESC LIMIT 1000"
       )
-      .all() as Array<{ metadata: string }>;
+      .all() as Array<{ account_id: string | null; metadata: string }>;
     for (const row of syncActs) {
       let meta: Record<string, any> = {};
       try {
@@ -226,6 +249,9 @@ export function computeRoasAndBudgetReport(repo: Repo, seoStore?: SeoStore): Roa
       }
       if (meta.status !== "active" && meta.status !== "trialing") continue;
       if (!meta.utm_source && !meta.utm_term && !meta.msclkid && !meta.gclid) continue;
+      const dedupeKey = String(meta.subscription_id || row.account_id || meta.account_id || "");
+      if (dedupeKey && seenConversionKeys.has(dedupeKey)) continue;
+      if (dedupeKey) seenConversionKeys.add(dedupeKey);
       const channel = normalizeChannel(meta.utm_source, meta.msclkid, meta.gclid);
       const entry = ensureKw(meta.utm_term || `(campaign_${channel})`, channel);
       entry.conversions += 1;
@@ -384,6 +410,21 @@ export function computeRoasAndBudgetReport(repo: Repo, seoStore?: SeoStore): Roa
       recommended_daily_budget_gbp: recommendedDailyBudgetGbp,
       recommended_weekly_budget_gbp: recommendedWeeklyBudgetGbp,
     },
+    current_daily_budget_gbp: activeDailyBudgetGbp,
+    total_spend_gbp: paidSpendGbp,
+    total_revenue_gbp: paidRevenueGbp,
+    blended_roas: paidRoas,
+    campaigns: keywordRows.map((k) => ({
+      campaign: `[${k.channel.toUpperCase()}] ${k.query}`,
+      query: k.query,
+      channel: k.channel,
+      spend_gbp: k.spend_gbp,
+      revenue_gbp: k.attributable_revenue_gbp,
+      conversions: k.conversions,
+      roas: k.roas,
+      status: k.status,
+      recommended_action: k.recommended_action,
+    })),
     channels: [...channelRollup.values()],
     keywords: keywordRows,
     scale_winners: keywordRows.filter((k) => k.status === "SCALE_WINNER"),
@@ -489,6 +530,24 @@ export function applyRoasReallocation(
     last_reallocated_at: nowIso,
     history,
   });
+
+  // Share empirical Paid Ads keyword CVRs by transactional tier with A17 Strategy Forecast Ledger
+  const paidKeywordCvrByTier: Record<string, { clicks: number; downloads: number; conversions: number }> = {};
+  for (const kw of finalReport.keywords) {
+    if (kw.clicks_or_downloads <= 0) continue;
+    const tx = classifyTransactionalTier(kw.query);
+    const bucket = paidKeywordCvrByTier[tx.tier] ?? { clicks: 0, downloads: 0, conversions: 0 };
+    bucket.clicks += kw.clicks_or_downloads;
+    bucket.downloads += Math.max(kw.installs, Math.round(kw.clicks_or_downloads * 0.2));
+    bucket.conversions += kw.conversions;
+    paidKeywordCvrByTier[tx.tier] = bucket;
+  }
+  if (Object.keys(paidKeywordCvrByTier).length > 0) {
+    seoStore.reconcileStrategyLedgerActualsAndCalibrate({
+      paidKeywordCvrByTier,
+      recalibrate: true,
+    });
+  }
 
   return {
     ok: true,

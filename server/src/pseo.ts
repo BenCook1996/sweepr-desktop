@@ -27,6 +27,12 @@ export interface CleanItem {
   metaDescription?: string;
   customFaqs?: Array<{ q: string; a: string }>;
   subLocations?: Array<{ subPath: string; role: string; avgSpace: string; safe: string }>;
+  competitorBlueprint?: {
+    sourceDomain: string;
+    sourceUrl?: string;
+    replicatedPatterns: string[];
+    superiorityFixes: string[];
+  };
   noindex?: boolean;
   mergedIntoSlug?: string;
   retiredReason?: string;
@@ -1740,11 +1746,21 @@ export function renderPseoPage(item: CleanItem): string {
             <tr>
               <td class="py-2 font-medium text-gray-800">Time Required</td>
               <td class="py-2">10–20 minutes per app</td>
-              <td class="py-2 text-emerald-700 font-semibold">&lt; 60 seconds across 40+ areas</td>
+              <td class="py-2 text-emerald-700 font-semibold">&lt; 60 seconds across ${cleanItems.length}+ areas</td>
             </tr>
           </tbody>
         </table>
       </div>
+      ${
+        item.competitorBlueprint && item.competitorBlueprint.superiorityFixes?.length
+          ? `<div class="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
+               <p class="font-semibold text-gray-800 mb-1">Why this guide goes further than legacy PC cleaners (${esc(item.competitorBlueprint.sourceDomain)}):</p>
+               <ul class="list-disc pl-4 space-y-0.5">
+                 ${item.competitorBlueprint.superiorityFixes.map((f) => `<li>${esc(f)}</li>`).join("")}
+               </ul>
+             </div>`
+          : ""
+      }
     </div>
 
     ${relatedSection}
@@ -1776,7 +1792,7 @@ export function renderPseoPage(item: CleanItem): string {
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center shadow-lg">
       <h3 class="text-2xl font-bold mb-2">Clean ${item.name} Automatically</h3>
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        SWEEPR Cleaner safely clears ${item.name} along with 40+ other hidden app folders and leftover files in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
+        SWEEPR Cleaner safely clears ${item.name} along with ${cleanItems.length}+ other hidden app folders and leftover files in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4 mb-5">
         <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go gap-2">
@@ -1788,7 +1804,7 @@ export function renderPseoPage(item: CleanItem): string {
         </a>
       </div>
       <div class="max-w-lg mx-auto bg-white/5 border border-white/10 rounded-xl p-3 text-left text-xs text-gray-300">
-        <strong class="text-emerald-400">🛡️ Windows 10/11 First-Launch Walkthrough:</strong> Because v0.1.0 is a freshly compiled 5 MB native Rust app, if Windows SmartScreen appears:
+        <strong class="text-emerald-400">🛡️ Windows 10/11 First-Launch Walkthrough:</strong> Because v0.1.0 is a freshly compiled 5.8 MB native Rust app, if Windows SmartScreen appears:
         <strong>Step 1: Click "More info"</strong> &rarr; <strong>Step 2: Click "Run anyway"</strong>.
       </div>
     </div>

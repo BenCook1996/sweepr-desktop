@@ -25,6 +25,7 @@ const PSEO_REDIRECTS_PATH = path.join(SERVER_ROOT, "src", "data", "pseo-redirect
 const GSC_SEED_PATH = path.join(SERVER_ROOT, "src", "data", "gsc-seed.json");
 const DAILY_STATE_PATH = path.join(SERVER_ROOT, "src", "data", "daily-seo-pages-state.json");
 export const KEYWORD_RESEARCH_REPORT_PATH = path.join(SERVER_ROOT, "src", "data", "keyword-research-report.json");
+export const SEO_STRATEGY_LEDGER_PATH = path.join(SERVER_ROOT, "src", "data", "seo-strategy-ledger.json");
 
 export const LOCKED_TEST_TITLE_SLUGS = new Set([
   "steam-depotcache",
@@ -737,7 +738,59 @@ function parseAvgSpaceMidpointGb(avgSpace) {
   return (nums[0] + nums[1]) / 2;
 }
 
-export function scoreOpportunityMjs({ keyword, autoRank = 1, dualEngine = true, avgSpaceGb = 10, gscImps = 0, posDelta = 0, isNetNew = true }) {
+function classifyTransactionalTierMjs(kw, weights = {}) {
+  const clean = String(kw || "").toLowerCase().trim();
+  const empCvr = weights.empirical_tier_cvr_pct || {};
+  if (/\b(alternative|alternatives|vs|versus|replace|switch\s+from|better\s+than|ccleaner|bleachbit|wisecleaner|glary|cleanmypc|avast\s+cleanup)\b/i.test(clean)) {
+    return {
+      tier: "BOFU_Switcher",
+      buyerStage: "BOFU",
+      intentMultiplier: weights.bofu_switcher_multiplier || 1.45,
+      expectedCvrPct: Number(empCvr.BOFU_Switcher) || 5.2,
+    };
+  }
+  if (/\b(cleaner|cleanup\s+tool|software|utility|app|download|free\s+tool|auto\s+clean|1-click|analyzer|remover)\b/i.test(clean)) {
+    return {
+      tier: "BOFU_Tool_Intent",
+      buyerStage: "BOFU",
+      intentMultiplier: weights.bofu_tool_multiplier || 1.38,
+      expectedCvrPct: Number(empCvr.BOFU_Tool_Intent) || 4.1,
+    };
+  }
+  if (/\b(full\s+for\s+no\s+reason|out\s+of\s+space|0\s+bytes\s+free|eating\s+disk|taking\s+up|filling\s+up|so\s+big|huge|bloat|bloated|100%\s+disk|shrink|compact)\b/i.test(clean)) {
+    return {
+      tier: "BOFU_Urgent_Pain",
+      buyerStage: "BOFU",
+      intentMultiplier: weights.bofu_urgent_pain_multiplier || 1.30,
+      expectedCvrPct: Number(empCvr.BOFU_Urgent_Pain) || 3.1,
+    };
+  }
+  if (/\b(how\s+to\s+(clear|clean|delete|remove|free\s+up|purge|empty|shrink)|clear|clean|delete|remove|free\s+up|purge|wipe)\b/i.test(clean)) {
+    return {
+      tier: "MOFU_Action_Cleanup",
+      buyerStage: "MOFU",
+      intentMultiplier: weights.mofu_action_multiplier || 1.20,
+      expectedCvrPct: Number(empCvr.MOFU_Action_Cleanup) || 2.1,
+    };
+  }
+  return {
+    tier: "TOFU_Safety_Diagnostic",
+    buyerStage: "TOFU",
+    intentMultiplier: weights.tofu_safety_multiplier || 1.08,
+    expectedCvrPct: Number(empCvr.TOFU_Safety_Diagnostic) || 1.1,
+  };
+}
+
+export function scoreOpportunityMjs({
+  keyword,
+  autoRank = 1,
+  dualEngine = true,
+  avgSpaceGb = 10,
+  gscImps = 0,
+  posDelta = 0,
+  isNetNew = true,
+  weights = {},
+}) {
   const kw = String(keyword || "").toLowerCase().trim();
   const sAuto = Math.min(100, (100 - 8 * (Math.max(1, autoRank) - 1)) + (dualEngine ? 15 : 0));
   const sGsc = gscImps > 0 ? Math.min(100, 22 * Math.log(1 + gscImps) + Math.min(20, Math.max(0, posDelta * 1.2))) : 0;
@@ -750,15 +803,31 @@ export function scoreOpportunityMjs({ keyword, autoRank = 1, dualEngine = true, 
   const tMod = /\b(safe|delete|clear|clean|cleaner|huge|space)\b/i.test(kw) ? 28 : 20;
   const lowCompScore = Math.min(100, tLen + tTech + tMod);
 
-  const intentMultiplier = /\b(cleaner|tool|alternative|vs)\b/i.test(kw)
-    ? 1.32
-    : /\b(clear|delete|clean|remove|free\s+up)\b/i.test(kw)
-    ? 1.22
-    : 1.15;
+  const tx = classifyTransactionalTierMjs(kw, weights);
+  const intentMultiplier = tx.intentMultiplier;
 
-  const gapBonus = isNetNew ? 8 : 6;
-  const base = 0.48 * demandScore + 0.52 * lowCompScore;
+  const gapBonus = (isNetNew ? 8 : 6) + Math.min(8, weights.competitor_replication_bonus || 6);
+  const dW = weights.demand_weight || 0.48;
+  const lW = weights.low_comp_weight || 0.52;
+  const base = dW * demandScore + lW * lowCompScore;
   const opportunityScore = Math.min(100, Math.max(0, Math.round(base * intentMultiplier + gapBonus)));
+
+  const forecastKd = Math.max(8, Math.min(88, Math.round(92 - lowCompScore * 0.82)));
+  const difficultyTier =
+    forecastKd <= 20 ? "very_easy" : forecastKd <= 35 ? "easy" : forecastKd <= 55 ? "moderate" : "hard";
+  const daysPerKd = weights.calibrated_days_per_kd_point || 1.15;
+  const posGainBonus = Math.min(8, Math.max(0, Number(weights.calibrated_position_gain_bonus) || 2.5));
+  const daysToTop10 = Math.max(7, Math.min(180, Math.round(8 + forecastKd * daysPerKd - (gscImps > 0 ? 9 : 0) - 5 - posGainBonus)));
+  const daysToTop3 = Math.max(14, Math.min(240, Math.round(daysToTop10 * 1.85 + 7)));
+  const forecastMonthlyVolume = Math.max(50, Math.min(9500, Math.round(Math.exp(demandScore / 15.8) * 1.35)));
+  const forecastTargetPosition = Number(Math.max(1.5, Math.min(12.0, 1.6 + forecastKd * 0.11)).toFixed(1));
+  const baseCtr = forecastTargetPosition <= 3.0 ? 0.105 : forecastTargetPosition <= 5.0 ? 0.053 : 0.036;
+  const ctrLiftMult = !isNetNew ? Math.max(1.0, Math.min(1.6, Number(weights.calibrated_ctr_lift_multiplier) || 1.18)) : 1.0;
+  const ctr = baseCtr * ctrLiftMult;
+  const forecastMonthlyClicks = Math.max(4, Math.round(forecastMonthlyVolume * ctr));
+  const forecastMonthlyDownloads = Number(Math.max(0.2, (forecastMonthlyClicks * tx.expectedCvrPct) / 100).toFixed(1));
+  const dlToPaidRate = (Number(weights.empirical_download_to_paid_cvr_pct) || 14.0) / 100;
+  const forecastMonthlyConversions = Number(Math.max(0.1, forecastMonthlyDownloads * dlToPaidRate).toFixed(2));
 
   return {
     keyword: kw,
@@ -766,6 +835,23 @@ export function scoreOpportunityMjs({ keyword, autoRank = 1, dualEngine = true, 
     demand_score: Number(demandScore.toFixed(1)),
     low_comp_score: Number(lowCompScore.toFixed(1)),
     intent_multiplier: intentMultiplier,
+    transactional_tier: tx.tier,
+    buyer_stage: tx.buyerStage,
+    difficulty_tier: difficultyTier,
+    forecast: {
+      transactional_tier: tx.tier,
+      buyer_stage: tx.buyerStage,
+      difficulty_tier: difficultyTier,
+      forecast_kd: forecastKd,
+      forecast_est_days_to_top10: daysToTop10,
+      forecast_est_days_to_top3: daysToTop3,
+      forecast_monthly_volume: forecastMonthlyVolume,
+      forecast_target_position: forecastTargetPosition,
+      forecast_monthly_clicks: forecastMonthlyClicks,
+      forecast_cvr_pct: tx.expectedCvrPct,
+      forecast_monthly_downloads: forecastMonthlyDownloads,
+      forecast_monthly_conversions: forecastMonthlyConversions,
+    },
   };
 }
 
@@ -785,6 +871,14 @@ export async function runKeywordResearchEngine(opts = {}) {
     : {};
   const cooldownMap = dailyState.ctrOptimizedAt || {};
 
+  let existingLedger = { scoring_weights: {}, entries: [] };
+  if (fs.existsSync(SEO_STRATEGY_LEDGER_PATH)) {
+    try {
+      existingLedger = JSON.parse(fs.readFileSync(SEO_STRATEGY_LEDGER_PATH, "utf8")) || { scoring_weights: {}, entries: [] };
+    } catch {}
+  }
+  const activeWeights = existingLedger.scoring_weights || {};
+
   const simulatedCatalog = [...existingItems];
   const newPseoCandidates = [];
 
@@ -798,6 +892,7 @@ export async function runKeywordResearchEngine(opts = {}) {
       dualEngine: true,
       avgSpaceGb: parseAvgSpaceMidpointGb(spec.avgSpace),
       isNetNew: true,
+      weights: activeWeights,
     });
     const cleanItem = {
       slug: spec.slug,
@@ -810,6 +905,19 @@ export async function runKeywordResearchEngine(opts = {}) {
       whatIsIt: spec.whatIsIt,
       whatHappens: spec.whatHappens,
       manualSteps: spec.manualSteps,
+      competitorBlueprint: {
+        sourceDomain: "wisecleaner.com",
+        replicatedPatterns: [
+          "Exact Windows 11 environment variable path breakdown",
+          "Safety verdict badge with deletion consequences",
+          "Step-by-step manual cleanup + 1-click automated comparison",
+        ],
+        superiorityFixes: [
+          `Empirical GB recovery range (${spec.avgSpace}) verified via k-anonymous telemetry`,
+          `Read-only PowerShell verification snippet for ${spec.path}`,
+          "7-day automatic rollback protection vs permanent Shift+Delete",
+        ],
+      },
     };
     simulatedCatalog.push(cleanItem);
     newPseoCandidates.push({
@@ -817,6 +925,10 @@ export async function runKeywordResearchEngine(opts = {}) {
       demand_score: score.demand_score,
       low_comp_score: score.low_comp_score,
       primary_keyword: primaryKw,
+      transactional_tier: score.transactional_tier,
+      buyer_stage: score.buyer_stage,
+      difficulty_tier: score.difficulty_tier,
+      forecast: score.forecast,
       validation,
       item: cleanItem,
     });

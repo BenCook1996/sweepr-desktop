@@ -290,6 +290,12 @@ export function ingestScanCompletedTelemetry(
         const item = allItems.find((i) => i.slug === slug);
         if (item) {
           indexNowUrls.push(`https://sweeprcleaner.com/clean/${item.category}/${item.slug}`);
+          store.captureStrategyBaselineSnapshot({
+            slug: item.slug,
+            target_path: `/clean/${item.category}/${item.slug}`,
+            optimization_type: "A1_telemetry_badge",
+            notes: `Activated empirical telemetry badge (n=${s.sample_count}, median=${s.median_gb} GB)`,
+          });
         }
       }
     }

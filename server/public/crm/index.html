@@ -749,6 +749,7 @@
           <div id="seo-subnav" class="flex flex-wrap items-center gap-1 bg-surface-900 border border-slate-800 rounded-xl p-1">
             <button data-seo-view="overview" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Overview</button>
             <button data-seo-view="rankings" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Rankings &amp; Traffic</button>
+            <button data-seo-view="forecasting" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Forecasting &amp; Strategy (A16/A17)</button>
             <button data-seo-view="audit" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Site Audit</button>
             <button data-seo-view="backlinks" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Backlinks</button>
             <button data-seo-view="authority" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Authority</button>
@@ -2861,7 +2862,7 @@
       });
       const el = document.getElementById('seo-view');
       try {
-        const renderers = { overview: seoOverview, rankings: seoRankings, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
+        const renderers = { overview: seoOverview, rankings: seoRankings, forecasting: seoForecasting, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
         el.innerHTML = await (renderers[view] || seoOverview)();
       } catch (e) {
         el.innerHTML = panel('Error', `<div class="text-rose-300 text-sm">${esc(e.message)}</div>`);
@@ -2968,8 +2969,60 @@
     }
 
     // ---------------- Rankings & traffic ----------------
+    async function seoForecasting() {
+      const [ledger, compOrg] = await Promise.all([seoFetch('/strategy-ledger'), seoFetch('/competitor-organic-gap')]);
+      const entries = ledger.entries || [];
+      const avgDays = entries.length ? Math.round(entries.reduce((a, e) => a + Number(e.forecast_est_days_to_top10 || 21), 0) / entries.length) : 21;
+      const totalEstClicks = entries.reduce((a, e) => a + Number(e.forecast_monthly_clicks || 0), 0);
+      const totalEstDownloads = entries.reduce((a, e) => a + Number(e.forecast_monthly_downloads || 0), 0);
+      const prePost = ledger.summary?.pre_vs_post_summary || { optimized_pages_count: 0, avg_clicks_lift_pct: 0, avg_ctr_lift_pct: 0, avg_position_delta: 0 };
+      const cards = `<div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+        ${seoCard('Logged Forecasts', fmtNum(ledger.summary?.total_entries || entries.length), 'Strategy Ledger (A17)', 'text-white', 'layers')}
+        ${seoCard('BOFU/MOFU Share', `${ledger.summary?.bofu_mofu_share_pct ?? 100}%`, '>= 70% transactional target', 'text-emerald-400', 'target')}
+        ${seoCard('Avg Time to Top 10', `~${avgDays} days`, 'based on KD & path specificity', 'text-sky-300', 'clock')}
+        ${seoCard('Forecast Clicks/mo', fmtNum(totalEstClicks), `~${totalEstDownloads.toFixed(0)} est. installs/mo`, 'text-brand-400', 'TrendingUp')}
+        ${seoCard('Pre → Post Lift', `${prePost.avg_clicks_lift_pct >= 0 ? '+' : ''}${prePost.avg_clicks_lift_pct}%`, `${fmtNum(prePost.optimized_pages_count)} optimized · Δpos +${prePost.avg_position_delta}`, 'text-emerald-300', 'zap')}
+        ${seoCard('Competitor Gaps', fmtNum(compOrg.total_tracked_pages || 0), `${fmtNum((compOrg.teardowns || []).length)} teardowns ready (A16)`, 'text-amber-300', 'radar')}
+      </div>`;
+      const forecasterForm = `<form data-seo-form="kw-forecast" class="flex flex-wrap items-center gap-2 mb-3">
+        <input name="keyword" required placeholder="Enter target keyword (e.g. discord cache cleaner tool windows 11)" class="flex-1 min-w-[260px] bg-surface-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+        <input name="competitor_domain" placeholder="Optional competitor (e.g. wisecleaner.com)" class="w-56 bg-surface-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+        ${seoBtn('<i data-lucide="calculator" class="w-3.5 h-3.5 inline"></i> Forecast KD, Time-to-Rank &amp; Log to Ledger', 'type="submit"', 'primary')}
+        ${seoBtn('<i data-lucide="sliders" class="w-3.5 h-3.5 inline"></i> Recalibrate Strategy Weights (A17)', 'data-seo-action="strategy-recalibrate"')}
+        ${seoBtn('<i data-lucide="sparkles" class="w-3.5 h-3.5 inline"></i> Run A18 Underperformer Auto-Refresh', 'data-seo-action="underperformer-refresh"')}
+      </form>
+      <div class="text-[11px] text-slate-400"><b>Active Adaptive Weights:</b> Low-Comp Rankability=<code>${ledger.scoring_weights?.low_comp_weight ?? 0.52}</code> · Demand=<code>${ledger.scoring_weights?.demand_weight ?? 0.48}</code> · Days/KD=<code>${ledger.scoring_weights?.calibrated_days_per_kd_point ?? 1.15}</code> · CTR Lift Mult=<code>${ledger.scoring_weights?.calibrated_ctr_lift_multiplier ?? 1.18}x</code> · Pos Gain Bonus=<code>+${ledger.scoring_weights?.calibrated_position_gain_bonus ?? 2.5}</code> · Competitor Bonus=<code>+${ledger.scoring_weights?.competitor_replication_bonus ?? 6}</code></div>
+      ${(ledger.recommendations || []).length ? `<div class="mt-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2"><b>Strategy Adjustment:</b> ${esc(ledger.recommendations[0])}</div>` : ''}`;
+      const ledgerTable = `<div class="overflow-x-auto max-h-[480px] overflow-y-auto"><table class="w-full text-left text-xs">
+        <thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+          <th class="py-2 px-3">Primary Keyword &amp; Route</th><th class="py-2 px-3">Transactional Tier</th><th class="py-2 px-3">Forecast KD</th><th class="py-2 px-3">Est. Days Top 10 / Top 3</th><th class="py-2 px-3">Est. Vol / Clicks</th><th class="py-2 px-3">Est. CVR / Installs</th><th class="py-2 px-3">Pre → Post Clicks (28d)</th><th class="py-2 px-3">Pre → Post Pos</th><th class="py-2 px-3">Lift &amp; Verdict</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${entries.map(e => {
+          const hasPre = e.optimization_count > 0 || (e.pre_impressions_28d && e.pre_impressions_28d > 0);
+          const prePosStr = e.pre_avg_position ? fmtPos(e.pre_avg_position) : '—';
+          const postPosStr = fmtPos(e.actual_avg_position);
+          const liftBadge = e.post_clicks_lift_pct !== null && e.post_clicks_lift_pct !== undefined
+            ? `<span class="px-1.5 py-0.5 rounded ${e.post_clicks_lift_pct >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'} font-mono text-[10px] mr-1">${e.post_clicks_lift_pct >= 0 ? '+' : ''}${e.post_clicks_lift_pct}% lift</span>`
+            : '';
+          const optTypeBadge = e.last_optimization_type
+            ? `<div class="text-[10px] text-sky-400 font-mono mt-0.5">${esc(e.last_optimization_type)} (#${e.optimization_count || 1})</div>`
+            : '';
+          return `<tr>
+          <td class="py-2 px-3"><div class="text-white font-semibold">${esc(e.primary_keyword)}</div><div class="text-[10px] text-slate-500 font-mono">${esc(e.target_path)} · src: ${esc(e.source_competitor_domain || 'sweepr')}</div>${optTypeBadge}</td>
+          <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-300 font-mono text-[10px]">${esc(e.buyer_stage)} · ${esc(e.transactional_tier)}</span></td>
+          <td class="py-2 px-3 font-mono">${e.forecast_kd}/100 <span class="text-slate-400">(${esc(e.difficulty_tier)})</span></td>
+          <td class="py-2 px-3 font-mono text-sky-300">~${e.forecast_est_days_to_top10}d / ~${e.forecast_est_days_to_top3}d${e.actual_days_to_top10 ? ` <span class="text-emerald-400">(actual ${e.actual_days_to_top10}d)</span>` : ''}</td>
+          <td class="py-2 px-3 font-mono">${fmtNum(e.forecast_monthly_volume)} / ${fmtNum(e.forecast_monthly_clicks)}</td>
+          <td class="py-2 px-3 font-mono text-emerald-300">${e.forecast_cvr_pct}% / ${e.forecast_monthly_downloads}/mo</td>
+          <td class="py-2 px-3 font-mono text-white">${hasPre ? `<span class="text-slate-400">${fmtNum(e.pre_clicks_28d)} →</span> ` : ''}${fmtNum(e.actual_clicks_28d)} <span class="text-slate-500">(${fmtNum(e.actual_impressions_28d)})</span></td>
+          <td class="py-2 px-3 font-mono">${hasPre && e.pre_avg_position ? `<span class="text-slate-400">${prePosStr} →</span> ` : ''}${postPosStr}${e.post_position_delta ? ` <span class="${e.post_position_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${e.post_position_delta > 0 ? '+' : ''}${e.post_position_delta})</span>` : ''}</td>
+          <td class="py-2 px-3 font-mono text-[11px] ${e.outcome_verdict === 'outperforming' ? 'text-emerald-400 font-bold' : e.outcome_verdict === 'on_track' ? 'text-sky-300' : 'text-slate-400'}">${liftBadge}${esc(e.outcome_verdict || 'forecasted')}</td>
+        </tr>`;
+        }).join('')}</tbody></table></div>`;
+      return cards + panel('Live Transactional Keyword Forecaster, Pre/Post Calibrator & Self-Healing Loop (A16/A17/A18)', forecasterForm) + panel('Persistent Pre- vs. Post-Optimization Forecast Strategy Ledger (A17)', ledgerTable);
+    }
+
     async function seoRankings() {
-      const [k, ins, prov] = await Promise.all([seoFetch('/keywords'), seoFetch('/gsc/insights'), seoFetch('/providers')]);
+      const [k, ins, prov, ledger] = await Promise.all([seoFetch('/keywords'), seoFetch('/gsc/insights'), seoFetch('/providers'), seoFetch('/strategy-ledger')]);
       const gscOn = prov.gsc.configured;
       const dfsOn = prov.dataforseo.configured;
       const head = `<div class="flex flex-wrap items-center gap-2">
@@ -3014,7 +3067,31 @@
       const pages = ins.pages.length ? `<table class="w-full text-xs"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-2 text-left">Page</th><th class="text-left">Clicks</th><th class="text-left">Impr.</th><th class="text-left">Pos</th><th class="text-left">Queries</th></tr></thead><tbody class="divide-y divide-slate-800/70">
         ${ins.pages.map(p => `<tr><td class="py-2 text-slate-200 font-mono text-[11px] max-w-[260px] truncate">${esc(p.page.replace(/^https?:\/\/[^/]+/, ''))}</td><td class="font-mono">${fmtNum(p.clicks)}</td><td class="font-mono">${fmtNum(p.impressions)}</td><td class="font-mono">${fmtPos(p.position)}</td><td class="font-mono">${fmtNum(p.queries)}</td></tr>`).join('')}</tbody></table>` : emptyState('Needs Search Console data.');
       return panel('Tracked keyword rankings & US search volume', table, head)
-        + `<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">${panel('Striking distance (positions 4-20)', opp)}${panel('Keyword cannibalisation', cannibal)}${panel('Top landing pages (organic)', pages)}</div>`;
+        + `<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">${panel('Striking distance (positions 4-20)', opp)}${panel('Keyword cannibalisation', cannibal)}${panel('Top landing pages (organic)', pages)}</div>`
+        + panel(
+            'Strategy Forecast vs. Actuals Ledger & Weight Calibrator (A17)',
+            `<div class="text-xs text-slate-300 mb-3 flex flex-wrap gap-4">
+               <span><b>Tracked Forecasts:</b> ${fmtNum(ledger.summary?.total_entries || 0)}</span>
+               <span><b>BOFU/MOFU Transactional Share:</b> <span class="text-emerald-400 font-bold">${ledger.summary?.bofu_mofu_share_pct ?? 100}%</span></span>
+               <span><b>Outperforming / On-Track:</b> <span class="text-emerald-400 font-bold">${fmtNum((ledger.summary?.outperforming_count || 0) + (ledger.summary?.on_track_count || 0))}</span></span>
+               <span><b>Calibrated Weights:</b> Low-Comp=${ledger.scoring_weights?.low_comp_weight ?? 0.52} · Demand=${ledger.scoring_weights?.demand_weight ?? 0.48} · ToolMult=${ledger.scoring_weights?.bofu_tool_multiplier ?? 1.38}x</span>
+             </div>
+             <div class="overflow-x-auto max-h-[420px] overflow-y-auto"><table class="w-full text-left text-xs">
+               <thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                 <th class="py-2 px-3">Slug / Primary Keyword</th><th class="py-2 px-3">Tier &amp; Stage</th><th class="py-2 px-3">Forecast KD</th><th class="py-2 px-3">Est. Days Top 10</th><th class="py-2 px-3">Est. Vol / Clicks</th><th class="py-2 px-3">Est. CVR / Installs</th><th class="py-2 px-3">Actual 28d Clicks (Impr)</th><th class="py-2 px-3">Actual Pos</th><th class="py-2 px-3">Verdict</th></tr></thead>
+               <tbody class="divide-y divide-slate-800/70">${(ledger.entries || []).slice(0, 35).map(e => `<tr>
+                 <td class="py-2 px-3"><div class="text-white font-semibold">${esc(e.primary_keyword)}</div><div class="text-[10px] text-slate-500 font-mono">${esc(e.target_path)} · src: ${esc(e.source_competitor_domain || 'sweepr')}</div></td>
+                 <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-300 font-mono text-[10px]">${esc(e.buyer_stage)} · ${esc(e.transactional_tier)}</span></td>
+                 <td class="py-2 px-3 font-mono">${e.forecast_kd} (${esc(e.difficulty_tier)})</td>
+                 <td class="py-2 px-3 font-mono text-sky-300">~${e.forecast_est_days_to_top10}d${e.actual_days_to_top10 ? ` <span class="text-emerald-400">(actual ${e.actual_days_to_top10}d)</span>` : ''}</td>
+                 <td class="py-2 px-3 font-mono">${fmtNum(e.forecast_monthly_volume)} / ${fmtNum(e.forecast_monthly_clicks)}</td>
+                 <td class="py-2 px-3 font-mono text-emerald-300">${e.forecast_cvr_pct}% / ${e.forecast_monthly_downloads}/mo</td>
+                 <td class="py-2 px-3 font-mono text-white">${fmtNum(e.actual_clicks_28d)} <span class="text-slate-500">(${fmtNum(e.actual_impressions_28d)})</span></td>
+                 <td class="py-2 px-3 font-mono">${fmtPos(e.actual_avg_position)}</td>
+                 <td class="py-2 px-3 font-mono text-[11px] ${e.outcome_verdict === 'outperforming' ? 'text-emerald-400 font-bold' : e.outcome_verdict === 'on_track' ? 'text-sky-300' : 'text-slate-400'}">${esc(e.outcome_verdict || 'forecasted')}</td>
+               </tr>`).join('')}</tbody></table></div>`,
+            seoBtn('<i data-lucide="sliders" class="w-3.5 h-3.5 inline"></i> Recalibrate Strategy Weights (A17)', 'data-seo-action="strategy-recalibrate"', 'primary')
+          );
     }
 
     // ---------------- Site audit ----------------
@@ -3109,7 +3186,7 @@
 
     // ---------------- Authority & Competitor Link Gap ----------------
     async function seoAuthority() {
-      const d = await seoFetch('/authority');
+      const [d, compOrg] = await Promise.all([seoFetch('/authority'), seoFetch('/competitor-organic-gap')]);
       const head = `<div class="flex flex-wrap gap-2">
         ${seoBtn('<i data-lucide="award" class="w-3.5 h-3.5 inline"></i> Sync DR &amp; Backlinks (DataForSEO ~$0.07)', `data-seo-action="dfs-backlinks" ${d.dfs_configured ? '' : 'disabled'}`, 'primary')}
         ${seoBtn('<i data-lucide="bar-chart-2" class="w-3.5 h-3.5 inline"></i> Sync Competitor Traffic (~$0.06)', `data-seo-action="dfs-domain-overview" ${d.dfs_configured ? '' : 'disabled'}`)}
@@ -3154,7 +3231,24 @@
         <tbody class="divide-y divide-slate-800/70">${gapRows || '<tr><td colspan="6">' + emptyState('Click Run Competitor Link Intersect to find high-authority domains linking to CCleaner, BleachBit, etc. but not yet linking to sweeprcleaner.com.') + '</td></tr>'}</tbody></table></div>`;
 
       return panel('Domain authority, backlinks & organic traffic vs competitors', compTable, head)
-        + panel('Competitor Link Gap (domains linking to competitors, excluding you)', gapTable, gapHead);
+        + panel('Competitor Link Gap (domains linking to competitors, excluding you)', gapTable, gapHead)
+        + panel(
+            'Competitor Organic Top Pages, Sitemap Harvester & Replication Blueprints (A16)',
+            `<div class="overflow-x-auto max-h-[420px] overflow-y-auto"><table class="w-full text-left text-xs">
+               <thead class="sticky top-0 bg-surface-900"><tr class="text-[10px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                 <th class="py-2 px-3">Competitor &amp; URL</th><th class="py-2 px-3">Content Hub</th><th class="py-2 px-3">Primary Keyword</th><th class="py-2 px-3">Est. Vol / KD</th><th class="py-2 px-3">Est. ETV</th><th class="py-2 px-3">Opp. Score</th><th class="py-2 px-3">SWEEPR Match</th><th></th></tr></thead>
+               <tbody class="divide-y divide-slate-800/70">${(compOrg.competitor_pages || []).map(p => `<tr>
+                 <td class="py-2 px-3"><div class="text-white font-semibold">${esc(p.competitor_domain)}</div><div class="text-[10px] text-slate-500 font-mono truncate max-w-[240px]" title="${esc(p.url)}">${esc(p.path)}</div></td>
+                 <td class="py-2 px-3 font-mono text-[11px] text-slate-300">${esc(p.content_hub)}</td>
+                 <td class="py-2 px-3 text-white font-semibold">${esc(p.primary_keyword || '—')}</td>
+                 <td class="py-2 px-3 font-mono">${fmtNum(p.search_volume)} / KD ${p.kd ?? '—'}</td>
+                 <td class="py-2 px-3 font-mono text-brand-400">${fmtNum(Math.round(p.estimated_etv || 0))}/mo</td>
+                 <td class="py-2 px-3 font-mono text-emerald-400 font-bold">${p.opportunity_score}/100</td>
+                 <td class="py-2 px-3 font-mono text-[11px] text-sky-300">${esc(p.our_matching_path || 'Uncaptured Gap')}</td>
+                 <td class="py-2 px-3 text-right"><button data-seo-teardown-url="${esc(p.url)}" class="px-2.5 py-1 rounded bg-surface-800 hover:bg-brand-500 hover:text-white text-slate-200 border border-slate-700 text-[11px] font-semibold transition-all">Teardown &amp; Replicate</button></td>
+               </tr>`).join('')}</tbody></table></div>`,
+            seoBtn('<i data-lucide="radar" class="w-3.5 h-3.5 inline"></i> Scan Competitor Sitemaps &amp; Top Pages (A16)', 'data-seo-action="comp-organic-harvest"', 'primary')
+          );
     }
 
     // ---------------- Core Web Vitals ----------------
@@ -3275,6 +3369,27 @@
             alert(`Synced backlink summary (DR ${r.dr_100 ?? '\u2014'}/100), ${r.discovered_backlinks_added} new backlinks, and ${r.bulk_ranks_updated} domain ranks. Cost: $${Number(r.cost_usd || 0).toFixed(4)}.`);
             seoShow(seoState.view);
           }
+          else if (a === 'comp-organic-harvest') {
+            seoJobPill('Scanning competitor sitemaps & top organic pages (A16)...');
+            const r = await seoFetch('/competitor-organic-gap', { method: 'POST', body: JSON.stringify({ crawl_sitemaps: true }) });
+            seoJobPill(null);
+            alert(`Harvested ${r.total_tracked_pages} competitor organic pages (${r.teardowns?.length || 0} teardowns & replication blueprints ready).`);
+            seoShow('authority');
+          }
+          else if (a === 'strategy-recalibrate') {
+            seoJobPill('Reconciling GSC/conversion actuals & calibrating strategy weights (A17)...');
+            const r = await seoFetch('/strategy-ledger', { method: 'POST', body: JSON.stringify({ recalibrate_weights: true }) });
+            seoJobPill(null);
+            alert(`Strategy Ledger calibrated across ${r.summary?.evaluated_count || 0} measured pages!\n\n${(r.recommendations || []).join('\n')}`);
+            seoShow(seoState.view === 'forecasting' ? 'forecasting' : 'rankings');
+          }
+          else if (a === 'underperformer-refresh') {
+            seoJobPill('Running A18 Self-Healing Underperformer Content Refresher...');
+            const r = await seoFetch('/underperformer-refresh', { method: 'POST', body: JSON.stringify({ force: true }) });
+            seoJobPill(null);
+            alert(`A18 Self-Healing Refresh Complete!\n\nEvaluated Candidates: ${r.evaluated_candidates}\nPages Refreshed (Pre-Baseline Frozen + Blueprint/CTR Applied): ${r.refreshed_count}\nQueued for IndexNow Re-Crawl: ${r.queued_for_indexnow}`);
+            seoShow('forecasting');
+          }
           else if (a === 'dfs-link-gap') {
             seoJobPill('Running Competitor Link Intersect via DataForSEO...');
             const r = await seoFetch('/dfs/link-gap', { method: 'POST', body: JSON.stringify({ limit: 100 }) });
@@ -3284,6 +3399,18 @@
           }
         } catch (err) { seoJobPill(null); alert(err.message); }
             return;
+      }
+      const tdBtn = e.target.closest('[data-seo-teardown-url]');
+      if (tdBtn) {
+        const url = tdBtn.dataset.seoTeardownUrl;
+        try {
+          tdBtn.textContent = 'Analyzing...';
+          const r = await seoFetch('/competitor-organic-teardown', { method: 'POST', body: JSON.stringify({ url, create_ledger_entry: true }) });
+          tdBtn.textContent = 'Replicated \u2713';
+          const bp = r.teardown?.replication_blueprint || {};
+          alert(`Teardown & Replication Blueprint Ready!\n\nCompetitor: ${r.teardown?.competitor_domain}\nKeyword: ${r.teardown?.target_keyword}\nWeaknesses Found:\n- ${(r.teardown?.weaknesses || []).join('\n- ')}\n\nSWEEPR Route: ${bp.recommended_route}\nEst. Days to Top 10: ~${bp.forecast?.forecast_est_days_to_top10}d (KD ${bp.forecast?.forecast_kd})\nLogged to Strategy Forecast Ledger!`);
+        } catch (err) { alert(err.message); }
+        return;
       }
       const gapBtn = e.target.closest('[data-seo-gap-outreach]');
       if (gapBtn) {
@@ -3320,6 +3447,13 @@
       const f = Object.fromEntries(new FormData(form).entries());
       try {
         if (form.dataset.seoForm === 'kw-add') { await seoFetch('/keywords', { method: 'POST', body: JSON.stringify(f) }); seoShow('rankings'); }
+        else if (form.dataset.seoForm === 'kw-forecast') {
+          const r = await seoFetch('/forecast-keyword', { method: 'POST', body: JSON.stringify({ keyword: f.keyword, competitor_domain: f.competitor_domain || undefined, log_to_ledger: true }) });
+          const s = r.scored;
+          const fc = s.forecast;
+          alert(`Keyword Forecast Logged to Strategy Ledger!\n\nKeyword: ${s.keyword}\nOpportunity Score: ${s.opportunity_score}/100\nTransactional Tier: ${s.buyer_stage} · ${s.transactional_tier} (Est. CVR ${fc.forecast_cvr_pct}%)\nRanking Difficulty: KD ${fc.forecast_kd}/100 (${fc.difficulty_tier})\nEst. Time to Rank: ~${fc.forecast_est_days_to_top10} days to Top 10 (~${fc.forecast_est_days_to_top3} days to Top 3)\nEst. Monthly Volume & Clicks: ${fc.forecast_monthly_volume}/mo vol → ~${fc.forecast_monthly_clicks} clicks/mo\nEst. Monthly Downloads: ~${fc.forecast_monthly_downloads}/mo (${fc.forecast_monthly_conversions} paid conversions)\nRecommended Route: ${s.target_path}`);
+          seoShow('forecasting');
+        }
         else if (form.dataset.seoForm === 'bl-add') { await seoFetch('/backlinks', { method: 'POST', body: JSON.stringify(f) }); seoShow('backlinks'); }
         else if (form.dataset.seoForm === 'competitors') { await seoFetch('/authority/competitors', { method: 'PUT', body: JSON.stringify(f) }); seoShow('authority'); }
         else if (form.dataset.seoForm === 'dfs-cap') { await seoFetch('/dfs/spend-cap', { method: 'PUT', body: JSON.stringify({ spend_cap_usd: Number(f.spend_cap_usd) }) }); seoShow('setup'); }
@@ -3343,20 +3477,25 @@
         if (autoRes.ok) {
           const autoData = await autoRes.json();
           const tbody = document.getElementById('automations-registry-body');
-          if (tbody && Array.isArray(autoData.automations)) {
-            tbody.innerHTML = autoData.automations.map(a => {
+          const jobsList = Array.isArray(autoData.jobs) ? autoData.jobs : Array.isArray(autoData.automations) ? autoData.automations : [];
+          if (tbody && jobsList.length > 0) {
+            tbody.innerHTML = jobsList.map(a => {
               const lastRun = a.last_run_at ? new Date(a.last_run_at * 1000).toLocaleString() : 'Never';
               const badge = a.last_status === 'ok'
                 ? '<span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">OK</span>'
                 : a.last_status === 'error'
                 ? '<span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold uppercase">Error</span>'
                 : '<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold uppercase">Idle</span>';
+              const rawSummary = a.last_summary || a.summary;
+              const summaryText = rawSummary && typeof rawSummary === 'object'
+                ? Object.entries(rawSummary).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(' · ')
+                : String(rawSummary || '—');
               return `<tr class="hover:bg-slate-800/40">
                 <td class="py-3 px-4 font-semibold text-white"><span class="font-mono text-brand-400 mr-1.5">${esc(a.id)}</span>${esc(a.name)}</td>
-                <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${esc(a.schedule)}</td>
+                <td class="py-3 px-4 font-mono text-slate-400 text-[11px]">${esc(a.cadence || a.schedule || 'Scheduled')}</td>
                 <td class="py-3 px-4">${badge}</td>
                 <td class="py-3 px-4 text-slate-300 text-[11px] whitespace-nowrap">${esc(lastRun)}</td>
-                <td class="py-3 px-4 text-slate-400 text-[11px] max-w-md truncate" title="${esc(a.summary || '')}">${esc(a.summary || '—')}</td>
+                <td class="py-3 px-4 text-slate-400 text-[11px] max-w-md truncate" title="${esc(summaryText)}">${esc(summaryText)}</td>
                 <td class="py-3 px-4 text-right"><button onclick="triggerCmoAutomation('${esc(a.id)}')" class="px-2.5 py-1 rounded bg-brand-500/15 hover:bg-brand-500/25 text-brand-300 border border-brand-500/30 text-[11px] font-bold">Run Now</button></td>
               </tr>`;
             }).join('');
@@ -3366,17 +3505,22 @@
           const roas = await roasRes.json();
           const sumEl = document.getElementById('roas-summary-line');
           if (sumEl) {
-            sumEl.textContent = `Daily Budget: £${Number(roas.current_daily_budget_gbp || 5).toFixed(2)}/day · 14d Spend: £${Number(roas.total_spend_gbp || 0).toFixed(2)} · 14d Revenue: £${Number(roas.total_revenue_gbp || 0).toFixed(2)} · Blended ROAS: ${Number(roas.blended_roas || 0).toFixed(2)}x`;
+            const dailyB = Number(roas.current_daily_budget_gbp ?? roas.active_daily_budget_gbp ?? 10).toFixed(2);
+            const spendB = Number(roas.total_spend_gbp ?? roas.totals?.paid_spend_gbp ?? 0).toFixed(2);
+            const revB = Number(roas.total_revenue_gbp ?? roas.totals?.paid_revenue_gbp ?? 0).toFixed(2);
+            const roasB = Number(roas.blended_roas ?? roas.totals?.paid_roas ?? 0).toFixed(2);
+            sumEl.textContent = `Daily Budget: £${dailyB}/day · 14d Spend: £${spendB} · 14d Revenue: £${revB} · Blended ROAS: ${roasB}x`;
           }
           const rBody = document.getElementById('roas-campaigns-body');
-          if (rBody && Array.isArray(roas.campaigns)) {
-            rBody.innerHTML = roas.campaigns.map(c => `<tr class="hover:bg-slate-800/40">
-              <td class="py-2.5 px-3 font-medium text-white">${esc(c.campaign)} <span class="text-[10px] text-slate-400 font-mono">(${esc(c.channel)})</span></td>
+          const campaignsList = Array.isArray(roas.campaigns) ? roas.campaigns : Array.isArray(roas.keywords) ? roas.keywords : [];
+          if (rBody) {
+            rBody.innerHTML = campaignsList.length ? campaignsList.map(c => `<tr class="hover:bg-slate-800/40">
+              <td class="py-2.5 px-3 font-medium text-white">${esc(c.campaign || c.query)} <span class="text-[10px] text-slate-400 font-mono">(${esc(c.channel || 'bing')})</span></td>
               <td class="py-2.5 px-3 font-mono text-slate-300">£${Number(c.spend_gbp || 0).toFixed(2)}</td>
-              <td class="py-2.5 px-3 font-mono text-emerald-400">£${Number(c.revenue_gbp || 0).toFixed(2)}</td>
+              <td class="py-2.5 px-3 font-mono text-emerald-400">£${Number(c.revenue_gbp ?? c.attributable_revenue_gbp ?? 0).toFixed(2)}</td>
               <td class="py-2.5 px-3 font-mono font-bold text-white">${Number(c.roas || 0).toFixed(2)}x</td>
-              <td class="py-2.5 px-3 text-[11px] font-semibold text-amber-300">${esc(c.recommended_action)}</td>
-            </tr>`).join('');
+              <td class="py-2.5 px-3 text-[11px] font-semibold text-amber-300">${esc(c.recommended_action || '')}</td>
+            </tr>`).join('') : '<tr><td colspan="5" class="py-4 text-center text-slate-500">No paid search campaigns logged in window.</td></tr>';
           }
         }
         if (expRes.ok) {
@@ -3384,14 +3528,19 @@
           const eBody = document.getElementById('experiments-table-body');
           if (eBody && Array.isArray(expData.experiments)) {
             eBody.innerHTML = expData.experiments.map(ex => {
-              const va = (ex.variants || []).find(v => v.variant === 'A') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 };
-              const vb = (ex.variants || []).find(v => v.variant === 'B') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 };
+              const va = Array.isArray(ex.variants)
+                ? (ex.variants.find(v => v.variant === 'A') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 })
+                : (ex.variants?.A || { exposures: 0, conversions: 0, conversion_rate_pct: 0 });
+              const vb = Array.isArray(ex.variants)
+                ? (ex.variants.find(v => v.variant === 'B') || { exposures: 0, conversions: 0, conversion_rate_pct: 0 })
+                : (ex.variants?.B || { exposures: 0, conversions: 0, conversion_rate_pct: 0 });
+              const winnerLabel = ex.statistically_significant_winner || ex.auto_promoted_variant || ex.winning_variant || 'Pending';
               return `<tr class="hover:bg-slate-800/40">
                 <td class="py-2.5 px-3 font-medium text-white">${esc(ex.name)}<div class="text-[10px] font-mono text-slate-400">${esc(ex.id)}</div></td>
                 <td class="py-2.5 px-3 font-mono text-slate-300">${va.conversions}/${va.exposures} (${va.conversion_rate_pct}%)</td>
                 <td class="py-2.5 px-3 font-mono text-slate-300">${vb.conversions}/${vb.exposures} (${vb.conversion_rate_pct}%)</td>
                 <td class="py-2.5 px-3 font-mono text-sky-300">${Number(ex.confidence_pct || 0).toFixed(1)}%</td>
-                <td class="py-2.5 px-3 font-mono font-bold text-emerald-400">${esc(ex.winning_variant || 'Pending')}</td>
+                <td class="py-2.5 px-3 font-mono font-bold text-emerald-400">${esc(winnerLabel)}</td>
               </tr>`;
             }).join('');
           }
