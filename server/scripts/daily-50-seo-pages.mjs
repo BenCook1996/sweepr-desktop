@@ -2367,7 +2367,7 @@ const STRIKE_ZONE_ENRICHMENTS = {
   },
   "adobe-media-cache": {
     metaTitle: "Clear Adobe Media Cache Files Safely on Windows | SWEEPR",
-    metaDescription: "How to clear %AppData%\\Adobe\\Common\\Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
+    metaDescription: "How to clear Adobe Common Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
     customFaqs: [
       {
         q: "Will deleting Adobe Media Cache Files (.cfa and .pek) break my Premiere Pro project?",
@@ -2464,19 +2464,152 @@ const STRIKE_ZONE_ENRICHMENTS = {
         a: "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
       }
     ]
+  },
+  "davinci-resolve-cacheclip": {
+    metaTitle: "Clear DaVinci Resolve CacheClip Safely | SWEEPR",
+    metaDescription: "How to clear DaVinci Resolve CacheClip and optimized media on Windows 10/11. Reclaim 20–150 GB of unlinked render clips safely without losing timelines.",
+    customFaqs: [
+      {
+        q: "Will deleting the DaVinci Resolve CacheClip folder corrupt my project?",
+        a: "No. CacheClip holds temporary timeline render cache and scratch video proxies. Your project databases, edit timelines, and source media remain completely untouched."
+      }
+    ]
+  },
+  "docker-desktop-wsl-vhdx": {
+    metaTitle: "Shrink Docker Desktop docker_data.vhdx on PC | SWEEPR",
+    metaDescription: "Why is Docker WSL2 data ext4.vhdx taking 50GB+ on Windows 11? Learn how to prune dangling images and compact WSL2 virtual disks safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Why doesn't docker system prune shrink the ext4.vhdx file size in Windows Explorer?",
+        a: "WSL2 Hyper-V virtual disks grow dynamically when containers write data, but do not release zeroed blocks back to Windows NTFS until diskpart or compact vdisk is run."
+      }
+    ]
+  },
+  "docker-desktop-ext4-disk": {
+    metaTitle: "Shrink Docker Desktop docker_data.vhdx on PC | SWEEPR",
+    metaDescription: "Why is Docker WSL2 data ext4.vhdx taking 50GB+ on Windows 11? Learn how to prune dangling images and compact WSL2 virtual disks safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Why doesn't docker system prune shrink the ext4.vhdx file size in Windows Explorer?",
+        a: "WSL2 Hyper-V virtual disks grow dynamically when containers write data, but do not release zeroed blocks back to Windows NTFS until diskpart or compact vdisk is run."
+      }
+    ]
+  },
+  "huggingface-hub-cache": {
+    metaTitle: "Clear HuggingFace Models Cache on Windows 11 | SWEEPR",
+    metaDescription: "How to clear %UserProfile%\\.cache\\huggingface\\hub on Windows 11/10. Reclaim 10–100 GB of unused AI models, safetensors, and diffusers checkpoints safely.",
+    customFaqs: [
+      {
+        q: "Does deleting .cache\\huggingface\\hub delete my custom Python AI scripts?",
+        a: "No. It only stores downloaded public model weights and tokenizers. Your Python code, virtual environments, and custom fine-tunes remain completely safe."
+      }
+    ]
+  },
+  "windows-prefetch": {
+    metaTitle: "Windows Prefetch Folder: Safe to Delete? | SWEEPR",
+    metaDescription: "Is it safe to delete C:\\Windows\\Prefetch on Windows 11/10? Learn why Windows creates .pf files, when to clear them, and how to reclaim disk space safely.",
+    customFaqs: [
+      {
+        q: "Is deleting C:\\Windows\\Prefetch safe or will it slow down Windows?",
+        a: "Deleting C:\\Windows\\Prefetch is completely safe. Windows will automatically rebuild fresh prefetch traces for your most-used applications over the next few reboots."
+      }
+    ]
+  },
+  "windows-softwaredistribution-download": {
+    metaTitle: "Clear Windows SoftwareDistribution Download | SWEEPR",
+    metaDescription: "How to safely clear C:\\Windows\\SoftwareDistribution\\Download on Windows 11/10. Fix stuck update downloads and reclaim 2–25 GB of disk space in 1 click.",
+    customFaqs: [
+      {
+        q: "Is it safe to delete files in SoftwareDistribution\\Download?",
+        a: "Yes, 100% safe. This folder only stores staging files for completed or pending Windows Updates. Deleting them forces Windows Update to fetch clean delta packages."
+      }
+    ]
+  },
+  "software-distribution-download": {
+    metaTitle: "Clear Windows SoftwareDistribution Download | SWEEPR",
+    metaDescription: "How to safely clear C:\\Windows\\SoftwareDistribution\\Download on Windows 11/10. Fix stuck update downloads and reclaim 2–25 GB of disk space in 1 click.",
+    customFaqs: [
+      {
+        q: "Is it safe to delete files in SoftwareDistribution\\Download?",
+        a: "Yes, 100% safe. This folder only stores staging files for completed or pending Windows Updates. Deleting them forces Windows Update to fetch clean delta packages."
+      }
+    ]
+  },
+  "adobe-premiere-media-cache": {
+    metaTitle: "Clear Adobe Media Cache Files Safely on Windows | SWEEPR",
+    metaDescription: "How to clear Adobe Common Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
+    customFaqs: [
+      {
+        q: "Will deleting Adobe Media Cache Files (.cfa and .pek) break my Premiere Pro project?",
+        a: "No. .cfa (conformed audio) and .pek (waveform peak) files are temporary cache assets. Premiere Pro and After Effects automatically rebuild them only for the active timeline you open next."
+      }
+    ]
+  },
+  "chrome-service-worker-cache": {
+    metaTitle: "Clear Chrome Cache_Data & Service Worker Bloat | SWEEPR",
+    metaDescription: "How to clear Google Chrome Cache_Data, Code Cache, and Service Worker CacheStorage on Windows 10/11. Reclaim 2–15 GB without deleting saved passwords or tabs.",
+    customFaqs: [
+      {
+        q: "Why does Google Chrome still use 10GB+ on disk after clearing browsing data in settings?",
+        a: "Chrome's built-in Clear Browsing Data dialog often leaves orphaned Service Worker\\CacheStorage folders, File System API blobs, and multi-profile GPUCache directories in %LocalAppData%\\Google\\Chrome\\User Data."
+      }
+    ]
+  },
+  "winsxs": {
+    metaTitle: "WinSxS Folder Windows 11: Safe to Clean? (Free 6–18 GB)",
+    metaDescription: "Is C:\\Windows\\WinSxS safe to delete on Windows 11? Never delete the folder directly — run DISM StartComponentCleanup or SWEEPR to reclaim 6–18 GB safely.",
+    customFaqs: [
+      {
+        q: "Can I delete the C:\\Windows\\WinSxS folder directly in File Explorer?",
+        a: "No. WinSxS (Windows Side-by-Side Component Store) contains hard links to active system binaries. Instead of deleting the folder directly, use DISM /Online /Cleanup-Image /StartComponentCleanup or SWEEPR 1-click component cleanup to safely purge superseded update payloads."
+      },
+      {
+        q: "Why is the WinSxS folder taking up 10–20 GB on Windows 11 24H2?",
+        a: "Every monthly cumulative update retains previous component versions inside C:\\Windows\\WinSxS so you can roll back patches. Pruning superseded components typically reclaims 6–18 GB without breaking Windows Update."
+      }
+    ]
+  },
+  "davinci-resolve-optimized-media": {
+    metaTitle: "Clear DaVinci Resolve Optimized Media Safely | SWEEPR",
+    metaDescription: "How to clear DaVinci Resolve Optimized Media and proxy clips on Windows 11/10. Reclaim 15–120 GB of scratch video storage safely without losing edits.",
+    customFaqs: [
+      {
+        q: "Does deleting DaVinci Resolve Optimized Media delete my original camera footage or timeline?",
+        a: "No. Optimized Media consists solely of uncompressed intermediate proxy files generated for smoother timeline playback. DaVinci Resolve automatically falls back to your original source camera files."
+      }
+    ]
+  },
+  "genshin-impact-update-cache": {
+    metaTitle: "Delete Genshin Impact Update Cache on PC Safely | SWEEPR",
+    metaDescription: "How to delete Genshin Impact update cache, temp zip packages, and past quest voice resources on Windows 11/10. Reclaim 8–35 GB of SSD space safely.",
+    customFaqs: [
+      {
+        q: "Will deleting Genshin Impact update cache or webCaches delete my game progress?",
+        a: "No. All Genshin Impact account progress, characters, and inventory are stored on HoYoverse servers. Clearing webCaches, SDKCaches, and leftover patch .zip_tmp archives only removes temporary installer bloat."
+      }
+    ]
   }
 };
 
 const STRIKE_ZONE_ALIASES = {
   "capcut-pc-cache": "capcut-desktop-cache",
+  "capcut-desktop-cache": "capcut-pc-cache",
   "intellij-idea-caches": "jetbrains-intellij-cache",
+  "jetbrains-intellij-cache": "intellij-idea-caches",
   "pip-cache": "pip-http-wheels-cache",
+  "pip-http-wheels-cache": "pip-cache",
   "delivery-optimization": "delivery-optimization-cache",
+  "delivery-optimization-cache": "delivery-optimization",
   "spotify-storage-cache": "spotify-cache",
+  "spotify-cache": "spotify-storage-cache",
   "google-chrome-cache": "chrome-service-worker-cache",
+  "chrome-service-worker-cache": "google-chrome-cache",
   "adobe-media-cache": "adobe-premiere-media-cache",
+  "adobe-premiere-media-cache": "adobe-media-cache",
   "docker-desktop-wsl-vhdx": "docker-desktop-ext4-disk",
-  "windows-softwaredistribution-download": "software-distribution-download"
+  "docker-desktop-ext4-disk": "docker-desktop-wsl-vhdx",
+  "windows-softwaredistribution-download": "software-distribution-download",
+  "software-distribution-download": "windows-softwaredistribution-download"
 };
 
 function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
@@ -2492,7 +2625,7 @@ function applyStrikeZoneBatchEnrichment(items, batch, ctrOptimizedAt) {
     );
     if (!item) continue;
     const isTitleLocked = LOCKED_TEST_TITLE_SLUGS.has(item.slug.toLowerCase()) || LOCKED_TEST_TITLE_SLUGS.has(slug);
-    const preset = STRIKE_ZONE_ENRICHMENTS[slug];
+    const preset = STRIKE_ZONE_ENRICHMENTS[slug] || STRIKE_ZONE_ENRICHMENTS[targetSlug];
     if (preset) {
       if (preset.metaTitle && !isTitleLocked && preset.metaTitle.length >= 30 && preset.metaTitle.length <= 60) {
         item.metaTitle = preset.metaTitle;

@@ -7,13 +7,13 @@
 - **Installer Footprint**: 5.8 MB native Rust binary (runs on-demand only; zero resident background bloatware)
 - **Cross-Platform Licensing**: Single Pro license covers up to **5 Devices** (Windows 11, Windows 10, macOS, Android, and iOS)
 - **Safety Architecture**: Pre-deletion SHA-256 rule verification, active process lock detection, and 7-day automatic Undo Rollback
-- **Audited Knowledge Base**: 373 verified Windows 10 & 11 folder/app cleanup guides + 10 interactive cleaner tools
-- **Full RAG Corpus (All 373 Guides)**: https://sweeprcleaner.com/llms-full.txt
+- **Audited Knowledge Base**: 377 verified Windows 10 & 11 folder/app cleanup guides + 10 interactive cleaner tools
+- **Full RAG Corpus (All 377 Guides)**: https://sweeprcleaner.com/llms-full.txt
 
 ## 2026 State of Windows 10 & 11 Storage Benchmark (Live Telemetry & VM Lab Dataset)
 - **Canonical Benchmark Report (CC-BY 4.0)**: https://sweeprcleaner.com/state-of-windows-storage
 - **Median Reclaimable Space per Windows PC**: **24.6 GB** (90th Percentile: **61.7 GB**)
-- **Dataset Scope**: 373 audited cache paths, 6 controlled Windows 11 24H2 VM benchmarks, and 0 anonymized desktop scan samples (k-anonymity floor n >= 30).
+- **Dataset Scope**: 377 audited cache paths, 6 controlled Windows 11 24H2 VM benchmarks, and 0 anonymized desktop scan samples (k-anonymity floor n >= 30).
 
 ### Top 10 Heaviest Windows 10/11 Cache Directories (Empirical Ranking)
 - **#1 [ComfyUI Temporary Preview & Latent Cache](https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache)** (`C:\ComfyUI\temp and %LocalAppData%\Temp\comfyui`): Median **21.6 GB** | P90 **22.4 GB** (Windows 11 24H2 Lab VM)
@@ -60,9 +60,9 @@
   - [SWEEPR vs Avast Cleanup](https://sweeprcleaner.com/vs/avast-cleanup) | [Best Avast Cleanup Alternatives](https://sweeprcleaner.com/alternatives/avast-cleanup)
   - [SWEEPR vs Wise Disk Cleaner](https://sweeprcleaner.com/vs/wise-disk-cleaner) | [Best Glary Utilities Alternatives](https://sweeprcleaner.com/alternatives/glary-utilities)
 
-## Top Priority Windows Storage & App Cache Guides (50 of 373 — Full List at /llms-full.txt)
+## Top Priority Windows Storage & App Cache Guides (50 of 377 — Full List at /llms-full.txt)
 - **Full Directory**: https://sweeprcleaner.com/clean
-- [Steam depotcache Folder (C:\Program Files (x86)\Steam\depotcache)](https://sweeprcleaner.com/clean/app/steam-depotcache) (`C:\Program Files (x86)\Steam\depotcache and steamapps\downloading`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 25.0 GB
+- [Steam depotcache Folder (C:\Program Files (x86)\Steam\depotcache)](https://sweeprcleaner.com/clean/app/steam-depotcache) (`C:\Program Files (x86)\Steam\depotcache and steamapps\downloading`) [SAFE_TO_DELETE]: Empirical Median 8.5 GB (P90 14 GB, n=30)
 - [NVIDIA DirectX Shader Cache (DXCache)](https://sweeprcleaner.com/clean/app/nvidia-dxcache) (`%LocalAppData%\NVIDIA\DXCache`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 14.0 GB
 - [AMD Radeon Adrenalin DXCache & VkCache](https://sweeprcleaner.com/clean/app/amd-shader-cache) (`%LocalAppData%\AMD\DxCache and %LocalAppData%\AMD\VkCache`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 12.0 GB
 - [Windows 11 24H2 8.63 GB Undeletable Update Cache Fix](https://sweeprcleaner.com/clean/folder/windows-11-24h2-update-cache-8gb-bug) (`C:\Windows\WinSxS\Temp\PendingDeletes & C:\$Windows.~BT`) [SAFE_TO_DELETE]: Reclaim 8.6 GB – 18.0 GB

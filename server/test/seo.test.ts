@@ -1350,6 +1350,7 @@ test("Phase 2 & 3 Builds: Action 2.7 (10 Transactional Tool Pages), Action 2.2 (
     title: "VRChat Cache Folder: Safe to Delete? Free 10–30 GB Fast",
     meta_description:
       "Is %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer safe to delete? Yes—reclaim 10–30 GB of cached VRChat worlds & avatars in 1 click without sign-outs.",
+    persist_state: false,
   });
   assert.equal(approveCtrRes.status, 200);
   const vrchatHtml = await (await app.request("/clean/app/vrchat-cache")).text();
@@ -2099,6 +2100,21 @@ test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & 
   const a18Json = (await a18Res.json()) as any;
   assert.equal(a18Json.ok, true);
   assert.ok(a18Json.refreshed_count >= 1);
+  for (const rp of a18Json.refreshed_pages) {
+    if (rp.applied_title) {
+      assert.ok(rp.applied_title.length >= 30 && rp.applied_title.length <= 60, `Clean title length 30-60: ${rp.applied_title}`);
+      assert.ok(!/\(\s*:/.test(rp.applied_title), `No unclosed parenthesis before colon: ${rp.applied_title}`);
+    }
+  }
+
+  // Verify cross-project backlinks return 200 OK skipped instead of 400 error
+  const crossBacklinkRes = await post("/api/crm/seo/backlinks", {
+    source_url: "https://example.com/wireguard-vpn-drip-guide",
+  });
+  assert.equal(crossBacklinkRes.status, 200);
+  const crossBacklinkJson = (await crossBacklinkRes.json()) as any;
+  assert.equal(crossBacklinkJson.ok, true);
+  assert.equal(crossBacklinkJson.skipped, "cross_project_ignored");
 
   const runA18Job = await post("/api/crm/automations/run", { job_id: "A18_underperformer_auto_refresh" });
   assert.equal(runA18Job.status, 200);

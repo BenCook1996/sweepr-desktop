@@ -973,6 +973,72 @@ export async function runUnderperformerAutoRefresh(
     }
   }
 
+const CURATED_A18_CTR_TITLES: Record<string, string> = {
+  winsxs: "WinSxS Folder Windows 11: Safe to Clean? (Free 6–18 GB)",
+  "hiberfil-sys": "How to Delete hiberfil.sys on Windows 11 (Free 6–32 GB)",
+  "gradle-caches": "Gradle Build Cache (.gradle): Safe to Delete? (4–25 GB)",
+  "gradle-wrapper-caches": "Gradle Build Cache (.gradle): Safe to Delete? (4–25 GB)",
+  "pip-http-wheels-cache": "Python pip Wheel Cache: Safe to Delete? (Free 1.5–10 GB)",
+  "discord-cache": "Clear Discord Cache on Windows 11 Safely (Free 1–5 GB)",
+  "windows-update-cleanup": "Windows Update Cleanup (WinSxS): Safe to Delete? | SWEEPR",
+  "software-distribution-download": "Clear Windows SoftwareDistribution Download | SWEEPR",
+  "windows-prefetch": "Windows Prefetch Folder: Safe to Delete? | SWEEPR",
+  "docker-desktop-ext4-disk": "Shrink Docker Desktop docker_data.vhdx on PC | SWEEPR",
+  "huggingface-hub-cache": "Clear HuggingFace Models Cache on Windows 11 | SWEEPR",
+  "davinci-resolve-cacheclip": "Clear DaVinci Resolve CacheClip Safely | SWEEPR",
+  "davinci-resolve-optimized-media": "Clear DaVinci Resolve Optimized Media Safely | SWEEPR",
+  "genshin-impact-update-cache": "Delete Genshin Impact Update Cache on PC Safely | SWEEPR",
+  "microsoft-teams-cache": "How to Clear Microsoft Teams Cache (New Teams) | SWEEPR",
+  "adobe-premiere-media-cache": "Clear Adobe Media Cache Files Safely on Windows | SWEEPR",
+  "chrome-service-worker-cache": "Clear Chrome Cache_Data & Service Worker Bloat | SWEEPR",
+};
+
+function truncateAtWordBoundary(input: string, maxChars: number): string {
+  const cleaned = input
+    .replace(/\s*\([^)]*\)?/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (cleaned.length <= maxChars) return cleaned.replace(/[&:,\-–—]+$/, "").trim();
+  const words = cleaned.split(" ");
+  let acc = "";
+  for (const w of words) {
+    const next = acc ? `${acc} ${w}` : w;
+    if (next.length > maxChars) break;
+    acc = next;
+  }
+  const result = (acc || cleaned.slice(0, maxChars)).replace(/[&:,\-–—(]+$/, "").trim();
+  return result;
+}
+
+function buildCleanCtrTitle(
+  slugLower: string,
+  cleanItem: { name?: string; metaTitle?: string } | undefined,
+  primaryKeyword: string,
+  spaceLabel: string
+): string {
+  const curated = CURATED_A18_CTR_TITLES[slugLower];
+  if (curated && curated.length >= 30 && curated.length <= 60) {
+    return curated;
+  }
+  if (cleanItem?.metaTitle && cleanItem.metaTitle.length >= 30 && cleanItem.metaTitle.length <= 60) {
+    return cleanItem.metaTitle;
+  }
+  const rawDisplay = cleanItem?.name || primaryKeyword.replace(/\b\w/g, (c) => c.toUpperCase());
+  const shortEntity = truncateAtWordBoundary(rawDisplay, 24);
+  let candidate = `${shortEntity}: Safe to Delete? (Free ${spaceLabel})`;
+  if (candidate.length < 30) {
+    candidate = `${shortEntity} Windows 11: Safe to Delete? (${spaceLabel})`;
+  }
+  if (candidate.length > 60) {
+    const tighterEntity = truncateAtWordBoundary(rawDisplay, 20);
+    candidate = `${tighterEntity}: Safe to Delete? (${spaceLabel})`;
+  }
+  if (candidate.length > 60) {
+    candidate = `${truncateAtWordBoundary(rawDisplay, 26)}: Safe to Delete?`;
+  }
+  return candidate;
+}
+
   const indexNowQueueUrls: string[] = [];
 
   for (const row of candidates.slice(0, maxPages)) {
@@ -1003,6 +1069,7 @@ export async function runUnderperformerAutoRefresh(
       : cleanItem?.avgSpace?.split("–")[0]?.trim() || "4.5 GB";
 
     let appliedTitle: string | undefined;
+    let appliedMetaDescription: string | undefined;
     let appliedCompDomain = row.source_competitor_domain || "wisecleaner.com";
     let addedFaqsCount = 0;
     const isCtrIssue = row.outcome_verdict === "underperforming_ctr";
@@ -1010,20 +1077,15 @@ export async function runUnderperformerAutoRefresh(
 
     // 2. Apply CTR Title & Meta Description Override if not locked
     if (!isLockedTitle) {
-      const displayName = cleanItem?.name || row.primary_keyword.replace(/\b\w/g, (c) => c.toUpperCase());
-      const shortName = displayName.length > 26 ? displayName.slice(0, 26).trim() : displayName;
-      let candidateTitle = `${shortName}: Safe to Delete? (Free ${spaceLabel})`;
-      if (candidateTitle.length < 30) {
-        candidateTitle = `${shortName} Windows 11: Safe to Delete? (${spaceLabel})`;
-      }
-      if (candidateTitle.length > 60) {
-        candidateTitle = `${shortName.slice(0, 22).trim()}: Safe to Delete? (${spaceLabel})`;
-      }
+      const candidateTitle = buildCleanCtrTitle(slugLower, cleanItem, row.primary_keyword, spaceLabel);
 
       const winPath = cleanItem?.path || "%LocalAppData%\\Temp";
-      let candidateMeta = `Yes — safe to clear on Windows 11. Reclaim ${spaceLabel} at ${winPath} without losing settings using manual steps or Sweepr 1-click cleanup.`;
-      if (candidateMeta.length > 160) {
-        candidateMeta = candidateMeta.slice(0, 157).trim() + "...";
+      let candidateMeta =
+        cleanItem?.metaDescription && cleanItem.metaDescription.length >= 110 && cleanItem.metaDescription.length <= 158
+          ? cleanItem.metaDescription
+          : `Yes — safe to clear on Windows 11. Reclaim ${spaceLabel} at ${winPath} without losing settings using manual steps or Sweepr 1-click cleanup.`;
+      if (candidateMeta.length > 158) {
+        candidateMeta = truncateAtWordBoundary(candidateMeta, 154) + "...";
       }
 
       const res = approveIntentGapRecommendation(store, {
@@ -1032,24 +1094,26 @@ export async function runUnderperformerAutoRefresh(
         slug: slugLower,
         title: candidateTitle,
         meta_description: candidateMeta,
+        persist_state: opts?.persist_disk !== false,
       });
       if (res.ok) {
         appliedTitle = candidateTitle;
+        appliedMetaDescription = candidateMeta;
       }
     }
 
     // 3. Apply A16 Competitor Structural Blueprint & FAQ Expansion
-    const matchedBenchmark =
-      COMPETITOR_CONTENT_HUB_BENCHMARKS.find(
-        (b) =>
-          b.primary_keyword.toLowerCase().includes(slugLower.replace(/-/g, " ")) ||
-          b.url === row.source_competitor_url
-      ) || COMPETITOR_CONTENT_HUB_BENCHMARKS[0]!;
+    const specificBenchmark = COMPETITOR_CONTENT_HUB_BENCHMARKS.find(
+      (b) =>
+        b.primary_keyword.toLowerCase().includes(slugLower.replace(/-/g, " ")) ||
+        b.url === row.source_competitor_url
+    );
+    const matchedBenchmark = specificBenchmark || COMPETITOR_CONTENT_HUB_BENCHMARKS[0]!;
     appliedCompDomain = matchedBenchmark.competitor_domain;
 
     const superiorityFixes = [
       `Verified Windows 11 24H2 safety verdict & ${spaceLabel} empirical recovery benchmark`,
-      `Copy-paste PowerShell size audit snippet for ${cleanItem?.path || matchedBenchmark.target_win_path}`,
+      `Copy-paste PowerShell size audit snippet for ${cleanItem?.path || specificBenchmark?.target_win_path || "%LocalAppData%\\Temp"}`,
       "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup",
     ];
     const replicatedPatterns = [
@@ -1070,6 +1134,12 @@ export async function runUnderperformerAutoRefresh(
     ];
 
     if (cleanItem) {
+      if (!isLockedTitle && appliedTitle) {
+        cleanItem.metaTitle = appliedTitle;
+      }
+      if (!isLockedTitle && appliedMetaDescription) {
+        cleanItem.metaDescription = appliedMetaDescription;
+      }
       cleanItem.competitorBlueprint = {
         sourceDomain: appliedCompDomain,
         replicatedPatterns: replicatedPatterns.slice(0, 4),
@@ -1089,6 +1159,12 @@ export async function runUnderperformerAutoRefresh(
       if (diskItems.length > 0) {
         const diskIdx = diskItems.findIndex((d) => String(d.slug || "").toLowerCase() === slugLower);
         if (diskIdx >= 0) {
+          if (!isLockedTitle && cleanItem.metaTitle) {
+            diskItems[diskIdx].metaTitle = cleanItem.metaTitle;
+          }
+          if (!isLockedTitle && cleanItem.metaDescription) {
+            diskItems[diskIdx].metaDescription = cleanItem.metaDescription;
+          }
           diskItems[diskIdx].competitorBlueprint = cleanItem.competitorBlueprint;
           diskItems[diskIdx].customFaqs = cleanItem.customFaqs;
           diskItems[diskIdx].lastUpdated = refreshedDate;

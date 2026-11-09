@@ -2,8 +2,12 @@
   "indexnow_key": "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b",
   "gsc_requested": [],
   "bing_requested": [],
-  "updatedAt": "2026-11-08T10:18:10.222Z",
+  "updatedAt": "2026-11-09T06:19:53.300Z",
   "pendingUrls": [
+    "https://sweeprcleaner.com/clean/folder/windows-11-24h2-sihclient-waasmedic-logs",
+    "https://sweeprcleaner.com/clean/folder/windows-connected-devices-platform-cdp-cache",
+    "https://sweeprcleaner.com/clean/folder/windows-pca-program-compatibility-assistant-logs",
+    "https://sweeprcleaner.com/clean/app/deno-typescript-global-dep-cache",
     "https://sweeprcleaner.com/vs/ccleaner",
     "https://sweeprcleaner.com/alternatives/ccleaner",
     "https://sweeprcleaner.com/vs/bleachbit",
@@ -829,9 +833,13 @@
     "https://sweeprcleaner.com/clean/app/invokeai-models-latents-cache",
     "https://sweeprcleaner.com/clean/app/koboldcpp-context-cache",
     "https://sweeprcleaner.com/clean/app/open-webui-pip-cache",
-    "https://sweeprcleaner.com/clean/app/whisper-faster-huggingface-cache"
+    "https://sweeprcleaner.com/clean/app/whisper-faster-huggingface-cache",
+    "https://sweeprcleaner.com/clean/folder/windows-11-24h2-sihclient-waasmedic-logs",
+    "https://sweeprcleaner.com/clean/folder/windows-connected-devices-platform-cdp-cache",
+    "https://sweeprcleaner.com/clean/folder/windows-pca-program-compatibility-assistant-logs",
+    "https://sweeprcleaner.com/clean/app/deno-typescript-global-dep-cache"
   ],
-  "last_indexnow_ping": "2026-11-08T18:16:50.307Z",
-  "last_sitemap_ping": "2026-11-08T18:16:50.307Z",
-  "last_audit": "2026-11-08T18:16:50.307Z"
+  "last_indexnow_ping": "2026-11-09T18:20:37.342Z",
+  "last_sitemap_ping": "2026-11-09T18:20:37.342Z",
+  "last_audit": "2026-11-09T18:20:37.341Z"
 }

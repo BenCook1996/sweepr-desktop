@@ -63,7 +63,7 @@ import {
   runUnderperformerAutoRefresh,
   teardownCompetitorOrganicPage,
 } from "./competitor-intel.js";
-import type { SeoStore } from "./store.js";
+import { isCrossProjectBacklink, type SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
   store: SeoStore;
@@ -607,6 +607,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       max_cpc_gbp: body.max_cpc_gbp !== undefined ? Number(body.max_cpc_gbp) : undefined,
       merge_into_slug: body.merge_into_slug,
       reason: body.reason,
+      persist_state: body.persist_state !== false,
     });
     if (!res.ok) return c.json(res, 400);
     return c.json(res);
@@ -729,8 +730,11 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   });
   router.post("/backlinks", async (c) => {
     const body = await c.req.json().catch(() => ({}));
-    const url = String(body.source_url ?? "").trim();
+    const url = String(body.source_url ?? body.url ?? "").trim();
     if (!isPublicHttpUrl(url)) return c.json({ error: "invalid_url" }, 400);
+    if (isCrossProjectBacklink(url)) {
+      return c.json({ ok: true, skipped: "cross_project_ignored" });
+    }
     const row = store.addBacklink(url, siteHost, null);
     return row ? c.json({ backlink: row }) : c.json({ error: "invalid_url" }, 400);
   });

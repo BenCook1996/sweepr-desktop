@@ -556,6 +556,7 @@ export interface ApproveIntentGapInput {
   query?: string;
   target_url?: string;
   max_cpc_gbp?: number;
+  persist_state?: boolean;
 }
 
 export function approveIntentGapRecommendation(
@@ -635,9 +636,9 @@ export function approveIntentGapRecommendation(
     };
     store.setSetting("intent_gap_approved_ctr_overrides", existingOverrides);
 
-    // Record 14-day cooldown window in daily-seo-pages-state.json (non-fatal on read-only fs)
+    // Record 14-day cooldown window in daily-seo-pages-state.json (non-fatal on read-only fs, skipped when persist_state === false)
     try {
-      if (existsSync(DAILY_STATE_PATH)) {
+      if (input.persist_state !== false && existsSync(DAILY_STATE_PATH)) {
         const state = readDailyState();
         state.ctrOptimizedAt = state.ctrOptimizedAt || {};
         state.ctrOptimizedAt[slug] = nowIso.slice(0, 10);

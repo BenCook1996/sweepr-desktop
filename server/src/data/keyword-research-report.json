@@ -1,37 +1,37 @@
 {
   "ok": true,
-  "generated_at": "2026-11-08T18:16:49.815Z",
+  "generated_at": "2026-11-09T18:20:36.858Z",
   "summary": {
-    "total_evaluated": 151,
-    "low_competition_count": 50,
-    "avg_opportunity_score": 81.3,
-    "bofu_mofu_share_pct": 64.2,
+    "total_evaluated": 155,
+    "low_competition_count": 53,
+    "avg_opportunity_score": 81.7,
+    "bofu_mofu_share_pct": 65.2,
     "by_intent": {
-      "informational": 73,
+      "informational": 74,
       "navigational": 1,
       "commercial": 4,
-      "transactional": 73
+      "transactional": 76
     },
     "by_buyer_stage": {
-      "BOFU": 28,
-      "MOFU": 69,
+      "BOFU": 30,
+      "MOFU": 71,
       "TOFU": 54
     },
     "by_difficulty_tier": {
-      "very_easy": 6,
-      "easy": 33,
-      "moderate": 62,
+      "very_easy": 7,
+      "easy": 34,
+      "moderate": 64,
       "hard": 50
     },
     "by_action": {
-      "enrich_existing_page": 13,
-      "create_pseo_folder": 38,
-      "create_pseo_app": 90,
+      "enrich_existing_page": 14,
+      "create_pseo_folder": 39,
+      "create_pseo_app": 92,
       "create_transactional_tool": 6,
       "bid_exact_match_ad": 1,
       "create_comparison": 3
     },
-    "new_pseo_ready_count": 24,
+    "new_pseo_ready_count": 20,
     "ctr_enrichment_ready_count": 8,
     "transactional_tool_candidates_count": 5
   },
@@ -45,17 +45,17 @@
     "tofu_safety_multiplier": 1.08,
     "competitor_replication_bonus": 6,
     "calibrated_days_per_kd_point": 0.75,
-    "calibrated_ctr_lift_multiplier": 1.19,
-    "calibrated_position_gain_bonus": 1.28,
+    "calibrated_ctr_lift_multiplier": 1.22,
+    "calibrated_position_gain_bonus": 1.24,
     "empirical_tier_cvr_pct": {
       "BOFU_Switcher": 1.04,
-      "BOFU_Tool_Intent": 3.97,
+      "BOFU_Tool_Intent": 3.73,
       "BOFU_Urgent_Pain": 3.1,
       "MOFU_Action_Cleanup": 2.03,
       "TOFU_Safety_Diagnostic": 1.1
     },
     "empirical_download_to_paid_cvr_pct": 14,
-    "updated_at": "2026-11-08T18:16:49.728Z",
+    "updated_at": "2026-11-09T18:20:36.778Z",
     "calibration_note": "Increased low_comp_weight to 0.62 (demand_weight=0.38) to accelerate Top-10 ranking velocity on KD <= 30 targets."
   },
   "top_opportunities": [
@@ -1292,7 +1292,7 @@
     {
       "keyword": "lghub cache safe to delete",
       "opportunity_score": 100,
-      "demand_score": 65.1,
+      "demand_score": 76,
       "low_comp_score": 85,
       "intent_multiplier": 1.22,
       "gap_bonus": 14,
@@ -1313,24 +1313,24 @@
         "forecast_kd": 22,
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
-        "forecast_monthly_volume": 83,
-        "forecast_target_position": 5.1,
-        "forecast_monthly_clicks": 4,
+        "forecast_monthly_volume": 80,
+        "forecast_target_position": 4.5,
+        "forecast_monthly_clicks": 5,
         "forecast_cvr_pct": 1.75,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
-        "GSC velocity=67.0 (20 imps)",
+        "GSC velocity=83.7 (44 imps)",
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 6.8 (+6 strike-zone bonus)"
+        "GSC Striking Distance pos 6.2 (+6 strike-zone bonus)"
       ]
     },
     {
       "keyword": "winsxs folder safe to delete",
       "opportunity_score": 100,
-      "demand_score": 61.2,
+      "demand_score": 72.4,
       "low_comp_score": 85,
       "intent_multiplier": 1.22,
       "gap_bonus": 14,
@@ -1351,24 +1351,24 @@
         "forecast_kd": 22,
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
-        "forecast_monthly_volume": 65,
-        "forecast_target_position": 12,
+        "forecast_monthly_volume": 132,
+        "forecast_target_position": 11.9,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 1.75,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
-        "GSC velocity=61.0 (15 imps)",
+        "GSC velocity=78.2 (34 imps)",
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 16.4 (+6 strike-zone bonus)"
+        "GSC Striking Distance pos 13.6 (+6 strike-zone bonus)"
       ]
     },
     {
       "keyword": "what is depotcache steam",
       "opportunity_score": 100,
-      "demand_score": 61.2,
+      "demand_score": 72,
       "low_comp_score": 100,
       "intent_multiplier": 1.15,
       "gap_bonus": 6,
@@ -1389,17 +1389,93 @@
         "forecast_kd": 10,
         "forecast_est_days_to_top10": 7,
         "forecast_est_days_to_top3": 20,
-        "forecast_monthly_volume": 65,
-        "forecast_target_position": 8.3,
+        "forecast_monthly_volume": 128,
+        "forecast_target_position": 7.9,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 1.1,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
-        "GSC velocity=61.0 (15 imps)",
+        "GSC velocity=77.6 (33 imps)",
         "Safety Verdict & Folder Diagnostic (TOFU) (1.15x, est. CVR 1.1%)",
-        "GSC Striking Distance pos 10.0 (+6 strike-zone bonus)"
+        "GSC Striking Distance pos 9.6 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "softwaredistribution download safe to delete",
+      "opportunity_score": 100,
+      "demand_score": 78.6,
+      "low_comp_score": 85,
+      "intent_multiplier": 1.32,
+      "gap_bonus": 14,
+      "search_intent": "transactional",
+      "transactional_tier": "BOFU_Tool_Intent",
+      "buyer_stage": "BOFU",
+      "difficulty_tier": "easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/softwaredistribution",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "BOFU_Tool_Intent",
+        "buyer_stage": "BOFU",
+        "difficulty_tier": "easy",
+        "forecast_kd": 22,
+        "forecast_est_days_to_top10": 11,
+        "forecast_est_days_to_top3": 27,
+        "forecast_monthly_volume": 87,
+        "forecast_target_position": 4.9,
+        "forecast_monthly_clicks": 6,
+        "forecast_cvr_pct": 1.56,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=87.8 (53 imps)",
+        "Direct Cleaner Tool Intent (BOFU) (1.32x, est. CVR 1.56%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 6.6 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "docker ext4 vhdx taking up disk space",
+      "opportunity_score": 100,
+      "demand_score": 74.3,
+      "low_comp_score": 100,
+      "intent_multiplier": 1.3,
+      "gap_bonus": 14,
+      "search_intent": "transactional",
+      "transactional_tier": "BOFU_Urgent_Pain",
+      "buyer_stage": "BOFU",
+      "difficulty_tier": "very_easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/docker-ext4-vhdx",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "BOFU_Urgent_Pain",
+        "buyer_stage": "BOFU",
+        "difficulty_tier": "very_easy",
+        "forecast_kd": 10,
+        "forecast_est_days_to_top10": 7,
+        "forecast_est_days_to_top3": 20,
+        "forecast_monthly_volume": 149,
+        "forecast_target_position": 7.1,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 3.1,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=81.2 (39 imps)",
+        "Urgent Disk Full / Storage Pain (BOFU) (1.30x, est. CVR 3.1%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 8.8 (+6 strike-zone bonus)"
       ]
     },
     {
@@ -1589,6 +1665,44 @@
         "Competitor Switcher / Comparison (BOFU) (1.45x, est. CVR 1.04%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 24.5 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "is it safe to delete prefetch files",
+      "opportunity_score": 99,
+      "demand_score": 76.9,
+      "low_comp_score": 65,
+      "intent_multiplier": 1.22,
+      "gap_bonus": 14,
+      "search_intent": "informational",
+      "transactional_tier": "MOFU_Action_Cleanup",
+      "buyer_stage": "MOFU",
+      "difficulty_tier": "moderate",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/prefetch-files",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "MOFU_Action_Cleanup",
+        "buyer_stage": "MOFU",
+        "difficulty_tier": "moderate",
+        "forecast_kd": 39,
+        "forecast_est_days_to_top10": 28,
+        "forecast_est_days_to_top3": 59,
+        "forecast_monthly_volume": 80,
+        "forecast_target_position": 5.4,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 1.75,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=85.2 (47 imps)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 7.1 (+6 strike-zone bonus)"
       ]
     },
     {
@@ -2221,237 +2335,9 @@
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
-    },
-    {
-      "keyword": "clear stalker 2 cache windows 11",
-      "opportunity_score": 87,
-      "demand_score": 87.8,
-      "low_comp_score": 50,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 8,
-      "search_intent": "transactional",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "moderate",
-      "is_low_competition": false,
-      "recommended_action": "create_pseo_folder",
-      "target_path": "/clean/folder/stalker-cache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 51,
-        "forecast_est_days_to_top10": 46,
-        "forecast_est_days_to_top3": 92,
-        "forecast_monthly_volume": 351,
-        "forecast_target_position": 7.2,
-        "forecast_monthly_clicks": 7,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
-      ]
-    },
-    {
-      "keyword": "clear microsoft directstorage cache",
-      "opportunity_score": 87,
-      "demand_score": 81.7,
-      "low_comp_score": 55,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 8,
-      "search_intent": "transactional",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "moderate",
-      "is_low_competition": false,
-      "recommended_action": "create_pseo_app",
-      "target_path": "/clean/app/microsoft-directstorage-cache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 47,
-        "forecast_est_days_to_top10": 38,
-        "forecast_est_days_to_top3": 77,
-        "forecast_monthly_volume": 238,
-        "forecast_target_position": 6.8,
-        "forecast_monthly_clicks": 9,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
-      ]
-    },
-    {
-      "keyword": "clear davinci resolve cache windows 11",
-      "opportunity_score": 87,
-      "demand_score": 88.5,
-      "low_comp_score": 50,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 8,
-      "search_intent": "transactional",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "moderate",
-      "is_low_competition": false,
-      "recommended_action": "create_pseo_folder",
-      "target_path": "/clean/folder/davinci-resolve-cache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 51,
-        "forecast_est_days_to_top10": 46,
-        "forecast_est_days_to_top3": 92,
-        "forecast_monthly_volume": 366,
-        "forecast_target_position": 7.2,
-        "forecast_monthly_clicks": 8,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
-      ]
     }
   ],
   "new_pseo_candidates": [
-    {
-      "opportunity_score": 100,
-      "primary_keyword": "c windows logs waasmedic safe to delete",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "easy",
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "easy",
-        "forecast_kd": 22,
-        "forecast_est_days_to_top10": 20,
-        "forecast_est_days_to_top3": 44,
-        "forecast_monthly_volume": 214,
-        "forecast_target_position": 4,
-        "forecast_monthly_clicks": 15,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.3,
-        "forecast_monthly_conversions": 0.1
-      },
-      "validation": {
-        "valid": true,
-        "errors": [],
-        "computedTitle": "Clean Windows Update Medic & SIH Diagnostic Logs | SWEEPR",
-        "computedDescription": "How to clean Windows Update Medic & SIH Diagnostic Logs and reclaim 0.8 GB – 6.5 GB safely. Verified Windows cleanup guide with manual steps and 1-click autom",
-        "canonicalPaths": [
-          "%windir%\\logs\\waasmedic",
-          "%windir%\\logs\\sih"
-        ]
-      },
-      "item": {
-        "slug": "windows-11-24h2-sihclient-waasmedic-logs",
-        "category": "folder",
-        "name": "Windows Update Medic (WaasMedic) & SIH Diagnostic Logs",
-        "path": "C:\\Windows\\Logs\\WaasMedic and C:\\Windows\\Logs\\SIH",
-        "safeToDelete": true,
-        "avgSpace": "0.8 GB – 6.5 GB",
-        "whatIsIt": "Service Initiated Healing (SIH) and the Windows Update Medic Service (WaasMedic) write daily ETL diagnostic traces into C:\\Windows\\Logs.",
-        "whatHappens": "Deleting historical WaasMedic and SIH .etl log files safely recovers C: drive space with zero impact on Windows Update reliability.",
-        "manualSteps": [
-          "Open File Explorer as Administrator and navigate to C:\\Windows\\Logs.",
-          "Open the WaasMedic and SIH subfolders.",
-          "Delete old .etl trace logs older than 7 days."
-        ],
-        "competitorBlueprint": {
-          "sourceDomain": "wisecleaner.com",
-          "replicatedPatterns": [
-            "Exact Windows 11 environment variable path breakdown",
-            "Safety verdict badge with deletion consequences",
-            "Step-by-step manual cleanup + 1-click automated comparison"
-          ],
-          "superiorityFixes": [
-            "Empirical GB recovery range (0.8 GB – 6.5 GB) verified via k-anonymous telemetry",
-            "Read-only PowerShell verification snippet for C:\\Windows\\Logs\\WaasMedic and C:\\Windows\\Logs\\SIH",
-            "7-day automatic rollback protection vs permanent Shift+Delete"
-          ]
-        }
-      }
-    },
-    {
-      "opportunity_score": 100,
-      "primary_keyword": "localappdata deno folder huge",
-      "transactional_tier": "BOFU_Urgent_Pain",
-      "buyer_stage": "BOFU",
-      "difficulty_tier": "moderate",
-      "forecast": {
-        "transactional_tier": "BOFU_Urgent_Pain",
-        "buyer_stage": "BOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 39,
-        "forecast_est_days_to_top10": 37,
-        "forecast_est_days_to_top3": 75,
-        "forecast_monthly_volume": 339,
-        "forecast_target_position": 5.9,
-        "forecast_monthly_clicks": 12,
-        "forecast_cvr_pct": 3.1,
-        "forecast_monthly_downloads": 0.4,
-        "forecast_monthly_conversions": 0.1
-      },
-      "validation": {
-        "valid": true,
-        "errors": [],
-        "computedTitle": "Clean Deno TypeScript Runtime Global Dependency | SWEEPR",
-        "computedDescription": "How to clean Deno TypeScript Runtime Global Dependency & V8 Cache and reclaim 1.5 GB – 16.0 GB safely. Verified Windows cleanup guide with manual steps and 1-",
-        "canonicalPaths": [
-          "%localappdata%\\deno\\deps",
-          "%localappdata%\\deno\\gen"
-        ]
-      },
-      "item": {
-        "slug": "deno-typescript-global-dep-cache",
-        "category": "app",
-        "name": "Deno TypeScript Runtime Global Dependency & V8 Cache",
-        "path": "%LocalAppData%\\deno\\deps and %LocalAppData%\\deno\\gen",
-        "safeToDelete": true,
-        "avgSpace": "1.5 GB – 16.0 GB",
-        "whatIsIt": "Deno caches remote JSR/npm modules, transpiled TypeScript JavaScript outputs, and V8 bytecode snapshots inside %LocalAppData%\\deno.",
-        "whatHappens": "Purging deno\\deps, deno\\gen, and deno\\npm reclaims up to 16 GB of SSD space. Deno automatically re-fetches active dependencies on next run.",
-        "manualSteps": [
-          "Open Windows Terminal and run: deno clean",
-          "Or navigate to %localappdata%\\deno and delete the 'deps', 'gen', and 'npm' subfolders."
-        ],
-        "competitorBlueprint": {
-          "sourceDomain": "wisecleaner.com",
-          "replicatedPatterns": [
-            "Exact Windows 11 environment variable path breakdown",
-            "Safety verdict badge with deletion consequences",
-            "Step-by-step manual cleanup + 1-click automated comparison"
-          ],
-          "superiorityFixes": [
-            "Empirical GB recovery range (1.5 GB – 16.0 GB) verified via k-anonymous telemetry",
-            "Read-only PowerShell verification snippet for %LocalAppData%\\deno\\deps and %LocalAppData%\\deno\\gen",
-            "7-day automatic rollback protection vs permanent Shift+Delete"
-          ]
-        }
-      }
-    },
     {
       "opportunity_score": 100,
       "primary_keyword": "davinci resolve logs folder huge",
@@ -2564,120 +2450,6 @@
           "superiorityFixes": [
             "Empirical GB recovery range (4.0 GB – 40.0 GB) verified via k-anonymous telemetry",
             "Read-only PowerShell verification snippet for %LocalAppData%\\CapCut\\User Data\\Cache\\effect and %LocalAppData%\\CapCut\\User Data\\Cache\\alg",
-            "7-day automatic rollback protection vs permanent Shift+Delete"
-          ]
-        }
-      }
-    },
-    {
-      "opportunity_score": 95,
-      "primary_keyword": "connecteddevicesplatform folder safe to delete",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "moderate",
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 39,
-        "forecast_est_days_to_top10": 37,
-        "forecast_est_days_to_top3": 75,
-        "forecast_monthly_volume": 248,
-        "forecast_target_position": 5.9,
-        "forecast_monthly_clicks": 9,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "validation": {
-        "valid": true,
-        "errors": [],
-        "computedTitle": "How to Clean Windows Connected Devices Safely | SWEEPR",
-        "computedDescription": "How to clean Windows Connected Devices Platform Activity Cache and reclaim 0.8 GB – 9.0 GB safely. Verified Windows cleanup guide with manual steps and 1-clic",
-        "canonicalPaths": [
-          "%localappdata%\\connecteddevicesplatform"
-        ]
-      },
-      "item": {
-        "slug": "windows-connected-devices-platform-cdp-cache",
-        "category": "folder",
-        "name": "Windows Connected Devices Platform (CDPUserSvc) Activity Cache",
-        "path": "%LocalAppData%\\ConnectedDevicesPlatform",
-        "safeToDelete": true,
-        "avgSpace": "0.8 GB – 9.0 GB",
-        "whatIsIt": "The Windows Connected Devices Platform service (CDPUserSvc) caches cross-device timeline databases (ActivitiesCache.db) and nearby share staging blobs inside %LocalAppData%\\ConnectedDevicesPlatform.",
-        "whatHappens": "Deleting stale CDP cache folders and WAL logs frees up to 9 GB with zero risk to Bluetooth pairings or local files.",
-        "manualSteps": [
-          "Press Win + R, type %localappdata%\\ConnectedDevicesPlatform, and hit Enter.",
-          "Open the L.<username> or numerical account subfolder and delete oversized ActivitiesCache.db-wal / temp files."
-        ],
-        "competitorBlueprint": {
-          "sourceDomain": "wisecleaner.com",
-          "replicatedPatterns": [
-            "Exact Windows 11 environment variable path breakdown",
-            "Safety verdict badge with deletion consequences",
-            "Step-by-step manual cleanup + 1-click automated comparison"
-          ],
-          "superiorityFixes": [
-            "Empirical GB recovery range (0.8 GB – 9.0 GB) verified via k-anonymous telemetry",
-            "Read-only PowerShell verification snippet for %LocalAppData%\\ConnectedDevicesPlatform",
-            "7-day automatic rollback protection vs permanent Shift+Delete"
-          ]
-        }
-      }
-    },
-    {
-      "opportunity_score": 93,
-      "primary_keyword": "c windows appcompat pca safe to delete",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "moderate",
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "moderate",
-        "forecast_kd": 39,
-        "forecast_est_days_to_top10": 37,
-        "forecast_est_days_to_top3": 75,
-        "forecast_monthly_volume": 170,
-        "forecast_target_position": 5.9,
-        "forecast_monthly_clicks": 6,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "validation": {
-        "valid": true,
-        "errors": [],
-        "computedTitle": "How to Clean Windows Program Safely | SWEEPR Cleaner",
-        "computedDescription": "How to clean Windows Program Compatibility Assistant Trace Logs and reclaim 0.4 GB – 4.0 GB safely. Verified Windows cleanup guide with manual steps and 1-cli",
-        "canonicalPaths": [
-          "%windir%\\appcompat\\pca"
-        ]
-      },
-      "item": {
-        "slug": "windows-pca-program-compatibility-assistant-logs",
-        "category": "folder",
-        "name": "Windows Program Compatibility Assistant (PCA) Trace Logs",
-        "path": "C:\\Windows\\appcompat\\pca",
-        "safeToDelete": true,
-        "avgSpace": "0.4 GB – 4.0 GB",
-        "whatIsIt": "The Windows Program Compatibility Assistant logs legacy application launch failures and installer telemetry inside C:\\Windows\\appcompat\\pca.",
-        "whatHappens": "Clearing old PCA log files safely frees C: drive space without changing any saved compatibility mode settings.",
-        "manualSteps": [
-          "Open File Explorer as Administrator to C:\\Windows\\appcompat\\pca.",
-          "Delete outdated .txt and .etl diagnostic log files."
-        ],
-        "competitorBlueprint": {
-          "sourceDomain": "wisecleaner.com",
-          "replicatedPatterns": [
-            "Exact Windows 11 environment variable path breakdown",
-            "Safety verdict badge with deletion consequences",
-            "Step-by-step manual cleanup + 1-click automated comparison"
-          ],
-          "superiorityFixes": [
-            "Empirical GB recovery range (0.4 GB – 4.0 GB) verified via k-anonymous telemetry",
-            "Read-only PowerShell verification snippet for C:\\Windows\\appcompat\\pca",
             "7-day automatic rollback protection vs permanent Shift+Delete"
           ]
         }
@@ -3743,8 +3515,8 @@
       "category": "app",
       "url": "/clean/app/steam-depotcache",
       "trigger_query": "what is depotcache steam",
-      "impressions": 15,
-      "position": 10,
+      "impressions": 33,
+      "position": 9.6,
       "opportunity_score": 100,
       "on_cooldown": true,
       "title_locked_by_test": true,
@@ -3762,9 +3534,9 @@
       "impressions": 11,
       "position": 10.4,
       "opportunity_score": 93,
-      "on_cooldown": true,
+      "on_cooldown": false,
       "title_locked_by_test": false,
-      "recommended_update": "faq_only",
+      "recommended_update": "title_and_faq",
       "suggested_faq": {
         "q": "How do I safely clear Gradle Build Cache & Wrapper Distributions (.gradle\\caches) (gradle wrapper caches safe to delete) on Windows 11?",
         "a": "Safe to clean when Android Studio/IntelliJ is closed. Reclaims up to 35 GB of SSD space. Typical space recovered is 4.0 GB – 35.0 GB at %UserProfile%\\.gradle\\caches and %UserProfile%\\.gradle\\daemon."
@@ -3810,9 +3582,9 @@
       "impressions": 12,
       "position": 9.8,
       "opportunity_score": 71,
-      "on_cooldown": true,
+      "on_cooldown": false,
       "title_locked_by_test": false,
-      "recommended_update": "faq_only",
+      "recommended_update": "title_and_faq",
       "suggested_faq": {
         "q": "How do I safely clear Node.js npm _cacache & npx Temp Cache (npm cache clean windows) on Windows 11?",
         "a": "Safe to delete. Existing node_modules folders in your projects continue working normally. Typical space recovered is 2.0 GB – 20.0 GB at %LocalAppData%\\npm-cache\\_cacache."
@@ -3855,9 +3627,9 @@
       "category": "folder",
       "url": "/clean/folder/winsxs",
       "trigger_query": "windows winsxs",
-      "impressions": 41,
-      "position": 26.5,
-      "opportunity_score": 54,
+      "impressions": 79,
+      "position": 20.2,
+      "opportunity_score": 60,
       "on_cooldown": true,
       "title_locked_by_test": false,
       "recommended_update": "faq_only",
@@ -3900,7 +3672,7 @@
       "keyword": "sweepr cleaner",
       "suggested_tool_slug": "sweepr-cache-cleaner",
       "target_clean_slug": "sweepr",
-      "opportunity_score": 24,
+      "opportunity_score": 27,
       "typical_savings": "2.0 GB – 15.0 GB"
     }
   ],
