@@ -28,6 +28,7 @@ import {
   executeIntentGapAutomation,
   getApprovedIntentGapAdsExport,
   loadVerifiedGscSeedRows,
+  runGscInternalLinkBooster,
 } from "./intent-gap.js";
 import {
   BLOAT_WATCH_FEEDS,
@@ -519,6 +520,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     const ledgerCalibration = store.reconcileStrategyLedgerActualsAndCalibrate({
       recalibrate: true,
     });
+    const linkBooster = runGscInternalLinkBooster(store);
 
     return c.json({
       ok: true,
@@ -527,6 +529,10 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       latest_date: store.gscLatestDate(),
       gsc: providerStatus(providers, store).gsc,
       intent_gap: intentGapSummary,
+      internal_link_booster: {
+        boosted_count: linkBooster.boosted_count,
+        boosted_slugs: linkBooster.boosted_slugs,
+      },
       strategy_ledger_reconciled: {
         evaluated_count: ledgerCalibration.evaluated_count,
         pre_vs_post_summary: ledgerCalibration.pre_vs_post_summary,

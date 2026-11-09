@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-09T18:20:37.343Z",
+  "timestamp": "2026-11-09T19:17:28.263Z",
   "result": {
     "run_id": 1,
     "pages": 416,
@@ -14,8 +14,8 @@
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1794248423,
-    "finished_at": 1794248432,
+    "started_at": 1794251839,
+    "finished_at": 1794251843,
     "pages": 416,
     "health_score": 100,
     "errors": 0,
@@ -32,7 +32,7 @@
     "circularPseoRedirects": 0,
     "liveTestedCount": 35,
     "livePassedCount": 35,
-    "avgLatencyMs": 0.52,
+    "avgLatencyMs": 0.45,
     "singleHopCompliance": "100%",
     "sampleResults": [
       {
@@ -42,7 +42,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.86,
+        "ms": 0.88,
         "label": "Root index.html alias",
         "passed": true
       },
@@ -53,7 +53,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.54,
+        "ms": 0.6,
         "label": "Pricing HTML alias",
         "passed": true
       },
@@ -64,7 +64,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.35,
+        "ms": 0.42,
         "label": "Login HTML alias",
         "passed": true
       },
@@ -75,7 +75,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.34,
+        "ms": 0.47,
         "label": "Terms HTML alias",
         "passed": true
       },
@@ -86,7 +86,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 1.67,
+        "ms": 0.5,
         "label": "Privacy HTML alias",
         "passed": true
       },
@@ -97,7 +97,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.35,
+        "ms": 0.45,
         "label": "Refund HTML alias",
         "passed": true
       },
@@ -108,7 +108,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.35,
+        "ms": 0.43,
         "label": "Support HTML alias",
         "passed": true
       },
@@ -119,7 +119,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.22,
+        "ms": 0.28,
         "label": "Cloudflare email obfuscation redirect",
         "passed": true
       },
@@ -130,7 +130,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.33,
+        "ms": 0.52,
         "label": "German root trailing slash",
         "passed": true
       },
@@ -141,7 +141,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.39,
+        "ms": 0.42,
         "label": "German pricing trailing slash",
         "passed": true
       },
@@ -152,7 +152,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.37,
+        "ms": 0.4,
         "label": "German order trailing slash",
         "passed": true
       },
@@ -163,7 +163,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.54,
+        "ms": 0.3,
         "label": "French root trailing slash",
         "passed": true
       },
@@ -174,7 +174,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.27,
+        "ms": 0.3,
         "label": "French pricing trailing slash",
         "passed": true
       },
@@ -185,7 +185,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.25,
+        "ms": 0.28,
         "label": "French order trailing slash",
         "passed": true
       },
@@ -196,7 +196,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.44,
+        "ms": 0.32,
         "label": "Spanish root trailing slash",
         "passed": true
       },
@@ -207,7 +207,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.29,
+        "ms": 0.28,
         "label": "Spanish pricing trailing slash",
         "passed": true
       },
@@ -218,7 +218,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.49,
+        "ms": 0.31,
         "label": "Spanish order trailing slash",
         "passed": true
       },
@@ -229,7 +229,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.38,
+        "ms": 0.36,
         "label": "Uppercase competitor vs slug",
         "passed": true
       },
@@ -240,7 +240,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.89,
+        "ms": 0.45,
         "label": "Uppercase competitor alternatives slug",
         "passed": true
       },
@@ -251,7 +251,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.3,
+        "ms": 0.41,
         "label": "DaVinci Resolve legacy alias",
         "passed": true
       },
@@ -262,7 +262,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.51,
+        "ms": 0.34,
         "label": "Iconcache legacy alias",
         "passed": true
       },
@@ -273,7 +273,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.41,
+        "ms": 0.58,
         "label": "Recycle bin legacy alias",
         "passed": true
       },
@@ -284,7 +284,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.86,
+        "ms": 0.51,
         "label": "Opera GX service worker retired suffix",
         "passed": true
       },
@@ -295,7 +295,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.77,
+        "ms": 0.47,
         "label": "Medal.tv media blob retired suffix",
         "passed": true
       },
@@ -306,7 +306,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.75,
+        "ms": 0.49,
         "label": "CapCut service worker retired suffix",
         "passed": true
       },
@@ -317,7 +317,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.42,
+        "ms": 0.45,
         "label": "Adobe CC service worker retired suffix",
         "passed": true
       },
@@ -328,7 +328,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.39,
+        "ms": 0.47,
         "label": "Defender scan history consolidation",
         "passed": true
       },
@@ -339,7 +339,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.45,
+        "ms": 0.48,
         "label": "Package cache consolidation",
         "passed": true
       },
@@ -350,7 +350,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.58,
+        "ms": 0.46,
         "label": "Crash dumps WER consolidation",
         "passed": true
       },
@@ -361,7 +361,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.48,
+        "ms": 0.62,
         "label": "CBS logs consolidation",
         "passed": true
       },
@@ -372,7 +372,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.61,
+        "ms": 0.55,
         "label": "DirectX D3DSCache consolidation",
         "passed": true
       },
@@ -383,7 +383,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 1.01,
+        "ms": 0.47,
         "label": "NVIDIA shader cache consolidation",
         "passed": true
       },
@@ -405,7 +405,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.44,
+        "ms": 0.51,
         "label": "JetBrains IntelliJ consolidation",
         "passed": true
       },
@@ -416,7 +416,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.41,
+        "ms": 0.56,
         "label": "Elgato Stream Deck consolidation",
         "passed": true
       }
@@ -426,121 +426,121 @@
     {
       "path": "/",
       "status": 200,
-      "ms": 3.93,
+      "ms": 4.16,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pricing",
       "status": 200,
-      "ms": 3.88,
+      "ms": 3.35,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/support",
       "status": 200,
-      "ms": 8.64,
+      "ms": 2.96,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/refund",
       "status": 200,
-      "ms": 15.54,
+      "ms": 2.98,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/privacy",
       "status": 200,
-      "ms": 12.85,
+      "ms": 3.36,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/terms",
       "status": 200,
-      "ms": 4.65,
+      "ms": 3.5,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/vs/ccleaner",
       "status": 200,
-      "ms": 10.15,
+      "ms": 6.85,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/alternatives/ccleaner",
       "status": 200,
-      "ms": 9.92,
+      "ms": 5.96,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 6.24,
+      "ms": 22.74,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 8.19,
+      "ms": 5.82,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/app/standard-notes-cache",
       "status": 200,
-      "ms": 7.98,
+      "ms": 4.33,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/folder/delivery-optimization-cache",
       "status": 200,
-      "ms": 6.14,
+      "ms": 4.69,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools",
       "status": 200,
-      "ms": 1.08,
+      "ms": 1.13,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools/discord-cache-cleaner",
       "status": 200,
-      "ms": 24.58,
+      "ms": 17.73,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/safe-to-delete",
       "status": 200,
-      "ms": 35.04,
+      "ms": 23.93,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/state-of-windows-storage",
       "status": 200,
-      "ms": 14.55,
+      "ms": 7.66,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/robots.txt",
       "status": 200,
-      "ms": 10.27,
+      "ms": 6.54,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "ms": 23.05,
+      "ms": 21.08,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/llms.txt",
       "status": 200,
-      "ms": 14.6,
+      "ms": 11.78,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pad.xml",
       "status": 200,
-      "ms": 4.95,
+      "ms": 4.57,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
   ],

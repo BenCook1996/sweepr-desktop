@@ -839,7 +839,24 @@
     "https://sweeprcleaner.com/clean/folder/windows-pca-program-compatibility-assistant-logs",
     "https://sweeprcleaner.com/clean/app/deno-typescript-global-dep-cache"
   ],
-  "last_indexnow_ping": "2026-11-09T18:20:37.342Z",
-  "last_sitemap_ping": "2026-11-09T18:20:37.342Z",
-  "last_audit": "2026-11-09T18:20:37.341Z"
+  "last_indexnow_ping": "2026-11-09T19:17:28.262Z",
+  "last_sitemap_ping": "2026-11-09T19:17:28.262Z",
+  "last_audit": "2026-11-09T19:17:28.262Z",
+  "pending": [
+    "https://sweeprcleaner.com/clean/app/riot-client-logs",
+    "https://sweeprcleaner.com/clean/app/medal-tv-cache",
+    "https://sweeprcleaner.com/clean/app/vrchat-cache",
+    "https://sweeprcleaner.com/clean/folder/windows-livekernelreports",
+    "https://sweeprcleaner.com/vs/ccleaner",
+    "https://sweeprcleaner.com/clean/app/ea-app-cache",
+    "https://sweeprcleaner.com/clean/app/chrome-gpu-shader-cache",
+    "https://sweeprcleaner.com/clean/app/opera-gx-cache",
+    "https://sweeprcleaner.com/clean/folder/programdata-package-cache",
+    "https://sweeprcleaner.com/clean/folder/windows-old",
+    "https://sweeprcleaner.com/clean/folder/software-distribution-download",
+    "https://sweeprcleaner.com/clean/folder/windows-prefetch",
+    "https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk",
+    "https://sweeprcleaner.com/clean/app/huggingface-hub-cache",
+    "https://sweeprcleaner.com/clean/folder/localappdata-webview2-ebwebview-cache"
+  ]
 }

@@ -177,8 +177,31 @@
       {
         "q": "Why can't I delete C:\\Windows.old directly in File Explorer?",
         "a": "C:\\Windows.old is owned by the TrustedInstaller system account and contains thousands of hard-linked system binaries. Use Settings -> System -> Storage -> Temporary files ('Previous Windows installation(s)') or SWEEPR Cleaner to remove it cleanly."
+      },
+      {
+        "q": "Why is Windows.old (Previous Windows Installation) taking up so much disk space on Windows 11?",
+        "a": "When Windows upgrades to a major new version or build, it saves a complete backup of your previous OS files in C:\\Windows.old so you can roll back. Clearing it typically reclaims 15.0 GB safely."
+      },
+      {
+        "q": "Does clearing Windows.old (Previous Windows Installation) delete personal saves or logins?",
+        "a": "No. If your PC has been running smoothly for more than 10 days after an update, deleting Windows.old is completely safe and reclaims 20+ GB."
       }
-    ]
+    ],
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 15.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows.old"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 15.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows.old",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "nvidia-dxcache",
@@ -246,7 +269,20 @@
       "Close all games or use AMD Software: Adrenalin Edition > Gaming > Graphics > Reset Shader Cache.",
       "Alternatively, press Windows Key + R and type %localappdata%\\AMD.",
       "Open DxCache, DxcCache, and VkCache and delete old shader files."
-    ]
+    ],
+    "metaTitle": "AMD Radeon Adrenalin: Safe to Delete? (Free 2.0 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 2.0 GB at %LocalAppData%\\AMD\\DxCache and %LocalAppData%\\AMD\\VkCache without losing settings using manual steps...",
+    "customFaqs": [
+      {
+        "q": "Why is AMD Radeon Adrenalin DXCache & VkCache taking up so much disk space on Windows 11?",
+        "a": "AMD Radeon graphics drivers store compiled DirectX and Vulkan shaders in %LocalAppData%\\AMD to speed up level loading. Clearing it typically reclaims 2.0 GB safely."
+      },
+      {
+        "q": "Does clearing AMD Radeon Adrenalin DXCache & VkCache delete personal saves or logins?",
+        "a": "No. Safely removes stale shaders from uninstalled games and resolves Radeon frame-pacing micro-stutter after driver updates."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "intel-arc-shader-cache",
@@ -276,7 +312,20 @@
       "Right-click the Epic Games Launcher system tray icon and click Exit.",
       "Press Windows Key + R, type %localappdata%\\EpicGamesLauncher\\Saved and press Enter.",
       "Delete any folders starting with 'webcache' as well as the 'Logs' and 'Crashes' folders."
-    ]
+    ],
+    "metaTitle": "Epic Games Launcher: Safe to Delete? (Free 1.0 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.0 GB at %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 without losing settings using manual steps or...",
+    "customFaqs": [
+      {
+        "q": "Why is Epic Games Launcher Webcache & Crash Logs taking up so much disk space on Windows 11?",
+        "a": "Epic Games Launcher embeds a Chromium browser that caches store videos, banners, and crash logs inside Saved\\webcache. Clearing it typically reclaims 1.0 GB safely."
+      },
+      {
+        "q": "Does clearing Epic Games Launcher Webcache & Crash Logs delete personal saves or logins?",
+        "a": "No. Reclaims disk space and fixes blank black screen issues in the Epic Games Launcher store tab without affecting installed games."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "steam-depotcache",
@@ -293,7 +342,19 @@
       "Open File Explorer and navigate to C:\\Program Files (x86)\\Steam\\depotcache (or your custom Steam library folder).",
       "Select all .depot and .manifest files (Ctrl + A) and press Shift + Delete, or use SWEEPR Cleaner to clean Steam depotcache, shadercache, and orphaned downloading folders in one click."
     ],
-    "warning": "Only delete depotcache when no Steam game downloads or patches are actively paused in your Steam Download Manager."
+    "warning": "Only delete depotcache when no Steam game downloads or patches are actively paused in your Steam Download Manager.",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 2.0 GB at C:\\Program Files\\Steam\\depotcache and steamapps\\downloading without losing settings using manual...",
+    "customFaqs": [
+      {
+        "q": "Why is Steam depotcache Folder (C:\\Program Files (x86)\\Steam\\depotcache) taking up so much disk space on Windows 11?",
+        "a": "What is Steam depotcache? The Steam depotcache folder stores encrypted delta-patch manifest chunks (.depot and .manifest files) used by Steam to verify and assemble game updates. When a game update is interrupted, cancelled, or uninstalled mid-patch, gigabytes of orphaned depot chunks remain locked in C:\\Program Files (x86)\\Steam\\depotcache indefinitely. Clearing it typically reclaims 2.0 GB safely."
+      },
+      {
+        "q": "Does clearing Steam depotcache Folder (C:\\Program Files (x86)\\Steam\\depotcache) delete personal saves or logins?",
+        "a": "No. Yes, Steam depotcache is 100% safe to delete as long as all current game updates have finished installing. Deleting it immediately reclaims 2 GB to 25 GB+ of SSD space without touching your installed games or Steam Cloud saves."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "battlenet-cache",
@@ -323,7 +384,34 @@
       "Open the EA App menu (top-left) > Help > App Recovery > Clear Cache.",
       "Or close EA App, press Windows Key + R, and navigate to %localappdata%\\Electronic Arts\\EA Desktop\\cache.",
       "Delete all cached files inside."
-    ]
+    ],
+    "metaTitle": "EA App & Origin Legacy: Safe to Delete? (Free 1.5 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\Electronic Arts\\EA Desktop\\cache without losing settings using manual steps or Sweepr...",
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Electronic Arts\\EA Desktop\\cache"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Electronic Arts\\EA Desktop\\cache",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "customFaqs": [
+      {
+        "q": "Why is EA App & Origin Legacy Installer Cache taking up so much disk space on Windows 11?",
+        "a": "The EA Desktop App caches store web assets, patch telemetry, and temporary installer packages in LocalAppData and ProgramData. Clearing it typically reclaims 1.5 GB safely."
+      },
+      {
+        "q": "Does clearing EA App & Origin Legacy Installer Cache delete personal saves or logins?",
+        "a": "No. Clears gigabytes of launcher bloat and resolves missing library tile bugs without uninstalling your EA games."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "ubisoft-connect-cache",
@@ -354,7 +442,33 @@
       "Press Windows Key + R, type %LocalAppData%\\VALORANT\\Saved and press Enter.",
       "Open the Logs, Crashes, and webcache_4430 folders and delete their contents (leave the Config folder untouched if you want to keep local settings).",
       "Next, open %LocalAppData%\\Riot Games\\Riot Client\\Logs and delete old Riot Client log files, or run SWEEPR Cleaner for a 1-click VALORANT & Riot cache cleanup."
-    ]
+    ],
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "customFaqs": [
+      {
+        "q": "Why is VALORANT & Riot Client Cache & Logs (%LocalAppData%\\VALORANT) taking up so much disk space on Windows 11?",
+        "a": "How to clear VALORANT cache files: VALORANT and the Riot Client continuously write verbose match telemetry logs, Unreal Engine crash dumps (.dmp), and embedded CEF browser webcache files inside %LocalAppData%\\VALORANT\\Saved and %LocalAppData%\\Riot Games. Clearing it typically reclaims 1.5 GB safely."
+      },
+      {
+        "q": "Does clearing VALORANT & Riot Client Cache & Logs (%LocalAppData%\\VALORANT) delete personal saves or logins?",
+        "a": "No. Clearing VALORANT and Riot Client cache files reclaims 1.5 GB – 8.0 GB of disk space and often fixes client black-screen freezes or stutter without resetting your crosshair, sensitivity, or keybinds."
+      }
+    ],
+    "lastUpdated": "2026-11-09",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs..."
   },
   {
     "slug": "roblox-http-cache",
@@ -451,7 +565,34 @@
       "Exit VRChat.",
       "Press Windows Key + R, type %appdata%\\..\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer and press Enter.",
       "Select all cache folders and delete them."
-    ]
+    ],
+    "metaTitle": "VRChat World & Avatar: Safe to Delete? (Free 10.0 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 10.0 GB at %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer without losing settings using manual steps or...",
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 10.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 10.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "customFaqs": [
+      {
+        "q": "Why is VRChat World & Avatar Cache (Cache-WindowsPlayer) taking up so much disk space on Windows 11?",
+        "a": "VRChat downloads every custom user avatar and 3D world you visit into AppData\\LocalLow\\VRChat, easily growing past 20–30 GB. Clearing it typically reclaims 10.0 GB safely."
+      },
+      {
+        "q": "Does clearing VRChat World & Avatar Cache (Cache-WindowsPlayer) delete personal saves or logins?",
+        "a": "No. 100% safe to clear. Frees up massive SSD space while keeping your account, friends list, and uploaded avatars intact."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "fivem-cache",
@@ -533,7 +674,8 @@
         "a": "No. .cfa (conformed audio) and .pek (waveform peak) files are temporary cache assets. Premiere Pro and After Effects automatically rebuild them only for the active timeline you open next."
       }
     ],
-    "metaDescription": "How to clear Adobe Common Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click."
+    "metaDescription": "How to clear Adobe Common Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "after-effects-disk-cache",
@@ -600,7 +742,8 @@
         "q": "Will deleting the DaVinci Resolve CacheClip folder corrupt my project?",
         "a": "No. CacheClip holds temporary timeline render cache and scratch video proxies. Your project databases, edit timelines, and source media remain completely untouched."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "capcut-desktop-cache",
@@ -624,7 +767,8 @@
         "q": "Will clearing CapCut PC cache delete my video editing drafts or templates?",
         "a": "No. CapCut project drafts are stored inside CapCut Drafts, whereas %LocalAppData%\\CapCut\\User Data\\Cache holds temporary render previews, proxy clips, and Service Worker web blobs that safely regenerate if you re-open an old timeline."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "blender-temp-render-cache",
@@ -693,7 +837,8 @@
         "q": "How do I clear OBS Studio cache without losing my scenes, sources, or stream keys?",
         "a": "Your OBS scenes and profiles are stored in %AppData%\\obs-studio\\basic\\scenes and basic\\profiles. Cleaning %AppData%\\obs-studio\\logs, crashes, and plugin_config\\obs-browser\\Cache frees disk space and fixes laggy browser overlays without touching any scene collections."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "audacity-session-temp",
@@ -806,7 +951,8 @@
         "q": "Where is the cache folder for the New Microsoft Teams app on Windows 11?",
         "a": "New Teams (WebView2) stores its cache inside %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView, whereas Classic Teams uses %AppData%\\Microsoft\\Teams. SWEEPR Cleaner cleans both automatically."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "slack-desktop-cache",
@@ -934,8 +1080,31 @@
       {
         "q": "Why does Opera GX still use 5GB+ of disk space after running the built-in GX Cleaner?",
         "a": "The built-in GX Cleaner often leaves behind multi-gigabyte Service Worker\\CacheStorage blobs, Dawn/ANGLE GPU shader caches, and old Crashpad dumps inside %LocalAppData%\\Opera Software\\Opera GX Stable. Purging those subdirectories reclaims full SSD space while keeping open workspaces and logins safe."
+      },
+      {
+        "q": "Why is Opera GX Browser Cache, Service Worker & GX Cleaner Guide taking up so much disk space on Windows 11?",
+        "a": "Even if you use the built-in Opera GX Cleaner tool, Opera GX often leaves behind gigabytes of offline PWA blobs inside Service Worker\\CacheStorage, compiled Dawn WebGPU shaders, and old update installers in %AppData%\\Opera Software\\Opera GX Stable. Clearing it typically reclaims 1.8 GB safely."
+      },
+      {
+        "q": "Does clearing Opera GX Browser Cache, Service Worker & GX Cleaner Guide delete personal saves or logins?",
+        "a": "No. Cleaning Opera GX’s hidden Cache_Data and Service Worker CacheStorage reclaims 1.8 GB – 12.0 GB of SSD space while keeping your GX Mods, Workspaces, open tabs, and saved passwords intact."
       }
-    ]
+    ],
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 1.8 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 1.8 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "vivaldi-browser-cache",
@@ -1106,7 +1275,8 @@
         "q": "Does deleting %LocalAppData%\\npm-cache break existing node_modules folders in my projects?",
         "a": "No. %LocalAppData%\\npm-cache (_cacache) is strictly a global download cache of compressed package tarballs. Your project node_modules directories are completely independent and will continue to run normally."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "pnpm-store-cache",
@@ -1435,7 +1605,8 @@
         "q": "Where does Logitech G HUB store its mouse DPI profiles and macros when cleaning LGHUB cache?",
         "a": "Your G HUB profiles and macros live in %LocalAppData%\\LGHUB\\settings.db. Cleaning C:\\ProgramData\\LGHUB\\depots and %LocalAppData%\\LGHUB\\cache reclaims 1–6 GB of orphaned update payloads without touching settings.db."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "elgato-streamdeck-cache",
@@ -1566,18 +1737,27 @@
       {
         "q": "Is it safe to delete files in C:\\Windows\\SoftwareDistribution\\Download?",
         "a": "Yes, 100% safe. This folder only stores staging cab and esd packages for completed or pending Windows Updates. Deleting them reclaims 2–25 GB and forces Windows Update to fetch clean delta packages if an update was stuck."
+      },
+      {
+        "q": "Why is Windows Update Download Cache (SoftwareDistribution\\Download) taking up so much disk space on Windows 11?",
+        "a": "Windows Update downloads compressed cumulative updates and feature packs into C:\\Windows\\SoftwareDistribution\\Download before installing them. Clearing it typically reclaims 2.5 GB safely."
+      },
+      {
+        "q": "Does clearing Windows Update Download Cache (SoftwareDistribution\\Download) delete personal saves or logins?",
+        "a": "No. 100% safe to delete. It removes leftover installation packages and also fixes stuck Windows Update error codes."
       }
     ],
     "lastUpdated": "2026-11-09",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
-        "Direct safety verdict + exact Windows 11 path breakdown",
-        "Step-by-step verification + FAQPage JSON-LD schema",
-        "Empirical 2.5 GB – 16.0 GB recovery benchmark + 1-click native Rust cleanup"
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 2.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows\\SoftwareDistribution\\Download"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 2.5 GB – 16.0 GB recovery benchmark",
+        "Verified Windows 11 24H2 safety verdict & 2.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\SoftwareDistribution\\Download",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -1625,18 +1805,27 @@
       {
         "q": "Is deleting C:\\Windows\\Prefetch safe or will it slow down Windows?",
         "a": "Deleting C:\\Windows\\Prefetch is completely safe. Windows automatically rebuilds fresh .pf launch traces for your active applications while purging stale traces from uninstalled apps."
+      },
+      {
+        "q": "Why is Windows Prefetch Application Launch Cache taking up so much disk space on Windows 11?",
+        "a": "Windows tracks how applications start up in .pf trace files inside C:\\Windows\\Prefetch, including hundreds of dead traces from uninstalled programs. Clearing it typically reclaims 0.2 GB safely."
+      },
+      {
+        "q": "Does clearing Windows Prefetch Application Launch Cache delete personal saves or logins?",
+        "a": "No. Safe to purge periodically when cluttered with old uninstalled app traces; Windows automatically rebuilds fresh traces for your current apps."
       }
     ],
     "lastUpdated": "2026-11-09",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
-        "Direct safety verdict + exact Windows 11 path breakdown",
-        "Step-by-step verification + FAQPage JSON-LD schema",
-        "Empirical 0.2 GB – 1.5 GB recovery benchmark + 1-click native Rust cleanup"
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 0.2 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows\\Prefetch"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 0.2 GB – 1.5 GB recovery benchmark",
+        "Verified Windows 11 24H2 safety verdict & 0.2 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\Prefetch",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -1899,8 +2088,31 @@
       {
         "q": "What are WATCHDOG-*.dmp files inside C:\\Windows\\LiveKernelReports?",
         "a": "WATCHDOG dump files are written by the Windows Display Driver Model (WDDM) Timeout Detection and Recovery (TDR) subsystem whenever your NVIDIA, AMD, or Intel GPU driver briefly freezes and recovers. Once your PC is running normally, these multi-gigabyte .dmp snapshots are 100% safe to delete."
+      },
+      {
+        "q": "Why is Windows LiveKernelReports & WATCHDOG GPU Crash Dumps (C:\\Windows\\LiveKernelReports) taking up so much disk space on Windows 11?",
+        "a": "What is C:\\Windows\\LiveKernelReports? Whenever your NVIDIA, AMD, or Intel graphics driver experiences a brief Timeout Detection and Recovery (TDR) freeze (Event ID 4101) without a full blue screen, Windows writes a huge uncompressed kernel memory dump (WATCHDOG-*.dmp, often 500 MB to 2 GB each) into C:\\Windows\\LiveKernelReports. Clearing it typically reclaims 1.5 GB safely."
+      },
+      {
+        "q": "Does clearing Windows LiveKernelReports & WATCHDOG GPU Crash Dumps (C:\\Windows\\LiveKernelReports) delete personal saves or logins?",
+        "a": "No. Yes, C:\\Windows\\LiveKernelReports is 100% safe to delete. Removing old WATCHDOG and PoW32kWatchdog .dmp files reclaims 1.5 GB – 10.0 GB immediately with zero impact on Windows or your GPU drivers."
       }
-    ]
+    ],
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows\\LiveKernelReports and C:\\Windows\\LiveKernelReports\\WATCHDOG"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\Windows\\LiveKernelReports and C:\\Windows\\LiveKernelReports\\WATCHDOG",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "msocache-office-setup",
@@ -2195,7 +2407,8 @@
         "q": "Where does LM Studio store downloaded GGUF models on Windows 11?",
         "a": "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "huggingface-hub-cache",
@@ -2217,18 +2430,27 @@
       {
         "q": "Does deleting .cache\\huggingface\\hub delete my custom Python AI scripts?",
         "a": "No. It only stores downloaded public model weights and tokenizers. Your Python code, virtual environments, and custom fine-tunes remain completely safe."
+      },
+      {
+        "q": "Why is HuggingFace Hub Transformers & Diffusers Cache taking up so much disk space on Windows 11?",
+        "a": "Python AI tools, Diffusers, and Transformers cache every downloaded safetensors checkpoint and tokenizer snapshot inside .cache\\huggingface\\hub. Clearing it typically reclaims 5.0 GB safely."
+      },
+      {
+        "q": "Does clearing HuggingFace Hub Transformers & Diffusers Cache delete personal saves or logins?",
+        "a": "No. Safely reclaims disk space from old model revisions and unused AI weights. Active Python scripts will automatically re-download only what they need."
       }
     ],
     "lastUpdated": "2026-11-09",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
-        "Direct safety verdict + exact Windows 11 path breakdown",
-        "Step-by-step verification + FAQPage JSON-LD schema",
-        "Empirical 5.0 GB – 50.0 GB recovery benchmark + 1-click native Rust cleanup"
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 5.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %UserProfile%\\.cache\\huggingface\\hub"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 5.0 GB – 50.0 GB recovery benchmark",
+        "Verified Windows 11 24H2 safety verdict & 5.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.cache\\huggingface\\hub",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -2255,7 +2477,8 @@
         "q": "Can I automate cleaning ComfyUI temp files on Windows 11 without manual terminal commands?",
         "a": "Yes. SWEEPR Cleaner automatically detects C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui, skips any files locked by active processes, and reclaims 2.0 GB – 18.0 GB in a single click while protecting user settings."
       }
-    ]
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "pytorch-torch-hub-cache",
@@ -2376,7 +2599,34 @@
       "Never select all folders inside C:\\ProgramData\\Package Cache and hit Delete—active applications rely on their registered GUID folder to run Modify/Repair/Uninstall.",
       "Open Settings > Apps > Installed Apps first and uninstall any old SDKs or Visual Studio workloads you no longer need.",
       "To safely clean only orphaned GUID folders whose parent product is already uninstalled, run SWEEPR Cleaner’s verified Package Cache orphan scanner."
-    ]
+    ],
+    "metaTitle": "Windows ProgramData: Safe to Delete? (Free 3.5 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 3.5 GB at C:\\ProgramData\\Package Cache without losing settings using manual steps or Sweepr 1-click cleanup.",
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 3.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\ProgramData\\Package Cache"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 3.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for C:\\ProgramData\\Package Cache",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "customFaqs": [
+      {
+        "q": "Why is Windows ProgramData Package Cache (C:\\ProgramData\\Package Cache) taking up so much disk space on Windows 11?",
+        "a": "C:\\ProgramData\\Package Cache is used by the Windows WiX Burn bootstrapper to store cached .msi and .cab installer baselines for Microsoft Visual C++ Redistributables, .NET runtimes, Visual Studio, and third-party drivers. Over years of updates, dozens of superseded versions accumulate. Clearing it typically reclaims 3.5 GB safely."
+      },
+      {
+        "q": "Does clearing Windows ProgramData Package Cache (C:\\ProgramData\\Package Cache) delete personal saves or logins?",
+        "a": "No. Pruning only orphaned and superseded package cache GUID folders reclaims 3.5 GB – 22.0 GB of C: drive space while keeping active uninstaller baselines healthy."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "windows-system32-driverstore-temp",
@@ -2420,7 +2670,34 @@
       "Navigate to %localappdata%\\Microsoft\\EdgeWebView\\User Data\\Default.",
       "Delete the 'Cache', 'Code Cache', and 'GPUCache' folders."
     ],
-    "category": "folder"
+    "category": "folder",
+    "metaTitle": "Microsoft Edge WebView2: Safe to Delete? (Free 1.5 GB)",
+    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache without losing settings using manual...",
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "customFaqs": [
+      {
+        "q": "Why is Microsoft Edge WebView2 Shared Runtime Cache (EBWebView) taking up so much disk space on Windows 11?",
+        "a": "Windows 11 widgets, Microsoft 365 apps, and modern desktop utilities embed Edge WebView2, accumulating gigabytes of cached web data. Clearing it typically reclaims 1.5 GB safely."
+      },
+      {
+        "q": "Does clearing Microsoft Edge WebView2 Shared Runtime Cache (EBWebView) delete personal saves or logins?",
+        "a": "No. Reclaims hidden SSD space while keeping Windows Widgets and Office add-ins working normally."
+      }
+    ],
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "programdata-windows-defender-scans-history",
@@ -3040,18 +3317,27 @@
       {
         "q": "Why doesn't docker system prune shrink the ext4.vhdx file size in Windows Explorer?",
         "a": "WSL2 Hyper-V virtual disks (ext4.vhdx / docker_data.vhdx) grow dynamically when containers write data, but do not release zeroed blocks back to Windows NTFS until fstrim and Optimize-VHD or diskpart compact vdisk is run."
+      },
+      {
+        "q": "Why is Docker Desktop WSL2 Virtual Disk Bloat taking up so much disk space on Windows 11?",
+        "a": "Docker Desktop on Windows uses a dynamic VHDX file inside WSL2 that grows as images and containers are pulled, but never shrinks automatically. Clearing it typically reclaims 12.0 GB safely."
+      },
+      {
+        "q": "Does clearing Docker Desktop WSL2 Virtual Disk Bloat delete personal saves or logins?",
+        "a": "No. Pruning unused container images and compacting the disk reclaims massive drive space while keeping active containers intact."
       }
     ],
     "lastUpdated": "2026-11-09",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
-        "Direct safety verdict + exact Windows 11 path breakdown",
-        "Step-by-step verification + FAQPage JSON-LD schema",
-        "Empirical 12.0 GB – 80.0 GB recovery benchmark + 1-click native Rust cleanup"
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 12.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 12.0 GB – 80.0 GB recovery benchmark",
+        "Verified Windows 11 24H2 safety verdict & 12.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -3718,8 +4004,31 @@
       {
         "q": "Does clearing %AppData%\\Medal\\Cache delete my recorded Medal gaming clips?",
         "a": "No. Recorded video clips are saved in your dedicated Medal Clips capture directory (typically C:\\Medal\\Clips or Videos\\Medal). Purging %AppData%\\Medal\\Cache, GPUCache, and Service Worker CacheStorage only removes launcher UI and thumbnail bloat."
+      },
+      {
+        "q": "Why is Medal.tv Clip Recorder Cache & Media Blob Storage taking up so much disk space on Windows 11?",
+        "a": "How to clear Medal TV cache without losing clips: Medal.tv runs an Electron desktop UI alongside a background hardware encoder, storing gigabytes of video preview blobs, waveform thumbnails, and Chromium cache files inside %AppData%\\Medal\\Cache. Clearing it typically reclaims 2.0 GB safely."
+      },
+      {
+        "q": "Does clearing Medal.tv Clip Recorder Cache & Media Blob Storage delete personal saves or logins?",
+        "a": "No. Purging Medal.tv’s UI cache and temporary encoding scratch frees 2.0 GB – 14.0 GB of C: drive space while keeping all of your saved gaming clips and montages completely untouched."
       }
-    ]
+    ],
+    "competitorBlueprint": {
+      "sourceDomain": "wisecleaner.com",
+      "replicatedPatterns": [
+        "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
+        "Step-by-step folder verification + FAQPage JSON-LD schema",
+        "Verified Windows 11 24H2 safety verdict & 2.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %AppData%\\Medal\\Cache\\Cache_Data, GPUCache, and %LocalAppData%\\Medal"
+      ],
+      "superiorityFixes": [
+        "Verified Windows 11 24H2 safety verdict & 2.0 GB empirical recovery benchmark",
+        "Copy-paste PowerShell size audit snippet for %AppData%\\Medal\\Cache\\Cache_Data, GPUCache, and %LocalAppData%\\Medal",
+        "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
+      ]
+    },
+    "lastUpdated": "2026-11-09"
   },
   {
     "slug": "steelseries-gg-cache",

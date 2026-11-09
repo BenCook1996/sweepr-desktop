@@ -12,12 +12,12 @@
   "ctrOptimizedAt": {
     "steam-depotcache": "2026-11-03",
     "riot-client-logs": "2026-11-03",
-    "programdata-package-cache": "2026-11-03",
+    "programdata-package-cache": "2026-11-09",
     "capcut-pc-cache": "2026-11-03",
-    "medal-tv-cache": "2026-11-03",
+    "medal-tv-cache": "2026-11-09",
     "windows-livekernelreports": "2026-11-03",
-    "opera-gx-cache": "2026-11-04",
-    "windows-old": "2026-11-05",
+    "opera-gx-cache": "2026-11-09",
+    "windows-old": "2026-11-09",
     "capcut-desktop-cache": "2026-11-05",
     "intellij-idea-caches": "2026-11-05",
     "lm-studio-models-cache": "2026-11-06",
@@ -43,7 +43,12 @@
     "hiberfil-sys": "2026-11-09",
     "gradle-caches": "2026-11-09",
     "pip-http-wheels-cache": "2026-11-09",
-    "steam-shader-cache": "2026-11-09"
+    "steam-shader-cache": "2026-11-09",
+    "localappdata-webview2-ebwebview-cache": "2026-11-09",
+    "ea-app-cache": "2026-11-09",
+    "chrome-gpu-shader-cache": "2026-11-09",
+    "vrchat-cache": "2026-11-09",
+    "vs-ccleaner": "2026-11-09"
   },
   "lastCtrEnrichedSlugs": [
     "winsxs",

@@ -359,6 +359,17 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
         const len = pp.title.length;
         if (len < 30) issues.push(issue("warning", "title_short", `Title is short (${len} chars)`, pp.title, "Aim for 50-60 characters (seo-meta-optimizer rule)."));
         if (len > 60) issues.push(issue("warning", "title_long", `Title may truncate in SERPs (${len} chars)`, pp.title, "Trim to <= 60 characters, primary keyword in first 30."));
+        if (/\([^)]*$/.test(pp.title) || /\(\s*:/.test(pp.title)) {
+          issues.push(
+            issue(
+              "error",
+              "title_truncated_artifact",
+              "Title contains an unclosed parenthesis or broken truncation artifact",
+              pp.title,
+              "Fix the <title> or metaTitle so all parentheses are balanced within 30-60 characters."
+            )
+          );
+        }
         const dup = titleOwners.get(pp.title) ?? [];
         if (dup.length > 1) issues.push(issue("warning", "title_duplicate", `Title duplicated on ${dup.length} pages`, dup.filter((x) => x !== p.path).slice(0, 4).join(", "), "Give each page a unique title."));
       }

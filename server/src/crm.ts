@@ -29,7 +29,11 @@ import { runAnnualRenewalRecapSweep } from "./renewal-recap.js";
 import { getExperimentLiftMultipliers, getExperimentSummary } from "./experiments.js";
 import { SeoStore } from "./seo/store.js";
 import { computeStateOfWindowsStorageReport, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
-import { executeIntentGapAutomation, loadVerifiedGscSeedRows } from "./seo/intent-gap.js";
+import {
+  executeIntentGapAutomation,
+  loadVerifiedGscSeedRows,
+  runGscInternalLinkBooster,
+} from "./seo/intent-gap.js";
 import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
 import { auditInternalBrandFactConsistency, checkDirectoryListings } from "./seo/listings.js";
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
@@ -59,6 +63,7 @@ const DEFAULT_AUTOMATION_JOBS: Array<{ id: string; name: string; cadence: string
   { id: "A7_keyword_discovery", name: "A7 Low-Competition Keyword Research & Opportunity Engine", cadence: "Every 12h + daily CI" },
   { id: "A17_strategy_forecast_ledger", name: "A17 SEO Strategy Forecast Ledger & Pre/Post Calibrator", cadence: "Every 12h + on GSC sync" },
   { id: "A18_underperformer_auto_refresh", name: "A18 Self-Healing Forecast Underperformer & CTR Auto-Refresher", cadence: "Every 12h + daily CI" },
+  { id: "A19_gsc_internal_link_booster", name: "A19 GSC Strike-Zone Internal Link Booster (/clean, /safe-to-delete & Leaf Mesh)", cadence: "Every 12h + on GSC sync" },
   { id: "A8_roas_reallocation", name: "A8 Paid Ads ROAS & v3 65% Reinvestment Engine", cadence: "Every 12h + CRM trigger" },
   { id: "A9_ab_experiments", name: "A9 A/B Experiment Z-Test & Auto-Winner Promotion", cadence: "Every 12h + CRM trigger" },
   { id: "A10_conversion_recovery", name: "A10 High-Intent Scan/Checkout & Giveaway GOTD50 Sweep", cadence: "Every 5m" },
@@ -1708,6 +1713,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             to: toIso,
             siteUrl: deps.config.publicUrl || "https://sweeprcleaner.com",
             persistState: true,
+            syncSeed: true,
           });
           summary = {
             queued_ctr_rewrite_slugs: r.queued_ctr_rewrite_slugs.length,
@@ -1795,6 +1801,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             teardowns_ready: r.teardowns.length,
           };
         } else if (id === "A17_strategy_forecast_ledger") {
+          seoStore.hydrateStrategyLedgerFromJsonFile();
           if (seoStore.listStrategyForecastLedger({ limit: 15 }).length < 10) {
             await runKeywordDiscoveryPipeline(seoStore, undefined, { persistReport: true });
           }
@@ -1819,6 +1826,13 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             evaluated_candidates: r.evaluated_candidates,
             refreshed_count: r.refreshed_count,
             queued_for_indexnow: r.queued_for_indexnow,
+          };
+        } else if (id === "A19_gsc_internal_link_booster") {
+          const r = runGscInternalLinkBooster(seoStore);
+          summary = {
+            boosted_count: r.boosted_count,
+            boosted_slugs: r.boosted_slugs,
+            hubs_updated: r.hubs_updated,
           };
         } else if (id === "stripe_reconcile") {
           const r = await reconcileStripeSubscriptions(repo, deps.stripe);

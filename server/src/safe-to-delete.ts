@@ -1,4 +1,4 @@
-import { getCleanItems, type CleanItem } from "./pseo.js";
+import { getCleanItems, getGscPriorityInternalLinkSlugs, type CleanItem } from "./pseo.js";
 import { escapeHtml } from "./security.js";
 import { ACTIVE_EXPERIMENTS, assignExperimentVariant } from "./experiments.js";
 
@@ -540,6 +540,28 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
         <a href="/download?platform=windows" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
       </div>
     </div>
+
+    <section id="gsc-trending-storage-fixes" style="margin-bottom:24px;background:#ffffff;border:1px solid #d6dad5;border-radius:18px;padding:22px;">
+      <h2 style="font-size:18px;font-weight:800;margin:0 0 6px;color:#111613;">🔥 Trending Windows 10 &amp; 11 Storage Cleanup Guides</h2>
+      <p style="font-size:13px;color:#4b554e;margin:0 0 14px;">Direct safety audits and step-by-step cleanup instructions for the most frequently queried Windows folders in Search Console:</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+        ${getGscPriorityInternalLinkSlugs()
+          .slice(0, 9)
+          .map((slug) => getCleanItems().find((i) => i.slug === slug))
+          .filter((i): i is CleanItem => Boolean(i))
+          .map(
+            (i) => `<a href="/clean/${i.category}/${i.slug}" style="display:block;padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#f8faf9;text-decoration:none;color:#111613;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:4px;">
+                <span style="color:${i.safeToDelete ? "#0d6847" : "#b45309"};">${i.safeToDelete ? "🟢 Safe to Delete" : "⚠️ Caution"}</span>
+                <span style="color:#334155;">${escapeHtml(i.avgSpace)}</span>
+              </div>
+              <div style="font-size:13.5px;font-weight:800;margin-bottom:2px;">${escapeHtml(i.name)}</div>
+              <div style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(i.path)}</div>
+            </a>`
+          )
+          .join("\n")}
+      </div>
+    </section>
 
     <section id="resultsContainer">
       ${renderRowsHtml(initialAnalysis)}

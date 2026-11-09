@@ -21,7 +21,11 @@ import { applyRoasReallocation } from "./roas.js";
 import { getExperimentLiftMultipliers, getExperimentSummary } from "./experiments.js";
 import { computeStateOfWindowsStorageReport, refreshAllTelemetryTruthCache } from "./seo/telemetry-truth.js";
 import { scanBloatWatchSignals } from "./seo/bloat-watch.js";
-import { executeIntentGapAutomation, loadVerifiedGscSeedRows } from "./seo/intent-gap.js";
+import {
+  executeIntentGapAutomation,
+  loadVerifiedGscSeedRows,
+  runGscInternalLinkBooster,
+} from "./seo/intent-gap.js";
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
 import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "./seo/competitor-intel.js";
 import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
@@ -362,6 +366,7 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
         to: toIso,
         siteUrl: config.publicUrl || "https://sweeprcleaner.com",
         persistState: true,
+        syncSeed: true,
       });
       recordAutomationRunStatus("A2_intent_gap_ctr", {
         status: "ok",
@@ -426,6 +431,7 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
 
     const t0A17 = Date.now();
     try {
+      seoStore.hydrateStrategyLedgerFromJsonFile();
       const gscSeed = loadVerifiedGscSeedRows();
       const liftMultipliers = getExperimentLiftMultipliers(repo);
       const cal = seoStore.reconcileStrategyLedgerActualsAndCalibrate({
@@ -468,6 +474,26 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       recordAutomationRunStatus("A18_underperformer_auto_refresh", {
         status: "error",
         durationMs: Date.now() - t0A18,
+        error: String(err?.message || err),
+      });
+    }
+
+    const t0A19 = Date.now();
+    try {
+      const boostRes = runGscInternalLinkBooster(seoStore);
+      recordAutomationRunStatus("A19_gsc_internal_link_booster", {
+        status: "ok",
+        durationMs: Date.now() - t0A19,
+        summary: {
+          boosted_count: boostRes.boosted_count,
+          boosted_slugs: boostRes.boosted_slugs,
+          hubs_updated: boostRes.hubs_updated,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A19_gsc_internal_link_booster", {
+        status: "error",
+        durationMs: Date.now() - t0A19,
         error: String(err?.message || err),
       });
     }

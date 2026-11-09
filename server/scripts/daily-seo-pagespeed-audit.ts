@@ -6,8 +6,9 @@ import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { SeoStore } from "../src/seo/store.js";
 import { runSiteAudit, AUDIT_USER_AGENT } from "../src/seo/audit.js";
-import { runKeywordDiscoveryPipeline } from "../src/seo/keywords.js";
+import { runKeywordDiscoveryPipeline, LOCKED_TEST_TITLE_SLUGS } from "../src/seo/keywords.js";
 import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "../src/seo/competitor-intel.js";
+import { loadVerifiedGscSeedRows, runGscInternalLinkBooster } from "../src/seo/intent-gap.js";
 import { TRANSACTIONAL_TOOLS } from "../src/transactional-tools.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -251,17 +252,61 @@ async function main() {
   // ---------------------------------------------------------------------------
   // Step 2.5: Keyword Research & Opportunity Quality Gate Verification
   // ---------------------------------------------------------------------------
-  console.log("\n--- 2.5. Automated Keyword Research, Competitor SEO (A16), Strategy Ledger (A17) & Auto-Refresh (A18) ---");
+  console.log("\n--- 2.5. Automated Keyword Research, Competitor SEO (A16), Strategy Ledger (A17), Auto-Refresh (A18) & Link Booster (A19) ---");
   const hydratedLedgerCount = store.hydrateStrategyLedgerFromJsonFile();
+  const gscSeedRows = loadVerifiedGscSeedRows();
   const compIntel = await harvestCompetitorOrganicPages(store, undefined, { crawl_sitemaps: false });
   const kwReport = await runKeywordDiscoveryPipeline(store, undefined, {
     fetch_autocomplete: false,
     enrich_dfs: false,
     persistReport: true,
   });
-  const recon = store.reconcileStrategyLedgerActualsAndCalibrate();
   const a18Refresh = await runUnderperformerAutoRefresh(store, { max_pages: 5, persist_disk: true });
+  const recon = store.reconcileStrategyLedgerActualsAndCalibrate({
+    seedGscRows: gscSeedRows,
+    recalibrate: true,
+  });
+  const a19Boost = runGscInternalLinkBooster(store);
+  store.exportStrategyLedgerToJsonFile();
   const ledgerRows = store.listStrategyForecastLedger({ limit: 200 });
+
+  // Verify 100% of GSC-active /clean/* pages in gsc-seed.json have explicit 30-60c metaTitle, 110-158c metaDescription & customFaqs
+  const allCleanRaw = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8")) as Array<{
+    slug: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    customFaqs?: Array<{ q: string; a: string }>;
+  }>;
+  const cleanBySlugMap = new Map(allCleanRaw.map((i) => [i.slug.toLowerCase(), i]));
+  const gscCleanSlugs = new Set<string>();
+  for (const r of gscSeedRows) {
+    const m = String(r.page || "").match(/\/clean\/(?:app|folder)\/([^/?#]+)/i);
+    if (m && (r.impressions || 0) > 0) gscCleanSlugs.add(m[1].toLowerCase());
+  }
+  let gscExplicitMetaVerified = 0;
+  for (const s of gscCleanSlugs) {
+    const item = cleanBySlugMap.get(s);
+    const hasValidTitle =
+      LOCKED_TEST_TITLE_SLUGS.has(s) ||
+      Boolean(
+        item?.metaTitle &&
+          item.metaTitle.length >= 30 &&
+          item.metaTitle.length <= 60 &&
+          !/\([^)]*$/.test(item.metaTitle)
+      );
+    if (
+      item &&
+      hasValidTitle &&
+      item.metaDescription &&
+      item.metaDescription.length >= 110 &&
+      item.metaDescription.length <= 158 &&
+      Array.isArray(item.customFaqs) &&
+      item.customFaqs.length >= 1
+    ) {
+      gscExplicitMetaVerified++;
+    }
+  }
+
   console.log(
     `  - Evaluated Queries:            ${kwReport.summary.total_evaluated} (${kwReport.summary.low_competition_count} low-competition, BOFU/MOFU share: ${kwReport.summary.bofu_mofu_share_pct}%)`
   );
@@ -270,13 +315,19 @@ async function main() {
     `  - Competitor Organic Pages (A16): ${compIntel.total_tracked_pages} tracked (${compIntel.teardowns.length} structural teardowns & blueprints)`
   );
   console.log(
-    `  - Strategy Forecast Ledger (A17): ${ledgerRows.length} logged forecasts (hydrated=${hydratedLedgerCount.hydrated_entries}, calibrated low_comp_weight=${store.getScoringWeights().low_comp_weight})`
+    `  - Strategy Forecast Ledger (A17): ${ledgerRows.length} logged forecasts (evaluated=${recon.evaluated_count}, hydrated=${hydratedLedgerCount.hydrated_entries}, calibrated low_comp_weight=${store.getScoringWeights().low_comp_weight})`
   );
   console.log(
     `  - Pre/Post Optimization Lift:   ${recon.pre_vs_post_summary.optimized_pages_count} optimized pages | Avg Clicks Lift: +${recon.pre_vs_post_summary.avg_clicks_lift_pct}% | Avg CTR Lift: +${recon.pre_vs_post_summary.avg_ctr_lift_pct}% | Pos Gain: +${recon.pre_vs_post_summary.avg_position_delta} spots`
   );
   console.log(
     `  - Underperformer Refresh (A18): ${a18Refresh.refreshed_count} refreshed (${a18Refresh.evaluated_candidates} evaluated)`
+  );
+  console.log(
+    `  - GSC Link Booster (A19):       ${a19Boost.boosted_count} Strike-Zone slugs promoted across ${a19Boost.hubs_updated.join(", ")}`
+  );
+  console.log(
+    `  - GSC Active Meta Completeness: ${gscExplicitMetaVerified}/${gscCleanSlugs.size} GSC-active /clean/* pages verified with explicit 30-60c metaTitle, 110-158c metaDescription & customFaqs`
   );
   console.log(
     `  - Ready Net-New pSEO Blueprints:${kwReport.summary.new_pseo_ready_count} (100% passed 6 SEO & safety gates)`

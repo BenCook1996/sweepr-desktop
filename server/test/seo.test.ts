@@ -1759,7 +1759,7 @@ test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 6
   assert.equal(statusRes.status, 200);
   const statusJson = (await statusRes.json()) as any;
   assert.equal(statusJson.ok, true);
-  assert.equal(statusJson.total_jobs, 18);
+  assert.equal(statusJson.total_jobs, 19);
   const a1Job = statusJson.jobs.find((j: any) => j.id === "A1_telemetry_truth");
   assert.equal(a1Job.last_status, "ok");
 });
@@ -2128,6 +2128,27 @@ test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & 
   const expEvalJson = (await expEvalRes.json()) as any;
   assert.equal(expEvalJson.ok, true);
   assert.ok(Array.isArray(expEvalJson.experiments));
+
+  // 9. Verify A17 full GSC registration (38+ evaluated pages) + multi-date Pre/Post Lift & A19 Internal Link Booster
+  const runA19Job = await post("/api/crm/automations/run", { job_id: "A19_gsc_internal_link_booster" });
+  assert.equal(runA19Job.status, 200);
+  const runA19JobJson = (await runA19Job.json()) as any;
+  assert.equal(runA19JobJson.ok, true);
+  assert.equal(runA19JobJson.results.A19_gsc_internal_link_booster.last_status, "ok");
+  assert.ok(runA19JobJson.results.A19_gsc_internal_link_booster.last_summary.boosted_count >= 8);
+
+  const runA17Full = await post("/api/crm/automations/run", { job_id: "A17_strategy_forecast_ledger" });
+  assert.equal(runA17Full.status, 200);
+  const runA17FullJson = (await runA17Full.json()) as any;
+  assert.equal(runA17FullJson.ok, true);
+  assert.ok(
+    runA17FullJson.results.A17_strategy_forecast_ledger.last_summary.evaluated_count >= 38,
+    `Expected >= 38 GSC-active pages evaluated in A17, got ${runA17FullJson.results.A17_strategy_forecast_ledger.last_summary.evaluated_count}`
+  );
+  assert.ok(
+    runA17FullJson.results.A17_strategy_forecast_ledger.last_summary.optimized_pages_count >= 5,
+    `Expected >= 5 multi-date Pre/Post optimized pages in A17, got ${runA17FullJson.results.A17_strategy_forecast_ledger.last_summary.optimized_pages_count}`
+  );
 });
 
 

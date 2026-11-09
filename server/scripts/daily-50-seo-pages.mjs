@@ -2879,10 +2879,14 @@ async function syncKeywordsToCrm(newItems) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const countArg = Number(args.find((a) => !a.startsWith("-")) || 2);
+  const flagCountArg = args.find((a) => a.startsWith("--count="));
+  const rawCount = flagCountArg
+    ? Number(flagCountArg.slice("--count=".length))
+    : Number(args.find((a) => !a.startsWith("-")) || 2);
   // Cap daily net-new canonical pillar additions to <= 5 to protect Googlebot crawl budget
-  const targetCount = Math.max(1, Math.min(5, countArg));
+  const targetCount = Math.max(1, Math.min(5, Number.isFinite(rawCount) ? rawCount : 2));
   const force = args.includes("--force");
+  const skipGitPush = args.includes("--no-push") || process.env.CI === "true";
   const markCtrArg = args.find((a) => a.startsWith("--mark-ctr="));
 
   let prevState = {};
@@ -3058,7 +3062,7 @@ async function main() {
     );
     await pingIndexNow(deltaUrls);
     await syncKeywordsToCrm([]);
-    if (!process.argv.includes("--no-push") && autoEnrichedSlugs.length > 0) {
+    if (!skipGitPush && autoEnrichedSlugs.length > 0) {
       try {
         execFileSync(
           "git",
@@ -3066,7 +3070,9 @@ async function main() {
             "add",
             "server/src/data/clean-items.json",
             "server/src/data/indexing-queue.json",
-            "server/src/data/daily-seo-pages-state.json"
+            "server/src/data/daily-seo-pages-state.json",
+            "server/src/data/seo-strategy-ledger.json",
+            "server/src/data/keyword-research-report.json"
           ],
           { cwd: REPO_ROOT, stdio: "inherit" }
         );
@@ -3115,7 +3121,7 @@ async function main() {
   await pingIndexNow(deltaUrls);
   await syncKeywordsToCrm(selected);
 
-  if (!process.argv.includes("--no-push")) {
+  if (!skipGitPush) {
     try {
       execFileSync(
         "git",
@@ -3124,6 +3130,8 @@ async function main() {
           "server/src/data/clean-items.json",
           "server/src/data/indexing-queue.json",
           "server/src/data/daily-seo-pages-state.json",
+          "server/src/data/seo-strategy-ledger.json",
+          "server/src/data/keyword-research-report.json",
           "server/public/sitemap.xml",
           "server/public/llms.txt",
           "server/scripts/daily-50-seo-pages.mjs"

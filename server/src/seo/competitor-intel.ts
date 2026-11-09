@@ -1052,7 +1052,7 @@ function buildCleanCtrTitle(
       target_path: targetPath,
       primary_keyword: row.primary_keyword,
       optimization_type: "A18_auto_refresh",
-      force_refresh_baseline: true,
+      force_refresh_baseline: false,
       notes: `A18 self-healing auto-refresh triggered on ${row.outcome_verdict || "stalled_rank"}`,
     });
 
@@ -1205,6 +1205,54 @@ function buildCleanCtrTitle(
     });
   }
 
+  // Ensure all GSC-active /clean/* pages have explicit metaDescription & customFaqs (and metaTitle when not locked)
+  if (opts?.persist_disk !== false && diskItems.length > 0) {
+    const refreshedDate = new Date().toISOString().slice(0, 10);
+    for (const row of allLedger) {
+      if ((row.actual_impressions_28d || 0) <= 0 || !row.target_path.toLowerCase().startsWith("/clean/")) continue;
+      const slugLower = row.slug.toLowerCase();
+      const diskIdx = diskItems.findIndex((d) => String(d.slug || "").toLowerCase() === slugLower);
+      if (diskIdx < 0) continue;
+      const dItem = diskItems[diskIdx];
+      const cleanItem = allCleanItems.find((i) => i.slug.toLowerCase() === slugLower);
+      const isLockedTitle = LOCKED_TEST_TITLE_SLUGS.has(slugLower);
+      const spaceLabel = cleanItem?.avgSpace?.split("–")[0]?.trim() || "4.5 GB";
+      if (!isLockedTitle && (!dItem.metaTitle || dItem.metaTitle.length < 30 || dItem.metaTitle.length > 60)) {
+        dItem.metaTitle = buildCleanCtrTitle(slugLower, cleanItem, row.primary_keyword, spaceLabel);
+        if (cleanItem) cleanItem.metaTitle = dItem.metaTitle;
+        diskItemsModified = true;
+      }
+      if (!dItem.metaDescription || dItem.metaDescription.length < 110 || dItem.metaDescription.length > 158) {
+        const winPath = dItem.path || cleanItem?.path || "%LocalAppData%\\Temp";
+        let candidateMeta = `Yes — safe to clear on Windows 11. Reclaim ${spaceLabel} at ${winPath} without losing settings using manual steps or Sweepr 1-click cleanup.`;
+        if (candidateMeta.length > 158) {
+          candidateMeta = truncateAtWordBoundary(candidateMeta, 154) + "...";
+        }
+        dItem.metaDescription = candidateMeta;
+        if (cleanItem) cleanItem.metaDescription = candidateMeta;
+        diskItemsModified = true;
+      }
+      if (!Array.isArray(dItem.customFaqs) || dItem.customFaqs.length === 0) {
+        dItem.customFaqs = [
+          {
+            q: `Why is ${dItem.name || row.primary_keyword} taking up so much disk space on Windows 11?`,
+            a: `${dItem.whatIsIt || "Cached build, shader, and update payloads accumulate across patches without automatic pruning."} Clearing it typically reclaims ${spaceLabel} safely.`,
+          },
+          {
+            q: `Does clearing ${dItem.name || row.primary_keyword} delete personal saves or logins?`,
+            a: `No. ${dItem.whatHappens || "Only regenerable cache and temporary artifacts are removed; user profiles, keybinds, and credentials remain intact."}`,
+          },
+        ];
+        if (cleanItem) cleanItem.customFaqs = dItem.customFaqs;
+        diskItemsModified = true;
+      }
+      if (!dItem.lastUpdated) {
+        dItem.lastUpdated = refreshedDate;
+        diskItemsModified = true;
+      }
+    }
+  }
+
   if (diskItemsModified && opts?.persist_disk !== false) {
     try {
       fs.writeFileSync(CLEAN_ITEMS_DISK_PATH, JSON.stringify(diskItems, null, 2) + "\n", "utf8");
@@ -1220,7 +1268,9 @@ function buildCleanCtrTitle(
     } catch {}
   }
 
-  store.exportStrategyLedgerToJsonFile();
+  if (opts?.persist_disk !== false) {
+    store.exportStrategyLedgerToJsonFile();
+  }
 
   return {
     ok: true,

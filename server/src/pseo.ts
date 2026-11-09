@@ -694,6 +694,27 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
   const myIdx = Math.max(0, pool.findIndex((i) => i.slug === item.slug));
   const related: CleanItem[] = [];
 
+  // A19: Prioritize active GSC Strike-Zone pages inside the same cluster first (up to 3), then top cross-cluster GSC winners (up to 2)
+  const prioritySlugs = getGscPriorityInternalLinkSlugs();
+  for (const pSlug of prioritySlugs) {
+    if (related.length >= 3) break;
+    if (siblingSlugs.has(pSlug)) continue;
+    const match = clusterPeers.find((i) => i.slug === pSlug);
+    if (match) {
+      siblingSlugs.add(match.slug);
+      related.push(match);
+    }
+  }
+  for (const pSlug of prioritySlugs) {
+    if (related.length >= 4) break;
+    if (siblingSlugs.has(pSlug)) continue;
+    const match = all.find((i) => i.slug === pSlug);
+    if (match) {
+      siblingSlugs.add(match.slug);
+      related.push(match);
+    }
+  }
+
   for (let offset = 1; offset < pool.length && related.length < 6; offset++) {
     const candidate = pool[(myIdx + offset * 3) % pool.length];
     if (candidate && !siblingSlugs.has(candidate.slug)) {
@@ -917,12 +938,32 @@ const FEATURED_GSC_SLUGS = [
   "logitech-options-plus-cache",
   "elgato-streamdeck-cache",
   "windows-livekernelreports",
+  "winsxs",
   "opera-gx-cache",
   "medal-tv-cache",
   "capcut-desktop-cache",
-  "winsxs",
   "obs-studio-logs-crashes",
 ];
+
+let gscPriorityInternalLinkSlugs: string[] = [...FEATURED_GSC_SLUGS];
+
+export function setGscPriorityInternalLinkSlugs(slugs: string[]) {
+  const cleaned = Array.from(
+    new Set(
+      (slugs || [])
+        .map((s) => String(s || "").trim().toLowerCase())
+        .filter(Boolean)
+    )
+  ).slice(0, 15);
+  if (cleaned.length > 0) {
+    gscPriorityInternalLinkSlugs = cleaned;
+    cachedDirectoryHtml = null;
+  }
+}
+
+export function getGscPriorityInternalLinkSlugs(): string[] {
+  return gscPriorityInternalLinkSlugs.length > 0 ? gscPriorityInternalLinkSlugs : FEATURED_GSC_SLUGS;
+}
 
 export function renderPseoDirectory(): string {
   getCleanItems();
@@ -938,9 +979,10 @@ export function renderPseoDirectory(): string {
   const items = cleanItems;
   const appItems = items.filter((i) => i.category === "app");
   const folderItems = items.filter((i) => i.category === "folder");
-  const featuredItems = FEATURED_GSC_SLUGS.map((s) => items.find((i) => i.slug === s)).filter(
-    (i): i is CleanItem => Boolean(i)
-  );
+  const priorityList = Array.from(new Set([...getGscPriorityInternalLinkSlugs(), ...FEATURED_GSC_SLUGS])).slice(0, 12);
+  const featuredItems = priorityList
+    .map((s) => items.find((i) => i.slug === s))
+    .filter((i): i is CleanItem => Boolean(i));
 
   const siloOrder: PseoClusterId[] = [
     "gaming",
@@ -1104,7 +1146,7 @@ export function renderPseoDirectory(): string {
     ${
       featuredItems.length > 0
         ? `
-    <div class="mb-12 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6">
+    <div id="gsc-trending-storage-fixes" class="mb-12 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6">
       <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
         <span>🔥 Most Searched Windows Cache &amp; Folder Guides (2026)</span>
       </h2>

@@ -1,7 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classifyPseoCluster, getCleanItems, setApprovedIntentGapSeoOverride } from "../pseo.js";
+import {
+  classifyPseoCluster,
+  getCleanItems,
+  setApprovedIntentGapSeoOverride,
+  setGscPriorityInternalLinkSlugs,
+} from "../pseo.js";
 import { scanBloatWatchSignals } from "./bloat-watch.js";
 import { LOCKED_TEST_TITLE_SLUGS } from "./keywords.js";
 import type { SeoStore } from "./store.js";
@@ -122,11 +127,47 @@ export function loadVerifiedGscSeedRows(): Array<{
   }
 }
 
+export function ensureGscSeedSynced(
+  store: SeoStore,
+  opts?: { forceIfEmpty?: boolean }
+): { synced: boolean; rows_ingested: number; max_date: string | null } {
+  const seedRows = loadVerifiedGscSeedRows();
+  if (seedRows.length === 0) {
+    return { synced: false, rows_ingested: 0, max_date: null };
+  }
+  const seedMaxDate = seedRows.reduce((m, r) => (r.date > m ? r.date : m), "");
+  const dbStat = store.db
+    .prepare("SELECT COUNT(*) AS c, MAX(date) AS max_date FROM seo_gsc_rows")
+    .get() as { c: number; max_date: string | null } | undefined;
+  const dbCount = Number(dbStat?.c ?? 0);
+  const dbMaxDate = dbStat?.max_date ?? null;
+
+  const shouldSync =
+    (opts?.forceIfEmpty && dbCount === 0) ||
+    (dbCount >= 20 && (dbCount < seedRows.length || (seedMaxDate && (!dbMaxDate || dbMaxDate < seedMaxDate))));
+
+  if (shouldSync) {
+    store.upsertGscRows(seedRows);
+    store.setSetting("gsc_last_sync", {
+      ok: true,
+      at: new Date().toISOString(),
+      source: "gsc_seed_auto_sync",
+      rows: seedRows.length,
+      latest_date: seedMaxDate || null,
+    });
+    return { synced: true, rows_ingested: seedRows.length, max_date: seedMaxDate || null };
+  }
+  return { synced: false, rows_ingested: dbCount, max_date: dbMaxDate };
+}
+
 export function computeIntentGapReport(
   store: SeoStore,
   opts: { from: string; to: string; siteUrl: string }
 ) {
+  ensureGscSeedSynced(store, { forceIfEmpty: false });
   const topQueries = store.gscTopQueries(opts.from, opts.to, 500);
+  const allCleanItems = getCleanItems();
+  const cleanBySlug = new Map(allCleanItems.map((i) => [i.slug.toLowerCase(), i]));
   const dailyState = readDailyState();
   const cooldownDays = Number(dailyState.ctrCooldownDays || 14);
   const ctrOptimizedAt = dailyState.ctrOptimizedAt || {};
@@ -255,6 +296,17 @@ export function computeIntentGapReport(
       const potentialClicksAtCurrentPos = Math.max(0, Math.round(item.impressions * expectedCtr - item.clicks));
       const potentialClicksAtPos1 = Math.max(0, Math.round(item.impressions * 0.28 - item.clicks));
       const topQuery = item.top_queries.sort((a, b) => b.impressions - a.impressions)[0]?.query ?? item.slug;
+      const cleanEntry = cleanBySlug.get(item.slug.toLowerCase());
+      const hasExplicitMeta = Boolean(
+        cleanEntry?.metaTitle &&
+          cleanEntry.metaTitle.length >= 30 &&
+          cleanEntry.metaTitle.length <= 60 &&
+          cleanEntry?.metaDescription &&
+          cleanEntry.metaDescription.length >= 110 &&
+          cleanEntry.metaDescription.length <= 158 &&
+          Array.isArray(cleanEntry?.customFaqs) &&
+          cleanEntry.customFaqs.length >= 1
+      );
 
       return {
         slug: item.slug,
@@ -268,6 +320,7 @@ export function computeIntentGapReport(
         position: Math.round(avgPos * 10) / 10,
         primary_query: topQuery,
         top_queries: item.top_queries.slice(0, 4),
+        has_explicit_meta: hasExplicitMeta,
         on_cooldown: onCooldown,
         last_optimized_at: lastOptIso,
         cooldown_days_remaining: cooldownDaysRemaining,
@@ -276,7 +329,9 @@ export function computeIntentGapReport(
         potential_clicks_at_pos1: potentialClicksAtPos1,
         recommended_action: onCooldown
           ? `Hold title/meta edits for ${cooldownDaysRemaining}d (14-day GSC CTR measurement window active since ${lastOptIso})`
-          : `Rewrite <title> & FAQ schema around "${topQuery}" with explicit safety verdict + GB savings`,
+          : hasExplicitMeta
+            ? `Explicit metaTitle/FAQ active; boost Depth-1 internal links via A19 to lift "${topQuery}" from Pos ${Math.round(avgPos * 10) / 10} into Top 5`
+            : `Rewrite <title> & FAQ schema around "${topQuery}" with explicit safety verdict + GB savings`,
       };
     })
     .filter((i) => i.position <= 22 && i.impressions >= 4)
@@ -353,7 +408,6 @@ export function computeIntentGapReport(
     }
   }
 
-  const allCleanItems = getCleanItems();
   const approvedOverrides =
     store.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
 
@@ -458,8 +512,11 @@ export function computeIntentGapReport(
 
 export function executeIntentGapAutomation(
   store: SeoStore,
-  opts: { from: string; to: string; siteUrl: string; persistState?: boolean }
+  opts: { from: string; to: string; siteUrl: string; persistState?: boolean; syncSeed?: boolean }
 ) {
+  if (opts.syncSeed) {
+    ensureGscSeedSynced(store, { forceIfEmpty: true });
+  }
   const report = computeIntentGapReport(store, opts);
 
   // 1. Sync classified search_intent and target_path back into seo_keywords
@@ -821,4 +878,98 @@ export function getApprovedIntentGapAdsExport(store: SeoStore) {
     csv: csvRows.join("\n"),
   };
 }
+
+/**
+ * A19: GSC Strike-Zone Internal Link Booster
+ * Dynamically promotes high-impression Strike-Zone (Pos 3.1-25.0) /clean/* guides into
+ * Depth-1 hub link blocks on /clean and /safe-to-delete and prioritizes them in leaf related-guide grids.
+ */
+export function runGscInternalLinkBooster(store: SeoStore) {
+  ensureGscSeedSynced(store, { forceIfEmpty: true });
+  const dbRows = store.db
+    .prepare("SELECT date, query, page, clicks, impressions, position FROM seo_gsc_rows")
+    .all() as Array<{ date: string; query: string; page: string; clicks: number; impressions: number; position: number }>;
+  const rows = dbRows.length > 0 ? dbRows : loadVerifiedGscSeedRows();
+
+  // Deduplicate by (query, page) keeping latest snapshot date
+  const latestMap = new Map<
+    string,
+    { date: string; query: string; page: string; clicks: number; impressions: number; position: number }
+  >();
+  for (const r of rows) {
+    const k = `${String(r.query || "").toLowerCase()}|${String(r.page || "").toLowerCase()}`;
+    const prev = latestMap.get(k);
+    if (!prev || r.date >= prev.date) {
+      latestMap.set(k, r);
+    }
+  }
+
+  const bySlug = new Map<
+    string,
+    { slug: string; category: string; impressions: number; clicks: number; weightedPos: number; topQuery: string; topImp: number }
+  >();
+
+  for (const r of latestMap.values()) {
+    const parsed = extractCleanSlug(r.page);
+    if (!parsed || (r.impressions || 0) <= 0) continue;
+    const prev = bySlug.get(parsed.slug) ?? {
+      slug: parsed.slug,
+      category: parsed.category,
+      impressions: 0,
+      clicks: 0,
+      weightedPos: 0,
+      topQuery: r.query,
+      topImp: 0,
+    };
+    const imp = Number(r.impressions || 0);
+    prev.impressions += imp;
+    prev.clicks += Number(r.clicks || 0);
+    prev.weightedPos += Number(r.position || 20) * imp;
+    if (imp > prev.topImp) {
+      prev.topImp = imp;
+      prev.topQuery = r.query;
+    }
+    bySlug.set(parsed.slug, prev);
+  }
+
+  const cleanSet = new Set(getCleanItems().map((i) => i.slug.toLowerCase()));
+  const candidates = [...bySlug.values()]
+    .filter((c) => cleanSet.has(c.slug))
+    .map((c) => {
+      const avgPos = c.impressions > 0 ? Number((c.weightedPos / c.impressions).toFixed(2)) : 20;
+      const inStrikeZone = avgPos >= 3.1 && avgPos <= 25.0;
+      const posWeight = avgPos >= 4.0 && avgPos <= 15.0 ? 2.0 : inStrikeZone ? 1.4 : 0.9;
+      const zeroClickBonus = c.clicks === 0 && c.impressions >= 10 ? 1.35 : 1.0;
+      const priorityScore = Number((c.impressions * posWeight * zeroClickBonus).toFixed(2));
+      return {
+        slug: c.slug,
+        category: c.category,
+        target_path: `/clean/${c.category}/${c.slug}`,
+        impressions: c.impressions,
+        clicks: c.clicks,
+        avg_position: avgPos,
+        primary_query: c.topQuery,
+        priority_score: priorityScore,
+      };
+    })
+    .sort((a, b) => b.priority_score - a.priority_score);
+
+  const boosted = candidates.slice(0, 12);
+  const boostedSlugs = boosted.map((b) => b.slug);
+  if (boostedSlugs.length > 0) {
+    setGscPriorityInternalLinkSlugs(boostedSlugs);
+  }
+
+  const summary = {
+    ok: true,
+    executed_at: new Date().toISOString(),
+    boosted_count: boostedSlugs.length,
+    boosted_slugs: boostedSlugs,
+    boosted_pages: boosted,
+    hubs_updated: ["/clean", "/safe-to-delete", "/clean/:category/:slug"],
+  };
+  store.setSetting("a19_internal_link_booster_last_run", summary);
+  return summary;
+}
+
 

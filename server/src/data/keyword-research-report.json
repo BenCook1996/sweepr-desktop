@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generated_at": "2026-11-09T18:20:36.858Z",
+  "generated_at": "2026-11-09T19:17:27.713Z",
   "summary": {
     "total_evaluated": 155,
     "low_competition_count": 53,
@@ -45,17 +45,17 @@
     "tofu_safety_multiplier": 1.08,
     "competitor_replication_bonus": 6,
     "calibrated_days_per_kd_point": 0.75,
-    "calibrated_ctr_lift_multiplier": 1.22,
-    "calibrated_position_gain_bonus": 1.24,
+    "calibrated_ctr_lift_multiplier": 1.01,
+    "calibrated_position_gain_bonus": 1.23,
     "empirical_tier_cvr_pct": {
       "BOFU_Switcher": 1.04,
-      "BOFU_Tool_Intent": 3.73,
+      "BOFU_Tool_Intent": 3.32,
       "BOFU_Urgent_Pain": 3.1,
       "MOFU_Action_Cleanup": 2.03,
       "TOFU_Safety_Diagnostic": 1.1
     },
     "empirical_download_to_paid_cvr_pct": 14,
-    "updated_at": "2026-11-09T18:20:36.778Z",
+    "updated_at": "2026-11-09T19:17:27.634Z",
     "calibration_note": "Increased low_comp_weight to 0.62 (demand_weight=0.38) to accelerate Top-10 ranking velocity on KD <= 30 targets."
   },
   "top_opportunities": [
@@ -86,13 +86,13 @@
         "forecast_monthly_volume": 438,
         "forecast_target_position": 5.5,
         "forecast_monthly_clicks": 16,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.3,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -308,13 +308,13 @@
         "forecast_monthly_volume": 274,
         "forecast_target_position": 4,
         "forecast_monthly_clicks": 20,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.3,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.4,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -382,13 +382,13 @@
         "forecast_monthly_volume": 350,
         "forecast_target_position": 4.5,
         "forecast_monthly_clicks": 19,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.3,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.4,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -493,13 +493,13 @@
         "forecast_monthly_volume": 315,
         "forecast_target_position": 4,
         "forecast_monthly_clicks": 23,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.4,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.5,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -567,13 +567,13 @@
         "forecast_monthly_volume": 214,
         "forecast_target_position": 4,
         "forecast_monthly_clicks": 15,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.3,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #1 + Bing #1)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -604,13 +604,13 @@
         "forecast_monthly_volume": 228,
         "forecast_target_position": 4,
         "forecast_monthly_clicks": 16,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.3,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -715,13 +715,13 @@
         "forecast_monthly_volume": 259,
         "forecast_target_position": 4.5,
         "forecast_monthly_clicks": 14,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.3,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -900,13 +900,13 @@
         "forecast_monthly_volume": 554,
         "forecast_target_position": 4.5,
         "forecast_monthly_clicks": 29,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.5,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.6,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -978,14 +978,14 @@
         "forecast_monthly_volume": 5400,
         "forecast_target_position": 5,
         "forecast_monthly_clicks": 286,
-        "forecast_cvr_pct": 1.56,
-        "forecast_monthly_downloads": 4.5,
-        "forecast_monthly_conversions": 0.63
+        "forecast_cvr_pct": 3.32,
+        "forecast_monthly_downloads": 9.5,
+        "forecast_monthly_conversions": 1.33
       },
       "reasons": [
         "DFS volume=5400/mo (score 100.0)",
         "DFS KD=31 (rankability 75.2)",
-        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 1.56%)",
+        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 3.32%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from avast.com (+6 bonus)"
       ]
@@ -1021,14 +1021,14 @@
         "forecast_monthly_volume": 4400,
         "forecast_target_position": 4.8,
         "forecast_monthly_clicks": 233,
-        "forecast_cvr_pct": 1.56,
-        "forecast_monthly_downloads": 3.6,
-        "forecast_monthly_conversions": 0.5
+        "forecast_cvr_pct": 3.32,
+        "forecast_monthly_downloads": 7.7,
+        "forecast_monthly_conversions": 1.08
       },
       "reasons": [
         "DFS volume=4400/mo (score 100.0)",
         "DFS KD=29 (rankability 76.8)",
-        "Direct Cleaner Tool Intent (BOFU) (1.32x, est. CVR 1.56%)",
+        "Direct Cleaner Tool Intent (BOFU) (1.32x, est. CVR 3.32%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from ccleaner.com (+6 bonus)"
       ]
@@ -1064,14 +1064,14 @@
         "forecast_monthly_volume": 3600,
         "forecast_target_position": 4.2,
         "forecast_monthly_clicks": 191,
-        "forecast_cvr_pct": 1.56,
-        "forecast_monthly_downloads": 3,
-        "forecast_monthly_conversions": 0.42
+        "forecast_cvr_pct": 3.32,
+        "forecast_monthly_downloads": 6.3,
+        "forecast_monthly_conversions": 0.88
       },
       "reasons": [
         "DFS volume=3600/mo (score 100.0)",
         "DFS KD=24 (rankability 80.8)",
-        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 1.56%)",
+        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 3.32%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from ccleaner.com (+6 bonus)"
       ]
@@ -1107,14 +1107,14 @@
         "forecast_monthly_volume": 2400,
         "forecast_target_position": 4,
         "forecast_monthly_clicks": 173,
-        "forecast_cvr_pct": 1.56,
-        "forecast_monthly_downloads": 2.7,
-        "forecast_monthly_conversions": 0.38
+        "forecast_cvr_pct": 3.32,
+        "forecast_monthly_downloads": 5.7,
+        "forecast_monthly_conversions": 0.8
       },
       "reasons": [
         "DFS volume=2400/mo (score 100.0)",
         "DFS KD=22 (rankability 82.4)",
-        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 1.56%)",
+        "Direct Cleaner Tool Intent (BOFU) (1.38x, est. CVR 3.32%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from wisecleaner.com (+6 bonus)"
       ]
@@ -1150,14 +1150,14 @@
         "forecast_monthly_volume": 1900,
         "forecast_target_position": 3.7,
         "forecast_monthly_clicks": 137,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 2.4,
-        "forecast_monthly_conversions": 0.34
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 2.8,
+        "forecast_monthly_conversions": 0.39
       },
       "reasons": [
         "DFS volume=1900/mo (score 100.0)",
         "DFS KD=19 (rankability 84.8)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from wisecleaner.com (+6 bonus)"
       ]
@@ -1193,9 +1193,9 @@
         "forecast_monthly_volume": 1700,
         "forecast_target_position": 3.6,
         "forecast_monthly_clicks": 122,
-        "forecast_cvr_pct": 1.56,
-        "forecast_monthly_downloads": 1.9,
-        "forecast_monthly_conversions": 0.27
+        "forecast_cvr_pct": 3.32,
+        "forecast_monthly_downloads": 4.1,
+        "forecast_monthly_conversions": 0.57
       },
       "reasons": [
         "DFS volume=1700/mo (score 100.0)",
@@ -1234,14 +1234,14 @@
         "forecast_monthly_volume": 1600,
         "forecast_target_position": 3.1,
         "forecast_monthly_clicks": 115,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 2,
-        "forecast_monthly_conversions": 0.28
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 2.3,
+        "forecast_monthly_conversions": 0.32
       },
       "reasons": [
         "DFS volume=1600/mo (score 100.0)",
         "DFS KD=14 (rankability 88.8)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from wisecleaner.com (+6 bonus)"
       ]
@@ -1277,14 +1277,14 @@
         "forecast_monthly_volume": 1300,
         "forecast_target_position": 3.4,
         "forecast_monthly_clicks": 94,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 1.6,
-        "forecast_monthly_conversions": 0.22
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 1.9,
+        "forecast_monthly_conversions": 0.27
       },
       "reasons": [
         "DFS volume=1300/mo (score 100.0)",
         "DFS KD=16 (rankability 87.2)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "Competitor organic replication target from bleachbit.org (+6 bonus)"
       ]
@@ -1314,15 +1314,15 @@
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
         "forecast_monthly_volume": 80,
-        "forecast_target_position": 4.5,
-        "forecast_monthly_clicks": 5,
-        "forecast_cvr_pct": 1.75,
+        "forecast_target_position": 5.2,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=83.7 (44 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 6.2 (+6 strike-zone bonus)"
       ]
@@ -1352,15 +1352,15 @@
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
         "forecast_monthly_volume": 132,
-        "forecast_target_position": 11.9,
+        "forecast_target_position": 12,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=78.2 (34 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 13.6 (+6 strike-zone bonus)"
       ]
@@ -1390,7 +1390,7 @@
         "forecast_est_days_to_top10": 7,
         "forecast_est_days_to_top3": 20,
         "forecast_monthly_volume": 128,
-        "forecast_target_position": 7.9,
+        "forecast_target_position": 8.6,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 1.1,
         "forecast_monthly_downloads": 0.2,
@@ -1427,15 +1427,15 @@
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
         "forecast_monthly_volume": 87,
-        "forecast_target_position": 4.9,
-        "forecast_monthly_clicks": 6,
-        "forecast_cvr_pct": 1.56,
+        "forecast_target_position": 5.6,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 3.32,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=87.8 (53 imps)",
-        "Direct Cleaner Tool Intent (BOFU) (1.32x, est. CVR 1.56%)",
+        "Direct Cleaner Tool Intent (BOFU) (1.32x, est. CVR 3.32%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 6.6 (+6 strike-zone bonus)"
       ]
@@ -1465,7 +1465,7 @@
         "forecast_est_days_to_top10": 7,
         "forecast_est_days_to_top3": 20,
         "forecast_monthly_volume": 149,
-        "forecast_target_position": 7.1,
+        "forecast_target_position": 7.8,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 3.1,
         "forecast_monthly_downloads": 0.2,
@@ -1503,15 +1503,15 @@
         "forecast_est_days_to_top10": 7,
         "forecast_est_days_to_top3": 20,
         "forecast_monthly_volume": 54,
-        "forecast_target_position": 9.3,
+        "forecast_target_position": 10,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=56.4 (12 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "GSC Striking Distance pos 11.0 (+6 strike-zone bonus)"
       ]
     },
@@ -1540,15 +1540,15 @@
         "forecast_est_days_to_top10": 19,
         "forecast_est_days_to_top3": 42,
         "forecast_monthly_volume": 57,
-        "forecast_target_position": 6.3,
+        "forecast_target_position": 7,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=58.1 (13 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 8.0 (+6 strike-zone bonus)"
       ]
@@ -1578,15 +1578,15 @@
         "forecast_est_days_to_top10": 19,
         "forecast_est_days_to_top3": 42,
         "forecast_monthly_volume": 50,
-        "forecast_target_position": 6.5,
+        "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=52.8 (10 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 8.2 (+6 strike-zone bonus)"
       ]
@@ -1616,15 +1616,15 @@
         "forecast_est_days_to_top10": 11,
         "forecast_est_days_to_top3": 27,
         "forecast_monthly_volume": 50,
-        "forecast_target_position": 6.3,
+        "forecast_target_position": 7,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=45.7 (7 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 8.0 (+6 strike-zone bonus)"
       ]
@@ -1692,15 +1692,15 @@
         "forecast_est_days_to_top10": 28,
         "forecast_est_days_to_top3": 59,
         "forecast_monthly_volume": 80,
-        "forecast_target_position": 5.4,
+        "forecast_target_position": 6.1,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=85.2 (47 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 7.1 (+6 strike-zone bonus)"
       ]
@@ -1732,13 +1732,13 @@
         "forecast_monthly_volume": 206,
         "forecast_target_position": 5.5,
         "forecast_monthly_clicks": 7,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -1769,13 +1769,13 @@
         "forecast_monthly_volume": 351,
         "forecast_target_position": 5.9,
         "forecast_monthly_clicks": 13,
-        "forecast_cvr_pct": 1.75,
-        "forecast_monthly_downloads": 0.2,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.3,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -1806,13 +1806,13 @@
         "forecast_monthly_volume": 276,
         "forecast_target_position": 5.9,
         "forecast_monthly_clicks": 10,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -1841,7 +1841,7 @@
         "forecast_est_days_to_top10": 32,
         "forecast_est_days_to_top3": 66,
         "forecast_monthly_volume": 50,
-        "forecast_target_position": 9.5,
+        "forecast_target_position": 10.2,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 1.04,
         "forecast_monthly_downloads": 0.2,
@@ -1881,13 +1881,13 @@
         "forecast_monthly_volume": 248,
         "forecast_target_position": 5.9,
         "forecast_monthly_clicks": 9,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #1 + Bing #1)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -1916,15 +1916,15 @@
         "forecast_est_days_to_top10": 23,
         "forecast_est_days_to_top3": 50,
         "forecast_monthly_volume": 50,
-        "forecast_target_position": 6.3,
+        "forecast_target_position": 7,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=48.3 (8 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 8.0 (+6 strike-zone bonus)"
       ]
@@ -1956,13 +1956,13 @@
         "forecast_monthly_volume": 170,
         "forecast_target_position": 5.9,
         "forecast_monthly_clicks": 6,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #1 + Bing #1)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -1991,15 +1991,15 @@
         "forecast_est_days_to_top10": 19,
         "forecast_est_days_to_top3": 42,
         "forecast_monthly_volume": 50,
-        "forecast_target_position": 8.7,
+        "forecast_target_position": 9.4,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=54.7 (11 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "GSC Striking Distance pos 10.4 (+6 strike-zone bonus)"
       ]
     },
@@ -2028,15 +2028,15 @@
         "forecast_est_days_to_top10": 28,
         "forecast_est_days_to_top3": 59,
         "forecast_monthly_volume": 76,
-        "forecast_target_position": 5.2,
+        "forecast_target_position": 5.9,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=64.8 (18 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 6.9 (+6 strike-zone bonus)"
       ]
@@ -2068,13 +2068,13 @@
         "forecast_monthly_volume": 578,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 12,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -2105,13 +2105,13 @@
         "forecast_monthly_volume": 474,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 10,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -2142,13 +2142,13 @@
         "forecast_monthly_volume": 521,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 11,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -2179,13 +2179,13 @@
         "forecast_monthly_volume": 508,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 11,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=99 (Google #3 + Bing #4)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -2250,15 +2250,15 @@
         "forecast_est_days_to_top10": 20,
         "forecast_est_days_to_top3": 44,
         "forecast_monthly_volume": 69,
-        "forecast_target_position": 6.1,
+        "forecast_target_position": 6.8,
         "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "GSC velocity=62.3 (16 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "GSC Striking Distance pos 7.8 (+6 strike-zone bonus)"
       ]
     },
@@ -2289,13 +2289,13 @@
         "forecast_monthly_volume": 366,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 8,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     },
@@ -2326,13 +2326,13 @@
         "forecast_monthly_volume": 381,
         "forecast_target_position": 7.2,
         "forecast_monthly_clicks": 8,
-        "forecast_cvr_pct": 1.75,
+        "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
         "Autocomplete demand=100 (Google #2 + Bing #3)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 1.75%)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)"
       ]
     }
