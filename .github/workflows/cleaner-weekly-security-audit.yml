@@ -1,0 +1,27 @@
+name: "SWEEPR Cleaner — Weekly Full-System Security & Code Signing Audit"
+
+on:
+  schedule:
+    - cron: "0 10 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cleaner-weekly-security-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Server Dependencies & Run Full Security + SEO Test Suite
+        working-directory: ./server
+        run: |
+          npm ci
+          npm test

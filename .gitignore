@@ -22,3 +22,9 @@ mobile/android/local.properties
 *.key
 *Secrets*.xcconfig
 
+
+# Google Cloud Service Account keys
+.gcp-service-account.json
+*.service-account.json
+sweepr-*.json
+

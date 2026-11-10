@@ -1,4 +1,4 @@
-name: "CMO SEO, Keyword Research, PageSpeed & Lifecycle Automations (A1-A19)"
+name: "Cloud CMO, Google Search Console, PageSpeed & Product Automations (A1-A21)"
 
 on:
   schedule:
@@ -6,9 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       batch_count:
-        description: "Number of pSEO pages to generate via keyword research engine"
+        description: "Number of canonical pSEO pages to generate via keyword research engine"
         required: false
-        default: "20"
+        default: "4"
+      run_weekly_product_advisor:
+        description: "Force-generate the A20 Weekly Content-to-Product & UI Mockup Advisory"
+        required: false
+        default: "true"
 
 jobs:
   cmo-automations:
@@ -17,6 +21,12 @@ jobs:
       contents: write
     env:
       CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
+      GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+      GSC_SITE_URL: ${{ secrets.GSC_SITE_URL || 'sc-domain:sweeprcleaner.com' }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      OPEN_PAGERANK_API_KEY: ${{ secrets.OPEN_PAGERANK_API_KEY }}
+      DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+      DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,31 +39,36 @@ jobs:
         working-directory: ./server
         run: npm ci
 
-      - name: Run Automated Keyword Research & pSEO Generation
+      - name: Run Unified Cloud Automation Runner (A21 Google Cloud GSC + Drip + 100/100 Audit + A20 Advisor)
         working-directory: ./server
         run: |
-          COUNT="${{ github.event.inputs.batch_count || '20' }}"
-          node scripts/daily-50-seo-pages.mjs --count="$COUNT" --no-push
+          COUNT="${{ github.event.inputs.batch_count || '4' }}"
+          FORCE_WEEKLY=""
+          if [ "$(date -u +%u)" = "1" ] || [ "${{ github.event.inputs.run_weekly_product_advisor || 'false' }}" = "true" ]; then
+            FORCE_WEEKLY="--force-weekly"
+          fi
+          npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" --update-log $FORCE_WEEKLY
 
-      - name: Run 100/100 SEO, PageSpeed & GEO Audit Gate
-        working-directory: ./server
-        run: npx tsx scripts/daily-seo-pagespeed-audit.ts
-
-      - name: Commit New pSEO Pages, Strategy Ledger & Updated GEO Index (if changed)
+      - name: Commit Cloud SEO Artifacts, GSC Seed, Audit Log & Product Mockups (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add server/src/data/clean-items.json server/src/data/keyword-research-report.json server/src/data/seo-strategy-ledger.json server/src/data/daily-seo-pages-state.json server/src/data/indexing-queue.json server/public/sitemap.xml server/public/llms.txt
+          git add server/src/data/gsc-seed.json server/src/data/clean-items.json server/src/data/keyword-research-report.json server/src/data/seo-strategy-ledger.json server/src/data/daily-seo-pages-state.json server/src/data/indexing-queue.json server/src/data/weekly-product-advisor-report.json server/public/crm/weekly-product-mockups.html WEEKLY_PRODUCT_CONTENT_ADVISORY.md TECHNICAL_SEO_AUDIT_LOG.md server/public/sitemap.xml server/public/llms.txt
           if ! git diff --staged --quiet; then
-            git commit -m "chore(seo): automated keyword research, competitor teardown & strategy ledger sync [skip ci]"
+            git commit -m "chore(cloud-seo): automated Google Cloud GSC sync, pillar content & audit log [skip ci]"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
 
-      - name: Sync GSC Seed & Trigger Production CRM Automations (A1-A19)
+      - name: Sync GSC Data & Trigger Production Railway Automations (A1-A21)
         if: env.CRM_ADMIN_PASSWORD != ''
         run: |
           B64=$(printf "admin:%s" "$CRM_ADMIN_PASSWORD" | base64 -w 0)
+          curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/cloud-sync" \
+            -H "Authorization: Basic $B64" \
+            -H "Origin: https://sweeprcleaner.com" \
+            -H "Content-Type: application/json" \
+            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true}' || true
           curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/ingest" \
             -H "Authorization: Basic $B64" \
             -H "Origin: https://sweeprcleaner.com" \
