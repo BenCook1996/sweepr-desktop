@@ -660,6 +660,72 @@ export async function runCloudGoogleSeoSync(
     } catch {}
   }
 
+  const ga4PropertyId = (process.env.GA4_PROPERTY_ID || "559447184").trim();
+  let ga4Sync: {
+    property_id: string;
+    synced_live: boolean;
+    active_users_28d?: number;
+    sessions_28d?: number;
+    engagement_rate_pct?: number;
+    total_events_28d?: number;
+    error?: string;
+  } = {
+    property_id: ga4PropertyId,
+    synced_live: false,
+  };
+
+  if (gsc.sa && ga4PropertyId) {
+    try {
+      const ga4Token = await googleAccessToken(gsc.sa, "https://www.googleapis.com/auth/analytics.readonly");
+      const ga4Res = await fetch(
+        `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(ga4PropertyId)}:runReport`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${ga4Token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            dateRanges: [{ startDate: "28daysAgo", endDate: "today" }],
+            metrics: [
+              { name: "activeUsers" },
+              { name: "sessions" },
+              { name: "engagementRate" },
+              { name: "eventCount" },
+            ],
+          }),
+          signal: AbortSignal.timeout(15000),
+        }
+      );
+      if (ga4Res.ok) {
+        const ga4Json = (await ga4Res.json().catch(() => ({}))) as any;
+        const mVals = ga4Json?.rows?.[0]?.metricValues ?? [];
+        ga4Sync = {
+          property_id: ga4PropertyId,
+          synced_live: true,
+          active_users_28d: Number(mVals[0]?.value ?? 0),
+          sessions_28d: Number(mVals[1]?.value ?? 0),
+          engagement_rate_pct: Number((Number(mVals[2]?.value ?? 0) * 100).toFixed(2)),
+          total_events_28d: Number(mVals[3]?.value ?? 0),
+        };
+        store.setSetting("ga4_last_cloud_report", ga4Sync);
+      } else {
+        const errBody = (await ga4Res.json().catch(() => ({}))) as any;
+        ga4Sync = {
+          property_id: ga4PropertyId,
+          synced_live: false,
+          error: `HTTP ${ga4Res.status}: ${errBody?.error?.message ?? ga4Res.statusText}`,
+        };
+      }
+    } catch (err: any) {
+      ga4Sync = {
+        property_id: ga4PropertyId,
+        synced_live: false,
+        error: String(err?.message || err),
+      };
+    }
+  }
+
   const summary = {
     ok: true,
     auth_mode: gsc.authMode,
@@ -671,6 +737,7 @@ export async function runCloudGoogleSeoSync(
     urls_indexed_pass: urlInspection.indexed_pass_count,
     google_api_key_configured: Boolean(googleApiKey),
     cwv_pages_checked: cwvChecked,
+    ga4: ga4Sync,
     synced_at: new Date().toISOString(),
   };
 

@@ -16,6 +16,7 @@ import {
   fetchGscSearchAnalytics,
   submitGscSitemap,
   inspectGscUrl,
+  fetchGa4FunnelReport,
   formatIsoDateDaysAgo
 } from './lib/google-cloud-api.mjs';
 
@@ -26,6 +27,7 @@ const DATA_DIR = path.join(SERVER_DIR, 'src', 'data');
 const GSC_SEED_PATH = path.join(DATA_DIR, 'gsc-seed.json');
 const INDEXING_QUEUE_PATH = path.join(DATA_DIR, 'indexing-queue.json');
 const GSC_SITE_URL = process.env.GSC_SITE_URL || 'sc-domain:sweeprcleaner.com';
+const GA4_PROPERTY_ID = process.env.GA4_PROPERTY_ID || '559447184';
 
 async function runCleanerCloudGscSync() {
   if (!hasServiceAccountCredentials()) {
@@ -87,6 +89,21 @@ async function runCleanerCloudGscSync() {
         console.log(`✅ [SWEEPR Cleaner URL Inspection] Inspected ${batch.length} priority canonical URLs.`);
       }
     } catch {}
+  }
+
+  try {
+    const ga4Report = await fetchGa4FunnelReport({
+      propertyId: GA4_PROPERTY_ID,
+      startDate: '28daysAgo',
+      endDate: 'today'
+    });
+    seed.ga4Summary = ga4Report.summary;
+    seed.ga4Events = ga4Report.events;
+    seed.ga4UpdatedAt = new Date().toISOString();
+    fs.writeFileSync(GSC_SEED_PATH, JSON.stringify(seed, null, 2) + '\n', 'utf8');
+    console.log(`✅ [SWEEPR Cleaner Cloud GA4 Sync] Synced GA4 Property ${GA4_PROPERTY_ID}: ${JSON.stringify(ga4Report.summary)}`);
+  } catch (err) {
+    console.warn(`[SWEEPR Cleaner Cloud GA4 Sync] Notice (Property ${GA4_PROPERTY_ID}): ${err.message}`);
   }
 }
 

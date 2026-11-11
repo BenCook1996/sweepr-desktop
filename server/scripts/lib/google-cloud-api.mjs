@@ -41,7 +41,12 @@ function base64UrlEncode(input) {
 }
 
 export function loadServiceAccountCredentials() {
-  const rawEnv = (process.env.GCP_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '').trim();
+  const rawEnv = (
+    process.env.GCP_SERVICE_ACCOUNT_JSON ||
+    process.env.GSC_SERVICE_ACCOUNT_JSON ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
+    ''
+  ).trim();
   if (rawEnv) {
     try {
       if (rawEnv.startsWith('{')) {
