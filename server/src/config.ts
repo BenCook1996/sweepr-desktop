@@ -1,8 +1,45 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 
 if (process.env.NODE_ENV !== "production" && existsSync(".env")) process.loadEnvFile(".env");
+
+const __configDir = dirname(fileURLToPath(import.meta.url));
+
+function loadReleaseArtifactMetadata(): { version: string; sha256: string; signature: string } {
+  const publicDirs = [
+    join(__configDir, "../public"),
+    join(process.cwd(), "public"),
+    join(process.cwd(), "server/public"),
+  ];
+  let version = "";
+  let sha256 = "";
+  let signature = "";
+
+  for (const pubDir of publicDirs) {
+    const manifestPath = join(pubDir, "release-manifest.json");
+    if (existsSync(manifestPath)) {
+      try {
+        const parsed = JSON.parse(readFileSync(manifestPath, "utf8"));
+        if (!version && typeof parsed?.version === "string") version = parsed.version.trim();
+        if (!sha256 && typeof parsed?.exe?.sha256 === "string") sha256 = parsed.exe.sha256.trim();
+        if (!signature && typeof parsed?.exe?.signature === "string") signature = parsed.exe.signature.trim();
+      } catch {}
+    }
+    const sigPath = join(pubDir, "SWEEPRCleaner.exe.sig");
+    if (!signature && existsSync(sigPath)) {
+      try {
+        signature = readFileSync(sigPath, "utf8").trim();
+      } catch {}
+    }
+    if (signature && sha256) break;
+  }
+
+  return { version, sha256, signature };
+}
+
+const releaseArtifactMeta = loadReleaseArtifactMetadata();
 
 const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v)) ? Number(v) : d);
 
@@ -130,13 +167,14 @@ export const config = {
   priceMonthly: resolvePriceId(process.env.STRIPE_PRICE_MONTHLY, "price_1URdu10Y0NLVZ2yqqlOZlh4Y"),
   priceSixMonth: resolvePriceId(process.env.STRIPE_PRICE_SIX_MONTH, "price_1URdu20Y0NLVZ2yqSCbMxbzb"),
   priceAnnual: resolvePriceId(process.env.STRIPE_PRICE_ANNUAL, "price_1URdu20Y0NLVZ2yq4KMNHQdJ"),
-  latestAppVersion: process.env.LATEST_APP_VERSION ?? "0.1.0",
+  latestAppVersion: process.env.LATEST_APP_VERSION ?? (releaseArtifactMeta.version || "0.1.0"),
   minAppVersion: process.env.MIN_APP_VERSION ?? "0.1.0",
   latestAndroidVersion: process.env.LATEST_ANDROID_VERSION ?? "1.0.0",
   minAndroidVersion: process.env.MIN_ANDROID_VERSION ?? "1.0.0",
   forceAppUpdate: process.env.FORCE_APP_UPDATE === "true",
   latestAppNotes: process.env.LATEST_APP_NOTES ?? "Bug fixes and new cleaning tools.",
-  latestAppSignature: process.env.LATEST_APP_SIGNATURE ?? "",
+  latestAppSignature: (process.env.LATEST_APP_SIGNATURE ?? "").trim() || releaseArtifactMeta.signature,
+  latestAppSha256: (process.env.LATEST_APP_SHA256 ?? "").trim() || releaseArtifactMeta.sha256,
   hibpApiKey: process.env.HIBP_API_KEY ?? "",
   trialDays: num(process.env.TRIAL_DAYS, 30),
   tokenTtlHours: num(process.env.TOKEN_TTL_HOURS, 72),

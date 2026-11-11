@@ -103,11 +103,11 @@ jobs:
       - name: Ensure gradlew is executable
         run: chmod +x ./gradlew
 
-      - name: Assemble Debug & Run Android Lint
-        run: ./gradlew :app:assembleDebug :app:lintDebug
+      - name: Run Unit Tests, Assemble Debug & Run Android Lint
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
 
   ios:
-    name: "iOS App (XcodeGen Project Generation)"
+    name: "iOS App (XcodeGen + Simulator Build)"
     runs-on: macos-latest
     defaults:
       run:
@@ -124,3 +124,6 @@ jobs:
 
       - name: Generate Xcode project from project.yml
         run: xcodegen generate
+
+      - name: Compile iOS Simulator Target (No Code Signing)
+        run: xcodebuild -project Sweepr.xcodeproj -scheme Sweepr -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO build

@@ -90,23 +90,25 @@ object PlayBillingManager : PurchasesUpdatedListener {
             val annual: Double,
             val annualEq: Double,
             val addon: Double,
+            val addonSixMo: Double,
+            val addonMo: Double,
         )
 
         val amounts = when (code) {
-            "USD" -> TierAmounts(1.99, 11.99, 47.99, 7.99, 64.99, 5.41, 9.99)
-            "EUR" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99)
-            "CAD" -> TierAmounts(2.99, 15.99, 64.99, 10.83, 89.99, 7.49, 14.99)
-            "AUD" -> TierAmounts(2.99, 17.99, 74.99, 12.49, 99.99, 8.33, 15.99)
-            "NZD" -> TierAmounts(2.99, 19.99, 79.99, 13.33, 109.99, 9.16, 17.99)
-            "CHF" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99)
-            "SEK", "NOK" -> TierAmounts(19.99, 129.99, 519.99, 86.66, 699.99, 58.33, 119.99)
-            "DKK" -> TierAmounts(14.99, 84.99, 329.99, 54.99, 449.99, 37.49, 79.99)
-            "PLN" -> TierAmounts(7.99, 47.99, 189.99, 31.66, 259.99, 21.66, 44.99)
-            "JPY" -> TierAmounts(290.0, 1880.0, 7480.0, 1246.0, 9980.0, 831.0, 1580.0)
-            "INR" -> TierAmounts(169.99, 999.99, 3999.99, 666.66, 5499.99, 458.33, 899.99)
-            "SGD" -> TierAmounts(2.99, 15.99, 62.99, 10.49, 84.99, 7.08, 13.99)
-            "BRL" -> TierAmounts(9.99, 64.99, 259.99, 43.33, 349.99, 29.16, 59.99)
-            else -> TierAmounts(1.99, 9.99, 38.99, 6.50, 49.99, 4.16, 9.99)
+            "USD" -> TierAmounts(1.99, 11.99, 47.99, 7.99, 64.99, 5.41, 9.99, 6.99, 1.99)
+            "EUR" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99, 6.99, 1.99)
+            "CAD" -> TierAmounts(2.99, 15.99, 64.99, 10.83, 89.99, 7.49, 14.99, 9.99, 2.99)
+            "AUD" -> TierAmounts(2.99, 17.99, 74.99, 12.49, 99.99, 8.33, 15.99, 10.99, 2.99)
+            "NZD" -> TierAmounts(2.99, 19.99, 79.99, 13.33, 109.99, 9.16, 17.99, 11.99, 3.49)
+            "CHF" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99, 6.99, 1.99)
+            "SEK", "NOK" -> TierAmounts(19.99, 129.99, 519.99, 86.66, 699.99, 58.33, 119.99, 79.99, 19.99)
+            "DKK" -> TierAmounts(14.99, 84.99, 329.99, 54.99, 449.99, 37.49, 79.99, 49.99, 14.99)
+            "PLN" -> TierAmounts(7.99, 47.99, 189.99, 31.66, 259.99, 21.66, 44.99, 29.99, 7.99)
+            "JPY" -> TierAmounts(290.0, 1880.0, 7480.0, 1246.0, 9980.0, 831.0, 1580.0, 980.0, 290.0)
+            "INR" -> TierAmounts(169.99, 999.99, 3999.99, 666.66, 5499.99, 458.33, 899.99, 599.99, 169.99)
+            "SGD" -> TierAmounts(2.99, 15.99, 62.99, 10.49, 84.99, 7.08, 13.99, 8.99, 2.49)
+            "BRL" -> TierAmounts(9.99, 64.99, 259.99, 43.33, 349.99, 29.16, 59.99, 39.99, 9.99)
+            else -> TierAmounts(1.99, 9.99, 38.99, 6.50, 49.99, 4.16, 9.99, 6.99, 1.99)
         }
 
         fun fmt(amount: Double): String = runCatching {
@@ -119,9 +121,13 @@ object PlayBillingManager : PurchasesUpdatedListener {
         val monthlyRenew = fmt(amounts.monthly)
         val sixMonth = fmt(amounts.sixMo)
         val sixMonthPerMo = fmt(amounts.sixEq)
+        val sixMonthSavingsPercent = kotlin.math.round((1.0 - (amounts.sixMo / (amounts.monthly * 6.0))) * 100.0).toInt()
         val annual = fmt(amounts.annual)
         val annualPerMo = fmt(amounts.annualEq)
+        val annualSavingsPercent = kotlin.math.round((1.0 - (amounts.annual / (amounts.monthly * 12.0))) * 100.0).toInt()
         val addonFormatted = fmt(amounts.addon)
+        val addonSixMonthFormatted = fmt(amounts.addonSixMo)
+        val addonMonthlyFormatted = fmt(amounts.addonMo)
 
         return mapOf(
             "sweepr_monthly_999" to PlayProductPrice(
@@ -133,28 +139,119 @@ object PlayBillingManager : PurchasesUpdatedListener {
             "sweepr_six_month_3899" to PlayProductPrice(
                 productId = "sweepr_six_month_3899",
                 formattedPrice = sixMonth,
-                subtitle = "Save 35% ($sixMonthPerMo/mo)",
+                subtitle = "Save $sixMonthSavingsPercent% ($sixMonthPerMo/mo)",
                 currencyCode = code,
             ),
             "sweepr_annual_4999" to PlayProductPrice(
                 productId = "sweepr_annual_4999",
                 formattedPrice = annual,
-                subtitle = "Save 58% ($annualPerMo/mo)",
+                subtitle = "Save $annualSavingsPercent% ($annualPerMo/mo)",
+                currencyCode = code,
+            ),
+            "sweepr_battery_care_monthly" to PlayProductPrice(
+                productId = "sweepr_battery_care_monthly",
+                formattedPrice = addonMonthlyFormatted,
+                subtitle = "+$addonMonthlyFormatted/mo",
+                currencyCode = code,
+            ),
+            "sweepr_battery_care_six_month" to PlayProductPrice(
+                productId = "sweepr_battery_care_six_month",
+                formattedPrice = addonSixMonthFormatted,
+                subtitle = "+$addonSixMonthFormatted/6mo",
                 currencyCode = code,
             ),
             "sweepr_battery_care_999" to PlayProductPrice(
                 productId = "sweepr_battery_care_999",
                 formattedPrice = addonFormatted,
-                subtitle = "$addonFormatted/yr",
+                subtitle = "+$addonFormatted/yr",
+                currencyCode = code,
+            ),
+            "sweepr_cloud_vault_monthly" to PlayProductPrice(
+                productId = "sweepr_cloud_vault_monthly",
+                formattedPrice = addonMonthlyFormatted,
+                subtitle = "+$addonMonthlyFormatted/mo",
+                currencyCode = code,
+            ),
+            "sweepr_cloud_vault_six_month" to PlayProductPrice(
+                productId = "sweepr_cloud_vault_six_month",
+                formattedPrice = addonSixMonthFormatted,
+                subtitle = "+$addonSixMonthFormatted/6mo",
                 currencyCode = code,
             ),
             "sweepr_cloud_vault_999" to PlayProductPrice(
                 productId = "sweepr_cloud_vault_999",
                 formattedPrice = addonFormatted,
-                subtitle = "$addonFormatted/yr",
+                subtitle = "+$addonFormatted/yr",
                 currencyCode = code,
             ),
         )
+    }
+
+    fun addonBadgeForPlan(
+        planProductId: String,
+        pricesMap: Map<String, PlayProductPrice> = _prices.value,
+    ): String = when (planProductId) {
+        SKU_MONTHLY -> pricesMap["sweepr_battery_care_monthly"]?.subtitle
+            ?: "+${pricesMap["sweepr_battery_care_monthly"]?.formattedPrice ?: "£1.99"}/mo"
+        SKU_SIX_MONTH -> pricesMap["sweepr_battery_care_six_month"]?.subtitle
+            ?: "+${pricesMap["sweepr_battery_care_six_month"]?.formattedPrice ?: "£6.99"}/6mo"
+        else -> pricesMap["sweepr_battery_care_999"]?.subtitle
+            ?: "+${pricesMap["sweepr_battery_care_999"]?.formattedPrice ?: "£9.99"}/yr"
+    }
+
+    fun ctaTotalForPlan(
+        planProductId: String,
+        addonCount: Int = 0,
+        locale: Locale = Locale.getDefault(),
+    ): String {
+        val currency = runCatching { Currency.getInstance(locale) }.getOrNull()
+        val code = currency?.currencyCode ?: "GBP"
+        fun fmt(amount: Double): String = runCatching {
+            val nf = NumberFormat.getCurrencyInstance(locale)
+            if (currency != null) nf.currency = currency
+            nf.format(amount)
+        }.getOrElse { "£%.2f".format(Locale.UK, amount) }
+
+        val (baseAmount, addonAmount, suffix) = when (planProductId) {
+            SKU_MONTHLY -> {
+                val base = when (code) {
+                    "USD" -> 11.99; "EUR", "CHF" -> 10.99; "CAD", "SGD" -> 15.99; "AUD" -> 17.99
+                    "NZD" -> 19.99; "SEK", "NOK" -> 129.99; "DKK" -> 84.99; "PLN" -> 47.99
+                    "JPY" -> 1880.0; "INR" -> 999.99; "BRL" -> 64.99; else -> 9.99
+                }
+                val addon = when (code) {
+                    "CAD", "AUD" -> 2.99; "NZD" -> 3.49; "SGD" -> 2.49; "SEK", "NOK" -> 19.99
+                    "DKK" -> 14.99; "PLN" -> 7.99; "JPY" -> 290.0; "INR" -> 169.99; "BRL" -> 9.99; else -> 1.99
+                }
+                Triple(base, addon, "/mo")
+            }
+            SKU_SIX_MONTH -> {
+                val base = when (code) {
+                    "USD" -> 47.99; "EUR", "CHF" -> 44.99; "CAD" -> 64.99; "SGD" -> 62.99; "AUD" -> 74.99
+                    "NZD" -> 79.99; "SEK", "NOK" -> 519.99; "DKK" -> 329.99; "PLN" -> 189.99
+                    "JPY" -> 7480.0; "INR" -> 3999.99; "BRL" -> 259.99; else -> 38.99
+                }
+                val addon = when (code) {
+                    "CAD" -> 9.99; "AUD" -> 10.99; "NZD" -> 11.99; "SGD" -> 8.99; "SEK", "NOK" -> 79.99
+                    "DKK" -> 49.99; "PLN" -> 29.99; "JPY" -> 980.0; "INR" -> 599.99; "BRL" -> 39.99; else -> 6.99
+                }
+                Triple(base, addon, "/6mo")
+            }
+            else -> {
+                val base = when (code) {
+                    "USD" -> 64.99; "EUR", "CHF" -> 59.99; "CAD" -> 89.99; "AUD" -> 99.99
+                    "NZD" -> 109.99; "SGD" -> 84.99; "SEK", "NOK" -> 699.99; "DKK" -> 449.99
+                    "PLN" -> 259.99; "JPY" -> 9980.0; "INR" -> 5499.99; "BRL" -> 349.99; else -> 49.99
+                }
+                val addon = when (code) {
+                    "CAD" -> 14.99; "AUD" -> 15.99; "NZD" -> 17.99; "SGD" -> 13.99; "SEK", "NOK" -> 119.99
+                    "DKK" -> 79.99; "PLN" -> 44.99; "JPY" -> 1580.0; "INR" -> 899.99; "BRL" -> 59.99; else -> 9.99
+                }
+                Triple(base, addon, "/yr")
+            }
+        }
+        val total = baseAmount + addonCount.coerceAtLeast(0) * addonAmount
+        return "${fmt(total)}$suffix"
     }
 
     fun init(context: Context) {

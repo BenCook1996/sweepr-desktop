@@ -870,7 +870,7 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
           <a href="/bloat-watch" style="color:#fff;font-weight:700;text-decoration:none;">PC Bloat Watch</a>
           <a href="/state-of-windows-storage" style="color:#d1fae5;text-decoration:none;">2026 Storage Study</a>
           <a href="/vs/ccleaner" style="color:#d1fae5;text-decoration:none;">vs CCleaner</a>
-          <a href="/order?plan=annual" style="background:#10b981;color:#06281e;padding:6px 14px;border-radius:8px;font-weight:700;text-decoration:none;">Get SWEEPR Pro</a>
+          <a href="/order?plan=annual" rel="nofollow" style="background:#10b981;color:#06281e;padding:6px 14px;border-radius:8px;font-weight:700;text-decoration:none;">Get SWEEPR Pro</a>
         </nav>
       </div>
     </header>
@@ -933,7 +933,7 @@ export function renderBloatWatchPostHtml(post: BloatWatchPost): string {
     <header style="background:#111613;color:#fff;padding:18px 24px;">
       <div style="max-width:880px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
         <a href="/bloat-watch" style="color:#d1fae5;text-decoration:none;font-weight:700;font-size:15px;">&larr; All PC Bloat Watch Benchmarks</a>
-        <a href="/order?plan=annual" style="background:#10b981;color:#06281e;padding:6px 14px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;">Clean in 1 Click with SWEEPR Pro</a>
+        <a href="/order?plan=annual" rel="nofollow" style="background:#10b981;color:#06281e;padding:6px 14px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;">Clean in 1 Click with SWEEPR Pro</a>
       </div>
     </header>
     <main style="max-width:880px;margin:32px auto;padding:0 20px 60px;">
@@ -979,7 +979,7 @@ export function renderBloatWatchPostHtml(post: BloatWatchPost): string {
             <p style="margin:0;color:#a7f3d0;font-size:14px;">SWEEPR Cleaner scans ${escapeHtml(post.affected_path)} in under 60 seconds with a 7-Day Undo Quarantine safety net.</p>
           </div>
           <div style="display:flex;gap:12px;">
-            <a href="/order?plan=annual" style="background:#10b981;color:#06281e;padding:10px 18px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px;">Get SWEEPR Pro (&pound;49.99/yr)</a>
+            <a href="/order?plan=annual" rel="nofollow" style="background:#10b981;color:#06281e;padding:10px 18px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px;">Get SWEEPR Pro (&pound;49.99/yr)</a>
             <a href="/clean/${escapeHtml(post.clean_item_category)}/${escapeHtml(post.clean_item_slug)}" style="background:rgba(255,255,255,0.12);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;text-decoration:none;font-size:14px;">Full Folder Guide</a>
           </div>
         </div>

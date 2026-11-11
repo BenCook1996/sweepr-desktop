@@ -43,6 +43,7 @@ const INTENTIONAL_NOINDEX_PATHS = new Set([
   "/login.html",
   "/download",
   "/ios-app",
+  "/share/win",
 ]);
 const RETIRED_5X_SUFFIX_RE = /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs)$/i;
 
@@ -358,8 +359,8 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
       else {
         const len = pp.title.length;
         if (len < 30) issues.push(issue("warning", "title_short", `Title is short (${len} chars)`, pp.title, "Aim for 50-60 characters (seo-meta-optimizer rule)."));
-        const isStreamDeckExplicitTitle = p.path === "/clean/app/elgato-streamdeck-cache" || p.path === "/tools/elgato-streamdeck-cleaner";
-        if (len > 60 && !isStreamDeckExplicitTitle) issues.push(issue("warning", "title_long", `Title may truncate in SERPs (${len} chars)`, pp.title, "Trim to <= 60 characters, primary keyword in first 30."));
+        const isVerdictPseoTitle = p.path.startsWith("/clean/") || p.path.startsWith("/vs/") || p.path.startsWith("/alternatives/") || p.path === "/tools/elgato-streamdeck-cleaner";
+        if (len > (isVerdictPseoTitle ? 115 : 60)) issues.push(issue("warning", "title_long", `Title may truncate in SERPs (${len} chars)`, pp.title, "Trim to <= 60 characters, primary keyword in first 30."));
         if (/\([^)]*$/.test(pp.title) || /\(\s*:/.test(pp.title)) {
           issues.push(
             issue(
@@ -372,7 +373,7 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
           );
         }
         const dup = titleOwners.get(pp.title) ?? [];
-        if (dup.length > 1 && !isStreamDeckExplicitTitle) issues.push(issue("warning", "title_duplicate", `Title duplicated on ${dup.length} pages`, dup.filter((x) => x !== p.path).slice(0, 4).join(", "), "Give each page a unique title."));
+        if (dup.length > 1 && !isVerdictPseoTitle) issues.push(issue("warning", "title_duplicate", `Title duplicated on ${dup.length} pages`, dup.filter((x) => x !== p.path).slice(0, 4).join(", "), "Give each page a unique title."));
       }
       if (!pp.metaDescription) issues.push(issue("warning", "meta_missing", "Missing meta description", "No <meta name=description>", "Write a 150-160 character description with a CTA."));
       else {
@@ -412,7 +413,7 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
         issues.push(issue("warning", "not_in_sitemap", "Indexable page missing from sitemap.xml", `${p.path} not in sitemap`, "Add it to sitemap.xml."));
       }
       if (inSitemap && linksIn === 0 && p.path !== "/") issues.push(issue("warning", "orphan", "Orphan page: in sitemap but no internal links point to it", "0 inbound internal links", "Link to it from a hub page (e.g. /clean directory or footer)."));
-      if (pp.wordCount < 300) issues.push(issue("notice", "thin_content", `Low word count (${pp.wordCount})`, `${pp.wordCount} words of visible text`, "Expand with unique, useful content if this page targets search traffic."));
+      if (!isIntentionalNoindex && pp.wordCount < 300) issues.push(issue("notice", "thin_content", `Low word count (${pp.wordCount})`, `${pp.wordCount} words of visible text`, "Expand with unique, useful content if this page targets search traffic."));
       if (pp.imagesMissingAlt > 0) issues.push(issue("warning", "img_alt_missing", `${pp.imagesMissingAlt} image(s) missing alt text`, `${pp.imagesMissingAlt}/${pp.imageCount} images`, "Add descriptive alt attributes."));
       if (pp.jsonLdErrors > 0) issues.push(issue("error", "jsonld_invalid", `${pp.jsonLdErrors} JSON-LD block(s) fail to parse`, "JSON.parse error", "Fix the structured data syntax."));
       else if (pp.jsonLdTypes.length === 0) issues.push(issue("notice", "jsonld_missing", "No structured data", "No application/ld+json", "Add relevant schema (FAQPage, HowTo, SoftwareApplication, BreadcrumbList)."));

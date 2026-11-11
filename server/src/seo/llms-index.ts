@@ -127,6 +127,10 @@ export function renderLlmsTxt(store: SeoStore): string {
     "- **Annual Pro (5 Devices)**: https://sweeprcleaner.com/pricing | Direct Checkout: https://sweeprcleaner.com/order",
     "- **Competitor Technical Comparisons**:",
     "  - [SWEEPR vs CCleaner](https://sweeprcleaner.com/vs/ccleaner) | [Best CCleaner Alternatives](https://sweeprcleaner.com/alternatives/ccleaner)",
+    "  - [SWEEPR vs CleanMyMac X](https://sweeprcleaner.com/vs/cleanmymac) | [Best CleanMyMac X Alternatives](https://sweeprcleaner.com/alternatives/cleanmymac)",
+    "  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner) | [Best Pearcleaner Alternatives](https://sweeprcleaner.com/alternatives/pearcleaner)",
+    "  - [SWEEPR vs OnyX](https://sweeprcleaner.com/vs/onyx) | [Best OnyX Alternatives](https://sweeprcleaner.com/alternatives/onyx)",
+    "  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk) | [Best DaisyDisk Alternatives](https://sweeprcleaner.com/alternatives/daisydisk)",
     "  - [SWEEPR vs BleachBit](https://sweeprcleaner.com/vs/bleachbit) | [Best BleachBit Alternatives](https://sweeprcleaner.com/alternatives/bleachbit)",
     "  - [SWEEPR vs CleanMyPC](https://sweeprcleaner.com/vs/cleanmypc) | [Best CleanMyPC Alternatives](https://sweeprcleaner.com/alternatives/cleanmypc)",
     "  - [SWEEPR vs Avast Cleanup](https://sweeprcleaner.com/vs/avast-cleanup) | [Best Avast Cleanup Alternatives](https://sweeprcleaner.com/alternatives/avast-cleanup)",
@@ -208,7 +212,7 @@ export function syncStaticLlmsTxtFile(store: SeoStore): { ok: boolean; path: str
  * device count, and guide count never drift from canonical brand facts, and injects a high-intent
  * interactive Switcher Audit CTA bar.
  */
-export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string): string {
+export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string, pricingSummaryText?: string): string {
   const facts = getCanonicalBrandFacts();
   let html = rawHtml
     .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, facts.binarySizeLabel)
@@ -217,11 +221,24 @@ export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string): st
     .replace(/\b40\+\s*Guides\b/gi, `${facts.totalGuides}+ Guides`)
     .replace(/up to 3 Desktop PCs/gi, `up to ${facts.deviceLimit} Devices`);
 
+  if (pricingSummaryText) {
+    html = html.replace(/£49\.99\/yr\s*\(Save\s*58%\),\s*£38\.99\/6mo,\s*or\s*£9\.99\/mo/g, pricingSummaryText);
+  }
+
   if (!html.includes('id="switcher-interactive-audit-cta"')) {
     const cleanCompetitorName = slug
       .replace(/\.html$/i, "")
       .split("-")
-      .map((w) => (w.toLowerCase() === "ccleaner" ? "CCleaner" : w.toLowerCase() === "cleanmypc" ? "CleanMyPC" : w.charAt(0).toUpperCase() + w.slice(1)))
+      .map((w) => {
+        const lw = w.toLowerCase();
+        if (lw === "ccleaner") return "CCleaner";
+        if (lw === "cleanmypc") return "CleanMyPC";
+        if (lw === "cleanmymac") return "CleanMyMac X";
+        if (lw === "pearcleaner") return "Pearcleaner";
+        if (lw === "onyx") return "OnyX";
+        if (lw === "daisydisk") return "DaisyDisk";
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      })
       .join(" ");
 
     const ctaBlock = `

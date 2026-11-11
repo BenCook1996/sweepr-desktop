@@ -25,11 +25,11 @@
   <meta property="og:title" content="SWEEPR Cleaner: One Cleaner for Your PC, Mac, iPhone &amp; Android" />
   <meta property="og:description" content="Reclaim gigabytes of hidden system cache, duplicate bursts, and leftover app bloat in under 60 seconds. Zero background bloatware." />
   <meta property="og:url" content="https://sweeprcleaner.com/" />
-  <meta property="og:image" content="https://sweeprcleaner.com/og-card.png" />
+  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="SWEEPR Cleaner: Fast PC, Mac &amp; Mobile Cleaner" />
   <meta name="twitter:description" content="Reclaim gigabytes of lost storage, merge duplicate photos, and protect battery health across 5 devices." />
-  <meta name="twitter:image" content="https://sweeprcleaner.com/og-card.png" />
+  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png" />
 
   <!-- Structured Data: SoftwareApplication + Organization + FAQPage -->
   <script type="application/ld+json">
@@ -38,10 +38,10 @@
   "@type": "SoftwareApplication",
   "name": "SWEEPR Cleaner",
   "image": [
-    "https://sweeprcleaner.com/og-card.png",
+    "https://sweeprcleaner.com/og-image.png",
     "https://sweeprcleaner.com/icon-512.png"
   ],
-  "operatingSystem": "Windows 10, Windows 11, macOS, Linux, Android, iOS",
+  "operatingSystem": "Windows 10, Windows 11, macOS, Android, iOS",
   "applicationCategory": "UtilitiesApplication",
   "description": "Fast, safe computer and phone cleaner, duplicate photo finder, 80% battery health saver, and storage optimizer for Windows, Mac, iOS, and Android.",
   "url": "https://sweeprcleaner.com/",
@@ -57,6 +57,66 @@
       "priceValidUntil": "2027-12-31",
       "availability": "https://schema.org/InStock",
       "url": "https://sweeprcleaner.com/order?plan=annual",
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": [
+          "GB",
+          "US",
+          "DE",
+          "FR",
+          "ES",
+          "CA",
+          "AU"
+        ],
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 14,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn"
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0.00",
+          "currency": "GBP"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": [
+            "GB",
+            "US",
+            "DE",
+            "FR",
+            "ES",
+            "CA",
+            "AU"
+          ]
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Offer",
+      "name": "SWEEPR Cleaner Pro — 6-Month Plan (Save 35%)",
+      "price": "38.99",
+      "priceCurrency": "GBP",
+      "priceValidUntil": "2027-12-31",
+      "availability": "https://schema.org/InStock",
+      "url": "https://sweeprcleaner.com/order?plan=six_month",
       "hasMerchantReturnPolicy": {
         "@type": "MerchantReturnPolicy",
         "applicableCountry": [
@@ -204,7 +264,7 @@
         "name": "How many devices does one SWEEPR Cleaner Pro plan cover?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "A single SWEEPR Cleaner Pro plan lets you clean up to 5 devices simultaneously across Windows, macOS, Linux, iPhone, iPad, and Android."
+          "text": "A single SWEEPR Cleaner Pro plan lets you clean up to 5 devices simultaneously across Windows, macOS, iPhone, iPad, and Android."
         }
       },
       {
@@ -1106,7 +1166,7 @@
           <option value="sgd">SGD (S$) · SG</option>
           <option value="brl">BRL (R$) · BR</option>
         </select>
-        <a href="/download" id="headerDownloadBtn" class="header-cta btn-press">Free Download</a>
+        <a href="/download" id="headerDownloadBtn" class="header-cta btn-press" rel="nofollow">Free Download</a>
       </div>
     </div>
   </header>
@@ -1123,7 +1183,6 @@
             <button type="button" class="os-chip" data-os="mac" aria-pressed="false">Mac</button>
             <button type="button" class="os-chip" data-os="ios" aria-pressed="false">iPhone</button>
             <button type="button" class="os-chip" data-os="android" aria-pressed="false">Android</button>
-            <button type="button" class="os-chip" data-os="linux" aria-pressed="false">Linux</button>
           </div>
         </div>
 
@@ -1136,10 +1195,10 @@
         </p>
 
         <div class="w3-cta-row">
-          <a href="/download?platform=windows" id="primaryDownloadCta" class="btn-primary-os btn-press">
+          <a href="/download?platform=windows" id="primaryDownloadCta" class="btn-primary-os btn-press" rel="nofollow">
             <span id="primaryDownloadLabel">Download Free for Windows</span>
           </a>
-          <a href="/order?plan=annual" id="secondaryOrderCta" class="btn-secondary-os btn-press">
+          <a href="/order?plan=annual" id="secondaryOrderCta" class="btn-secondary-os btn-press" rel="nofollow">
             <span>Clean up to 5 devices</span>
             <span class="mono" id="secondaryOrderPriceBadge">£49.99/yr</span>
           </a>
@@ -1286,7 +1345,7 @@
         <!-- Binary Plan Switcher (Hick's Law: 2 Primary Choices) -->
         <div class="binary-switcher" role="tablist" aria-label="Choose billing plan">
           <button type="button" class="plan-switch-btn btn-press" role="tab" id="planTabAnnual" aria-selected="true" data-plan="annual">
-            <span>Yearly Plan · Save 58%</span>
+            <span id="planTabAnnualTitle">Yearly Plan · Save 58%</span>
             <span class="plan-switch-sub" id="switchAnnualSub">£4.16/mo equivalent</span>
           </button>
           <button type="button" class="plan-switch-btn btn-press" role="tab" id="planTabMonthly" aria-selected="false" data-plan="monthly">
@@ -1334,7 +1393,7 @@
         </div>
 
         <!-- Primary Checkout CTA -->
-        <a href="/order?plan=annual" id="w3CheckoutBtn" class="w3-checkout-btn btn-press">
+        <a href="/order?plan=annual" id="w3CheckoutBtn" class="w3-checkout-btn btn-press" rel="nofollow">
           <span id="w3CheckoutBtnLabel">Continue to Checkout</span>
           <span class="mono" id="w3CheckoutBtnTotal">£49.99/yr →</span>
         </a>
@@ -1506,7 +1565,7 @@
           <details class="faq-item">
             <summary class="faq-summary">Can I get a file back if I clean it by mistake?</summary>
             <p class="faq-answer">
-              Yes! On Windows, Mac, and Linux, cleaned files are kept safely in SWEEPR's 7-Day Undo folder so you can put any file right back where it was in one click. On iPhone and Android, deleted photos stay in your phone's Recently Deleted album for 30 days.
+              Yes! On Windows and Mac, cleaned files are kept safely in SWEEPR's 7-Day Undo folder so you can put any file right back where it was in one click. On iPhone and Android, deleted photos stay in your phone's Recently Deleted album for 30 days.
             </p>
           </details>
           <details class="faq-item">
@@ -1518,18 +1577,79 @@
         </div>
       </div>
     </section>
+
+    <!-- CLICK-DEPTH-1 POPULAR STORAGE GUIDES & SWITCHER COMPARISONS HUB -->
+    <section class="section-block" aria-labelledby="popular-guides-heading" style="padding-top:0;">
+      <div class="info-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+          <div>
+            <div class="section-tag">Verified Safety Verdicts &amp; Comparisons</div>
+            <h2 class="section-title" id="popular-guides-heading" style="font-size:1.35rem;margin-bottom:4px;">Most-searched Windows &amp; Mac cleanup guides</h2>
+            <p style="color:var(--muted);font-size:0.86rem;">Exact folder safety audits, reclaimable GB benchmarks, and side-by-side cleaner comparisons.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="/tools" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">10 Cleaner Tools →</a>
+            <a href="/safe-to-delete" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">Path Safety Checker →</a>
+            <a href="/tools/pc-cache-calculator" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">Cache Bloat Calculator →</a>
+            <a href="/clean" class="nav-link" style="background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--border);font-size:0.8rem;font-weight:700;">All 377 Folder Guides →</a>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;font-size:0.84rem;padding-bottom:18px;border-bottom:1px solid var(--border);">
+          <a href="/clean/app/steam-depotcache" style="color:var(--text);text-decoration:none;font-weight:600;">Steam depotcache Cleanup (2–25 GB)</a>
+          <a href="/clean/app/genshin-impact-update-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Genshin Impact Update Cache (3–22 GB)</a>
+          <a href="/clean/app/riot-client-logs" style="color:var(--text);text-decoration:none;font-weight:600;">Riot Client &amp; VALORANT Logs (1.5–8 GB)</a>
+          <a href="/clean/app/logitech-ghub-installer-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Logitech G HUB Cache (1.5–8 GB)</a>
+          <a href="/clean/app/stremio-desktop-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Stremio Desktop Cache (1.5–9.5 GB)</a>
+          <a href="/clean/app/amd-shader-cache" style="color:var(--text);text-decoration:none;font-weight:600;">AMD Radeon DXCache &amp; VkCache (2–12 GB)</a>
+          <a href="/clean/folder/winsxs" style="color:var(--text);text-decoration:none;font-weight:600;">Windows WinSxS Component Store (6–20 GB)</a>
+          <a href="/clean/folder/windows-livekernelreports" style="color:var(--text);text-decoration:none;font-weight:600;">Windows LiveKernelReports Dumps (1.5–10 GB)</a>
+          <a href="/clean/app/comfyui-temp-output-cache" style="color:var(--text);text-decoration:none;font-weight:600;">ComfyUI Temp &amp; Output Cache (2–18 GB)</a>
+          <a href="/clean/folder/programdata-package-cache" style="color:var(--text);text-decoration:none;font-weight:600;">ProgramData Package Cache (3.5–22 GB)</a>
+          <a href="/clean/app/brave-browser-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Brave Browser Cache (1–7 GB)</a>
+          <a href="/clean/app/medal-tv-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Medal.tv Clip Cache (2–14 GB)</a>
+          <a href="/clean/app/nvidia-nv-cache" style="color:var(--text);text-decoration:none;font-weight:600;">NVIDIA NV_Cache Leftovers (1.5–8 GB)</a>
+          <a href="/clean/app/nvidia-dxcache" style="color:var(--text);text-decoration:none;font-weight:600;">NVIDIA DirectX DXCache (2–14 GB)</a>
+          <a href="/clean/app/battlenet-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Battle.net Agent Cache (1.5–7 GB)</a>
+          <a href="/clean/app/capcut-desktop-cache" style="color:var(--text);text-decoration:none;font-weight:600;">CapCut Desktop Cache (2.5–18 GB)</a>
+          <a href="/clean/app/zen-browser-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Zen Browser Cache (1.5–9.5 GB)</a>
+          <a href="/clean/app/opera-gx-cache" style="color:var(--text);text-decoration:none;font-weight:600;">Opera GX Browser Cache (1.8–12 GB)</a>
+          <a href="/clean/app/jetbrains-intellij-cache" style="color:var(--text);text-decoration:none;font-weight:600;">JetBrains IntelliJ Cache (1.5–9.5 GB)</a>
+          <a href="/clean/folder/windows-old" style="color:var(--text);text-decoration:none;font-weight:600;">Delete Windows.old Safely (15–35 GB)</a>
+        </div>
+
+        <div style="margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:0.81rem;">
+          <strong style="color:var(--accent-ink);">Compare Cleaners:</strong>
+          <a href="/vs/ccleaner" style="color:var(--muted);text-decoration:underline;">SWEEPR vs CCleaner</a>
+          <a href="/vs/cleanmymac" style="color:var(--muted);text-decoration:underline;">SWEEPR vs CleanMyMac X</a>
+          <a href="/vs/bleachbit" style="color:var(--muted);text-decoration:underline;">SWEEPR vs BleachBit</a>
+          <a href="/vs/daisydisk" style="color:var(--muted);text-decoration:underline;">SWEEPR vs DaisyDisk</a>
+          <a href="/vs/pearcleaner" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Pearcleaner</a>
+          <a href="/vs/onyx" style="color:var(--muted);text-decoration:underline;">SWEEPR vs OnyX</a>
+          <a href="/vs/cleanmypc" style="color:var(--muted);text-decoration:underline;">SWEEPR vs CleanMyPC</a>
+          <a href="/vs/avast-cleanup" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Avast Cleanup</a>
+          <a href="/vs/wise-disk-cleaner" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Wise Disk Cleaner</a>
+          <a href="/vs/glary-utilities" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Glary Utilities</a>
+          <a href="/alternatives/ccleaner" style="color:var(--muted);text-decoration:underline;">CCleaner Alternatives</a>
+          <a href="/alternatives/cleanmymac" style="color:var(--muted);text-decoration:underline;">CleanMyMac Alternatives</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <strong>SWEEPR Cleaner Inc.</strong> · Fast, safe cleanup for Windows, Mac, Linux, iPhone &amp; Android.<br />
+        <strong>SWEEPR Cleaner Inc.</strong> · Fast, safe cleanup for Windows, Mac, iPhone &amp; Android.<br />
         <span>© 2026 SWEEPR Cleaner Inc. All rights reserved.</span>
       </div>
       <div class="footer-links">
         <a href="/pricing">Pricing</a>
-        <a href="/download">Download</a>
+        <a href="/download" rel="nofollow">Download</a>
+        <a href="/tools">Cleaner Tools</a>
+        <a href="/safe-to-delete">Path Checker</a>
         <a href="/vs/ccleaner">vs CCleaner</a>
+        <a href="/vs/cleanmymac">vs CleanMyMac</a>
         <a href="/alternatives/ccleaner">Alternatives</a>
         <a href="/clean">Cleanup Guides</a>
         <a href="/bloat-watch">PC Bloat Watch</a>
@@ -1541,6 +1661,7 @@
         <a href="/privacy">Privacy Policy</a>
         <a href="/terms">Terms of Service</a>
         <a href="/refund">Refund Policy</a>
+        <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}">Cookie Preferences</a>
       </div>
     </div>
   </footer>
@@ -1573,21 +1694,21 @@
     (function () {
       // 1. Complete Multi-Currency Fallback Catalog (Matches server/src/pricing.ts 1:1)
       var FALLBACK_PRICING = {
-        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', intro: 1.99, monthly: 9.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '£' + v.toFixed(2); } },
-        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', intro: 1.99, monthly: 11.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '$' + v.toFixed(2); } },
-        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '€' + v.toFixed(2); } },
-        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', intro: 2.99, monthly: 15.99, addonAnnual: 14.99, addonMonthly: 2.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
-        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', intro: 2.99, monthly: 17.99, addonAnnual: 15.99, addonMonthly: 2.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
-        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', intro: 2.99, monthly: 19.99, addonAnnual: 17.99, addonMonthly: 3.49, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
-        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
-        sek: { code: 'sek', symbol: ' kr', label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
-        nok: { code: 'nok', symbol: ' kr', label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
-        dkk: { code: 'dkk', symbol: ' kr.', label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1 019.88 kr.', intro: 14.99, monthly: 84.99, addonAnnual: 79.99, addonMonthly: 14.99, fmt: function(v) { return v.toFixed(2) + ' kr.'; } },
-        pln: { code: 'pln', symbol: ' zł', label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', intro: 7.99, monthly: 47.99, addonAnnual: 44.99, addonMonthly: 7.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
-        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', intro: 290, monthly: 1880, addonAnnual: 1580, addonMonthly: 290, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
-        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', intro: 169.99, monthly: 999.99, addonAnnual: 899.99, addonMonthly: 169.99, fmt: function(v) { return '₹' + v.toFixed(2); } },
-        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', intro: 2.99, monthly: 15.99, addonAnnual: 13.99, addonMonthly: 2.49, fmt: function(v) { return 'S$' + v.toFixed(2); } },
-        brl: { code: 'brl', symbol: 'R$ ', label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', intro: 9.99, monthly: 64.99, addonAnnual: 59.99, addonMonthly: 9.99, fmt: function(v) { return 'R$ ' + v.toFixed(2); } }
+        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', sixMo: 38.99, annualSavingsPercent: 58, sixMonthSavingsPercent: 35, intro: 1.99, monthly: 9.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '£' + v.toFixed(2); } },
+        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', sixMo: 47.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 1.99, monthly: 11.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '$' + v.toFixed(2); } },
+        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '€' + v.toFixed(2); } },
+        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', sixMo: 64.99, annualSavingsPercent: 53, sixMonthSavingsPercent: 32, intro: 2.99, monthly: 15.99, addonAnnual: 14.99, addonMonthly: 2.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
+        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', sixMo: 74.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 31, intro: 2.99, monthly: 17.99, addonAnnual: 15.99, addonMonthly: 2.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
+        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', sixMo: 79.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 2.99, monthly: 19.99, addonAnnual: 17.99, addonMonthly: 3.49, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
+        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
+        sek: { code: 'sek', symbol: ' kr', label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
+        nok: { code: 'nok', symbol: ' kr', label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
+        dkk: { code: 'dkk', symbol: ' kr.', label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1 019.88 kr.', sixMo: 329.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 35, intro: 14.99, monthly: 84.99, addonAnnual: 79.99, addonMonthly: 14.99, fmt: function(v) { return v.toFixed(2) + ' kr.'; } },
+        pln: { code: 'pln', symbol: ' zł', label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', sixMo: 189.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 7.99, monthly: 47.99, addonAnnual: 44.99, addonMonthly: 7.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
+        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', sixMo: 7480, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 290, monthly: 1880, addonAnnual: 1580, addonMonthly: 290, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
+        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', sixMo: 3999.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 169.99, monthly: 999.99, addonAnnual: 899.99, addonMonthly: 169.99, fmt: function(v) { return '₹' + v.toFixed(2); } },
+        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', sixMo: 62.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 2.99, monthly: 15.99, addonAnnual: 13.99, addonMonthly: 2.49, fmt: function(v) { return 'S$' + v.toFixed(2); } },
+        brl: { code: 'brl', symbol: 'R$ ', label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', sixMo: 259.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 9.99, monthly: 64.99, addonAnnual: 59.99, addonMonthly: 9.99, fmt: function(v) { return 'R$ ' + v.toFixed(2); } }
       };
 
       var OS_PROFILES = {
@@ -1645,7 +1766,6 @@
         if (/iphone|ipad|ipod/.test(ua)) return 'ios';
         if (/android/.test(ua)) return 'android';
         if (/macintosh|mac os x/.test(ua)) return 'mac';
-        if (/linux/.test(ua)) return 'linux';
         return 'windows';
       }
 
@@ -1709,6 +1829,8 @@
         var monthlyRenew = api && api.monthlyFormatted ? api.monthlyFormatted : c.fmt(c.monthly);
         var annualEq = api && api.annualMonthlyEqFormatted ? api.annualMonthlyEqFormatted : c.annualEq;
         var annualStrike = api && api.annualRegularTotalFormatted ? api.annualRegularTotalFormatted : c.annualStrike;
+        var annualSavingsPercent = api && api.annualSavingsPercent ? api.annualSavingsPercent : (c.annualSavingsPercent || Math.round((1 - (annualBase / (monthlyBase * 12))) * 100));
+        var sixMonthSavingsPercent = api && api.sixMonthSavingsPercent ? api.sixMonthSavingsPercent : (c.sixMonthSavingsPercent || 35);
         var addonAnnualRate = api && api.batteryCareAnnualAmount ? (api.batteryCareAnnualAmount / divisor) : c.addonAnnual;
         var addonMonthlyRate = api && api.batteryCareMonthlyAmount ? (api.batteryCareMonthlyAmount / divisor) : c.addonMonthly;
         var addonAnnualFmt = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : c.fmt(c.addonAnnual);
@@ -1729,6 +1851,7 @@
         var strikeEl = document.getElementById('giantPriceStrike');
         var capEl = document.getElementById('giantPriceCaption');
         var locEl = document.getElementById('detectedLocationLabel');
+        var swAnnualTitle = document.getElementById('planTabAnnualTitle');
         var swAnnualSub = document.getElementById('switchAnnualSub');
         var swMonthlySub = document.getElementById('switchMonthlySub');
         var addonBatTag = document.getElementById('addonBatteryPriceTag');
@@ -1747,6 +1870,7 @@
         for (var cpIdx = 0; cpIdx < currPills.length; cpIdx++) {
           currPills[cpIdx].setAttribute('aria-pressed', currPills[cpIdx].getAttribute('data-currency-pill') === state.currency ? 'true' : 'false');
         }
+        if (swAnnualTitle) swAnnualTitle.textContent = 'Yearly Plan · Save ' + annualSavingsPercent + '%';
         if (swAnnualSub) swAnnualSub.textContent = annualEq + '/mo equivalent';
         if (swMonthlySub) swMonthlySub.textContent = monthlyRenew + '/month · Cancel anytime';
         if (addonBatTag) addonBatTag.textContent = activeAddonTag;
@@ -1781,7 +1905,7 @@
 
         if (faqPlan) {
           var sixMoFmt = api && api.sixMonthFormatted ? api.sixMonthFormatted : c.fmt(c.sixMo || (annualBase * 0.78));
-          faqPlan.textContent = 'All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, iOS, and Android. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving 58%, or ' + annualEq + '/month), the 6-Month plan is ' + sixMoFmt + ' every 6 months, and the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
+          faqPlan.textContent = 'All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, iOS, and Android. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving ' + annualSavingsPercent + '%, or ' + annualEq + '/month), the 6-Month plan is ' + sixMoFmt + ' every 6 months (saving ' + sixMonthSavingsPercent + '%), and the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
         }
         if (faqAddon) {
           faqAddon.textContent = 'Each optional add-on is ' + addonAnnualFmt + '/year (' + addonMonthlyFmt + '/month on monthly billing). Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';

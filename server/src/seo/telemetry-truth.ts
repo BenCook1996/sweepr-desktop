@@ -672,7 +672,7 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
       <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
       <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
       <a href="/clean" class="hidden sm:inline-flex btn btn-ghost text-sm">Directory</a>
-      <a href="/download?platform=windows&amp;utm_source=state_of_storage" class="btn btn-go text-sm">Free 60s Storage Scan (.exe)</a>
+      <a href="/download?platform=windows&amp;utm_source=state_of_storage" rel="nofollow" class="btn btn-go text-sm">Free 60s Storage Scan (.exe)</a>
     </div>
   </nav>
 
@@ -823,7 +823,7 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
           SWEEPR Cleaner is a native 6.5 MB Rust desktop utility for Windows 10 &amp; 11 with zero background bloatware and a 7-day Undo Quarantine.
         </p>
         <div class="flex flex-wrap gap-3">
-          <a href="/download?platform=windows&amp;utm_source=state_of_storage_cta" class="btn btn-go text-sm py-2.5 px-5">
+          <a href="/download?platform=windows&amp;utm_source=state_of_storage_cta" rel="nofollow" class="btn btn-go text-sm py-2.5 px-5">
             Download Free Windows Analyzer (.exe) &rarr;
           </a>
           <a href="/tools" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold no-underline">

@@ -5,6 +5,8 @@
   "folder:localappdata-d3dscache-directx": "/clean/folder/directx-d3dscache",
   "folder:localappdata-crashdumps-wer": "/clean/folder/localappdata-crashdumps",
   "folder:windows-livekernelreports-watchdog-dumps": "/clean/folder/windows-livekernelreports",
+  "folder:livekernelreports": "/clean/folder/windows-livekernelreports",
+  "app:livekernelreports": "/clean/folder/windows-livekernelreports",
   "app:pip-wheel-cache": "/clean/app/pip-http-wheels-cache",
   "app:nuget-package-cache": "/clean/app/nuget-packages-http-cache",
   "app:go-build-cache": "/clean/app/go-build-mod-cache",

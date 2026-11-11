@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       batch_count:
-        description: "Number of canonical pSEO pages to generate via keyword research engine"
+        description: "Number of canonical pSEO pages to generate via keyword research engine (0 = frozen during Core Update stabilization)"
         required: false
-        default: "4"
+        default: "0"
       run_weekly_product_advisor:
         description: "Force-generate the A20 Weekly Content-to-Product & UI Mockup Advisory"
         required: false
@@ -42,12 +42,16 @@ jobs:
       - name: Run Unified Cloud Automation Runner (A21 Google Cloud GSC + Drip + 100/100 Audit + A20 Advisor)
         working-directory: ./server
         run: |
-          COUNT="${{ github.event.inputs.batch_count || '4' }}"
+          COUNT="${{ github.event.inputs.batch_count || '0' }}"
+          SKIP_DRIP=""
+          if [ "$COUNT" = "0" ]; then
+            SKIP_DRIP="--skip-drip"
+          fi
           FORCE_WEEKLY=""
           if [ "$(date -u +%u)" = "1" ] || [ "${{ github.event.inputs.run_weekly_product_advisor || 'false' }}" = "true" ]; then
             FORCE_WEEKLY="--force-weekly"
           fi
-          npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" --update-log $FORCE_WEEKLY
+          npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" $SKIP_DRIP --update-log $FORCE_WEEKLY
 
       - name: Commit Cloud SEO Artifacts, GSC Seed, Audit Log & Product Mockups (if changed)
         run: |
@@ -70,7 +74,7 @@ jobs:
             -H "Authorization: Basic $B64" \
             -H "Origin: https://sweeprcleaner.com" \
             -H "Content-Type: application/json" \
-            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true}' || true
+            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true,"submit_sitemap":false}' || true
           if [ -f server/src/data/gsc-seed.json ]; then
             curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/ingest" \
               -H "Authorization: Basic $B64" \

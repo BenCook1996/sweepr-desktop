@@ -55,6 +55,10 @@
 - **Annual Pro (5 Devices)**: https://sweeprcleaner.com/pricing | Direct Checkout: https://sweeprcleaner.com/order
 - **Competitor Technical Comparisons**:
   - [SWEEPR vs CCleaner](https://sweeprcleaner.com/vs/ccleaner) | [Best CCleaner Alternatives](https://sweeprcleaner.com/alternatives/ccleaner)
+  - [SWEEPR vs CleanMyMac X](https://sweeprcleaner.com/vs/cleanmymac) | [Best CleanMyMac X Alternatives](https://sweeprcleaner.com/alternatives/cleanmymac)
+  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner) | [Best Pearcleaner Alternatives](https://sweeprcleaner.com/alternatives/pearcleaner)
+  - [SWEEPR vs OnyX](https://sweeprcleaner.com/vs/onyx) | [Best OnyX Alternatives](https://sweeprcleaner.com/alternatives/onyx)
+  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk) | [Best DaisyDisk Alternatives](https://sweeprcleaner.com/alternatives/daisydisk)
   - [SWEEPR vs BleachBit](https://sweeprcleaner.com/vs/bleachbit) | [Best BleachBit Alternatives](https://sweeprcleaner.com/alternatives/bleachbit)
   - [SWEEPR vs CleanMyPC](https://sweeprcleaner.com/vs/cleanmypc) | [Best CleanMyPC Alternatives](https://sweeprcleaner.com/alternatives/cleanmypc)
   - [SWEEPR vs Avast Cleanup](https://sweeprcleaner.com/vs/avast-cleanup) | [Best Avast Cleanup Alternatives](https://sweeprcleaner.com/alternatives/avast-cleanup)

@@ -7,7 +7,6 @@ on:
       - main
     paths:
       - 'app/**'
-      - 'scripts/build-mac-dmg.mjs'
       - '.github/workflows/build-apps.yml'
 
 jobs:
@@ -37,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
-          node-version: lts/*
+          node-version: "24"
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
@@ -55,7 +54,7 @@ jobs:
         working-directory: ./app
         run: npm ci
 
-      - name: Build Tauri App
+      - name: Build Tauri App (inner SWEEPRCleaner.exe signed via tauri.conf.json bundle.windows.signCommand before NSIS/MSI packaging)
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +62,10 @@ jobs:
           SWEEPR_API_URL: ${{ secrets.SWEEPR_API_URL }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          SWEEPR_CERT_THUMBPRINT: ${{ secrets.SWEEPR_CERT_THUMBPRINT }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         with:
           projectPath: "./app"
           tagName: "v__VERSION__"
@@ -72,28 +75,40 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      - name: Package signed macOS UDIF DMG with custom Volume Icon & commit to server/public
+      - name: Package signed macOS Universal UDIF DMG from Rust/Tauri binary & commit to server/public
         if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
-          APP_BUNDLE=$(find app/src-tauri/target -name "*.app" -type d | head -n 1)
-          if [ -n "$APP_BUNDLE" ]; then
-            codesign --force --deep --options runtime --sign - "$APP_BUNDLE"
-            STAGE_DIR=$(mktemp -d)
-            cp -R "$APP_BUNDLE" "$STAGE_DIR/"
-            ln -s /Applications "$STAGE_DIR/Applications"
-            cp app/src-tauri/icons/icon.icns "$STAGE_DIR/.VolumeIcon.icns"
-            SetFile -c icnC "$STAGE_DIR/.VolumeIcon.icns" || true
-            SetFile -a C "$STAGE_DIR" || true
-            hdiutil create -volname "SWEEPR Cleaner" -srcfolder "$STAGE_DIR" -ov -format UDZO server/public/SWEEPRCleaner.dmg
-            if [ "${{ github.ref_name }}" = "main" ]; then
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              git add server/public/SWEEPRCleaner.dmg
-              if ! git diff --staged --quiet; then
-                git commit -m "chore(mac): update native Universal UDIF SWEEPRCleaner.dmg with icon [skip ci]"
-                git pull --rebase origin main || true
-                git push origin HEAD:main || true
-              fi
+          set -euo pipefail
+          APP_BUNDLE=$(find app/src-tauri/target/universal-apple-darwin/release/bundle/macos -maxdepth 1 -name "*.app" -type d | head -n 1)
+          if [ -z "$APP_BUNDLE" ]; then
+            echo "Error: Universal macOS .app bundle not found in target/universal-apple-darwin/release/bundle/macos" >&2
+            exit 1
+          fi
+          MACHO_BIN=$(find "$APP_BUNDLE/Contents/MacOS" -maxdepth 1 -type f | head -n 1)
+          if [ -z "$MACHO_BIN" ] || ! file "$MACHO_BIN" | grep -q "Mach-O"; then
+            echo "Error: Expected compiled Rust/Tauri Mach-O executable inside $APP_BUNDLE/Contents/MacOS" >&2
+            exit 1
+          fi
+          lipo -info "$MACHO_BIN"
+          SIGN_ID="${APPLE_SIGNING_IDENTITY:--}"
+          codesign --force --deep --options runtime --sign "$SIGN_ID" "$APP_BUNDLE"
+          STAGE_DIR=$(mktemp -d)
+          cp -R "$APP_BUNDLE" "$STAGE_DIR/"
+          ln -s /Applications "$STAGE_DIR/Applications"
+          cp app/src-tauri/icons/icon.icns "$STAGE_DIR/.VolumeIcon.icns"
+          SetFile -c icnC "$STAGE_DIR/.VolumeIcon.icns" || true
+          SetFile -a C "$STAGE_DIR" || true
+          hdiutil create -volname "SWEEPR Cleaner" -srcfolder "$STAGE_DIR" -ov -format UDZO server/public/SWEEPRCleaner.dmg
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add server/public/SWEEPRCleaner.dmg
+            if ! git diff --staged --quiet; then
+              git commit -m "chore(mac): update native Universal UDIF SWEEPRCleaner.dmg with icon [skip ci]"
+              git pull --rebase origin main || true
+              git push origin HEAD:main || true
             fi
           fi
 
@@ -134,7 +149,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
+          $tauriVersion = (Get-Content "app/src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json).version
           $signedInstallers = Get-ChildItem -Path "app/src-tauri/target/release/bundle" -Recurse -Include *.exe,*.msi | Select-Object -ExpandProperty FullName
           if ($signedInstallers) {
-            gh release upload v1.0.0 $signedInstallers --clobber
+            gh release upload "v$tauriVersion" $signedInstallers --clobber
           }

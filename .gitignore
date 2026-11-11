@@ -14,6 +14,8 @@ app/src-tauri/gen/
 
 mobile/android/.gradle/
 mobile/android/local.properties
+mobile/android/.idea/
+.idea/
 *.jks
 *.keystore
 *.p12

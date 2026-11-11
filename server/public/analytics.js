@@ -20,6 +20,40 @@
   );
 
   let isInitialized = false;
+  let thirdPartyTrackersInitialized = false;
+  let activeProvidersCfg = null;
+  const COOKIE_CONSENT_STORAGE_KEY = 'sweepr_cookie_consent';
+
+  function isUkOrEeaTimezone() {
+    try {
+      const tz = String((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || '');
+      if (!tz) return false;
+      return (
+        tz.startsWith('Europe/') ||
+        tz === 'Atlantic/Reykjavik' ||
+        tz === 'Atlantic/Faroe' ||
+        tz === 'Atlantic/Canary' ||
+        tz === 'Atlantic/Madeira' ||
+        tz === 'Atlantic/Azores'
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function getStoredCookieConsent() {
+    try {
+      const val = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+      if (val === 'granted' || val === 'denied') return val;
+    } catch (e) {}
+    return null;
+  }
+
+  function getEffectiveConsentState() {
+    const stored = getStoredCookieConsent();
+    if (stored === 'granted' || stored === 'denied') return stored;
+    return isUkOrEeaTimezone() ? 'denied' : 'granted';
+  }
 
   function isBotOrAutomatedVisitor() {
     try {
@@ -105,9 +139,9 @@
       log('GA track error:', e);
     }
 
-    // 2. Meta Pixel (Map standard events)
+    // 2. Meta Pixel (Map standard events — gated behind explicit consent)
     try {
-      if (window.fbq) {
+      if (window.fbq && getEffectiveConsentState() === 'granted') {
         switch (eventName) {
           case 'page_view':
             window.fbq('track', 'PageView');
@@ -145,9 +179,9 @@
       log('Meta Pixel track error:', e);
     }
 
-    // 3. Microsoft Clarity Custom Tags
+    // 3. Microsoft Clarity Custom Tags (gated behind explicit consent)
     try {
-      if (window.clarity) {
+      if (window.clarity && getEffectiveConsentState() === 'granted') {
         window.clarity('set', eventName, 'true');
       }
     } catch (e) {}
@@ -170,40 +204,14 @@
     } catch (e) {}
   };
 
-  /**
-   * Initializes GA4, Meta Pixel, and Microsoft Clarity once IDs are available
-   */
-  function initProviders(cfg) {
-    if (isInitialized) return;
-    isInitialized = true;
-
-    if (isBotOrAutomatedVisitor()) {
-      log('Skipping analytics initialization for bot or automated visitor.');
-      return;
-    }
+  function loadConsentGatedProviders(cfg) {
+    if (thirdPartyTrackersInitialized || !cfg) return;
+    if (getEffectiveConsentState() !== 'granted') return;
+    thirdPartyTrackersInitialized = true;
 
     const attr = window.sweeprAttribution ? window.sweeprAttribution.getPayload() : {};
 
-    // 1. Google Analytics 4
-    if (cfg.gaMeasurementId && cfg.gaMeasurementId.startsWith('G-')) {
-      log('Initializing Google Analytics 4 with ID:', cfg.gaMeasurementId);
-      const gaScript = document.createElement('script');
-      gaScript.async = true;
-      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.gaMeasurementId)}`;
-      document.head.appendChild(gaScript);
-
-      window.gtag('js', new Date());
-      window.gtag('config', cfg.gaMeasurementId, {
-        send_page_view: true,
-        campaign_source: attr.utm_source || undefined,
-        campaign_medium: attr.utm_medium || undefined,
-        campaign_name: attr.utm_campaign || undefined,
-        campaign_term: attr.utm_term || undefined,
-        campaign_content: attr.utm_content || undefined
-      });
-    }
-
-    // 2. Meta Pixel
+    // 2. Meta Pixel (Explicit Consent Required under UK PECR / EU ePrivacy / GDPR)
     if (cfg.metaPixelId && /^\d+$/.test(cfg.metaPixelId.trim())) {
       log('Initializing Meta Pixel with ID:', cfg.metaPixelId);
       const fbScript = document.createElement('script');
@@ -215,7 +223,7 @@
       window.fbq('track', 'PageView');
     }
 
-    // 3. Microsoft Clarity (Heatmaps & Session Replays)
+    // 3. Microsoft Clarity (Heatmaps & Session Replays — Explicit Consent Required)
     if (cfg.clarityProjectId && cfg.clarityProjectId.trim().length >= 4) {
       log('Initializing Microsoft Clarity with Project ID:', cfg.clarityProjectId);
       const clarityScript = document.createElement('script');
@@ -226,6 +234,147 @@
       if (attr.utm_source) window.clarity('set', 'utm_source', attr.utm_source);
       if (attr.utm_campaign) window.clarity('set', 'utm_campaign', attr.utm_campaign);
       if (attr.ref) window.clarity('set', 'referral', attr.ref);
+    }
+  }
+
+  function applyCookieConsentChoice(state) {
+    const normalized = state === 'granted' ? 'granted' : 'denied';
+    try {
+      localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, normalized);
+    } catch (e) {}
+
+    try {
+      window.gtag('consent', 'update', {
+        analytics_storage: normalized,
+        ad_storage: normalized,
+        ad_user_data: normalized,
+        ad_personalization: normalized
+      });
+    } catch (e) {}
+
+    if (normalized === 'granted' && activeProvidersCfg) {
+      loadConsentGatedProviders(activeProvidersCfg);
+    }
+
+    const pill = document.getElementById('sweeprCookieConsentPill');
+    if (pill) pill.remove();
+  }
+
+  function renderCookieConsentPill(forceOpen) {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (!forceOpen) {
+      if (isBotOrAutomatedVisitor()) return;
+      if (getStoredCookieConsent() !== null) return;
+      if (!isUkOrEeaTimezone()) return;
+    }
+
+    const existing = document.getElementById('sweeprCookieConsentPill');
+    if (existing) existing.remove();
+
+    const currentConsent = getEffectiveConsentState();
+    const pill = document.createElement('div');
+    pill.id = 'sweeprCookieConsentPill';
+    pill.setAttribute('role', 'region');
+    pill.setAttribute('aria-label', 'Cookie Preferences');
+    pill.style.cssText =
+      'position:fixed;bottom:14px;left:14px;z-index:99998;max-width:360px;width:calc(100% - 28px);' +
+      'background:rgba(17,22,19,0.96);color:#f4f5f3;border:1px solid rgba(154,219,192,0.32);' +
+      'border-radius:14px;padding:11px 14px;box-shadow:0 12px 32px rgba(0,0,0,0.28);' +
+      'backdrop-filter:blur(10px);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:12px;line-height:1.4;';
+
+    pill.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">' +
+        '<span style="font-weight:700;color:#9adbc0;font-size:12px;">🍪 Cookie Preferences</span>' +
+        (forceOpen
+          ? '<span style="font-size:10.5px;color:#94a3b8;">Current: ' + (currentConsent === 'granted' ? 'Analytics Enabled' : 'Essential Only') + '</span>'
+          : '<a href="/privacy" style="color:#94a3b8;text-decoration:underline;font-size:11px;">Privacy Policy</a>') +
+      '</div>' +
+      '<div style="color:#cbd5e1;font-size:11.5px;margin-bottom:9px;">' +
+        'We use cookieless privacy defaults in the UK/EEA and optional analytics cookies to improve SWEEPR.' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">' +
+        '<button type="button" id="sweeprCookieAcceptBtn" style="background:#0d6847;color:#ffffff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;font-size:11.5px;cursor:pointer;">' +
+          'Accept' +
+        '</button>' +
+        '<button type="button" id="sweeprCookieDeclineBtn" style="background:rgba(255,255,255,0.08);color:#e2e8f0;border:1px solid rgba(255,255,255,0.16);border-radius:8px;padding:6px 11px;font-weight:600;font-size:11.5px;cursor:pointer;">' +
+          'Essential Only' +
+        '</button>' +
+      '</div>';
+
+    document.body.appendChild(pill);
+
+    const acceptBtn = document.getElementById('sweeprCookieAcceptBtn');
+    if (acceptBtn) {
+      acceptBtn.addEventListener('click', function () {
+        applyCookieConsentChoice('granted');
+      });
+    }
+    const declineBtn = document.getElementById('sweeprCookieDeclineBtn');
+    if (declineBtn) {
+      declineBtn.addEventListener('click', function () {
+        applyCookieConsentChoice('denied');
+      });
+    }
+  }
+
+  window.sweeprOpenCookiePreferences = function () {
+    renderCookieConsentPill(true);
+  };
+  window.sweeprSetCookieConsent = applyCookieConsentChoice;
+
+  /**
+   * Initializes GA4, Meta Pixel, and Microsoft Clarity once IDs are available
+   */
+  function initProviders(cfg) {
+    if (isInitialized) return;
+    isInitialized = true;
+    activeProvidersCfg = cfg;
+
+    if (isBotOrAutomatedVisitor()) {
+      log('Skipping analytics initialization for bot or automated visitor.');
+      return;
+    }
+
+    const attr = window.sweeprAttribution ? window.sweeprAttribution.getPayload() : {};
+    const consentState = getEffectiveConsentState();
+
+    // Google Consent Mode v2 default (strictly 'denied' for UK/EEA until user clicks 'Accept')
+    window.gtag('consent', 'default', {
+      analytics_storage: consentState,
+      ad_storage: consentState,
+      ad_user_data: consentState,
+      ad_personalization: consentState,
+      functionality_storage: 'granted',
+      security_storage: 'granted',
+      url_passthrough: true,
+      ads_data_redaction: consentState === 'denied'
+    });
+
+    // 1. Google Analytics 4 (runs in cookieless Consent Mode v2 when consentState === 'denied')
+    if (cfg.gaMeasurementId && cfg.gaMeasurementId.startsWith('G-')) {
+      log('Initializing Google Analytics 4 with ID:', cfg.gaMeasurementId, 'Consent:', consentState);
+      const gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.gaMeasurementId)}`;
+      document.head.appendChild(gaScript);
+
+      window.gtag('js', new Date());
+      window.gtag('config', cfg.gaMeasurementId, {
+        send_page_view: true,
+        anonymize_ip: true,
+        campaign_source: attr.utm_source || undefined,
+        campaign_medium: attr.utm_medium || undefined,
+        campaign_name: attr.utm_campaign || undefined,
+        campaign_term: attr.utm_term || undefined,
+        campaign_content: attr.utm_content || undefined
+      });
+    }
+
+    // 2 & 3. Meta Pixel & Microsoft Clarity (gated behind explicit consent)
+    if (consentState === 'granted') {
+      loadConsentGatedProviders(cfg);
+    } else {
+      renderCookieConsentPill(false);
     }
 
     // Note: Do NOT call window.sweeprTrack('page_view') here because gtag('config', ..., { send_page_view: true })
@@ -345,8 +494,15 @@
     setTimeout(() => window.sweeprTrack('dwell_time', { seconds: 60 }), 60000);
     setTimeout(() => window.sweeprTrack('dwell_time', { seconds: 120 }), 120000);
 
-    // 3. Click Interactions (CTAs, Downloads, Navigation)
+    // 3. Click Interactions (CTAs, Downloads, Navigation, Cookie Preferences)
     document.addEventListener('click', function (e) {
+      const cookieTrigger = e.target.closest('[data-cookie-preferences], a[href="#cookie-preferences"]');
+      if (cookieTrigger) {
+        e.preventDefault();
+        renderCookieConsentPill(true);
+        return;
+      }
+
       const target = e.target.closest('a, button');
       if (!target) return;
 

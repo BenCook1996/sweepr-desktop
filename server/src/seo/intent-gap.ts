@@ -300,7 +300,7 @@ export function computeIntentGapReport(
       const hasExplicitMeta = Boolean(
         cleanEntry?.metaTitle &&
           cleanEntry.metaTitle.length >= 30 &&
-          cleanEntry.metaTitle.length <= 60 &&
+          cleanEntry.metaTitle.length <= 115 &&
           cleanEntry?.metaDescription &&
           cleanEntry.metaDescription.length >= 110 &&
           cleanEntry.metaDescription.length <= 158 &&
@@ -661,8 +661,8 @@ export function approveIntentGapRecommendation(
 
     const title = String(input.title || "").trim();
     const metaDescription = String(input.meta_description || "").trim();
-    if (title && (title.length < 30 || title.length > 60)) {
-      return { ok: false, error: "title_must_be_30_to_60_chars" };
+    if (title && (title.length < 30 || title.length > 115)) {
+      return { ok: false, error: "title_must_be_30_to_115_chars" };
     }
     if (metaDescription && (metaDescription.length < 70 || metaDescription.length > 160)) {
       return { ok: false, error: "meta_description_must_be_70_to_160_chars" };

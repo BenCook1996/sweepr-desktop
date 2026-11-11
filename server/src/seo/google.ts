@@ -1,4 +1,4 @@
-import { createSign } from "node:crypto";
+import { createHash, createSign } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +6,16 @@ import type { SeoStore } from "./store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_INDEXING_QUEUE_PATH = path.resolve(__dirname, "../data/indexing-queue.json");
+const DEFAULT_SITEMAP_XML_PATH = path.resolve(__dirname, "../../public/sitemap.xml");
+
+function computeLocalSitemapSha256(): string | null {
+  try {
+    if (existsSync(DEFAULT_SITEMAP_XML_PATH)) {
+      return createHash("sha256").update(readFileSync(DEFAULT_SITEMAP_XML_PATH)).digest("hex");
+    }
+  } catch {}
+  return null;
+}
 
 /**
  * Phase 2 data providers (all free, all optional, all env-configured):
@@ -379,7 +389,8 @@ export async function refreshOpenPageRank(store: SeoStore, cfg: SeoProviderConfi
 export async function submitGscSitemap(
   store: SeoStore,
   cfg: SeoProviderConfig,
-  sitemapUrl?: string
+  sitemapUrl?: string,
+  opts?: { force?: boolean }
 ): Promise<{
   ok: boolean;
   submitted: boolean;
@@ -387,11 +398,43 @@ export async function submitGscSitemap(
   sitemap_url: string;
   site_url: string | null;
   submitted_at: string;
+  sitemap_sha256?: string | null;
+  skipped_unchanged?: boolean;
   note?: string;
 }> {
   const gsc = resolveGscConfig(cfg, store);
   const targetSitemap = sitemapUrl || `${(cfg.siteUrl || "https://sweeprcleaner.com").replace(/\/$/, "")}/sitemap.xml`;
   const submittedAt = new Date().toISOString();
+  const currentSha256 = computeLocalSitemapSha256();
+
+  if (!opts?.force && currentSha256) {
+    const prev = store.getSetting<{ submitted?: boolean; sitemap_sha256?: string | null } | null>(
+      "gsc_last_sitemap_submit",
+      null
+    );
+    let queueLastSha: string | null = null;
+    try {
+      if (existsSync(DEFAULT_INDEXING_QUEUE_PATH)) {
+        const q = JSON.parse(readFileSync(DEFAULT_INDEXING_QUEUE_PATH, "utf8"));
+        if (typeof q?.last_gsc_sitemap_sha256 === "string") {
+          queueLastSha = q.last_gsc_sitemap_sha256;
+        }
+      }
+    } catch {}
+    if ((prev?.submitted && prev.sitemap_sha256 === currentSha256) || queueLastSha === currentSha256) {
+      return {
+        ok: true,
+        submitted: false,
+        mode: gsc.authMode,
+        sitemap_url: targetSitemap,
+        site_url: gsc.siteUrl || null,
+        submitted_at: submittedAt,
+        sitemap_sha256: currentSha256,
+        skipped_unchanged: true,
+        note: "Skipped GSC sitemap PUT because sitemap.xml SHA-256 is unchanged since last submission.",
+      };
+    }
+  }
 
   if ((!gsc.sa && !gsc.oauth) || !gsc.siteUrl) {
     const fallback = {
@@ -401,6 +444,7 @@ export async function submitGscSitemap(
       sitemap_url: targetSitemap,
       site_url: gsc.siteUrl || null,
       submitted_at: submittedAt,
+      sitemap_sha256: currentSha256,
       note: "Service account credentials not set yet; using IndexNow + sitemap.xml crawl bridge.",
     };
     store.setSetting("gsc_last_sitemap_submit", fallback);
@@ -433,8 +477,19 @@ export async function submitGscSitemap(
     sitemap_url: targetSitemap,
     site_url: gsc.siteUrl,
     submitted_at: submittedAt,
+    sitemap_sha256: currentSha256,
   };
   store.setSetting("gsc_last_sitemap_submit", record);
+  if (currentSha256) {
+    try {
+      if (existsSync(DEFAULT_INDEXING_QUEUE_PATH)) {
+        const q = JSON.parse(readFileSync(DEFAULT_INDEXING_QUEUE_PATH, "utf8"));
+        q.last_gsc_sitemap_sha256 = currentSha256;
+        q.last_gsc_sitemap_submitted_at = submittedAt;
+        writeFileSync(DEFAULT_INDEXING_QUEUE_PATH, JSON.stringify(q, null, 2) + "\n", "utf8");
+      }
+    } catch {}
+  }
   return record;
 }
 
@@ -591,6 +646,8 @@ export async function runCloudGoogleSeoSync(
     maxInspectUrls?: number;
     runCwv?: boolean;
     persistQueue?: boolean;
+    submitSitemap?: boolean;
+    forceSitemapSubmit?: boolean;
   }
 ) {
   const gsc = resolveGscConfig(cfg, store);
@@ -623,13 +680,15 @@ export async function runCloudGoogleSeoSync(
     submitted: false,
     sitemap_url: `${(cfg.siteUrl || "https://sweeprcleaner.com").replace(/\/$/, "")}/sitemap.xml`,
   };
-  try {
-    const smRes = await submitGscSitemap(store, cfg);
-    sitemapSubmit = {
-      submitted: smRes.submitted,
-      sitemap_url: smRes.sitemap_url,
-    };
-  } catch {}
+  if (opts?.submitSitemap || opts?.forceSitemapSubmit) {
+    try {
+      const smRes = await submitGscSitemap(store, cfg, undefined, { force: opts?.forceSitemapSubmit });
+      sitemapSubmit = {
+        submitted: smRes.submitted,
+        sitemap_url: smRes.sitemap_url,
+      };
+    } catch {}
+  }
 
   let urlInspection = {
     inspected_count: 0,

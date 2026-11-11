@@ -218,7 +218,7 @@
         </div>
       </div>
       <a href="/login" class="btn btn-ghost text-sm">Login</a>
-      <a href="/download" class="btn btn-go gap-2 text-sm">
+      <a href="/download" class="btn btn-go gap-2 text-sm" rel="nofollow">
         <span>Get SWEEPR Cleaner</span>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
@@ -250,11 +250,11 @@
         <strong>SWEEPR Cleaner</strong> was built from the ground up as a fast, clutter-free alternative: it is tiny (under 6 MB (5.8 MB)), never runs in the background when closed, shows you exactly what will be cleaned with a 7-day undo safety net, updates your apps in one click, boosts your PC for gaming, permanently shreds private files, and lets you clean up to 5 devices on one license.
       </p>
       <div class="flex flex-wrap gap-4 items-center">
-        <a href="/download" class="btn btn-go gap-2">
+        <a href="/download" class="btn btn-go gap-2" rel="nofollow">
           <span>Free Download</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-ghost text-sm font-semibold">Get Pro Now &rarr;</a>
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-ghost text-sm font-semibold" rel="nofollow">Get Pro Now &rarr;</a>
       </div>
     </div>
 
@@ -375,11 +375,11 @@
         Scan your PC in under 60 seconds and see exactly how many gigabytes you can safely recover today.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="/download" class="btn btn-go btn-big gap-2">
+        <a href="/download" class="btn btn-go btn-big gap-2" rel="nofollow">
           <span>Free Download</span>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big">
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big" rel="nofollow">
           Get Pro Now
         </a>
       </div>
@@ -404,6 +404,23 @@
     </div>
   </footer>
 
+    <script>
+    (function () {
+      fetch('/api/pricing', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          var c = (d && d.current) || d;
+          if (!c || !c.annualFormatted) return;
+          var txt = c.annualFormatted + '/yr (Save ' + c.annualSavingsPercent + '%), ' +
+                    c.sixMonthFormatted + '/6mo, or ' +
+                    c.monthlyFormatted + '/mo';
+          document.querySelectorAll('[data-sweepr-pricing-cell]').forEach(function (el) {
+            el.textContent = txt;
+          });
+        })
+        .catch(function () {});
+    })();
+  </script>
   <script src="/i18n.js" defer></script>
 </body>
 </html>

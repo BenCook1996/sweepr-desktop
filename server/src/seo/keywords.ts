@@ -63,10 +63,24 @@ export const SEO_STRATEGY_LEDGER_PATH = resolve(__dirname, "../data/seo-strategy
 export const LOCKED_TEST_TITLE_SLUGS = new Set([
   "steam-depotcache",
   "riot-client-logs",
-  "elgato-streamdeck-cache",
+  "logitech-ghub-installer-cache",
+  "stremio-desktop-cache",
+  "amd-shader-cache",
+  "comfyui-temp-output-cache",
+  "genshin-impact-update-cache",
+  "winsxs",
+  "programdata-package-cache",
   "windows-livekernelreports",
+  "elgato-streamdeck-cache",
+  "logitech-options-plus-cache",
+  "opera-gx-cache",
+  "capcut-desktop-cache",
+  "zen-browser-cache",
+  "medal-tv-cache",
+  "windows-old",
   "vivaldi-browser-cache",
   "jetbrains-intellij-cache",
+  "localappdata-webview2-ebwebview-cache",
 ]);
 
 export const RETIRED_5X_SUFFIX_RE =
@@ -1584,9 +1598,9 @@ export function validateCandidateCleanItem(
     errors.push("manualSteps_requires_at_least_2_steps");
   }
 
-  // Gate 1: Title Length (30–60 chars) & Catalog-Wide Uniqueness
+  // Gate 1: Title Length (30–115 chars) & Catalog-Wide Uniqueness
   const computedTitle = buildPseoTitle(candidate);
-  if (computedTitle.length < 30 || computedTitle.length > 60) {
+  if (computedTitle.length < 30 || computedTitle.length > 115) {
     errors.push(`title_length_out_of_bounds:${computedTitle.length}(${computedTitle})`);
   }
   const lowerTitle = computedTitle.toLowerCase();

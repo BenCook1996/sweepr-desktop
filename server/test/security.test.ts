@@ -1773,6 +1773,41 @@ test("Multi-currency purchase telemetry on /checkout/success: injects actual Str
   assert.ok(!html.includes("value:49.99,currency:'GBP'"), "Must not contain hardcoded 49.99 GBP");
 });
 
+test("Crash telemetry POST /v1/telemetry/crash records Desktop and Mobile crashes into CRM crashes_7d", async () => {
+  const { repo, post } = setup();
+  assert.equal(repo.getCrmStats().crashes_7d, 0);
+
+  const desktopCrash = await post("/v1/telemetry/crash", {
+    platform: "windows",
+    app_version: "0.1.0",
+    error_type: "rust_panic",
+    message: "Panic at src/scanner.rs:142:9: Failed reading <redacted_path>",
+    stack: "location: src/scanner.rs:142:9",
+  });
+  assert.equal(desktopCrash.status, 200);
+
+  const androidCrash = await post("/v1/telemetry/crash", {
+    platform: "android",
+    app_version: "1.0.2",
+    error_type: "IllegalStateException",
+    message: "IllegalStateException on main: MediaStore cursor closed",
+    stack: "java.lang.IllegalStateException at com.sweepr.app.MediaScanner.scan(MediaScanner.kt:88)",
+  });
+  assert.equal(androidCrash.status, 200);
+
+  const iosCrash = await post("/v1/telemetry/crash", {
+    platform: "ios",
+    app_version: "1.0.2",
+    error_type: "NSRangeException",
+    message: "NSRangeException: Index out of bounds",
+    stack: "0 CoreFoundation __exceptionPreprocess + 242",
+  });
+  assert.equal(iosCrash.status, 200);
+
+  assert.equal(repo.getCrmStats().crashes_7d, 3);
+});
+
+
 
 
 

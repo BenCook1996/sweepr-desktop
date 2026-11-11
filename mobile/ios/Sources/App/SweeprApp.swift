@@ -38,8 +38,11 @@ struct SweeprApp: App {
     @AppStorage("sweepr_theme_mode") private var themeModeRaw: String = SweeprThemeMode.dark.rawValue
 
     init() {
-        // Install on-device crash & uncaught exception logger
+        // Install on-device crash & uncaught exception logger and flush any pending crash report to /v1/telemetry/crash
         CrashLogger.install()
+        Task {
+            await CrashLogger.flushPendingCrashReport()
+        }
 
         #if DEBUG
         // Verbose RevenueCat logs only in debug builds (they can include purchase details).

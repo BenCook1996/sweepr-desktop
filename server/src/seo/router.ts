@@ -485,6 +485,8 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       maxInspectUrls: typeof body.max_inspect_urls === "number" ? body.max_inspect_urls : 6,
       runCwv: Boolean(body.run_cwv),
       persistQueue: body.persist_queue !== false,
+      submitSitemap: Boolean(body.submit_sitemap),
+      forceSitemapSubmit: Boolean(body.force_sitemap_submit),
     });
     const w = gscWindow();
     const intentGap = w

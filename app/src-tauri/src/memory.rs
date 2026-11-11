@@ -334,13 +334,22 @@ pub fn toggle_startup_item(name: &str, scope: &str, enabled: bool) -> AppResult<
 }
 
 #[cfg(windows)]
+pub const AUTOSTART_REG_VALUE: &str = "SWEEPRCleaner";
+#[cfg(windows)]
+const LEGACY_AUTOSTART_REG_VALUE: &str = "Sweepr";
+
+#[cfg(windows)]
 pub fn is_autostart_enabled() -> bool {
     use winreg::enums::HKEY_CURRENT_USER;
     use winreg::RegKey;
     RegKey::predef(HKEY_CURRENT_USER)
         .open_subkey(RUN_KEY)
-        .and_then(|k| k.get_value::<String, _>("Sweepr"))
-        .map(|v| !v.trim().is_empty())
+        .map(|k| {
+            k.get_value::<String, _>(AUTOSTART_REG_VALUE)
+                .or_else(|_| k.get_value::<String, _>(LEGACY_AUTOSTART_REG_VALUE))
+                .map(|v| !v.trim().is_empty())
+                .unwrap_or(false)
+        })
         .unwrap_or(false)
 }
 
@@ -373,10 +382,12 @@ pub fn set_autostart_enabled(enabled: bool) -> AppResult<bool> {
             .map_err(|e| AppError::Other(format!("Could not determine executable path: {e}")))?;
         let cmd = format!("\"{}\" --autostart", exe.to_string_lossy());
         run_key
-            .set_value("Sweepr", &cmd)
+            .set_value(AUTOSTART_REG_VALUE, &cmd)
             .map_err(|e| AppError::Other(format!("Could not enable autostart: {e}")))?;
+        let _ = run_key.delete_value(LEGACY_AUTOSTART_REG_VALUE);
     } else {
-        let _ = run_key.delete_value("Sweepr");
+        let _ = run_key.delete_value(AUTOSTART_REG_VALUE);
+        let _ = run_key.delete_value(LEGACY_AUTOSTART_REG_VALUE);
     }
     Ok(is_autostart_enabled())
 }
@@ -1345,6 +1356,67 @@ fn save_tab_sessions_index(data_dir: &std::path::Path, list: &[TabSessionSnapsho
     Ok(())
 }
 
+/// Returns `(browser_id, browser_label, user_data_root)` across Windows, macOS, and Linux.
+/// Each `user_data_root` is the directory that contains the `Default` profile folder.
+pub fn chromium_user_data_roots() -> Vec<(&'static str, &'static str, std::path::PathBuf)> {
+    let mut roots = Vec::new();
+    if let Some(local) = dirs::data_local_dir() {
+        for (id, label, rel) in [
+            ("chrome", "Google Chrome", "Google/Chrome"),
+            ("msedge", "Microsoft Edge", "Microsoft/Edge"),
+            ("brave", "Brave Browser", "BraveSoftware/Brave-Browser"),
+        ] {
+            let candidate = local.join(rel).join("User Data");
+            if !roots.iter().any(|(_, _, p)| p == &candidate) {
+                roots.push((id, label, candidate));
+            }
+        }
+    }
+    if let Some(home) = dirs::home_dir() {
+        let app_support = home.join("Library/Application Support");
+        for (id, label, rel) in [
+            ("chrome", "Google Chrome", "Google/Chrome"),
+            ("msedge", "Microsoft Edge", "Microsoft Edge"),
+            ("brave", "Brave Browser", "BraveSoftware/Brave-Browser"),
+        ] {
+            let candidate = app_support.join(rel);
+            if !roots.iter().any(|(_, _, p)| p == &candidate) {
+                roots.push((id, label, candidate));
+            }
+        }
+        let dot_config = dirs::config_dir().unwrap_or_else(|| home.join(".config"));
+        for (id, label, rel) in [
+            ("chrome", "Google Chrome", "google-chrome"),
+            ("msedge", "Microsoft Edge", "microsoft-edge"),
+            ("brave", "Brave Browser", "BraveSoftware/Brave-Browser"),
+        ] {
+            let candidate = dot_config.join(rel);
+            if !roots.iter().any(|(_, _, p)| p == &candidate) {
+                roots.push((id, label, candidate));
+            }
+        }
+    }
+    roots
+}
+
+pub fn firefox_profiles_roots() -> Vec<std::path::PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(roaming) = dirs::data_dir() {
+        roots.push(roaming.join("Mozilla").join("Firefox").join("Profiles"));
+    }
+    if let Some(home) = dirs::home_dir() {
+        let mac_ff = home.join("Library/Application Support/Firefox/Profiles");
+        if !roots.contains(&mac_ff) {
+            roots.push(mac_ff);
+        }
+        let linux_ff = home.join(".mozilla/firefox");
+        if !roots.contains(&linux_ff) {
+            roots.push(linux_ff);
+        }
+    }
+    roots
+}
+
 pub fn backup_tab_sessions(
     data_dir: &std::path::Path,
     custom_label: Option<&str>,
@@ -1362,54 +1434,47 @@ pub fn backup_tab_sessions(
     let mut total_bytes = 0u64;
     let mut estimated_tabs = 0u32;
 
-    if let Some(local) = dirs::data_local_dir() {
-        let chromium_targets = [
-            ("chrome", "Google Chrome", "Google/Chrome"),
-            ("msedge", "Microsoft Edge", "Microsoft/Edge"),
-            ("brave", "Brave Browser", "BraveSoftware/Brave-Browser"),
-        ];
-
-        for (id, label, rel) in chromium_targets {
-            let sessions_dir = local.join(rel).join("User Data").join("Default").join("Sessions");
-            if !sessions_dir.is_dir() {
+    for (id, label, user_data_root) in chromium_user_data_roots() {
+        let sessions_dir = user_data_root.join("Default").join("Sessions");
+        if !sessions_dir.is_dir() {
+            continue;
+        }
+        let Ok(entries) = std::fs::read_dir(&sessions_dir) else {
+            continue;
+        };
+        let mut browser_bytes = 0u64;
+        let mut browser_tabs = 0u32;
+        let dst_browser_dir = snap_dir.join(id);
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if !p.is_file() {
                 continue;
             }
-            let Ok(entries) = std::fs::read_dir(&sessions_dir) else {
-                continue;
-            };
-            let mut browser_bytes = 0u64;
-            let mut browser_tabs = 0u32;
-            let dst_browser_dir = snap_dir.join(id);
-            for entry in entries.flatten() {
-                let p = entry.path();
-                if !p.is_file() {
-                    continue;
-                }
-                let fname = entry.file_name().to_string_lossy().into_owned();
-                if fname.starts_with("Session_") || fname.starts_with("Tabs_") {
-                    let dst = dst_browser_dir.join(&fname);
-                    if let Ok(copied) = copy_shared_file(&p, &dst) {
-                        if copied > 0 {
-                            browser_bytes += copied;
-                            if let Ok(raw) = std::fs::read(&dst) {
-                                browser_tabs = browser_tabs.max(estimate_tabs_in_bytes(&raw));
-                            }
+            let fname = entry.file_name().to_string_lossy().into_owned();
+            if fname.starts_with("Session_") || fname.starts_with("Tabs_") {
+                let dst = dst_browser_dir.join(&fname);
+                if let Ok(copied) = copy_shared_file(&p, &dst) {
+                    if copied > 0 {
+                        browser_bytes += copied;
+                        if let Ok(raw) = std::fs::read(&dst) {
+                            browser_tabs = browser_tabs.max(estimate_tabs_in_bytes(&raw));
                         }
                     }
                 }
             }
-            if browser_bytes > 0 {
+        }
+        if browser_bytes > 0 {
+            if !browsers_backed_up.iter().any(|b: &String| b == label) {
                 browsers_backed_up.push(label.to_string());
-                total_bytes += browser_bytes;
-                estimated_tabs += browser_tabs.max(1);
             }
+            total_bytes += browser_bytes;
+            estimated_tabs += browser_tabs.max(1);
         }
     }
 
-    if let Some(roaming) = dirs::data_dir() {
-        let ff_profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+    let mut ff_bytes = 0u64;
+    for ff_profiles in firefox_profiles_roots() {
         if let Ok(entries) = std::fs::read_dir(&ff_profiles) {
-            let mut ff_bytes = 0u64;
             for entry in entries.flatten() {
                 let p = entry.path();
                 let backups = p.join("sessionstore-backups");
@@ -1429,12 +1494,12 @@ pub fn backup_tab_sessions(
                     }
                 }
             }
-            if ff_bytes > 0 {
-                browsers_backed_up.push("Mozilla Firefox".to_string());
-                total_bytes += ff_bytes;
-                estimated_tabs += 4;
-            }
         }
+    }
+    if ff_bytes > 0 {
+        browsers_backed_up.push("Mozilla Firefox".to_string());
+        total_bytes += ff_bytes;
+        estimated_tabs += 4;
     }
 
     if browsers_backed_up.is_empty() {
@@ -1490,37 +1555,32 @@ pub fn restore_tab_session(data_dir: &std::path::Path, snapshot_id: &str) -> App
 
     let mut files_restored = 0u32;
 
-    if let Some(local) = dirs::data_local_dir() {
-        let chromium_targets = [
-            ("chrome", "Google/Chrome"),
-            ("msedge", "Microsoft/Edge"),
-            ("brave", "BraveSoftware/Brave-Browser"),
-        ];
-        for (id, rel) in chromium_targets {
-            let src_dir = snap_dir.join(id);
-            if !src_dir.is_dir() {
-                continue;
-            }
-            let dst_dir = local.join(rel).join("User Data").join("Default").join("Sessions");
-            let _ = std::fs::create_dir_all(&dst_dir);
-            if let Ok(entries) = std::fs::read_dir(&src_dir) {
-                for entry in entries.flatten() {
-                    let p = entry.path();
-                    if p.is_file() {
-                        let dst = dst_dir.join(entry.file_name());
-                        if copy_shared_file(&p, &dst).is_ok() {
-                            files_restored += 1;
-                        }
+    for (id, _label, user_data_root) in chromium_user_data_roots() {
+        let src_dir = snap_dir.join(id);
+        if !src_dir.is_dir() || !user_data_root.exists() {
+            continue;
+        }
+        let dst_dir = user_data_root.join("Default").join("Sessions");
+        let _ = std::fs::create_dir_all(&dst_dir);
+        if let Ok(entries) = std::fs::read_dir(&src_dir) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_file() {
+                    let dst = dst_dir.join(entry.file_name());
+                    if copy_shared_file(&p, &dst).is_ok() {
+                        files_restored += 1;
                     }
                 }
             }
         }
     }
 
-    if let Some(roaming) = dirs::data_dir() {
-        let ff_src = snap_dir.join("firefox");
-        if ff_src.is_dir() {
-            let ff_profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+    let ff_src = snap_dir.join("firefox");
+    if ff_src.is_dir() {
+        for ff_profiles in firefox_profiles_roots() {
+            if !ff_profiles.is_dir() {
+                continue;
+            }
             if let Ok(prof_entries) = std::fs::read_dir(&ff_src) {
                 for prof in prof_entries.flatten() {
                     let prof_path = prof.path();

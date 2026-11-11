@@ -20,6 +20,99 @@ mod vault;
 
 use tauri::Manager;
 
+/// Strips personal file paths (e.g. `C:\Users\Alice\...`, `/Users/alice/...`, `/home/alice/...`)
+/// so crash telemetry never contains PII or local filesystem usernames.
+pub(crate) fn sanitize_crash_text(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    for token in raw.split_whitespace() {
+        let trimmed = token.trim_matches(|c: char| matches!(c, '"' | '\'' | '(' | ')' | '[' | ']' | ',' | ';'));
+        let lower = trimmed.to_ascii_lowercase();
+        let is_personal_path = lower.contains(":\\users\\")
+            || lower.contains(":/users/")
+            || lower.starts_with("/users/")
+            || lower.starts_with("/home/")
+            || lower.starts_with("\\\\")
+            || (trimmed.len() >= 3
+                && trimmed.as_bytes()[0].is_ascii_alphabetic()
+                && trimmed.as_bytes()[1] == b':'
+                && (trimmed.as_bytes()[2] == b'\\' || trimmed.as_bytes()[2] == b'/'));
+        if !out.is_empty() {
+            out.push(' ');
+        }
+        if is_personal_path {
+            out.push_str("<redacted_path>");
+        } else if trimmed.contains('@') && trimmed.contains('.') {
+            out.push_str("<redacted_email>");
+        } else {
+            out.push_str(token);
+        }
+    }
+    out.chars().take(512).collect()
+}
+
+pub(crate) fn sanitize_panic_location(file: &str, line: u32, col: u32) -> String {
+    let normalized = file.replace('\\', "/");
+    let rel = if let Some(idx) = normalized.rfind("src/") {
+        &normalized[idx..]
+    } else {
+        normalized.rsplit('/').next().unwrap_or("unknown.rs")
+    };
+    format!("{rel}:{line}:{col}")
+}
+
+async fn flush_last_crash_report(api_url: String, crash_paths: Vec<std::path::PathBuf>) {
+    for path in crash_paths {
+        if !path.exists() {
+            continue;
+        }
+        let Ok(raw) = std::fs::read_to_string(&path) else {
+            let _ = std::fs::remove_file(&path);
+            continue;
+        };
+        let Ok(mut payload) = serde_json::from_str::<serde_json::Value>(&raw) else {
+            let _ = std::fs::remove_file(&path);
+            continue;
+        };
+        if let Some(obj) = payload.as_object_mut() {
+            if !obj.contains_key("platform") {
+                obj.insert(
+                    "platform".to_string(),
+                    serde_json::Value::String(std::env::consts::OS.to_string()),
+                );
+            }
+            if !obj.contains_key("error_type") {
+                obj.insert(
+                    "error_type".to_string(),
+                    serde_json::Value::String("rust_panic".to_string()),
+                );
+            }
+        }
+        let base = api_url.trim_end_matches('/');
+        let base_url = if base.is_empty() {
+            "https://sweeprcleaner.com"
+        } else {
+            base
+        };
+        let url = format!("{base_url}/v1/telemetry/crash");
+        if let Ok(client) = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(8))
+            .build()
+        {
+            if let Ok(resp) = client
+                .post(&url)
+                .header("x-sweepr-project", "cleaner")
+                .json(&payload)
+                .send()
+                .await
+            {
+                if resp.status().is_success() || resp.status().as_u16() == 400 {
+                    let _ = std::fs::remove_file(&path);
+                }
+            }
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     if scheduler::run_headless_if_requested() {
@@ -30,25 +123,80 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
+            let local_data_dir = app
+                .path()
+                .app_local_data_dir()
+                .unwrap_or_else(|_| data_dir.clone());
             let _ = std::fs::create_dir_all(&data_dir);
+            let _ = std::fs::create_dir_all(&local_data_dir);
 
-            // Install crash reporting hook (#3)
-            let panic_dir = data_dir.clone();
+            let licensing = licensing::Licensing::new(data_dir.clone());
+            let api_url_for_crash = licensing.api_url().to_string();
+
+            // Flush any sanitized crash report (`last_crash.json`) from a previous session to POST /v1/telemetry/crash
+            let mut pending_crash_paths = vec![local_data_dir.join("last_crash.json")];
+            if local_data_dir != data_dir {
+                pending_crash_paths.push(data_dir.join("last_crash.json"));
+            }
+            if pending_crash_paths.iter().any(|p| p.exists()) {
+                tauri::async_runtime::spawn(async move {
+                    flush_last_crash_report(api_url_for_crash, pending_crash_paths).await;
+                });
+            }
+
+            // Install sanitized crash reporting hook (#3) writing `<app_local_data_dir>/last_crash.json`
+            let panic_local_dir = local_data_dir.clone();
+            let panic_data_dir = data_dir.clone();
+            let app_version = app.package_info().version.to_string();
             let prev_hook = std::panic::take_hook();
             std::panic::set_hook(Box::new(move |info| {
                 let ts = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_secs())
                     .unwrap_or(0);
-                let msg = format!("[ts:{ts}] Panic: {}\n", info);
-                let _ = std::fs::create_dir_all(&panic_dir);
+                let raw_payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
+                    (*s).to_string()
+                } else if let Some(s) = info.payload().downcast_ref::<String>() {
+                    s.clone()
+                } else {
+                    "Unexpected panic".to_string()
+                };
+                let sanitized_msg = sanitize_crash_text(&raw_payload);
+                let location = info
+                    .location()
+                    .map(|l| sanitize_panic_location(l.file(), l.line(), l.column()))
+                    .unwrap_or_else(|| "unknown:0:0".to_string());
+                let os_name = std::env::consts::OS;
+                let report_json = serde_json::json!({
+                    "version": app_version,
+                    "app_version": app_version,
+                    "os": os_name,
+                    "platform": os_name,
+                    "error_type": "rust_panic",
+                    "location": location,
+                    "message": format!("Panic at {location}: {sanitized_msg}"),
+                    "stack": format!("location: {location}"),
+                    "timestamp": ts,
+                });
+                let _ = std::fs::create_dir_all(&panic_local_dir);
+                let _ = std::fs::write(
+                    panic_local_dir.join("last_crash.json"),
+                    serde_json::to_string_pretty(&report_json).unwrap_or_default(),
+                );
+                if panic_data_dir != panic_local_dir {
+                    let _ = std::fs::create_dir_all(&panic_data_dir);
+                    let _ = std::fs::write(
+                        panic_data_dir.join("last_crash.json"),
+                        serde_json::to_string_pretty(&report_json).unwrap_or_default(),
+                    );
+                }
                 if let Ok(mut f) = std::fs::OpenOptions::new()
                     .create(true)
                     .append(true)
-                    .open(panic_dir.join("crash.log"))
+                    .open(panic_data_dir.join("crash.log"))
                 {
                     use std::io::Write;
-                    let _ = write!(f, "{}", msg);
+                    let _ = writeln!(f, "[ts:{ts}] Panic at {location}: {sanitized_msg}");
                 }
                 prev_hook(info);
             }));
@@ -58,14 +206,17 @@ pub fn run() {
 
             app.manage(commands::AppState {
                 data_dir: data_dir.clone(),
-                licensing: licensing::Licensing::new(data_dir.clone()),
+                licensing,
             });
             battery::setup_tray_and_monitor(app.handle(), data_dir);
             Ok(())
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                if cfg!(target_os = "macos") {
+                let installer_mode = std::env::args().any(|a| a == "--installer");
+                let tray_active = !installer_mode
+                    && window.app_handle().tray_by_id(battery::TRAY_ID).is_some();
+                if (cfg!(target_os = "windows") && tray_active) || cfg!(target_os = "macos") {
                     api.prevent_close();
                     let _ = window.hide();
                 }
@@ -181,4 +332,22 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Sweepr");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitizes_personal_paths_and_locations() {
+        let raw = "Failed reading C:\\Users\\Benjamin\\Documents\\secret.txt for user@example.com";
+        let sanitized = sanitize_crash_text(raw);
+        assert!(!sanitized.contains("Benjamin"));
+        assert!(!sanitized.contains("user@example.com"));
+        assert!(sanitized.contains("<redacted_path>"));
+        assert!(sanitized.contains("<redacted_email>"));
+
+        let loc = sanitize_panic_location("C:\\Users\\Benjamin\\Downloads\\desktop_cleaner\\app\\src-tauri\\src\\scanner.rs", 142, 9);
+        assert_eq!(loc, "src/scanner.rs:142:9");
+    }
 }

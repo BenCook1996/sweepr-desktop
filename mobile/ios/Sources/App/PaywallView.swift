@@ -44,8 +44,59 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
         }
     }
 
+    static var addonSixMonthNumericAmount: Double {
+        switch currencyCode {
+        case "CAD": return 9.99
+        case "AUD": return 10.99
+        case "NZD": return 11.99
+        case "SGD": return 8.99
+        case "SEK", "NOK": return 79.99
+        case "DKK": return 49.99
+        case "PLN": return 29.99
+        case "JPY": return 980
+        case "INR": return 599.99
+        case "BRL": return 39.99
+        default: return 6.99
+        }
+    }
+
+    static var addonMonthlyNumericAmount: Double {
+        switch currencyCode {
+        case "CAD", "AUD": return 2.99
+        case "NZD": return 3.49
+        case "SGD": return 2.49
+        case "SEK", "NOK": return 19.99
+        case "DKK": return 14.99
+        case "PLN": return 7.99
+        case "JPY": return 290
+        case "INR": return 169.99
+        case "BRL": return 9.99
+        default: return 1.99
+        }
+    }
+
     static var localizedAddonYearlyPrice: String {
         formatLocalCurrency(addonYearlyNumericAmount)
+    }
+
+    var intervalSuffix: String {
+        switch self {
+        case .monthly: return "/mo"
+        case .sixMonth: return "/6mo"
+        case .annual: return "/yr"
+        }
+    }
+
+    var addonNumericAmount: Double {
+        switch self {
+        case .monthly: return Self.addonMonthlyNumericAmount
+        case .sixMonth: return Self.addonSixMonthNumericAmount
+        case .annual: return Self.addonYearlyNumericAmount
+        }
+    }
+
+    var addonIntervalPriceLabel: String {
+        "+\(Self.formatLocalCurrency(addonNumericAmount))\(intervalSuffix)"
     }
 
     var fallbackNumericPrice: Double {
@@ -162,16 +213,28 @@ enum SubscriptionPlanOption: String, CaseIterable, Identifiable {
         }
     }
 
+    var savingsPercent: Int {
+        let monthlyPrice = SubscriptionPlanOption.monthly.fallbackNumericPrice
+        guard monthlyPrice > 0 else { return 0 }
+        let months: Double
+        switch self {
+        case .monthly: return 0
+        case .sixMonth: months = 6.0
+        case .annual: months = 12.0
+        }
+        return Int(((1.0 - (fallbackNumericPrice / (monthlyPrice * months))) * 100.0).rounded())
+    }
+
     var fallbackSubtitle: String {
         switch self {
         case .monthly:
             return "Billed monthly · Cancel anytime"
         case .sixMonth:
             let eq = (fallbackNumericPrice / 6.0 * 100.0).rounded(.down) / 100.0
-            return "Save 35% (\(Self.formatLocalCurrency(eq))/mo)"
+            return "Save \(savingsPercent)% (\(Self.formatLocalCurrency(eq))/mo)"
         case .annual:
             let eq = (fallbackNumericPrice / 12.0 * 100.0).rounded(.down) / 100.0
-            return "Save 58% (\(Self.formatLocalCurrency(eq))/mo)"
+            return "Save \(savingsPercent)% (\(Self.formatLocalCurrency(eq))/mo)"
         }
     }
 
@@ -224,7 +287,7 @@ struct PaywallView: View {
     private func ctaPriceLabel(for option: SubscriptionPlanOption) -> String {
         let addonCount = (includeBatteryAddon ? 1 : 0) + (includeCloudAddon ? 1 : 0)
         guard addonCount > 0 else {
-            return priceText(for: option)
+            return "\(priceText(for: option))\(option.intervalSuffix)"
         }
         let baseNumeric: Double
         if let pkg = matchedPackage(for: option, in: packages) {
@@ -232,19 +295,10 @@ struct PaywallView: View {
         } else {
             baseNumeric = option.fallbackNumericPrice
         }
-        let batteryNumeric: Double = includeBatteryAddon
-            ? (packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("battery") })
-                .map { NSDecimalNumber(decimal: $0.storeProduct.price).doubleValue }
-                ?? SubscriptionPlanOption.addonYearlyNumericAmount)
-            : 0
-        let cloudNumeric: Double = includeCloudAddon
-            ? (packages.first(where: { $0.identifier.localizedCaseInsensitiveContains("cloud") || $0.identifier.localizedCaseInsensitiveContains("vault") })
-                .map { NSDecimalNumber(decimal: $0.storeProduct.price).doubleValue }
-                ?? SubscriptionPlanOption.addonYearlyNumericAmount)
-            : 0
-        let combined = baseNumeric + batteryNumeric + cloudNumeric
+        let perAddonNumeric = option.addonNumericAmount
+        let combined = baseNumeric + Double(addonCount) * perAddonNumeric
         let formattedCombined = SubscriptionPlanOption.formatLocalCurrency(combined)
-        return "\(formattedCombined) (\(priceText(for: option)) + \(addonCount) Add-on\(addonCount > 1 ? "s" : ""))"
+        return "\(formattedCombined)\(option.intervalSuffix)"
     }
 
     var body: some View {
@@ -273,7 +327,7 @@ struct PaywallView: View {
                         Text("Clean & speed up in 1 click")
                             .font(.system(size: 22, weight: .heavy))
                             .foregroundColor(.primary)
-                        Text("Choose a plan below, or save 58% with Yearly. Cancel anytime.")
+                        Text("Choose a plan below, or save \(SubscriptionPlanOption.annual.savingsPercent)% with Yearly. Cancel anytime.")
                             .font(.system(size: 13.5))
                             .foregroundColor(.secondary)
                     }
@@ -298,7 +352,7 @@ struct PaywallView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                                Text(selectedPlan.addonIntervalPriceLabel)
                                     .font(.system(size: 12, weight: .heavy, design: .monospaced))
                                     .foregroundColor(.sweeprEmerald)
                             }
@@ -318,7 +372,7 @@ struct PaywallView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                                Text(selectedPlan.addonIntervalPriceLabel)
                                     .font(.system(size: 12, weight: .heavy, design: .monospaced))
                                     .foregroundColor(.sweeprEmerald)
                             }
@@ -458,7 +512,7 @@ struct PaywallView: View {
                                     .opacity(0.85)
                             }
                             Spacer()
-                            Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                            Text(selectedPlan.addonIntervalPriceLabel)
                                 .font(.system(size: 13, weight: .heavy, design: .monospaced))
                         }
                         .padding(14)
@@ -482,7 +536,7 @@ struct PaywallView: View {
                                     .opacity(0.85)
                             }
                             Spacer()
-                            Text("+\(SubscriptionPlanOption.localizedAddonYearlyPrice)/yr")
+                            Text(selectedPlan.addonIntervalPriceLabel)
                                 .font(.system(size: 13, weight: .heavy, design: .monospaced))
                         }
                         .padding(14)

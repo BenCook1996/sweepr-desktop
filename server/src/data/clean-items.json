@@ -14,14 +14,14 @@
       "Type %appdata%\\discord and hit Enter.",
       "Delete the folders named 'Cache', 'Code Cache', and 'GPUCache'."
     ],
-    "metaTitle": "How to Clear Discord Cache on Windows 11 Safely | SWEEPR",
-    "metaDescription": "How to clear %AppData%\\Discord\\Cache, Code Cache, and GPUCache on Windows 10/11. Reclaim 1–10 GB of cached images and videos without logging out of Discord.",
     "customFaqs": [
       {
         "q": "Will deleting %AppData%\\Discord\\Cache_Data log me out or delete my Discord messages?",
         "a": "No. All Discord messages and server history live on Discord's cloud servers, and your session token is stored separately. Clearing Cache_Data, Code Cache, and GPUCache frees disk space and fixes laggy server switching."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete Discord Cache & Code Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\discord\\Cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "spotify-cache",
@@ -37,14 +37,14 @@
       "Press Windows Key + R, type %localappdata%\\Spotify, and press Enter.",
       "Open the 'Storage' directory, select all files (Ctrl+A), and press Delete."
     ],
-    "metaTitle": "How to Clear Spotify Storage Cache on Windows | SWEEPR",
-    "metaDescription": "Why is %LocalAppData%\\Spotify\\Storage taking 10GB+? Learn how to clear Spotify desktop audio & Browser cache on Windows 10/11 while keeping playlists safe.",
     "customFaqs": [
       {
         "q": "Does clearing %LocalAppData%\\Spotify\\Storage delete my Spotify playlists or liked songs?",
         "a": "No. Your playlists and library are stored in your Spotify cloud account. %LocalAppData%\\Spotify\\Storage and Data hold encrypted stream chunks from recently played tracks that safely regenerate as you listen."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete Spotify Offline Storage & Streaming Cache? YES — Safe Cleanup Guide (Reclaim 2–10 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Spotify\\Storage? YES (2–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "steam-shader-cache",
@@ -75,14 +75,14 @@
       "Press Windows Key + R, type %localappdata%\\Google\\Chrome\\User Data\\Default and hit Enter.",
       "Locate 'Service Worker' and delete the 'CacheStorage' directory."
     ],
-    "metaTitle": "Clear Chrome Cache_Data & Service Worker Bloat | SWEEPR",
-    "metaDescription": "How to clear Google Chrome Cache_Data, Code Cache, and Service Worker CacheStorage on Windows 10/11. Reclaim 2–15 GB without deleting saved passwords or tabs.",
     "customFaqs": [
       {
         "q": "Why does Google Chrome still use 10GB+ on disk after clearing browsing data in settings?",
         "a": "Chrome's built-in Clear Browsing Data dialog often leaves orphaned Service Worker\\CacheStorage folders, File System API blobs, and multi-profile GPUCache directories in %LocalAppData%\\Google\\Chrome\\User Data."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete Google Chrome Service Worker & CacheStorage? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Service Worker\\Cac (1–5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "winsxs",
@@ -100,8 +100,6 @@
       "If Component Store Cleanup Recommended says Yes, run: Dism.exe /Online /Cleanup-Image /StartComponentCleanup",
       "Or run SWEEPR Cleaner to automate DISM Component Store pruning alongside 40+ other hidden Windows folders in one click."
     ],
-    "metaTitle": "WinSxS Folder Windows 11: Safe to Clean? (Free 6–18 GB)",
-    "metaDescription": "Is C:\\Windows\\WinSxS safe to delete on Windows 11? Never delete the folder directly — run DISM StartComponentCleanup or SWEEPR to reclaim 6–18 GB safely.",
     "customFaqs": [
       {
         "q": "Can I delete the C:\\Windows\\WinSxS folder directly in File Explorer?",
@@ -125,7 +123,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\WinSxS",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+    "metaDescription": "Can I clean C:\\Windows\\WinSxS via DISM? YES (6–20 GB). Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "windows-temp",
@@ -171,8 +171,6 @@
       "Click on 'Temporary files'.",
       "Check 'Previous Windows installation(s)' and click 'Remove files'."
     ],
-    "metaTitle": "Delete Windows.old Folder Safely on Windows 11 | SWEEPR",
-    "metaDescription": "Is C:\\Windows.old safe to delete after a Windows 11 update? Reclaim 15–35 GB safely without permission errors using Dism /Cleanup-Image or SWEEPR Cleaner.",
     "customFaqs": [
       {
         "q": "Why can't I delete C:\\Windows.old directly in File Explorer?",
@@ -201,7 +199,9 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete C:\\Windows.old? YES — Safe Cleanup Guide (Reclaim 15–35 GB)",
+    "metaDescription": "Can I delete C:\\Windows.old on Windows 11? YES (15–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "nvidia-dxcache",
@@ -217,14 +217,14 @@
       "Press Windows Key + R, type %localappdata%\\NVIDIA\\DXCache and press Enter.",
       "Select all files (Ctrl+A), press Delete, and click Skip for any files currently locked by the NVIDIA display driver."
     ],
-    "metaTitle": "Clear NVIDIA DXCache & GLCache (Fix Stutter) | SWEEPR",
-    "metaDescription": "Is %LocalAppData%\\NVIDIA\\DXCache safe to delete? Yes—reclaim 1–8 GB of old shader cache files on Windows 10/11 and fix post-update game frame-time stutters.",
     "customFaqs": [
       {
         "q": "Why does Windows say 'File In Use' when I try to delete files in NVIDIA\\DXCache?",
         "a": "Desktop Window Manager (dwm.exe), browsers with hardware acceleration, and NVIDIA background containers keep active locks on the current driver's .bin/.toc shader files. SWEEPR Cleaner automatically skips locked active files and purges all orphaned shader generations."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete NVIDIA DXCache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\NVIDIA\\DXCache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "nvidia-glcache",
@@ -270,8 +270,6 @@
       "Alternatively, press Windows Key + R and type %localappdata%\\AMD.",
       "Open DxCache, DxcCache, and VkCache and delete old shader files."
     ],
-    "metaTitle": "AMD Radeon Adrenalin: Safe to Delete? (Free 2.0 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 2.0 GB at %LocalAppData%\\AMD\\DxCache and %LocalAppData%\\AMD\\VkCache without losing settings using manual steps...",
     "customFaqs": [
       {
         "q": "Why is AMD Radeon Adrenalin DXCache & VkCache taking up so much disk space on Windows 11?",
@@ -282,7 +280,9 @@
         "a": "No. Safely removes stale shaders from uninstalled games and resolves Radeon frame-pacing micro-stutter after driver updates."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "intel-arc-shader-cache",
@@ -313,8 +313,6 @@
       "Press Windows Key + R, type %localappdata%\\EpicGamesLauncher\\Saved and press Enter.",
       "Delete any folders starting with 'webcache' as well as the 'Logs' and 'Crashes' folders."
     ],
-    "metaTitle": "Epic Games Launcher: Safe to Delete? (Free 1.0 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.0 GB at %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430 without losing settings using manual steps or...",
     "customFaqs": [
       {
         "q": "Why is Epic Games Launcher Webcache & Crash Logs taking up so much disk space on Windows 11?",
@@ -325,7 +323,9 @@
         "a": "No. Reclaims disk space and fixes blank black screen issues in the Epic Games Launcher store tab without affecting installed games."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Epic Games webcache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "steam-depotcache",
@@ -343,7 +343,6 @@
       "Select all .depot and .manifest files (Ctrl + A) and press Shift + Delete, or use SWEEPR Cleaner to clean Steam depotcache, shadercache, and orphaned downloading folders in one click."
     ],
     "warning": "Only delete depotcache when no Steam game downloads or patches are actively paused in your Steam Download Manager.",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 2.0 GB at C:\\Program Files\\Steam\\depotcache and steamapps\\downloading without losing settings using manual...",
     "customFaqs": [
       {
         "q": "Why is Steam depotcache Folder (C:\\Program Files (x86)\\Steam\\depotcache) taking up so much disk space on Windows 11?",
@@ -354,7 +353,9 @@
         "a": "No. Yes, Steam depotcache is 100% safe to delete as long as all current game updates have finished installing. Deleting it immediately reclaims 2 GB to 25 GB+ of SSD space without touching your installed games or Steam Cloud saves."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+    "metaDescription": "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "battlenet-cache",
@@ -385,8 +386,6 @@
       "Or close EA App, press Windows Key + R, and navigate to %localappdata%\\Electronic Arts\\EA Desktop\\cache.",
       "Delete all cached files inside."
     ],
-    "metaTitle": "EA App & Origin Legacy: Safe to Delete? (Free 1.5 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\Electronic Arts\\EA Desktop\\cache without losing settings using manual steps or Sweepr...",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
@@ -411,7 +410,9 @@
         "a": "No. Clears gigabytes of launcher bloat and resolves missing library tile bugs without uninstalling your EA games."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete EA App Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "ubisoft-connect-cache",
@@ -468,7 +469,8 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs..."
+    "metaTitle": "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "roblox-http-cache",
@@ -529,8 +531,6 @@
       "Open HoYoPlay Settings > Clear Downloaded Resource Cache.",
       "Remove any leftover .tmp or .zip_temp archives in the game installation folder."
     ],
-    "metaTitle": "Delete Genshin Impact Update Cache on PC Safely | SWEEPR",
-    "metaDescription": "How to delete Genshin Impact update cache, temp zip packages, and past quest voice resources on Windows 11/10. Reclaim 8–35 GB of SSD space safely.",
     "customFaqs": [
       {
         "q": "Will deleting Genshin Impact update cache or webCaches delete my game progress?",
@@ -550,7 +550,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+    "metaDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "vrchat-cache",
@@ -566,8 +568,6 @@
       "Press Windows Key + R, type %appdata%\\..\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer and press Enter.",
       "Select all cache folders and delete them."
     ],
-    "metaTitle": "VRChat World & Avatar: Safe to Delete? (Free 10.0 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 10.0 GB at %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer without losing settings using manual steps or...",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
@@ -592,7 +592,9 @@
         "a": "No. 100% safe to clear. Frees up massive SSD space while keeping your account, friends list, and uploaded avatars intact."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete VRChat Cache-WindowsPlayer? YES — Safe Cleanup Guide (Reclaim 10–30 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "fivem-cache",
@@ -667,15 +669,15 @@
       "Press Windows Key + R, type %appdata%\\Adobe\\Common and press Enter.",
       "Delete the contents of 'Media Cache Files', 'Media Cache', and 'Peak Files'."
     ],
-    "metaTitle": "Clear Adobe Media Cache Files Safely on Windows | SWEEPR",
     "customFaqs": [
       {
         "q": "Will deleting Adobe Media Cache Files (.cfa and .pek) break my Premiere Pro project?",
         "a": "No. .cfa (conformed audio) and .pek (waveform peak) files are temporary cache assets. Premiere Pro and After Effects automatically rebuild them only for the active timeline you open next."
       }
     ],
-    "metaDescription": "How to clear Adobe Common Media Cache Files on Windows 10/11. Reclaim 10–80 GB of Premiere Pro & After Effects .cfa and .pek files safely in 1 click.",
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Adobe Premiere Pro & After Effects Common Media? YES — Safe Cleanup Guide (Reclaim 5–60 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\Adobe\\Common\\Media Cache Files? YES (5–60 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "after-effects-disk-cache",
@@ -735,15 +737,15 @@
       "Open your Videos\\CacheClip folder in File Explorer.",
       "Delete old project cache UUID folders."
     ],
-    "metaTitle": "Clear DaVinci Resolve CacheClip Safely | SWEEPR",
-    "metaDescription": "How to clear DaVinci Resolve CacheClip and optimized media on Windows 10/11. Reclaim 20–150 GB of unlinked render clips safely without losing timelines.",
     "customFaqs": [
       {
         "q": "Will deleting the DaVinci Resolve CacheClip folder corrupt my project?",
         "a": "No. CacheClip holds temporary timeline render cache and scratch video proxies. Your project databases, edit timelines, and source media remain completely untouched."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete DaVinci Resolve CacheClip & Optimized Media? YES — Safe Cleanup Guide (Reclaim 8–75 GB)",
+    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (8–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "capcut-desktop-cache",
@@ -760,15 +762,15 @@
       "Delete the contents of the Cache, effect, and SmartMatting cache folders (do NOT delete the Projects\\com.lveditor.draft folder unless you want to remove old drafts).",
       "Use SWEEPR Cleaner to automatically purge CapCut PC render scratch and Service Worker bloat while protecting your active drafts."
     ],
-    "metaTitle": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
-    "metaDescription": "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
     "customFaqs": [
       {
         "q": "Will clearing CapCut PC cache delete my video editing drafts or templates?",
         "a": "No. CapCut project drafts are stored inside CapCut Drafts, whereas %LocalAppData%\\CapCut\\User Data\\Cache holds temporary render previews, proxy clips, and Service Worker web blobs that safely regenerate if you re-open an old timeline."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "blender-temp-render-cache",
@@ -830,15 +832,15 @@
       "Delete old files inside the logs and crashes folders.",
       "To clear the OBS Browser Source cache, navigate to %AppData%\\obs-studio\\plugin_config\\obs-browser\\Cache and delete its contents (leave your basic\\scenes and basic\\profiles folders untouched)."
     ],
-    "metaTitle": "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
-    "metaDescription": "How to clear OBS Studio logs, Crashpad dumps, and browser-source CEF cache on Windows 10/11. Reclaim 500 MB–4 GB in %AppData%\\obs-studio safely in 1 click.",
     "customFaqs": [
       {
         "q": "How do I clear OBS Studio cache without losing my scenes, sources, or stream keys?",
         "a": "Your OBS scenes and profiles are stored in %AppData%\\obs-studio\\basic\\scenes and basic\\profiles. Cleaning %AppData%\\obs-studio\\logs, crashes, and plugin_config\\obs-browser\\Cache frees disk space and fixes laggy browser overlays without touching any scene collections."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete OBS Studio Logs & Cache? YES — Safe Cleanup Guide (Reclaim 1–6.5 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "audacity-session-temp",
@@ -944,15 +946,15 @@
       "Press Windows Key + R, type %localappdata%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams and press Enter.",
       "Delete the 'EBWebView' cache directory."
     ],
-    "metaTitle": "How to Clear Microsoft Teams Cache (New Teams) | SWEEPR",
-    "metaDescription": "How to clear New Microsoft Teams (MSTeams_8wekyb3d8bbwe) and Classic Teams cache on Windows 11/10. Fix Teams startup freezes and reclaim 1–8 GB safely.",
     "customFaqs": [
       {
         "q": "Where is the cache folder for the New Microsoft Teams app on Windows 11?",
         "a": "New Teams (WebView2) stores its cache inside %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView, whereas Classic Teams uses %AppData%\\Microsoft\\Teams. SWEEPR Cleaner cleans both automatically."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Microsoft Teams EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Micros (1.5–9 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "slack-desktop-cache",
@@ -1074,8 +1076,6 @@
       "Next, press Windows Key + R, type %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage and delete the bloated subfolder caches.",
       "Or run SWEEPR Cleaner to deep-clean Opera GX caches that the built-in GX Cleaner misses."
     ],
-    "metaTitle": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
-    "metaDescription": "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
     "customFaqs": [
       {
         "q": "Why does Opera GX still use 5GB+ of disk space after running the built-in GX Cleaner?",
@@ -1104,7 +1104,9 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Opera GX Cache? YES — Safe Cleanup Guide (Reclaim 1.8–12 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "vivaldi-browser-cache",
@@ -1119,7 +1121,9 @@
       "Close Vivaldi.",
       "Press Windows Key + R, type %localappdata%\\Vivaldi\\User Data\\Default and press Enter.",
       "Delete 'Cache', 'Code Cache', and 'Service Worker\\CacheStorage'."
-    ]
+    ],
+    "metaTitle": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "notion-desktop-cache",
@@ -1268,15 +1272,15 @@
       "Open Terminal or PowerShell and run: npm cache clean --force.",
       "Or navigate to %localappdata%\\npm-cache and delete '_cacache' and '_npx'."
     ],
-    "metaTitle": "Clear npm-cache Folder on Windows 11 Safely (2026) | SWEEPR",
-    "metaDescription": "How to clear %LocalAppData%\\npm-cache on Windows 10/11 safely. Reclaim 2–18 GB of cached Node.js tarballs using npm cache clean --force or SWEEPR Cleaner.",
     "customFaqs": [
       {
         "q": "Does deleting %LocalAppData%\\npm-cache break existing node_modules folders in my projects?",
         "a": "No. %LocalAppData%\\npm-cache (_cacache) is strictly a global download cache of compressed package tarballs. Your project node_modules directories are completely independent and will continue to run normally."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete %LOCALAPPDATA%\\npm-cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "pnpm-store-cache",
@@ -1334,8 +1338,6 @@
       "Run 'pip cache purge' in Command Prompt or PowerShell.",
       "Or navigate to %localappdata%\\pip\\Cache and delete all files."
     ],
-    "metaTitle": "Python pip Wheel Cache: Safe to Delete? (Free 1.5–10 GB)",
-    "metaDescription": "How to safely clear %LocalAppData%\\pip\\Cache on Windows 11/10. Reclaim 1.5–10 GB of cached Python .whl archives and HTTP downloads without breaking venvs.",
     "customFaqs": [
       {
         "q": "Does clearing %LocalAppData%\\pip\\Cache uninstall my Python packages?",
@@ -1355,7 +1357,9 @@
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\pip\\Cache",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete Python pip Wheel & HTTP Download Cache? YES — Safe Cleanup Guide (Reclaim 1.5–18 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (1.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "nuget-packages-http-cache",
@@ -1385,8 +1389,6 @@
       "Navigate to %userprofile%\\.gradle.",
       "Delete old daemon logs and unused transform caches inside .gradle\\caches."
     ],
-    "metaTitle": "Gradle Build Cache (.gradle): Safe to Delete? (4–25 GB)",
-    "metaDescription": "How to safely clear %UserProfile%\\.gradle\\caches and wrapper distributions on Windows 11/10. Reclaim 4–25 GB of stale Android Studio & Java build cache.",
     "customFaqs": [
       {
         "q": "Is it safe to delete the .gradle\\caches folder on Windows 11?",
@@ -1406,7 +1408,9 @@
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.gradle\\caches and %UserProfile%\\.gradle\\daemon",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
+    "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "jetbrains-system-caches",
@@ -1598,22 +1602,20 @@
       "Open %LocalAppData%\\LGHUB and clear the cache and GPUCache folders (do NOT delete settings.db or settings.json so your macros stay intact).",
       "Relaunch G HUB or use SWEEPR Cleaner to safely purge LGHUB depots and cache in 1 click."
     ],
-    "metaTitle": "LGHUB Cache & Depots: Safe to Delete? (2026) | SWEEPR",
-    "metaDescription": "Is C:\\ProgramData\\LGHUB\\depots safe to delete? Clear 1–6 GB of Logitech G HUB installer cache and crash dumps while keeping your mouse DPI & macros intact.",
     "customFaqs": [
       {
         "q": "Where does Logitech G HUB store its mouse DPI profiles and macros when cleaning LGHUB cache?",
         "a": "Your G HUB profiles and macros live in %LocalAppData%\\LGHUB\\settings.db. Cleaning C:\\ProgramData\\LGHUB\\depots and %LocalAppData%\\LGHUB\\cache reclaims 1–6 GB of orphaned update payloads without touching settings.db."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    "metaDescription": "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "elgato-streamdeck-cache",
     "category": "app",
     "name": "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck)",
-    "metaTitle": "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
-    "metaDescription": "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — safe to delete? Reclaim 1–4 GB on Windows 11 without losing ProfilesV2 button layouts.",
     "path": "%APPDATA%\\Elgato\\StreamDeck\\logs and %LOCALAPPDATA%\\Elgato\\Stream Deck\\cache",
     "safeToDelete": true,
     "avgSpace": "1–4 GB",
@@ -1630,7 +1632,9 @@
         "q": "Will clearing %AppData%\\Elgato\\StreamDeck\\logs and cache delete my button profiles or icons?",
         "a": "No. Your custom Stream Deck profiles and icon packs live inside %AppData%\\Elgato\\StreamDeck\\ProfilesV2. Cleaning the logs, Crashpad dumps, and QtWebEngine cache only removes background software telemetry and plugin debug bloat."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "acrobat-reader-arm-cache",
@@ -1733,8 +1737,6 @@
       "Navigate to C:\\Windows\\SoftwareDistribution\\Download in File Explorer.",
       "Select all files inside the Download folder (Ctrl+A) and press Delete."
     ],
-    "metaTitle": "Clear Windows SoftwareDistribution Download | SWEEPR",
-    "metaDescription": "How to safely clear C:\\Windows\\SoftwareDistribution\\Download on Windows 11/10. Fix stuck update downloads and reclaim 2–25 GB of disk space in 1 click.",
     "customFaqs": [
       {
         "q": "Is it safe to delete files in C:\\Windows\\SoftwareDistribution\\Download?",
@@ -1763,7 +1765,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\SoftwareDistribution\\Download",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete Windows Update Download Cache? YES — Safe Cleanup Guide (Reclaim 2.5–16 GB)",
+    "metaDescription": "Can I delete C:\\Windows\\SoftwareDistribution\\Download? YES (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "delivery-optimization-cache",
@@ -1779,14 +1783,14 @@
       "Check 'Delivery Optimization Files'.",
       "Click 'Remove files' at the top."
     ],
-    "metaTitle": "Clear Windows Delivery Optimization Cache Safely | SWEEPR",
-    "metaDescription": "How to delete Windows 11 Delivery Optimization cache in ServiceProfiles\\NetworkService. Reclaim 2–15 GB of peer-to-peer update staging files in 1 click.",
     "customFaqs": [
       {
         "q": "What is the Windows Delivery Optimization cache folder used for?",
         "a": "Delivery Optimization stores downloaded Windows Update and Microsoft Store chunks so your PC can share them with other PCs on your local network. Clearing it frees 2–15 GB immediately without rolling back any installed updates."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete Windows Delivery Optimization P2P Cache? YES — Safe Cleanup Guide (Reclaim 2–15 GB)",
+    "metaDescription": "Delete C:\\Windows\\ServiceProfiles\\NetworkService\\AppData\\Local\\Microsof (2–15 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "windows-prefetch",
@@ -1801,8 +1805,6 @@
       "Press Windows Key + R, type C:\\Windows\\Prefetch and press Enter (click Continue as Admin).",
       "Select old .pf files (Ctrl+A) and press Delete."
     ],
-    "metaTitle": "Windows Prefetch Folder: Safe to Delete? | SWEEPR",
-    "metaDescription": "Is it safe to delete C:\\Windows\\Prefetch on Windows 11/10? Learn why Windows creates .pf files, when to clear them, and how to reclaim disk space safely.",
     "customFaqs": [
       {
         "q": "Is deleting C:\\Windows\\Prefetch safe or will it slow down Windows?",
@@ -1831,7 +1833,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\Prefetch",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete Windows Prefetch Application Launch Cache? YES — Safe Cleanup Guide (Reclaim 0.2–1.5 GB)",
+    "metaDescription": "Can I delete C:\\Windows\\Prefetch? YES (0.2–1.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "windows-installer-patch-cache",
@@ -1864,8 +1868,6 @@
       "To shrink hiberfil.sys by 50% while keeping Fast Startup, run: powercfg /h /type reduced.",
       "To remove hiberfil.sys completely, run: powercfg /h off."
     ],
-    "metaTitle": "How to Delete hiberfil.sys on Windows 11 (Free 6–32 GB)",
-    "metaDescription": "How to safely delete hiberfil.sys on Windows 11/10 using powercfg -h off or reduce its size by 50% with Reduced Hibernate while keeping Fast Startup.",
     "customFaqs": [
       {
         "q": "Why can't I delete C:\\hiberfil.sys directly in File Explorer?",
@@ -1885,7 +1887,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\hiberfil.sys",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete C:\\hiberfil.sys? YES — Safe Cleanup Guide (Reclaim 6–32 GB)",
+    "metaDescription": "Can I delete C:\\hiberfil.sys on Windows 11? YES (6–32 GB). Zero save files or active logins lost. Manual powercfg steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "pagefile-sys",
@@ -1976,14 +1980,14 @@
       "Press Windows Key + R, type %localappdata%\\CrashDumps and press Enter.",
       "Select all .dmp files (Ctrl+A) and press Delete."
     ],
-    "metaTitle": "AppData\\Local\\CrashDumps: Safe to Delete on PC? | SWEEPR",
-    "metaDescription": "Is %LocalAppData%\\CrashDumps safe to delete on Windows 10/11? Yes—reclaim 1–12 GB by removing old application .dmp crash files safely with 1-click cleanup.",
     "customFaqs": [
       {
         "q": "Why is %LocalAppData%\\CrashDumps suddenly taking up gigabytes on my C: drive?",
         "a": "Windows Error Reporting (WER) writes a full or mini user-mode memory dump (.dmp) into %LocalAppData%\\CrashDumps whenever a game, browser, or creative app crashes on exit. Unless you are actively debugging a crash in WinDbg, these .dmp files are 100% safe to delete."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\CrashDumps? YES (1–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "windows-memory-dmp-minidump",
@@ -2084,8 +2088,6 @@
       "Open the WATCHDOG subfolder and any sibling folders, select all .dmp files, and press Shift + Delete.",
       "Alternatively, run Disk Cleanup as Administrator or use SWEEPR Cleaner to purge all kernel and user-mode crash dumps in 1 click."
     ],
-    "metaTitle": "C:\\Windows\\LiveKernelReports: Safe to Delete? | SWEEPR",
-    "metaDescription": "Is C:\\Windows\\LiveKernelReports safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU crash dump (.dmp) files on Windows 10/11 safely in 1 click.",
     "customFaqs": [
       {
         "q": "What are WATCHDOG-*.dmp files inside C:\\Windows\\LiveKernelReports?",
@@ -2114,7 +2116,9 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+    "metaDescription": "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "msocache-office-setup",
@@ -2402,15 +2406,15 @@
       "Press Windows Key + R, type %userprofile%\\.cache\\lm-studio\\models, and press Enter.",
       "Delete any publisher/model folders you no longer actively run."
     ],
-    "metaTitle": "LM Studio Models Cache Location & Cleanup | SWEEPR",
-    "metaDescription": "Where is the LM Studio models cache location on Windows? Learn how to delete unused GGUF model weights in %UserProfile%\\.cache\\lm-studio\\models safely.",
     "customFaqs": [
       {
         "q": "Where does LM Studio store downloaded GGUF models on Windows 11?",
         "a": "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "huggingface-hub-cache",
@@ -2426,8 +2430,6 @@
       "Press Windows Key + R, type %userprofile%\\.cache\\huggingface\\hub, and press Enter.",
       "Delete old 'models--*' directories or temp download lock files."
     ],
-    "metaTitle": "Clear HuggingFace Models Cache on Windows 11 | SWEEPR",
-    "metaDescription": "How to clear %UserProfile%\\.cache\\huggingface\\hub on Windows 11/10. Reclaim 10–100 GB of unused AI models, safetensors, and diffusers checkpoints safely.",
     "customFaqs": [
       {
         "q": "Does deleting .cache\\huggingface\\hub delete my custom Python AI scripts?",
@@ -2456,7 +2458,9 @@
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.cache\\huggingface\\hub",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete HuggingFace Hub Transformers & Diffusers Cache? YES — Safe Cleanup Guide (Reclaim 5–50 GB)",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\huggingface\\hub? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "comfyui-temp-output-cache",
@@ -2472,15 +2476,15 @@
       "Open your ComfyUI installation folder and navigate to the 'temp' subfolder.",
       "Select all temporary preview files (Ctrl+A) and delete them."
     ],
-    "metaTitle": "Clear ComfyUI Temp Files & Latent Cache | SWEEPR",
-    "metaDescription": "How to clear ComfyUI temp files, preview PNGs, and latent cache on Windows 11. Reclaim 2–18 GB from C:\\ComfyUI\\temp safely without losing models.",
     "customFaqs": [
       {
         "q": "Can I automate cleaning ComfyUI temp files on Windows 11 without manual terminal commands?",
         "a": "Yes. SWEEPR Cleaner automatically detects C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui, skips any files locked by active processes, and reclaims 2.0 GB – 18.0 GB in a single click while protecting user settings."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+    "metaDescription": "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "pytorch-torch-hub-cache",
@@ -2602,8 +2606,6 @@
       "Open Settings > Apps > Installed Apps first and uninstall any old SDKs or Visual Studio workloads you no longer need.",
       "To safely clean only orphaned GUID folders whose parent product is already uninstalled, run SWEEPR Cleaner’s verified Package Cache orphan scanner."
     ],
-    "metaTitle": "Windows ProgramData: Safe to Delete? (Free 3.5 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 3.5 GB at C:\\ProgramData\\Package Cache without losing settings using manual steps or Sweepr 1-click cleanup.",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
@@ -2628,7 +2630,9 @@
         "a": "No. Pruning only orphaned and superseded package cache GUID folders reclaims 3.5 GB – 22.0 GB of C: drive space while keeping active uninstaller baselines healthy."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+    "metaDescription": "Can I delete orphaned C:\\ProgramData\\Package Cache? YES (3.5–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "windows-system32-driverstore-temp",
@@ -2673,8 +2677,6 @@
       "Delete the 'Cache', 'Code Cache', and 'GPUCache' folders."
     ],
     "category": "folder",
-    "metaTitle": "Microsoft Edge WebView2: Safe to Delete? (Free 1.5 GB)",
-    "metaDescription": "Yes — safe to clear on Windows 11. Reclaim 1.5 GB at %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache without losing settings using manual...",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
@@ -2699,7 +2701,9 @@
         "a": "No. Reclaims hidden SSD space while keeping Windows Widgets and Office add-ins working normally."
       }
     ],
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "programdata-windows-defender-scans-history",
@@ -3313,8 +3317,6 @@
       "Run 'docker system prune -a --volumes' to delete dangling images and build layers.",
       "Shut down WSL with 'wsl --shutdown' and compact ext4.vhdx via diskpart."
     ],
-    "metaTitle": "Shrink Docker Desktop docker_data.vhdx on PC | SWEEPR",
-    "metaDescription": "Why is Docker WSL2 data ext4.vhdx taking 50GB+ on Windows 11? Learn how to prune dangling images and compact WSL2 virtual disks safely in 1 click.",
     "customFaqs": [
       {
         "q": "Why doesn't docker system prune shrink the ext4.vhdx file size in Windows Explorer?",
@@ -3343,7 +3345,9 @@
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete Docker Desktop WSL2 Virtual Disk Bloat? YES — Safe Cleanup Guide (Reclaim 12–80 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\wsl\\data\\ext4.vhdx? YES (12–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "vcpkg-binary-cache",
@@ -3418,8 +3422,6 @@
       "Open DaVinci Resolve and go to Playback > Delete Render Cache > All.",
       "Or close Resolve and manually delete CacheClip contents in your Videos folder."
     ],
-    "metaTitle": "Clear DaVinci Resolve Optimized Media Safely | SWEEPR",
-    "metaDescription": "How to clear DaVinci Resolve Optimized Media and proxy clips on Windows 11/10. Reclaim 15–120 GB of scratch video storage safely without losing edits.",
     "customFaqs": [
       {
         "q": "Does deleting DaVinci Resolve Optimized Media delete my original camera footage or timeline?",
@@ -3439,7 +3441,9 @@
         "Copy-paste PowerShell size audit snippet for C:\\Users\\%USERNAME%\\Videos\\CacheClip and %LocalAppData%\\Blackmagic Design\\DaVinci Resolve\\Support\\optimized_media",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
-    }
+    },
+    "metaTitle": "Can I Delete DaVinci Resolve Optimized Media & Render Cache? YES — Safe Cleanup Guide (Reclaim 15–120 GB)",
+    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (15–120 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "ableton-waveform-peaks-cache",
@@ -4000,8 +4004,6 @@
       "Delete the contents of the Cache\\Cache_Data, Code Cache, GPUCache, and logs directories (your actual recorded video clips live in your configured Medal Clips folder and are not affected).",
       "Run SWEEPR Cleaner to clear Medal.tv cache bloat in 1 click."
     ],
-    "metaTitle": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
-    "metaDescription": "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
     "customFaqs": [
       {
         "q": "Does clearing %AppData%\\Medal\\Cache delete my recorded Medal gaming clips?",
@@ -4030,7 +4032,9 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "lastUpdated": "2026-11-09"
+    "lastUpdated": "2026-11-09",
+    "metaTitle": "Can I Delete Medal TV Cache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "steelseries-gg-cache",
@@ -4063,14 +4067,14 @@
       "Delete any old versioned JetBrains IntelliJ IDEA folders from previous years, or clear the caches, tmp, and log folders inside your current version directory.",
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
     ],
-    "metaTitle": "Clear IntelliJ IDEA Caches & System Logs | SWEEPR",
-    "metaDescription": "How to clear IntelliJ IDEA system caches and logs on Windows 10/11 safely. Reclaim 2–15 GB from %LocalAppData%\\JetBrains\\IntelliJIdea* in 1 click.",
     "customFaqs": [
       {
         "q": "Does clearing IntelliJ IDEA system caches delete my project settings or keymaps?",
         "a": "No. Project settings live in .idea inside your project folder, and custom keymaps live in %AppData%\\JetBrains\\IntelliJIdea*\\keymaps. Purging %LocalAppData%\\JetBrains\\IntelliJIdea*\\caches only clears stale symbol indexes and compiler caches, which safely rebuild on the next build."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "jetbrains-pycharm-cache",
@@ -4230,7 +4234,9 @@
       "Press Windows Key + R, type %AppData%\\zen\\Profiles into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Zen Browser (or use SWEEPR Cleaner to purge all Zen Browser cache directories automatically in one click)."
-    ]
+    ],
+    "metaTitle": "Can I Delete Zen Browser Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "waterfox-cache",
@@ -4743,14 +4749,14 @@
       "Navigate to %LocalAppData%\\LogiOptionsPlus and delete the Cache and GPUCache subdirectories (leave settings.db untouched).",
       "Or run SWEEPR Cleaner to clean Logitech Options+ cache safely in one click."
     ],
-    "metaTitle": "Clear Logi Options+ Cache & Crash Dumps on PC | SWEEPR",
-    "metaDescription": "How to clear Logitech Logi Options+ cache, updater installers, and Crashpad dumps on Windows 10/11. Reclaim 500 MB–4 GB while keeping MX mouse gestures safe.",
     "customFaqs": [
       {
         "q": "Does clearing Logi Options+ cache reset my MX Master mouse button mappings?",
         "a": "No. Your custom MX Master and MX Keys button assignments are saved in settings.db and synced to your Logi ID. Purging WebCache, GPUCache, and Crashpad dumps only removes temporary updater and Electron cache files."
       }
-    ]
+    ],
+    "metaTitle": "Can I Delete LogiOptionsPlus Cache? YES — Safe Cleanup Guide (Reclaim 1.2–6.5 GB)",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "bambu-studio-cache",
@@ -5614,7 +5620,9 @@
       "Press Windows Key + R, type %AppData%\\stremio into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Stremio Streaming App (or use SWEEPR Cleaner to purge all Stremio Streaming App cache directories automatically in one click)."
-    ]
+    ],
+    "metaTitle": "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaDescription": "Can I delete %APPDATA%\\stremio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "kodi-media-center-cache",

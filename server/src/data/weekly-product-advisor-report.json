@@ -3,7 +3,7 @@
   "automation_id": "A20_weekly_product_content_advisor",
   "read_only_mode": true,
   "week_id": "2026-W46",
-  "generated_at": "2026-11-11T00:05:36.262Z",
+  "generated_at": "2026-11-11T08:39:06.882Z",
   "summary": {
     "total_catalog_pages": 377,
     "weekly_produced_or_enriched_count": 157,
@@ -16,14 +16,14 @@
     "top_proposal_score": 95
   },
   "codebase_snapshot": {
-    "inspected_at": "2026-11-11T00:05:36.265Z",
+    "inspected_at": "2026-11-11T08:39:06.891Z",
     "read_only_verified": true,
     "desktop_rust_rules_path": "app/src-tauri/src/rules.rs",
     "desktop_svelte_cleaner_path": "app/src/components/Cleaner.svelte",
     "android_dashboard_path": "mobile/android/app/src/main/java/com/sweepr/app/DashboardScreen.kt",
     "ios_dashboard_path": "mobile/ios/Sources/App/DashboardView.swift",
-    "windows_rule_count": 23,
-    "macos_rule_count": 21,
+    "windows_rule_count": 27,
+    "macos_rule_count": 24,
     "linux_rule_count": 14,
     "windows_rules": [
       {
@@ -80,17 +80,17 @@
       },
       {
         "id": "shader_cache",
-        "name": "DirectX, NVIDIA & AMD GPU shader caches",
-        "description": "DirectX D3DSCache, NVIDIA DXCache/GLCache/NV_Cache, AMD DxCache/VkCache/GLCache and C:\\\\AMD driver unpack leftovers. Rebuilds automatically.",
+        "name": "NVIDIA DXCache / GLCache & AMD DxCache",
+        "description": "DirectX D3DSCache, NVIDIA DXCache/GLCache/NV_Cache, AMD DxCache/DxcCache/VkCache/GLCache and C:\\\\AMD driver unpack leftovers. Rebuilds automatically.",
         "group": "System",
         "os": "windows",
-        "patternCount": 9,
+        "patternCount": 10,
         "samplePatterns": [
-          "D3DSCache",
           "NVIDIA/DXCache",
           "NVIDIA/GLCache",
           "@programdata/NVIDIA Corporation/NV_Cache",
-          "AMD/DxCache"
+          "AMD/DxCache",
+          "AMD/DxcCache"
         ]
       },
       {
@@ -197,27 +197,86 @@
         ]
       },
       {
-        "id": "peripheral_caches",
-        "name": "Logitech G HUB, Razer Synapse & iCUE caches",
-        "description": "Logitech G HUB media/blob storage, installer depots & bytecode caches, plus Razer Synapse and Corsair iCUE logs. Macros and profiles (settings.db) are untouched.",
+        "id": "elgato_streamdeck_cache",
+        "name": "Elgato Stream Deck App Cache",
+        "description": "Elgato Stream Deck software Cache, Code Cache, GPUCache and Service Worker storage (%APPDATA%\\\\Elgato\\\\StreamDeck). Profiles, custom icons and actions are untouched.",
         "group": "Apps",
         "os": "windows",
-        "patternCount": 10,
+        "patternCount": 5,
         "samplePatterns": [
+          "Elgato/StreamDeck/Cache",
+          "Elgato/StreamDeck/Code Cache",
+          "Elgato/StreamDeck/GPUCache",
+          "Elgato/StreamDeck/Service Worker/CacheStorage",
+          "@local/Elgato/StreamDeck/Cache"
+        ]
+      },
+      {
+        "id": "peripheral_caches",
+        "name": "Logitech G HUB & Options+ Depots/Blob Cache",
+        "description": "Logitech G HUB & Logi Options+ installer depots, media/blob storage & bytecode caches, plus Razer Synapse and Corsair iCUE logs. Macros and profiles (settings.db) are untouched.",
+        "group": "Apps",
+        "os": "windows",
+        "patternCount": 14,
+        "samplePatterns": [
+          "LGHUB/depots",
+          "@programdata/LGHUB/depots",
           "LGHUB/blob_storage",
           "LGHUB/cache",
-          "@roaming/LGHUB/Code Cache",
-          "@roaming/LGHUB/GPUCache",
-          "@roaming/LGHUB/DawnCache"
+          "LogiOptionsPlus/cache"
+        ]
+      },
+      {
+        "id": "steam_cache",
+        "name": "Steam DepotCache & HTTP/Shader Cache",
+        "description": "Steam depotcache staging chunks, HTTP/HTML caches, DirectX/Vulkan shadercache and crash dumps. Installed games and saves are untouched.",
+        "group": "Apps",
+        "os": "windows",
+        "patternCount": 6,
+        "samplePatterns": [
+          "@pfx86/Steam/depotcache",
+          "@pfx86/Steam/appcache/httpcache",
+          "@pfx86/Steam/steamapps/shadercache",
+          "@pfx86/Steam/logs",
+          "@pfx86/Steam/dumps"
+        ]
+      },
+      {
+        "id": "riot_valorant_logs",
+        "name": "Riot Client & Valorant Logs/Crashes",
+        "description": "Riot Client diagnostic logs and VALORANT Saved/Logs and crash dump archives. Game installations and Vanguard settings are untouched.",
+        "group": "Apps",
+        "os": "windows",
+        "patternCount": 4,
+        "samplePatterns": [
+          "Riot Games/Riot Client/Logs",
+          "Riot Games/Riot Client/Data/Logs",
+          "VALORANT/Saved/Logs",
+          "VALORANT/Saved/Crashes"
+        ]
+      },
+      {
+        "id": "genshin_hoyoplay_cache",
+        "name": "Genshin Impact / HoYoPlay Update & WebCaches",
+        "description": "Cognosphere HoYoPlay launcher fedata caches and Genshin Impact webCaches/update staging leftovers. Game data and account logins are untouched.",
+        "group": "Apps",
+        "os": "windows",
+        "patternCount": 9,
+        "samplePatterns": [
+          "@roaming/Cognosphere/HYP/1_0/fedata/Cache",
+          "@roaming/Cognosphere/HYP/*/fedata/Cache",
+          "@roaming/Cognosphere/HYP/1_0/fedata/Code Cache",
+          "@roaming/Cognosphere/HYP/1_0/fedata/GPUCache",
+          "HoYoPlay/logs"
         ]
       },
       {
         "id": "game_launchers",
         "name": "Gaming Launchers & Shader/Update Caches",
-        "description": "Safe webcaches, depotcaches, shader caches and crash logs from Steam, Epic Games, EA App/Origin, HoYoPlay/Genshin Impact, Riot Client, GOG Galaxy, Ubisoft, VRChat, Medal TV, Overwolf, Minecraft and Roblox.",
+        "description": "Safe webcaches, depotcaches, shader caches and crash logs from Epic Games, EA App/Origin, GOG Galaxy, Ubisoft, Battle.net, VRChat, Medal TV, Overwolf, Minecraft and Roblox.",
         "group": "Apps",
         "os": "windows",
-        "patternCount": 42,
+        "patternCount": 43,
         "samplePatterns": [
           "EpicGamesLauncher/Saved/webcache",
           "EpicGamesLauncher/Saved/webcache_4147",
@@ -229,16 +288,16 @@
       {
         "id": "creator_ai_caches",
         "name": "Creator, Media & Local AI App Caches",
-        "description": "Temporary caches and logs from CapCut, OBS Studio, DaVinci Resolve, Adobe Media/CameraRaw, Canva, Notion, Postman, Plex, ComfyUI and LM Studio.",
+        "description": "Temporary caches, incomplete model downloads, and logs from ComfyUI, HuggingFace, PyTorch, Whisper, uv, Conda, Ollama, LM Studio, CapCut, OBS Studio, DaVinci Resolve, Adobe Media/CameraRaw, Canva, Notion, Postman and Plex.",
         "group": "Apps",
         "os": "windows",
-        "patternCount": 22,
+        "patternCount": 33,
         "samplePatterns": [
-          "CapCut/User Data/Cache",
-          "@roaming/obs-studio/logs",
-          "@roaming/obs-studio/crashes",
-          "@roaming/Blackmagic Design/DaVinci Resolve/Support/logs",
-          "Adobe/Common/Media Cache Files"
+          "ComfyUI/temp",
+          "@home/ComfyUI/temp",
+          "@home/ComfyUI/input/temp",
+          "@home/.cache/huggingface/hub",
+          "@home/.cache/huggingface/xet"
         ]
       },
       {
@@ -439,6 +498,25 @@
     }
   ],
   "weekly_content_log": [
+    {
+      "slug": "elgato-streamdeck-cache",
+      "url_path": "/clean/app/elgato-streamdeck-cache",
+      "title": "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck)",
+      "category": "app",
+      "windows_path": "%APPDATA%\\Elgato\\StreamDeck\\logs and %LOCALAPPDATA%\\Elgato\\Stream Deck\\cache",
+      "avg_space_label": "1–4 GB",
+      "avg_space_midpoint_gb": 4,
+      "avg_space_max_gb": 4,
+      "production_source": "a18_auto_refresh",
+      "last_touched_date": "2026-11-06",
+      "gsc_impressions_28d": 608,
+      "gsc_clicks_28d": 0,
+      "gsc_position": 7.43,
+      "capability_gap_state": "missing_desktop_scanner_rule",
+      "matched_desktop_rule_id": null,
+      "matched_desktop_rule_name": null,
+      "recommended_app_surface": "New Desktop Rust Rule (`app/src-tauri/src/rules.rs`) + Pro Storage Advisor Card in `Cleaner.svelte`"
+    },
     {
       "slug": "windows-livekernelreports",
       "url_path": "/clean/folder/windows-livekernelreports",
@@ -1251,25 +1329,6 @@
       "gsc_impressions_28d": 9,
       "gsc_clicks_28d": 0,
       "gsc_position": 7.33,
-      "capability_gap_state": "missing_desktop_scanner_rule",
-      "matched_desktop_rule_id": null,
-      "matched_desktop_rule_name": null,
-      "recommended_app_surface": "New Desktop Rust Rule (`app/src-tauri/src/rules.rs`) + Pro Storage Advisor Card in `Cleaner.svelte`"
-    },
-    {
-      "slug": "elgato-streamdeck-cache",
-      "url_path": "/clean/app/elgato-streamdeck-cache",
-      "title": "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck)",
-      "category": "app",
-      "windows_path": "%APPDATA%\\Elgato\\StreamDeck\\logs and %LOCALAPPDATA%\\Elgato\\Stream Deck\\cache",
-      "avg_space_label": "1–4 GB",
-      "avg_space_midpoint_gb": 4,
-      "avg_space_max_gb": 4,
-      "production_source": "a18_auto_refresh",
-      "last_touched_date": "2026-11-06",
-      "gsc_impressions_28d": 9,
-      "gsc_clicks_28d": 0,
-      "gsc_position": 9.22,
       "capability_gap_state": "missing_desktop_scanner_rule",
       "matched_desktop_rule_id": null,
       "matched_desktop_rule_name": null,
@@ -2292,7 +2351,7 @@
   "history": [
     {
       "week_id": "2026-W46",
-      "generated_at": "2026-11-11T00:05:36.262Z",
+      "generated_at": "2026-11-11T08:39:06.882Z",
       "total_catalog_pages": 377,
       "weekly_active_or_enriched_pages": 157,
       "covered_first_class_count": 40,

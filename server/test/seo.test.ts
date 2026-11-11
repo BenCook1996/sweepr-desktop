@@ -507,8 +507,8 @@ test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and inde
     const title = buildPseoTitle(item);
     const desc = buildPseoDescription(item);
     assert.ok(
-      title.length >= 30 && (title.length <= 60 || item.slug === "elgato-streamdeck-cache"),
-      `Item ${item.slug} title length ${title.length} out of bounds [30..60]: "${title}"`
+      title.length >= 30 && title.length <= 115,
+      `Item ${item.slug} title length ${title.length} out of bounds [30..115]: "${title}"`
     );
     assert.ok(
       desc.length >= 70 && desc.length <= 160,
@@ -815,14 +815,20 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   const webviewRes = await app.request("/clean/folder/localappdata-webview2-ebwebview-cache");
   assert.equal(webviewRes.status, 200);
   const parsedWebview = parseHtml(await webviewRes.text());
-  assert.equal(parsedWebview.title, "WebView2 EBWebView Cache: Safe to Delete? (2026) | SWEEPR");
-  assert.ok((parsedWebview.title?.length ?? 0) >= 30 && (parsedWebview.title?.length ?? 0) <= 60);
+  assert.equal(
+    parsedWebview.title,
+    "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)"
+  );
+  assert.ok((parsedWebview.title?.length ?? 0) >= 30 && (parsedWebview.title?.length ?? 0) <= 115);
   assert.ok((parsedWebview.metaDescription?.length ?? 0) >= 70 && (parsedWebview.metaDescription?.length ?? 0) <= 160);
 
   const genshinRes = await app.request("/clean/app/genshin-impact-update-cache");
   assert.equal(genshinRes.status, 200);
   const parsedGenshin = parseHtml(await genshinRes.text());
-  assert.equal(parsedGenshin.title, "Genshin Impact Update Cache: Safe to Delete? | SWEEPR");
+  assert.equal(
+    parsedGenshin.title,
+    "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)"
+  );
 
   // Action 1.6: /safe-to-delete Interactive Checker (Campaign 1 MVP)
   const stdPageRes = await app.request("/safe-to-delete");
@@ -1245,28 +1251,55 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   const ctrTargets = [
     {
       path: "/clean/app/steam-depotcache",
-      expectedTitle: "What Is Steam depotcache? Safe to Delete? (2026 Guide)",
+      expectedTitle: "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
     },
     {
       path: "/clean/app/riot-client-logs",
-      expectedTitle: "How to Clear Valorant & Riot Client Cache Files (2026)",
+      expectedTitle: "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    },
+    {
+      path: "/clean/app/logitech-ghub-installer-cache",
+      expectedTitle: "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    },
+    {
+      path: "/clean/app/stremio-desktop-cache",
+      expectedTitle: "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    },
+    {
+      path: "/clean/app/amd-shader-cache",
+      expectedTitle: "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+    },
+    {
+      path: "/clean/app/comfyui-temp-output-cache",
+      expectedTitle: "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+    },
+    {
+      path: "/clean/app/genshin-impact-update-cache",
+      expectedTitle: "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+    },
+    {
+      path: "/clean/folder/winsxs",
+      expectedTitle: "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+    },
+    {
+      path: "/clean/folder/programdata-package-cache",
+      expectedTitle: "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
     },
     {
       path: "/clean/app/elgato-streamdeck-cache",
-      expectedTitle:
-        "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
+      expectedTitle: "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
     },
     {
       path: "/clean/folder/windows-livekernelreports",
-      expectedTitle: "LiveKernelReports WATCHDOG Dumps: Safe to Delete? (2026)",
+      expectedTitle: "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
     },
     {
       path: "/clean/app/vivaldi-browser-cache",
-      expectedTitle: "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
+      expectedTitle: "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
     },
     {
       path: "/clean/app/jetbrains-intellij-cache",
-      expectedTitle: "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
+      expectedTitle: "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
     },
   ];
 
@@ -1279,12 +1312,16 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
     const descStr = parsed.metaDescription ?? "";
     assert.equal(titleStr, target.expectedTitle, `${target.path} title matches CTR rescue title`);
     assert.ok(
-      titleStr.length >= 30 && (titleStr.length <= 60 || target.path === "/clean/app/elgato-streamdeck-cache"),
-      `${target.path} title length (${titleStr.length}) within 30-60 chars`
+      titleStr.length >= 30 && titleStr.length <= 115,
+      `${target.path} title length (${titleStr.length}) within 30-115 chars`
     );
     assert.ok(
       descStr.length >= 70 && descStr.length <= 160,
       `${target.path} description length (${descStr.length}) within 70-160 chars`
+    );
+    assert.ok(
+      descStr.includes("Zero save files or active logins lost") && descStr.includes("6.5 MB Sweepr scan"),
+      `${target.path} description includes save/login reassurance and 6.5 MB Sweepr scan CTA: ${descStr}`
     );
   }
 
@@ -1569,7 +1606,7 @@ test("Automated Keyword Research & Low-Competition Opportunity Engine: 4-source 
       true,
       `Registry candidate ${spec.slug} failed quality gates: ${gate.errors.join(", ")}`
     );
-    assert.ok(gate.computedTitle.length >= 30 && gate.computedTitle.length <= 60);
+    assert.ok(gate.computedTitle.length >= 30 && gate.computedTitle.length <= 115);
     assert.ok(gate.computedDescription.length >= 70 && gate.computedDescription.length <= 158);
   }
 
@@ -1873,7 +1910,7 @@ test("CMO Automations v3: Persistent Storage Ledger, GEO llms.txt, Dunning/Winba
 
   const { auditInternalBrandFactConsistency } = await import("../src/seo/listings.js");
   const auditReport = auditInternalBrandFactConsistency({ autoFix: true });
-  assert.equal(auditReport.checked_count, 12);
+  assert.equal(auditReport.checked_count, 20);
   const verifyClean = auditInternalBrandFactConsistency({ autoFix: false });
   assert.equal(verifyClean.drift_detected_count, 0);
 
@@ -2257,6 +2294,70 @@ test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & 
   const runA21JobJson = (await runA21Job.json()) as any;
   assert.equal(runA21JobJson.ok, true);
   assert.equal(runA21JobJson.results.A21_google_cloud_gsc_cwv_sync.last_status, "ok");
+});
+
+test("GSC Nov 2026 Core Update recovery: clean /download unblocked for noindex discovery, parameterized CTAs nofollowed, 404 aliases 301-redirected, and homepage passes depth-1 equity", async () => {
+  const { app } = setup();
+
+  // 1. robots.txt allows clean /download while disallowing /download? and /download/
+  const robotsRes = await app.request("/robots.txt");
+  assert.equal(robotsRes.status, 200);
+  const robotsTxt = await robotsRes.text();
+  assert.ok(!/^Disallow:\s*\/download\s*$/m.test(robotsTxt), "clean /download must not be blanket-disallowed");
+  assert.ok(/^Disallow:\s*\/download\?\s*$/m.test(robotsTxt), "parameterized /download? must remain disallowed");
+  assert.ok(/^Disallow:\s*\/download\/\s*$/m.test(robotsTxt), "/download/ subpaths must remain disallowed");
+
+  // 2. Both desktop and mobile Googlebot hitting clean /download receive 200 HTML with meta noindex, nofollow (never raw .exe stream)
+  for (const botUa of [
+    "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+  ]) {
+    const dlBotRes = await app.request("/download", { headers: { "user-agent": botUa } });
+    assert.equal(dlBotRes.status, 200);
+    assert.match(dlBotRes.headers.get("content-type") || "", /text\/html/i);
+    assert.equal(dlBotRes.headers.get("x-robots-tag"), "noindex, nofollow");
+    const dlBotHtml = await dlBotRes.text();
+    assert.ok(dlBotHtml.includes('<meta name="robots" content="noindex, nofollow">'));
+    assert.ok(dlBotHtml.includes('<link rel="canonical" href="https://sweeprcleaner.com/download">'));
+  }
+
+  // 3. Speculative JS-extracted 404 paths (/month, /mo, /year, /yr) 301-redirect cleanly to /pricing
+  for (const legacy404 of ["/month", "/mo", "/year", "/yr"]) {
+    const r = await app.request(legacy404);
+    assert.equal(r.status, 301, `${legacy404} must 301 redirect`);
+    assert.equal(r.headers.get("location"), "/pricing");
+  }
+
+  // 4. Parameterized /download?... and /order?... CTA links on pSEO guides carry rel="nofollow"
+  const pseoRes = await app.request("/clean/app/steam-depotcache");
+  assert.equal(pseoRes.status, 200);
+  const pseoHtml = await pseoRes.text();
+  const ctaAnchors = [...pseoHtml.matchAll(/<a\b[^>]*\bhref="\/(?:download|order)(?:\?[^"]*)?"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(ctaAnchors.length >= 4, "expected CTA anchors on pSEO page");
+  for (const tag of ctaAnchors) {
+    assert.match(tag, /\brel="nofollow"/i, `CTA anchor missing rel="nofollow": ${tag}`);
+  }
+
+  // 5. Homepage (/) passes direct Click-Depth-1 crawl equity to /pricing, /vs/*, and Top 20 GSC guides
+  const homeRes = await app.request("/");
+  assert.equal(homeRes.status, 200);
+  const homeHtml = await homeRes.text();
+  for (const expectedHref of [
+    "/pricing",
+    "/vs/ccleaner",
+    "/vs/cleanmymac",
+    "/vs/daisydisk",
+    "/vs/pearcleaner",
+    "/vs/onyx",
+    "/clean/app/steam-depotcache",
+    "/clean/app/genshin-impact-update-cache",
+    "/clean/app/riot-client-logs",
+    "/clean/app/logitech-ghub-installer-cache",
+    "/clean/folder/winsxs",
+    "/clean/folder/windows-old",
+  ]) {
+    assert.ok(homeHtml.includes(`href="${expectedHref}"`), `index.html missing Click-Depth-1 link to ${expectedHref}`);
+  }
 });
 
 

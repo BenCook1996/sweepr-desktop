@@ -231,7 +231,7 @@
         </div>
       </div>
       <a href="/login" class="btn btn-ghost text-sm">Login</a>
-      <a href="/download" class="btn btn-go gap-2 text-sm">
+      <a href="/download" class="btn btn-go gap-2 text-sm" rel="nofollow">
         <span>Get SWEEPR Cleaner</span>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
@@ -300,7 +300,7 @@
           </div>
         </div>
         <div class="flex gap-3">
-          <a href="/download" class="btn btn-go text-sm">Free Download</a>
+          <a href="/download" class="btn btn-go text-sm" rel="nofollow">Free Download</a>
           <a href="/pricing" class="btn btn-ghost text-sm">View Pricing</a>
         </div>
       </div>
@@ -385,11 +385,11 @@
         Download SWEEPR Cleaner and see how much disk space and RAM you can reclaim in under 60 seconds.
       </p>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="/download" class="btn btn-go btn-big gap-2">
+        <a href="/download" class="btn btn-go btn-big gap-2" rel="nofollow">
           <span>Free Download</span>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big">
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-big" rel="nofollow">
           Get Pro Now
         </a>
       </div>
@@ -409,6 +409,23 @@
     </div>
   </footer>
 
+    <script>
+    (function () {
+      fetch('/api/pricing', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          var c = (d && d.current) || d;
+          if (!c || !c.annualFormatted) return;
+          var txt = c.annualFormatted + '/yr (Save ' + c.annualSavingsPercent + '%), ' +
+                    c.sixMonthFormatted + '/6mo, or ' +
+                    c.monthlyFormatted + '/mo';
+          document.querySelectorAll('[data-sweepr-pricing-cell]').forEach(function (el) {
+            el.textContent = txt;
+          });
+        })
+        .catch(function () {});
+    })();
+  </script>
   <script src="/i18n.js" defer></script>
 </body>
 </html>

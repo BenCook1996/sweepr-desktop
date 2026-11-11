@@ -19,8 +19,10 @@ const AUDIT_LOG_PATH = path.join(REPO_ROOT, "TECHNICAL_SEO_AUDIT_LOG.md");
 const CLEAN_ITEMS_PATH = path.join(SERVER_ROOT, "src", "data", "clean-items.json");
 
 function parseArgs(argv: string[]) {
-  let count = 4;
-  let skipDrip = false;
+  // Default to 0 daily pSEO expansion & no sitemap re-ping during Google Core Update stabilization
+  let count = 0;
+  let skipDrip = true;
+  let submitSitemap = false;
   let skipAudit = false;
   let forceWeekly = false;
   let runCwv = Boolean(process.env.GOOGLE_API_KEY);
@@ -32,9 +34,14 @@ function parseArgs(argv: string[]) {
   for (const arg of argv) {
     if (arg.startsWith("--count=")) {
       const n = Number(arg.split("=")[1]);
-      if (Number.isFinite(n) && n >= 0) count = n;
+      if (Number.isFinite(n) && n >= 0) {
+        count = n;
+        if (n > 0) skipDrip = false;
+      }
     } else if (arg === "--skip-drip") {
       skipDrip = true;
+    } else if (arg === "--submit-sitemap") {
+      submitSitemap = true;
     } else if (arg === "--skip-audit") {
       skipAudit = true;
     } else if (arg === "--force-weekly") {
@@ -58,6 +65,7 @@ function parseArgs(argv: string[]) {
   return {
     count,
     skipDrip,
+    submitSitemap,
     skipAudit,
     forceWeekly,
     runCwv,
@@ -256,6 +264,7 @@ async function main() {
     maxInspectUrls: 6,
     runCwv: opts.runCwv,
     persistQueue: true,
+    submitSitemap: opts.submitSitemap,
   });
 
   let gscSeedUpdated = false;

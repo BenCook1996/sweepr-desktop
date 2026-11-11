@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "exe": {
+    "bytes": 6840632,
+    "sha256": "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA",
+    "signature": "xyJ5WqQuepYsY1Kxs8b6dvZCeomOEJZhSXegzcylyvtBghKU1BdKVsc3//OqONtcnOJajpVGMaSnM8OhUwOLBQ=="
+  },
+  "msi": {
+    "bytes": 3993600,
+    "sha256": "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A",
+    "signature": "B/gYVbNgvM/AZB+VjUFbXTPexgSg5MY2xroSXLv4EVZ7M7rvpGLBAXy3hAo31usLxVLZ7e1Rjo5Ns2tcZHIACg=="
+  }
+}

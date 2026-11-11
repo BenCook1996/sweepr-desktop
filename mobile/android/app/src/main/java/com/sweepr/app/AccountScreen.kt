@@ -148,6 +148,7 @@ fun AccountScreen(
     val cloudAddonPrice = prices["sweepr_cloud_vault_999"]?.formattedPrice ?: batteryAddonPrice
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
+    val activeAddonBadge = PlayBillingManager.addonBadgeForPlan(selectedPlan.productId, prices)
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
     var showQrPairDialog by rememberSaveable { mutableStateOf(false) }
     var qrPairInput by rememberSaveable { mutableStateOf("") }
@@ -487,7 +488,7 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (state.hasBatteryCare) "ACTIVE" else "+$batteryAddonPrice/yr",
+                            if (state.hasBatteryCare) "ACTIVE" else activeAddonBadge,
                             color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
@@ -507,7 +508,7 @@ fun AccountScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                         ) {
-                            Text("Add Battery Care ($batteryAddonPrice/yr)", fontWeight = FontWeight.Bold)
+                            Text("Add Battery Care ($activeAddonBadge)", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -515,7 +516,7 @@ fun AccountScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // SWEEPR Cloud Protection Add-on Card (Consistent 9.99/yr rate)
+            // SWEEPR Cloud Protection Add-on Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -543,7 +544,7 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            "+$cloudAddonPrice/yr",
+                            activeAddonBadge,
                             color = Color(0xFF6D28D9),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
@@ -562,7 +563,7 @@ fun AccountScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                     ) {
-                        Text("Add Cloud Protection ($cloudAddonPrice/yr)", fontWeight = FontWeight.Bold)
+                        Text("Add Cloud Protection ($activeAddonBadge)", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -867,6 +868,8 @@ fun PaywallModalSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
+    var includeBatteryAddon by rememberSaveable { mutableStateOf(false) }
+    var includeCloudAddon by rememberSaveable { mutableStateOf(false) }
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
     val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
@@ -874,7 +877,9 @@ fun PaywallModalSheet(
     val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
     val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel
     val annualSub = prices[PlanTier.ANNUAL.productId]?.subtitle ?: "Save 58% (£4.16/mo)"
-    val selectedPriceText = prices[selectedPlan.productId]?.formattedPrice ?: selectedPlan.priceLabel
+    val addonBadge = PlayBillingManager.addonBadgeForPlan(selectedPlan.productId, prices)
+    val addonCount = (if (includeBatteryAddon) 1 else 0) + (if (includeCloudAddon) 1 else 0)
+    val selectedPriceText = PlayBillingManager.ctaTotalForPlan(selectedPlan.productId, addonCount)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -961,6 +966,53 @@ fun PaywallModalSheet(
                     onClick = { selectedPlan = PlanTier.ANNUAL },
                     modifier = Modifier.weight(1f),
                 )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Surface(
+                    onClick = { includeBatteryAddon = !includeBatteryAddon },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Checkbox(
+                                checked = includeBatteryAddon,
+                                onCheckedChange = { includeBatteryAddon = it },
+                            )
+                            Text("Battery Health Saver", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(addonBadge, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = emeraldText())
+                    }
+                }
+                Surface(
+                    onClick = { includeCloudAddon = !includeCloudAddon },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Checkbox(
+                                checked = includeCloudAddon,
+                                onCheckedChange = { includeCloudAddon = it },
+                            )
+                            Text("Private File Lockbox", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(addonBadge, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = emeraldText())
+                    }
+                }
             }
 
             EmeraldButton(

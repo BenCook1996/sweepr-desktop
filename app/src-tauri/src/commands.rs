@@ -532,11 +532,38 @@ fn scan_chromium_browser(name: &str, id: &str, relative_path: &str) -> BrowserPr
         installed: false,
     };
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
     if let Some(local_app_data) = dirs::data_local_dir() {
         let user_data = local_app_data.join(relative_path).join("User Data");
         if user_data.exists() {
             item.installed = true;
+            let default_profile = user_data.join("Default");
+            if default_profile.exists() {
+                item.cache_bytes += dir_size(&default_profile.join("Cache"));
+                item.cache_bytes += dir_size(&default_profile.join("Code Cache"));
+                item.cache_bytes += dir_size(&default_profile.join("GPUCache"));
+                item.cookies_bytes += file_size(&default_profile.join("Network").join("Cookies"));
+                item.cookies_bytes += file_size(&default_profile.join("Cookies"));
+                item.history_bytes += file_size(&default_profile.join("History"));
+                item.history_bytes += file_size(&default_profile.join("History-journal"));
+            }
+        }
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    if let Some(home) = dirs::home_dir() {
+        let linux_rel = match id {
+            "chrome" => "google-chrome",
+            "edge" => "microsoft-edge",
+            _ => "BraveSoftware/Brave-Browser",
+        };
+        let config_root = dirs::config_dir().unwrap_or_else(|| home.join(".config"));
+        let cache_root = dirs::cache_dir().unwrap_or_else(|| home.join(".cache"));
+        let user_data = config_root.join(linux_rel);
+        let cache_dir = cache_root.join(linux_rel);
+        if user_data.exists() || cache_dir.exists() {
+            item.installed = true;
+            item.cache_bytes += dir_size(&cache_dir);
             let default_profile = user_data.join("Default");
             if default_profile.exists() {
                 item.cache_bytes += dir_size(&default_profile.join("Cache"));
@@ -878,7 +905,7 @@ pub async fn clean_browser_privacy(
         for b in &browsers {
             match b.as_str() {
                 "chrome" | "edge" | "brave" => {
-                    #[cfg(not(target_os = "macos"))]
+                    #[cfg(target_os = "windows")]
                     {
                         let rel = match b.as_str() {
                             "chrome" => "Google/Chrome",
@@ -911,6 +938,45 @@ pub async fn clean_browser_privacy(
                                     total_freed += clean_file_or_dir(&default_profile.join("History"));
                                     total_freed += clean_file_or_dir(&default_profile.join("History-journal"));
                                 }
+                            }
+                        }
+                    }
+                    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+                    if let Some(home) = dirs::home_dir() {
+                        let linux_rel = match b.as_str() {
+                            "chrome" => "google-chrome",
+                            "edge" => "microsoft-edge",
+                            _ => "BraveSoftware/Brave-Browser",
+                        };
+                        let config_root = dirs::config_dir().unwrap_or_else(|| home.join(".config"));
+                        let cache_root = dirs::cache_dir().unwrap_or_else(|| home.join(".cache"));
+                        if clear_cache {
+                            total_freed += clean_file_or_dir(&cache_root.join(linux_rel));
+                        }
+                        let default_profile = config_root.join(linux_rel).join("Default");
+                        if default_profile.exists() {
+                            if clear_cache {
+                                total_freed += clean_file_or_dir(&default_profile.join("Cache"));
+                                total_freed += clean_file_or_dir(&default_profile.join("Code Cache"));
+                                total_freed += clean_file_or_dir(&default_profile.join("GPUCache"));
+                            }
+                            if clear_cookies {
+                                total_freed += clean_cookie_sqlite_file(
+                                    &default_profile.join("Network").join("Cookies"),
+                                    "cookies",
+                                    "host_key",
+                                    &allowlist,
+                                );
+                                total_freed += clean_cookie_sqlite_file(
+                                    &default_profile.join("Cookies"),
+                                    "cookies",
+                                    "host_key",
+                                    &allowlist,
+                                );
+                            }
+                            if clear_history {
+                                total_freed += clean_file_or_dir(&default_profile.join("History"));
+                                total_freed += clean_file_or_dir(&default_profile.join("History-journal"));
                             }
                         }
                     }
@@ -1122,6 +1188,10 @@ pub struct AppUpdateInfo {
     pub url: String,
     pub source: String,
     pub sha256: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature_url: Option<String>,
 }
 
 const GITHUB_RELEASES_LATEST_URL: &str =
@@ -1288,6 +1358,11 @@ async fn fetch_latest_update_manifest(
                     .get("sha256")
                     .and_then(|v| v.as_str())
                     .and_then(normalize_sha256_hex);
+                let signature = info
+                    .get("signature")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty());
                 let url = if is_trusted_update_url(&candidate_url, api_url) {
                     candidate_url
                 } else {
@@ -1315,6 +1390,8 @@ async fn fetch_latest_update_manifest(
                     url,
                     source: "server".into(),
                     sha256,
+                    signature,
+                    signature_url: None,
                 });
             }
         }
@@ -1346,16 +1423,18 @@ async fn fetch_latest_update_manifest(
                         .trim()
                         .to_string();
 
+                    let mut asset_name = String::new();
                     let mut asset_url = String::new();
                     let mut asset_sha256: Option<String> = None;
+                    let mut asset_sig_url: Option<String> = None;
 
                     if let Some(assets) = release.get("assets").and_then(|a| a.as_array()) {
                         for asset in assets {
-                            let name = asset
+                            let raw_name = asset
                                 .get("name")
                                 .and_then(|v| v.as_str())
-                                .unwrap_or("")
-                                .to_ascii_lowercase();
+                                .unwrap_or("");
+                            let name = raw_name.to_ascii_lowercase();
                             let dl = asset
                                 .get("browser_download_url")
                                 .and_then(|v| v.as_str())
@@ -1363,6 +1442,7 @@ async fn fetch_latest_update_manifest(
                             if (name.ends_with(".exe") || name.ends_with(".msi"))
                                 && is_trusted_update_url(dl, api_url)
                             {
+                                asset_name = raw_name.to_string();
                                 asset_url = dl.to_string();
                                 asset_sha256 = asset
                                     .get("digest")
@@ -1370,6 +1450,31 @@ async fn fetch_latest_update_manifest(
                                     .and_then(normalize_sha256_hex);
                                 if name.contains("setup") || name.contains("sweepr") {
                                     break;
+                                }
+                            }
+                        }
+
+                        if !asset_name.is_empty() {
+                            let expected_sig_name = format!("{asset_name}.sig").to_ascii_lowercase();
+                            for asset in assets {
+                                let name = asset
+                                    .get("name")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_ascii_lowercase();
+                                let dl = asset
+                                    .get("browser_download_url")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("");
+                                if (name == expected_sig_name
+                                    || name.ends_with(".exe.sig")
+                                    || name.ends_with(".msi.sig"))
+                                    && is_trusted_update_url(dl, api_url)
+                                {
+                                    asset_sig_url = Some(dl.to_string());
+                                    if name == expected_sig_name {
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -1392,6 +1497,8 @@ async fn fetch_latest_update_manifest(
                             url: asset_url,
                             source: "github".into(),
                             sha256: asset_sha256,
+                            signature: None,
+                            signature_url: asset_sig_url,
                         };
                     } else if !update_available && !server_force_update {
                         return AppUpdateInfo {
@@ -1404,6 +1511,8 @@ async fn fetch_latest_update_manifest(
                             url: String::new(),
                             source: "github".into(),
                             sha256: asset_sha256,
+                            signature: None,
+                            signature_url: asset_sig_url,
                         };
                     }
                 }
@@ -1426,6 +1535,8 @@ async fn fetch_latest_update_manifest(
         url: String::new(),
         source: "local".into(),
         sha256: None,
+        signature: None,
+        signature_url: None,
     }
 }
 
@@ -1473,6 +1584,91 @@ fn generate_update_uuid() -> String {
         (b[8] & 0x3f) | 0x80, b[9],
         b[10], b[11], b[12], b[13], b[14], b[15]
     )
+}
+
+async fn fetch_github_release_signature(
+    client: &reqwest::Client,
+    current: &str,
+    api_url: &str,
+    asset_url: &str,
+    explicit_sig_url: Option<&str>,
+) -> Option<String> {
+    let user_agent = format!("SweeprCleaner/{current}");
+    let mut candidate_urls: Vec<String> = Vec::new();
+    if let Some(sig_url) = explicit_sig_url.filter(|u| !u.trim().is_empty()) {
+        candidate_urls.push(sig_url.trim().to_string());
+    }
+    let derived_sig_url = format!("{}.sig", asset_url.trim());
+    if !candidate_urls.iter().any(|u| u.eq_ignore_ascii_case(&derived_sig_url)) {
+        candidate_urls.push(derived_sig_url);
+    }
+
+    for sig_url in candidate_urls {
+        if !is_trusted_update_url(&sig_url, api_url) {
+            continue;
+        }
+        let Ok(resp) = client
+            .get(&sig_url)
+            .header("User-Agent", &user_agent)
+            .send()
+            .await
+        else {
+            continue;
+        };
+        if !resp.status().is_success() {
+            continue;
+        }
+        if let Some(cl) = resp.content_length() {
+            if cl > 8192 {
+                continue;
+            }
+        }
+        if let Ok(bytes) = resp.bytes().await {
+            if bytes.len() <= 8192 {
+                if let Ok(text) = std::str::from_utf8(&bytes) {
+                    let trimmed = text.trim();
+                    if !trimmed.is_empty() {
+                        return Some(trimmed.to_string());
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+fn verify_installer_signature(
+    licensing: &crate::licensing::Licensing,
+    installer_path: &Path,
+    expected_sha256_hex: &str,
+    signature: &str,
+) -> AppResult<()> {
+    let sig = signature.trim();
+    if sig.is_empty() {
+        return Err(AppError::Other(
+            "Update manifest is missing a cryptographic Ed25519 signature.".into(),
+        ));
+    }
+    if licensing
+        .verify_binary_signature(expected_sha256_hex.to_ascii_lowercase().as_bytes(), sig)
+        .is_ok()
+        || licensing
+            .verify_binary_signature(expected_sha256_hex.to_ascii_uppercase().as_bytes(), sig)
+            .is_ok()
+    {
+        return Ok(());
+    }
+    let meta = std::fs::metadata(installer_path)
+        .map_err(|e| AppError::Other(format!("Failed reading update installer metadata: {e}")))?;
+    if meta.len() as usize > MAX_UPDATE_INSTALLER_BYTES {
+        return Err(AppError::Other(
+            "Update package exceeds maximum allowed size (150 MB).".into(),
+        ));
+    }
+    let bytes = std::fs::read(installer_path).map_err(|e| {
+        AppError::Other(format!("Failed reading update installer for signature check: {e}"))
+    })?;
+    licensing.verify_binary_signature(&bytes, sig)
 }
 
 #[tauri::command]
@@ -1561,7 +1757,20 @@ pub async fn install_app_update(
                 "Update URL did not match trusted release host.".into(),
             ));
         }
-        (gh_info.url, None, gh_info.sha256)
+        let signature_opt = match gh_info.signature.filter(|s| !s.trim().is_empty()) {
+            Some(sig) => Some(sig),
+            None => {
+                fetch_github_release_signature(
+                    &client,
+                    &current,
+                    &api_url,
+                    &gh_info.url,
+                    gh_info.signature_url.as_deref(),
+                )
+                .await
+            }
+        };
+        (gh_info.url, signature_opt, gh_info.sha256)
     };
 
     let sig = signature_opt
@@ -1598,62 +1807,101 @@ pub async fn install_app_update(
         }
     }
 
-    let mut bytes = Vec::new();
-    while let Some(chunk) = resp
-        .chunk()
-        .await
-        .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?
-    {
-        if bytes.len().saturating_add(chunk.len()) > MAX_UPDATE_INSTALLER_BYTES {
-            return Err(AppError::Other(
-                "Update package exceeds maximum allowed size (150 MB).".into(),
-            ));
-        }
-        bytes.extend_from_slice(&chunk);
-    }
+    let updates_dir = state.data_dir.join("updates");
+    std::fs::create_dir_all(&updates_dir)
+        .map_err(|e| AppError::Other(format!("Failed creating updates folder: {e}")))?;
 
-    // Mandatory Ed25519 signature verification over the installer binary
-    state.licensing.verify_binary_signature(&bytes, sig)?;
+    let uuid = generate_update_uuid();
+    let temp_installer_path = updates_dir.join(format!("SWEEPRCleaner-{uuid}.exe.part"));
+    let installer_path = updates_dir.join(format!("SWEEPRCleaner-{uuid}.exe"));
+
+    let stream_res: AppResult<(usize, [u8; 2], String)> = async {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp_installer_path)
+            .map_err(|e| {
+                AppError::Other(format!("Failed creating temporary update installer file: {e}"))
+            })?;
+        let mut hasher = Sha256::new();
+        let mut total_bytes: usize = 0;
+        let mut header = [0u8; 2];
+
+        while let Some(chunk) = resp
+            .chunk()
+            .await
+            .map_err(|e| AppError::Other(format!("Failed reading update binary: {e}")))?
+        {
+            let next_total = total_bytes.saturating_add(chunk.len());
+            if next_total > MAX_UPDATE_INSTALLER_BYTES {
+                return Err(AppError::Other(
+                    "Update package exceeds maximum allowed size (150 MB).".into(),
+                ));
+            }
+            if total_bytes < 2 {
+                let mut offset = total_bytes;
+                for &b in chunk.iter() {
+                    if offset < 2 {
+                        header[offset] = b;
+                        offset += 1;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            total_bytes = next_total;
+            hasher.update(&chunk);
+            file.write_all(&chunk)
+                .map_err(|e| AppError::Other(format!("Failed writing update installer chunk: {e}")))?;
+        }
+        file.sync_all()
+            .map_err(|e| AppError::Other(format!("Failed syncing update installer: {e}")))?;
+        let actual_hex: String = hasher
+            .finalize()
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect();
+        Ok((total_bytes, header, actual_hex))
+    }
+    .await;
+
+    let (total_bytes, header, actual_hex) = match stream_res {
+        Ok(v) => v,
+        Err(err) => {
+            let _ = std::fs::remove_file(&temp_installer_path);
+            return Err(err);
+        }
+    };
 
     // Verify minimum installer size and Windows PE ('MZ') header
-    if bytes.len() < 64 * 1024 || &bytes[0..2] != b"MZ" {
+    if total_bytes < 64 * 1024 || &header != b"MZ" {
+        let _ = std::fs::remove_file(&temp_installer_path);
         return Err(AppError::Other(
             "Downloaded update package is not a valid Windows executable.".into(),
         ));
     }
 
     // Mandatory SHA-256 digest verification
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-    let actual_hex: String = hasher
-        .finalize()
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect();
     if !actual_hex.eq_ignore_ascii_case(&expected_sha256) {
+        let _ = std::fs::remove_file(&temp_installer_path);
         return Err(AppError::Other(
             "Update SHA-256 integrity check failed. Aborting installation.".into(),
         ));
     }
 
-    let updates_dir = state.data_dir.join("updates");
-    std::fs::create_dir_all(&updates_dir)
-        .map_err(|e| AppError::Other(format!("Failed creating updates folder: {e}")))?;
-
-    let uuid = generate_update_uuid();
-    let installer_path = updates_dir.join(format!("SWEEPRCleaner-{uuid}.exe"));
+    // Mandatory Ed25519 signature verification over the downloaded installer
+    if let Err(err) =
+        verify_installer_signature(&state.licensing, &temp_installer_path, &actual_hex, sig)
     {
-        use std::io::Write;
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&installer_path)
-            .map_err(|e| AppError::Other(format!("Failed creating update installer file: {e}")))?;
-        file.write_all(&bytes)
-            .map_err(|e| AppError::Other(format!("Failed writing update installer: {e}")))?;
-        file.sync_all()
-            .map_err(|e| AppError::Other(format!("Failed syncing update installer: {e}")))?;
+        let _ = std::fs::remove_file(&temp_installer_path);
+        return Err(err);
     }
+
+    std::fs::rename(&temp_installer_path, &installer_path).map_err(|e| {
+        let _ = std::fs::remove_file(&temp_installer_path);
+        AppError::Other(format!("Failed finalizing update installer file: {e}"))
+    })?;
 
     let _lock_guard = std::fs::OpenOptions::new()
         .read(true)
@@ -2641,20 +2889,17 @@ pub async fn compact_browser_databases(state: State<'_, AppState>) -> AppResult<
     state.licensing.require_active().await?;
     tauri::async_runtime::spawn_blocking(|| {
         let mut total = 0u64;
-        if let Some(local) = dirs::data_local_dir() {
-            for rel in ["Google/Chrome", "Microsoft/Edge", "BraveSoftware/Brave-Browser"] {
-                let default_prof = local.join(rel).join("User Data").join("Default");
-                if default_prof.is_dir() {
-                    total += compact_sqlite_dir(&default_prof);
-                    let net_dir = default_prof.join("Network");
-                    if net_dir.is_dir() {
-                        total += compact_sqlite_dir(&net_dir);
-                    }
+        for (_id, _label, user_data_root) in memory::chromium_user_data_roots() {
+            let default_prof = user_data_root.join("Default");
+            if default_prof.is_dir() {
+                total += compact_sqlite_dir(&default_prof);
+                let net_dir = default_prof.join("Network");
+                if net_dir.is_dir() {
+                    total += compact_sqlite_dir(&net_dir);
                 }
             }
         }
-        if let Some(roaming) = dirs::data_dir() {
-            let ff_profiles = roaming.join("Mozilla").join("Firefox").join("Profiles");
+        for ff_profiles in memory::firefox_profiles_roots() {
             if let Ok(rd) = std::fs::read_dir(ff_profiles) {
                 for entry in rd.flatten() {
                     let p = entry.path();
@@ -2732,21 +2977,8 @@ fn resolve_extension_msg(version_dir: &Path, raw: &str) -> Option<String> {
 pub async fn list_browser_extensions() -> AppResult<Vec<BrowserExtensionItem>> {
     tauri::async_runtime::spawn_blocking(|| {
         let mut out = Vec::new();
-        let Some(local) = dirs::data_local_dir() else {
-            return out;
-        };
-        let browsers = [
-            ("Google Chrome", "Google/Chrome"),
-            ("Microsoft Edge", "Microsoft/Edge"),
-            ("Brave", "BraveSoftware/Brave-Browser"),
-        ];
-
-        for (browser_label, rel) in browsers {
-            let ext_root = local
-                .join(rel)
-                .join("User Data")
-                .join("Default")
-                .join("Extensions");
+        for (_id, browser_label, user_data_root) in memory::chromium_user_data_roots() {
+            let ext_root = user_data_root.join("Default").join("Extensions");
             let Ok(ext_ids) = std::fs::read_dir(&ext_root) else {
                 continue;
             };

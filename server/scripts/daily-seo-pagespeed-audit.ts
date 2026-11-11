@@ -261,7 +261,10 @@ async function main() {
     enrich_dfs: false,
     persistReport: true,
   });
-  const a18Refresh = await runUnderperformerAutoRefresh(store, { max_pages: 5, persist_disk: true });
+  const a18Refresh = await runUnderperformerAutoRefresh(store, {
+    max_pages: 5,
+    persist_disk: process.env.ALLOW_A18_DISK_PERSIST === "1",
+  });
   const recon = store.reconcileStrategyLedgerActualsAndCalibrate({
     seedGscRows: gscSeedRows,
     recalibrate: true,
@@ -374,6 +377,10 @@ async function main() {
     { path: "/refund.html", expected: "/refund", label: "Refund HTML alias" },
     { path: "/support.html", expected: "/support", label: "Support HTML alias" },
     { path: "/cdn-cgi/l/email-protection", expected: "/support", label: "Cloudflare email obfuscation redirect" },
+    { path: "/month", expected: "/pricing", label: "Speculative JS /month 404 recovery redirect" },
+    { path: "/mo", expected: "/pricing", label: "Speculative JS /mo 404 recovery redirect" },
+    { path: "/year", expected: "/pricing", label: "Speculative JS /year 404 recovery redirect" },
+    { path: "/yr", expected: "/pricing", label: "Speculative JS /yr 404 recovery redirect" },
 
     // Tier 2: Localized Trailing Slash Normalization
     { path: "/de/", expected: "/de", label: "German root trailing slash" },
@@ -512,7 +519,7 @@ async function main() {
   let googlePingStatus = "pending";
   let bingPingStatus = "pending";
 
-  if (deltaUrls.length > 0) {
+  if (deltaUrls.length > 0 && process.env.ALLOW_LIVE_INDEXNOW === "1") {
     const indexNowPayload = {
       host: "sweeprcleaner.com",
       key: queue.indexnow_key || INDEXNOW_KEY,

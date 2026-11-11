@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-11-09T23:03:14.529Z",
+  "timestamp": "2026-11-11T08:38:09.181Z",
   "result": {
     "run_id": 1,
-    "pages": 416,
-    "html_pages": 416,
+    "pages": 426,
+    "html_pages": 426,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -14,9 +14,9 @@
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1794265385,
-    "finished_at": 1794265390,
-    "pages": 416,
+    "started_at": 1794386258,
+    "finished_at": 1794386261,
+    "pages": 426,
     "health_score": 100,
     "errors": 0,
     "warnings": 0,
@@ -27,12 +27,12 @@
   "issuesSummary": {},
   "pagesWithIssues": [],
   "redirectAudit": {
-    "totalPseoRules": 1062,
+    "totalPseoRules": 1064,
     "brokenPseoRedirects": 0,
     "circularPseoRedirects": 0,
-    "liveTestedCount": 35,
-    "livePassedCount": 35,
-    "avgLatencyMs": 0.46,
+    "liveTestedCount": 39,
+    "livePassedCount": 39,
+    "avgLatencyMs": 0.45,
     "singleHopCompliance": "100%",
     "sampleResults": [
       {
@@ -42,7 +42,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.92,
+        "ms": 0.6,
         "label": "Root index.html alias",
         "passed": true
       },
@@ -53,7 +53,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.59,
+        "ms": 0.69,
         "label": "Pricing HTML alias",
         "passed": true
       },
@@ -64,7 +64,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.5,
+        "ms": 0.36,
         "label": "Login HTML alias",
         "passed": true
       },
@@ -75,7 +75,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.43,
+        "ms": 0.4,
         "label": "Terms HTML alias",
         "passed": true
       },
@@ -86,7 +86,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.41,
+        "ms": 0.38,
         "label": "Privacy HTML alias",
         "passed": true
       },
@@ -97,7 +97,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.41,
+        "ms": 0.37,
         "label": "Refund HTML alias",
         "passed": true
       },
@@ -108,7 +108,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.45,
+        "ms": 0.39,
         "label": "Support HTML alias",
         "passed": true
       },
@@ -119,8 +119,52 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.27,
+        "ms": 0.25,
         "label": "Cloudflare email obfuscation redirect",
+        "passed": true
+      },
+      {
+        "path": "/month",
+        "expectedTarget": "/pricing",
+        "actualTarget": "/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.47,
+        "label": "Speculative JS /month 404 recovery redirect",
+        "passed": true
+      },
+      {
+        "path": "/mo",
+        "expectedTarget": "/pricing",
+        "actualTarget": "/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.9,
+        "label": "Speculative JS /mo 404 recovery redirect",
+        "passed": true
+      },
+      {
+        "path": "/year",
+        "expectedTarget": "/pricing",
+        "actualTarget": "/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.43,
+        "label": "Speculative JS /year 404 recovery redirect",
+        "passed": true
+      },
+      {
+        "path": "/yr",
+        "expectedTarget": "/pricing",
+        "actualTarget": "/pricing",
+        "status": 301,
+        "targetStatus": 200,
+        "hops": 1,
+        "ms": 0.31,
+        "label": "Speculative JS /yr 404 recovery redirect",
         "passed": true
       },
       {
@@ -130,7 +174,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.56,
+        "ms": 0.31,
         "label": "German root trailing slash",
         "passed": true
       },
@@ -141,7 +185,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.47,
+        "ms": 0.42,
         "label": "German pricing trailing slash",
         "passed": true
       },
@@ -152,7 +196,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.42,
+        "ms": 0.51,
         "label": "German order trailing slash",
         "passed": true
       },
@@ -163,7 +207,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.39,
+        "ms": 0.24,
         "label": "French root trailing slash",
         "passed": true
       },
@@ -174,7 +218,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.43,
+        "ms": 0.21,
         "label": "French pricing trailing slash",
         "passed": true
       },
@@ -185,7 +229,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.28,
+        "ms": 0.26,
         "label": "French order trailing slash",
         "passed": true
       },
@@ -196,7 +240,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.29,
+        "ms": 0.4,
         "label": "Spanish root trailing slash",
         "passed": true
       },
@@ -207,7 +251,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.31,
+        "ms": 0.22,
         "label": "Spanish pricing trailing slash",
         "passed": true
       },
@@ -218,7 +262,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.29,
+        "ms": 0.26,
         "label": "Spanish order trailing slash",
         "passed": true
       },
@@ -229,7 +273,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.34,
+        "ms": 0.33,
         "label": "Uppercase competitor vs slug",
         "passed": true
       },
@@ -240,7 +284,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.47,
+        "ms": 0.31,
         "label": "Uppercase competitor alternatives slug",
         "passed": true
       },
@@ -251,7 +295,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.49,
+        "ms": 0.28,
         "label": "DaVinci Resolve legacy alias",
         "passed": true
       },
@@ -273,7 +317,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.48,
+        "ms": 0.47,
         "label": "Recycle bin legacy alias",
         "passed": true
       },
@@ -284,7 +328,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.5,
+        "ms": 0.42,
         "label": "Opera GX service worker retired suffix",
         "passed": true
       },
@@ -306,7 +350,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.49,
+        "ms": 0.95,
         "label": "CapCut service worker retired suffix",
         "passed": true
       },
@@ -317,7 +361,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.44,
+        "ms": 0.5,
         "label": "Adobe CC service worker retired suffix",
         "passed": true
       },
@@ -328,7 +372,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.44,
+        "ms": 0.43,
         "label": "Defender scan history consolidation",
         "passed": true
       },
@@ -339,7 +383,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.46,
+        "ms": 0.65,
         "label": "Package cache consolidation",
         "passed": true
       },
@@ -350,7 +394,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.47,
+        "ms": 0.56,
         "label": "Crash dumps WER consolidation",
         "passed": true
       },
@@ -361,7 +405,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.52,
+        "ms": 0.43,
         "label": "CBS logs consolidation",
         "passed": true
       },
@@ -372,7 +416,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.49,
+        "ms": 0.84,
         "label": "DirectX D3DSCache consolidation",
         "passed": true
       },
@@ -383,7 +427,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.68,
+        "ms": 0.84,
         "label": "NVIDIA shader cache consolidation",
         "passed": true
       },
@@ -394,7 +438,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.51,
+        "ms": 0.54,
         "label": "Vivaldi browser consolidation",
         "passed": true
       },
@@ -405,7 +449,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.5,
+        "ms": 0.54,
         "label": "JetBrains IntelliJ consolidation",
         "passed": true
       },
@@ -416,7 +460,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.59,
+        "ms": 0.42,
         "label": "Elgato Stream Deck consolidation",
         "passed": true
       }
@@ -426,126 +470,126 @@
     {
       "path": "/",
       "status": 200,
-      "ms": 4.72,
+      "ms": 2.89,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pricing",
       "status": 200,
-      "ms": 3.31,
+      "ms": 3.51,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/support",
       "status": 200,
-      "ms": 3.35,
+      "ms": 3.18,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/refund",
       "status": 200,
-      "ms": 10.44,
+      "ms": 4.42,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/privacy",
       "status": 200,
-      "ms": 3.61,
+      "ms": 2.66,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/terms",
       "status": 200,
-      "ms": 5.58,
+      "ms": 1.2,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/vs/ccleaner",
       "status": 200,
-      "ms": 6.03,
+      "ms": 5.15,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/alternatives/ccleaner",
       "status": 200,
-      "ms": 6.88,
+      "ms": 7,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 29.69,
+      "ms": 18.88,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 5.81,
+      "ms": 5.03,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/app/standard-notes-cache",
       "status": 200,
-      "ms": 4.38,
+      "ms": 4.85,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/folder/delivery-optimization-cache",
       "status": 200,
-      "ms": 5.78,
+      "ms": 3.91,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools",
       "status": 200,
-      "ms": 1.16,
+      "ms": 0.98,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools/discord-cache-cleaner",
       "status": 200,
-      "ms": 21.12,
+      "ms": 15.13,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/safe-to-delete",
       "status": 200,
-      "ms": 35.03,
+      "ms": 22.16,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/state-of-windows-storage",
       "status": 200,
-      "ms": 7.72,
+      "ms": 6.48,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/robots.txt",
       "status": 200,
-      "ms": 8.73,
+      "ms": 3.9,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "ms": 33.01,
+      "ms": 38.83,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/llms.txt",
       "status": 200,
-      "ms": 11.35,
+      "ms": 9.85,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pad.xml",
       "status": 200,
-      "ms": 5.25,
+      "ms": 4.41,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
   ],
   "indexing": {
-    "sitemapUrlCount": 416,
+    "sitemapUrlCount": 425,
     "bingIndexNowStatus": "skipped (0 delta URLs)",
     "apiIndexNowStatus": "skipped (0 delta URLs)",
     "googlePingStatus": "pending",

@@ -404,7 +404,7 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
             r.guide_url
               ? `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
                   <a href="${escapeHtml(r.guide_url)}" style="font-size:13px;font-weight:700;color:#0d6847;text-decoration:none;">Read Full Safety Audit &amp; Manual Steps &rarr;</a>
-                  <a href="/order?plan=annual&utm_source=safe_to_delete_item" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a>
+                  <a href="/order?plan=annual&utm_source=safe_to_delete_item" rel="nofollow" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a>
                 </div>`
               : ""
           }
@@ -457,7 +457,7 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/vs/ccleaner">SWEEPR vs CCleaner</a>
         <a href="/pricing">Pricing</a>
-        <a href="/order?plan=annual" class="btn-primary">Get SWEEPR Pro &rarr;</a>
+        <a href="/order?plan=annual" rel="nofollow" class="btn-primary">Get SWEEPR Pro &rarr;</a>
       </div>
     </nav>
 
@@ -526,8 +526,8 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
         </p>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;" data-experiment-id="checker_cta_copy_v1" data-experiment-variant="${ctaVariant}">
-        <a href="/order?plan=annual&utm_source=safe_to_delete_cta&exp_var=${ctaVariant}" id="checkerMainProCta" class="btn-primary" style="background:#ffffff;color:#073825 !important;font-weight:800;" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual'})">${escapeHtml(ctaButtonCopy)}</a>
-        <a href="/download?platform=windows" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
+        <a href="/order?plan=annual&utm_source=safe_to_delete_cta&exp_var=${ctaVariant}" rel="nofollow" id="checkerMainProCta" class="btn-primary" style="background:#ffffff;color:#073825 !important;font-weight:800;" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual'})">${escapeHtml(ctaButtonCopy)}</a>
+        <a href="/download?platform=windows" rel="nofollow" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
       </div>
     </div>
 
@@ -659,7 +659,7 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
             '</div>' +
             '<p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 6px;"><strong>Why it grows:</strong> ' + esc(r.explanation) + '</p>' +
             '<p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 10px;"><strong>If deleted:</strong> ' + esc(r.what_happens) + '</p>' +
-            (r.guide_url ? '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;"><a href="' + esc(r.guide_url) + '" style="font-size:13px;font-weight:700;color:#0d6847;text-decoration:none;">Read Full Safety Audit &amp; Manual Steps &rarr;</a><a href="/order?plan=annual&utm_source=safe_to_delete_item" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a></div>' : '') +
+            (r.guide_url ? '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;"><a href="' + esc(r.guide_url) + '" style="font-size:13px;font-weight:700;color:#0d6847;text-decoration:none;">Read Full Safety Audit &amp; Manual Steps &rarr;</a><a href="/order?plan=annual&utm_source=safe_to_delete_item" rel="nofollow" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a></div>' : '') +
           '</div>';
         }).join('');
         document.getElementById('resultsContainer').innerHTML = html;

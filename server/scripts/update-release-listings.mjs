@@ -20,17 +20,67 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const PAD_XML_PATH = path.join(REPO_ROOT, "server/public/pad.xml");
 const EXE_PATH = path.join(REPO_ROOT, "server/public/SWEEPRCleaner.exe");
+const EXE_SIG_PATH = path.join(REPO_ROOT, "server/public/SWEEPRCleaner.exe.sig");
 const MSI_PATH = path.join(REPO_ROOT, "server/public/Sweepr_Setup.msi");
+const MSI_SIG_PATH = path.join(REPO_ROOT, "server/public/Sweepr_Setup.msi.sig");
+const RELEASE_MANIFEST_PATH = path.join(REPO_ROOT, "server/public/release-manifest.json");
 const TAURI_CONF_PATH = path.join(REPO_ROOT, "app/src-tauri/tauri.conf.json");
 const NUSPEC_PATH = path.join(REPO_ROOT, "chocolatey/sweepr-cleaner.nuspec");
 const CHOCO_INSTALL_PATH = path.join(REPO_ROOT, "chocolatey/tools/chocolateyinstall.ps1");
 
-function sha256File(filePath) {
+function loadEd25519PrivateKey() {
+  let b64 = (process.env.LICENSE_PRIVATE_KEY_B64 || "").trim();
+  if (!b64) {
+    for (const envFile of [path.join(REPO_ROOT, "server/.env"), path.join(REPO_ROOT, ".env")]) {
+      if (fs.existsSync(envFile)) {
+        const content = fs.readFileSync(envFile, "utf8");
+        const match = content.match(/^LICENSE_PRIVATE_KEY_B64=(.+)$/m);
+        if (match?.[1]?.trim()) {
+          b64 = match[1].trim().replace(/^["']|["']$/g, "");
+          break;
+        }
+      }
+    }
+  }
+  if (!b64) {
+    const secretsFile = path.join(REPO_ROOT, "server/data/.server-secrets.json");
+    if (fs.existsSync(secretsFile)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(secretsFile, "utf8"));
+        if (typeof parsed?.licensePrivateKeyB64 === "string") {
+          b64 = parsed.licensePrivateKeyB64.trim();
+        }
+      } catch {}
+    }
+  }
+  if (!b64) return null;
+  try {
+    const decoded = Buffer.from(b64, "base64");
+    const text = decoded.toString("utf8");
+    const key = text.includes("BEGIN")
+      ? crypto.createPrivateKey(text)
+      : crypto.createPrivateKey({ key: decoded, format: "der", type: "pkcs8" });
+    return key.asymmetricKeyType === "ed25519" ? key : null;
+  } catch {
+    return null;
+  }
+}
+
+function sha256AndSignFile(filePath, sigPath, signingKey) {
   if (!fs.existsSync(filePath)) return null;
   const buf = fs.readFileSync(filePath);
+  const sha256 = crypto.createHash("sha256").update(buf).digest("hex").toUpperCase();
+  let signature = "";
+  if (signingKey) {
+    signature = crypto.sign(null, buf, signingKey).toString("base64");
+    fs.writeFileSync(sigPath, `${signature}\n`, "utf8");
+  } else if (fs.existsSync(sigPath)) {
+    signature = fs.readFileSync(sigPath, "utf8").trim();
+  }
   return {
     bytes: buf.length,
-    sha256: crypto.createHash("sha256").update(buf).digest("hex").toUpperCase(),
+    sha256,
+    signature,
   };
 }
 
@@ -43,14 +93,32 @@ function main() {
     .replace(/^v/i, "")
     .trim();
 
-  const exeInfo = sha256File(EXE_PATH) || {
+  const signingKey = loadEd25519PrivateKey();
+
+  const exeInfo = sha256AndSignFile(EXE_PATH, EXE_SIG_PATH, signingKey) || {
     bytes: 6840632,
     sha256: "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA",
+    signature: fs.existsSync(EXE_SIG_PATH) ? fs.readFileSync(EXE_SIG_PATH, "utf8").trim() : "",
   };
-  const msiInfo = sha256File(MSI_PATH) || {
+  const msiInfo = sha256AndSignFile(MSI_PATH, MSI_SIG_PATH, signingKey) || {
     bytes: 3993600,
     sha256: "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A",
+    signature: fs.existsSync(MSI_SIG_PATH) ? fs.readFileSync(MSI_SIG_PATH, "utf8").trim() : "",
   };
+
+  fs.writeFileSync(
+    RELEASE_MANIFEST_PATH,
+    `${JSON.stringify(
+      {
+        version,
+        exe: exeInfo,
+        msi: msiInfo,
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
 
   const now = new Date();
   const year = String(now.getUTCFullYear());

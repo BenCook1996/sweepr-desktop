@@ -73,6 +73,9 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
   if (slug === "nvidia-shader-cache" || slug === "nvidia-dx-cache") {
     return "/clean/app/nvidia-dxcache";
   }
+  if (slug === "livekernelreports") {
+    return "/clean/folder/windows-livekernelreports";
+  }
   if (slug === "vivaldi-cache") {
     return "/clean/app/vivaldi-browser-cache";
   }
@@ -128,139 +131,145 @@ export function getCleanItems(): CleanItem[] {
 }
 
 const CUSTOM_GSC_TITLES: Record<string, string> = {
-  "steam-depotcache": "What Is Steam depotcache? Safe to Delete? (2026 Guide)",
-  "programdata-package-cache": "ProgramData Package Cache: Safe to Delete? (2026) | SWEEPR",
-  "riot-client-logs": "How to Clear Valorant & Riot Client Cache Files (2026)",
-  "logitech-ghub-installer-cache": "LGHUB Depots & Media Blob Cache: Safe to Delete? (2026)",
-  "logitech-options-plus-cache": "Logi Options+ Depots & Media Blob Cache: Safe to Delete?",
+  "steam-depotcache": "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+  "riot-client-logs": "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+  "logitech-ghub-installer-cache": "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+  "stremio-desktop-cache": "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+  "amd-shader-cache": "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+  "comfyui-temp-output-cache": "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+  "genshin-impact-update-cache": "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+  "winsxs": "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+  "programdata-package-cache": "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+  "windows-livekernelreports": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+  "livekernelreports": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+  "logitech-options-plus-cache": "Can I Delete LogiOptionsPlus Cache? YES — Safe Cleanup Guide (Reclaim 1.2–6.5 GB)",
   "elgato-streamdeck-cache":
-    "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
-  "windows-livekernelreports": "LiveKernelReports WATCHDOG Dumps: Safe to Delete? (2026)",
-  "vivaldi-browser-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
-  "vivaldi-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
-  "jetbrains-intellij-cache": "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
-  "intellij-idea-caches": "IntelliJ Clean Launcher, Logs & IDE Caches Guide (2026)",
-  "dolphin-emulator-cache": "Dolphin Emulator Shader & Media Blob Cache Guide (2026)",
-  "zen-browser-cache": "Clear Zen Browser Cache & Media Blob Storage (2026)",
-  "opera-gx-cache": "How to Clear Opera GX Cache & Bloat Safely (2026) | SWEEPR",
-  "medal-tv-cache": "How to Clear Medal TV Cache (Keep Clips Safe) | SWEEPR",
-  "capcut-desktop-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
-  "capcut-pc-cache": "How to Clear CapCut PC Cache Safely (2026) | SWEEPR",
-  "winsxs": "Windows WinSxS Folder Cleanup: Safe to Delete? | SWEEPR",
-  "obs-studio-logs-crashes": "OBS Studio Logs & Crash Dumps: Safe to Delete? | SWEEPR",
-  "adobe-media-cache": "Adobe Premiere & Media Cache: Safe to Delete? | SWEEPR",
-  "creative-cloud-installer-cache": "Adobe Creative Cloud Cache: Safe to Delete? (2026) | SWEEPR",
-  "nvidia-dxcache": "NVIDIA DXCache & GLCache Folder: Safe to Delete? | SWEEPR",
-  "npm-cache": "Clear npm-cache Folder on Windows 11 Safely (2026) | SWEEPR",
-  "gradle-wrapper-caches": "Clear .gradle Caches & Wrapper Dists on Windows | SWEEPR",
-  "localappdata-crashdumps": "AppData\\Local\\CrashDumps: Safe to Delete? (2026) | SWEEPR",
-  "hiberfil-sys": "C:\\hiberfil.sys on Windows 11: Safe to Delete? | SWEEPR",
-  "windows-old": "Delete C:\\Windows.old Safely on Windows 11 (2026) | SWEEPR",
-  "pip-cache": "How to Clear Python pip Cache on Windows 11 | SWEEPR",
-  "delivery-optimization": "Clear Delivery Optimization Cache on Windows 11 | SWEEPR",
-  "c-drive-filling-up-by-itself-windows-11": "C Drive Filling Up By Itself on Windows 11? Fix It | SWEEPR",
-  "system-and-reserved-storage-100gb-windows-11": "System & Reserved Storage Taking 100GB Windows 11 | SWEEPR",
-  "appdata-local-folder-huge-windows-11": "AppData\\Local Folder Huge on Windows 11? Safe Clean | SWEEPR",
-  "windows-11-24h2-update-cache-8gb-bug": "Fix Windows 11 24H2 8.63 GB Undeletable Update Cache | SWEEPR",
-  "other-storage-full-windows-11-cleanup": "Clean 'Other' & Temporary Files on Windows 11 | SWEEPR",
-  "localappdata-webview2-ebwebview-cache": "WebView2 EBWebView Cache: Safe to Delete? (2026) | SWEEPR",
-  "genshin-impact-update-cache": "Genshin Impact Update Cache: Safe to Delete? | SWEEPR",
-  "ea-app-cache": "How to Clear EA App Cache & Logs Safely (2026) | SWEEPR",
-  "epic-games-webcache": "Epic Games Launcher Webcache: Safe to Delete? | SWEEPR",
-  "chrome-gpu-shader-cache": "Chrome GPUCache & GrShaderCache: Safe to Delete? | SWEEPR",
-  "amd-shader-cache": "AMD DxCache & VkCache Folder: Safe to Delete? | SWEEPR",
-  "vrchat-cache": "How to Clear VRChat Cache Folder Safely (2026) | SWEEPR",
-  "comfyui-temp-output-cache": "ComfyUI Temp & Output Cache Cleanup Guide (2026) | SWEEPR",
-  "lm-studio-models-cache": "LM Studio Models & GGUF Cache: Safe to Delete? | SWEEPR",
+    "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+  "vivaldi-browser-cache": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+  "vivaldi-cache": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+  "jetbrains-intellij-cache": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+  "intellij-idea-caches": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+  "dolphin-emulator-cache": "Can I Delete Dolphin Emulator Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+  "zen-browser-cache": "Can I Delete Zen Browser Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+  "opera-gx-cache": "Can I Delete Opera GX Cache? YES — Safe Cleanup Guide (Reclaim 1.8–12 GB)",
+  "medal-tv-cache": "Can I Delete Medal TV Cache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+  "capcut-desktop-cache": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
+  "capcut-pc-cache": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
+  "obs-studio-logs-crashes": "Can I Delete OBS Studio Logs & Cache? YES — Safe Cleanup Guide (Reclaim 1–6.5 GB)",
+  "adobe-media-cache": "Can I Delete Adobe Media Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
+  "creative-cloud-installer-cache": "Can I Delete Adobe Creative Cloud Cache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+  "nvidia-dxcache": "Can I Delete NVIDIA DXCache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+  "npm-cache": "Can I Delete %LOCALAPPDATA%\\npm-cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+  "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
+  "localappdata-crashdumps": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
+  "hiberfil-sys": "Can I Delete C:\\hiberfil.sys? YES — Safe Cleanup Guide (Reclaim 6–32 GB)",
+  "windows-old": "Can I Delete C:\\Windows.old? YES — Safe Cleanup Guide (Reclaim 15–35 GB)",
+  "pip-cache": "Can I Delete %LOCALAPPDATA%\\pip\\Cache? YES — Safe Cleanup Guide (Reclaim 2–20 GB)",
+  "delivery-optimization": "Can I Delete DeliveryOptimization Cache? YES — Safe Cleanup Guide (Reclaim 3–20 GB)",
+  "c-drive-filling-up-by-itself-windows-11": "Can I Delete Hidden C: Drive Bloat? YES — Safe Cleanup Guide (Reclaim 12–65 GB)",
+  "system-and-reserved-storage-100gb-windows-11": "Can I Delete System & Reserved Bloat? YES — Safe Cleanup Guide (Reclaim 10–60 GB)",
+  "appdata-local-folder-huge-windows-11": "Can I Delete %LOCALAPPDATA% Cache Bloat? YES — Safe Cleanup Guide (Reclaim 10–50 GB)",
+  "windows-11-24h2-update-cache-8gb-bug": "Can I Delete Windows 11 24H2 Update Cache? YES — Safe Cleanup Guide (Reclaim 8.6 GB)",
+  "other-storage-full-windows-11-cleanup": "Can I Delete Windows 11 Temporary Files? YES — Safe Cleanup Guide (Reclaim 6–45 GB)",
+  "localappdata-webview2-ebwebview-cache": "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
+  "ea-app-cache": "Can I Delete EA App Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
+  "epic-games-webcache": "Can I Delete Epic Games webcache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+  "chrome-gpu-shader-cache": "Can I Delete Chrome GPUCache? YES — Safe Cleanup Guide (Reclaim 1–6 GB)",
+  "vrchat-cache": "Can I Delete VRChat Cache-WindowsPlayer? YES — Safe Cleanup Guide (Reclaim 10–30 GB)",
+  "lm-studio-models-cache": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
 };
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "steam-depotcache":
-    "What is the Steam depotcache folder and is it safe to delete? Yes—reclaim 2–20 GB of orphaned .csd/.csm chunks in C:\\Program Files (x86)\\Steam\\depotcache.",
-  "programdata-package-cache":
-    "Can you delete C:\\ProgramData\\Package Cache? Learn which orphaned Visual C++ & MSI caches are safe to remove to free 3–18 GB without breaking uninstallers.",
+    "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "riot-client-logs":
-    "How to clear Valorant cache files and Riot Client logs on Windows 10/11. Safely delete 1–6.5 GB in %LocalAppData%\\VALORANT\\Saved\\Logs without FPS drops.",
+    "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "logitech-ghub-installer-cache":
-    "Is C:\\ProgramData\\LGHUB\\depots and LGHUB Media Blob Storage safe to delete? Clear 1–6 GB of Logitech G HUB cache while keeping mouse DPI & macros intact.",
-  "logitech-options-plus-cache":
-    "Is Logi Options+ depots and Media Blob Storage safe to delete? Reclaim 1–4.5 GB in C:\\ProgramData\\Logishrd\\LogiOptionsPlus while keeping button mappings.",
-  "elgato-streamdeck-cache":
-    "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — safe to delete? Reclaim 1–4 GB on Windows 11 without losing ProfilesV2 button layouts.",
-  "windows-livekernelreports":
-    "Is C:\\Windows\\LiveKernelReports\\WATCHDOG safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU timeout minidump (.dmp) files on Windows 10 & 11.",
-  "vivaldi-browser-cache":
-    "How to clear Vivaldi WebGPU DawnCache, GPUCache, and browser cache on Windows 10/11. Reclaim 1–6 GB in %LocalAppData%\\Vivaldi\\User Data without sign-outs.",
-  "vivaldi-cache":
-    "How to clear Vivaldi WebGPU DawnCache, GPUCache, and browser cache on Windows 10/11. Reclaim 1–6 GB in %LocalAppData%\\Vivaldi\\User Data without sign-outs.",
-  "jetbrains-intellij-cache":
-    "How to clean IntelliJ IDEA launcher caches, old JVM indexes, and logs in %LocalAppData%\\JetBrains on Windows 10/11 to reclaim 5–25 GB safely in 1 click.",
-  "intellij-idea-caches":
-    "How to clean IntelliJ IDEA launcher caches, old JVM indexes, and logs in %LocalAppData%\\JetBrains on Windows 10/11 to reclaim 5–25 GB safely in 1 click.",
-  "dolphin-emulator-cache":
-    "How to clear Dolphin Emulator ShaderCache, Ubershaders, and Media Blob Storage on Windows 10/11. Safely free 500 MB–6 GB without losing GameCube/Wii saves.",
-  "zen-browser-cache":
-    "How to clear Zen Browser cache2, Media Blob Storage, and Service Worker storage on Windows 10/11. Reclaim 1–6 GB without losing Workspaces or saved logins.",
-  "opera-gx-cache":
-    "How to clear Opera GX cache, Service Worker CacheStorage, and shader bloat on Windows 10/11. Reclaim 1.5–8.5 GB while keeping tabs, mods, and logins intact.",
-  "medal-tv-cache":
-    "How to clear Medal.tv cache without losing clips. Safely delete 2–12 GB from %AppData%\\Medal\\Cache & IndexedDB blob storage on Windows 10 and Windows 11.",
-  "capcut-desktop-cache":
-    "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
-  "capcut-pc-cache":
-    "How to clear CapCut PC cache on Windows 10/11 without losing video drafts. Safely remove 2–20 GB of proxy cache, Service Worker blobs, and render scratch.",
-  "winsxs":
-    "Can you delete C:\\Windows\\WinSxS? Learn how to safely clean the Windows Side-by-Side Component Store using DISM or SWEEPR Cleaner to reclaim 6–18 GB.",
-  "obs-studio-logs-crashes":
-    "How to clear OBS Studio logs, Crashpad dumps, and browser-source CEF cache on Windows 10/11. Reclaim 500 MB–4 GB in %AppData%\\obs-studio safely in 1 click.",
-  "adobe-media-cache":
-    "How to clear Adobe Media Cache Files (.cfa, .pek) on Windows 10/11. Reclaim 10–80 GB for Premiere Pro & After Effects without affecting project timelines.",
-  "creative-cloud-installer-cache":
-    "Is Adobe Creative Cloud cache safe to delete? Reclaim 2–12 GB of CoreSync, RIBS installer staging, and Service Worker cache without signing out of Adobe apps.",
-  "nvidia-dxcache":
-    "Is NVIDIA DXCache and GLCache safe to delete? Clear 2–15 GB of stale DirectX 12 & Vulkan compiled shader binaries on Windows 10/11 to fix disk bloat & stutter.",
-  "npm-cache":
-    "How to clear %LocalAppData%\\npm-cache on Windows 10/11 safely. Reclaim 2–18 GB of cached Node.js tarballs using npm cache clean --force or SWEEPR Cleaner.",
-  "gradle-wrapper-caches":
-    "Is %UserProfile%\\.gradle\\caches safe to delete? Reclaim 5–35 GB of orphaned Android Studio & Java Gradle wrapper distributions and build caches in 1 click.",
-  "localappdata-crashdumps":
-    "Is %LocalAppData%\\CrashDumps safe to delete on Windows 11? Yes—safely remove 1–15 GB of old application .dmp crash files without affecting installed apps.",
-  "hiberfil-sys":
-    "What is C:\\hiberfil.sys on Windows 11 and can you delete it? Reclaim 8–32 GB of SSD space using powercfg -h off or SWEEPR Cleaner's safe system audit.",
-  "windows-old":
-    "How to delete C:\\Windows.old on Windows 11 safely and reclaim 15–40 GB after an OS update without running into TrustedInstaller permission errors.",
-  "pip-cache":
-    "How to clear %LocalAppData%\\pip\\Cache on Windows 11. Safely delete 2–20 GB of cached Python wheel (.whl) and PyTorch packages in 1 click.",
-  "delivery-optimization":
-    "Is Windows Update Delivery Optimization cache safe to delete? Reclaim 3–20 GB in ServiceProfiles\\NetworkService\\AppData\\Local\\Microsoft\\Windows\\DeliveryOptimization.",
-  "c-drive-filling-up-by-itself-windows-11":
-    "Why is your C: drive filling up by itself on Windows 11? Find and purge hidden WinSxS, Temp, Package Cache, DXCache, and crash dumps to reclaim 12–65 GB.",
-  "system-and-reserved-storage-100gb-windows-11":
-    "Fix System & Reserved storage taking 80GB–100GB+ on Windows 11. Safely clean WinSxS component bloat, Windows Update staging, and hiberfil.sys in minutes.",
-  "appdata-local-folder-huge-windows-11":
-    "AppData\\Local folder taking 50GB+ on Windows 11? Learn which Cache, GPUCache, Temp, and D3DSCache subfolders are 100% safe to delete without losing logins.",
-  "windows-11-24h2-update-cache-8gb-bug":
-    "How to fix the Windows 11 24H2 8.63 GB undeletable Windows Update cache bug in WinSxS\\Temp\\PendingDeletes and C:\\$Windows.~BT using DISM and SWEEPR.",
-  "other-storage-full-windows-11-cleanup":
-    "Temporary files & 'Other' storage full on Windows 11? Safely clean hidden ProgramData\\Package Cache, .cache, and GPU shader folders to free 6–45 GB.",
-  "localappdata-webview2-ebwebview-cache":
-    "Is Microsoft Edge WebView2 EBWebView cache safe to delete? Reclaim 1–8 GB of embedded Chromium cache on Windows 10/11 without breaking desktop apps.",
-  "genshin-impact-update-cache":
-    "How to clear Genshin Impact & HoYoPlay update staging cache on Windows 10/11. Safely delete 4–25 GB of leftover .zip_tmp patch archives after updates.",
-  "ea-app-cache":
-    "Is %LocalAppData%\\Electronic Arts\\EA Desktop cache safe to delete? Clear 1–6 GB of EA App installer staging and CEF cache to fix stuck game updates.",
-  "epic-games-webcache":
-    "How to clear %LocalAppData%\\EpicGamesLauncher\\Saved\\webcache on Windows 10/11. Safely remove 1–5 GB of CEF storefront bloat and fix blank launcher UI.",
-  "chrome-gpu-shader-cache":
-    "Is Google Chrome GPUCache, GrShaderCache, and DawnCache safe to delete? Reclaim 1–6 GB in %LocalAppData%\\Google\\Chrome\\User Data without losing logins.",
+    "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "stremio-desktop-cache":
+    "Can I delete %APPDATA%\\stremio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "amd-shader-cache":
-    "Is %LocalAppData%\\AMD\\DxCache and VkCache safe to delete? Clear 2–12 GB of compiled Radeon DirectX & Vulkan shader binaries to fix disk bloat & stutter.",
-  "vrchat-cache":
-    "Is %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer safe to delete? Reclaim 10–30 GB of cached avatar and world bundles without losing your account.",
+    "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "comfyui-temp-output-cache":
-    "How to clear ComfyUI temp preview tensors, custom_nodes pip cache, and intermediate diffusion latents on Windows 11 to reclaim 5–40 GB of NVMe space.",
+    "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "genshin-impact-update-cache":
+    "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "winsxs":
+    "Can I clean C:\\Windows\\WinSxS via DISM? YES (6–20 GB). Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan.",
+  "programdata-package-cache":
+    "Can I delete orphaned C:\\ProgramData\\Package Cache? YES (3.5–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "windows-livekernelreports":
+    "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "livekernelreports":
+    "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "logitech-options-plus-cache":
+    "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "elgato-streamdeck-cache":
+    "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "vivaldi-browser-cache":
+    "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "vivaldi-cache":
+    "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "jetbrains-intellij-cache":
+    "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "intellij-idea-caches":
+    "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "dolphin-emulator-cache":
+    "Can I delete %APPDATA%\\Dolphin Emulator\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "zen-browser-cache":
+    "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "opera-gx-cache":
+    "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+  "medal-tv-cache":
+    "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "capcut-desktop-cache":
+    "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "capcut-pc-cache":
+    "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "obs-studio-logs-crashes":
+    "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "adobe-media-cache":
+    "Can I delete %APPDATA%\\Adobe\\Common\\Media Cache Files? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "creative-cloud-installer-cache":
+    "Can I delete %LOCALAPPDATA%\\Adobe\\Creative Cloud? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "nvidia-dxcache":
+    "Can I delete %LOCALAPPDATA%\\NVIDIA\\DXCache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "npm-cache":
+    "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "gradle-wrapper-caches":
+    "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "localappdata-crashdumps":
+    "Can I delete %LOCALAPPDATA%\\CrashDumps? YES (1–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "hiberfil-sys":
+    "Can I delete C:\\hiberfil.sys on Windows 11? YES (6–32 GB). Zero save files or active logins lost. Manual powercfg steps + 1-click free 6.5 MB Sweepr scan.",
+  "windows-old":
+    "Can I delete C:\\Windows.old on Windows 11? YES (15–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "pip-cache":
+    "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (2–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "delivery-optimization":
+    "Can I delete Windows DeliveryOptimization cache? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "c-drive-filling-up-by-itself-windows-11":
+    "C: drive filling up in %LOCALAPPDATA% & C:\\Windows\\Temp? Reclaim 12–65 GB. Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "system-and-reserved-storage-100gb-windows-11":
+    "System & Reserved taking 100GB in C:\\Windows\\WinSxS? Reclaim 10–60 GB. Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "appdata-local-folder-huge-windows-11":
+    "Can I delete %LOCALAPPDATA%\\Temp & GPUCache bloat? YES (10–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "windows-11-24h2-update-cache-8gb-bug":
+    "Fix Windows 11 24H2 8.63 GB cache in C:\\Windows\\WinSxS\\Temp. Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan.",
+  "other-storage-full-windows-11-cleanup":
+    "Clean 'Other' storage in C:\\ProgramData\\Package Cache (6–45 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "localappdata-webview2-ebwebview-cache":
+    "Can I delete %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "ea-app-cache":
+    "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "epic-games-webcache":
+    "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+  "chrome-gpu-shader-cache":
+    "Can I delete %LOCALAPPDATA%\\Google\\Chrome\\User Data\\ShaderCache? YES (1–6 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+  "vrchat-cache":
+    "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "lm-studio-models-cache":
-    "Where does LM Studio store GGUF models on Windows 11? Safely audit and clean %UserProfile%\\.cache\\lm-studio to reclaim 10–80 GB of unused LLM weights.",
+    "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
 };
 
 export type PseoClusterId =
@@ -765,7 +774,7 @@ export function setApprovedIntentGapSeoOverride(
   }
   const existing = approvedIntentGapOverrides.get(cleanSlug) ?? { approvedAt: new Date().toISOString() };
   approvedIntentGapOverrides.set(cleanSlug, {
-    title: opts.title && opts.title.length >= 30 && opts.title.length <= 60 ? opts.title : existing.title,
+    title: opts.title && opts.title.length >= 30 && opts.title.length <= 115 ? opts.title : existing.title,
     metaDescription:
       opts.metaDescription && opts.metaDescription.length >= 70 && opts.metaDescription.length <= 160
         ? opts.metaDescription
@@ -789,14 +798,48 @@ export function isPseoSlugNoindexed(slug: string): boolean {
   return Boolean(item?.noindex || item?.mergedIntoSlug);
 }
 
+export function formatCompactSpaceRange(avgSpace: string): string {
+  const raw = String(avgSpace || "").trim();
+  if (!raw) return "1–10 GB";
+  const gbMatches = [...raw.matchAll(/(\d+(?:\.\d+)?)\s*(GB|MB)/gi)];
+  if (gbMatches.length >= 2) {
+    const u1 = gbMatches[0][2].toUpperCase();
+    const u2 = gbMatches[1][2].toUpperCase();
+    if (u1 === "GB" && u2 === "GB") {
+      return `${Number(Number(gbMatches[0][1]).toFixed(1))}–${Number(Number(gbMatches[1][1]).toFixed(1))} GB`;
+    }
+    if (u1 === "MB" && u2 === "GB") {
+      return `${gbMatches[0][1]} MB–${Number(Number(gbMatches[1][1]).toFixed(1))} GB`;
+    }
+  }
+  return raw.replace(/\.0\b/g, "");
+}
+
+export function extractPrimaryDisplayPath(rawPath: string): string {
+  const firstPart = String(rawPath || "")
+    .split(/\s+(?:and|or)\s+|,\s+/i)[0]
+    .trim()
+    .replace(/^%localappdata%low/i, "%LOCALAPPDATA%Low")
+    .replace(/^%localappdata%/i, "%LOCALAPPDATA%")
+    .replace(/^%appdata%/i, "%APPDATA%")
+    .replace(/^%programdata%/i, "%PROGRAMDATA%")
+    .replace(/^%userprofile%/i, "%USERPROFILE%")
+    .replace(/^%windir%/i, "%WINDIR%")
+    .replace(/^%temp%/i, "%TEMP%");
+  return firstPart || "%LOCALAPPDATA%\\Temp";
+}
+
 export function buildPseoTitle(item: CleanItem): string {
   const approved = approvedIntentGapOverrides.get(item.slug)?.title;
-  const custom = approved || CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
-  if (custom && custom.length >= 30 && (custom.length <= 60 || item.slug === "elgato-streamdeck-cache")) {
+  if (approved && approved.length >= 30 && approved.length <= 115) {
+    return approved;
+  }
+  const custom = CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
+  if (custom && custom.length >= 30 && custom.length <= 115) {
     return custom;
   }
 
-  const cleanName = item.name
+  let cleanName = item.name
     .replace(/TechSmith Snagit Screen Capture/g, "Snagit Capture")
     .replace(/MuseScore Studio Notation Software/g, "MuseScore Studio")
     .replace(/Roblox Engine & Player/g, "Roblox Player")
@@ -805,86 +848,50 @@ export function buildPseoTitle(item: CleanItem): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  const candidates: string[] = [cleanName];
-  if (cleanName.includes("&")) {
-    const parts = cleanName.split("&").map((s) => s.trim());
-    if (parts[0] && parts[0].length >= 10) candidates.push(parts[0]);
-  }
-
-  const brands = [
-    " | SWEEPR Cleaner", // 17
-    " (2026) | SWEEPR",  // 16
-    " | SWEEPR",         // 9
-  ];
-
-  const templates = [
-    (target: string, brand: string) => `How to Clean ${target} Safely${brand}`,
-    (target: string, brand: string) => `How to Clean ${target} (2026)${brand}`,
-    (target: string, brand: string) => `How to Clean ${target}${brand}`,
-    (target: string, brand: string) => `How to Safely Delete ${target} on Windows 11${brand}`,
-    (target: string, brand: string) => `How to Clean ${target} on Windows 11${brand}`,
-    (target: string, brand: string) => `How to Clean ${target} Cache Safely${brand}`,
-    (target: string, brand: string) => `Clean ${target} Safely${brand}`,
-    (target: string, brand: string) => `Clean ${target}${brand}`,
-  ];
-
-  for (const cand of candidates) {
-    for (const brand of brands) {
-      for (const tmpl of templates) {
-        const title = tmpl(cand, brand);
-        if (title.length >= 50 && title.length <= 60) {
-          return title;
-        }
+  if (cleanName.length > 48) {
+    const words = cleanName.split(" ");
+    let acc = "";
+    for (const w of words) {
+      if ((acc + " " + w).trim().length <= 48) {
+        acc = (acc + " " + w).trim();
+      } else {
+        break;
       }
     }
+    cleanName = acc.replace(/[&:,\-–—]+$/, "").trim() || cleanName.slice(0, 48).trim();
   }
 
-  const shortTemplates = [
-    `How to Clean ${cleanName} Safely on Windows 11 | SWEEPR`,
-    `How to Clean ${cleanName} Safely (2026) | SWEEPR Cleaner`,
-    `How to Safely Clean ${cleanName} on Windows 11 | SWEEPR`,
-    `How to Clean ${cleanName} Cache Safely (2026) | SWEEPR`,
-  ];
-  for (const st of shortTemplates) {
-    if (st.length >= 50 && st.length <= 60) return st;
-  }
-
-  const words = cleanName.split(" ");
-  let target = "";
-  for (const w of words) {
-    if ((target + " " + w).trim().length <= 26) {
-      target = (target + " " + w).trim();
-    } else {
-      break;
-    }
-  }
-
-  const fallbacks = [
-    `How to Clean ${target} Safely | SWEEPR`,
-    `How to Clean ${target} (2026) | SWEEPR`,
-    `How to Clean ${target} Safely | SWEEPR Cleaner`,
-    `How to Clean ${target} | SWEEPR Cleaner`,
-  ];
-  for (const fb of fallbacks) {
-    if (fb.length >= 50 && fb.length <= 60) return fb;
-  }
-
-  return `How to Clean ${target} | SWEEPR Cleaner`.slice(0, 60);
+  const telemetry = getActiveTelemetryTruthForSlug(item.slug);
+  const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : formatCompactSpaceRange(item.avgSpace);
+  return `Can I Delete ${cleanName}? YES — Safe Cleanup Guide (Reclaim ${spaceLabel})`;
 }
 
 export function buildPseoDescription(item: CleanItem): string {
   const approvedDesc = approvedIntentGapOverrides.get(item.slug)?.metaDescription;
-  const customDesc = approvedDesc || CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
+  if (approvedDesc && approvedDesc.length >= 70 && approvedDesc.length <= 160) {
+    return approvedDesc;
+  }
+  const customDesc = CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }
   const telemetry = getActiveTelemetryTruthForSlug(item.slug);
-  const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : item.avgSpace;
-  const withoutParens = item.name.replace(/\s*\([^)]*\)/g, "").trim();
-  const base = `Step-by-step guide to cleaning ${withoutParens} to reclaim ${spaceLabel}. Learn whether it is safe to delete and how to clean it safely in 1 click.`;
-  if (base.length <= 158) return base;
-  const shorter = `How to clean ${withoutParens} and reclaim ${spaceLabel} safely. Verified Windows cleanup guide with manual steps and 1-click automatic cleaning.`;
-  return shorter.slice(0, 158).trim();
+  const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : formatCompactSpaceRange(item.avgSpace);
+  let primaryPath = extractPrimaryDisplayPath(item.path);
+
+  let desc = `Can I delete ${primaryPath}? YES (${spaceLabel}). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+  if (desc.length > 158) {
+    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+  }
+  if (desc.length > 158) {
+    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`;
+  }
+  if (desc.length > 158) {
+    const maxP = 158 - `Delete  (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`.length;
+    primaryPath = primaryPath.slice(0, Math.max(18, maxP));
+    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`;
+  }
+  return desc;
 }
 
 function matchTransactionalToolForItem(
@@ -939,19 +946,58 @@ function matchTransactionalToolForItem(
   return { slug: "windows-24h2-update-cleaner", label: "Windows 11 24H2 Update & WinSxS Cleaner", savings: "10–45 GB" };
 }
 
-const FEATURED_GSC_SLUGS = [
+export const FEATURED_GSC_SLUGS = [
   "steam-depotcache",
-  "programdata-package-cache",
+  "genshin-impact-update-cache",
   "riot-client-logs",
   "logitech-ghub-installer-cache",
-  "logitech-options-plus-cache",
-  "elgato-streamdeck-cache",
-  "windows-livekernelreports",
+  "stremio-desktop-cache",
+  "amd-shader-cache",
   "winsxs",
-  "opera-gx-cache",
+  "windows-livekernelreports",
+  "comfyui-temp-output-cache",
+  "programdata-package-cache",
+  "brave-browser-cache",
   "medal-tv-cache",
+  "nvidia-nv-cache",
+  "nvidia-dxcache",
+  "battlenet-cache",
   "capcut-desktop-cache",
+  "zen-browser-cache",
+  "opera-gx-cache",
+  "jetbrains-intellij-cache",
+  "windows-old",
+  "elgato-streamdeck-cache",
+  "logitech-options-plus-cache",
+  "vivaldi-browser-cache",
+  "localappdata-webview2-ebwebview-cache",
+  "dolphin-emulator-cache",
   "obs-studio-logs-crashes",
+  "creative-cloud-installer-cache",
+  "npm-cache",
+  "gradle-wrapper-caches",
+  "localappdata-crashdumps",
+  "hiberfil-sys",
+  "c-drive-filling-up-by-itself-windows-11",
+  "system-and-reserved-storage-100gb-windows-11",
+  "appdata-local-folder-huge-windows-11",
+  "windows-11-24h2-update-cache-8gb-bug",
+  "other-storage-full-windows-11-cleanup",
+  "ea-app-cache",
+  "epic-games-webcache",
+  "vrchat-cache",
+  "lm-studio-models-cache",
+  "discord-cache",
+  "spotify-cache",
+  "steam-shader-cache",
+  "chrome-service-worker-cache",
+  "huggingface-hub-cache",
+  "windows-temp",
+  "appdata-temp",
+  "nvidia-glcache",
+  "intel-arc-shader-cache",
+  "ubisoft-connect-cache",
+  "roblox-http-cache",
 ];
 
 let gscPriorityInternalLinkSlugs: string[] = [...FEATURED_GSC_SLUGS];
@@ -963,7 +1009,7 @@ export function setGscPriorityInternalLinkSlugs(slugs: string[]) {
         .map((s) => String(s || "").trim().toLowerCase())
         .filter(Boolean)
     )
-  ).slice(0, 15);
+  ).slice(0, 50);
   if (cleaned.length > 0) {
     gscPriorityInternalLinkSlugs = cleaned;
     cachedDirectoryHtml = null;
@@ -1057,10 +1103,10 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
             <div id="bloatCalcCountLabel" class="text-xs text-emerald-100/75 mt-1">Across 4 selected gaming/AI workloads on C:</div>
           </div>
           <div class="mt-4 flex flex-col gap-2">
-            <a href="/download" class="inline-block text-center bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-sm py-3 px-4 rounded-xl no-underline transition-all">
+            <a href="/download" rel="nofollow" class="inline-block text-center bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-sm py-3 px-4 rounded-xl no-underline transition-all">
               ⚡ Scan &amp; Reclaim with SWEEPR (6.5 MB Rust App) &rarr;
             </a>
-            <a id="bloatCalcShareWinLink" href="/share/win?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" class="inline-block text-center bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs py-2.5 px-3 rounded-lg no-underline transition-all">
+            <a id="bloatCalcShareWinLink" href="/share/win?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" rel="nofollow" class="inline-block text-center bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs py-2.5 px-3 rounded-lg no-underline transition-all">
               Share My Benchmark Card (+30d Free Pro)
             </a>
           </div>
@@ -1126,35 +1172,98 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
 
 export function renderGamingAndAiCacheBloatCalculatorPage(): string {
   const widgetHtml = renderGamingAndAiCacheBloatCalculatorWidget();
+  const calcJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        headline: "Windows Gaming & AI Cache Bloat Calculator (2026 Benchmark)",
+        description:
+          "Interactive Windows 11/10 storage calculator measuring hidden %LOCALAPPDATA% and %USERPROFILE% cache footprints across Steam, Genshin Impact, Valorant, ComfyUI, Ollama, Docker, JetBrains, and Adobe.",
+        url: "https://sweeprcleaner.com/tools/pc-cache-calculator",
+        author: { "@type": "Organization", name: "SWEEPR Storage Research Lab" },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
+          { "@type": "ListItem", position: 2, name: "Cleaner Tools", item: "https://sweeprcleaner.com/tools" },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "PC Cache Calculator",
+            item: "https://sweeprcleaner.com/tools/pc-cache-calculator",
+          },
+        ],
+      },
+    ],
+  });
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Windows Gaming &amp; AI Cache Bloat Calculator (%LOCALAPPDATA% Benchmark) | SWEEPR Cleaner</title>
-  <meta name="description" content="Free interactive Windows 11/10 Gaming &amp; AI Cache Bloat Calculator. Check Steam, Genshin Impact, Valorant, ComfyUI, Ollama, Docker, JetBrains, and Adobe to see exact %LOCALAPPDATA% paths and wasted GB." />
+  <title>Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR</title>
+  <meta name="description" content="Free Windows 11/10 Gaming &amp; AI Cache Bloat Calculator. Check Steam, Genshin, Valorant, ComfyUI, Ollama, Docker &amp; JetBrains %LOCALAPPDATA% paths." />
   <link rel="canonical" href="https://sweeprcleaner.com/tools/pc-cache-calculator" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR Cleaner" />
+  <meta property="og:title" content="Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR" />
   <meta property="og:description" content="See exact %LOCALAPPDATA% shader, HuggingFace, Ollama, and IDE cache paths and calculate how many GB are hiding on your C: drive." />
   <meta property="og:url" content="https://sweeprcleaner.com/tools/pc-cache-calculator" />
-  <meta property="og:image" content="https://sweeprcleaner.com/share/win.svg?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" />
+  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script type="application/ld+json">${calcJsonLd}</script>
+  <script src="/vendor/tailwindcss-3.4.5.js"></script>
+  <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/style.css" />
 </head>
-<body class="bg-[#03110c] text-emerald-50 min-h-screen">
-  <nav class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+<body class="bg-[#03110c] text-emerald-50 min-h-screen flex flex-col">
+  <nav class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between w-full">
     <a href="/" class="font-extrabold text-xl text-white no-underline">SWEEPR <span class="text-emerald-400">Cleaner</span></a>
     <div class="flex items-center gap-4 text-sm">
+      <a href="/tools" class="text-emerald-200 hover:text-white no-underline">Cleaner Tools</a>
       <a href="/clean" class="text-emerald-200 hover:text-white no-underline">377-Rule Directory</a>
       <a href="/safe-to-delete" class="text-emerald-200 hover:text-white no-underline">Path Safety Checker</a>
-      <a href="/download" class="bg-emerald-500 text-gray-950 font-extrabold px-4 py-2 rounded-xl no-underline">Download 6.5 MB App</a>
+      <a href="/download" rel="nofollow" class="bg-emerald-500 text-gray-950 font-extrabold px-4 py-2 rounded-xl no-underline">Download 6.5 MB App</a>
     </div>
   </nav>
-  <main class="max-w-5xl mx-auto px-6 py-8">
+  <main class="max-w-5xl mx-auto px-6 py-8 flex-1 w-full">
+    <header class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-black text-white mb-3">Windows Gaming &amp; AI Cache Bloat Calculator (2026 Benchmark)</h1>
+      <p class="text-sm md:text-base text-emerald-100/85 max-w-3xl leading-relaxed">
+        Modern PC games, GPU shader compilers, local AI inference tools, and developer IDEs silently store tens of gigabytes inside hidden <code class="text-emerald-300">%LOCALAPPDATA%</code>, <code class="text-emerald-300">%USERPROFILE%</code>, and <code class="text-emerald-300">C:\ProgramData</code> directories that Windows Storage Sense completely misses. Select the apps installed on your PC below to inspect exact folder paths and estimate how much disk space you can safely reclaim without losing save files, logins, or active projects.
+      </p>
+    </header>
     ${widgetHtml}
+    <section class="mt-8 bg-[#062017] border border-emerald-500/30 rounded-2xl p-6 md:p-8 text-sm text-emerald-100/85 leading-relaxed space-y-4">
+      <h2 class="text-xl font-bold text-white">Benchmark Methodology &amp; Non-Destructive Cleanup Guarantees</h2>
+      <p>
+        Every workload profile in this calculator is calibrated against SWEEPR Storage Research Lab measurements on Windows 10 (22H2) and Windows 11 (23H2 / 24H2) workstations. Unlike legacy registry cleaners, SWEEPR Cleaner targets strictly disposable staging depots, compiled DirectX/Vulkan shader caches, orphaned MSI/EXE patch payloads, and temporary preview buffers—never touching saved game progress, browser passwords, session cookies, or active model weights unless explicitly selected.
+      </p>
+      <p>
+        For manual verification before running an automated scan, inspect our step-by-step safety audits for the largest C: drive culprits:
+        <a href="/clean/app/steam-depotcache" class="text-emerald-300 underline font-semibold">Steam depotcache</a>,
+        <a href="/clean/app/genshin-impact-update-cache" class="text-emerald-300 underline font-semibold">Genshin Impact Update Cache</a>,
+        <a href="/clean/app/comfyui-temp-output-cache" class="text-emerald-300 underline font-semibold">ComfyUI Temp &amp; Output Cache</a>,
+        <a href="/clean/app/amd-shader-cache" class="text-emerald-300 underline font-semibold">AMD Radeon DXCache</a>,
+        <a href="/clean/app/nvidia-dxcache" class="text-emerald-300 underline font-semibold">NVIDIA DXCache</a>, and
+        <a href="/clean/folder/winsxs" class="text-emerald-300 underline font-semibold">Windows WinSxS Component Store</a>.
+        You can also compare SWEEPR against legacy utilities in <a href="/vs/ccleaner" class="text-emerald-300 underline font-semibold">SWEEPR vs CCleaner</a> and <a href="/vs/cleanmymac" class="text-emerald-300 underline font-semibold">SWEEPR vs CleanMyMac X</a>.
+      </p>
+    </section>
   </main>
+  <footer class="mt-auto py-8 text-center text-emerald-200/70 text-xs border-t border-emerald-500/20">
+    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
+      <a href="/pricing" class="hover:text-emerald-300 transition-colors">Pricing</a>
+      <a href="/vs/ccleaner" class="hover:text-emerald-300 transition-colors">vs CCleaner</a>
+      <a href="/refund" class="hover:text-emerald-300 transition-colors">Refund Policy</a>
+      <a href="/terms" class="hover:text-emerald-300 transition-colors">Terms of Service</a>
+      <a href="/privacy" class="hover:text-emerald-300 transition-colors">Privacy Policy</a>
+      <a href="/support" class="hover:text-emerald-300 transition-colors">Support &amp; Help</a>
+      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-300 transition-colors">Cookie Preferences</a>
+    </div>
+    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
+  </footer>
 </body>
 </html>`;
 }
@@ -1173,8 +1282,9 @@ export function renderPseoDirectory(): string {
   const items = cleanItems;
   const appItems = items.filter((i) => i.category === "app");
   const folderItems = items.filter((i) => i.category === "folder");
-  const priorityList = Array.from(new Set([...getGscPriorityInternalLinkSlugs(), ...FEATURED_GSC_SLUGS])).slice(0, 12);
+  const priorityList = Array.from(new Set([...getGscPriorityInternalLinkSlugs(), ...FEATURED_GSC_SLUGS])).slice(0, 50);
   const featuredItems = priorityList
+    .slice(0, 20)
     .map((s) => items.find((i) => i.slug === s))
     .filter((i): i is CleanItem => Boolean(i));
 
@@ -1219,7 +1329,6 @@ export function renderPseoDirectory(): string {
   <meta name="description" content="Wondering what is filling up your hard drive? Browse verified guides to safely cleaning hidden Windows folders, app caches, and temp files in minutes.">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="dns-prefetch" href="https://translate.google.com">
   <link rel="dns-prefetch" href="https://translate.googleapis.com">
   <meta property="og:type" content="website">
@@ -1281,7 +1390,7 @@ export function renderPseoDirectory(): string {
   <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
@@ -1316,8 +1425,8 @@ export function renderPseoDirectory(): string {
       <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
       <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
-      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Download Free Scan</a>
+      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700" rel="nofollow">Get Pro</a>
+      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm" rel="nofollow">Download Free Scan</a>
     </div>
   </nav>
 
@@ -1389,18 +1498,26 @@ export function renderPseoDirectory(): string {
 
     <!-- Competitor Comparison & Switcher Hub -->
     <section class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
-      <h2 class="text-xl font-bold text-gray-900 mb-2">Compare SWEEPR Cleaner vs. Legacy PC Cleaners (2026 Benchmarks)</h2>
+      <h2 class="text-xl font-bold text-gray-900 mb-2">Compare SWEEPR Cleaner vs. Legacy Windows &amp; Mac Cleaners (2026 Benchmarks)</h2>
       <p class="text-xs text-gray-600 mb-5">
-        See how SWEEPR's 5 MB native Rust engine compares against legacy Windows cleaners across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
+        See how SWEEPR's 5.8 MB native Rust engine compares against Windows and macOS utilities across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
       </p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
         <a href="/vs/ccleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CCleaner &rarr;</a>
+        <a href="/vs/cleanmymac" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CleanMyMac X &rarr;</a>
+        <a href="/vs/pearcleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Pearcleaner &rarr;</a>
+        <a href="/vs/onyx" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. OnyX &rarr;</a>
+        <a href="/vs/daisydisk" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. DaisyDisk &rarr;</a>
         <a href="/vs/bleachbit" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. BleachBit &rarr;</a>
         <a href="/vs/cleanmypc" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CleanMyPC &rarr;</a>
         <a href="/vs/avast-cleanup" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Avast Cleanup &rarr;</a>
         <a href="/vs/wise-disk-cleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Wise Disk Cleaner &rarr;</a>
         <a href="/vs/glary-utilities" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Glary Utilities &rarr;</a>
         <a href="/alternatives/ccleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CCleaner Alternative (2026) &rarr;</a>
+        <a href="/alternatives/cleanmymac" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CleanMyMac X Alternative &rarr;</a>
+        <a href="/alternatives/pearcleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Pearcleaner Alternative &rarr;</a>
+        <a href="/alternatives/onyx" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best OnyX Alternative &rarr;</a>
+        <a href="/alternatives/daisydisk" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best DaisyDisk Alternative &rarr;</a>
         <a href="/alternatives/bleachbit" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best BleachBit Alternative (2026) &rarr;</a>
         <a href="/alternatives/cleanmypc" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CleanMyPC Alternative (2026) &rarr;</a>
         <a href="/alternatives/avast-cleanup" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Avast Cleanup Alternative &rarr;</a>
@@ -1415,10 +1532,10 @@ export function renderPseoDirectory(): string {
         SWEEPR Cleaner checks all 40+ hidden folders at once and safely frees up your storage in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4 mb-5">
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go btn-big">
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go btn-big" rel="nofollow">
           Activate Pro Now (5 Devices) &rarr;
         </a>
-        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm px-6 py-3">
+        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm px-6 py-3" rel="nofollow">
           Download Free Windows / Mac Scan
         </a>
       </div>
@@ -1428,6 +1545,16 @@ export function renderPseoDirectory(): string {
       </div>
     </div>
   </main>
+  <footer class="mt-auto py-8 text-center text-gray-500 text-xs border-t border-gray-200 bg-white">
+    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
+      <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
+      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
+      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
+      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
+      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
+    </div>
+    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
+  </footer>
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="/i18n.js" defer></script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
@@ -1623,7 +1750,6 @@ export function renderPseoPage(item: CleanItem): string {
   <meta name="description" content="${pageDesc}">
   <meta name="robots" content="${robotsMetaContent}">
   <link rel="canonical" href="${canonicalUrl}">
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="dns-prefetch" href="https://translate.google.com">
   <link rel="dns-prefetch" href="https://translate.googleapis.com">
   
@@ -1701,7 +1827,7 @@ export function renderPseoPage(item: CleanItem): string {
   <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
@@ -1739,8 +1865,8 @@ export function renderPseoPage(item: CleanItem): string {
       <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
       <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
       <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
-      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700">Get Pro</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm">Get SWEEPR Cleaner</a>
+      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700" rel="nofollow">Get Pro</a>
+      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm" rel="nofollow">Get SWEEPR Cleaner</a>
     </div>
   </nav>
 
@@ -1819,10 +1945,10 @@ export function renderPseoPage(item: CleanItem): string {
           : ""
       }
       <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
-        <a href="/download?platform=windows&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" class="btn btn-go text-xs py-2 px-4">
+        <a href="/download?platform=windows&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" class="btn btn-go text-xs py-2 px-4" rel="nofollow">
           Download Free 60-Second Windows Scan (.exe) &rarr;
         </a>
-        <a href="/order?plan=annual&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="text-xs font-bold text-emerald-700 hover:underline">
+        <a href="/order?plan=annual&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="text-xs font-bold text-emerald-700 hover:underline" rel="nofollow">
           Or Activate 1-Click Pro Cleaner (5 Devices) &rarr;
         </a>
         <a href="/safe-to-delete" class="text-xs font-bold text-gray-700 hover:underline">
@@ -1860,10 +1986,10 @@ export function renderPseoPage(item: CleanItem): string {
       <div id="inlineSafeCheckResult" class="hidden rounded-xl bg-white/10 border border-white/15 p-3.5 text-xs mb-3"></div>
       <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
         <div class="flex flex-wrap items-center gap-3">
-          <a href="/download?platform=windows&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" class="inline-flex items-center gap-1.5 font-extrabold text-emerald-300 hover:text-emerald-200 underline">
+          <a href="/download?platform=windows&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" class="inline-flex items-center gap-1.5 font-extrabold text-emerald-300 hover:text-emerald-200 underline" rel="nofollow">
             💻 Download Free Windows Scan (Reclaim ${item.avgSpace}) &rarr;
           </a>
-          <a href="/order?plan=annual&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="inline-flex items-center gap-1 font-bold text-white/90 hover:text-white">
+          <a href="/order?plan=annual&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="inline-flex items-center gap-1 font-bold text-white/90 hover:text-white" rel="nofollow">
             🔑 Unlock 5-Device Pro
           </a>
         </div>
@@ -1899,7 +2025,7 @@ export function renderPseoPage(item: CleanItem): string {
                   '<span style="font-weight:700;color:#d1fae5;">Typical Space: ' + (first.avg_space || '${item.avgSpace}') + '</span>' +
                   '</div>' +
                   '<div style="color:#e2e8f0;line-height:1.45;margin-bottom:6px;">' + (first.explanation || '') + '</div>' +
-                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${item.slug}" style="color:#34d399;font-weight:800;text-decoration:underline;">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
+                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${item.slug}" style="color:#34d399;font-weight:800;text-decoration:underline;" rel="nofollow">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
               })
               .catch(function() {
                 btn.disabled = false;
@@ -2028,9 +2154,14 @@ export function renderPseoPage(item: CleanItem): string {
         </a>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-        <span class="font-semibold text-gray-800">Why Windows 11 users switch to SWEEPR (5.8 MB Rust, Zero Telemetry Bloat):</span>
+        <span class="font-semibold text-gray-800">Why Windows &amp; Mac users switch to SWEEPR (5.8 MB Rust, Zero Telemetry Bloat):</span>
         <div class="flex flex-wrap gap-3 font-bold">
           <a href="/vs/ccleaner" class="text-emerald-700 hover:underline">SWEEPR vs CCleaner</a>
+          <a href="/alternatives/ccleaner" class="text-emerald-700 hover:underline">Best CCleaner Alternative</a>
+          <a href="/vs/cleanmymac" class="text-emerald-700 hover:underline">SWEEPR vs CleanMyMac X</a>
+          <a href="/vs/pearcleaner" class="text-emerald-700 hover:underline">SWEEPR vs Pearcleaner</a>
+          <a href="/vs/onyx" class="text-emerald-700 hover:underline">SWEEPR vs OnyX</a>
+          <a href="/vs/daisydisk" class="text-emerald-700 hover:underline">SWEEPR vs DaisyDisk</a>
           <a href="/vs/bleachbit" class="text-emerald-700 hover:underline">SWEEPR vs BleachBit</a>
           <a href="/safe-to-delete" class="text-emerald-700 hover:underline">Safe-to-Delete Checker</a>
           <a href="/state-of-windows-storage" class="text-emerald-700 hover:underline">2026 Storage Study</a>
@@ -2045,11 +2176,11 @@ export function renderPseoPage(item: CleanItem): string {
         SWEEPR Cleaner safely clears ${item.name} along with ${cleanItems.length}+ other hidden app folders and leftover files in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
       </p>
       <div class="flex flex-col sm:flex-row justify-center gap-4 mb-5">
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go gap-2">
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go gap-2" rel="nofollow">
           <span>Activate Pro Now (5 Devices)</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
-        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm">
+        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm" rel="nofollow">
           Download Free Scan (.exe / .dmg)
         </a>
       </div>
@@ -2059,6 +2190,16 @@ export function renderPseoPage(item: CleanItem): string {
       </div>
     </div>
   </main>
+  <footer class="mt-auto py-8 text-center text-gray-500 text-xs border-t border-gray-200 bg-white">
+    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
+      <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
+      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
+      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
+      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
+      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
+    </div>
+    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
+  </footer>
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="/i18n.js" defer></script>
   <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>

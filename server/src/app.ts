@@ -152,6 +152,7 @@ export interface AppDeps {
     forceAppUpdate?: boolean;
     latestAppNotes?: string;
     latestAppSignature?: string;
+    latestAppSha256?: string;
     hibpApiKey?: string;
     gaMeasurementId?: string;
     metaPixelId?: string;
@@ -580,6 +581,14 @@ export function createApp(deps: AppDeps) {
         "/state-of-windows-storage",
         "/vs/ccleaner",
         "/alternatives/ccleaner",
+        "/vs/cleanmymac",
+        "/alternatives/cleanmymac",
+        "/vs/pearcleaner",
+        "/alternatives/pearcleaner",
+        "/vs/onyx",
+        "/alternatives/onyx",
+        "/vs/daisydisk",
+        "/alternatives/daisydisk",
         "/vs/bleachbit",
         "/alternatives/bleachbit",
         "/vs/cleanmypc",
@@ -599,6 +608,14 @@ export function createApp(deps: AppDeps) {
         ["sweepr", "brand", "/"],
         ["ccleaner alternative", "competitor", "/alternatives/ccleaner"],
         ["sweepr vs ccleaner", "competitor", "/vs/ccleaner"],
+        ["cleanmymac alternative", "competitor", "/alternatives/cleanmymac"],
+        ["sweepr vs cleanmymac", "competitor", "/vs/cleanmymac"],
+        ["pearcleaner alternative", "competitor", "/alternatives/pearcleaner"],
+        ["sweepr vs pearcleaner", "competitor", "/vs/pearcleaner"],
+        ["onyx mac alternative", "competitor", "/alternatives/onyx"],
+        ["sweepr vs onyx", "competitor", "/vs/onyx"],
+        ["daisydisk alternative", "competitor", "/alternatives/daisydisk"],
+        ["sweepr vs daisydisk", "competitor", "/vs/daisydisk"],
         ["bleachbit alternative", "competitor", "/alternatives/bleachbit"],
         ["sweepr vs bleachbit", "competitor", "/vs/bleachbit"],
         ["cleanmypc alternative", "competitor", "/alternatives/cleanmypc"],
@@ -797,6 +814,10 @@ export function createApp(deps: AppDeps) {
   });
   app.get("/support.html", (c) => c.redirect("/support", 301));
   app.get("/cdn-cgi/l/email-protection", (c) => c.redirect("/support", 301));
+  app.get("/month", (c) => c.redirect("/pricing", 301));
+  app.get("/mo", (c) => c.redirect("/pricing", 301));
+  app.get("/year", (c) => c.redirect("/pricing", 301));
+  app.get("/yr", (c) => c.redirect("/pricing", 301));
   app.get("/refund", (c) => {
     const file = "./public/refund.html";
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
@@ -812,7 +833,7 @@ export function createApp(deps: AppDeps) {
     c.header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     return c.body(renderLlmsFullTxt(seoStore));
   });
-  app.get("/vs/:competitor", (c) => {
+  app.get("/vs/:competitor", async (c) => {
     const raw = String(c.req.param("competitor") ?? "");
     if (raw.toLowerCase().endsWith(".html")) {
       const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -823,11 +844,12 @@ export function createApp(deps: AppDeps) {
       return c.redirect(`/vs/${competitor}`, 301);
     }
     const file = `./public/vs/${competitor}.html`;
-    return existsSync(file)
-      ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
-      : c.notFound();
+    if (!existsSync(file)) return c.notFound();
+    const cur = await resolvePricingForRequest(c, { allowQueryOverride: true });
+    const pricingSummary = `${cur.annualFormatted}/yr (Save ${cur.annualSavingsPercent}%), ${cur.sixMonthFormatted}/6mo, or ${cur.monthlyFormatted}/mo`;
+    return c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor, pricingSummary));
   });
-  app.get("/alternatives/:competitor", (c) => {
+  app.get("/alternatives/:competitor", async (c) => {
     const raw = String(c.req.param("competitor") ?? "");
     if (raw.toLowerCase().endsWith(".html")) {
       const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
@@ -838,9 +860,10 @@ export function createApp(deps: AppDeps) {
       return c.redirect(`/alternatives/${competitor}`, 301);
     }
     const file = `./public/alternatives/${competitor}.html`;
-    return existsSync(file)
-      ? c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor))
-      : c.notFound();
+    if (!existsSync(file)) return c.notFound();
+    const cur = await resolvePricingForRequest(c, { allowQueryOverride: true });
+    const pricingSummary = `${cur.annualFormatted}/yr (Save ${cur.annualSavingsPercent}%), ${cur.sixMonthFormatted}/6mo, or ${cur.monthlyFormatted}/mo`;
+    return c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor, pricingSummary));
   });
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
   app.get("/benchmark", (c) => c.html(renderGamingAndAiCacheBloatCalculatorPage()));
@@ -945,10 +968,22 @@ export function createApp(deps: AppDeps) {
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.
   const page = (rawTitle: string, msg: string, downloadLink = false) => {
     const title = escapeHtml(rawTitle);
-    const fullTitle = rawTitle.length < 30 ? `${title} — SWEEPR Cleaner Official Platform Hub` : title;
+    const fullTitle =
+      rawTitle === "Download SWEEPR Cleaner"
+        ? "Download SWEEPR Cleaner — Windows, Mac, iOS & Android"
+        : rawTitle.length < 30
+          ? `${title} | SWEEPR Cleaner Official`
+          : title.slice(0, 60);
     const desc =
       "Download or activate SWEEPR Cleaner across Windows 11/10, macOS, Android, and iPhone/iPad. Digitally signed native cleaner with 14-day money-back guarantee.";
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${fullTitle}</title><meta name="description" content="${desc}"><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://sweeprcleaner.com/download"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b"><link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b"><link rel="shortcut icon" href="/favicon.ico?v=20261031b"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b"><script src="/analytics.js" defer></script></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#f4f5f3;color:#111613;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:20px;box-shadow:0 8px 32px rgba(17,22,19,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#4b554e;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" style="display:inline-block;margin-top:20px;background:#0d6847;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(13,104,71,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
+    const dlJsonLd = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Download SWEEPR Cleaner",
+      description: desc,
+      url: "https://sweeprcleaner.com/download",
+    });
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${fullTitle}</title><meta name="description" content="${desc}"><meta name="robots" content="noindex, nofollow"><link rel="canonical" href="https://sweeprcleaner.com/download"><script type="application/ld+json">${dlJsonLd}</script><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b"><link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b"><link rel="shortcut icon" href="/favicon.ico?v=20261031b"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b"><script src="/analytics.js" defer></script></head><body style="font-family:system-ui, -apple-system, sans-serif;background:#f4f5f3;color:#111613;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;"><div style="text-align:center;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:20px;box-shadow:0 8px 32px rgba(17,22,19,0.06);width:100%;max-width:420px;box-sizing:border-box;"><h1 style="margin-top:0;font-size:24px;line-height:1.25;">${title}</h1><p style="color:#4b554e;line-height:1.5;font-size:15px;">${msg}</p>${downloadLink ? '<a href="/download" rel="nofollow" style="display:inline-block;margin-top:20px;background:#0d6847;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 4px 12px rgba(13,104,71,0.25);">Download SWEEPR Cleaner</a>' : ''}</div></body></html>`;
   };
 
   // ---------- Smart download: one button, the right app for every device ----------
@@ -1002,7 +1037,7 @@ export function createApp(deps: AppDeps) {
 
   const mobileDownloadLandingPage = (platform: "android" | "ios", ua = "", host = "sweeprcleaner.com") => {
     const btn = (href: string, text: string, primary = false, subBadge = "Recommended") =>
-      `<a href="${href}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:13px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? `<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">${subBadge}</span>` : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Open &rarr;</span>'}</a>`;
+      `<a href="${href}" rel="nofollow" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:13px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? `<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">${subBadge}</span>` : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Open &rarr;</span>'}</a>`;
     const cleanHost = host.replace(/^https?:\/\//, "");
     const isAndroidWebView = /android/.test(ua) && /\bwv\b|instagram|fban|fbav|tiktok|bytedancewebview|line\/|micromessenger|reddit/.test(ua);
 
@@ -1024,7 +1059,7 @@ export function createApp(deps: AppDeps) {
         `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:#eceee9;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;word-break:break-all;color:#143625;"><strong>Verified SHA-256:</strong> ${escapeHtml(apkSha)}</div>` +
         `</details>` +
         `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
-        `<a href="/download?platform=picker" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+        `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
         `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
         `</div><p style="display:none">`;
       return page("SWEEPR Cleaner for Android & PC", bodyHtml);
@@ -1049,7 +1084,7 @@ export function createApp(deps: AppDeps) {
 
   const pickerPage = (heading: string, msg: string, ua = "", host = "sweeprcleaner.com") => {
     const btn = (href: string, text: string, primary = false) =>
-      `<a href="${href}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? '<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">Recommended</span>' : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Download &rarr;</span>'}</a>`;
+      `<a href="${href}" rel="nofollow" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? '<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">Recommended</span>' : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Download &rarr;</span>'}</a>`;
     const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
     const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const hasAndroid = existsSync("./public/SWEEPRCleaner.apk");
@@ -1109,9 +1144,9 @@ export function createApp(deps: AppDeps) {
       smartScreenGuide +
       postDownloadEmailCapture +
       `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(17,22,19,0.08);font-size:12.5px;color:#4b554e;text-align:left;">` +
-      `<a href="/order?plan=annual" style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;color:#0d6847;border:1px solid #86efac;padding:11px 15px;border-radius:12px;text-decoration:none;font-weight:700;"><span>Unlock 5-Device Pro License</span><span>&rarr;</span></a>` +
+      `<a href="/order?plan=annual" rel="nofollow" style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;color:#0d6847;border:1px solid #86efac;padding:11px 15px;border-radius:12px;text-decoration:none;font-weight:700;"><span>Unlock 5-Device Pro License</span><span>&rarr;</span></a>` +
       `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-weight:600;">` +
-      `<a href="/login" style="color:#111613;text-decoration:underline;">Customer Login &amp; QR Activation</a>` +
+      `<a href="/login" rel="nofollow" style="color:#111613;text-decoration:underline;">Customer Login &amp; QR Activation</a>` +
       `<a href="/" style="color:#0d6847;text-decoration:none;font-weight:700;">&larr; Back to Home</a>` +
       `</div></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
@@ -1420,7 +1455,8 @@ export function createApp(deps: AppDeps) {
 
   app.get("/download", async (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
-    const ua = c.req.header("user-agent")?.toLowerCase() || "";
+    const rawUa = c.req.header("user-agent") || "";
+    const ua = rawUa.toLowerCase();
     const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
     const chMobile = c.req.header("sec-ch-ua-mobile")?.toLowerCase() || "";
     let host = "sweeprcleaner.com";
@@ -1430,11 +1466,14 @@ export function createApp(deps: AppDeps) {
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
     const direct = c.req.query("direct") === "1" || c.req.query("raw") === "1";
+    const isCrawler = Boolean(detectBot(rawUa)) || rawUa === AUDIT_USER_AGENT || ua.includes("sweeprseoaudit");
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
     const platform: Platform | null =
       requested && (validPlatforms as readonly string[]).includes(requested)
         ? (requested as Platform)
-        : detectPlatform(ua, chPlatform, chMobile);
+        : isCrawler
+          ? null
+          : detectPlatform(ua, chPlatform, chMobile);
 
     if (!platform || requested === "picker") {
       c.header("Cache-Control", "private, no-store");
@@ -1593,6 +1632,7 @@ export function createApp(deps: AppDeps) {
   });
 
   app.get("/share/win", (c) => {
+    c.header("X-Robots-Tag", "noindex, nofollow");
     const { gbLabel, culprit, msNum, code } = parseShareWinParams(c);
     const baseUrl = (config.publicUrl || "https://sweeprcleaner.com").replace(/\/+$/, "");
     const qs = `gb=${encodeURIComponent(gbLabel)}&culprit=${encodeURIComponent(culprit)}&ms=${encodeURIComponent(String(msNum))}&code=${encodeURIComponent(code)}`;
@@ -1618,6 +1658,7 @@ export function createApp(deps: AppDeps) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${ogTitle} — SWEEPR Cleaner</title>
   <meta name="description" content="${ogDesc}" />
+  <meta name="robots" content="noindex, nofollow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="SWEEPR Cleaner" />
   <meta property="og:title" content="${ogTitle}" />
@@ -6600,7 +6641,7 @@ export function createApp(deps: AppDeps) {
       pub_date: new Date().toISOString(),
       url: downloadUrl,
       signature: config.latestAppSignature || "",
-      sha256: process.env.LATEST_APP_SHA256 || "",
+      sha256: process.env.LATEST_APP_SHA256 || config.latestAppSha256 || "",
       disabledRules: (process.env.DISABLED_CLEAN_RULES || "")
         .split(",")
         .map((s) => s.trim().toLowerCase())

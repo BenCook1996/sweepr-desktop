@@ -35,6 +35,45 @@ fun Purchases.logIn(appUserID: String) {
     )
 }
 
+/**
+ * Reports a sanitized crash / uncaught exception to POST /v1/telemetry/crash so CRM
+ * `crashes_7d` reflects real Android stability without exposing personal file paths.
+ */
+fun SweeprAccountApi.reportCrash(
+    errorType: String,
+    message: String,
+    stack: String?,
+    appVersion: String = BuildConfig.VERSION_NAME,
+): Boolean = runCatching {
+    val body = org.json.JSONObject()
+        .put("platform", "android")
+        .put("app_version", appVersion)
+        .put("error_type", errorType.take(128))
+        .put("message", message.take(512))
+        .put("project_id", SweeprAccountApi.PROJECT_ID)
+        .apply {
+            if (!stack.isNullOrBlank()) {
+                put("stack", stack.take(4000))
+            }
+        }
+    val base = API_URL.trimEnd('/')
+    val conn = (java.net.URL("$base/v1/telemetry/crash").openConnection() as java.net.HttpURLConnection).apply {
+        requestMethod = "POST"
+        connectTimeout = 6_000
+        readTimeout = 6_000
+        setRequestProperty("Content-Type", "application/json")
+        setRequestProperty("Accept", "application/json")
+        setRequestProperty("X-Sweepr-Project", SweeprAccountApi.PROJECT_ID)
+        doOutput = true
+    }
+    try {
+        conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+        conn.responseCode in 200..299
+    } finally {
+        conn.disconnect()
+    }
+}.getOrDefault(false)
+
 class SweeprApp : Application(), ImageLoaderFactory {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -91,8 +130,9 @@ class SweeprApp : Application(), ImageLoaderFactory {
         }
 
         // Ensure every device has a registered CRM accountId on launch so RevenueCat webhooks carry
-        // the real CRM account ID instead of an orphaned $RCAnonymousID.
+        // the real CRM account ID instead of an orphaned $RCAnonymousID, and flush any pending crash report.
         appScope.launch {
+            flushPendingCrashReport()
             runCatching {
                 val linked = SweeprAccountApi.ensureDeviceRegistered(Prefs.account.value)
                 syncRevenueCatIdentity(linked.accountId, linked.email)
@@ -100,9 +140,28 @@ class SweeprApp : Application(), ImageLoaderFactory {
         }
     }
 
+    private fun sanitizeCrashPaths(raw: String): String =
+        LogFiles.redactText(raw)
+            .replace(Regex("(/storage/emulated/\\d+/|/sdcard/|/data/user/\\d+/)[^\\s:)]+"), "<redacted_path>")
+
+    private fun flushPendingCrashReport() {
+        runCatching {
+            val pendingFile = File(File(cacheDir, "logs"), "last_crash.json")
+            if (!pendingFile.exists()) return
+            val json = org.json.JSONObject(pendingFile.readText())
+            val errorType = json.optString("error_type", "UncaughtException")
+            val message = json.optString("message", "Android crash")
+            val stack = json.optString("stack", "").ifBlank { null }
+            val appVersion = json.optString("app_version", BuildConfig.VERSION_NAME)
+            if (SweeprAccountApi.reportCrash(errorType, message, stack, appVersion)) {
+                pendingFile.delete()
+            }
+        }
+    }
+
     /**
-     * Records uncaught exceptions locally in cache/logs/last_crash.txt (redacted) so the user can
-     * include them when generating a support log report, without sending telemetry off-device.
+     * Records uncaught exceptions locally in cache/logs/last_crash.txt and last_crash.json (redacted)
+     * and reports sanitized crash telemetry to POST /v1/telemetry/crash so CRM `crashes_7d` reflects real stability.
      */
     private fun installLocalCrashHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
@@ -112,8 +171,37 @@ class SweeprApp : Application(), ImageLoaderFactory {
                 val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
                 val sw = StringWriter()
                 throwable.printStackTrace(PrintWriter(sw))
-                val report = "Crash at $stamp on thread ${thread.name}:\n${LogFiles.redactText(sw.toString())}\n"
+                val sanitizedStack = sanitizeCrashPaths(sw.toString())
+                val errorType = throwable.javaClass.simpleName.ifBlank { "UncaughtException" }
+                val sanitizedMsg = sanitizeCrashPaths(throwable.message ?: errorType)
+                val report = "Crash at $stamp on thread ${thread.name}:\n$sanitizedStack\n"
                 File(dir, "last_crash.txt").writeText(report)
+
+                val crashJson = org.json.JSONObject()
+                    .put("platform", "android")
+                    .put("app_version", BuildConfig.VERSION_NAME)
+                    .put("error_type", errorType)
+                    .put("message", "$errorType on ${thread.name}: $sanitizedMsg".take(512))
+                    .put("stack", sanitizedStack.take(4000))
+                val pendingFile = File(dir, "last_crash.json")
+                pendingFile.writeText(crashJson.toString())
+
+                val reporter = Thread {
+                    runCatching {
+                        if (SweeprAccountApi.reportCrash(
+                                errorType = errorType,
+                                message = "$errorType on ${thread.name}: $sanitizedMsg",
+                                stack = sanitizedStack,
+                                appVersion = BuildConfig.VERSION_NAME,
+                            )
+                        ) {
+                            pendingFile.delete()
+                        }
+                    }
+                }
+                reporter.isDaemon = true
+                reporter.start()
+                reporter.join(1500)
             }
             previous?.uncaughtException(thread, throwable)
         }

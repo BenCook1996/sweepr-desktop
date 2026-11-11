@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms of Service &amp; License Agreement | SWEEPR Cleaner</title>
-  <meta name="description" content="Read the Terms of Service and End-User License Agreement (EULA) for SWEEPR Cleaner desktop and mobile software, subscriptions, and 5-device cross-platform licensing.">
+  <meta name="description" content="Read the Terms of Service and End-User License Agreement (EULA) for SWEEPR Cleaner desktop and mobile software, subscriptions, and 5-device Pro licensing.">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/terms">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
@@ -64,6 +64,7 @@
   <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <link rel="stylesheet" href="/style.css">
   <script src="/nav.js" defer></script>
+  <script src="/analytics.js" defer></script>
 </head>
 <body class="text-gray-800 flex flex-col min-h-screen">
   <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between">
@@ -105,7 +106,7 @@
         </div>
       </div>
       <a href="/login" class="btn btn-ghost text-sm">Login</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2">
+      <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2" rel="nofollow">
         <span>Get SWEEPR Cleaner</span>
         <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
@@ -115,7 +116,7 @@
   <main class="flex-1 pt-32 pb-16 px-6 max-w-4xl mx-auto w-full">
     <h1 class="text-4xl font-black mb-8 text-gray-900">Terms of Service &amp; License Agreement</h1>
     <div class="prose prose-emerald max-w-none text-gray-600 space-y-6">
-      <p class="text-sm text-gray-500">Effective Date: October 2026 | Version 2.2</p>
+      <p class="text-sm text-gray-500">Effective Date: November 2026 | Version 2.3</p>
       
       <div>
         <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">1. Acceptance of Terms</h2>
@@ -124,7 +125,7 @@
 
       <div>
         <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">2. Grant of License &amp; 5-Device Cross-Platform Coverage</h2>
-        <p class="mb-3">SWEEPR Cleaner Inc. grants you a revocable, non-exclusive, non-transferable, limited license to install and execute the Software on up to 5 devices across Windows, macOS, iOS, and Android (plus Linux) per active Pro subscription license. The license is for your personal or internal business use only.</p>
+        <p class="mb-3">SWEEPR Cleaner Inc. grants you a revocable, non-exclusive, non-transferable, limited license to install and execute the Software on up to 5 devices across Windows, macOS, iOS, and Android per active Pro subscription license. The license is for your personal or internal business use only.</p>
       </div>
 
       <div>
@@ -134,17 +135,21 @@
 
       <div>
         <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">4. Permitted Use &amp; File Safety Protocol</h2>
-        <p class="mb-3">SWEEPR Cleaner incorporates strict safety checks, cryptographic checksums, and a 7-day automatic undo rollback to protect your operating system. Users agree not to reverse engineer, decompile, bypass software licensing mechanisms, or redistribute modified binaries.</p>
+        <p class="mb-3">SWEEPR Cleaner incorporates safety heuristics, cryptographic checksums, and a 7-day undo quarantine for eligible cache files. Users agree not to reverse engineer, decompile, bypass software licensing mechanisms, or redistribute modified binaries.</p>
       </div>
 
-      <div>
-        <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">5. Limitation of Liability</h2>
-        <p class="mb-3">To the maximum extent permitted by applicable law, SWEEPR Cleaner Inc. and its suppliers shall not be liable for any indirect, incidental, special, or consequential damages resulting from the use or inability to use the Software. In any event, our total liability shall not exceed the amount actually paid by you for the Software during the twelve months preceding the claim.</p>
+      <div id="disclaimer-permanent-deletion">
+        <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">5. Disclaimer of Warranties, Permanent Data Destruction &amp; User Backup Obligation</h2>
+        <p class="mb-3"><strong>5.1 Explicit &ldquo;AS IS&rdquo; and &ldquo;AS AVAILABLE&rdquo; Warranty Disclaimer:</strong> TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE AND ALL ASSOCIATED SERVICES ARE PROVIDED STRICTLY <strong>&ldquo;AS IS&rdquo;</strong> AND <strong>&ldquo;AS AVAILABLE&rdquo;</strong>, WITH ALL FAULTS AND WITHOUT WARRANTY OF ANY KIND. SWEEPR CLEANER INC. AND ITS LICENSORS EXPRESSLY DISCLAIM ALL WARRANTIES AND CONDITIONS, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO ANY IMPLIED WARRANTIES OF <strong>MERCHANTABILITY</strong>, <strong>FITNESS FOR A PARTICULAR PURPOSE</strong>, <strong>TITLE</strong>, <strong>QUIET ENJOYMENT</strong>, <strong>SYSTEM STABILITY</strong>, AND <strong>NON-INFRINGEMENT</strong>.</p>
+        <p class="mb-3"><strong>5.2 Irreversible Data Destruction &amp; Quarantine Scope:</strong> You expressly acknowledge and agree that permanent deletion and system modification tools within the Software&mdash;including, without limitation, the <strong>3-Pass File Shredder</strong>, <strong>Browser Privacy Cleaner</strong>, <strong>Registry Cleaner</strong>, and <strong>Empty Recycle Bin</strong> operations&mdash;are designed to <strong>permanently and irreversibly destroy or modify data beyond any forensic or software recovery</strong>. You further acknowledge that the <strong>7-Day Quarantine (Undo Safety Net)</strong> applies solely to eligible standard cache and temporary files (specifically individual files under <strong>50 MB</strong>, up to a maximum rolling limit of <strong>300 items</strong> per quarantine session) and does not back up or retain oversized archives, shredded files, emptied Recycle Bin items, cleared browser sessions/databases, or modified system registry keys.</p>
+        <p class="mb-3"><strong>5.3 Mandatory User Backup Obligation:</strong> Because operating system environments, third-party application configurations, and storage hardware vary, <strong>you are solely responsible for maintaining complete, independent, and verified backups of your system and data</strong> (such as Apple Time Machine, Windows File History, System Restore points, or external/cloud backups) prior to executing any disk cleanup, file shredding, duplicate removal, or registry modification operations.</p>
       </div>
 
-      <div>
-        <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">6. Governing Law &amp; Support Contact</h2>
-        <p class="mb-3">These terms are governed by the laws of England and Wales. For technical support, licensing inquiries, or contract notices, please visit our <a href="/support" class="text-emerald-600 font-semibold underline">Support Center</a>.</p>
+      <div id="limitation-of-liability">
+        <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">6. Limitation of Liability &amp; Governing Law</h2>
+        <p class="mb-3"><strong>6.1 Exclusion of Consequential Damages &amp; Data Loss:</strong> TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL SWEEPR CLEANER INC., ITS OFFICERS, DIRECTORS, EMPLOYEES, OR SUPPLIERS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION DAMAGES FOR LOSS OF DATA, CORRUPTION OF FILES OR OPERATING SYSTEM REGISTRIES, LOSS OF PROFITS, BUSINESS INTERRUPTION, OR COST OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, ARISING OUT OF OR IN CONNECTION WITH THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+        <p class="mb-3"><strong>6.2 Aggregate Liability Cap:</strong> TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SWEEPR CLEANER INC.&rsquo;S TOTAL CUMULATIVE AND AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THIS AGREEMENT OR THE SOFTWARE&mdash;WHETHER IN CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR OTHERWISE&mdash;SHALL BE STRICTLY LIMITED TO THE <strong>TOTAL SUBSCRIPTION FEES ACTUALLY PAID BY YOU FOR THE SOFTWARE IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM</strong>.</p>
+        <p class="mb-3"><strong>6.3 Governing Law &amp; Support Contact:</strong> These terms are governed by the laws of England and Wales. Nothing in this Agreement excludes or limits any statutory consumer rights that cannot be waived under applicable law. For technical support, licensing inquiries, or contract notices, please visit our <a href="/support" class="text-emerald-600 font-semibold underline">Support Center</a>.</p>
       </div>
     </div>
   </main>
@@ -155,6 +160,7 @@
       <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
       <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
       <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
+      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
     </div>
     <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
   </footer>

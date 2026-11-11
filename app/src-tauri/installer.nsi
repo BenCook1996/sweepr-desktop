@@ -824,6 +824,15 @@ Section Uninstall
       !insertmacro UnpinShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk"
       Delete "$SMPROGRAMS\${PRODUCTNAME}.lnk"
     ${EndIf}
+    !insertmacro UnpinShortcut "$SMPROGRAMS\SWEEPR Cleaner.lnk"
+    !insertmacro UnpinShortcut "$SMPROGRAMS\SWEEPRCleaner.lnk"
+    Delete "$SMPROGRAMS\SWEEPR Cleaner.lnk"
+    Delete "$SMPROGRAMS\SWEEPRCleaner.lnk"
+    Delete "$SMPROGRAMS\Sweepr.lnk"
+    Delete "$SMPROGRAMS\SWEEPR Cleaner\SWEEPR Cleaner.lnk"
+    Delete "$SMPROGRAMS\SWEEPRCleaner\SWEEPRCleaner.lnk"
+    RMDir "$SMPROGRAMS\SWEEPR Cleaner"
+    RMDir "$SMPROGRAMS\SWEEPRCleaner"
 
     ; Remove desktop shortcuts
     !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
@@ -832,6 +841,11 @@ Section Uninstall
       !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
       Delete "$DESKTOP\${PRODUCTNAME}.lnk"
     ${EndIf}
+    !insertmacro UnpinShortcut "$DESKTOP\SWEEPR Cleaner.lnk"
+    !insertmacro UnpinShortcut "$DESKTOP\SWEEPRCleaner.lnk"
+    Delete "$DESKTOP\SWEEPR Cleaner.lnk"
+    Delete "$DESKTOP\SWEEPRCleaner.lnk"
+    Delete "$DESKTOP\Sweepr.lnk"
   ${EndIf}
 
   ; Remove registry information for add/remove programs
@@ -843,12 +857,13 @@ Section Uninstall
     DeleteRegKey HKCU "${UNINSTKEY}"
   !endif
 
-  ; Removes the Autostart entry for ${PRODUCTNAME} from the HKCU Run key if it exists.
-  ; This ensures the program does not launch automatically after uninstallation if it exists.
-  ; If it doesn't exist, it does nothing.
-  ; We do this when not updating (to preserve the registry value on updates)
+  ; Removes the Autostart entry for ${PRODUCTNAME}, SWEEPRCleaner, and legacy Sweepr from the HKCU Run key,
+  ; and removes the SweeprScheduledClean scheduled task when not updating.
   ${If} $UpdateMode <> 1
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCTNAME}"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "SWEEPRCleaner"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Sweepr"
+    nsExec::ExecToLog "schtasks /Delete /TN SweeprScheduledClean /F"
   ${EndIf}
 
   ; Delete app data if the checkbox is selected

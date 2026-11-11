@@ -1862,6 +1862,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             maxInspectUrls: 4,
             runCwv: false,
             persistQueue: false,
+            submitSitemap: false,
           });
           summary = { ...r };
         } else if (id === "stripe_reconcile") {

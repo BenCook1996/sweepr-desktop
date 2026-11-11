@@ -575,7 +575,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         <a href="/bloat-watch">Bloat Watch</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
-        <a href="/download?platform=windows" class="btn-primary" style="padding:8px 14px;font-size:13px;">Download Free Scanner</a>
+        <a href="/download?platform=windows" rel="nofollow" class="btn-primary" style="padding:8px 14px;font-size:13px;">Download Free Scanner</a>
       </div>
     </nav>
 
@@ -599,10 +599,10 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       </p>
 
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;" data-experiment-id="checker_cta_copy_v1" data-experiment-variant="${ctaVariant}">
-        <a href="/download?platform=windows&utm_source=tool_${escapeHtml(tool.slug)}" class="btn-primary" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe',tool:'${escapeHtml(tool.slug)}'})">
+        <a href="/download?platform=windows&utm_source=tool_${escapeHtml(tool.slug)}" rel="nofollow" class="btn-primary" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe',tool:'${escapeHtml(tool.slug)}'})">
           ⬇ Download Free ${escapeHtml(tool.shortName)} (.exe)
         </a>
-        <a href="/order?plan=annual&utm_source=tool_${escapeHtml(tool.slug)}&exp_var=${ctaVariant}" class="btn-secondary" id="toolPrimaryOrderCta" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual',tool:'${escapeHtml(tool.slug)}'})">
+        <a href="/order?plan=annual&utm_source=tool_${escapeHtml(tool.slug)}&exp_var=${ctaVariant}" rel="nofollow" class="btn-secondary" id="toolPrimaryOrderCta" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual',tool:'${escapeHtml(tool.slug)}'})">
           ${escapeHtml(primaryCtaText)}
         </a>
       </div>

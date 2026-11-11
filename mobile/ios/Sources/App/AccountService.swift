@@ -42,7 +42,7 @@ enum AppConfig {
     }
 }
 
-/// On-device crash and diagnostic log capture for Sweepr iOS.
+/// On-device crash and diagnostic log capture for Sweepr iOS, plus sanitized telemetry dispatch to `/v1/telemetry/crash`.
 enum CrashLogger {
     private static let maxLogBytes = 256 * 1024
 
@@ -52,17 +52,93 @@ enum CrashLogger {
         return dir.appendingPathComponent("sweepr_crash_diagnostics.log")
     }
 
+    static var pendingCrashFileURL: URL {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return dir.appendingPathComponent("last_crash.json")
+    }
+
+    static var appVersionString: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0.0"
+    }
+
     static func install() {
         NSSetUncaughtExceptionHandler { exception in
-            let stack = exception.callStackSymbols.joined(separator: "\n")
+            let stack = CrashLogger.redact(exception.callStackSymbols.joined(separator: "\n"))
+            let errorType = exception.name.rawValue.isEmpty ? "NSException" : exception.name.rawValue
+            let reason = CrashLogger.redact(exception.reason ?? "Uncaught iOS exception")
             let entry = """
-            [\(ISO8601DateFormatter().string(from: Date()))] UNCAUGHT EXCEPTION: \(exception.name.rawValue)
-            Reason: \(exception.reason ?? "Unknown")
+            [\(ISO8601DateFormatter().string(from: Date()))] UNCAUGHT EXCEPTION: \(errorType)
+            Reason: \(reason)
             Stack:
             \(stack)
             ----------------------------------------
             """
             CrashLogger.appendEntry(entry)
+            CrashLogger.persistAndDispatchCrash(
+                errorType: errorType,
+                message: "\(errorType): \(reason)",
+                stack: stack
+            )
+        }
+    }
+
+    static func persistAndDispatchCrash(errorType: String, message: String, stack: String?) {
+        let sanitizedMessage = String(redact(message).prefix(512))
+        let sanitizedStack = stack.map { String(redact($0).prefix(4000)) } ?? ""
+        let payload: [String: Any] = [
+            "platform": "ios",
+            "os": "ios",
+            "app_version": appVersionString,
+            "error_type": String(errorType.prefix(128)),
+            "message": sanitizedMessage,
+            "stack": sanitizedStack,
+            "project_id": AppConfig.projectId
+        ]
+        if let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted]) {
+            try? jsonData.write(to: pendingCrashFileURL, options: [.atomic, .completeFileProtection])
+        }
+
+        guard let url = URL(string: "\(AppConfig.apiURL.trimmingCharacters(in: CharacterSet(charactersIn: "/")))/v1/telemetry/crash"),
+              let bodyData = try? JSONSerialization.data(withJSONObject: payload) else {
+            return
+        }
+        var req = URLRequest(url: url, timeoutInterval: 4.0)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(AppConfig.projectId, forHTTPHeaderField: "X-Sweepr-Project")
+        req.httpBody = bodyData
+
+        let sem = DispatchSemaphore(value: 0)
+        URLSession.shared.dataTask(with: req) { _, response, _ in
+            if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                try? FileManager.default.removeItem(at: pendingCrashFileURL)
+            }
+            sem.signal()
+        }.resume()
+        _ = sem.wait(timeout: .now() + 1.5)
+    }
+
+    static func flushPendingCrashReport() async {
+        let fileURL = pendingCrashFileURL
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let data = try? Data(contentsOf: fileURL),
+              let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return
+        }
+        guard let url = URL(string: "\(AppConfig.apiURL.trimmingCharacters(in: CharacterSet(charactersIn: "/")))/v1/telemetry/crash"),
+              let bodyData = try? JSONSerialization.data(withJSONObject: json) else {
+            return
+        }
+        var req = URLRequest(url: url, timeoutInterval: 8.0)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(AppConfig.projectId, forHTTPHeaderField: "X-Sweepr-Project")
+        req.httpBody = bodyData
+        if let (_, response) = try? await URLSession.shared.data(for: req),
+           let http = response as? HTTPURLResponse,
+           (200...299).contains(http.statusCode) || http.statusCode == 400 {
+            try? FileManager.default.removeItem(at: fileURL)
         }
     }
 
@@ -76,7 +152,8 @@ enum CrashLogger {
         let patterns: [(String, String)] = [
             ("(?i)Bearer\\s+[A-Za-z0-9._~+/-]+=*", "Bearer [REDACTED]"),
             ("\\b(ptk|chk|rtk)_[A-Za-z0-9_-]+", "[REDACTED]"),
-            ("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[REDACTED_EMAIL]")
+            ("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[REDACTED_EMAIL]"),
+            ("(/var/mobile/Containers/[^\\s:)]+|/Users/[^\\s:)]+)", "<redacted_path>")
         ]
         for (pattern, replacement) in patterns {
             if let regex = try? NSRegularExpression(pattern: pattern) {

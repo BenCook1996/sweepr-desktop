@@ -64,6 +64,7 @@
   <script src="/vendor/tailwindcss-3.4.5.js"></script>
   <link rel="stylesheet" href="/style.css">
   <script src="/nav.js" defer></script>
+  <script src="/analytics.js" defer></script>
 </head>
 <body class="text-gray-800 flex flex-col min-h-screen">
   <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between">
@@ -105,7 +106,7 @@
         </div>
       </div>
       <a href="/login" class="btn btn-ghost text-sm">Login</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2">
+      <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2" rel="nofollow">
         <span>Get SWEEPR Cleaner</span>
         <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
@@ -165,7 +166,7 @@
 
       <div id="privacy-rights">
         <h2 class="text-2xl font-bold mt-6 mb-3 text-gray-900">6. Your GDPR, UK DPA &amp; CCPA Rights</h2>
-        <p class="mb-3">Under applicable data protection laws (including the EU GDPR, UK Data Protection Act 2018, and California Consumer Privacy Act), you retain the right to access, rectify, export, opt out of website analytics cookies, or permanently delete your account data. You can exercise self-service account deletion at any time via the Customer Portal (<code class="text-emerald-700 font-semibold">/login</code>) or by contacting our Data Protection Officer.</p>
+        <p class="mb-3">Under applicable data protection laws (including the EU GDPR, UK Data Protection Act 2018, and California Consumer Privacy Act), you retain the right to access, rectify, export, opt out of website analytics cookies via <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="text-emerald-600 font-semibold underline">Cookie Preferences</a>, or permanently delete your account data. You can exercise self-service account deletion at any time via the Customer Portal (<code class="text-emerald-700 font-semibold">/login</code>) or by contacting our Data Protection Officer.</p>
       </div>
 
       <div id="contact">
@@ -181,6 +182,7 @@
       <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
       <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
       <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
+      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
     </div>
     <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
   </footer>

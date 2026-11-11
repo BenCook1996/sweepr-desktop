@@ -6,7 +6,9 @@ Disallow: /crm
 Disallow: /checkout/
 Disallow: /order
 Disallow: /login
-Disallow: /download
+Disallow: /download?
+Disallow: /download/
+Disallow: /share/
 Disallow: /ios-app
 Disallow: /r/
 Disallow: /api/
