@@ -525,16 +525,29 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
 
     const t0A18 = Date.now();
     try {
-      const refreshRes = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
-      recordAutomationRunStatus("A18_underperformer_auto_refresh", {
-        status: "ok",
-        durationMs: Date.now() - t0A18,
-        summary: {
-          evaluated_candidates: refreshRes.evaluated_candidates,
-          refreshed_count: refreshRes.refreshed_count,
-          queued_for_indexnow: refreshRes.queued_for_indexnow,
-        },
-      });
+      if (process.env.ALLOW_A18_AUTO_REFRESH === "1") {
+        const refreshRes = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
+        recordAutomationRunStatus("A18_underperformer_auto_refresh", {
+          status: "ok",
+          durationMs: Date.now() - t0A18,
+          summary: {
+            evaluated_candidates: refreshRes.evaluated_candidates,
+            refreshed_count: refreshRes.refreshed_count,
+            queued_for_indexnow: refreshRes.queued_for_indexnow,
+          },
+        });
+      } else {
+        recordAutomationRunStatus("A18_underperformer_auto_refresh", {
+          status: "ok",
+          durationMs: 0,
+          summary: {
+            skipped: "frozen_during_core_update_stabilization",
+            evaluated_candidates: 0,
+            refreshed_count: 0,
+            queued_for_indexnow: 0,
+          },
+        });
+      }
     } catch (err: any) {
       recordAutomationRunStatus("A18_underperformer_auto_refresh", {
         status: "error",

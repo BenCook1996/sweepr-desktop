@@ -179,7 +179,7 @@ fn expand(base: &Path, pattern: &str) -> Vec<PathBuf> {
 fn specs() -> Vec<Spec> {
     use Base::*;
     vec![
-        Spec { id: "temp", name: "Temporary files", description: "Files apps left in your temp folder more than 24 hours ago.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: false },
+        Spec { id: "temp", name: "Temporary files", description: "Files apps left in your temp folder more than 24 hours ago.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: true },
         Spec { id: "thumbnails", name: "Windows thumbnail & icon cache", description: "Cached Explorer thumbnails, IE/WebView caches and diagnostic traces. Rebuilds automatically.", group: Group::System, base: LocalAppData, patterns: &["Microsoft/Windows/INetCache/IE", "Microsoft/Windows/Caches", "ElevatedDiagnostics"], min_age_hours: 24, free: false },
         Spec { id: "crash_dumps", name: "Crash dumps & kernel reports", description: "Diagnostic dumps, Windows Error Reporting archives, LiveKernelReports watchdog dumps and CLR usage logs.", group: Group::System, base: LocalAppData, patterns: &["CrashDumps", "Microsoft/Windows/WER/ReportArchive", "Microsoft/Windows/WER/ReportQueue", "Diagnostics", "Microsoft/CLR_v4.0/UsageLogs", "@systemdrive/Windows/LiveKernelReports"], min_age_hours: 0, free: false },
         Spec { id: "delivery_opt", name: "Windows Update, Package Cache & Windows.old", description: "Delivery Optimization peer cache, installer Package Cache, Defender scan history and previous Windows installation leftovers.", group: Group::System, base: LocalAppData, patterns: &["Microsoft/Windows/DeliveryOptimization/Cache", "Package Cache", "@programdata/Package Cache", "@programdata/Microsoft/Windows Defender/Scans/History/Results", "@systemdrive/Windows.old"], min_age_hours: 24, free: false },
@@ -244,7 +244,7 @@ fn specs() -> Vec<Spec> {
 fn specs() -> Vec<Spec> {
     use Base::*;
     vec![
-        Spec { id: "temp", name: "Temporary files", description: "Your files in /tmp older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: false },
+        Spec { id: "temp", name: "Temporary files", description: "Your files in /tmp older than 24 hours.", group: Group::System, base: Temp, patterns: &[""], min_age_hours: 24, free: true },
         Spec { id: "trash", name: "Trash bin", description: "Files in ~/.local/share/Trash older than 24 hours.", group: Group::System, base: Home, patterns: &[".local/share/Trash/files", ".local/share/Trash/info"], min_age_hours: 24, free: false },
         Spec { id: "shader_cache", name: "Mesa, Vulkan & NVIDIA GPU shader caches", description: "Compiled Mesa, Vulkan and NVIDIA GLCache/DXCache shader caches. Rebuilt automatically.", group: Group::System, base: Home, patterns: &[".cache/mesa_shader_cache", ".cache/mesa_shader_cache_sf", ".cache/nvidia/GLCache", ".cache/nvidia/DXCache"], min_age_hours: 24, free: false },
         Spec { id: "chrome", name: "Google Chrome cache & GPU/Service Worker storage", description: "Cached web content, Code Cache, GPUCache, Dawn WebGPU cache and Service Worker storage.", group: Group::Browsers, base: Home, patterns: &[".cache/google-chrome", ".config/google-chrome/*/Code Cache", ".config/google-chrome/*/GPUCache", ".config/google-chrome/*/DawnCache", ".config/google-chrome/*/Service Worker/CacheStorage"], min_age_hours: 0, free: false },
@@ -367,6 +367,22 @@ mod tests {
             assert!(elgato.patterns.contains(&"Elgato/StreamDeck/GPUCache"));
         }
         assert!(!specs.is_empty());
+    }
+
+    #[test]
+    fn temp_is_only_free_starter_rule() {
+        let specs = all_specs();
+        let temp = specs.iter().find(|s| s.id == "temp").expect("temp rule must exist");
+        assert!(temp.free, "temp rule must be free: true for 500 MB Free Starter Clean");
+        for spec in &specs {
+            if spec.id != "temp" {
+                assert!(
+                    !spec.free,
+                    "expected rule '{}' to be Pro-only (free: false), matching 'SWEEPR Free: Basic Temp Only'",
+                    spec.id
+                );
+            }
+        }
     }
 }
 

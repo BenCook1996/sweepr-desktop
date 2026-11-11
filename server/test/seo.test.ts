@@ -1970,7 +1970,7 @@ test("CMO Automations v3: Persistent Storage Ledger, GEO llms.txt, Dunning/Winba
 });
 
 test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & A17 Strategy Forecast Ledger", async () => {
-  const { get, post } = setup();
+  const { repo, app, get, post } = setup();
 
   // 1. Verify 5-Tier Transactional Classifier & Time-to-Rank Forecaster
   const { classifyTransactionalTier, computeKeywordForecast, scoreKeywordOpportunity } = await import("../src/seo/keywords.js");
@@ -2181,6 +2181,50 @@ test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & 
   const runA18JobJson = (await runA18Job.json()) as any;
   assert.equal(runA18JobJson.ok, true);
   assert.equal(runA18JobJson.results.A18_underperformer_auto_refresh.last_status, "ok");
+  assert.equal(
+    runA18JobJson.results.A18_underperformer_auto_refresh.last_summary.skipped,
+    "frozen_during_core_update_stabilization"
+  );
+  assert.equal(runA18JobJson.results.A18_underperformer_auto_refresh.last_summary.refreshed_count, 0);
+
+  // Verify curated CUSTOM_GSC_TITLES (including gradle-wrapper-caches) self-heal stale overrides on boot & stay locked during A18
+  const staleStore = new SeoStore(repo.db);
+  staleStore.setSetting("intent_gap_approved_ctr_overrides", {
+    "gradle-wrapper-caches": {
+      slug: "gradle-wrapper-caches",
+      status: "approved",
+      ctr_status: "approved",
+      title: "Gradle Build Cache (.gradle): Safe to Delete? (4–25 GB)",
+      meta_description: "Stale automated description that must be purged on boot for locked GSC titles.",
+      approved_at: new Date().toISOString(),
+    },
+  });
+  const healedApp = createApp({
+    repo,
+    signingKey: privateKey,
+    stripe: null,
+    config: {
+      publicUrl: "http://test",
+      stripeWebhookSecret: "",
+      priceActivation: "",
+      priceMonthly: "",
+      trialDays: 7,
+      tokenTtlHours: 72,
+      maxDevicesPc: 2,
+      maxDevicesMobile: 2,
+      devEndpoints: false,
+      pastDueGraceDays: 3,
+      crmAdminUser: "admin",
+      crmAdminPassword: ADMIN_PASSWORD,
+    },
+  });
+  const gradleHtml = await (await healedApp.request("/clean/app/gradle-wrapper-caches")).text();
+  assert.equal(
+    parseHtml(gradleHtml).title,
+    "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)"
+  );
+  const cleanedOverrides = staleStore.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {});
+  assert.equal(cleanedOverrides["gradle-wrapper-caches"]?.title, null);
 
   // 8. Verify A9 Experiment Evaluation endpoint (/api/crm/experiments/evaluate)
   const expEvalRes = await post("/api/crm/experiments/evaluate", {});

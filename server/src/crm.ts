@@ -1832,12 +1832,21 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             low_comp_weight: r.scoring_weights.low_comp_weight,
           };
         } else if (id === "A18_underperformer_auto_refresh") {
-          const r = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
-          summary = {
-            evaluated_candidates: r.evaluated_candidates,
-            refreshed_count: r.refreshed_count,
-            queued_for_indexnow: r.queued_for_indexnow,
-          };
+          if (Boolean(body.force) || process.env.ALLOW_A18_AUTO_REFRESH === "1") {
+            const r = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
+            summary = {
+              evaluated_candidates: r.evaluated_candidates,
+              refreshed_count: r.refreshed_count,
+              queued_for_indexnow: r.queued_for_indexnow,
+            };
+          } else {
+            summary = {
+              skipped: "frozen_during_core_update_stabilization",
+              evaluated_candidates: 0,
+              refreshed_count: 0,
+              queued_for_indexnow: 0,
+            };
+          }
         } else if (id === "A19_gsc_internal_link_booster") {
           const r = runGscInternalLinkBooster(seoStore);
           summary = {

@@ -28,6 +28,20 @@ export interface CategoryResult {
 export interface ScanReport { categories: CategoryResult[]; total_bytes: number; total_files: number; duration_ms: number }
 export interface ScanProgress { done: number; total: number; category_id: string; category_name: string; bytes_so_far: number }
 export interface CleanReport { category_id: string; bytes_freed: number; files_removed: number; files_skipped: number; moved_to_trash: boolean }
+export interface FreeAllowanceStatus {
+  used_bytes: number;
+  limit_bytes: number;
+  remaining_bytes: number;
+  files_cleaned: number;
+  exhausted: boolean;
+  updated_at: number;
+}
+export interface PaywallContext {
+  message: string;
+  feature?: string;
+  freedBytes?: number;
+  remainingBytes?: number;
+}
 export interface LicenseStatus { active: boolean; status: string; plan: string | null; expires_at: number | null; offline: boolean; dev_unlock: boolean; addons?: string[] }
 export interface QrChallengeResponse { challenge_id: string; poll_secret: string; approve_url: string; qr_svg: string; expires_at: number; ttl_seconds: number }
 export interface QrPollResult { status: string; license: LicenseStatus | null }
@@ -166,9 +180,10 @@ export const errorMessage = (e: unknown) => (isAppError(e) ? e.message : String(
 
 export const isPaymentRequired = (e: unknown) => isAppError(e) && e.kind === "payment_required";
 
-/** Ask the app shell to open the activation (checkout) modal. */
+/** Ask the app shell to open the activation (checkout) modal, optionally with contextual upgrade copy. */
 export const ACTIVATE_EVENT = "sweepr-open-activate";
-export const requestActivation = () => window.dispatchEvent(new CustomEvent(ACTIVATE_EVENT));
+export const requestActivation = (context?: PaywallContext) =>
+  window.dispatchEvent(new CustomEvent<PaywallContext | undefined>(ACTIVATE_EVENT, { detail: context }));
 
 /** Ask the Home screen to open its "Recently Cleaned / Undo" drawer (used by the quick rail). */
 export const OPEN_UNDO_EVENT = "sweepr-open-undo";
@@ -253,6 +268,7 @@ export const api = {
   onScanProgress: (cb: (p: ScanProgress) => void): Promise<UnlistenFn> =>
     listen<ScanProgress>("scan://progress", (e) => cb(e.payload)),
   clean: (ids: string[], useTrash: boolean) => invoke<CleanReport[]>("clean_categories", { ids, useTrash }),
+  getFreeAllowance: () => invoke<FreeAllowanceStatus>("get_free_allowance"),
   listQuarantine: () => invoke<QuarantineEntry[]>("list_quarantine"),
   restoreQuarantineItem: (id: string) => invoke<string>("restore_quarantine_item", { id }),
   getCleaningHistory: () => invoke<CleanHistoryEntry[]>("get_cleaning_history"),

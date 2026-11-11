@@ -22,7 +22,133 @@ use tauri_plugin_opener::OpenerExt;
 
 pub struct AppState {
     pub data_dir: PathBuf,
+    pub local_data_dir: PathBuf,
     pub licensing: Licensing,
+}
+
+/// Lifetime 500 MB Free Starter Clean allowance for `free: true` rules (`temp`).
+pub const FREE_STARTER_ALLOWANCE_BYTES: u64 = 500 * 1024 * 1024;
+const FREE_ALLOWANCE_FILENAME: &str = "free_allowance.json";
+static FREE_ALLOWANCE_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+pub struct FreeAllowanceRecord {
+    pub used_bytes: u64,
+    #[serde(default)]
+    pub files_cleaned: u64,
+    #[serde(default)]
+    pub updated_at: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct FreeAllowanceStatus {
+    pub used_bytes: u64,
+    pub limit_bytes: u64,
+    pub remaining_bytes: u64,
+    pub files_cleaned: u64,
+    pub exhausted: bool,
+    pub updated_at: u64,
+}
+
+pub fn load_free_allowance(local_data_dir: &Path) -> FreeAllowanceRecord {
+    let path = local_data_dir.join(FREE_ALLOWANCE_FILENAME);
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_default()
+}
+
+pub fn save_free_allowance(local_data_dir: &Path, rec: &FreeAllowanceRecord) -> std::io::Result<()> {
+    std::fs::create_dir_all(local_data_dir)?;
+    let path = local_data_dir.join(FREE_ALLOWANCE_FILENAME);
+    let json = serde_json::to_string_pretty(rec)?;
+    safety::atomic_write(&path, json.as_bytes())?;
+    safety::restrict_file_permissions(&path);
+    Ok(())
+}
+
+pub fn compute_free_allowance_status(rec: &FreeAllowanceRecord) -> FreeAllowanceStatus {
+    let used = rec.used_bytes.min(FREE_STARTER_ALLOWANCE_BYTES);
+    let remaining = FREE_STARTER_ALLOWANCE_BYTES.saturating_sub(used);
+    FreeAllowanceStatus {
+        used_bytes: used,
+        limit_bytes: FREE_STARTER_ALLOWANCE_BYTES,
+        remaining_bytes: remaining,
+        files_cleaned: rec.files_cleaned,
+        exhausted: remaining == 0,
+        updated_at: rec.updated_at,
+    }
+}
+
+#[tauri::command]
+pub fn get_free_allowance(state: State<'_, AppState>) -> FreeAllowanceStatus {
+    let _guard = FREE_ALLOWANCE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let rec = load_free_allowance(&state.local_data_dir);
+    compute_free_allowance_status(&rec)
+}
+
+fn execute_free_starter_clean(
+    selected: &[rules::Rule],
+    category_ids: Vec<String>,
+    data_dir: &Path,
+    local_data_dir: &Path,
+) -> AppResult<Vec<CleanReport>> {
+    if selected.is_empty() || selected.iter().any(|r| !r.free) {
+        return Err(AppError::PaymentRequired);
+    }
+
+    let _guard = FREE_ALLOWANCE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut rec = load_free_allowance(local_data_dir);
+    let mut remaining = FREE_STARTER_ALLOWANCE_BYTES.saturating_sub(rec.used_bytes);
+    if remaining == 0 {
+        return Err(AppError::PaymentRequired);
+    }
+
+    let exclusions = safety::load_exclusions(data_dir);
+    let mut reports = Vec::with_capacity(selected.len());
+    for rule in selected {
+        // Always move Free Starter Clean items into 7-Day Quarantine (`use_trash = false`).
+        let rep = cleaner::clean_with_exclusions_quarantine_and_budget(
+            rule,
+            false,
+            &exclusions,
+            Some(data_dir),
+            Some(remaining),
+        );
+        remaining = remaining.saturating_sub(rep.bytes_freed);
+        reports.push(rep);
+    }
+
+    let total_freed: u64 = reports.iter().map(|r| r.bytes_freed).sum();
+    let total_removed: u64 = reports.iter().map(|r| r.files_removed).sum();
+    let total_skipped: u64 = reports.iter().map(|r| r.files_skipped).sum();
+
+    if total_freed == 0 && total_removed == 0 && total_skipped > 0 {
+        // Remaining eligible files on disk exceed the remaining free starter budget.
+        return Err(AppError::PaymentRequired);
+    }
+
+    if total_freed > 0 || total_removed > 0 {
+        rec.used_bytes = rec
+            .used_bytes
+            .saturating_add(total_freed)
+            .min(FREE_STARTER_ALLOWANCE_BYTES);
+        rec.files_cleaned = rec.files_cleaned.saturating_add(total_removed);
+        rec.updated_at = now_secs();
+        let _ = save_free_allowance(local_data_dir, &rec);
+
+        let entry = CleanHistoryEntry {
+            id: format!("h_{}", now_secs()),
+            timestamp: now_secs(),
+            bytes_freed: total_freed,
+            files_removed: total_removed,
+            categories: category_ids,
+            mode: "Sweepr Quarantine (7d undo)".into(),
+        };
+        let _ = append_cleaning_history(data_dir, entry);
+    }
+
+    Ok(reports)
 }
 
 fn join_err(e: impl std::fmt::Display) -> AppError {
@@ -91,7 +217,6 @@ pub async fn clean_categories(
     ids: Vec<String>,
     use_trash: bool,
 ) -> AppResult<Vec<CleanReport>> {
-    state.licensing.require_active().await?;
     let disabled = safety::load_disabled_rules(&state.data_dir);
     let mut selected = Vec::new();
     for id in &ids {
@@ -101,6 +226,34 @@ pub async fn clean_categories(
         let rule = rules::find(id).ok_or_else(|| AppError::NotFound(id.clone()))?;
         selected.push(rule);
     }
+
+    let all_free = !selected.is_empty() && selected.iter().all(|r| r.free);
+    let is_licensed = if !all_free {
+        state.licensing.require_active().await?;
+        true
+    } else if state.licensing.has_cached_active_token().await {
+        true
+    } else {
+        matches!(
+            tokio::time::timeout(
+                std::time::Duration::from_millis(1500),
+                state.licensing.require_active(),
+            )
+            .await,
+            Ok(Ok(()))
+        )
+    };
+
+    if !is_licensed {
+        let data_dir_clone = state.data_dir.clone();
+        let local_data_dir_clone = state.local_data_dir.clone();
+        return tauri::async_runtime::spawn_blocking(move || {
+            execute_free_starter_clean(&selected, ids, &data_dir_clone, &local_data_dir_clone)
+        })
+        .await
+        .map_err(join_err)?;
+    }
+
     let exclusions = safety::load_exclusions(&state.data_dir);
     let data_dir_clone = state.data_dir.clone();
     let reports = tauri::async_runtime::spawn_blocking(move || {
@@ -3633,6 +3786,112 @@ mod tests {
         // Re-opening the app loads the saved preferences from disk
         let reopened = load_ui_preferences(&dir);
         assert_eq!(reopened, updated);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn free_starter_clean_enforces_500mb_lifetime_cap_and_7d_quarantine() {
+        let dir = std::env::temp_dir().join(format!("sweepr-free-allowance-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let data_dir = dir.join("data");
+        let local_data_dir = dir.join("local_data");
+        let temp_root = dir.join("temp_files");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        std::fs::create_dir_all(&local_data_dir).unwrap();
+        std::fs::create_dir_all(&temp_root).unwrap();
+
+        // 1. Pro rule (`free: false`) is rejected with PaymentRequired for unlicensed users.
+        let pro_rule = rules::Rule {
+            id: "shader_cache",
+            name: "Gaming Shaders",
+            description: "Pro rule",
+            group: rules::Group::System,
+            roots: vec![temp_root.clone()],
+            min_age_hours: 0,
+            free: false,
+        };
+        assert!(matches!(
+            execute_free_starter_clean(&[pro_rule], vec!["shader_cache".into()], &data_dir, &local_data_dir),
+            Err(AppError::PaymentRequired)
+        ));
+
+        // 2. Unlicensed user cleans `free: true` rule (`temp`) -> moved into 7-Day Quarantine & tracked in free_allowance.json.
+        std::fs::write(temp_root.join("cache_1.tmp"), vec![b'x'; 1024]).unwrap();
+        std::fs::write(temp_root.join("cache_2.tmp"), vec![b'y'; 2048]).unwrap();
+        let free_rule = rules::Rule {
+            id: "temp",
+            name: "Temporary files",
+            description: "Free temp rule",
+            group: rules::Group::System,
+            roots: vec![temp_root.clone()],
+            min_age_hours: 0,
+            free: true,
+        };
+
+        let reports = execute_free_starter_clean(
+            std::slice::from_ref(&free_rule),
+            vec!["temp".into()],
+            &data_dir,
+            &local_data_dir,
+        )
+        .expect("free starter clean should succeed under 500 MB");
+        assert_eq!(reports.len(), 1);
+        assert_eq!(reports[0].bytes_freed, 3072);
+        assert_eq!(reports[0].files_removed, 2);
+        assert!(!reports[0].moved_to_trash);
+
+        // Verify 7-Day Quarantine entries created in `data_dir`
+        let quarantined = cleaner::list_quarantine_entries(&data_dir);
+        assert_eq!(quarantined.len(), 2);
+
+        // Verify `<app_local_data_dir>/free_allowance.json` persisted
+        assert!(local_data_dir.join("free_allowance.json").is_file());
+        let allowance = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
+        assert_eq!(allowance.used_bytes, 3072);
+        assert_eq!(allowance.limit_bytes, FREE_STARTER_ALLOWANCE_BYTES);
+        assert_eq!(allowance.remaining_bytes, FREE_STARTER_ALLOWANCE_BYTES - 3072);
+        assert!(!allowance.exhausted);
+
+        // 3. Simulate reaching 500 MB cap -> further unlicensed cleans return PaymentRequired.
+        save_free_allowance(
+            &local_data_dir,
+            &FreeAllowanceRecord {
+                used_bytes: FREE_STARTER_ALLOWANCE_BYTES - 500,
+                files_cleaned: 10,
+                updated_at: 1700000000,
+            },
+        )
+        .unwrap();
+        std::fs::write(temp_root.join("fits.tmp"), vec![b'1'; 500]).unwrap();
+        std::fs::write(temp_root.join("overflow.tmp"), vec![b'2'; 600]).unwrap();
+
+        let capped = execute_free_starter_clean(
+            std::slice::from_ref(&free_rule),
+            vec!["temp".into()],
+            &data_dir,
+            &local_data_dir,
+        )
+        .expect("exact remaining 500 bytes should succeed");
+        assert_eq!(capped[0].bytes_freed, 500);
+        assert_eq!(capped[0].files_skipped, 1);
+        assert!(temp_root.join("overflow.tmp").exists());
+
+        let exhausted = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
+        assert_eq!(exhausted.used_bytes, FREE_STARTER_ALLOWANCE_BYTES);
+        assert_eq!(exhausted.remaining_bytes, 0);
+        assert!(exhausted.exhausted);
+
+        // Next clean attempt now returns PaymentRequired immediately!
+        assert!(matches!(
+            execute_free_starter_clean(
+                std::slice::from_ref(&free_rule),
+                vec!["temp".into()],
+                &data_dir,
+                &local_data_dir,
+            ),
+            Err(AppError::PaymentRequired)
+        ));
 
         let _ = std::fs::remove_dir_all(&dir);
     }

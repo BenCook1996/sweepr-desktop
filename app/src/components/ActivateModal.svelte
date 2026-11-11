@@ -2,9 +2,17 @@
   import { onDestroy } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import { api, errorMessage, trackAppEvent } from "../lib/api";
+  import { api, errorMessage, trackAppEvent, type PaywallContext } from "../lib/api";
 
-  let { open = $bindable(false), onActivated }: { open: boolean; onActivated?: () => void } = $props();
+  let {
+    open = $bindable(false),
+    context = null,
+    onActivated,
+  }: {
+    open: boolean;
+    context?: PaywallContext | null;
+    onActivated?: () => void;
+  } = $props();
 
   type PlanId = "monthly" | "six_month" | "annual";
 
@@ -65,6 +73,9 @@
             plan: selectedPlan,
             experiment_id: "paywall_anchor_v1",
             variant: experimentVariant,
+            trigger_feature: context?.feature ?? null,
+            freed_bytes: context?.freedBytes ?? null,
+            remaining_bytes: context?.remainingBytes ?? null,
           });
         })
         .catch(() => {
@@ -583,7 +594,16 @@
           </div>
 
           <h2 class="modal-title">Clean &amp; speed up in 1 click</h2>
-          <p class="prompt-text">Choose a plan below. Cancel anytime in 1 click.</p>
+          {#if context?.message}
+            <div class="starter-aha-banner" role="status">
+              {#if context.feature}
+                <span class="starter-aha-kicker">{context.feature}</span>
+              {/if}
+              <p class="starter-aha-text">{context.message}</p>
+            </div>
+          {:else}
+            <p class="prompt-text">Choose a plan below. Cancel anytime in 1 click.</p>
+          {/if}
 
           {#if conversionOffer && (conversionOffer.discount_pct ?? 0) > 0}
             <div class="conversion-offer-banner" role="status">
@@ -830,6 +850,8 @@
     position: relative;
     width: 100%;
     max-width: 440px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
     background: var(--panel-solid, #ffffff);
     border-radius: 22px;
     border: 1px solid var(--border);
@@ -912,6 +934,37 @@
     font-size: 13px;
     color: var(--muted);
     margin: 4px 0 18px 0;
+  }
+
+  .starter-aha-banner {
+    width: 100%;
+    margin: 10px 0 14px 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.11);
+    border: 1px solid rgba(16, 185, 129, 0.36);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+  }
+  .starter-aha-kicker {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #059669;
+  }
+  :global(.dark) .starter-aha-kicker {
+    color: #34d399;
+  }
+  .starter-aha-text {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
   }
 
   .conversion-offer-banner {

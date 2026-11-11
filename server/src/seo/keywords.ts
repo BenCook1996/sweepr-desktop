@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import {
   buildPseoDescription,
   buildPseoTitle,
+  CUSTOM_GSC_TITLE_SLUGS,
   getCleanItems,
   getPseoRedirectTarget,
   type CleanItem,
@@ -81,6 +82,7 @@ export const LOCKED_TEST_TITLE_SLUGS = new Set([
   "vivaldi-browser-cache",
   "jetbrains-intellij-cache",
   "localappdata-webview2-ebwebview-cache",
+  ...CUSTOM_GSC_TITLE_SLUGS,
 ]);
 
 export const RETIRED_5X_SUFFIX_RE =

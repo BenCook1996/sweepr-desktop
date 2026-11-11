@@ -722,6 +722,14 @@ impl Licensing {
         }
     }
 
+    pub async fn has_cached_active_token(&self) -> bool {
+        if Self::dev_unlock() {
+            return true;
+        }
+        let st = self.state.lock().await;
+        matches!(&st.token, Some((_, c)) if c.exp > now())
+    }
+
     pub async fn require_active(&self) -> AppResult<()> {
         if self.status(false).await?.active {
             Ok(())

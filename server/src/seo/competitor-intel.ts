@@ -1222,7 +1222,7 @@ function buildCleanCtrTitle(
         if (cleanItem) cleanItem.metaTitle = dItem.metaTitle;
         diskItemsModified = true;
       }
-      if (!dItem.metaDescription || dItem.metaDescription.length < 110 || dItem.metaDescription.length > 158) {
+      if (!isLockedTitle && (!dItem.metaDescription || dItem.metaDescription.length < 110 || dItem.metaDescription.length > 158)) {
         const winPath = dItem.path || cleanItem?.path || "%LocalAppData%\\Temp";
         let candidateMeta = `Yes — safe to clear on Windows 11. Reclaim ${spaceLabel} at ${winPath} without losing settings using manual steps or Sweepr 1-click cleanup.`;
         if (candidateMeta.length > 158) {

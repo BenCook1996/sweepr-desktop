@@ -254,7 +254,7 @@ pub fn clean_with_exclusions_and_quarantine(
     exclusions: &[PathBuf],
     quarantine_data_dir: Option<&Path>,
 ) -> CleanReport {
-    clean_with_quarantine(rule, use_trash, exclusions, quarantine_data_dir)
+    clean_with_exclusions_quarantine_and_budget(rule, use_trash, exclusions, quarantine_data_dir, None)
 }
 
 pub fn clean_with_quarantine(
@@ -262,6 +262,16 @@ pub fn clean_with_quarantine(
     use_trash: bool,
     exclusions: &[PathBuf],
     quarantine_data_dir: Option<&Path>,
+) -> CleanReport {
+    clean_with_exclusions_quarantine_and_budget(rule, use_trash, exclusions, quarantine_data_dir, None)
+}
+
+pub fn clean_with_exclusions_quarantine_and_budget(
+    rule: &Rule,
+    use_trash: bool,
+    exclusions: &[PathBuf],
+    quarantine_data_dir: Option<&Path>,
+    max_bytes: Option<u64>,
 ) -> CleanReport {
     if let Some(data_dir) = quarantine_data_dir {
         let disabled = crate::safety::load_disabled_rules(data_dir);
@@ -283,7 +293,17 @@ pub fn clean_with_quarantine(
         ..Default::default()
     };
 
-    if use_trash {
+    if let Some(limit) = max_bytes {
+        if limit == 0 {
+            report.files_skipped = targets.len() as u64;
+            return report;
+        }
+        // Sort ascending by size so smaller temp files always fit cleanly under the
+        // 500 MB starter cap instead of a single oversized file blocking smaller ones.
+        targets.sort_by_key(|(_, s)| *s);
+    }
+
+    if use_trash && max_bytes.is_none() {
         let ctx = trash_context();
         for chunk in targets.chunks(TRASH_BATCH) {
             let paths: Vec<&PathBuf> = chunk
@@ -317,9 +337,38 @@ pub fn clean_with_quarantine(
                 }
             }
         }
+    } else if use_trash {
+        let ctx = trash_context();
+        for (path, s) in &targets {
+            if let Some(limit) = max_bytes {
+                if report.bytes_freed.saturating_add(*s) > limit {
+                    report.files_skipped += 1;
+                    continue;
+                }
+            }
+            if std::fs::symlink_metadata(&path)
+                .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
+                .unwrap_or(true)
+            {
+                report.files_skipped += 1;
+                continue;
+            }
+            if ctx.delete(path).is_ok() {
+                report.files_removed += 1;
+                report.bytes_freed += s;
+            } else {
+                report.files_skipped += 1;
+            }
+        }
     } else if let Some(data_dir) = quarantine_data_dir {
         let mut entries = list_quarantine_entries(data_dir);
         for (path, s) in &targets {
+            if let Some(limit) = max_bytes {
+                if report.bytes_freed.saturating_add(*s) > limit {
+                    report.files_skipped += 1;
+                    continue;
+                }
+            }
             if std::fs::symlink_metadata(&path)
                 .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
                 .unwrap_or(true)
@@ -343,6 +392,12 @@ pub fn clean_with_quarantine(
         remove_empty_dirs(rule);
     } else {
         for (path, s) in &targets {
+            if let Some(limit) = max_bytes {
+                if report.bytes_freed.saturating_add(*s) > limit {
+                    report.files_skipped += 1;
+                    continue;
+                }
+            }
             if std::fs::symlink_metadata(&path)
                 .map(|m| m.file_type().is_symlink() || crate::safety::metadata_is_link_like(&m))
                 .unwrap_or(true)
@@ -446,6 +501,51 @@ mod tests {
         entries[0].original_path = data_dir.join("account.json").to_string_lossy().into_owned();
         save_quarantine_entries(&data_dir, &entries).unwrap();
         assert!(restore_quarantine_entry(&data_dir, &entries[0].id).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn budget_capped_quarantine_clean_respects_limit() {
+        let dir = std::env::temp_dir().join(format!("sweepr-budget-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let data_dir = dir.join("data");
+        let work_dir = dir.join("temp_root");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        std::fs::create_dir_all(&work_dir).unwrap();
+
+        // Create 3 files: 100 bytes, 200 bytes, and 500 bytes (800 bytes total).
+        std::fs::write(work_dir.join("small_a.tmp"), vec![b'a'; 100]).unwrap();
+        std::fs::write(work_dir.join("small_b.tmp"), vec![b'b'; 200]).unwrap();
+        std::fs::write(work_dir.join("large_c.tmp"), vec![b'c'; 500]).unwrap();
+
+        let rule = Rule {
+            id: "temp",
+            name: "Temporary files",
+            description: "Test temp",
+            group: crate::rules::Group::System,
+            roots: vec![work_dir.clone()],
+            min_age_hours: 0,
+            free: true,
+        };
+
+        // Cap budget at 350 bytes: small_a (100) + small_b (200) = 300 <= 350, large_c (500) skipped.
+        let report = clean_with_exclusions_quarantine_and_budget(
+            &rule,
+            false,
+            &[],
+            Some(&data_dir),
+            Some(350),
+        );
+        assert_eq!(report.bytes_freed, 300);
+        assert_eq!(report.files_removed, 2);
+        assert_eq!(report.files_skipped, 1);
+        assert!(!work_dir.join("small_a.tmp").exists());
+        assert!(!work_dir.join("small_b.tmp").exists());
+        assert!(work_dir.join("large_c.tmp").exists());
+
+        let quarantined = list_quarantine_entries(&data_dir);
+        assert_eq!(quarantined.len(), 2);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

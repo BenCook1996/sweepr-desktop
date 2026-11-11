@@ -55,6 +55,13 @@ jobs:
 
       - name: Commit Cloud SEO Artifacts, GSC Seed, Audit Log & Product Mockups (if changed)
         run: |
+          COUNT="${{ github.event.inputs.batch_count || '0' }}"
+          IS_MONDAY=$([ "$(date -u +%u)" = "1" ] && echo "1" || echo "0")
+          RUN_WEEKLY="${{ github.event.inputs.run_weekly_product_advisor || 'false' }}"
+          if [ "$COUNT" = "0" ] && [ "$IS_MONDAY" = "0" ] && [ "$RUN_WEEKLY" != "true" ]; then
+            echo "Skipping daily git commit/push while pSEO batch_count=0 during Core Update stabilization (GSC ingest continues via HTTPS below)."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for f in server/src/data/gsc-seed.json server/src/data/clean-items.json server/src/data/keyword-research-report.json server/src/data/seo-strategy-ledger.json server/src/data/daily-seo-pages-state.json server/src/data/indexing-queue.json server/src/data/weekly-product-advisor-report.json server/public/crm/weekly-product-mockups.html WEEKLY_PRODUCT_CONTENT_ADVISORY.md TECHNICAL_SEO_AUDIT_LOG.md server/public/sitemap.xml server/public/llms.txt; do

@@ -206,6 +206,7 @@ pub fn run() {
 
             app.manage(commands::AppState {
                 data_dir: data_dir.clone(),
+                local_data_dir: local_data_dir.clone(),
                 licensing,
             });
             battery::setup_tray_and_monitor(app.handle(), data_dir);
@@ -225,6 +226,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::scan_start,
             commands::clean_categories,
+            commands::get_free_allowance,
             commands::list_quarantine,
             commands::restore_quarantine_item,
             commands::get_cleaning_history,

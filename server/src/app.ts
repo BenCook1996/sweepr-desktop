@@ -39,6 +39,7 @@ import {
 } from "./pseo.js";
 import { SeoStore } from "./seo/store.js";
 import { createSeoRouter } from "./seo/router.js";
+import { LOCKED_TEST_TITLE_SLUGS } from "./seo/keywords.js";
 import {
   ensureBloatWatchSeeded,
   getBloatWatchPost,
@@ -85,6 +86,7 @@ import {
   recordInstallerDownloaded,
   recordRecoveryBannerInteraction,
   sanitizeAttributionId,
+  SWEEPR_WINDOWS_EXE_SHA256,
 } from "./download-recovery.js";
 import {
   buildGiveawayReadmeTxt,
@@ -266,13 +268,14 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
 /** Server-side source of truth: is this entitlement currently usable? */
 export function resolveCheckoutPromoCoupon(
   rawCoupon: unknown
-): { code: "GOTD50" | "SWEEPR50" | "SCAN5GB20" | "STAY30"; discountPct: number; multiplier: number } | null {
+): { code: "GOTD50" | "SWEEPR50" | "SCAN5GB20" | "WELCOME20" | "STAY30"; discountPct: number; multiplier: number } | null {
   const c = String(rawCoupon ?? "")
     .trim()
     .toUpperCase();
   if (c === "GOTD50") return { code: "GOTD50", discountPct: 50, multiplier: 0.5 };
   if (c === "SWEEPR50") return { code: "SWEEPR50", discountPct: 50, multiplier: 0.5 };
   if (c === "SCAN5GB20") return { code: "SCAN5GB20", discountPct: 20, multiplier: 0.8 };
+  if (c === "WELCOME20") return { code: "WELCOME20", discountPct: 20, multiplier: 0.8 };
   if (c === "STAY30") return { code: "STAY30", discountPct: 30, multiplier: 0.7 };
   return null;
 }
@@ -509,9 +512,37 @@ export function createApp(deps: AppDeps) {
     setPromotedWinnersPersistHook((winners) => {
       seoStore.setSetting("promoted_experiment_winners", winners);
     });
+    for (const lockedSlug of LOCKED_TEST_TITLE_SLUGS) {
+      setApprovedIntentGapSeoOverride(lockedSlug, null);
+    }
     const savedOverrides =
       seoStore.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {}) ?? {};
+    let cleanedLockedOverrides = false;
     for (const [slug, ov] of Object.entries(savedOverrides)) {
+      const normalizedSlug = slug.trim().toLowerCase();
+      if (LOCKED_TEST_TITLE_SLUGS.has(normalizedSlug) && ov && (ov.title || ov.meta_description)) {
+        const stillNoindex = Boolean(ov.noindex);
+        savedOverrides[slug] = {
+          ...ov,
+          title: null,
+          meta_description: null,
+          ctr_status: "rejected",
+          status: stillNoindex ? "approved" : "rejected",
+          updated_at: new Date().toISOString(),
+        };
+        cleanedLockedOverrides = true;
+        if (stillNoindex) {
+          setApprovedIntentGapSeoOverride(slug, {
+            noindex: true,
+            mergedIntoSlug: ov.merged_into_slug || undefined,
+            retiredReason: ov.retired_reason || undefined,
+            approvedAt: ov.approved_at || undefined,
+          });
+        } else {
+          setApprovedIntentGapSeoOverride(slug, null);
+        }
+        continue;
+      }
       if (ov && ov.status === "approved") {
         setApprovedIntentGapSeoOverride(slug, {
           title: ov.title || undefined,
@@ -522,6 +553,9 @@ export function createApp(deps: AppDeps) {
           retiredReason: ov.retired_reason || undefined,
         });
       }
+    }
+    if (cleanedLockedOverrides) {
+      seoStore.setSetting("intent_gap_approved_ctr_overrides", savedOverrides);
     }
     syncStaticLlmsTxtFile(seoStore);
   } catch {}
@@ -1012,6 +1046,776 @@ export function createApp(deps: AppDeps) {
     return "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
   };
 
+  const cachedInstallerMeta = new Map<Platform, { sha256: string; sizeMb: string }>();
+  const getInstallerMeta = (platform: Platform): { sha256: string; sizeMb: string } => {
+    const hit = cachedInstallerMeta.get(platform);
+    if (hit) return hit;
+    const { file } = DESKTOP_FILES[platform];
+    const p = `./public/${file}`;
+    try {
+      if (existsSync(p)) {
+        const buf = readFileSync(p);
+        const sha256 = createHash("sha256").update(buf).digest("hex").toUpperCase();
+        const sizeMb = `${(buf.length / (1024 * 1024)).toFixed(1)} MB`;
+        const meta = { sha256, sizeMb };
+        cachedInstallerMeta.set(platform, meta);
+        return meta;
+      }
+    } catch {}
+    if (platform === "android") {
+      return { sha256: getApkSha256(), sizeMb: "3.2 MB" };
+    }
+    return {
+      sha256: SWEEPR_WINDOWS_EXE_SHA256,
+      sizeMb: platform === "mac" ? "7.0 MB" : "6.5 MB",
+    };
+  };
+
+  const renderPostDownloadThankYouPage = (
+    activePlatform: "windows" | "mac" | "linux",
+    attributionId: string
+  ): string => {
+    const winMeta = getInstallerMeta("windows");
+    const macMeta = getInstallerMeta("mac");
+    const activeMeta = activePlatform === "mac" ? macMeta : getInstallerMeta(activePlatform);
+    const activeFile = DESKTOP_FILES[activePlatform].file;
+    const streamHref =
+      activePlatform === "mac"
+        ? "/download?stream=1&platform=mac"
+        : activePlatform === "linux"
+          ? "/download?stream=1&platform=linux"
+          : "/download?stream=1&platform=windows";
+    const isMacDefault = activePlatform === "mac";
+    const safeAttrId = escapeHtml(attributionId);
+    const safeWinSha = escapeHtml(winMeta.sha256);
+    const safeMacSha = escapeHtml(macMeta.sha256);
+    const safeActiveSha = escapeHtml(activeMeta.sha256);
+    const safeActiveFile = escapeHtml(activeFile);
+    const safeSizeMb = escapeHtml(activeMeta.sizeMb);
+    const dlJsonLd = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "Thank You for Downloading SWEEPR Cleaner",
+      description:
+        "Post-download setup walkthrough, verified SSL.com publisher details, SHA-256 checksum, and backup link for SWEEPR Cleaner.",
+      url: "https://sweeprcleaner.com/download",
+    });
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Downloading SWEEPR Cleaner — 3-Step Quick Launch Guide</title>
+  <meta name="description" content="Your SWEEPR Cleaner download is starting automatically. Follow the 3-step Windows SmartScreen or macOS Gatekeeper walkthrough to run your free 60-second scan." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://sweeprcleaner.com/download" />
+  <script type="application/ld+json">${dlJsonLd}</script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b" />
+  <link rel="alternate icon" type="image/png" href="/favicon.png?v=20261031b" />
+  <link rel="shortcut icon" href="/favicon.ico?v=20261031b" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261031b" />
+  <script src="/analytics.js" defer></script>
+  <style>
+    :root {
+      --bg: #f4f6f4;
+      --surface: #ffffff;
+      --surface-muted: #f8faf9;
+      --border: #d5ded8;
+      --text: #111814;
+      --muted: #4b5750;
+      --emerald: #0d6847;
+      --emerald-bright: #10b981;
+      --emerald-soft: #eaf5ef;
+      --emerald-border: #9adbc0;
+      --win-blue: #0067c0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #e6f3ec 0%, var(--bg) 52%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 48px;
+    }
+    .shell {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+    }
+    .brand img { border-radius: 8px; display: block; }
+    .brand span em { font-style: normal; color: var(--emerald); }
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .top-links a { color: var(--muted); text-decoration: none; }
+    .top-links a:hover { color: var(--emerald); text-decoration: underline; }
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 26px 28px;
+      box-shadow: 0 12px 36px rgba(13, 40, 28, 0.06);
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .dl-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 13px;
+      border-radius: 999px;
+      background: var(--emerald-soft);
+      border: 1px solid var(--emerald-border);
+      color: #074730;
+      font-size: 12.5px;
+      font-weight: 800;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--emerald-bright);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.22);
+    }
+    .trust-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1e3a2f;
+    }
+    .trust-pills span {
+      background: #f1f5f3;
+      border: 1px solid #dce5df;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    h1 {
+      margin: 4px 0 8px;
+      font-size: clamp(23px, 3.2vw, 31px);
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+    }
+    .hero-sub {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14.5px;
+      line-height: 1.5;
+    }
+    .hero-sub a {
+      color: var(--emerald);
+      font-weight: 700;
+    }
+    .os-tabs {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #eef2ef;
+      border: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+    .os-tab {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+    .os-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(17, 24, 20, 0.08);
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 820px) {
+      .steps-grid { grid-template-columns: 1fr; }
+      .hero-card { padding: 20px 18px; }
+    }
+    .step-card {
+      background: var(--surface-muted);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .step-card.highlight {
+      border-color: var(--emerald);
+      background: #f3faf6;
+    }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--emerald);
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--emerald);
+      color: #fff;
+      display: inline-grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .step-title {
+      margin: 0;
+      font-size: 15.5px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+    .step-desc {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.48;
+    }
+    .visual-box {
+      margin-top: auto;
+      border-radius: 11px;
+      padding: 11px 12px;
+      background: #ffffff;
+      border: 1px solid #d5ded8;
+      font-size: 12px;
+    }
+    .browser-dl-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .browser-dl-open {
+      color: var(--win-blue);
+      font-weight: 800;
+      font-size: 11.5px;
+    }
+    .smartscreen-mock {
+      background: #1b2a38;
+      color: #f8fafc;
+      border-radius: 10px;
+      padding: 11px 12px;
+      border: 1px solid #334155;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .ss-head {
+      font-weight: 800;
+      font-size: 12px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .ss-more {
+      display: inline-block;
+      color: #60a5fa;
+      text-decoration: underline;
+      font-weight: 800;
+      margin: 3px 0 6px;
+    }
+    .ss-pub {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .ss-pub strong { color: #6ee7b7; }
+    .ss-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .ss-btn-run {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 2px solid #34d399;
+      font-size: 11px;
+    }
+    .ss-btn-dont {
+      background: transparent;
+      color: #94a3b8;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #475569;
+      font-size: 11px;
+    }
+    .scan-ready-mock {
+      background: linear-gradient(135deg, #073825, #0d6847);
+      color: #ecfdf5;
+      border-radius: 10px;
+      padding: 11px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .scan-ready-mock strong { font-size: 12.5px; }
+    .scan-ready-mock span { font-size: 11.5px; color: #a7f3d0; }
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    @media (max-width: 820px) {
+      .lower-grid { grid-template-columns: 1fr; }
+    }
+    .sub-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 20px;
+    }
+    .sub-card h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .sub-card p {
+      margin: 0 0 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .sha-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f3;
+      border: 1px solid #cbd5cf;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .sha-code {
+      flex: 1;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11.5px;
+      color: #143625;
+      word-break: break-all;
+      user-select: all;
+    }
+    .copy-btn {
+      flex-shrink: 0;
+      background: var(--surface);
+      color: var(--emerald);
+      border: 1px solid var(--emerald);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: var(--emerald-soft); }
+    .ps-hint {
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 11px;
+      color: #475569;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 9px;
+      overflow-x: auto;
+    }
+    .email-form {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .email-input {
+      flex: 1;
+      min-width: 190px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #b8c4bc;
+      font-size: 13.5px;
+    }
+    .email-submit {
+      background: var(--emerald);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .email-submit:hover { background: #095237; }
+    .coupon-reveal {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--emerald-soft);
+      border: 1px solid var(--emerald-border);
+      font-size: 12.5px;
+      color: #073825;
+    }
+    .coupon-pill {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-weight: 900;
+      background: #ffffff;
+      border: 1px dashed var(--emerald);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin: 0 4px;
+    }
+    .footer-links {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .footer-links a { color: var(--emerald); font-weight: 700; text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+    .hidden-os { display: none !important; }
+  </style>
+</head>
+<body>
+  <iframe id="dlAutoStreamFrame" title="SWEEPR Installer Stream" style="display:none;width:0;height:0;border:0;" aria-hidden="true"></iframe>
+
+  <div class="shell">
+    <header class="topbar">
+      <a href="/" class="brand">
+        <img src="/favicon.svg?v=20261031b" alt="SWEEPR" width="30" height="30" />
+        <span>SWEEPR <em>Cleaner</em></span>
+      </a>
+      <nav class="top-links" aria-label="Download options">
+        <a href="/download?stream=1&amp;platform=windows" rel="nofollow">Windows (.exe)</a>
+        <a href="/download?stream=1&amp;platform=mac" rel="nofollow">macOS (.dmg)</a>
+        <a href="/download?platform=picker" rel="nofollow">All Platforms</a>
+        <a href="/pricing">Pro Plans</a>
+      </nav>
+    </header>
+
+    <main class="hero-card" data-attribution-id="${safeAttrId}">
+      <div class="status-row">
+        <div class="dl-pill" role="status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span id="dlStatusLabel">Starting download: ${safeActiveFile} (${safeSizeMb})…</span>
+        </div>
+        <div class="trust-pills">
+          <span>✓ SSL.com Publisher: Benjamin Cook</span>
+          <span>✓ 500 MB Free Starter Clean</span>
+          <span>✓ 7-Day Undo Quarantine</span>
+        </div>
+      </div>
+
+      <h1>Thank you! Launch SWEEPR Cleaner in 3 quick steps</h1>
+      <p class="hero-sub">
+        Your installer is downloading automatically to your browser&rsquo;s top-right <strong>Downloads</strong> bar.
+        Didn&rsquo;t start?
+        <a id="directStreamAnchor" href="${escapeHtml(streamHref)}" rel="nofollow">Click here to download <span id="directFileName">${safeActiveFile}</span> directly</a>.
+      </p>
+
+      <div class="os-tabs" role="tablist" aria-label="Operating system setup guide">
+        <button type="button" id="tabBtnWin" role="tab" aria-selected="${isMacDefault ? "false" : "true"}" class="os-tab${isMacDefault ? "" : " active"}" onclick="window.__switchDlOs('windows')">
+          💻 Windows 10 &amp; 11 (SmartScreen)
+        </button>
+        <button type="button" id="tabBtnMac" role="tab" aria-selected="${isMacDefault ? "true" : "false"}" class="os-tab${isMacDefault ? " active" : ""}" onclick="window.__switchDlOs('mac')">
+          🍏 macOS 11+ (Gatekeeper)
+        </button>
+      </div>
+
+      <!-- Windows 3-Step SmartScreen Walkthrough -->
+      <section id="stepsWin" class="steps-grid${isMacDefault ? " hidden-os" : ""}" aria-label="Windows SmartScreen 3-step walkthrough">
+        <article class="step-card">
+          <div class="step-badge"><span class="step-num">1</span> Step 1</div>
+          <h2 class="step-title">Open SWEEPRCleaner.exe</h2>
+          <p class="step-desc">Click <strong>SWEEPRCleaner.exe</strong> in your browser&rsquo;s top-right Downloads shelf (or press <kbd>Ctrl</kbd>+<kbd>J</kbd>).</p>
+          <div class="visual-box">
+            <div class="browser-dl-pill">
+              <span>📦 SWEEPRCleaner.exe</span>
+              <span class="browser-dl-open">Open file ↗</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card highlight">
+          <div class="step-badge"><span class="step-num">2</span> Step 2 · Windows SmartScreen</div>
+          <h2 class="step-title">Click More info &rarr; Run anyway</h2>
+          <p class="step-desc">If Windows shows a blue prompt on this fresh Rust build, click <strong>More info</strong>, verify <strong>Verified SSL.com Publisher: Benjamin Cook</strong>, and click <strong>Run anyway</strong>.</p>
+          <div class="smartscreen-mock" aria-label="Windows SmartScreen prompt preview">
+            <div class="ss-head">Windows protected your PC</div>
+            <span class="ss-more">More info</span>
+            <div class="ss-pub">App: SWEEPRCleaner.exe<br />Publisher: <strong>Verified SSL.com Publisher: Benjamin Cook</strong></div>
+            <div class="ss-actions">
+              <span class="ss-btn-run">Run anyway</span>
+              <span class="ss-btn-dont">Don&rsquo;t run</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card">
+          <div class="step-badge"><span class="step-num">3</span> Step 3</div>
+          <h2 class="step-title">Free 60s Scan starts automatically</h2>
+          <p class="step-desc">Click <strong>Install</strong> once (&lt;0.3s, zero bundled bloatware) — your <strong>Free 60s Scan starts automatically</strong> with 500 MB Free Starter Clean.</p>
+          <div class="scan-ready-mock">
+            <strong>⚡ Instant 1-Click Launch</strong>
+            <span>Scans System Temp, Shaders, Browsers &amp; AI Caches in seconds</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- macOS 3-Step Gatekeeper Walkthrough -->
+      <section id="stepsMac" class="steps-grid${isMacDefault ? "" : " hidden-os"}" aria-label="macOS Gatekeeper 3-step walkthrough">
+        <article class="step-card">
+          <div class="step-badge"><span class="step-num">1</span> Step 1</div>
+          <h2 class="step-title">Open SWEEPRCleaner.dmg</h2>
+          <p class="step-desc">Open <strong>SWEEPRCleaner.dmg</strong> from Downloads and drag <strong>SWEEPR Cleaner</strong> into your <strong>Applications</strong> folder.</p>
+          <div class="visual-box">
+            <div class="browser-dl-pill">
+              <span>💿 SWEEPRCleaner.dmg</span>
+              <span class="browser-dl-open">Drag to Applications &rarr;</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card highlight">
+          <div class="step-badge"><span class="step-num">2</span> Step 2 · macOS Gatekeeper</div>
+          <h2 class="step-title">Right-click &rarr; Open (First Launch)</h2>
+          <p class="step-desc">In <strong>Applications</strong>, <strong>Control-click (Right-click)</strong> SWEEPR Cleaner and choose <strong>Open</strong> (or go to <strong>System Settings &rarr; Privacy &amp; Security &rarr; Open Anyway</strong>).</p>
+          <div class="smartscreen-mock" aria-label="macOS Gatekeeper prompt preview">
+            <div class="ss-head">macOS Gatekeeper First-Run Check</div>
+            <div class="ss-pub" style="margin-top:4px;">Applications &rarr; Control-Click <strong>SWEEPR Cleaner.app</strong></div>
+            <div class="ss-actions">
+              <span class="ss-btn-run">Open</span>
+              <span class="ss-btn-dont">Cancel</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="step-card">
+          <div class="step-badge"><span class="step-num">3</span> Step 3</div>
+          <h2 class="step-title">Free 60s Scan starts automatically</h2>
+          <p class="step-desc">SWEEPR opens immediately and your <strong>Free 60s Scan starts automatically</strong> with 500 MB Free Starter Clean &amp; 7-Day Undo Quarantine.</p>
+          <div class="scan-ready-mock">
+            <strong>⚡ Native Apple Silicon &amp; Intel</strong>
+            <span>Scans System Temp, Xcode, Browsers &amp; App Caches safely</span>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <div class="lower-grid">
+      <section class="sub-card" aria-label="Verified SHA-256 Checksum">
+        <h2>🔐 Verified SHA-256 Checksum (<span id="shaFileName">${safeActiveFile}</span>)</h2>
+        <p>Verify your downloaded installer matches our official SSL.com signed build byte-for-byte:</p>
+        <div class="sha-row">
+          <code id="sha256Code" class="sha-code">${safeActiveSha}</code>
+          <button type="button" id="copySha256Btn" class="copy-btn" onclick="window.__copySha256()">Copy SHA-256</button>
+        </div>
+        <div id="shaVerifyCmd" class="ps-hint">${
+          isMacDefault
+            ? "shasum -a 256 ~/Downloads/SWEEPRCleaner.dmg"
+            : "Get-FileHash ~\\Downloads\\SWEEPRCleaner.exe -Algorithm SHA256"
+        }</div>
+      </section>
+
+      <section class="sub-card" id="dlRecoveryBox" aria-label="Email backup link and 20% welcome coupon">
+        <h2>📩 Email Me a Backup Link + 20% Welcome Coupon</h2>
+        <p>Optional: get your direct Windows &amp; Mac backup download link, SHA-256 checksum, and a <strong>20% off SWEEPR Pro welcome coupon</strong> sent to your inbox.</p>
+        <form id="dlRecoveryForm" class="email-form" onsubmit="return window.__bindDlEmail(event)">
+          <input type="email" id="dlRecoveryEmail" class="email-input" required placeholder="you@example.com" aria-label="Email address" />
+          <button type="submit" id="dlRecoverySubmit" class="email-submit">Send Backup Link + 20% Off</button>
+        </form>
+        <div id="dlRecoveryStatus" class="coupon-reveal" role="status">
+          ✓ Sent! Your 20% Welcome Coupon is <span class="coupon-pill">WELCOME20</span> &mdash;
+          <a href="/order?plan=annual&amp;coupon=WELCOME20" rel="nofollow" style="color:#0d6847;font-weight:800;text-decoration:underline;">Apply 20% Off on Pro &rarr;</a>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer-links">
+      <span>Need help launching SWEEPR? <a href="/support">Contact 1-on-1 Support</a> or install via Winget: <code>winget install SWEEPR.Cleaner</code></span>
+      <div>
+        <a href="/order?plan=annual" rel="nofollow">Unlock 5-Device Pro License &rarr;</a>
+        &nbsp;&middot;&nbsp;
+        <a href="/">&larr; Back to Home</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var META = {
+        windows: {
+          file: "SWEEPRCleaner.exe",
+          sha: ${JSON.stringify(winMeta.sha256).replace(/</g, "\\u003c")},
+          stream: "/download?stream=1&platform=windows",
+          cmd: "Get-FileHash ~\\\\Downloads\\\\SWEEPRCleaner.exe -Algorithm SHA256"
+        },
+        mac: {
+          file: "SWEEPRCleaner.dmg",
+          sha: ${JSON.stringify(macMeta.sha256).replace(/</g, "\\u003c")},
+          stream: "/download?stream=1&platform=mac",
+          cmd: "shasum -a 256 ~/Downloads/SWEEPRCleaner.dmg"
+        }
+      };
+      var autoStreamUrl = ${JSON.stringify(streamHref).replace(/</g, "\\u003c")};
+      var currentOs = ${JSON.stringify(isMacDefault ? "mac" : "windows")};
+
+      setTimeout(function () {
+        var frame = document.getElementById("dlAutoStreamFrame");
+        if (frame) {
+          frame.src = autoStreamUrl;
+        } else {
+          var a = document.createElement("a");
+          a.href = autoStreamUrl;
+          a.rel = "nofollow";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+        }
+        var lbl = document.getElementById("dlStatusLabel");
+        if (lbl) {
+          lbl.textContent = "Downloading " + (META[currentOs] ? META[currentOs].file : "SWEEPRCleaner.exe") + " — check your browser Downloads bar ↗";
+        }
+      }, 300);
+
+      window.__switchDlOs = function (os) {
+        currentOs = os === "mac" ? "mac" : "windows";
+        var isMac = currentOs === "mac";
+        var winSec = document.getElementById("stepsWin");
+        var macSec = document.getElementById("stepsMac");
+        var btnWin = document.getElementById("tabBtnWin");
+        var btnMac = document.getElementById("tabBtnMac");
+        if (winSec) winSec.classList.toggle("hidden-os", isMac);
+        if (macSec) macSec.classList.toggle("hidden-os", !isMac);
+        if (btnWin) {
+          btnWin.classList.toggle("active", !isMac);
+          btnWin.setAttribute("aria-selected", isMac ? "false" : "true");
+        }
+        if (btnMac) {
+          btnMac.classList.toggle("active", isMac);
+          btnMac.setAttribute("aria-selected", isMac ? "true" : "false");
+        }
+        var m = META[currentOs];
+        var shaEl = document.getElementById("sha256Code");
+        var shaFile = document.getElementById("shaFileName");
+        var cmdEl = document.getElementById("shaVerifyCmd");
+        var directA = document.getElementById("directStreamAnchor");
+        var directFn = document.getElementById("directFileName");
+        if (shaEl) shaEl.textContent = m.sha;
+        if (shaFile) shaFile.textContent = m.file;
+        if (cmdEl) cmdEl.textContent = m.cmd;
+        if (directA) directA.setAttribute("href", m.stream);
+        if (directFn) directFn.textContent = m.file;
+      };
+
+      window.__copySha256 = function () {
+        var el = document.getElementById("sha256Code");
+        var btn = document.getElementById("copySha256Btn");
+        var txt = el ? (el.textContent || "").trim() : "";
+        if (!txt) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(function () {
+            if (btn) {
+              btn.textContent = "Copied ✓";
+              setTimeout(function () { btn.textContent = "Copy SHA-256"; }, 2000);
+            }
+          });
+        }
+      };
+
+      window.__bindDlEmail = function (e) {
+        if (e) e.preventDefault();
+        var inp = document.getElementById("dlRecoveryEmail");
+        var st = document.getElementById("dlRecoveryStatus");
+        var btn = document.getElementById("dlRecoverySubmit");
+        var em = inp ? inp.value.trim() : "";
+        if (!em || em.indexOf("@") === -1) return false;
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Sending…";
+        }
+        var m = document.cookie.match(/(?:^|; )sweepr_attr_id=([^;]*)/);
+        var aid = m ? decodeURIComponent(m[1]) : (localStorage.getItem("sweepr_attr_id") || ${JSON.stringify(attributionId).replace(/</g, "\\u003c")});
+        fetch("/api/download-recovery/bind-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: em,
+            attribution_id: aid,
+            platform: currentOs,
+            send_desktop_link: true,
+            include_welcome_coupon: true
+          })
+        })
+          .then(function () {
+            if (st) st.style.display = "block";
+            if (btn) btn.textContent = "Sent + 20% Unlocked ✓";
+          })
+          .catch(function () {
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = "Send Backup Link + 20% Off";
+            }
+          });
+        return false;
+      };
+    })();
+  </script>
+</body>
+</html>`;
+  };
+
   /** Order matters: Android and ChromeOS user agents also contain "Linux". */
   const detectPlatform = (ua: string, chPlatform = "", chMobile = ""): Platform | null => {
     if (/iphone|ipad|ipod/.test(ua) || chPlatform.includes("ios")) return "ios";
@@ -1457,6 +2261,9 @@ export function createApp(deps: AppDeps) {
     c.header("X-Robots-Tag", "noindex, nofollow");
     const rawUa = c.req.header("user-agent") || "";
     const ua = rawUa.toLowerCase();
+    const accept = (c.req.header("accept") || "").toLowerCase();
+    const secFetchDest = (c.req.header("sec-fetch-dest") || "").toLowerCase();
+    const secFetchMode = (c.req.header("sec-fetch-mode") || "").toLowerCase();
     const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
     const chMobile = c.req.header("sec-ch-ua-mobile")?.toLowerCase() || "";
     let host = "sweeprcleaner.com";
@@ -1465,24 +2272,37 @@ export function createApp(deps: AppDeps) {
     } catch {}
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
+    const stream = c.req.query("stream") === "1";
     const direct = c.req.query("direct") === "1" || c.req.query("raw") === "1";
+    const isStream = stream || direct;
     const isCrawler = Boolean(detectBot(rawUa)) || rawUa === AUDIT_USER_AGENT || ua.includes("sweeprseoaudit");
+    const isBrowserUa =
+      /mozilla\/5\.0/i.test(rawUa) && /applewebkit|gecko|chrome|safari|firefox|edg\//i.test(rawUa);
+    const isBrowserNavigation =
+      !isCrawler &&
+      (accept.includes("text/html") ||
+        secFetchMode === "navigate" ||
+        secFetchDest === "document" ||
+        isBrowserUa);
+
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
-    const platform: Platform | null =
+    const detectedPlatform: Platform | null =
       requested && (validPlatforms as readonly string[]).includes(requested)
         ? (requested as Platform)
         : isCrawler
           ? null
           : detectPlatform(ua, chPlatform, chMobile);
 
-    if (!platform || requested === "picker") {
+    if (isCrawler || requested === "picker" || (!detectedPlatform && requested !== undefined)) {
       c.header("Cache-Control", "private, no-store");
       return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device platform:", ua, host));
     }
 
+    const platform: Platform = detectedPlatform ?? "windows";
+
     // Never force an immediate raw .apk sideload or unsigned .mobileconfig MDM stream on mobile visitors!
     // Route Android to the Google Play + Verified SHA-256 APK landing view, and iOS to the App Store / Cross-Device Email capture card.
-    if ((platform === "android" && !direct) || platform === "ios") {
+    if ((platform === "android" && !isStream) || (platform === "ios" && !isStream)) {
       try {
         let attrId =
           sanitizeAttributionId(c.req.query("attribution_id")) ||
@@ -1513,13 +2333,19 @@ export function createApp(deps: AppDeps) {
     const installerPath = `./public/${file}`;
     const hasFile = existsSync(installerPath);
 
+    let resolvedAttrId =
+      sanitizeAttributionId(c.req.query("attribution_id")) ||
+      sanitizeAttributionId(getCookie(c, "sweepr_attr_id")) ||
+      `attr_dl_${randomToken(8)}`;
+
+    const shouldRenderThankYouHtml =
+      !isStream &&
+      (platform === "windows" || platform === "mac" || platform === "linux") &&
+      (!requested || isBrowserNavigation);
+
     try {
-      let attrId =
-        sanitizeAttributionId(c.req.query("attribution_id")) ||
-        sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
-      if (!attrId) {
-        attrId = `attr_dl_${randomToken(8)}`;
-        setCookie(c, "sweepr_attr_id", attrId, {
+      if (!getCookie(c, "sweepr_attr_id")) {
+        setCookie(c, "sweepr_attr_id", resolvedAttrId, {
           httpOnly: false,
           sameSite: "Lax",
           secure: isHttps,
@@ -1533,9 +2359,9 @@ export function createApp(deps: AppDeps) {
         c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
         clientIp(c);
       const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
-      c.header("X-Sweepr-Attribution-Id", attrId);
+      c.header("X-Sweepr-Attribution-Id", resolvedAttrId);
       recordInstallerDownloaded(repo, {
-        attributionId: attrId,
+        attributionId: resolvedAttrId,
         platform,
         installerFile: file,
         accountId: sessAccId,
@@ -1546,22 +2372,41 @@ export function createApp(deps: AppDeps) {
           available: hasFile,
           referrer: c.req.header("referer") || null,
           ip_os_fingerprint: ipOsFingerprint,
+          stage: shouldRenderThankYouHtml ? "thankyou_page" : "binary_stream",
         },
         nowSec: now(),
       });
-      repo.recordAnalyticsEvent({
-        event_name: "installer_downloaded",
-        platform,
-        account_id: sessAccId,
-        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: attrId },
-      });
-      syncToCentralCrm("/v1/telemetry/event", {
-        event_name: "installer_downloaded",
-        category: "funnel",
-        os: platform,
-        properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: attrId },
-      });
+      if (shouldRenderThankYouHtml) {
+        repo.recordAnalyticsEvent({
+          event_name: "download_thankyou_viewed",
+          platform,
+          account_id: sessAccId,
+          metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+        });
+      } else {
+        repo.recordAnalyticsEvent({
+          event_name: "installer_downloaded",
+          platform,
+          account_id: sessAccId,
+          metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+        });
+        syncToCentralCrm("/v1/telemetry/event", {
+          event_name: "installer_downloaded",
+          category: "funnel",
+          os: platform,
+          properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+        });
+      }
     } catch {}
+
+    if (shouldRenderThankYouHtml) {
+      if (!hasFile && requested) {
+        c.header("Cache-Control", "private, no-store");
+        return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`, ua, host));
+      }
+      c.header("Cache-Control", "private, no-store");
+      return c.html(renderPostDownloadThankYouPage(platform as "windows" | "mac" | "linux", resolvedAttrId));
+    }
 
     if (!hasFile) {
       c.header("Cache-Control", "private, no-store");
@@ -2000,6 +2845,10 @@ export function createApp(deps: AppDeps) {
       pct = 20;
       couponId = "SWEEPR_SCAN5GB_20_OFF";
       label = "20% Scan Recovery Discount";
+    } else if (code === "WELCOME20") {
+      pct = 20;
+      couponId = "SWEEPR_WELCOME_20_OFF";
+      label = "20% Welcome Discount";
     } else if (code === "STAY30") {
       pct = 30;
       couponId = "SWEEPR_STAY_30_OFF";
@@ -7013,33 +7862,54 @@ export function createApp(deps: AppDeps) {
       accountId,
       nowSec: now(),
     });
-    if (body?.send_desktop_link || platform === "ios" || platform === "android") {
-      const winUrl = `https://sweeprcleaner.com/download?platform=windows&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
-      const macUrl = `https://sweeprcleaner.com/download?platform=mac&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
-      const orderUrl = `https://sweeprcleaner.com/order?plan=annual&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
+    if (body?.send_desktop_link || body?.include_welcome_coupon || platform === "ios" || platform === "android") {
+      const winUrl = `https://sweeprcleaner.com/download?platform=windows&utm_source=download_backup_email&attribution_id=${encodeURIComponent(attrId)}`;
+      const macUrl = `https://sweeprcleaner.com/download?platform=mac&utm_source=download_backup_email&attribution_id=${encodeURIComponent(attrId)}`;
+      const orderUrl = `https://sweeprcleaner.com/order?plan=annual&coupon=WELCOME20&utm_source=download_backup_email&attribution_id=${encodeURIComponent(attrId)}`;
+      const winSha = getInstallerMeta("windows").sha256;
       void dispatchTransactionalCustomerEmail({
         to: rawEmail,
-        subject: "Your SWEEPR Cleaner Download Link for Windows PC & Mac",
+        subject: "Your SWEEPR Cleaner Backup Download Link + 20% Welcome Coupon (WELCOME20)",
         textBody: [
-          "Here is your direct download link for SWEEPR Cleaner on your computer:",
+          "Here is your backup download link for SWEEPR Cleaner plus your 20% Pro Welcome Coupon:",
           "",
           `Download for Windows 10 & 11 (.exe): ${winUrl}`,
           `Download for Mac (.dmg): ${macUrl}`,
+          `Verified Windows SHA-256: ${winSha}`,
           "",
-          `Unlock 5-Device Pro License (PC, Mac, Android & iOS): ${orderUrl}`,
+          "Quick Windows SmartScreen Tip:",
+          "1. Open SWEEPRCleaner.exe",
+          "2. Click More info -> Run anyway (Verified SSL.com Publisher: Benjamin Cook)",
+          "3. Your free 60s scan starts automatically.",
+          "",
+          `Claim 20% Off 5-Device Pro License (Code WELCOME20): ${orderUrl}`,
         ].join("\n"),
-        htmlBody: `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:16px;color:#111613;">
-          <h2 style="margin:0 0 8px;color:#073825;">Your SWEEPR Cleaner Desktop Links</h2>
-          <p style="color:#4b554e;font-size:14px;line-height:1.5;">Open this email on your Windows PC or Mac to install SWEEPR Cleaner in one click:</p>
-          <p style="margin:18px 0;"><a href="${winUrl}" style="display:inline-block;background:#0d6847;color:#ffffff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:800;">💻 Download for Windows 10 &amp; 11 (.exe)</a></p>
-          <p style="margin:12px 0;"><a href="${macUrl}" style="display:inline-block;background:#f4f5f3;color:#111613;border:1px solid #d6dad5;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">🍏 Download for Mac (.dmg)</a></p>
+        htmlBody: `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:540px;margin:0 auto;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:16px;color:#111613;">
+          <h2 style="margin:0 0 8px;color:#073825;">Your SWEEPR Cleaner Backup Link + 20% Welcome Coupon</h2>
+          <p style="color:#4b554e;font-size:14px;line-height:1.5;">Open this email on your Windows PC or Mac to download SWEEPR Cleaner anytime:</p>
+          <p style="margin:18px 0 10px;"><a href="${winUrl}" style="display:inline-block;background:#0d6847;color:#ffffff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:800;">💻 Download for Windows 10 &amp; 11 (.exe)</a></p>
+          <p style="margin:10px 0 16px;"><a href="${macUrl}" style="display:inline-block;background:#f4f5f3;color:#111613;border:1px solid #d6dad5;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">🍏 Download for Mac (.dmg)</a></p>
+          <div style="padding:12px 14px;border-radius:10px;background:#f8faf9;border:1px solid #dce5df;font-size:12.5px;color:#334155;line-height:1.5;">
+            <strong>Windows SmartScreen Quick Tip:</strong> Click <strong>More info &rarr; Run anyway</strong> (Verified SSL.com Publisher: <strong>Benjamin Cook</strong>).<br />
+            <span style="font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#475569;word-break:break-all;">SHA-256: ${escapeHtml(winSha)}</span>
+          </div>
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;" />
-          <p style="font-size:13px;color:#4b554e;">Want Pro across all 5 of your devices? <a href="${orderUrl}" style="color:#0d6847;font-weight:700;">Unlock SWEEPR Pro &rarr;</a></p>
+          <div style="padding:14px;border-radius:12px;background:#eaf5ef;border:1px solid #9adbc0;">
+            <div style="font-size:13.5px;font-weight:800;color:#073825;margin-bottom:4px;">🎁 20% Off SWEEPR Pro (5 Devices) — Code: <code style="background:#fff;padding:2px 6px;border-radius:5px;border:1px dashed #0d6847;">WELCOME20</code></div>
+            <p style="margin:0;font-size:13px;color:#1e3a2f;"><a href="${orderUrl}" style="color:#0d6847;font-weight:800;">Apply 20% Welcome Coupon on Checkout &rarr;</a></p>
+          </div>
         </div>`,
-        tag: "mobile_to_desktop_link",
+        tag: "download_backup_welcome_coupon",
       }).catch(() => {});
     }
-    return c.json({ ok: true, attribution_id: attrId, account_id: accountId, email: rawEmail });
+    return c.json({
+      ok: true,
+      attribution_id: attrId,
+      account_id: accountId,
+      email: rawEmail,
+      welcome_coupon: "WELCOME20",
+      discount_pct: 20,
+    });
   });
 
   // Action 3.1: A/B Experiment Assignment & Exposure Tracking

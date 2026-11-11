@@ -71,11 +71,15 @@ async function runCleanerCloudGscSync() {
     console.warn(`[SWEEPR Cleaner Cloud GSC Sync] Notice: ${err.message}`);
   }
 
-  try {
-    await submitGscSitemap({ siteUrl: GSC_SITE_URL, feedpath: 'https://sweeprcleaner.com/sitemap.xml' });
-    console.log('✅ [SWEEPR Cleaner Cloud GSC Sync] Submitted https://sweeprcleaner.com/sitemap.xml');
-  } catch (err) {
-    console.warn(`[SWEEPR Cleaner Sitemap Submit] Notice: ${err.message}`);
+  if (process.argv.includes('--submit-sitemap') || process.env.SUBMIT_GSC_SITEMAP === '1') {
+    try {
+      await submitGscSitemap({ siteUrl: GSC_SITE_URL, feedpath: 'https://sweeprcleaner.com/sitemap.xml' });
+      console.log('✅ [SWEEPR Cleaner Cloud GSC Sync] Submitted https://sweeprcleaner.com/sitemap.xml');
+    } catch (err) {
+      console.warn(`[SWEEPR Cleaner Sitemap Submit] Notice: ${err.message}`);
+    }
+  } else {
+    console.log('ℹ️ [SWEEPR Cleaner Cloud GSC Sync] Skipping Sitemaps API re-ping (pass --submit-sitemap or SUBMIT_GSC_SITEMAP=1 to force).');
   }
 
   if (fs.existsSync(INDEXING_QUEUE_PATH)) {

@@ -14,6 +14,7 @@
     type LicenseStatus,
     type AppInfo,
     type AppUpdateInfo,
+    type PaywallContext,
     type UnplugAlert,
   } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
@@ -28,6 +29,7 @@
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
   let showActivateModal = $state(false);
+  let paywallContext = $state<PaywallContext | null>(null);
   let appReady = $state(false);
   let autoUpdateInfo = $state<AppUpdateInfo | null>(null);
   let installingUpdate = $state(false);
@@ -180,7 +182,15 @@
   });
 
   $effect(() => {
-    const open = () => (showActivateModal = true);
+    const open = (ev: Event) => {
+      const detail = (ev as CustomEvent<PaywallContext | undefined>)?.detail;
+      if (detail) {
+        paywallContext = detail;
+      } else if (!showActivateModal) {
+        paywallContext = null;
+      }
+      showActivateModal = true;
+    };
     window.addEventListener(ACTIVATE_EVENT, open);
     let unlistenNav: (() => void) | null = null;
     let unlistenAlert: (() => void) | null = null;
@@ -207,6 +217,12 @@
       unlistenNav?.();
       unlistenAlert?.();
     };
+  });
+
+  $effect(() => {
+    if (!showActivateModal) {
+      paywallContext = null;
+    }
   });
 
   let showSettingsMenu = $state(false);
@@ -775,7 +791,13 @@
         </div>
 
         {#if !sidebarCollapsed && !license?.active}
-          <button class="tier-badge free clickable" onclick={() => (showActivateModal = true)}>
+          <button
+            class="tier-badge free clickable"
+            onclick={() => {
+              paywallContext = null;
+              showActivateModal = true;
+            }}
+          >
             {t("tier.unlockPro", $lang)}
           </button>
         {/if}
@@ -1009,7 +1031,7 @@
       </div>
     {/if}
 
-    <ActivateModal bind:open={showActivateModal} onActivated={refreshLicense} />
+    <ActivateModal bind:open={showActivateModal} context={paywallContext} onActivated={refreshLicense} />
 
     {#if autoUpdateInfo?.update_available && autoUpdateInfo?.force_update}
       <div class="force-update-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="force-update-title">

@@ -1,14 +1,23 @@
 <script lang="ts" module>
-  import type { AppRemnant, ScanReport, StartupItem } from "../lib/api";
+  import type { AppRemnant, FreeAllowanceStatus, ScanReport, StartupItem } from "../lib/api";
+  const FREE_STARTER_LIMIT_BYTES = 500 * 1024 * 1024;
   let cachedReport: ScanReport | null = null;
   let cachedSelected: Record<string, boolean> = {};
   let cachedRemnants: AppRemnant[] = [];
   let cachedStartups: StartupItem[] = [];
   let cachedIncludeRemnants = true;
+  let cachedFreeAllowance: FreeAllowanceStatus = {
+    used_bytes: 0,
+    limit_bytes: FREE_STARTER_LIMIT_BYTES,
+    remaining_bytes: FREE_STARTER_LIMIT_BYTES,
+    files_cleaned: 0,
+    exhausted: false,
+    updated_at: 0,
+  };
 </script>
 
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { fade, fly, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import {
@@ -70,6 +79,18 @@
   let restoreNotice = $state<string | null>(null);
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let pendingCleanAfterAuth = $state(false);
+  let freeAllowance = $state<FreeAllowanceStatus>(cachedFreeAllowance);
+
+  async function refreshFreeAllowance(): Promise<FreeAllowanceStatus> {
+    try {
+      const fa = await api.getFreeAllowance();
+      freeAllowance = fa;
+      cachedFreeAllowance = fa;
+      return fa;
+    } catch {
+      return freeAllowance;
+    }
+  }
 
   // Viral "I Just Reclaimed X.X GB with SWEEPR" Shareable Benchmark Card State
   let showShareWinModal = $state(false);
@@ -383,13 +404,108 @@
   );
 
   const selectedCats = $derived(nonEmpty.filter((c) => selected[c.id]));
+  const freeEligibleCats = $derived(nonEmpty.filter((c) => c.free));
+  const freeEligibleBytes = $derived(freeEligibleCats.reduce((s, c) => s + c.bytes, 0));
+  const starterCleanableNowBytes = $derived(Math.min(freeEligibleBytes, freeAllowance.remaining_bytes));
+  const freeSelectedCats = $derived(selectedCats.filter((c) => c.free));
+  const proSelectedCats = $derived(selectedCats.filter((c) => !c.free));
+  const starterSelectedBytes = $derived(freeSelectedCats.reduce((s, c) => s + c.bytes, 0));
+  const hasProSelection = $derived(
+    proSelectedCats.length > 0 || (includeRemnants && remnants.length > 0)
+  );
   const selectedBytes = $derived(
     selectedCats.reduce((s, c) => s + c.bytes, 0) + (includeRemnants ? remnantsBytes : 0)
   );
   const totalFoundBytes = $derived((report?.total_bytes ?? 0) + remnantsBytes);
-  const targetHeroBytes = $derived(selectedBytes > 0 ? selectedBytes : totalFoundBytes);
+  const isStarterSelectionOnly = $derived(
+    !license?.active &&
+      !freeAllowance.exhausted &&
+      freeSelectedCats.length > 0 &&
+      !hasProSelection
+  );
+  const targetHeroBytes = $derived(
+    isStarterSelectionOnly
+      ? totalFoundBytes
+      : selectedBytes > 0
+        ? selectedBytes
+        : totalFoundBytes
+  );
+  const freedStarterOrSessionBytes = $derived(Math.max(freedTotal, freeAllowance.used_bytes));
+  const remainingUncleanedBytes = $derived.by(() => {
+    if (totalFoundBytes > 0) return totalFoundBytes;
+    try {
+      const last = Number(localStorage.getItem("sweepr_last_scan_bytes") || "0") || 0;
+      return Math.max(0, last - freedStarterOrSessionBytes);
+    } catch {
+      return 0;
+    }
+  });
   let displayedHeroBytes = $state(0);
   let depletingBytes = $state(0);
+
+  const GAMING_SHADER_IDS = new Set([
+    "shader_cache",
+    "steam_cache",
+    "game_launchers",
+    "riot_valorant_logs",
+    "genshin_hoyoplay_cache",
+  ]);
+  const AI_DEV_CACHE_IDS = new Set([
+    "creator_ai_caches",
+    "dev_caches",
+    "build_caches",
+    "xcode",
+  ]);
+
+  const gamingShaderBytes = $derived(
+    nonEmpty.filter((c) => GAMING_SHADER_IDS.has(c.id)).reduce((s, c) => s + c.bytes, 0)
+  );
+  const aiDevCacheBytes = $derived(
+    nonEmpty.filter((c) => AI_DEV_CACHE_IDS.has(c.id)).reduce((s, c) => s + c.bytes, 0)
+  );
+
+  function getCategoryProFeatureLabel(c: CategoryResult): string {
+    if (GAMING_SHADER_IDS.has(c.id)) return "Gaming Shaders";
+    if (AI_DEV_CACHE_IDS.has(c.id)) return "AI / Dev Caches";
+    if (c.id === "duplicates") return "Duplicates";
+    if (c.group === "browsers" || c.id === "webview2_cache") return "Browser Caches";
+    return c.name;
+  }
+
+  function buildContextualUpgradeCopy(
+    overrideFreedBytes?: number,
+    overrideRemainingBytes?: number
+  ): string {
+    const freedB = overrideFreedBytes ?? freedStarterOrSessionBytes;
+    const remB = overrideRemainingBytes ?? remainingUncleanedBytes;
+    if (freedB > 0 && remB > 0) {
+      return `You just freed ${formatBytes(freedB)}! Unlock SWEEPR Pro to clean the remaining ${formatBytes(remB)} across all 5 devices.`;
+    }
+    if (freedB > 0) {
+      return `You just freed ${formatBytes(freedB)}! Unlock SWEEPR Pro for unlimited Gaming Shaders, AI/Dev Caches, Duplicates & Scheduled Clean across all 5 devices.`;
+    }
+    if (remB > 0) {
+      return starterCleanableNowBytes > 0
+        ? `Unlock SWEEPR Pro to clean all ${formatBytes(remB)} across all 5 devices — or run your free ${formatBytes(starterCleanableNowBytes)} Starter Clean on Basic Temp first!`
+        : `Unlock SWEEPR Pro to clean the remaining ${formatBytes(remB)} across all 5 devices.`;
+    }
+    return "Unlock SWEEPR Pro for unlimited Gaming Shaders, AI/Dev Caches, App Remnants, Duplicates & Scheduled Clean across all 5 devices.";
+  }
+
+  function openProUpgradeModal(
+    feature?: string,
+    overrideFreedBytes?: number,
+    overrideRemainingBytes?: number
+  ) {
+    const freedB = overrideFreedBytes ?? freedStarterOrSessionBytes;
+    const remB = overrideRemainingBytes ?? remainingUncleanedBytes;
+    requestActivation({
+      message: buildContextualUpgradeCopy(freedB, remB),
+      feature,
+      freedBytes: freedB,
+      remainingBytes: remB,
+    });
+  }
 
   // Segmented Native Storage Bar Fractions
   const sysSegmentPct = $derived(
@@ -435,6 +551,16 @@
     );
   });
 
+  function toggleRuleSelection(c: CategoryResult, checked: boolean) {
+    const next = { ...selected, [c.id]: checked };
+    selected = next;
+    cachedSelected = next;
+    if (checked && !c.free && !license?.active) {
+      pendingCleanAfterAuth = true;
+      openProUpgradeModal(getCategoryProFeatureLabel(c));
+    }
+  }
+
   function toggleGroup(cats: CategoryResult[], checked: boolean) {
     const next = { ...selected };
     for (const c of cats) {
@@ -442,13 +568,146 @@
     }
     selected = next;
     cachedSelected = next;
+    if (checked && !license?.active && cats.some((c) => !c.free)) {
+      pendingCleanAfterAuth = true;
+      openProUpgradeModal("Browser & Gaming Shader Caches");
+    }
   }
 
   function toggleAppAndRemnants(checked: boolean) {
-    toggleGroup(appCacheCats, checked);
+    const next = { ...selected };
+    for (const c of appCacheCats) {
+      next[c.id] = checked;
+    }
+    selected = next;
+    cachedSelected = next;
     if (remnants.length > 0) {
       includeRemnants = checked;
       cachedIncludeRemnants = checked;
+    }
+    if (checked && !license?.active) {
+      pendingCleanAfterAuth = true;
+      openProUpgradeModal("App Remnants & AI/Gaming Caches");
+    }
+  }
+
+  function selectAllRemainingForPro() {
+    if (!report) return;
+    const next: Record<string, boolean> = {};
+    for (const c of report.categories) {
+      next[c.id] = c.bytes > 0;
+    }
+    selected = next;
+    cachedSelected = next;
+    includeRemnants = remnants.length > 0;
+    cachedIncludeRemnants = includeRemnants;
+  }
+
+  function handleProQuickCategory(
+    kind: "starter" | "shaders" | "ai_dev" | "remnants" | "duplicates" | "schedule"
+  ) {
+    if (kind === "starter") {
+      if (freeAllowance.exhausted) {
+        selectAllRemainingForPro();
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal("500 MB Free Starter Clean Used");
+        return;
+      }
+      if (freeEligibleCats.length > 0) {
+        const next: Record<string, boolean> = {};
+        for (const c of nonEmpty) {
+          next[c.id] = c.free && c.bytes > 0;
+        }
+        selected = next;
+        cachedSelected = next;
+        includeRemnants = false;
+        cachedIncludeRemnants = false;
+        requestClean();
+      } else {
+        scan();
+      }
+      return;
+    }
+
+    if (kind === "duplicates") {
+      if (!license?.active) {
+        openProUpgradeModal("Duplicates");
+        return;
+      }
+      onOpenTool?.("storage");
+      return;
+    }
+
+    if (kind === "schedule") {
+      if (!license?.active) {
+        openProUpgradeModal("Scheduled Clean");
+        return;
+      }
+      onOpenTool?.("schedule");
+      return;
+    }
+
+    if (kind === "shaders") {
+      const targets = nonEmpty.filter((c) => GAMING_SHADER_IDS.has(c.id));
+      if (!license?.active) {
+        if (targets.length > 0) {
+          const next = { ...selected };
+          for (const t of targets) next[t.id] = true;
+          selected = next;
+          cachedSelected = next;
+        }
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal("Gaming Shaders");
+        return;
+      }
+      if (targets.length > 0) {
+        cleanSpecificCategoryGroup(targets, false);
+      } else {
+        expandedGroup = "app";
+      }
+      return;
+    }
+
+    if (kind === "ai_dev") {
+      const targets = nonEmpty.filter((c) => AI_DEV_CACHE_IDS.has(c.id));
+      if (!license?.active) {
+        if (targets.length > 0) {
+          const next = { ...selected };
+          for (const t of targets) next[t.id] = true;
+          selected = next;
+          cachedSelected = next;
+        }
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal("AI/Dev Caches");
+        return;
+      }
+      if (targets.length > 0) {
+        cleanSpecificCategoryGroup(targets, false);
+      } else {
+        expandedGroup = "app";
+      }
+      return;
+    }
+
+    if (kind === "remnants") {
+      if (!license?.active) {
+        if (remnants.length > 0) {
+          includeRemnants = true;
+          cachedIncludeRemnants = true;
+        }
+        for (const c of appCacheCats) {
+          selected[c.id] = true;
+        }
+        cachedSelected = { ...selected };
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal("App Remnants");
+        return;
+      }
+      if (appAndRemnantsBytes > 0) {
+        cleanSpecificCategoryGroup(appCacheCats, remnants.length > 0);
+      } else {
+        onOpenTool?.("apps");
+      }
     }
   }
 
@@ -460,19 +719,45 @@
     trackAppEvent("scan_started");
     const unlisten = await api.onScanProgress((p) => (progress = p));
     try {
-      const [scanRes, remRes, startRes] = await Promise.allSettled([
+      const [scanRes, remRes, startRes, faRes] = await Promise.allSettled([
         api.scan(),
         api.scanAppRemnants(),
         api.startupItems(),
+        refreshFreeAllowance(),
       ]);
+
+      const currentAllowance = faRes.status === "fulfilled" ? faRes.value : freeAllowance;
+      const loadedRemnants = remRes.status === "fulfilled" ? remRes.value : remnants;
+
+      if (remRes.status === "fulfilled") {
+        remnants = loadedRemnants;
+        cachedRemnants = loadedRemnants;
+      }
+      if (startRes.status === "fulfilled") {
+        startups = startRes.value;
+        cachedStartups = startRes.value;
+      }
 
       if (scanRes.status === "fulfilled") {
         const r = scanRes.value;
         report = r;
         cachedReport = r;
-        const sel = Object.fromEntries(r.categories.map((c) => [c.id, c.bytes > 0]));
+        const hasFreeStarterTargets =
+          !license?.active &&
+          !currentAllowance.exhausted &&
+          r.categories.some((c) => c.free && c.bytes > 0);
+
+        const sel = Object.fromEntries(
+          r.categories.map((c) => [
+            c.id,
+            hasFreeStarterTargets ? c.free && c.bytes > 0 : c.bytes > 0,
+          ])
+        );
         selected = sel;
         cachedSelected = sel;
+        includeRemnants = hasFreeStarterTargets ? false : loadedRemnants.length > 0;
+        cachedIncludeRemnants = includeRemnants;
+
         const activeCats = r.categories.filter((c) => c.bytes > 0);
         const activeIds = activeCats.map((c) => c.id);
         const ruleBytes: Record<string, number> = {};
@@ -493,17 +778,6 @@
       } else {
         throw scanRes.reason;
       }
-
-      if (remRes.status === "fulfilled") {
-        remnants = remRes.value;
-        cachedRemnants = remRes.value;
-        includeRemnants = remRes.value.length > 0;
-        cachedIncludeRemnants = includeRemnants;
-      }
-      if (startRes.status === "fulfilled") {
-        startups = startRes.value;
-        cachedStartups = startRes.value;
-      }
     } catch (e) {
       error = errorMessage(e);
     } finally {
@@ -517,11 +791,27 @@
       scan();
       return;
     }
-    if (selectedBytes === 0) return;
-    if (!license?.active) {
-      pendingCleanAfterAuth = true;
-      requestActivation();
+    if (selectedBytes === 0) {
+      if (!license?.active && totalFoundBytes > 0) {
+        selectAllRemainingForPro();
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal("Full Deep Cleanup");
+      }
       return;
+    }
+    if (!license?.active) {
+      const canRunFreeStarter =
+        freeSelectedCats.length > 0 &&
+        starterSelectedBytes > 0 &&
+        !freeAllowance.exhausted &&
+        freeAllowance.remaining_bytes > 0;
+      if (!canRunFreeStarter) {
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal(
+          freeAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup"
+        );
+        return;
+      }
     }
     void executeClean();
   }
@@ -538,12 +828,139 @@
     requestClean();
   }
 
-  async function executeClean() {
-    if (!license?.active) {
-      pendingCleanAfterAuth = true;
-      requestActivation();
+  async function executeClean(forcePro = false) {
+    const isProActive = Boolean(license?.active || forcePro);
+    if (!isProActive) {
+      const freeCatsToClean = selectedCats.filter((c) => c.free && c.bytes > 0);
+      const hadProSelected = hasProSelection;
+      if (
+        freeCatsToClean.length === 0 ||
+        freeAllowance.exhausted ||
+        freeAllowance.remaining_bytes <= 0
+      ) {
+        pendingCleanAfterAuth = true;
+        openProUpgradeModal(
+          freeAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup"
+        );
+        return;
+      }
+
+      error = null;
+      const initialDeplete = Math.min(
+        freeCatsToClean.reduce((s, c) => s + c.bytes, 0),
+        freeAllowance.remaining_bytes
+      );
+      depletingBytes = initialDeplete;
+      phase = "cleaning";
+      if (
+        typeof window !== "undefined" &&
+        !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+      ) {
+        const start = performance.now();
+        const duration = 180;
+        const tickDeplete = (now: number) => {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 4);
+          depletingBytes = Math.max(0, Math.round(initialDeplete * (1 - eased)));
+          if (t < 1 && phase === "cleaning") requestAnimationFrame(tickDeplete);
+        };
+        requestAnimationFrame(tickDeplete);
+      } else {
+        depletingBytes = 0;
+      }
+
+      try {
+        const freeIds = freeCatsToClean.map((c) => c.id);
+        const cleanedReports = await api.clean(freeIds, false);
+        const updatedAllowance = await refreshFreeAllowance();
+
+        results = cleanedReports;
+        const catFreed = cleanedReports.reduce((s, r) => s + r.bytes_freed, 0);
+        const catRemoved = cleanedReports.reduce((s, r) => s + r.files_removed, 0);
+        freedTotal = catFreed;
+        removedTotal = catRemoved;
+
+        let remainingAfterStarter = 0;
+        if (report) {
+          const freedMap = new Map(cleanedReports.map((r) => [r.category_id, r.bytes_freed]));
+          const updatedCategories = report.categories.map((c) => {
+            const deducted = freedMap.get(c.id) ?? 0;
+            if (!deducted) return c;
+            return {
+              ...c,
+              bytes: Math.max(0, c.bytes - deducted),
+            };
+          });
+          const updatedTotal = updatedCategories.reduce((s, c) => s + c.bytes, 0);
+          report = {
+            ...report,
+            categories: updatedCategories,
+            total_bytes: updatedTotal,
+          };
+          cachedReport = report;
+          remainingAfterStarter = updatedTotal + remnantsBytes;
+
+          const nextSel: Record<string, boolean> = {};
+          for (const c of updatedCategories) {
+            nextSel[c.id] = !updatedAllowance.exhausted ? c.free && c.bytes > 0 : c.bytes > 0;
+          }
+          selected = nextSel;
+          cachedSelected = nextSel;
+        }
+
+        addLifetimeStats(
+          freedTotal,
+          removedTotal,
+          freeIds,
+          "Recently Cleaned (7-day undo)",
+          false
+        );
+        trackAppEvent("free_starter_clean_completed", {
+          cleaned_bytes: freedTotal,
+          files_removed: removedTotal,
+          allowance_used_bytes: updatedAllowance.used_bytes,
+          allowance_remaining_bytes: updatedAllowance.remaining_bytes,
+          remaining_pro_bytes: remainingAfterStarter,
+        });
+        await syncLifetimeStatsFromBackend().catch(() => {});
+        api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+        phase = "done";
+
+        const contextualFreed = Math.max(freedTotal, updatedAllowance.used_bytes);
+        if (
+          remainingAfterStarter > 0 &&
+          (hadProSelected || updatedAllowance.exhausted)
+        ) {
+          selectAllRemainingForPro();
+          pendingCleanAfterAuth = true;
+          setTimeout(() => {
+            openProUpgradeModal(
+              updatedAllowance.exhausted
+                ? "500 MB Free Starter Clean Complete"
+                : "Unlock Full Cleanup",
+              contextualFreed,
+              remainingAfterStarter
+            );
+          }, 360);
+        }
+      } catch (e: any) {
+        phase = "idle";
+        const latestAllowance = await refreshFreeAllowance();
+        if (isPaymentRequired(e)) {
+          selectAllRemainingForPro();
+          pendingCleanAfterAuth = true;
+          openProUpgradeModal(
+            latestAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup",
+            Math.max(freedTotal, latestAllowance.used_bytes),
+            remainingUncleanedBytes
+          );
+        } else {
+          error = errorMessage(e);
+        }
+      }
       return;
     }
+
     pendingCleanAfterAuth = false;
     error = null;
     const initialDeplete = selectedBytes > 0 ? selectedBytes : totalFoundBytes;
@@ -617,7 +1034,7 @@
       phase = "idle";
       if (isPaymentRequired(e)) {
         pendingCleanAfterAuth = true;
-        requestActivation();
+        openProUpgradeModal("Pro Deep Cleanup");
       } else {
         error = errorMessage(e);
       }
@@ -729,6 +1146,7 @@
       })
       .catch(() => {});
 
+    void refreshFreeAllowance();
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
     try {
       if (!localStorage.getItem("sweepr_installed_telemetry_v1")) {
@@ -751,8 +1169,15 @@
     };
     const onActivated = async () => {
       await onLicenseChange(true);
+      await tick();
       if (pendingCleanAfterAuth) {
-        void executeClean();
+        if (selectedBytes === 0 && totalFoundBytes > 0) {
+          selectAllRemainingForPro();
+        }
+        const live = license?.active || (await api.licenseStatus(false).catch(() => null))?.active;
+        if (live) {
+          void executeClean(true);
+        }
       }
     };
     const onSafetyCheck = (e: Event) => {
@@ -835,6 +1260,15 @@
       <div class="d3-disk-meta">
         <div class="d3-disk-kicker">
           <span class="d3-os-pill">{osDiskLabel}</span>
+          {#if !license?.active}
+            <span class="d3-starter-pill" class:exhausted={freeAllowance.exhausted}>
+              {#if freeAllowance.exhausted}
+                500 MB Free Starter Clean Used
+              {:else}
+                Free Starter Clean · {formatBytes(freeAllowance.remaining_bytes)} of 500 MB left
+              {/if}
+            </span>
+          {/if}
           {#if phase === "scanning"}
             <span class="d3-status-text is-active" role="status" aria-live="polite">
               <span class="d3-live-spinner" aria-hidden="true"></span>
@@ -849,7 +1283,7 @@
               <span>Reclaiming space safely…</span>
             </span>
           {:else if phase === "done"}
-            <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files)</span>
+            <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files) into 7-Day Quarantine</span>
           {:else}
             <span class="d3-status-text">Personal files &amp; active logins untouched</span>
           {/if}
@@ -866,7 +1300,13 @@
             <span class="d3-hero-metric">{formatBytes(freedTotal)} Freed</span>
           {:else if report && totalFoundBytes > 0}
             <span class="d3-hero-metric">{formatBytes(displayedHeroBytes)}</span>
-            <span class="d3-hero-unit">reclaimable junk selected</span>
+            {#if isStarterSelectionOnly}
+              <span class="d3-hero-unit">
+                reclaimable junk found · <strong>{formatBytes(starterCleanableNowBytes)} Free Starter Clean</strong> ready
+              </span>
+            {:else}
+              <span class="d3-hero-unit">reclaimable junk selected</span>
+            {/if}
           {:else}
             <span class="d3-hero-metric">Ready to Scan</span>
           {/if}
@@ -899,6 +1339,18 @@
             <span class="d3-btn-spinner btn-spinner" aria-hidden="true"></span>
             <span>Cleaning…</span>
           </button>
+        {:else if phase === "done" && !license?.active && remainingUncleanedBytes > 0}
+          <button
+            type="button"
+            class="d3-primary-btn c1-btn-primary"
+            onclick={() => {
+              selectAllRemainingForPro();
+              pendingCleanAfterAuth = true;
+              openProUpgradeModal("Unlock Full Cleanup");
+            }}
+          >
+            Unlock Pro · Clean {formatBytes(remainingUncleanedBytes)}
+          </button>
         {:else if phase === "done"}
           <button type="button" class="d3-primary-btn c1-btn-primary" onclick={scan}>
             {t("action.scan", $lang)}
@@ -909,7 +1361,11 @@
             class="d3-primary-btn c1-btn-primary"
             onclick={requestClean}
           >
-            {t("action.clean", $lang)} {formatBytes(selectedBytes)}
+            {#if isStarterSelectionOnly}
+              Free Starter Clean ({formatBytes(Math.min(starterSelectedBytes, freeAllowance.remaining_bytes))})
+            {:else}
+              {t("action.clean", $lang)} {formatBytes(selectedBytes)}
+            {/if}
           </button>
         {:else}
           <button
@@ -937,7 +1393,96 @@
       <span class="d3-legend-item"><i class="d3-dot d3-dot-cobalt"></i>App Junk &amp; Leftovers ({formatBytes(appAndRemnantsBytes)})</span>
       <span class="d3-legend-item"><i class="d3-dot d3-dot-amber"></i>Duplicates &amp; Startup ({enabledStartups.length})</span>
     </div>
+
+    <div class="d3-quick-tier-strip" role="group" aria-label="Cleanup tiers and automation">
+      <button
+        type="button"
+        class="d3-quick-tier-btn is-starter"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("starter")}
+      >
+        <span class="d3-tier-tag is-free">FREE</span>
+        <span>
+          Basic Temp
+          {#if !license?.active}
+            ({freeAllowance.exhausted ? "500 MB used" : `${formatBytes(starterCleanableNowBytes > 0 ? starterCleanableNowBytes : freeAllowance.remaining_bytes)} free`})
+          {:else if freeEligibleBytes > 0}
+            ({formatBytes(freeEligibleBytes)})
+          {/if}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("shaders")}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>Gaming Shaders{gamingShaderBytes > 0 ? ` (${formatBytes(gamingShaderBytes)})` : ""}</span>
+      </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("ai_dev")}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>AI/Dev Caches{aiDevCacheBytes > 0 ? ` (${formatBytes(aiDevCacheBytes)})` : ""}</span>
+      </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("remnants")}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>App Remnants{remnantsBytes > 0 ? ` (${formatBytes(remnantsBytes)})` : ""}</span>
+      </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("duplicates")}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>Duplicates</span>
+      </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={() => handleProQuickCategory("schedule")}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>Scheduled Clean</span>
+      </button>
+    </div>
   </header>
+
+  {#if !license?.active && phase === "done" && freedStarterOrSessionBytes > 0 && remainingUncleanedBytes > 0}
+    <div class="d3-starter-upsell-banner" role="region" aria-label="Unlock SWEEPR Pro for remaining storage">
+      <div class="d3-starter-upsell-copy">
+        <span class="a14-referral-badge">500 MB Starter Clean</span>
+        <span>{buildContextualUpgradeCopy()}</span>
+      </div>
+      <button
+        type="button"
+        class="a14-share-win-btn"
+        onclick={() => {
+          selectAllRemainingForPro();
+          pendingCleanAfterAuth = true;
+          openProUpgradeModal("Unlock Full Cleanup");
+        }}
+      >
+        Unlock SWEEPR Pro →
+      </button>
+    </div>
+  {/if}
 
   {#if phase === "done" && freedTotal > 0}
     <div class="a14-referral-banner" role="region" aria-label="Storage milestone reward">
@@ -1147,10 +1692,17 @@
                           type="checkbox"
                           class="checkbox"
                           class:checked={!!selected[c.id]}
-                          bind:checked={selected[c.id]}
+                          checked={!!selected[c.id]}
+                          onchange={(e) =>
+                            toggleRuleSelection(c, (e.currentTarget as HTMLInputElement).checked)}
                           tabindex={expandedIds.has("sys") ? 0 : -1}
                         />
                         <span class="d3-path-name">{c.name}</span>
+                        {#if !license?.active}
+                          <span class="d3-tier-tag" class:is-free={c.free} class:is-pro={!c.free}>
+                            {c.free ? "FREE" : "PRO"}
+                          </span>
+                        {/if}
                       </label>
                       <button
                         type="button"
@@ -1297,10 +1849,17 @@
                           type="checkbox"
                           class="checkbox"
                           class:checked={!!selected[c.id]}
-                          bind:checked={selected[c.id]}
+                          checked={!!selected[c.id]}
+                          onchange={(e) =>
+                            toggleRuleSelection(c, (e.currentTarget as HTMLInputElement).checked)}
                           tabindex={expandedIds.has("app") ? 0 : -1}
                         />
                         <span class="d3-path-name">{c.name}</span>
+                        {#if !license?.active}
+                          <span class="d3-tier-tag" class:is-free={c.free} class:is-pro={!c.free}>
+                            {c.free ? "FREE" : "PRO"}
+                          </span>
+                        {/if}
                       </label>
                       <button
                         type="button"
@@ -1401,20 +1960,20 @@
     <article class="d3-tile d3-tile-amber bento-card" style="--stagger-i: 2;">
       <div>
         <div class="d3-tile-head">
-          <span class="d3-tile-kicker">DUPLICATES &amp; STARTUP SPEED</span>
+          <span class="d3-tile-kicker">DUPLICATES &amp; SCHEDULED CLEAN</span>
           <button
             type="button"
             class="d3-inspect-btn inspect-btn"
-            onclick={() => onOpenTool?.("memory")}
+            onclick={() => handleProQuickCategory("schedule")}
           >
-            {enabledStartups.length} Startup Apps
+            Scheduled Clean{!license?.active ? " · PRO" : ""}
           </button>
         </div>
 
         <div class="d3-tile-metric">Duplicates · {enabledStartups.length} Startup</div>
-        <h3 class="d3-tile-title">Duplicate Files &amp; Startup Speed</h3>
+        <h3 class="d3-tile-title">Duplicates, Startup &amp; Auto-Clean</h3>
         <p class="d3-tile-desc">
-          Finds identical copies of photos and documents (always keeps your original safe) and stops unnecessary apps from slowing down startup.
+          Finds identical copies of photos and documents (always keeps your original safe), speeds up startup, and runs set-and-forget Scheduled Auto-Clean.
         </p>
       </div>
 
@@ -1422,9 +1981,9 @@
         <button
           type="button"
           class="d3-tile-action"
-          onclick={() => onOpenTool?.("storage")}
+          onclick={() => handleProQuickCategory("duplicates")}
         >
-          <span>Find Duplicates</span>
+          <span>Find Duplicates{!license?.active ? " (Pro)" : ""}</span>
           <span>→</span>
         </button>
         <button
@@ -1708,6 +2267,113 @@
     background: var(--d3-green-bg);
     color: var(--d3-green-ink);
     border: 1px solid var(--d3-green-border);
+  }
+
+  .d3-starter-pill {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.14);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.36);
+    font-variant-numeric: tabular-nums;
+  }
+  :global(.dark) .d3-starter-pill {
+    color: #34d399;
+  }
+  .d3-starter-pill.exhausted {
+    background: rgba(245, 158, 11, 0.14);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.36);
+  }
+  :global(.dark) .d3-starter-pill.exhausted {
+    color: #fbbf24;
+  }
+
+  .d3-quick-tier-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .d3-quick-tier-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+      transform 120ms var(--ease-out),
+      border-color 140ms var(--ease-out),
+      background-color 140ms var(--ease-out);
+  }
+  .d3-quick-tier-btn:hover:not(:disabled) {
+    border-color: rgba(16, 185, 129, 0.55);
+  }
+  .d3-quick-tier-btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .d3-quick-tier-btn.is-starter {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.34);
+  }
+
+  .d3-tier-tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .d3-tier-tag.is-free {
+    background: #10b981;
+    color: #ffffff;
+  }
+  .d3-tier-tag.is-pro {
+    background: rgba(15, 23, 42, 0.12);
+    color: inherit;
+    border: 1px solid rgba(100, 116, 139, 0.35);
+  }
+  :global(.dark) .d3-tier-tag.is-pro {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.24);
+  }
+
+  .d3-starter-upsell-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 11px 15px;
+    border-radius: 13px;
+    border: 1px solid rgba(16, 185, 129, 0.42);
+    background: rgba(16, 185, 129, 0.1);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .d3-starter-upsell-copy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .d3-status-text {

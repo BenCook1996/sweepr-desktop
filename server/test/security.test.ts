@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 import { openDb } from "../src/db.js";
-import { createApp } from "../src/app.js";
+import { createApp, resolveCheckoutPromoCoupon } from "../src/app.js";
 import { sha256 } from "../src/tokens.js";
 import { createRateLimiter, escapeHtml, normalizeEmail } from "../src/security.js";
 import { isPrivateOrLoopbackIp } from "../src/pricing.js";
@@ -1806,6 +1806,67 @@ test("Crash telemetry POST /v1/telemetry/crash records Desktop and Mobile crashe
 
   assert.equal(repo.getCrmStats().crashes_7d, 3);
 });
+
+test("Browser GET /download renders Post-Download Thank-You SmartScreen/Gatekeeper walkthrough & streams on ?stream=1", async () => {
+  const { app, post } = setup();
+
+  const browserRes = await app.request("/download", {
+    headers: {
+      accept: "text/html,application/xhtml+xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
+    },
+  });
+  assert.equal(browserRes.status, 200);
+  assert.match(browserRes.headers.get("content-type") || "", /text\/html/i);
+  const html = await browserRes.text();
+
+  // 300ms hidden iframe/anchor auto-trigger for /download?stream=1&platform=windows
+  assert.ok(html.includes('id="dlAutoStreamFrame"'));
+  assert.ok(html.includes("/download?stream=1&platform=windows"));
+  assert.ok(html.includes("}, 300);"));
+
+  // Visual 3-step Windows SmartScreen & macOS Gatekeeper walkthrough
+  assert.ok(html.includes("Open SWEEPRCleaner.exe"));
+  assert.ok(html.includes("More info"));
+  assert.ok(html.includes("Run anyway"));
+  assert.ok(html.includes("Verified SSL.com Publisher: Benjamin Cook"));
+  assert.ok(html.includes("Free 60s Scan starts automatically"));
+  assert.ok(html.includes("macOS Gatekeeper"));
+
+  // Copyable SHA-256 checksum & optional backup link + 20% welcome coupon form
+  assert.ok(html.includes('id="sha256Code"'));
+  assert.ok(html.includes('id="copySha256Btn"'));
+  assert.ok(html.includes('id="dlRecoveryEmail"'));
+  assert.ok(html.includes("WELCOME20"));
+
+  // ?stream=1 streams the raw installer binary with attachment Content-Disposition
+  const streamRes = await app.request("/download?stream=1&platform=windows", {
+    headers: {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
+    },
+  });
+  if (existsSync("./public/SWEEPRCleaner.exe")) {
+    assert.equal(streamRes.status, 200);
+    assert.equal(streamRes.headers.get("content-disposition"), 'attachment; filename="SWEEPRCleaner.exe"');
+  }
+
+  // Email capture returns 20% welcome coupon WELCOME20 and checkout promo resolver honors it
+  const bindRes = await post("/api/download-recovery/bind-email", {
+    email: "thankyou-lead@example.com",
+    platform: "windows",
+    send_desktop_link: true,
+    include_welcome_coupon: true,
+  });
+  assert.equal(bindRes.status, 200);
+  const bindJson = await bindRes.json();
+  assert.equal(bindJson.ok, true);
+  assert.equal(bindJson.welcome_coupon, "WELCOME20");
+  assert.equal(bindJson.discount_pct, 20);
+
+  const resolved = resolveCheckoutPromoCoupon("welcome20");
+  assert.deepEqual(resolved, { code: "WELCOME20", discountPct: 20, multiplier: 0.8 });
+});
+
 
 
 

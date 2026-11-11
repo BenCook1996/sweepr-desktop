@@ -14,8 +14,9 @@
   } = $props();
 
   let step = $state<Step>("welcome");
-  let progress = $state(0);
-  let statusText = $state("Preparing to install SWEEPR Cleaner…");
+  let progress = $state(100);
+  let statusText = $state("Launching your free 60-second scan…");
+  let installing = $state(false);
 
   // Setup questions / options
   let desktopShortcut = $state(true);
@@ -31,39 +32,32 @@
     step = "options";
   }
 
-  function startInstall() {
+  async function startInstall() {
+    if (installing) return;
+    installing = true;
     step = "installing";
-    progress = 0;
-    statusText = "Preparing to install SWEEPR Cleaner…";
+    progress = 100;
+    statusText = "Installation complete! Starting your free 60-second scan…";
 
-    const interval = setInterval(() => {
-      progress += Math.floor(Math.random() * 8) + 4;
-      if (progress >= 25 && progress < 50) {
-        statusText = "Setting up SWEEPR Cleaner on your PC…";
-      } else if (progress >= 50 && progress < 75) {
-        statusText = "Getting your cleaning and speed tools ready…";
-      } else if (progress >= 75 && progress < 100) {
-        statusText = "Creating your shortcuts and finishing up…";
-      } else if (progress >= 100) {
-        progress = 100;
-        statusText = "Installation complete! Opening SWEEPR Cleaner…";
-        clearInterval(interval);
-        setTimeout(async () => {
-          try {
-            await api.completeInstallation(desktopShortcut, startMenuShortcut, launchOnStartup);
-          } catch {
-            // Continue even if shortcut helper fails
-          }
-          trackAppEvent("app_installed", {
-            source: "installer_ui",
-            desktop_shortcut: desktopShortcut,
-            start_menu_shortcut: startMenuShortcut,
-            launch_on_startup: launchOnStartup,
-          });
-          if (onComplete) onComplete();
-        }, 450);
-      }
-    }, 110);
+    const startedAt = performance.now();
+    // Complete shortcut/flag setup without blocking UI past 180ms (<300ms 1-click install).
+    await Promise.race([
+      api.completeInstallation(desktopShortcut, startMenuShortcut, launchOnStartup).catch(() => {}),
+      new Promise<void>((resolve) => setTimeout(resolve, 180)),
+    ]);
+
+    const elapsed = performance.now() - startedAt;
+    if (elapsed < 90) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 90 - elapsed));
+    }
+
+    trackAppEvent("app_installed", {
+      source: "installer_ui",
+      desktop_shortcut: desktopShortcut,
+      start_menu_shortcut: startMenuShortcut,
+      launch_on_startup: launchOnStartup,
+    });
+    if (onComplete) onComplete();
   }
 </script>
 
@@ -110,9 +104,14 @@
         <h1 class="welcome-heading">Welcome to SWEEPR Cleaner</h1>
         <p class="welcome-sub">Smart Performance, Deep Cleaning and Privacy for your PC.</p>
 
-        <button class="primary install-btn" onclick={goToOptions}>
-          INSTALL
-        </button>
+        <div class="welcome-actions">
+          <button class="primary install-btn" onclick={startInstall} disabled={installing}>
+            INSTALL &amp; START FREE SCAN
+          </button>
+          <button type="button" class="customize-link" onclick={goToOptions}>
+            Customize shortcuts
+          </button>
+        </div>
       </div>
 
       <div class="right-col">
@@ -348,6 +347,27 @@
     background: linear-gradient(135deg, #047857 0%, #059669 100%);
     box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
     transform: translateY(-1px);
+  }
+  .welcome-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .customize-link {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 6px 4px;
+    box-shadow: none;
+  }
+  .customize-link:hover {
+    color: #0f172a;
+    transform: none;
   }
 
   .right-col {

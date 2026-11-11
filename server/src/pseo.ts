@@ -179,6 +179,8 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "lm-studio-models-cache": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
 };
 
+export const CUSTOM_GSC_TITLE_SLUGS: readonly string[] = Object.keys(CUSTOM_GSC_TITLES);
+
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "steam-depotcache":
     "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
