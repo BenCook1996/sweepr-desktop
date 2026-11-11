@@ -34,6 +34,7 @@ data class PendingTrash(
 data class SubscriptionInfo(
     val active: Boolean = false,
     val batteryCareActive: Boolean = false,
+    val cloudVaultActive: Boolean = false,
     val productId: String? = null,
     val expiresAt: Long? = null,
     val willRenew: Boolean = false,
@@ -43,6 +44,7 @@ data class SubscriptionInfo(
 )
 
 const val PREMIUM_ENTITLEMENT = "premium"
+const val CLOUD_VAULT_ENTITLEMENT = "cloud_vault"
 
 /**
  * Real result of the most recent media cleanup, shown on the Cleaning Complete screen.
@@ -85,6 +87,7 @@ data class DashboardState(
 ) {
     val hasPremium: Boolean get() = subscription.active
     val hasBatteryCare: Boolean get() = subscription.batteryCareActive
+    val hasCloudVault: Boolean get() = subscription.cloudVaultActive
     val selectedItems: List<MediaItem> get() = media.everything.filter { it.uri in selectedMedia }
     val selectedBytes: Long get() = selectedItems.sumOf { it.size }
     val selectedTrashItems: List<MediaItem> get() = media.trashed.filter { it.uri in selectedTrash }
@@ -94,6 +97,7 @@ data class DashboardState(
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private var rcActive: Boolean = false
     private var rcBatteryCare: Boolean = false
+    private var rcCloudVault: Boolean = false
     private var serverActive: Boolean = false
 
     private val app: Application get() = getApplication()
@@ -126,6 +130,18 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             })
     }
 
+    private fun isServerCloudVaultEntitled(acc: Prefs.LinkedAccount?): Boolean {
+        val nowSec = System.currentTimeMillis() / 1000L
+        return acc != null &&
+            acc.isSignedIn &&
+            acc.expiresAt > nowSec &&
+            (isServerAccountCurrentlyEntitled(acc) || acc.addons.any {
+                it.equals("cloud_vault", ignoreCase = true) ||
+                    it.equals("sweepr_cloud_vault_999", ignoreCase = true) ||
+                    it.equals("sweepr_secure_bundle", ignoreCase = true)
+            })
+    }
+
     private fun serverExpiresAtMillis(acc: Prefs.LinkedAccount?): Long? {
         val exp = acc?.expiresAt ?: 0L
         return if (exp > 0L) (if (exp > 10_000_000_000L) exp else exp * 1000L) else null
@@ -136,6 +152,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         serverActive = isServerAccountCurrentlyEntitled(linked)
         val initialActive = rcActive || serverActive
         val initialBatteryCare = initialActive || rcBatteryCare || isServerBatteryCareEntitled(linked)
+        val initialCloudVault = initialActive || rcCloudVault || isServerCloudVaultEntitled(linked)
         BatteryCareManager.enforceEntitlement(application, initialActive || initialBatteryCare)
         _state.update { s ->
             s.copy(
@@ -143,6 +160,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 subscription = s.subscription.copy(
                     active = initialActive,
                     batteryCareActive = initialBatteryCare,
+                    cloudVaultActive = initialCloudVault,
                     productId = s.subscription.productId ?: linked.plan,
                     expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(linked),
                 ),
@@ -154,6 +172,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 serverActive = isServerAccountCurrentlyEntitled(acc)
                 val active = rcActive || serverActive
                 val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(acc)
+                val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(acc)
                 BatteryCareManager.enforceEntitlement(app, active || batActive)
                 _state.update { s ->
                     s.copy(
@@ -161,6 +180,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         subscription = s.subscription.copy(
                             active = active,
                             batteryCareActive = batActive,
+                            cloudVaultActive = vaultActive,
                             productId = if (rcActive) s.subscription.productId else (acc.plan ?: s.subscription.productId),
                             expiresAt = if (rcActive) s.subscription.expiresAt else (serverExpiresAtMillis(acc) ?: s.subscription.expiresAt),
                         ),
@@ -198,6 +218,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         serverActive = isServerAccountCurrentlyEntitled(updated)
                         val active = rcActive || serverActive
                         val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
+                        val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(updated)
                         BatteryCareManager.enforceEntitlement(app, active || batActive)
                         _state.update { s ->
                             s.copy(
@@ -205,6 +226,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                                 subscription = s.subscription.copy(
                                     active = active,
                                     batteryCareActive = batActive,
+                                    cloudVaultActive = vaultActive,
                                     expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
                                 ),
                             )
@@ -222,16 +244,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun updateCustomerInfo(info: CustomerInfo) {
         val ent = info.entitlements.active[PREMIUM_ENTITLEMENT]
         val batEnt = info.entitlements.active[BATTERY_CARE_ENTITLEMENT]
+        val vaultEnt = info.entitlements.active[CLOUD_VAULT_ENTITLEMENT]
         rcActive = ent != null
-        rcBatteryCare = batEnt != null
+        rcBatteryCare = batEnt != null || info.activeSubscriptions.contains("sweepr_battery_care_999")
+        rcCloudVault = vaultEnt != null || info.activeSubscriptions.contains("sweepr_cloud_vault_999")
         val acct = _state.value.linkedAccount
         serverActive = isServerAccountCurrentlyEntitled(acct)
         val active = rcActive || serverActive
         val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(acct)
+        val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(acct)
         BatteryCareManager.enforceEntitlement(app, active || batActive)
         val sub = SubscriptionInfo(
             active = active,
             batteryCareActive = batActive,
+            cloudVaultActive = vaultActive,
             productId = ent?.productIdentifier ?: acct.plan,
             expiresAt = ent?.expirationDate?.time ?: serverExpiresAtMillis(acct),
             willRenew = ent?.willRenew ?: serverActive,
@@ -492,9 +518,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
             res.onSuccess { updated ->
+                val isCloudVaultSku = productId.equals("sweepr_cloud_vault_999", ignoreCase = true) ||
+                    productId.contains("cloud_vault", ignoreCase = true)
+                var hasCloudVault = rcCloudVault
                 if (updated.serverActive) {
                     if (!isAddonOnly) {
                         rcActive = true
+                    } else if (isCloudVaultSku) {
+                        hasCloudVault = true
+                        rcCloudVault = true
                     } else {
                         rcBatteryCare = true
                     }
@@ -503,6 +535,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 serverActive = isServerAccountCurrentlyEntitled(updated)
                 val active = rcActive || serverActive
                 val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
+                val vaultActive = active || hasCloudVault || isServerCloudVaultEntitled(updated)
                 BatteryCareManager.enforceEntitlement(app, active || batActive)
                 _state.update { s ->
                     s.copy(
@@ -511,10 +544,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         subscription = s.subscription.copy(
                             active = active,
                             batteryCareActive = batActive,
+                            cloudVaultActive = vaultActive,
                             productId = s.subscription.productId ?: updated.plan,
                             expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(updated),
                         ),
-                        message = if (active || batActive) {
+                        message = if (active || batActive || vaultActive) {
                             locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored)
                         } else {
                             s.message
@@ -638,7 +672,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             _state.update { it.copy(isScanning = true, scanStatus = locApp.getString(R.string.scan_status_media)) }
             val media = if (permissions.media) {
-                withContext(Dispatchers.IO) { runCatching { MediaScanner.scan(app) }.getOrDefault(MediaScanResult()) }
+                withContext(Dispatchers.IO) {
+                    runCatching { MediaScanner.scan(app) }
+                        .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                        .getOrDefault(MediaScanResult())
+                }
             } else MediaScanResult()
 
             _state.update { it.copy(scanStatus = locApp.getString(R.string.scan_status_contacts)) }
@@ -649,10 +687,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 withContext(Dispatchers.IO) { runCatching { ContactsScanner.scanIncomplete(app) }.getOrDefault(emptyList()) }
             } else emptyList()
 
-            // Keep Best Shot (group.keep) unselected; pre-select duplicate & similar extras + screenshots
+            // Keep Best Shot (group.keep) unselected; pre-select duplicate & similar extras + screenshots + safe blurry photos
             val preselected = (media.duplicateGroups + media.similarGroups)
                 .flatMap { g -> g.extras.map { it.uri } }
                 .plus(media.screenshots.map { it.uri })
+                .plus(media.blurry.map { it.uri })
                 .toSet()
 
             _state.update {
@@ -666,7 +705,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     selectedMedia = preselected,
                     selectedTrash = emptySet(),
                     selectedContactGroups = contacts.map { g -> g.key }.toSet(),
-                    selectedIncompleteContactIds = incomplete.map { c -> c.contactId }.toSet(),
+                    selectedIncompleteContactIds = emptySet(),
                 )
             }
             StorageWidgetProvider.refreshAll(app)

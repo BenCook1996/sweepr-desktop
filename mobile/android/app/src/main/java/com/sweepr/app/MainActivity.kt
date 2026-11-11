@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.google.android.play.core.review.ReviewManagerFactory
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -142,15 +143,17 @@ class MainActivity : AppCompatActivity() {
                             incomingDeepLinkPair = null
                         },
                         title = {
-                            Text(if (isChallenge) "Approve Desktop Sign-In?" else "Link SWEEPR Account?")
+                            Text(
+                                stringResource(
+                                    if (isChallenge) R.string.deeplink_approve_title else R.string.deeplink_link_title,
+                                ),
+                            )
                         },
                         text = {
                             Text(
-                                if (isChallenge) {
-                                    "Approve Desktop Sign-In? A desktop computer is requesting access to your SWEEPR Pro subscription."
-                                } else {
-                                    "Link SWEEPR Account? Do you want to link this device using the pairing link you opened?"
-                                },
+                                stringResource(
+                                    if (isChallenge) R.string.deeplink_approve_body else R.string.deeplink_link_body,
+                                ),
                             )
                         },
                         confirmButton = {
@@ -161,7 +164,11 @@ class MainActivity : AppCompatActivity() {
                                     vm.handleQrPairInput(raw)
                                 },
                             ) {
-                                Text(if (isChallenge) "Approve" else "Link Device")
+                                Text(
+                                    stringResource(
+                                        if (isChallenge) R.string.deeplink_approve_confirm else R.string.deeplink_link_confirm,
+                                    ),
+                                )
                             }
                         },
                         dismissButton = {
@@ -171,7 +178,7 @@ class MainActivity : AppCompatActivity() {
                                     incomingDeepLinkPair = null
                                 },
                             ) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.action_cancel))
                             }
                         },
                     )
@@ -322,12 +329,17 @@ object AppPermissions {
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO,
             Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
         )
         Build.VERSION.SDK_INT >= 33 -> arrayOf(
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
         )
-        Build.VERSION.SDK_INT >= 29 -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        Build.VERSION.SDK_INT >= 29 -> arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
+        )
         else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 
@@ -346,12 +358,13 @@ object AppPermissions {
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
         val full = if (Build.VERSION.SDK_INT >= 33) {
-            granted(Manifest.permission.READ_MEDIA_IMAGES) || granted(Manifest.permission.READ_MEDIA_VIDEO)
+            granted(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
             granted(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
-        val limited = !full && Build.VERSION.SDK_INT >= 34 &&
-            granted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        val limited = Build.VERSION.SDK_INT >= 34 &&
+            granted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) &&
+            !granted(Manifest.permission.READ_MEDIA_IMAGES)
 
         return PermissionState(
             media = full || limited,
@@ -376,6 +389,7 @@ fun SweeprRoot(
     var permissions by remember { mutableStateOf(AppPermissions.current(context)) }
     var scanAfterGrant by remember { mutableStateOf(false) }
     var showMediaDisclosure by rememberSaveable { mutableStateOf(false) }
+    var showContactsDisclosure by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -407,18 +421,19 @@ fun SweeprRoot(
         }
     }
     val requestPermissions: () -> Unit = {
-        scanAfterGrant = true
-        permissionLauncher.launch(AppPermissions.contactsPermissions())
+        if (permissions.contactsRead) {
+            vm.scan(permissions)
+        } else {
+            showContactsDisclosure = true
+        }
     }
 
     if (showMediaDisclosure) {
         AlertDialog(
             onDismissRequest = { showMediaDisclosure = false },
-            title = { Text("Photos & Videos Access Disclosure") },
+            title = { Text(stringResource(R.string.media_disclosure_title)) },
             text = {
-                Text(
-                    "SWEEPR Cleaner needs access to your device's Photos and Videos solely to scan for duplicate photos, similar bursts, large videos, and screenshots so you can review and free up storage space.\n\nAll photo and video analysis happens 100% locally on your device. Your media is never uploaded or shared with any server.",
-                )
+                Text(stringResource(R.string.media_disclosure_body))
             },
             confirmButton = {
                 Button(
@@ -433,6 +448,32 @@ fun SweeprRoot(
             },
             dismissButton = {
                 TextButton(onClick = { showMediaDisclosure = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showContactsDisclosure) {
+        AlertDialog(
+            onDismissRequest = { showContactsDisclosure = false },
+            title = { Text(stringResource(R.string.contacts_disclosure_title)) },
+            text = {
+                Text(stringResource(R.string.contacts_disclosure_body))
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showContactsDisclosure = false
+                        scanAfterGrant = true
+                        permissionLauncher.launch(AppPermissions.contactsPermissions())
+                    },
+                ) {
+                    Text(stringResource(R.string.action_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showContactsDisclosure = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -482,14 +523,15 @@ fun SweeprRoot(
     }
 
     if (state.updateStatus.forceUpdate) {
+        val defaultUpdateBody = stringResource(R.string.update_required_default_body)
         AlertDialog(
             onDismissRequest = {},
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-            title = { Text("Update Required") },
+            title = { Text(stringResource(R.string.update_required_title, state.updateStatus.latestVersion)) },
             text = {
                 Text(
                     buildString {
-                        append("A mandatory update (v${state.updateStatus.latestVersion}) is required to continue using SWEEPR Cleaner safely.")
+                        append(defaultUpdateBody)
                         if (state.updateStatus.notes.isNotBlank()) {
                             append("\n\n")
                             append(state.updateStatus.notes)
@@ -507,41 +549,24 @@ fun SweeprRoot(
                         )
                     },
                 ) {
-                    Text("Update on Google Play")
+                    Text(stringResource(R.string.update_required_cta))
                 }
             },
         )
     }
 
-    // #25 In-App Review prompt after the user's 2nd successful cleanup
-    if (state.promptInAppReview) {
-        AlertDialog(
-            onDismissRequest = vm::clearReviewPrompt,
-            title = { Text(stringResource(R.string.review_prompt_title)) },
-            text = { Text(stringResource(R.string.review_prompt_body)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        vm.clearReviewPrompt()
-                        runCatching {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${context.packageName}"))
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            )
-                        }.onFailure {
-                            context.openUrl("https://play.google.com/store/apps/details?id=${context.packageName}")
-                        }
-                    },
-                ) {
-                    Text(stringResource(R.string.about_rate))
+    // #25 Genuine Google Play In-App Review flow after a qualifying cleanup
+    LaunchedEffect(state.promptInAppReview) {
+        if (state.promptInAppReview) {
+            vm.clearReviewPrompt()
+            val activity = context as? Activity ?: return@LaunchedEffect
+            val reviewManager = ReviewManagerFactory.create(context)
+            reviewManager.requestReviewFlow().addOnCompleteListener { requestTask ->
+                if (requestTask.isSuccessful) {
+                    reviewManager.launchReviewFlow(activity, requestTask.result)
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = vm::clearReviewPrompt) {
-                    Text(stringResource(R.string.review_prompt_later))
-                }
-            },
-        )
+            }
+        }
     }
 
     // Results screens need a scan first (e.g. after the process was restarted).
@@ -829,7 +854,7 @@ private fun SweeprBottomBar(current: Screen, onSelect: (Screen) -> Unit) {
                             maxLines = 1,
                             softWrap = false,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            letterSpacing = (-0.2).sp,
+                            letterSpacing = 0.1.sp,
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(

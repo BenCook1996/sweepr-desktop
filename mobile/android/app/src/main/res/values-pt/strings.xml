@@ -441,4 +441,20 @@
         <item quantity="many">%d eventos antigos excluídos da agenda</item>
         <item quantity="other">%d eventos antigos excluídos da agenda</item>
     </plurals>
+
+    <string name="action_continue">Continuar</string>
+    <string name="dashboard_limited_access_banner">Analisando %1$d fotos selecionadas — Gerenciar seleção</string>
+    <string name="media_disclosure_title">Aviso de Acesso a Fotos e Vídeos</string>
+    <string name="media_disclosure_body">O SWEEPR Cleaner solicita acesso às suas fotos, vídeos e metadados de localização exclusivamente para procurar duplicatas, fotos semelhantes, imagens borradas, capturas de tela e arquivos grandes localmente no seu dispositivo.\n\n100% da análise ocorre offline no seu celular — suas fotos, vídeos e dados de GPS nunca são enviados para nenhum servidor.</string>
+    <string name="contacts_disclosure_title">Aviso de Acesso a Contatos e Agenda</string>
+    <string name="contacts_disclosure_body">O SWEEPR Cleaner solicita acesso aos seus contatos e à sua agenda exclusivamente para detectar e mesclar contatos duplicados ou limpar eventos antigos localmente no seu dispositivo.\n\nSeus dados de contatos e agenda nunca saem do seu celular.</string>
+    <string name="deeplink_approve_title">Aprovar login no computador?</string>
+    <string name="deeplink_link_title">Vincular conta SWEEPR?</string>
+    <string name="deeplink_approve_body">Aprovar login no computador? Um computador está solicitando acesso à sua assinatura SWEEPR Pro.</string>
+    <string name="deeplink_link_body">Vincular conta SWEEPR? Deseja vincular este dispositivo usando o link de pareamento que você abriu?</string>
+    <string name="deeplink_approve_confirm">Aprovar</string>
+    <string name="deeplink_link_confirm">Vincular dispositivo</string>
+    <string name="update_required_title">Atualização obrigatória (v%1$s)</string>
+    <string name="update_required_default_body">Uma atualização crítica de segurança e estabilidade é necessária para continuar usando o SWEEPR Cleaner.</string>
+    <string name="update_required_cta">Atualizar no Google Play</string>
 </resources>

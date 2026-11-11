@@ -173,8 +173,6 @@ export const requestActivation = () => window.dispatchEvent(new CustomEvent(ACTI
 /** Ask the Home screen to open its "Recently Cleaned / Undo" drawer (used by the quick rail). */
 export const OPEN_UNDO_EVENT = "sweepr-open-undo";
 
-let cachedAppInfoPromise: Promise<AppInfo> | null = null;
-
 function getTelemetryClientId(): string {
   try {
     const key = "sweepr_telemetry_client_id";
@@ -191,6 +189,7 @@ function getTelemetryClientId(): string {
 
 /**
  * Privacy-friendly funnel & scan telemetry event dispatcher (`POST /v1/telemetry/event`).
+ * Dispatches via native Rust Tauri command `send_telemetry_event` (using `reqwest` outside WebView CSP / adblockers).
  * Non-blocking and never throws.
  */
 export function trackAppEvent(eventName: string, metadata?: Record<string, unknown>): void {
@@ -205,36 +204,31 @@ export function trackAppEvent(eventName: string, metadata?: Record<string, unkno
         }
       }
     }
-    if (!cachedAppInfoPromise) {
-      cachedAppInfoPromise = invoke<AppInfo>("app_info").catch(() => ({
-        version: "0.1.0",
-        platform: "windows",
-        api_url: "https://sweeprcleaner.com",
-      }));
-    }
     const clientId = getTelemetryClientId();
-    void cachedAppInfoPromise.then((info) => {
-      const base = (info?.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
-      const platform = (info?.platform || "windows").toLowerCase();
-      const deviceId = info?.device_id || info?.machine_id || undefined;
-      return fetch(`${base}/v1/telemetry/event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event_name: eventName,
-          platform,
-          attribution_id: clientId,
-          device_id: deviceId,
-          hardware_id: deviceId,
-          metadata: {
-            app_version: info?.version || "0.1.0",
-            client_id: clientId,
-            device_id: deviceId,
-            ...(metadata ?? {}),
-          },
-        }),
-      }).catch(() => {});
-    });
+    const properties: Record<string, unknown> = {
+      client_id: clientId,
+      attribution_id: clientId,
+      ...(metadata ?? {}),
+    };
+    void invoke<{ attribution_id?: string; referral_code?: string; ledger?: { referral_code?: string } }>("send_telemetry_event", {
+      eventName,
+      event_name: eventName,
+      properties,
+    })
+      .then((d) => {
+        if (typeof d?.attribution_id === "string" && d.attribution_id.trim().startsWith("attr_")) {
+          try {
+            localStorage.setItem("sweepr_telemetry_client_id", d.attribution_id.trim());
+          } catch {}
+        }
+        const refCode = d?.referral_code || d?.ledger?.referral_code;
+        if (typeof refCode === "string" && refCode.trim()) {
+          try {
+            localStorage.setItem("sweepr_referral_code", refCode.trim().toUpperCase());
+          } catch {}
+        }
+      })
+      .catch(() => {});
   } catch {
     // Ignore telemetry network errors
   }
@@ -269,10 +263,10 @@ export const api = {
   removeExclusion: (path: string) => invoke<string[]>("remove_exclusion", { path }),
   checkRunningApps: (categoryIds: string[]) => invoke<RunningAppConflict[]>("check_running_apps", { categoryIds }),
   licenseStatus: (force = false) => invoke<LicenseStatus>("license_status", { force }),
-  startCheckout: (email?: string, plan: "monthly" | "six_month" | "annual" = "monthly") =>
-    invoke<boolean>("start_checkout", { email: email ?? null, plan }),
-  startAddonCheckout: (addon: string, email?: string, plan: "monthly" | "six_month" | "annual" = "annual") =>
-    invoke<boolean>("start_addon_checkout", { addon, email: email ?? null, plan }),
+  startCheckout: (email?: string, plan: "monthly" | "six_month" | "annual" = "monthly", coupon?: string) =>
+    invoke<boolean>("start_checkout", { email: email ?? null, plan, coupon: coupon ?? null }),
+  startAddonCheckout: (addon: string, email?: string, plan: "monthly" | "six_month" | "annual" = "annual", coupon?: string) =>
+    invoke<boolean>("start_addon_checkout", { addon, email: email ?? null, plan, coupon: coupon ?? null }),
   batteryDiagnostics: () => invoke<BatteryDiagnostics>("battery_diagnostics"),
   setBatteryChargeLimit: (enabled: boolean, limitPercent: number) =>
     invoke<BatteryCareConfig>("set_battery_charge_limit", { enabled, limitPercent }),
@@ -285,7 +279,10 @@ export const api = {
   onTrayNavigate: (cb: (target: string) => void): Promise<UnlistenFn> =>
     listen<string>("tray://navigate", (e) => cb(e.payload)),
   requestLoginOtp: (email: string) => invoke<void>("request_login_otp", { email }),
+  sendAccountOtp: (email: string) => invoke<void>("request_login_otp", { email }),
   verifyLoginOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
+  verifyAccountOtp: (email: string, code: string) => invoke<LicenseStatus>("verify_login_otp", { email, code }),
+  redeemPairingToken: (token: string) => invoke<LicenseStatus>("redeem_pairing_token", { token }),
   startQrChallenge: () => invoke<QrChallengeResponse>("start_qr_challenge"),
   pollQrChallenge: (challengeId: string, pollSecret: string) =>
     invoke<QrPollResult>("poll_qr_challenge", { challengeId, pollSecret }),
@@ -356,6 +353,14 @@ export const api = {
   listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
   restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
   appInfo: () => invoke<AppInfo>("app_info"),
+  sendTelemetryEvent: (eventName: string, properties?: Record<string, unknown>) =>
+    invoke<unknown>("send_telemetry_event", {
+      eventName,
+      event_name: eventName,
+      properties: properties ?? {},
+    }),
+  finalizeInstall: (source?: string) =>
+    invoke<void>("finalize_install", { source: source ?? null }),
   getUiPreferences: () => invoke<UiPreferences>("get_ui_preferences"),
   saveUiPreferences: (prefs: { theme?: "light" | "dark"; language?: string; sidebarCollapsed?: boolean }) =>
     invoke<UiPreferences>("save_ui_preferences", {
@@ -378,6 +383,8 @@ export const api = {
     invoke<void>("uninstall_self", { removeAppData }),
   revealInFolder: (path: string) =>
     invoke<void>("reveal_in_folder", { path }).catch(() => revealItemInDir(path).catch(() => {})),
+  checkMacosFullDiskAccess: () => invoke<boolean>("check_macos_full_disk_access"),
+  openMacosFdaSettings: () => invoke<void>("open_macos_fda_settings"),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }
@@ -400,7 +407,25 @@ export interface ScheduleConfig {
 }
 export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }
 export interface AppRemnant { name: string; path: string; location: string; bytes: number; files: number; }
-export interface DuplicateGroup { hash: string; size: number; files: string[]; }
+export interface PhotoMemberDetail {
+  path: string;
+  size: number;
+  width: number;
+  height: number;
+  dhash: string;
+  hamming_distance: number;
+  sharpness: number;
+  is_best_shot: boolean;
+  badge: string;
+}
+export interface DuplicateGroup {
+  hash: string;
+  size: number;
+  files: string[];
+  kind?: "exact" | "similar_photo" | string;
+  best_shot?: string | null;
+  photo_details?: PhotoMemberDetail[];
+}
 export interface DuplicateCleanReport { files_removed: number; bytes_freed: number; files_skipped: number; }
 export interface RegistryIssue { key: string; name: string; issue_type: string; details: string; }
 export interface RegistryBackupEntry { id: string; key: string; name: string; issue_type: string; value: string; backed_up_at: number; }
@@ -454,6 +479,7 @@ export interface TabSessionSnapshot {
   created_at: number;
   browsers: string[];
   estimated_tabs: number;
+  tab_count?: number;
   bytes: number;
 }
 

@@ -161,20 +161,14 @@ dependencies {
     implementation("io.coil-kt:coil-video:2.6.0")
 
     // RevenueCat + Direct Google Play Billing Library + Google Play In-App Updates + BouncyCastle Ed25519 (API 26+)
-    implementation("com.revenuecat.purchases:purchases:8.2.1")
-    implementation("com.revenuecat.purchases:purchases-ui:8.2.1") // Paywalls UI
-    implementation("com.android.billingclient:billing-ktx:8.0.0")
+    implementation("com.revenuecat.purchases:purchases:8.10.0")
+    implementation("com.revenuecat.purchases:purchases-ui:8.10.0") // Paywalls UI
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation("com.google.android.play:review-ktx:2.0.1")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.70")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20231013")
     testImplementation("org.mockito:mockito-core:5.11.0")
-}
-
-configurations.all {
-    resolutionStrategy {
-        force("com.android.billingclient:billing:8.0.0")
-        force("com.android.billingclient:billing-ktx:8.0.0")
-    }
 }

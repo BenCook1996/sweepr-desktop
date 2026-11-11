@@ -407,6 +407,8 @@ class AppViewModel: ObservableObject {
     @Published var isScanning = false
     @Published var hasScanned = false
     @Published var scanStatus = ""
+    @Published var photoAuthStatus: PHAuthorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    @Published var showPhotoPermissionPrimer = false
     @Published var mediaResult = MediaScanResult()
     @Published var contactGroups: [ContactDuplicateGroup] = []
     @Published var incompleteContacts: [ContactEntry] = []
@@ -417,8 +419,15 @@ class AppViewModel: ObservableObject {
     @Published var selectedCalendarEventIDs: Set<String> = []
     @Published var storage = StorageInfo.current()
 
+    var selectedMediaBytes: Int64 {
+        mediaResult.allItems
+            .filter { selectedMediaIDs.contains($0.id) }
+            .reduce(Int64(0)) { $0 + $1.estimatedBytes }
+    }
+
     @Published var hasPremium = false
     @Published var hasBatteryCare = false
+    @Published var hasCloudVault = false
     @Published var showingPaywall = false
     @Published var subscriptionInfoText = "Free Plan"
     @Published var linkedAccount = AccountService.loadAccount()
@@ -432,8 +441,10 @@ class AppViewModel: ObservableObject {
     private var pendingAfterPurchase: (() -> Void)? = nil
     private var rcActive: Bool = false
     private var rcBatteryCare: Bool = false
+    private var rcCloudVault: Bool = false
     private static let entitlementIDs = ["premium", "Sweepr Pro", "SWEEPR Cleaner Pro"]
     private static let batteryCareEntitlementIDs = ["battery_care", "Battery Care", "Total Battery Care"]
+    private static let cloudVaultEntitlementIDs = ["cloud_vault", "Cloud Vault", "Private File Lockbox"]
 
     private func isServerEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
         guard let acc = acc, acc.isSignedIn, acc.serverActive else { return false }
@@ -443,6 +454,10 @@ class AppViewModel: ObservableObject {
 
     private func isServerBatteryCareEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
         return isServerEntitled(acc) && (acc?.addons.contains("battery_care") == true || acc?.addons.contains("battery_saver") == true)
+    }
+
+    private func isServerCloudVaultEntitled(_ acc: LinkedSweeprAccount?) -> Bool {
+        return isServerEntitled(acc) && (acc?.addons.contains("cloud_vault") == true || acc?.addons.contains("sweepr_cloud_vault_999") == true || acc?.addons.contains("sweepr_secure_bundle") == true)
     }
 
     private func resumePendingIfEntitled() {
@@ -456,11 +471,15 @@ class AppViewModel: ObservableObject {
     init() {
         let initialPremium = rcActive || isServerEntitled(linkedAccount)
         let initialBatteryCare = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+        let initialCloudVault = rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
         hasPremium = initialPremium
         hasBatteryCare = initialBatteryCare
+        hasCloudVault = initialPremium || initialCloudVault
         BatteryCareMonitor.shared.enforceEntitlement(initialBatteryCare)
         refreshStorage()
-        checkSubscription()
+        if Purchases.isConfigured {
+            checkSubscription()
+        }
         if linkedAccount.isSignedIn {
             Task { await refreshLinkedAccount() }
         }
@@ -472,21 +491,25 @@ class AppViewModel: ObservableObject {
 
     func refreshSubscriptionStatus() {
         Task {
-            if let info = try? await Purchases.shared.customerInfo() {
+            if Purchases.isConfigured, let info = try? await Purchases.shared.customerInfo() {
                 applyCustomerInfo(info)
             }
             if linkedAccount.isSignedIn {
                 await refreshLinkedAccount()
             } else {
                 let batActive = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+                let vaultActive = rcActive || rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
                 hasBatteryCare = batActive
+                hasCloudVault = vaultActive
                 BatteryCareMonitor.shared.enforceEntitlement(batActive)
             }
         }
     }
 
     func checkSubscription() {
+        guard Purchases.isConfigured else { return }
         Task {
+            guard Purchases.isConfigured else { return }
             if let info = try? await Purchases.shared.customerInfo() {
                 applyCustomerInfo(info)
             }
@@ -498,12 +521,15 @@ class AppViewModel: ObservableObject {
 
     private func applyCustomerInfo(_ info: CustomerInfo) {
         rcActive = Self.entitlementIDs.contains { info.entitlements[$0]?.isActive == true }
-        rcBatteryCare = Self.batteryCareEntitlementIDs.contains { info.entitlements[$0]?.isActive == true }
+        rcBatteryCare = Self.batteryCareEntitlementIDs.contains { info.entitlements[$0]?.isActive == true } || info.activeSubscriptions.contains("sweepr_battery_care_999")
+        rcCloudVault = info.entitlements["cloud_vault"]?.isActive == true || Self.cloudVaultEntitlementIDs.contains { info.entitlements[$0]?.isActive == true } || info.activeSubscriptions.contains("sweepr_cloud_vault_999")
         let serverEntitled = isServerEntitled(linkedAccount)
         let active = rcActive || serverEntitled
         let batActive = active || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+        let vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
         hasPremium = active
         hasBatteryCare = batActive
+        hasCloudVault = vaultActive
         BatteryCareMonitor.shared.enforceEntitlement(batActive)
         if active {
             resumePendingIfEntitled()
@@ -521,12 +547,20 @@ class AppViewModel: ObservableObject {
         }
     }
 
-    func scan() async {
+    func scan(confirmPrimer: Bool = false) async {
         guard !isScanning else { return }
+        let currentPhotoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        photoAuthStatus = currentPhotoStatus
+        if currentPhotoStatus == .notDetermined && !confirmPrimer {
+            showPhotoPermissionPrimer = true
+            return
+        }
+        showPhotoPermissionPrimer = false
         isScanning = true
         scanStatus = "Scanning photo library…"
 
         let photoStatus = await PhotoScanner.requestAuthorization()
+        photoAuthStatus = photoStatus
         if photoStatus == .authorized || photoStatus == .limited {
             mediaResult = await PhotoScanner.scan { status in
                 Task { @MainActor in
@@ -535,15 +569,15 @@ class AppViewModel: ObservableObject {
             }
         }
 
-        scanStatus = "Scanning contacts…"
-        let contactsGranted = await ContactsCleaner.requestAccess()
-        if contactsGranted {
+        // Do not chain CNContactStore.requestAccess during photo scan; only scan contacts if already authorized.
+        if CNContactStore.authorizationStatus(for: .contacts) == .authorized {
+            scanStatus = "Scanning contacts…"
             let contactsResult = await ContactsCleaner.scanAll()
             contactGroups = contactsResult.duplicateGroups
             incompleteContacts = contactsResult.incompleteContacts
         }
 
-        // Auto-select extras from duplicate and similar groups (keeping Best Shot at index 0) + screenshots
+        // Auto-select extras from duplicate and similar groups (keeping Best Shot at index 0) + screenshots + safe blurry photos
         var autoSelected: Set<String> = []
         for group in mediaResult.duplicateGroups {
             autoSelected.formUnion(group.extras.map(\.id))
@@ -552,14 +586,28 @@ class AppViewModel: ObservableObject {
             autoSelected.formUnion(group.extras.map(\.id))
         }
         autoSelected.formUnion(mediaResult.screenshots.map(\.id))
+        autoSelected.formUnion(mediaResult.blurryPhotos.map(\.id))
 
         selectedMediaIDs = autoSelected
         selectedContactGroupIDs = Set(contactGroups.map(\.id))
-        selectedIncompleteContactIDs = Set(incompleteContacts.map(\.id))
+        selectedIncompleteContactIDs = []
         hasScanned = true
         isScanning = false
         scanStatus = ""
         refreshStorage()
+    }
+
+    func requestContactsAndScan() async {
+        let contactsGranted = await ContactsCleaner.requestAccess()
+        guard contactsGranted else { return }
+        let contactsResult = await ContactsCleaner.scanAll()
+        contactGroups = contactsResult.duplicateGroups
+        incompleteContacts = contactsResult.incompleteContacts
+        selectedContactGroupIDs = Set(contactGroups.map(\.id))
+    }
+
+    func presentLimitedLibraryPicker() {
+        PhotoScanner.presentLimitedLibraryPicker()
     }
 
     func toggleMediaSelection(id: String) {
@@ -612,9 +660,6 @@ class AppViewModel: ObservableObject {
             oldCalendarEvents.removeAll { selectedCalendarEventIDs.contains($0.id) }
             selectedCalendarEventIDs.removeAll()
             alertMessage = "Deleted \(deleted) expired calendar events older than 1 year."
-            if deleted > 0 {
-                requestAppStoreReview()
-            }
         } catch {
             CrashLogger.recordError("DeleteCalendarEvents", error: error)
             alertMessage = "Could not delete calendar events: \(error.localizedDescription)"
@@ -658,7 +703,7 @@ class AppViewModel: ObservableObject {
         if optimizedCount > 0 {
             let gpsNote = strippedCount > 0 ? " · Removed map location from \(strippedCount) photos" : ""
             alertMessage = "Optimized \(optimizedCount) photos! Saved \(formatByteCount(savedBytesTotal))\(gpsNote)."
-            requestAppStoreReview()
+            requestAppStoreReview(freedBytes: savedBytesTotal)
         } else {
             alertMessage = "Could not optimize selected photos."
         }
@@ -720,6 +765,11 @@ class AppViewModel: ObservableObject {
         guard !selectedMediaIDs.isEmpty else { return }
         isWorking = true
         let idsToDelete = Array(selectedMediaIDs)
+        let bytesByID = Dictionary(
+            mediaResult.allItems.map { ($0.id, $0.estimatedBytes) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let deletedBytes = idsToDelete.reduce(Int64(0)) { $0 + (bytesByID[$1] ?? 0) }
         do {
             try await PhotoScanner.deleteAssets(identifiers: idsToDelete)
             mediaResult = mediaResult.removing(ids: Set(idsToDelete))
@@ -727,7 +777,7 @@ class AppViewModel: ObservableObject {
             if !isBatchCleaning {
                 alertMessage = "Moved \(idsToDelete.count) items to Recently Deleted (recoverable for 30 days)."
             }
-            requestAppStoreReview()
+            requestAppStoreReview(freedBytes: deletedBytes)
         } catch {
             CrashLogger.recordError("DeleteSelectedMedia", error: error)
             alertMessage = "Deletion was cancelled or failed."
@@ -760,7 +810,7 @@ class AppViewModel: ObservableObject {
             mediaResult = mediaResult.removing(ids: [id])
             selectedMediaIDs.remove(id)
             alertMessage = "Video compressed (\(preset.title))! Saved \(formatByteCount(result.savedBytes)) without losing quality."
-            requestAppStoreReview()
+            requestAppStoreReview(freedBytes: result.savedBytes)
         } catch {
             CrashLogger.recordError("CompressVideo", error: error)
             alertMessage = error.localizedDescription
@@ -791,9 +841,6 @@ class AppViewModel: ObservableObject {
         if !isBatchCleaning || mergedCount == 0 {
             alertMessage = "Smart-merged \(mergedCount) duplicate contact groups."
         }
-        if mergedCount > 0 {
-            requestAppStoreReview()
-        }
         return mergedCount
     }
 
@@ -817,11 +864,15 @@ class AppViewModel: ObservableObject {
     }
 
     func restorePurchases() async {
+        guard Purchases.isConfigured else {
+            alertMessage = "App Store billing is not configured on this build."
+            return
+        }
         isWorking = true
         do {
             let info = try await Purchases.shared.restorePurchases()
             applyCustomerInfo(info)
-            alertMessage = hasPremium ? "Purchases successfully restored!" : "No active subscription found."
+            alertMessage = (hasPremium || hasBatteryCare || hasCloudVault) ? "Purchases successfully restored!" : "No active subscription found."
         } catch {
             CrashLogger.recordError("RestorePurchases", error: error)
             alertMessage = "Failed to restore: \(error.localizedDescription)"
@@ -848,12 +899,16 @@ class AppViewModel: ObservableObject {
         do {
             let linked = try await AccountService.verifyOtp(email: email, code: code)
             linkedAccount = linked
-            _ = try? await Purchases.shared.logIn(linked.accountId)
-            Purchases.shared.attribution.setEmail(linked.email)
-            Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])
+            if Purchases.isConfigured {
+                _ = try? await Purchases.shared.logIn(linked.accountId)
+                Purchases.shared.attribution.setEmail(linked.email)
+                Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])
+            }
             let batActive = rcActive || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+            let vaultActive = rcActive || rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
             hasPremium = rcActive || isServerEntitled(linkedAccount)
             hasBatteryCare = batActive
+            hasCloudVault = hasPremium || vaultActive
             BatteryCareMonitor.shared.enforceEntitlement(batActive)
             resumePendingIfEntitled()
             alertMessage = "Signed in as \(linked.email)"
@@ -870,8 +925,10 @@ class AppViewModel: ObservableObject {
         if let updated = try? await AccountService.refreshEntitlement(current: linkedAccount) {
             linkedAccount = updated
             let batActive = rcActive || rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+            let vaultActive = rcActive || rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
             hasPremium = rcActive || isServerEntitled(linkedAccount)
             hasBatteryCare = batActive
+            hasCloudVault = hasPremium || vaultActive
             BatteryCareMonitor.shared.enforceEntitlement(batActive)
             resumePendingIfEntitled()
         }
@@ -894,10 +951,14 @@ class AppViewModel: ObservableObject {
 
     func signOut() {
         linkedAccount = AccountService.clearAccount()
-        Task { _ = try? await Purchases.shared.logOut() }
+        if Purchases.isConfigured {
+            Task { _ = try? await Purchases.shared.logOut() }
+        }
         let batActive = rcBatteryCare || isServerBatteryCareEntitled(linkedAccount)
+        let vaultActive = rcActive || rcCloudVault || isServerCloudVaultEntitled(linkedAccount)
         hasPremium = rcActive || isServerEntitled(linkedAccount)
         hasBatteryCare = batActive
+        hasCloudVault = hasPremium || vaultActive
         BatteryCareMonitor.shared.enforceEntitlement(batActive)
         alertMessage = "Signed out of your SWEEPR Cleaner account."
     }
@@ -920,14 +981,15 @@ class AppViewModel: ObservableObject {
         isWorking = false
     }
 
-    func requestAppStoreReview() {
+    func requestAppStoreReview(freedBytes: Int64 = 0) {
+        // Only prompt SKStoreReviewController after a successful clean with >500 MB freed
+        guard freedBytes > 500 * 1024 * 1024 else { return }
         let defaults = UserDefaults.standard
-        let count = defaults.integer(forKey: "sweepr_completed_cleanups") + 1
-        defaults.set(count, forKey: "sweepr_completed_cleanups")
-        guard count == 2 else { return }
-        if let scene = UIApplication.shared.connectedScenes
+        guard !defaults.bool(forKey: "sweepr_review_prompted_500mb") else { return }
+        defaults.set(true, forKey: "sweepr_review_prompted_500mb")
+        if let windowScene = UIApplication.shared.connectedScenes
             .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
-            SKStoreReviewController.requestReview(in: scene)
+            SKStoreReviewController.requestReview(in: windowScene)
         }
     }
 }
@@ -1023,9 +1085,14 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
+                vm.photoAuthStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
                 vm.refreshSubscriptionStatus()
                 BatteryCareMonitor.shared.refresh()
             }
+        }
+        .sheet(isPresented: $vm.showPhotoPermissionPrimer) {
+            PhotoPermissionPrimerSheet(vm: vm)
+                .presentationDetents([.medium])
         }
         .sheet(isPresented: Binding(
             get: { showPaywall || vm.showingPaywall },
@@ -1069,6 +1136,61 @@ struct ContentView: View {
 struct AlertItem: Identifiable {
     let id = UUID()
     let message: String
+}
+
+// MARK: - Friendly Pre-Permission Priming Card (#10)
+struct PhotoPermissionPrimerSheet: View {
+    @ObservedObject var vm: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer(minLength: 8)
+
+            SweeprIconBadge(
+                systemName: "photo.on.rectangle.angled",
+                tint: .sweeprEmerald,
+                size: 64,
+                iconSize: 28,
+                cornerRadius: 20
+            )
+
+            Text("100% On-Device Photo Scan")
+                .font(.title3.weight(.heavy))
+                .multilineTextAlignment(.center)
+
+            Text("SWEEPR Cleaner needs access to your Photo Library to find duplicate photos, similar bursts, blurry shots, screenshots, and large videos so you can free up space.\n\n100% of scanning happens privately on your iPhone — your photos and videos never leave your device.")
+                .font(.subheadline)
+                .foregroundColor(.sweeprMutedText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+
+            VStack(spacing: 10) {
+                Button {
+                    dismiss()
+                    Task { await vm.scan(confirmPrimer: true) }
+                } label: {
+                    Text("Continue to Photo Access")
+                }
+                .buttonStyle(SweeprPrimaryButtonStyle())
+
+                Button {
+                    vm.showPhotoPermissionPrimer = false
+                    dismiss()
+                } label: {
+                    Text("Not Now")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.sweeprMutedText)
+                        .padding(.vertical, 6)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer(minLength: 8)
+        }
+        .padding(.vertical, 16)
+        .background(Color.sweeprCanvas.ignoresSafeArea())
+    }
 }
 
 // MARK: - Candidate 5: 3D Stacked Swipe Photo Deck (SwipeReviewView)
@@ -1167,6 +1289,7 @@ struct SwipeReviewView: View {
                                     : "\(min(currentIndex + 1, filteredItems.count)) of \(filteredItems.count) in \(selectedFilter)"
                             )
                             .font(.caption)
+                            .monospacedDigit()
                             .foregroundColor(.sweeprMutedText)
                             .contentTransition(.numericText())
                             .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: currentIndex)
@@ -1209,6 +1332,7 @@ struct SwipeReviewView: View {
                                     } label: {
                                         Text("\(option.label) (\(option.count))")
                                             .font(.system(size: 12, weight: .bold))
+                                            .monospacedDigit()
                                             .foregroundColor(isSelected ? .white : .sweeprMutedText)
                                             .contentTransition(.numericText())
                                             .padding(.horizontal, 12)

@@ -15,6 +15,9 @@
   --warn: #b85d00;
   --danger: #b91c1c;
   --radius: 16px;
+  --radius-card: 20px;
+  --radius-inner: 12px;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
 }
 
 body {
@@ -140,12 +143,17 @@ button.btn.hidden,
 button.btn:hover:not(:disabled),
 [type="submit"].btn:hover:not(:disabled),
 [type="button"].btn:hover:not(:disabled) {
-  border-color: rgba(0,0,0,0.12);
+  border-color: rgba(0,0,0,0.14);
   background-color: #ffffff;
   background: #ffffff;
   color: var(--text);
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn:has(> .arrow-icon),
+.btn-go:has(> .arrow-icon) {
+  padding-inline: 1.35rem 1.15rem;
 }
 
 .btn-primary {
@@ -154,7 +162,7 @@ button.btn:hover:not(:disabled),
   border: none;
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(13, 104, 71, 0.28);
-  transition: transform 75ms cubic-bezier(0.16, 1, 0.3, 1), background-color 140ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 75ms cubic-bezier(0.2, 0, 0, 1), background-color 140ms cubic-bezier(0.2, 0, 0, 1), box-shadow 140ms cubic-bezier(0.2, 0, 0, 1);
   will-change: transform;
 }
 
@@ -166,10 +174,14 @@ button.btn:hover:not(:disabled),
 
 .btn-primary:active:not(:disabled),
 .btn:active:not(:disabled) {
-  transform: scale(0.985);
+  transform: scale(0.97);
+  transition-duration: 75ms;
 }
 
-.tabular-nums {
+.tabular-nums,
+.price-amount,
+.stat-metric,
+.path-size {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -237,12 +249,13 @@ button.btn-go:hover:not(:disabled),
 [type="submit"].btn-go:hover:not(:disabled),
 [type="button"].btn-go:hover:not(:disabled) {
   background: linear-gradient(135deg, #0d6847 0%, #073825 100%);
-  box-shadow: 0 8px 30px rgba(13, 104, 71, 0.5), 0 0 0 2px rgba(13, 104, 71, 0.3);
-  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 28px rgba(13, 104, 71, 0.46), 0 0 0 2px rgba(13, 104, 71, 0.25);
+  transform: translateY(-1px);
 }
 
 .btn-go:active:not(:disabled) {
-  transform: translateY(1px) scale(0.98);
+  transform: scale(0.97);
+  transition-duration: 75ms;
 }
 
 .btn-go svg.arrow-icon {

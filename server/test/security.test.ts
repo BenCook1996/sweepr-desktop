@@ -1104,6 +1104,682 @@ test("Cloudflare Security Audit regressions: CRIT-01..05, HIGH-01..10, MED-01..1
   assert.equal(dashAfter.status, 401);
 });
 
+test("Desktop Tauri & Web CORS middleware allows trusted origins on /api/* and /v1/* and rejects untrusted origins", async () => {
+  const { app } = setup();
+  const allowedOrigins = [
+    "https://sweeprcleaner.com",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+    "tauri://localhost",
+    "http://localhost:1420",
+  ];
+
+  for (const origin of allowedOrigins) {
+    const preflight = await app.request("/v1/telemetry/event", {
+      method: "OPTIONS",
+      headers: {
+        origin,
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "Content-Type, Authorization, X-Poll-Secret",
+      },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), origin);
+    assert.equal(preflight.headers.get("access-control-allow-methods"), "GET,POST,OPTIONS");
+    assert.equal(
+      preflight.headers.get("access-control-allow-headers"),
+      "Content-Type,Authorization,X-Poll-Secret"
+    );
+
+    const apiGet = await app.request("/api/pricing", {
+      method: "GET",
+      headers: { origin },
+    });
+    assert.equal(apiGet.status, 200);
+    assert.equal(apiGet.headers.get("access-control-allow-origin"), origin);
+  }
+
+  const blocked = await app.request("/api/pricing", {
+    method: "GET",
+    headers: { origin: "https://evil.example" },
+  });
+  assert.equal(blocked.headers.get("access-control-allow-origin"), null);
+});
+
+test("Stripe webhook idempotency only marks processed after handler succeeds, and missing MYskiOdE coupon is omitted", async () => {
+  const { handleStripeWebhook } = await import("../src/stripe.js");
+  let shouldThrowOnRetrieve = true;
+  let lastSubCreateParams: any = null;
+  const mockStripe: any = {
+    products: {
+      list: async () => ({ data: [{ id: "prod_sweepr", name: "SWEEPR Cleaner Pro" }] }),
+    },
+    prices: {
+      retrieve: async () => ({ id: "price_monthly_test", product: "prod_sweepr" }),
+    },
+    coupons: {
+      retrieve: async () => {
+        throw new Error("No such coupon: 'MYskiOdE'");
+      },
+      create: async () => {
+        throw new Error("Coupon creation disabled in test");
+      },
+    },
+    customers: {
+      create: async (params: any) => ({ id: "cus_coupon_test", email: params.email }),
+      update: async (id: string, params: any) => ({ id, ...params }),
+    },
+    subscriptions: {
+      retrieve: async (id: string) => {
+        if (shouldThrowOnRetrieve) {
+          throw new Error("Transient Stripe API timeout");
+        }
+        return {
+          id,
+          status: "active",
+          customer: "cus_retry_1",
+          metadata: { account_id: "acc_retry_1", plan: "annual" },
+          current_period_end: Math.floor(Date.now() / 1000) + 86400 * 365,
+          items: {
+            data: [
+              {
+                price: {
+                  unit_amount: 4999,
+                  currency: "gbp",
+                  recurring: { interval: "year", interval_count: 1 },
+                },
+                quantity: 1,
+              },
+            ],
+          },
+        };
+      },
+      create: async (params: any) => {
+        lastSubCreateParams = params;
+        return {
+          id: "sub_no_coupon_1",
+          status: "incomplete",
+          livemode: false,
+          metadata: params.metadata || {},
+          latest_invoice: {
+            confirmation_secret: { client_secret: "pi_no_coupon_1_secret_xyz" },
+          },
+        };
+      },
+    },
+  };
+
+  const { repo, post } = setup({ stripe: mockStripe });
+  repo.createAccount("acc_retry_1", sha256("tok_retry_1"), "retry@example.com");
+
+  const checkoutCompletedEvent: any = {
+    id: "evt_retry_test_1",
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        id: "cs_retry_1",
+        customer: "cus_retry_1",
+        client_reference_id: "acc_retry_1",
+        subscription: "sub_retry_1",
+      },
+    },
+  };
+
+  // 1. First attempt throws transient error -> must NOT be marked processed
+  await assert.rejects(
+    () => handleStripeWebhook(mockStripe, repo, checkoutCompletedEvent),
+    /Transient Stripe API timeout/
+  );
+  assert.equal(repo.isWebhookProcessed("evt_retry_test_1"), false);
+
+  // 2. Retry succeeds -> marks event processed and grants active entitlement
+  shouldThrowOnRetrieve = false;
+  const retryRes = await handleStripeWebhook(mockStripe, repo, checkoutCompletedEvent);
+  assert.equal(retryRes.duplicate, false);
+  assert.equal(repo.isWebhookProcessed("evt_retry_test_1"), true);
+  assert.equal(repo.entitlement("acc_retry_1")?.status, "active");
+
+  // 3. Subsequent delivery of the same event.id returns { duplicate: true } immediately
+  const dupRes = await handleStripeWebhook(mockStripe, repo, checkoutCompletedEvent);
+  assert.equal(dupRes.duplicate, true);
+
+  // 4. When coupon MYskiOdE does not exist in Stripe, /api/create-subscription omits discounts rather than attaching an unverified coupon
+  const subRes = await post("/api/create-subscription", {
+    email: "nocoupon@example.com",
+    plan: "monthly",
+    applyDiscount: true,
+    paymentMethod: "card",
+  });
+  assert.equal(subRes.status, 200);
+  assert.equal(lastSubCreateParams?.discounts, undefined);
+});
+
+test("Cancel-save downgrade (/api/portal/switch-to-monthly) updates Stripe subscription item price to monthly for customer currency", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  let lastSubUpdateId = "";
+  let lastSubUpdateParams: any = null;
+  let createdPriceParams: any = null;
+
+  const mockStripe: any = {
+    products: {
+      list: async () => ({ data: [{ id: "prod_sweepr", name: "SWEEPR Cleaner Pro" }] }),
+    },
+    prices: {
+      retrieve: async () => ({
+        id: "price_gbp_monthly",
+        product: "prod_sweepr",
+        currency: "gbp",
+        unit_amount: 999,
+        recurring: { interval: "month", interval_count: 1 },
+      }),
+      list: async () => ({ data: [] }),
+      create: async (params: any) => {
+        createdPriceParams = params;
+        return {
+          id: `price_monthly_${params.currency}_${params.unit_amount}`,
+          ...params,
+        };
+      },
+    },
+    subscriptions: {
+      retrieve: async (id: string) => ({
+        id,
+        status: "active",
+        customer: "cus_downgrade_1",
+        currency: "eur",
+        current_period_end: nowSec + 86400 * 30,
+        cancel_at_period_end: true,
+        metadata: { account_id: "acc_downgrade_1", plan: "annual" },
+        items: {
+          data: [
+            {
+              id: "si_annual_item_1",
+              price: {
+                id: "price_annual_eur_5999",
+                currency: "eur",
+                unit_amount: 5999,
+                recurring: { interval: "year", interval_count: 1 },
+              },
+              quantity: 1,
+            },
+          ],
+        },
+      }),
+      update: async (id: string, params: any) => {
+        lastSubUpdateId = id;
+        lastSubUpdateParams = params;
+        return { id, status: "active", ...params };
+      },
+    },
+  };
+
+  const { repo, post, app } = setup({ stripe: mockStripe, priceMonthly: "price_gbp_monthly" });
+  repo.createAccount("acc_downgrade_1", sha256("tok_dg_1"), "downgrade@example.de");
+  repo.setCustomer("acc_downgrade_1", "cus_downgrade_1", "downgrade@example.de");
+  repo.upsertEntitlement({
+    account_id: "acc_downgrade_1",
+    stripe_subscription_id: "sub_downgrade_1",
+    status: "active",
+    plan: "annual",
+    current_period_end: nowSec + 86400 * 30,
+    cancel_at_period_end: 1,
+  });
+
+  repo.setOtp("downgrade@example.de", sha256("445566"), nowSec + 600);
+  const loginRes = await post("/api/verify-otp", { email: "downgrade@example.de", code: "445566" });
+  const sessionCookie = (loginRes.headers.get("set-cookie") ?? "").split(";")[0];
+
+  const switchRes = await app.request("/api/portal/switch-to-monthly", {
+    method: "POST",
+    headers: { cookie: sessionCookie, "content-type": "application/json" },
+  });
+  assert.equal(switchRes.status, 200);
+  const switchBody = await switchRes.json();
+  assert.equal(switchBody.ok, true);
+  assert.equal(switchBody.plan, "monthly");
+  assert.equal(switchBody.cancel_at_period_end, false);
+
+  // Verify getOrCreatePlanPriceId created/resolved the EUR monthly price (1099 cents) and passed items[{ id, price }] to stripe.subscriptions.update
+  assert.equal(createdPriceParams?.currency, "eur");
+  assert.equal(createdPriceParams?.unit_amount, 1099);
+  assert.equal(lastSubUpdateId, "sub_downgrade_1");
+  assert.deepEqual(lastSubUpdateParams?.items, [
+    { id: "si_annual_item_1", price: "price_monthly_eur_1099" },
+  ]);
+  assert.equal(lastSubUpdateParams?.cancel_at_period_end, false);
+  assert.equal(lastSubUpdateParams?.metadata?.plan, "monthly");
+  assert.equal(repo.entitlement("acc_downgrade_1")?.plan, "monthly");
+  assert.equal(repo.entitlement("acc_downgrade_1")?.cancel_at_period_end, 0);
+});
+
+test("/v1/billing/google-play/verify supports both subscriptionsv2 and one-time add-on products endpoints", async () => {
+  const { repo, post } = setup();
+  const prevAccessToken = process.env.GOOGLE_PLAY_ACCESS_TOKEN;
+  const prevFetch = globalThis.fetch;
+  process.env.GOOGLE_PLAY_ACCESS_TOKEN = "gp_test_token_123";
+
+  const requestedUrls: string[] = [];
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = String(input);
+    requestedUrls.push(url);
+    if (url.includes("/purchases/subscriptionsv2/tokens/gp_sub_tok_annual_123456")) {
+      return new Response(
+        JSON.stringify({
+          subscriptionState: "SUBSCRIPTION_STATE_ACTIVE",
+          lineItems: [{ productId: "sweepr_annual_4999" }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }
+    if (url.includes("/purchases/products/sweepr_battery_care_999/tokens/gp_prod_tok_battery_123456")) {
+      return new Response(
+        JSON.stringify({
+          purchaseState: 0,
+          productId: "sweepr_battery_care_999",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }
+    return new Response(JSON.stringify({ error: "not_found" }), { status: 404 });
+  }) as typeof fetch;
+
+  try {
+    // 1. Verify subscription via purchases/subscriptionsv2/tokens/...
+    const subRes = await post("/v1/billing/google-play/verify", {
+      product_id: "sweepr_annual_4999",
+      purchase_token: "gp_sub_tok_annual_123456",
+      device_id: "android_dev_sub_1",
+      project_id: "cleaner",
+    });
+    assert.equal(subRes.status, 200);
+    const subBody = await subRes.json();
+    assert.equal(subBody.active, true);
+    assert.equal(subBody.plan, "annual");
+    assert.ok(
+      requestedUrls.some((u) =>
+        u.includes("/purchases/subscriptionsv2/tokens/gp_sub_tok_annual_123456")
+      )
+    );
+
+    // 2. Verify one-time add-on via purchases/products/{productId}/tokens/{token}
+    const addonRes = await post(
+      "/v1/billing/google-play/verify",
+      {
+        product_id: "sweepr_battery_care_999",
+        purchase_token: "gp_prod_tok_battery_123456",
+        device_id: "android_dev_sub_1",
+        project_id: "cleaner",
+      },
+      { authorization: `Bearer ${subBody.refresh_token}` }
+    );
+    assert.equal(addonRes.status, 200);
+    const addonBody = await addonRes.json();
+    assert.equal(addonBody.active, true);
+    assert.equal(addonBody.plan, "annual");
+    assert.ok(addonBody.addons.includes("battery_care"));
+    assert.ok(
+      requestedUrls.some((u) =>
+        u.includes("/purchases/products/sweepr_battery_care_999/tokens/gp_prod_tok_battery_123456")
+      )
+    );
+    assert.deepEqual(repo.addonsForAccount(subBody.account_id), ["battery_care"]);
+  } finally {
+    globalThis.fetch = prevFetch;
+    if (prevAccessToken === undefined) {
+      delete process.env.GOOGLE_PLAY_ACCESS_TOKEN;
+    } else {
+      process.env.GOOGLE_PLAY_ACCESS_TOKEN = prevAccessToken;
+    }
+  }
+});
+
+test("Mobile /download routes Android to Google Play + SHA-256 APK landing and iOS to App Store + PC/Mac email capture", async () => {
+  const { app, post } = setup();
+
+  // 1. Android User-Agent gets clean HTML landing page (no forced raw .apk sideload)
+  const androidRes = await app.request("/download", {
+    headers: {
+      "user-agent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/126.0.0.0 Mobile Safari/537.36",
+    },
+  });
+  assert.equal(androidRes.status, 200);
+  assert.match(androidRes.headers.get("content-type") ?? "", /text\/html/i);
+  const androidHtml = await androidRes.text();
+  assert.ok(androidHtml.includes("https://play.google.com/store/apps/details?id=com.sweepr.app"));
+  assert.ok(androidHtml.includes("Verified SHA-256:"));
+  assert.ok(androidHtml.includes("/download?platform=android&direct=1"));
+  assert.ok(androidHtml.includes("Send PC &amp; Mac Download Link to My Email"));
+
+  // 2. iOS User-Agent gets clean HTML landing page (no unsigned .mobileconfig MDM stream)
+  const iosRes = await app.request("/download", {
+    headers: {
+      "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
+    },
+  });
+  assert.equal(iosRes.status, 200);
+  assert.match(iosRes.headers.get("content-type") ?? "", /text\/html/i);
+  const iosHtml = await iosRes.text();
+  assert.ok(iosHtml.includes("Send PC &amp; Mac Download Link to My Email"));
+  assert.ok(iosHtml.includes("/ios-app"));
+  assert.ok(iosHtml.includes("https://testflight.apple.com"));
+  assert.ok(!iosHtml.includes("application/x-apple-aspen-config"));
+
+  // 3. Cross-device email capture on mobile binds lead and returns ok
+  const bindRes = await post("/api/download-recovery/bind-email", {
+    email: "mobile.visitor@example.com",
+    platform: "ios",
+    send_desktop_link: true,
+  });
+  assert.equal(bindRes.status, 200);
+  const bindData = await bindRes.json();
+  assert.equal(bindData.ok, true);
+  assert.equal(bindData.email, "mobile.visitor@example.com");
+});
+
+test("Referral loop: referred checkout followed by invoice.paid webhook retains full +30-day bonus_seconds extension and records referral_aha_clicked", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const basePeriodEnd = nowSec + 30 * 86400;
+  const referrerBaseEnd = nowSec + 15 * 86400;
+
+  let referrerCode = "";
+  const referredSubPayload = () => ({
+    id: "sub_referred_1",
+    customer: "cus_referred_1",
+    status: "active",
+    created: nowSec,
+    current_period_start: nowSec,
+    current_period_end: basePeriodEnd,
+    cancel_at_period_end: false,
+    currency: "usd",
+    metadata: {
+      account_id: "acc_referred",
+      plan: "monthly",
+      ref: referrerCode,
+    },
+    items: {
+      data: [
+        {
+          id: "si_ref_1",
+          price: {
+            id: "price_monthly_usd",
+            unit_amount: 1199,
+            currency: "usd",
+            recurring: { interval: "month", interval_count: 1 },
+          },
+          quantity: 1,
+        },
+      ],
+    },
+  });
+
+  const mockStripe = {
+    webhooks: {
+      constructEvent: (raw: string) => JSON.parse(raw),
+    },
+    subscriptions: {
+      retrieve: async (id: string) => {
+        if (id === "sub_referred_1") return referredSubPayload();
+        throw new Error(`Unexpected sub ${id}`);
+      },
+    },
+  };
+
+  const { repo, app, post } = setup({
+    stripe: mockStripe,
+    stripeWebhookSecret: "whsec_ref_test",
+  });
+
+  // 1. Seed active referrer account + entitlement
+  repo.createAccount("acc_referrer", sha256("tok_referrer"), "referrer@example.com");
+  repo.setCustomer("acc_referrer", "cus_referrer_1", "referrer@example.com");
+  repo.upsertEntitlement({
+    account_id: "acc_referrer",
+    stripe_subscription_id: "sub_referrer_1",
+    status: "active",
+    plan: "monthly",
+    current_period_end: referrerBaseEnd,
+    cancel_at_period_end: 0,
+  });
+  referrerCode = repo.ensureReferralCode("acc_referrer");
+
+  // 2. Seed referred account
+  repo.createAccount("acc_referred", sha256("tok_referred"), "friend@example.com");
+  repo.setCustomer("acc_referred", "cus_referred_1", "friend@example.com");
+
+  const { handleStripeWebhook } = await import("../src/stripe.js");
+
+  // 3. Fire customer.subscription.created webhook for referred checkout
+  const subCreatedRes = await handleStripeWebhook(
+    mockStripe as any,
+    repo,
+    {
+      id: "evt_ref_sub_created_1",
+      type: "customer.subscription.created",
+      data: { object: referredSubPayload() },
+    } as any
+  );
+  assert.equal(subCreatedRes.duplicate, false);
+
+  const entAfterCheckout = repo.entitlement("acc_referred");
+  assert.ok(entAfterCheckout);
+  assert.equal(entAfterCheckout.bonus_seconds, 30 * 86400);
+  assert.equal(entAfterCheckout.current_period_end, basePeriodEnd + 30 * 86400);
+
+  const referrerEntAfterCheckout = repo.entitlement("acc_referrer");
+  assert.ok(referrerEntAfterCheckout);
+  assert.equal(referrerEntAfterCheckout.bonus_seconds, 30 * 86400);
+  assert.equal(referrerEntAfterCheckout.current_period_end, referrerBaseEnd + 30 * 86400);
+
+  // 4. Fire subsequent invoice.paid webhook (which re-runs syncSubscription with Stripe's basePeriodEnd)
+  const invoicePaidRes = await handleStripeWebhook(
+    mockStripe as any,
+    repo,
+    {
+      id: "evt_ref_invoice_paid_1",
+      type: "invoice.paid",
+      data: {
+        object: {
+          id: "in_referred_1",
+          customer: "cus_referred_1",
+          customer_email: "friend@example.com",
+          subscription: "sub_referred_1",
+          total: 1199,
+          amount_paid: 1199,
+          currency: "usd",
+          created: nowSec,
+        },
+      },
+    } as any
+  );
+  assert.equal(invoicePaidRes.duplicate, false);
+
+  // Verify the +30-day extension was NOT overwritten by invoice.paid syncSubscription
+  const entAfterInvoicePaid = repo.entitlement("acc_referred");
+  assert.ok(entAfterInvoicePaid);
+  assert.equal(entAfterInvoicePaid.bonus_seconds, 30 * 86400);
+  assert.equal(entAfterInvoicePaid.current_period_end, basePeriodEnd + 30 * 86400);
+
+  // 5. Verify referral_aha_clicked is accepted by /v1/telemetry/event
+  const ahaRes = await post("/v1/telemetry/event", {
+    event_name: "referral_aha_clicked",
+    platform: "windows",
+    account_id: "acc_referrer",
+  });
+  assert.equal(ahaRes.status, 200);
+  const ahaBody = await ahaRes.json();
+  assert.equal(ahaBody.ok, true);
+
+  // 6. Verify GET /share/win renders dynamic OpenGraph meta tags and benchmark SVG card
+  const shareWinRes = await app.request(
+    `/share/win?gb=18.4%20GB&culprit=NVIDIA%20DXCache%20%2F%20ComfyUI&ms=245&code=${encodeURIComponent(referrerCode)}`
+  );
+  assert.equal(shareWinRes.status, 200);
+  const shareWinHtml = await shareWinRes.text();
+  assert.ok(shareWinHtml.includes("I Just Reclaimed 18.4 GB with SWEEPR (245ms Scan)"));
+  assert.ok(shareWinHtml.includes("NVIDIA DXCache / ComfyUI"));
+  assert.ok(shareWinHtml.includes(`sweeprcleaner.com/r/${referrerCode}`));
+  assert.ok(shareWinHtml.includes('property="og:image"'));
+  assert.ok(shareWinHtml.includes('name="twitter:card" content="summary_large_image"'));
+
+  const svgRes = await app.request(
+    `/share/win.svg?gb=18.4%20GB&culprit=NVIDIA%20DXCache&ms=245&code=${encodeURIComponent(referrerCode)}`
+  );
+  assert.equal(svgRes.status, 200);
+  assert.match(svgRes.headers.get("content-type") ?? "", /image\/svg\+xml/i);
+
+  // 7. Verify GET /clean, GET /benchmark, and GET /tools/pc-cache-calculator render the Windows Gaming & AI Cache Bloat Calculator
+  for (const calcPath of ["/clean", "/benchmark", "/tools/pc-cache-calculator"]) {
+    const calcRes = await app.request(calcPath);
+    assert.equal(calcRes.status, 200);
+    const calcHtml = await calcRes.text();
+    assert.ok(calcHtml.includes("Windows Gaming &amp; AI Cache Bloat Calculator"));
+    assert.ok(calcHtml.includes("Steam &amp; NVIDIA DXCache"));
+    assert.ok(calcHtml.includes("Genshin / HoYoPlay"));
+    assert.ok(calcHtml.includes("Valorant &amp; Riot"));
+    assert.ok(calcHtml.includes("ComfyUI &amp; HuggingFace"));
+    assert.ok(calcHtml.includes("Ollama &amp; LM Studio"));
+    assert.ok(calcHtml.includes("Docker &amp; WSL2"));
+    assert.ok(calcHtml.includes("JetBrains &amp; Cursor"));
+    assert.ok(calcHtml.includes("Adobe Media Cache"));
+  }
+
+  // 8. Verify Web-to-Desktop 60-minute IP+OS fingerprint attribution bridge (/download?platform=windows -> app_installed & scan_started)
+  repo.createAccount("acc_web_funnel", sha256("tok_web_funnel"), "webfunnel@example.com");
+  const dlRes = await app.request("/download?platform=windows&attribution_id=attr_web_bridge_01", {
+    headers: {
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "x-forwarded-for": "198.51.100.77",
+    },
+  });
+  assert.equal(dlRes.headers.get("x-sweepr-attribution-id"), "attr_web_bridge_01");
+  // Associate web visitor account with recovery session
+  const { associateCheckoutLeadWithRecovery } = await import("../src/download-recovery.js");
+  associateCheckoutLeadWithRecovery(repo, {
+    attributionId: "attr_web_bridge_01",
+    email: "webfunnel@example.com",
+    accountId: "acc_web_funnel",
+  });
+
+  const desktopDeviceId = "d".repeat(64);
+  const installTelemetryRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-forwarded-for": "198.51.100.77",
+    },
+    body: JSON.stringify({
+      event_name: "app_installed",
+      platform: "windows",
+      attribution_id: "dt_local_anon_123",
+      device_id: desktopDeviceId,
+      metadata: { source: "finalize_install" },
+    }),
+  });
+  assert.equal(installTelemetryRes.status, 200);
+  const installTelemetryBody = await installTelemetryRes.json();
+  assert.equal(installTelemetryBody.ok, true);
+  assert.equal(installTelemetryBody.attribution_id, "attr_web_bridge_01");
+  assert.equal(installTelemetryBody.account_id, "acc_web_funnel");
+
+  const scanStartTelemetryRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-forwarded-for": "198.51.100.77",
+    },
+    body: JSON.stringify({
+      event_name: "scan_started",
+      platform: "windows",
+      device_id: desktopDeviceId,
+    }),
+  });
+  assert.equal(scanStartTelemetryRes.status, 200);
+  const scanStartBody = await scanStartTelemetryRes.json();
+  assert.equal(scanStartBody.attribution_id, "attr_web_bridge_01");
+  assert.equal(scanStartBody.account_id, "acc_web_funnel");
+
+  const recoveryRow = repo.db
+    .prepare("SELECT * FROM download_recovery_sessions WHERE attribution_id = ?")
+    .get("attr_web_bridge_01") as any;
+  assert.ok(recoveryRow);
+  assert.ok(Number(recoveryRow.installed_at) > 0);
+  assert.equal(recoveryRow.ip_os_fingerprint, "198.51.100.77|windows");
+  assert.equal(recoveryRow.matched_device_id, desktopDeviceId);
+  assert.equal(recoveryRow.account_id, "acc_web_funnel");
+
+  const linkedDeviceRow = repo.db
+    .prepare("SELECT * FROM devices WHERE id = ? AND account_id = ?")
+    .get(desktopDeviceId, "acc_web_funnel") as any;
+  assert.ok(linkedDeviceRow, "Desktop device should be linked to the web visitor's account");
+});
+
+test("Multi-currency purchase telemetry on /checkout/success: injects actual Stripe amount_total/100, uppercase currency, and plan tier", async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const mockStripe: any = {
+    checkout: {
+      sessions: {
+        retrieve: async (id: string) => ({
+          id,
+          subscription: "sub_usd_6m",
+          amount_total: 4799,
+          currency: "usd",
+          metadata: { account_id: "acc_usd_1", plan: "six_month" },
+        }),
+      },
+    },
+    subscriptions: {
+      retrieve: async (id: string) => ({
+        id,
+        status: "active",
+        currency: "usd",
+        created: nowSec,
+        current_period_start: nowSec,
+        current_period_end: nowSec + 180 * 86400,
+        cancel_at_period_end: false,
+        metadata: { account_id: "acc_usd_1", plan: "six_month" },
+        items: {
+          data: [
+            {
+              price: {
+                unit_amount: 4799,
+                currency: "usd",
+                recurring: { interval: "month", interval_count: 6 },
+              },
+            },
+          ],
+        },
+        latest_invoice: {
+          amount_paid: 4799,
+          currency: "usd",
+          payment_intent: { id: "pi_usd_6m", status: "succeeded", amount: 4799, currency: "usd" },
+        },
+      }),
+    },
+  };
+
+  const { repo, app } = setup({ stripe: mockStripe });
+  repo.createAccount("acc_usd_1", "usdbuyer@example.com");
+
+  const res = await app.request("/checkout/success?web=1&session_id=cs_test_usd_6m&account_id=acc_usd_1", {
+    method: "GET",
+  });
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.ok(html.includes("value:47.99"), "Should inject actual amount_total / 100 (47.99)");
+  assert.ok(html.includes('currency:"USD"'), "Should inject uppercase currency USD");
+  assert.ok(html.includes('plan:"six_month"'), "Should inject actual plan tier six_month");
+  assert.ok(html.includes("gtag('event','purchase'"), "Should include gtag purchase event call");
+  assert.ok(html.includes("fbq('track','Purchase'"), "Should include fbq Purchase event call");
+  assert.ok(!html.includes("value:49.99,currency:'GBP'"), "Must not contain hardcoded 49.99 GBP");
+});
+
+
+
+
+
+
+
+
 
 
 

@@ -13,6 +13,8 @@ export interface Account {
   stripe_customer_id: string | null;
   email: string | null;
   name: string | null;
+  company?: string | null;
+  phone?: string | null;
   notes: string | null;
   country: string | null;
   lead_device: string | null;
@@ -83,6 +85,7 @@ export interface Entitlement {
   addons?: string | null;
   current_period_end: number | null;
   cancel_at_period_end: number;
+  bonus_seconds?: number;
   updated_at: number;
 }
 
@@ -160,6 +163,7 @@ export interface CrmCustomerSummary {
   subscription_status: EntStatus;
   plan: string | null;
   amount_cents: number;
+  currency?: string;
   billing_interval: string;
   current_period_end: number | null;
   cancel_at_period_end: number;
@@ -183,6 +187,7 @@ export interface CrmStats {
   averageHealthScore: number;
   activeDevices: number;
   atRiskAccountsCount: number;
+  leadAccountsCount: number;
   currency: string;
   crashes_7d: number;
   funnel: Record<string, number>;
@@ -193,6 +198,8 @@ export interface CrmStats {
   installs30d?: number;
   installs7d?: number;
   installConversionPct?: number;
+  outreachTotal?: number;
+  emailActionsTotal?: number;
 }
 
 export function generateReferralCode(_seed?: string): string {
@@ -221,6 +228,8 @@ export function openDb(path: string) {
     CREATE TABLE IF NOT EXISTS devices (
       id TEXT NOT NULL,
       account_id TEXT NOT NULL REFERENCES accounts(id),
+      refresh_token_hash TEXT,
+      token_hash TEXT,
       first_seen INTEGER NOT NULL,
       last_seen INTEGER NOT NULL,
       revoked INTEGER NOT NULL DEFAULT 0,
@@ -233,6 +242,7 @@ export function openDb(path: string) {
       plan TEXT,
       current_period_end INTEGER,
       cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
+      bonus_seconds INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS otps (
@@ -397,12 +407,20 @@ export function openDb(path: string) {
       email_status TEXT NOT NULL DEFAULT 'pending',
       email_sent_at INTEGER,
       recovery_outcome TEXT NOT NULL DEFAULT 'pending',
+      client_ip TEXT,
+      ip_os_fingerprint TEXT,
+      matched_device_id TEXT,
       metadata_json TEXT,
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_dl_recovery_email ON download_recovery_sessions(lower(email));
     CREATE INDEX IF NOT EXISTS idx_dl_recovery_outcome ON download_recovery_sessions(recovery_outcome, downloaded_at);
   `);
+
+  ensureColumn(db, "download_recovery_sessions", "client_ip", "TEXT");
+  ensureColumn(db, "download_recovery_sessions", "ip_os_fingerprint", "TEXT");
+  ensureColumn(db, "download_recovery_sessions", "matched_device_id", "TEXT");
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_dl_recovery_ip_os ON download_recovery_sessions(ip_os_fingerprint, downloaded_at DESC);`);
 
   // Ensure extended CRM columns on accounts table
   ensureColumn(db, "accounts", "email", "TEXT");
@@ -423,12 +441,17 @@ export function openDb(path: string) {
   ensureColumn(db, "accounts", "max_scan_reclaimable_bytes", "INTEGER DEFAULT 0");
   ensureColumn(db, "accounts", "last_clean_at", "INTEGER");
   ensureColumn(db, "accounts", "last_scan_at", "INTEGER");
+  ensureColumn(db, "accounts", "company", "TEXT");
+  ensureColumn(db, "accounts", "phone", "TEXT");
   ensureColumn(db, "accounts", "updated_at", "INTEGER");
   ensureColumn(db, "devices", "type", "TEXT DEFAULT 'pc'");
+  ensureColumn(db, "devices", "refresh_token_hash", "TEXT");
   ensureColumn(db, "devices", "token_hash", "TEXT");
   ensureColumn(db, "devices", "device_name", "TEXT");
   ensureColumn(db, "devices", "platform", "TEXT");
+  db.exec(`UPDATE devices SET refresh_token_hash = token_hash WHERE refresh_token_hash IS NULL AND token_hash IS NOT NULL`);
   ensureColumn(db, "entitlements", "addons", "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn(db, "entitlements", "bonus_seconds", "INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "subscriptions", "addons", "TEXT NOT NULL DEFAULT '[]'");
   // OTPs are now stored hashed with a failed-attempt counter. Any pre-existing (plaintext) codes are dropped.
   const otpCols = db.prepare(`PRAGMA table_info(otps)`).all() as Array<{ name: string }>;
@@ -441,7 +464,23 @@ export function openDb(path: string) {
     db.prepare(`UPDATE accounts SET referral_code = ? WHERE id = ?`).run(generateReferralCode(row.id), row.id);
   }
 
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_accounts_email_lower ON accounts(lower(email));`);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_accounts_email_lower ON accounts(lower(email));
+    CREATE INDEX IF NOT EXISTS idx_accounts_created_at ON accounts(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_devices_account_revoked ON devices(account_id, revoked, last_seen DESC);
+    CREATE INDEX IF NOT EXISTS idx_entitlements_status_plan ON entitlements(status, plan);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_account_status ON subscriptions(account_id, status, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_invoices_account_created ON invoices(account_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_activities_account_created ON activities(account_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_activities_created ON activities(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_admin_notes_account_created ON admin_notes(account_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_name_created ON analytics_events(event_name, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_created ON analytics_events(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_crash_reports_created ON crash_reports(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_support_tickets_created ON support_tickets(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_outreach_logs_status_reached ON outreach_logs(status, reached_out_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_email_actions_type_actioned ON email_automation_logs(action_type, actioned_at DESC);
+  `);
 
   // Periodic TTL cleanup for high-append tables (#63 Partitioning)
   const runTtlCleanup = () => {
@@ -652,9 +691,9 @@ export class Repo {
     return this.db.prepare(`
       SELECT a.* FROM accounts a
       JOIN devices d ON a.id = d.account_id
-      WHERE d.token_hash = ? AND d.revoked = 0
+      WHERE (d.refresh_token_hash = ? OR d.token_hash = ?) AND d.revoked = 0
       LIMIT 1
-    `).get(hash) as Account | undefined;
+    `).get(hash, hash) as Account | undefined;
   }
 
   /** If `hash` matched a secondary device token rather than the primary account token, returns that device record. */
@@ -663,9 +702,9 @@ export class Repo {
     if (direct) return undefined;
     return this.db.prepare(`
       SELECT id, account_id FROM devices
-      WHERE token_hash = ? AND revoked = 0
+      WHERE (refresh_token_hash = ? OR token_hash = ?) AND revoked = 0
       LIMIT 1
-    `).get(hash) as { id: string; account_id: string } | undefined;
+    `).get(hash, hash) as { id: string; account_id: string } | undefined;
   }
 
   accountById(id: string): Account | undefined {
@@ -708,8 +747,8 @@ export class Repo {
   }
 
   setDeviceTokenHash(accountId: string, deviceId: string, tokenHash: string) {
-    this.db.prepare("UPDATE devices SET token_hash = ?, last_seen = ? WHERE account_id = ? AND id = ? AND revoked = 0")
-      .run(tokenHash, now(), accountId, deviceId);
+    this.db.prepare("UPDATE devices SET refresh_token_hash = ?, token_hash = ?, last_seen = ? WHERE account_id = ? AND id = ? AND revoked = 0")
+      .run(tokenHash, tokenHash, now(), accountId, deviceId);
   }
 
   deleteAccount(accountId: string): boolean {
@@ -740,12 +779,14 @@ export class Repo {
     return Number(r.changes) > 0;
   }
 
-  updateAccountProfile(accountId: string, updates: { name?: string; email?: string; notes?: string; country?: string | null; lead_device?: string | null; health_score?: number; lifecycle_stage?: string }) {
+  updateAccountProfile(accountId: string, updates: { name?: string; email?: string; company?: string | null; phone?: string | null; notes?: string; country?: string | null; lead_device?: string | null; health_score?: number; lifecycle_stage?: string }) {
     const t = now();
     const existing = this.accountById(accountId);
     if (!existing) return;
     const name = updates.name !== undefined ? updates.name : existing.name;
     const email = updates.email !== undefined ? updates.email : existing.email;
+    const company = updates.company !== undefined ? updates.company : (existing.company ?? null);
+    const phone = updates.phone !== undefined ? updates.phone : (existing.phone ?? null);
     const notes = updates.notes !== undefined ? updates.notes : existing.notes;
     const country = updates.country !== undefined ? (updates.country ? updates.country.trim().toUpperCase().slice(0, 8) : null) : existing.country;
     const lead_device = updates.lead_device !== undefined ? (updates.lead_device ? updates.lead_device.trim().slice(0, 64) : null) : existing.lead_device;
@@ -754,9 +795,9 @@ export class Repo {
 
     this.db.prepare(`
       UPDATE accounts
-      SET name = ?, email = ?, notes = ?, country = ?, lead_device = ?, health_score = ?, lifecycle_stage = ?, updated_at = ?
+      SET name = ?, email = ?, company = ?, phone = ?, notes = ?, country = ?, lead_device = ?, health_score = ?, lifecycle_stage = ?, updated_at = ?
       WHERE id = ?
-    `).run(name, email, notes, country, lead_device, health_score, lifecycle_stage, t, accountId);
+    `).run(name, email, company, phone, notes, country, lead_device, health_score, lifecycle_stage, t, accountId);
 
     this.addActivity({
       account_id: accountId,
@@ -817,7 +858,7 @@ export class Repo {
   }
 
   revokeDevice(accountId: string, deviceId: string, actor = "admin") {
-    this.db.prepare("UPDATE devices SET revoked = 1, token_hash = NULL WHERE id = ? AND account_id = ?").run(deviceId, accountId);
+    this.db.prepare("UPDATE devices SET revoked = 1, refresh_token_hash = NULL, token_hash = NULL WHERE id = ? AND account_id = ?").run(deviceId, accountId);
     this.addActivity({
       account_id: accountId,
       type: "device_revoked",
@@ -884,6 +925,11 @@ export class Repo {
   upsertEntitlement(e: Omit<Entitlement, "updated_at"> & { addons_list?: string[] }) {
     const t = now();
     const cancelFlag = e.cancel_at_period_end ? 1 : 0;
+    const existingEnt = this.entitlement(e.account_id);
+    const resolvedBonusSeconds =
+      typeof e.bonus_seconds === "number"
+        ? Math.max(0, Math.round(e.bonus_seconds))
+        : Math.max(0, Math.round(Number(existingEnt?.bonus_seconds ?? 0)));
     const existingAddons = this.addonsForAccount(e.account_id);
     let mergedAddons = existingAddons;
     if (Array.isArray(e.addons_list)) {
@@ -900,8 +946,8 @@ export class Repo {
     }
     const addonsJson = JSON.stringify(mergedAddons);
     this.db.prepare(`
-      INSERT INTO entitlements (account_id, stripe_subscription_id, status, plan, addons, current_period_end, cancel_at_period_end, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO entitlements (account_id, stripe_subscription_id, status, plan, addons, current_period_end, cancel_at_period_end, bonus_seconds, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET
         stripe_subscription_id = excluded.stripe_subscription_id,
         status = excluded.status,
@@ -909,41 +955,85 @@ export class Repo {
         addons = excluded.addons,
         current_period_end = excluded.current_period_end,
         cancel_at_period_end = excluded.cancel_at_period_end,
+        bonus_seconds = excluded.bonus_seconds,
         updated_at = excluded.updated_at
-    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, addonsJson, e.current_period_end, cancelFlag, t);
+    `).run(e.account_id, e.stripe_subscription_id, e.status, e.plan, addonsJson, e.current_period_end, cancelFlag, resolvedBonusSeconds, t);
 
-    // Also mirror to subscriptions table for CRM subscription history
-    const subId = e.stripe_subscription_id || `sub_${e.account_id}`;
-    const amount = e.plan === "annual" ? 6499 : e.plan === "six_month" ? 4799 : 1199;
+    // Also mirror to subscriptions table for CRM subscription history without overwriting existing custom prices
+    const existingSub = this.db
+      .prepare("SELECT * FROM subscriptions WHERE account_id = ? ORDER BY updated_at DESC, rowid DESC LIMIT 1")
+      .get(e.account_id) as SubscriptionRecord | undefined;
+    const subId = e.stripe_subscription_id || existingSub?.id || `sub_${e.account_id}`;
+    const isFreeOrNone =
+      e.plan === "giveaway_6m" ||
+      e.plan === "none" ||
+      e.status === "none" ||
+      e.status === "incomplete" ||
+      e.status === "incomplete_expired";
+    const defaultAmount = isFreeOrNone
+      ? 0
+      : e.plan === "lifetime"
+      ? 19900
+      : e.plan === "annual"
+      ? 6499
+      : e.plan === "six_month"
+      ? 4799
+      : 1199;
+    const defaultInterval =
+      e.plan === "lifetime"
+        ? "lifetime"
+        : e.plan === "annual"
+        ? "year"
+        : e.plan === "six_month" || e.plan === "giveaway_6m"
+        ? "6-month"
+        : "month";
+    const resolvedAmount =
+      isFreeOrNone
+        ? 0
+        : existingSub && existingSub.plan === (e.plan || "monthly") && existingSub.amount_cents > 0
+        ? existingSub.amount_cents
+        : defaultAmount;
+    const resolvedCurrency = existingSub?.currency || "usd";
+    const resolvedInterval =
+      existingSub && existingSub.plan === (e.plan || "monthly") && existingSub.billing_interval
+        ? existingSub.billing_interval
+        : defaultInterval;
+
     this.upsertSubscription({
       id: subId,
       account_id: e.account_id,
       stripe_subscription_id: e.stripe_subscription_id,
       status: e.status,
       plan: e.plan || "monthly",
-      amount_cents: amount,
-      currency: "usd",
-      billing_interval: e.plan === "annual" ? "year" : e.plan === "six_month" ? "6-month" : "month",
-      current_period_start: t,
+      amount_cents: resolvedAmount,
+      currency: resolvedCurrency,
+      billing_interval: resolvedInterval,
+      current_period_start: existingSub?.current_period_start ?? t,
       current_period_end: e.current_period_end,
       cancel_at_period_end: cancelFlag,
       canceled_at: e.status === "canceled" ? t : null,
-      trial_start: e.status === "trialing" ? t : null,
+      trial_start: e.status === "trialing" ? (existingSub?.trial_start ?? t) : null,
       trial_end: e.status === "trialing" ? e.current_period_end : null,
     });
 
     // Update account stage and health score
     let stage = "customer";
     let health = 100;
-    if (e.status === "trialing") {
+    if (e.status === "none" || e.status === "incomplete" || e.status === "incomplete_expired") {
+      stage = "lead";
+      health = 80;
+    } else if (e.status === "trialing") {
       stage = "trial";
       health = 90;
-    } else if (e.status === "past_due") {
+    } else if (e.status === "past_due" || e.status === "disputed") {
       stage = "past_due";
       health = 40;
     } else if (e.status === "canceled" || e.status === "unpaid") {
       stage = "churned";
       health = 10;
+    } else if (e.status === "paused") {
+      stage = "paused";
+      health = 70;
     }
     this.db.prepare("UPDATE accounts SET lifecycle_stage = ?, health_score = ?, updated_at = ? WHERE id = ?")
       .run(stage, health, t, e.account_id);
@@ -964,6 +1054,8 @@ export class Repo {
 
   upsertSubscription(sub: Omit<SubscriptionRecord, "created_at" | "updated_at">) {
     const t = now();
+    // Deduplicate any prior synthetic subscription rows for the same account so MRR and listCustomers never double-count
+    this.db.prepare("DELETE FROM subscriptions WHERE account_id = ? AND id != ?").run(sub.account_id, sub.id);
     this.db.prepare(`
       INSERT INTO subscriptions (
         id, account_id, stripe_subscription_id, status, plan, amount_cents, currency,
@@ -971,6 +1063,8 @@ export class Repo {
         canceled_at, trial_start, trial_end, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
+        account_id = excluded.account_id,
+        stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, subscriptions.stripe_subscription_id),
         status = excluded.status,
         plan = excluded.plan,
         amount_cents = excluded.amount_cents,
@@ -1083,7 +1177,7 @@ export class Repo {
 
     if (options.status && options.status !== "all") {
       if (options.status === "lead") {
-        conditions.push("(COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead')");
+        conditions.push("(COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR COALESCE(e.plan, '') = 'giveaway_6m')");
       } else {
         conditions.push("COALESCE(e.status, 'none') = ?");
         params.push(options.status);
@@ -1115,22 +1209,40 @@ export class Repo {
         a.name,
         a.stripe_customer_id,
         a.country,
-        COALESCE(a.lead_device, (SELECT CASE WHEN d.type = 'mobile' THEN 'Mobile App' WHEN d.type = 'pc' THEN 'Windows PC' ELSE d.type END FROM devices d WHERE d.account_id = a.id ORDER BY d.last_seen DESC LIMIT 1)) as lead_device,
+        COALESCE(a.lead_device, CASE WHEN dc.latest_type = 'mobile' THEN 'Mobile App' WHEN dc.latest_type = 'pc' THEN 'Windows PC' ELSE dc.latest_type END) as lead_device,
         COALESCE(e.status, 'none') as subscription_status,
         e.plan,
-        COALESCE(s.amount_cents, 999) as amount_cents,
-        COALESCE(s.billing_interval, 'month') as billing_interval,
+        CASE
+          WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR COALESCE(e.plan, '') = 'giveaway_6m' THEN 0
+          ELSE COALESCE(s.amount_cents, CASE WHEN e.plan = 'lifetime' THEN 19900 WHEN e.plan = 'annual' THEN 6499 WHEN e.plan = 'six_month' THEN 4799 ELSE 999 END)
+        END as amount_cents,
+        COALESCE(s.currency, 'usd') as currency,
+        COALESCE(s.billing_interval, CASE WHEN e.plan = 'lifetime' THEN 'lifetime' WHEN e.plan = 'annual' THEN 'year' WHEN e.plan IN ('six_month', 'giveaway_6m') THEN '6-month' ELSE 'month' END) as billing_interval,
         e.current_period_end,
         COALESCE(e.cancel_at_period_end, 0) as cancel_at_period_end,
-        (SELECT COUNT(*) FROM devices d WHERE d.account_id = a.id AND d.revoked = 0) as device_count,
+        COALESCE(dc.device_count, 0) as device_count,
         COALESCE(a.health_score, 100) as health_score,
         COALESCE(a.lifecycle_stage, 'lead') as lifecycle_stage,
         COALESCE(a.total_spend_cents, 0) as total_spend_cents,
-        (SELECT MAX(last_seen) FROM devices d WHERE d.account_id = a.id) as last_seen,
+        dc.last_seen as last_seen,
         a.created_at
       FROM accounts a
       LEFT JOIN entitlements e ON a.id = e.account_id
-      LEFT JOIN subscriptions s ON a.id = s.account_id
+      LEFT JOIN subscriptions s ON s.id = (
+        SELECT s2.id FROM subscriptions s2
+        WHERE s2.account_id = a.id
+        ORDER BY s2.updated_at DESC, s2.rowid DESC
+        LIMIT 1
+      )
+      LEFT JOIN (
+        SELECT
+          d.account_id,
+          SUM(CASE WHEN d.revoked = 0 THEN 1 ELSE 0 END) as device_count,
+          MAX(d.last_seen) as last_seen,
+          (SELECT d2.type FROM devices d2 WHERE d2.account_id = d.account_id ORDER BY d2.last_seen DESC LIMIT 1) as latest_type
+        FROM devices d
+        GROUP BY d.account_id
+      ) dc ON a.id = dc.account_id
       ${whereClause}
       ORDER BY a.created_at DESC
       LIMIT ? OFFSET ?
@@ -1161,6 +1273,7 @@ export class Repo {
         cancel_at_period_end: 0,
         updated_at: account.created_at,
       },
+      subscription: subscriptions[0] ?? null,
       subscriptions,
       devices,
       invoices,
@@ -1173,13 +1286,13 @@ export class Repo {
     const counts = this.db.prepare(`
       SELECT
         COUNT(DISTINCT a.id) as total_customers,
-        SUM(CASE WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR a.lifecycle_stage = 'lead' OR e.plan = 'giveaway_6m' THEN 1 ELSE 0 END) as leads_count,
+        SUM(CASE WHEN COALESCE(e.status, 'none') IN ('none', 'incomplete', 'incomplete_expired') OR COALESCE(e.plan, '') = 'giveaway_6m' THEN 1 ELSE 0 END) as leads_count,
         SUM(CASE WHEN e.status = 'active' AND COALESCE(e.plan, '') != 'giveaway_6m' THEN 1 ELSE 0 END) as active_subs,
         SUM(CASE WHEN e.status = 'trialing' THEN 1 ELSE 0 END) as trialing_subs,
-        SUM(CASE WHEN e.status = 'past_due' THEN 1 ELSE 0 END) as past_due_subs,
-        SUM(CASE WHEN e.status IN ('canceled', 'unpaid') THEN 1 ELSE 0 END) as canceled_subs,
+        SUM(CASE WHEN e.status IN ('past_due', 'disputed') THEN 1 ELSE 0 END) as past_due_subs,
+        SUM(CASE WHEN e.status IN ('canceled', 'unpaid', 'paused') THEN 1 ELSE 0 END) as canceled_subs,
         AVG(COALESCE(a.health_score, 100)) as avg_health,
-        SUM(CASE WHEN a.health_score < 50 OR e.status = 'past_due' THEN 1 ELSE 0 END) as at_risk
+        SUM(CASE WHEN a.health_score < 50 OR e.status IN ('past_due', 'disputed') THEN 1 ELSE 0 END) as at_risk
       FROM accounts a
       LEFT JOIN entitlements e ON a.id = e.account_id
     `).get() as {
@@ -1199,19 +1312,27 @@ export class Repo {
     const pastDueSubs = Number(counts.past_due_subs || 0);
     const canceledSubs = Number(counts.canceled_subs || 0);
 
-    // Active MRR from active subscriptions (default $9.99/mo)
+    // Active recurring MRR from active paid entitlements (normalized across year & 6-month intervals; excludes one-time lifetime & free giveaway_6m)
     const mrrRow = this.db.prepare(`
       SELECT SUM(
         CASE
-          WHEN s.billing_interval = 'year' THEN ROUND(s.amount_cents / 12)
-          ELSE s.amount_cents
+          WHEN COALESCE(e.plan, '') IN ('lifetime', 'giveaway_6m', 'none') OR COALESCE(s.billing_interval, '') = 'lifetime' THEN 0
+          WHEN COALESCE(s.billing_interval, '') = 'year' OR e.plan = 'annual' THEN ROUND(COALESCE(s.amount_cents, 6499) / 12.0)
+          WHEN COALESCE(s.billing_interval, '') IN ('6 months', '6-month', 'six_month') OR e.plan = 'six_month' THEN ROUND(COALESCE(s.amount_cents, 4799) / 6.0)
+          ELSE COALESCE(s.amount_cents, 999)
         END
       ) as mrr
-      FROM subscriptions s
-      WHERE s.status = 'active'
+      FROM entitlements e
+      LEFT JOIN subscriptions s ON s.id = (
+        SELECT s2.id FROM subscriptions s2
+        WHERE s2.account_id = e.account_id
+        ORDER BY s2.updated_at DESC, s2.rowid DESC
+        LIMIT 1
+      )
+      WHERE e.status = 'active' AND COALESCE(e.plan, '') != 'giveaway_6m'
     `).get() as { mrr: number | null };
 
-    const mrrCents = Number(mrrRow.mrr || (activeSubs * 999));
+    const mrrCents = Math.round(Number(mrrRow?.mrr ?? 0));
     const arrCents = mrrCents * 12;
 
     const deviceCountRow = this.db.prepare(`
@@ -1227,23 +1348,24 @@ export class Repo {
     const cutoff30d = nowSec - 30 * 86400;
     const cutoff7d = nowSec - 7 * 86400;
 
-    const dlRow = this.db.prepare(`
+    const evStatsRow = this.db.prepare(`
       SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
-        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
+        SUM(CASE WHEN event_name IN ('installer_downloaded', 'download_completed', 'download_started') THEN 1 ELSE 0 END) as dl_total,
+        SUM(CASE WHEN event_name IN ('installer_downloaded', 'download_completed', 'download_started') AND created_at >= ? THEN 1 ELSE 0 END) as dl_d30,
+        SUM(CASE WHEN event_name IN ('installer_downloaded', 'download_completed', 'download_started') AND created_at >= ? THEN 1 ELSE 0 END) as dl_d7,
+        SUM(CASE WHEN event_name IN ('app_installed', 'extension_installed', 'first_launch') THEN 1 ELSE 0 END) as inst_total,
+        SUM(CASE WHEN event_name IN ('app_installed', 'extension_installed', 'first_launch') AND created_at >= ? THEN 1 ELSE 0 END) as inst_d30,
+        SUM(CASE WHEN event_name IN ('app_installed', 'extension_installed', 'first_launch') AND created_at >= ? THEN 1 ELSE 0 END) as inst_d7
       FROM analytics_events
-      WHERE event_name IN ('installer_downloaded', 'download_completed', 'download_started')
-    `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
-
-    const instRow = this.db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d30,
-        SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as d7
-      FROM analytics_events
-      WHERE event_name IN ('app_installed', 'extension_installed', 'first_launch')
-    `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
+      WHERE event_name IN ('installer_downloaded', 'download_completed', 'download_started', 'app_installed', 'extension_installed', 'first_launch')
+    `).get(cutoff30d, cutoff7d, cutoff30d, cutoff7d) as {
+      dl_total: number | null;
+      dl_d30: number | null;
+      dl_d7: number | null;
+      inst_total: number | null;
+      inst_d30: number | null;
+      inst_d7: number | null;
+    };
 
     const devInstallRow = this.db.prepare(`
       SELECT
@@ -1253,17 +1375,21 @@ export class Repo {
       FROM devices
     `).get(cutoff30d, cutoff7d) as { total: number | null; d30: number | null; d7: number | null };
 
-    const downloadsTotal = Number(dlRow?.total || 0);
-    const downloads30d = Number(dlRow?.d30 || 0);
-    const downloads7d = Number(dlRow?.d7 || 0);
-    const installsTotal = Math.max(Number(instRow?.total || 0), Number(devInstallRow?.total || 0));
-    const installs30d = Math.max(Number(instRow?.d30 || 0), Number(devInstallRow?.d30 || 0));
-    const installs7d = Math.max(Number(instRow?.d7 || 0), Number(devInstallRow?.d7 || 0));
+    const outreachCountRow = this.db.prepare(`SELECT COUNT(*) as count FROM outreach_logs`).get() as { count: number };
+    const emailActionsCountRow = this.db.prepare(`SELECT COUNT(*) as count FROM email_automation_logs`).get() as { count: number };
+
+    const downloadsTotal = Number(evStatsRow?.dl_total || 0);
+    const downloads30d = Number(evStatsRow?.dl_d30 || 0);
+    const downloads7d = Number(evStatsRow?.dl_d7 || 0);
+    const installsTotal = Math.max(Number(evStatsRow?.inst_total || 0), Number(devInstallRow?.total || 0));
+    const installs30d = Math.max(Number(evStatsRow?.inst_d30 || 0), Number(devInstallRow?.d30 || 0));
+    const installs7d = Math.max(Number(evStatsRow?.inst_d7 || 0), Number(devInstallRow?.d7 || 0));
     const installConversionPct = downloadsTotal > 0 ? Math.min(100, Math.round((installsTotal / downloadsTotal) * 1000) / 10) : 0;
 
     return {
       totalCustomers: Number(counts.total_customers || 0),
       leadsCount,
+      leadAccountsCount: leadsCount,
       activeSubscriptions: activeSubs,
       trialingSubscriptions: trialingSubs,
       pastDueSubscriptions: pastDueSubs,
@@ -1283,6 +1409,8 @@ export class Repo {
       installs30d,
       installs7d,
       installConversionPct,
+      outreachTotal: Number(outreachCountRow?.count || 0),
+      emailActionsTotal: Number(emailActionsCountRow?.count || 0),
     };
   }
 
@@ -1527,8 +1655,10 @@ export class Repo {
     this.db.prepare(`UPDATE accounts SET referred_by = ?, updated_at = ? WHERE id = ?`).run(referrerCode, nowSec, referredAccountId);
 
     // Reward referrer with +30 days on their active/trialing entitlement
+    const bonusDeltaSec = 30 * 86400;
     const baseEnd = refEnt.current_period_end && refEnt.current_period_end > nowSec ? refEnt.current_period_end : nowSec;
-    const newEnd = baseEnd + 30 * 86400;
+    const newEnd = baseEnd + bonusDeltaSec;
+    const referrerBonusSec = Math.max(0, Number(refEnt.bonus_seconds ?? 0)) + bonusDeltaSec;
     this.upsertEntitlement({
       account_id: referrer.id,
       stripe_subscription_id: refEnt.stripe_subscription_id ?? null,
@@ -1536,6 +1666,7 @@ export class Repo {
       plan: refEnt.plan ?? "monthly",
       current_period_end: newEnd,
       cancel_at_period_end: refEnt.cancel_at_period_end ?? 0,
+      bonus_seconds: referrerBonusSec,
     });
 
     // Also grant the referred account +30 days (either extending existing entitlement or granting a 30-day Pro trial)
@@ -1543,7 +1674,8 @@ export class Repo {
     const referredActive =
       referredEnt && (referredEnt.status === "active" || referredEnt.status === "trialing") && (referredEnt.current_period_end ?? 0) > nowSec;
     const referredBaseEnd = referredActive && referredEnt?.current_period_end ? referredEnt.current_period_end : nowSec;
-    const referredNewEnd = referredBaseEnd + 30 * 86400;
+    const referredNewEnd = referredBaseEnd + bonusDeltaSec;
+    const referredBonusSec = Math.max(0, Number(referredEnt?.bonus_seconds ?? 0)) + bonusDeltaSec;
     this.upsertEntitlement({
       account_id: referredAccountId,
       stripe_subscription_id: referredEnt?.stripe_subscription_id ?? null,
@@ -1552,6 +1684,7 @@ export class Repo {
       addons_list: this.addonsForAccount(referredAccountId),
       current_period_end: referredNewEnd,
       cancel_at_period_end: referredEnt?.cancel_at_period_end ?? 0,
+      bonus_seconds: referredBonusSec,
     });
 
     this.addActivity({
@@ -1606,13 +1739,16 @@ export class Repo {
       return { ok: false, error: "no_active_subscription" };
     }
 
+    const winbackBonusSec = days * 86400;
     const baseEnd = ent.current_period_end && ent.current_period_end > nowSec ? ent.current_period_end : nowSec;
-    const newEnd = baseEnd + days * 86400;
+    const newEnd = baseEnd + winbackBonusSec;
+    const cumulativeBonusSec = Math.max(0, Number(ent.bonus_seconds ?? 0)) + winbackBonusSec;
     this.db.prepare(`UPDATE accounts SET winback_claimed = 1, updated_at = ? WHERE id = ?`).run(nowSec, accountId);
     this.upsertEntitlement({
       ...ent,
       current_period_end: newEnd,
       cancel_at_period_end: 0,
+      bonus_seconds: cumulativeBonusSec,
     });
 
     this.addActivity({
@@ -1625,6 +1761,19 @@ export class Repo {
     });
 
     return { ok: true, current_period_end: newEnd, status: ent.status };
+  }
+
+  /** Returns true if the webhook event has already been processed (idempotency). */
+  isWebhookProcessed(eventId: string): boolean {
+    const row = this.db.prepare("SELECT 1 AS ok FROM processed_events WHERE id = ? LIMIT 1").get(eventId);
+    return Boolean(row);
+  }
+
+  /** Marks a webhook event as processed after its handler succeeds without throwing. */
+  markWebhookProcessed(eventId: string): void {
+    const t = now();
+    this.db.prepare("DELETE FROM processed_events WHERE processed_at < ?").run(t - 30 * 86400);
+    this.db.prepare("INSERT OR IGNORE INTO processed_events (id, processed_at) VALUES (?, ?)").run(eventId, t);
   }
 
   /** Returns true if this is the first time we've seen the event (idempotency). */

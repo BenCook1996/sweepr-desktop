@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import RevenueCat
 import Security
 import UIKit
 
@@ -118,7 +119,9 @@ enum AccountService {
     private static let storageKey = "sweepr_linked_account_v1"
     private static let deviceKey = "sweepr_device_id_v1"
     private static let legacyRefreshTokenKey = "sweepr_refresh_token"
-    private static let keychainService = "com.sweepr.app.auth"
+    private static var keychainService: String {
+        "\(Bundle.main.bundleIdentifier ?? "com.sweepr.app").auth"
+    }
     private static let keychainAccount = "refresh_token"
 
     struct VerifiedTokenClaims {
@@ -287,6 +290,9 @@ enum AccountService {
             decoded.addons = []
             decoded.signedToken = nil
         }
+        if !decoded.accountId.isEmpty || !decoded.email.isEmpty {
+            syncRevenueCatIdentity(accountId: decoded.accountId, email: decoded.email)
+        }
         return decoded
     }
 
@@ -301,6 +307,9 @@ enum AccountService {
         sanitized.refreshToken = ""
         if let data = try? JSONEncoder().encode(sanitized) {
             UserDefaults.standard.set(data, forKey: storageKey)
+        }
+        if !account.accountId.isEmpty || !account.email.isEmpty {
+            syncRevenueCatIdentity(accountId: account.accountId, email: account.email)
         }
     }
 
@@ -607,6 +616,15 @@ enum AccountService {
             bearerToken: current.refreshToken
         )
         _ = clearAccount()
+    }
+
+    static func requestJSONInternal(
+        path: String,
+        method: String,
+        body: [String: Any],
+        bearerToken: String? = nil
+    ) async throws -> [String: Any] {
+        try await requestJSON(path: path, method: method, body: body, bearerToken: bearerToken)
     }
 
     private static func requestJSON(

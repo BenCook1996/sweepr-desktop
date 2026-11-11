@@ -60,12 +60,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.revenuecat.purchases.Purchases
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,6 +124,19 @@ fun AccountScreen(
     val context = LocalContext.current
     val sub = state.subscription
     val linked = state.linkedAccount
+
+    LaunchedEffect(linked.accountId, linked.email) {
+        if (Purchases.isConfigured) {
+            runCatching {
+                if (linked.accountId.isNotBlank()) {
+                    Purchases.shared.logIn(linked.accountId)
+                }
+                if (linked.email.isNotBlank()) {
+                    Purchases.shared.setEmail(linked.email)
+                }
+            }
+        }
+    }
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
     val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
@@ -245,6 +260,9 @@ fun AccountScreen(
                 Button(
                     enabled = !state.isWorking,
                     onClick = {
+                        if (Purchases.isConfigured && emailInput.isNotBlank()) {
+                            runCatching { Purchases.shared.setEmail(emailInput.trim()) }
+                        }
                         if (!otpSent) {
                             onSendOtp(emailInput) { otpSent = true }
                         } else {
@@ -279,7 +297,7 @@ fun AccountScreen(
             text = {
                 Column {
                     Text(
-                        "Scan the QR code on sweeprcleaner.com/dashboard or your PC app with your camera, or paste a pairing link / token (ptk_... or chk_...) below. Clean up to 5 devices total.",
+                        "Scan the QR code displayed in your desktop app with your camera, or paste a pairing link / token (ptk_... or chk_...) below. Clean up to 5 devices total.",
                         fontSize = 13.sp,
                         color = Color.Gray,
                     )
@@ -478,7 +496,7 @@ fun AccountScreen(
                         )
                     }
                     Text(
-                        "Reminds you to unplug at 80%, alerts you if your phone gets too hot, and clears background app clutter.",
+                        "80% Charge-Limit Unplug Guard, Thermal Sensor Alerts & Deep System Storage Settings Shortcut",
                         color = Color.Gray,
                         fontSize = 12.sp,
                     )
@@ -534,7 +552,7 @@ fun AccountScreen(
                         )
                     }
                     Text(
-                        "Locks private photos and documents with your own password and backs up important folders automatically.",
+                        "Locks private photos and documents with your own password in an AES-256-GCM On-Device Biometric Lockbox.",
                         color = Color.Gray,
                         fontSize = 12.sp,
                     )
@@ -679,22 +697,13 @@ fun AccountScreen(
                 )
             }
 
-            if (WEBSITE_URL.isNotBlank()) {
-                Spacer(Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextButton(onClick = { context.openUrl("$WEBSITE_URL/privacy") }) {
-                        Text(stringResource(R.string.about_privacy), fontSize = 12.sp)
-                    }
-                    TextButton(onClick = { context.openUrl("$WEBSITE_URL/terms") }) {
-                        Text(stringResource(R.string.about_terms), fontSize = 12.sp)
-                    }
-                    TextButton(onClick = { context.openUrl(GOOGLE_PLAY_SUBSCRIPTIONS_URL) }) {
-                        Text(stringResource(R.string.account_manage), fontSize = 12.sp)
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = { context.openUrl(GOOGLE_PLAY_SUBSCRIPTIONS_URL) }) {
+                    Text(stringResource(R.string.account_manage), fontSize = 12.sp)
                 }
             }
 
@@ -744,7 +753,6 @@ fun AboutScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(24.dp))
 
             if (WEBSITE_URL.isNotBlank()) {
-                SettingsItem(Icons.Default.Home, stringResource(R.string.about_website), WEBSITE_URL.removePrefix("https://")) { context.openUrl(WEBSITE_URL) }
                 SettingsItem(Icons.Default.Lock, stringResource(R.string.about_privacy), stringResource(R.string.about_privacy_detail)) {
                     context.openUrl("$WEBSITE_URL/privacy")
                 }

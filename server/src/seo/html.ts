@@ -95,11 +95,12 @@ function collectTypes(node: unknown, out: Set<string>, merchantIssues?: Set<stri
       if (!hasImage) {
         merchantIssues.add('Missing field "image"');
       }
-      if (!o.aggregateRating || typeof o.aggregateRating !== "object") {
-        merchantIssues.add('Missing field "aggregateRating"');
-      }
-      if (!o.review || (typeof o.review !== "object" && !Array.isArray(o.review))) {
-        merchantIssues.add('Missing field "review"');
+      if (o.aggregateRating && typeof o.aggregateRating === "object") {
+        const ar = o.aggregateRating as Record<string, unknown>;
+        const rc = Number(ar.reviewCount ?? ar.ratingCount ?? 0);
+        if (!Number.isFinite(rc) || rc < 5) {
+          merchantIssues.add('Unverified "aggregateRating" (< 5 verified reviews)');
+        }
       }
 
       const rawOffers = o.offers;

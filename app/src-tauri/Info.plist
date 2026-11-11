@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.utilities</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSDesktopFolderUsageDescription</key>
+  <string>SWEEPR Cleaner scans your Desktop folder locally to locate duplicate files and reclaim disk space.</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>SWEEPR Cleaner scans your Documents folder locally to locate duplicate files, stale developer artifacts, and large files.</string>
+  <key>NSDownloadsFolderUsageDescription</key>
+  <string>SWEEPR Cleaner scans your Downloads folder locally to locate old unused installers and duplicate files.</string>
+  <key>NSSystemAdministrationUsageDescription</key>
+  <string>SWEEPR Cleaner uses system permissions to inspect protected application caches and reclaim storage safely.</string>
+</dict>
+</plist>

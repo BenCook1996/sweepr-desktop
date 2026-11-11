@@ -331,9 +331,8 @@ input[type="checkbox"]:checked::before,
 ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.55); }
 
-@keyframes sweepr-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .spinner {
@@ -344,7 +343,7 @@ input[type="checkbox"]:checked::before,
   border-top-color: var(--accent) !important;
   border-right-color: rgba(16, 185, 129, 0.35);
   border-radius: 50%;
-  transform: rotate(var(--sweepr-spin, 0deg)) !important;
+  animation: spin 0.75s linear infinite;
   will-change: transform;
   margin: 0 auto;
 }

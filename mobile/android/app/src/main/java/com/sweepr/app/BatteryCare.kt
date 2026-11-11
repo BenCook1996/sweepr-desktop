@@ -280,6 +280,11 @@ object BatteryCareManager {
         return snap
     }
 
+    /**
+     * Clears only SWEEPR's own local app cache directory (`context.cacheDir` / `context.externalCacheDir`)
+     * as permitted under Android 11+ Scoped Storage. For clearing heavy third-party app caches,
+     * use [openSystemStorageSettings] to launch `Settings.ACTION_INTERNAL_STORAGE_SETTINGS`.
+     */
     fun trimAppCaches(context: Context): Long {
         var freed = 0L
         fun clearDir(dir: File?) {
@@ -297,6 +302,28 @@ object BatteryCareManager {
         clearDir(context.cacheDir)
         clearDir(context.externalCacheDir)
         return freed
+    }
+
+    /**
+     * Launches Android's system Internal Storage Settings (`Settings.ACTION_INTERNAL_STORAGE_SETTINGS`)
+     * so users can genuinely inspect and clear heavy third-party app caches in 1 tap.
+     */
+    fun openSystemStorageSettings(context: Context): Boolean {
+        val actions = listOf(
+            Settings.ACTION_INTERNAL_STORAGE_SETTINGS,
+            Settings.ACTION_MEMORY_CARD_SETTINGS,
+            Settings.ACTION_SETTINGS,
+        )
+        for (action in actions) {
+            try {
+                val intent = Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                return true
+            } catch (_: Exception) {
+                // Fall back to next settings action on custom OEM ROMs
+            }
+        }
+        return false
     }
 
     private fun ensureChannel(context: Context) {
@@ -336,7 +363,7 @@ object BatteryCareManager {
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     )
                     val title = "${loc.getString(R.string.app_name)} Overheat Guard — ${tempC}°C"
-                    val body = "Your battery temperature reached ${tempC}°C. Run 1-Tap Cache Cool-Down or unplug charger to reduce thermal wear."
+                    val body = "Your battery temperature reached ${tempC}°C. Unplug charger or open System Storage Settings to clear heavy app caches."
                     val notif = NotificationCompat.Builder(loc, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setColor(0xFFEF4444.toInt())
@@ -862,19 +889,18 @@ fun BatteryCareScreen(
                 }
             }
 
-            // 3. 1-Tap Cache Cool-Down
+            // 3. Deep System Storage Settings Shortcut & Local Cache Trim
             SweeprPanel(Modifier.fillMaxWidth()) {
-                Row(
+                Column(
                     Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         SweeprIconBadge(
                             kind = SweeprIconKind.SPARKLE_CLEAN,
@@ -882,34 +908,56 @@ fun BatteryCareScreen(
                             badgeSize = 36.dp,
                             iconSize = 18.dp,
                         )
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "1-Tap Cache Cool-Down",
+                                "Deep System Storage Settings Shortcut",
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                "Flush temporary app cache files & refresh memory telemetry",
+                                "80% Charge-Limit Unplug Guard, Thermal Sensor Alerts & Deep System Storage Settings Shortcut. Android 11+ Scoped Storage requires system settings to clear third-party app caches.",
                                 fontSize = 11.5.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
-                    Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            val freed = BatteryCareManager.trimAppCaches(context)
-                            snap = BatteryCareManager.readSnapshot(context)
-                            notice = if (freed > 0L) {
-                                "Cache Cool-Down complete — freed ${formatBytes(freed)}."
-                            } else {
-                                "Cache Cool-Down complete — temporary caches are already clean."
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("Cool Down", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Button(
+                            onClick = {
+                                val opened = BatteryCareManager.openSystemStorageSettings(context)
+                                if (!opened) {
+                                    notice = "Could not open Android Storage Settings on this device."
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("System Storage Settings", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                val freed = BatteryCareManager.trimAppCaches(context)
+                                snap = BatteryCareManager.readSnapshot(context)
+                                notice = if (freed > 0L) {
+                                    "Cleared ${formatBytes(freed)} of SWEEPR local app cache."
+                                } else {
+                                    "SWEEPR local cache is already clean (0 B)."
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text("Clear App Cache", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
                     }
                 }
             }

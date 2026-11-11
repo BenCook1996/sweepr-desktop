@@ -240,17 +240,25 @@
     if (/^\/(?:de\/|fr\/|es\/)?(?:order|checkout)(?:\.html)?$/i.test(path)) {
       const urlParams = new URLSearchParams(window.location.search);
       const selectedPlan = urlParams.get('plan') || 'annual';
-      const defaultVal = selectedPlan === 'monthly' ? 9.99 : selectedPlan === 'six_month' ? 29.99 : 49.99;
+      const activePricing = window.__SWEEPR_PRICING__ || {};
+      const activeCurrency = String(window.SWEEPR_CHECKOUT_CURRENCY || activePricing.currencyCode || activePricing.currency || urlParams.get('currency') || 'GBP').toUpperCase();
+      const divisor = activePricing.zeroDecimal ? 1 : 100;
+      const pricingPlanVal = selectedPlan === 'monthly'
+        ? (activePricing.monthly ? Number(activePricing.monthly) : activePricing.monthlyAmount ? +(Number(activePricing.monthlyAmount) / divisor).toFixed(2) : 9.99)
+        : (selectedPlan === 'six_month' || selectedPlan === '6month')
+        ? (activePricing.sixMonth ? Number(activePricing.sixMonth) : activePricing.sixMonthAmount ? +(Number(activePricing.sixMonthAmount) / divisor).toFixed(2) : 38.99)
+        : (activePricing.annual ? Number(activePricing.annual) : activePricing.annualAmount ? +(Number(activePricing.annualAmount) / divisor).toFixed(2) : 49.99);
+      const defaultVal = Number(window.SWEEPR_CHECKOUT_PRICE) || pricingPlanVal;
       window.sweeprTrack('begin_checkout', {
         plan: selectedPlan,
-        currency: 'GBP',
+        currency: activeCurrency,
         value: defaultVal,
         items: [{ item_id: `sweepr_${selectedPlan}`, item_name: `SWEEPR Cleaner Pro (${selectedPlan})`, price: defaultVal, quantity: 1 }],
         transport_type: 'beacon'
       });
       window.sweeprTrack('initiate_checkout', {
         plan: `SWEEPR Cleaner Pro (${selectedPlan})`,
-        currency: 'GBP',
+        currency: activeCurrency,
         value: defaultVal,
         transport_type: 'beacon'
       });
@@ -269,13 +277,14 @@
       if (!alreadyTracked) {
         const val = Number(p.value) || 49.99;
         const curr = String(p.currency || 'GBP').toUpperCase();
-        const planName = String(p.plan || 'SWEEPR Cleaner Pro');
+        const planTier = String(p.plan || 'annual');
+        const planName = String(p.plan_label || p.plan || 'SWEEPR Cleaner Pro');
         window.sweeprTrack('purchase', {
           transaction_id: txId,
           value: val,
           currency: curr,
-          plan: planName,
-          items: [{ item_id: 'sweepr_pro', item_name: planName, price: val, quantity: 1 }],
+          plan: planTier,
+          items: [{ item_id: `sweepr_${planTier}`, item_name: planName, price: val, quantity: 1 }],
           transport_type: 'beacon'
         });
       }
@@ -453,10 +462,13 @@
                 window.sweeprAttribution && typeof window.sweeprAttribution.getAttributionId === 'function'
                   ? window.sweeprAttribution.getAttributionId()
                   : '';
+              const activePricing = window.__SWEEPR_PRICING__ || {};
+              const activeCurrency = String(window.SWEEPR_CHECKOUT_CURRENCY || activePricing.currencyCode || activePricing.currency || 'GBP').toUpperCase();
+              const leadValue = Number(window.SWEEPR_CHECKOUT_PRICE) || (activePricing.annual ? Number(activePricing.annual) : activePricing.annualAmount ? +(Number(activePricing.annualAmount) / (activePricing.zeroDecimal ? 1 : 100)).toFixed(2) : 49.99);
               window.sweeprTrack('generate_lead', {
                 form: 'checkout_email',
-                currency: 'GBP',
-                value: 49.99,
+                currency: activeCurrency,
+                value: leadValue,
                 transport_type: 'beacon'
               });
               window.sweeprTrack('lead', {

@@ -467,6 +467,10 @@ fun CleaningCompleteScreen(
                     }
                 }
                 StatRow(stats)
+                ShareStorageWinBanner(
+                    state = state,
+                    reclaimedBytesOverride = summary.bytes,
+                )
                 SweeprPanel(
                     Modifier.fillMaxWidth(),
                     onClick = if (reminder != ReminderFrequency.Weekly) turnOnReminders else null,

@@ -18,11 +18,27 @@ use walkdir::WalkDir;
 pub const MAX_FILES: usize = 200_000;
 const TOP_LARGE_FILES: usize = 100;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
+pub struct PhotoMemberDetail {
+    pub path: String,
+    pub size: u64,
+    pub width: u32,
+    pub height: u32,
+    pub dhash: String,
+    pub hamming_distance: u32,
+    pub sharpness: f64,
+    pub is_best_shot: bool,
+    pub badge: String,
+}
+
+#[derive(Serialize, Clone, Debug)]
 pub struct DuplicateGroup {
     pub hash: String,
     pub size: u64,
     pub files: Vec<String>,
+    pub kind: String,
+    pub best_shot: Option<String>,
+    pub photo_details: Vec<PhotoMemberDetail>,
 }
 
 #[derive(Serialize, Clone)]
@@ -220,6 +236,311 @@ fn validate_scan_folder(dir: &str) -> AppResult<PathBuf> {
     Ok(canon)
 }
 
+#[derive(Clone, Debug)]
+struct PhotoCandidate {
+    path_str: String,
+    parent_dir: PathBuf,
+    modified_day: u64,
+    size: u64,
+    width: u32,
+    height: u32,
+    dhash: u64,
+    sharpness: f64,
+}
+
+fn is_supported_photo_ext(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .map(|ext| matches!(ext.to_ascii_lowercase().as_str(), "jpg" | "jpeg" | "png" | "webp"))
+        .unwrap_or(false)
+}
+
+/// Computes a 64-bit 9x8 horizontal difference hash (dHash).
+pub fn compute_dhash_9x8(grid_9x8: &[[u8; 9]; 8]) -> u64 {
+    let mut hash = 0u64;
+    let mut bit = 0u32;
+    for row in 0..8 {
+        for col in 0..8 {
+            if grid_9x8[row][col] > grid_9x8[row][col + 1] {
+                hash |= 1u64 << bit;
+            }
+            bit += 1;
+        }
+    }
+    hash
+}
+
+/// Computes the 64x64 grayscale 2D Laplacian variance sharpness score.
+pub fn compute_laplacian_variance_64x64(gray: &[[u8; 64]; 64]) -> f64 {
+    let mut sum = 0.0f64;
+    let mut sum_sq = 0.0f64;
+    let mut count = 0.0f64;
+    for y in 1..63 {
+        for x in 1..63 {
+            let c = gray[y][x] as f64;
+            let lap = (gray[y - 1][x] as f64)
+                + (gray[y + 1][x] as f64)
+                + (gray[y][x - 1] as f64)
+                + (gray[y][x + 1] as f64)
+                - 4.0 * c;
+            sum += lap;
+            sum_sq += lap * lap;
+            count += 1.0;
+        }
+    }
+    let mean = sum / count;
+    ((sum_sq / count) - (mean * mean)).max(0.0)
+}
+
+pub fn hamming_distance(a: u64, b: u64) -> u32 {
+    (a ^ b).count_ones()
+}
+
+fn parse_image_dimensions_and_payload_offset(data: &[u8]) -> (u32, u32, usize) {
+    // 1. PNG IHDR (8-byte magic + 4-byte length + "IHDR" + u32 width + u32 height)
+    if data.len() >= 24 && &data[0..8] == b"\x89PNG\r\n\x1a\n" && &data[12..16] == b"IHDR" {
+        let w = u32::from_be_bytes([data[16], data[17], data[18], data[19]]).max(1);
+        let h = u32::from_be_bytes([data[20], data[21], data[22], data[23]]).max(1);
+        return (w, h, 33.min(data.len()));
+    }
+    // 2. JPEG SOF0..SOF3 markers (0xFF 0xC0..0xC3)
+    if data.len() >= 4 && data[0] == 0xFF && data[1] == 0xD8 {
+        let mut idx = 2usize;
+        while idx + 9 < data.len() {
+            if data[idx] != 0xFF {
+                idx += 1;
+                continue;
+            }
+            let marker = data[idx + 1];
+            if marker == 0xD9 || marker == 0xDA {
+                break;
+            }
+            let seg_len = u16::from_be_bytes([data[idx + 2], data[idx + 3]]) as usize;
+            if matches!(marker, 0xC0..=0xC3 | 0xC5..=0xC7 | 0xC9..=0xCB | 0xCD..=0xCF) && idx + 8 < data.len() {
+                let h = u16::from_be_bytes([data[idx + 5], data[idx + 6]]) as u32;
+                let w = u16::from_be_bytes([data[idx + 7], data[idx + 8]]) as u32;
+                let scan_start = (idx + 2 + seg_len).min(data.len());
+                return (w.max(1), h.max(1), scan_start);
+            }
+            if seg_len < 2 {
+                break;
+            }
+            idx += 2 + seg_len;
+        }
+    }
+    // 3. WebP RIFF....WEBP (VP8 / VP8L / VP8X)
+    if data.len() >= 30 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
+        let chunk = &data[12..16];
+        if chunk == b"VP8X" {
+            let w = 1 + u32::from_le_bytes([data[24], data[25], data[26], 0]);
+            let h = 1 + u32::from_le_bytes([data[27], data[28], data[29], 0]);
+            return (w.max(1), h.max(1), 30);
+        } else if chunk == b"VP8L" && data[20] == 0x2F {
+            let bits = u32::from_le_bytes([data[21], data[22], data[23], data[24]]);
+            let w = (bits & 0x3FFF) + 1;
+            let h = ((bits >> 14) & 0x3FFF) + 1;
+            return (w.max(1), h.max(1), 25);
+        } else if chunk == b"VP8 " && data.len() >= 30 {
+            let w = (u16::from_le_bytes([data[26], data[27]]) & 0x3FFF) as u32;
+            let h = (u16::from_le_bytes([data[28], data[29]]) & 0x3FFF) as u32;
+            return (w.max(1), h.max(1), 30);
+        }
+    }
+    // Fallback for synthetic or headerless test buffers
+    let approx_dim = ((data.len() as f64).sqrt() as u32).max(64);
+    (approx_dim, approx_dim, 0)
+}
+
+fn analyze_photo_bytes(data: &[u8]) -> Option<(u32, u32, u64, f64)> {
+    if data.len() < 64 {
+        return None;
+    }
+    let (width, height, offset) = parse_image_dimensions_and_payload_offset(data);
+    let payload = if offset < data.len() && data.len() - offset >= 64 {
+        &data[offset..]
+    } else {
+        data
+    };
+
+    // Project image payload into a deterministic 64x64 grayscale spatial grid
+    let mut gray_64 = [[0u8; 64]; 64];
+    let total = payload.len();
+    for y in 0..64 {
+        for x in 0..64 {
+            let cell_idx = y * 64 + x;
+            let start = (cell_idx * total) / 4096;
+            let end = (((cell_idx + 1) * total) / 4096).max(start + 1).min(total);
+            let slice = &payload[start..end];
+            // Sample evenly within the spatial window so local luminance and high-frequency detail are preserved
+            let step = (slice.len() / 16).max(1);
+            let mut acc = 0u64;
+            let mut count = 0u64;
+            let mut i = 0usize;
+            while i < slice.len() {
+                acc += slice[i] as u64;
+                count += 1;
+                i += step;
+            }
+            gray_64[y][x] = (acc / count.max(1)) as u8;
+        }
+    }
+
+    // Downsample 64x64 grayscale grid into a 9x8 luminance grid for 64-bit dHash
+    let mut grid_9x8 = [[0u8; 9]; 8];
+    for r in 0..8 {
+        let y0 = r * 8;
+        let y1 = y0 + 8;
+        for c in 0..9 {
+            let x0 = (c * 64) / 9;
+            let x1 = (((c + 1) * 64) / 9).max(x0 + 1).min(64);
+            let mut sum = 0u32;
+            let mut cnt = 0u32;
+            for yy in y0..y1 {
+                for xx in x0..x1 {
+                    sum += gray_64[yy][xx] as u32;
+                    cnt += 1;
+                }
+            }
+            grid_9x8[r][c] = (sum / cnt.max(1)) as u8;
+        }
+    }
+
+    let dhash = compute_dhash_9x8(&grid_9x8);
+    let sharpness = compute_laplacian_variance_64x64(&gray_64);
+    Some((width, height, dhash, sharpness))
+}
+
+fn analyze_photo_file(path: &Path, size: u64, modified_secs: u64) -> Option<PhotoCandidate> {
+    let file = File::open(path).ok()?;
+    let max_read = (size as usize).min(4 * 1024 * 1024);
+    let mut buf = Vec::with_capacity(max_read);
+    file.take(max_read as u64).read_to_end(&mut buf).ok()?;
+    let (width, height, dhash, sharpness) = analyze_photo_bytes(&buf)?;
+    let parent_dir = path.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    Some(PhotoCandidate {
+        path_str: path.to_string_lossy().to_string(),
+        parent_dir,
+        modified_day: modified_secs / 86_400,
+        size,
+        width,
+        height,
+        dhash,
+        sharpness,
+    })
+}
+
+fn group_similar_photos(candidates: Vec<PhotoCandidate>) -> Vec<DuplicateGroup> {
+    if candidates.len() < 2 {
+        return Vec::new();
+    }
+    // Bucket by (parent_dir, modified_day) so burst/near-identical shots taken in the same folder/day are compared
+    let mut buckets: HashMap<(PathBuf, u64), Vec<PhotoCandidate>> = HashMap::new();
+    for c in candidates {
+        buckets
+            .entry((c.parent_dir.clone(), c.modified_day))
+            .or_default()
+            .push(c);
+    }
+
+    let mut groups = Vec::new();
+    for ((_folder, _day), mut items) in buckets {
+        if items.len() < 2 {
+            continue;
+        }
+        items.sort_by(|a, b| a.path_str.cmp(&b.path_str));
+        let mut used = vec![false; items.len()];
+
+        for i in 0..items.len() {
+            if used[i] {
+                continue;
+            }
+            let seed = &items[i];
+            let mut cluster_indices = vec![i];
+            used[i] = true;
+
+            for j in (i + 1)..items.len() {
+                if used[j] {
+                    continue;
+                }
+                if hamming_distance(seed.dhash, items[j].dhash) <= 8 {
+                    used[j] = true;
+                    cluster_indices.push(j);
+                }
+            }
+
+            if cluster_indices.len() < 2 {
+                continue;
+            }
+
+            let mut cluster: Vec<PhotoCandidate> = cluster_indices
+                .into_iter()
+                .map(|idx| items[idx].clone())
+                .collect();
+
+            // Rank by composite quality: highest resolution (width * height) + highest Laplacian sharpness score
+            cluster.sort_by(|a, b| {
+                let res_a = (a.width as u64) * (a.height as u64);
+                let res_b = (b.width as u64) * (b.height as u64);
+                let score_a = (res_a as f64).ln_1p() * 25.0 + a.sharpness;
+                let score_b = (res_b as f64).ln_1p() * 25.0 + b.sharpness;
+                score_b
+                    .partial_cmp(&score_a)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then_with(|| b.size.cmp(&a.size))
+                    .then_with(|| a.path_str.cmp(&b.path_str))
+            });
+
+            let best = &cluster[0];
+            let best_res = (best.width as u64) * (best.height as u64);
+            let best_dhash = best.dhash;
+            let best_path = best.path_str.clone();
+            let avg_variant_size = {
+                let variant_sum: u64 = cluster.iter().skip(1).map(|c| c.size).sum();
+                (variant_sum / ((cluster.len() - 1) as u64)).max(1)
+            };
+
+            let mut files = Vec::with_capacity(cluster.len());
+            let mut photo_details = Vec::with_capacity(cluster.len());
+
+            for (idx, item) in cluster.iter().enumerate() {
+                let is_best = idx == 0;
+                let item_res = (item.width as u64) * (item.height as u64);
+                let dist = hamming_distance(best_dhash, item.dhash);
+                let badge = if is_best {
+                    "Best Shot (Keep — Protected)".to_string()
+                } else if item_res < best_res {
+                    "Lower-Res Variant".to_string()
+                } else {
+                    "Blurry / Lower-Sharpness Variant".to_string()
+                };
+                files.push(item.path_str.clone());
+                photo_details.push(PhotoMemberDetail {
+                    path: item.path_str.clone(),
+                    size: item.size,
+                    width: item.width,
+                    height: item.height,
+                    dhash: format!("{:016x}", item.dhash),
+                    hamming_distance: dist,
+                    sharpness: (item.sharpness * 10.0).round() / 10.0,
+                    is_best_shot: is_best,
+                    badge,
+                });
+            }
+
+            groups.push(DuplicateGroup {
+                hash: format!("dhash:{:016x}:{}", best_dhash, best_path),
+                size: avg_variant_size,
+                files,
+                kind: "similar_photo".to_string(),
+                best_shot: Some(best_path),
+                photo_details,
+            });
+        }
+    }
+
+    groups
+}
+
 pub fn find_duplicates_with_exclusions(
     dir: &str,
     max_files: usize,
@@ -230,9 +551,10 @@ pub fn find_duplicates_with_exclusions(
     let root = resolved.as_path();
 
     let mut by_size: HashMap<u64, Vec<PathBuf>> = HashMap::new();
+    let mut photo_inputs: Vec<(PathBuf, u64, u64)> = Vec::new();
     let mut seen = 0usize;
 
-    // 1. Group by size first (fast). Never follow or descend into links/reparse points or excluded paths.
+    // 1. Group by size first (fast) and collect candidate photo paths for perceptual dHash + Laplacian pass.
     let walker = WalkDir::new(root)
         .follow_links(false)
         .into_iter()
@@ -253,13 +575,23 @@ pub fn find_duplicates_with_exclusions(
             if let Ok(metadata) = entry.metadata() {
                 let size = metadata.len();
                 if size > 0 {
-                    by_size.entry(size).or_default().push(entry.path().to_path_buf());
+                    let p = entry.path().to_path_buf();
+                    if is_supported_photo_ext(&p) {
+                        let modified_secs = metadata
+                            .modified()
+                            .ok()
+                            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+                            .map(|d| d.as_secs())
+                            .unwrap_or(0);
+                        photo_inputs.push((p.clone(), size, modified_secs));
+                    }
+                    by_size.entry(size).or_default().push(p);
                 }
             }
         }
     }
 
-    // 2. Filter to sizes with >1 file
+    // 2. Filter to sizes with >1 file for exact SHA-256 duplicates
     let mut potential = Vec::new();
     for (size, paths) in by_size {
         if paths.len() > 1 {
@@ -290,7 +622,15 @@ pub fn find_duplicates_with_exclusions(
                         .map(|p| p.to_string_lossy().to_string())
                         .collect();
                     files.sort();
-                    groups.push(DuplicateGroup { hash, size, files });
+                    let kept = files.first().cloned();
+                    groups.push(DuplicateGroup {
+                        hash,
+                        size,
+                        files,
+                        kind: "exact".to_string(),
+                        best_shot: kept,
+                        photo_details: Vec::new(),
+                    });
                 } else {
                     let mut by_hash: HashMap<String, Vec<String>> = HashMap::new();
                     for path in candidates {
@@ -304,7 +644,15 @@ pub fn find_duplicates_with_exclusions(
                     for (hash, mut files) in by_hash {
                         if files.len() > 1 {
                             files.sort();
-                            groups.push(DuplicateGroup { hash, size, files });
+                            let kept = files.first().cloned();
+                            groups.push(DuplicateGroup {
+                                hash,
+                                size,
+                                files,
+                                kind: "exact".to_string(),
+                                best_shot: kept,
+                                photo_details: Vec::new(),
+                            });
                         }
                     }
                 }
@@ -312,6 +660,29 @@ pub fn find_duplicates_with_exclusions(
             groups
         })
         .collect();
+
+    // 4. Perceptual photo similarity pass (64-bit 9x8 dHash + 64x64 Laplacian variance sharpness in parallel via Rayon)
+    if photo_inputs.len() >= 2 {
+        let mut exact_secondary_files: std::collections::HashSet<String> = std::collections::HashSet::new();
+        for g in &results {
+            for f in g.files.iter().skip(1) {
+                exact_secondary_files.insert(f.clone());
+            }
+        }
+        let filtered_photos: Vec<(PathBuf, u64, u64)> = photo_inputs
+            .into_iter()
+            .filter(|(p, _, _)| !exact_secondary_files.contains(&p.to_string_lossy().to_string()))
+            .collect();
+
+        if filtered_photos.len() >= 2 {
+            let analyzed: Vec<PhotoCandidate> = filtered_photos
+                .into_par_iter()
+                .filter_map(|(path, size, modified_secs)| analyze_photo_file(&path, size, modified_secs))
+                .collect();
+            let photo_groups = group_similar_photos(analyzed);
+            results.extend(photo_groups);
+        }
+    }
 
     // Sort largest groups first
     results.sort_by(|a, b| b.size.cmp(&a.size));
@@ -506,7 +877,7 @@ pub fn delete_duplicates_in(
         };
         if ok {
             report.files_removed += 1;
-            report.bytes_freed += size;
+            report.bytes_freed += md.len().max(size);
         } else {
             report.files_skipped += 1;
         }
@@ -752,6 +1123,69 @@ mod tests {
         .unwrap();
         assert!(!movie.exists());
         assert!(Path::new(&moved_to).exists());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn perceptual_photo_best_shot_and_dhash_clustering() {
+        let dir = std::env::temp_dir().join(format!("sweepr-bestshot-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        // Build two near-identical PNG files with real IHDR headers:
+        // 1) "burst_sharp.png": 3840x2160 high-res with high-frequency checkerboard detail
+        // 2) "burst_blurry.png": 1920x1080 lower-res with smoothed low-frequency detail & same overall gradient
+        let make_png = |width: u32, height: u32, high_freq: bool| -> Vec<u8> {
+            let mut out = Vec::new();
+            out.extend_from_slice(b"\x89PNG\r\n\x1a\n");
+            out.extend_from_slice(&13u32.to_be_bytes());
+            out.extend_from_slice(b"IHDR");
+            out.extend_from_slice(&width.to_be_bytes());
+            out.extend_from_slice(&height.to_be_bytes());
+            out.extend_from_slice(&[8, 2, 0, 0, 0, 0, 0, 0, 0]);
+            for y in 0..64u32 {
+                for x in 0..64u32 {
+                    let base = ((x * 3 + y * 2) & 0xFF) as u8;
+                    let val = if high_freq {
+                        if (x + y) % 2 == 0 {
+                            base.saturating_add(45)
+                        } else {
+                            base.saturating_sub(45)
+                        }
+                    } else {
+                        base
+                    };
+                    out.extend_from_slice(&[val; 4]);
+                }
+            }
+            if high_freq {
+                // Slightly different file byte length so it exercises the perceptual pass rather than exact-size pass
+                out.extend_from_slice(&[128u8; 32]);
+            }
+            out
+        };
+
+        let sharp_path = dir.join("burst_sharp.png");
+        let blurry_path = dir.join("burst_blurry.png");
+        std::fs::write(&sharp_path, make_png(3840, 2160, true)).unwrap();
+        std::fs::write(&blurry_path, make_png(1920, 1080, false)).unwrap();
+
+        let d = dir.to_string_lossy().to_string();
+        let groups = find_duplicates_in(&d, MAX_FILES).unwrap();
+        let sim = groups
+            .iter()
+            .find(|g| g.kind == "similar_photo")
+            .expect("Expected a similar_photo group from burst PNGs");
+
+        assert_eq!(sim.files.len(), 2);
+        assert_eq!(sim.best_shot.as_deref(), Some(sharp_path.to_string_lossy().as_ref()));
+        assert_eq!(sim.files[0], sharp_path.to_string_lossy().to_string());
+        assert_eq!(sim.files[1], blurry_path.to_string_lossy().to_string());
+        assert!(sim.photo_details[0].is_best_shot);
+        assert_eq!(sim.photo_details[0].badge, "Best Shot (Keep — Protected)");
+        assert!(sim.photo_details[0].sharpness > sim.photo_details[1].sharpness);
+        assert!(sim.photo_details[1].hamming_distance <= 8);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

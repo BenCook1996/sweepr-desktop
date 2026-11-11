@@ -17,12 +17,13 @@
     type UnplugAlert,
   } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
+  import { resolveFilePathSafetyIntelligence } from "./lib/cache-intelligence";
 
-  type Tab = "cleaner" | "speed" | "space" | "apps" | "privacy" | "account";
+  type Tab = "cleaner" | "speed" | "space" | "apps" | "privacy" | "cloud" | "account";
   let tab = $state<Tab>("cleaner");
   const activeTab = $derived(tab);
   let speedMode = $state<"pc" | "battery">("pc");
-  let toolsMode = $state<"privacy" | "apps" | "space">("privacy");
+  let toolsMode = $state<"privacy" | "apps" | "space" | "cloud">("privacy");
   let accountSection = $state<"schedule" | "account">("account");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
@@ -327,6 +328,19 @@
       run: () => toggleSidebar(),
     },
     {
+      id: "cmd-safety-check",
+      label: "Paste Any Folder Path -> Instant Safety Check (377 Verified Rules)",
+      group: "Safety Check",
+      keywords: "safe to delete folder path safety check cache intelligence what happens if deleted",
+      run: () => {
+        const q = cmdQuery.trim();
+        tab = "cleaner";
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("sweepr-safety-check", { detail: { query: q } }));
+        }, 40);
+      },
+    },
+    {
       id: "cmd-target-peripheral",
       label: "Clean Logitech G HUB, Razer Synapse & iCUE Caches",
       group: "Targeted Cache Cleanup",
@@ -390,6 +404,20 @@
         (c.keywords && c.keywords.toLowerCase().includes(q))
     );
   });
+
+  const cmdSafetyIntel = $derived.by(() => {
+    const q = cmdQuery.trim();
+    if (q.length < 2) return null;
+    return resolveFilePathSafetyIntelligence(q);
+  });
+
+  function openSafetyCheckFromCmd(query: string) {
+    showCommandPalette = false;
+    tab = "cleaner";
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("sweepr-safety-check", { detail: { query } }));
+    }, 40);
+  }
 
   function openCommandPalette() {
     cmdQuery = "";
@@ -646,6 +674,7 @@
           class="nav-tab nav-item"
           class:active={tab === "cleaner"}
           aria-current={tab === "cleaner" ? "page" : undefined}
+          title={`Smart Clean (${modKeyLabel}1)`}
           onclick={() => (tab = "cleaner")}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -660,6 +689,7 @@
           class="nav-tab nav-item"
           class:active={tab === "speed"}
           aria-current={tab === "speed" ? "page" : undefined}
+          title={`Speed & Battery (${modKeyLabel}2)`}
           onclick={() => (tab = "speed")}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -672,8 +702,9 @@
 
         <button
           class="nav-tab nav-item"
-          class:active={tab === "space" || tab === "apps" || tab === "privacy"}
-          aria-current={tab === "space" || tab === "apps" || tab === "privacy" ? "page" : undefined}
+          class:active={tab === "space" || tab === "apps" || tab === "privacy" || tab === "cloud"}
+          aria-current={tab === "space" || tab === "apps" || tab === "privacy" || tab === "cloud" ? "page" : undefined}
+          title={`Storage & Privacy Tools (${modKeyLabel}4)`}
           onclick={() => (tab = toolsMode)}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -703,6 +734,7 @@
           <button
             class="nav-tab nav-item account-pill"
             class:active={tab === "account"}
+            title={`Settings (${modKeyLabel},)`}
             onclick={() => {
               tab = "account";
             }}
@@ -806,11 +838,11 @@
     {/if}
 
     <main class="main-content content-area">
-      {#if tab === "space" || tab === "apps" || tab === "privacy"}
+      {#if tab === "space" || tab === "apps" || tab === "privacy" || tab === "cloud"}
         <div class="tools-subbar">
           <button
             class="tools-pill"
-            class:active={tab === "privacy"}
+            class:active={tab === "privacy" || tab === "cloud"}
             onclick={() => { toolsMode = "privacy"; tab = "privacy"; }}
           >
             {t("nav.privacy", $lang)}
@@ -855,6 +887,9 @@
                 } else if (tool === "privacy" || tool === "shredder") {
                   toolsMode = "privacy";
                   tab = "privacy";
+                } else if (tool === "cloud") {
+                  toolsMode = "cloud";
+                  tab = "cloud";
                 } else if (tool === "schedule") {
                   accountSection = "schedule";
                   tab = "account";
@@ -869,6 +904,8 @@
             <Apps {license} />
           {:else if tab === "privacy"}
             <Privacy {license} />
+          {:else if tab === "cloud"}
+            <Privacy {license} initialSubView="vault" />
           {:else if tab === "account"}
             <Account
               {license}
@@ -901,7 +938,7 @@
               bind:this={cmdInputEl}
               type="text"
               bind:value={cmdQuery}
-              placeholder="Type a command or tool name (e.g. Scan, Battery, Vault, Shredder, Undo)…"
+              placeholder="Paste any folder path -> Instant Safety Check, or type a command…"
               class="cmd-input"
               onkeydown={(e) => {
                 if (e.key === "ArrowDown") {
@@ -913,11 +950,41 @@
                 } else if (e.key === "Enter" && filteredCommands[cmdSelectedIndex]) {
                   e.preventDefault();
                   executeCommand(filteredCommands[cmdSelectedIndex]);
+                } else if (e.key === "Enter" && cmdSafetyIntel) {
+                  e.preventDefault();
+                  openSafetyCheckFromCmd(cmdQuery.trim());
                 }
               }}
             />
             <kbd class="cmd-esc">Esc</kbd>
           </div>
+          {#if cmdSafetyIntel}
+            <div class="cmd-safety-card" role="region" aria-label="Instant Folder Safety Check">
+              <div class="cmd-safety-head">
+                <span
+                  class="cmd-safety-badge"
+                  class:is-safe={cmdSafetyIntel.safetyBadge === "100% Safe Automated"}
+                  class:is-review={cmdSafetyIntel.safetyBadge !== "100% Safe Automated"}
+                >
+                  {cmdSafetyIntel.safetyBadge}
+                </span>
+                <span class="cmd-safety-owner">Owner: <strong>{cmdSafetyIntel.owner}</strong></span>
+                <code class="cmd-safety-path">{cmdSafetyIntel.path}</code>
+              </div>
+              <p class="cmd-safety-copy"><strong>What it is:</strong> {cmdSafetyIntel.whatItIs}</p>
+              <p class="cmd-safety-copy"><strong>If deleted:</strong> {cmdSafetyIntel.whatHappensIfDeleted}</p>
+              <div class="cmd-safety-foot">
+                <span class="cmd-safety-rebuild">Rebuild: {cmdSafetyIntel.rebuildCost}</span>
+                <button
+                  type="button"
+                  class="cmd-safety-open-btn"
+                  onclick={() => openSafetyCheckFromCmd(cmdQuery.trim())}
+                >
+                  Open in Cleaner Safety Check →
+                </button>
+              </div>
+            </div>
+          {/if}
           <div class="cmd-list" role="listbox">
             {#each filteredCommands as cmd, idx (cmd.id)}
               <button
@@ -1538,6 +1605,82 @@
   .cmd-empty {
     padding: 18px;
     text-align: center;
+  }
+
+  .cmd-safety-card {
+    margin: 8px 10px 4px 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 12px;
+  }
+  .cmd-safety-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cmd-safety-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .cmd-safety-badge.is-safe {
+    background: #10b981;
+    color: #ffffff;
+  }
+  .cmd-safety-badge.is-review {
+    background: #f59e0b;
+    color: #111827;
+  }
+  .cmd-safety-owner {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .cmd-safety-path {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 10.5px;
+    background: var(--panel);
+    padding: 1px 6px;
+    border-radius: 5px;
+    word-break: break-all;
+  }
+  .cmd-safety-copy {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .cmd-safety-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .cmd-safety-open-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 2px 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #10b981;
+    cursor: pointer;
+  }
+  .cmd-safety-open-btn:hover {
+    text-decoration: underline;
   }
 
   .force-update-backdrop {

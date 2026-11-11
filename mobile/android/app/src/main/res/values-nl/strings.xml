@@ -439,4 +439,20 @@
         <item quantity="one">%d oude agenda-afspraak verwijderd</item>
         <item quantity="other">%d oude agenda-afspraken verwijderd</item>
     </plurals>
+
+    <string name="action_continue">Doorgaan</string>
+    <string name="dashboard_limited_access_banner">%1$d geselecteerde foto\'s scannen — Selectie beheren</string>
+    <string name="media_disclosure_title">Toelichting op toegang tot foto\'s en video\'s</string>
+    <string name="media_disclosure_body">SWEEPR Cleaner vraagt uitsluitend toegang tot je foto\'s, video\'s en locatiemetadata om lokaal op je toestel te scannen op duplicaten, vergelijkbare foto\'s, wazige opnamen, screenshots en grote bestanden.\n\n100% van het scannen gebeurt offline op je telefoon — je foto\'s, video\'s en GPS-gegevens worden nooit naar een server geüpload.</string>
+    <string name="contacts_disclosure_title">Toelichting op toegang tot contacten en agenda</string>
+    <string name="contacts_disclosure_body">SWEEPR Cleaner vraagt uitsluitend toegang tot je contacten en agenda om dubbele contacten samen te voegen of verlopen agenda-afspraken lokaal op je toestel op te schonen.\n\nJe adresboek- en agendagegevens verlaten nooit je telefoon.</string>
+    <string name="deeplink_approve_title">Desktop-aanmelding goedkeuren?</string>
+    <string name="deeplink_link_title">SWEEPR-account koppelen?</string>
+    <string name="deeplink_approve_body">Desktop-aanmelding goedkeuren? Een computer vraagt toegang tot je SWEEPR Pro-abonnement.</string>
+    <string name="deeplink_link_body">SWEEPR-account koppelen? Wil je dit apparaat koppelen met de geopende koppelingslink?</string>
+    <string name="deeplink_approve_confirm">Goedkeuren</string>
+    <string name="deeplink_link_confirm">Apparaat koppelen</string>
+    <string name="update_required_title">Update vereist (v%1$s)</string>
+    <string name="update_required_default_body">Er is een essentiële beveiligings- en stabiliteitsupdate vereist om SWEEPR Cleaner te blijven gebruiken.</string>
+    <string name="update_required_cta">Updaten op Google Play</string>
 </resources>

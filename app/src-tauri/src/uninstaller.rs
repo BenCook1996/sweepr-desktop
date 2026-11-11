@@ -798,36 +798,53 @@ fn find_exe_paths_in_str(s: &str, out: &mut Vec<String>) {
     let bytes = s.as_bytes();
     let mut i = 0usize;
     while i + 6 < bytes.len() {
-        let c = bytes[i];
-        let is_drive = c.is_ascii_alphabetic()
-            && bytes[i + 1] == b':'
-            && bytes[i + 2] == b'\\'
-            && (i == 0 || !bytes[i - 1].is_ascii_alphanumeric());
+        let Some(rest) = s.get(i..) else {
+            i += 1;
+            continue;
+        };
+        let mut chars = rest.chars();
+        let Some(first) = chars.next() else {
+            break;
+        };
+        let prev_char = s.get(..i).and_then(|prefix| prefix.chars().next_back());
+        let is_drive = first.is_ascii_alphabetic()
+            && rest.as_bytes().get(1) == Some(&b':')
+            && rest.as_bytes().get(2) == Some(&b'\\')
+            && !prev_char.map(|ch| ch.is_alphanumeric()).unwrap_or(false);
         if is_drive {
             let mut end = i + 3;
-            while end < bytes.len() {
-                let b = bytes[end];
-                if b < 0x20 || b >= 0x7F || matches!(b, b'"' | b'<' | b'>' | b'|' | b'?' | b'*') {
-                    break;
+            if let Some(after_drive) = s.get(end..) {
+                for ch in after_drive.chars() {
+                    if ch < ' '
+                        || ch == '\u{7f}'
+                        || ch.is_control()
+                        || matches!(ch, '"' | '<' | '>' | '|' | '?' | '*')
+                    {
+                        break;
+                    }
+                    end += ch.len_utf8();
                 }
-                end += 1;
             }
-            let candidate = &s[i..end];
-            if let Some(pos) = candidate.to_ascii_lowercase().find(".exe") {
-                let exe_path = candidate[..pos + 4].trim().to_string();
-                let lower = exe_path.to_ascii_lowercase();
-                if exe_path.len() > 7
-                    && !exe_path.contains('%')
-                    && !lower.contains("\\windows\\installer\\")
-                    && !lower.contains("\\windows\\system32\\")
-                    && !out.iter().any(|p| p.eq_ignore_ascii_case(&exe_path))
-                {
-                    out.push(exe_path);
+            if let Some(candidate) = s.get(i..end) {
+                let lower_cand = candidate.to_ascii_lowercase();
+                if let Some(pos) = lower_cand.find(".exe") {
+                    if let Some(raw_exe) = candidate.get(..pos + 4) {
+                        let exe_path = raw_exe.trim().to_string();
+                        let lower = exe_path.to_lowercase();
+                        if exe_path.len() > 7
+                            && !exe_path.contains('%')
+                            && !lower.contains("\\windows\\installer\\")
+                            && !lower.contains("\\windows\\system32\\")
+                            && !out.iter().any(|p| p.to_lowercase() == lower)
+                        {
+                            out.push(exe_path);
+                        }
+                    }
                 }
             }
             i = end;
         } else {
-            i += 1;
+            i += first.len_utf8();
         }
     }
 }
@@ -841,15 +858,19 @@ fn extract_lnk_exe_targets(bytes: &[u8]) -> Vec<String> {
         .collect();
     find_exe_paths_in_str(&ascii, &mut out);
 
-    // 2. Scan UTF-16LE segments (aligned and 1-byte offset)
+    // 2. Scan UTF-16LE wide-string segments (aligned and 1-byte offset), supporting Unicode paths (e.g. C:\Users\Jürgen\...)
     for offset in [0usize, 1usize] {
         if bytes.len() > offset + 2 {
             let u16s: Vec<u16> = bytes[offset..]
                 .chunks_exact(2)
                 .map(|c| u16::from_le_bytes([c[0], c[1]]))
-                .map(|u| if (0x20..0x7F).contains(&u) { u } else { 0 })
                 .collect();
-            let utf16_str = String::from_utf16_lossy(&u16s);
+            let utf16_str: String = std::char::decode_utf16(u16s.into_iter())
+                .map(|r| match r {
+                    Ok(ch) if ch >= ' ' && ch != '\u{7f}' && !ch.is_control() => ch,
+                    _ => '\0',
+                })
+                .collect();
             find_exe_paths_in_str(&utf16_str, &mut out);
         }
     }
@@ -1151,16 +1172,37 @@ Mozilla Firefox    Mozilla.Firefox     122.0     124.0.1   winget
         good_lnk_bytes.push(0);
         std::fs::write(&good_lnk, &good_lnk_bytes).unwrap();
 
+        // Verify UTF-16LE wide string extraction with non-ASCII Windows username (e.g. C:\Users\Jürgen\...)
+        let unicode_sub = dir.join("Jürgen");
+        std::fs::create_dir_all(&unicode_sub).unwrap();
+        let unicode_exe = unicode_sub.join("UnicodeApp.exe");
+        std::fs::write(&unicode_exe, b"MZ").unwrap();
+        let unicode_lnk = dir.join("UnicodeApp.lnk");
+        let mut unicode_lnk_bytes = vec![0x4C, 0x00, 0x00, 0x00, 0x00]; // 1-byte unaligned offset before UTF-16LE
+        for u in unicode_exe.to_string_lossy().encode_utf16() {
+            unicode_lnk_bytes.extend_from_slice(&u.to_le_bytes());
+        }
+        unicode_lnk_bytes.extend_from_slice(&[0x00, 0x00]);
+        std::fs::write(&unicode_lnk, &unicode_lnk_bytes).unwrap();
+        let extracted_unicode = extract_lnk_exe_targets(&unicode_lnk_bytes);
+        assert!(
+            extracted_unicode.iter().any(|p| p.contains("Jürgen") && p.ends_with("UnicodeApp.exe")),
+            "expected UTF-16LE target with Jürgen, got: {:?}",
+            extracted_unicode
+        );
+
         let found = scan_broken_items_in_roots(std::slice::from_ref(&dir), std::slice::from_ref(&dir));
         assert_eq!(found.len(), 2);
 
         let mut paths: Vec<String> = found.iter().map(|i| i.path.clone()).collect();
         paths.push(good_lnk.to_string_lossy().into_owned());
+        paths.push(unicode_lnk.to_string_lossy().into_owned());
         let cleaned = clean_broken_items_in_roots(&paths, std::slice::from_ref(&dir)).unwrap();
         assert_eq!(cleaned, 2);
         assert!(!empty_sub.exists());
         assert!(!bad_lnk.exists());
         assert!(good_lnk.exists(), "valid .lnk must not be deleted");
+        assert!(unicode_lnk.exists(), "valid UTF-16LE Unicode .lnk must not be deleted");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -8,6 +8,11 @@ struct ContactEntry: Identifiable, Hashable {
     let organization: String
     let phones: [String]
     let emails: [String]
+    var hasPostalAddress: Bool = false
+    var hasBirthday: Bool = false
+    var hasNote: Bool = false
+    var hasSocialProfile: Bool = false
+    var hasUrlAddress: Bool = false
 
     var displayName: String {
         if !fullName.isEmpty { return fullName }
@@ -16,16 +21,22 @@ struct ContactEntry: Identifiable, Hashable {
     }
 
     var incompleteReason: String? {
-        let hasName = !fullName.isEmpty || !organization.isEmpty
-        let hasReachability = !phones.isEmpty || !emails.isEmpty
-        if !hasName && !hasReachability {
-            return "Empty contact (no name, phone, or email)"
-        } else if !hasName {
-            return "Missing contact name"
-        } else if !hasReachability {
-            return "No phone number or email address"
+        // Only flag a contact as 'Incomplete' if ALL of phone, email, postal address, birthday, and URL are empty
+        let hasAllContactFieldsEmpty = phones.isEmpty &&
+            emails.isEmpty &&
+            !hasPostalAddress &&
+            !hasBirthday &&
+            !hasUrlAddress &&
+            !hasSocialProfile &&
+            !hasNote
+        guard hasAllContactFieldsEmpty else {
+            return nil
         }
-        return nil
+        let hasName = !fullName.isEmpty || !organization.isEmpty
+        if !hasName {
+            return "Empty contact (no name, phone, email, address, birthday, or URL)"
+        }
+        return "No phone, email, postal address, birthday, or URL"
     }
 }
 
@@ -223,32 +234,62 @@ enum ContactsCleaner {
 
     private static func performScan() -> ContactsScanResult {
         let store = CNContactStore()
-        let keys: [CNKeyDescriptor] = [
+        let baseKeys: [CNKeyDescriptor] = [
             CNContactIdentifierKey as CNKeyDescriptor,
             CNContactGivenNameKey as CNKeyDescriptor,
             CNContactFamilyNameKey as CNKeyDescriptor,
             CNContactOrganizationNameKey as CNKeyDescriptor,
             CNContactPhoneNumbersKey as CNKeyDescriptor,
-            CNContactEmailAddressesKey as CNKeyDescriptor
+            CNContactEmailAddressesKey as CNKeyDescriptor,
+            CNContactPostalAddressesKey as CNKeyDescriptor,
+            CNContactBirthdayKey as CNKeyDescriptor,
+            CNContactSocialProfilesKey as CNKeyDescriptor,
+            CNContactUrlAddressesKey as CNKeyDescriptor
         ]
-        let request = CNContactFetchRequest(keysToFetch: keys)
+        let keysWithNotes: [CNKeyDescriptor] = baseKeys + [
+            CNContactNoteKey as CNKeyDescriptor
+        ]
         var all: [ContactEntry] = []
 
-        try? store.enumerateContacts(with: request) { contact, _ in
+        let appendContact: (CNContact) -> Void = { contact in
             let name = "\(contact.givenName) \(contact.familyName)"
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let org = contact.organizationName.trimmingCharacters(in: .whitespacesAndNewlines)
             let phones = contact.phoneNumbers.map { $0.value.stringValue }
             let emails = contact.emailAddresses.map { $0.value as String }
+            let hasPostal = contact.isKeyAvailable(CNContactPostalAddressesKey) && !contact.postalAddresses.isEmpty
+            let hasBday = contact.isKeyAvailable(CNContactBirthdayKey) && contact.birthday != nil
+            let hasNote = contact.isKeyAvailable(CNContactNoteKey) &&
+                !contact.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            let hasSocial = contact.isKeyAvailable(CNContactSocialProfilesKey) && !contact.socialProfiles.isEmpty
+            let hasUrl = contact.isKeyAvailable(CNContactUrlAddressesKey) && !contact.urlAddresses.isEmpty
             all.append(
                 ContactEntry(
                     id: contact.identifier,
                     fullName: name,
                     organization: org,
                     phones: phones,
-                    emails: emails
+                    emails: emails,
+                    hasPostalAddress: hasPostal,
+                    hasBirthday: hasBday,
+                    hasNote: hasNote,
+                    hasSocialProfile: hasSocial,
+                    hasUrlAddress: hasUrl
                 )
             )
+        }
+
+        do {
+            let requestWithNotes = CNContactFetchRequest(keysToFetch: keysWithNotes)
+            try store.enumerateContacts(with: requestWithNotes) { contact, _ in
+                appendContact(contact)
+            }
+        } catch {
+            all.removeAll()
+            let fallbackRequest = CNContactFetchRequest(keysToFetch: baseKeys)
+            try? store.enumerateContacts(with: fallbackRequest) { contact, _ in
+                appendContact(contact)
+            }
         }
 
         var usedIDs = Set<String>()

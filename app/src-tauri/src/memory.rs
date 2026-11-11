@@ -1,6 +1,8 @@
 //! Honest memory insights: who is using RAM, and what launches at startup.
-//! We deliberately do NOT "purge" RAM. Emptying working sets/file caches
-//! usually makes modern OSes slower.
+//! We never globally purge OS file caches or system-wide RAM. On Windows, optional
+//! browser tab taming (`tame_browser_memory`) selectively calls `SetPriorityClass`
+//! (`BELOW_NORMAL_PRIORITY_CLASS`) and `K32EmptyWorkingSet` only on inactive background
+//! browser tab renderer / extension worker processes, reporting the exact measured RSS delta.
 
 use crate::error::{AppError, AppResult};
 use serde::{Deserialize, Serialize};
@@ -876,12 +878,7 @@ pub fn tame_browser_memory(
         }
     }
     let measured_freed = before_bytes.saturating_sub(after_bytes);
-    let fallback_estimate = before_bytes * 38 / 100;
-    let bytes_freed = if measured_freed > 0 {
-        measured_freed
-    } else {
-        fallback_estimate
-    };
+    let bytes_freed = measured_freed;
 
     Ok(BrowserTameResult {
         tabs_tamed,
@@ -1013,14 +1010,14 @@ pub fn boost_gaming_mode() -> GamingBoostResult {
 #[derive(Serialize, Clone)]
 pub struct SystemHealthDetails {
     pub uptime_seconds: u64,
-    pub last_boot_seconds: Option<u64>,
+    pub last_boot_seconds: Option<f32>,
     pub battery_percent: Option<u8>,
     pub battery_status: Option<String>,
     pub is_ssd: bool,
 }
 
 #[cfg(windows)]
-fn query_windows_boot_seconds() -> Option<u64> {
+fn query_windows_boot_seconds() -> Option<f32> {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
@@ -1047,7 +1044,8 @@ fn query_windows_boot_seconds() -> Option<u64> {
                     let digits: String = rest.chars().filter(|c| c.is_ascii_digit()).collect();
                     if let Ok(ms) = digits.parse::<u64>() {
                         if ms >= 1000 {
-                            return Some((ms / 1000).clamp(3, 300));
+                            let secs = ((ms as f32 / 1000.0).clamp(3.0, 300.0) * 10.0).round() / 10.0;
+                            return Some(secs);
                         }
                     }
                 }
@@ -1055,12 +1053,11 @@ fn query_windows_boot_seconds() -> Option<u64> {
         }
     }
 
-    let enabled_count = startup_items().into_iter().filter(|s| s.enabled).count() as u64;
-    Some(12 + enabled_count * 2)
+    None
 }
 
 #[cfg(not(windows))]
-fn query_windows_boot_seconds() -> Option<u64> {
+fn query_windows_boot_seconds() -> Option<f32> {
     None
 }
 
@@ -1276,6 +1273,8 @@ pub struct TabSessionSnapshot {
     pub created_at: u64,
     pub browsers: Vec<String>,
     pub estimated_tabs: u32,
+    #[serde(default)]
+    pub tab_count: u32,
     pub bytes: u64,
 }
 
@@ -1463,6 +1462,7 @@ pub fn backup_tab_sessions(
         created_at: ts,
         browsers: browsers_backed_up,
         estimated_tabs,
+        tab_count: estimated_tabs,
         bytes: total_bytes,
     };
 

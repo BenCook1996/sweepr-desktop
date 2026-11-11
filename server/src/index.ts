@@ -29,6 +29,9 @@ import {
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
 import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "./seo/competitor-intel.js";
 import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
+import { runCloudGoogleSeoSync } from "./seo/google.js";
+import { verifyBacklinks } from "./seo/backlinks.js";
+import { generateWeeklyContentToProductReport } from "./seo/product-advisor.js";
 import { recordAutomationRunStatus } from "./crm.js";
 
 process.on("uncaughtException", (err) => {
@@ -37,14 +40,28 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (reason) => {
   console.error("[fatal-guard] Unhandled rejection:", reason);
 });
-process.on("SIGTERM", () => {
-  console.log("[lifecycle] Received SIGTERM, shutting down cleanly.");
+const activeIntervals: ReturnType<typeof setInterval>[] = [];
+const activeTimeouts: ReturnType<typeof setTimeout>[] = [];
+let shuttingDown = false;
+function gracefulShutdown(signal: "SIGTERM" | "SIGINT"): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[lifecycle] Received ${signal}, clearing background timers and closing SQLite cleanly.`);
+  for (const intervalHandle of activeIntervals) {
+    clearInterval(intervalHandle);
+  }
+  activeIntervals.length = 0;
+  for (const timeoutHandle of activeTimeouts) {
+    clearTimeout(timeoutHandle);
+  }
+  activeTimeouts.length = 0;
+  try {
+    repo.db.close();
+  } catch {}
   process.exit(0);
-});
-process.on("SIGINT", () => {
-  console.log("[lifecycle] Received SIGINT, shutting down cleanly.");
-  process.exit(0);
-});
+}
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 const repo = openDb(config.databasePath);
 let signingKey;
@@ -203,7 +220,11 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   }
 
   // 1. Every 5 minutes (+ T+15s boot): A3 Download-to-Install Recovery + A10 Scan/Checkout & Giveaway GOTD50 Sweep
+  let running5m = false;
   const runFiveMinuteConversionSweeps = async () => {
+    if (running5m) return;
+    running5m = true;
+    try {
     const t0A3 = Date.now();
     try {
       const resA3 = await evaluateDownloadRecoverySessions(repo);
@@ -264,12 +285,23 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
         error: String(err?.message || err),
       });
     }
+    } finally {
+      running5m = false;
+    }
   };
-  setTimeout(runFiveMinuteConversionSweeps, 15_000).unref?.();
-  setInterval(runFiveMinuteConversionSweeps, 5 * 60_000).unref?.();
+  const timeout5m = setTimeout(runFiveMinuteConversionSweeps, 15_000);
+  timeout5m.unref?.();
+  const interval5m = setInterval(runFiveMinuteConversionSweeps, 5 * 60_000);
+  interval5m.unref?.();
+  activeTimeouts.push(timeout5m);
+  activeIntervals.push(interval5m);
 
   // 2. Every 6 hours (+ T+30s boot): A1 Telemetry Truth & Storage Benchmark + A4 Bloat Watch + A12 GEO Index + A15 Competitor Freshness
+  let running6h = false;
   const runSixHourSeoIntelligence = async () => {
+    if (running6h) return;
+    running6h = true;
+    try {
     const seoStore = new SeoStore(repo.db);
     const t0A1 = Date.now();
     try {
@@ -349,13 +381,46 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
         error: String(err?.message || err),
       });
     }
+    } finally {
+      running6h = false;
+    }
   };
-  setTimeout(runSixHourSeoIntelligence, 30_000).unref?.();
-  setInterval(runSixHourSeoIntelligence, 6 * 3600 * 1000).unref?.();
+  const timeout6h = setTimeout(runSixHourSeoIntelligence, 30_000);
+  timeout6h.unref?.();
+  const interval6h = setInterval(runSixHourSeoIntelligence, 6 * 3600 * 1000);
+  interval6h.unref?.();
+  activeTimeouts.push(timeout6h);
+  activeIntervals.push(interval6h);
 
-  // 3. Every 12 hours (+ T+45s boot): A2 Intent-Gap -> A16 Competitor Intel -> A7 Keyword Discovery -> A17 Forecast Ledger -> A18 Self-Healing Refresh -> A8 ROAS -> A9 Experiments -> A6 Renewal Recap -> Stripe Reconcile
+  // 3. Every 12 hours (+ T+45s boot): A21 Google Cloud GSC/CWV Sync -> A2 Intent-Gap -> A16 Competitor Intel -> A7 Keyword Discovery -> A17 Forecast Ledger -> A18 Self-Healing Refresh -> A19 Link Booster -> A8 ROAS -> A9 Experiments -> A6 Renewal Recap -> Stripe Reconcile
+  let running12h = false;
   const runTwelveHourLifecycleAndSeo = async () => {
+    if (running12h) return;
+    running12h = true;
+    try {
     const seoStore = new SeoStore(repo.db);
+
+    const t0A21 = Date.now();
+    try {
+      const cloudRes = await runCloudGoogleSeoSync(seoStore, config.seo, {
+        days: 90,
+        maxInspectUrls: 6,
+        runCwv: true,
+        persistQueue: false,
+      });
+      recordAutomationRunStatus("A21_google_cloud_gsc_cwv_sync", {
+        status: "ok",
+        durationMs: Date.now() - t0A21,
+        summary: { ...cloudRes },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A21_google_cloud_gsc_cwv_sync", {
+        status: "error",
+        durationMs: Date.now() - t0A21,
+        error: String(err?.message || err),
+      });
+    }
+
     const t0A2 = Date.now();
     try {
       const nowMs = Date.now();
@@ -571,16 +636,33 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
         });
       }
     }
+    } finally {
+      running12h = false;
+    }
   };
-  setTimeout(runTwelveHourLifecycleAndSeo, 45_000).unref?.();
-  setInterval(runTwelveHourLifecycleAndSeo, 12 * 3600 * 1000).unref?.();
+  const timeout12h = setTimeout(runTwelveHourLifecycleAndSeo, 45_000);
+  timeout12h.unref?.();
+  const interval12h = setInterval(runTwelveHourLifecycleAndSeo, 12 * 3600 * 1000);
+  interval12h.unref?.();
+  activeTimeouts.push(timeout12h);
+  activeIntervals.push(interval12h);
 
-  // 4. Every 7 days (+ T+20s boot): A5 Weekly Listing Freshness & Auto-Publish Crawler
+  // 4. Every 7 days (+ T+20s boot): A5 Weekly Listing Freshness + Backlink Verifier + A20 Weekly Content-to-Product Advisor
+  let running7d = false;
   const runWeeklyListingAudit = async () => {
+    if (running7d) return;
+    running7d = true;
+    try {
+    const seoStore = new SeoStore(repo.db);
     const t0A5 = Date.now();
     try {
-      const seoStore = new SeoStore(repo.db);
       const res = await checkDirectoryListings(seoStore, { targetDomain: "sweeprcleaner.com" });
+      let backlinksChecked = 0;
+      try {
+        const unverified = seoStore.listBacklinks("unverified");
+        const blRes = await verifyBacklinks(seoStore, unverified);
+        backlinksChecked = blRes.checked;
+      } catch {}
       recordAutomationRunStatus("A5_directory_listings", {
         status: "ok",
         durationMs: Date.now() - t0A5,
@@ -588,6 +670,7 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
           current_count: res.current_count,
           stale_count: res.stale_count,
           open_crm_tasks: res.open_crm_tasks,
+          backlinks_verified: backlinksChecked,
         },
       });
       console.log(
@@ -601,7 +684,38 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       });
       console.warn(`[a5-listings] Directory listing audit warning: ${err?.message || err}`);
     }
+
+    const t0A20 = Date.now();
+    try {
+      const adv = generateWeeklyContentToProductReport(seoStore, { persist: true });
+      recordAutomationRunStatus("A20_weekly_product_content_advisor", {
+        status: "ok",
+        durationMs: Date.now() - t0A20,
+        summary: {
+          week_id: adv.week_id,
+          total_catalog_pages: adv.summary.total_catalog_pages,
+          weekly_produced_or_enriched_count: adv.summary.weekly_produced_or_enriched_count,
+          proposals_count: adv.summary.proposals_count,
+          top_proposal_title: adv.summary.top_proposal_title,
+          top_proposal_score: adv.summary.top_proposal_score,
+          read_only_mode: adv.read_only_mode,
+        },
+      });
+    } catch (err: any) {
+      recordAutomationRunStatus("A20_weekly_product_content_advisor", {
+        status: "error",
+        durationMs: Date.now() - t0A20,
+        error: String(err?.message || err),
+      });
+    }
+    } finally {
+      running7d = false;
+    }
   };
-  setTimeout(runWeeklyListingAudit, 20_000).unref?.();
-  setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000).unref?.();
+  const timeout7d = setTimeout(runWeeklyListingAudit, 20_000);
+  timeout7d.unref?.();
+  const interval7d = setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000);
+  interval7d.unref?.();
+  activeTimeouts.push(timeout7d);
+  activeIntervals.push(interval7d);
 });

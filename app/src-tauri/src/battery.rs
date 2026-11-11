@@ -365,6 +365,58 @@ fn powershell(script: &str) -> Option<String> {
 }
 
 #[cfg(windows)]
+#[repr(C)]
+struct SystemPowerStatus {
+    ac_line_status: u8,
+    battery_flag: u8,
+    battery_life_percent: u8,
+    system_status_flag: u8,
+    battery_life_time: u32,
+    battery_full_life_time: u32,
+}
+
+/// Lightweight (<0.05ms, zero process creation) Win32 `GetSystemPowerStatus` FFI check
+/// used by the background tray monitor. Returns `present: false` when `BatteryFlag == 128`
+/// (no system battery, i.e., desktop PC) so the background loop exits cleanly.
+#[cfg(windows)]
+fn read_lightweight_battery_status() -> RawBattery {
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn GetSystemPowerStatus(lp_system_power_status: *mut SystemPowerStatus) -> i32;
+    }
+    let mut sps = SystemPowerStatus {
+        ac_line_status: 255,
+        battery_flag: 255,
+        battery_life_percent: 255,
+        system_status_flag: 0,
+        battery_life_time: u32::MAX,
+        battery_full_life_time: u32::MAX,
+    };
+    let ok = unsafe { GetSystemPowerStatus(&mut sps) };
+    if ok == 0 || (sps.battery_flag & 128) != 0 || sps.battery_flag == 255 {
+        return RawBattery {
+            present: false,
+            ..Default::default()
+        };
+    }
+    let charge_percent = (sps.battery_life_percent <= 100).then_some(sps.battery_life_percent);
+    let ac_connected = sps.ac_line_status == 1;
+    let charging = (sps.battery_flag & 8) != 0;
+    RawBattery {
+        present: true,
+        charge_percent,
+        ac_connected,
+        charging,
+        ..Default::default()
+    }
+}
+
+#[cfg(not(windows))]
+fn read_lightweight_battery_status() -> RawBattery {
+    read_raw_battery()
+}
+
+#[cfg(windows)]
 fn read_raw_battery() -> RawBattery {
     const SCRIPT: &str = r#"$ErrorActionPreference='SilentlyContinue'
 $b = Get-CimInstance -ClassName Win32_Battery | Select-Object -First 1
@@ -894,14 +946,15 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
     use tauri::{Emitter, Manager};
 
-    let raw = read_raw_battery();
-    let cfg = load_config(&data_dir);
-    let (tooltip, status_line, limit_line) = format_tray_status(&raw, &cfg);
+    // Never call read_raw_battery() synchronously on the main Tauri setup thread (0ms startup overhead).
+    let tooltip = "SWEEPR Cleaner — Battery Care";
+    let status_line = "Battery: Checking status…";
+    let limit_line = "Charge Limit: Off (80% target)";
 
-    let Ok(status_item) = MenuItem::with_id(app, "tray_status", &status_line, false, None::<&str>) else {
+    let Ok(status_item) = MenuItem::with_id(app, "tray_status", status_line, false, None::<&str>) else {
         return;
     };
-    let Ok(limit_item) = MenuItem::with_id(app, "tray_limit", &limit_line, false, None::<&str>) else {
+    let Ok(limit_item) = MenuItem::with_id(app, "tray_limit", limit_line, false, None::<&str>) else {
         return;
     };
     let Ok(sep1) = PredefinedMenuItem::separator(app) else { return };
@@ -970,7 +1023,7 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
     let data_dir_for_menu = data_dir.clone();
     let _ = TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon)
-        .tooltip(&tooltip)
+        .tooltip(tooltip)
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(move |app_handle, event| match event.id().as_ref() {
@@ -1021,10 +1074,11 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
 
     let monitor_handle = app.clone();
     std::thread::spawn(move || {
+        // Defer initial battery status reading to the background thread after a 3-second delay.
+        std::thread::sleep(std::time::Duration::from_secs(3));
         let mut last_alert_ts = 0u64;
         loop {
-            std::thread::sleep(std::time::Duration::from_secs(60));
-            let raw = read_raw_battery();
+            let raw = read_lightweight_battery_status();
             let cfg = load_config(&data_dir);
             let (tip, s_line, l_line) = format_tray_status(&raw, &cfg);
             if let Some(tray) = monitor_handle.tray_by_id(TRAY_ID) {
@@ -1033,6 +1087,10 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
             if let Some(st) = monitor_handle.try_state::<TrayState>() {
                 let _ = st.status_item.set_text(&s_line);
                 let _ = st.limit_item.set_text(&l_line);
+            }
+            // If no system battery is present (e.g. desktop PC, BatteryFlag == 128), exit the monitor loop completely.
+            if !raw.present {
+                break;
             }
             if let Some(alert) = evaluate_unplug_alert(&raw, &cfg, now_unix_secs(), &mut last_alert_ts) {
                 let _ = monitor_handle.emit("battery://unplug-alert", &alert);
@@ -1047,6 +1105,7 @@ pub fn setup_tray_and_monitor(app: &tauri::AppHandle, data_dir: std::path::PathB
             if cfg.auto_hibernate_tabs {
                 let _ = memory::tame_browser_memory(None, false);
             }
+            std::thread::sleep(std::time::Duration::from_secs(60));
         }
     });
 }

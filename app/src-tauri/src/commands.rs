@@ -218,8 +218,13 @@ pub async fn start_checkout(
     state: State<'_, AppState>,
     email: Option<String>,
     plan: Option<String>,
+    coupon: Option<String>,
 ) -> AppResult<bool> {
-    match state.licensing.checkout_url(email.as_deref(), plan.as_deref()).await? {
+    match state
+        .licensing
+        .checkout_url_with_options(email.as_deref(), plan.as_deref(), None, coupon.as_deref())
+        .await?
+    {
         None => Ok(true),
         Some(url) => {
             app.opener().open_url(url, None::<&str>).map_err(|e| AppError::Other(e.to_string()))?;
@@ -235,10 +240,16 @@ pub async fn start_addon_checkout(
     addon: String,
     email: Option<String>,
     plan: Option<String>,
+    coupon: Option<String>,
 ) -> AppResult<bool> {
     match state
         .licensing
-        .checkout_url_with_addon(email.as_deref(), plan.as_deref(), Some(addon.as_str()))
+        .checkout_url_with_options(
+            email.as_deref(),
+            plan.as_deref(),
+            Some(addon.as_str()),
+            coupon.as_deref(),
+        )
         .await?
     {
         None => Ok(true),
@@ -319,6 +330,11 @@ pub async fn request_login_otp(state: State<'_, AppState>, email: String) -> App
 #[tauri::command]
 pub async fn verify_login_otp(state: State<'_, AppState>, email: String, code: String) -> AppResult<LicenseStatus> {
     state.licensing.verify_email_otp(&email, &code).await
+}
+
+#[tauri::command]
+pub async fn redeem_pairing_token(state: State<'_, AppState>, token: String) -> AppResult<LicenseStatus> {
+    state.licensing.redeem_pairing_token(&token).await
 }
 
 #[tauri::command]
@@ -1823,11 +1839,85 @@ pub struct AppInfo {
     pub preferences: UiPreferences,
 }
 
+fn sanitize_attribution_token(raw: &str) -> Option<String> {
+    let cleaned: String = raw
+        .trim()
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
+        .take(80)
+        .collect();
+    if cleaned.len() >= 6 {
+        Some(cleaned)
+    } else {
+        None
+    }
+}
+
+pub fn load_or_detect_attribution_token(data_dir: &Path) -> Option<String> {
+    let attr_file = data_dir.join("attribution_id.txt");
+    if let Ok(raw) = std::fs::read_to_string(&attr_file) {
+        if let Some(tok) = sanitize_attribution_token(&raw) {
+            return Some(tok);
+        }
+    }
+    if let Ok(env_val) = std::env::var("SWEEPR_ATTRIBUTION_ID") {
+        if let Some(tok) = sanitize_attribution_token(&env_val) {
+            let _ = std::fs::create_dir_all(data_dir);
+            let _ = std::fs::write(&attr_file, &tok);
+            return Some(tok);
+        }
+    }
+    for arg in std::env::args() {
+        if let Some(rest) = arg.strip_prefix("--attribution-id=") {
+            if let Some(tok) = sanitize_attribution_token(rest) {
+                let _ = std::fs::create_dir_all(data_dir);
+                let _ = std::fs::write(&attr_file, &tok);
+                return Some(tok);
+            }
+        }
+    }
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(name) = exe_path.file_stem().and_then(|s| s.to_str()) {
+            if let Some(idx) = name.find("attr_") {
+                if let Some(tok) = sanitize_attribution_token(&name[idx..]) {
+                    let _ = std::fs::create_dir_all(data_dir);
+                    let _ = std::fs::write(&attr_file, &tok);
+                    return Some(tok);
+                }
+            }
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
     let installer_mode = std::env::args().any(|a| a == "--installer");
     if installer_mode && !ui_preferences_file(&state.data_dir).exists() {
         let _ = save_ui_preferences_to(&state.data_dir, &UiPreferences::default());
+    }
+    let flag_path = state.data_dir.join("installed_v1.flag");
+    if !installer_mode && !flag_path.exists() {
+        let _ = std::fs::create_dir_all(&state.data_dir);
+        let _ = std::fs::write(&flag_path, b"1");
+        let api_url = state.licensing.api_url().to_string();
+        let device_id = state.licensing.device_id().to_string();
+        let version = app.package_info().version.to_string();
+        let data_dir = state.data_dir.clone();
+        let props = serde_json::json!({
+            "source": "first_run_launch",
+        });
+        tauri::async_runtime::spawn(async move {
+            let _ = dispatch_telemetry_event_with_dir(
+                &api_url,
+                &device_id,
+                &version,
+                "app_installed",
+                Some(props),
+                Some(&data_dir),
+            )
+            .await;
+        });
     }
     let preferences = load_ui_preferences(&state.data_dir);
     AppInfo {
@@ -1839,6 +1929,172 @@ pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
         installer_mode,
         preferences,
     }
+}
+
+#[allow(dead_code)]
+pub async fn dispatch_telemetry_event(
+    api_url: &str,
+    device_id: &str,
+    app_version: &str,
+    event_name: &str,
+    properties: Option<serde_json::Value>,
+) -> AppResult<serde_json::Value> {
+    dispatch_telemetry_event_with_dir(api_url, device_id, app_version, event_name, properties, None).await
+}
+
+pub async fn dispatch_telemetry_event_with_dir(
+    api_url: &str,
+    device_id: &str,
+    app_version: &str,
+    event_name: &str,
+    properties: Option<serde_json::Value>,
+    data_dir: Option<&Path>,
+) -> AppResult<serde_json::Value> {
+    let trimmed_event = event_name.trim();
+    if trimmed_event.is_empty() {
+        return Ok(serde_json::json!({ "ok": false, "error": "empty_event_name" }));
+    }
+    let base = api_url.trim_end_matches('/');
+    let base_url = if base.is_empty() {
+        "https://sweeprcleaner.com"
+    } else {
+        base
+    };
+    let platform = std::env::consts::OS;
+
+    let mut meta_map = serde_json::Map::new();
+    meta_map.insert(
+        "app_version".to_string(),
+        serde_json::Value::String(app_version.to_string()),
+    );
+    meta_map.insert(
+        "device_id".to_string(),
+        serde_json::Value::String(device_id.to_string()),
+    );
+    meta_map.insert(
+        "hardware_id".to_string(),
+        serde_json::Value::String(device_id.to_string()),
+    );
+    if let Some(serde_json::Value::Object(props)) = properties {
+        for (k, v) in props {
+            meta_map.insert(k, v);
+        }
+    }
+
+    let disk_attr = data_dir.and_then(load_or_detect_attribution_token);
+    let caller_attr = meta_map
+        .get("attribution_id")
+        .and_then(|v| v.as_str())
+        .or_else(|| meta_map.get("client_id").and_then(|v| v.as_str()))
+        .map(|s| s.to_string());
+
+    let attribution_id = match (&disk_attr, &caller_attr) {
+        (Some(d), Some(c)) if c.starts_with("dt_") => d.clone(),
+        (_, Some(c)) if !c.trim().is_empty() => c.clone(),
+        (Some(d), _) => d.clone(),
+        _ => device_id.to_string(),
+    };
+    meta_map.insert(
+        "attribution_id".to_string(),
+        serde_json::Value::String(attribution_id.clone()),
+    );
+
+    let metadata_val = serde_json::Value::Object(meta_map);
+    let body = serde_json::json!({
+        "event_name": trimmed_event,
+        "platform": platform,
+        "attribution_id": attribution_id,
+        "device_id": device_id,
+        "hardware_id": device_id,
+        "properties": &metadata_val,
+        "metadata": metadata_val,
+    });
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(8))
+        .build()
+        .map_err(|e| AppError::Other(e.to_string()))?;
+
+    let url = format!("{base_url}/v1/telemetry/event");
+    match client
+        .post(&url)
+        .header("x-sweepr-project", "cleaner")
+        .json(&body)
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            let status_ok = resp.status().is_success();
+            let parsed = resp
+                .json::<serde_json::Value>()
+                .await
+                .unwrap_or_else(|_| serde_json::json!({ "ok": status_ok }));
+            if let (Some(dir), Some(resolved_attr)) = (
+                data_dir,
+                parsed.get("attribution_id").and_then(|v| v.as_str()),
+            ) {
+                if let Some(tok) = sanitize_attribution_token(resolved_attr) {
+                    if tok.starts_with("attr_") {
+                        let _ = std::fs::create_dir_all(dir);
+                        let _ = std::fs::write(dir.join("attribution_id.txt"), &tok);
+                    }
+                }
+            }
+            Ok(parsed)
+        }
+        Err(_) => Ok(serde_json::json!({ "ok": false })),
+    }
+}
+
+#[tauri::command]
+pub async fn send_telemetry_event(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    event_name: String,
+    properties: Option<serde_json::Value>,
+) -> AppResult<serde_json::Value> {
+    let api_url = state.licensing.api_url().to_string();
+    let device_id = state.licensing.device_id().to_string();
+    let version = app.package_info().version.to_string();
+    dispatch_telemetry_event_with_dir(
+        &api_url,
+        &device_id,
+        &version,
+        &event_name,
+        properties,
+        Some(&state.data_dir),
+    )
+    .await
+}
+
+#[tauri::command]
+pub async fn finalize_install(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    source: Option<String>,
+) -> AppResult<()> {
+    let flag_path = state.data_dir.join("installed_v1.flag");
+    let first_run = !flag_path.exists();
+    let _ = std::fs::create_dir_all(&state.data_dir);
+    let _ = std::fs::write(&flag_path, b"1");
+    if first_run {
+        let api_url = state.licensing.api_url().to_string();
+        let device_id = state.licensing.device_id().to_string();
+        let version = app.package_info().version.to_string();
+        let props = serde_json::json!({
+            "source": source.unwrap_or_else(|| "finalize_install".to_string()),
+        });
+        let _ = dispatch_telemetry_event_with_dir(
+            &api_url,
+            &device_id,
+            &version,
+            "app_installed",
+            Some(props),
+            Some(&state.data_dir),
+        )
+        .await;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -1873,8 +2129,34 @@ pub async fn complete_installation(
     launch_on_startup: bool,
 ) -> AppResult<()> {
     use tauri::Manager;
-    let _ = std::fs::write(state.data_dir.join("installed_v1.flag"), b"1");
+    let flag_path = state.data_dir.join("installed_v1.flag");
+    let first_run = !flag_path.exists();
+    let _ = std::fs::create_dir_all(&state.data_dir);
+    let _ = std::fs::write(&flag_path, b"1");
     let _ = memory::set_autostart_enabled(launch_on_startup);
+    if first_run {
+        let api_url = state.licensing.api_url().to_string();
+        let device_id = state.licensing.device_id().to_string();
+        let version = app.package_info().version.to_string();
+        let data_dir = state.data_dir.clone();
+        let props = serde_json::json!({
+            "source": "finalize_install",
+            "desktop_shortcut": desktop_shortcut,
+            "start_menu_shortcut": start_menu_shortcut,
+            "launch_on_startup": launch_on_startup,
+        });
+        tauri::async_runtime::spawn(async move {
+            let _ = dispatch_telemetry_event_with_dir(
+                &api_url,
+                &device_id,
+                &version,
+                "app_installed",
+                Some(props),
+                Some(&data_dir),
+            )
+            .await;
+        });
+    }
 
     #[cfg(target_os = "windows")]
     {
@@ -2863,6 +3145,29 @@ pub async fn pick_file(title: Option<String>) -> AppResult<Option<String>> {
 }
 
 #[tauri::command]
+pub async fn scan_stale_dev_artifacts(
+    state: State<'_, AppState>,
+    custom_roots: Option<Vec<String>>,
+    min_inactive_days: Option<u64>,
+) -> AppResult<scanner::StaleDevArtifactsReport> {
+    let exclusions = safety::load_exclusions(&state.data_dir);
+    let days = min_inactive_days.unwrap_or(30).max(1);
+    let roots: Vec<PathBuf> = match custom_roots {
+        Some(list) if !list.is_empty() => list
+            .into_iter()
+            .map(|s| PathBuf::from(s.trim()))
+            .filter(|p| p.is_absolute() && p.is_dir())
+            .collect(),
+        _ => scanner::default_dev_project_roots(),
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        scanner::scan_stale_dev_artifacts_in(&roots, &exclusions, days)
+    })
+    .await
+    .map_err(join_err)
+}
+
+#[tauri::command]
 pub fn reveal_in_folder(path: String) -> AppResult<()> {
     let p = PathBuf::from(path.trim());
     if !p.is_absolute() {
@@ -2885,6 +3190,38 @@ pub fn reveal_in_folder(path: String) -> AppResult<()> {
         };
         tauri_plugin_opener::open_path(dir, None::<&str>)
             .map_err(|e| AppError::Other(format!("Could not open folder: {e}")))?;
+    }
+    Ok(())
+}
+
+/// Checks whether SWEEPR Cleaner has macOS Full Disk Access (FDA) by testing read access
+/// to TCC-protected directories (`~/Library/Safari` or `~/.Trash`). Always returns `true` on Windows/Linux.
+#[tauri::command]
+pub fn check_macos_full_disk_access() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(home) = dirs::home_dir() {
+            let safari = home.join("Library/Safari");
+            let trash = home.join(".Trash");
+            return std::fs::read_dir(&safari).is_ok() || std::fs::read_dir(&trash).is_ok();
+        }
+        return false;
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        true
+    }
+}
+
+/// Opens macOS System Settings -> Privacy & Security -> Full Disk Access pane.
+#[tauri::command]
+pub fn open_macos_fda_settings() -> AppResult<()> {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+            .status()
+            .map_err(|e| AppError::Other(format!("Could not open System Settings: {e}")))?;
     }
     Ok(())
 }

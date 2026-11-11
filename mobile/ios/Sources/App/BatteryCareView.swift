@@ -36,10 +36,12 @@ final class BatteryCareMonitor: ObservableObject {
     @Published var thermalGuardEnabled: Bool {
         didSet {
             UserDefaults.standard.set(thermalGuardEnabled, forKey: Self.thermalGuardKey)
+            evaluateThermalAlert()
         }
     }
 
     @Published var unplugAlertActive: Bool = false
+    @Published var thermalAlertActive: Bool = false
     @Published var statusNotice: String? = nil
 
     private static let limitEnabledKey = "sweepr_battery_limit_enabled"
@@ -47,6 +49,7 @@ final class BatteryCareMonitor: ObservableObject {
     private static let thermalGuardKey = "sweepr_battery_thermal_guard"
     private static let entitledKey = "sweepr_battery_entitled"
     private static let lastAlertKey = "sweepr_battery_last_unplug_alert"
+    private static let lastThermalAlertKey = "sweepr_battery_last_thermal_alert"
     private static let alertCooldownSec: TimeInterval = 30 * 60
 
     func enforceEntitlement(_ entitled: Bool) {
@@ -55,7 +58,11 @@ final class BatteryCareMonitor: ObservableObject {
             if chargeLimitEnabled { chargeLimitEnabled = false }
             if thermalGuardEnabled { thermalGuardEnabled = false }
             unplugAlertActive = false
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["sweepr.battery.unplug"])
+            thermalAlertActive = false
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [
+                "sweepr.battery.unplug",
+                "sweepr.battery.thermal"
+            ])
         }
     }
 
@@ -104,6 +111,7 @@ final class BatteryCareMonitor: ObservableObject {
         uptimeHours = proc.systemUptime / 3600.0
 
         evaluateUnplugAlert()
+        evaluateThermalAlert()
     }
 
     var thermalLabel: String {
@@ -121,7 +129,7 @@ final class BatteryCareMonitor: ObservableObject {
         let statePart = isCharging ? "charging" : (isPluggedIn ? "plugged in at 100%" : "on battery")
         let thermalPart = thermalState == .nominal
             ? "Temperature is normal."
-            : "Your iPhone is \(thermalLabel.lowercased()) — heavy background apps may be heating the battery."
+            : "Your iPhone thermal state is \(thermalLabel.lowercased()) — unplug from fast charging to reduce thermal battery wear."
         return "\(chargePart) (\(statePart)). \(thermalPart)"
     }
 
@@ -133,6 +141,16 @@ final class BatteryCareMonitor: ObservableObject {
         statusNotice = enabled
             ? "Unplug alert armed at \(chargeLimitPercent)%. You'll get an alert when your iPhone reaches \(chargeLimitPercent)% on the charger."
             : "Charge-limit unplug alert turned off."
+    }
+
+    func requestNotificationPermissionAndEnableThermalGuard(_ enabled: Bool) {
+        if enabled {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
+        thermalGuardEnabled = enabled
+        statusNotice = enabled
+            ? "Overheat Protection armed. You'll receive a notification if iOS ProcessInfo.thermalState reaches Hot or Critical."
+            : "Overheat Protection turned off."
     }
 
     func trimBackgroundCaches() {
@@ -150,8 +168,8 @@ final class BatteryCareMonitor: ObservableObject {
         }
         refresh()
         statusNotice = freedBytes > 0
-            ? "Cleared \(formatByteCount(freedBytes)) of in-app web & temporary cache and refreshed memory."
-            : "Background caches are already clean."
+            ? "Cleared \(formatByteCount(freedBytes)) of SWEEPR in-app temporary cache."
+            : "SWEEPR local temporary cache is already clean (0 B)."
     }
 
     private func evaluateUnplugAlert() {
@@ -175,6 +193,31 @@ final class BatteryCareMonitor: ObservableObject {
         content.sound = .default
 
         let req = UNNotificationRequest(identifier: "sweepr.battery.unplug", content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(req, withCompletionHandler: nil)
+    }
+
+    private func evaluateThermalAlert() {
+        let isEntitled = UserDefaults.standard.bool(forKey: Self.entitledKey)
+        let isOverheating = thermalState == .serious || thermalState == .critical
+        guard isEntitled, thermalGuardEnabled, isOverheating else {
+            thermalAlertActive = false
+            if thermalState == .nominal {
+                UserDefaults.standard.set(0.0, forKey: Self.lastThermalAlertKey)
+            }
+            return
+        }
+        thermalAlertActive = true
+        let now = Date().timeIntervalSince1970
+        let last = UserDefaults.standard.double(forKey: Self.lastThermalAlertKey)
+        guard last == 0 || (now - last) >= Self.alertCooldownSec else { return }
+        UserDefaults.standard.set(now, forKey: Self.lastThermalAlertKey)
+
+        let content = UNMutableNotificationContent()
+        content.title = "SWEEPR Overheat Guard — Thermal State: \(thermalLabel)"
+        content.body = "iOS ProcessInfo.thermalState reported \(thermalLabel.lowercased()) temperature. Unplug from fast charging and let your iPhone cool down to prevent lithium-ion wear."
+        content.sound = .default
+
+        let req = UNNotificationRequest(identifier: "sweepr.battery.thermal", content: content, trigger: nil)
         UNUserNotificationCenter.current().add(req, withCompletionHandler: nil)
     }
 }
@@ -495,10 +538,7 @@ struct BatteryCareView: View {
                         if enabled && !isUnlocked {
                             onShowPaywall()
                         } else {
-                            monitor.thermalGuardEnabled = enabled
-                            monitor.statusNotice = enabled
-                                ? "Overheat protection on."
-                                : "Overheat protection off."
+                            monitor.requestNotificationPermissionAndEnableThermalGuard(enabled)
                         }
                     }
                 )

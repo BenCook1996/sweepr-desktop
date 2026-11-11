@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWEEPR Weekly Content-to-Product & UI Mockup Studio (2026-W46)</title>
+  <style>
+    :root {
+      --bg-obsidian: #060911;
+      --bg-card: #0c1220;
+      --bg-elevated: #111a2e;
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.22);
+      --cyan: #06b6d4;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 20% 0%, rgba(16, 185, 129, 0.12), transparent 45%), var(--bg-obsidian);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 28px;
+    }
+    .studio-container { max-width: 1440px; margin: 0 auto; }
+    .studio-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px 26px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.05));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 18px;
+      margin-bottom: 24px;
+    }
+    .badge-readonly {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.16);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 8px 0 4px; font-size: 26px; letter-spacing: -0.02em; }
+    .sub-meta { color: var(--text-dim); font-size: 13px; margin: 0; }
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .kpi-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .kpi-box .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+    .kpi-box .val { font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px; }
+    .kpi-box .sub { font-size: 12px; color: var(--emerald); margin-top: 2px; }
+
+    /* Interactive Device Switcher */
+    .switcher-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .platform-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .plat-tab {
+      background: var(--bg-card);
+      color: var(--text-dim);
+      border: 1px solid var(--border-subtle);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .plat-tab.active, .plat-tab:hover {
+      background: rgba(16, 185, 129, 0.16);
+      color: #fff;
+      border-color: var(--emerald);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Mockup Stage */
+    .mockup-stage {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 24px;
+      margin-bottom: 34px;
+      align-items: start;
+    }
+    @media (max-width: 1150px) {
+      .mockup-stage { grid-template-columns: 1fr; }
+    }
+
+    /* Frame 1: Desktop Tauri Window Mockup */
+    .desktop-window {
+      background: #080d18;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+    .window-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #050811;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .win-dots { display: flex; gap: 6px; }
+    .win-dots span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .desktop-body {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      min-height: 540px;
+    }
+    .desktop-sidebar {
+      background: #060a13;
+      border-right: 1px solid var(--border-subtle);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      color: #fff;
+      padding: 4px 8px 16px;
+    }
+    .brand-orb {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    }
+    .side-nav-item {
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .side-nav-item.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #fff;
+      font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .desktop-main { padding: 18px 20px; }
+    .storage-strip-card {
+      background: #0d1526;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .storage-bar-track {
+      height: 10px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      margin: 8px 0;
+    }
+    .seg-sys { width: 22%; background: #3b82f6; }
+    .seg-ai { width: 34%; background: #8b5cf6; }
+    .seg-games { width: 20%; background: #10b981; }
+    .seg-advisor { width: 14%; background: #f59e0b; }
+
+    .cat-row-mock {
+      background: #0c1424;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+    .cat-row-mock.proposal-highlight {
+      border-color: rgba(16, 185, 129, 0.45);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.08);
+    }
+    .cat-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .cat-title-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cat-name { font-size: 13px; font-weight: 700; color: #fff; }
+    .proposal-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      cursor: pointer;
+    }
+    .proposal-tag.purple {
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+      border-color: rgba(139, 92, 246, 0.45);
+    }
+    .proposal-tag.amber {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fcd34d;
+      border-color: rgba(245, 158, 11, 0.45);
+    }
+    .gb-amount { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 800; color: var(--emerald); }
+    .safety-drawer-mock {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(16, 185, 129, 0.07);
+      border-left: 3px solid var(--emerald);
+      border-radius: 8px;
+      font-size: 11.5px;
+      color: #cbd5e1;
+    }
+    .sub-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .sub-chip {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    /* Mobile Dual Phone Stage */
+    .phones-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .phone-frame {
+      background: #070b14;
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      border-radius: 34px;
+      padding: 16px 14px 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      position: relative;
+    }
+    .phone-notch {
+      width: 92px;
+      height: 18px;
+      background: #020409;
+      border-radius: 999px;
+      margin: 0 auto 12px;
+    }
+    .phone-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .ring-mock {
+      width: 138px;
+      height: 138px;
+      border-radius: 50%;
+      margin: 8px auto 14px;
+      border: 6px solid rgba(16, 185, 129, 0.25);
+      border-top-color: var(--emerald);
+      border-right-color: var(--cyan);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+    }
+    .ring-mock .gb { font-size: 22px; font-weight: 800; color: #fff; }
+    .ring-mock .lbl { font-size: 10px; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.06em; }
+    .mobile-card-proposal {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(6, 182, 212, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 16px;
+      padding: 11px 12px;
+      margin-bottom: 10px;
+    }
+    .mobile-bento-mini {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .bento-cell {
+      background: #0e1628;
+      border: 1px solid var(--border-subtle);
+      border-radius: 13px;
+      padding: 10px;
+      font-size: 11px;
+    }
+    .btn-emerald-pill {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: linear-gradient(90deg, var(--emerald), var(--cyan));
+      color: #04130e;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Proposal Cards & Spec Viewers */
+    .proposals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 18px;
+      margin-bottom: 32px;
+    }
+    .proposal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .proposal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .rank-pill {
+      background: var(--emerald);
+      color: #04130e;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .score-pill {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .gap-pill, .plat-chip {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .proposal-card h3 { margin: 6px 0; font-size: 17px; }
+    .proposal-sub { color: var(--text-dim); font-size: 13px; margin: 0 0 12px; }
+    .proposal-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    .proposal-why { font-size: 13px; color: #cbd5e1; margin-bottom: 12px; }
+    .slug-list { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
+    .slug-tag {
+      background: rgba(6, 182, 212, 0.12);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    details.code-spec-drawer {
+      background: #070b14;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    details.code-spec-drawer summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald);
+    }
+    .spec-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+    .spec-label { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+    pre {
+      margin: 0;
+      padding: 10px;
+      background: #03060c;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      font-size: 11px;
+      color: #a7f3d0;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="studio-container">
+    <div class="studio-header">
+      <div>
+        <span class="badge-readonly">A20 Advisory Mode · Zero App Code Modified</span>
+        <h1>Weekly Content-to-Product & UI Mockup Studio (2026-W46)</h1>
+        <p class="sub-meta">
+          Cross-referencing <strong>377</strong> web cleanup guides against
+          <code>app/src-tauri/src/rules.rs</code> (23 Windows rules),
+          <code>Cleaner.svelte</code>, <code>DashboardScreen.kt</code> (Android), and <code>DashboardView.swift</code> (iOS).
+        </p>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--text-dim)">Generated At</div>
+        <div style="font-size:14px;font-weight:700">2026-11-11 00:05:36 UTC</div>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi-box">
+        <div class="lbl">Web Cleanup Catalog</div>
+        <div class="val">377</div>
+        <div class="sub">157 produced / enriched this cycle</div>
+      </div>
+      <div class="kpi-box">
+        <div class="lbl">GSC Active Guides</div>
+        <div class="val">151</div>
+        <div class="sub">Verified Search Console traction</div>
+      </div>
+      <div class="kpi-box">
+        <div class="lbl">Desktop Rule Coverage</div>
+        <div class="val">29.7%</div>
+        <div class="sub">10.6% first-class + mega-buckets</div>
+      </div>
+      <div class="kpi-box">
+        <div class="lbl">Uncaptured / Bundled Pool</div>
+        <div class="val">3127.4 GB</div>
+        <div class="sub">Midpoint reclaimable bloat across gaps</div>
+      </div>
+      <div class="kpi-box">
+        <div class="lbl">Top Proposal Score</div>
+        <div class="val">95/100</div>
+        <div class="sub">P1: Inline Safe-to-Delete Drawer</div>
+      </div>
+    </div>
+
+    <div class="switcher-bar">
+      <h2 style="margin:0;font-size:19px;">Interactive Multi-Platform Proposal Mockups</h2>
+      <div class="platform-tabs">
+        <button class="plat-tab active" onclick="filterMockupStage('all', this)">All Platforms Side-by-Side</button>
+        <button class="plat-tab" onclick="filterMockupStage('desktop', this)">Desktop (Tauri / Cleaner.svelte)</button>
+        <button class="plat-tab" onclick="filterMockupStage('mobile', this)">Mobile (Android Compose & iOS SwiftUI)</button>
+      </div>
+    </div>
+
+    <div class="mockup-stage" id="mockup-stage">
+      <!-- Desktop Tauri Window Frame -->
+      <div class="desktop-window" id="frame-desktop">
+        <div class="window-titlebar">
+          <div class="win-dots">
+            <span style="background:#ef4444"></span>
+            <span style="background:#f59e0b"></span>
+            <span style="background:#10b981"></span>
+          </div>
+          <div>SWEEPR Desktop Cleaner v2.5 — <code>app/src/components/Cleaner.svelte</code> (Proposed Advisory Preview)</div>
+          <div style="color:#34d399;font-weight:700">Quarantine Vault Active</div>
+        </div>
+        <div class="desktop-body">
+          <div class="desktop-sidebar">
+            <div>
+              <div class="brand-row">
+                <span class="brand-orb"></span>
+                <span>SWEEPR</span>
+              </div>
+              <div class="side-nav-item active"><span>Smart Cleaner</span><span>48.2 GB</span></div>
+              <div class="side-nav-item"><span>AI & LLM Vault</span><span style="color:#c4b5fd">NEW · P2</span></div>
+              <div class="side-nav-item"><span>OS Advisor</span><span style="color:#fcd34d">NEW · P3</span></div>
+              <div class="side-nav-item"><span>Quarantine</span><span>7d Safe</span></div>
+            </div>
+            <div style="padding:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;font-size:11px;">
+              <div style="color:#34d399;font-weight:700;">5-Device Pro Linked</div>
+              <div style="color:var(--text-dim);margin-top:2px;">Synced with iPhone & Android (P5)</div>
+            </div>
+          </div>
+
+          <div class="desktop-main">
+            <div class="storage-strip-card">
+              <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span><strong>48.2 GB Reclaimable</strong> across 4 Content-Backed Scan Buckets</span>
+                <span style="color:var(--emerald);font-weight:700;">Empirical P50 Benchmark: 18.4 GB</span>
+              </div>
+              <div class="storage-bar-track">
+                <div class="seg-sys" title="System & Browsers"></div>
+                <div class="seg-ai" title="P2: Local AI & Creator Render Vault"></div>
+                <div class="seg-games" title="P4: Per-Launcher Game Shaders"></div>
+                <div class="seg-advisor" title="P3: Read-Only WinSxS & VHDX Advisor"></div>
+              </div>
+              <div style="display:flex;gap:14px;font-size:11px;color:var(--text-dim);flex-wrap:wrap;">
+                <span><strong style="color:#3b82f6">●</strong> System & Browsers (6.8 GB)</span>
+                <span><strong style="color:#8b5cf6">●</strong> [P2] AI & Creator Vault (21.4 GB)</span>
+                <span><strong style="color:#10b981">●</strong> [P4] Game Shaders (11.2 GB)</span>
+                <span><strong style="color:#f59e0b">●</strong> [P3] OS & VHDX Advisor (8.8 GB)</span>
+              </div>
+            </div>
+
+            <!-- Proposal P1 Mockup Row -->
+            <div class="cat-row-mock proposal-highlight">
+              <div class="cat-row-top">
+                <div class="cat-title-wrap">
+                  <input type="checkbox" checked readOnly />
+                  <span class="cat-name">Discord, Teams & Browser Media Caches</span>
+                  <span class="proposal-tag" onclick="toggleMockDrawer('p1-drawer')">P1 · ? Safe to Delete · Why?</span>
+                  <span class="sub-chip">Typical PC: 1.5–6.0 GB (n≥30)</span>
+                </div>
+                <span class="gb-amount">6.84 GB</span>
+              </div>
+              <div class="safety-drawer-mock" id="p1-drawer">
+                <div><strong>100% Safe to Delete (Sourced from <code>clean-items.json</code>):</strong> Clears local cached images, GIFs, and HTTP chunks in <code>%AppData%discordCache</code> and <code>SoftwareDistributionDownload</code>.</div>
+                <div style="margin-top:4px;color:#34d399;">✓ Keeps all chat history, logins, saved passwords & Discord server memberships untouched. Backed by 7-day Quarantine rollback.</div>
+              </div>
+            </div>
+
+            <!-- Proposal P2 Mockup Row -->
+            <div class="cat-row-mock proposal-highlight">
+              <div class="cat-row-top">
+                <div class="cat-title-wrap">
+                  <input type="checkbox" checked readOnly />
+                  <span class="cat-name">Local AI Models & 4K Creator Render Caches</span>
+                  <span class="proposal-tag purple">P2 · New Rust Rule (rules.rs)</span>
+                </div>
+                <span class="gb-amount">21.40 GB</span>
+              </div>
+              <div class="sub-chips-row">
+                <span class="sub-chip">✓ HuggingFace Hub Cache · 9.2 GB</span>
+                <span class="sub-chip">✓ DaVinci Resolve CacheClip · 7.8 GB</span>
+                <span class="sub-chip">✓ Ollama Partial Blobs · 3.1 GB</span>
+                <span class="sub-chip">✓ CapCut Desktop Cache · 1.3 GB</span>
+              </div>
+            </div>
+
+            <!-- Proposal P4 Mockup Row -->
+            <div class="cat-row-mock proposal-highlight">
+              <div class="cat-row-top">
+                <div class="cat-title-wrap">
+                  <input type="checkbox" checked readOnly />
+                  <span class="cat-name">Game Launchers & GPU Shader Pre-Cache</span>
+                  <span class="proposal-tag">P4 · Per-Launcher Breakdown</span>
+                </div>
+                <span class="gb-amount">11.20 GB</span>
+              </div>
+              <div class="sub-chips-row">
+                <span class="sub-chip">✓ Steam shadercache & depotcache · 4.6 GB</span>
+                <span class="sub-chip">✓ NVIDIA DXCache · 3.1 GB</span>
+                <span class="sub-chip">✓ Genshin / HoYoPlay Patch Staging · 2.4 GB</span>
+                <span class="sub-chip">✓ VRChat World Cache · 1.1 GB</span>
+              </div>
+            </div>
+
+            <!-- Proposal P3 Mockup Row -->
+            <div class="cat-row-mock proposal-highlight" style="border-color:rgba(245,158,11,0.45)">
+              <div class="cat-row-top">
+                <div class="cat-title-wrap">
+                  <span class="proposal-tag amber">P3 · Read-Only System Advisor</span>
+                  <span class="cat-name">WinSxS Component Store & Docker/WSL2 Virtual Disks</span>
+                </div>
+                <span class="gb-amount" style="color:#fcd34d">8.80 GB Compactable</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:6px;">
+                Non-destructive size probe for top GSC system queries (<code>winsxs</code>, <code>docker-desktop-ext4-disk</code>, <code>hiberfil-sys</code>) with guided 1-click native Windows compaction.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Android & iOS Side-by-Side Frames -->
+      <div class="phones-wrap" id="frame-mobile">
+        <!-- Android Candidate 5 Phone -->
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-top-bar">
+            <span>Android · <code>DashboardScreen.kt</code></span>
+            <span style="color:var(--emerald);font-weight:700">PRO</span>
+          </div>
+          <div class="ring-mock">
+            <span class="gb">14.8 GB</span>
+            <span class="lbl">Smart Clean</span>
+          </div>
+
+          <!-- P5 Linked PC Card -->
+          <div class="mobile-card-proposal">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:10px;font-weight:800;color:#34d399;text-transform:uppercase;">P5 · Linked Windows 11 PC</span>
+              <span style="font-size:11px;font-weight:800;color:#fff;">28.4 GB Bloat</span>
+            </div>
+            <div style="font-size:12px;font-weight:700;margin-top:3px;">Desktop Gaming-PC · Ready to Clean</div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:2px;">
+              Steam Shaders (4.6 GB), Discord (2.1 GB), HuggingFace (9.2 GB)
+            </div>
+            <button class="btn-emerald-pill" onclick="this.textContent='✓ Queued for Next PC Wakeup (/api/device-link)'">
+              Queue 1-Click Remote PC Clean
+            </button>
+          </div>
+
+          <!-- P6 App Cache Encyclopedia Bento -->
+          <div class="mobile-bento-mini">
+            <div class="bento-cell">
+              <div style="color:var(--emerald);font-weight:700;">Photos & Dupes</div>
+              <div style="font-size:14px;font-weight:800;margin-top:2px;">6.2 GB</div>
+            </div>
+            <div class="bento-cell" style="border-color:rgba(16,185,129,0.45);">
+              <div style="color:#67e8f9;font-weight:700;">P6 · App Caches</div>
+              <div style="font-size:14px;font-weight:800;margin-top:2px;">5.4 GB</div>
+              <div style="font-size:9.5px;color:var(--text-dim);">WhatsApp · TikTok · CapCut</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- iOS Candidate 5 iPhone -->
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-top-bar">
+            <span>iOS · <code>DashboardView.swift</code></span>
+            <span style="color:#67e8f9;font-weight:700">QuickCleanReviewView</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px;padding:0 4px;">
+            Review Cleanup (+12.4 GB Selected)
+          </div>
+
+          <!-- P6 Safety Verdict Sheet inside iOS Review -->
+          <div class="mobile-card-proposal" style="background:rgba(16,185,129,0.1)">
+            <div style="font-size:10px;font-weight:800;color:#34d399;text-transform:uppercase;">
+              P6 · Safe-to-Delete Verdict Sheet
+            </div>
+            <div style="font-size:11.5px;font-weight:700;color:#fff;margin-top:3px;">
+              ✓ Originals, iCloud Photos & Chat History Untouched
+            </div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:3px;">
+              Matches <code>sweeprcleaner.com/safe-to-delete</code> guarantees: only duplicate bursts, cached streams, and already-synced local proxies are removed.
+            </div>
+          </div>
+
+          <div class="bento-cell" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;">Similar & Duplicate Bursts</div>
+              <div style="font-size:10px;color:var(--emerald);">✓ Keeps Best Shot in iCloud</div>
+            </div>
+            <span style="font-weight:800;color:var(--emerald);">4.8 GB</span>
+          </div>
+
+          <div class="bento-cell" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;">Large 4K Videos & CapCut Proxies</div>
+              <div style="font-size:10px;color:var(--emerald);">✓ Preview Before Removing</div>
+            </div>
+            <span style="font-weight:800;color:var(--emerald);">5.1 GB</span>
+          </div>
+
+          <div class="bento-cell" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;">Social & Media Stream Caches</div>
+              <div style="font-size:10px;color:#67e8f9;">Telegram · Discord · Spotify</div>
+            </div>
+            <span style="font-weight:800;color:var(--emerald);">2.5 GB</span>
+          </div>
+
+          <button class="btn-emerald-pill" style="margin-top:12px;">Clean +12.4 GB Safely</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin:0 0 14px;font-size:19px;">Ranked Product Integration Proposals (6)</h2>
+    <div class="proposals-grid">
+      
+      <div class="proposal-card" data-proposal-id="P1_desktop_inline_safety_evidence_drawer">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#1</span>
+            <span class="score-pill">95/100 Impact</span>
+            <span class="gap-pill">covered first class</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">desktop windows</span><span class="plat-chip">desktop macos</span>
+          </div>
+        </div>
+        <h3>Inline 'Why Is This Safe to Delete?' Evidence Drawer &amp; Empirical GB Badge</h3>
+        <p class="proposal-sub">Embed clean-items.json safety explanations, customFAQs, and A1 k-anonymous median GB badges directly into Cleaner.svelte category cards</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>4.5 GB – 38.0 GB per scan</strong></div>
+          <div><span>Demand:</span> <strong>96/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>95/100</strong></div>
+          <div><span>Ease:</span> <strong>98/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> We have 377+ researched safety guides in clean-items.json with plain-English 'whatIsIt', 'whatHappens', and FAQ answers, yet Cleaner.svelte only displays a 1-line description. Adding an expandable '? Safe to Delete' pill on every category row eliminates user hesitation at the exact moment of the Free-to-Pro paywall trigger.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/discord-cache" target="_blank" class="slug-tag">discord-cache</a><a href="/clean/app/software-distribution-download" target="_blank" class="slug-tag">software-distribution-download</a><a href="/clean/app/windows-prefetch" target="_blank" class="slug-tag">windows-prefetch</a><a href="/clean/app/nvidia-dxcache" target="_blank" class="slug-tag">nvidia-dxcache</a><a href="/clean/app/steam-shader-cache" target="_blank" class="slug-tag">steam-shader-cache</a><a href="/clean/app/microsoft-teams-cache" target="_blank" class="slug-tag">microsoft-teams-cache</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// No breaking Rust change required — rule IDs in app/src-tauri/src/rules.rs already map 1:1
+// Optional enrichment in Category struct (app/src-tauri/src/cleaner.rs):
+pub struct SafetyMetadata {
+    pub verdict: &amp;'static str,       // &quot;100% Safe · Regenerates Automatically&quot;
+    pub what_happens: &amp;'static str,  // &quot;Clears cached media only. Keeps logins &amp; history.&quot;
+    pub empirical_p50_gb: f32,       // e.g. 3.8
+}</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;!-- Proposed addition inside Cleaner.svelte category row --&gt;
+&lt;button
+  type=&quot;button&quot;
+  class=&quot;safety-verdict-pill&quot;
+  on:click|stopPropagation={() =&gt; toggleSafetyDrawer(cat.id)}
+&gt;
+  &lt;span class=&quot;dot-emerald&quot;&gt;&lt;/span&gt;
+  Safe to Delete · Why?
+&lt;/button&gt;
+{#if openSafetyRuleId === cat.id &amp;&amp; safetyEncyclopedia[cat.id]}
+  &lt;div class=&quot;safety-evidence-drawer&quot;&gt;
+    &lt;div class=&quot;drawer-grid&quot;&gt;
+      &lt;div&gt;&lt;strong&gt;What it is:&lt;/strong&gt; {safetyEncyclopedia[cat.id].whatIsIt}&lt;/div&gt;
+      &lt;div&gt;&lt;strong&gt;After cleaning:&lt;/strong&gt; {safetyEncyclopedia[cat.id].whatHappens}&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;drawer-footer&quot;&gt;
+      &lt;span class=&quot;badge-quarantine&quot;&gt;7-Day Quarantine Protected&lt;/span&gt;
+      &lt;span class=&quot;badge-telemetry&quot;&gt;Typical PC Reclaims: {safetyEncyclopedia[cat.id].avgSpace}&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+{/if}</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Shared safety verdict badge inside StorageBreakdownDialog (DashboardScreen.kt)
+Surface(color = SweeprGreen.copy(alpha = 0.14f), shape = RoundedCornerShape(8.dp)) {
+    Text(&quot;100% Safe · Cloud &amp; Logins Untouched&quot;, color = SweeprGreen, fontSize = 11.sp)
+}</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Verdict pill inside QuickCleanReviewView row (DashboardView.swift)
+Text(&quot;Safe · Keeps iCloud &amp; Logins&quot;)
+    .font(.system(size: 11, weight: .semibold, design: .rounded))
+    .foregroundColor(.sweeprEmerald)</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="proposal-card" data-proposal-id="P2_desktop_local_ai_llm_model_vault_scanner">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#2</span>
+            <span class="score-pill">92/100 Impact</span>
+            <span class="gap-pill">missing desktop scanner rule</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">desktop windows</span><span class="plat-chip">desktop macos</span>
+          </div>
+        </div>
+        <h3>Dedicated 'Local AI, LLM &amp; Creator Cache Vault' Scanner Rule &amp; Pro Card</h3>
+        <p class="proposal-sub">Upgrade creator_ai_caches in rules.rs from .locks-only to scan Ollama blobs, LM Studio GGUF checkpoints, HuggingFace snapshots, and DaVinci Resolve CacheClip</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>15.0 GB – 120.0 GB per developer/creator PC</strong></div>
+          <div><span>Demand:</span> <strong>91/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>94/100</strong></div>
+          <div><span>Ease:</span> <strong>82/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> Inspection of app/src-tauri/src/rules.rs (line 264) revealed that `creator_ai_caches` currently only scans `@home/.cache/huggingface/hub/.locks` (which is a few KB of lockfiles!) instead of orphaned model snapshots, Ollama blobs, LM Studio downloads, or DaVinci Resolve `CacheClip` render caches. Surfacing these multi-gigabyte caches immediately creates a 20 GB+ 'Aha Moment' scan result.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/huggingface-hub-cache" target="_blank" class="slug-tag">huggingface-hub-cache</a><a href="/clean/app/ollama-models-blob-cache" target="_blank" class="slug-tag">ollama-models-blob-cache</a><a href="/clean/app/lm-studio-models-cache" target="_blank" class="slug-tag">lm-studio-models-cache</a><a href="/clean/app/davinci-resolve-cacheclip" target="_blank" class="slug-tag">davinci-resolve-cacheclip</a><a href="/clean/app/davinci-resolve-optimized-media" target="_blank" class="slug-tag">davinci-resolve-optimized-media</a><a href="/clean/app/adobe-premiere-media-cache" target="_blank" class="slug-tag">adobe-premiere-media-cache</a><a href="/clean/app/capcut-desktop-cache" target="_blank" class="slug-tag">capcut-desktop-cache</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// Proposed rule addition in app/src-tauri/src/rules.rs (Windows &amp; macOS)
+Spec {
+    id: &quot;local_ai_llm_caches&quot;,
+    name: &quot;Local AI &amp; LLM Model Caches&quot;,
+    description: &quot;HuggingFace Hub snapshots, Ollama temp blobs, LM Studio downloads &amp; PyTorch cache&quot;,
+    group: Group::Developer,
+    patterns: &amp;[
+        &quot;@home/.cache/huggingface/hub/.locks&quot;,
+        &quot;@home/.cache/huggingface/Download&quot;,
+        &quot;@home/.ollama/models/blobs/*-partial*&quot;,
+        &quot;@home/.cache/lm-studio/downloads&quot;,
+        &quot;@local/torch/hub/checkpoints&quot;,
+        &quot;@local/pip/cache/http-v2&quot;,
+    ],
+},
+Spec {
+    id: &quot;creator_video_render_caches&quot;,
+    name: &quot;4K Video Render &amp; Proxy Caches (DaVinci / CapCut / OBS)&quot;,
+    description: &quot;DaVinci Resolve CacheClip/Optimized Media, CapCut cache &amp; OBS logs&quot;,
+    group: Group::Apps,
+    patterns: &amp;[
+        &quot;@local/CapCut/User Data/Cache&quot;,
+        &quot;@roaming/Blackmagic Design/DaVinci Resolve/Support/elig&quot;,
+        &quot;@roaming/obs-studio/logs&quot;,
+        &quot;@roaming/obs-studio/crashes&quot;,
+        &quot;@local/Medal/recorder-3/logs&quot;,
+    ],
+},</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;!-- Proposed AI &amp; Creator Vault badge in Cleaner.svelte --&gt;
+{#if cat.id === 'local_ai_llm_caches' || cat.id === 'creator_video_render_caches'}
+  &lt;span class=&quot;pro-vault-chip&quot;&gt;AI &amp; Creator Pro Vault&lt;/span&gt;
+{/if}</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Surface CapCut &amp; High-Bitrate 4K Creator Export Caches inside Videos Bento Card</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Surface CapCut / 4K ProRes proxy cleanup inside QuickCleanReviewView</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="proposal-card" data-proposal-id="P3_desktop_readonly_system_vhdx_winsxs_advisor">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#3</span>
+            <span class="score-pill">90/100 Impact</span>
+            <span class="gap-pill">missing desktop scanner rule</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">desktop windows</span>
+          </div>
+        </div>
+        <h3>Read-Only System &amp; Virtual Disk Compaction Advisor (WinSxS, Docker/WSL2 ext4.vhdx, hiberfil.sys)</h3>
+        <p class="proposal-sub">Add a non-destructive 'Deep System Storage Advisor' card in Cleaner.svelte for GSC's highest-impression Windows folders that cannot be blindly unlinked</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>8.0 GB – 65.0 GB per Windows 11 PC</strong></div>
+          <div><span>Demand:</span> <strong>98/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>88/100</strong></div>
+          <div><span>Ease:</span> <strong>74/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> Users land on sweeprcleaner.com searching how to shrink `WinSxS`, `docker_data.vhdx`, and `hiberfil.sys`. Because raw file deletion would break Windows or Docker, `rules.rs` currently ignores them completely—meaning a user who downloads SWEEPR from `/clean/folder/winsxs` doesn't see WinSxS in the app! A read-only Diagnostic Advisor Card that measures their exact GB size on disk and offers safe 1-click native Windows commands (`DISM /StartComponentCleanup`, `wsl --shutdown` + VHDX compact, `powercfg /h off`) bridges our #1 SEO funnel directly into the desktop app.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/winsxs" target="_blank" class="slug-tag">winsxs</a><a href="/clean/app/docker-desktop-ext4-disk" target="_blank" class="slug-tag">docker-desktop-ext4-disk</a><a href="/clean/app/hiberfil-sys" target="_blank" class="slug-tag">hiberfil-sys</a><a href="/clean/app/windows-old" target="_blank" class="slug-tag">windows-old</a><a href="/clean/app/wsl2-ubuntu-vhdx" target="_blank" class="slug-tag">wsl2-ubuntu-vhdx</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// Read-only size probe (never passed to fs::remove_file)
+pub struct SystemAdvisorItem {
+    pub id: String,
+    pub name: String,
+    pub path_display: String,
+    pub bytes_detected: u64,
+    pub safe_reclaim_method: String, // e.g. &quot;DISM /Online /Cleanup-Image /StartComponentCleanup&quot;
+}</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;div class=&quot;advisor-card&quot;&gt;
+  &lt;div class=&quot;advisor-head&quot;&gt;
+    &lt;span class=&quot;advisor-badge&quot;&gt;Read-Only OS Advisor&lt;/span&gt;
+    &lt;h4&gt;Deep Windows &amp; Virtual Disk Reserves (+24.6 GB Detected)&lt;/h4&gt;
+  &lt;/div&gt;
+  &lt;!-- Lists WinSxS, Docker/WSL2 ext4.vhdx, hiberfil.sys with safe native compaction actions --&gt;
+&lt;/div&gt;</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Displays Linked PC System Reserve alert when paired via /api/device-link</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Displays Linked PC System Reserve alert in Multi-Device Sync card</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="proposal-card" data-proposal-id="P4_desktop_per_launcher_game_shader_sub_breakdown">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#4</span>
+            <span class="score-pill">88/100 Impact</span>
+            <span class="gap-pill">bundled in mega rule</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">desktop windows</span><span class="plat-chip">desktop macos</span>
+          </div>
+        </div>
+        <h3>Expandable Per-Game Launcher &amp; Shader Breakdown (Steam, Genshin, Riot/Valorant, NVIDIA DXCache)</h3>
+        <p class="proposal-sub">Unbundle the monolithic game_launchers and gpu_shaders rules into toggleable per-launcher sub-rows inside Cleaner.svelte</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>5.0 GB – 45.0 GB per gaming PC</strong></div>
+          <div><span>Demand:</span> <strong>89/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>87/100</strong></div>
+          <div><span>Ease:</span> <strong>90/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> `rules.rs` currently bundles 13 launchers into a single `game_launchers` category. Gamers want granular control: they want to wipe `VRChat` or `EA App` or `Steam depotcache` while keeping shader caches for the competitive FPS they play tonight. Adding expandable sub-rows per launcher in `Cleaner.svelte` (plus adding HoYoPlay/Genshin &amp; VRChat paths) makes SWEEPR feel tailor-made for PC gamers.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/steam-shader-cache" target="_blank" class="slug-tag">steam-shader-cache</a><a href="/clean/app/genshin-impact-update-cache" target="_blank" class="slug-tag">genshin-impact-update-cache</a><a href="/clean/app/nvidia-dxcache" target="_blank" class="slug-tag">nvidia-dxcache</a><a href="/clean/app/ea-app-cache" target="_blank" class="slug-tag">ea-app-cache</a><a href="/clean/app/vrchat-cache" target="_blank" class="slug-tag">vrchat-cache</a><a href="/clean/app/riot-client-logs" target="_blank" class="slug-tag">riot-client-logs</a><a href="/clean/app/steam-depotcache" target="_blank" class="slug-tag">steam-depotcache</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// Add VRChat &amp; HoYoPlay/Genshin patch staging to game_launchers or dedicated rule:
+&quot;@local/../LocalLow/VRChat/VRChat/Cache-WindowsPlayer&quot;,
+&quot;@local/HoYoPlay/cache&quot;,</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;!-- Sub-item breakdown pills inside Game Launchers &amp; GPU Shaders row --&gt;
+&lt;div class=&quot;sub-launcher-chips&quot;&gt;
+  &lt;span class=&quot;chip&quot;&gt;Steam Shaders · 6.4 GB&lt;/span&gt;
+  &lt;span class=&quot;chip&quot;&gt;NVIDIA DXCache · 4.1 GB&lt;/span&gt;
+  &lt;span class=&quot;chip&quot;&gt;VRChat Worlds · 8.9 GB&lt;/span&gt;
+  &lt;span class=&quot;chip&quot;&gt;EA App Staging · 2.3 GB&lt;/span&gt;
+&lt;/div&gt;</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Optional Gaming Storage tip inside More Tools Bento list</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Optional Gaming Storage tip inside More Tools section</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="proposal-card" data-proposal-id="P5_mobile_linked_pc_bloat_alert_remote_clean">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#5</span>
+            <span class="score-pill">86/100 Impact</span>
+            <span class="gap-pill">cross platform mobile bridge</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">mobile android</span><span class="plat-chip">mobile ios</span><span class="plat-chip">desktop windows</span>
+          </div>
+        </div>
+        <h3>Mobile-to-Desktop 'Linked PC Bloat Alert &amp; 1-Click Remote Clean Queue' Card</h3>
+        <p class="proposal-sub">Add a Linked Windows/Mac Status Card inside Android DashboardScreen.kt and iOS DashboardView.swift powered by /api/device-link</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>Cross-device Pro retention &amp; 5-device bundle upsell</strong></div>
+          <div><span>Demand:</span> <strong>82/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>96/100</strong></div>
+          <div><span>Ease:</span> <strong>78/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> SWEEPR's core value proposition is '1 Subscription Covers 5 Devices (Windows, macOS, iOS &amp; Android)', and `/api/device-link` already supports cross-device linking. However, neither `DashboardScreen.kt` nor `DashboardView.swift` currently displays the user's linked PC storage status on the Home tab. Surfacing a 'Linked Windows PC: 28.4 GB Reclaimable — Queue 1-Click Clean' card turns mobile sessions into cross-platform Pro upgrades.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/discord-cache" target="_blank" class="slug-tag">discord-cache</a><a href="/clean/app/spotify-cache" target="_blank" class="slug-tag">spotify-cache</a><a href="/clean/app/chrome-gpu-shader-cache" target="_blank" class="slug-tag">chrome-gpu-shader-cache</a><a href="/clean/app/windows-old" target="_blank" class="slug-tag">windows-old</a><a href="/clean/app/delivery-optimization" target="_blank" class="slug-tag">delivery-optimization</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// Polls /api/device-link/pending-commands on desktop startup when linked</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;!-- Shows 'Synced with iPhone / Android (5-Device Pro)' indicator in Desktop sidebar --&gt;</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Proposed Composable in DashboardScreen.kt (Candidate 5 Home Tab)
+@Composable
+fun LinkedPcStatusCard(pcName: String, reclaimableGb: Float, onQueueClean: () -&gt; Unit) {
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = Color(0xFF0E1525),
+        border = BorderStroke(1.dp, SweeprGreen.copy(alpha = 0.28f))
+    ) { /* Displays PC name, 28.4 GB badge, and 'Queue Remote PC Clean' button */ }
+}</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Proposed View in DashboardView.swift below bentoCategoryGrid
+private var linkedPcCompanionCard: some View {
+    HStack(spacing: 14) {
+        Image(systemName: &quot;desktopcomputer&quot;)
+            .foregroundColor(.sweeprEmerald)
+        VStack(alignment: .leading, spacing: 3) {
+            Text(&quot;LINKED WINDOWS 11 PC&quot;).font(.caption2).foregroundColor(.sweeprEmerald)
+            Text(&quot;28.4 GB Safe to Reclaim&quot;).font(.headline).foregroundColor(.white)
+        }
+        Spacer()
+        Button(&quot;Queue Clean&quot;) { /* Triggers /api/device-link queue */ }
+    }
+}</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="proposal-card" data-proposal-id="P6_mobile_safe_to_delete_verdict_and_app_cache_card">
+        <div class="proposal-head">
+          <div class="proposal-rank-wrap">
+            <span class="rank-pill">#6</span>
+            <span class="score-pill">83/100 Impact</span>
+            <span class="gap-pill">cross platform mobile bridge</span>
+          </div>
+          <div class="platform-badges">
+            <span class="plat-chip">mobile android</span><span class="plat-chip">mobile ios</span>
+          </div>
+        </div>
+        <h3>Mobile 'Safe-to-Delete Verdict Sheet' &amp; App Cache Encyclopedia Bento Card</h3>
+        <p class="proposal-sub">Bring SWEEPR's signature safety transparency and messaging/social cache guidance into iOS QuickCleanReviewView and Android DashboardScreen</p>
+        <div class="proposal-metrics">
+          <div><span>Est. Savings:</span> <strong>3.5 GB – 18.0 GB per phone</strong></div>
+          <div><span>Demand:</span> <strong>80/100</strong></div>
+          <div><span>Pro Upsell:</span> <strong>86/100</strong></div>
+          <div><span>Ease:</span> <strong>88/100</strong></div>
+        </div>
+        <p class="proposal-why"><strong>Analysis:</strong> In `DashboardView.swift` (`QuickCleanReviewView`, line 422) and `DashboardScreen.kt` (`StorageBreakdownDialog`, line 795), users review `Similar &amp; Duplicate Photos`, `Large 4K Videos`, `Screenshots`, and `Synced Cloud Backups` before tapping Clean. Adding an expandable 'Why is this safe?' verdict chip plus an 'App &amp; Social Media Cache Guide' card differentiates SWEEPR Mobile from generic clone cleaners.</p>
+        <div class="slug-list">
+          <span>Content Drivers:</span>
+          <a href="/clean/app/whatsapp-desktop-cache" target="_blank" class="slug-tag">whatsapp-desktop-cache</a><a href="/clean/app/telegram-desktop-cache" target="_blank" class="slug-tag">telegram-desktop-cache</a><a href="/clean/app/discord-cache" target="_blank" class="slug-tag">discord-cache</a><a href="/clean/app/capcut-pc-cache" target="_blank" class="slug-tag">capcut-pc-cache</a><a href="/clean/app/itunes-apple-mobile-sync-backup" target="_blank" class="slug-tag">itunes-apple-mobile-sync-backup</a>
+        </div>
+        <details class="code-spec-drawer">
+          <summary>View Copy-Paste Implementation Spec (Rust / Svelte / Compose / SwiftUI)</summary>
+          <div class="spec-grid">
+            <div>
+              <div class="spec-label">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre>// Mobile-focused UX enhancement</pre>
+            </div>
+            <div>
+              <div class="spec-label">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre>&lt;!-- Shared JSON copy schema with Desktop safety encyclopedia --&gt;</pre>
+            </div>
+            <div>
+              <div class="spec-label">Android Jetpack Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre>// Expandable Safety Verdict Pill inside ReviewScreen / StorageBreakdownDialog
+Row(verticalAlignment = Alignment.CenterVertically) {
+    Icon(Icons.Default.VerifiedUser, tint = SweeprGreen, modifier = Modifier.size(14.dp))
+    Text(&quot;Originals &amp; Cloud Backups Preserved · Tap to verify&quot;, color = SweeprGreen, fontSize = 11.sp)
+}</pre>
+            </div>
+            <div>
+              <div class="spec-label">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre>// Expandable Safety Verdict Sheet inside QuickCleanReviewView (DashboardView.swift)
+HStack(spacing: 6) {
+    Image(systemName: &quot;checkmark.shield.fill&quot;).foregroundColor(.sweeprEmerald)
+    Text(&quot;100% Safe · Originals &amp; iCloud Library Protected&quot;)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundColor(.sweeprEmerald)
+}</pre>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMockDrawer(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    function filterMockupStage(mode, btn) {
+      var tabs = document.querySelectorAll('.plat-tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      var d = document.getElementById('frame-desktop');
+      var m = document.getElementById('frame-mobile');
+      var stage = document.getElementById('mockup-stage');
+      if (mode === 'desktop') {
+        d.style.display = 'block';
+        m.style.display = 'none';
+        stage.style.gridTemplateColumns = '1fr';
+      } else if (mode === 'mobile') {
+        d.style.display = 'none';
+        m.style.display = 'grid';
+        stage.style.gridTemplateColumns = '1fr';
+      } else {
+        d.style.display = 'block';
+        m.style.display = 'grid';
+        stage.style.gridTemplateColumns = '';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -107,7 +107,7 @@ struct AccountView: View {
                 Spacer()
             }
 
-            Text("One account unlocks SWEEPR Pro across iPhone, Android, Windows & Mac.")
+            Text("Manage your SWEEPR Pro membership and app preferences on this device.")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.sweeprMutedText)
 
@@ -464,19 +464,16 @@ struct AccountView: View {
                     }
                     .buttonStyle(.plain)
 
-                    if let shareURL = URL(string: "\(AppConfig.websiteURL)?ref=\(vm.linkedAccount.referralCode)") {
-                        ShareLink(
-                            item: shareURL,
-                            message: Text("Clean up your phone & PC with SWEEPR Cleaner! Use my referral code \(vm.linkedAccount.referralCode)")
-                        ) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .font(.system(size: 11, weight: .bold))
-                                .padding(.horizontal, 11)
-                                .padding(.vertical, 6)
-                                .background(Color.sweeprEmerald)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
-                        }
+                    ShareLink(
+                        item: "Clean up your phone with SWEEPR Cleaner! Use my invite code: \(vm.linkedAccount.referralCode)"
+                    ) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .font(.system(size: 11, weight: .bold))
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 6)
+                            .background(Color.sweeprEmerald)
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
                     }
                 }
 
@@ -542,16 +539,12 @@ struct AccountView: View {
                 Divider().background(Color.sweeprLine)
 
                 if let website = URL(string: AppConfig.websiteURL) {
-                    Link(destination: website) {
-                        settingsRow(icon: "globe", tint: .sweeprEmerald, title: "Official Website", value: "sweeprcleaner.com")
-                    }
-                    Divider().background(Color.sweeprLine)
                     Link(destination: website.appendingPathComponent("privacy")) {
                         settingsRow(icon: "hand.raised.fill", tint: .sweeprCyan, title: "Privacy Policy", value: "View")
                     }
                     Divider().background(Color.sweeprLine)
                     Link(destination: website.appendingPathComponent("terms")) {
-                        settingsRow(icon: "doc.text.fill", tint: .sweeprIndigo, title: "Terms of Service", value: "View")
+                        settingsRow(icon: "doc.text.fill", tint: .sweeprIndigo, title: "Terms of Use (EULA)", value: "View")
                     }
                     Divider().background(Color.sweeprLine)
                 }

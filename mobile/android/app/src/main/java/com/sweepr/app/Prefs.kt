@@ -300,6 +300,7 @@ object Prefs {
         val code = account.referralCode.ifBlank { defaultReferralCode(account.deviceId, account.accountId) }
         val normalized = account.copy(referralCode = code)
         _account.value = normalized
+        SweeprApp.syncRevenueCatIdentity(normalized.accountId, normalized.email)
         storeRefreshTokenSecurely(normalized.refreshToken)
         if (::secureAuthStore.isInitialized) {
             secureAuthStore.edit()

@@ -105,6 +105,14 @@
   const selectedList = $derived(Object.keys(selectedFiles).filter((k) => selectedFiles[k]));
   const selectedBytes = $derived(
     groups.reduce((sum, g) => {
+      if (g.photo_details && g.photo_details.length > 0) {
+        return (
+          sum +
+          g.photo_details
+            .filter((pd) => selectedFiles[pd.path])
+            .reduce((acc, pd) => acc + pd.size, 0)
+        );
+      }
       const count = g.files.filter((f) => selectedFiles[f]).length;
       return sum + count * g.size;
     }, 0)
@@ -149,15 +157,20 @@
       if (mode === "duplicates") {
         const COPY_RE = /\(\d+\)| - copy|_copy/i;
         const raw = await api.findDuplicates(selectedDir.trim());
-        groups = raw.map((g) => ({
-          ...g,
-          files: [...g.files].sort((a, b) => {
-            const aCopy = COPY_RE.test(a) ? 1 : 0;
-            const bCopy = COPY_RE.test(b) ? 1 : 0;
-            if (aCopy !== bCopy) return aCopy - bCopy;
-            return a.length - b.length;
-          }),
-        }));
+        groups = raw.map((g) => {
+          if (g.kind === "similar_photo") {
+            return g;
+          }
+          return {
+            ...g,
+            files: [...g.files].sort((a, b) => {
+              const aCopy = COPY_RE.test(a) ? 1 : 0;
+              const bCopy = COPY_RE.test(b) ? 1 : 0;
+              if (aCopy !== bCopy) return aCopy - bCopy;
+              return a.length - b.length;
+            }),
+          };
+        });
         smartSelectExtras();
         scanned = true;
       } else {
@@ -421,11 +434,16 @@
         <div class="grid">
           {#each groups as g, i (g.hash)}
             <div class="card item" style={`--stagger-i: ${Math.min(i, 7)};`}>
-              <div class="row" style="margin-bottom: 6px;">
+              <div class="row" style="margin-bottom: 6px; gap: 6px;">
                 <strong style="font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   {fileNameOf(g.files[0])}
                 </strong>
                 <div class="spacer"></div>
+                {#if g.kind === "similar_photo"}
+                  <span class="badge free" style="background: rgba(16, 185, 129, 0.14); color: var(--accent);">
+                    Best-Shot Burst
+                  </span>
+                {/if}
                 <span class="badge free">{g.files.length}×</span>
               </div>
               <div class="cluster-size">
@@ -433,9 +451,12 @@
               </div>
               <div class="files">
                 {#each g.files as f, idx}
+                  {@const pd = g.photo_details?.find((p) => p.path === f)}
                   <label class="row file-path" class:kept={idx === 0} title={f}>
                     {#if idx === 0}
-                      <span class="badge free" style="font-size: 10px; padding: 2px 6px;">Kept</span>
+                      <span class="badge free" style="font-size: 10px; padding: 2px 6px;">
+                        {g.kind === "similar_photo" ? "Best Shot (Keep — Protected)" : "Kept"}
+                      </span>
                     {:else}
                       <input
                         type="checkbox"
@@ -447,7 +468,15 @@
                       />
                     {/if}
                     <span class="muted small path" style="flex: 1; overflow: hidden; text-overflow: ellipsis;">
-                      {shortenPath(f, 52)}
+                      {shortenPath(f, 44)}
+                      {#if pd}
+                        <span style="display: block; font-size: 10.5px; opacity: 0.85;">
+                          {pd.width}×{pd.height} · Sharpness {pd.sharpness.toFixed(1)}
+                          {#if !pd.is_best_shot}
+                            · {pd.badge} (Δ{pd.hamming_distance})
+                          {/if}
+                        </span>
+                      {/if}
                     </span>
                   </label>
                 {/each}

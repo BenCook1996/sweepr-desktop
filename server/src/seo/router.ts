@@ -13,12 +13,15 @@ import {
   type FetchLike,
 } from "./dataforseo.js";
 import {
+  inspectGscPriorityUrls,
   loadOAuthRefreshCredential,
   loadServiceAccount,
   providerStatus,
   refreshOpenPageRank,
+  runCloudGoogleSeoSync,
   runCrux,
   runPageSpeed,
+  submitGscSitemap,
   syncSearchConsole,
   type SeoProviderConfig,
 } from "./google.js";
@@ -64,6 +67,11 @@ import {
   runUnderperformerAutoRefresh,
   teardownCompetitorOrganicPage,
 } from "./competitor-intel.js";
+import {
+  generateWeeklyContentToProductReport,
+  loadOrGenerateWeeklyProductAdvisorReport,
+  renderProductAdvisorMockupHtml,
+} from "./product-advisor.js";
 import { isCrossProjectBacklink, type SeoStore } from "./store.js";
 
 export interface SeoRouterDeps {
@@ -423,20 +431,27 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   router.get("/gsc/config", (c) =>
     c.json({
       ...providerStatus(providers, store).gsc,
+      pagespeed: providerStatus(providers, store).pagespeed,
       intent_gap_last_run: store.getSetting<Record<string, unknown> | null>("intent_gap_last_run", null),
+      a21_last_summary: store.getSetting<Record<string, unknown> | null>("a21_cloud_google_sync_last_summary", null),
     })
   );
 
   const handleGscConfigUpdate = async (c: any) => {
     const body = await c.req.json().catch(() => ({}));
-    if (typeof body.site_url === "string" && body.site_url.trim()) {
-      store.setSetting("gsc_site_url", body.site_url.trim());
+    const siteUrlVal = body.site_url ?? body.gsc_site_url;
+    if (typeof siteUrlVal === "string" && siteUrlVal.trim()) {
+      store.setSetting("gsc_site_url", siteUrlVal.trim());
     }
-    if (body.service_account_json !== undefined) {
+    if (typeof body.google_api_key === "string") {
+      store.setSetting("google_api_key", body.google_api_key.trim());
+    }
+    const saInput = body.service_account_json !== undefined ? body.service_account_json : body.gsc_service_account_json;
+    if (saInput !== undefined) {
       const raw =
-        typeof body.service_account_json === "string"
-          ? body.service_account_json.trim()
-          : JSON.stringify(body.service_account_json);
+        typeof saInput === "string"
+          ? saInput.trim()
+          : JSON.stringify(saInput);
       if (raw) {
         const sa = loadServiceAccount(raw);
         const oauth = sa ? null : loadOAuthRefreshCredential(raw);
@@ -455,10 +470,54 @@ export function createSeoRouter(deps: SeoRouterDeps) {
         store.setSetting("gsc_service_account_json", "");
       }
     }
-    return c.json({ ok: true, gsc: providerStatus(providers, store).gsc });
+    const status = providerStatus(providers, store);
+    return c.json({ ok: true, gsc: status.gsc, pagespeed: status.pagespeed, providers: status });
   };
   router.put("/gsc/config", handleGscConfigUpdate);
   router.post("/gsc/config", handleGscConfigUpdate);
+  router.put("/gsc/configure", handleGscConfigUpdate);
+  router.post("/gsc/configure", handleGscConfigUpdate);
+
+  router.post("/gsc/cloud-sync", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const syncSummary = await runCloudGoogleSeoSync(store, providers, {
+      days: typeof body.days === "number" ? body.days : 90,
+      maxInspectUrls: typeof body.max_inspect_urls === "number" ? body.max_inspect_urls : 6,
+      runCwv: Boolean(body.run_cwv),
+      persistQueue: body.persist_queue !== false,
+    });
+    const w = gscWindow();
+    const intentGap = w
+      ? executeIntentGapAutomation(store, {
+          from: w.from,
+          to: w.to,
+          siteUrl: providers.siteUrl,
+          persistState: body.persist_state !== false,
+        })
+      : null;
+    const ledgerCalibration = store.reconcileStrategyLedgerActualsAndCalibrate({
+      recalibrate: true,
+    });
+    return c.json({
+      ...syncSummary,
+      intent_gap_executed: Boolean(intentGap),
+      strategy_ledger_evaluated: ledgerCalibration.evaluated_count,
+    });
+  });
+
+  router.get("/gsc/inspection-ledger", (c) => {
+    const ledger = store.getSetting<Array<Record<string, unknown>>>("gsc_url_inspection_ledger", []);
+    const lastSitemap = store.getSetting<Record<string, unknown> | null>("gsc_last_sitemap_submit", null);
+    const lastCloudSync = store.getSetting<Record<string, unknown> | null>("a21_cloud_google_sync_last_summary", null);
+    return c.json({
+      ok: true,
+      total_inspected: ledger.length,
+      indexed_pass_count: ledger.filter((r) => r.verdict === "PASS").length,
+      last_sitemap_submit: lastSitemap,
+      last_cloud_sync: lastCloudSync,
+      ledger,
+    });
+  });
 
   router.post("/gsc/ingest", async (c) => {
     const body = await c.req.json().catch(() => ({}));
@@ -884,7 +943,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   });
 
   // ---------------- Core Web Vitals ----------------
-  router.get("/cwv", (c) => c.json({ cwv: store.listCwv(), providers: providerStatus(providers) }));
+  router.get("/cwv", (c) => c.json({ cwv: store.listCwv(), providers: providerStatus(providers, store) }));
   router.post("/pagespeed/run", async (c) => {
     const body = await c.req.json().catch(() => ({}));
     const path = String(body.path ?? "/").startsWith("/") ? String(body.path ?? "/") : "/";
@@ -1352,6 +1411,29 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       notes: body.notes ? String(body.notes) : undefined,
     });
     return c.json({ ok: true, snapshot, entry: snapshot });
+  });
+
+  // ---------------- A20: Weekly Content-to-Product & UI Mockup Advisor ----------------
+  router.get("/product-advisor", (c) => {
+    const refresh = c.req.query("refresh") === "1" || c.req.query("refresh") === "true";
+    const report = refresh
+      ? generateWeeklyContentToProductReport(store, { persist: true })
+      : loadOrGenerateWeeklyProductAdvisorReport(store);
+    return c.json(report);
+  });
+
+  router.post("/product-advisor/generate", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const report = generateWeeklyContentToProductReport(store, {
+      persist: body.persist !== false,
+    });
+    return c.json(report);
+  });
+
+  router.get("/product-advisor/mockup-report", (c) => {
+    const report = loadOrGenerateWeeklyProductAdvisorReport(store);
+    const html = renderProductAdvisorMockupHtml(report);
+    return c.html(html);
   });
 
   return router;

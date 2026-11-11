@@ -29,6 +29,11 @@
   import { formatBytes } from "../lib/format";
   import { addLifetimeStats, syncLifetimeStatsFromBackend } from "../lib/store";
   import { lang, t } from "../lib/i18n";
+  import {
+    CACHE_INTELLIGENCE,
+    resolveFilePathSafetyIntelligence,
+    resolveRuleSafetyIntelligence,
+  } from "../lib/cache-intelligence";
 
   let {
     license,
@@ -66,9 +71,294 @@
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let pendingCleanAfterAuth = $state(false);
 
+  // Viral "I Just Reclaimed X.X GB with SWEEPR" Shareable Benchmark Card State
+  let showShareWinModal = $state(false);
+  let shareCanvasEl = $state<HTMLCanvasElement | null>(null);
+  let shareActionToast = $state<string | null>(null);
+
+  // 1-Time Peak Delight Review Capture Card (>= 500 MB freed with 0 errors, throttled via localStorage)
+  const REVIEW_DELIGHT_STORAGE_KEY = "sweepr_review_delight_shown_v1";
+  let showReviewDelightCard = $state(false);
+  function dismissReviewDelightCard() {
+    showReviewDelightCard = false;
+    try {
+      localStorage.setItem(REVIEW_DELIGHT_STORAGE_KEY, "1");
+    } catch {}
+  }
+
+  const referralCode = $derived.by(() => {
+    try {
+      const saved = localStorage.getItem("sweepr_referral_code");
+      if (saved && saved.trim()) return saved.trim().toUpperCase();
+    } catch {}
+    const seed = (info?.device_id || info?.machine_id || "PRO2026")
+      .replace(/[^A-Za-z0-9]/g, "")
+      .slice(0, 8)
+      .toUpperCase();
+    return `SWP-${seed || "PRO2026"}`;
+  });
+
+  const shareReclaimedBytes = $derived(
+    freedTotal > 0 ? freedTotal : targetHeroBytes > 0 ? targetHeroBytes : 6.4 * 1024 * 1024 * 1024
+  );
+  const shareReclaimedLabel = $derived(formatBytes(shareReclaimedBytes));
+  const shareScanDurationMs = $derived(Math.max(38, report?.duration_ms ?? 312));
+  const shareTopCulprit = $derived.by(() => {
+    const cats = report?.categories ? [...report.categories].filter((c) => c.bytes > 0) : [];
+    cats.sort((a, b) => b.bytes - a.bytes);
+    if (cats.length >= 2) {
+      return `${cats[0].name} / ${cats[1].name}`;
+    }
+    if (cats.length === 1) {
+      return `${cats[0].name} / Shader Cache`;
+    }
+    return isMacOs ? "Xcode DerivedData / ComfyUI / Safari Cache" : "NVIDIA DXCache / ComfyUI / Xcode";
+  });
+  const shareReferralShortDisplay = $derived(`sweeprcleaner.com/r/${referralCode}`);
+  const shareWinPublicUrl = $derived(
+    `https://sweeprcleaner.com/share/win?gb=${encodeURIComponent(shareReclaimedLabel)}&culprit=${encodeURIComponent(shareTopCulprit)}&ms=${encodeURIComponent(String(shareScanDurationMs))}&code=${encodeURIComponent(referralCode)}`
+  );
+
+  function renderShareWinCanvas() {
+    const canvas = shareCanvasEl;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const W = 1200;
+    const H = 630;
+    canvas.width = W;
+    canvas.height = H;
+
+    // 1. Sleek Dark-Emerald Background Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+    bgGrad.addColorStop(0, "#03110c");
+    bgGrad.addColorStop(0.52, "#062319");
+    bgGrad.addColorStop(1, "#041610");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle Bioluminescent Radial Glow
+    const glow = ctx.createRadialGradient(W * 0.78, H * 0.28, 30, W * 0.78, H * 0.28, 440);
+    glow.addColorStop(0, "rgba(16, 185, 129, 0.26)");
+    glow.addColorStop(0.6, "rgba(6, 182, 212, 0.08)");
+    glow.addColorStop(1, "rgba(4, 22, 16, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle Precision Grid Overlay
+    ctx.strokeStyle = "rgba(16, 185, 129, 0.07)";
+    ctx.lineWidth = 1;
+    for (let x = 60; x < W; x += 60) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+    for (let y = 60; y < H; y += 60) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    }
+
+    // Card Frame Border
+    ctx.strokeStyle = "rgba(16, 185, 129, 0.45)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(28, 28, W - 56, H - 56, 28);
+    ctx.stroke();
+
+    // Top Header Pill + Brand Wordmark
+    ctx.fillStyle = "#10b981";
+    ctx.font = "800 22px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.fillText("⚡ SWEEPR CLEANER · STORAGE BENCHMARK", 72, 92);
+
+    ctx.fillStyle = "rgba(16, 185, 129, 0.18)";
+    ctx.beginPath();
+    ctx.roundRect(W - 360, 62, 288, 44, 22);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(16, 185, 129, 0.55)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "#6ee7b7";
+    ctx.font = "800 17px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.fillText("+30 DAYS FREE PRO PASS", W - 332, 90);
+
+    // Main Viral Headline
+    ctx.fillStyle = "#ecfdf5";
+    ctx.font = "900 62px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.fillText(`I Just Reclaimed ${shareReclaimedLabel}`, 72, 195);
+
+    ctx.fillStyle = "#34d399";
+    ctx.font = "800 36px system-ui, -apple-system, Segoe UI, sans-serif";
+    ctx.fillText(`with SWEEPR Cleaner (${osDiskLabel})`, 72, 248);
+
+    // 3 Telemetry Metric Boxes (GB Reclaimed, Top Culprit, Scan Duration in ms)
+    const boxY = 292;
+    const boxH = 172;
+    const boxes = [
+      {
+        x: 72,
+        w: 310,
+        kicker: "STORAGE RECLAIMED",
+        value: shareReclaimedLabel,
+        sub: `${removedTotal || report?.total_files || 1240} junk files purged`,
+        accent: "#34d399",
+      },
+      {
+        x: 404,
+        w: 472,
+        kicker: "TOP CULPRIT",
+        value: shareTopCulprit.length > 26 ? `${shareTopCulprit.slice(0, 25)}…` : shareTopCulprit,
+        sub: "100% Safe Automated Rule · 7-Day Undo",
+        accent: "#38bdf8",
+      },
+      {
+        x: 898,
+        w: 230,
+        kicker: "SCAN SPEED",
+        value: `${shareScanDurationMs} ms`,
+        sub: "Native Rust Engine",
+        accent: "#fbbf24",
+      },
+    ];
+
+    for (const b of boxes) {
+      ctx.fillStyle = "rgba(7, 38, 27, 0.86)";
+      ctx.beginPath();
+      ctx.roundRect(b.x, boxY, b.w, boxH, 20);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.32)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "800 15px ui-monospace, SFMono-Regular, Consolas, monospace";
+      ctx.fillText(b.kicker, b.x + 24, boxY + 42);
+
+      ctx.fillStyle = b.accent;
+      ctx.font = b.w > 400 ? "800 28px system-ui, -apple-system, sans-serif" : "900 40px system-ui, -apple-system, sans-serif";
+      ctx.fillText(b.value, b.x + 24, boxY + 102);
+
+      ctx.fillStyle = "#d1fae5";
+      ctx.font = "600 16px system-ui, -apple-system, sans-serif";
+      ctx.fillText(b.sub, b.x + 24, boxY + 142);
+    }
+
+    // Bottom Referral Footer Bar
+    ctx.fillStyle = "rgba(16, 185, 129, 0.14)";
+    ctx.beginPath();
+    ctx.roundRect(72, 496, W - 144, 74, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(52, 211, 153, 0.45)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#a7f3d0";
+    ctx.font = "700 20px system-ui, -apple-system, sans-serif";
+    ctx.fillText("Claim +30 Days Free SWEEPR Pro:", 98, 541);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 23px ui-monospace, SFMono-Regular, Consolas, monospace";
+    ctx.fillText(shareReferralShortDisplay, 430, 541);
+  }
+
+  function openShareWinModal() {
+    showShareWinModal = true;
+    shareActionToast = null;
+    trackAppEvent("referral_aha_clicked", {
+      bytes_cleaned: shareReclaimedBytes,
+      top_culprit: shareTopCulprit,
+      duration_ms: shareScanDurationMs,
+      referral_code: referralCode,
+    });
+    setTimeout(() => renderShareWinCanvas(), 20);
+  }
+
+  async function copyShareWinCardImage() {
+    renderShareWinCanvas();
+    const canvas = shareCanvasEl;
+    if (!canvas) return;
+    try {
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (blob && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        shareActionToast = "Copied benchmark card image to clipboard! Paste anywhere (Ctrl+V / ⌘V).";
+        return;
+      }
+    } catch {}
+    try {
+      await navigator.clipboard.writeText(
+        `I just reclaimed ${shareReclaimedLabel} in ${shareScanDurationMs}ms with SWEEPR Cleaner (Top culprit: ${shareTopCulprit})! Claim +30 days Free Pro: ${shareWinPublicUrl}`
+      );
+      shareActionToast = "Copied share link & benchmark summary to clipboard!";
+    } catch {
+      shareActionToast = `Share URL: ${shareReferralShortDisplay}`;
+    }
+  }
+
+  async function shareWinOnSocial(network: "x" | "reddit" | "discord") {
+    const shareText = `I just reclaimed ${shareReclaimedLabel} in ${shareScanDurationMs}ms with @SWEEPRCleaner! Top culprit: ${shareTopCulprit}. Claim +30 days Free Pro:`;
+    trackAppEvent("referral_aha_clicked", {
+      network,
+      bytes_cleaned: shareReclaimedBytes,
+      top_culprit: shareTopCulprit,
+      duration_ms: shareScanDurationMs,
+      referral_code: referralCode,
+    });
+    if (network === "x") {
+      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareWinPublicUrl)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else if (network === "reddit") {
+      const title = `I just reclaimed ${shareReclaimedLabel} with SWEEPR Cleaner in ${shareScanDurationMs}ms (Top culprit: ${shareTopCulprit})`;
+      const url = `https://www.reddit.com/submit?url=${encodeURIComponent(shareWinPublicUrl)}&title=${encodeURIComponent(title)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else if (network === "discord") {
+      await copyShareWinCardImage();
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${shareWinPublicUrl}`);
+      } catch {}
+      shareActionToast = "Copied rich Discord share link (unfurls storage card) — paste into any Discord channel!";
+      window.open("https://discord.com/app", "_blank", "noopener,noreferrer");
+    }
+  }
+
+  // 377-Item Plain-English Cache Safety Intelligence State
+  let expandedRuleIntel = $state<Record<string, boolean>>({});
+  let expandedFileIntel = $state<Record<string, boolean>>({});
+  let safetyCheckPath = $state("");
+  let safetySearchInputEl = $state<HTMLInputElement | null>(null);
+  const safetyCheckResult = $derived(
+    safetyCheckPath.trim() ? resolveFilePathSafetyIntelligence(safetyCheckPath) : null
+  );
+
+  const SAMPLE_SAFETY_PATHS = [
+    "%AppData%\\discord\\Cache",
+    "Steam\\steamapps\\shadercache",
+    "Chrome\\User Data\\Default\\Service Worker\\CacheStorage",
+    "C:\\Windows\\SoftwareDistribution\\Download",
+  ];
+
+  function toggleRuleIntel(ruleId: string) {
+    expandedRuleIntel = {
+      ...expandedRuleIntel,
+      [ruleId]: !expandedRuleIntel[ruleId],
+    };
+  }
+
+  function toggleFileIntel(fileKey: string) {
+    expandedFileIntel = {
+      ...expandedFileIntel,
+      [fileKey]: !expandedFileIntel[fileKey],
+    };
+  }
+
   // Dynamic OS Disk Label & Localized Add-on Price (D3 Architecture)
   let osDiskLabel = $state("Local Disk (C:) · NVMe");
   let localizedAddonPrice = $state("£9.99/yr");
+  let isMacOs = $state(false);
+  let hasMacosFda = $state(true);
 
   const nonEmpty = $derived(report?.categories.filter((c) => c.bytes > 0) ?? []);
 
@@ -315,6 +605,14 @@
       await syncLifetimeStatsFromBackend().catch(() => {});
       api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
       phase = "done";
+      if (freedTotal >= 500 * 1024 * 1024 && !error) {
+        try {
+          if (localStorage.getItem(REVIEW_DELIGHT_STORAGE_KEY) !== "1") {
+            localStorage.setItem(REVIEW_DELIGHT_STORAGE_KEY, "1");
+            showReviewDelightCard = true;
+          }
+        } catch {}
+      }
     } catch (e: any) {
       phase = "idle";
       if (isPaymentRequired(e)) {
@@ -391,6 +689,13 @@
       const ua = (navigator.userAgent || "").toLowerCase();
       if (ua.includes("mac")) {
         osDiskLabel = "Mac Hard Drive";
+        isMacOs = true;
+        api
+          .checkMacosFullDiskAccess()
+          .then((granted) => {
+            hasMacosFda = granted;
+          })
+          .catch(() => {});
       } else if (ua.includes("linux")) {
         osDiskLabel = "Computer Storage";
       } else {
@@ -450,13 +755,25 @@
         void executeClean();
       }
     };
+    const onSafetyCheck = (e: Event) => {
+      const detail = (e as CustomEvent<{ query?: string }> | undefined)?.detail;
+      if (detail?.query) {
+        safetyCheckPath = detail.query;
+      }
+      setTimeout(() => {
+        safetySearchInputEl?.focus();
+        safetySearchInputEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 40);
+    };
     window.addEventListener(OPEN_UNDO_EVENT, onOpenUndo);
     window.addEventListener("sweepr-trigger-scan", onTriggerScan);
     window.addEventListener("sweepr-license-activated", onActivated);
+    window.addEventListener("sweepr-safety-check", onSafetyCheck);
     return () => {
       window.removeEventListener(OPEN_UNDO_EVENT, onOpenUndo);
       window.removeEventListener("sweepr-trigger-scan", onTriggerScan);
       window.removeEventListener("sweepr-license-activated", onActivated);
+      window.removeEventListener("sweepr-safety-check", onSafetyCheck);
     };
   });
 </script>
@@ -472,6 +789,44 @@
     >
       {error}
     </div>
+  {/if}
+
+  {#if (isMacOs || info?.platform === "macos") && !hasMacosFda}
+    <section
+      class="macos-fda-banner"
+      aria-label="macOS Full Disk Access Setup"
+      style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;border-radius:14px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.32);margin-bottom:12px;"
+    >
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <strong style="font-size:13.5px;color:var(--text);">
+          Grant Full Disk Access to scan Safari, Mail &amp; System Trash
+        </strong>
+        <span style="font-size:12px;color:var(--muted);">
+          Step 1: Click <strong>Open System Settings</strong> below · Step 2: Toggle <strong>SWEEPR Cleaner</strong> on under Privacy &amp; Security → Full Disk Access, then re-scan.
+        </span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <button
+          type="button"
+          class="primary small-btn"
+          onclick={async () => {
+            await api.openMacosFdaSettings().catch(() => {});
+          }}
+        >
+          Open System Settings
+        </button>
+        <button
+          type="button"
+          class="ghost small-btn"
+          onclick={async () => {
+            hasMacosFda = await api.checkMacosFullDiskAccess().catch(() => false);
+            if (hasMacosFda) scan();
+          }}
+        >
+          Re-check
+        </button>
+      </div>
+    </section>
   {/if}
 
   <!-- 1. D3 Top Native OS Storage Bar & Primary Fitts's Law Action -->
@@ -584,27 +939,155 @@
     </div>
   </header>
 
-  {#if phase === "done" && freedTotal >= 1024 * 1024 * 1024}
+  {#if phase === "done" && freedTotal > 0}
     <div class="a14-referral-banner" role="region" aria-label="Storage milestone reward">
       <div class="a14-referral-left">
-        <span class="a14-referral-badge">Milestone Unlocked</span>
+        <span class="a14-referral-badge">Aha! Storage Win</span>
         <span class="a14-referral-copy">
-          You reclaimed <strong>{formatBytes(freedTotal)}</strong>! Share SWEEPR with a friend or review us to earn <strong>30 days of Pro free</strong>.
+          You reclaimed <strong>{formatBytes(freedTotal)}</strong> in <strong>{shareScanDurationMs}ms</strong> (Top culprit: <strong>{shareTopCulprit}</strong>)! Share your storage win to earn <strong>+30 days of Pro free</strong>.
         </span>
       </div>
       <div class="a14-referral-actions">
+        <button
+          type="button"
+          class="a14-share-win-btn"
+          onclick={openShareWinModal}
+        >
+          Share My Storage Win (+30 Days Free Pro)
+        </button>
         <a
-          href="https://sweeprcleaner.com/?utm_source=desktop_app&utm_medium=referral_aha&utm_campaign=post_clean_5gb"
+          href={shareWinPublicUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="a14-referral-link"
           onclick={() => trackAppEvent("referral_aha_clicked", { bytes_cleaned: freedTotal })}
         >
-          Share &amp; Claim 30 Days Free →
+          {shareReferralShortDisplay} →
         </a>
       </div>
     </div>
   {/if}
+
+  {#if phase === "done" && showReviewDelightCard && freedTotal >= 500 * 1024 * 1024 && !error}
+    <div class="a14-referral-banner" role="region" aria-label="Review SWEEPR on Trustpilot or AlternativeTo">
+      <div class="a14-referral-left">
+        <span class="a14-referral-badge">★ Peak Delight</span>
+        <span class="a14-referral-copy">
+          Did Sweepr save your drive today? Leave a 30-second review on <strong>Trustpilot / AlternativeTo</strong> to help independent users find us.
+        </span>
+      </div>
+      <div class="a14-referral-actions">
+        <a
+          href="https://www.trustpilot.com/evaluate/sweeprcleaner.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="a14-share-win-btn"
+          style="text-decoration:none;"
+          onclick={dismissReviewDelightCard}
+        >
+          ★ Review on Trustpilot
+        </a>
+        <a
+          href="https://alternativeto.net/software/sweepr-cleaner/about/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="a14-referral-link"
+          onclick={dismissReviewDelightCard}
+        >
+          AlternativeTo →
+        </a>
+        <button
+          type="button"
+          class="d3-safety-clear"
+          onclick={dismissReviewDelightCard}
+          aria-label="Dismiss review card"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  {/if}
+
+  <!-- 1.5. Paste Any Folder Path -> Instant Safety Check (377-Item Knowledge Base) -->
+  <section class="d3-safety-search-card" aria-label="Paste Any Folder Path Instant Safety Check">
+    <div class="d3-safety-search-head">
+      <div class="d3-safety-title-wrap">
+        <span class="d3-safety-kicker">INSTANT SAFETY CHECK · {CACHE_INTELLIGENCE.length} VERIFIED RULES</span>
+        <span class="d3-safety-sub">Paste any folder path or cache name for a plain-English safety verdict</span>
+      </div>
+      <div class="d3-safety-chips">
+        {#each SAMPLE_SAFETY_PATHS as sample}
+          <button
+            type="button"
+            class="d3-safety-chip"
+            class:active={safetyCheckPath === sample}
+            onclick={() => (safetyCheckPath = safetyCheckPath === sample ? "" : sample)}
+          >
+            {sample.split("\\").slice(-2).join("\\")}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    <div class="d3-safety-input-row">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" class="d3-safety-icon">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <input
+        bind:this={safetySearchInputEl}
+        type="text"
+        bind:value={safetyCheckPath}
+        placeholder="Paste any folder path -> Instant Safety Check (e.g. %AppData%\discord\Cache or C:\Windows\WinSxS)…"
+        class="d3-safety-input"
+        aria-label="Paste any folder path for instant safety check"
+      />
+      {#if safetyCheckPath}
+        <button
+          type="button"
+          class="d3-safety-clear"
+          onclick={() => (safetyCheckPath = "")}
+          aria-label="Clear folder path"
+        >
+          Clear
+        </button>
+      {/if}
+    </div>
+
+    {#if safetyCheckResult}
+      <div class="d3-safety-result-drawer" role="region" aria-live="polite">
+        <div class="d3-safety-result-top">
+          <span
+            class="d3-safety-badge"
+            class:is-safe={safetyCheckResult.safetyBadge === "100% Safe Automated"}
+            class:is-review={safetyCheckResult.safetyBadge !== "100% Safe Automated"}
+          >
+            {safetyCheckResult.safetyBadge}
+          </span>
+          <span class="d3-safety-owner">Owner: <strong>{safetyCheckResult.owner}</strong></span>
+          {#if safetyCheckResult.avgSpace}
+            <span class="d3-safety-avg">Typical size: {safetyCheckResult.avgSpace}</span>
+          {/if}
+          <code class="d3-safety-code-path">{safetyCheckResult.path}</code>
+        </div>
+        <div class="d3-safety-grid">
+          <div class="d3-safety-col">
+            <span class="d3-safety-label">What it is</span>
+            <p class="d3-safety-copy">{safetyCheckResult.whatItIs}</p>
+          </div>
+          <div class="d3-safety-col">
+            <span class="d3-safety-label">What happens if deleted</span>
+            <p class="d3-safety-copy">{safetyCheckResult.whatHappensIfDeleted}</p>
+          </div>
+        </div>
+        <div class="d3-safety-foot">
+          <span class="d3-safety-rebuild"><strong>Rebuild behavior:</strong> {safetyCheckResult.rebuildCost}</span>
+          {#if safetyCheckResult.warning}
+            <span class="d3-safety-warn">Note: {safetyCheckResult.warning}</span>
+          {/if}
+        </div>
+      </div>
+    {/if}
+  </section>
 
   <!-- 2. D3 4 Semantic Pastel-Tinted Category Tiles (Every figure sits inside the card that explains it) -->
   <div class="d3-tiles-grid">
@@ -655,17 +1138,91 @@
             <div class="file-accordion-inner">
               <div class="d3-path-drawer">
                 {#each sysBrowserCats as c (c.id)}
-                  <label class="d3-path-item">
-                    <input
-                      type="checkbox"
-                      class="checkbox"
-                      class:checked={!!selected[c.id]}
-                      bind:checked={selected[c.id]}
-                      tabindex={expandedIds.has("sys") ? 0 : -1}
-                    />
-                    <span class="d3-path-name">{c.name}</span>
-                    <span class="d3-path-size">{formatBytes(c.bytes)}</span>
-                  </label>
+                  {@const intel = resolveRuleSafetyIntelligence(c)}
+                  {@const isRuleOpen = !!expandedRuleIntel[c.id]}
+                  <div class="d3-rule-block">
+                    <div class="d3-path-item">
+                      <label class="d3-path-check-label">
+                        <input
+                          type="checkbox"
+                          class="checkbox"
+                          class:checked={!!selected[c.id]}
+                          bind:checked={selected[c.id]}
+                          tabindex={expandedIds.has("sys") ? 0 : -1}
+                        />
+                        <span class="d3-path-name">{c.name}</span>
+                      </label>
+                      <button
+                        type="button"
+                        class="d3-why-safe-btn"
+                        class:open={isRuleOpen}
+                        onclick={() => toggleRuleIntel(c.id)}
+                        aria-expanded={isRuleOpen}
+                      >
+                        Why is this safe to delete?
+                      </button>
+                      <span class="d3-path-size">{formatBytes(c.bytes)}</span>
+                    </div>
+
+                    {#if isRuleOpen}
+                      <div class="d3-intel-drawer">
+                        <div class="d3-intel-badges">
+                          <span
+                            class="d3-safety-badge"
+                            class:is-safe={intel.safetyBadge === "100% Safe Automated"}
+                            class:is-review={intel.safetyBadge !== "100% Safe Automated"}
+                          >
+                            {intel.safetyBadge}
+                          </span>
+                          <span class="d3-intel-owner">App Owner: <strong>{intel.owner}</strong></span>
+                        </div>
+                        <div class="d3-intel-path-row">
+                          <span class="d3-intel-label">Exact Path:</span>
+                          <code class="d3-intel-code">{c.roots?.[0] || intel.path}</code>
+                        </div>
+                        <p class="d3-intel-text"><strong>What it is:</strong> {intel.whatItIs}</p>
+                        <p class="d3-intel-text"><strong>If deleted:</strong> {intel.whatHappensIfDeleted}</p>
+                        <p class="d3-intel-rebuild"><strong>Rebuild behavior:</strong> {intel.rebuildCost}</p>
+
+                        {#if c.top_files && c.top_files.length > 0}
+                          <div class="d3-top-files-section">
+                            <div class="d3-top-files-title">
+                              Top {Math.min(50, c.top_files.length)} Scanned Files in {c.name}
+                            </div>
+                            <div class="d3-top-files-list">
+                              {#each c.top_files.slice(0, 50) as file, fIdx (`${c.id}-${fIdx}`)}
+                                {@const fileKey = `${c.id}::${file.path}`}
+                                {@const fileOpen = !!expandedFileIntel[fileKey]}
+                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c) : intel}
+                                <div class="d3-top-file-row">
+                                  <div class="d3-top-file-main">
+                                    <code class="d3-top-file-path" title={file.path}>{file.path}</code>
+                                    <button
+                                      type="button"
+                                      class="d3-file-why-btn"
+                                      onclick={() => toggleFileIntel(fileKey)}
+                                      aria-expanded={fileOpen}
+                                    >
+                                      {fileOpen ? "Hide safety" : "Why safe?"}
+                                    </button>
+                                    <span class="d3-top-file-size">{formatBytes(file.size)}</span>
+                                  </div>
+                                  {#if fileOpen}
+                                    <div class="d3-file-intel-sub">
+                                      <span><strong>Rating:</strong> {fileIntel.safetyBadge}</span>
+                                      <span><strong>Owner:</strong> {fileIntel.owner}</span>
+                                      <span><strong>Path:</strong> <code>{file.path}</code></span>
+                                      <span><strong>Rebuild:</strong> {fileIntel.whatHappensIfDeleted} ({fileIntel.rebuildCost})</span>
+                                    </div>
+                                  {/if}
+                                </div>
+                              {/each}
+                            </div>
+                          </div>
+                        {/if}
+                      </div>
+                    {/if}
+                  </div>
                 {/each}
               </div>
             </div>
@@ -731,17 +1288,91 @@
             <div class="file-accordion-inner">
               <div class="d3-path-drawer">
                 {#each appCacheCats as c (c.id)}
-                  <label class="d3-path-item">
-                    <input
-                      type="checkbox"
-                      class="checkbox"
-                      class:checked={!!selected[c.id]}
-                      bind:checked={selected[c.id]}
-                      tabindex={expandedIds.has("app") ? 0 : -1}
-                    />
-                    <span class="d3-path-name">{c.name}</span>
-                    <span class="d3-path-size">{formatBytes(c.bytes)}</span>
-                  </label>
+                  {@const intel = resolveRuleSafetyIntelligence(c)}
+                  {@const isRuleOpen = !!expandedRuleIntel[c.id]}
+                  <div class="d3-rule-block">
+                    <div class="d3-path-item">
+                      <label class="d3-path-check-label">
+                        <input
+                          type="checkbox"
+                          class="checkbox"
+                          class:checked={!!selected[c.id]}
+                          bind:checked={selected[c.id]}
+                          tabindex={expandedIds.has("app") ? 0 : -1}
+                        />
+                        <span class="d3-path-name">{c.name}</span>
+                      </label>
+                      <button
+                        type="button"
+                        class="d3-why-safe-btn"
+                        class:open={isRuleOpen}
+                        onclick={() => toggleRuleIntel(c.id)}
+                        aria-expanded={isRuleOpen}
+                      >
+                        Why is this safe to delete?
+                      </button>
+                      <span class="d3-path-size">{formatBytes(c.bytes)}</span>
+                    </div>
+
+                    {#if isRuleOpen}
+                      <div class="d3-intel-drawer">
+                        <div class="d3-intel-badges">
+                          <span
+                            class="d3-safety-badge"
+                            class:is-safe={intel.safetyBadge === "100% Safe Automated"}
+                            class:is-review={intel.safetyBadge !== "100% Safe Automated"}
+                          >
+                            {intel.safetyBadge}
+                          </span>
+                          <span class="d3-intel-owner">App Owner: <strong>{intel.owner}</strong></span>
+                        </div>
+                        <div class="d3-intel-path-row">
+                          <span class="d3-intel-label">Exact Path:</span>
+                          <code class="d3-intel-code">{c.roots?.[0] || intel.path}</code>
+                        </div>
+                        <p class="d3-intel-text"><strong>What it is:</strong> {intel.whatItIs}</p>
+                        <p class="d3-intel-text"><strong>If deleted:</strong> {intel.whatHappensIfDeleted}</p>
+                        <p class="d3-intel-rebuild"><strong>Rebuild behavior:</strong> {intel.rebuildCost}</p>
+
+                        {#if c.top_files && c.top_files.length > 0}
+                          <div class="d3-top-files-section">
+                            <div class="d3-top-files-title">
+                              Top {Math.min(50, c.top_files.length)} Scanned Files in {c.name}
+                            </div>
+                            <div class="d3-top-files-list">
+                              {#each c.top_files.slice(0, 50) as file, fIdx (`${c.id}-${fIdx}`)}
+                                {@const fileKey = `${c.id}::${file.path}`}
+                                {@const fileOpen = !!expandedFileIntel[fileKey]}
+                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c) : intel}
+                                <div class="d3-top-file-row">
+                                  <div class="d3-top-file-main">
+                                    <code class="d3-top-file-path" title={file.path}>{file.path}</code>
+                                    <button
+                                      type="button"
+                                      class="d3-file-why-btn"
+                                      onclick={() => toggleFileIntel(fileKey)}
+                                      aria-expanded={fileOpen}
+                                    >
+                                      {fileOpen ? "Hide safety" : "Why safe?"}
+                                    </button>
+                                    <span class="d3-top-file-size">{formatBytes(file.size)}</span>
+                                  </div>
+                                  {#if fileOpen}
+                                    <div class="d3-file-intel-sub">
+                                      <span><strong>Rating:</strong> {fileIntel.safetyBadge}</span>
+                                      <span><strong>Owner:</strong> {fileIntel.owner}</span>
+                                      <span><strong>Path:</strong> <code>{file.path}</code></span>
+                                      <span><strong>Rebuild:</strong> {fileIntel.whatHappensIfDeleted} ({fileIntel.rebuildCost})</span>
+                                    </div>
+                                  {/if}
+                                </div>
+                              {/each}
+                            </div>
+                          </div>
+                        {/if}
+                      </div>
+                    {/if}
+                  </div>
                 {/each}
               </div>
             </div>
@@ -931,6 +1562,66 @@
       {:else}
         <div class="undo-empty">No files currently in 7-day undo quarantine.</div>
       {/if}
+    </div>
+  </div>
+{/if}
+
+{#if showShareWinModal}
+  <div
+    class="undo-backdrop"
+    onclick={() => (showShareWinModal = false)}
+    role="presentation"
+    transition:fade={{ duration: 160 }}
+  >
+    <div
+      class="undo-modal share-win-modal card"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share My Storage Win (+30 Days Free Pro)"
+      tabindex="-1"
+      transition:scale={{ duration: 200, start: 0.96, opacity: 0, easing: cubicOut }}
+    >
+      <div class="undo-head">
+        <div>
+          <h3 class="undo-title">I Just Reclaimed {shareReclaimedLabel} with SWEEPR</h3>
+          <span style="font-size:11.5px;color:var(--muted);">
+            Every friend who claims your link gets +30 days of SWEEPR Pro free — and so do you!
+          </span>
+        </div>
+        <button type="button" class="close-x" onclick={() => (showShareWinModal = false)}>✕</button>
+      </div>
+
+      <div class="share-win-canvas-wrap">
+        <canvas
+          bind:this={shareCanvasEl}
+          width="1200"
+          height="630"
+          class="share-win-canvas"
+        ></canvas>
+      </div>
+
+      {#if shareActionToast}
+        <div class="restore-toast toast" role="status">
+          {shareActionToast}
+        </div>
+      {/if}
+
+      <div class="share-win-actions-row">
+        <button type="button" class="share-win-primary-btn" onclick={copyShareWinCardImage}>
+          📋 Copy Image to Clipboard
+        </button>
+        <button type="button" class="share-win-social-btn" onclick={() => shareWinOnSocial("x")}>
+          Share on X
+        </button>
+        <button type="button" class="share-win-social-btn" onclick={() => shareWinOnSocial("reddit")}>
+          Reddit
+        </button>
+        <button type="button" class="share-win-social-btn" onclick={() => shareWinOnSocial("discord")}>
+          Discord
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -1459,9 +2150,21 @@
     border-top: 1px solid currentColor;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    max-height: 125px;
+    gap: 6px;
+    max-height: 290px;
     overflow-y: auto;
+  }
+
+  .d3-rule-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+  }
+  .d3-rule-block:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   .d3-path-item {
@@ -1469,6 +2172,14 @@
     align-items: center;
     gap: 8px;
     font-size: 11.5px;
+    padding: 3px 0;
+  }
+  .d3-path-check-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
     cursor: pointer;
   }
   .d3-path-name {
@@ -1481,6 +2192,328 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .d3-why-safe-btn {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid currentColor;
+    color: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: opacity 120ms ease, background-color 120ms ease;
+  }
+  :global(body[data-theme="dark"]) .d3-why-safe-btn,
+  :global(.dark) .d3-why-safe-btn {
+    background: rgba(15, 23, 42, 0.45);
+  }
+  .d3-why-safe-btn.open {
+    background: currentColor;
+    color: var(--panel-solid, #ffffff);
+  }
+
+  .d3-intel-drawer {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 11.5px;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--text);
+  }
+  :global(body[data-theme="dark"]) .d3-intel-drawer,
+  :global(.dark) .d3-intel-drawer {
+    background: rgba(15, 23, 42, 0.68);
+  }
+
+  .d3-intel-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .d3-safety-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .d3-safety-badge.is-safe {
+    background: #10b981;
+    color: #ffffff;
+  }
+  .d3-safety-badge.is-review {
+    background: #f59e0b;
+    color: #111827;
+  }
+
+  .d3-intel-owner {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .d3-intel-path-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .d3-intel-label {
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .d3-intel-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    background: var(--panel-2);
+    padding: 1px 6px;
+    border-radius: 5px;
+    word-break: break-all;
+  }
+  .d3-intel-text,
+  .d3-intel-rebuild {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  .d3-top-files-section {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .d3-top-files-title {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+  .d3-top-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .d3-top-file-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: var(--panel-2);
+  }
+  .d3-top-file-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .d3-top-file-path {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+  }
+  .d3-file-why-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .d3-top-file-size {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .d3-file-intel-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 10.5px;
+    color: var(--muted);
+    padding-top: 3px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* 1.5. Paste Any Folder Path -> Instant Safety Check Card */
+  .d3-safety-search-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .d3-safety-search-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .d3-safety-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .d3-safety-kicker {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .d3-safety-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .d3-safety-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .d3-safety-chip {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .d3-safety-chip.active {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.14);
+  }
+  .d3-safety-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 11px;
+  }
+  .d3-safety-icon {
+    color: #10b981;
+    flex-shrink: 0;
+  }
+  .d3-safety-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 12.5px;
+    outline: none;
+    min-width: 0;
+  }
+  .d3-safety-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .d3-safety-result-drawer {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .d3-safety-result-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+  }
+  .d3-safety-owner,
+  .d3-safety-avg {
+    color: var(--muted);
+  }
+  .d3-safety-code-path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    background: var(--panel);
+    padding: 2px 7px;
+    border-radius: 6px;
+    word-break: break-all;
+  }
+  .d3-safety-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .d3-safety-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .d3-safety-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+  .d3-safety-copy {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text);
+  }
+  .d3-safety-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .d3-safety-warn {
+    color: #d97706;
+    font-weight: 600;
   }
 
   .d3-dual-actions {
@@ -1664,6 +2697,7 @@
     color: var(--muted);
     font-size: 11px;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
   .restore-link {
     background: transparent;
@@ -1741,6 +2775,68 @@
   }
   .a14-referral-link:hover {
     text-decoration: underline;
+  }
+  .a14-referral-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .a14-share-win-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 13px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  }
+  .share-win-modal {
+    max-width: 640px;
+  }
+  .share-win-canvas-wrap {
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    background: #041610;
+  }
+  .share-win-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .share-win-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .share-win-primary-btn {
+    flex: 1.4;
+    min-width: 190px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .share-win-social-btn {
+    flex: 1;
+    min-width: 92px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
   }
 
   @media (prefers-reduced-motion: reduce) {

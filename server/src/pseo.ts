@@ -79,7 +79,15 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
   if (slug === "intellij-idea-caches" || slug === "intellij-cache") {
     return "/clean/app/jetbrains-intellij-cache";
   }
-  if (slug === "elgato-stream-deck-cache") {
+  if (
+    slug === "elgato-stream-deck-cache" ||
+    slug === "elgato-stream-deck-media-blob-storage" ||
+    slug === "elgato-stream-deck-code-bytecode-cache" ||
+    slug === "elgato-stream-deck-service-worker-cachestorage" ||
+    slug === "elgato-stream-deck-gpu-shader-cache" ||
+    slug === "elgato-stream-deck-crashpad-dump-logs" ||
+    (slug.startsWith("elgato-streamdeck-") && slug !== "elgato-streamdeck-cache")
+  ) {
     return "/clean/app/elgato-streamdeck-cache";
   }
   // Cross-category canonical redirect (e.g. /clean/folder/<slug> when item is /clean/app/<slug>)
@@ -125,7 +133,8 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "riot-client-logs": "How to Clear Valorant & Riot Client Cache Files (2026)",
   "logitech-ghub-installer-cache": "LGHUB Depots & Media Blob Cache: Safe to Delete? (2026)",
   "logitech-options-plus-cache": "Logi Options+ Depots & Media Blob Cache: Safe to Delete?",
-  "elgato-streamdeck-cache": "How to Clean Stream Deck (App Cache & LCD Keys Guide)",
+  "elgato-streamdeck-cache":
+    "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
   "windows-livekernelreports": "LiveKernelReports WATCHDOG Dumps: Safe to Delete? (2026)",
   "vivaldi-browser-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
   "vivaldi-cache": "Clear Vivaldi WebGPU, Shader & Browser Cache on Windows",
@@ -177,7 +186,7 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "logitech-options-plus-cache":
     "Is Logi Options+ depots and Media Blob Storage safe to delete? Reclaim 1–4.5 GB in C:\\ProgramData\\Logishrd\\LogiOptionsPlus while keeping button mappings.",
   "elgato-streamdeck-cache":
-    "How to clean Elgato Stream Deck: safely clear 500 MB–3.5 GB in %AppData%\\Elgato\\StreamDeck cache & logs, plus how to clean physical LCD keys without damage.",
+    "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — safe to delete? Reclaim 1–4 GB on Windows 11 without losing ProfilesV2 button layouts.",
   "windows-livekernelreports":
     "Is C:\\Windows\\LiveKernelReports\\WATCHDOG safe to delete? Yes—reclaim 1–8 GB by removing old WATCHDOG GPU timeout minidump (.dmp) files on Windows 10 & 11.",
   "vivaldi-browser-cache":
@@ -783,7 +792,7 @@ export function isPseoSlugNoindexed(slug: string): boolean {
 export function buildPseoTitle(item: CleanItem): string {
   const approved = approvedIntentGapOverrides.get(item.slug)?.title;
   const custom = approved || CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
-  if (custom && custom.length >= 30 && custom.length <= 60) {
+  if (custom && custom.length >= 30 && (custom.length <= 60 || item.slug === "elgato-streamdeck-cache")) {
     return custom;
   }
 
@@ -965,6 +974,191 @@ export function getGscPriorityInternalLinkSlugs(): string[] {
   return gscPriorityInternalLinkSlugs.length > 0 ? gscPriorityInternalLinkSlugs : FEATURED_GSC_SLUGS;
 }
 
+export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
+  return `
+    <section id="pc-cache-bloat-calculator" class="mb-12 bg-[#062017] text-emerald-50 border border-emerald-500/40 rounded-2xl p-6 md:p-8 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <span class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
+          ⚡ Zero-Signup Interactive Benchmark Tool
+        </span>
+        <span class="text-xs font-mono text-emerald-300/90">GSC-Verified Windows 11/10 Paths · 6.5 MB Native Rust Engine</span>
+      </div>
+      <h2 class="text-2xl md:text-3xl font-black text-white mb-2">
+        Windows Gaming &amp; AI Cache Bloat Calculator
+      </h2>
+      <p class="text-sm text-emerald-100/85 mb-6 max-w-3xl">
+        Check the games, AI tools, and IDEs installed on your PC to see the exact <code class="bg-black/30 px-1.5 py-0.5 rounded text-emerald-300">%LOCALAPPDATA%</code> folders silently eating your C: drive and your estimated reclaimable GB:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6" id="bloatCalcGrid">
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="steam" data-name="Steam &amp; NVIDIA DXCache" data-gb="12.5" data-paths="%LocalAppData%\\NVIDIA\\DXCache|C:\\Program Files (x86)\\Steam\\steamapps\\shadercache|%LocalAppData%\\Steam\\htmlcache" checked />
+          <span>
+            <strong class="block text-sm text-white">Steam &amp; NVIDIA DXCache</strong>
+            <span class="text-xs text-emerald-300 font-mono">~12.5 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="genshin" data-name="Genshin Impact / HoYoPlay" data-gb="8.4" data-paths="%AppData%\\Cognosphere\\HYP\\1_1\\fedata\\Cache|%LocalAppData%\\HoYoverse\\Genshin Impact\\cache" />
+          <span>
+            <strong class="block text-sm text-white">Genshin / HoYoPlay</strong>
+            <span class="text-xs text-emerald-300 font-mono">~8.4 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="valorant" data-name="Valorant &amp; Riot Client" data-gb="4.8" data-paths="%LocalAppData%\\VALORANT\\Saved\\Logs|%LocalAppData%\\VALORANT\\Saved\\Crashes|%LocalAppData%\\Riot Games\\Riot Client\\Logs" />
+          <span>
+            <strong class="block text-sm text-white">Valorant &amp; Riot</strong>
+            <span class="text-xs text-emerald-300 font-mono">~4.8 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="comfyui" data-name="ComfyUI &amp; HuggingFace" data-gb="34.0" data-paths="%UserProfile%\\.cache\\huggingface\\hub|%LocalAppData%\\pip\\Cache|ComfyUI\\temp" checked />
+          <span>
+            <strong class="block text-sm text-white">ComfyUI &amp; HuggingFace</strong>
+            <span class="text-xs text-emerald-300 font-mono">~34.0 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="ollama" data-name="Ollama &amp; LM Studio" data-gb="26.5" data-paths="%UserProfile%\\.ollama\\models\\blobs|%UserProfile%\\.cache\\lm-studio" checked />
+          <span>
+            <strong class="block text-sm text-white">Ollama &amp; LM Studio</strong>
+            <span class="text-xs text-emerald-300 font-mono">~26.5 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="docker" data-name="Docker Desktop &amp; WSL2" data-gb="28.0" data-paths="%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx|%LocalAppData%\\Temp\\docker-scout" />
+          <span>
+            <strong class="block text-sm text-white">Docker &amp; WSL2</strong>
+            <span class="text-xs text-emerald-300 font-mono">~28.0 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="jetbrains" data-name="JetBrains IDEs &amp; Cursor" data-gb="14.2" data-paths="%LocalAppData%\\JetBrains|%AppData%\\Cursor\\User\\workspaceStorage|%AppData%\\Code\\Cache" checked />
+          <span>
+            <strong class="block text-sm text-white">JetBrains &amp; Cursor</strong>
+            <span class="text-xs text-emerald-300 font-mono">~14.2 GB avg bloat</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
+          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="adobe" data-name="Adobe Premiere &amp; After Effects" data-gb="22.0" data-paths="%AppData%\\Adobe\\Common\\Media Cache Files|%AppData%\\Adobe\\Common\\Peak Files" />
+          <span>
+            <strong class="block text-sm text-white">Adobe Media Cache</strong>
+            <span class="text-xs text-emerald-300 font-mono">~22.0 GB avg bloat</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch bg-[#03110c] border border-emerald-500/35 rounded-xl p-5">
+        <div class="flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-emerald-500/20 pb-4 lg:pb-0 lg:pr-5">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Estimated Hidden Cache Wasted</div>
+            <div id="bloatCalcTotalGb" class="text-4xl md:text-5xl font-black text-emerald-300 tabular-nums">87.2 GB</div>
+            <div id="bloatCalcCountLabel" class="text-xs text-emerald-100/75 mt-1">Across 4 selected gaming/AI workloads on C:</div>
+          </div>
+          <div class="mt-4 flex flex-col gap-2">
+            <a href="/download" class="inline-block text-center bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-sm py-3 px-4 rounded-xl no-underline transition-all">
+              ⚡ Scan &amp; Reclaim with SWEEPR (6.5 MB Rust App) &rarr;
+            </a>
+            <a id="bloatCalcShareWinLink" href="/share/win?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" class="inline-block text-center bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs py-2.5 px-3 rounded-lg no-underline transition-all">
+              Share My Benchmark Card (+30d Free Pro)
+            </a>
+          </div>
+        </div>
+        <div class="lg:col-span-2 flex flex-col justify-between">
+          <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">
+            Exact Windows <code class="text-emerald-200">%LOCALAPPDATA%</code> &amp; <code class="text-emerald-200">%USERPROFILE%</code> Target Paths:
+          </div>
+          <div id="bloatCalcPathsList" class="space-y-1.5 font-mono text-xs text-emerald-100 bg-black/40 p-3.5 rounded-lg border border-emerald-500/20 max-h-48 overflow-y-auto"></div>
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-200/80">
+            <span>🟢 100% Non-Destructive: Saved logins, game saves &amp; active checkpoints stay untouched.</span>
+            <a href="/tools/pc-cache-calculator" class="text-emerald-300 underline font-bold">Permalink: /tools/pc-cache-calculator</a>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        (function(){
+          var cbs = document.querySelectorAll('.bloat-calc-cb');
+          var totalEl = document.getElementById('bloatCalcTotalGb');
+          var countEl = document.getElementById('bloatCalcCountLabel');
+          var listEl = document.getElementById('bloatCalcPathsList');
+          var shareEl = document.getElementById('bloatCalcShareWinLink');
+          function updateBloatCalc() {
+            var total = 0;
+            var count = 0;
+            var names = [];
+            var rows = [];
+            for (var i = 0; i < cbs.length; i++) {
+              var cb = cbs[i];
+              if (cb.checked) {
+                var gb = parseFloat(cb.getAttribute('data-gb') || '0') || 0;
+                var nm = cb.getAttribute('data-name') || '';
+                var rawPaths = (cb.getAttribute('data-paths') || '').split('|');
+                total += gb;
+                count++;
+                names.push(nm);
+                for (var j = 0; j < rawPaths.length; j++) {
+                  if (rawPaths[j]) {
+                    rows.push('<div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>' + rawPaths[j] + '</span><span class="text-emerald-400 font-bold">' + nm + '</span></div>');
+                  }
+                }
+              }
+            }
+            var gbStr = total.toFixed(1) + ' GB';
+            if (totalEl) totalEl.textContent = gbStr;
+            if (countEl) countEl.textContent = 'Across ' + count + ' selected gaming/AI workload' + (count === 1 ? '' : 's') + ' on C:';
+            if (listEl) listEl.innerHTML = rows.length ? rows.join('') : '<div class="text-emerald-400/70">Select at least one game or AI tool above to inspect its exact cache paths.</div>';
+            if (shareEl) {
+              var culpritStr = names.slice(0, 2).join(' / ') || 'NVIDIA DXCache / ComfyUI';
+              shareEl.setAttribute('href', '/share/win?gb=' + encodeURIComponent(gbStr) + '&culprit=' + encodeURIComponent(culpritStr) + '&ms=280');
+            }
+          }
+          for (var k = 0; k < cbs.length; k++) {
+            cbs[k].addEventListener('change', updateBloatCalc);
+          }
+          updateBloatCalc();
+        })();
+      </script>
+    </section>
+  `;
+}
+
+export function renderGamingAndAiCacheBloatCalculatorPage(): string {
+  const widgetHtml = renderGamingAndAiCacheBloatCalculatorWidget();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Windows Gaming &amp; AI Cache Bloat Calculator (%LOCALAPPDATA% Benchmark) | SWEEPR Cleaner</title>
+  <meta name="description" content="Free interactive Windows 11/10 Gaming &amp; AI Cache Bloat Calculator. Check Steam, Genshin Impact, Valorant, ComfyUI, Ollama, Docker, JetBrains, and Adobe to see exact %LOCALAPPDATA% paths and wasted GB." />
+  <link rel="canonical" href="https://sweeprcleaner.com/tools/pc-cache-calculator" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR Cleaner" />
+  <meta property="og:description" content="See exact %LOCALAPPDATA% shader, HuggingFace, Ollama, and IDE cache paths and calculate how many GB are hiding on your C: drive." />
+  <meta property="og:url" content="https://sweeprcleaner.com/tools/pc-cache-calculator" />
+  <meta property="og:image" content="https://sweeprcleaner.com/share/win.svg?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="bg-[#03110c] text-emerald-50 min-h-screen">
+  <nav class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+    <a href="/" class="font-extrabold text-xl text-white no-underline">SWEEPR <span class="text-emerald-400">Cleaner</span></a>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="/clean" class="text-emerald-200 hover:text-white no-underline">377-Rule Directory</a>
+      <a href="/safe-to-delete" class="text-emerald-200 hover:text-white no-underline">Path Safety Checker</a>
+      <a href="/download" class="bg-emerald-500 text-gray-950 font-extrabold px-4 py-2 rounded-xl no-underline">Download 6.5 MB App</a>
+    </div>
+  </nav>
+  <main class="max-w-5xl mx-auto px-6 py-8">
+    ${widgetHtml}
+  </main>
+</body>
+</html>`;
+}
+
 export function renderPseoDirectory(): string {
   getCleanItems();
   try {
@@ -1142,6 +1336,8 @@ export function renderPseoDirectory(): string {
           .join("")}
       </div>
     </div>
+
+    ${renderGamingAndAiCacheBloatCalculatorWidget()}
 
     ${
       featuredItems.length > 0
@@ -1555,7 +1751,11 @@ export function renderPseoPage(item: CleanItem): string {
         <span class="text-gray-300">/</span>
         <a href="/clean#silo-${cluster.id}" class="hover:underline">${cluster.badge}</a>
       </div>
-      <h1 class="text-3xl md:text-4xl font-black text-gray-900 mt-2 mb-3">How to Clean ${item.name}</h1>
+      <h1 class="text-3xl md:text-4xl font-black text-gray-900 mt-2 mb-3">${
+        isStreamDeck
+          ? "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)"
+          : `How to Clean ${item.name}`
+      }</h1>
       <div class="flex flex-wrap gap-3 items-center text-sm">
         <span class="px-3 py-1 rounded-full font-bold text-xs ${
           item.safeToDelete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
@@ -1564,6 +1764,14 @@ export function renderPseoPage(item: CleanItem): string {
         </span>
         <span class="text-gray-500">Typical Space Reclaimed: <strong>${item.avgSpace}</strong></span>
       </div>
+      ${
+        isStreamDeck
+          ? `<div id="streamdeck-top-intent-callout" class="mt-4 bg-amber-50/90 border border-amber-300 rounded-xl p-3.5 text-xs text-slate-800 leading-relaxed shadow-sm">
+              <p class="mb-1"><strong>1. Looking to clean physical Elgato Stream Deck LCD keys?</strong> Unplug the USB cable first and gently wipe the LCD buttons with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</p>
+              <p class="m-0"><strong>2. Looking to reclaim 1–4 GB of Windows 11 PC disk bloat?</strong> This guide covers deleting the software disk cache in <code>%APPDATA%\\Elgato\\StreamDeck</code> (<code>logs</code>, <code>Cache</code>, <code>Blob_Storage</code>, and <code>Service Worker\\CacheStorage</code>) while keeping your <code>ProfilesV2</code> button layouts 100% intact.</p>
+            </div>`
+          : ""
+      }
     </div>
 
     <!-- Quick Verdict Box (GEO / AI Snippet Optimized) -->

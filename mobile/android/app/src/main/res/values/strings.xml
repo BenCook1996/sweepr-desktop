@@ -657,4 +657,20 @@
     <string name="done_keep_clean_on">Turn On</string>
     <string name="done_keep_clean_enabled">On ✓</string>
     <string name="done_button">Done</string>
+
+    <!-- Prominent Disclosure & Partial Photo Access (#10) -->
+    <string name="dashboard_limited_access_banner">Scanning %1$d selected photos — Manage Selection</string>
+    <string name="media_disclosure_title">Photo &amp; Video Access Disclosure</string>
+    <string name="media_disclosure_body">SWEEPR Cleaner requests access to your photos, videos, and media location metadata solely to scan for duplicates, similar photos, blurry shots, screenshots, and large files locally on your device.\n\n100% of scanning happens offline on your phone — your photos, videos, and GPS metadata are never uploaded to any server.</string>
+    <string name="contacts_disclosure_title">Contacts &amp; Calendar Access Disclosure</string>
+    <string name="contacts_disclosure_body">SWEEPR Cleaner requests access to your contacts and calendar solely to detect and merge duplicate contacts or clean up expired calendar events locally on your device.\n\nYour address book and calendar data never leave your phone and are never uploaded or shared.</string>
+    <string name="deeplink_approve_title">Approve Desktop Sign-In?</string>
+    <string name="deeplink_link_title">Link SWEEPR Account?</string>
+    <string name="deeplink_approve_body">Approve Desktop Sign-In? A desktop computer is requesting access to your SWEEPR Pro subscription.</string>
+    <string name="deeplink_link_body">Link SWEEPR Account? Do you want to link this device using the pairing link you opened?</string>
+    <string name="deeplink_approve_confirm">Approve</string>
+    <string name="deeplink_link_confirm">Link Device</string>
+    <string name="update_required_title">Update Required (v%1$s)</string>
+    <string name="update_required_default_body">A critical security and stability update is required to continue using SWEEPR Cleaner.</string>
+    <string name="update_required_cta">Update on Google Play</string>
 </resources>

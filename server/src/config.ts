@@ -117,13 +117,16 @@ export const config = {
         process.env.RAILWAY_SERVICE_ID ||
         process.env.RAILWAY_PUBLIC_DOMAIN
     ),
+  isLiveStripe,
   stripeCoupon: process.env.STRIPE_COUPON ?? "MYskiOdE",
   stripePublishableKey:
     (process.env.STRIPE_PUBLISHABLE_KEY ?? "").trim() ||
-    "pk_live_51UPMkj0Y0NLVZ2yqEhyw8TQdFT9YA86RzxfzhtyXtnpGzQ1cw2LnKJs7GzElp2RdtynJbK9sWhPBjFN7VUR9w0Wd00UtJ7gia9",
+    (isLiveStripe
+      ? "pk_live_51UPMkj0Y0NLVZ2yqEhyw8TQdFT9YA86RzxfzhtyXtnpGzQ1cw2LnKJs7GzElp2RdtynJbK9sWhPBjFN7VUR9w0Wd00UtJ7gia9"
+      : ""),
   stripeSecretKey: resolvedSecretKey,
   stripeWebhookSecret: resolveStripeWebhookSecret(),
-  priceActivation: process.env.STRIPE_PRICE_ACTIVATION ?? "",
+  // Legacy STRIPE_PRICE_ACTIVATION removed; Monthly/6-Month/Annual plans used.
   priceMonthly: resolvePriceId(process.env.STRIPE_PRICE_MONTHLY, "price_1URdu10Y0NLVZ2yqqlOZlh4Y"),
   priceSixMonth: resolvePriceId(process.env.STRIPE_PRICE_SIX_MONTH, "price_1URdu20Y0NLVZ2yqSCbMxbzb"),
   priceAnnual: resolvePriceId(process.env.STRIPE_PRICE_ANNUAL, "price_1URdu20Y0NLVZ2yq4KMNHQdJ"),

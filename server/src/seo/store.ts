@@ -322,7 +322,10 @@ function addColumnIfMissing(db: DatabaseSync, table: string, column: string, def
   }
 }
 
+const initializedSeoDbs = new WeakSet<DatabaseSync>();
+
 export function ensureSeoSchema(db: DatabaseSync) {
+  if (initializedSeoDbs.has(db)) return;
   db.exec(`
     CREATE TABLE IF NOT EXISTS seo_keywords (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -698,6 +701,7 @@ export function ensureSeoSchema(db: DatabaseSync) {
     ["dfs_updated_at", "INTEGER"],
   ];
   for (const [col, def] of domCols) addColumnIfMissing(db, "seo_domain_metrics", col, def);
+  initializedSeoDbs.add(db);
 }
 
 const nowSec = () => Math.floor(Date.now() / 1000);
@@ -714,10 +718,15 @@ export function isCrossProjectBacklink(raw: string): boolean {
   }
 }
 
+const purgedSeoDbs = new WeakSet<DatabaseSync>();
+
 export class SeoStore {
   constructor(readonly db: DatabaseSync, private readonly now: () => number = nowSec) {
     ensureSeoSchema(db);
-    this.purgeCrossProjectBacklinks();
+    if (!purgedSeoDbs.has(db)) {
+      this.purgeCrossProjectBacklinks();
+      purgedSeoDbs.add(db);
+    }
   }
 
   // ---------- settings ----------
@@ -1870,7 +1879,11 @@ export class SeoStore {
            actual_avg_position = COALESCE(excluded.actual_avg_position, seo_strategy_forecast_ledger.actual_avg_position),
            outcome_verdict = CASE WHEN excluded.outcome_verdict != 'pending_data' THEN excluded.outcome_verdict ELSE seo_strategy_forecast_ledger.outcome_verdict END,
            optimization_count = CASE WHEN excluded.optimization_count > seo_strategy_forecast_ledger.optimization_count THEN excluded.optimization_count ELSE seo_strategy_forecast_ledger.optimization_count END,
-           last_optimization_type = COALESCE(excluded.last_optimization_type, seo_strategy_forecast_ledger.last_optimization_type),
+           last_optimization_type = CASE
+             WHEN excluded.last_optimization_type IS NOT NULL THEN excluded.last_optimization_type
+             WHEN excluded.outcome_verdict IN ('underperforming_ctr', 'underperforming_rank') AND excluded.optimization_count = 0 THEN NULL
+             ELSE seo_strategy_forecast_ledger.last_optimization_type
+           END,
            notes = COALESCE(excluded.notes, seo_strategy_forecast_ledger.notes),
            updated_at = excluded.updated_at`
       )

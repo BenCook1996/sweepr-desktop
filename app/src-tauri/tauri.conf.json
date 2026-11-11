@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://sweeprcleaner.com; connect-src ipc: http://ipc.localhost https://ipc.localhost https://sweeprcleaner.com"
     }
   },
   "bundle": {
@@ -31,9 +31,13 @@
     "publisher": "SWEEPR Cleaner",
     "copyright": "Copyright © 2026 SWEEPR Cleaner. All rights reserved.",
     "shortDescription": "Safe, honest disk cleaner",
-    "longDescription": "SWEEPR Cleaner Desktop — Fast, private, intelligent PC disk and system cleaner for Windows.",
+    "longDescription": "SWEEPR Cleaner Desktop — Fast, private, intelligent disk and system cleaner for Windows, macOS, and Linux.",
     "category": "Utility",
     "windows": {
+      "signCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/sign-windows.ps1 -File \"%1\"",
+      "certificateThumbprint": "1800DBEA6FE847D384E549D02CA372C3D45D8B81",
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://ts.ssl.com",
       "webviewInstallMode": { "type": "downloadBootstrapper" },
       "wix": {
         "dialogImagePath": "icons/wix-dialog.bmp",
@@ -48,7 +52,12 @@
         "template": "installer.nsi"
       }
     },
-    "macOS": { "minimumSystemVersion": "11.0", "hardenedRuntime": true }
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist",
+      "infoPlist": "Info.plist"
+    }
   }
 }
 

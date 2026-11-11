@@ -22,8 +22,14 @@
   import { addLifetimeStats } from "../lib/store";
   import { lang, t } from "../lib/i18n";
 
-  let { license }: { license: LicenseStatus | null } = $props();
-  let subView = $state<"browser" | "vault" | "eraser">(cachedSubView);
+  let {
+    license,
+    initialSubView,
+  }: {
+    license: LicenseStatus | null;
+    initialSubView?: "browser" | "vault" | "eraser";
+  } = $props();
+  let subView = $state<"browser" | "vault" | "eraser">(initialSubView ?? cachedSubView);
   let error = $state<string | null>(null);
 
   // Browser Privacy Cleaner

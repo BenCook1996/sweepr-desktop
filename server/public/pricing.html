@@ -39,26 +39,6 @@
     "@type": "Brand",
     "name": "SWEEPR Cleaner"
   },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.9",
-    "reviewCount": "148",
-    "bestRating": "5",
-    "worstRating": "1"
-  },
-  "review": {
-    "@type": "Review",
-    "reviewRating": {
-      "@type": "Rating",
-      "ratingValue": "5",
-      "bestRating": "5"
-    },
-    "author": {
-      "@type": "Person",
-      "name": "Marcus Vance"
-    },
-    "reviewBody": "Reclaimed 34 GB of orphaned Steam depotcache and NVIDIA shader caches in under 45 seconds with zero background RAM overhead."
-  },
   "offers": [
     {
       "@type": "Offer",
@@ -313,6 +293,9 @@
     .nav-link { padding: 8px 12px; border-radius: 8px; font-size: 0.86rem; font-weight: 600; color: var(--muted); min-height: 40px; display: inline-flex; align-items: center; }
     .nav-link:hover { color: var(--text); background: var(--surface); }
     .region-select { min-height: 40px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-elevated); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+    .currency-pill-bar { display: inline-flex; align-items: center; gap: 3px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: 10px; }
+    .curr-pill { padding: 4px 8px; border-radius: 7px; border: none; background: transparent; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--muted); cursor: pointer; transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
+    .curr-pill[aria-pressed="true"] { background: var(--surface-elevated); color: var(--text); box-shadow: 0 1px 2px rgba(19, 22, 20, 0.06); }
 
     .container {
       max-width: 1240px;
@@ -556,7 +539,12 @@
       </nav>
 
       <div style="display:flex;align-items:center;gap:8px;">
-        <label for="pricingCurrencySelect" class="mono" style="font-size:0.74rem;color:var(--muted);">Currency:</label>
+        <div class="currency-pill-bar" role="group" aria-label="Quick currency switcher">
+          <button type="button" class="curr-pill" data-currency-pill="gbp" aria-pressed="true">£ GBP</button>
+          <button type="button" class="curr-pill" data-currency-pill="usd" aria-pressed="false">$ USD</button>
+          <button type="button" class="curr-pill" data-currency-pill="eur" aria-pressed="false">€ EUR</button>
+        </div>
+        <label for="pricingCurrencySelect" class="mono" style="font-size:0.74rem;color:var(--muted);">More:</label>
         <select id="pricingCurrencySelect" class="region-select" aria-label="Select currency">
           <option value="gbp">GBP (£)</option>
           <option value="usd">USD ($)</option>
@@ -589,6 +577,13 @@
         <p style="color:var(--muted);max-width:58ch;">
           One SWEEPR Cleaner Pro account cleans hidden junk files, finds duplicate photos and documents, removes leftover files from deleted apps, and includes a 7-Day Undo Safety Net across Windows, Mac, Linux, iPhone, and Android.
         </p>
+
+        <div class="mono" aria-label="Verifiable engineering proof" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:0.73rem;font-weight:700;color:var(--accent-ink);">
+          <span style="padding:5px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--border);">✓ 6.52 MB Native Rust Binary (Zero Electron Bloat)</span>
+          <span style="padding:5px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--border);">✓ SSL.com Authenticode Signed (SHA-256 Verified)</span>
+          <span style="padding:5px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--border);">✓ 100% Local On-Device Scan</span>
+          <span style="padding:5px 10px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--border);">✓ 7-Day 1-Click Quarantine Rollback</span>
+        </div>
 
         <div class="feature-checklist">
           <div class="feature-check-row">
@@ -701,6 +696,51 @@
       </div>
     </section>
 
+    <!-- Why Engineers & Power Users Choose Sweepr Over Free Scripts & Legacy Cleaners -->
+    <section class="matrix-section" aria-labelledby="why-engineers-heading">
+      <span class="status-pill" style="margin-bottom:10px;">Commercial Subscription Value</span>
+      <h2 id="why-engineers-heading" style="font-size:1.65rem;font-weight:800;letter-spacing:-0.025em;">
+        Why Engineers &amp; Power Users Choose Sweepr Over Free Scripts &amp; Legacy Cleaners
+      </h2>
+      <p style="color:var(--muted);font-size:0.92rem;margin-top:6px;max-width:68ch;">
+        Whether you choose our flexible Monthly plan, 6-Month plan (Save 35%), or Annual plan (Save 58%), here is how Sweepr Pro compares against free open-source scripts and legacy commercial cleaners:
+      </p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:20px;">
+        <article style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:16px;padding:18px;">
+          <div class="mono" style="font-size:0.74rem;font-weight:700;color:var(--accent);margin-bottom:6px;">VS. BLEACHBIT / PEARCLEANER / ONYX (FREE)</div>
+          <h3 style="font-size:1.02rem;font-weight:800;margin-bottom:8px;">Safe-to-Delete Intelligence &amp; 7-Day Rollback</h3>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
+            Zero risk of permanently nuking saved games or bookmarks — every clean is backed by plain-English 'Safe-to-Delete?' explanations and a 7-Day 1-Click Quarantine Rollback.
+          </p>
+        </article>
+
+        <article style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:16px;padding:18px;">
+          <div class="mono" style="font-size:0.74rem;font-weight:700;color:var(--accent);margin-bottom:6px;">VS. CLEANMYMAC X ($39.95/YR MAC-ONLY)</div>
+          <h3 style="font-size:1.02rem;font-weight:800;margin-bottom:8px;">5-Device Cross-Platform + AI &amp; Shader Intelligence</h3>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
+            Cross-platform license covering up to 5 devices across Windows 11, macOS, iOS, and Android, plus deep Windows gaming shader, ComfyUI/Ollama AI model, and WinSxS/AppData intelligence.
+          </p>
+        </article>
+
+        <article style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:16px;padding:18px;">
+          <div class="mono" style="font-size:0.74rem;font-weight:700;color:var(--accent);margin-bottom:6px;">VS. CCLEANER PRO</div>
+          <h3 style="font-size:1.02rem;font-weight:800;margin-bottom:8px;">6.5 MB Native Rust Engine (Zero Adware)</h3>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
+            6.5 MB native Rust engine with zero background adware daemons, zero telemetry uploads of personal file names, and instant &lt;10s Rayon parallel scanning.
+          </p>
+        </article>
+
+        <article style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:16px;padding:18px;">
+          <div class="mono" style="font-size:0.74rem;font-weight:700;color:var(--accent);margin-bottom:6px;">377-RULE LIVE KNOWLEDGE BASE</div>
+          <h3 style="font-size:1.02rem;font-weight:800;margin-bottom:8px;">Continuously Updated &amp; 14-Day Refund Guarantee</h3>
+          <p style="font-size:0.86rem;color:var(--muted);line-height:1.55;">
+            Instant folder-path safety lookups across 377 verified cache rules for dev tools, browsers, and games — backed by 1-click cancellation and a 14-day money-back guarantee.
+          </p>
+        </article>
+      </div>
+    </section>
+
     <!-- Free vs Pro Matrix -->
     <section class="matrix-section" aria-labelledby="compare-heading">
       <h2 id="compare-heading" style="font-size:1.65rem;font-weight:800;letter-spacing:-0.025em;">Free Download vs. SWEEPR Cleaner Pro</h2>
@@ -781,6 +821,10 @@
         var total = base + addonCount * activeAddon;
 
         document.getElementById('pricingRegionBadge').textContent = c.label;
+        var currPills = document.querySelectorAll('[data-currency-pill]');
+        for (var cpIdx = 0; cpIdx < currPills.length; cpIdx++) {
+          currPills[cpIdx].setAttribute('aria-pressed', currPills[cpIdx].getAttribute('data-currency-pill') === state.currency ? 'true' : 'false');
+        }
         document.getElementById('pSubAnnual').textContent = c.annualEq + '/mo eq';
         document.getElementById('pSub6Month').textContent = c.sixEq + '/mo eq';
         document.getElementById('pSubMonthly').textContent = c.fmt(c.monthly) + '/month';
@@ -832,6 +876,16 @@
         document.getElementById('pAddonCloud').addEventListener('change', render);
 
         var sel = document.getElementById('pricingCurrencySelect');
+        var quickPills = document.querySelectorAll('[data-currency-pill]');
+        for (var qp = 0; qp < quickPills.length; qp++) {
+          quickPills[qp].addEventListener('click', function () {
+            var nextCurr = this.getAttribute('data-currency-pill');
+            if (sel && nextCurr) {
+              sel.value = nextCurr;
+              sel.dispatchEvent(new Event('change'));
+            }
+          });
+        }
         var qCurr = '';
         try { qCurr = (new URLSearchParams(window.location.search).get('currency') || '').toLowerCase(); } catch (e) {}
         var saved = '';

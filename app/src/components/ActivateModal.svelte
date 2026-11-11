@@ -74,6 +74,9 @@
     }
   });
   let showSignIn = $state(false);
+  let otpSent = $state(false);
+  let otpCode = $state("");
+  let statusNotice = $state<string | null>(null);
   let showQrScan = $state(false);
   let qrSvg = $state<string | null>(null);
   let qrCountdown = $state(120);
@@ -83,6 +86,15 @@
   let unlockedSuccess = $state(false);
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let qrTimer: ReturnType<typeof setInterval> | null = null;
+
+  function selectPlan(plan: PlanId) {
+    selectedPlan = plan;
+    trackAppEvent("paywall_plan_selected", {
+      plan,
+      experiment_id: "paywall_anchor_v1",
+      variant: experimentVariant,
+    });
+  }
 
   let monthlyIntroLabel = $state("£1.99");
   let monthlyRenewLabel = $state("£9.99");
@@ -162,9 +174,14 @@
   );
 
   const ctaPriceLabel = $derived(
-    selectedAddons.length > 0
-      ? `${basePlanLabel} + ${selectedAddons.length} add-on${selectedAddons.length > 1 ? "s" : ""}`
-      : basePlanLabel
+    (() => {
+      const base =
+        selectedAddons.length > 0
+          ? `${basePlanLabel} + ${selectedAddons.length} add-on${selectedAddons.length > 1 ? "s" : ""}`
+          : basePlanLabel;
+      const pct = Number(conversionOffer?.discount_pct || 0);
+      return pct > 0 && conversionOffer?.coupon_code ? `${base} (-${pct}% w/ ${conversionOffer.coupon_code})` : base;
+    })()
   );
 
   function stopPolling() {
@@ -230,13 +247,93 @@
     return false;
   }
 
-  async function handleActivate() {
+  async function requestSignInOtp() {
     error = null;
+    statusNotice = null;
     const trimmedEmail = email.trim();
-    if (showSignIn && (!trimmedEmail || !trimmedEmail.includes("@"))) {
+    if (trimmedEmail.includes("ptk_")) {
+      busy = true;
+      try {
+        const s = await api.redeemPairingToken(trimmedEmail);
+        if (s.active) {
+          notifyActivated();
+          return;
+        }
+      } catch (e) {
+        error = errorMessage(e);
+      } finally {
+        busy = false;
+      }
+      return;
+    }
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
       error = "Enter the email address used for your Pro subscription.";
       return;
     }
+    busy = true;
+    try {
+      await api.sendAccountOtp(trimmedEmail);
+      otpSent = true;
+      statusNotice = `Sent a 6-digit login code to ${trimmedEmail}. Enter it below (or paste your ptk_... pairing key).`;
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function handleActivate() {
+    error = null;
+    statusNotice = null;
+    const trimmedEmail = email.trim();
+    const trimmedCode = otpCode.trim();
+
+    if (trimmedCode.includes("ptk_") || trimmedEmail.includes("ptk_")) {
+      busy = true;
+      try {
+        const rawTok = trimmedCode.includes("ptk_") ? trimmedCode : trimmedEmail;
+        const s = await api.redeemPairingToken(rawTok);
+        if (s.active) {
+          notifyActivated();
+          return;
+        }
+      } catch (e) {
+        error = errorMessage(e);
+      } finally {
+        busy = false;
+      }
+      return;
+    }
+
+    if (showSignIn) {
+      if (!trimmedEmail || !trimmedEmail.includes("@")) {
+        error = "Enter the email address used for your Pro subscription.";
+        return;
+      }
+      if (!otpSent && !trimmedCode) {
+        await requestSignInOtp();
+        return;
+      }
+      if (!trimmedCode) {
+        error = "Enter the 6-digit verification code sent to your email (or paste your ptk_... pairing key).";
+        return;
+      }
+      busy = true;
+      try {
+        const s = await api.verifyAccountOtp(trimmedEmail, trimmedCode);
+        if (s.active) {
+          notifyActivated();
+          return;
+        }
+        error = "No active Pro subscription found for this account yet.";
+      } catch (e) {
+        error = errorMessage(e);
+      } finally {
+        busy = false;
+      }
+      return;
+    }
+
     if (trimmedEmail && !trimmedEmail.includes("@")) {
       error = "Enter a valid email address.";
       return;
@@ -245,10 +342,11 @@
     busy = true;
     try {
       const emailArg = trimmedEmail ? trimmedEmail : undefined;
+      const couponArg = conversionOffer?.coupon_code?.trim() || undefined;
       const activatedImmediately =
         selectedAddons.length > 0
-          ? await api.startAddonCheckout(selectedAddons.join(","), emailArg, selectedPlan)
-          : await api.startCheckout(emailArg, selectedPlan);
+          ? await api.startAddonCheckout(selectedAddons.join(","), emailArg, selectedPlan, couponArg)
+          : await api.startCheckout(emailArg, selectedPlan, couponArg);
       if (activatedImmediately || (await checkLicense())) {
         notifyActivated();
         return;
@@ -261,7 +359,14 @@
         await checkLicense();
       }, 2500);
     } catch (e) {
-      error = errorMessage(e);
+      const msg = errorMessage(e);
+      if (msg.includes("OTP_REQUIRED") || msg.includes("requires_otp")) {
+        showSignIn = true;
+        otpSent = true;
+        statusNotice = msg.replace(/^OTP_REQUIRED:\s*/i, "");
+      } else {
+        error = msg;
+      }
     } finally {
       busy = false;
     }
@@ -271,8 +376,11 @@
     stopPolling();
     open = false;
     error = null;
+    statusNotice = null;
     waitingPayment = false;
     showSignIn = false;
+    otpSent = false;
+    otpCode = "";
   }
 
   function onWindowKeydown(e: KeyboardEvent) {
@@ -345,7 +453,7 @@
               type="button"
               class="plan-card-btn"
               class:selected={selectedPlan === "monthly"}
-              onclick={() => (selectedPlan = "monthly")}
+              onclick={() => selectPlan("monthly")}
             >
               <div class="plan-card-top">
                 <span class="plan-label">Monthly</span>
@@ -359,7 +467,7 @@
               type="button"
               class="plan-card-btn"
               class:selected={selectedPlan === "six_month"}
-              onclick={() => (selectedPlan = "six_month")}
+              onclick={() => selectPlan("six_month")}
             >
               <div class="plan-card-top">
                 <span class="plan-label">6 Months</span>
@@ -373,7 +481,7 @@
               type="button"
               class="plan-card-btn"
               class:selected={selectedPlan === "annual"}
-              onclick={() => (selectedPlan = "annual")}
+              onclick={() => selectPlan("annual")}
             >
               <div class="plan-card-top">
                 <span class="plan-label">Yearly</span>
@@ -403,14 +511,48 @@
 
           {#if showSignIn}
             <div class="signin-drawer">
-              <input
-                type="email"
-                bind:value={email}
-                placeholder="Enter your Pro email address"
-                class="neutral-input"
-                aria-label="Email address"
-                onkeydown={(e) => e.key === "Enter" && handleActivate()}
-              />
+              <label for="activate-email-input" style="display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 5px;">
+                Registered Pro Email Address (or paste ptk_... pairing key)
+              </label>
+              <div style="display: flex; gap: 6px;">
+                <input
+                  id="activate-email-input"
+                  type="email"
+                  bind:value={email}
+                  placeholder="you@company.com or ptk_..."
+                  class="neutral-input"
+                  aria-label="Email address or pairing key"
+                  onkeydown={(e) => e.key === "Enter" && handleActivate()}
+                />
+                <button
+                  type="button"
+                  class="link-btn"
+                  style="white-space: nowrap; padding: 0 8px;"
+                  disabled={busy}
+                  onclick={requestSignInOtp}
+                >
+                  {otpSent ? "Resend Code" : "Email 6-Digit Code"}
+                </button>
+              </div>
+              <div style="margin-top: 8px;">
+                <label for="activate-otp-input" style="display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 5px;">
+                  6-Digit Verification Code / Pairing Key
+                </label>
+                <input
+                  id="activate-otp-input"
+                  type="text"
+                  bind:value={otpCode}
+                  placeholder="123456 or ptk_..."
+                  class="neutral-input"
+                  aria-label="6-digit verification code or pairing key"
+                  onkeydown={(e) => e.key === "Enter" && handleActivate()}
+                />
+              </div>
+              {#if statusNotice}
+                <div style="margin-top: 6px; font-size: 11.5px; color: var(--accent, #10b981); font-weight: 600;">
+                  {statusNotice}
+                </div>
+              {/if}
               <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
                 <button type="button" class="link-btn" onclick={startQrSignIn}>
                   Sign In with QR Code
@@ -420,7 +562,7 @@
           {/if}
 
           {#if showQrScan}
-            <div style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
+            <div style="width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 22px; background: var(--panel-2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
               {#if qrSvg}
                 <div style="width: 150px; height: 150px; background: #fff; padding: 8px; border-radius: 10px;">
                   <img
@@ -432,7 +574,7 @@
               {:else}
                 <span style="font-size: 12px; color: var(--muted);">Generating QR code…</span>
               {/if}
-              <div style="display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted);">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums;">
                 <span>Expires in {qrCountdown}s</span>
                 <button type="button" class="link-btn" onclick={startQrSignIn}>Refresh QR</button>
                 <button type="button" class="link-btn" onclick={() => { stopPolling(); showQrScan = false; }}>Hide QR</button>
@@ -446,9 +588,9 @@
 
           <button class="begin-btn" disabled={busy} onclick={handleActivate}>
             {#if busy}
-              <span>Opening…</span>
-            {:else if showSignIn && email.trim()}
-              <span>Activate Existing Pro</span>
+              <span>Verifying…</span>
+            {:else if showSignIn}
+              <span>{otpCode.trim() ? "Verify & Unlock Pro" : otpSent ? "Verify 6-Digit Code" : "Send 6-Digit Login Code"}</span>
               <span class="btn-arrow">→</span>
             {:else}
               <span>Continue for {ctaPriceLabel}</span>
@@ -695,6 +837,7 @@
     color: var(--text);
     letter-spacing: -0.5px;
     line-height: 1.05;
+    font-variant-numeric: tabular-nums;
   }
   .plan-sub {
     font-size: 10.5px;

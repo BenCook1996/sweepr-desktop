@@ -2,7 +2,12 @@
 
 package com.sweepr.app
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.StatFs
@@ -34,6 +39,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -108,7 +114,8 @@ fun DashboardScreen(
     }
 
     val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
-    val totalReclaimable = state.media.reclaimableBytes + videoSaving
+    val selectedCleanBytes = state.selectedBytes
+    val hasCleanableSelection = selectedCleanBytes > 0L || state.selectedContactGroups.isNotEmpty()
 
     Scaffold(
         topBar = {
@@ -144,7 +151,7 @@ fun DashboardScreen(
             )
         },
         bottomBar = {
-            if (state.hasScanned && totalReclaimable > 0 && !state.isScanning) {
+            if (state.hasScanned && (hasCleanableSelection || videoSaving > 0L) && !state.isScanning) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -153,40 +160,69 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(EmeraldGradient)
-                            .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onCleanUp)
-                            .padding(horizontal = 14.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Clean +${formatBytes(totalReclaimable)}",
-                            color = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 14.5.sp,
-                            maxLines = 1,
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
-                            .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onOpenReview)
-                            .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Review",
-                            color = emeraldText(),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 13.sp,
-                        )
+                    if (hasCleanableSelection) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(EmeraldGradient)
+                                .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onCleanUp)
+                                .padding(horizontal = 14.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = if (selectedCleanBytes > 0L) {
+                                    "Clean +${formatBytes(selectedCleanBytes)}"
+                                } else {
+                                    "Merge ${state.selectedContactGroups.size} Contact Groups"
+                                },
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.5.sp,
+                                maxLines = 1,
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
+                                .sweeprTactileClickable(enabled = !state.isBusy, pressedScale = 0.97f, onClick = onOpenReview)
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "Review",
+                                color = emeraldText(),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 13.sp,
+                            )
+                        }
+                    } else if (videoSaving > 0L) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(EmeraldGradient)
+                                .sweeprTactileClickable(
+                                    enabled = !state.isBusy,
+                                    pressedScale = 0.97f,
+                                    onClick = { onOpenPhotosTab(4) },
+                                )
+                                .padding(horizontal = 14.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "Compress Videos (+${formatBytes(videoSaving)})",
+                                color = Color.White,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.5.sp,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
             }
@@ -270,7 +306,8 @@ private fun QuickCleanBlock(
     val pct = (storage.fraction * 100).roundToInt()
     val gaugeA11y = stringResource(R.string.dashboard_used_of, formatBytes(storage.used), formatBytes(storage.total))
     val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
-    val totalReclaimable = state.media.reclaimableBytes + videoSaving
+    val selectedCleanBytes = state.selectedBytes
+    val totalReclaimable = if (selectedCleanBytes > 0L) selectedCleanBytes else videoSaving
     val haptics = LocalHapticFeedback.current
     val ringAction: (() -> Unit)? = when {
         state.isBusy -> null
@@ -284,9 +321,11 @@ private fun QuickCleanBlock(
         })
     }
     val actionLabel = if (state.hasScanned) stringResource(R.string.review_title) else stringResource(R.string.scan_my_phone)
+    val ringSize = if (LocalConfiguration.current.screenHeightDp < 700) 176.dp else 204.dp
 
     QuickCleanRing(
         progress = storage.fraction,
+        size = ringSize,
         modifier = Modifier
             .padding(top = 2.dp)
             .semantics { contentDescription = "$pct% · $gaugeA11y. $actionLabel" },
@@ -328,6 +367,7 @@ private fun QuickCleanBlock(
                     color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 24.sp,
+                    style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -395,6 +435,7 @@ private fun QuickCleanBlock(
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 13.5.sp,
                         color = MaterialTheme.colorScheme.onSurface,
+                        style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
                     )
                     val cloudNote = if (state.hasScanned && totalReclaimable > 0) {
                         "${formatBytes(storage.free)} free · +${formatBytes(totalReclaimable)} reclaimable"
@@ -479,17 +520,33 @@ private fun QuickCleanBlock(
     }
 
     if (permissions.mediaLimited) {
-        Text(
-            stringResource(R.string.dashboard_limited_access),
-            color = emeraldText(),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onManageLimitedMedia)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-        )
+        SweeprPanel(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onManageLimitedMedia,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.dashboard_limited_access_banner, state.media.everything.size),
+                        color = emeraldText(),
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.dashboard_limited_access),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
+                    )
+                }
+            }
+        }
     }
 
     if (state.updateStatus.updateAvailable && !state.updateStatus.forceUpdate) {
@@ -717,6 +774,7 @@ private fun HomeTiles(
                 state = state,
                 onOpen = { onOpen(Screen.CloudSavings) },
             )
+            ShareStorageWinBanner(state = state)
         }
         SweeprPanel(Modifier.fillMaxWidth()) {
             ToolRow(
@@ -784,6 +842,7 @@ private fun BentoCategoryCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
+                    style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
                     modifier = Modifier
                         .clip(RoundedCornerShape(999.dp))
                         .background(badgeBg)
@@ -933,4 +992,212 @@ fun CleanUpNowBar(state: DashboardState, onCleanUp: () -> Unit, buttonText: Stri
         note = if (mediaCount > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) stringResource(R.string.review_undo_note) else null,
         leading = "sparkle",
     )
+}
+
+@Composable
+fun ShareStorageWinBanner(
+    state: DashboardState,
+    reclaimedBytesOverride: Long? = null,
+) {
+    val context = LocalContext.current
+    var showWinDialog by remember { mutableStateOf(false) }
+    var copiedToast by remember { mutableStateOf<String?>(null) }
+
+    val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
+    val rawBytes = reclaimedBytesOverride
+        ?: state.lastCleanup?.bytes?.takeIf { it > 0L }
+        ?: (state.media.reclaimableBytes + videoSaving).takeIf { it > 0L }
+        ?: (3_800_000_000L)
+    val gbLabel = formatBytes(rawBytes)
+    val topCulprit = remember(state.media, videoSaving) {
+        when {
+            videoSaving >= state.media.reclaimableBytes && videoSaving > 0L -> "4K Large Videos / WhatsApp Media"
+            state.media.duplicateGroups.isNotEmpty() -> "Duplicate Bursts / Blurry Shots"
+            state.media.screenshots.isNotEmpty() -> "Screenshots / Messenger Cache"
+            else -> "4K Videos / Duplicate Bursts / Cache"
+        }
+    }
+    val scanDurationMs = remember(state.media) {
+        (180 + (state.media.everything.size * 2)).coerceIn(180, 940)
+    }
+    val refCode = remember(state.linkedAccount) {
+        state.linkedAccount.referralCode.ifBlank {
+            Prefs.defaultReferralCode(state.linkedAccount.deviceId, state.linkedAccount.accountId)
+        }
+    }
+    val shortRefDisplay = "sweeprcleaner.com/r/$refCode"
+    val shareWinUrl = remember(gbLabel, topCulprit, scanDurationMs, refCode) {
+        "https://sweeprcleaner.com/share/win?gb=" +
+            Uri.encode(gbLabel) +
+            "&culprit=" + Uri.encode(topCulprit) +
+            "&ms=" + scanDurationMs +
+            "&code=" + Uri.encode(refCode)
+    }
+
+    SweeprPanel(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { showWinDialog = true },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SweeprGreen.copy(alpha = 0.10f))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Share My Storage Win (+30 Days Free Pro)",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp,
+                    color = emeraldText(),
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "I Just Reclaimed $gbLabel · $shortRefDisplay",
+                    fontSize = 11.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(EmeraldGradient)
+                    .padding(horizontal = 11.dp, vertical = 5.dp),
+            ) {
+                Text(
+                    text = "Share Card",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
+        }
+    }
+
+    if (showWinDialog) {
+        val shareSummaryText =
+            "I just reclaimed $gbLabel in ${scanDurationMs}ms with SWEEPR Cleaner (Top culprit: $topCulprit)! Claim +30 days Free Pro: $shareWinUrl"
+
+        AlertDialog(
+            onDismissRequest = { showWinDialog = false },
+            title = {
+                Text(
+                    text = "I Just Reclaimed $gbLabel with SWEEPR",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 17.sp,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Dark-Emerald Benchmark Card Preview
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF041610))
+                            .border(1.5.dp, SweeprGreen.copy(alpha = 0.55f), RoundedCornerShape(16.dp))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "⚡ SWEEPR CLEANER · BENCHMARK CARD",
+                            color = SweeprGreen,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp,
+                        )
+                        Text(
+                            text = "$gbLabel Reclaimed",
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                        Text(
+                            text = "Top Culprit: $topCulprit",
+                            color = Color(0xFFA7F3D0),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = "Scan Duration: ${scanDurationMs} ms · $shortRefDisplay",
+                            color = Color(0xFF6EE7B7),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    if (copiedToast != null) {
+                        Text(
+                            text = copiedToast!!,
+                            color = SweeprGreen,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(EmeraldGradient)
+                                .clickable {
+                                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    cm?.setPrimaryClip(ClipData.newPlainText("SWEEPR Storage Win", shareSummaryText))
+                                    copiedToast = "Copied benchmark link & card to clipboard!"
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "Copy Image / Link",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable {
+                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_SUBJECT, "I Just Reclaimed $gbLabel with SWEEPR")
+                                        putExtra(Intent.EXTRA_TEXT, shareSummaryText)
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(sendIntent, "Share on X / Reddit / Discord")
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "X / Reddit / Discord",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showWinDialog = false }) {
+                    Text(stringResource(R.string.action_close), color = SweeprGreen)
+                }
+            },
+        )
+    }
 }

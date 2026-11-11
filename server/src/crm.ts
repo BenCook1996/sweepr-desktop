@@ -39,6 +39,9 @@ import { auditInternalBrandFactConsistency, checkDirectoryListings } from "./seo
 import { runKeywordDiscoveryPipeline } from "./seo/keywords.js";
 import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "./seo/competitor-intel.js";
 import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
+import { generateWeeklyContentToProductReport } from "./seo/product-advisor.js";
+import { runCloudGoogleSeoSync } from "./seo/google.js";
+import { config as globalConfig } from "./config.js";
 
 export interface AutomationJobStatus {
   id: string;
@@ -54,6 +57,7 @@ export interface AutomationJobStatus {
 
 const DEFAULT_AUTOMATION_JOBS: Array<{ id: string; name: string; cadence: string }> = [
   { id: "A1_telemetry_truth", name: "A1 Telemetry Truth & State of Windows Storage Benchmark", cadence: "Every 6h + live on scan_completed" },
+  { id: "A21_google_cloud_gsc_cwv_sync", name: "A21 Google Cloud Service Account GSC Sync, Sitemap Ping, URL Inspection & CWV", cadence: "Every 12h + daily CI" },
   { id: "A2_intent_gap_ctr", name: "A2 GSC Intent-Gap & Strike-Zone CTR Engine", cadence: "Every 12h + on GSC sync" },
   { id: "A3_download_recovery", name: "A3 Download-to-Install & SmartScreen Recovery", cadence: "Every 5m" },
   { id: "A4_bloat_watch", name: "A4 Bloat Watch Radar & Emerging Keyword Discovery", cadence: "Every 6h" },
@@ -64,6 +68,7 @@ const DEFAULT_AUTOMATION_JOBS: Array<{ id: string; name: string; cadence: string
   { id: "A17_strategy_forecast_ledger", name: "A17 SEO Strategy Forecast Ledger & Pre/Post Calibrator", cadence: "Every 12h + on GSC sync" },
   { id: "A18_underperformer_auto_refresh", name: "A18 Self-Healing Forecast Underperformer & CTR Auto-Refresher", cadence: "Every 12h + daily CI" },
   { id: "A19_gsc_internal_link_booster", name: "A19 GSC Strike-Zone Internal Link Booster (/clean, /safe-to-delete & Leaf Mesh)", cadence: "Every 12h + on GSC sync" },
+  { id: "A20_weekly_product_content_advisor", name: "A20 Weekly Content-to-Product & UI Mockup Advisor (Read-Only)", cadence: "Every Monday 07:00 UTC + CRM trigger" },
   { id: "A8_roas_reallocation", name: "A8 Paid Ads ROAS & v3 65% Reinvestment Engine", cadence: "Every 12h + CRM trigger" },
   { id: "A9_ab_experiments", name: "A9 A/B Experiment Z-Test & Auto-Winner Promotion", cadence: "Every 12h + CRM trigger" },
   { id: "A10_conversion_recovery", name: "A10 High-Intent Scan/Checkout & Giveaway GOTD50 Sweep", cadence: "Every 5m" },
@@ -400,7 +405,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
   });
 
   // 4. Update Customer Profile
-  router.patch("/customers/:id", async (c) => {
+  const handleUpdateCustomerProfile = async (c: any) => {
     const id = c.req.param("id");
     const body = await c.req.json().catch(() => ({}));
     const customer = repo.accountById(id);
@@ -409,6 +414,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     repo.updateAccountProfile(id, {
       name: body.name,
       email: body.email,
+      company: body.company,
+      phone: body.phone,
       notes: body.notes,
       health_score: body.health_score !== undefined ? Number(body.health_score) : undefined,
       lifecycle_stage: body.lifecycle_stage,
@@ -417,7 +424,10 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     });
 
     return c.json({ ok: true, customer: repo.getCustomer360(id) });
-  });
+  };
+  router.patch("/customers/:id", handleUpdateCustomerProfile);
+  router.patch("/customers/:id/profile", handleUpdateCustomerProfile);
+  router.put("/customers/:id/profile", handleUpdateCustomerProfile);
 
   // 5. Add Customer Note
   router.post("/customers/:id/notes", async (c) => {
@@ -458,7 +468,8 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     const currency = (body.currency || "usd").toLowerCase();
     const interval = plan === "annual" ? "year" : plan === "six_month" ? "6 months" : plan === "lifetime" ? "lifetime" : "month";
 
-    const subId = `sub_${randomToken(8)}`;
+    const existingEnt = repo.entitlement(id);
+    const subId = existingEnt?.stripe_subscription_id || `sub_${id}`;
     repo.upsertEntitlement({
       account_id: id,
       stripe_subscription_id: subId,
@@ -471,7 +482,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
     repo.upsertSubscription({
       id: subId,
       account_id: id,
-      stripe_subscription_id: null,
+      stripe_subscription_id: existingEnt?.stripe_subscription_id || null,
       status,
       plan,
       amount_cents,
@@ -603,7 +614,7 @@ export function createCrmRouter(deps: CrmRouterDeps) {
       lead_device: leadDevice,
     });
 
-    const subId = `sub_${randomToken(10)}`;
+    const subId = `sub_${accountId}`;
     repo.upsertEntitlement({
       account_id: accountId,
       stripe_subscription_id: subId,
@@ -1834,6 +1845,25 @@ export function createCrmRouter(deps: CrmRouterDeps) {
             boosted_slugs: r.boosted_slugs,
             hubs_updated: r.hubs_updated,
           };
+        } else if (id === "A20_weekly_product_content_advisor") {
+          const r = generateWeeklyContentToProductReport(seoStore, { persist: true });
+          summary = {
+            week_id: r.week_id,
+            total_catalog_pages: r.summary.total_catalog_pages,
+            weekly_produced_or_enriched_count: r.summary.weekly_produced_or_enriched_count,
+            proposals_count: r.summary.proposals_count,
+            top_proposal_title: r.summary.top_proposal_title,
+            top_proposal_score: r.summary.top_proposal_score,
+            read_only_mode: r.read_only_mode,
+          };
+        } else if (id === "A21_google_cloud_gsc_cwv_sync") {
+          const r = await runCloudGoogleSeoSync(seoStore, globalConfig.seo, {
+            days: 90,
+            maxInspectUrls: 4,
+            runCwv: false,
+            persistQueue: false,
+          });
+          summary = { ...r };
         } else if (id === "stripe_reconcile") {
           const r = await reconcileStripeSubscriptions(repo, deps.stripe);
           summary = { ...r };

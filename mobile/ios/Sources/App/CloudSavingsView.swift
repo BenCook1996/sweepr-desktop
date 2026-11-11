@@ -300,7 +300,9 @@ enum MobileCloudVault {
 
     // MARK: - Keychain + Face ID / Touch ID Vault Key Persistence
 
-    private static let keychainService = "com.sweepr.app.vault"
+    private static var keychainService: String {
+        "\(Bundle.main.bundleIdentifier ?? "com.sweepr.app").vault"
+    }
     private static let keychainAccount = "master_vault_password"
 
     static func saveRememberedPassword(_ password: String) {
@@ -427,7 +429,7 @@ struct CloudSavingsView: View {
             allowedContentTypes: [.item],
             allowsMultipleSelection: false
         ) { result in
-            guard vm.hasPremium else {
+            guard vm.hasPremium || vm.hasCloudVault else {
                 onShowPaywall()
                 return
             }
@@ -630,7 +632,7 @@ struct CloudSavingsView: View {
 
             HStack(spacing: 8) {
                 Button {
-                    guard vm.hasPremium else {
+                    guard vm.hasPremium || vm.hasCloudVault else {
                         onShowPaywall()
                         return
                     }

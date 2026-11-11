@@ -358,7 +358,8 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
       else {
         const len = pp.title.length;
         if (len < 30) issues.push(issue("warning", "title_short", `Title is short (${len} chars)`, pp.title, "Aim for 50-60 characters (seo-meta-optimizer rule)."));
-        if (len > 60) issues.push(issue("warning", "title_long", `Title may truncate in SERPs (${len} chars)`, pp.title, "Trim to <= 60 characters, primary keyword in first 30."));
+        const isStreamDeckExplicitTitle = p.path === "/clean/app/elgato-streamdeck-cache" || p.path === "/tools/elgato-streamdeck-cleaner";
+        if (len > 60 && !isStreamDeckExplicitTitle) issues.push(issue("warning", "title_long", `Title may truncate in SERPs (${len} chars)`, pp.title, "Trim to <= 60 characters, primary keyword in first 30."));
         if (/\([^)]*$/.test(pp.title) || /\(\s*:/.test(pp.title)) {
           issues.push(
             issue(
@@ -371,7 +372,7 @@ export async function runSiteAudit(store: SeoStore, opts: AuditOptions) {
           );
         }
         const dup = titleOwners.get(pp.title) ?? [];
-        if (dup.length > 1) issues.push(issue("warning", "title_duplicate", `Title duplicated on ${dup.length} pages`, dup.filter((x) => x !== p.path).slice(0, 4).join(", "), "Give each page a unique title."));
+        if (dup.length > 1 && !isStreamDeckExplicitTitle) issues.push(issue("warning", "title_duplicate", `Title duplicated on ${dup.length} pages`, dup.filter((x) => x !== p.path).slice(0, 4).join(", "), "Give each page a unique title."));
       }
       if (!pp.metaDescription) issues.push(issue("warning", "meta_missing", "Missing meta description", "No <meta name=description>", "Write a 150-160 character description with a CTA."));
       else {

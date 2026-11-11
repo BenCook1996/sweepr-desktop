@@ -1,9 +1,11 @@
 import AVFoundation
+import CoreLocation
 import CryptoKit
 import Foundation
 import ImageIO
 import MobileCoreServices
 import Photos
+import PhotosUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -242,6 +244,19 @@ enum PhotoScanner {
         await PHPhotoLibrary.requestAuthorization(for: .readWrite)
     }
 
+    @MainActor
+    static func presentLimitedLibraryPicker() {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+            var topController = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController ?? scene.windows.first?.rootViewController
+        else { return }
+        while let presented = topController.presentedViewController {
+            topController = presented
+        }
+        PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: topController)
+    }
+
     static func scan(onProgress: (@Sendable (String) -> Void)? = nil) async -> MediaScanResult {
         await Task.detached(priority: .userInitiated) {
             await performScan(onProgress: onProgress)
@@ -308,6 +323,17 @@ enum PhotoScanner {
         var destOptions: [CFString: Any] = rawProps
         if stripGps {
             destOptions[kCGImagePropertyGPSDictionary] = kCFNull
+        } else if destOptions[kCGImagePropertyGPSDictionary] == nil, let loc = asset.location {
+            let lat = loc.coordinate.latitude
+            let lon = loc.coordinate.longitude
+            destOptions[kCGImagePropertyGPSDictionary] = [
+                kCGImagePropertyGPSLatitude: abs(lat),
+                kCGImagePropertyGPSLatitudeRef: lat >= 0 ? "N" : "S",
+                kCGImagePropertyGPSLongitude: abs(lon),
+                kCGImagePropertyGPSLongitudeRef: lon >= 0 ? "E" : "W",
+                kCGImagePropertyGPSAltitude: abs(loc.altitude),
+                kCGImagePropertyGPSAltitudeRef: loc.altitude >= 0 ? 0 : 1
+            ] as [CFString: Any]
         }
         if compressQuality {
             destOptions[kCGImageDestinationLossyCompressionQuality] = preset.jpegQuality
@@ -408,9 +434,13 @@ enum PhotoScanner {
         }
 
         let resources = PHAssetResource.assetResources(for: asset)
-        let originalBytes = resources.first.flatMap { res in
-            (res.value(forKey: "fileSize") as? CLong).map { Int64($0) }
-        } ?? 0
+        let streamedBytes: Int64
+        if let firstRes = resources.first {
+            streamedBytes = await streamAssetResourceByteSize(firstRes)
+        } else {
+            streamedBytes = 0
+        }
+        let originalBytes = streamedBytes > 0 ? streamedBytes : estimateAssetByteSize(asset: asset, resources: resources)
 
         let avAsset = try await requestAVAsset(for: asset)
         let exportSession = AVAssetExportSession(asset: avAsset, presetName: preset.avExportPresetName)
@@ -481,6 +511,45 @@ enum PhotoScanner {
         )
     }
 
+    private static func streamAssetResourceByteSize(_ resource: PHAssetResource) async -> Int64 {
+        await withCheckedContinuation { continuation in
+            let options = PHAssetResourceRequestOptions()
+            options.isNetworkAccessAllowed = false
+            var totalBytes: Int64 = 0
+            var finished = false
+            PHAssetResourceManager.default().requestData(
+                for: resource,
+                options: options,
+                dataReceivedHandler: { chunk in
+                    totalBytes += Int64(chunk.count)
+                },
+                completionHandler: { _ in
+                    guard !finished else { return }
+                    finished = true
+                    continuation.resume(returning: totalBytes)
+                }
+            )
+        }
+    }
+
+    private static func estimateAssetByteSize(asset: PHAsset, resources: [PHAssetResource]) -> Int64 {
+        let pixels = max(Int64(asset.pixelWidth) * Int64(asset.pixelHeight), 1_000_000)
+        if asset.mediaType == .video {
+            let durationSec = max(asset.duration, 1.0)
+            let is4K = pixels >= (3840 * 2160)
+            let bytesPerSec: Double = is4K ? 2_800_000 : 1_250_000
+            return Int64(durationSec * bytesPerSec)
+        }
+        let uti = resources.first?.uniformTypeIdentifier.lowercased() ?? ""
+        if uti.contains("raw") || uti.contains("dng") {
+            return pixels * 2
+        }
+        if asset.mediaSubtypes.contains(.photoLive) {
+            return (pixels * 3) / 4
+        }
+        return pixels / 2
+    }
+
     private static func requestAVAsset(for asset: PHAsset) async throws -> AVAsset {
         try await withCheckedThrowingContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -525,9 +594,7 @@ enum PhotoScanner {
                 return
             }
             let resources = PHAssetResource.assetResources(for: asset)
-            let byteSize = resources.first.flatMap { res in
-                (res.value(forKey: "fileSize") as? CLong).map { Int64($0) }
-            } ?? Int64(asset.pixelWidth * asset.pixelHeight / 2)
+            let byteSize = estimateAssetByteSize(asset: asset, resources: resources)
 
             let isVideo = asset.mediaType == .video
             let isScreenshot = asset.mediaSubtypes.contains(.photoScreenshot)

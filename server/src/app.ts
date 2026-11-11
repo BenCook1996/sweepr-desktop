@@ -1,12 +1,13 @@
 import { Hono } from "hono";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { compress } from "hono/compress";
+import { cors } from "hono/cors";
 import { etag } from "hono/etag";
 import { getCookie, setCookie, getSignedCookie, setSignedCookie, deleteCookie } from "hono/cookie";
 import { bodyLimit } from "hono/body-limit";
 import { readFileSync, existsSync, statSync, createReadStream } from "node:fs";
 import { Readable } from "node:stream";
-import { createSign, randomInt } from "node:crypto";
+import { createHash, createSign, randomInt } from "node:crypto";
 import type { Context } from "hono";
 import type Stripe from "stripe";
 import type { KeyObject } from "node:crypto";
@@ -31,6 +32,7 @@ import {
   getCleanItemBySlug,
   getPseoRedirectTarget,
   isPseoSlugNoindexed,
+  renderGamingAndAiCacheBloatCalculatorPage,
   renderPseoDirectory,
   renderPseoPage,
   setApprovedIntentGapSeoOverride,
@@ -75,7 +77,9 @@ import {
 import { getAccountStorageRecap, processAnnualRenewalRecap } from "./renewal-recap.js";
 import {
   associateCheckoutLeadWithRecovery,
+  computeIpOsFingerprint,
   dispatchPostCleanAhaMilestoneEmail,
+  dispatchTransactionalCustomerEmail,
   getVisitorRecoveryStatus,
   recordAppInstalledForRecovery,
   recordInstallerDownloaded,
@@ -119,7 +123,7 @@ export interface AppDeps {
     publicUrl: string;
     stripeWebhookSecret: string;
     stripePublishableKey?: string;
-    priceActivation: string;
+    priceActivation?: string;
     priceMonthly: string;
     priceSixMonth?: string;
     priceAnnual?: string;
@@ -261,11 +265,12 @@ function extractAttributionMeta(body: any, accountId: string, plan: string, refC
 /** Server-side source of truth: is this entitlement currently usable? */
 export function resolveCheckoutPromoCoupon(
   rawCoupon: unknown
-): { code: "GOTD50" | "SCAN5GB20" | "STAY30"; discountPct: number; multiplier: number } | null {
+): { code: "GOTD50" | "SWEEPR50" | "SCAN5GB20" | "STAY30"; discountPct: number; multiplier: number } | null {
   const c = String(rawCoupon ?? "")
     .trim()
     .toUpperCase();
   if (c === "GOTD50") return { code: "GOTD50", discountPct: 50, multiplier: 0.5 };
+  if (c === "SWEEPR50") return { code: "SWEEPR50", discountPct: 50, multiplier: 0.5 };
   if (c === "SCAN5GB20") return { code: "SCAN5GB20", discountPct: 20, multiplier: 0.8 };
   if (c === "STAY30") return { code: "STAY30", discountPct: 30, multiplier: 0.7 };
   return null;
@@ -350,6 +355,21 @@ export function createApp(deps: AppDeps) {
   app.use("*", compress());
   app.use("*", etag());
   app.use("*", securityHeaders({ hsts: isHttps }));
+
+  const desktopAndWebCors = cors({
+    origin: [
+      "https://sweeprcleaner.com",
+      "http://tauri.localhost",
+      "https://tauri.localhost",
+      "tauri://localhost",
+      "http://localhost:1420",
+    ],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Poll-Secret"],
+    maxAge: 86400,
+  });
+  app.use("/api/*", desktopAndWebCors);
+  app.use("/v1/*", desktopAndWebCors);
 
   // Drop automated PHP/CGI/scanner probes early before body parsing, static lookup, or bot telemetry
   const SCANNER_PROBE_RE = /\.(?:php\d?|phtml|phar|cgi|asp|aspx|jsp|env)$/i;
@@ -823,6 +843,8 @@ export function createApp(deps: AppDeps) {
       : c.notFound();
   });
   app.get("/clean", (c) => c.html(renderPseoDirectory()));
+  app.get("/benchmark", (c) => c.html(renderGamingAndAiCacheBloatCalculatorPage()));
+  app.get("/tools/pc-cache-calculator", (c) => c.html(renderGamingAndAiCacheBloatCalculatorPage()));
   app.get("/safe-to-delete", (c) => {
     const q = c.req.query("q") || c.req.query("path") || "";
     const visitorKey =
@@ -883,6 +905,17 @@ export function createApp(deps: AppDeps) {
     let cleanSlug = rawSlug.toLowerCase().replace(/%20|\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 
     // Legacy / historical redirect aliases
+    if (
+      cleanSlug === "elgato-stream-deck-media-blob-storage" ||
+      cleanSlug === "elgato-stream-deck-code-bytecode-cache" ||
+      cleanSlug === "elgato-stream-deck-service-worker-cachestorage" ||
+      cleanSlug === "elgato-stream-deck-gpu-shader-cache" ||
+      cleanSlug === "elgato-stream-deck-crashpad-dump-logs" ||
+      cleanSlug === "elgato-stream-deck-cache" ||
+      (cleanSlug.startsWith("elgato-streamdeck-") && cleanSlug !== "elgato-streamdeck-cache")
+    ) {
+      return c.redirect("/clean/app/elgato-streamdeck-cache", 301);
+    }
     if (category === "folder" && cleanSlug === "davinci-resolve-render-cache") {
       return c.redirect("/clean/folder/davinci-resolve-fusion-cache", 301);
     }
@@ -926,7 +959,22 @@ export function createApp(deps: AppDeps) {
     mac: { file: "SWEEPRCleaner.dmg", type: "application/x-apple-diskimage", label: "Mac" },
     linux: { file: "SWEEPRCleaner.AppImage", type: "application/x-executable", label: "Linux" },
     android: { file: "SWEEPRCleaner.apk", type: "application/vnd.android.package-archive", label: "Android" },
-    ios: { file: "SWEEPRCleaner.mobileconfig", type: "application/x-apple-aspen-config; charset=utf-8", label: "iPhone & iPad" },
+    ios: { file: "SWEEPRCleaner.dmg", type: "application/x-apple-diskimage", label: "iPhone & iPad" },
+  };
+
+  let cachedApkSha256: string | null = null;
+  const getApkSha256 = (): string => {
+    if (cachedApkSha256) return cachedApkSha256;
+    try {
+      if (existsSync("./public/SWEEPRCleaner.apk")) {
+        cachedApkSha256 = createHash("sha256")
+          .update(readFileSync("./public/SWEEPRCleaner.apk"))
+          .digest("hex")
+          .toUpperCase();
+        return cachedApkSha256;
+      }
+    } catch {}
+    return "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
   };
 
   /** Order matters: Android and ChromeOS user agents also contain "Linux". */
@@ -940,52 +988,151 @@ export function createApp(deps: AppDeps) {
     return null;
   };
 
+  const renderDesktopEmailCaptureCard = (sourcePlatform: string, prominent = false) =>
+    `<div id="dlRecoveryBox" style="margin-top:14px;padding:${prominent ? "16px" : "14px"};border-radius:14px;background:${prominent ? "#eef6f1" : "#f8faf9"};border:${prominent ? "2px solid #0d6847" : "1px solid #c6dcd0"};text-align:left;font-size:12.5px;color:#111613;">` +
+    `<div style="font-weight:800;font-size:13.5px;color:#073825;margin-bottom:4px;">📩 Send PC &amp; Mac Download Link to My Email</div>` +
+    `<div style="color:#4b554e;font-size:12px;margin-bottom:8px;">On your phone right now? Enter your email and we&rsquo;ll send the direct Windows 11/10 &amp; Mac download link + your free 500 MB cleanup pass:</div>` +
+    `<form id="dlRecoveryForm" style="display:flex;gap:6px;flex-wrap:wrap;" onsubmit="return window.__bindDlEmail && window.__bindDlEmail(event)">` +
+    `<input type="email" id="dlRecoveryEmail" required placeholder="you@example.com" style="flex:1;min-width:160px;padding:10px 12px;border-radius:9px;border:1px solid #b8c4bc;font-size:13px;" />` +
+    `<button type="submit" id="dlRecoverySubmit" style="background:#0d6847;color:#fff;border:none;padding:10px 14px;border-radius:9px;font-weight:800;font-size:12.5px;cursor:pointer;">Email Me PC &amp; Mac Link</button>` +
+    `</form>` +
+    `<div id="dlRecoveryStatus" style="display:none;margin-top:6px;font-size:12px;font-weight:700;color:#0d6847;">✓ Sent! Open the email on your Windows PC or Mac to install in 1 click.</div>` +
+    `</div>` +
+    `<script>(function(){window.__bindDlEmail=function(e){if(e)e.preventDefault();var inp=document.getElementById('dlRecoveryEmail');var st=document.getElementById('dlRecoveryStatus');var btn=document.getElementById('dlRecoverySubmit');var em=inp?inp.value.trim():'';if(!em||em.indexOf('@')===-1)return false;if(btn)btn.disabled=true;var m=document.cookie.match(/(?:^|; )sweepr_attr_id=([^;]*)/);var aid=m?decodeURIComponent(m[1]):(localStorage.getItem('sweepr_attr_id')||'');fetch('/api/download-recovery/bind-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,attribution_id:aid,platform:'${escapeHtml(sourcePlatform)}',send_desktop_link:true})}).then(function(){if(st)st.style.display='block';if(btn)btn.textContent='Sent ✓';}).catch(function(){if(btn)btn.disabled=false;});return false;};})();</script>`;
+
+  const mobileDownloadLandingPage = (platform: "android" | "ios", ua = "", host = "sweeprcleaner.com") => {
+    const btn = (href: string, text: string, primary = false, subBadge = "Recommended") =>
+      `<a href="${href}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:13px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? `<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">${subBadge}</span>` : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Open &rarr;</span>'}</a>`;
+    const cleanHost = host.replace(/^https?:\/\//, "");
+    const isAndroidWebView = /android/.test(ua) && /\bwv\b|instagram|fban|fbav|tiktok|bytedancewebview|line\/|micromessenger|reddit/.test(ua);
+
+    if (platform === "android") {
+      const apkSha = getApkSha256();
+      const webViewHint = isAndroidWebView
+        ? `<div style="margin:10px 0;padding:12px;border-radius:12px;background:#e3ede7;border:1px solid #0d6847;text-align:left;font-size:12.5px;color:#073825;"><strong>📱 In-App Browser Detected:</strong> Tap Google Play below or open in Chrome for one-tap installation:${btn(`intent://${cleanHost}/download?platform=android#Intent;scheme=https;package=com.android.chrome;end`, "🌐 Open in Chrome", false)}</div>`
+        : "";
+      const bodyHtml =
+        `Install SWEEPR Cleaner from Google Play or email yourself the PC &amp; Mac desktop link:</p>` +
+        webViewHint +
+        btn("https://play.google.com/store/apps/details?id=com.sweepr.app", "▶️ Get SWEEPR Cleaner on Google Play", true, "Google Play") +
+        btn("https://play.google.com/apps/testing/com.sweepr.app", "🧪 Join Official Google Play Beta (30d Pro Free)", false) +
+        renderDesktopEmailCaptureCard("android", true) +
+        `<details style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#f8faf9;border:1px solid #d6dad5;text-align:left;font-size:12px;color:#4b554e;">` +
+        `<summary style="cursor:pointer;font-weight:800;color:#111613;">Advanced Option: Verified Direct APK Download (.apk)</summary>` +
+        `<div style="margin-top:8px;line-height:1.45;">For devices without Google Play Services, download the signed release APK directly:</div>` +
+        btn("/download?platform=android&direct=1", "📦 Download Verified SWEEPRCleaner.apk", false) +
+        `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:#eceee9;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;word-break:break-all;color:#143625;"><strong>Verified SHA-256:</strong> ${escapeHtml(apkSha)}</div>` +
+        `</details>` +
+        `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
+        `<a href="/download?platform=picker" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+        `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
+        `</div><p style="display:none">`;
+      return page("SWEEPR Cleaner for Android & PC", bodyHtml);
+    }
+
+    // iOS landing view: App Store / TestFlight / Instant Web App + Prominent Cross-Device PC & Mac Email Capture Card
+    const iosBodyHtml =
+      `Cleaning your PC, Mac, or iPhone? Send the desktop installer link to your email or launch SWEEPR on iOS:</p>` +
+      renderDesktopEmailCaptureCard("ios", true) +
+      `<div style="margin-top:14px;padding:14px;border-radius:14px;background:#ffffff;border:1px solid #d6dad5;text-align:left;">` +
+      `<div style="font-weight:800;font-size:13px;color:#073825;margin-bottom:4px;">🍎 SWEEPR Cleaner for iPhone &amp; iPad</div>` +
+      `<div style="color:#4b554e;font-size:12px;margin-bottom:6px;">No configuration profiles required. Launch the instant iOS Cleaner or join Apple TestFlight / App Store access:</div>` +
+      btn("/ios-app", "🚀 Launch SWEEPR Cleaner for iOS (Instant)", true, "iPhone & iPad") +
+      btn("https://testflight.apple.com", "🍏 App Store & TestFlight Early Access", false) +
+      `</div>` +
+      `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
+      `<a href="/download?platform=picker" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+      `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
+      `</div><p style="display:none">`;
+    return page("SWEEPR Cleaner for iPhone, PC & Mac", iosBodyHtml);
+  };
+
   const pickerPage = (heading: string, msg: string, ua = "", host = "sweeprcleaner.com") => {
-    const btn = (href: string, text: string, primary = true) =>
-      `<a href="${href}" style="display:block;margin-top:10px;background:${primary ? "#0d6847" : "#111613"};color:#fff;padding:13px 20px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:15px;">${text}</a>`;
+    const btn = (href: string, text: string, primary = false) =>
+      `<a href="${href}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? '<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">Recommended</span>' : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Download &rarr;</span>'}</a>`;
     const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
     const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const hasAndroid = existsSync("./public/SWEEPRCleaner.apk");
-    const isNonSafariIos = /iphone|ipad|ipod/.test(ua) && (/crios|fxios|edgios|opios|instagram|fban|fbav|tiktok|line\/|wv/.test(ua) || !ua.includes("safari"));
-    const isAndroidWebView = /android/.test(ua) && /\bwv\b|instagram|fban|fbav|tiktok|bytedancewebview|line\/|micromessenger|reddit/.test(ua);
-    const cleanHost = host.replace(/^https?:\/\//, "");
-    const assistBanner = isNonSafariIos
-      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #0d6847;background:#e3ede7;text-align:left;font-size:13px;color:#073825;"><strong>📱 iPhone / iPad Detected:</strong> Apple requires iOS Configuration Profiles to be opened in Safari, or you can launch the iOS app directly:${btn(`x-safari-https://${cleanHost}/download?platform=ios&direct=1`, "🧭 Open in Safari & Install iOS App", true)}${btn("/ios-app", "🚀 Launch SWEEPR Cleaner iOS App", false)}</div>`
-      : isAndroidWebView
-      ? `<div style="margin:12px 0;padding:14px;border-radius:14px;border:2px solid #0d6847;background:#e3ede7;text-align:left;font-size:13px;color:#073825;"><strong>📱 Android Detected:</strong> Downloading SWEEPRCleaner.apk... If your in-app browser blocks APK installs, tap below to open in Chrome:${btn(`intent://${cleanHost}/download?platform=android&direct=1#Intent;scheme=https;package=com.android.chrome;end`, "🌐 Open in Chrome & Install APK", true)}<iframe src="/download?platform=android&direct=1" style="display:none"></iframe></div>`
-      : "";
-    const smartScreenGuide = `<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 First-Launch Guide:</strong><br>Because v0.1.0 is a freshly compiled 5 MB native Rust binary, if Windows SmartScreen appears on first launch: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>.</div>`;
+    const recommended: Platform = detectPlatform(ua.toLowerCase()) ?? "windows";
+    const smartScreenGuide = `<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 Signed Installer:</strong><br>Digitally signed with SSL.com EV/IV Authenticode. Download and run to start your 60-second scan.</div>`;
+    const platformEntries: { key: Platform | "play_beta"; html: string; isPrimary: boolean }[] = [
+      {
+        key: "windows",
+        isPrimary: recommended === "windows",
+        html: btn("/download?platform=windows", "💻 Download for Windows 10 & 11 (.exe)", recommended === "windows"),
+      },
+      ...(hasMac
+        ? [
+            {
+              key: "mac" as const,
+              isPrimary: recommended === "mac",
+              html: btn("/download?platform=mac", "🍏 Download for Mac — macOS 11+ (.dmg)", recommended === "mac"),
+            },
+          ]
+        : []),
+      {
+        key: "play_beta",
+        isPrimary: recommended === "android",
+        html: btn("https://play.google.com/store/apps/details?id=com.sweepr.app", "▶️ Get for Android on Google Play", recommended === "android"),
+      },
+      ...(hasAndroid
+        ? [
+            {
+              key: "android" as const,
+              isPrimary: false,
+              html: btn("/download?platform=android", "📱 Android Options & Verified APK (SHA-256)", false),
+            },
+          ]
+        : []),
+      {
+        key: "ios",
+        isPrimary: recommended === "ios",
+        html: btn("/download?platform=ios", "🍎 iPhone & iPad (App Store / Send PC Link)", recommended === "ios"),
+      },
+      ...(hasLinux
+        ? [
+            {
+              key: "linux" as const,
+              isPrimary: recommended === "linux",
+              html: btn("/download?platform=linux", "🐧 Download for Linux (.AppImage)", recommended === "linux"),
+            },
+          ]
+        : []),
+    ];
+    const primaryEntry = platformEntries.find((e) => e.isPrimary) ?? platformEntries[0];
+    const secondaryEntries = platformEntries.filter((e) => e !== primaryEntry);
+    const postDownloadEmailCapture = renderDesktopEmailCaptureCard(recommended, recommended === "ios" || recommended === "android");
     const links =
-      assistBanner +
-      (hasAndroid ? btn("/download?platform=android&direct=1", "📱 Download for Android (.apk)", true) : "") +
-      btn("https://play.google.com/apps/testing/com.sweepr.app", "▶️ Join Official Google Play Beta (Get 30 Days Pro Free)", true) +
-      btn("/download?platform=ios&direct=1", "🍎 Install on iPhone & iPad (iOS / iPadOS)", true) +
-      btn("/download?platform=windows", "💻 Download for Windows 10 & 11 (.exe)", true) +
-      (hasMac ? btn("/download?platform=mac", "🍏 Download for Mac — macOS 11+ Universal (.dmg)", true) : "") +
-      (hasLinux ? btn("/download?platform=linux", "Download for Linux (.AppImage)", false) : "") +
+      primaryEntry.html +
+      `<div style="margin:14px 0 4px;font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#5c6860;text-align:left;">Other Platforms</div>` +
+      secondaryEntries.map((e) => e.html).join("") +
       smartScreenGuide +
-      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px;color:#4b554e;">Want instant 5-device Pro access across Windows, Mac, Android &amp; iOS?<a href="/order?plan=annual" style="display:block;margin-top:8px;background:#0d6847;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Activate Pro License (5 Devices) &rarr;</a><div style="margin-top:12px;">Already purchased on another device? Log in to your Customer Portal to activate this device via QR code:</div><a href="/login" style="display:block;margin-top:8px;background:#111613;color:#fff;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;">Customer Login &amp; QR Activation &rarr;</a><a href="/" style="display:inline-block;margin-top:12px;color:#0d6847;text-decoration:none;font-weight:600;">&larr; Back to Home</a></div>`;
+      postDownloadEmailCapture +
+      `<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(17,22,19,0.08);font-size:12.5px;color:#4b554e;text-align:left;">` +
+      `<a href="/order?plan=annual" style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;color:#0d6847;border:1px solid #86efac;padding:11px 15px;border-radius:12px;text-decoration:none;font-weight:700;"><span>Unlock 5-Device Pro License</span><span>&rarr;</span></a>` +
+      `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-weight:600;">` +
+      `<a href="/login" style="color:#111613;text-decoration:underline;">Customer Login &amp; QR Activation</a>` +
+      `<a href="/" style="color:#0d6847;text-decoration:none;font-weight:700;">&larr; Back to Home</a>` +
+      `</div></div>`;
     return page(heading, `${msg}</p>${links}<p style="display:none">`);
   };
 
   /** Streams a file from disk (no full in-memory buffering) with an explicit Content-Length and edge caching headers. */
-  const streamFile = (path: string, type: string, filename: string) => {
+  const streamFile = (c: Context, path: string, type: string, filename: string) => {
     const stat = statSync(path);
     const body = Readable.toWeb(createReadStream(path)) as unknown as ReadableStream<Uint8Array>;
-    return new Response(body, {
-      headers: {
-        "Content-Type": type,
-        "Content-Length": String(stat.size),
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "public, max-age=0, must-revalidate",
-      },
+    return c.newResponse(body, 200, {
+      "Content-Type": type,
+      "Content-Length": String(stat.size),
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "public, max-age=0, must-revalidate",
     });
   };
 
   app.get("/Sweepr_Setup.exe", (c) => c.redirect("/download?platform=windows", 302));
   app.get("/Sweepr_Setup.dmg", (c) => c.redirect("/download?platform=mac", 302));
   app.get("/SWEEPRCleaner.apk", (c) => c.redirect("/download?platform=android&direct=1", 302));
-  app.get("/SWEEPRCleaner.mobileconfig", (c) => c.redirect("/download?platform=ios&direct=1", 302));
+  app.get("/SWEEPRCleaner.mobileconfig", (c) => c.redirect("/download?platform=ios", 302));
 
   app.get("/ios-app", (c) => {
     c.header("X-Robots-Tag", "noindex, nofollow");
@@ -1282,6 +1429,7 @@ export function createApp(deps: AppDeps) {
     } catch {}
     // ?platform=mac etc. lets people download for a different device (e.g. "Other platforms" links).
     const requested = c.req.query("platform")?.toLowerCase();
+    const direct = c.req.query("direct") === "1" || c.req.query("raw") === "1";
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
     const platform: Platform | null =
       requested && (validPlatforms as readonly string[]).includes(requested)
@@ -1291,6 +1439,35 @@ export function createApp(deps: AppDeps) {
     if (!platform || requested === "picker") {
       c.header("Cache-Control", "private, no-store");
       return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device platform:", ua, host));
+    }
+
+    // Never force an immediate raw .apk sideload or unsigned .mobileconfig MDM stream on mobile visitors!
+    // Route Android to the Google Play + Verified SHA-256 APK landing view, and iOS to the App Store / Cross-Device Email capture card.
+    if ((platform === "android" && !direct) || platform === "ios") {
+      try {
+        let attrId =
+          sanitizeAttributionId(c.req.query("attribution_id")) ||
+          sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+        if (!attrId) {
+          attrId = `attr_dl_${randomToken(8)}`;
+          setCookie(c, "sweepr_attr_id", attrId, {
+            httpOnly: false,
+            sameSite: "Lax",
+            secure: isHttps,
+            path: "/",
+            maxAge: 90 * 86400,
+          });
+        }
+        const sessAccId = await sessionAccountId(c);
+        repo.recordAnalyticsEvent({
+          event_name: "mobile_download_landing_viewed",
+          platform,
+          account_id: sessAccId,
+          metadata: { platform, referrer: c.req.header("referer") || null, attribution_id: attrId },
+        });
+      } catch {}
+      c.header("Cache-Control", "private, no-store");
+      return c.html(mobileDownloadLandingPage(platform, ua, host));
     }
 
     const { file, type, label } = DESKTOP_FILES[platform];
@@ -1312,12 +1489,25 @@ export function createApp(deps: AppDeps) {
         });
       }
       const sessAccId = await sessionAccountId(c);
+      const visitorIp =
+        c.req.header("cf-connecting-ip")?.trim() ||
+        c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+        clientIp(c);
+      const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
+      c.header("X-Sweepr-Attribution-Id", attrId);
       recordInstallerDownloaded(repo, {
         attributionId: attrId,
         platform,
         installerFile: file,
         accountId: sessAccId,
-        metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null },
+        clientIp: visitorIp,
+        ipOsFingerprint,
+        metadata: {
+          installer: file,
+          available: hasFile,
+          referrer: c.req.header("referer") || null,
+          ip_os_fingerprint: ipOsFingerprint,
+        },
         nowSec: now(),
       });
       repo.recordAnalyticsEvent({
@@ -1339,7 +1529,7 @@ export function createApp(deps: AppDeps) {
       return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`, ua, host));
     }
 
-    return streamFile(installerPath, type, file);
+    return streamFile(c, installerPath, type, file);
   });
 
   // Referral shortlink: /r/:code -> /order?ref=:code
@@ -1347,6 +1537,152 @@ export function createApp(deps: AppDeps) {
     const code = String(c.req.param("code") ?? "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 32);
     if (!code) return c.redirect("/order");
     return c.redirect(`/order?ref=${encodeURIComponent(code)}`);
+  });
+
+  // Public viral "I Just Reclaimed X.X GB with SWEEPR" benchmark card & dynamic OpenGraph preview route
+  const parseShareWinParams = (c: Context) => {
+    const rawGbInput = String(c.req.query("gb") ?? "14.8 GB").trim().slice(0, 32);
+    const gbLabel = /^\d+(\.\d+)?$/.test(rawGbInput)
+      ? `${rawGbInput} GB`
+      : rawGbInput || "14.8 GB";
+    const culprit =
+      String(c.req.query("culprit") ?? "NVIDIA DXCache / ComfyUI / Xcode")
+        .trim()
+        .slice(0, 80) || "NVIDIA DXCache / ComfyUI / Xcode";
+    const msNum = Math.max(
+      12,
+      Math.min(99999, Number.parseInt(String(c.req.query("ms") ?? "312"), 10) || 312)
+    );
+    const code =
+      String(c.req.query("code") ?? c.req.query("ref") ?? "SWP-PRO30")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "")
+        .slice(0, 32) || "SWP-PRO30";
+    return { gbLabel, culprit, msNum, code };
+  };
+
+  app.get("/share/win.svg", (c) => {
+    const { gbLabel, culprit, msNum, code } = parseShareWinParams(c);
+    const safeGb = escapeHtml(gbLabel);
+    const safeCulprit = escapeHtml(culprit.length > 34 ? `${culprit.slice(0, 33)}…` : culprit);
+    const safeMs = escapeHtml(`${msNum} ms`);
+    const safeRef = escapeHtml(`sweeprcleaner.com/r/${code}`);
+    c.header("Content-Type", "image/svg+xml; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600");
+    return c.body(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">` +
+        `<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#03110c"/><stop offset="55%" stop-color="#062319"/><stop offset="100%" stop-color="#041610"/></linearGradient></defs>` +
+        `<rect width="1200" height="630" fill="url(#bg)"/>` +
+        `<rect x="28" y="28" width="1144" height="574" rx="28" fill="none" stroke="#10b981" stroke-opacity="0.48" stroke-width="3"/>` +
+        `<text x="72" y="96" fill="#10b981" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="22" font-weight="800">⚡ SWEEPR CLEANER · STORAGE BENCHMARK</text>` +
+        `<text x="72" y="195" fill="#ecfdf5" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="60" font-weight="900">I Just Reclaimed ${safeGb}</text>` +
+        `<text x="72" y="248" fill="#34d399" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="34" font-weight="800">with SWEEPR Cleaner (+30 Days Free Pro Pass)</text>` +
+        `<rect x="72" y="292" width="310" height="170" rx="20" fill="#07261b" stroke="#10b981" stroke-opacity="0.35"/>` +
+        `<text x="96" y="336" fill="#9ca3af" font-family="ui-monospace,Consolas,monospace" font-size="15" font-weight="800">STORAGE RECLAIMED</text>` +
+        `<text x="96" y="396" fill="#34d399" font-family="system-ui,-apple-system,sans-serif" font-size="40" font-weight="900">${safeGb}</text>` +
+        `<rect x="404" y="292" width="472" height="170" rx="20" fill="#07261b" stroke="#10b981" stroke-opacity="0.35"/>` +
+        `<text x="428" y="336" fill="#9ca3af" font-family="ui-monospace,Consolas,monospace" font-size="15" font-weight="800">TOP CULPRIT</text>` +
+        `<text x="428" y="394" fill="#38bdf8" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="800">${safeCulprit}</text>` +
+        `<rect x="898" y="292" width="230" height="170" rx="20" fill="#07261b" stroke="#10b981" stroke-opacity="0.35"/>` +
+        `<text x="922" y="336" fill="#9ca3af" font-family="ui-monospace,Consolas,monospace" font-size="15" font-weight="800">SCAN SPEED</text>` +
+        `<text x="922" y="396" fill="#fbbf24" font-family="system-ui,-apple-system,sans-serif" font-size="38" font-weight="900">${safeMs}</text>` +
+        `<rect x="72" y="496" width="1056" height="72" rx="18" fill="#083022" stroke="#34d399" stroke-opacity="0.45"/>` +
+        `<text x="100" y="541" fill="#ffffff" font-family="ui-monospace,Consolas,monospace" font-size="23" font-weight="800">Claim +30 Days Free Pro: ${safeRef}</text>` +
+        `</svg>`
+    );
+  });
+
+  app.get("/share/win", (c) => {
+    const { gbLabel, culprit, msNum, code } = parseShareWinParams(c);
+    const baseUrl = (config.publicUrl || "https://sweeprcleaner.com").replace(/\/+$/, "");
+    const qs = `gb=${encodeURIComponent(gbLabel)}&culprit=${encodeURIComponent(culprit)}&ms=${encodeURIComponent(String(msNum))}&code=${encodeURIComponent(code)}`;
+    const sharePageUrl = `${baseUrl}/share/win?${qs}`;
+    const ogImageUrl = `${baseUrl}/share/win.svg?${qs}`;
+    const shortReferralDisplay = `sweeprcleaner.com/r/${code}`;
+
+    const safeGb = escapeHtml(gbLabel);
+    const safeCulprit = escapeHtml(culprit);
+    const safeMs = escapeHtml(String(msNum));
+    const safeCode = escapeHtml(code);
+    const safeShortRef = escapeHtml(shortReferralDisplay);
+    const safeSharePageUrl = escapeHtml(sharePageUrl);
+    const safeOgImageUrl = escapeHtml(ogImageUrl);
+
+    const ogTitle = `I Just Reclaimed ${safeGb} with SWEEPR (${safeMs}ms Scan)`;
+    const ogDesc = `Top culprit: ${safeCulprit}. Reclaim hidden cache bloat in 1 click and claim +30 days of SWEEPR Pro free via ${safeShortRef}.`;
+
+    return c.html(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${ogTitle} — SWEEPR Cleaner</title>
+  <meta name="description" content="${ogDesc}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SWEEPR Cleaner" />
+  <meta property="og:title" content="${ogTitle}" />
+  <meta property="og:description" content="${ogDesc}" />
+  <meta property="og:url" content="${safeSharePageUrl}" />
+  <meta property="og:image" content="${safeOgImageUrl}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${ogTitle}" />
+  <meta name="twitter:description" content="${ogDesc}" />
+  <meta name="twitter:image" content="${safeOgImageUrl}" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b" />
+</head>
+<body style="margin:0;min-height:100vh;background:#03110c;color:#ecfdf5;font-family:system-ui,-apple-system,Segoe UI,sans-serif;display:grid;place-items:center;padding:20px;box-sizing:border-box;">
+  <main style="width:100%;max-width:760px;background:#062017;border:1px solid rgba(16,185,129,0.4);border-radius:24px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.45);box-sizing:border-box;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <span style="font-size:12px;font-weight:800;letter-spacing:0.06em;color:#34d399;text-transform:uppercase;">⚡ SWEEPR Cleaner · Verified Storage Win</span>
+      <span style="background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.5);color:#6ee7b7;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:800;">+30 Days Free Pro Referral</span>
+    </div>
+    <h1 style="margin:0 0 6px;font-size:28px;font-weight:900;line-height:1.2;">I Just Reclaimed ${safeGb} with SWEEPR</h1>
+    <p style="margin:0 0 16px;color:#a7f3d0;font-size:14.5px;">Top Culprit: <strong>${safeCulprit}</strong> · Scanned in <strong>${safeMs} ms</strong> · Referral: <code>${safeShortRef}</code></p>
+    <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(16,185,129,0.35);background:#041610;margin-bottom:16px;">
+      <canvas id="winCanvas" width="1200" height="630" style="display:block;width:100%;height:auto;"></canvas>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="/r/${safeCode}" style="flex:1.4;min-width:210px;text-align:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:800;font-size:14.5px;">Claim +30 Days Free SWEEPR Pro &rarr;</a>
+      <a href="/download?ref=${safeCode}" style="flex:1;min-width:180px;text-align:center;background:rgba(255,255,255,0.08);border:1px solid rgba(16,185,129,0.4);color:#ecfdf5;text-decoration:none;padding:13px 16px;border-radius:12px;font-weight:700;font-size:14px;">Download Free Scanner</a>
+      <button type="button" id="copyCardBtn" style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;padding:13px 16px;border-radius:12px;font-weight:800;font-size:13.5px;cursor:pointer;">📋 Copy Image</button>
+    </div>
+  </main>
+  <script>
+    (function(){
+      var c = document.getElementById('winCanvas');
+      if (!c || !c.getContext) return;
+      var ctx = c.getContext('2d');
+      var g = ctx.createLinearGradient(0,0,1200,630);
+      g.addColorStop(0,'#03110c'); g.addColorStop(0.55,'#062319'); g.addColorStop(1,'#041610');
+      ctx.fillStyle = g; ctx.fillRect(0,0,1200,630);
+      ctx.strokeStyle = 'rgba(16,185,129,0.45)'; ctx.lineWidth = 3;
+      ctx.strokeRect(28,28,1144,574);
+      ctx.fillStyle = '#10b981'; ctx.font = '800 22px system-ui,sans-serif';
+      ctx.fillText('⚡ SWEEPR CLEANER · STORAGE BENCHMARK', 72, 92);
+      ctx.fillStyle = '#ecfdf5'; ctx.font = '900 60px system-ui,sans-serif';
+      ctx.fillText(${JSON.stringify(`I Just Reclaimed ${gbLabel}`).replace(/</g, "\\u003c")}, 72, 195);
+      ctx.fillStyle = '#34d399'; ctx.font = '800 32px system-ui,sans-serif';
+      ctx.fillText(${JSON.stringify(`Top Culprit: ${culprit} (${msNum} ms scan)`).replace(/</g, "\\u003c")}, 72, 255);
+      ctx.fillStyle = '#ffffff'; ctx.font = '800 26px ui-monospace,Consolas,monospace';
+      ctx.fillText(${JSON.stringify(`Claim +30 Days Free Pro: ${shortReferralDisplay}`).replace(/</g, "\\u003c")}, 72, 540);
+      var btn = document.getElementById('copyCardBtn');
+      if (btn) {
+        btn.addEventListener('click', function(){
+          c.toBlob(function(blob){
+            if (blob && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+              navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(function(){
+                btn.textContent = '✓ Copied Image';
+              });
+            }
+          }, 'image/png');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`);
   });
 
   // Serve the website frontend. The CRM HTML under public/crm is only served via the authenticated /crm route.
@@ -1387,6 +1723,100 @@ export function createApp(deps: AppDeps) {
     });
     cachedStripeProductId = created.id;
     return created.id;
+  }
+
+  const cachedPlanPriceIds = new Map<string, string>();
+  async function getOrCreatePlanPriceId(
+    plan: "monthly" | "six_month" | "annual",
+    currency?: string
+  ): Promise<string> {
+    if (!stripe) throw new Error("Stripe not configured");
+    const normCurr = String(currency || "gbp").trim().toLowerCase() || "gbp";
+    const tierPricing = getPricingForCountryOrCurrency(undefined, normCurr);
+    const targetCurrency = tierPricing.currency.toLowerCase();
+    const unitAmount =
+      plan === "annual"
+        ? tierPricing.annualAmount
+        : plan === "six_month"
+        ? tierPricing.sixMonthAmount
+        : tierPricing.monthlyAmount;
+    const targetInterval = plan === "annual" ? "year" : "month";
+    const targetIntervalCount = plan === "six_month" ? 6 : 1;
+    const cacheKey = `${plan}:${targetCurrency}:${unitAmount}`;
+    if (cachedPlanPriceIds.has(cacheKey)) {
+      return cachedPlanPriceIds.get(cacheKey)!;
+    }
+
+    const configuredPriceId =
+      plan === "annual"
+        ? config.priceAnnual
+        : plan === "six_month"
+        ? config.priceSixMonth
+        : config.priceMonthly;
+    if (
+      configuredPriceId &&
+      !configuredPriceId.includes("...") &&
+      typeof (stripe.prices as any)?.retrieve === "function"
+    ) {
+      try {
+        const priceObj = await stripe.prices.retrieve(configuredPriceId);
+        const priceCurr = (priceObj.currency || targetCurrency).toLowerCase();
+        const priceInterval = priceObj.recurring?.interval || targetInterval;
+        const priceIntervalCount = priceObj.recurring?.interval_count ?? 1;
+        if (
+          priceObj.id &&
+          priceCurr === targetCurrency &&
+          priceInterval === targetInterval &&
+          priceIntervalCount === targetIntervalCount
+        ) {
+          cachedPlanPriceIds.set(cacheKey, priceObj.id);
+          return priceObj.id;
+        }
+      } catch {
+        // Fall through to list/create price for the requested currency
+      }
+    }
+
+    const productId = await getStripeProductId();
+    if (typeof (stripe.prices as any)?.list === "function") {
+      try {
+        const existingPrices = await stripe.prices.list({
+          product: productId,
+          currency: targetCurrency,
+          active: true,
+          limit: 25,
+        });
+        const match = existingPrices.data?.find(
+          (p) =>
+            p.unit_amount === unitAmount &&
+            p.recurring?.interval === targetInterval &&
+            (p.recurring?.interval_count ?? 1) === targetIntervalCount
+        );
+        if (match?.id) {
+          cachedPlanPriceIds.set(cacheKey, match.id);
+          return match.id;
+        }
+      } catch {
+        // Fall through to price creation
+      }
+    }
+
+    if (typeof (stripe.prices as any)?.create === "function") {
+      const createdPrice = await stripe.prices.create({
+        product: productId,
+        currency: targetCurrency,
+        unit_amount: unitAmount,
+        recurring: {
+          interval: targetInterval,
+          ...(targetIntervalCount > 1 ? { interval_count: targetIntervalCount } : {}),
+        },
+        nickname: `SWEEPR Cleaner Pro (${plan.toUpperCase()} - ${targetCurrency.toUpperCase()})`,
+      });
+      cachedPlanPriceIds.set(cacheKey, createdPrice.id);
+      return createdPrice.id;
+    }
+
+    return configuredPriceId || `price_${plan}_${targetCurrency}`;
   }
 
   let cachedStripeBatteryProductId: string | null = null;
@@ -1434,8 +1864,27 @@ export function createApp(deps: AppDeps) {
   }
 
   const cachedIntroCoupons = new Map<string, string>();
+  async function verifyStripeCouponExists(candidateCouponId: string | null | undefined): Promise<string> {
+    const id = String(candidateCouponId ?? "").trim();
+    if (!id || !stripe) return "";
+    if (cachedIntroCoupons.has(id)) return cachedIntroCoupons.get(id)!;
+    if (typeof (stripe.coupons as any)?.retrieve !== "function") {
+      return id;
+    }
+    try {
+      const existing = await stripe.coupons.retrieve(id);
+      if (existing && existing.id && !(existing as any).deleted && existing.valid !== false) {
+        cachedIntroCoupons.set(id, existing.id);
+        return existing.id;
+      }
+    } catch {
+      // Coupon does not exist in this Stripe environment
+    }
+    return "";
+  }
+
   async function getOrCreateIntroCoupon(currency: string, discountAmount: number): Promise<string> {
-    if (!stripe) return stripeCoupon;
+    if (!stripe) return "";
     const normCurr = currency.toLowerCase();
     const couponId = `sweepr_intro_${normCurr}_${discountAmount}`;
     if (cachedIntroCoupons.has(couponId)) return cachedIntroCoupons.get(couponId)!;
@@ -1459,7 +1908,7 @@ export function createApp(deps: AppDeps) {
       cachedIntroCoupons.set(couponId, created.id);
       return created.id;
     } catch {
-      return stripeCoupon;
+      return verifyStripeCouponExists(stripeCoupon);
     }
   }
 
@@ -1484,7 +1933,7 @@ export function createApp(deps: AppDeps) {
       cachedIntroCoupons.set(couponId, created.id);
       return created.id;
     } catch {
-      return stripeCoupon;
+      return verifyStripeCouponExists(stripeCoupon);
     }
   }
 
@@ -1501,7 +1950,7 @@ export function createApp(deps: AppDeps) {
     let pct = 0;
     let couponId = "";
     let label = "";
-    if (code === DEFAULT_GOTD_UPGRADE_COUPON || code === gotdCfg.upgrade_coupon.toUpperCase()) {
+    if (code === "SWEEPR50" || code === DEFAULT_GOTD_UPGRADE_COUPON || code === gotdCfg.upgrade_coupon.toUpperCase()) {
       pct = gotdCfg.upgrade_discount_pct || 50;
       couponId = await getOrCreateGotdUpgradeCoupon(pct);
       return { code, percentOff: pct, stripeCouponId: couponId };
@@ -1539,7 +1988,8 @@ export function createApp(deps: AppDeps) {
       cachedIntroCoupons.set(couponId, created.id);
       return { code, percentOff: pct, stripeCouponId: created.id };
     } catch {
-      return { code, percentOff: pct, stripeCouponId: stripeCoupon };
+      const verifiedFallback = await verifyStripeCouponExists(stripeCoupon);
+      return { code, percentOff: pct, stripeCouponId: verifiedFallback };
     }
   }
 
@@ -2204,9 +2654,14 @@ export function createApp(deps: AppDeps) {
   app.get("/api/checkout-config", async (c) => {
     const pk = (config.stripePublishableKey ?? "").trim();
     const validPk = pk.startsWith("pk_") && !pk.includes("...") ? pk : "";
+    const isLiveStripe = Boolean(
+      validPk.startsWith("pk_live_") ||
+        (process.env.STRIPE_SECRET_KEY ?? "").trim().startsWith("sk_live_")
+    );
     const localizedPricing = await resolvePricingForRequest(c, { trustProxy, allowQueryOverride: true });
     return c.json({
       publishableKey: validPk,
+      isLiveStripe,
       stripeConfigured: Boolean(stripe),
       elementsEnabled: Boolean(stripe && validPk),
       country: localizedPricing.country,
@@ -3986,9 +4441,18 @@ export function createApp(deps: AppDeps) {
 
     if (ent.stripe_subscription_id && stripe && !ent.stripe_subscription_id.startsWith("sub_owner_")) {
       try {
+        const sub = await stripe.subscriptions.retrieve(ent.stripe_subscription_id);
+        const firstItem = sub?.items?.data?.[0];
+        const subCurrency = (firstItem?.price?.currency || sub?.currency || "gbp").toLowerCase();
+        const monthlyPriceId = await getOrCreatePlanPriceId("monthly", subCurrency);
         await stripe.subscriptions.update(ent.stripe_subscription_id, {
           cancel_at_period_end: false,
+          ...(firstItem?.id
+            ? { items: [{ id: firstItem.id, price: monthlyPriceId }] }
+            : {}),
+          proration_behavior: "none",
           metadata: {
+            ...(sub?.metadata || {}),
             plan: "monthly",
             switched_from: ent.plan || "annual",
             cancel_save_flow: "switch_to_monthly",
@@ -3996,6 +4460,7 @@ export function createApp(deps: AppDeps) {
         });
       } catch (err: any) {
         console.warn("[portal] stripe switch-to-monthly warning:", err?.message || err);
+        return c.json({ error: err?.message || "Failed to switch subscription to monthly billing." }, 400);
       }
     }
 
@@ -4945,26 +5410,39 @@ export function createApp(deps: AppDeps) {
       created_at: now(),
     });
     repo.touchDevice(accountId, deviceId, deviceType, config.maxDevicesPc, config.maxDevicesMobile);
+    repo.setDeviceTokenHash(accountId, deviceId, sha256(refreshToken));
+    let resolvedAttrId: string | null = null;
     try {
       const attrId =
         sanitizeAttributionId(body.attribution_id) ||
         sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
-      recordAppInstalledForRecovery(repo, {
+      const reqIp =
+        c.req.header("cf-connecting-ip")?.trim() ||
+        c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+        clientIp(c);
+      const reqPlatform = deviceType === "mobile" ? "android" : "windows";
+      const matchedSession = recordAppInstalledForRecovery(repo, {
         attributionId: attrId,
         accountId,
         email,
+        deviceId,
+        clientIp: reqIp,
+        platform: reqPlatform,
+        ipOsFingerprint: computeIpOsFingerprint(reqIp, reqPlatform),
         source: "v1_accounts",
         nowSec: now(),
         allowRecentWindowsFallback: deviceType === "pc",
       });
+      resolvedAttrId = matchedSession?.attribution_id || attrId || null;
       repo.recordAnalyticsEvent({
         event_name: "app_installed",
-        platform: deviceType === "mobile" ? "android" : "windows",
+        platform: reqPlatform,
         account_id: accountId,
         metadata: {
           device_id: deviceId,
           device_type: deviceType,
           country: localizedPricing.country,
+          attribution_id: resolvedAttrId,
           source: "v1_accounts",
         },
       });
@@ -4975,10 +5453,20 @@ export function createApp(deps: AppDeps) {
       os: deviceType === "mobile" ? "android" : "windows",
       device_id: deviceId,
       account_id: accountId,
-      properties: { device_type: deviceType, country: localizedPricing.country, source: "v1_accounts" },
+      properties: {
+        device_type: deviceType,
+        country: localizedPricing.country,
+        attribution_id: resolvedAttrId,
+        source: "v1_accounts",
+      },
     });
     const referralCode = repo.ensureReferralCode(accountId);
-    return c.json({ account_id: accountId, refresh_token: refreshToken, referral_code: referralCode });
+    return c.json({
+      account_id: accountId,
+      refresh_token: refreshToken,
+      referral_code: referralCode,
+      attribution_id: resolvedAttrId,
+    });
   });
 
   async function findOrSyncEntitledAccountByEmail(rawEmail?: string | null): Promise<Account | null> {
@@ -5537,6 +6025,22 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    const isBatteryAddon =
+      productId.toLowerCase().includes("battery") || hasBatteryCareAddon(body);
+    const isCloudAddon =
+      productId.toLowerCase().includes("vault") || productId.toLowerCase().includes("cloud") || hasCloudVaultAddon(body);
+    const isBaseSubProduct =
+      productId.toLowerCase().includes("monthly") ||
+      productId.toLowerCase().includes("six_month") ||
+      productId.toLowerCase().includes("6month") ||
+      productId.toLowerCase().includes("annual") ||
+      productId.includes("4999") ||
+      productId.includes("3899") ||
+      body?.plan === "monthly" ||
+      body?.plan === "six_month" ||
+      body?.plan === "annual";
+    const isAddonOnly = (isBatteryAddon || isCloudAddon) && !isBaseSubProduct;
+
     // Fail-closed Google Play Developer API verification (unless explicitly overridden in local unit test env)
     const allowUnverifiedTest = process.env.ALLOW_UNVERIFIED_GOOGLE_PLAY_TEST === "1";
     const gpAccessToken = await resolveGooglePlayAccessToken();
@@ -5546,24 +6050,51 @@ export function createApp(deps: AppDeps) {
     if (gpAccessToken) {
       try {
         const pkg = "com.sweepr.app";
-        const verifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(pkg)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
-        const gpRes = await fetch(verifyUrl, {
-          headers: { Authorization: `Bearer ${gpAccessToken}` },
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!gpRes.ok) {
-          return c.json({ error: "invalid_google_play_receipt" }, 402);
-        }
-        const gpData: any = await gpRes.json().catch(() => null);
-        const state = String(gpData?.subscriptionState ?? "");
-        if (state !== "SUBSCRIPTION_STATE_ACTIVE" && state !== "SUBSCRIPTION_STATE_IN_GRACE_PERIOD") {
-          return c.json({ error: "invalid_google_play_receipt" }, 402);
-        }
-        if (
-          Array.isArray(gpData?.lineItems) &&
-          gpData.lineItems.length > 0 &&
-          !gpData.lineItems.some((li: any) => li?.productId === productId)
-        ) {
+        const subVerifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(pkg)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
+        const productVerifyUrl = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(pkg)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+
+        const verifySubscriptionToken = async (): Promise<boolean> => {
+          const gpRes = await fetch(subVerifyUrl, {
+            headers: { Authorization: `Bearer ${gpAccessToken}` },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!gpRes.ok) return false;
+          const gpData: any = await gpRes.json().catch(() => null);
+          const state = String(gpData?.subscriptionState ?? "");
+          if (state !== "SUBSCRIPTION_STATE_ACTIVE" && state !== "SUBSCRIPTION_STATE_IN_GRACE_PERIOD") {
+            return false;
+          }
+          if (
+            Array.isArray(gpData?.lineItems) &&
+            gpData.lineItems.length > 0 &&
+            !gpData.lineItems.some((li: any) => li?.productId === productId)
+          ) {
+            return false;
+          }
+          return true;
+        };
+
+        const verifyOneTimeProductToken = async (): Promise<boolean> => {
+          const gpProdRes = await fetch(productVerifyUrl, {
+            headers: { Authorization: `Bearer ${gpAccessToken}` },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!gpProdRes.ok) return false;
+          const gpProdData: any = await gpProdRes.json().catch(() => null);
+          if (Number(gpProdData?.purchaseState) !== 0) {
+            return false;
+          }
+          if (gpProdData?.productId && gpProdData.productId !== productId) {
+            return false;
+          }
+          return true;
+        };
+
+        const verified = isAddonOnly
+          ? (await verifyOneTimeProductToken()) || (await verifySubscriptionToken())
+          : (await verifySubscriptionToken()) || (await verifyOneTimeProductToken());
+
+        if (!verified) {
           return c.json({ error: "invalid_google_play_receipt" }, 402);
         }
       } catch {
@@ -5588,22 +6119,6 @@ export function createApp(deps: AppDeps) {
       refreshToken = randomToken(32);
       repo.setDeviceTokenHash(account.id, deviceId, sha256(refreshToken));
     }
-
-    const isBatteryAddon =
-      productId.toLowerCase().includes("battery") || hasBatteryCareAddon(body);
-    const isCloudAddon =
-      productId.toLowerCase().includes("vault") || productId.toLowerCase().includes("cloud") || hasCloudVaultAddon(body);
-    const isBaseSubProduct =
-      productId.toLowerCase().includes("monthly") ||
-      productId.toLowerCase().includes("six_month") ||
-      productId.toLowerCase().includes("6month") ||
-      productId.toLowerCase().includes("annual") ||
-      productId.includes("4999") ||
-      productId.includes("3899") ||
-      body?.plan === "monthly" ||
-      body?.plan === "six_month" ||
-      body?.plan === "annual";
-    const isAddonOnly = (isBatteryAddon || isCloudAddon) && !isBaseSubProduct;
 
     const plan =
       body?.plan === "annual" || productId.includes("annual") || productId.includes("4999")
@@ -6138,6 +6653,7 @@ export function createApp(deps: AppDeps) {
     "scan_started",
     "scan_completed",
     "paywall_viewed",
+    "paywall_plan_selected",
     "checkout_started",
     "purchase_completed",
     "clean_completed",
@@ -6151,6 +6667,7 @@ export function createApp(deps: AppDeps) {
     "experiment_conversion",
     "annual_renewal_recap_sent",
     "switched_to_monthly_save",
+    "referral_aha_clicked",
   ]);
   let lastCrashEmailSentAt = 0;
   app.post("/v1/telemetry/crash", async (c) => {
@@ -6228,30 +6745,52 @@ export function createApp(deps: AppDeps) {
       emailAcc?.id ||
       null;
 
+    let effectiveAttrId = attrId;
+    let effectiveAccountId = resolvedAccountId;
+    const visitorIp =
+      c.req.header("cf-connecting-ip")?.trim() ||
+      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+      clientIp(c);
+    const eventPlatform = String(body.platform || "windows").toLowerCase();
+    const ipOsFingerprint = computeIpOsFingerprint(visitorIp, eventPlatform);
+
     let ledgerSummary: ReturnType<typeof repo.recordAccountScanAndCleanProgress> = null;
     let milestoneUnlocked = false;
     let referralUrl: string | null = null;
 
     try {
       if (eventName === "installer_downloaded") {
-        recordInstallerDownloaded(repo, {
-          attributionId: attrId || `attr_ev_${randomToken(8)}`,
-          platform: body.platform || "windows",
+        const dlSession = recordInstallerDownloaded(repo, {
+          attributionId: effectiveAttrId || `attr_ev_${randomToken(8)}`,
+          platform: eventPlatform,
           installerFile: typeof body?.metadata?.installer === "string" ? body.metadata.installer : "SWEEPRCleaner.exe",
-          accountId: resolvedAccountId,
+          accountId: effectiveAccountId,
           email: resolvedEmail,
+          clientIp: visitorIp,
+          ipOsFingerprint,
           metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : null,
           nowSec: now(),
         });
-      } else if (eventName === "app_installed" || eventName === "first_launch") {
-        recordAppInstalledForRecovery(repo, {
-          attributionId: attrId,
-          accountId: resolvedAccountId,
+        effectiveAttrId = dlSession.attribution_id || effectiveAttrId;
+      } else if (eventName === "app_installed" || eventName === "first_launch" || eventName === "scan_started") {
+        const matchedRecovery = recordAppInstalledForRecovery(repo, {
+          attributionId: effectiveAttrId,
+          accountId: effectiveAccountId,
           email: resolvedEmail,
+          deviceId: rawDeviceId || null,
+          clientIp: visitorIp,
+          platform: eventPlatform,
+          ipOsFingerprint,
           source: eventName,
           nowSec: now(),
-          allowRecentWindowsFallback: String(body.platform || "windows").toLowerCase() === "windows",
+          allowRecentWindowsFallback: eventPlatform.startsWith("win"),
         });
+        if (matchedRecovery) {
+          effectiveAttrId = matchedRecovery.attribution_id || effectiveAttrId;
+          if (!effectiveAccountId && matchedRecovery.account_id) {
+            effectiveAccountId = matchedRecovery.account_id;
+          }
+        }
       } else if (eventName === "scan_completed") {
         ingestScanCompletedTelemetry(seoStore, {
           platform: body.platform || "windows",
@@ -6331,24 +6870,38 @@ export function createApp(deps: AppDeps) {
       }
     } catch {}
 
+    const enrichedMetadata =
+      body.metadata && typeof body.metadata === "object"
+        ? {
+            ...body.metadata,
+            ...(effectiveAttrId ? { attribution_id: effectiveAttrId } : {}),
+            ...(rawDeviceId ? { device_id: rawDeviceId } : {}),
+          }
+        : effectiveAttrId || rawDeviceId
+          ? {
+              ...(effectiveAttrId ? { attribution_id: effectiveAttrId } : {}),
+              ...(rawDeviceId ? { device_id: rawDeviceId } : {}),
+            }
+          : body.metadata;
+
     const id = repo.recordAnalyticsEvent({
       event_name: eventName,
       platform: body.platform,
-      account_id: resolvedAccountId,
-      metadata: body.metadata,
+      account_id: effectiveAccountId,
+      metadata: enrichedMetadata,
     });
     syncToCentralCrm("/v1/telemetry/event", {
       event_name: eventName,
       category: "funnel",
       os: body.platform || "windows",
-      account_id: resolvedAccountId,
-      properties: body.metadata || null,
+      account_id: effectiveAccountId,
+      properties: enrichedMetadata || null,
     });
     return c.json({
       ok: true,
       id,
-      attribution_id: attrId || null,
-      account_id: resolvedAccountId,
+      attribution_id: effectiveAttrId || null,
+      account_id: effectiveAccountId,
       ...(ledgerSummary
         ? {
             lifetime_bytes_cleaned: ledgerSummary.total_bytes_cleaned,
@@ -6368,6 +6921,84 @@ export function createApp(deps: AppDeps) {
       sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
     const status = await getVisitorRecoveryStatus(repo, attrId, now());
     return c.json(status);
+  });
+
+  app.post("/api/download-recovery/bind-email", async (c) => {
+    const body = await c.req.json().catch(() => ({}));
+    const rawEmail = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (!rawEmail || !rawEmail.includes("@") || rawEmail.length > 254) {
+      return c.json({ error: "invalid_email" }, 400);
+    }
+    let attrId =
+      sanitizeAttributionId(body?.attribution_id) ||
+      sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+    if (!attrId) {
+      attrId = `attr_dl_${randomToken(8)}`;
+      setCookie(c, "sweepr_attr_id", attrId, {
+        httpOnly: false,
+        sameSite: "Lax",
+        secure: isHttps,
+        path: "/",
+        maxAge: 90 * 86400,
+      });
+    }
+    const platform = typeof body?.platform === "string" ? body.platform.toLowerCase() : "windows";
+    const existingAcc = repo.accountByEmail(rawEmail);
+    let accountId = existingAcc?.id || null;
+    if (!accountId) {
+      accountId = `acc_lead_${randomToken(8)}`;
+      const refreshToken = randomToken(32);
+      try {
+        repo.createAccount(accountId, sha256(refreshToken), rawEmail, null, {
+          lead_device: platform,
+          created_at: now(),
+        });
+      } catch {
+        accountId = repo.accountByEmail(rawEmail)?.id || null;
+      }
+    }
+    recordInstallerDownloaded(repo, {
+      attributionId: attrId,
+      platform,
+      installerFile: platform === "mac" ? "SWEEPRCleaner.dmg" : "SWEEPRCleaner.exe",
+      accountId,
+      email: rawEmail,
+      metadata: { source: "post_download_modal" },
+      nowSec: now(),
+    });
+    associateCheckoutLeadWithRecovery(repo, {
+      attributionId: attrId,
+      email: rawEmail,
+      accountId,
+      nowSec: now(),
+    });
+    if (body?.send_desktop_link || platform === "ios" || platform === "android") {
+      const winUrl = `https://sweeprcleaner.com/download?platform=windows&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
+      const macUrl = `https://sweeprcleaner.com/download?platform=mac&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
+      const orderUrl = `https://sweeprcleaner.com/order?plan=annual&utm_source=mobile_email_capture&attribution_id=${encodeURIComponent(attrId)}`;
+      void dispatchTransactionalCustomerEmail({
+        to: rawEmail,
+        subject: "Your SWEEPR Cleaner Download Link for Windows PC & Mac",
+        textBody: [
+          "Here is your direct download link for SWEEPR Cleaner on your computer:",
+          "",
+          `Download for Windows 10 & 11 (.exe): ${winUrl}`,
+          `Download for Mac (.dmg): ${macUrl}`,
+          "",
+          `Unlock 5-Device Pro License (PC, Mac, Android & iOS): ${orderUrl}`,
+        ].join("\n"),
+        htmlBody: `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:28px 22px;background:#ffffff;border:1px solid #d6dad5;border-radius:16px;color:#111613;">
+          <h2 style="margin:0 0 8px;color:#073825;">Your SWEEPR Cleaner Desktop Links</h2>
+          <p style="color:#4b554e;font-size:14px;line-height:1.5;">Open this email on your Windows PC or Mac to install SWEEPR Cleaner in one click:</p>
+          <p style="margin:18px 0;"><a href="${winUrl}" style="display:inline-block;background:#0d6847;color:#ffffff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:800;">💻 Download for Windows 10 &amp; 11 (.exe)</a></p>
+          <p style="margin:12px 0;"><a href="${macUrl}" style="display:inline-block;background:#f4f5f3;color:#111613;border:1px solid #d6dad5;padding:10px 18px;border-radius:10px;text-decoration:none;font-weight:700;">🍏 Download for Mac (.dmg)</a></p>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;" />
+          <p style="font-size:13px;color:#4b554e;">Want Pro across all 5 of your devices? <a href="${orderUrl}" style="color:#0d6847;font-weight:700;">Unlock SWEEPR Pro &rarr;</a></p>
+        </div>`,
+        tag: "mobile_to_desktop_link",
+      }).catch(() => {});
+    }
+    return c.json({ ok: true, attribution_id: attrId, account_id: accountId, email: rawEmail });
   });
 
   // Action 3.1: A/B Experiment Assignment & Exposure Tracking
@@ -6619,9 +7250,10 @@ export function createApp(deps: AppDeps) {
     if (!event) {
       return c.json({ error: "invalid_signature" }, 400);
     }
-    if (!repo.markEventProcessed(event.id)) return c.json({ received: true, duplicate: true });
+    if (repo.isWebhookProcessed(event.id)) return c.json({ received: true, duplicate: true });
     try {
-      await handleStripeEvent(stripe, repo, event);
+      const res = await handleStripeEvent(stripe, repo, event);
+      if (res?.duplicate) return c.json({ received: true, duplicate: true });
     } catch (e) {
       repo.unmarkEvent(event.id); // let Stripe retry
       repo.recordWebhookDlq(event.id, "stripe", event.type, raw, String((e as Error)?.message || e));
@@ -6657,9 +7289,10 @@ export function createApp(deps: AppDeps) {
     }
 
     const key = `rc_${eventId}`;
-    if (!repo.markEventProcessed(key)) return c.json({ received: true, duplicate: true });
+    if (repo.isWebhookProcessed(key)) return c.json({ received: true, duplicate: true });
     try {
       await handleRevenueCatWebhook(repo, body);
+      repo.markWebhookProcessed(key);
     } catch (e) {
       repo.unmarkEvent(key); // let RevenueCat retry
       if (e instanceof RevenueCatPayloadError) return c.json({ error: e.message }, 400);
@@ -6715,6 +7348,9 @@ export function createApp(deps: AppDeps) {
     let accountId = c.req.query("account_id")?.trim() || "";
     const redirectStatus = c.req.query("redirect_status")?.trim() || "";
     const paymentIntentId = c.req.query("payment_intent")?.trim() || "";
+    let resolvedAmountCents: number | null = null;
+    let resolvedCurrencyRaw: string | null = null;
+    let resolvedPlanTier: string | null = c.req.query("plan")?.trim() || null;
 
     if (redirectStatus === "failed" || redirectStatus === "canceled") {
       if (isPopup) {
@@ -6732,6 +7368,15 @@ export function createApp(deps: AppDeps) {
         }
         if (!accountId && typeof session?.metadata?.account_id === "string") {
           accountId = session.metadata.account_id.trim();
+        }
+        if (typeof session?.amount_total === "number" && Number.isFinite(session.amount_total)) {
+          resolvedAmountCents = session.amount_total;
+        }
+        if (typeof session?.currency === "string" && session.currency.trim()) {
+          resolvedCurrencyRaw = session.currency.trim();
+        }
+        if (typeof session?.metadata?.plan === "string" && session.metadata.plan.trim()) {
+          resolvedPlanTier = session.metadata.plan.trim();
         }
       } catch (err) {
         console.error("[checkout/success] session lookup error:", err);
@@ -6758,9 +7403,25 @@ export function createApp(deps: AppDeps) {
             null;
           const invPiId = typeof invPi === "string" ? invPi : invPi?.id ?? "";
           let status = typeof invPi === "object" && invPi ? String(invPi.status || "") : "";
+          if (typeof invPi === "object" && invPi) {
+            if (resolvedAmountCents === null && typeof invPi.amount === "number" && invPi.amount > 0) {
+              resolvedAmountCents = invPi.amount;
+            }
+            if (!resolvedCurrencyRaw && typeof invPi.currency === "string" && invPi.currency.trim()) {
+              resolvedCurrencyRaw = invPi.currency.trim();
+            }
+          }
           if (!status && invPiId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
             const fetched = await stripe.paymentIntents.retrieve(invPiId).catch(() => null);
-            if (fetched) status = String(fetched.status || "");
+            if (fetched) {
+              status = String(fetched.status || "");
+              if (resolvedAmountCents === null && typeof fetched.amount === "number" && fetched.amount > 0) {
+                resolvedAmountCents = fetched.amount;
+              }
+              if (!resolvedCurrencyRaw && typeof fetched.currency === "string" && fetched.currency.trim()) {
+                resolvedCurrencyRaw = fetched.currency.trim();
+              }
+            }
           }
           if (!status && paymentIntentId && typeof (stripe.paymentIntents as any)?.retrieve === "function") {
             const subCustId = typeof s.customer === "string" ? s.customer : (s.customer as any)?.id ?? "";
@@ -6776,6 +7437,12 @@ export function createApp(deps: AppDeps) {
                 (piMetaAcc && piMetaAcc === metaAccountId))
             ) {
               status = String(fetched.status || "");
+              if (resolvedAmountCents === null && typeof fetched.amount === "number" && fetched.amount > 0) {
+                resolvedAmountCents = fetched.amount;
+              }
+              if (!resolvedCurrencyRaw && typeof fetched.currency === "string" && fetched.currency.trim()) {
+                resolvedCurrencyRaw = fetched.currency.trim();
+              }
             }
           }
           return status;
@@ -6801,6 +7468,36 @@ export function createApp(deps: AppDeps) {
           }
           return c.redirect("/order?error=payment_cancelled");
         }
+
+        const latestInv: any = sub.latest_invoice;
+        const subItemPrice: any = sub.items?.data?.[0]?.price;
+        const subAmountCandidates = [
+          typeof latestInv?.amount_paid === "number" && latestInv.amount_paid > 0 ? latestInv.amount_paid : null,
+          typeof latestInv?.amount_due === "number" && latestInv.amount_due > 0 ? latestInv.amount_due : null,
+          typeof latestInv?.total === "number" && latestInv.total > 0 ? latestInv.total : null,
+          typeof subItemPrice?.unit_amount === "number" && subItemPrice.unit_amount > 0 ? subItemPrice.unit_amount : null,
+        ];
+        for (const cand of subAmountCandidates) {
+          if (resolvedAmountCents === null && cand !== null) {
+            resolvedAmountCents = cand;
+            break;
+          }
+        }
+        const subCurrencyCandidates = [
+          (sub as any).currency,
+          latestInv?.currency,
+          subItemPrice?.currency,
+        ];
+        for (const currCand of subCurrencyCandidates) {
+          if (!resolvedCurrencyRaw && typeof currCand === "string" && currCand.trim()) {
+            resolvedCurrencyRaw = currCand.trim();
+            break;
+          }
+        }
+        if (!resolvedPlanTier && typeof sub.metadata?.plan === "string" && sub.metadata.plan.trim()) {
+          resolvedPlanTier = sub.metadata.plan.trim();
+        }
+
         if (metaAccountId && (!accountId || metaAccountId === accountId)) {
           await syncPayPalCustomerEmail(sub, metaAccountId);
           const effectiveSub =
@@ -6828,15 +7525,72 @@ export function createApp(deps: AppDeps) {
       }
     }
 
+    if (paymentIntentId && stripe && (resolvedAmountCents === null || !resolvedCurrencyRaw)) {
+      try {
+        const fetchedPi = await stripe.paymentIntents.retrieve(paymentIntentId).catch(() => null);
+        if (fetchedPi) {
+          if (resolvedAmountCents === null && typeof fetchedPi.amount === "number" && fetchedPi.amount > 0) {
+            resolvedAmountCents = fetchedPi.amount;
+          }
+          if (!resolvedCurrencyRaw && typeof fetchedPi.currency === "string" && fetchedPi.currency.trim()) {
+            resolvedCurrencyRaw = fetchedPi.currency.trim();
+          }
+          if (!resolvedPlanTier && typeof fetchedPi.metadata?.plan === "string" && fetchedPi.metadata.plan.trim()) {
+            resolvedPlanTier = fetchedPi.metadata.plan.trim();
+          }
+        }
+      } catch {}
+    }
+
+    if (accountId && (resolvedAmountCents === null || !resolvedCurrencyRaw || !resolvedPlanTier)) {
+      const dbSubs = repo.subscriptionsForAccount(accountId);
+      const matchedSub =
+        (subscriptionId ? dbSubs.find((s) => s.id === subscriptionId || s.stripe_subscription_id === subscriptionId) : null) ??
+        dbSubs[0];
+      if (matchedSub) {
+        if (resolvedAmountCents === null && typeof matchedSub.amount_cents === "number" && matchedSub.amount_cents > 0) {
+          resolvedAmountCents = matchedSub.amount_cents;
+        }
+        if (!resolvedCurrencyRaw && typeof matchedSub.currency === "string" && matchedSub.currency.trim()) {
+          resolvedCurrencyRaw = matchedSub.currency.trim();
+        }
+        if (!resolvedPlanTier && typeof matchedSub.plan === "string" && matchedSub.plan.trim()) {
+          resolvedPlanTier = matchedSub.plan.trim();
+        }
+      }
+      if (!resolvedPlanTier) {
+        const ent = repo.entitlement(accountId);
+        if (ent?.plan) resolvedPlanTier = ent.plan;
+      }
+    }
+
     deleteCookie(c, "sweepr_order_draft", { path: "/" });
 
     if (isPopup) {
-      const successTargetUrl = `/checkout/success?web=1${subscriptionId ? `&subscription_id=${encodeURIComponent(subscriptionId)}` : ""}${accountId ? `&account_id=${encodeURIComponent(accountId)}` : ""}`;
+      const successTargetUrl = `/checkout/success?web=1${sessionId ? `&session_id=${encodeURIComponent(sessionId)}` : ""}${subscriptionId ? `&subscription_id=${encodeURIComponent(subscriptionId)}` : ""}${accountId ? `&account_id=${encodeURIComponent(accountId)}` : ""}`;
       return c.html(popupClosePage("success", successTargetUrl));
     }
 
+    const finalCurrency = (resolvedCurrencyRaw || c.req.query("currency") || "GBP").trim().toUpperCase();
+    const finalPlanTier = (resolvedPlanTier || "annual").trim().toLowerCase();
+    const pricingTier = PRICING_BY_CURRENCY[finalCurrency.toLowerCase()] ?? PRICING_BY_CURRENCY.gbp;
+    const fallbackAmountMinor =
+      finalPlanTier === "monthly"
+        ? pricingTier.monthlyAmount
+        : finalPlanTier === "six_month" || finalPlanTier === "6month"
+        ? pricingTier.sixMonthAmount
+        : pricingTier.annualAmount;
+    const amountMinor = resolvedAmountCents !== null ? resolvedAmountCents : fallbackAmountMinor;
+    const purchaseValue = pricingTier.zeroDecimal ? amountMinor : +(amountMinor / 100).toFixed(2);
+    const purchasePlanLabel =
+      finalPlanTier === "monthly"
+        ? "SWEEPR Cleaner Pro (monthly)"
+        : finalPlanTier === "six_month" || finalPlanTier === "6month"
+        ? "SWEEPR Cleaner Pro (six_month)"
+        : "SWEEPR Cleaner Pro (annual)";
+
     const safeTxId = escapeHtml(subscriptionId || sessionId || accountId || `tx_${now()}`);
-    const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';window.SWEEPR_PURCHASE_EVENT={transaction_id:${JSON.stringify(safeTxId)},value:49.99,currency:'GBP',plan:'SWEEPR Cleaner Pro'};}catch(e){}</script>`;
+    const clearDraftScript = `<script>try{localStorage.removeItem('sweepr_order_draft');document.cookie='sweepr_order_draft=; path=/; max-age=0; SameSite=Lax';window.SWEEPR_PURCHASE_EVENT={transaction_id:${JSON.stringify(safeTxId)},value:${purchaseValue},currency:${JSON.stringify(finalCurrency)},plan:${JSON.stringify(finalPlanTier)},plan_label:${JSON.stringify(purchasePlanLabel)}};if(typeof gtag==='function'||typeof fbq==='function'){var dk='sweepr_ga4_purchased_'+${JSON.stringify(safeTxId)};if(sessionStorage.getItem(dk)!=='1'){sessionStorage.setItem(dk,'1');if(typeof gtag==='function'){gtag('event','purchase',{transaction_id:${JSON.stringify(safeTxId)},value:${purchaseValue},currency:${JSON.stringify(finalCurrency)},plan:${JSON.stringify(finalPlanTier)},items:[{item_id:'sweepr_'+${JSON.stringify(finalPlanTier)},item_name:${JSON.stringify(purchasePlanLabel)},price:${purchaseValue},quantity:1}]});}if(typeof fbq==='function'){fbq('track','Purchase',{content_name:${JSON.stringify(purchasePlanLabel)},plan:${JSON.stringify(finalPlanTier)},value:${purchaseValue},currency:${JSON.stringify(finalCurrency)}});}}}}catch(e){}</script>`;
     if (isWeb) {
       return c.html(
         page(

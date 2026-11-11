@@ -127,9 +127,11 @@ object VideoCompressor {
                     }
                 }.getOrDefault(0)
 
-                // Try hardware ByteBuffer H.264 re-encode first; fall back to keyframe-thinned remux
-                val reencoded = runCatching {
-                    reencodeVideoByteBuffer(
+                val inputLength = runCatching { fd.statSize }.getOrDefault(-1L)
+
+                // Try hardware Surface-to-Surface H.264 re-encode first (never copies unscaled 4K YUV ByteBuffers into a 720p encoder)
+                val reencodedSurface = runCatching {
+                    reencodeVideoSurface(
                         extractor = extractor,
                         videoTrackIndex = videoTrackIndex,
                         audioTrackIndex = audioTrackIndex,
@@ -143,8 +145,43 @@ object VideoCompressor {
                     )
                 }.getOrDefault(false)
 
-                if (reencoded && outputFile.exists() && outputFile.length() > 1024L) {
+                if (reencodedSurface && outputFile.exists() && outputFile.length() > 1024L) {
+                    if (inputLength > 0L && outputFile.length() >= inputLength) {
+                        outputFile.delete()
+                        return false
+                    }
                     return true
+                }
+
+                // Secondary fallback: ByteBuffer H.264 re-encode keeping encoder resolution equal to source resolution with reduced bitrate
+                outputFile.delete()
+                val byteBufferExtractor = MediaExtractor()
+                try {
+                    byteBufferExtractor.setDataSource(fd.fileDescriptor)
+                    val reencodedByteBuffer = runCatching {
+                        reencodeVideoByteBufferSameResolution(
+                            extractor = byteBufferExtractor,
+                            videoTrackIndex = videoTrackIndex,
+                            audioTrackIndex = audioTrackIndex,
+                            sourceVideoFormat = videoFormat,
+                            sourceAudioFormat = audioFormat,
+                            outputFile = outputFile,
+                            preset = preset,
+                            rotation = rotation,
+                            durationUs = durationUs,
+                            onProgress = onProgress,
+                        )
+                    }.getOrDefault(false)
+
+                    if (reencodedByteBuffer && outputFile.exists() && outputFile.length() > 1024L) {
+                        if (inputLength > 0L && outputFile.length() >= inputLength) {
+                            outputFile.delete()
+                            return false
+                        }
+                        return true
+                    }
+                } finally {
+                    byteBufferExtractor.release()
                 }
 
                 // Fallback: fast stream remux with audio + video tracks into clean MP4 container
@@ -152,7 +189,7 @@ object VideoCompressor {
                 val remuxExtractor = MediaExtractor()
                 try {
                     remuxExtractor.setDataSource(fd.fileDescriptor)
-                    return remuxStream(
+                    val remuxed = remuxStream(
                         extractor = remuxExtractor,
                         videoTrackIndex = videoTrackIndex,
                         audioTrackIndex = audioTrackIndex,
@@ -163,6 +200,11 @@ object VideoCompressor {
                         durationUs = durationUs,
                         onProgress = onProgress,
                     )
+                    if (remuxed && inputLength > 0L && outputFile.length() >= inputLength) {
+                        outputFile.delete()
+                        return false
+                    }
+                    return remuxed
                 } finally {
                     remuxExtractor.release()
                 }
@@ -172,7 +214,11 @@ object VideoCompressor {
         }
     }
 
-    private fun reencodeVideoByteBuffer(
+    /**
+     * Hardware Surface-to-Surface transcoding using [MediaCodec.createInputSurface] as the
+     * decoder output [android.view.Surface] so hardware scales frames cleanly without raw YUV plane stride corruption.
+     */
+    private fun reencodeVideoSurface(
         extractor: MediaExtractor,
         videoTrackIndex: Int,
         audioTrackIndex: Int,
@@ -191,6 +237,150 @@ object VideoCompressor {
         val scale = if (longSide > preset.maxLongSide) preset.maxLongSide.toFloat() / longSide.toFloat() else 1.0f
         val dstWidth = (((srcWidth * scale).toInt() + 1) / 2 * 2).coerceAtLeast(16)
         val dstHeight = (((srcHeight * scale).toInt() + 1) / 2 * 2).coerceAtLeast(16)
+
+        val encoderFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, dstWidth, dstHeight).apply {
+            setInteger(
+                MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+            )
+            setInteger(MediaFormat.KEY_BIT_RATE, preset.targetBitrateBps)
+            setInteger(MediaFormat.KEY_FRAME_RATE, 30)
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
+        }
+
+        val decoder = MediaCodec.createDecoderByType(srcMime)
+        val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        if (rotation != 0) muxer.setOrientationHint(rotation)
+
+        var inputSurface: android.view.Surface? = null
+        var muxerStarted = false
+        try {
+            encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            inputSurface = encoder.createInputSurface()
+            decoder.configure(sourceVideoFormat, inputSurface, null, 0)
+            encoder.start()
+            decoder.start()
+
+            extractor.selectTrack(videoTrackIndex)
+            val bufferInfo = MediaCodec.BufferInfo()
+            val encInfo = MediaCodec.BufferInfo()
+            var muxerVideoTrack = -1
+            var muxerAudioTrack = -1
+
+            var inputDone = false
+            var decoderDone = false
+            var encoderDone = false
+            val timeoutUs = 10_000L
+
+            while (!encoderDone) {
+                if (!inputDone) {
+                    val inIndex = decoder.dequeueInputBuffer(timeoutUs)
+                    if (inIndex >= 0) {
+                        val inBuf = decoder.getInputBuffer(inIndex)!!
+                        val sampleSize = extractor.readSampleData(inBuf, 0)
+                        if (sampleSize < 0) {
+                            decoder.queueInputBuffer(inIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            inputDone = true
+                        } else {
+                            val pts = extractor.sampleTime
+                            decoder.queueInputBuffer(inIndex, 0, sampleSize, pts, 0)
+                            extractor.advance()
+                            if (durationUs > 0) {
+                                onProgress((0.1f + 0.7f * (pts.toFloat() / durationUs)).coerceIn(0.1f, 0.8f))
+                            }
+                        }
+                    }
+                }
+
+                if (!decoderDone) {
+                    val outIndex = decoder.dequeueOutputBuffer(bufferInfo, timeoutUs)
+                    if (outIndex >= 0) {
+                        val isEos = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                        val doRender = bufferInfo.size > 0 && !isEos
+                        decoder.releaseOutputBuffer(outIndex, doRender)
+                        if (isEos) {
+                            encoder.signalEndOfInputStream()
+                            decoderDone = true
+                        }
+                    }
+                }
+
+                val encOutIndex = encoder.dequeueOutputBuffer(encInfo, timeoutUs)
+                when {
+                    encOutIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        muxerVideoTrack = muxer.addTrack(encoder.outputFormat)
+                        if (sourceAudioFormat != null && audioTrackIndex >= 0) {
+                            muxerAudioTrack = runCatching { muxer.addTrack(sourceAudioFormat) }.getOrDefault(-1)
+                        }
+                        muxer.start()
+                        muxerStarted = true
+                    }
+                    encOutIndex >= 0 -> {
+                        val encodedData = encoder.getOutputBuffer(encOutIndex)
+                        if (encodedData != null && (encInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 && encInfo.size > 0 && muxerStarted) {
+                            encodedData.position(encInfo.offset)
+                            encodedData.limit(encInfo.offset + encInfo.size)
+                            muxer.writeSampleData(muxerVideoTrack, encodedData, encInfo)
+                        }
+                        encoder.releaseOutputBuffer(encOutIndex, false)
+                        if ((encInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            encoderDone = true
+                        }
+                    }
+                }
+            }
+
+            if (muxerStarted && muxerAudioTrack >= 0 && audioTrackIndex >= 0) {
+                extractor.unselectTrack(videoTrackIndex)
+                extractor.selectTrack(audioTrackIndex)
+                extractor.seekTo(0L, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                val audioBuf = ByteBuffer.allocate(256 * 1024)
+                val audioInfo = MediaCodec.BufferInfo()
+                while (true) {
+                    val sampleSize = extractor.readSampleData(audioBuf, 0)
+                    if (sampleSize < 0) break
+                    audioInfo.offset = 0
+                    audioInfo.size = sampleSize
+                    audioInfo.presentationTimeUs = extractor.sampleTime
+                    audioInfo.flags = toCodecFlags(extractor.sampleFlags)
+                    muxer.writeSampleData(muxerAudioTrack, audioBuf, audioInfo)
+                    extractor.advance()
+                }
+            }
+            return muxerStarted
+        } finally {
+            runCatching { decoder.stop() }
+            runCatching { decoder.release() }
+            runCatching { inputSurface?.release() }
+            runCatching { encoder.stop() }
+            runCatching { encoder.release() }
+            if (muxerStarted) runCatching { muxer.stop() }
+            runCatching { muxer.release() }
+        }
+    }
+
+    /**
+     * Fallback ByteBuffer re-encoder that strictly preserves source width & height (`dstWidth = srcWidth`,
+     * `dstHeight = srcHeight`) with reduced bitrate so YUV planes are never copied across different resolutions.
+     */
+    private fun reencodeVideoByteBufferSameResolution(
+        extractor: MediaExtractor,
+        videoTrackIndex: Int,
+        audioTrackIndex: Int,
+        sourceVideoFormat: MediaFormat,
+        sourceAudioFormat: MediaFormat?,
+        outputFile: File,
+        preset: CompressionPreset,
+        rotation: Int,
+        durationUs: Long,
+        onProgress: (Float) -> Unit,
+    ): Boolean {
+        val srcWidth = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_WIDTH) }.getOrDefault(1280)
+        val srcHeight = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_HEIGHT) }.getOrDefault(720)
+        val srcMime = sourceVideoFormat.getString(MediaFormat.KEY_MIME) ?: return false
+        val dstWidth = (srcWidth / 2 * 2).coerceAtLeast(16)
+        val dstHeight = (srcHeight / 2 * 2).coerceAtLeast(16)
 
         val encoderFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, dstWidth, dstHeight).apply {
             setInteger(

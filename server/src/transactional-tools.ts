@@ -134,14 +134,14 @@ export const TRANSACTIONAL_TOOLS: TransactionalToolConfig[] = [
     slug: "elgato-streamdeck-cleaner",
     appName: "Elgato Stream Deck & Wave Link",
     shortName: "Elgato Stream Deck Cleaner",
-    title: "Elgato Stream Deck Cache & Logs Cleaner (Free 1–5 GB)",
+    title: "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
     metaDescription:
-      "Safely clean %AppData%\\Elgato\\StreamDeck logs, Media Blob Storage, and Qt/CEF caches on Windows 10/11—plus safe physical LCD key cleaning steps.",
-    heroBadge: "🎛️ ELGATO STREAM DECK CACHE & LOGS CLEANER",
-    h1: "Elgato Stream Deck Cache & Logs Cleaner",
+      "Clean the Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) on Windows 11. Safely reclaim 1–4 GB of software disk cache, logs & blobs.",
+    heroBadge: "🎛️ ELGATO STREAM DECK SOFTWARE DISK CACHE CLEANER",
+    h1: "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
     subtitle:
-      "Clean runaway %AppData%\\Elgato\\StreamDeck plugin logs, animated icon Media Blob Storage, and CEF Service Worker caches without losing a single button profile, folder layout, or OBS hotkey.",
-    typicalSavings: "800 MB – 5.0 GB",
+      "Clean runaway %APPDATA%\\Elgato\\StreamDeck software disk cache, plugin logs, animated icon Media Blob Storage, and CEF Service Worker caches on Windows 11 without losing a single button profile, folder layout, or OBS hotkey.",
+    typicalSavings: "1–4 GB",
     targetCleanSlugs: ["elgato-streamdeck-cache"],
     samplePaths: [
       "%AppData%\\Elgato\\StreamDeck\\logs, 2.1 GB",
@@ -407,6 +407,9 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       ? `Get the 5-Device Pro Licence (14-Day Guarantee) →`
       : `Clean ${tool.shortName.replace(/\s*Cleaner$/i, "")} in 1 Click — Get SWEEPR Pro →`;
 
+  const verifiedReviewCount = Number(process.env.SWEEPR_VERIFIED_REVIEW_COUNT ?? 0);
+  const verifiedRatingValue = String(process.env.SWEEPR_VERIFIED_RATING_VALUE ?? "").trim();
+
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@graph": [
@@ -418,29 +421,20 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         url: canonicalUrl,
         image: "https://sweeprcleaner.com/og-image.png",
         description: tool.metaDescription,
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          ratingCount: "128",
-          bestRating: "5",
-          worstRating: "1",
-        },
-        review: {
-          "@type": "Review",
-          reviewRating: {
-            "@type": "Rating",
-            ratingValue: "5",
-            bestRating: "5",
-          },
-          author: {
-            "@type": "Person",
-            name: "Verified Windows 11 User",
-          },
-          reviewBody: `Safely cleaned ${tool.typicalSavings} from ${tool.appName} in one click without losing any logins or settings.`,
-        },
+        ...(verifiedReviewCount >= 5 && verifiedRatingValue
+          ? {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: verifiedRatingValue,
+                reviewCount: String(verifiedReviewCount),
+                bestRating: "5",
+                worstRating: "1",
+              },
+            }
+          : {}),
         offers: {
           "@type": "Offer",
-          price: "29.99",
+          price: "49.99",
           priceCurrency: "GBP",
           availability: "https://schema.org/InStock",
           url: "https://sweeprcleaner.com/order?plan=annual",
@@ -592,6 +586,14 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       <h1 style="font-size:clamp(26px,3.8vw,36px);line-height:1.15;margin:0 0 10px;">
         ${escapeHtml(tool.h1)}
       </h1>
+      ${
+        tool.slug === "elgato-streamdeck-cleaner"
+          ? `<div id="streamdeck-tool-top-callout" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:14px;padding:12px 15px;margin:0 0 14px;font-size:13px;line-height:1.5;color:#1e293b;">
+              <div style="margin-bottom:4px;"><strong>1. Cleaning physical Stream Deck LCD buttons?</strong> Unplug the USB cable first and gently wipe the LCD keys with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</div>
+              <div><strong>2. Cleaning Windows 11 PC disk bloat (1–4 GB)?</strong> Use the software cache cleaner below to purge <code>%APPDATA%\\Elgato\\StreamDeck</code> (<code>logs</code>, <code>Cache</code>, <code>Blob_Storage</code>, and <code>Service Worker\\CacheStorage</code>) while keeping your <code>ProfilesV2</code> button layouts 100% intact.</div>
+            </div>`
+          : ""
+      }
       <p style="color:var(--muted);font-size:15.5px;max-width:780px;margin:0 0 18px;">
         ${escapeHtml(tool.subtitle)}
       </p>

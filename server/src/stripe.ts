@@ -132,6 +132,12 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   const mappedEntStatus: EntStatus =
     sub.status === "incomplete_expired" ? "canceled" : (sub.status as EntStatus);
 
+  const existingBonusSec = Math.max(0, Number(existingEnt?.bonus_seconds ?? 0));
+  let effectivePeriodEnd =
+    currentPeriodEnd !== null && currentPeriodEnd !== undefined
+      ? currentPeriodEnd + existingBonusSec
+      : null;
+
   if (shouldUpdateEntitlement) {
     repo.upsertEntitlement({
       account_id: account.id,
@@ -139,14 +145,21 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
       status: mappedEntStatus,
       plan: planName,
       addons_list: Array.from(detectedAddons),
-      current_period_end: currentPeriodEnd,
+      current_period_end: effectivePeriodEnd,
       cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
+      bonus_seconds: existingBonusSec,
     });
   }
 
   const refCode = typeof sub.metadata?.ref === "string" ? sub.metadata.ref.trim() : "";
   if (sub.status === "active" && refCode) {
-    repo.applyReferral(account.id, refCode, Math.floor(Date.now() / 1000));
+    const applied = repo.applyReferral(account.id, refCode, Math.floor(Date.now() / 1000));
+    if (applied) {
+      const updatedEnt = repo.entitlement(account.id);
+      if (updatedEnt?.current_period_end) {
+        effectivePeriodEnd = updatedEnt.current_period_end;
+      }
+    }
   }
 
   repo.upsertSubscription({
@@ -159,7 +172,7 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
     currency: sub.currency || "usd",
     billing_interval: interval === "year" ? "year" : intervalCount === 6 ? "6-month" : "month",
     current_period_start: (sub as any).current_period_start ?? null,
-    current_period_end: currentPeriodEnd,
+    current_period_end: effectivePeriodEnd,
     cancel_at_period_end: sub.cancel_at_period_end ? 1 : 0,
     canceled_at: sub.canceled_at ?? null,
     trial_start: sub.trial_start ?? null,
@@ -290,7 +303,12 @@ export async function syncPayPalEmailFromSubscription(
   }
 }
 
-export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Stripe.Event) {
+export async function handleStripeWebhook(
+  stripe: Stripe,
+  repo: Repo,
+  event: Stripe.Event
+): Promise<{ duplicate: boolean }> {
+  if (repo.isWebhookProcessed(event.id)) return { duplicate: true };
   switch (event.type) {
     case "checkout.session.completed": {
       const s = event.data.object as Stripe.Checkout.Session;
@@ -308,7 +326,10 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
       }
       const subId = idOf(s.subscription as any);
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        const sub =
+          typeof s.subscription === "object" && s.subscription
+            ? await stripe.subscriptions.retrieve(subId).catch(() => s.subscription as Stripe.Subscription)
+            : await stripe.subscriptions.retrieve(subId);
         if (sub) {
           await syncPayPalEmailFromSubscription(stripe, repo, sub, accountId);
           syncSubscription(repo, sub, accountId);
@@ -381,15 +402,23 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     case "invoice.paid": {
       const inv = event.data.object as Stripe.Invoice;
       const subId = invoiceSubscriptionId(inv);
+      let retrievedSub: Stripe.Subscription | null = null;
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId).catch(() => null);
-        if (sub) {
-          await syncPayPalEmailFromSubscription(stripe, repo, sub);
-          syncSubscription(repo, sub);
+        retrievedSub = await stripe.subscriptions.retrieve(subId).catch(() => null);
+        if (retrievedSub) {
+          await syncPayPalEmailFromSubscription(stripe, repo, retrievedSub);
+          syncSubscription(repo, retrievedSub);
         }
       }
       const custId = idOf(inv.customer as any);
-      const account = custId ? repo.accountByCustomer(custId) : undefined;
+      const custEmail =
+        typeof (inv as any).customer_email === "string"
+          ? (inv as any).customer_email.trim().toLowerCase()
+          : "";
+      const account =
+        (custId ? repo.accountByCustomer(custId) : undefined) ??
+        (retrievedSub?.metadata?.account_id ? repo.accountById(retrievedSub.metadata.account_id) : undefined) ??
+        (custEmail ? repo.accountByEmail(custEmail) : undefined);
       if (account) {
         repo.upsertInvoice({
           id: inv.id,
@@ -405,14 +434,52 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
           pdf_url: inv.invoice_pdf ?? null,
           created_at: inv.created,
         });
+        const formattedPaid = `${((inv.amount_paid ?? 0) / 100).toFixed(2)} ${String(inv.currency || "gbp").toUpperCase()}`;
         repo.addActivity({
           account_id: account.id,
           type: "invoice_paid",
           title: "Payment Received",
-          description: `Successfully paid ${(inv.amount_paid / 100).toFixed(2)} ${inv.currency.toUpperCase()}`,
+          description: `Successfully paid ${formattedPaid}`,
           actor: "stripe",
           metadata: { invoice_id: inv.id, amount_paid: inv.amount_paid },
         });
+
+        const normEmail = (account.email || custEmail || "").trim().toLowerCase();
+        const isInitialInvoice =
+          !(inv as any).billing_reason ||
+          (inv as any).billing_reason === "subscription_create" ||
+          (inv as any).billing_reason === "manual";
+        if (normEmail && !normEmail.endsWith("@pending.sweeprcleaner.com") && isInitialInvoice) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const recentSent = repo.db
+            .prepare(
+              "SELECT id FROM activities WHERE account_id = ? AND type = 'welcome_email_sent' AND created_at > ? LIMIT 1"
+            )
+            .get(account.id, nowSec - 300);
+          if (!recentSent) {
+            const { randomInt } = await import("node:crypto");
+            const { sha256 } = await import("./tokens.js");
+            const activationKey = randomInt(100000, 1000000).toString();
+            repo.setOtp(`activation:${normEmail}`, sha256(activationKey), nowSec + 7 * 86400);
+            const ent = repo.entitlement(account.id);
+            const planLabel = ent?.plan || retrievedSub?.metadata?.plan || "Pro";
+            repo.addActivity({
+              account_id: account.id,
+              type: "welcome_email_sent",
+              title: "Payment Receipt & Subscription Key Sent",
+              description: `Receipt (${formattedPaid}) & 6-digit Subscription Key sent to ${normEmail}`,
+              actor: "stripe",
+              metadata: { email: normEmail, plan: planLabel, invoice_id: inv.id },
+            });
+            import("./email.js").then((m) => {
+              m.sendSubscriptionEmail(normEmail, "activated", planLabel, account.name || undefined, activationKey, {
+                amountFormatted: formattedPaid,
+                invoiceUrl: inv.hosted_invoice_url ?? null,
+                invoiceId: inv.id,
+              }).catch(console.error);
+            });
+          }
+        }
       }
       break;
     }
@@ -477,7 +544,7 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     }
     case "customer.subscription.trial_will_end": {
       const sub = event.data.object as Stripe.Subscription;
-      await sendRenewalReminder(sub);
+      await sendRenewalReminder(repo, sub);
       break;
     }
     case "invoice.upcoming": {
@@ -596,11 +663,54 @@ export async function handleStripeEvent(stripe: Stripe, repo: Repo, event: Strip
     default:
       break;
   }
+  repo.markWebhookProcessed(event.id);
+  return { duplicate: false };
 }
 
-/** Hook up your email provider (Postmark, Resend, SES...) here. */
-async function sendRenewalReminder(sub: Stripe.Subscription) {
-  console.log(`[reminder] email customer ${String(sub.customer)}: Trial ending. Paid renewal starts on ${new Date((sub.trial_end ?? 0) * 1000).toISOString()}.`);
+export const handleStripeEvent = handleStripeWebhook;
+
+/** Sends a real HTML renewal reminder email via dispatchEmail when customer.subscription.trial_will_end fires. */
+async function sendRenewalReminder(repo: Repo, sub: Stripe.Subscription) {
+  const custId = idOf(sub.customer as any);
+  const expandedCust =
+    typeof sub.customer === "object" && sub.customer && !(sub.customer as any).deleted
+      ? (sub.customer as Stripe.Customer)
+      : null;
+  const account =
+    (custId ? repo.accountByCustomer(custId) : undefined) ??
+    (sub.metadata?.account_id ? repo.accountById(sub.metadata.account_id) : undefined);
+  const email = (
+    account?.email ||
+    expandedCust?.email ||
+    (typeof sub.metadata?.email === "string" ? sub.metadata.email : "")
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!email || email.endsWith("@pending.sweeprcleaner.com")) {
+    console.log(
+      `[reminder] customer ${String(custId || sub.id)}: Trial ending on ${new Date((sub.trial_end ?? 0) * 1000).toISOString()} (no email on file).`
+    );
+    return;
+  }
+
+  const price = sub.items?.data?.[0]?.price;
+  const planName =
+    price?.recurring?.interval === "year"
+      ? "annual"
+      : price?.recurring?.interval_count === 6
+      ? "six_month"
+      : sub.metadata?.plan || "monthly";
+
+  const { sendRenewalReminderEmail } = await import("./email.js");
+  await sendRenewalReminderEmail({
+    to: email,
+    name: account?.name || expandedCust?.name || null,
+    plan: planName,
+    trialEndTs: sub.trial_end ?? null,
+    amountCents: price?.unit_amount ?? null,
+    currency: sub.currency ?? "gbp",
+  }).catch((err) => console.error("[reminder] Failed to send renewal reminder email:", err));
 }
 
 /**

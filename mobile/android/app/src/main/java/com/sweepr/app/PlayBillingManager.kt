@@ -56,6 +56,24 @@ object PlayBillingManager : PurchasesUpdatedListener {
     private val connectionWaiters = java.util.concurrent.CopyOnWriteArrayList<Pair<(BillingClient) -> Unit, () -> Unit>>()
     private val productDetailsMap = ConcurrentHashMap<String, ProductDetails>()
     private var pendingCallback: ((productId: String, purchaseToken: String, orderId: String?) -> Unit)? = null
+    @Volatile
+    private var activeBaseSubscriptionToken: String? = null
+    @Volatile
+    private var activeBaseSubscriptionProductId: String? = null
+
+    private fun isBaseSubscriptionSku(productId: String): Boolean =
+        productId == SKU_MONTHLY || productId == SKU_SIX_MONTH || productId == SKU_ANNUAL
+
+    private fun updateCachedBaseSubscription(purchases: List<Purchase>) {
+        val baseSub = purchases.firstOrNull { p ->
+            p.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                p.products.any { isBaseSubscriptionSku(it) }
+        }
+        if (baseSub != null) {
+            activeBaseSubscriptionToken = baseSub.purchaseToken
+            activeBaseSubscriptionProductId = baseSub.products.firstOrNull { isBaseSubscriptionSku(it) }
+        }
+    }
 
     private val _prices = MutableStateFlow(defaultLocalePrices())
     val prices: StateFlow<Map<String, PlayProductPrice>> = _prices.asStateFlow()
@@ -79,15 +97,15 @@ object PlayBillingManager : PurchasesUpdatedListener {
             "EUR" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99)
             "CAD" -> TierAmounts(2.99, 15.99, 64.99, 10.83, 89.99, 7.49, 14.99)
             "AUD" -> TierAmounts(2.99, 17.99, 74.99, 12.49, 99.99, 8.33, 15.99)
-            "NZD" -> TierAmounts(2.99, 19.99, 79.99, 13.33, 109.99, 9.17, 9.99)
+            "NZD" -> TierAmounts(2.99, 19.99, 79.99, 13.33, 109.99, 9.16, 17.99)
             "CHF" -> TierAmounts(1.99, 10.99, 44.99, 7.49, 59.99, 4.99, 9.99)
-            "SEK", "NOK" -> TierAmounts(25.0, 129.0, 499.0, 83.0, 649.0, 54.0, 99.0)
-            "DKK" -> TierAmounts(15.0, 89.0, 349.0, 58.0, 449.0, 37.0, 69.0)
-            "PLN" -> TierAmounts(9.99, 49.99, 189.99, 31.67, 249.99, 20.83, 39.99)
-            "JPY" -> TierAmounts(300.0, 1980.0, 7400.0, 1233.0, 9800.0, 817.0, 1500.0)
-            "INR" -> TierAmounts(199.0, 599.0, 2199.0, 367.0, 2999.0, 250.0, 799.0)
-            "SGD" -> TierAmounts(2.99, 16.99, 64.99, 10.83, 84.99, 7.08, 9.99)
-            "BRL" -> TierAmounts(9.90, 49.90, 189.90, 31.65, 249.90, 20.83, 49.90)
+            "SEK", "NOK" -> TierAmounts(19.99, 129.99, 519.99, 86.66, 699.99, 58.33, 119.99)
+            "DKK" -> TierAmounts(14.99, 84.99, 329.99, 54.99, 449.99, 37.49, 79.99)
+            "PLN" -> TierAmounts(7.99, 47.99, 189.99, 31.66, 259.99, 21.66, 44.99)
+            "JPY" -> TierAmounts(290.0, 1880.0, 7480.0, 1246.0, 9980.0, 831.0, 1580.0)
+            "INR" -> TierAmounts(169.99, 999.99, 3999.99, 666.66, 5499.99, 458.33, 899.99)
+            "SGD" -> TierAmounts(2.99, 15.99, 62.99, 10.49, 84.99, 7.08, 13.99)
+            "BRL" -> TierAmounts(9.99, 64.99, 259.99, 43.33, 349.99, 29.16, 59.99)
             else -> TierAmounts(1.99, 9.99, 38.99, 6.50, 49.99, 4.16, 9.99)
         }
 
@@ -241,6 +259,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
                     } else {
                         emptyList()
                     }
+                    updateCachedBaseSubscription(activeSubs)
                     for (p in activeSubs) {
                         if (!p.isAcknowledged) {
                             val ackParams = AcknowledgePurchaseParams.newBuilder()
@@ -289,8 +308,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
             .setProductList(subsProducts)
             .build()
 
-        client.queryProductDetailsAsync(subsParams) { result, subsDetailsResult ->
-            val detailsList = subsDetailsResult.productDetailsList
+        client.queryProductDetailsAsync(subsParams) { result, detailsList ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 val updated = _prices.value.toMutableMap()
                 for (details in detailsList) {
@@ -331,8 +349,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
             .setProductList(inappProducts)
             .build()
 
-        client.queryProductDetailsAsync(inappParams) { result, inappDetailsResult ->
-            val detailsList = inappDetailsResult.productDetailsList
+        client.queryProductDetailsAsync(inappParams) { result, detailsList ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK && detailsList.isNotEmpty()) {
                 val updated = _prices.value.toMutableMap()
                 for (details in detailsList) {
@@ -361,22 +378,55 @@ object PlayBillingManager : PurchasesUpdatedListener {
         onSuccess: (productId: String, purchaseToken: String, orderId: String?) -> Unit,
         onFallback: () -> Unit,
     ) {
-        activity.runOnUiThread {
-            val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
-            val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(details)
-            if (details.productType == BillingClient.ProductType.SUBS && !offerToken.isNullOrBlank()) {
-                productDetailsParamsBuilder.setOfferToken(offerToken)
+        val executeFlow: () -> Unit = {
+            activity.runOnUiThread {
+                val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
+                val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(details)
+                if (details.productType == BillingClient.ProductType.SUBS && !offerToken.isNullOrBlank()) {
+                    productDetailsParamsBuilder.setOfferToken(offerToken)
+                }
+                val flowParamsBuilder = BillingFlowParams.newBuilder()
+                    .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
+
+                val activeToken = activeBaseSubscriptionToken
+                val activeProdId = activeBaseSubscriptionProductId
+                if (details.productType == BillingClient.ProductType.SUBS &&
+                    isBaseSubscriptionSku(details.productId) &&
+                    !activeToken.isNullOrBlank() &&
+                    activeProdId != details.productId
+                ) {
+                    val updateParams = BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                        .setOldPurchaseToken(activeToken)
+                        .setSubscriptionReplacementMode(
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE,
+                        )
+                        .build()
+                    flowParamsBuilder.setSubscriptionUpdateParams(updateParams)
+                }
+
+                val flowParams = flowParamsBuilder.build()
+                pendingCallback = onSuccess
+                val billingResult = client.launchBillingFlow(activity, flowParams)
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    pendingCallback = null
+                    onFallback()
+                }
             }
-            val flowParams = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
+        }
+
+        if (details.productType == BillingClient.ProductType.SUBS && isBaseSubscriptionSku(details.productId)) {
+            val subsParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.SUBS)
                 .build()
-            pendingCallback = onSuccess
-            val billingResult = client.launchBillingFlow(activity, flowParams)
-            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                pendingCallback = null
-                onFallback()
+            client.queryPurchasesAsync(subsParams) { subsResult, subsPurchases ->
+                if (subsResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    updateCachedBaseSubscription(subsPurchases)
+                }
+                executeFlow()
             }
+        } else {
+            executeFlow()
         }
     }
 
@@ -404,8 +454,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
                         ),
                     )
                     .build()
-                client.queryProductDetailsAsync(subsParam) { subsResult, subsDetailsResult ->
-                    val subsList = subsDetailsResult.productDetailsList
+                client.queryProductDetailsAsync(subsParam) { subsResult, subsList ->
                     val foundSub = subsList.firstOrNull()
                     if (subsResult.responseCode == BillingClient.BillingResponseCode.OK && foundSub != null) {
                         productDetailsMap[productId] = foundSub
@@ -423,8 +472,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
                                 ),
                             )
                             .build()
-                        client.queryProductDetailsAsync(inappParam) { inappResult, inappDetailsResult ->
-                            val inappList = inappDetailsResult.productDetailsList
+                        client.queryProductDetailsAsync(inappParam) { inappResult, inappList ->
                             val foundInapp = inappList.firstOrNull()
                             if (inappResult.responseCode == BillingClient.BillingResponseCode.OK && foundInapp != null) {
                                 productDetailsMap[productId] = foundInapp

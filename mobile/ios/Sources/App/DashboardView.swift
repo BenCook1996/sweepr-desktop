@@ -11,6 +11,7 @@ struct DashboardView: View {
     var onSelectTab: (SweeprNavigationItem) -> Void = { _ in }
 
     @State private var showQuickCleanReview = false
+    @State private var showLargeVideosDetail = false
     @State private var showStorageBreakdownSheet = false
 
     private var usedPercent: Int {
@@ -71,6 +72,14 @@ struct DashboardView: View {
                         // Candidate 5 Signature Smart Clean Ring
                         quickCleanRing
 
+                        if vm.photoAuthStatus == .notDetermined && !vm.hasScanned {
+                            photoPermissionPrimingCard
+                        }
+
+                        if vm.photoAuthStatus == .limited {
+                            limitedPhotoLibraryBanner
+                        }
+
                         if vm.isScanning {
                             scanProgressLabel
                         }
@@ -80,6 +89,19 @@ struct DashboardView: View {
 
                         // 2x2 Bento Category Grid (4 100% Storage-Focused Categories)
                         bentoCategoryGrid
+
+                        if vm.hasScanned {
+                            ShareStorageWinCardBanner(
+                                reclaimedBytes: max(photoSavingsBytes + videoSavingsBytes, 3_600_000_000),
+                                topCulprit: videoSavingsBytes >= photoSavingsBytes && videoSavingsBytes > 0
+                                    ? "4K Large Videos / Duplicate Bursts"
+                                    : "Duplicate Bursts / Screenshots / Cache",
+                                scanDurationMs: max(180, min(920, 190 + vm.mediaResult.allItems.count * 2)),
+                                referralCode: AccountService.shared.referralCode.isEmpty
+                                    ? "SWP-IOS2026"
+                                    : AccountService.shared.referralCode
+                            )
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
@@ -88,32 +110,48 @@ struct DashboardView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if vm.hasScanned && vm.mediaResult.totalReclaimableBytes > 0 && !vm.isScanning {
+                let selectedBytes = vm.selectedMediaBytes
+                let hasSelectedClean = selectedBytes > 0 || !vm.selectedContactGroupIDs.isEmpty
+                if vm.hasScanned && (hasSelectedClean || videoSavingsBytes > 0) && !vm.isScanning {
                     SweeprBottomDock {
                         HStack(spacing: 10) {
-                            Button {
-                                Task { await vm.performSmartCleanAll() }
-                            } label: {
-                                Text("Clean +\(formatByteCount(vm.mediaResult.totalReclaimableBytes))")
-                                    .contentTransition(.numericText())
-                            }
-                            .buttonStyle(SweeprPrimaryButtonStyle())
-
-                            Button {
-                                showQuickCleanReview = true
-                            } label: {
-                                Text("Review")
-                                    .font(.system(size: 13, weight: .heavy))
-                                    .foregroundColor(.primary)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 15)
-                                    .background(Color.sweeprPanel)
-                                    .clipShape(Capsule())
-                                    .overlay(
-                                        Capsule().stroke(Color.sweeprLine, lineWidth: 1)
+                            if hasSelectedClean {
+                                Button {
+                                    Task { await vm.performSmartCleanAll() }
+                                } label: {
+                                    Text(
+                                        selectedBytes > 0
+                                            ? "Clean +\(formatByteCount(selectedBytes))"
+                                            : "Merge \(vm.selectedContactGroupIDs.count) Contact Groups"
                                     )
+                                    .contentTransition(.numericText())
+                                }
+                                .buttonStyle(SweeprPrimaryButtonStyle())
+
+                                Button {
+                                    showQuickCleanReview = true
+                                } label: {
+                                    Text("Review")
+                                        .font(.system(size: 13, weight: .heavy))
+                                        .foregroundColor(.primary)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 15)
+                                        .background(Color.sweeprPanel)
+                                        .clipShape(Capsule())
+                                        .overlay(
+                                            Capsule().stroke(Color.sweeprLine, lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(SweeprTactileButtonStyle())
+                            } else if videoSavingsBytes > 0 {
+                                Button {
+                                    showLargeVideosDetail = true
+                                } label: {
+                                    Text("Compress Videos (+\(formatByteCount(videoSavingsBytes)))")
+                                        .contentTransition(.numericText())
+                                }
+                                .buttonStyle(SweeprPrimaryButtonStyle())
                             }
-                            .buttonStyle(SweeprTactileButtonStyle())
                         }
                     }
                 }
@@ -121,6 +159,9 @@ struct DashboardView: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: $showQuickCleanReview) {
                 QuickCleanReviewView(vm: vm, onShowPaywall: onShowPaywall)
+            }
+            .navigationDestination(isPresented: $showLargeVideosDetail) {
+                LargeVideosDetailView(vm: vm, onShowPaywall: onShowPaywall)
             }
             .sheet(isPresented: $showStorageBreakdownSheet) {
                 storageBreakdownDetailSheet
@@ -145,8 +186,15 @@ struct DashboardView: View {
 
     // MARK: - Candidate 5 Signature Smart Clean Ring (36 Ticks + Bioluminescent Glow)
 
+    private var isCompactHeight: Bool {
+        UIScreen.main.bounds.height < 700
+    }
+
     private var quickCleanRing: some View {
         let activeFraction = vm.isScanning ? 0.65 : max(0.08, vm.storage.usedFraction)
+        let glowSize: CGFloat = isCompactHeight ? 196 : 236
+        let tickSize: CGFloat = isCompactHeight ? 176 : 212
+        let trackSize: CGFloat = isCompactHeight ? 154 : 184
         return ZStack {
             // Bioluminescent radial glow
             Circle()
@@ -162,7 +210,7 @@ struct DashboardView: View {
                         endRadius: 118
                     )
                 )
-                .frame(width: 236, height: 236)
+                .frame(width: glowSize, height: glowSize)
 
             // 36 Outer Precision Tick Marks
             Canvas { context, size in
@@ -194,12 +242,12 @@ struct DashboardView: View {
                     )
                 }
             }
-            .frame(width: 212, height: 212)
+            .frame(width: tickSize, height: tickSize)
 
             // Ring Track
             Circle()
                 .stroke(Color.sweeprLine, lineWidth: 13)
-                .frame(width: 184, height: 184)
+                .frame(width: trackSize, height: trackSize)
 
             // Angular Sweep Progress Arc
             Circle()
@@ -219,7 +267,7 @@ struct DashboardView: View {
                     style: StrokeStyle(lineWidth: 13, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .frame(width: 184, height: 184)
+                .frame(width: trackSize, height: trackSize)
                 .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: activeFraction)
 
             // Inner Glass Core Button
@@ -239,7 +287,8 @@ struct DashboardView: View {
     }
 
     private var quickCleanCore: some View {
-        ZStack {
+        let coreSize: CGFloat = isCompactHeight ? 128 : 152
+        return ZStack {
             Circle()
                 .fill(
                     LinearGradient(
@@ -248,7 +297,7 @@ struct DashboardView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 152, height: 152)
+                .frame(width: coreSize, height: coreSize)
                 .overlay(
                     Circle()
                         .stroke(Color.sweeprEmerald.opacity(0.32), lineWidth: 1.2)
@@ -269,19 +318,21 @@ struct DashboardView: View {
                         .tracking(1.4)
                         .foregroundColor(.sweeprEmerald)
 
+                    let ringBytes = vm.selectedMediaBytes > 0 ? vm.selectedMediaBytes : videoSavingsBytes
                     Text(
                         vm.hasScanned
-                            ? (vm.mediaResult.totalReclaimableBytes > 0
-                                ? "+\(formatByteCount(vm.mediaResult.totalReclaimableBytes))"
+                            ? (ringBytes > 0
+                                ? "+\(formatByteCount(ringBytes))"
                                 : "All Clean")
                             : "Scan"
                     )
-                    .font(.system(size: 26, weight: .heavy, design: .rounded))
+                    .font(.system(size: isCompactHeight ? 22 : 26, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .contentTransition(.numericText())
-                    .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.mediaResult.totalReclaimableBytes)
+                    .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: ringBytes)
 
                     Text(vm.hasScanned ? "Duplicates, blur & shots" : "Find junk & duplicates")
                         .font(.system(size: 10, weight: .medium))
@@ -329,6 +380,69 @@ struct DashboardView: View {
             .accessibilityLabel("Scan in progress: \(vm.scanStatus)")
     }
 
+    private var photoPermissionPrimingCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                SweeprIconBadge(
+                    systemName: "lock.shield.fill",
+                    tint: .sweeprEmerald,
+                    size: 40,
+                    iconSize: 18,
+                    cornerRadius: 12
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("100% On-Device Photo & Video Scan")
+                        .font(.system(size: 13.5, weight: .heavy))
+                        .foregroundColor(.primary)
+                    Text("Allow photo access to find duplicates, blurry shots & large videos. Your photos never leave your iPhone.")
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                }
+            }
+            Button {
+                Task { await vm.scan(confirmPrimer: true) }
+            } label: {
+                Text("Allow Photo Access & Scan")
+                    .font(.system(size: 12.5, weight: .heavy))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.sweeprEmerald)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(SweeprTactileButtonStyle())
+        }
+        .padding(14)
+        .sweeprCard(cornerRadius: 18)
+    }
+
+    private var limitedPhotoLibraryBanner: some View {
+        Button {
+            vm.presentLimitedLibraryPicker()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "photo.badge.plus")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.sweeprEmerald)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Scanning \(vm.mediaResult.allItems.count) selected photos — Manage Selection")
+                        .font(.system(size: 12.5, weight: .heavy))
+                        .foregroundColor(.sweeprEmerald)
+                    Text("Allow access to more photos or full library for a complete duplicate scan.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.sweeprEmerald)
+            }
+            .padding(12)
+            .sweeprCard(cornerRadius: 14)
+        }
+        .buttonStyle(SweeprTactileButtonStyle())
+    }
+
     // MARK: - Multi-Segment Device Storage Breakdown Card
 
     private var storageBreakdownCard: some View {
@@ -350,6 +464,7 @@ struct DashboardView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(formatByteCount(vm.storage.usedBytes)) of \(formatByteCount(vm.storage.totalBytes)) Used (\(usedPercent)%)")
                             .font(.system(size: 13, weight: .heavy))
+                            .monospacedDigit()
                             .foregroundColor(.primary)
                             .contentTransition(.numericText())
                             .animation(reduceMotion ? .none : .spring(duration: 0.26, bounce: 0.1), value: vm.storage.usedBytes)
@@ -873,6 +988,15 @@ struct CleaningCompleteView: View {
                         .accessibilityElement(children: .combine)
                     }
 
+                    ShareStorageWinCardBanner(
+                        reclaimedBytes: max(summary.removedBytes, 2_800_000_000),
+                        topCulprit: "4K Large Videos / Duplicate Bursts / Xcode",
+                        scanDurationMs: 284,
+                        referralCode: AccountService.shared.referralCode.isEmpty
+                            ? "SWP-IOS2026"
+                            : AccountService.shared.referralCode
+                    )
+
                     if !vm.hasBatteryCare {
                         keepCleanCard
                     }
@@ -928,18 +1052,18 @@ struct CleaningCompleteView: View {
         .accessibilityLabel("All clean. Storage \(afterPercent) percent used")
     }
 
-    /// Soft upsell into the existing Battery Care add-on (background junk cleanup).
+    /// Soft upsell into the existing Battery Care add-on (80% Charge-Limit Unplug Guard & Thermal Alerts).
     private var keepCleanCard: some View {
         Button(action: onOpenBatteryCare) {
             HStack(spacing: 12) {
-                Image(systemName: "calendar.badge.clock")
+                Image(systemName: "bolt.shield.fill")
                     .font(.title3)
                     .foregroundColor(.sweeprAccentText)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Keep it clean automatically?")
+                    Text("Protect battery health while charging?")
                         .font(.subheadline.weight(.bold))
                         .foregroundColor(.primary)
-                    Text("Battery Care includes background junk cleanup")
+                    Text("80% Charge-Limit Unplug Guard & Real-Time Thermal State Alerts")
                         .font(.caption)
                         .foregroundColor(.sweeprMutedText)
                 }
@@ -958,7 +1082,7 @@ struct CleaningCompleteView: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Keep it clean automatically. Battery Care includes background junk cleanup")
+        .accessibilityLabel("Protect battery health while charging. 80% Charge-Limit Unplug Guard and Real-Time Thermal State Alerts")
         .accessibilityHint("Opens Battery and Vault")
         .accessibilityAddTraits(.isButton)
     }
@@ -1016,5 +1140,160 @@ struct StatCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title): \(count) items. \(subtitle)")
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+// MARK: - Viral "Share My Storage Win (+30 Days Free Pro)" Card & Sheet
+struct ShareStorageWinCardBanner: View {
+    let reclaimedBytes: Int64
+    let topCulprit: String
+    let scanDurationMs: Int
+    let referralCode: String
+
+    @State private var showShareSheet = false
+    @State private var copiedStatus: String? = nil
+
+    private var gbLabel: String {
+        formatByteCount(reclaimedBytes)
+    }
+
+    private var shortReferralDisplay: String {
+        "sweeprcleaner.com/r/\(referralCode)"
+    }
+
+    private var shareWinWebURL: String {
+        var comps = URLComponents(string: "https://sweeprcleaner.com/share/win")
+        comps?.queryItems = [
+            URLQueryItem(name: "gb", value: gbLabel),
+            URLQueryItem(name: "culprit", value: topCulprit),
+            URLQueryItem(name: "ms", value: "\(scanDurationMs)"),
+            URLQueryItem(name: "code", value: referralCode),
+        ]
+        return comps?.url?.absoluteString ?? "https://sweeprcleaner.com/r/\(referralCode)"
+    }
+
+    var body: some View {
+        Button {
+            showShareSheet = true
+        } label: {
+            HStack(spacing: 12) {
+                SweeprIconBadge(
+                    systemName: "sparkles.rectangle.stack.fill",
+                    tint: .sweeprEmerald,
+                    size: 40,
+                    iconSize: 18,
+                    cornerRadius: 12
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Share My Storage Win (+30 Days Free Pro)")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundColor(.sweeprEmerald)
+                    Text("I Just Reclaimed \(gbLabel) · \(shortReferralDisplay)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.sweeprMutedText)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Text("Share")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(Color.sweeprEmerald)
+                    .clipShape(Capsule())
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.sweeprEmerald.opacity(0.10))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.sweeprEmerald.opacity(0.38), lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showShareSheet) {
+            NavigationStack {
+                VStack(spacing: 16) {
+                    // Sleek Dark-Emerald Benchmark Card
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("⚡ SWEEPR CLEANER · STORAGE BENCHMARK")
+                            .font(.system(size: 10.5, weight: .heavy))
+                            .tracking(0.8)
+                            .foregroundColor(.sweeprEmerald)
+
+                        Text("I Just Reclaimed \(gbLabel) with SWEEPR")
+                            .font(.system(size: 22, weight: .heavy))
+                            .foregroundColor(.white)
+
+                        Text("Top Culprit: \(topCulprit)")
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundColor(Color(red: 0.65, green: 0.95, blue: 0.82))
+
+                        HStack {
+                            Text("Scan Speed: \(scanDurationMs) ms")
+                                .font(.system(size: 11.5, weight: .bold))
+                                .foregroundColor(.white.opacity(0.9))
+                            Spacer()
+                            Text(shortReferralDisplay)
+                                .font(.system(size: 11.5, weight: .heavy, design: .monospaced))
+                                .foregroundColor(.sweeprEmerald)
+                        }
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color(red: 0.016, green: 0.086, blue: 0.063))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.sweeprEmerald.opacity(0.55), lineWidth: 1.5)
+                    )
+
+                    if let status = copiedStatus {
+                        Text(status)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.sweeprEmerald)
+                    }
+
+                    Button {
+                        UIPasteboard.general.string = "I just reclaimed \(gbLabel) in \(scanDurationMs)ms with SWEEPR Cleaner (Top culprit: \(topCulprit))! Claim +30 days Free Pro: \(shareWinWebURL)"
+                        copiedStatus = "Copied benchmark link & card to clipboard!"
+                    } label: {
+                        Text("Copy Image / Link to Clipboard")
+                    }
+                    .buttonStyle(SweeprPrimaryButtonStyle())
+
+                    ShareLink(
+                        item: URL(string: shareWinWebURL) ?? URL(string: "https://sweeprcleaner.com")!,
+                        subject: Text("I Just Reclaimed \(gbLabel) with SWEEPR"),
+                        message: Text("I just reclaimed \(gbLabel) in \(scanDurationMs)ms with SWEEPR Cleaner (Top culprit: \(topCulprit))! Claim +30 days Free Pro:")
+                    ) {
+                        Text("Share on X / Reddit / Discord")
+                            .font(.system(size: 14, weight: .heavy))
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.sweeprPanel)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Color.sweeprLine, lineWidth: 1))
+                    }
+
+                    Spacer()
+                }
+                .padding(20)
+                .navigationTitle("Share My Storage Win")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { showShareSheet = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 }

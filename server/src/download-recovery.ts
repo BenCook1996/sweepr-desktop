@@ -4,8 +4,34 @@ import type { EmailDispatchResult } from "./email.js";
 
 export const A3_FLAG_AFTER_SEC = 30 * 60; // 30 minutes
 export const A3_EMAIL_AFTER_SEC = 2 * 3600; // 2 hours
+export const ATTRIBUTION_MATCH_WINDOW_SEC = 60 * 60; // 60 minutes
 export const SWEEPR_WINDOWS_EXE_SHA256 = "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA";
 export const SWEEPR_WINDOWS_MSI_SHA256 = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
+
+export function normalizeFingerprintIp(ip: string | null | undefined): string | null {
+  let norm = String(ip ?? "").trim().toLowerCase();
+  if (!norm || norm === "unknown") return null;
+  if (norm.startsWith("::ffff:")) norm = norm.slice(7);
+  if (norm === "::1" || norm === "0:0:0:0:0:0:0:1") norm = "127.0.0.1";
+  return norm;
+}
+
+export function computeIpOsFingerprint(
+  ip: string | null | undefined,
+  platform: string | null | undefined
+): string | null {
+  const normIp = normalizeFingerprintIp(ip);
+  if (!normIp) return null;
+  const rawOs = String(platform ?? "windows").trim().toLowerCase();
+  const normOs = rawOs.startsWith("win")
+    ? "windows"
+    : rawOs.startsWith("mac") || rawOs === "darwin"
+      ? "mac"
+      : rawOs.startsWith("lin")
+        ? "linux"
+        : rawOs;
+  return `${normIp}|${normOs}`;
+}
 
 export interface DownloadRecoverySession {
   attribution_id: string;
@@ -28,6 +54,9 @@ export interface DownloadRecoverySession {
     | "recovered_web_checkout"
     | "recovered_after_email"
     | "installed_within_30m";
+  client_ip?: string | null;
+  ip_os_fingerprint?: string | null;
+  matched_device_id?: string | null;
   metadata_json: string | null;
   updated_at: number;
 }
@@ -154,7 +183,68 @@ export async function dispatchTransactionalCustomerEmail(opts: {
     };
   }
 
-  // 1. Primary: nodemailer SMTP if configured
+  // 1. Primary: Resend HTTPS API (Port 443 - never blocked by cloud firewalls like Railway)
+  const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (resendApiKey) {
+    try {
+      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "SWEEPR Cleaner <support@sweeprcleaner.com>";
+      const resp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [recipient],
+          subject: opts.subject,
+          text: opts.textBody,
+          html: opts.htmlBody,
+        }),
+      });
+      const respData: any = await resp.json().catch(() => ({}));
+      if (resp.ok) {
+        return { ok: true, provider: "Resend HTTPS", id: respData.id, to: recipient, timestamp: new Date().toISOString() };
+      }
+    } catch {
+      // Fall through to SendGrid HTTPS -> Gmail SMTP
+    }
+  }
+
+  // 2. Secondary: SendGrid HTTPS API (Port 443)
+  const sendgridApiKey = process.env.SENDGRID_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (sendgridApiKey) {
+    try {
+      const rawFrom = process.env.EMAIL_FROM || "SWEEPR Cleaner <support@sweeprcleaner.com>";
+      const fromMatch = rawFrom.match(/^(.*?)<([^>]+)>$/);
+      const fromObj = fromMatch
+        ? { email: fromMatch[2].trim(), name: fromMatch[1].trim().replace(/^["']|["']$/g, "") || "SWEEPR Cleaner" }
+        : { email: rawFrom.trim() };
+      const resp = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sendgridApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: recipient }] }],
+          from: fromObj,
+          subject: opts.subject,
+          content: [
+            { type: "text/plain", value: opts.textBody },
+            ...(opts.htmlBody ? [{ type: "text/html", value: opts.htmlBody }] : []),
+          ],
+        }),
+      });
+      if (resp.ok) {
+        return { ok: true, provider: "SendGrid HTTPS", to: recipient, timestamp: new Date().toISOString() };
+      }
+    } catch {
+      // Fall through to Gmail SMTP
+    }
+  }
+
+  // 3. Fallback: Gmail SMTP via nodemailer
   const rawUser = process.env.SMTP_GMAIL_USER;
   const rawPass = process.env.SMTP_GMAIL_PASS;
   const user = rawUser?.trim().replace(/^["']|["']$/g, "");
@@ -177,34 +267,6 @@ export async function dispatchTransactionalCustomerEmail(opts: {
         html: opts.htmlBody,
       });
       return { ok: true, provider: "nodemailer-gmail-smtp", id: info?.messageId, to: recipient, timestamp: new Date().toISOString() };
-    } catch {
-      // Fall through to Resend HTTPS if SMTP port is blocked on cloud host
-    }
-  }
-
-  // 2. Cloud HTTPS Fallback: Resend API (Port 443)
-  const resendApiKey = process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "");
-  if (resendApiKey) {
-    try {
-      const from = process.env.EMAIL_FROM || process.env.RESEND_FROM || "SWEEPR Cleaner <onboarding@resend.dev>";
-      const resp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from,
-          to: [recipient],
-          subject: opts.subject,
-          text: opts.textBody,
-          html: opts.htmlBody,
-        }),
-      });
-      const respData: any = await resp.json().catch(() => ({}));
-      if (resp.ok) {
-        return { ok: true, provider: "Resend HTTPS", id: respData.id, to: recipient, timestamp: new Date().toISOString() };
-      }
     } catch {}
   }
 
@@ -230,6 +292,8 @@ export function recordInstallerDownloaded(
     installerFile?: string;
     accountId?: string | null;
     email?: string | null;
+    clientIp?: string | null;
+    ipOsFingerprint?: string | null;
     metadata?: Record<string, unknown> | null;
     nowSec?: number;
   }
@@ -238,6 +302,8 @@ export function recordInstallerDownloaded(
   const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
   const platform = (opts.platform || "windows").toLowerCase();
   const installerFile = opts.installerFile || (platform === "windows" ? "SWEEPRCleaner.exe" : "Sweepr_Setup");
+  const normIp = normalizeFingerprintIp(opts.clientIp);
+  const fingerprint = opts.ipOsFingerprint || computeIpOsFingerprint(normIp, platform);
 
   // Check if we already have an account email if accountId is known
   let resolvedEmail = opts.email ? String(opts.email).trim().toLowerCase() : null;
@@ -264,6 +330,8 @@ export function recordInstallerDownloaded(
              platform = ?,
              installer_file = ?,
              email_status = ?,
+             client_ip = COALESCE(?, client_ip),
+             ip_os_fingerprint = COALESCE(?, ip_os_fingerprint),
              metadata_json = COALESCE(?, metadata_json),
              updated_at = ?
          WHERE attribution_id = ?`
@@ -274,6 +342,8 @@ export function recordInstallerDownloaded(
         platform,
         installerFile,
         nextEmailStatus,
+        normIp,
+        fingerprint,
         opts.metadata ? JSON.stringify(opts.metadata) : null,
         nowSec,
         attrId
@@ -283,8 +353,8 @@ export function recordInstallerDownloaded(
       .prepare(
         `INSERT INTO download_recovery_sessions (
            attribution_id, account_id, email, platform, installer_file,
-           downloaded_at, email_status, recovery_outcome, metadata_json, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?)`
+           downloaded_at, email_status, recovery_outcome, client_ip, ip_os_fingerprint, metadata_json, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?)`
       )
       .run(
         attrId,
@@ -293,6 +363,8 @@ export function recordInstallerDownloaded(
         platform,
         installerFile,
         nowSec,
+        normIp,
+        fingerprint,
         opts.metadata ? JSON.stringify(opts.metadata) : null,
         nowSec
       );
@@ -338,6 +410,15 @@ export function associateCheckoutLeadWithRecovery(
         .run(email, opts.accountId ?? null, nextEmailStatus, nowSec, attrId);
       return;
     }
+    // Pre-seed the recovery session for this attribution_id so A3 can email at T+30m/T+2h
+    repo.db
+      .prepare(
+        `INSERT INTO download_recovery_sessions (
+           attribution_id, account_id, email, platform, installer_file,
+           downloaded_at, email_status, recovery_outcome, metadata_json, updated_at
+         ) VALUES (?, ?, ?, 'windows', 'SWEEPRCleaner.exe', ?, 'pending', 'pending', NULL, ?)`
+      )
+      .run(attrId, opts.accountId ?? null, email, nowSec, nowSec);
   }
 
   // Also enrich the most recent un-installed Windows download session within the last 24h if account_id matches
@@ -382,6 +463,10 @@ export function recordAppInstalledForRecovery(
     attributionId?: string | null;
     accountId?: string | null;
     email?: string | null;
+    deviceId?: string | null;
+    clientIp?: string | null;
+    platform?: string | null;
+    ipOsFingerprint?: string | null;
     source?: string;
     nowSec?: number;
     allowRecentWindowsFallback?: boolean;
@@ -389,12 +474,33 @@ export function recordAppInstalledForRecovery(
 ): DownloadRecoverySession | null {
   const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
   const attrId = sanitizeAttributionId(opts.attributionId);
+  const deviceId = String(opts.deviceId ?? "").trim().slice(0, 64) || null;
+  const fingerprint =
+    opts.ipOsFingerprint || computeIpOsFingerprint(opts.clientIp, opts.platform || "windows");
   let session: DownloadRecoverySession | undefined;
 
   if (attrId) {
     session = repo.db
       .prepare("SELECT * FROM download_recovery_sessions WHERE attribution_id = ?")
       .get(attrId) as DownloadRecoverySession | undefined;
+  }
+  if (!session && deviceId) {
+    session = repo.db
+      .prepare(
+        "SELECT * FROM download_recovery_sessions WHERE matched_device_id = ? ORDER BY downloaded_at DESC LIMIT 1"
+      )
+      .get(deviceId) as DownloadRecoverySession | undefined;
+  }
+  // 60-minute IP+OS fingerprint attribution match window
+  if (!session && fingerprint) {
+    session = repo.db
+      .prepare(
+        `SELECT * FROM download_recovery_sessions
+         WHERE ip_os_fingerprint = ? AND downloaded_at >= ?
+         ORDER BY CASE WHEN installed_at IS NULL THEN 0 ELSE 1 END ASC, downloaded_at DESC
+         LIMIT 1`
+      )
+      .get(fingerprint, nowSec - ATTRIBUTION_MATCH_WINDOW_SEC) as DownloadRecoverySession | undefined;
   }
   if (!session && opts.accountId) {
     session = repo.db
@@ -415,7 +521,7 @@ export function recordAppInstalledForRecovery(
       .prepare(
         "SELECT * FROM download_recovery_sessions WHERE installed_at IS NULL AND platform = 'windows' AND downloaded_at >= ? ORDER BY downloaded_at DESC LIMIT 1"
       )
-      .get(nowSec - 86400) as DownloadRecoverySession | undefined;
+      .get(nowSec - ATTRIBUTION_MATCH_WINDOW_SEC) as DownloadRecoverySession | undefined;
   }
 
   if (!session) return null;
@@ -433,15 +539,28 @@ export function recordAppInstalledForRecovery(
     : "installed_within_30m";
 
   const nextEmailStatus = session.email_status === "sent" ? "sent" : "skipped_installed";
+  const wasAlreadyInstalled = session.installed_at != null;
+
+  let mergedMetaJson = session.metadata_json;
+  try {
+    const parsedMeta = session.metadata_json ? JSON.parse(session.metadata_json) : {};
+    if (deviceId) parsedMeta.matched_device_id = deviceId;
+    if (fingerprint) parsedMeta.ip_os_fingerprint = fingerprint;
+    parsedMeta.matched_source = opts.source || "app_installed";
+    mergedMetaJson = JSON.stringify(parsedMeta);
+  } catch {}
 
   repo.db
     .prepare(
       `UPDATE download_recovery_sessions
        SET installed_at = COALESCE(installed_at, ?),
-           account_id = COALESCE(?, account_id),
-           email = COALESCE(?, email),
+           account_id = COALESCE(account_id, ?),
+           email = COALESCE(email, ?),
+           matched_device_id = COALESCE(?, matched_device_id),
+           ip_os_fingerprint = COALESCE(ip_os_fingerprint, ?),
            email_status = ?,
            recovery_outcome = ?,
+           metadata_json = COALESCE(?, metadata_json),
            updated_at = ?
        WHERE attribution_id = ?`
     )
@@ -449,21 +568,33 @@ export function recordAppInstalledForRecovery(
       nowSec,
       opts.accountId ?? null,
       opts.email ? opts.email.trim().toLowerCase() : null,
+      deviceId,
+      fingerprint,
       nextEmailStatus,
       outcome,
+      mergedMetaJson,
       nowSec,
       session.attribution_id
     );
 
-  if (outcome === "recovered_install" || outcome === "recovered_after_email") {
+  // Link the desktop device to the web visitor's account / funnel session when both are known
+  const linkedAccountId = session.account_id || opts.accountId || null;
+  if (linkedAccountId && deviceId && /^[a-f0-9]{64}$/i.test(deviceId)) {
+    try {
+      repo.touchDevice(linkedAccountId, deviceId.toLowerCase(), "pc", 5, 5);
+    } catch {}
+  }
+
+  if (!wasAlreadyInstalled && (outcome === "recovered_install" || outcome === "recovered_after_email")) {
     repo.recordAnalyticsEvent({
       event_name: "smartscreen_recovery_completed",
       platform: session.platform,
-      account_id: opts.accountId ?? session.account_id ?? null,
+      account_id: linkedAccountId,
       metadata: {
         attribution_id: session.attribution_id,
         recovery_outcome: outcome,
         source: opts.source || "app_installed",
+        device_id: deviceId,
         elapsed_sec: nowSec - session.downloaded_at,
       },
     });
@@ -920,10 +1051,10 @@ export async function evaluateHighIntentScanAndCheckoutAbandonment(
     const elapsed = nowSec - triggerTs;
     // Must be at least 60 minutes after scan/paywall/checkout and have >= 1 GB found (or explicit checkout_started)
     if (elapsed < 3600) continue;
-    const reclaimableGb = Math.max(
-      1.2,
-      Math.round((st.reclaimableBytes / (1024 * 1024 * 1024)) * 10) / 10
-    );
+    const reclaimableGb =
+      st.reclaimableBytes > 0
+        ? Math.round((st.reclaimableBytes / (1024 * 1024 * 1024)) * 10) / 10
+        : 0;
     if (st.reclaimableBytes < 500 * 1024 * 1024 && !st.lastPaywallOrCheckoutAt) continue;
 
     const acc = repo.accountById(accountId);
@@ -943,12 +1074,17 @@ export async function evaluateHighIntentScanAndCheckoutAbandonment(
       .get(accountId, nowSec - 14 * 86400) as { id: number } | undefined;
     if (alreadySent) continue;
 
+    const hasMeasuredScanBytes = reclaimableGb > 0;
     const orderUrl = `https://sweeprcleaner.com/order?plan=annual&coupon=SCAN5GB20&email=${encodeURIComponent(email)}&utm_source=scan_abandon_recovery`;
-    const subject = `Your SWEEPR scan found ${reclaimableGb} GB of reclaimable cache — finish cleaning in 1 click (20% Off)`;
+    const subject = hasMeasuredScanBytes
+      ? `Your SWEEPR scan found ${reclaimableGb} GB of reclaimable cache — finish cleaning in 1 click (20% Off)`
+      : `Finish setting up SWEEPR Cleaner Pro — 1-click PC cache cleanup (20% Off)`;
     const textBody = [
       `Hi ${acc?.name || "there"},`,
       "",
-      `Your recent SWEEPR Cleaner scan detected ${reclaimableGb} GB of safe-to-delete cache and temporary files on your PC.`,
+      hasMeasuredScanBytes
+        ? `Your recent SWEEPR Cleaner scan detected ${reclaimableGb} GB of safe-to-delete cache and temporary files on your PC.`
+        : `You recently explored SWEEPR Cleaner Pro to clear safe-to-delete system caches, shader bloat, and temporary files on your PC.`,
       "",
       `You can unlock 1-Click Cleanup + 7-Day Undo Quarantine across up to 5 devices here:`,
       orderUrl,
@@ -958,15 +1094,27 @@ export async function evaluateHighIntentScanAndCheckoutAbandonment(
     const htmlBody = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;color:#111613;">
         <div style="font-size:12px;font-weight:800;color:#0d6847;text-transform:uppercase;margin-bottom:6px;">
-          SWEEPR CLEANER &bull; SCAN RESULTS SAVED
+          SWEEPR CLEANER &bull; ${hasMeasuredScanBytes ? "SCAN RESULTS SAVED" : "PRO UPGRADE SAVED"}
         </div>
-        <h2 style="font-size:21px;margin:0 0 12px;">Your PC Scan Found ${reclaimableGb} GB Ready to Reclaim</h2>
+        <h2 style="font-size:21px;margin:0 0 12px;">${
+          hasMeasuredScanBytes
+            ? `Your PC Scan Found ${reclaimableGb} GB Ready to Reclaim`
+            : "Finish Cleaning Your PC in 1 Click"
+        }</h2>
         <p style="font-size:14px;color:#4b554e;line-height:1.55;">
-          Your recent SWEEPR Cleaner scan identified <strong>${reclaimableGb} GB</strong> of orphaned caches, shader files, and updater leftovers that are 100% safe to remove.
+          ${
+            hasMeasuredScanBytes
+              ? `Your recent SWEEPR Cleaner scan identified <strong>${reclaimableGb} GB</strong> of orphaned caches, shader files, and updater leftovers that are 100% safe to remove.`
+              : "Complete your SWEEPR Cleaner Pro upgrade to safely remove orphaned caches, shader files, and updater leftovers in 1 click."
+          }
         </p>
         <div style="margin:20px 0;text-align:center;">
           <a href="${orderUrl}" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
-            Reclaim ${reclaimableGb} GB in 1 Click (5-Device Pro) &rarr;
+            ${
+              hasMeasuredScanBytes
+                ? `Reclaim ${reclaimableGb} GB in 1 Click (5-Device Pro) &rarr;`
+                : "Unlock 1-Click Cleanup (5-Device Pro) &rarr;"
+            }
           </a>
         </div>
         <p style="font-size:12px;color:#64748b;text-align:center;">
@@ -987,7 +1135,9 @@ export async function evaluateHighIntentScanAndCheckoutAbandonment(
       repo.addActivity({
         account_id: accountId,
         type: "high_intent_checkout_recovery_sent",
-        title: `High-Intent Scan/Checkout Recovery Sent (${reclaimableGb} GB found)`,
+        title: hasMeasuredScanBytes
+          ? `High-Intent Scan/Checkout Recovery Sent (${reclaimableGb} GB found)`
+          : "High-Intent Checkout Recovery Sent (qualitative — 0 B telemetry)",
         description: subject,
         actor: "a10_conversion_recovery",
         metadata: {
@@ -1166,7 +1316,8 @@ export async function dispatchChurnWinbackEmail(
 
   const cleanedBytes = Number(acc?.total_bytes_cleaned ?? 0);
   const cleanedGb =
-    cleanedBytes > 0 ? Math.max(0.5, Math.round((cleanedBytes / (1024 * 1024 * 1024)) * 10) / 10) : 14.8;
+    cleanedBytes > 0 ? Math.round((cleanedBytes / (1024 * 1024 * 1024)) * 10) / 10 : 0;
+  const hasMeasuredCleanBytes = cleanedGb > 0;
   const stay30Url = `https://sweeprcleaner.com/order?plan=annual&coupon=STAY30&email=${encodeURIComponent(email)}&utm_source=churn_winback`;
   const portalUrl = `https://sweeprcleaner.com/login?email=${encodeURIComponent(email)}&utm_source=churn_winback_free30d`;
 
@@ -1175,7 +1326,9 @@ export async function dispatchChurnWinbackEmail(
     `Hi ${acc?.name || "Customer"},`,
     "",
     `Your SWEEPR Cleaner Pro subscription has been updated (${opts.reason === "cancel_at_period_end" ? "scheduled to end at period close" : "canceled"}).`,
-    `To date, SWEEPR Cleaner has helped keep your PC clean (${cleanedGb} GB of cache & shader bloat managed).`,
+    hasMeasuredCleanBytes
+      ? `To date, SWEEPR Cleaner has helped keep your PC clean (${cleanedGb} GB of cache & shader bloat managed).`
+      : `To date, SWEEPR Cleaner has helped keep your PC's system caches, shader directories, and temporary storage clean.`,
     "",
     `If you'd like to keep automatic 5-device protection active, choose either loyalty option below:`,
     `1. Claim +30 Days of SWEEPR Pro 100% Free in your Customer Portal: ${portalUrl}`,
@@ -1191,7 +1344,11 @@ export async function dispatchChurnWinbackEmail(
     </div>
     <h2 style="font-size:20px;margin:0 0 12px;">Claim +30 Days Free Pro or Save 30% (Code: STAY30)</h2>
     <p style="font-size:14px;color:#4b554e;line-height:1.55;">
-      We've confirmed your cancellation request. With <strong>${cleanedGb} GB</strong> of cache &amp; shader bloat managed on your account, we'd love to keep protecting your SSDs with either loyalty option:
+      ${
+        hasMeasuredCleanBytes
+          ? `We've confirmed your cancellation request. With <strong>${cleanedGb} GB</strong> of cache &amp; shader bloat managed on your account, we'd love to keep protecting your SSDs with either loyalty option:`
+          : `We've confirmed your cancellation request. To keep automatic cache, shader, and temporary storage cleanup active across your PCs, we'd love to offer you either loyalty option:`
+      }
     </p>
     <div style="margin:20px 0;display:flex;flex-direction:column;gap:10px;text-align:center;">
       <a href="${escapeHtml(stay30Url)}" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">

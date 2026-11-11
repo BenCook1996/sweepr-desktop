@@ -59,15 +59,30 @@ struct SweeprApp: App {
             return
         }
         #if DEBUG
-        Purchases.configure(withAPIKey: apiKey)
+        let linked = AccountService.loadAccount()
+        if !linked.accountId.isEmpty {
+            Purchases.configure(withAPIKey: apiKey, appUserID: linked.accountId)
+        } else {
+            Purchases.configure(withAPIKey: apiKey)
+        }
         #else
         guard apiKey.hasPrefix("appl_") else {
             NSLog("Sweepr: Release build requires a production App Store RevenueCat API key (appl_...) – purchases are disabled.")
             return
         }
-        Purchases.configure(withAPIKey: apiKey)
+        let linked = AccountService.loadAccount()
+        if !linked.accountId.isEmpty {
+            Purchases.configure(withAPIKey: apiKey, appUserID: linked.accountId)
+        } else {
+            Purchases.configure(withAPIKey: apiKey)
+        }
         #endif
+        guard Purchases.isConfigured else { return }
         Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])
+        AccountService.syncRevenueCatIdentity(accountId: linked.accountId, email: linked.email)
+        Task {
+            _ = await AccountService.ensureDeviceRegistered(current: linked)
+        }
     }
 
     private var activeTheme: SweeprThemeMode {

@@ -439,4 +439,20 @@
         <item quantity="one">%d alter Kalendertermin gelöscht</item>
         <item quantity="other">%d alte Kalendertermine gelöscht</item>
     </plurals>
+
+    <string name="action_continue">Weiter</string>
+    <string name="dashboard_limited_access_banner">%1$d ausgewählte Fotos gescannt — Auswahl verwalten</string>
+    <string name="media_disclosure_title">Hinweis zum Foto- &amp; Videozugriff</string>
+    <string name="media_disclosure_body">SWEEPR Cleaner fordert Zugriff auf Ihre Fotos, Videos und Standort-Metadaten ausschließlich an, um lokal auf Ihrem Gerät nach Duplikaten, ähnlichen Fotos, unscharfen Aufnahmen, Screenshots und großen Dateien zu suchen.\n\n100 % des Scans erfolgen offline auf Ihrem Smartphone — Ihre Fotos, Videos und GPS-Daten werden niemals auf Server hochgeladen.</string>
+    <string name="contacts_disclosure_title">Hinweis zum Kontakt- &amp; Kalenderzugriff</string>
+    <string name="contacts_disclosure_body">SWEEPR Cleaner fordert Zugriff auf Ihre Kontakte und Ihren Kalender ausschließlich an, um lokal auf Ihrem Gerät doppelte Kontakte zusammenzuführen oder abgelaufene Termine zu bereinigen.\n\nIhre Adressbuch- und Kalenderdaten verlassen niemals Ihr Smartphone.</string>
+    <string name="deeplink_approve_title">Desktop-Anmeldung bestätigen?</string>
+    <string name="deeplink_link_title">SWEEPR-Konto verknüpfen?</string>
+    <string name="deeplink_approve_body">Desktop-Anmeldung bestätigen? Ein Computer fordert Zugriff auf Ihr SWEEPR Pro-Abo an.</string>
+    <string name="deeplink_link_body">SWEEPR-Konto verknüpfen? Möchten Sie dieses Gerät über den geöffneten Link verknüpfen?</string>
+    <string name="deeplink_approve_confirm">Bestätigen</string>
+    <string name="deeplink_link_confirm">Gerät verknüpfen</string>
+    <string name="update_required_title">Update erforderlich (v%1$s)</string>
+    <string name="update_required_default_body">Ein wichtiges Sicherheits- und Stabilitätsupdate ist erforderlich, um SWEEPR Cleaner weiter zu nutzen.</string>
+    <string name="update_required_cta">Bei Google Play aktualisieren</string>
 </resources>

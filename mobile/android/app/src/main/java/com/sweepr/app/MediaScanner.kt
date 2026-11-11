@@ -14,7 +14,9 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.security.MessageDigest
+import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
+import kotlinx.coroutines.ensureActive
 
 enum class MediaCategory {
     DUPLICATES,
@@ -126,9 +128,12 @@ object MediaScanner {
     /** Threshold for Large Media / Downloads category (50 MB). */
     const val LARGE_FILE_THRESHOLD_BYTES = 50L * 1024L * 1024L
 
-    fun scan(context: Context): MediaScanResult {
+    suspend fun scan(context: Context): MediaScanResult {
+        coroutineContext.ensureActive()
         val rawImages = query(context, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, isVideo = false, trashedOnly = false)
+        coroutineContext.ensureActive()
         val videos = query(context, MediaStore.Video.Media.EXTERNAL_CONTENT_URI, isVideo = true, trashedOnly = false)
+        coroutineContext.ensureActive()
         val trashedItems = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             query(context, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, isVideo = false, trashedOnly = true) +
                 query(context, MediaStore.Video.Media.EXTERNAL_CONTENT_URI, isVideo = true, trashedOnly = true)
@@ -140,14 +145,17 @@ object MediaScanner {
 
         // Enrich camera photos with on-device perceptual 64-bit dHash + Laplacian sharpness + resolution score
         val photos = rawPhotos.mapIndexed { index, item ->
+            coroutineContext.ensureActive()
             if (index < MAX_PERCEPTUAL_PHOTOS) enrichWithPerceptualMetrics(context, item) else item
         }
         val images = photos + screenshots
         val allMedia = (images + videos).sortedByDescending { it.dateTaken }
 
+        coroutineContext.ensureActive()
         val duplicateGroups = findExactDuplicates(context, photos) + findExactDuplicates(context, videos)
         val inDuplicateGroup = duplicateGroups.flatMap { g -> g.items.map { it.uri } }.toSet()
         val nonDuplicatePhotos = photos.filter { it.uri !in inDuplicateGroup }
+        coroutineContext.ensureActive()
         val similarGroups = findSimilar(nonDuplicatePhotos)
         val inSimilarExtras = similarGroups.flatMap { g -> g.extras.map { it.uri } }.toSet()
 
@@ -197,11 +205,15 @@ object MediaScanner {
         }
     }
 
-    private fun enrichWithPerceptualMetrics(context: Context, item: MediaItem): MediaItem {
+    private suspend fun enrichWithPerceptualMetrics(context: Context, item: MediaItem): MediaItem {
+        coroutineContext.ensureActive()
         val hasGps = PhotoOptimizer.hasGpsMetadata(context, item.uri)
+        coroutineContext.ensureActive()
         val bmp = loadSmallBitmap(context, item.uri) ?: return item.copy(hasGps = hasGps)
         return try {
+            coroutineContext.ensureActive()
             val hash = computeDHash(bmp)
+            coroutineContext.ensureActive()
             val sharp = computeLaplacianSharpness(bmp)
             val megapixels = ((item.width.toLong().coerceAtLeast(1L) * item.height.toLong().coerceAtLeast(1L)).toDouble()) / 1_000_000.0
             // Combine sharpness with resolution bonus so the sharpest, highest-resolution frame wins Best Shot
@@ -441,6 +453,7 @@ object MediaScanner {
     /**
      * Groups visually similar photos (64-bit dHash Hamming distance <= 8) and ranks each group
      * by [MediaItem.qualityScore] (sharpness + resolution) so the first item is the "Best Shot".
+     * Never groups two photos when either item has a null dHash.
      */
     private fun findSimilar(photos: List<MediaItem>): List<MediaGroup> {
         val groups = mutableListOf<MediaGroup>()
@@ -450,30 +463,23 @@ object MediaScanner {
         for (i in chronological.indices) {
             val seed = chronological[i]
             if (seed.uri in assigned) continue
+            val seedHash = seed.dHash ?: continue
             val cluster = mutableListOf(seed)
             assigned += seed.uri
 
             for (j in (i + 1) until chronological.size) {
                 val candidate = chronological[j]
                 if (candidate.uri in assigned) continue
+                val candHash = candidate.dHash ?: continue
 
                 val dt = abs(candidate.dateTaken - cluster.last().dateTaken)
-                val seedHash = seed.dHash
-                val candHash = candidate.dHash
-
-                val visuallySimilar = if (seedHash != null && candHash != null) {
-                    val dist = hammingDistance(seedHash, candHash)
-                    (dist <= DHASH_SIMILAR_DISTANCE && dt <= SIMILAR_WINDOW_MS) ||
-                        dist <= DHASH_NEAR_IDENTICAL_DISTANCE
-                } else {
-                    dt <= 4_000L && sameShape(seed, candidate)
-                }
+                val dist = hammingDistance(seedHash, candHash)
+                val visuallySimilar = (dist <= DHASH_SIMILAR_DISTANCE && dt <= SIMILAR_WINDOW_MS) ||
+                    dist <= DHASH_NEAR_IDENTICAL_DISTANCE
 
                 if (visuallySimilar) {
                     cluster += candidate
                     assigned += candidate.uri
-                } else if (dt > SIMILAR_WINDOW_MS && (seedHash == null || candHash == null)) {
-                    break
                 }
             }
 
@@ -489,10 +495,5 @@ object MediaScanner {
         }
 
         return groups.sortedByDescending { it.keep.dateTaken }
-    }
-
-    private fun sameShape(a: MediaItem, b: MediaItem): Boolean {
-        if (a.width == 0 || a.height == 0 || b.width == 0 || b.height == 0) return true
-        return (a.width == b.width && a.height == b.height) || (a.width == b.height && a.height == b.width)
     }
 }

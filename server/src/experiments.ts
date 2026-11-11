@@ -38,15 +38,15 @@ export const ACTIVE_EXPERIMENTS: Record<ExperimentId, ExperimentDefinition> = {
     id: "paywall_anchor_v1",
     name: "Checkout & In-App Paywall Price Anchoring",
     description:
-      "A/B test comparing standard Annual-Default anchoring (Variant A) vs. Per-Month Equivalent (£2.49/mo) + Monthly Comparison Toggle anchoring (Variant B).",
+      "A/B test comparing standard Annual-Default anchoring (Variant A) vs. Per-Month Equivalent (£4.16/mo) + Monthly Comparison Toggle anchoring (Variant B).",
     variants: {
       A: {
-        label: "Annual Default Anchor (£29.99/yr)",
-        copy: "Annual Pro — £29.99/yr (Covers 5 Devices)",
+        label: "Annual Default Anchor (£49.99/yr)",
+        copy: "Annual Pro — £49.99/yr (Covers 5 Devices)",
       },
       B: {
-        label: "Per-Month Breakdown Anchor (£2.49/mo billed annually vs £4.99/mo)",
-        copy: "Annual Pro — Just £2.49/mo (Save 50% vs Monthly • 5 Devices)",
+        label: "Per-Month Breakdown Anchor (£4.16/mo billed annually vs £9.99/mo)",
+        copy: "Annual Pro — Just £4.16/mo (Save 58% vs Monthly • 5 Devices)",
       },
     },
   },

@@ -490,4 +490,20 @@
         <item quantity="many">%d anciens événements supprimés</item>
         <item quantity="other">%d anciens événements supprimés</item>
     </plurals>
+
+    <string name="action_continue">Continuer</string>
+    <string name="dashboard_limited_access_banner">Analyse de %1$d photos sélectionnées — Gérer la sélection</string>
+    <string name="media_disclosure_title">Information sur l\'accès aux photos et vidéos</string>
+    <string name="media_disclosure_body">SWEEPR Cleaner demande l\'accès à vos photos, vidéos et métadonnées de localisation uniquement pour détecter les doublons, photos similaires, photos floues, captures d\'écran et fichiers volumineux localement sur votre appareil.\n\n100 % de l\'analyse s\'effectue hors ligne sur votre téléphone — vos photos, vidéos et données GPS ne sont jamais envoyées sur un serveur.</string>
+    <string name="contacts_disclosure_title">Information sur l\'accès aux contacts et au calendrier</string>
+    <string name="contacts_disclosure_body">SWEEPR Cleaner demande l\'accès à vos contacts et à votre calendrier uniquement pour détecter et fusionner les doublons ou supprimer les anciens événements localement sur votre appareil.\n\nVos données de carnet d\'adresses et de calendrier ne quittent jamais votre téléphone.</string>
+    <string name="deeplink_approve_title">Approuver la connexion sur ordinateur ?</string>
+    <string name="deeplink_link_title">Associer le compte SWEEPR ?</string>
+    <string name="deeplink_approve_body">Approuver la connexion sur ordinateur ? Un ordinateur demande l\'accès à votre abonnement SWEEPR Pro.</string>
+    <string name="deeplink_link_body">Associer le compte SWEEPR ? Voulez-vous associer cet appareil via le lien ouvert ?</string>
+    <string name="deeplink_approve_confirm">Approuver</string>
+    <string name="deeplink_link_confirm">Associer l\'appareil</string>
+    <string name="update_required_title">Mise à jour requise (v%1$s)</string>
+    <string name="update_required_default_body">Une mise à jour critique de sécurité et de stabilité est requise pour continuer à utiliser SWEEPR Cleaner.</string>
+    <string name="update_required_cta">Mettre à jour sur Google Play</string>
 </resources>

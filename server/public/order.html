@@ -455,13 +455,19 @@
 
           <!-- 2. Included Free Everyday Features (O1 2x2 Grid) -->
           <div class="bg-[#eff1ee] border border-[#e5e7e4] rounded-xl p-4">
-            <div class="text-xs font-bold text-[#3f4743] mb-2.5">Included in your plan</div>
+            <div class="text-xs font-bold text-[#3f4743] mb-2.5">Included in your Monthly, 6-Month, or Annual plan</div>
             <ul class="grid grid-cols-2 gap-2.5 text-xs font-semibold text-[#0c0f0e]">
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> Safe Junk &amp; Temp File Cleaner</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> Duplicate Photo &amp; File Finder</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> Slow Startup Speed Booster</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 30-Day Undo Recovery Box</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 377 'Safe-to-Delete?' Cache Rules</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 7-Day 1-Click Quarantine Rollback</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 6.5 MB Native Rust (&lt;10s Scan)</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 5 Devices (Win 11, Mac, iOS, Android)</li>
             </ul>
+            <div class="mt-3 pt-3 border-t border-[#dce0db] space-y-1.5 text-[11px] text-[#3f4743] leading-snug">
+              <div class="font-bold text-[#0c0f0e]">Why Engineers &amp; Power Users Choose Sweepr Over Free Scripts &amp; Legacy Cleaners:</div>
+              <div><strong class="text-[#073825]">vs. BleachBit / Pearcleaner / OnyX:</strong> Plain-English 'Safe-to-Delete?' explanations + 7-Day 1-Click Quarantine Rollback (zero risk to saved games or logins).</div>
+              <div><strong class="text-[#073825]">vs. CleanMyMac X ($39.95/yr Mac-only):</strong> Cross-platform 5-device license (Windows 11, macOS, iOS, Android) + gaming shader, ComfyUI/Ollama AI model &amp; WinSxS/AppData intelligence.</div>
+              <div><strong class="text-[#073825]">vs. CCleaner Pro:</strong> 6.5 MB native Rust binary with zero background adware daemons and zero personal filename telemetry.</div>
+            </div>
           </div>
 
           <!-- 3. O1 Full-Row Add-On Cards (+£9.99/yr each) -->
@@ -514,7 +520,7 @@
           </div>
 
           <!-- 4. O1 Live Itemized Receipt Summary -->
-          <div class="bg-[#eff1ee] rounded-xl p-4 border border-[#e5e7e4] space-y-2.5 text-xs sm:text-sm">
+          <div class="bg-[#eff1ee] rounded-2xl p-4 space-y-2.5 text-xs sm:text-sm">
             <div class="flex items-center justify-between text-[#3f4743]">
               <span id="summaryPlanTitle">SWEEPR Cleaner Pro (Annual Plan)</span>
               <span id="summaryPlanPrice" class="font-bold text-[#0c0f0e] tabular-nums">£49.99/year</span>
@@ -542,7 +548,7 @@
 
             <div id="discountSummaryRow" class="hidden flex flex-col gap-0.5 text-[#0d6847] font-medium border-t border-[#e5e7e4] pt-2">
               <div class="flex items-center justify-between text-xs">
-                <span>Introductory 1st-Month Discount (<strong id="discountSaveStrong">Save £8.00</strong>)</span>
+                <span id="discountSummaryLabel"><span id="discountSummaryTitleText">Introductory 1st-Month Discount</span> (<strong id="discountSaveStrong">Save £8.00</strong>)</span>
                 <span id="discountAmountMinus" class="font-bold">- £8.00</span>
               </div>
               <div id="discountNoteText" class="text-[11px] text-[#505854] font-normal">
@@ -722,7 +728,7 @@
           </div>
 
           <!-- Interactive 3-Option Payment Logo-Bar Switcher (Branded Vector Icons) -->
-          <div id="paymentLogoStripBar" class="grid grid-cols-3 gap-1.5 bg-gray-100/90 p-1.5 rounded-xl border border-gray-200" role="tablist" aria-label="Select payment method">
+          <div id="paymentLogoStripBar" class="grid grid-cols-3 gap-1.5 bg-gray-100/90 p-1.5 rounded-[14px] border border-gray-200" role="tablist" aria-label="Select payment method">
             <!-- 1. Card: Visa, Mastercard, Amex & Card Label -->
             <button type="button" data-logo-method="card" onclick="selectPaymentLogoMethod('card')" class="h-12 px-2 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-white text-gray-900 shadow-xs border-2 border-emerald-500 overflow-hidden" aria-label="Pay by Card (Visa, Mastercard, Amex)">
               <span class="inline-flex items-center justify-center gap-1 whitespace-nowrap leading-none">
@@ -1067,6 +1073,15 @@
     let isDiscountApplied = false;
     let isBatteryAddonSelected = false;
     let isCloudVaultAddonSelected = false;
+    const rawUrlCoupon = (new URLSearchParams(window.location.search).get('coupon') || '').trim().toUpperCase();
+    const COUPON_DISCOUNTS = {
+      SCAN5GB20: 20,
+      STAY30: 30,
+      GOTD50: 50,
+      SWEEPR50: 50
+    };
+    const activeCoupon = Object.prototype.hasOwnProperty.call(COUPON_DISCOUNTS, rawUrlCoupon) ? rawUrlCoupon : '';
+    const activeCouponPct = activeCoupon ? COUPON_DISCOUNTS[activeCoupon] : 0;
     let stripe = null;
     let elements = null;
     let cardElements = null;
@@ -1171,11 +1186,24 @@
       return pos === 'suffix' ? `${numStr}${symbol}` : `${symbol}${numStr}`;
     }
 
-    function getAmountTodayPence() {
-      const base = getBasePlanPence(selectedPlan);
-      const batteryAddon = isBatteryAddonSelected ? getBatteryAddonPence(selectedPlan) : 0;
-      const cloudAddon = isCloudVaultAddonSelected ? getBatteryAddonPence(selectedPlan) : 0;
+    function getSubtotalBeforeCouponPence(plan = selectedPlan) {
+      const p = checkoutConfig && checkoutConfig.pricing;
+      const base = activeCouponPct > 0
+        ? (plan === 'annual' ? (p?.annualAmount ?? 4999) : plan === 'six_month' ? (p?.sixMonthAmount ?? 3899) : (p?.monthlyAmount ?? 999))
+        : getBasePlanPence(plan);
+      const batteryAddon = isBatteryAddonSelected ? getBatteryAddonPence(plan) : 0;
+      const cloudAddon = isCloudVaultAddonSelected ? getBatteryAddonPence(plan) : 0;
       return base + batteryAddon + cloudAddon;
+    }
+
+    function getCouponDiscountPence(plan = selectedPlan) {
+      if (!activeCouponPct) return 0;
+      return Math.round(getSubtotalBeforeCouponPence(plan) * (activeCouponPct / 100));
+    }
+
+    function getAmountTodayPence() {
+      const subtotal = getSubtotalBeforeCouponPence(selectedPlan);
+      return Math.max(0, subtotal - getCouponDiscountPence(selectedPlan));
     }
 
     function getSelectedAddonsList() {
@@ -1319,15 +1347,19 @@
       const modalRegularStrikePrice = document.getElementById('modalRegularStrikePrice');
       const modalRenewMonthlyPrice = document.getElementById('modalRenewMonthlyPrice');
       const modalSavingsNote = document.getElementById('modalSavingsNote');
+      const discountSummaryTitleText = document.getElementById('discountSummaryTitleText');
       const discountSaveStrong = document.getElementById('discountSaveStrong');
       const discountAmountMinus = document.getElementById('discountAmountMinus');
+      const discountNoteText = document.getElementById('discountNoteText');
       if (modalIntroPriceText) modalIntroPriceText.textContent = introFmt;
       if (modalIntroBigPrice) modalIntroBigPrice.textContent = introFmt;
       if (modalRegularStrikePrice) modalRegularStrikePrice.textContent = `Regular ${monthlyFmt}`;
       if (modalRenewMonthlyPrice) modalRenewMonthlyPrice.textContent = `${monthlyFmt}/month`;
       if (modalSavingsNote) modalSavingsNote.textContent = `Introductory ${introSavFmt} savings applies strictly to month 1. Auto-renews at standard ${monthlyFmt}/month unless cancelled.`;
+      if (discountSummaryTitleText) discountSummaryTitleText.textContent = 'Introductory 1st-Month Discount';
       if (discountSaveStrong) discountSaveStrong.textContent = `Save ${introSavFmt}`;
       if (discountAmountMinus) discountAmountMinus.textContent = `- ${introSavFmt}`;
+      if (discountNoteText) discountNoteText.textContent = 'Discount applies strictly to month 1.';
 
       const productPriceTop = document.getElementById('productPriceTop');
       const productPriceSub = document.getElementById('productPriceSub');
@@ -1453,6 +1485,30 @@
         }
       }
 
+      if (activeCouponPct > 0) {
+        const couponDiscountFmt = formatLocalAmount(getCouponDiscountPence(plan));
+        const finalTodayFmt = formatLocalAmount(getAmountTodayPence());
+        const regularRenewalFmt = formatLocalAmount(getSubtotalBeforeCouponPence(plan));
+        const basePlanMinor = plan === 'annual' ? (p?.annualAmount ?? 4999) : plan === 'six_month' ? (p?.sixMonthAmount ?? 3899) : (p?.monthlyAmount ?? 999);
+        const discountedBasePlanFmt = formatLocalAmount(Math.max(0, basePlanMinor - Math.round(basePlanMinor * (activeCouponPct / 100))));
+        if (productPriceTop) productPriceTop.textContent = discountedBasePlanFmt;
+        if (productTag) productTag.classList.remove('hidden');
+        if (productTagContent) {
+          productTagContent.className = 'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300';
+          productTagContent.innerHTML = `<svg class="w-3 h-3 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg> Promo Code ${escapeHtml(activeCoupon)}: Extra ${activeCouponPct}% Off Applied`;
+        }
+        if (discountSummaryRow) discountSummaryRow.classList.remove('hidden');
+        if (discountSummaryTitleText) discountSummaryTitleText.textContent = `Promo Code ${activeCoupon}`;
+        if (discountSaveStrong) discountSaveStrong.textContent = `Save ${activeCouponPct}%`;
+        if (discountAmountMinus) discountAmountMinus.textContent = `- ${couponDiscountFmt}`;
+        if (discountNoteText) discountNoteText.textContent = `Promo code ${activeCoupon} (${activeCouponPct}% off) applied to today's total.`;
+        if (totalTodayText) totalTodayText.textContent = finalTodayFmt;
+        if (termsConsentLabel) {
+          const cycleWord = plan === 'annual' ? 'annually' : plan === 'six_month' ? 'every 6 months' : 'monthly';
+          termsConsentLabel.textContent = `I agree to pay ${finalTodayFmt} today (with ${activeCouponPct}% promo code ${activeCoupon} applied) which will auto renew at ${regularRenewalFmt} ${cycleWord} unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.`;
+        }
+      }
+
       const mobileQuickTotalText = document.getElementById('mobileQuickTotalText');
       if (mobileQuickTotalText && totalTodayText) {
         mobileQuickTotalText.textContent = totalTodayText.textContent;
@@ -1477,6 +1533,12 @@
       }
 
       updatePaymentRequestTotal();
+      try {
+        const zeroDec = Boolean(p?.zeroDecimal);
+        const todayMinor = getAmountTodayPence();
+        window.SWEEPR_CHECKOUT_PRICE = zeroDec ? todayMinor : +(todayMinor / 100).toFixed(2);
+        window.SWEEPR_CHECKOUT_CURRENCY = String(checkoutConfig?.currency || p?.currencyCode || p?.currency || 'GBP').toUpperCase();
+      } catch (e) {}
 
       try {
         const savedLang = localStorage.getItem('sweepr_lang');
@@ -1869,8 +1931,16 @@
         const res = await fetch(cfgUrl);
         if (res.ok) {
           checkoutConfig = await res.json();
+          if (checkoutConfig && checkoutConfig.pricing) {
+            window.__SWEEPR_PRICING__ = checkoutConfig.pricing;
+            window.SWEEPR_CHECKOUT_CURRENCY = String(checkoutConfig.currency || checkoutConfig.pricing.currencyCode || checkoutConfig.pricing.currency || 'GBP').toUpperCase();
+          }
           applyGeoPaymentLayout();
-          const pk = (checkoutConfig.publishableKey || '').trim() || (checkoutConfig.elementsEnabled !== false ? DEFAULT_STRIPE_PUBLISHABLE_KEY : '');
+          const pk =
+            (checkoutConfig.publishableKey || '').trim() ||
+            (checkoutConfig.isLiveStripe === true && checkoutConfig.elementsEnabled !== false
+              ? DEFAULT_STRIPE_PUBLISHABLE_KEY
+              : '');
           if (checkoutConfig.elementsEnabled !== false && pk) {
             const stripeCtor = await waitForStripeJs(8000);
             if (stripeCtor) {
@@ -1882,21 +1952,11 @@
             enableFallbackCardInputs();
           }
         } else {
-          const stripeCtor = await waitForStripeJs(8000);
-          if (stripeCtor) {
-            setupStripeElements(DEFAULT_STRIPE_PUBLISHABLE_KEY);
-          } else {
-            enableFallbackCardInputs();
-          }
+          enableFallbackCardInputs();
         }
       } catch (err) {
         console.warn('Could not load Stripe config:', err);
-        const stripeCtor = await waitForStripeJs(8000);
-        if (stripeCtor) {
-          setupStripeElements(DEFAULT_STRIPE_PUBLISHABLE_KEY);
-        } else {
-          enableFallbackCardInputs();
-        }
+        enableFallbackCardInputs();
       }
 
       setupFallbackInputMasks();
@@ -2182,6 +2242,7 @@
             addons: getSelectedAddonsList(),
             currency: checkoutConfig?.currency,
             country: checkoutConfig?.country,
+            coupon: activeCoupon || undefined,
             paymentMethod: 'google_pay'
           })
         });
@@ -2281,8 +2342,9 @@
                   batteryCareAddon: isBatteryAddonSelected,
                   cloudVaultAddon: isCloudVaultAddonSelected,
                   addons: getSelectedAddonsList(),
-              currency: checkoutConfig?.currency,
-              country: checkoutConfig?.country,
+                  currency: checkoutConfig?.currency,
+                  country: checkoutConfig?.country,
+                  coupon: activeCoupon || undefined,
                   paymentMethod: 'wallet'
                 })
               });
@@ -2630,7 +2692,7 @@
 
       try {
         const getAttributionPayload = () => (window.sweeprAttribution && typeof window.sweeprAttribution.getPayload === 'function' ? window.sweeprAttribution.getPayload() : {});
-        const activeCouponCode = (new URLSearchParams(window.location.search).get('coupon') || '').trim() || undefined;
+        const activeCouponCode = activeCoupon || (new URLSearchParams(window.location.search).get('coupon') || '').trim().toUpperCase() || undefined;
         // Case A: Direct PayPal Popup Authorization (Matches competitor PayPal popup UX)
         if (method === 'paypal') {
           const subRes = await fetch('/api/create-subscription', {
@@ -2649,8 +2711,7 @@
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
               paymentMethod: 'paypal',
-              coupon: activeCouponCode,
-              coupon: activeCouponCode,
+              coupon: activeCoupon || activeCouponCode || undefined,
               attribution: getAttributionPayload(),
               ref: getAttributionPayload().ref,
               popup: Boolean(paypalPopup && !paypalPopup.closed)
@@ -2799,6 +2860,7 @@
               addons: getSelectedAddonsList(),
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
+              coupon: activeCoupon || activeCouponCode || undefined,
               attribution: typeof getAttributionPayload === 'function' ? getAttributionPayload() : undefined,
               ref: typeof getAttributionPayload === 'function' ? getAttributionPayload().ref : undefined,
               paymentMethod: method
@@ -2839,7 +2901,7 @@
               addons: getSelectedAddonsList(),
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
-              coupon: activeCouponCode,
+              coupon: activeCoupon || activeCouponCode || undefined,
               attribution: getAttributionPayload(),
               ref: getAttributionPayload().ref,
               paymentMethod: 'card'
@@ -2902,6 +2964,7 @@
               addons: getSelectedAddonsList(),
               currency: checkoutConfig?.currency,
               country: checkoutConfig?.country,
+              coupon: activeCoupon || activeCouponCode || undefined,
               attribution: typeof getAttributionPayload === 'function' ? getAttributionPayload() : undefined,
               ref: typeof getAttributionPayload === 'function' ? getAttributionPayload().ref : undefined,
               paymentMethod: 'card',
@@ -2958,7 +3021,7 @@
             currency: checkoutConfig?.currency,
             country: checkoutConfig?.country,
             paymentMethod: method,
-            coupon: activeCouponCode,
+            coupon: activeCoupon || activeCouponCode || undefined,
             attribution: getAttributionPayload(),
             ref: getAttributionPayload().ref,
             confirmOnServer: true,

@@ -50,10 +50,19 @@ class SweeprFeatureTest {
             assertEquals(1, wrongPwList.size)
             assertNull(wrongPwList[0].unlockedName)
 
-            // 3. Listing with correct password reveals original filename
+            // 3. Listing with correct password reveals original filename via encrypted vault_index.json
+            val indexFile = java.io.File(tempDir, "vault_index.json")
+            assertTrue("vault_index.json must be created", indexFile.exists())
             val unlockedList = MobileCloudVault.listInDir(tempDir, password)
             assertEquals(1, unlockedList.size)
             assertEquals("passport_scan.pdf", unlockedList[0].unlockedName)
+
+            // 3b. If vault_index.json is deleted, listInDir reads ONLY the 512-byte fixed header and rebuilds index
+            assertTrue(indexFile.delete())
+            val rebuiltList = MobileCloudVault.listInDir(tempDir, password)
+            assertEquals(1, rebuiltList.size)
+            assertEquals("passport_scan.pdf", rebuiltList[0].unlockedName)
+            assertTrue("vault_index.json must be rebuilt from 512-byte header", indexFile.exists())
 
             // 4. Decrypting with correct password recovers exact bytes and filename
             val (name, decrypted) = MobileCloudVault.decrypt(entry.file, password)

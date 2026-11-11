@@ -109,14 +109,14 @@
         <input type="text" id="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="123456" class="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow bg-white text-center tracking-widest font-mono text-xl font-bold">
         
         <div class="mt-2 flex items-center justify-center">
-          <button type="button" id="resendOtpBtn" class="text-xs font-semibold text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors py-1 px-2 rounded">
+          <button type="button" id="resendOtpBtn" class="text-xs font-semibold text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors py-1 px-2 rounded tabular-nums">
             Didn't receive it? Resend code
           </button>
         </div>
       </div>
       
-      <button type="submit" class="btn w-full justify-center" id="loginBtn">
-        <span id="loginBtnText">Continue</span>
+      <button type="submit" class="btn btn-primary w-full justify-center gap-2 font-bold" id="loginBtn">
+        <span id="loginBtnText">Send 6-Digit Login Code &rarr;</span>
       </button>
     </form>
     
@@ -124,8 +124,8 @@
 
     <div class="text-center mt-6 pt-5 border-t border-gray-100">
       <p class="text-xs text-gray-500 mb-2 font-medium">Don't have SWEEPR Cleaner yet?</p>
-      <a href="/order" class="btn btn-go w-full justify-center gap-2 text-sm">
-        <span>Buy Now</span>
+      <a href="/order" class="btn w-full justify-center gap-2 text-sm font-bold">
+        <span>Get SWEEPR Pro (5 Devices)</span>
         <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </a>
     </div>
@@ -198,7 +198,7 @@
       awaitingOtp = false;
       emailSection.classList.remove('hidden');
       otpSection.classList.add('hidden');
-      loginBtnText.textContent = "Continue";
+      loginBtnText.textContent = "Send 6-Digit Login Code \u2192";
       loginBtn.disabled = false;
       showMessage('', false);
       emailInput.focus();
@@ -209,7 +209,7 @@
       emailSection.classList.add('hidden');
       otpSection.classList.remove('hidden');
       targetEmail.textContent = email;
-      loginBtnText.textContent = "Verify Code";
+      loginBtnText.textContent = "Verify & Open Portal \u2192";
       loginBtn.disabled = false;
       otpInput.value = '';
       otpInput.focus();
@@ -315,14 +315,14 @@
           } else {
             showMessage(data.error || "No active subscription found for this email.", 'error');
             loginBtn.disabled = false;
-            loginBtnText.textContent = "Continue";
+            loginBtnText.textContent = "Send 6-Digit Login Code \u2192";
           }
         } else {
           const code = otpInput.value.trim();
           if (code.length !== 6) {
             showMessage("Please enter the 6-digit login code.", 'error');
             loginBtn.disabled = false;
-            loginBtnText.textContent = "Verify Code";
+            loginBtnText.textContent = "Verify & Open Portal \u2192";
             return;
           }
 
@@ -337,13 +337,13 @@
           } else {
             showMessage(data.error || "Invalid or expired code.", 'error');
             loginBtn.disabled = false;
-            loginBtnText.textContent = "Verify Code";
+            loginBtnText.textContent = "Verify & Open Portal \u2192";
           }
         }
       } catch (err) {
         showMessage("Network error. Please try again.", 'error');
         loginBtn.disabled = false;
-        loginBtnText.textContent = awaitingOtp ? "Verify Code" : "Continue";
+        loginBtnText.textContent = awaitingOtp ? "Verify & Open Portal \u2192" : "Send 6-Digit Login Code \u2192";
       }
     });
   </script>

@@ -1757,77 +1757,12 @@ struct LargeVideosDetailView: View {
     }
 
     private func beforeAfterPreview(for item: MediaItem) -> some View {
-        let afterBytes = compressFileSize
-            ? max(Int64(1), Int64(Double(item.estimatedBytes) * (1.0 - photoPreset.estimatedSavingsRatio)))
-            : item.estimatedBytes
-
-        return GeometryReader { geo in
-            let width = max(geo.size.width, 1)
-            let splitX = width * previewSplit
-            ZStack {
-                AssetThumbnailView(localIdentifier: item.id, targetSize: CGSize(width: 800, height: 800))
-                    .frame(width: width, height: 180)
-                    .clipped()
-
-                // "After" side emerald wash to make the split comparison tactile
-                Rectangle()
-                    .fill(Color.sweeprEmerald.opacity(0.08))
-                    .frame(width: max(0, width - splitX), height: 180)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-
-                // Draggable split divider line + handle
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(width: 2, height: 180)
-                    .position(x: splitX, y: 90)
-
-                Image(systemName: "arrow.left.and.right")
-                    .font(.system(size: 12, weight: .heavy))
-                    .foregroundColor(.sweeprDeepEmerald)
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(Color.white))
-                    .shadow(color: Color.black.opacity(0.25), radius: 4, x: 0, y: 2)
-                    .position(x: splitX, y: 90)
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        let ratio = value.location.x / width
-                        previewSplit = min(max(ratio, 0.08), 0.92)
-                    }
-            )
-        }
-        .frame(height: 180)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(alignment: .bottomLeading) {
-            previewTag("Before · \(formatByteCount(item.estimatedBytes))")
-                .padding(8)
-        }
-        .overlay(alignment: .bottomTrailing) {
-            previewTag(
-                compressFileSize
-                    ? "After · ~\(formatByteCount(afterBytes)) (-\(photoPreset.savedPercentEstimate)%)"
-                    : "After · no location"
-            )
-            .padding(8)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "Before and after preview photo, \(formatByteCount(item.estimatedBytes)) before, about \(formatByteCount(afterBytes)) after"
+        BeforeAfterPhotoComparisonView(
+            item: item,
+            preset: photoPreset,
+            compressFileSize: compressFileSize,
+            previewSplit: $previewSplit
         )
-    }
-
-    private func previewTag(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .heavy))
-            .foregroundColor(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(Color.black.opacity(0.65))
-            )
     }
 
     private func statsRow(_ stats: [(value: String, label: String, highlight: Bool)]) -> some View {
@@ -2062,6 +1997,9 @@ struct ContactsCleanerView: View {
             }
         }
         .navigationTitle("Contacts & Calendar")
+        .task {
+            await vm.requestContactsAndScan()
+        }
         .confirmationDialog(
             "Smart Merge \(vm.selectedContactGroupIDs.count) Contact Group(s)?",
             isPresented: $showMergeConfirm,
@@ -2279,4 +2217,177 @@ private func emptyCategoryState(icon: String, title: String, subtitle: String) -
     }
     .frame(maxWidth: .infinity)
     .padding(.vertical, 60)
+}
+
+// MARK: - Real Downsampled & JPEG-Compressed Split Before/After Preview
+private struct BeforeAfterPhotoComparisonView: View {
+    let item: MediaItem
+    let preset: PhotoCompressionPreset
+    let compressFileSize: Bool
+    @Binding var previewSplit: CGFloat
+
+    @State private var beforeImage: UIImage? = nil
+    @State private var afterImage: UIImage? = nil
+    @State private var measuredAfterBytes: Int64? = nil
+
+    private var displayedAfterBytes: Int64 {
+        if !compressFileSize {
+            return item.estimatedBytes
+        }
+        if let measured = measuredAfterBytes, measured > 0, measured < item.estimatedBytes {
+            return measured
+        }
+        return max(Int64(1), Int64(Double(item.estimatedBytes) * (1.0 - preset.estimatedSavingsRatio)))
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = max(geo.size.width, 1)
+            let splitX = width * previewSplit
+            ZStack {
+                // "Before" side: original full-resolution preview
+                Group {
+                    if let beforeImage = beforeImage {
+                        Image(uiImage: beforeImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        AssetThumbnailView(localIdentifier: item.id, targetSize: CGSize(width: 960, height: 960))
+                    }
+                }
+                .frame(width: width, height: 180)
+                .clipped()
+
+                // "After" side: actual downsampled & JPEG-compressed UIImage preview
+                Group {
+                    if let afterImage = compressFileSize ? (afterImage ?? beforeImage) : beforeImage {
+                        Image(uiImage: afterImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        AssetThumbnailView(localIdentifier: item.id, targetSize: CGSize(width: 960, height: 960))
+                    }
+                }
+                .frame(width: width, height: 180)
+                .clipped()
+                .mask(
+                    HStack(spacing: 0) {
+                        Color.clear.frame(width: splitX)
+                        Color.black.frame(width: max(0, width - splitX))
+                    }
+                )
+
+                // Draggable split divider line + handle
+                Rectangle()
+                    .fill(Color.white)
+                    .frame(width: 2, height: 180)
+                    .position(x: splitX, y: 90)
+
+                Image(systemName: "arrow.left.and.right")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundColor(.sweeprDeepEmerald)
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white))
+                    .shadow(color: Color.black.opacity(0.25), radius: 4, x: 0, y: 2)
+                    .position(x: splitX, y: 90)
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        let ratio = value.location.x / width
+                        previewSplit = min(max(ratio, 0.08), 0.92)
+                    }
+            )
+        }
+        .frame(height: 180)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(alignment: .bottomLeading) {
+            previewTag("Before · \(formatByteCount(item.estimatedBytes))")
+                .padding(8)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            previewTag(
+                compressFileSize
+                    ? "After · ~\(formatByteCount(displayedAfterBytes)) (-\(preset.savedPercentEstimate)%)"
+                    : "After · no location"
+            )
+            .padding(8)
+        }
+        .task(id: "\(item.id)_\(preset.rawValue)_\(compressFileSize)") {
+            await buildBeforeAndCompressedPreview()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "Before and after preview photo, \(formatByteCount(item.estimatedBytes)) before, about \(formatByteCount(displayedAfterBytes)) after"
+        )
+    }
+
+    private func previewTag(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .heavy))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.black.opacity(0.65))
+            )
+    }
+
+    private func buildBeforeAndCompressedPreview() async {
+        let assetId = item.id
+        let maxEdge = CGFloat(preset.maxPixelSize)
+        let quality = preset.jpegQuality
+        let doCompress = compressFileSize
+
+        let pair: (UIImage?, UIImage?, Int64?) = await Task.detached(priority: .userInitiated) {
+            let assets = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
+            guard let asset = assets.firstObject else { return (nil, nil, nil) }
+
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = false
+            options.isSynchronous = true
+
+            var fetchedImage: UIImage? = nil
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 1600, height: 1600),
+                contentMode: .aspectFit,
+                options: options
+            ) { result, _ in
+                fetchedImage = result
+            }
+
+            guard let sourceImage = fetchedImage else { return (nil, nil, nil) }
+            guard doCompress else { return (sourceImage, sourceImage, nil) }
+
+            let srcW = sourceImage.size.width * sourceImage.scale
+            let srcH = sourceImage.size.height * sourceImage.scale
+            let longest = max(srcW, srcH, 1)
+            let scaleRatio = min(1.0, maxEdge / longest)
+            let targetSize = CGSize(
+                width: max(1, (srcW * scaleRatio).rounded()),
+                height: max(1, (srcH * scaleRatio).rounded())
+            )
+
+            let format = UIGraphicsImageRendererFormat.default()
+            format.scale = 1.0
+            let downsampled = UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+                sourceImage.draw(in: CGRect(origin: .zero, size: targetSize))
+            }
+
+            guard let jpegData = downsampled.jpegData(compressionQuality: quality),
+                  let decodedAfter = UIImage(data: jpegData)
+            else {
+                return (sourceImage, downsampled, nil)
+            }
+            return (sourceImage, decodedAfter, Int64(jpegData.count))
+        }.value
+
+        beforeImage = pair.0
+        afterImage = pair.1
+        measuredAfterBytes = pair.2
+    }
 }

@@ -5,6 +5,7 @@
     ContextMenuItem,
     MemoryOverview,
     StartupItem,
+    SystemHealthDetails,
     TabSessionSnapshot,
   } from "../lib/api";
 
@@ -14,6 +15,7 @@
   let cachedStartup: StartupItem[] = [];
   let cachedContextMenu: ContextMenuItem[] = [];
   let cachedBattery: BatteryDiagnostics | null = null;
+  let cachedHealth: SystemHealthDetails | null = null;
 </script>
 
 <script lang="ts">
@@ -44,6 +46,7 @@
   let startup = $state<StartupItem[]>(cachedStartup);
   let contextMenuItems = $state<ContextMenuItem[]>(cachedContextMenu);
   let diag = $state<BatteryDiagnostics | null>(cachedBattery);
+  let health = $state<SystemHealthDetails | null>(cachedHealth);
 
   let boosting = $state(false);
   let boostNotice = $state<string | null>(null);
@@ -105,13 +108,14 @@
 
   async function load() {
     try {
-      const [m, b, ts, s, cm, bat] = await Promise.all([
+      const [m, b, ts, s, cm, bat, h] = await Promise.all([
         api.memory(),
         api.browserMemoryReport().catch(() => null),
         api.listTabSessions().catch(() => []),
         api.startupItems(),
         api.listContextMenuItems().catch(() => []),
         api.batteryDiagnostics().catch(() => null),
+        api.systemHealthDetails().catch(() => null),
       ]);
       mem = m;
       browserReport = b;
@@ -119,12 +123,14 @@
       startup = s;
       contextMenuItems = cm;
       diag = bat;
+      health = h;
       cachedMem = m;
       cachedBrowserReport = b;
       cachedTabSessions = ts;
       cachedStartup = s;
       cachedContextMenu = cm;
       cachedBattery = bat;
+      cachedHealth = h;
     } catch (e) {
       error = errorMessage(e);
     }
@@ -180,7 +186,7 @@
       boostNotice =
         totalFreed > 0
           ? `Freed ${formatBytes(totalFreed)} of memory`
-          : "Memory sped up";
+          : "Working set trim requires active Windows browser processes; 0 B trimmed";
     } catch (e) {
       if (isPaymentRequired(e)) {
         requestActivation();
@@ -260,6 +266,8 @@
       }
       if (r.bytes_freed > 0) {
         boostNotice = `Freed ${formatBytes(r.bytes_freed)}`;
+      } else if (enabled) {
+        boostNotice = "Working set trim requires active Windows browser processes; 0 B trimmed";
       }
     } catch (e) {
       if (input) input.checked = prev;
@@ -343,9 +351,14 @@
     savingTabs = true;
     try {
       const saved = await api.backupTabSessions();
-      tabSessions = await api.listTabSessions().catch(() => saved);
+      tabSessions = await api.listTabSessions().catch(() => (saved ? [saved] : tabSessions));
       cachedTabSessions = tabSessions;
-      boostNotice = saved.length > 0 ? `Saved ${saved.length} browser tab session(s)` : "No open browser tab sessions found";
+      const tabCount = saved?.tab_count ?? saved?.estimated_tabs ?? 0;
+      if (saved && (tabCount > 0 || (saved.browsers && saved.browsers.length > 0))) {
+        boostNotice = `Saved ${tabCount} tab(s) (${saved.browsers.join(", ")})`;
+      } else {
+        boostNotice = "No open browser tab sessions found";
+      }
     } catch (e) {
       if (isPaymentRequired(e)) requestActivation();
       else error = errorMessage(e);
@@ -486,7 +499,14 @@
 
   <!-- Section 2: Startup Apps -->
   <section class="group-section">
-    <div class="group-label">{t("speed.startupApps", $lang)}</div>
+    <div class="group-label" style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span>{t("speed.startupApps", $lang)}</span>
+      <span style="font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted);">
+        {health?.last_boot_seconds != null
+          ? `Last Event ID 100 boot: ${health.last_boot_seconds}s`
+          : "Run as Admin to read Event ID 100 boot telemetry"}
+      </span>
+    </div>
     {#if toggleableStartup.length === 0}
       <div class="empty-line">No startup apps found</div>
     {:else}
@@ -540,7 +560,7 @@
 
       {#each tabSessions as snap (snap.id)}
         <div class="line-row">
-          <span class="row-name">{snap.browser} — Saved Tabs ({snap.estimated_tabs})</span>
+          <span class="row-name">{snap.browsers?.length ? snap.browsers.join(", ") : snap.label} — Saved Tabs ({snap.tab_count ?? snap.estimated_tabs})</span>
           <div class="row-right">
             <button
               class="ghost mini-btn"

@@ -234,19 +234,48 @@ object PhotoOptimizer {
                 throw IllegalStateException("Optimized photo output is empty.")
             }
 
+            // Never replace a smaller HEIC/WebP/JPEG with a larger re-encoded JPEG!
+            var keptOriginalFormat = false
+            if (compressResolution && tempFile.length() >= item.size) {
+                if (!stripGps || !(hadGps || savedGpsAttrs.isNotEmpty())) {
+                    // Keep original file untouched when re-encoded JPEG bytes >= original HEIC/WebP bytes
+                    return PhotoOptimizationResult(
+                        original = item,
+                        outputUri = item.uri,
+                        outputName = item.name,
+                        originalBytes = item.size,
+                        optimizedBytes = item.size,
+                        gpsStripped = false,
+                    )
+                } else {
+                    // Preserve original image encoding and strip EXIF GPS tags in-place instead of using larger JPEG
+                    keptOriginalFormat = true
+                    openPhotoStream(context, item.uri)?.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    runCatching {
+                        val outExif = ExifInterface(tempFile.absolutePath)
+                        for (tag in GPS_TAGS) {
+                            outExif.setAttribute(tag, null)
+                        }
+                        outExif.saveAttributes()
+                    }
+                }
+            }
+
             val baseName = item.name.substringBeforeLast('.')
+            val origExt = item.name.substringAfterLast('.', "jpg").lowercase()
+            val outExt = if (!compressResolution || keptOriginalFormat) origExt else "jpg"
             val suffix = when {
-                compressResolution && stripGps -> "sweepr_${preset.suffix}_nogps"
-                compressResolution -> "sweepr_${preset.suffix}"
+                compressResolution && !keptOriginalFormat && stripGps -> "sweepr_${preset.suffix}_nogps"
+                compressResolution && !keptOriginalFormat -> "sweepr_${preset.suffix}"
                 else -> "sweepr_nogps"
             }
-            val outputName = "${baseName}_${suffix}.jpg"
+            val outputName = "${baseName}_${suffix}.${outExt}"
             val outputUri = publishToMediaStore(context, tempFile, outputName)
-            val finalBytes = if (compressResolution) {
-                tempFile.length().coerceAtMost(item.size)
-            } else {
-                tempFile.length()
-            }
+            val finalBytes = tempFile.length()
 
             return PhotoOptimizationResult(
                 original = item,
@@ -315,9 +344,17 @@ object PhotoOptimizer {
 
     private fun publishToMediaStore(context: Context, sourceFile: File, displayName: String): Uri {
         val resolver = context.contentResolver
+        val ext = displayName.substringAfterLast('.', "jpg").lowercase()
+        val mimeType = when (ext) {
+            "heic" -> "image/heic"
+            "heif" -> "image/heif"
+            "webp" -> "image/webp"
+            "png" -> "image/png"
+            else -> "image/jpeg"
+        }
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.MIME_TYPE, mimeType)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Sweepr")
                 put(MediaStore.Images.Media.IS_PENDING, 1)

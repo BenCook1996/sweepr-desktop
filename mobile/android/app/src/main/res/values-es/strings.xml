@@ -490,4 +490,20 @@
         <item quantity="many">Se eliminaron %d eventos antiguos del calendario</item>
         <item quantity="other">Se eliminaron %d eventos antiguos del calendario</item>
     </plurals>
+
+    <string name="action_continue">Continuar</string>
+    <string name="dashboard_limited_access_banner">Escaneando %1$d fotos seleccionadas — Administrar selección</string>
+    <string name="media_disclosure_title">Aviso de acceso a fotos y vídeos</string>
+    <string name="media_disclosure_body">SWEEPR Cleaner solicita acceso a tus fotos, vídeos y metadatos de ubicación únicamente para buscar duplicados, fotos similares, imágenes borrosas, capturas de pantalla y archivos grandes localmente en tu dispositivo.\n\nEl 100 % del análisis se realiza sin conexión en tu teléfono: tus fotos, vídeos y datos GPS nunca se suben a ningún servidor.</string>
+    <string name="contacts_disclosure_title">Aviso de acceso a contactos y calendario</string>
+    <string name="contacts_disclosure_body">SWEEPR Cleaner solicita acceso a tus contactos y calendario únicamente para detectar y fusionar contactos duplicados o limpiar eventos antiguos localmente en tu dispositivo.\n\nTus datos de agenda y calendario nunca salen de tu teléfono ni se comparten.</string>
+    <string name="deeplink_approve_title">¿Aprobar inicio de sesión en escritorio?</string>
+    <string name="deeplink_link_title">¿Vincular cuenta SWEEPR?</string>
+    <string name="deeplink_approve_body">¿Aprobar inicio de sesión en escritorio? Un ordenador solicita acceso a tu suscripción SWEEPR Pro.</string>
+    <string name="deeplink_link_body">¿Vincular cuenta SWEEPR? ¿Quieres vincular este dispositivo con el enlace que abriste?</string>
+    <string name="deeplink_approve_confirm">Aprobar</string>
+    <string name="deeplink_link_confirm">Vincular dispositivo</string>
+    <string name="update_required_title">Actualización obligatoria (v%1$s)</string>
+    <string name="update_required_default_body">Se requiere una actualización crítica de seguridad y estabilidad para seguir usando SWEEPR Cleaner.</string>
+    <string name="update_required_cta">Actualizar en Google Play</string>
 </resources>

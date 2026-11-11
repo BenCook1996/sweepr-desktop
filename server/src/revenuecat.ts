@@ -52,6 +52,20 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
   const email: string | undefined = normalizeEmail(rawEmail) ?? undefined;
   const store = typeof event.store === "string" ? event.store.slice(0, 50) : "app";
   let account = repo.accountById(appUserId);
+  if (!account && Array.isArray(event.aliases)) {
+    for (const alias of event.aliases) {
+      if (typeof alias === "string" && alias.length > 0 && alias.length <= 200) {
+        const matched = repo.accountById(alias);
+        if (matched) {
+          account = matched;
+          break;
+        }
+      }
+    }
+  }
+  if (!account && email) {
+    account = repo.accountByEmail(email);
+  }
   if (!account) {
     repo.createAccount(appUserId, sha256(randomToken(32)), email);
     repo.updateAccountProfile(appUserId, {
@@ -64,6 +78,9 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
       return;
     }
     console.log(`[revenuecat] Created CRM account for new mobile subscriber ${appUserId}`);
+  } else if (email && !account.email) {
+    repo.db.prepare("UPDATE accounts SET email = ? WHERE id = ?").run(email, account.id);
+    account = repo.accountById(account.id) ?? account;
   }
 
   const mapped = STATUS_MAP[event.type];

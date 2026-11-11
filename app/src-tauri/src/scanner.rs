@@ -39,7 +39,7 @@ const DUP_SKIP_DIRS: &[&str] = &[
     ".venv",
 ];
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct FileEntry {
     pub path: String,
     pub size: u64,
@@ -484,6 +484,311 @@ pub fn scan_all_with_exclusions(
     }
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub struct StaleDevArtifactEntry {
+    pub artifact_path: String,
+    pub project_root: String,
+    pub artifact_kind: String,
+    pub size_bytes: u64,
+    pub files_count: u64,
+    pub last_source_modified_secs: u64,
+    pub inactive_days: u64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct DockerDiskInspection {
+    pub vhdx_files: Vec<FileEntry>,
+    pub total_vhdx_bytes: u64,
+    pub buildkit_reclaimable_bytes: u64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub struct StaleDevArtifactsReport {
+    pub artifacts: Vec<StaleDevArtifactEntry>,
+    pub total_artifact_bytes: u64,
+    pub total_artifact_files: u64,
+    pub docker: DockerDiskInspection,
+    pub duration_ms: u64,
+}
+
+const STALE_ARTIFACT_DIRS: &[&str] = &[
+    "node_modules",
+    "target",
+    ".next",
+    ".nuxt",
+    ".gradle",
+    ".venv",
+];
+
+pub fn default_dev_project_roots() -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = Vec::new();
+    if let Some(home) = dirs::home_dir() {
+        for sub in [
+            "Projects",
+            "Repos",
+            "source/repos",
+            "dev",
+            "workspace",
+            "code",
+            "GitHub",
+            "Desktop",
+            "Documents",
+        ] {
+            let candidate = home.join(sub);
+            if candidate.is_dir() && !roots.iter().any(|r| r == &candidate) {
+                roots.push(candidate);
+            }
+        }
+        if roots.is_empty() {
+            roots.push(home);
+        }
+    }
+    roots
+}
+
+fn measure_dir_bytes_and_files(dir: &Path, exclusions: &[PathBuf]) -> (u64, u64) {
+    let mut bytes = 0u64;
+    let mut files = 0u64;
+    let walker = WalkDir::new(dir)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|e| !safety::is_link_like(e) && !safety::is_excluded(e.path(), exclusions));
+    for entry in walker.flatten() {
+        if files >= MAX_FILES_PER_ROOT as u64 {
+            break;
+        }
+        if entry.file_type().is_file() {
+            if let Ok(md) = entry.metadata() {
+                bytes += md.len();
+                files += 1;
+            }
+        }
+    }
+    (bytes, files)
+}
+
+/// Find the most recent modification timestamp (unix seconds) among source/manifest files
+/// in `project_root`, ignoring heavy build/dependency artifact subdirectories.
+fn latest_project_source_modified_secs(project_root: &Path) -> Option<u64> {
+    let mut latest: Option<u64> = None;
+    let walker = WalkDir::new(project_root)
+        .follow_links(false)
+        .min_depth(1)
+        .max_depth(4)
+        .into_iter()
+        .filter_entry(|e| {
+            if safety::is_link_like(e) {
+                return false;
+            }
+            if e.file_type().is_dir() && e.depth() > 0 {
+                let name = e.file_name().to_string_lossy().to_ascii_lowercase();
+                if STALE_ARTIFACT_DIRS.iter().any(|k| name == *k)
+                    || name == ".git"
+                    || name == "dist"
+                    || name == "build"
+                    || name == "__pycache__"
+                {
+                    return false;
+                }
+            }
+            true
+        });
+
+    let mut checked = 0usize;
+    for entry in walker.flatten() {
+        if checked >= 2_500 {
+            break;
+        }
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        checked += 1;
+        if let Ok(md) = entry.metadata() {
+            if let Ok(m) = md.modified() {
+                if let Ok(dur) = m.duration_since(SystemTime::UNIX_EPOCH) {
+                    let secs = dur.as_secs();
+                    latest = Some(latest.map_or(secs, |prev| prev.max(secs)));
+                }
+            }
+        }
+    }
+    latest
+}
+
+pub fn inspect_docker_disk() -> DockerDiskInspection {
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    if let Some(local) = dirs::data_local_dir() {
+        candidates.push(local.join("Docker/wsl/data/ext4.vhdx"));
+        candidates.push(local.join("Docker/wsl/disk/docker_data.vhdx"));
+        candidates.push(local.join("Docker/wsl/main/ext4.vhdx"));
+        candidates.push(local.join("Docker/wsl/distro/ext4.vhdx"));
+    }
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(
+            home.join("Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"),
+        );
+        candidates.push(home.join(".docker/desktop/vms/0/data/Docker.raw"));
+    }
+
+    let mut vhdx_files: Vec<FileEntry> = Vec::new();
+    let mut total_vhdx_bytes = 0u64;
+    let mut seen = HashSet::new();
+    for path in candidates {
+        let key = path.to_string_lossy().to_ascii_lowercase();
+        if !seen.insert(key) {
+            continue;
+        }
+        if let Ok(md) = std::fs::metadata(&path) {
+            if md.is_file() {
+                let sz = md.len();
+                total_vhdx_bytes += sz;
+                vhdx_files.push(FileEntry {
+                    path: path.to_string_lossy().into_owned(),
+                    size: sz,
+                });
+            }
+        }
+    }
+
+    // Measure local Docker Buildx / BuildKit cache directories if present
+    let mut buildkit_reclaimable_bytes = 0u64;
+    if let Some(home) = dirs::home_dir() {
+        for rel in [".docker/buildx", ".cache/docker-buildkit"] {
+            let p = home.join(rel);
+            if p.is_dir() {
+                let (b, _) = measure_dir_bytes_and_files(&p, &[]);
+                buildkit_reclaimable_bytes += b;
+            }
+        }
+    }
+
+    DockerDiskInspection {
+        vhdx_files,
+        total_vhdx_bytes,
+        buildkit_reclaimable_bytes,
+    }
+}
+
+pub fn scan_stale_dev_artifacts_in(
+    search_roots: &[PathBuf],
+    exclusions: &[PathBuf],
+    min_inactive_days: u64,
+) -> StaleDevArtifactsReport {
+    let started = Instant::now();
+    let now_secs = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let min_age_secs = min_inactive_days.saturating_mul(86_400);
+    let cutoff_secs = now_secs.saturating_sub(min_age_secs);
+
+    let mut candidate_artifacts: Vec<(PathBuf, PathBuf, String)> = Vec::new();
+    let mut seen_artifacts: HashSet<String> = HashSet::new();
+
+    for root in search_roots {
+        if !root.is_dir() || safety::is_excluded(root, exclusions) {
+            continue;
+        }
+        let walker = WalkDir::new(root)
+            .follow_links(false)
+            .min_depth(1)
+            .max_depth(5)
+            .into_iter()
+            .filter_entry(|e| {
+                if safety::is_link_like(e) || safety::is_excluded(e.path(), exclusions) {
+                    return false;
+                }
+                if e.file_type().is_dir() && e.depth() > 0 {
+                    let name = e.file_name().to_string_lossy();
+                    let lower = name.to_ascii_lowercase();
+                    if lower == ".git"
+                        || lower == "appdata"
+                        || lower == "library"
+                        || lower == ".cargo"
+                        || lower == ".rustup"
+                    {
+                        return false;
+                    }
+                    // If parent of this entry is already one of STALE_ARTIFACT_DIRS, don't recurse deeper for discovery
+                    if let Some(parent_name) = e
+                        .path()
+                        .parent()
+                        .and_then(|p| p.file_name())
+                        .map(|n| n.to_string_lossy().to_ascii_lowercase())
+                    {
+                        if STALE_ARTIFACT_DIRS.iter().any(|k| parent_name == *k) {
+                            return false;
+                        }
+                    }
+                }
+                true
+            });
+
+        for entry in walker.flatten() {
+            if !entry.file_type().is_dir() {
+                continue;
+            }
+            let dir_name = entry.file_name().to_string_lossy();
+            let lower = dir_name.to_ascii_lowercase();
+            let Some(&matched_kind) = STALE_ARTIFACT_DIRS.iter().find(|&&k| k == lower) else {
+                continue;
+            };
+            let Some(project_root) = entry.path().parent().map(|p| p.to_path_buf()) else {
+                continue;
+            };
+            // For "target", require a Rust `Cargo.toml` in the parent project so we don't flag arbitrary folders named `target`
+            if matched_kind == "target" && !project_root.join("Cargo.toml").is_file() {
+                continue;
+            }
+            let key = entry.path().to_string_lossy().to_ascii_lowercase();
+            if seen_artifacts.insert(key) {
+                candidate_artifacts.push((
+                    entry.path().to_path_buf(),
+                    project_root,
+                    matched_kind.to_string(),
+                ));
+            }
+        }
+    }
+
+    let mut artifacts: Vec<StaleDevArtifactEntry> = candidate_artifacts
+        .par_iter()
+        .filter_map(|(artifact_dir, project_root, kind)| {
+            let last_mod = latest_project_source_modified_secs(project_root)?;
+            if last_mod > cutoff_secs {
+                return None;
+            }
+            let (size_bytes, files_count) = measure_dir_bytes_and_files(artifact_dir, exclusions);
+            if size_bytes == 0 {
+                return None;
+            }
+            let inactive_days = now_secs.saturating_sub(last_mod) / 86_400;
+            Some(StaleDevArtifactEntry {
+                artifact_path: artifact_dir.to_string_lossy().into_owned(),
+                project_root: project_root.to_string_lossy().into_owned(),
+                artifact_kind: kind.clone(),
+                size_bytes,
+                files_count,
+                last_source_modified_secs: last_mod,
+                inactive_days,
+            })
+        })
+        .collect();
+
+    artifacts.sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes));
+    let total_artifact_bytes = artifacts.iter().map(|a| a.size_bytes).sum();
+    let total_artifact_files = artifacts.iter().map(|a| a.files_count).sum();
+    let docker = inspect_docker_disk();
+
+    StaleDevArtifactsReport {
+        artifacts,
+        total_artifact_bytes,
+        total_artifact_files,
+        docker,
+        duration_ms: started.elapsed().as_millis() as u64,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -578,6 +883,37 @@ mod tests {
         assert!(report.categories[0].top_files[0]
             .path
             .ends_with("invoice - Copy.pdf"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn stale_dev_artifacts_scanner_detects_node_modules_and_rust_target() {
+        let dir = std::env::temp_dir().join(format!("sweepr-stale-dev-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+
+        let js_proj = dir.join("old-web-app");
+        let js_nm = js_proj.join("node_modules").join("pkg");
+        std::fs::create_dir_all(&js_nm).unwrap();
+        std::fs::write(js_proj.join("package.json"), br#"{"name":"old-web-app"}"#).unwrap();
+        std::fs::write(js_nm.join("index.js"), vec![b'x'; 2048]).unwrap();
+
+        let rust_proj = dir.join("old-rust-cli");
+        let rust_target = rust_proj.join("target").join("debug");
+        std::fs::create_dir_all(&rust_target).unwrap();
+        std::fs::write(rust_proj.join("Cargo.toml"), b"[package]\nname = \"old\"").unwrap();
+        std::fs::write(rust_target.join("app.pdb"), vec![b'r'; 4096]).unwrap();
+
+        // With min_inactive_days = 30, freshly written source files must NOT be flagged as stale
+        let fresh_report = scan_stale_dev_artifacts_in(std::slice::from_ref(&dir), &[], 30);
+        assert_eq!(fresh_report.artifacts.len(), 0);
+
+        // With min_inactive_days = 0, both node_modules and Rust target are detected
+        let zero_day_report = scan_stale_dev_artifacts_in(std::slice::from_ref(&dir), &[], 0);
+        assert_eq!(zero_day_report.artifacts.len(), 2);
+        assert_eq!(zero_day_report.total_artifact_bytes, 6144);
+        assert_eq!(zero_day_report.artifacts[0].artifact_kind, "target");
+        assert_eq!(zero_day_report.artifacts[1].artifact_kind, "node_modules");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -31,7 +31,8 @@ function recordCrmFailure(): void {
 }
 
 function getCrmUrl(): string {
-  const url = (process.env.SWEEPR_CRM_URL || "").trim().replace(/\/+$/, "");
+  const raw = (process.env.SWEEPR_CRM_URL || process.env.RAILWAY_SERVICE_SWEEPR_CRM_URL || "").trim().replace(/\/+$/, "");
+  const url = raw && !/^https?:\/\//i.test(raw) ? `https://${raw}` : raw;
   if (!url) return "";
   const isProd = process.env.NODE_ENV === "production";
   if (isProd && !url.startsWith("https://")) {

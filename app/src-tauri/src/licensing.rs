@@ -320,6 +320,9 @@ struct EntitlementResponse {
 struct CheckoutResponse {
     #[serde(default)]
     activated: bool,
+    #[serde(default)]
+    requires_otp: bool,
+    message: Option<String>,
     url: Option<String>,
     account_id: Option<String>,
     refresh_token: Option<String>,
@@ -640,7 +643,7 @@ impl Licensing {
         };
 
         let result: AppResult<EntitlementResponse> = async {
-            let mut acc = self.ensure_account(&mut st).await?;
+            let acc = self.ensure_account(&mut st).await?;
             let url = format!("{}/v1/entitlement", self.api_base()?);
             let payload = serde_json::json!({
                 "device_id": self.device_id,
@@ -651,21 +654,31 @@ impl Licensing {
                 .post_json_with_retry(&url, Some(&acc.refresh_token), &payload)
                 .await?;
             if resp.status().as_u16() == 401 {
-                st.account = None;
-                let _ = std::fs::remove_file(self.data_dir.join("account.json"));
-                acc = self.ensure_account(&mut st).await?;
-                return Ok(self
-                    .post_json_with_retry(&url, Some(&acc.refresh_token), &payload)
-                    .await?
-                    .error_for_status()?
-                    .json()
-                    .await?);
+                // Never delete account.json on a 401 so multi-device refresh tokens or transient
+                // auth errors do not log out the user or orphan their paired account.
+                return Ok(EntitlementResponse {
+                    status: "unauthorized".into(),
+                    token: None,
+                    disabled_rules: None,
+                });
             }
             Ok(resp.error_for_status()?.json().await?)
         }
         .await;
 
         match result {
+            Ok(resp) if resp.status == "unauthorized" && resp.token.is_none() => match &st.token {
+                Some((_, c)) if c.exp > now() => Ok(active_status(c, true)),
+                _ => Ok(LicenseStatus {
+                    active: false,
+                    status: "unauthorized".into(),
+                    plan: None,
+                    addons: Vec::new(),
+                    expires_at: None,
+                    offline: false,
+                    dev_unlock: false,
+                }),
+            },
             Ok(resp) => {
                 if let Some(ref rules) = resp.disabled_rules {
                     let _ = crate::safety::save_disabled_rules(&self.data_dir, rules);
@@ -730,7 +743,7 @@ impl Licensing {
     /// device and returns `Ok(None)` when `email` already has an active
     /// subscription on the server.
     pub async fn checkout_url(&self, email: Option<&str>, plan: Option<&str>) -> AppResult<Option<String>> {
-        self.checkout_url_with_addon(email, plan, None).await
+        self.checkout_url_with_options(email, plan, None, None).await
     }
 
     pub async fn checkout_url_with_addon(
@@ -738,6 +751,16 @@ impl Licensing {
         email: Option<&str>,
         plan: Option<&str>,
         addon: Option<&str>,
+    ) -> AppResult<Option<String>> {
+        self.checkout_url_with_options(email, plan, addon, None).await
+    }
+
+    pub async fn checkout_url_with_options(
+        &self,
+        email: Option<&str>,
+        plan: Option<&str>,
+        addon: Option<&str>,
+        coupon: Option<&str>,
     ) -> AppResult<Option<String>> {
         let mut map = serde_json::Map::new();
         map.insert("device_id".into(), serde_json::Value::String(self.device_id.clone()));
@@ -750,6 +773,13 @@ impl Licensing {
             .filter(|p| matches!(*p, "monthly" | "six_month" | "6month" | "annual"))
         {
             map.insert("plan".into(), serde_json::Value::String(p.to_string()));
+        }
+        let clean_coupon = coupon
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+            .map(|c| c.to_ascii_uppercase());
+        if let Some(ref c) = clean_coupon {
+            map.insert("coupon".into(), serde_json::Value::String(c.clone()));
         }
         let wanted_addons: Vec<String> = addon
             .unwrap_or("")
@@ -790,9 +820,8 @@ impl Licensing {
             let mut resp = self
                 .post_json_with_retry(&url, Some(&acc.refresh_token), &body)
                 .await?;
-            if resp.status().as_u16() == 401 {
+            if resp.status().as_u16() == 401 && st.token.is_none() {
                 st.account = None;
-                let _ = std::fs::remove_file(self.data_dir.join("account.json"));
                 acc = self.ensure_account(&mut st).await?;
                 resp = self
                     .post_json_with_retry(&url, Some(&acc.refresh_token), &body)
@@ -801,6 +830,8 @@ impl Licensing {
             if resp.status().as_u16() == 409 {
                 return Ok(CheckoutResponse {
                     activated: true,
+                    requires_otp: false,
+                    message: None,
                     url: None,
                     account_id: None,
                     refresh_token: None,
@@ -813,6 +844,16 @@ impl Licensing {
         .await;
 
         match send_checkout {
+            Ok(r) if r.requires_otp => {
+                drop(st);
+                if let Some(e) = email.map(str::trim).filter(|e| !e.is_empty()) {
+                    let _ = self.request_email_otp(e).await;
+                }
+                let msg = r.message.unwrap_or_else(|| {
+                    "An active subscription already exists for this email. Please verify with the 6-digit login code sent to your email.".into()
+                });
+                Err(AppError::License(format!("OTP_REQUIRED: {msg}")))
+            }
             Ok(r) if r.activated => {
                 if let (Some(account_id), Some(refresh_token)) = (r.account_id, r.refresh_token) {
                     let acc = Account { account_id, refresh_token };
@@ -878,6 +919,17 @@ impl Licensing {
                 if !wanted_addons.is_empty() {
                     let joined = wanted_addons.join(",");
                     url = format!("{url}{sep}addons={joined}");
+                    sep = '&';
+                }
+                if let Some(ref c) = clean_coupon {
+                    let encoded_coupon: String = c
+                        .bytes()
+                        .filter(|b| b.is_ascii_alphanumeric() || *b == b'_' || *b == b'-')
+                        .map(|b| b as char)
+                        .collect();
+                    if !encoded_coupon.is_empty() {
+                        url = format!("{url}{sep}coupon={encoded_coupon}");
+                    }
                 }
                 Ok(Some(url))
             }
@@ -906,15 +958,18 @@ impl Licensing {
         Ok(())
     }
 
-    /// Step 2 of linking an existing email purchase: verifies the 6-digit OTP and binds this device.
+    /// Step 2 of linking an existing email purchase: verifies the 6-digit OTP (or a `ptk_...` pairing key) and binds this device.
     pub async fn verify_email_otp(&self, email: &str, code: &str) -> AppResult<LicenseStatus> {
         let email = email.trim();
         let code = code.trim();
+        if code.starts_with("ptk_") {
+            return self.redeem_pairing_token(code).await;
+        }
         if email.is_empty() || !email.contains('@') {
             return Err(AppError::License("Please enter a valid email address.".into()));
         }
         if code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
-            return Err(AppError::License("Please enter a valid 6-digit Subscription Key.".into()));
+            return Err(AppError::License("Please enter a valid 6-digit Subscription Key or ptk_... pairing key.".into()));
         }
 
         let resp = self
@@ -972,6 +1027,85 @@ impl Licensing {
 
         Err(AppError::License(
             "Invalid or expired 6-digit Subscription Key. Click 'Email me a new key' to receive a fresh code.".into(),
+        ))
+    }
+
+    /// Redeems a `ptk_...` pairing key from the welcome email or Customer Portal to link this device.
+    pub async fn redeem_pairing_token(&self, token: &str) -> AppResult<LicenseStatus> {
+        let raw = token.trim();
+        let extracted = if let Some(idx) = raw.find("ptk_") {
+            raw[idx..]
+                .split(|c: char| !c.is_ascii_alphanumeric() && c != '_' && c != '-')
+                .next()
+                .unwrap_or("")
+        } else {
+            raw
+        };
+        if !extracted.starts_with("ptk_") || extracted.len() < 24 {
+            return Err(AppError::License(
+                "Please enter a valid ptk_... pairing key from your welcome email or Customer Portal.".into(),
+            ));
+        }
+        let platform = std::env::consts::OS;
+        let device_name = match platform {
+            "macos" => "Mac Desktop",
+            "linux" => "Linux Desktop",
+            _ => "Windows PC",
+        };
+        let resp = self
+            .http
+            .post(format!("{}/api/device-link/redeem", self.api_base()?))
+            .header("x-sweepr-project", PROJECT_ID)
+            .json(&serde_json::json!({
+                "token": extracted,
+                "device_id": self.device_id,
+                "device_type": "pc",
+                "device_name": device_name,
+                "platform": platform,
+            }))
+            .send()
+            .await?;
+        if resp.status().as_u16() == 403 {
+            return Err(AppError::License("Device limit reached for this subscription.".into()));
+        }
+        if resp.status().is_success() {
+            #[derive(Deserialize)]
+            struct RedeemPairingResp {
+                account_id: String,
+                refresh_token: String,
+                token: Option<String>,
+            }
+            let parsed: RedeemPairingResp = resp.json().await?;
+            {
+                let mut st = self.state.lock().await;
+                let acc = Account {
+                    account_id: parsed.account_id,
+                    refresh_token: parsed.refresh_token,
+                };
+                save_account(&self.data_dir.join("account.json"), &acc, &self.device_id)?;
+                st.account = Some(acc);
+                st.token = None;
+                if let (Some(tok), Some(key)) = (parsed.token, self.pubkey.as_ref()) {
+                    if let Ok(claims) = verify_token_with_keys(
+                        &tok,
+                        key,
+                        self.backup_pubkey.as_ref(),
+                        &self.device_id,
+                    ) {
+                        let _ = crate::safety::atomic_write(
+                            &self.data_dir.join("entitlement.jws"),
+                            tok.as_bytes(),
+                        );
+                        let status = active_status(&claims, false);
+                        st.token = Some((tok, claims));
+                        return Ok(status);
+                    }
+                }
+            }
+            return self.status(true).await;
+        }
+        Err(AppError::License(
+            "Invalid or expired pairing key. Request a 6-digit login code or generate a new key in your Customer Portal.".into(),
         ))
     }
 

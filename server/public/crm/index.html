@@ -47,9 +47,10 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .badge-active { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
     .badge-trialing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .badge-past_due { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-canceled { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-none { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .badge-past_due, .badge-unpaid, .badge-incomplete { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-paused { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-canceled, .badge-disputed { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-none, .badge-lead { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
     
     /* Custom scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -109,7 +110,7 @@
           <i data-lucide="mail-check" class="w-4 h-4 text-cyan-400"></i>
           <span>Email &amp; Portal Actions</span>
         </div>
-        <span id="nav-email-actions-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">9</span>
+        <span id="nav-email-actions-badge" class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">12</span>
       </button>
       <button onclick="switchTab('seo')" id="nav-seo" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
         <i data-lucide="line-chart" class="w-4 h-4 text-sky-400"></i>
@@ -273,12 +274,15 @@
         <!-- Revenue Breakdown & Fast Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="lg:col-span-2 bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
               <div>
                 <h3 class="font-bold text-white text-base">Subscription Funnel & Cohort Health</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Real-time status breakdown across customer accounts</p>
+                <p class="text-xs text-slate-400 mt-0.5">Mutually-exclusive cohort breakdown across all customer &amp; lead accounts (reconciles to 100%)</p>
               </div>
-              <span class="text-xs font-mono text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-full border border-brand-500/20">Live Sync</span>
+              <div class="flex items-center gap-2">
+                <span id="funnel-total-summary" class="text-xs font-mono text-slate-300 bg-surface-800 px-2.5 py-1 rounded-full border border-slate-700">0 total accounts</span>
+                <span class="text-xs font-mono text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-full border border-brand-500/20">Live Sync</span>
+              </div>
             </div>
 
             <!-- Health Distribution Bars -->
@@ -305,7 +309,7 @@
 
               <div>
                 <div class="flex justify-between text-xs mb-1.5">
-                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Past Due / Dunning Grace</span>
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Past Due / Dunning / Paused</span>
                   <span class="font-mono text-amber-400" id="funnel-past-due">0 accounts</span>
                 </div>
                 <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
@@ -320,6 +324,16 @@
                 </div>
                 <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
                   <div id="bar-canceled" class="bg-gradient-to-r from-rose-500 to-red-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="font-medium text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Leads &amp; Free / Giveaway Accounts</span>
+                  <span class="font-mono text-slate-400" id="funnel-leads">0 accounts</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                  <div id="bar-leads" class="bg-gradient-to-r from-slate-500 to-slate-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
               </div>
             </div>
@@ -449,22 +463,27 @@
       <!-- TAB 3: SUBSCRIPTIONS OVERVIEW -->
       <section id="tab-subscriptions" class="hidden space-y-6">
         <div class="bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h3 class="font-bold text-white text-base mb-1">Active Recurring Agreements</h3>
-              <p class="text-xs text-slate-400">Complete ledger of billing agreements, price intervals, and automated renewals</p>
+              <p class="text-xs text-slate-400" id="subscriptions-count-label">Complete ledger of billing agreements, price intervals, and automated renewals</p>
             </div>
-            <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Create Subscription</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button onclick="toggleSubscriptionsIncludeLeads()" id="btn-toggle-sub-leads" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition-all">
+                Show Free Leads (0)
+              </button>
+              <button onclick="openCreateSubscriptionModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold shadow-sm transition-all">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Create Subscription</span>
+              </button>
+            </div>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-surface-850/80 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider">
                 <tr>
-                  <th class="py-3.5 px-6">Account ID</th>
+                  <th class="py-3.5 px-6">Customer &amp; Account ID</th>
                   <th class="py-3.5 px-4">Plan Interval</th>
                   <th class="py-3.5 px-4">Status</th>
                   <th class="py-3.5 px-4">Unit Price</th>
@@ -692,22 +711,22 @@
               <button onclick="filterEmailActions('portal_submission')" id="ea-filter-portal_submission" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all">Portal &amp; Appeals</button>
               <button onclick="filterEmailActions('code_fix')" id="ea-filter-code_fix" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-surface-800 text-slate-300 hover:text-white border border-slate-700 transition-all">Code &amp; Config Fixes</button>
             </div>
-            <div class="flex flex-wrap items-center gap-2.5">
-              <div class="relative">
+            <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+              <div class="relative flex-1 sm:flex-initial">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                 <input
                   id="ea-search-input"
                   type="text"
                   oninput="loadEmailActions(this.value)"
                   placeholder="Search sender, subject, action..."
-                  class="pl-9 pr-4 py-1.5 bg-surface-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 w-64"
+                  class="pl-9 pr-4 py-1.5 bg-surface-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 w-full sm:w-64"
                 />
               </div>
               <a href="/api/crm/email-actions/export.csv" class="px-3 py-1.5 rounded-xl bg-surface-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition-all flex items-center gap-1.5">
                 <i data-lucide="download" class="w-3.5 h-3.5 text-slate-400"></i>
                 <span>Export CSV</span>
               </a>
-              <button onclick="promptAddEmailAction()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-1.5">
+              <button onclick="openAddEmailActionModal()" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-1.5">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>Log Email / Portal Action</span>
               </button>
@@ -750,6 +769,7 @@
             <button data-seo-view="overview" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Overview</button>
             <button data-seo-view="rankings" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Rankings &amp; Traffic</button>
             <button data-seo-view="forecasting" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Forecasting &amp; Strategy (A16/A17)</button>
+            <button data-seo-view="product_advisor" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Product &amp; App Advisor (A20)</button>
             <button data-seo-view="audit" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Site Audit</button>
             <button data-seo-view="backlinks" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Backlinks</button>
             <button data-seo-view="authority" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Authority</button>
@@ -787,14 +807,14 @@
             <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Scans Completed</span>
             <div class="mt-2 flex items-baseline gap-2">
               <span id="tel-stat-scans" class="text-2xl font-extrabold font-mono text-brand-400">0</span>
-              <span class="text-xs text-slate-400">funnel events</span>
+              <span id="tel-stat-scans-sub" class="text-xs text-slate-400">0 started</span>
             </div>
           </div>
           <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Checkouts &amp; Purchases</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Purchases Completed</span>
             <div class="mt-2 flex items-baseline gap-2">
               <span id="tel-stat-checkouts" class="text-2xl font-extrabold font-mono text-emerald-400">0</span>
-              <span class="text-xs text-slate-400">conversion events</span>
+              <span id="tel-stat-checkouts-sub" class="text-xs text-slate-400">0 checkouts</span>
             </div>
           </div>
           <div class="bg-surface-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl">
@@ -891,8 +911,8 @@
       <section id="tab-automations" class="hidden space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-4 bg-surface-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div>
-            <h2 class="text-base font-bold text-white">Autonomous CMO Engine (A1–A15)</h2>
-            <p class="text-xs text-slate-400 mt-1">Persisted automation telemetry, Paid Ads ROAS budget rules, and live A/B funnel experiments.</p>
+            <h2 class="text-base font-bold text-white">Autonomous CMO Engine (A1–A21)</h2>
+            <p class="text-xs text-slate-400 mt-1">Persisted automation telemetry, Paid Ads ROAS budget rules, Weekly Product Advisor (A20), Competitor Price Sentinel (A21), and live A/B funnel experiments.</p>
           </div>
           <div class="flex items-center gap-2.5">
             <button onclick="loadAutomationsDashboard()" class="px-3.5 py-2 rounded-lg bg-surface-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold">Refresh</button>
@@ -956,7 +976,7 @@
 
         <div class="bg-surface-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-            <h3 class="font-bold text-white text-sm">CMO Automation Registry (A1–A15)</h3>
+            <h3 class="font-bold text-white text-sm">CMO Automation Registry (A1–A21)</h3>
             <span class="text-xs text-slate-400 font-mono">/api/crm/automations/status</span>
           </div>
           <div class="overflow-x-auto">
@@ -1031,7 +1051,7 @@
       </div>
 
       <!-- Drawer Tabs Navigation -->
-      <div class="px-6 border-b border-slate-800 flex gap-6 text-xs font-semibold">
+      <div class="px-6 border-b border-slate-800 flex gap-6 text-xs font-semibold overflow-x-auto whitespace-nowrap">
         <button onclick="switchDrawerTab('overview')" id="dtab-nav-overview" class="py-3 border-b-2 border-brand-500 text-brand-400">Subscription & Details</button>
         <button onclick="switchDrawerTab('devices')" id="dtab-nav-devices" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-white">Hardware Devices</button>
         <button onclick="switchDrawerTab('invoices')" id="dtab-nav-invoices" class="py-3 border-b-2 border-transparent text-slate-400 hover:text-white">Invoices & Billing</button>
@@ -1043,7 +1063,7 @@
 
         <!-- Drawer Tab 1: Overview -->
         <div id="dtab-overview" class="space-y-6">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-xl bg-surface-850 border border-slate-800">
               <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Current Tier</span>
               <div class="text-base font-bold text-white capitalize" id="drawer-plan">Monthly Pro</div>
@@ -1066,7 +1086,7 @@
             <div class="w-full bg-slate-800 rounded-full h-2">
               <div id="drawer-health-bar" class="bg-brand-500 h-2 rounded-full" style="width: 98%"></div>
             </div>
-            <div class="grid grid-cols-2 gap-3 text-xs pt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
               <div>
                 <span class="text-slate-400 block text-[11px]">Cumulative Lifetime Value:</span>
                 <span class="font-bold text-white font-mono text-sm" id="drawer-ltv">$198.00</span>
@@ -1083,7 +1103,7 @@
                 <span class="text-slate-400 block text-[11px]">Lead / Primary Device:</span>
                 <span class="font-bold text-white text-sm" id="drawer-lead-device">Windows PC</span>
               </div>
-              <div class="col-span-2 pt-1 border-t border-slate-800/80">
+              <div class="sm:col-span-2 pt-1 border-t border-slate-800/80">
                 <span class="text-slate-400 block text-[11px]">Lead Recorded (Date &amp; Time):</span>
                 <span class="font-bold text-white font-mono text-xs" id="drawer-created-at">—</span>
               </div>
@@ -1219,7 +1239,7 @@
       </div>
 
       <div class="space-y-4 text-xs">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Customer Name</label>
             <input type="text" id="create-sub-name" placeholder="e.g. Benjamin" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500">
@@ -1230,7 +1250,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Plan Tier</label>
             <select id="create-sub-plan" onchange="handlePlanChange(this.value)" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-brand-500">
@@ -1249,7 +1269,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Duration (Days)</label>
             <input type="number" id="create-sub-days" value="365" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
@@ -1400,7 +1420,7 @@
           <input type="text" id="outreach-new-who" placeholder="e.g. editor@filehippo.com or Vendor Portal Desk" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-medium">Website / Domain</label>
             <input type="text" id="outreach-new-website" placeholder="e.g. filehippo.com" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
@@ -1411,7 +1431,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-medium">How Reached Out</label>
             <select id="outreach-new-how" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-brand-500">
@@ -1448,6 +1468,141 @@
     </div>
   </div>
 
+  <!-- MODAL: EDIT CUSTOMER PROFILE -->
+  <div id="modal-edit-profile" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
+            <i data-lucide="user-cog" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base">Edit Customer Profile</h3>
+            <p class="text-[11px] text-slate-400">Update contact identity, lifecycle stage &amp; health score</p>
+          </div>
+        </div>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Customer Name</label>
+          <input type="text" id="edit-profile-name" placeholder="Full Name" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Email Address</label>
+          <input type="email" id="edit-profile-email" placeholder="user@domain.com" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Company / Organization</label>
+            <input type="text" id="edit-profile-company" placeholder="Optional" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Phone Number</label>
+            <input type="text" id="edit-profile-phone" placeholder="Optional" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Lifecycle Stage</label>
+            <select id="edit-profile-stage" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-brand-500">
+              <option value="lead">Lead</option>
+              <option value="trial">Trial</option>
+              <option value="customer">Customer</option>
+              <option value="vip">VIP</option>
+              <option value="at_risk">At Risk</option>
+              <option value="churned">Churned</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Health Score (0–100)</label>
+            <input type="number" id="edit-profile-health" min="0" max="100" value="100" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onclick="submitEditProfile()" id="btn-submit-edit-profile" class="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs transition-all shadow-lg shadow-brand-500/20 flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Save Profile</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD EMAIL / PORTAL ACTION -->
+  <div id="modal-add-email-action" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-surface-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <i data-lucide="mail-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base">Log Email / Portal Action</h3>
+            <p class="text-[11px] text-slate-400">Record an actioned thread with automatic 72h dedupe cooldown</p>
+          </div>
+        </div>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Sender Email <span class="text-rose-400">*</span></label>
+            <input type="email" id="ea-new-sender" placeholder="e.g. editor@softpedia.com" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-cyan-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Project</label>
+            <select id="ea-new-project" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-cyan-500">
+              <option value="cleaner" selected>SWEEPR Cleaner</option>
+              <option value="deepblock">DeepBlock</option>
+              <option value="vpn">SWEEPR VPN</option>
+              <option value="shopsafe">ShopSafe</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Email Subject <span class="text-rose-400">*</span></label>
+          <input type="text" id="ea-new-subject" placeholder="e.g. Re: SWEEPR Cleaner Editorial Review" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-cyan-500">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Action Type</label>
+            <select id="ea-new-type" class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-semibold focus:outline-none focus:border-cyan-500">
+              <option value="email_reply" selected>Email Reply Sent</option>
+              <option value="portal_submission">Portal Submission</option>
+              <option value="appeal_filed">Appeal Filed</option>
+              <option value="code_fix">Code / Schema Fix</option>
+              <option value="config_update">Config / Infra Update</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-medium">Portal / Reference URL</label>
+            <input type="url" id="ea-new-url" placeholder="https://..." class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-cyan-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-medium">Action Summary <span class="text-rose-400">*</span></label>
+          <textarea id="ea-new-summary" rows="2" placeholder="Describe the reply sent, portal form completed, or fix deployed..." class="w-full bg-surface-800 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="closeModals()" class="px-4 py-2 rounded-lg bg-surface-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors">Cancel</button>
+        <button onclick="submitAddEmailAction()" id="btn-submit-email-action" class="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>Log Action</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="crm-toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
   <!-- JAVASCRIPT APPLICATION LOGIC -->
   <script>
     // Safe lucide fallback so CDN or CSP blocks never freeze UI actions
@@ -1467,6 +1622,9 @@
     let currentFilterStatus = 'all';
     let allOutreachLogs = [];
     let currentOutreachFilter = 'all';
+    let activeTab = 'dashboard';
+    let showSubLeads = false;
+    const loadedTabs = new Set(['dashboard', 'customers', 'subscriptions']);
 
     // XSS protection: every server-provided value rendered via innerHTML must go through esc().
     function escapeHtml(v) {
@@ -1481,9 +1639,43 @@
     // Only allow simple tokens in CSS class fragments built from data (e.g. badge-${status}).
     const cls = (v) => String(v ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
     const money = (cents) => (Number(cents || 0) / 100).toFixed(2);
+    const currencySymbol = (cur) => {
+      const c = String(cur || 'usd').toLowerCase();
+      if (c === 'gbp') return '£';
+      if (c === 'eur') return '€';
+      return '$';
+    };
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('crm-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const tone = type === 'error'
+        ? 'bg-rose-950/95 border-rose-500/40 text-rose-200'
+        : type === 'info'
+          ? 'bg-slate-900/95 border-sky-500/40 text-sky-200'
+          : 'bg-slate-900/95 border-emerald-500/40 text-emerald-200';
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-2xl text-xs font-semibold flex items-center gap-2 transition-all duration-200 ${tone}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 220);
+      }, 3200);
+    }
 
     // Delegated handlers: ids travel in escaped data-* attributes, never inside inline JS strings.
     document.addEventListener('click', (e) => {
+      // Backdrop click-to-close for Drawer 360 and Modals
+      if (e.target && e.target.id === 'drawer-360') {
+        closeDrawer();
+        return;
+      }
+      if (e.target && e.target.id && e.target.id.startsWith('modal-') && e.target.classList.contains('fixed')) {
+        closeModals();
+        return;
+      }
+
       const deviceBtn = e.target.closest('[data-device-action]');
       if (deviceBtn) {
         e.stopPropagation();
@@ -1505,6 +1697,13 @@
       }
     });
 
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModals();
+        closeDrawer();
+      }
+    });
+
     document.addEventListener('change', (e) => {
       const statusSel = e.target.closest('[data-outreach-status-id]');
       if (statusSel) {
@@ -1519,14 +1718,14 @@
     });
 
     async function refreshData() {
-      await Promise.all([
-        loadStats(),
-        loadCustomers(),
-        loadActivities(),
-        loadOutreach(),
-        loadEmailActions(),
-        loadTelemetry()
-      ]);
+      const tasks = [loadStats(), loadCustomers(document.getElementById('global-search')?.value || '')];
+      if (activeTab === 'activities') tasks.push(loadActivities());
+      if (activeTab === 'outreach') tasks.push(loadOutreach(document.getElementById('outreach-search')?.value || ''));
+      if (activeTab === 'email-actions') tasks.push(loadEmailActions(document.getElementById('ea-search-input')?.value || ''));
+      if (activeTab === 'telemetry') tasks.push(loadTelemetry());
+      if (activeTab === 'automations' && typeof loadAutomationsDashboard === 'function') tasks.push(loadAutomationsDashboard());
+      if (activeTab === 'seo' && typeof seoShow === 'function') tasks.push(seoShow(seoState.view));
+      await Promise.all(tasks);
     }
 
     async function loadTelemetry() {
@@ -1547,7 +1746,9 @@
         const elInstallsSub = document.getElementById('tel-stat-installs-sub');
         const elTickets = document.getElementById('tel-stat-tickets');
         const elScans = document.getElementById('tel-stat-scans');
+        const elScansSub = document.getElementById('tel-stat-scans-sub');
         const elCheckouts = document.getElementById('tel-stat-checkouts');
+        const elCheckoutsSub = document.getElementById('tel-stat-checkouts-sub');
         const elCrashes = document.getElementById('tel-stat-crashes');
 
         if (elDownloads) elDownloads.textContent = String(downloads.total ?? (funnel.installer_downloaded || 0));
@@ -1555,8 +1756,10 @@
         if (elInstalls) elInstalls.textContent = String(installs.total ?? (funnel.app_installed || 0));
         if (elInstallsSub) elInstallsSub.textContent = `${installs.conversion_rate_pct ?? 0}% conv`;
         if (elTickets) elTickets.textContent = String(tickets.length);
-        if (elScans) elScans.textContent = String((funnel.scan_started || 0) + (funnel.scan_completed || 0));
-        if (elCheckouts) elCheckouts.textContent = String((funnel.checkout_started || 0) + (funnel.purchase_completed || 0));
+        if (elScans) elScans.textContent = String(funnel.scan_completed || 0);
+        if (elScansSub) elScansSub.textContent = `${funnel.scan_started || 0} started`;
+        if (elCheckouts) elCheckouts.textContent = String(funnel.purchase_completed || 0);
+        if (elCheckoutsSub) elCheckoutsSub.textContent = `${funnel.checkout_started || 0} checkouts`;
         if (elCrashes) elCrashes.textContent = String(data.crashes_7d ?? crashes.length);
 
         const osBox = document.getElementById('telemetry-os-breakdown');
@@ -1762,17 +1965,26 @@
       loadEmailActions(searchEl ? searchEl.value : '');
     }
 
-    async function promptAddEmailAction() {
-      const sender_email = prompt('Sender Email Address (e.g. editor@softpedia.com):');
-      if (!sender_email) return;
-      const subject = prompt('Email Subject:');
-      if (!subject) return;
-      const project_id = prompt('Project ID (cleaner, deepblock, vpn, shopsafe):', 'cleaner') || 'cleaner';
-      const action_type = prompt('Action Type (email_reply, portal_submission, appeal_filed, code_fix, config_update):', 'email_reply') || 'email_reply';
-      const action_summary = prompt('Action Summary (what was done):');
-      if (!action_summary) return;
-      const portal_url = prompt('Portal / Reference URL (optional):', '') || '';
+    function openAddEmailActionModal() {
+      document.getElementById('modal-add-email-action').classList.remove('hidden');
+      safeCreateIcons();
+    }
 
+    async function submitAddEmailAction() {
+      const sender_email = document.getElementById('ea-new-sender').value.trim();
+      const subject = document.getElementById('ea-new-subject').value.trim();
+      const project_id = document.getElementById('ea-new-project').value || 'cleaner';
+      const action_type = document.getElementById('ea-new-type').value || 'email_reply';
+      const action_summary = document.getElementById('ea-new-summary').value.trim();
+      const portal_url = document.getElementById('ea-new-url').value.trim();
+
+      if (!sender_email || !subject || !action_summary) {
+        showToast('Please enter Sender Email, Subject, and Action Summary.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit-email-action');
+      if (btn) btn.disabled = true;
       try {
         const res = await fetch('/api/crm/email-actions', {
           method: 'POST',
@@ -1787,11 +1999,23 @@
             portal_url: portal_url || null
           })
         });
-        if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok !== false) {
+          document.getElementById('ea-new-sender').value = '';
+          document.getElementById('ea-new-subject').value = '';
+          document.getElementById('ea-new-summary').value = '';
+          document.getElementById('ea-new-url').value = '';
+          closeModals();
+          showToast('Email / portal action logged with 72h dedupe protection.');
           await loadEmailActions();
+          await loadStats();
+        } else {
+          showToast(data.reason || data.error || 'Failed to log email action', 'error');
         }
       } catch (err) {
-        alert('Failed to log email action: ' + err.message);
+        showToast('Failed to log email action: ' + err.message, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
@@ -1799,7 +2023,9 @@
       if (!confirm('Remove this email action record from the deduplication log?')) return;
       try {
         await fetch(`/api/crm/email-actions/${id}`, { method: 'DELETE' });
+        showToast('Email action removed from deduplication log.');
         await loadEmailActions();
+        await loadStats();
       } catch (err) {
         console.error('Failed to delete email action:', err);
       }
@@ -1821,6 +2047,7 @@
 
     // Switch Main Menu Tabs
     function switchTab(tab) {
+      activeTab = tab;
       toggleCrmSidebar(false);
       document.querySelectorAll('main > div > section').forEach(el => el.classList.add('hidden'));
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
@@ -1851,8 +2078,10 @@
         automations: "CMO Automations, Paid Ads ROAS & A/B Experiments"
       };
       document.getElementById('page-title').textContent = titles[tab] || "Dashboard";
+      if (tab === 'activities') loadActivities();
+      if (tab === 'outreach') loadOutreach(document.getElementById('outreach-search')?.value || '');
       if (tab === 'seo') seoShow(seoState.view);
-      if (tab === 'email-actions') loadEmailActions();
+      if (tab === 'email-actions') loadEmailActions(document.getElementById('ea-search-input')?.value || '');
       if (tab === 'telemetry') loadTelemetry();
       if (tab === 'automations') loadAutomationsDashboard();
       safeCreateIcons();
@@ -1865,7 +2094,7 @@
         const stats = await res.json();
 
         document.getElementById('stat-mrr').textContent = `$${(stats.mrrCents / 100).toFixed(2)}`;
-        document.getElementById('stat-arr').textContent = `$${(stats.arrCents / 100).toFixed(2)}`;
+        document.getElementById('stat-arr').textContent = `$${(stats.arrCents / 100).toFixed(2)} ARR`;
         document.getElementById('stat-active-subs').textContent = stats.activeSubscriptions;
         document.getElementById('stat-trialing-subs').textContent = `${stats.trialingSubscriptions} in trial`;
         const elStatInstalls = document.getElementById('stat-installs');
@@ -1879,19 +2108,37 @@
         document.getElementById('stat-devices').textContent = stats.activeDevices;
         document.getElementById('stat-avg-health').textContent = `${stats.averageHealthScore}%`;
 
-        // Funnel calculation
+        if (typeof stats.outreachTotal === 'number') {
+          const outBadge = document.getElementById('nav-outreach-badge');
+          if (outBadge) outBadge.textContent = stats.outreachTotal;
+        }
+        if (typeof stats.emailActionsTotal === 'number') {
+          const eaBadge = document.getElementById('nav-email-actions-badge');
+          if (eaBadge) eaBadge.textContent = stats.emailActionsTotal;
+        }
+
+        // Mutually-exclusive cohort funnel calculation (Active + Trialing + Past Due + Canceled + Leads = totalCustomers = 100%)
         const total = Math.max(stats.totalCustomers, 1);
-        document.getElementById('funnel-active').textContent = `${stats.activeSubscriptions} accounts`;
+        const totalSummary = document.getElementById('funnel-total-summary');
+        if (totalSummary) totalSummary.textContent = `${stats.totalCustomers} total accounts`;
+
+        document.getElementById('funnel-active').textContent = `${stats.activeSubscriptions} accounts (${Math.round((stats.activeSubscriptions / total) * 100)}%)`;
         document.getElementById('bar-active').style.width = `${(stats.activeSubscriptions / total) * 100}%`;
 
-        document.getElementById('funnel-trials').textContent = `${stats.trialingSubscriptions} accounts`;
+        document.getElementById('funnel-trials').textContent = `${stats.trialingSubscriptions} accounts (${Math.round((stats.trialingSubscriptions / total) * 100)}%)`;
         document.getElementById('bar-trials').style.width = `${(stats.trialingSubscriptions / total) * 100}%`;
 
-        document.getElementById('funnel-past-due').textContent = `${stats.pastDueSubscriptions} accounts`;
+        document.getElementById('funnel-past-due').textContent = `${stats.pastDueSubscriptions} accounts (${Math.round((stats.pastDueSubscriptions / total) * 100)}%)`;
         document.getElementById('bar-past-due').style.width = `${(stats.pastDueSubscriptions / total) * 100}%`;
 
-        document.getElementById('funnel-canceled').textContent = `${stats.canceledSubscriptions} accounts`;
+        document.getElementById('funnel-canceled').textContent = `${stats.canceledSubscriptions} accounts (${Math.round((stats.canceledSubscriptions / total) * 100)}%)`;
         document.getElementById('bar-canceled').style.width = `${(stats.canceledSubscriptions / total) * 100}%`;
+
+        const leadsCount = stats.leadAccountsCount ?? Math.max(0, stats.totalCustomers - stats.activeSubscriptions - stats.trialingSubscriptions - stats.pastDueSubscriptions - stats.canceledSubscriptions);
+        const elFunnelLeads = document.getElementById('funnel-leads');
+        const elBarLeads = document.getElementById('bar-leads');
+        if (elFunnelLeads) elFunnelLeads.textContent = `${leadsCount} accounts (${Math.round((leadsCount / total) * 100)}%)`;
+        if (elBarLeads) elBarLeads.style.width = `${(leadsCount / total) * 100}%`;
       } catch (err) {
         console.error("Failed to load CRM stats:", err);
       }
@@ -1985,7 +2232,7 @@
               </span>
             </td>
             <td class="py-4 px-4 font-mono font-bold text-white">
-              $${money(c.amount_cents)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${esc(c.billing_interval)}</span>
+              ${currencySymbol(c.currency)}${money(c.amount_cents)}<span class="text-[10px] text-slate-400 font-sans font-normal"> /${esc(c.billing_interval)}</span>
             </td>
             <td class="py-4 px-4">
               <span class="font-mono font-bold ${healthColor}">${Number(c.health_score || 0)}%</span>
@@ -2004,20 +2251,66 @@
       safeCreateIcons();
     }
 
+    function toggleSubscriptionsIncludeLeads() {
+      showSubLeads = !showSubLeads;
+      renderSubscriptionsTable(allCustomers);
+    }
+
     function renderSubscriptionsTable(customers) {
       const tbody = document.getElementById('subscriptions-table-body');
-      tbody.innerHTML = customers.map(c => {
-        const dateStr = c.current_period_end ? new Date(c.current_period_end * 1000).toLocaleDateString() : 'N/A';
+      const subRows = customers.filter(c => {
+        const st = String(c.subscription_status || 'none').toLowerCase();
+        const pl = String(c.plan || 'none').toLowerCase();
+        return !(st === 'none' && pl === 'none');
+      });
+      const leadCount = customers.length - subRows.length;
+      const rowsToRender = showSubLeads ? customers : subRows;
+
+      const toggleBtn = document.getElementById('btn-toggle-sub-leads');
+      if (toggleBtn) {
+        toggleBtn.textContent = showSubLeads
+          ? `Hide Free Leads (${leadCount})`
+          : `Show Free Leads (${leadCount})`;
+      }
+      const subLabel = document.getElementById('subscriptions-count-label');
+      if (subLabel) {
+        subLabel.textContent = `Showing ${rowsToRender.length} subscription agreements (${subRows.length} active/trial/past-due/canceled · ${leadCount} free leads)`;
+      }
+
+      if (rowsToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400">No active or historical subscription agreements found. Click <strong>Create Subscription</strong> or <strong>Show Free Leads (${leadCount})</strong> above.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rowsToRender.map(c => {
+        const isLifetime = String(c.plan || '').toLowerCase() === 'lifetime';
+        const isNone = String(c.subscription_status || 'none').toLowerCase() === 'none';
+        const dateStr = isLifetime
+          ? 'Lifetime (Never Expires)'
+          : (c.current_period_end ? new Date(c.current_period_end * 1000).toLocaleDateString() : 'N/A');
+        const sym = currencySymbol(c.currency);
+        const renewLabel = isNone
+          ? 'No Active Billing'
+          : isLifetime
+            ? 'Paid Lifetime VIP'
+            : (c.cancel_at_period_end ? 'Cancels at end' : 'Renews Automatically');
+        const renewColor = isNone
+          ? 'text-slate-500'
+          : (c.cancel_at_period_end ? 'text-rose-400' : 'text-emerald-400');
+
         return `
-          <tr class="hover:bg-surface-850/60 transition-colors">
-            <td class="py-4 px-6 font-mono text-white font-semibold">${esc(c.id)}</td>
-            <td class="py-4 px-4 capitalize text-slate-300">${esc(c.plan || 'Monthly')} (${esc(c.billing_interval)})</td>
+          <tr class="hover:bg-surface-850/60 transition-colors cursor-pointer" data-open-customer="${esc(c.id)}">
+            <td class="py-4 px-6">
+              <div class="font-bold text-white">${esc(c.name || c.email || 'Anonymous User')}</div>
+              <div class="text-[11px] font-mono text-slate-400">${esc(c.email ? `${c.email} · ${c.id}` : c.id)}</div>
+            </td>
+            <td class="py-4 px-4 capitalize text-slate-300">${esc(c.plan || 'none')} (${esc(c.billing_interval || 'month')})</td>
             <td class="py-4 px-4"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${cls(c.subscription_status)} capitalize">${esc(c.subscription_status)}</span></td>
-            <td class="py-4 px-4 font-mono text-white">$${money(c.amount_cents)}</td>
+            <td class="py-4 px-4 font-mono text-white font-bold">${sym}${money(c.amount_cents)}</td>
             <td class="py-4 px-4 font-mono text-slate-300">${esc(dateStr)}</td>
             <td class="py-4 px-4">
-              <span class="text-xs font-semibold ${c.cancel_at_period_end ? 'text-rose-400' : 'text-emerald-400'}">
-                ${c.cancel_at_period_end ? 'Cancels at end' : 'Renews Automatically'}
+              <span class="text-xs font-semibold ${renewColor}">
+                ${esc(renewLabel)}
               </span>
             </td>
             <td class="py-4 px-6 text-right">
@@ -2041,10 +2334,13 @@
       loadCustomers(document.getElementById('global-search').value);
     }
 
-    // Global Search debouncing
+    // Global Search debouncing (auto-switches to Customer Directory when typing from Overview/other tabs)
     let searchTimeout = null;
     function handleSearch(val) {
       clearTimeout(searchTimeout);
+      if (val && val.trim().length > 0 && activeTab !== 'customers' && activeTab !== 'subscriptions') {
+        switchTab('customers');
+      }
       searchTimeout = setTimeout(() => {
         loadCustomers(val);
       }, 250);
@@ -2058,7 +2354,8 @@
         activeCustomer = data;
 
         const acc = data.account;
-        const ent = data.entitlement;
+        const ent = data.entitlement || { status: 'none', plan: 'none', current_period_end: 0, cancel_at_period_end: 0 };
+        const sub = data.subscription || (data.subscriptions && data.subscriptions[0]) || null;
 
         document.getElementById('drawer-name').textContent = acc.name || 'Anonymous Account';
         document.getElementById('drawer-email').textContent = acc.email || 'No email attached';
@@ -2070,12 +2367,39 @@
         badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-semibold badge-${cls(ent.status)} capitalize`;
         badge.textContent = ent.status;
 
-        document.getElementById('drawer-plan').textContent = `${ent.plan || 'Monthly'} Tier`;
-        document.getElementById('drawer-period-end').textContent = ent.current_period_end ? new Date(ent.current_period_end * 1000).toLocaleDateString() : 'Continuous';
-        document.getElementById('drawer-autorenew-info').textContent = ent.cancel_at_period_end ? 'Scheduled to Cancel at Period End' : 'Auto-renew active';
+        const planKey = String(ent.plan || sub?.plan || 'none').toLowerCase();
+        const planTitleMap = {
+          monthly: 'Monthly Pro',
+          six_month: '6-Month Pro',
+          annual: 'Annual Pro',
+          lifetime: 'Lifetime VIP',
+          giveaway_6m: 'Giveaway 6-Month Pro',
+          none: 'Free / Lead Tier'
+        };
+        document.getElementById('drawer-plan').textContent = planTitleMap[planKey] || `${ent.plan || 'Free'} Tier`;
 
-        document.getElementById('drawer-health-score').textContent = `${acc.health_score || 100} / 100`;
-        document.getElementById('drawer-health-bar').style.width = `${acc.health_score || 100}%`;
+        const sym = currencySymbol(sub?.currency || 'usd');
+        const amountStr = sub ? `${sym}${money(sub.amount_cents)}` : '$0.00';
+        const intervalStr = planKey === 'lifetime'
+          ? 'one-time VIP license'
+          : planKey === 'giveaway_6m'
+            ? 'promotional giveaway ($0.00)'
+            : planKey === 'none' || ent.status === 'none'
+              ? 'no active billing'
+              : `per ${sub?.billing_interval || (planKey === 'annual' ? 'year' : planKey === 'six_month' ? '6 months' : 'month')}`;
+        document.getElementById('drawer-billing-info').textContent = `${amountStr} (${intervalStr})`;
+
+        document.getElementById('drawer-period-end').textContent = planKey === 'lifetime'
+          ? 'Never (Lifetime)'
+          : (ent.current_period_end ? new Date(ent.current_period_end * 1000).toLocaleDateString() : 'No active period');
+        document.getElementById('drawer-autorenew-info').textContent = ent.status === 'none'
+          ? 'Lead / Free account'
+          : planKey === 'lifetime'
+            ? 'Permanent VIP entitlement'
+            : (ent.cancel_at_period_end ? 'Scheduled to Cancel at Period End' : 'Auto-renew active');
+
+        document.getElementById('drawer-health-score').textContent = `${acc.health_score ?? 100} / 100`;
+        document.getElementById('drawer-health-bar').style.width = `${acc.health_score ?? 100}%`;
         document.getElementById('drawer-ltv').textContent = `$${((acc.total_spend_cents || 0) / 100).toFixed(2)}`;
         document.getElementById('drawer-stage').textContent = acc.lifecycle_stage || 'customer';
         document.getElementById('drawer-country').textContent = formatCountryFlag(acc.country);
@@ -2197,6 +2521,58 @@
       document.getElementById('modal-add-outreach').classList.remove('hidden');
       safeCreateIcons();
     }
+    function openEditProfileModal() {
+      if (!activeCustomer || !activeCustomer.account) return;
+      const acc = activeCustomer.account;
+      document.getElementById('edit-profile-name').value = acc.name || '';
+      document.getElementById('edit-profile-email').value = acc.email || '';
+      document.getElementById('edit-profile-company').value = acc.company || '';
+      document.getElementById('edit-profile-phone').value = acc.phone || '';
+      document.getElementById('edit-profile-stage').value = acc.lifecycle_stage || 'customer';
+      document.getElementById('edit-profile-health').value = String(acc.health_score ?? 100);
+      document.getElementById('modal-edit-profile').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    async function submitEditProfile() {
+      if (!activeCustomer || !activeCustomer.account) return;
+      const name = document.getElementById('edit-profile-name').value.trim();
+      const email = document.getElementById('edit-profile-email').value.trim();
+      const company = document.getElementById('edit-profile-company').value.trim();
+      const phone = document.getElementById('edit-profile-phone').value.trim();
+      const lifecycle_stage = document.getElementById('edit-profile-stage').value;
+      const health_score = Math.min(100, Math.max(0, Number(document.getElementById('edit-profile-health').value || 100)));
+
+      const btn = document.getElementById('btn-submit-edit-profile');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch(`/api/crm/customers/${encodeURIComponent(activeCustomer.account.id)}/profile`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: name || null,
+            email: email || null,
+            company: company || null,
+            phone: phone || null,
+            lifecycle_stage,
+            health_score
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          closeModals();
+          showToast('Customer profile updated.');
+          await openCustomer360(activeCustomer.account.id);
+          await refreshData();
+        } else {
+          showToast('Failed to update profile: ' + (data.error || `HTTP ${res.status}`), 'error');
+        }
+      } catch (err) {
+        showToast('Profile update failed: ' + err.message, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
 
     function handlePlanChange(plan) {
       const daysInput = document.getElementById('create-sub-days');
@@ -2223,6 +2599,10 @@
       document.getElementById('modal-make-me-paid').classList.add('hidden');
       document.getElementById('modal-credentials').classList.add('hidden');
       document.getElementById('modal-add-outreach').classList.add('hidden');
+      const ep = document.getElementById('modal-edit-profile');
+      if (ep) ep.classList.add('hidden');
+      const ea = document.getElementById('modal-add-email-action');
+      if (ea) ea.classList.add('hidden');
     }
 
     function showCredentialsModal(data, msg) {
@@ -2245,7 +2625,7 @@
     function copyToClipboard(elementId) {
       const text = document.getElementById(elementId).textContent;
       navigator.clipboard.writeText(text);
-      alert('Copied to clipboard: ' + text);
+      showToast('Copied to clipboard: ' + text);
     }
 
     // Submit Create Paid Subscription
@@ -2566,7 +2946,9 @@
           statusVal === 'submitted' ? 'text-purple-400 border-purple-500/30 bg-purple-500/10' :
           'text-brand-400 border-brand-500/30 bg-brand-500/10';
 
-        const safeUrl = String(row.url || '').startsWith('http') ? row.url : `https://${row.website || ''}`;
+        const rawUrl = String(row.url || '').trim();
+        const cleanDomain = String(row.website || '').trim().replace(/^https?:\/\//i, '');
+        const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${cleanDomain}`;
 
         return `
           <tr class="hover:bg-surface-850/60 transition-colors">
@@ -2862,7 +3244,7 @@
       });
       const el = document.getElementById('seo-view');
       try {
-        const renderers = { overview: seoOverview, rankings: seoRankings, forecasting: seoForecasting, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
+        const renderers = { overview: seoOverview, rankings: seoRankings, forecasting: seoForecasting, product_advisor: seoProductAdvisor, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
         el.innerHTML = await (renderers[view] || seoOverview)();
       } catch (e) {
         el.innerHTML = panel('Error', `<div class="text-rose-300 text-sm">${esc(e.message)}</div>`);
@@ -2980,7 +3362,7 @@
         ${seoCard('Logged Forecasts', fmtNum(ledger.summary?.total_entries || entries.length), 'Strategy Ledger (A17)', 'text-white', 'layers')}
         ${seoCard('BOFU/MOFU Share', `${ledger.summary?.bofu_mofu_share_pct ?? 100}%`, '>= 70% transactional target', 'text-emerald-400', 'target')}
         ${seoCard('Avg Time to Top 10', `~${avgDays} days`, 'based on KD & path specificity', 'text-sky-300', 'clock')}
-        ${seoCard('Forecast Clicks/mo', fmtNum(totalEstClicks), `~${totalEstDownloads.toFixed(0)} est. installs/mo`, 'text-brand-400', 'TrendingUp')}
+        ${seoCard('Forecast Clicks/mo', fmtNum(totalEstClicks), `~${totalEstDownloads.toFixed(0)} est. installs/mo`, 'text-brand-400', 'trending-up')}
         ${seoCard('Pre → Post Lift', `${prePost.avg_clicks_lift_pct >= 0 ? '+' : ''}${prePost.avg_clicks_lift_pct}%`, `${fmtNum(prePost.optimized_pages_count)} optimized · Δpos +${prePost.avg_position_delta}`, 'text-emerald-300', 'zap')}
         ${seoCard('Competitor Gaps', fmtNum(compOrg.total_tracked_pages || 0), `${fmtNum((compOrg.teardowns || []).length)} teardowns ready (A16)`, 'text-amber-300', 'radar')}
       </div>`;
@@ -3292,7 +3674,7 @@
 
     // ---------------- Data sources ----------------
     async function seoSetup() {
-      const [p, dfs] = await Promise.all([seoFetch('/providers'), seoFetch('/dfs/status').catch(() => null)]);
+      const [p, dfs, insp] = await Promise.all([seoFetch('/providers'), seoFetch('/dfs/status').catch(() => null), seoFetch('/gsc/inspection-ledger').catch(() => null)]);
       const row = (name, ok, detail, envs) => `<div class="flex items-start justify-between gap-4 py-3 border-b border-slate-800/70">
         <div><div class="text-sm font-semibold text-white">${esc(name)}</div><div class="text-xs text-slate-400 mt-0.5">${detail}</div>
         ${envs ? `<div class="text-[11px] text-slate-500 mt-1 font-mono">${esc(envs)}</div>` : ''}</div>
@@ -3308,7 +3690,8 @@
       const callRows = (dfs?.recent_calls || []).map(c => `<tr><td class="py-1.5 font-mono text-[11px] text-slate-300">${esc(c.endpoint)}</td><td class="py-1.5 font-mono">${c.status_code}</td><td class="py-1.5 font-mono text-amber-300">${fmtUsd(c.cost_usd, 4)}</td><td class="py-1.5 text-[11px] text-slate-400">${esc(c.note || '')}</td><td class="py-1.5 text-[11px] text-slate-500">${esc(fmtDate(c.created_at))}</td></tr>`).join('');
       const ledger = callRows ? `<table class="w-full text-left text-xs mt-3"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-1.5">Endpoint</th><th>Status</th><th>Cost</th><th>Note</th><th>When</th></tr></thead><tbody class="divide-y divide-slate-800/70">${callRows}</tbody></table>` : '<div class="text-xs text-slate-500 mt-2">No DataForSEO calls made from this CRM yet.</div>';
 
-      return panel('Data sources', `
+      const cloudConfigPanel = panel('Google Cloud Service Account & Cloud Automation Setup (Free Tier · A21)', `<div class="space-y-3 text-xs"><p class="text-slate-300">Configure your 100% free <strong>Google Cloud Service Account JSON</strong> (powers Search Console Search Analytics, Sitemaps Submit &amp; URL Inspection API) and optional free <strong>Google Cloud API Key</strong> (25,000 req/day for PageSpeed Insights &amp; CrUX). Values saved here persist immediately in SQLite without restarting Railway.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">GSC Auth Mode</div><div class="text-sm font-bold text-emerald-400 font-mono mt-0.5">${esc(p.gsc.auth_mode || 'unconfigured')}</div><div class="text-[11px] text-slate-400 truncate mt-0.5">${esc(p.gsc.service_account || 'Seed / OAuth Continuity')}</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">GSC Rows Synced</div><div class="text-sm font-bold text-white font-mono mt-0.5">${fmtNum(p.gsc.rows || 0)} rows</div><div class="text-[11px] text-slate-400 mt-0.5">Latest: ${esc(p.gsc.latest_date || 'N/A')}</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">URL Inspection Ledger</div><div class="text-sm font-bold text-sky-400 font-mono mt-0.5">${fmtNum(insp?.total_inspected || 0)} URLs</div><div class="text-[11px] text-slate-400 mt-0.5">${fmtNum(insp?.indexed_pass_count || 0)} PASS verdict</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">PageSpeed / CrUX API Key</div><div class="text-sm font-bold ${p.pagespeed.keyed ? 'text-emerald-400' : 'text-amber-300'} font-mono mt-0.5">${p.pagespeed.keyed ? 'Active (25k/day)' : 'Unkeyed Fallback'}</div><div class="text-[11px] text-slate-400 mt-0.5">Free Google Cloud tier</div></div></div><form data-seo-form="gsc-cloud-config" class="space-y-3 pt-2 border-t border-slate-800/80"><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label class="block text-[11px] text-slate-400 mb-1">GSC Property URL (<code>GSC_SITE_URL</code>)</label><input name="site_url" value="${esc(p.gsc.site_url || 'sc-domain:sweeprcleaner.com')}" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono"></div><div><label class="block text-[11px] text-slate-400 mb-1">Google Cloud API Key (<code>GOOGLE_API_KEY</code> — optional, for PageSpeed/CrUX)</label><input name="google_api_key" type="password" placeholder="AIzaSy... (leave blank to keep current)" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono"></div></div><div><label class="block text-[11px] text-slate-400 mb-1">Google Cloud Service Account JSON or Base64 (<code>GSC_SERVICE_ACCOUNT_JSON</code>)</label><textarea name="service_account_json" rows="3" placeholder="Paste Google Cloud Service Account JSON..." class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono"></textarea></div><div class="flex flex-wrap items-center gap-2">${seoBtn('Save Cloud Credentials to Runtime DB', 'type="submit"', 'primary')}${seoBtn('Run Cloud GSC &amp; CWV Sync Now (A21)', 'data-seo-action="gsc-cloud-sync" type="button"')}</div></form></div>`);
+      return cloudConfigPanel + panel('Data sources', `
         ${row('Site auditor, backlink verifier, crawler log', true, 'Built in. No keys needed.', `SEO_SITE_URL=${p.site_url}`)}
         ${row('DataForSEO v3 (Search Volume, KD, DR, Backlinks, Competitor Gap)', p.dataforseo.configured, dfsDetail, 'DATAFORSEO_LOGIN=...   DATAFORSEO_PASSWORD=...   DATAFORSEO_LOCATION_CODE=2840')}
         ${row('Google Search Console', p.gsc.configured, p.gsc.configured ? `Property ${esc(p.gsc.site_url)} via ${esc(p.gsc.service_account)}` : 'Real rankings, clicks, impressions, CTR. Create a Google Cloud service account, enable the Search Console API, then add the service account email as a user on your GSC property.', 'GSC_SITE_URL=sc-domain:sweeprcleaner.com   GSC_SERVICE_ACCOUNT_JSON=<json | base64 | file path>')}
@@ -3317,6 +3700,117 @@
         ${row('Open PageRank', p.open_pagerank.configured, 'Free domain authority (0-10) for you, competitors and referring domains. 30,000 domains/month on the free tier.', 'OPEN_PAGERANK_API_KEY=<from keywordseverywhere.com/account/openpagerank>')}
         <p class="text-[11px] text-slate-500 mt-4">Set these in <code>server/.env</code> (or your host's environment) and restart the server. Keys are read from the environment only; they're never stored in the database or sent to the browser.</p>`)
         + panel('DataForSEO budget guard & API call ledger', capForm + ledger);
+    }
+
+    // ---------------- Product & App Advisor (A20) ----------------
+    async function seoProductAdvisor() {
+      const r = await seoFetch('/product-advisor');
+      const s = r.summary || {};
+      const snap = r.codebase_snapshot || {};
+      const cards = `<div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        ${seoCard('Web Cleanup Catalog', fmtNum(s.total_catalog_pages || 0), `${fmtNum(s.weekly_produced_or_enriched_count || 0)} produced/enriched (${esc(r.week_id || '')})`, 'text-brand-400', 'file-text')}
+        ${seoCard('GSC Active Guides', fmtNum(s.gsc_active_pages_evaluated || 0), 'Verified Search Console demand', 'text-sky-400', 'trending-up')}
+        ${seoCard('Desktop Rule Coverage', `${s.desktop_any_rule_coverage_pct || 0}%`, `${s.desktop_first_class_coverage_pct || 0}% dedicated (${snap.windows_rule_count || 23} Win rules)`, 'text-emerald-400', 'cpu')}
+        ${seoCard('Uncaptured / Bundled GB', `${fmtNum(s.uncaptured_or_bundled_midpoint_gb_pool || 0)} GB`, 'Midpoint bloat across app gaps', 'text-amber-400', 'hard-drive')}
+        ${seoCard('Top Proposal Impact', `${s.top_proposal_score || 95}/100`, esc(s.top_proposal_title || 'Inline Safety Evidence Drawer'), 'text-purple-400', 'sparkles')}
+      </div>`;
+
+      const headerBar = `<div class="bg-surface-900 border border-emerald-500/30 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold uppercase">Read-Only Advisory Mode · Zero App Edits</span>
+            <span class="text-xs font-mono text-slate-400">${esc(r.week_id || '')} · Inspected ${esc((r.generated_at || '').slice(0, 19).replace('T', ' '))} UTC</span>
+          </div>
+          <h3 class="text-base font-bold text-white mt-1.5">Weekly Content-to-Product &amp; Multi-Platform UI Mockup Advisor (A20)</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Logs all content produced/enriched for SWEEPR Cleaner and cross-references against <code class="text-emerald-300">app/src-tauri/src/rules.rs</code>, <code class="text-emerald-300">Cleaner.svelte</code>, <code class="text-sky-300">DashboardScreen.kt</code>, and <code class="text-sky-300">DashboardView.swift</code>.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button data-seo-action="product-advisor-generate" class="px-3.5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow">Regenerate Weekly Advisory Now</button>
+          <a href="/api/crm/seo/product-advisor/mockup-report" target="_blank" class="px-3.5 py-2 rounded-lg bg-surface-800 hover:bg-slate-700 border border-emerald-500/40 text-emerald-300 text-xs font-bold">Open Full-Screen Mockup Studio ↗</a>
+        </div>
+      </div>`;
+
+      const gapRows = (r.gap_matrix || []).map(g => `<tr class="border-b border-slate-800/60">
+        <td class="py-2.5 px-3 font-semibold text-white">${esc(g.label)}<div class="text-[10px] font-mono text-slate-400">${esc(g.state)}</div></td>
+        <td class="py-2.5 px-3 font-mono text-right text-white font-bold">${fmtNum(g.count)}</td>
+        <td class="py-2.5 px-3 font-mono text-right text-emerald-400">${g.share_pct}%</td>
+        <td class="py-2.5 px-3 font-mono text-right text-amber-300">${fmtNum(g.total_midpoint_reclaimable_gb)} GB</td>
+        <td class="py-2.5 px-3 text-[11px] font-mono text-sky-300">${(g.sample_slugs || []).slice(0, 4).map(esc).join(', ')}</td>
+        <td class="py-2.5 px-3 text-xs text-slate-300">${esc(g.description)}</td>
+      </tr>`).join('');
+
+      const gapPanel = panel('Web-to-App Capability Gap Matrix (Desktop Rust/Svelte + Mobile Android/iOS)', `<div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead class="text-[11px] uppercase text-slate-400 border-b border-slate-800">
+          <tr><th class="py-2 px-3 text-left">Capability Gap State</th><th class="py-2 px-3 text-right">Guides</th><th class="py-2 px-3 text-right">Share</th><th class="py-2 px-3 text-right">Midpoint GB Pool</th><th class="py-2 px-3 text-left">Sample Slugs</th><th class="py-2 px-3 text-left">Strategic Diagnosis</th></tr>
+        </thead>
+        <tbody>${gapRows}</tbody>
+      </table></div>`);
+
+      const mockupFramePanel = panel('Interactive Multi-Platform UI Mockups (Desktop Cleaner.svelte · Android Compose · iOS SwiftUI)', `
+        <div class="rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+          <iframe src="/api/crm/seo/product-advisor/mockup-report" class="w-full" style="height: 760px; border: 0;" title="SWEEPR Weekly Product Advisor Interactive Mockups"></iframe>
+        </div>
+      `);
+
+      const proposalCards = (r.proposals || []).map(p => `<div class="bg-surface-850 border border-slate-800 rounded-xl p-4 space-y-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs">#${p.rank}</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold">${p.product_impact_score}/100 Impact</span>
+            <span class="text-xs font-mono text-amber-300">${esc(p.estimated_reclaimable_gb_range)}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${(p.target_platforms || []).map(pl => `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-mono uppercase">${esc(pl)}</span>`).join('')}
+          </div>
+        </div>
+        <h4 class="text-sm font-bold text-white">${esc(p.title)}</h4>
+        <p class="text-xs text-slate-400">${esc(p.subtitle)}</p>
+        <p class="text-xs text-slate-300"><strong>Why Recommend:</strong> ${esc(p.why_recommend)}</p>
+        <div class="text-[11px] text-sky-300 font-mono">Content Drivers: ${(p.supporting_content_slugs || []).map(esc).join(', ')}</div>
+        <details class="bg-slate-950/80 border border-slate-800 rounded-lg p-2.5 text-xs">
+          <summary class="cursor-pointer font-bold text-emerald-400">View Implementation Blueprint (Rust / Svelte / Kotlin Compose / SwiftUI)</summary>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-2.5">
+            <div>
+              <div class="text-[10px] uppercase text-slate-400 mb-1">Desktop Rust (<code>app/src-tauri/src/rules.rs</code>)</div>
+              <pre class="p-2 bg-slate-900 rounded text-[11px] text-emerald-300 overflow-x-auto">${esc(p.desktop_spec?.rust_snippet || '')}</pre>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase text-slate-400 mb-1">Desktop Svelte (<code>app/src/components/Cleaner.svelte</code>)</div>
+              <pre class="p-2 bg-slate-900 rounded text-[11px] text-cyan-300 overflow-x-auto">${esc(p.desktop_spec?.svelte_ui_snippet || '')}</pre>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase text-slate-400 mb-1">Android Compose (<code>DashboardScreen.kt</code>)</div>
+              <pre class="p-2 bg-slate-900 rounded text-[11px] text-amber-200 overflow-x-auto">${esc(p.mobile_spec?.android_compose_snippet || '')}</pre>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase text-slate-400 mb-1">iOS SwiftUI (<code>DashboardView.swift</code>)</div>
+              <pre class="p-2 bg-slate-900 rounded text-[11px] text-purple-200 overflow-x-auto">${esc(p.mobile_spec?.ios_swiftui_snippet || '')}</pre>
+            </div>
+          </div>
+        </details>
+      </div>`).join('');
+
+      const proposalsPanel = panel(`Ranked Product Integration Proposals (${(r.proposals || []).length})`, `<div class="space-y-3">${proposalCards}</div>`);
+
+      const logRows = (r.weekly_content_log || []).slice(0, 40).map(item => `<tr class="border-b border-slate-800/60">
+        <td class="py-2 px-3 font-mono text-sky-300"><a href="${esc(item.url_path)}" target="_blank" class="hover:underline">${esc(item.slug)}</a></td>
+        <td class="py-2 px-3 text-slate-300">${esc(item.title)}</td>
+        <td class="py-2 px-3 font-mono text-[11px] text-emerald-300">${esc(item.production_source)}</td>
+        <td class="py-2 px-3 font-mono text-right text-amber-300">${esc(item.avg_space_label)}</td>
+        <td class="py-2 px-3 font-mono text-right text-white">${fmtNum(item.gsc_impressions_28d)}</td>
+        <td class="py-2 px-3 font-mono text-[11px] text-purple-300">${esc(item.capability_gap_state)}</td>
+        <td class="py-2 px-3 font-mono text-[11px] text-slate-400">${esc(item.matched_desktop_rule_id || 'none')}</td>
+        <td class="py-2 px-3 text-[11px] text-slate-300">${esc(item.recommended_app_surface)}</td>
+      </tr>`).join('');
+
+      const logPanel = panel('Weekly Content Production & Enrichment Ledger (Top 40 Tracked Guides)', `<div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="w-full text-xs">
+        <thead class="text-[11px] uppercase text-slate-400 border-b border-slate-800 sticky top-0 bg-surface-900">
+          <tr><th class="py-2 px-3 text-left">Slug</th><th class="py-2 px-3 text-left">Guide Title</th><th class="py-2 px-3 text-left">Source</th><th class="py-2 px-3 text-right">Avg Space</th><th class="py-2 px-3 text-right">GSC Impr</th><th class="py-2 px-3 text-left">Gap State</th><th class="py-2 px-3 text-left">Desktop Rule</th><th class="py-2 px-3 text-left">Recommended App Surface</th></tr>
+        </thead>
+        <tbody>${logRows}</tbody>
+      </table></div>`);
+
+      return headerBar + cards + mockupFramePanel + gapPanel + proposalsPanel + logPanel;
     }
 
     // ---------------- Event delegation ----------------
@@ -3390,6 +3884,20 @@
             alert(`A18 Self-Healing Refresh Complete!\n\nEvaluated Candidates: ${r.evaluated_candidates}\nPages Refreshed (Pre-Baseline Frozen + Blueprint/CTR Applied): ${r.refreshed_count}\nQueued for IndexNow Re-Crawl: ${r.queued_for_indexnow}`);
             seoShow('forecasting');
           }
+          else if (a === 'product-advisor-generate') {
+            seoJobPill('Running A20 Weekly Content-to-Product & UI Mockup Advisor...');
+            const r = await seoFetch('/product-advisor/generate', { method: 'POST', body: JSON.stringify({ persist: true }) });
+            seoJobPill(null);
+            alert(`A20 Weekly Content-to-Product Advisory Updated (${r.week_id})!\n\nTotal Catalog Guides: ${r.summary?.total_catalog_pages}\nActive/Enriched Guides: ${r.summary?.weekly_produced_or_enriched_count}\nProposals Ranked: ${r.summary?.proposals_count}\nTop Proposal: ${r.summary?.top_proposal_title} (${r.summary?.top_proposal_score}/100)\nRead-Only Guardrail: Verified`);
+            seoShow('product_advisor');
+          }
+          else if (a === 'gsc-cloud-sync') {
+            seoJobPill('Running A21 Google Cloud GSC, Sitemap, URL Inspection & CWV Sync...');
+            const r = await seoFetch('/gsc/cloud-sync', { method: 'POST', body: JSON.stringify({ days: 90, max_inspect_urls: 6, run_cwv: true }) });
+            seoJobPill(null);
+            alert(`A21 Cloud Google Sync Complete!\n\nAuth Mode: ${r.auth_mode}\nGSC Rows Synced: ${r.gsc_rows_synced}\nSitemap Submitted: ${r.sitemap_submitted ? 'Yes' : 'Skipped'}\nPriority URLs Inspected: ${r.urls_inspected} (${r.urls_indexed_pass} PASS)\nCWV Pages Checked: ${r.cwv_pages_checked}`);
+            seoShow('setup');
+          }
           else if (a === 'dfs-link-gap') {
             seoJobPill('Running Competitor Link Intersect via DataForSEO...');
             const r = await seoFetch('/dfs/link-gap', { method: 'POST', body: JSON.stringify({ limit: 100 }) });
@@ -3457,6 +3965,14 @@
         else if (form.dataset.seoForm === 'bl-add') { await seoFetch('/backlinks', { method: 'POST', body: JSON.stringify(f) }); seoShow('backlinks'); }
         else if (form.dataset.seoForm === 'competitors') { await seoFetch('/authority/competitors', { method: 'PUT', body: JSON.stringify(f) }); seoShow('authority'); }
         else if (form.dataset.seoForm === 'dfs-cap') { await seoFetch('/dfs/spend-cap', { method: 'PUT', body: JSON.stringify({ spend_cap_usd: Number(f.spend_cap_usd) }) }); seoShow('setup'); }
+        else if (form.dataset.seoForm === 'gsc-cloud-config') {
+          const payload = { site_url: f.site_url };
+          if (f.google_api_key && String(f.google_api_key).trim()) payload.google_api_key = String(f.google_api_key).trim();
+          if (f.service_account_json && String(f.service_account_json).trim()) payload.service_account_json = String(f.service_account_json).trim();
+          const r = await seoFetch('/gsc/configure', { method: 'POST', body: JSON.stringify(payload) });
+          alert(`Google Cloud Credentials Saved!\n\nGSC Auth Mode: ${r.gsc?.auth_mode}\nService Account: ${r.gsc?.service_account || 'Seed / OAuth'}\nPageSpeed Keyed: ${r.pagespeed?.keyed ? 'Yes (25k/day)' : 'No'}`);
+          seoShow('setup');
+        }
         else if (form.dataset.seoForm === 'psi') {
           seoJobPill('Running PageSpeed Insights (up to ~60s)');
           const r = await seoFetch('/pagespeed/run', { method: 'POST', body: JSON.stringify(f) });
