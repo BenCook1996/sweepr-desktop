@@ -776,6 +776,7 @@
             <button data-seo-view="cwv" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Core Web Vitals</button>
             <button data-seo-view="bots" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Crawlers &amp; AI</button>
             <button data-seo-view="setup" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">Data Sources</button>
+            <button data-seo-view="changelog" class="seo-tab px-3 py-1.5 rounded-lg text-xs font-semibold">SEO Changelog</button>
           </div>
           <div id="seo-job-pill" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-300">
             <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span id="seo-job-text">Working...</span>
@@ -3244,7 +3245,7 @@
       });
       const el = document.getElementById('seo-view');
       try {
-        const renderers = { overview: seoOverview, rankings: seoRankings, forecasting: seoForecasting, product_advisor: seoProductAdvisor, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup };
+        const renderers = { overview: seoOverview, rankings: seoRankings, forecasting: seoForecasting, product_advisor: seoProductAdvisor, audit: seoAudit, backlinks: seoBacklinks, authority: seoAuthority, cwv: seoCwv, bots: seoBots, setup: seoSetup, changelog: seoChangelog };
         el.innerHTML = await (renderers[view] || seoOverview)();
       } catch (e) {
         el.innerHTML = panel('Error', `<div class="text-rose-300 text-sm">${esc(e.message)}</div>`);
@@ -3813,14 +3814,305 @@
       return headerBar + cards + mockupFramePanel + gapPanel + proposalsPanel + logPanel;
     }
 
+    // ---------------- SEO Changelog (M5 / R6) ----------------
+    const PROJ_BADGES = {
+      cleaner: { label: 'Cleaner', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+      vpn: { label: 'VPN', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30' },
+      deepblock: { label: 'Deepblock', cls: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+      shopsafe: { label: 'Shopsafe', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+      clipper: { label: 'Clipper', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+    };
+
+    const CAT_LABELS = {
+      technical_seo: { label: 'Technical SEO', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+      routing: { label: 'Routing & 301', cls: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' },
+      content_information_gain: { label: 'Info Gain', cls: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
+      distribution_backlinks: { label: 'Distribution & Backlinks', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+      sitemap_pruning: { label: 'Sitemap Pruning', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+      gsc_indexing: { label: 'GSC Indexing', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+    };
+
+    const STATUS_BADGES = {
+      completed: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      verified: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+      in_progress: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      planned: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+    };
+
+    async function seoChangelog() {
+      const activeProj = seoState.changelogProj || 'all';
+      const activeCat = seoState.changelogCat || 'all';
+
+      const q = new URLSearchParams();
+      if (activeProj !== 'all') q.set('project', activeProj);
+      if (activeCat !== 'all') q.set('category', activeCat);
+      q.set('limit', '100');
+
+      const [listRes, summaryRes] = await Promise.all([
+        seoFetch('/changelog?' + q.toString()),
+        seoFetch('/changelog/summary' + (activeProj !== 'all' ? '?project=' + encodeURIComponent(activeProj) : ''))
+      ]);
+
+      const entries = listRes.entries || [];
+      const sum = summaryRes.summary || { total: 0, by_category: {}, by_status: {}, by_project: {} };
+
+      const projects = [
+        { id: 'all', label: 'All Projects' },
+        { id: 'cleaner', label: 'Cleaner' },
+        { id: 'vpn', label: 'VPN' },
+        { id: 'deepblock', label: 'Deepblock' },
+        { id: 'shopsafe', label: 'Shopsafe' },
+        { id: 'clipper', label: 'Clipper' },
+      ];
+
+      const categories = [
+        { id: 'all', label: 'All Categories' },
+        { id: 'technical_seo', label: 'Technical SEO' },
+        { id: 'routing', label: 'Routing' },
+        { id: 'content_information_gain', label: 'Info Gain' },
+        { id: 'distribution_backlinks', label: 'Distribution & Backlinks' },
+        { id: 'sitemap_pruning', label: 'Sitemap Pruning' },
+        { id: 'gsc_indexing', label: 'GSC Indexing' },
+      ];
+
+      const projButtons = projects.map(p => {
+        const count = p.id === 'all' ? sum.total : (sum.by_project[p.id] || 0);
+        const isActive = activeProj === p.id;
+        return `<button data-seo-changelog-proj="${p.id}" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${isActive ? 'bg-brand-500 text-white shadow-sm' : 'bg-surface-800 text-slate-400 hover:text-white border border-slate-800'}">
+          ${p.label} <span class="ml-1 opacity-60 text-[10px]">(${count})</span>
+        </button>`;
+      }).join('');
+
+      const catButtons = categories.map(c => {
+        const count = c.id === 'all' ? sum.total : (sum.by_category[c.id] || 0);
+        const isActive = activeCat === c.id;
+        return `<button data-seo-changelog-cat="${c.id}" class="px-2 py-0.5 rounded text-[11px] font-medium transition-all ${isActive ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-slate-200'}">
+          ${c.label} <span class="opacity-60">(${count})</span>
+        </button>`;
+      }).join('');
+
+      const headerBar = `<div class="flex flex-wrap items-center justify-between gap-3 bg-surface-900 border border-slate-800 rounded-2xl p-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="history" class="w-5 h-5 text-brand-400"></i> Unified SEO Changelog
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Audit trail of technical SEO, routing, content gain, backlink distribution, sitemap pruning, and GSC re-indexing across all linked projects.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          ${seoBtn('+ Log SEO Change', 'data-seo-action="changelog-toggle-form"', 'primary')}
+        </div>
+      </div>`;
+
+      const completedCount = (sum.by_status?.completed || 0) + (sum.by_status?.verified || 0);
+      const catCount = Object.keys(sum.by_category || {}).length;
+
+      const cards = `<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        ${seoCard('Total Actions', fmtNum(sum.total), `${entries.length} displayed`, 'text-brand-400', 'activity')}
+        ${seoCard('Completed / Verified', fmtNum(completedCount), `${sum.by_status?.verified || 0} verified in live SERP`, 'text-emerald-400', 'check-circle-2')}
+        ${seoCard('Active Categories', `${catCount} / 6`, 'Portfolio-wide distribution', 'text-sky-400', 'layers')}
+        ${seoCard('Latest Action', sum.latest_date || '—', 'Chronological index', 'text-amber-400', 'calendar')}
+      </div>`;
+
+      const drawer = `<div id="seo-changelog-drawer" class="hidden bg-surface-900 border border-brand-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4 text-brand-400"></i> New SEO Changelog Entry</h3>
+          <button data-seo-action="changelog-toggle-form" class="text-xs text-slate-400 hover:text-white">&times; Close</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Project</label>
+            <select id="cl-input-project" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
+              <option value="cleaner">SWEEPR Cleaner (cleaner)</option>
+              <option value="vpn">SWEEPR VPN (vpn)</option>
+              <option value="deepblock">SWEEPR Deepblock (deepblock)</option>
+              <option value="shopsafe">SWEEPR Shopsafe (shopsafe)</option>
+              <option value="clipper">ClipLetter (clipper)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Category</label>
+            <select id="cl-input-category" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
+              <option value="technical_seo">Technical SEO (technical_seo)</option>
+              <option value="routing">Routing & 301 (routing)</option>
+              <option value="content_information_gain">Content & Info Gain (content_information_gain)</option>
+              <option value="distribution_backlinks">Distribution & Backlinks (distribution_backlinks)</option>
+              <option value="sitemap_pruning">Sitemap Pruning (sitemap_pruning)</option>
+              <option value="gsc_indexing">GSC Indexing (gsc_indexing)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Date</label>
+            <input id="cl-input-date" type="text" value="${new Date().toISOString().slice(0, 10)}" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono" />
+          </div>
+        </div>
+        <div class="text-xs space-y-3">
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Title</label>
+            <input id="cl-input-title" type="text" placeholder="e.g. Prune sitemap to ~75 Tier-1 URLs" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Technical Breakdown & Description</label>
+            <textarea id="cl-input-desc" rows="3" placeholder="Describe technical implementation, files modified, HTTP status codes, etc." class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white"></textarea>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Impact Statement</label>
+              <input id="cl-input-impact" type="text" placeholder="e.g. Eliminates thin-content crawl budget waste" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Status</label>
+              <select id="cl-input-status" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
+                <option value="completed">Completed</option>
+                <option value="verified">Verified</option>
+                <option value="in_progress">In Progress</option>
+                <option value="planned">Planned</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-400 font-semibold mb-1">Target URLs (comma-separated)</label>
+            <input id="cl-input-urls" type="text" placeholder="/clean/app/steam-depotcache, /pricing" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono" />
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <button data-seo-action="changelog-toggle-form" class="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white border border-slate-700">Cancel</button>
+          <button data-seo-action="changelog-submit" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white transition-all shadow-md">Save & Sync to Central CRM</button>
+        </div>
+      </div>`;
+
+      const filterBar = `<div class="bg-surface-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">${projButtons}</div>
+        </div>
+        <div class="pt-2 border-t border-slate-800/60 flex flex-wrap items-center gap-1">
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-2">Category:</span>
+          ${catButtons}
+        </div>
+      </div>`;
+
+      const tableRows = entries.length === 0
+        ? `<tr><td colspan="6" class="py-12 text-center text-slate-400 text-sm">No SEO changes logged matching these filters.</td></tr>`
+        : entries.map(e => {
+            const proj = PROJ_BADGES[e.project_id] || { label: e.project_id, cls: 'bg-slate-700 text-slate-300 border-slate-600' };
+            const cat = CAT_LABELS[e.category] || { label: e.category, cls: 'bg-slate-700 text-slate-300 border-slate-600' };
+            const statusCls = STATUS_BADGES[e.status] || STATUS_BADGES.completed;
+
+            let urls = [];
+            if (e.target_urls) {
+              try {
+                urls = JSON.parse(e.target_urls);
+                if (!Array.isArray(urls)) urls = [String(e.target_urls)];
+              } catch {
+                urls = String(e.target_urls).split(',').map(s => s.trim()).filter(Boolean);
+              }
+            }
+            const urlsHtml = urls.slice(0, 4).map(u => `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 border border-slate-700/60 mr-1 mb-1">${esc(u)}</span>`).join('') +
+              (urls.length > 4 ? `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-400">+${urls.length - 4} more</span>` : '');
+
+            return `<tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors align-top">
+              <td class="py-3 px-3 font-mono text-xs text-slate-400 whitespace-nowrap">${esc(e.date)}</td>
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${proj.cls}">${esc(proj.label)}</span>
+              </td>
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded text-[10px] font-medium border ${cat.cls}">${esc(cat.label)}</span>
+              </td>
+              <td class="py-3 px-3 min-w-[320px]">
+                <div class="font-bold text-white text-xs mb-1">${esc(e.title)}</div>
+                <div class="text-xs text-slate-300 leading-relaxed">${esc(e.description)}</div>
+                ${urlsHtml ? `<div class="mt-2 flex flex-wrap">${urlsHtml}</div>` : ''}
+              </td>
+              <td class="py-3 px-3 min-w-[200px]">
+                <div class="text-xs text-emerald-400 font-medium">${esc(e.impact)}</div>
+              </td>
+              <td class="py-3 px-3 whitespace-nowrap text-right">
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusCls}">${esc(e.status)}</span>
+                <div class="mt-2">
+                  <button data-seo-action="changelog-delete" data-id="${e.id}" class="text-[10px] text-slate-500 hover:text-rose-400 transition-colors" title="Delete entry">&times; delete</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+
+      const logTable = panel('Changelog Ledger (' + entries.length + ' entries)', `<div class="overflow-x-auto"><table class="w-full text-left text-xs">
+        <thead class="text-[11px] uppercase text-slate-400 border-b border-slate-800 bg-surface-900">
+          <tr>
+            <th class="py-2.5 px-3">Date</th>
+            <th class="py-2.5 px-3">Project</th>
+            <th class="py-2.5 px-3">Category</th>
+            <th class="py-2.5 px-3">Action &amp; Breakdown</th>
+            <th class="py-2.5 px-3">Impact</th>
+            <th class="py-2.5 px-3 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table></div>`);
+
+      return headerBar + cards + drawer + filterBar + logTable;
+    }
+
     // ---------------- Event delegation ----------------
     document.addEventListener('click', async (e) => {
       const tab = e.target.closest('[data-seo-view]');
       if (tab) { seoShow(tab.dataset.seoView); return; }
+
+      const clProj = e.target.closest('[data-seo-changelog-proj]');
+      if (clProj) {
+        seoState.changelogProj = clProj.dataset.seoChangelogProj;
+        seoShow('changelog');
+        return;
+      }
+      const clCat = e.target.closest('[data-seo-changelog-cat]');
+      if (clCat) {
+        seoState.changelogCat = clCat.dataset.seoChangelogCat;
+        seoShow('changelog');
+        return;
+      }
       const action = e.target.closest('[data-seo-action]');
       if (action && !action.disabled) {
         const a = action.dataset.seoAction;
         try {
+          if (a === 'changelog-toggle-form') {
+            const d = document.getElementById('seo-changelog-drawer');
+            if (d) d.classList.toggle('hidden');
+            return;
+          }
+          if (a === 'changelog-delete') {
+            const id = action.dataset.id;
+            if (id && confirm('Delete changelog entry #' + id + '?')) {
+              await seoFetch('/changelog/' + encodeURIComponent(id), { method: 'DELETE' });
+              seoShow('changelog');
+            }
+            return;
+          }
+          if (a === 'changelog-submit') {
+            const project_id = document.getElementById('cl-input-project').value;
+            const category = document.getElementById('cl-input-category').value;
+            const date = document.getElementById('cl-input-date').value;
+            const title = document.getElementById('cl-input-title').value.trim();
+            const description = document.getElementById('cl-input-desc').value.trim();
+            const impact = document.getElementById('cl-input-impact').value.trim();
+            const status = document.getElementById('cl-input-status').value;
+            const urlsRaw = document.getElementById('cl-input-urls').value;
+            const target_urls = urlsRaw ? urlsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            if (!title || !description || !impact) {
+              alert('Title, description, and impact are required.');
+              return;
+            }
+
+            try {
+              await seoFetch('/changelog', {
+                method: 'POST',
+                body: JSON.stringify({ project_id, category, date, title, description, impact, status, target_urls }),
+              });
+              alert('Changelog entry saved and synced to Central CRM!');
+              seoShow('changelog');
+            } catch (err) {
+              alert('Failed to save changelog entry: ' + err.message);
+            }
+            return;
+          }
           if (a === 'audit-local') await seoRunJob('/audit/run', { source: 'local' }, 'Site audit');
           else if (a === 'audit-live') await seoRunJob('/audit/run', { source: 'live' }, 'Live site audit');
           else if (a === 'gsc-sync') await seoRunJob('/gsc/sync', { days: 90 }, 'Search Console sync');

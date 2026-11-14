@@ -4,8 +4,8 @@
  *
  * Updates:
  *  1. `server/public/pad.xml` (<Program_Version>, release date, and <File_Size_Bytes/K/MB>)
- *  2. `winget-manifests/s/SWEEPR/Cleaner/<version>/*.yaml` (PackageVersion & SHA-256)
- *  3. `chocolatey/sweepr-cleaner.nuspec` & `chocolatey/tools/chocolateyinstall.ps1` (version & SHA-256)
+ *  2. `winget-manifests/manifests/s/Sweepr/SweeprCleaner/<version>/*.yaml` (PackageVersion & SHA-256)
+ *  3. `chocolatey/sweepr-cleaner.nuspec` & `chocolatey/tools/chocolateyInstall.ps1` (version & SHA-256)
  *
  * Usage:
  *   node server/scripts/update-release-listings.mjs [--version=0.1.0]
@@ -26,7 +26,9 @@ const MSI_SIG_PATH = path.join(REPO_ROOT, "server/public/Sweepr_Setup.msi.sig");
 const RELEASE_MANIFEST_PATH = path.join(REPO_ROOT, "server/public/release-manifest.json");
 const TAURI_CONF_PATH = path.join(REPO_ROOT, "app/src-tauri/tauri.conf.json");
 const NUSPEC_PATH = path.join(REPO_ROOT, "chocolatey/sweepr-cleaner.nuspec");
-const CHOCO_INSTALL_PATH = path.join(REPO_ROOT, "chocolatey/tools/chocolateyinstall.ps1");
+const CHOCO_INSTALL_PATH = fs.existsSync(path.join(REPO_ROOT, "chocolatey/tools/chocolateyInstall.ps1"))
+  ? path.join(REPO_ROOT, "chocolatey/tools/chocolateyInstall.ps1")
+  : path.join(REPO_ROOT, "chocolatey/tools/chocolateyinstall.ps1");
 
 function loadEd25519PrivateKey() {
   let b64 = (process.env.LICENSE_PRIVATE_KEY_B64 || "").trim();
@@ -161,11 +163,11 @@ function main() {
     fs.writeFileSync(CHOCO_INSTALL_PATH, ps1, "utf8");
   }
 
-  // 3. Update Winget manifests under winget-manifests/s/SWEEPR/Cleaner/<version>/
-  const wingetDir = path.join(REPO_ROOT, "winget-manifests/s/SWEEPR/Cleaner", version);
+  // 3. Update Winget manifests under winget-manifests/manifests/s/Sweepr/SweeprCleaner/<version>/
+  const wingetDir = path.join(REPO_ROOT, "winget-manifests/manifests/s/Sweepr/SweeprCleaner", version);
   fs.mkdirSync(wingetDir, { recursive: true });
-  const baseWingetDir = path.join(REPO_ROOT, "winget-manifests/s/SWEEPR/Cleaner/0.1.0");
-  for (const file of ["SWEEPR.Cleaner.yaml", "SWEEPR.Cleaner.installer.yaml", "SWEEPR.Cleaner.locale.en-US.yaml"]) {
+  const baseWingetDir = path.join(REPO_ROOT, "winget-manifests/manifests/s/Sweepr/SweeprCleaner/0.1.0");
+  for (const file of ["Sweepr.SweeprCleaner.yaml", "Sweepr.SweeprCleaner.installer.yaml", "Sweepr.SweeprCleaner.locale.en-US.yaml"]) {
     const srcPath = fs.existsSync(path.join(wingetDir, file))
       ? path.join(wingetDir, file)
       : path.join(baseWingetDir, file);
@@ -194,7 +196,7 @@ function main() {
         version,
         exe: exeInfo,
         msi: msiInfo,
-        updated: ["server/public/pad.xml", "chocolatey/sweepr-cleaner.nuspec", `winget-manifests/s/SWEEPR/Cleaner/${version}`],
+        updated: ["server/public/pad.xml", "chocolatey/sweepr-cleaner.nuspec", `winget-manifests/manifests/s/Sweepr/SweeprCleaner/${version}`],
       },
       null,
       2

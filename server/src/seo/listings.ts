@@ -439,8 +439,8 @@ export function getDirectorySubmissionPack(store: SeoStore) {
       {
         platform_id: "winget",
         name: "Windows Package Manager (Winget)",
-        manifest_dir: `winget-manifests/s/SWEEPR/Cleaner/${version}/`,
-        command: `wingetcreate update SWEEPR.Cleaner --version ${version} --urls https://sweeprcleaner.com/SWEEPRCleaner.exe https://sweeprcleaner.com/Sweepr_Setup.msi --token $WINGET_TOKEN --submit`,
+        manifest_dir: `winget-manifests/manifests/s/Sweepr/SweeprCleaner/${version}/`,
+        command: `wingetcreate update Sweepr.SweeprCleaner --version ${version} --urls https://sweeprcleaner.com/SWEEPRCleaner.exe https://sweeprcleaner.com/Sweepr_Setup.msi --token $WINGET_TOKEN --submit`,
         submission_url: "https://github.com/microsoft/winget-pkgs/pulls",
       },
       {

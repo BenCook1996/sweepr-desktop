@@ -13,6 +13,7 @@
     "seo:product-advisor": "tsx scripts/weekly-product-content-advisor.ts",
     "cloud:automations": "tsx scripts/cloud-automation-runner.ts",
     "test": "tsx --test test/*.test.ts",
+    "test:e2e": "tsx --test --test-concurrency=3 test/e2e-*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -26,7 +26,22 @@ export interface CleanItem {
   metaTitle?: string;
   metaDescription?: string;
   customFaqs?: Array<{ q: string; a: string }>;
-  subLocations?: Array<{ subPath: string; role: string; avgSpace: string; safe: string }>;
+  subLocations?: Array<{
+    subPath: string;
+    role: string;
+    avgSpace: string;
+    safe: string;
+    extensions?: string[];
+    regenerates?: string;
+    troubleshooting?: string;
+  }>;
+  proofImage?: string;
+  visualProof?: string | { path: string; alt?: string; caption?: string };
+  troubleshooting?: {
+    processLock?: string;
+    adminRequired?: boolean;
+    edgeCaseNote?: string;
+  };
   competitorBlueprint?: {
     sourceDomain: string;
     sourceUrl?: string;
@@ -628,7 +643,15 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
 export function buildSubLocationsForItem(
   item: CleanItem,
   clusterId: PseoClusterId
-): Array<{ subPath: string; role: string; avgSpace: string; safe: string }> {
+): Array<{
+  subPath: string;
+  role: string;
+  avgSpace: string;
+  safe: string;
+  extensions?: string[];
+  regenerates?: string;
+  troubleshooting?: string;
+}> {
   if (Array.isArray(item.subLocations) && item.subLocations.length > 0) {
     return item.subLocations;
   }
@@ -865,6 +888,10 @@ export function buildPseoTitle(item: CleanItem): string {
 
   const telemetry = getActiveTelemetryTruthForSlug(item.slug);
   const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : formatCompactSpaceRange(item.avgSpace);
+  const candidateTitle = `Can I Delete ${cleanName}? YES (${spaceLabel}) — Safe Cleanup Guide`;
+  if (candidateTitle.length >= 30 && candidateTitle.length <= 115) {
+    return candidateTitle;
+  }
   return `Can I Delete ${cleanName}? YES — Safe Cleanup Guide (Reclaim ${spaceLabel})`;
 }
 
@@ -1666,6 +1693,36 @@ export function renderPseoPage(item: CleanItem): string {
       </div>`
       : "";
 
+  const visualProofHtml = item.proofImage
+    ? `
+    <!-- Verified Visual Proof (Windows 11 File System Inspection) -->
+    <div id="verified-visual-proof" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            📸 Verified Visual Proof
+          </span>
+          <h3 class="text-sm font-bold text-gray-900 m-0">Live Windows 11 24H2 Disk Inspection</h3>
+        </div>
+        <span class="text-[11px] font-mono text-gray-500 hidden sm:inline">SWEEPR Engineering Lab</span>
+      </div>
+      <figure class="m-0">
+        <img
+          src="${item.proofImage}"
+          alt="${typeof item.visualProof === 'object' && item.visualProof?.alt ? esc(item.visualProof.alt) : `Verified disk inspection of ${esc(item.name)} on Windows 11`}"
+          class="w-full rounded-xl border border-gray-200 shadow-inner object-cover"
+          loading="lazy"
+          decoding="async"
+          width="800"
+          height="450"
+        />
+        <figcaption class="mt-2.5 text-xs text-gray-500 text-center italic">
+          ${typeof item.visualProof === 'object' && item.visualProof?.caption ? esc(item.visualProof.caption) : `Live Windows 11 file inspection demonstrating disk footprint and safe subfolder layout for ${esc(item.name)}.`}
+        </figcaption>
+      </figure>
+    </div>`
+    : "";
+
   const siblingTableSection = `
     <!-- Sub-Folders & Cache Locations Breakdown Table -->
     <div id="subfolders-breakdown-table" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
@@ -1689,7 +1746,13 @@ export function renderPseoPage(item: CleanItem): string {
                 (loc, idx) => `
             <tr class="${idx === 0 ? "bg-emerald-50/50" : loc.safe.includes("Protected") ? "bg-gray-50/80" : ""}">
               <td class="py-2.5 pr-3 font-mono text-[11px] font-semibold text-gray-900 break-all max-w-xs">${loc.subPath}</td>
-              <td class="py-2.5 pr-3">${loc.role}</td>
+              <td class="py-2.5 pr-3">
+                <div>${loc.role}</div>
+                ${Array.isArray(loc.extensions) && loc.extensions.length > 0 ? `
+                <div class="mt-1 flex flex-wrap gap-1">
+                  ${loc.extensions.map((ext) => `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-700 border border-gray-200/80">${esc(ext)}</span>`).join("")}
+                </div>` : ""}
+              </td>
               <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${loc.avgSpace}</td>
               <td class="py-2.5 whitespace-nowrap font-semibold">${loc.safe}</td>
             </tr>`
@@ -1822,6 +1885,19 @@ export function renderPseoPage(item: CleanItem): string {
           },
         ],
       },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        name: "SWEEPR Cleaner",
+        url: "https://sweeprcleaner.com",
+        logo: "https://sweeprcleaner.com/logo-mint-glass.svg",
+        sameAs: [
+          "https://github.com/BenCook1996/sweepr-desktop",
+          "https://github.com/microsoft/winget-pkgs",
+          "https://alternativeto.net/software/sweepr-cleaner/about/",
+          "https://sourceforge.net/projects/sweepr-cleaner/",
+        ],
+      },
     ],
   })}</script>
 
@@ -1891,6 +1967,12 @@ export function renderPseoPage(item: CleanItem): string {
           ${item.safeToDelete ? "🟢 100% Safe to Delete" : "⚠️ Exercise Caution"}
         </span>
         <span class="text-gray-500">Typical Space Reclaimed: <strong>${item.avgSpace}</strong></span>
+      </div>
+      <div class="mt-3 flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-xl px-3.5 py-1.5">
+        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook</span>
       </div>
       ${
         isStreamDeck
@@ -2074,6 +2156,7 @@ export function renderPseoPage(item: CleanItem): string {
       </p>
     </div>
 
+    ${visualProofHtml}
     ${siblingTableSection}
 
     <!-- Frequently Asked Questions -->
@@ -2177,7 +2260,7 @@ export function renderPseoPage(item: CleanItem): string {
       <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
         SWEEPR Cleaner safely clears ${item.name} along with ${cleanItems.length}+ other hidden app folders and leftover files in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
       </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4 mb-5">
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
         <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go gap-2" rel="nofollow">
           <span>Activate Pro Now (5 Devices)</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -2185,10 +2268,6 @@ export function renderPseoPage(item: CleanItem): string {
         <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm" rel="nofollow">
           Download Free Scan (.exe / .dmg)
         </a>
-      </div>
-      <div class="max-w-lg mx-auto bg-white/5 border border-white/10 rounded-xl p-3 text-left text-xs text-gray-300">
-        <strong class="text-emerald-400">🛡️ Windows 10/11 First-Launch Walkthrough:</strong> Because v0.1.0 is a freshly compiled 5.8 MB native Rust app, if Windows SmartScreen appears:
-        <strong>Step 1: Click "More info"</strong> &rarr; <strong>Step 2: Click "Run anyway"</strong>.
       </div>
     </div>
   </main>

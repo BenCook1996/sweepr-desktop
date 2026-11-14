@@ -4,20 +4,20 @@
     <id>sweepr-cleaner</id>
     <version>0.1.0</version>
     <packageSourceUrl>https://github.com/BenCook1996/sweepr-desktop</packageSourceUrl>
-    <owners>SWEEPR Cleaner Team</owners>
+    <owners>Benjamin Cook</owners>
     <title>SWEEPR Cleaner</title>
-    <authors>SWEEPR Cleaner Team</authors>
+    <authors>Benjamin Cook</authors>
     <projectUrl>https://sweeprcleaner.com</projectUrl>
     <iconUrl>https://sweeprcleaner.com/icon-192.png</iconUrl>
-    <copyright>Copyright (c) 2026 SWEEPR Cleaner Team</copyright>
+    <copyright>Copyright (c) 2026 Benjamin Cook. All rights reserved.</copyright>
     <licenseUrl>https://sweeprcleaner.com/terms</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <docsUrl>https://sweeprcleaner.com/clean</docsUrl>
     <bugTrackerUrl>https://sweeprcleaner.com/support</bugTrackerUrl>
-    <tags>sweepr cleaner disk-cleanup storage uninstaller ccleaner-alternative windows-11</tags>
+    <tags>sweepr cleaner disk-cleanup storage uninstaller ccleaner-alternative windows-11 rust</tags>
     <summary>Native Rust PC &amp; SSD storage cleaner for Windows 10 and 11 with a 7-day undo safety net.</summary>
     <description>SWEEPR Cleaner is a fast, lightweight native Rust PC cleaner and speed booster for Windows 10 and Windows 11. Features 60-second junk cleanup, complete app uninstaller, GPU shader &amp; game launcher cache cleaner, duplicate finder, and a 7-day undo safety net with zero background telemetry.</description>
-    <releaseNotes>https://sweeprcleaner.com/bloat-watch</releaseNotes>
+    <releaseNotes>https://sweeprcleaner.com/state-of-windows-storage</releaseNotes>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />

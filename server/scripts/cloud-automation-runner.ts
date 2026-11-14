@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { openDb } from "../src/db.js";
 import { config } from "../src/config.js";
+import { syncSeoChangelogToCentralCrm } from "../src/crm-sync.js";
 import { SeoStore } from "../src/seo/store.js";
 import { runCloudGoogleSeoSync } from "../src/seo/google.js";
 import { generateWeeklyContentToProductReport } from "../src/seo/product-advisor.js";
@@ -30,6 +31,7 @@ function parseArgs(argv: string[]) {
   let provisionSaPath: string | null = null;
   let googleApiKeyArg: string | null = null;
   let syncProdCrm = false;
+  let logChangelog = process.env.GITHUB_ACTIONS === "true";
 
   for (const arg of argv) {
     if (arg.startsWith("--count=")) {
@@ -52,6 +54,10 @@ function parseArgs(argv: string[]) {
       runCwv = false;
     } else if (arg === "--update-log") {
       updateLog = true;
+    } else if (arg === "--log-changelog") {
+      logChangelog = true;
+    } else if (arg === "--no-log-changelog") {
+      logChangelog = false;
     } else if (arg.startsWith("--provision-sa=")) {
       provisionSaPath = arg.slice("--provision-sa=".length).trim().replace(/^["']|["']$/g, "");
     } else if (arg.startsWith("--google-api-key=")) {
@@ -70,6 +76,7 @@ function parseArgs(argv: string[]) {
     forceWeekly,
     runCwv,
     updateLog,
+    logChangelog,
     provisionSaPath,
     googleApiKeyArg,
     syncProdCrm,
@@ -372,12 +379,47 @@ async function main() {
     });
   }
 
+  // Record net-new SEO mutations to CRM SEO Changelog (when running in cloud or --log-changelog)
+  let changelogRecorded = false;
+  if (opts.logChangelog && (cloudSync.sitemap_submitted || dripExecuted)) {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const category = cloudSync.sitemap_submitted ? "sitemap_pruning" : "content_information_gain";
+    const title = cloudSync.sitemap_submitted
+      ? "Automated Cloud GSC Sitemap Re-Submission & Audit"
+      : `Automated Cloud Pillar Content Drip (${opts.count} pages)`;
+    const existingEntries = seoStore.listChangelog({ projectId: "cleaner", limit: 25 });
+    const alreadyLogged = existingEntries.some((e) => e.date === todayIso && e.title === title);
+    if (!alreadyLogged) {
+      const description = [
+        cloudSync.sitemap_submitted ? "Submitted updated sitemap.xml to GSC via SHA-256 change detector." : null,
+        dripExecuted ? `Published ${opts.count} pillar SEO pages and refreshed internal links.` : null,
+        `Audit score: ${auditScore}/100 (${pagesAudited} pages), GSC URLs inspected: ${cloudSync.urls_inspected}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const entry = seoStore.addChangelogEntry({
+        project_id: "cleaner",
+        date: todayIso,
+        category,
+        title,
+        description,
+        impact: cloudSync.sitemap_submitted ? "Tier-1 sitemap crawl efficiency" : "Pillar topical depth",
+        impact_area: "server/public/sitemap.xml, server/public/llms.txt",
+        author: "Cloud Automation Runner (A1-A21)",
+        status: "completed",
+      });
+      syncSeoChangelogToCentralCrm(entry);
+      changelogRecorded = true;
+    }
+  }
+
   const finalSummary = {
     ok: auditErrors === 0 && auditScore === 100,
     executed_at: new Date().toISOString(),
     a21_cloud_google_sync: cloudSync,
     gsc_seed_updated: gscSeedUpdated,
     drip_executed: dripExecuted,
+    changelog_recorded: changelogRecorded,
     audit: {
       health_score: auditScore,
       pages_audited: pagesAudited,

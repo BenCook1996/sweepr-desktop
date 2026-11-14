@@ -407,6 +407,9 @@ export function createApp(deps: AppDeps) {
     if (p === "/pad.xml") {
       c.res.headers.set("X-Robots-Tag", "noindex, follow");
     }
+    if (/^\/(?:de|fr|es)(?:\/|$)/.test(p) && !p.includes("/order") && !c.res.headers.has("X-Robots-Tag")) {
+      c.res.headers.set("X-Robots-Tag", "noindex, follow");
+    }
     if (c.res.headers.has("Cache-Control")) return;
 
     if (
@@ -765,6 +768,9 @@ export function createApp(deps: AppDeps) {
     if (!existsSync(file)) return c.notFound();
     let html = readFileSync(file, "utf-8");
     if (lang !== "en") {
+      if (!c.res.headers.has("X-Robots-Tag")) {
+        c.header("X-Robots-Tag", "noindex, follow");
+      }
       html = html.replace(/<html\s+lang="en"/i, `<html lang="${escapeHtml(lang)}"`);
       const locMeta = LOCALIZED_META[lang];
       const pageKey = file.includes("pricing.html") ? "pricing" : file.includes("index.html") ? "home" : null;
@@ -2258,7 +2264,6 @@ export function createApp(deps: AppDeps) {
   });
 
   app.get("/download", async (c) => {
-    c.header("X-Robots-Tag", "noindex, nofollow");
     const rawUa = c.req.header("user-agent") || "";
     const ua = rawUa.toLowerCase();
     const accept = (c.req.header("accept") || "").toLowerCase();
@@ -2276,6 +2281,9 @@ export function createApp(deps: AppDeps) {
     const direct = c.req.query("direct") === "1" || c.req.query("raw") === "1";
     const isStream = stream || direct;
     const isCrawler = Boolean(detectBot(rawUa)) || rawUa === AUDIT_USER_AGENT || ua.includes("sweeprseoaudit");
+    if (isCrawler || requested === "picker") {
+      c.header("X-Robots-Tag", "noindex, nofollow");
+    }
     const isBrowserUa =
       /mozilla\/5\.0/i.test(rawUa) && /applewebkit|gecko|chrome|safari|firefox|edg\//i.test(rawUa);
     const isBrowserNavigation =

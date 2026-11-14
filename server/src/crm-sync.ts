@@ -268,3 +268,29 @@ export function reportAffiliateClickToCentralCrm(params: {
     country: params.country ?? null,
   });
 }
+
+export function syncSeoChangelogToCentralCrm(entry: {
+  project_id?: string;
+  date: string;
+  category: string;
+  title: string;
+  description: string;
+  impact: string;
+  status?: string;
+  target_urls?: string[] | string | null;
+  metadata?: Record<string, unknown>;
+  metadata_json?: string;
+}): void {
+  syncToCentralCrm("/api/crm/seo/changelog", {
+    project_id: entry.project_id || PROJECT_ID,
+    date: entry.date,
+    category: entry.category,
+    title: entry.title,
+    description: entry.description,
+    impact: entry.impact,
+    status: entry.status || "completed",
+    target_urls: entry.target_urls,
+    metadata: entry.metadata || {},
+    metadata_json: entry.metadata_json,
+  });
+}

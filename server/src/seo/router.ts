@@ -72,7 +72,13 @@ import {
   loadOrGenerateWeeklyProductAdvisorReport,
   renderProductAdvisorMockupHtml,
 } from "./product-advisor.js";
-import { isCrossProjectBacklink, type SeoStore } from "./store.js";
+import {
+  isCrossProjectBacklink,
+  type SeoStore,
+  type SeoChangelogCategory,
+  type SeoChangelogStatus,
+} from "./store.js";
+import { syncSeoChangelogToCentralCrm } from "../crm-sync.js";
 
 export interface SeoRouterDeps {
   store: SeoStore;
@@ -1436,6 +1442,105 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     const report = loadOrGenerateWeeklyProductAdvisorReport(store);
     const html = renderProductAdvisorMockupHtml(report);
     return c.html(html);
+  });
+
+  // ---------------- M5: SEO Changelog & Cross-Project Tracking ----------------
+  const VALID_CHANGELOG_CATEGORIES: SeoChangelogCategory[] = [
+    "technical_seo",
+    "routing",
+    "content_information_gain",
+    "distribution_backlinks",
+    "sitemap_pruning",
+    "gsc_indexing",
+  ];
+
+  router.get("/changelog", (c) => {
+    const projectId = c.req.query("project") || c.req.query("projectId");
+    const category = c.req.query("category");
+    const status = c.req.query("status");
+    const rawLimit = c.req.query("limit") ? parseInt(c.req.query("limit")!, 10) : 100;
+    const limit = Math.max(1, Math.min(200, isNaN(rawLimit) ? 100 : rawLimit));
+    const offset = c.req.query("offset") ? Math.max(0, parseInt(c.req.query("offset")!, 10)) : 0;
+
+    const entries = store.listChangelog({
+      projectId: projectId || undefined,
+      category: category || undefined,
+      status: status || undefined,
+      limit,
+      offset,
+    });
+
+    const summary = store.getChangelogSummary(projectId || undefined);
+
+    return c.json({
+      ok: true,
+      count: entries.length,
+      total: summary.total,
+      entries: entries.map((e) => ({
+        ...e,
+        metadata: e.metadata_json ? JSON.parse(e.metadata_json) : {},
+      })),
+    });
+  });
+
+  router.get("/changelog/summary", (c) => {
+    const projectId = c.req.query("project") || c.req.query("projectId");
+    const summary = store.getChangelogSummary(projectId || undefined);
+    return c.json({ ok: true, summary });
+  });
+
+  router.post("/changelog", async (c) => {
+    const rawBody = await c.req.json().catch(() => ({}));
+    if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+      return c.json({ ok: false, error: "invalid_payload", message: "Request body must be a non-null JSON object" }, 400);
+    }
+    const body = rawBody;
+
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    const description = typeof body.description === "string" ? body.description.trim() : "";
+    const category = body.category as SeoChangelogCategory;
+
+    if (!title) return c.json({ ok: false, error: "title_required", message: "Title cannot be empty" }, 400);
+    if (!description) return c.json({ ok: false, error: "description_required", message: "Description cannot be empty" }, 400);
+    if (!category || !VALID_CHANGELOG_CATEGORIES.includes(category)) {
+      return c.json({ ok: false, error: "invalid_category", valid_categories: VALID_CHANGELOG_CATEGORIES }, 400);
+    }
+
+    const impact = typeof body.impact === "string" ? body.impact.trim() : (typeof body.impact_area === "string" ? body.impact_area.trim() : "");
+    const impactArea = typeof body.impact_area === "string" ? body.impact_area.trim() : impact;
+    const author = typeof body.author === "string" ? body.author.trim() : "Benjamin Cook";
+    const diffOrDetails = typeof body.diff_or_details === "string" ? body.diff_or_details : "";
+
+    const entry = store.addChangelogEntry({
+      project_id: body.project_id || body.projectId || "cleaner",
+      date: body.date,
+      category,
+      title,
+      description,
+      impact,
+      impact_area: impactArea,
+      author,
+      diff_or_details: diffOrDetails,
+      status: body.status || "completed",
+      target_urls: body.target_urls,
+      metadata: body.metadata,
+      metadata_json: body.metadata_json,
+    });
+
+    // Non-blocking sync to central CRM hub
+    try {
+      syncSeoChangelogToCentralCrm(entry);
+    } catch {
+      // Non-blocking sync
+    }
+
+    return c.json({ ok: true, id: entry.id, entry }, 200);
+  });
+
+  router.delete("/changelog/:id", (c) => {
+    const id = Number(c.req.param("id"));
+    const ok = store.deleteChangelogEntry(id);
+    return ok ? c.json({ ok: true, deleted_id: id }) : c.json({ error: "not_found" }, 404);
   });
 
   return router;

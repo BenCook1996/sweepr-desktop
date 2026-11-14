@@ -64,7 +64,7 @@
   - [SWEEPR vs Avast Cleanup](https://sweeprcleaner.com/vs/avast-cleanup) | [Best Avast Cleanup Alternatives](https://sweeprcleaner.com/alternatives/avast-cleanup)
   - [SWEEPR vs Wise Disk Cleaner](https://sweeprcleaner.com/vs/wise-disk-cleaner) | [Best Glary Utilities Alternatives](https://sweeprcleaner.com/alternatives/glary-utilities)
 
-## Top Priority Windows Storage & App Cache Guides (50 of 377 — Full List at /llms-full.txt)
+## Top Priority Windows Storage & App Cache Guides (48 of 377 — Full List at /llms-full.txt)
 - **Full Directory**: https://sweeprcleaner.com/clean
 - [Steam depotcache Folder (C:\Program Files (x86)\Steam\depotcache)](https://sweeprcleaner.com/clean/app/steam-depotcache) (`C:\Program Files (x86)\Steam\depotcache and steamapps\downloading`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 25.0 GB
 - [NVIDIA DirectX Shader Cache (DXCache)](https://sweeprcleaner.com/clean/app/nvidia-dxcache) (`%LocalAppData%\NVIDIA\DXCache`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 14.0 GB
@@ -82,37 +82,35 @@
 - [ComfyUI Temporary Preview & Latent Cache](https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache) (`C:\ComfyUI\temp and %LocalAppData%\Temp\comfyui`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 18.0 GB
 - [LM Studio GGUF Model Cache & Temp Downloads](https://sweeprcleaner.com/clean/app/lm-studio-models-cache) (`%UserProfile%\.cache\lm-studio\models`) [SAFE_TO_DELETE]: Reclaim 10.0 GB – 80.0 GB
 - [Windows WinSxS Component Store (C:\Windows\WinSxS)](https://sweeprcleaner.com/clean/folder/winsxs) (`C:\Windows\WinSxS`) [CAUTION]: Reclaim 6.0 GB – 20.0 GB
-- [Bloated Windows Search Index Database (Windows.edb)](https://sweeprcleaner.com/clean/folder/windows-search-index-edb) (`C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb`) [CAUTION]: Reclaim 2.0 GB – 25.0 GB
 - [Spotify Offline Storage & Streaming Cache](https://sweeprcleaner.com/clean/app/spotify-cache) (`%LocalAppData%\Spotify\Storage`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 10.0 GB
 - [Steam Shader Pre-Caching & Download Bloat](https://sweeprcleaner.com/clean/app/steam-shader-cache) (`C:\Program Files (x86)\Steam\steamapps\shadercache`) [SAFE_TO_DELETE]: Reclaim 3.0 GB – 15.0 GB
 - [Google Chrome Service Worker & CacheStorage](https://sweeprcleaner.com/clean/app/chrome-service-worker-cache) (`%LocalAppData%\Google\Chrome\User Data\Default\Service Worker\CacheStorage`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
-- [Windows System Temp Folder](https://sweeprcleaner.com/clean/folder/windows-temp) (`C:\Windows\Temp`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 8.0 GB
-- [User AppData Local Temp Directory](https://sweeprcleaner.com/clean/folder/appdata-temp) (`%LocalAppData%\Temp`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 12.0 GB
 - [Windows.old (Previous Windows Installation)](https://sweeprcleaner.com/clean/folder/windows-old) (`C:\Windows.old`) [SAFE_TO_DELETE]: Reclaim 15.0 GB – 35.0 GB
-- [NVIDIA OpenGL & Vulkan Shader Cache (GLCache)](https://sweeprcleaner.com/clean/app/nvidia-glcache) (`%LocalAppData%\NVIDIA\GLCache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 6.0 GB
-- [NVIDIA ProgramData NV_Cache & Installer Leftovers](https://sweeprcleaner.com/clean/app/nvidia-nv-cache) (`C:\ProgramData\NVIDIA Corporation\NV_Cache`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 8.0 GB
-- [Intel Arc & Iris Xe Graphics Shader Cache](https://sweeprcleaner.com/clean/app/intel-arc-shader-cache) (`%LocalAppData%\Intel\ShaderCache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
 - [Epic Games Launcher Webcache & Crash Logs](https://sweeprcleaner.com/clean/app/epic-games-webcache) (`%LocalAppData%\EpicGamesLauncher\Saved\webcache_4430`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.5 GB
 - [Blizzard Battle.net Agent & Blizzard Entertainment Cache](https://sweeprcleaner.com/clean/app/battlenet-cache) (`C:\ProgramData\Battle.net and C:\ProgramData\Blizzard Entertainment\Battle.net\Cache`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 7.0 GB
 - [EA App & Origin Legacy Installer Cache](https://sweeprcleaner.com/clean/app/ea-app-cache) (`%LocalAppData%\Electronic Arts\EA Desktop\cache`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 8.0 GB
-- [Ubisoft Connect Launcher Cache & Logs](https://sweeprcleaner.com/clean/app/ubisoft-connect-cache) (`%LocalAppData%\Ubisoft Game Launcher\spool and cache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
-- [Roblox Temporary Texture & HTTP Asset Cache](https://sweeprcleaner.com/clean/app/roblox-http-cache) (`%Temp%\Roblox`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 12.0 GB
-- [Minecraft Launcher Webcache, Logs & Crash Reports](https://sweeprcleaner.com/clean/app/minecraft-logs-crash-reports) (`%AppData%\.minecraft\logs and %AppData%\.minecraft\webcache2`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 8.0 GB
-- [GOG Galaxy Webcache & Installer Temp](https://sweeprcleaner.com/clean/app/gog-galaxy-webcache) (`%ProgramData%\GOG.com\Galaxy\webcache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 6.0 GB
 - [HoYoPlay & Genshin Impact Temp Update Packages](https://sweeprcleaner.com/clean/app/genshin-impact-update-cache) (`C:\Program Files\HoYoPlay\games\Genshin Impact game\Temp`) [SAFE_TO_DELETE]: Reclaim 3.0 GB – 22.0 GB
 - [VRChat World & Avatar Cache (Cache-WindowsPlayer)](https://sweeprcleaner.com/clean/app/vrchat-cache) (`%LocalAppData%Low\VRChat\VRChat\Cache-WindowsPlayer`) [SAFE_TO_DELETE]: Reclaim 10.0 GB – 30.0 GB
-- [FiveM Server Asset & Priv Cache](https://sweeprcleaner.com/clean/app/fivem-cache) (`%LocalAppData%\FiveM\FiveM.app\data\cache and server-cache-priv`) [SAFE_TO_DELETE]: Reclaim 5.0 GB – 35.0 GB
-- [osu! Staging & Beatmap Extraction Temp](https://sweeprcleaner.com/clean/app/osu-local-cache) (`%LocalAppData%\osu!\Logs and Data\r`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
-- [Razer Synapse 3 Installer Cache & Logs](https://sweeprcleaner.com/clean/app/razer-synapse-logs) (`C:\ProgramData\Razer\Synapse3\Log and Installer`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 6.0 GB
-- [Corsair iCUE Update Packages & Telemetry Logs](https://sweeprcleaner.com/clean/app/corsair-icue-logs) (`%LocalAppData%\Corsair\iCUE5\logs and C:\ProgramData\Corsair`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
 - [Adobe Premiere Pro & After Effects Common Media Cache](https://sweeprcleaner.com/clean/app/adobe-premiere-media-cache) (`%AppData%\Adobe\Common\Media Cache Files`) [SAFE_TO_DELETE]: Reclaim 5.0 GB – 60.0 GB
-- [Adobe After Effects Disk & Frame Preview Cache](https://sweeprcleaner.com/clean/app/after-effects-disk-cache) (`%LocalAppData%\Temp\Adobe\After Effects Disk Cache`) [SAFE_TO_DELETE]: Reclaim 10.0 GB – 80.0 GB
-- [Adobe Photoshop Orphaned Scratch Temp Files](https://sweeprcleaner.com/clean/app/photoshop-temp-scratch) (`%LocalAppData%\Temp (Photoshop Temp*)`) [SAFE_TO_DELETE]: Reclaim 4.0 GB – 40.0 GB
 - [Adobe Creative Cloud Installer & Patch Staging Cache](https://sweeprcleaner.com/clean/app/creative-cloud-installer-cache) (`C:\ProgramData\Adobe\Installer`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 15.0 GB
-- [DaVinci Resolve CacheClip & Optimized Media Bloat](https://sweeprcleaner.com/clean/app/davinci-resolve-cacheclip) (`C:\Users\%USERNAME%\Videos\CacheClip`) [SAFE_TO_DELETE]: Reclaim 8.0 GB – 75.0 GB
 - [CapCut PC Video Editor Cache & Render Scratch](https://sweeprcleaner.com/clean/app/capcut-desktop-cache) (`%LocalAppData%\CapCut\User Data\Cache andCache_Data`) [SAFE_TO_DELETE]: Reclaim 2.5 GB – 18.0 GB
-- [Blender Fluid, Smoke & Autosave Temp Cache](https://sweeprcleaner.com/clean/app/blender-temp-render-cache) (`%Temp%\blender_*`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 15.0 GB
-- [Figma Desktop Font, Canvas & GPU Cache](https://sweeprcleaner.com/clean/app/figma-desktop-cache) (`%AppData%\Figma\Cache and %AppData%\Figma\Code Cache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 6.0 GB
-- [Canva Desktop Asset & Template Cache](https://sweeprcleaner.com/clean/app/canva-desktop-cache) (`%AppData%\Canva\Cache and Service Worker\CacheStorage`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
 - [OBS Studio Cache, Browser Source Cache & Crash Logs](https://sweeprcleaner.com/clean/app/obs-studio-logs-crashes) (`%AppData%\obs-studio\logs, crashes, and %AppData%\obs-studio\plugin_config\obs-browser\Cache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 6.5 GB
-- [Audacity Unsaved Audio Block Temp Data](https://sweeprcleaner.com/clean/app/audacity-session-temp) (`%LocalAppData%\Audacity\SessionData`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 12.0 GB
+- [Opera GX Browser Cache, Service Worker & GX Cleaner Guide](https://sweeprcleaner.com/clean/app/opera-gx-cache) (`%LocalAppData%\Opera Software\Opera GX Stable\Cache\Cache_Data and %AppData%\Opera Software\Opera GX Stable\Service Worker\CacheStorage`) [SAFE_TO_DELETE]: Reclaim 1.8 GB – 12.0 GB
+- [Vivaldi Browser Cache & Service Worker Bloat](https://sweeprcleaner.com/clean/app/vivaldi-browser-cache) (`%LocalAppData%\Vivaldi\User Data\Default\Cache`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 5.0 GB
+- [Node.js npm _cacache & npx Temp Cache](https://sweeprcleaner.com/clean/app/npm-cache) (`%LocalAppData%\npm-cache\_cacache`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 20.0 GB
+- [Python pip Wheel & HTTP Download Cache](https://sweeprcleaner.com/clean/app/pip-http-wheels-cache) (`%LocalAppData%\pip\Cache`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 18.0 GB
+- [Windows Delivery Optimization P2P Cache](https://sweeprcleaner.com/clean/folder/delivery-optimization-cache) (`C:\Windows\ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 15.0 GB
+- [Windows Hibernation File (C:\hiberfil.sys)](https://sweeprcleaner.com/clean/folder/hiberfil-sys) (`C:\hiberfil.sys`) [CAUTION]: Reclaim 6.0 GB – 32.0 GB
+- [User Application CrashDumps (%LocalAppData%\CrashDumps)](https://sweeprcleaner.com/clean/folder/localappdata-crashdumps) (`%LocalAppData%\CrashDumps`) [SAFE_TO_DELETE]: Reclaim 1.0 GB – 12.0 GB
+- [Microsoft Edge WebView2 Shared Runtime Cache (EBWebView)](https://sweeprcleaner.com/clean/folder/localappdata-webview2-ebwebview-cache) (`%LocalAppData%\Microsoft\EdgeWebView\User Data\Default\Cache`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 9.0 GB
+- [Docker Desktop WSL2 Virtual Disk Bloat](https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk) (`%LocalAppData%\Docker\wsl\data\ext4.vhdx`) [CAUTION]: Reclaim 12.0 GB – 80.0 GB
+- [Medal.tv Clip Recorder Cache & Media Blob Storage](https://sweeprcleaner.com/clean/app/medal-tv-cache) (`%AppData%\Medal\Cache\Cache_Data, GPUCache, and %LocalAppData%\Medal`) [SAFE_TO_DELETE]: Reclaim 2.0 GB – 14.0 GB
+- [Zen Browser Cache & Temporary Files](https://sweeprcleaner.com/clean/app/zen-browser-cache) (`%AppData%\zen\Profiles\Cache\Cache_Data, Code Cache, and Service Worker\CacheStorage`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 9.5 GB
+- [Dolphin Emulator Cache & Temporary Files](https://sweeprcleaner.com/clean/app/dolphin-emulator-cache) (`%AppData%\Dolphin Emulator\cache, shaders, and logs`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 9.5 GB
+- [AnyDesk Remote Desktop Cache & Temporary Files](https://sweeprcleaner.com/clean/app/anydesk-remote-cache) (`%AppData%\AnyDesk\Cache and Logs`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 9.5 GB
+- [Stremio Streaming App Cache & Temporary Files](https://sweeprcleaner.com/clean/app/stremio-desktop-cache) (`%AppData%\stremio\Cache and Logs`) [SAFE_TO_DELETE]: Reclaim 1.5 GB – 9.5 GB
+- [Gradle Build & Dependency Wrapper Cache](https://sweeprcleaner.com/clean/app/gradle-wrapper-cache) (`%UserProfile%\.gradle\caches`) [SAFE_TO_DELETE]: Reclaim 4.0 GB – 30.0 GB
+- [C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup)](https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11) (`C:\Windows\Temp & %LocalAppData%\Temp & C:\ProgramData\Package Cache`) [SAFE_TO_DELETE]: Reclaim 12.0 GB – 65.0 GB
+- [System & Reserved Storage Taking 80GB–100GB+ on Windows 11](https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11) (`C:\Windows\WinSxS & C:\Windows\SoftwareDistribution\Download`) [SAFE_TO_DELETE]: Reclaim 10.0 GB – 55.0 GB
+- [AppData\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide)](https://sweeprcleaner.com/clean/folder/appdata-local-folder-huge-windows-11) (`%LocalAppData%\Packages & %LocalAppData%\Temp & %LocalAppData%\D3DSCache`) [SAFE_TO_DELETE]: Reclaim 8.0 GB – 75.0 GB
+- [Temporary Files & 'Other' Storage Full on Windows 11 (Deep Clean)](https://sweeprcleaner.com/clean/folder/other-storage-full-windows-11-cleanup) (`C:\ProgramData & %UserProfile%\.cache & %LocalAppData%\NVIDIA\DXCache`) [SAFE_TO_DELETE]: Reclaim 6.0 GB – 45.0 GB

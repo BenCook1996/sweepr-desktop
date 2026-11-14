@@ -51,7 +51,7 @@ jobs:
           if [ "$(date -u +%u)" = "1" ] || [ "${{ github.event.inputs.run_weekly_product_advisor || 'false' }}" = "true" ]; then
             FORCE_WEEKLY="--force-weekly"
           fi
-          npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" $SKIP_DRIP --update-log $FORCE_WEEKLY
+          npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" $SKIP_DRIP --submit-sitemap --update-log $FORCE_WEEKLY
 
       - name: Commit Cloud SEO Artifacts, GSC Seed, Audit Log & Product Mockups (if changed)
         run: |
@@ -64,7 +64,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          for f in server/src/data/gsc-seed.json server/src/data/clean-items.json server/src/data/keyword-research-report.json server/src/data/seo-strategy-ledger.json server/src/data/daily-seo-pages-state.json server/src/data/indexing-queue.json server/src/data/weekly-product-advisor-report.json server/public/crm/weekly-product-mockups.html WEEKLY_PRODUCT_CONTENT_ADVISORY.md TECHNICAL_SEO_AUDIT_LOG.md server/public/sitemap.xml server/public/llms.txt; do
+          for f in server/src/data/gsc-seed.json server/src/data/clean-items.json server/src/data/keyword-research-report.json server/src/data/seo-strategy-ledger.json server/src/data/daily-seo-pages-state.json server/src/data/indexing-queue.json server/src/data/weekly-product-advisor-report.json server/public/crm/weekly-product-mockups.html WEEKLY_PRODUCT_CONTENT_ADVISORY.md TECHNICAL_SEO_AUDIT_LOG.md SEO_CHANGELOG.md server/public/sitemap.xml server/public/llms.txt; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           if ! git diff --staged --quiet; then
@@ -81,7 +81,7 @@ jobs:
             -H "Authorization: Basic $B64" \
             -H "Origin: https://sweeprcleaner.com" \
             -H "Content-Type: application/json" \
-            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true,"submit_sitemap":false}' || true
+            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true,"submit_sitemap":true}' || true
           if [ -f server/src/data/gsc-seed.json ]; then
             curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/ingest" \
               -H "Authorization: Basic $B64" \

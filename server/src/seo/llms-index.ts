@@ -43,7 +43,7 @@ export function getCanonicalBrandFacts(): CanonicalBrandFacts {
 export function renderLlmsTxt(store: SeoStore): string {
   const facts = getCanonicalBrandFacts();
   const report = computeStateOfWindowsStorageReport(store);
-  const items = getCleanItems();
+  const items = getCleanItems().filter((i) => !i.noindex);
   const bloatPosts = listBloatWatchPosts(store, "published");
 
   const prioritySlugs = [

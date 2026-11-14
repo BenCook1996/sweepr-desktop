@@ -932,7 +932,7 @@ export function runGscInternalLinkBooster(store: SeoStore) {
     bySlug.set(parsed.slug, prev);
   }
 
-  const cleanSet = new Set(getCleanItems().map((i) => i.slug.toLowerCase()));
+  const cleanSet = new Set(getCleanItems().filter((i) => !i.noindex).map((i) => i.slug.toLowerCase()));
   const candidates = [...bySlug.values()]
     .filter((c) => cleanSet.has(c.slug))
     .map((c) => {

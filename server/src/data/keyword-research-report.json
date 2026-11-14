@@ -1,39 +1,39 @@
 {
   "ok": true,
-  "generated_at": "2026-11-11T08:38:06.914Z",
+  "generated_at": "2026-11-14T13:20:26.659Z",
   "summary": {
-    "total_evaluated": 1034,
-    "low_competition_count": 217,
-    "avg_opportunity_score": 62,
+    "total_evaluated": 1068,
+    "low_competition_count": 221,
+    "avg_opportunity_score": 61.8,
     "bofu_mofu_share_pct": 53.1,
     "by_intent": {
-      "informational": 639,
+      "informational": 661,
       "navigational": 2,
-      "commercial": 11,
-      "transactional": 382
+      "commercial": 12,
+      "transactional": 393
     },
     "by_buyer_stage": {
-      "BOFU": 63,
-      "MOFU": 486,
-      "TOFU": 485
+      "BOFU": 67,
+      "MOFU": 500,
+      "TOFU": 501
     },
     "by_difficulty_tier": {
       "very_easy": 10,
-      "easy": 103,
-      "moderate": 228,
-      "hard": 693
+      "easy": 104,
+      "moderate": 233,
+      "hard": 721
     },
     "by_action": {
-      "enrich_existing_page": 129,
-      "create_pseo_folder": 156,
-      "create_pseo_app": 724,
-      "create_transactional_tool": 15,
+      "enrich_existing_page": 130,
+      "create_pseo_folder": 159,
+      "create_pseo_app": 751,
+      "create_transactional_tool": 17,
       "bid_exact_match_ad": 1,
-      "create_comparison": 9
+      "create_comparison": 10
     },
     "new_pseo_ready_count": 20,
     "ctr_enrichment_ready_count": 11,
-    "transactional_tool_candidates_count": 13
+    "transactional_tool_candidates_count": 14
   },
   "scoring_weights": {
     "demand_weight": 0.38,
@@ -55,7 +55,7 @@
       "TOFU_Safety_Diagnostic": 1.06
     },
     "empirical_download_to_paid_cvr_pct": 14,
-    "updated_at": "2026-11-11T08:38:06.749Z",
+    "updated_at": "2026-11-14T13:20:26.198Z",
     "calibration_note": "Increased low_comp_weight to 0.62 (demand_weight=0.38) to accelerate Top-10 ranking velocity on KD <= 30 targets."
   },
   "top_opportunities": [
@@ -1313,61 +1313,23 @@
         "forecast_kd": 26,
         "forecast_est_days_to_top10": 19,
         "forecast_est_days_to_top3": 42,
-        "forecast_monthly_volume": 8029,
+        "forecast_monthly_volume": 8527,
         "forecast_target_position": 6.1,
-        "forecast_monthly_clicks": 301,
+        "forecast_monthly_clicks": 322,
         "forecast_cvr_pct": 2.03,
-        "forecast_monthly_downloads": 6.1,
-        "forecast_monthly_conversions": 0.85
+        "forecast_monthly_downloads": 6.5,
+        "forecast_monthly_conversions": 0.91
       },
       "reasons": [
-        "GSC velocity=100.0 (4866 imps)",
+        "GSC velocity=100.0 (5168 imps)",
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
-        "GSC Striking Distance pos 7.8 (+6 strike-zone bonus)"
-      ]
-    },
-    {
-      "keyword": "how to clear medal cache",
-      "opportunity_score": 100,
-      "demand_score": 71.5,
-      "low_comp_score": 80,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 14,
-      "search_intent": "informational",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "easy",
-      "is_low_competition": true,
-      "recommended_action": "create_pseo_app",
-      "target_path": "/clean/app/medal-cache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "easy",
-        "forecast_kd": 26,
-        "forecast_est_days_to_top10": 19,
-        "forecast_est_days_to_top3": 42,
-        "forecast_monthly_volume": 125,
-        "forecast_target_position": 5.8,
-        "forecast_monthly_clicks": 5,
-        "forecast_cvr_pct": 2.03,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "GSC velocity=76.9 (32 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 7.4 (+6 strike-zone bonus)"
+        "GSC Striking Distance pos 7.7 (+6 strike-zone bonus)"
       ]
     },
     {
       "keyword": "how to clear cache valorant",
       "opportunity_score": 100,
-      "demand_score": 55.8,
+      "demand_score": 58.2,
       "low_comp_score": 80,
       "intent_multiplier": 1.22,
       "gap_bonus": 14,
@@ -1388,18 +1350,170 @@
         "forecast_kd": 26,
         "forecast_est_days_to_top10": 19,
         "forecast_est_days_to_top3": 42,
-        "forecast_monthly_volume": 50,
-        "forecast_target_position": 5.1,
+        "forecast_monthly_volume": 54,
+        "forecast_target_position": 4.5,
         "forecast_monthly_clicks": 4,
         "forecast_cvr_pct": 2.03,
         "forecast_monthly_downloads": 0.2,
         "forecast_monthly_conversions": 0.1
       },
       "reasons": [
-        "GSC velocity=52.8 (10 imps)",
+        "GSC velocity=56.4 (12 imps)",
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 6.7 (+6 strike-zone bonus)"
+        "GSC Striking Distance pos 6.2 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "how to clear medal cache",
+      "opportunity_score": 100,
+      "demand_score": 72.4,
+      "low_comp_score": 80,
+      "intent_multiplier": 1.22,
+      "gap_bonus": 14,
+      "search_intent": "informational",
+      "transactional_tier": "MOFU_Action_Cleanup",
+      "buyer_stage": "MOFU",
+      "difficulty_tier": "easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/medal-cache",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "MOFU_Action_Cleanup",
+        "buyer_stage": "MOFU",
+        "difficulty_tier": "easy",
+        "forecast_kd": 26,
+        "forecast_est_days_to_top10": 19,
+        "forecast_est_days_to_top3": 42,
+        "forecast_monthly_volume": 132,
+        "forecast_target_position": 5.6,
+        "forecast_monthly_clicks": 5,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=78.2 (34 imps)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 7.3 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "how to clear valorant cache",
+      "opportunity_score": 100,
+      "demand_score": 68.7,
+      "low_comp_score": 80,
+      "intent_multiplier": 1.22,
+      "gap_bonus": 14,
+      "search_intent": "informational",
+      "transactional_tier": "MOFU_Action_Cleanup",
+      "buyer_stage": "MOFU",
+      "difficulty_tier": "easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/valorant-cache",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "MOFU_Action_Cleanup",
+        "buyer_stage": "MOFU",
+        "difficulty_tier": "easy",
+        "forecast_kd": 26,
+        "forecast_est_days_to_top10": 19,
+        "forecast_est_days_to_top3": 42,
+        "forecast_monthly_volume": 104,
+        "forecast_target_position": 5.4,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=72.5 (26 imps)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 7.0 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "amd dxcache safe to delete",
+      "opportunity_score": 100,
+      "demand_score": 48.8,
+      "low_comp_score": 85,
+      "intent_multiplier": 1.22,
+      "gap_bonus": 14,
+      "search_intent": "informational",
+      "transactional_tier": "MOFU_Action_Cleanup",
+      "buyer_stage": "MOFU",
+      "difficulty_tier": "easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/amd-dxcache",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "MOFU_Action_Cleanup",
+        "buyer_stage": "MOFU",
+        "difficulty_tier": "easy",
+        "forecast_kd": 22,
+        "forecast_est_days_to_top10": 11,
+        "forecast_est_days_to_top3": 27,
+        "forecast_monthly_volume": 50,
+        "forecast_target_position": 7.4,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=24.2 (2 imps)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 9.0 (+6 strike-zone bonus)"
+      ]
+    },
+    {
+      "keyword": "dxcache amd safe to delete",
+      "opportunity_score": 100,
+      "demand_score": 48.8,
+      "low_comp_score": 85,
+      "intent_multiplier": 1.22,
+      "gap_bonus": 14,
+      "search_intent": "informational",
+      "transactional_tier": "MOFU_Action_Cleanup",
+      "buyer_stage": "MOFU",
+      "difficulty_tier": "easy",
+      "is_low_competition": true,
+      "recommended_action": "create_pseo_app",
+      "target_path": "/clean/app/amd-dxcache",
+      "competitor_source_domain": null,
+      "competitor_source_url": null,
+      "replicated_patterns": [],
+      "forecast": {
+        "transactional_tier": "MOFU_Action_Cleanup",
+        "buyer_stage": "MOFU",
+        "difficulty_tier": "easy",
+        "forecast_kd": 22,
+        "forecast_est_days_to_top10": 11,
+        "forecast_est_days_to_top3": 27,
+        "forecast_monthly_volume": 50,
+        "forecast_target_position": 7.4,
+        "forecast_monthly_clicks": 4,
+        "forecast_cvr_pct": 2.03,
+        "forecast_monthly_downloads": 0.2,
+        "forecast_monthly_conversions": 0.1
+      },
+      "reasons": [
+        "GSC velocity=15.2 (1 imps)",
+        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
+        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
+        "GSC Striking Distance pos 9.0 (+6 strike-zone bonus)"
       ]
     },
     {
@@ -1517,44 +1631,6 @@
       ]
     },
     {
-      "keyword": "amd dxcache safe to delete",
-      "opportunity_score": 100,
-      "demand_score": 48.8,
-      "low_comp_score": 85,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 14,
-      "search_intent": "informational",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "easy",
-      "is_low_competition": true,
-      "recommended_action": "create_pseo_app",
-      "target_path": "/clean/app/amd-dxcache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "easy",
-        "forecast_kd": 22,
-        "forecast_est_days_to_top10": 11,
-        "forecast_est_days_to_top3": 27,
-        "forecast_monthly_volume": 50,
-        "forecast_target_position": 9.4,
-        "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 2.03,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "GSC velocity=15.2 (1 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 11.0 (+6 strike-zone bonus)"
-      ]
-    },
-    {
       "keyword": "can i delete lghub cache",
       "opportunity_score": 100,
       "demand_score": 48.8,
@@ -1666,44 +1742,6 @@
         "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
         "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
         "GSC Striking Distance pos 9.0 (+6 strike-zone bonus)"
-      ]
-    },
-    {
-      "keyword": "how to clear valorant cache",
-      "opportunity_score": 100,
-      "demand_score": 67.6,
-      "low_comp_score": 80,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 14,
-      "search_intent": "informational",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "easy",
-      "is_low_competition": true,
-      "recommended_action": "create_pseo_app",
-      "target_path": "/clean/app/valorant-cache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "easy",
-        "forecast_kd": 26,
-        "forecast_est_days_to_top10": 19,
-        "forecast_est_days_to_top3": 42,
-        "forecast_monthly_volume": 97,
-        "forecast_target_position": 5.7,
-        "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 2.03,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "GSC velocity=70.8 (24 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
-        "Uncaptured ecosystem/tool opportunity (+8 gap bonus)",
-        "GSC Striking Distance pos 7.3 (+6 strike-zone bonus)"
       ]
     },
     {
@@ -2309,43 +2347,6 @@
         "Safety Verdict & Folder Diagnostic (TOFU) (1.15x, est. CVR 1.06%)",
         "GSC Striking Distance pos 9.9 (+6 strike-zone bonus)"
       ]
-    },
-    {
-      "keyword": "steam depotcache safe to delete",
-      "opportunity_score": 100,
-      "demand_score": 62.9,
-      "low_comp_score": 100,
-      "intent_multiplier": 1.22,
-      "gap_bonus": 6,
-      "search_intent": "informational",
-      "transactional_tier": "MOFU_Action_Cleanup",
-      "buyer_stage": "MOFU",
-      "difficulty_tier": "very_easy",
-      "is_low_competition": true,
-      "recommended_action": "enrich_existing_page",
-      "target_path": "/clean/app/steam-depotcache",
-      "competitor_source_domain": null,
-      "competitor_source_url": null,
-      "replicated_patterns": [],
-      "forecast": {
-        "transactional_tier": "MOFU_Action_Cleanup",
-        "buyer_stage": "MOFU",
-        "difficulty_tier": "very_easy",
-        "forecast_kd": 10,
-        "forecast_est_days_to_top10": 7,
-        "forecast_est_days_to_top3": 20,
-        "forecast_monthly_volume": 72,
-        "forecast_target_position": 6.9,
-        "forecast_monthly_clicks": 4,
-        "forecast_cvr_pct": 2.03,
-        "forecast_monthly_downloads": 0.2,
-        "forecast_monthly_conversions": 0.1
-      },
-      "reasons": [
-        "GSC velocity=63.6 (17 imps)",
-        "Actionable Cleanup Guide (MOFU) (1.22x, est. CVR 2.03%)",
-        "GSC Striking Distance pos 8.5 (+6 strike-zone bonus)"
-      ]
     }
   ],
   "new_pseo_candidates": [
@@ -2372,7 +2373,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete DaVinci Resolve Studio Gallery Stills & Neural? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+        "computedTitle": "Can I Delete DaVinci Resolve Studio Gallery Stills & Neural? YES (2–18 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %APPDATA%\\Blackmagic Design\\DaVinci Resolve\\Support\\logs (2–18 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\blackmagic design\\davinci resolve\\support\\logs"
@@ -2430,7 +2431,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete CapCut Desktop Proxy Video & AI Matting Render? YES — Safe Cleanup Guide (Reclaim 4–40 GB)",
+        "computedTitle": "Can I Delete CapCut Desktop Proxy Video & AI Matting Render? YES (4–40 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache\\effect (4–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\capcut\\user data\\cache\\effect",
@@ -2489,7 +2490,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Microsoft DirectStorage GPU Decompression? YES — Safe Cleanup Guide (Reclaim 1–8 GB)",
+        "computedTitle": "Can I Delete Microsoft DirectStorage GPU Decompression? YES (1–8 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Microsoft\\DirectStorage\\Cache (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\microsoft\\directstorage\\cache"
@@ -2547,7 +2548,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Astral uv Python Package & Wheel Cache? YES — Safe Cleanup Guide (Reclaim 3–35 GB)",
+        "computedTitle": "Can I Delete Astral uv Python Package & Wheel Cache? YES (3–35 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\uv\\cache? YES (3–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\uv\\cache"
@@ -2604,7 +2605,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Podman Desktop OCI Image Tarball & Machine Cache? YES — Safe Cleanup Guide (Reclaim 2.5–24 GB)",
+        "computedTitle": "Can I Delete Podman Desktop OCI Image Tarball & Machine Cache? YES (2.5–24 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\containers\\cache? YES (2.5–24 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\containers\\cache",
@@ -2662,7 +2663,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Path of Exile 2 DirectX 12 & Vulkan Shader Cache? YES — Safe Cleanup Guide (Reclaim 2.5–16 GB)",
+        "computedTitle": "Can I Delete Path of Exile 2 DirectX 12 & Vulkan Shader Cache? YES (2.5–16 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %APPDATA%\\Path of Exile 2\\ShaderCacheD3D12 (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\path of exile 2\\shadercached3d12",
@@ -2721,7 +2722,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete S.T.A.L.K.E.R. 2 Unreal Engine 5 PSO Shader? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+        "computedTitle": "Can I Delete S.T.A.L.K.E.R. 2 Unreal Engine 5 PSO Shader? YES (2–18 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Stalker2\\Saved\\Crashes? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\stalker2\\saved\\crashes",
@@ -2780,7 +2781,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Marvel Rivals Unreal Engine 5 Shader & Crash? YES — Safe Cleanup Guide (Reclaim 2–14.5 GB)",
+        "computedTitle": "Can I Delete Marvel Rivals Unreal Engine 5 Shader & Crash? YES (2–14.5 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Marvel\\Saved\\Config\\CrashReportClient (2–14.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\marvel\\saved\\config\\crashreportclient",
@@ -2839,7 +2840,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Zenless Zone Zero HoYoPlay WebCache & Temporary? YES — Safe Cleanup Guide (Reclaim 2–15 GB)",
+        "computedTitle": "Can I Delete Zenless Zone Zero HoYoPlay WebCache & Temporary? YES (2–15 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\ZenlessZoneZero Game\\ZenlessZone (2–15 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files\\hoyoplay\\games\\zenlesszonezero game\\zenlesszonezero_data\\webcaches"
@@ -2897,7 +2898,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Monster Hunter Wilds RE Engine Shader.cache2? YES — Safe Cleanup Guide (Reclaim 2.5–14 GB)",
+        "computedTitle": "Can I Delete Monster Hunter Wilds RE Engine Shader.cache2? YES (2.5–14 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache\\2246340 (2.5–14 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files (x86)\\steam\\steamapps\\shadercache\\2246340"
@@ -2955,7 +2956,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windows 11 Recall Screen Snapshots & Vector? YES — Safe Cleanup Guide (Reclaim 5–75 GB)",
+        "computedTitle": "Can I Delete Windows 11 Recall Screen Snapshots & Vector? YES (5–75 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\CoreAIPlatform.00\\UKP? YES (5–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\coreaiplatform.00\\ukp"
@@ -3013,7 +3014,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Delta Force Shader & Anti-Cheat Log Cache? YES — Safe Cleanup Guide (Reclaim 1.5–10.5 GB)",
+        "computedTitle": "Can I Delete Delta Force Shader & Anti-Cheat Log Cache? YES (1.5–10.5 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\DFM\\Saved\\Logs? YES (1.5–10.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\dfm\\saved\\logs",
@@ -3072,7 +3073,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Wuthering Waves Kuro Launcher Patch & WebCache? YES — Safe Cleanup Guide (Reclaim 1.8–12 GB)",
+        "computedTitle": "Can I Delete Wuthering Waves Kuro Launcher Patch & WebCache? YES (1.8–12 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\KRInstall\\Wuthering Waves\\Log (1.8–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\krinstall\\wuthering waves\\log",
@@ -3131,7 +3132,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Helldivers 2 Arrowhead Shader Cache & Crash? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        "computedTitle": "Can I Delete Helldivers 2 Arrowhead Shader Cache & Crash? YES (1.5–9.5 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %APPDATA%\\Arrowhead\\Helldivers2\\shader_cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\arrowhead\\helldivers2\\shader_cache",
@@ -3190,7 +3191,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Trae AI IDE Bytecode, GPUCache & Extension? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+        "computedTitle": "Can I Delete Trae AI IDE Bytecode, GPUCache & Extension? YES (1.5–10 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %APPDATA%\\Trae\\Cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\trae\\cache",
@@ -3249,7 +3250,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Valve Deadlock Source 2 Vulkan & DirectX Shader? YES — Safe Cleanup Guide (Reclaim 1.8–11 GB)",
+        "computedTitle": "Can I Delete Valve Deadlock Source 2 Vulkan & DirectX Shader? YES (1.8–11 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache\\1422450 (1.8–11 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files (x86)\\steam\\steamapps\\shadercache\\1422450"
@@ -3307,7 +3308,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Zed Editor Language Server & Node Runtime Cache? YES — Safe Cleanup Guide (Reclaim 1.5–11 GB)",
+        "computedTitle": "Can I Delete Zed Editor Language Server & Node Runtime Cache? YES (1.5–11 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Zed\\languages? YES (1.5–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\zed\\languages",
@@ -3366,7 +3367,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windsurf AI IDE Chromium & Cascade Index Cache? YES — Safe Cleanup Guide (Reclaim 1.8–12.5 GB)",
+        "computedTitle": "Can I Delete Windsurf AI IDE Chromium & Cascade Index Cache? YES (1.8–12.5 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %APPDATA%\\Windsurf\\Cache? YES (1.8–12.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\windsurf\\cache",
@@ -3425,7 +3426,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete THE FINALS Unreal Engine 5 PSO Shader & Crash? YES — Safe Cleanup Guide (Reclaim 1.8–14 GB)",
+        "computedTitle": "Can I Delete THE FINALS Unreal Engine 5 PSO Shader & Crash? YES (1.8–14 GB) — Safe Cleanup Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Discovery\\Saved\\Logs? YES (1.8–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\discovery\\saved\\logs",
@@ -3484,7 +3485,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windows 11 CrossDevice / Phone Link Clipboard? YES — Safe Cleanup Guide (Reclaim 1.2–12 GB)",
+        "computedTitle": "Can I Delete Windows 11 CrossDevice / Phone Link Clipboard? YES (1.2–12 GB) — Safe Cleanup Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Packages\\MicrosoftWindows.Client.Core_cw5n1h2tx (1.2–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\packages\\microsoftwindows.client.core_cw5n1h2txyewy\\tempstate"
@@ -3526,8 +3527,8 @@
       "category": "app",
       "url": "/clean/app/elgato-streamdeck-cache",
       "trigger_query": "how to clean stream deck",
-      "impressions": 4866,
-      "position": 7.8,
+      "impressions": 5168,
+      "position": 7.7,
       "opportunity_score": 100,
       "on_cooldown": true,
       "title_locked_by_test": true,
@@ -3546,8 +3547,8 @@
       "position": 10.4,
       "opportunity_score": 93,
       "on_cooldown": false,
-      "title_locked_by_test": false,
-      "recommended_update": "title_and_faq",
+      "title_locked_by_test": true,
+      "recommended_update": "faq_only",
       "suggested_faq": {
         "q": "How do I safely clear Gradle Build Cache & Wrapper Distributions (.gradle\\caches) (gradle wrapper caches safe to delete) on Windows 11?",
         "a": "Safe to clean when Android Studio/IntelliJ is closed. Reclaims up to 35 GB of SSD space. Typical space recovered is 4.0 GB – 35.0 GB at %UserProfile%\\.gradle\\caches and %UserProfile%\\.gradle\\daemon."
@@ -3562,7 +3563,7 @@
       "position": 7.8,
       "opportunity_score": 88,
       "on_cooldown": true,
-      "title_locked_by_test": false,
+      "title_locked_by_test": true,
       "recommended_update": "faq_only",
       "suggested_faq": {
         "q": "How do I safely clear Windows Hibernation File (C:\\hiberfil.sys) (how to delete hiberfil.sys windows 11) on Windows 11?",
@@ -3594,8 +3595,8 @@
       "position": 9.8,
       "opportunity_score": 71,
       "on_cooldown": false,
-      "title_locked_by_test": false,
-      "recommended_update": "title_and_faq",
+      "title_locked_by_test": true,
+      "recommended_update": "faq_only",
       "suggested_faq": {
         "q": "How do I safely clear Node.js npm _cacache & npx Temp Cache (npm cache clean windows) on Windows 11?",
         "a": "Safe to delete. Existing node_modules folders in your projects continue working normally. Typical space recovered is 2.0 GB – 20.0 GB at %LocalAppData%\\npm-cache\\_cacache."
@@ -3654,9 +3655,9 @@
       "category": "app",
       "url": "/clean/app/zen-browser-cache",
       "trigger_query": "zen browser clear cache",
-      "impressions": 8,
-      "position": 8.8,
-      "opportunity_score": 57,
+      "impressions": 9,
+      "position": 8.6,
+      "opportunity_score": 58,
       "on_cooldown": false,
       "title_locked_by_test": true,
       "recommended_update": "faq_only",
@@ -3781,6 +3782,13 @@
       "suggested_tool_slug": "prefetch-cache-cleaner",
       "target_clean_slug": "prefetch",
       "opportunity_score": 46,
+      "typical_savings": "2.0 GB – 15.0 GB"
+    },
+    {
+      "keyword": "sweep cleaner",
+      "suggested_tool_slug": "sweep-cache-cleaner",
+      "target_clean_slug": "sweep",
+      "opportunity_score": 40,
       "typical_savings": "2.0 GB – 15.0 GB"
     },
     {

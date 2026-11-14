@@ -2700,7 +2700,15 @@ const COMPETITOR_URLS = [
   "https://sweeprcleaner.com/vs/wise-disk-cleaner",
   "https://sweeprcleaner.com/alternatives/wise-disk-cleaner",
   "https://sweeprcleaner.com/vs/glary-utilities",
-  "https://sweeprcleaner.com/alternatives/glary-utilities"
+  "https://sweeprcleaner.com/alternatives/glary-utilities",
+  "https://sweeprcleaner.com/vs/cleanmymac",
+  "https://sweeprcleaner.com/alternatives/cleanmymac",
+  "https://sweeprcleaner.com/vs/pearcleaner",
+  "https://sweeprcleaner.com/alternatives/pearcleaner",
+  "https://sweeprcleaner.com/vs/onyx",
+  "https://sweeprcleaner.com/alternatives/onyx",
+  "https://sweeprcleaner.com/vs/daisydisk",
+  "https://sweeprcleaner.com/alternatives/daisydisk"
 ];
 
 function updateSitemapXml(items) {
@@ -2723,6 +2731,7 @@ function updateSitemapXml(items) {
     }
   }
   for (const item of items) {
+    if (item.noindex) continue;
     const url = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
     if (!existingLocs.has(url)) {
       existingLocs.add(url);
@@ -2746,13 +2755,14 @@ function updateLlmsTxt(allItems) {
   if (!fs.existsSync(LLMS_PATH)) return;
   let content = fs.readFileSync(LLMS_PATH, "utf8");
   const marker = "## Programmatic Windows Storage & App Cache Guides";
-  const topGuides = allItems
+  const indexableItems = allItems.filter((i) => !i.noindex);
+  const topGuides = indexableItems
     .slice(-25)
     .reverse()
     .map((i) => `- [${i.name} (${i.path})](https://sweeprcleaner.com/clean/${i.category}/${i.slug}): Reclaim ${i.avgSpace}`)
     .join("\n");
 
-  const section = `${marker} (${allItems.length} Verified Guides)
+  const section = `${marker} (${indexableItems.length} Verified Guides)
 - Full Directory: https://sweeprcleaner.com/clean
 ${topGuides}
 `;
@@ -2786,10 +2796,22 @@ function updateIndexingQueue(newUrls, redirectedSlugs = {}) {
       /* reset corrupt queue */
     }
   }
+  const noindexSlugs = new Set();
+  try {
+    if (fs.existsSync(CLEAN_ITEMS_PATH)) {
+      const parsedItems = JSON.parse(fs.readFileSync(CLEAN_ITEMS_PATH, "utf8"));
+      if (Array.isArray(parsedItems)) {
+        for (const it of parsedItems) {
+          if (it && it.noindex && it.slug) noindexSlugs.add(String(it.slug).toLowerCase());
+        }
+      }
+    }
+  } catch {}
   const isCanonicalUrl = (u) => {
     const m = String(u).match(/\/clean\/(?:app|folder)\/([^/?#]+)/);
     if (!m) return true;
     const slug = m[1].toLowerCase();
+    if (noindexSlugs.has(slug)) return false;
     if (isSlugInRedirects(slug, redirectedSlugs)) return false;
     if (RETIRED_CARTESIAN_SUFFIXES.some((suf) => slug.endsWith(suf))) return false;
     return true;

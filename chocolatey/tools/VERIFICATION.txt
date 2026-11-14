@@ -1,0 +1,36 @@
+VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community in verifying that this package's contents are trustworthy.
+
+The installer has been downloaded from the official source and can be verified as follows:
+
+1. Software Title: SWEEPR Cleaner
+2. Version: 0.1.0
+3. Official Homepage: https://sweeprcleaner.com
+4. Official Direct Download URL:
+   https://sweeprcleaner.com/SWEEPRCleaner.exe
+
+5. Checksum Verification:
+   Obtain the cryptographic checksum using PowerShell:
+   Get-FileHash -Path SWEEPRCleaner.exe -Algorithm SHA256
+
+   Checksum Type: sha256
+   Checksum: 38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA
+
+6. Microsoft Authenticode Signature Verification:
+   The binary is digitally signed with a verified Microsoft Authenticode certificate.
+   Inspect the digital signature in PowerShell:
+   Get-AuthenticodeSignature -FilePath SWEEPRCleaner.exe
+
+   Status: Valid
+   Signer Subject: CN=Benjamin Cook, O=Benjamin Cook, L=Worthing, C=GB
+   Signer Issuer: CN=SSL.com Code Signing Intermediate CA RSA R1, O=SSL Corp, L=Houston, S=Texas, C=US
+   Certificate Thumbprint: 1800DBEA6FE847D384E549D02CA372C3D45D8B81
+
+7. Terms of Service & License:
+   https://sweeprcleaner.com/terms
+
+8. Live PAD XML Feed:
+   https://sweeprcleaner.com/pad.xml
+
+Maintainer Note:
+The package maintainer (Benjamin Cook) is the original developer and publisher of SWEEPR Cleaner.

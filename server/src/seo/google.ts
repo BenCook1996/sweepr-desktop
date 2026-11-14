@@ -17,6 +17,20 @@ function computeLocalSitemapSha256(): string | null {
   return null;
 }
 
+function loadSitemapUrlSet(): Set<string> {
+  const urls = new Set<string>();
+  try {
+    if (existsSync(DEFAULT_SITEMAP_XML_PATH)) {
+      const xml = readFileSync(DEFAULT_SITEMAP_XML_PATH, "utf8");
+      for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) {
+        const u = m[1].trim();
+        if (u) urls.add(u);
+      }
+    }
+  } catch {}
+  return urls;
+}
+
 /**
  * Phase 2 data providers (all free, all optional, all env-configured):
  *  - Google Search Console API  (GSC_SERVICE_ACCOUNT_JSON + GSC_SITE_URL)  -> real rankings, clicks, impressions
@@ -525,14 +539,37 @@ export async function inspectGscPriorityUrls(
   const queuePath = opts?.queueFilePath || DEFAULT_INDEXING_QUEUE_PATH;
 
   let candidateUrls: string[] = Array.isArray(opts?.urls) ? [...opts!.urls!] : [];
-  let queueData: { pending?: string[]; submitted?: string[]; [k: string]: unknown } = {};
+  let queueData: {
+    pendingUrls?: string[];
+    pending?: string[];
+    submitted?: string[];
+    gsc_requested?: string[];
+    [k: string]: unknown;
+  } = {};
   if (candidateUrls.length === 0 && existsSync(queuePath)) {
     try {
       queueData = JSON.parse(readFileSync(queuePath, "utf8")) || {};
-      if (Array.isArray(queueData.pending) && queueData.pending.length > 0) {
-        candidateUrls = queueData.pending.slice(0, maxUrls);
-      } else if (Array.isArray(queueData.submitted) && queueData.submitted.length > 0) {
-        candidateUrls = queueData.submitted.slice(0, maxUrls);
+      const rawList =
+        Array.isArray(queueData.pendingUrls) && queueData.pendingUrls.length > 0
+          ? queueData.pendingUrls
+          : Array.isArray(queueData.pending) && queueData.pending.length > 0
+            ? queueData.pending
+            : Array.isArray(queueData.submitted) && queueData.submitted.length > 0
+              ? queueData.submitted
+              : [];
+      const sitemapSet = loadSitemapUrlSet();
+      const applySitemapFilter =
+        sitemapSet.size > 0 &&
+        (path.resolve(queuePath) === path.resolve(DEFAULT_INDEXING_QUEUE_PATH) ||
+          rawList.some((u) => sitemapSet.has(u)));
+      const requestedSet = new Set(Array.isArray(queueData.gsc_requested) ? queueData.gsc_requested : []);
+      const filtered = rawList.filter((u) => {
+        if (requestedSet.has(u)) return false;
+        if (applySitemapFilter && !sitemapSet.has(u)) return false;
+        return true;
+      });
+      if (filtered.length > 0) {
+        candidateUrls = filtered.slice(0, maxUrls);
       }
     } catch {}
   }
@@ -621,8 +658,20 @@ export async function inspectGscPriorityUrls(
   if (indexedUrls.size > 0 && opts?.persistQueue !== false && existsSync(queuePath)) {
     try {
       const currentQ = JSON.parse(readFileSync(queuePath, "utf8")) || {};
+      let dirty = false;
+      if (Array.isArray(currentQ.pendingUrls)) {
+        currentQ.pendingUrls = currentQ.pendingUrls.filter((u: string) => !indexedUrls.has(u));
+        dirty = true;
+      }
       if (Array.isArray(currentQ.pending)) {
         currentQ.pending = currentQ.pending.filter((u: string) => !indexedUrls.has(u));
+        dirty = true;
+      }
+      if (dirty || Array.isArray(currentQ.gsc_requested)) {
+        const requested = new Set<string>(Array.isArray(currentQ.gsc_requested) ? currentQ.gsc_requested : []);
+        for (const u of indexedUrls) requested.add(u);
+        currentQ.gsc_requested = [...requested];
+        currentQ.updatedAt = new Date().toISOString();
         writeFileSync(queuePath, JSON.stringify(currentQ, null, 2) + "\n", "utf8");
       }
     } catch {}

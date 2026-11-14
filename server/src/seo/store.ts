@@ -273,6 +273,58 @@ export interface StrategyForecastLedgerRow {
   updated_at: number;
 }
 
+export type SeoChangelogCategory =
+  | "technical_seo"
+  | "routing"
+  | "content_information_gain"
+  | "distribution_backlinks"
+  | "sitemap_pruning"
+  | "gsc_indexing";
+
+export type SeoChangelogStatus = "planned" | "in_progress" | "completed" | "verified";
+
+export interface SeoChangelogRow {
+  id: number;
+  project_id: string;
+  date: string;
+  category: SeoChangelogCategory;
+  title: string;
+  description: string;
+  impact: string;
+  impact_area: string;
+  author: string;
+  diff_or_details: string;
+  status: SeoChangelogStatus;
+  target_urls: string | null;
+  metadata_json: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface SeoChangelogInput {
+  project_id?: string;
+  date?: string;
+  category: SeoChangelogCategory;
+  title: string;
+  description: string;
+  impact?: string;
+  impact_area?: string;
+  author?: string;
+  diff_or_details?: string;
+  status?: SeoChangelogStatus;
+  target_urls?: string[] | string | null;
+  metadata?: Record<string, unknown>;
+  metadata_json?: string;
+}
+
+export interface SeoChangelogFilter {
+  projectId?: string;
+  category?: SeoChangelogCategory | string;
+  status?: SeoChangelogStatus | string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface SeoScoringWeights {
   demand_weight: number;
   low_comp_weight: number;
@@ -639,6 +691,26 @@ export function ensureSeoSchema(db: DatabaseSync) {
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_seo_strategy_ledger_stage ON seo_strategy_forecast_ledger(buyer_stage, forecast_opportunity_score DESC);
+
+    CREATE TABLE IF NOT EXISTS seo_changelog (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_id TEXT NOT NULL DEFAULT 'cleaner',
+      date TEXT NOT NULL,
+      category TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      impact TEXT NOT NULL DEFAULT '',
+      impact_area TEXT NOT NULL DEFAULT '',
+      author TEXT NOT NULL DEFAULT 'Benjamin Cook',
+      diff_or_details TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'completed',
+      target_urls TEXT,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_seo_changelog_proj_date ON seo_changelog(project_id, date DESC);
+    CREATE INDEX IF NOT EXISTS idx_seo_changelog_category ON seo_changelog(project_id, category);
   `);
 
   const ledgerCols: Array<[string, string]> = [
@@ -655,6 +727,10 @@ export function ensureSeoSchema(db: DatabaseSync) {
     ["last_optimization_type", "TEXT"],
   ];
   for (const [col, def] of ledgerCols) addColumnIfMissing(db, "seo_strategy_forecast_ledger", col, def);
+  addColumnIfMissing(db, "seo_changelog", "impact_area", "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, "seo_changelog", "author", "TEXT NOT NULL DEFAULT 'Benjamin Cook'");
+  addColumnIfMissing(db, "seo_changelog", "diff_or_details", "TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, "seo_changelog", "impact", "TEXT NOT NULL DEFAULT ''");
 
   // Idempotent column migrations for databases created under Phase 1/2.
   const kwCols: Array<[string, string]> = [
@@ -2937,6 +3013,139 @@ export class SeoStore {
       scoring_weights: weights,
       recommendations,
     };
+  }
+
+  // ---------- SEO Changelog (M5 / R6) ----------
+  addChangelogEntry(entry: SeoChangelogInput): SeoChangelogRow {
+    const t = this.now();
+    const dateStr = entry.date ? String(entry.date).trim().slice(0, 30) : new Date(t * 1000).toISOString().slice(0, 10);
+    const projectId = (entry.project_id || "cleaner").toLowerCase().trim();
+    const status = entry.status || "completed";
+    const impact = String(entry.impact || entry.impact_area || "").trim();
+    const impactArea = String(entry.impact_area || entry.impact || "").trim();
+    const author = String(entry.author || "Benjamin Cook").trim();
+    const diffOrDetails = String(entry.diff_or_details || "").trim();
+    const targetUrls = Array.isArray(entry.target_urls)
+      ? JSON.stringify(entry.target_urls)
+      : typeof entry.target_urls === "string"
+        ? entry.target_urls
+        : null;
+    const metadataJson = entry.metadata
+      ? JSON.stringify(entry.metadata)
+      : (entry.metadata_json || "{}");
+
+    const res = this.db
+      .prepare(
+        `INSERT INTO seo_changelog (
+           project_id, date, category, title, description, impact, impact_area, author, diff_or_details, status, target_urls, metadata_json, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        projectId,
+        dateStr,
+        entry.category,
+        entry.title,
+        entry.description,
+        impact,
+        impactArea,
+        author,
+        diffOrDetails,
+        status,
+        targetUrls,
+        metadataJson,
+        t,
+        t
+      );
+
+    const insertedId = Number(res.lastInsertRowid);
+    const row = this.db
+      .prepare("SELECT * FROM seo_changelog WHERE id = ?")
+      .get(insertedId) as unknown as SeoChangelogRow;
+    return row;
+  }
+
+  listChangelog(filters?: SeoChangelogFilter): SeoChangelogRow[] {
+    const clauses: string[] = [];
+    const params: Array<string | number> = [];
+
+    if (filters?.projectId && filters.projectId !== "all" && filters.projectId !== "*") {
+      clauses.push("LOWER(project_id) = LOWER(?)");
+      params.push(filters.projectId);
+    }
+    if (filters?.category && filters.category !== "all") {
+      clauses.push("category = ?");
+      params.push(filters.category);
+    }
+    if (filters?.status && filters.status !== "all") {
+      clauses.push("status = ?");
+      params.push(filters.status);
+    }
+
+    const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+    const limit = Math.max(1, Math.min(500, Number(filters?.limit) || 100));
+    const offset = Math.max(0, Number(filters?.offset) || 0);
+
+    params.push(limit, offset);
+    return this.db
+      .prepare(`SELECT * FROM seo_changelog ${where} ORDER BY date DESC, id DESC LIMIT ? OFFSET ?`)
+      .all(...params) as unknown as SeoChangelogRow[];
+  }
+
+  getChangelogSummary(projectId?: string): {
+    total: number;
+    by_category: Record<string, number>;
+    by_status: Record<string, number>;
+    by_project: Record<string, number>;
+    latest_date: string | null;
+    recent: SeoChangelogRow[];
+  } {
+    const projFilter = projectId && projectId !== "all" && projectId !== "*" ? "WHERE LOWER(project_id) = LOWER(?)" : "";
+    const projParams = projectId && projectId !== "all" && projectId !== "*" ? [projectId] : [];
+
+    const totalRow = this.db
+      .prepare(`SELECT COUNT(*) as count FROM seo_changelog ${projFilter}`)
+      .get(...projParams) as { count: number } | undefined;
+
+    const catRows = this.db
+      .prepare(`SELECT category, COUNT(*) as count FROM seo_changelog ${projFilter} GROUP BY category`)
+      .all(...projParams) as Array<{ category: string; count: number }>;
+
+    const statusRows = this.db
+      .prepare(`SELECT status, COUNT(*) as count FROM seo_changelog ${projFilter} GROUP BY status`)
+      .all(...projParams) as Array<{ status: string; count: number }>;
+
+    const projectRows = this.db
+      .prepare(`SELECT project_id, COUNT(*) as count FROM seo_changelog GROUP BY project_id`)
+      .all() as Array<{ project_id: string; count: number }>;
+
+    const latestRow = this.db
+      .prepare(`SELECT date FROM seo_changelog ${projFilter} ORDER BY date DESC, id DESC LIMIT 1`)
+      .get(...projParams) as { date: string } | undefined;
+
+    const byCategory: Record<string, number> = {};
+    for (const r of catRows) byCategory[r.category] = r.count;
+
+    const byStatus: Record<string, number> = {};
+    for (const r of statusRows) byStatus[r.status] = r.count;
+
+    const byProject: Record<string, number> = {};
+    for (const r of projectRows) byProject[r.project_id] = r.count;
+
+    const recent = this.listChangelog({ projectId, limit: 5 });
+
+    return {
+      total: totalRow?.count || 0,
+      by_category: byCategory,
+      by_status: byStatus,
+      by_project: byProject,
+      latest_date: latestRow?.date || null,
+      recent,
+    };
+  }
+
+  deleteChangelogEntry(id: number): boolean {
+    const res = this.db.prepare("DELETE FROM seo_changelog WHERE id = ?").run(id);
+    return Number(res.changes) > 0;
   }
 }
 
