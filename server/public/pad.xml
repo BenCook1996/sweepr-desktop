@@ -77,7 +77,7 @@ Key Features:
       <Application_Info_URL>https://sweeprcleaner.com</Application_Info_URL>
       <Application_Order_URL>https://sweeprcleaner.com/order</Application_Order_URL>
       <Application_Screenshot_URL>https://sweeprcleaner.com/screenshot.png</Application_Screenshot_URL>
-      <Application_Icon_URL>https://sweeprcleaner.com/icon-32x32.png</Application_Icon_URL>
+      <Application_Icon_URL>https://sweeprcleaner.com/icon-512.png</Application_Icon_URL>
       <Application_XML_File_URL>https://sweeprcleaner.com/pad.xml</Application_XML_File_URL>
     </Application_URLs>
     <Download_URLs>
