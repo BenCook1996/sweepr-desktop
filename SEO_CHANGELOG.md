@@ -27,6 +27,21 @@ Maintained centrally in the SWEEPR CRM (`sweepr-crm`) tracking technical SEO, ro
 
 ## Chronological Changelog
 
+### 2026-11-15
+
+#### [CLEANER] Ship Winget PR #480164, Public Scoop Bucket, Release Asset Sync, Schema `sameAs`, Directory Seed Expansion & Multi-Portal Submissions
+- **Winget & Scoop Package Managers:** Published validated Winget manifests in [microsoft/winget-pkgs#480164](https://github.com/microsoft/winget-pkgs/pull/480164) and launched public Scoop bucket repository [BenCook1996/scoop-sweepr](https://github.com/BenCook1996/scoop-sweepr) (`v0.1.0`) alongside public `README.md` documentation and verified SHA-256 checksums for `BenCook1996/sweepr-desktop`.
+- **GitHub `v0.1.0` Release Asset Sync:** Uploaded updated `Sweepr_Setup.msi`, `SWEEPRCleaner.dmg`, and `SWEEPRCleaner.apk` release artifacts to `BenCook1996/sweepr-desktop` (`v0.1.0`) matching live production binaries.
+- **GSC & IndexNow Sitemap Submission:** Submitted the pruned `76`-URL `sitemap.xml` via GSC API & Desktop Chrome UI (`Success | 76 URLs`), pushed all `76` canonical routes to IndexNow (`HTTP 200`), and completed `11` priority URL Inspection Request Indexing submissions (reaching Google's daily quota).
+- **Directory Outreach & Live Listing Verification:** Submitted PAD XML and vendor forms to Softpedia, FileHorse, SourceForge, Download3K, Soft112, and DownloadCrew; verified live SaaSHub listing (`https://www.saashub.com/sweepr-cleaner` returning `HTTP 200` with outbound link); logged gated/editorial portals (AlternativeTo queue, Apponic, TechSpot, SnapFiles, Uptodown, Microsoft Store, Chocolatey, Microsoft WDSI, BetaList, CNET, OlderGeeks, SoftFamous, FileEagle, DownloadAstro).
+- **Schema & Listing Seed Expansion:** Updated `Organization.sameAs` in `server/src/pseo.ts` and expanded `DEFAULT_DIRECTORY_LISTINGS` (`15` seeded entries) with unconditional `INSERT OR IGNORE` seeding in `server/src/seo/listings.ts`, plus 4-store CRM parity reconciliation across `sweeprcleaner.com`, `sweepr-crm-production`, `sweepr.db`, and `sweepr-crm.db`.
+
+#### [VPN] Ship v2.5.0 Mockup 1 Binaries (`.exe`/`.dmg`/`.apk`/`.aab`), PAD 4.0 Sync, Play Store vc16, WDSI & GitHub Repo Homepage
+- Deployed 12-surface Mockup 1 UI (`f2e4fd7`), rebuilt `SWEEPRVPN.dmg`, `SWEEPRVPN.exe`, and `SWEEPRVPN.apk` / `app-release.aab` (`v2.5.0` vc16), synced `pad.xml` and `warrant-canary.html`, published vc16 to Google Play Closed Testing, submitted `SWEEPRVPN.exe` to Microsoft WDSI, configured GitHub repo homepage/topics, and synchronized CRM outreach/backlink targets.
+
+#### [DEEPBLOCK] v1.2.9 Store Submissions (CWS, AMO, SourceForge, GitHub Release) & CRM Sync
+- Logged v1.2.9 Chrome Web Store (`Pending review`), Mozilla Firefox AMO (`Version 6710779`), and SourceForge vendor (`bcook96`, category `Ad Blockers [3275]`) submissions; published GitHub repo metadata, `README.md`, and 5-asset `v1.2.9` GitHub Release; staged Edge Partner Center and Opera Add-ons portals in CRM.
+
 ### 2026-11-13
 
 #### [VPN] Purge 984 Zombie HTML Pages & Enforce Server-Level Pattern 301 Consolidation

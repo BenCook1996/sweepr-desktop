@@ -37,8 +37,18 @@ export const DEFAULT_DIRECTORY_LISTINGS: Array<{
   },
   {
     platform_id: "winget",
-    platform_name: "Windows Package Manager (winget-pkgs)",
-    listing_url: "https://github.com/microsoft/winget-pkgs",
+    platform_name: "Windows Package Manager (winget-pkgs #480164)",
+    listing_url: "https://github.com/microsoft/winget-pkgs/pull/480164",
+  },
+  {
+    platform_id: "scoop",
+    platform_name: "Scoop Bucket (BenCook1996/scoop-sweepr)",
+    listing_url: "https://github.com/BenCook1996/scoop-sweepr",
+  },
+  {
+    platform_id: "github_release",
+    platform_name: "GitHub Releases (sweepr-desktop v0.1.0)",
+    listing_url: "https://github.com/BenCook1996/sweepr-desktop/releases/tag/v0.1.0",
   },
   {
     platform_id: "chocolatey",
@@ -58,17 +68,42 @@ export const DEFAULT_DIRECTORY_LISTINGS: Array<{
   {
     platform_id: "softpedia",
     platform_name: "Softpedia Windows System Cleaning",
-    listing_url: "https://www.softpedia.com",
+    listing_url: "https://www.softpedia.com/user/submit.shtml",
   },
   {
     platform_id: "alternativeto",
     platform_name: "AlternativeTo (CCleaner & BleachBit Alternatives)",
-    listing_url: "https://alternativeto.net",
+    listing_url: "https://alternativeto.net/software/sweeprcleaner/",
   },
   {
     platform_id: "saashub",
     platform_name: "SaaSHub Software Directory",
-    listing_url: "https://www.saashub.com",
+    listing_url: "https://www.saashub.com/sweepr-cleaner",
+  },
+  {
+    platform_id: "filehorse",
+    platform_name: "FileHorse Windows Utilities",
+    listing_url: "https://www.filehorse.com/contact/",
+  },
+  {
+    platform_id: "sourceforge",
+    platform_name: "SourceForge Software Directory",
+    listing_url: "https://sourceforge.net/software/vendors/new",
+  },
+  {
+    platform_id: "download3k",
+    platform_name: "Download3K Software Directory",
+    listing_url: "https://www.download3k.com/submit.php",
+  },
+  {
+    platform_id: "soft112",
+    platform_name: "Soft112 Software Directory",
+    listing_url: "https://www.soft112.com/submit-software.html",
+  },
+  {
+    platform_id: "downloadcrew",
+    platform_name: "DownloadCrew Software Directory",
+    listing_url: "https://www.downloadcrew.com/user/feedback",
   },
 ];
 
@@ -143,22 +178,18 @@ export function extractVersionAndRatingFromHtml(html: string): {
 export function ensureDirectoryListingsSeeded(store: SeoStore) {
   const expectedVersion = readCurrentReleaseVersion();
   const now = Math.floor(Date.now() / 1000);
-  const existing = store.db.prepare("SELECT COUNT(*) AS c FROM seo_directory_listings").get() as { c: number };
-  if (existing.c === 0) {
-    const stmt = store.db.prepare(`
-      INSERT OR IGNORE INTO seo_directory_listings (
-        platform_id, platform_name, listing_url, expected_version,
-        version_status, backlink_status, crm_task_status, updated_at
-      ) VALUES (?, ?, ?, ?, 'unverified', 'unverified', 'none', ?)
-    `);
-    for (const item of DEFAULT_DIRECTORY_LISTINGS) {
-      stmt.run(item.platform_id, item.platform_name, item.listing_url, expectedVersion, now);
-    }
-  } else {
-    store.db
-      .prepare("UPDATE seo_directory_listings SET expected_version = ? WHERE expected_version != ?")
-      .run(expectedVersion, expectedVersion);
+  const stmt = store.db.prepare(`
+    INSERT OR IGNORE INTO seo_directory_listings (
+      platform_id, platform_name, listing_url, expected_version,
+      version_status, backlink_status, crm_task_status, updated_at
+    ) VALUES (?, ?, ?, ?, 'unverified', 'unverified', 'none', ?)
+  `);
+  for (const item of DEFAULT_DIRECTORY_LISTINGS) {
+    stmt.run(item.platform_id, item.platform_name, item.listing_url, expectedVersion, now);
   }
+  store.db
+    .prepare("UPDATE seo_directory_listings SET expected_version = ? WHERE expected_version != ?")
+    .run(expectedVersion, expectedVersion);
 }
 
 export function listDirectoryListings(store: SeoStore): DirectoryListingRow[] {

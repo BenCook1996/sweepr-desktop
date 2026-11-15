@@ -1893,9 +1893,10 @@ export function renderPseoPage(item: CleanItem): string {
         logo: "https://sweeprcleaner.com/logo-mint-glass.svg",
         sameAs: [
           "https://github.com/BenCook1996/sweepr-desktop",
-          "https://github.com/microsoft/winget-pkgs",
-          "https://alternativeto.net/software/sweepr-cleaner/about/",
-          "https://sourceforge.net/projects/sweepr-cleaner/",
+          "https://github.com/BenCook1996/scoop-sweepr",
+          "https://github.com/microsoft/winget-pkgs/pull/480164",
+          "https://alternativeto.net/software/sweeprcleaner/",
+          "https://www.saashub.com/sweepr-cleaner",
         ],
       },
     ],
