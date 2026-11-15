@@ -145,16 +145,16 @@ Attempting to request indexation for all 75 Tier-1 URLs in a single day is mathe
 **Objective:** Index secondary high-intent gaming, dev, and browser cache guides.
 
 ### Day 4 Batch (4 URLs):
-- [ ] `https://sweeprcleaner.com/clean/app/amd-shader-cache` (AMD Radeon DirectX/Vulkan shader cache)
-- [ ] `https://sweeprcleaner.com/clean/app/discord-cache` (Discord Chromium cache & video previews)
-- [ ] `https://sweeprcleaner.com/clean/app/spotify-cache` (Spotify offline storage cache)
-- [ ] `https://sweeprcleaner.com/clean/app/riot-client-logs` (Valorant / League crash dumps & logs)
+- [x] `https://sweeprcleaner.com/clean/app/amd-shader-cache` (AMD Radeon DirectX/Vulkan shader cache — Indexing requested 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/discord-cache` (Discord Chromium cache & video previews — Already `URL is on Google` / `Page is indexed`, checked 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/spotify-cache` (Spotify offline storage cache — Already `URL is on Google` / `Page is indexed`, checked 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/riot-client-logs` (Valorant / League crash dumps & logs — Indexing requested 2026-11-15)
 
 ### Day 5 Batch (4 URLs):
-- [ ] `https://sweeprcleaner.com/clean/app/genshin-impact-update-cache` (HoYoverse update chunks)
-- [ ] `https://sweeprcleaner.com/clean/app/medal-tv-cache` (Medal.tv video clip cache)
-- [ ] `https://sweeprcleaner.com/clean/app/stremio-desktop-cache` (Stremio streaming torrent chunks)
-- [ ] `https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk` (Docker ext4.vhdx unreleased space)
+- [x] `https://sweeprcleaner.com/clean/app/genshin-impact-update-cache` (HoYoverse update chunks — Indexing requested 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/medal-tv-cache` (Medal.tv video clip cache — Indexing requested 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/stremio-desktop-cache` (Stremio streaming torrent chunks — Indexing requested 2026-11-15)
+- [x] `https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk` (Docker ext4.vhdx unreleased space — Indexing requested 2026-11-15)
 
 ---
 
@@ -214,8 +214,16 @@ site:sweeprcleaner.com inurl:month OR inurl:year
 | `https://sweeprcleaner.com/clean/app/steam-depotcache` | Phase 3 | Day 3 | Operator | 200 OK | Match | [ ] | Pending |
 | `https://sweeprcleaner.com/clean/folder/winsxs` | Phase 3 | Day 3 | Operator | 200 OK | Match | [ ] | Pending |
 | `https://sweeprcleaner.com/clean/app/nvidia-dxcache` | Phase 3 | Day 3 | Operator | 200 OK | Match | [ ] | Pending |
-| `https://sweeprcleaner.com/clean/folder/windows-old` | Phase 3 | Day 3 | Operator | 200 OK | Match | [ ] | Pending |
-| `https://sweeprcleaner.com/clean/folder/hiberfil-sys` | Phase 3 | Day 3 | Operator | 200 OK | Match | [ ] | Pending |
+| `https://sweeprcleaner.com/clean/folder/windows-old` | Phase 3 | Day 3 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/folder/hiberfil-sys` | Phase 3 | Day 3 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/amd-shader-cache` | Phase 3B | Day 4 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/discord-cache` | Phase 3B | Day 4 | GSC Web (chrome_devtools) | 200 OK | Match | [n/a] | Already indexed (`URL is on Google`, 2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/spotify-cache` | Phase 3B | Day 4 | GSC Web (chrome_devtools) | 200 OK | Match | [n/a] | Already indexed (`URL is on Google`, 2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/riot-client-logs` | Phase 3B | Day 4 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/genshin-impact-update-cache` | Phase 3B | Day 5 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/medal-tv-cache` | Phase 3B | Day 5 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/stremio-desktop-cache` | Phase 3B | Day 5 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
+| `https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk` | Phase 3B | Day 5 | GSC Web (chrome_devtools) | 200 OK | Match | [x] | Indexing requested (2026-11-15) |
 
 ---
 
