@@ -1900,6 +1900,7 @@ export function renderPseoPage(item: CleanItem): string {
           "https://sourceforge.net/software/product/SWEEPR-Cleaner/",
           "https://www.softpedia.com/get/Tweak/System-Tweak/SWEEPR-Cleaner.shtml",
           "https://community.chocolatey.org/packages/sweepr-cleaner/0.1.0",
+          "https://www.producthunt.com/products/sweepr-cleaner",
         ],
       },
     ],
