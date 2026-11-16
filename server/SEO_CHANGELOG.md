@@ -27,6 +27,30 @@ Maintained centrally in the SWEEPR CRM (`sweepr-crm`) tracking technical SEO, ro
 
 ## Chronological Changelog
 
+### 2026-11-16
+
+#### [Cleaner] Resolve Hreflang/Robots Contradictions, Add Pruned `X-Robots-Tag` Headers & Submit Temporary `/sitemap-cleanup.xml`
+- **Project**: `cleaner`
+- **Category**: `gsc_indexing`
+- **Status**: `completed`
+- **Target URLs**: `/`, `/pricing`, `/de`, `/de/pricing`, `/fr`, `/fr/pricing`, `/es`, `/es/pricing`, `/sitemap-cleanup.xml`, `/clean/*`
+- **Files Modified**: `server/public/index.html`, `server/public/pricing.html`, `server/src/app.ts`, `server/public/sitemap-cleanup.xml`, `server/test/e2e-seo-hygiene.test.ts`, `docs/distribution/gsc-reindexing-plan.md`
+- **Technical Breakdown**:
+  Removed `hreflang="de|fr|es"` links pointing to noindexed localized routes in `server/public/index.html` and `server/public/pricing.html` while keeping `en` and `x-default`. Updated `renderHtmlFileWithLocale` in `server/src/app.ts` so localized pages align HTML `<meta name="robots">` with HTTP `X-Robots-Tag` (`noindex, follow`, or `noindex, nofollow` on order routes) and strip conflicting `hreflang` tags. Added `X-Robots-Tag: noindex, follow` headers alongside meta robots tags on all `329` pruned `clean-items.json` guides, and served a temporary 14-day `server/public/sitemap-cleanup.xml` (`1,411` URLs covering `329` noindexed guides, `1,064` `pseo-redirects.json` keys + `14` legacy aliases, `6` localized routes, and `4` phantom `/month`–`/yr` redirects, excluding all `76` Tier-1 URLs in `/sitemap.xml`) with `X-Robots-Tag: noindex`.
+- **Impact**:
+  Eliminates contradictory index/noindex and canonical signals on localized pages and forces Googlebot to re-crawl and flush orphaned thin/redirected URLs out of Google's site-quality denominator.
+- **Metadata**:
+  ```json
+  {
+    "cleanup_sitemap_urls": 1411,
+    "tier1_sitemap_urls": 76,
+    "hreflang_noindex_conflict_resolved": true,
+    "pruned_x_robots_tag": "noindex, follow"
+  }
+  ```
+
+---
+
 ### 2026-11-12
 
 #### [Cleaner] Prune Indexable Footprint to Curated ~75 Tier-1 URLs

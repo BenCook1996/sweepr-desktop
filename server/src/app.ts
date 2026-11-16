@@ -768,10 +768,14 @@ export function createApp(deps: AppDeps) {
     if (!existsSync(file)) return c.notFound();
     let html = readFileSync(file, "utf-8");
     if (lang !== "en") {
+      const locRobots = file.includes("order.html") ? "noindex, nofollow" : "noindex, follow";
       if (!c.res.headers.has("X-Robots-Tag")) {
-        c.header("X-Robots-Tag", "noindex, follow");
+        c.header("X-Robots-Tag", locRobots);
       }
-      html = html.replace(/<html\s+lang="en"/i, `<html lang="${escapeHtml(lang)}"`);
+      html = html
+        .replace(/<html\s+lang="en"/i, `<html lang="${escapeHtml(lang)}"`)
+        .replace(/<meta\s+name="robots"\s+content="[^"]*"\s*\/?>/i, `<meta name="robots" content="${locRobots}" />`)
+        .replace(/\s*<link\s+rel="alternate"\s+hreflang="[^"]*"\s+href="[^"]*"\s*\/?>/gi, "");
       const locMeta = LOCALIZED_META[lang];
       const pageKey = file.includes("pricing.html") ? "pricing" : file.includes("index.html") ? "home" : null;
       if (locMeta && pageKey) {
@@ -956,6 +960,13 @@ export function createApp(deps: AppDeps) {
     c.header("Content-Type", "application/xml; charset=utf-8");
     return c.body(xml);
   });
+  app.get("/sitemap-cleanup.xml", (c) => {
+    const file = "./public/sitemap-cleanup.xml";
+    if (!existsSync(file)) return c.notFound();
+    c.header("Content-Type", "application/xml; charset=utf-8");
+    c.header("X-Robots-Tag", "noindex");
+    return c.body(readFileSync(file, "utf-8"));
+  });
   app.get("/bloat-watch/:slug", (c) => {
     const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
     const post = getBloatWatchPost(seoStore, slug);
@@ -1003,6 +1014,9 @@ export function createApp(deps: AppDeps) {
 
     const item = getCleanItemBySlug(category, cleanSlug) ?? getCleanItems().find((i) => i.category === category && i.slug === cleanSlug);
     if (!item) return c.notFound();
+    if (item.noindex) {
+      c.header("X-Robots-Tag", "noindex, follow");
+    }
     return c.html(renderPseoPage(item));
   });
   // NOTE: `msg` is trusted, server-authored HTML (pickerPage injects links). Never pass user input as `msg`.

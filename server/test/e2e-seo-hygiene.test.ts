@@ -218,7 +218,20 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     }
   });
 
-  test("TC-T1-LOC-01 & 02: Localized routes serve X-Robots-Tag: noindex, follow", async () => {
+  test("TC-T1-LOC-01 & 02: Localized routes align X-Robots-Tag + HTML meta noindex and drop conflicting hreflang tags", async () => {
+    for (const rootPath of ["/", "/pricing"]) {
+      const rootRes = await app.request(rootPath);
+      assert.equal(rootRes.status, 200, `${rootPath} must return HTTP 200`);
+      const rootHtml = await rootRes.text();
+      for (const loc of ["de", "fr", "es"] as const) {
+        assert.equal(
+          new RegExp(`hreflang="${loc}"`, "i").test(rootHtml),
+          false,
+          `${rootPath} must not emit hreflang="${loc}" pointing to noindexed routes`
+        );
+      }
+    }
+
     for (const loc of ["de", "fr", "es"] as const) {
       const homeRes = await app.request(`/${loc}`);
       assert.equal(homeRes.status, 200, `/${loc} must return HTTP 200`);
@@ -227,6 +240,9 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
         "noindex, follow",
         `/${loc} must serve X-Robots-Tag: noindex, follow`
       );
+      const homeParsed = parseHtml(await homeRes.text());
+      assert.equal(homeParsed.metaRobots, "noindex, follow", `/${loc} HTML meta robots must match noindex, follow`);
+      assert.equal(homeParsed.hreflangCount, 0, `/${loc} must omit hreflang tags while noindexed`);
 
       const pricingRes = await app.request(`/${loc}/pricing`);
       assert.equal(pricingRes.status, 200, `/${loc}/pricing must return HTTP 200`);
@@ -235,6 +251,9 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
         "noindex, follow",
         `/${loc}/pricing must serve X-Robots-Tag: noindex, follow`
       );
+      const pricingParsed = parseHtml(await pricingRes.text());
+      assert.equal(pricingParsed.metaRobots, "noindex, follow", `/${loc}/pricing HTML meta robots must match noindex, follow`);
+      assert.equal(pricingParsed.hreflangCount, 0, `/${loc}/pricing must omit hreflang tags while noindexed`);
     }
   });
 
@@ -247,7 +266,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     }
   });
 
-  test("TC-T1-NOINDEX-01 & 02: Pruned guides return HTTP 200 with meta noindex, follow", async () => {
+  test("TC-T1-NOINDEX-01 & 02: Pruned guides return HTTP 200 with meta + header noindex, follow", async () => {
     const items = getCleanItems();
     const pruned = items.filter((i) => i.noindex);
     assert.ok(pruned.length > 0, "Catalog must have pruned items");
@@ -256,6 +275,11 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     for (const item of pruned.slice(0, 5)) {
       const res = await app.request(`/clean/${item.category}/${item.slug}`);
       assert.equal(res.status, 200, `Pruned guide ${item.slug} must return HTTP 200`);
+      assert.equal(
+        res.headers.get("x-robots-tag"),
+        "noindex, follow",
+        `Pruned guide ${item.slug} must serve X-Robots-Tag: noindex, follow`
+      );
       const html = await res.text();
       const parsed = parseHtml(html);
       assert.equal(
@@ -491,6 +515,57 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
         const url = locTag.replace(/<\/?loc>/g, "");
         assert.ok(url.startsWith("https://") || url.startsWith("http://"), `Invalid loc URL in ${sourceName}: ${url}`);
       }
+    }
+  });
+
+  test("TC-T1-SM-CLEANUP-01: Temporary /sitemap-cleanup.xml has >=1400 unique non-Tier-1 URLs and zero 404s", async () => {
+    const cleanupRes = await app.request("/sitemap-cleanup.xml");
+    assert.equal(cleanupRes.status, 200, "Dynamic /sitemap-cleanup.xml must return HTTP 200");
+    assert.equal(
+      cleanupRes.headers.get("x-robots-tag"),
+      "noindex",
+      "/sitemap-cleanup.xml must serve X-Robots-Tag: noindex"
+    );
+
+    const cleanupXml = await cleanupRes.text();
+    const cleanupUrls = parseSitemap(cleanupXml);
+    const cleanupSet = new Set(cleanupUrls);
+    assert.equal(cleanupUrls.length, cleanupSet.size, "/sitemap-cleanup.xml URLs must be unique");
+    assert.ok(
+      cleanupUrls.length >= 1400,
+      `Expected >= 1400 URLs in /sitemap-cleanup.xml, got ${cleanupUrls.length}`
+    );
+
+    const { urls: tier1Urls } = await loadDynamicSitemap(app);
+    const tier1Set = new Set(tier1Urls);
+    for (const u of cleanupUrls) {
+      assert.equal(tier1Set.has(u), false, `Tier-1 URL must NOT appear in /sitemap-cleanup.xml: ${u}`);
+    }
+
+    for (const u of cleanupUrls) {
+      const path = new URL(u).pathname;
+      const res = await app.request(path);
+      if (res.status === 301) {
+        const loc = res.headers.get("location") || "";
+        assert.ok(loc.length > 0, `Cleanup URL ${path} returned 301 without Location header`);
+        continue;
+      }
+      assert.equal(
+        res.status,
+        200,
+        `Cleanup URL ${path} returned unexpected HTTP ${res.status} (must be 301 or 200 noindex)`
+      );
+      assert.equal(
+        res.headers.get("x-robots-tag"),
+        "noindex, follow",
+        `Cleanup 200 URL ${path} must serve X-Robots-Tag: noindex, follow`
+      );
+      const parsed = parseHtml(await res.text());
+      assert.equal(
+        parsed.metaRobots,
+        "noindex, follow",
+        `Cleanup 200 URL ${path} must have <meta name="robots" content="noindex, follow">`
+      );
     }
   });
 });

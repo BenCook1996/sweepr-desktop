@@ -35,8 +35,8 @@ Attempting to request indexation for all 75 Tier-1 URLs in a single day is mathe
   - Verify zero pruned long-tail guides and zero localized routes (`/de*`, `/fr*`, `/es*`) appear in the XML.
   - Test command: `curl -sI https://sweeprcleaner.com/sitemap.xml`
 - [ ] **Check 0.2: Long-Tail Guides Serve Noindex**
-  - Verify that pruned guides return HTTP 200 with `<meta name="robots" content="noindex, follow">`.
-  - Test URL: `https://sweeprcleaner.com/clean/app/slack-cache`
+  - Verify that pruned guides return HTTP 200 with both HTTP `X-Robots-Tag: noindex, follow` and `<meta name="robots" content="noindex, follow">`.
+  - Test URL: `https://sweeprcleaner.com/clean/app/megasync-app-cache`
 - [ ] **Check 0.3: Localized Routes Serve X-Robots-Tag**
   - Verify that `/de`, `/de/pricing`, `/fr`, `/fr/pricing`, `/es`, `/es/pricing` return header `X-Robots-Tag: noindex, follow`.
   - Test command: `curl -sI https://sweeprcleaner.com/de | grep -i x-robots-tag`
@@ -50,6 +50,10 @@ Attempting to request indexation for all 75 Tier-1 URLs in a single day is mathe
   - In GSC, navigate to **Indexing &rarr; Sitemaps**.
   - Re-submit `https://sweeprcleaner.com/sitemap.xml`.
   - Confirm status: **"Success"** with ~75 discovered URLs.
+- [ ] **Check 0.7: Temporary Cleanup Sitemap (`sitemap-cleanup.xml`, 14-Day Re-Crawl Accelerator)**
+  - Submit `https://sweeprcleaner.com/sitemap-cleanup.xml` (`1,411` URLs covering the `329` noindexed guides, `1,064` `pseo-redirects.json` + `14` legacy `301` aliases, `6` noindexed localized routes, and `4` phantom `/month`–`/yr` redirects; serves `X-Robots-Tag: noindex`) alongside `/sitemap.xml` on `2026-11-16`.
+  - Purpose: Force Googlebot to re-crawl and flush orphaned thin/301/404 URLs out of Google's site-quality denominator.
+  - Scheduled retirement: Remove `sitemap-cleanup.xml` between **`2026-11-30` and `2026-12-07`** once GSC shows those URLs moved to `Excluded by 'noindex' tag` and `Page with redirect`.
 
 ---
 
@@ -244,6 +248,10 @@ site:sweeprcleaner.com inurl:month OR inurl:year
 ### Scenario D: "Discovered - currently not indexed"
 - **Cause:** Google knows the URL exists but has postponed crawling due to crawl budget constraints.
 - **Remedy:** Trigger a manual inspection and live test. This bumps the priority from standard discovery crawl to active crawl queue.
+
+### Scenario E: "Validation: Failed" on "Excluded by ‘noindex’ tag"
+- **Cause:** Clicking **"Validate Fix"** inside GSC's `Excluded by ‘noindex’ tag` report asks Google to verify that all URLs in that bucket are now *indexable*. Google immediately marks validation as `Failed` when it hits intentionally pruned `noindex` URLs.
+- **Remedy:** Do **not** click `"Validate Fix"` on `Excluded by ‘noindex’ tag` when pruning thin/localized pages. Wait for `/sitemap-cleanup.xml` re-crawls to settle naturally into the expected ~335+ intentional `noindex` baseline.
 
 ---
 
