@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://sweeprcleaner.com/download</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-temp</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/appdata-temp</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/nvidia-glcache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/nvidia-nv-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/intel-arc-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/ubisoft-connect-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/roblox-http-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/minecraft-logs-crash-reports</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/gog-galaxy-webcache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/fivem-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/osu-local-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/razer-synapse-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/corsair-icue-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/after-effects-disk-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/photoshop-temp-scratch</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/davinci-resolve-cacheclip</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/blender-temp-render-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/figma-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/canva-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -25,13 +21,8 @@
   <url><loc>https://sweeprcleaner.com/clean/app/unreal-engine-derived-data-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/lightroom-classic-preview-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/vlc-art-thumbnail-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/microsoft-teams-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/slack-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/zoom-data-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/telegram-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/whatsapp-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/edge-browser-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/brave-browser-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/firefox-cache2</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/notion-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/obsidian-gpu-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -41,11 +32,9 @@
   <url><loc>https://sweeprcleaner.com/clean/app/itunes-apple-mobile-backups</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/signal-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/thunderbird-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/vscode-cacheddata</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/pnpm-store-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/yarn-berry-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/cargo-registry-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/nuget-packages-http-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-system-caches</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/android-studio-avd-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/docker-desktop-build-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -70,39 +59,31 @@
   <url><loc>https://sweeprcleaner.com/clean/folder/pagefile-sys</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/swapfile-sys</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/system-volume-information</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/windows-bt-upgrade-folder</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-error-reporting-wer</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-memory-dmp-minidump</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/explorer-thumbnail-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/directx-d3dscache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-cbs-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-dism-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-panther-setup-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/msocache-office-setup</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/inetcache-temporary-internet-files</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-fontcache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/cryptneturlcache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-srum-telemetry-db</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-driverstore-old-drivers</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/recycle-bin-hidden-folder</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/uwp-packages-tempstate</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/clipchamp-uwp-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-retaildemo-offline-content</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/downloaded-program-files-legacy</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-branchcache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-defender-quarantine-old</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-search-index-edb</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/wsl2-temp-vhdx-compaction</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/nvidia-driver-extraction-c-nvidia</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/amd-driver-extraction-c-amd</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/windows-logs-etw-sleepstudy</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/ollama-models-blob-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/huggingface-hub-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/pytorch-torch-hub-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/cursor-ai-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/unity-gi-package-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/call-of-duty-hq-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/fortnite-d3d12-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/vrchat-avatar-world-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/fivem-citizenfx-priv-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-system32-driverstore-temp</loc><lastmod>2026-11-16</lastmod></url>
@@ -112,17 +93,13 @@
   <url><loc>https://sweeprcleaner.com/clean/app/git-lfs-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/rustup-toolchain-downloads</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/amd-oglcache-bloat</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/windows-system32-winevt-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-prefetch-readyboot</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/bun-install-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/conda-package-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/cargo-target-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/unity-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/godot-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/substance-painter-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/curseforge-addon-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/mod-organizer-downloads</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/vortex-mod-downloads</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/ea-anticheat-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/riot-vanguard-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/easy-anticheat-logs</loc><lastmod>2026-11-16</lastmod></url>
@@ -166,7 +143,6 @@
   <url><loc>https://sweeprcleaner.com/clean/folder/podman-desktop-machine-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/android-studio-gradle-build-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/android-studio-avd-snapshots-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/unity-editor-package-manager-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/unity-editor-gi-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/unreal-engine-crash-reports</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/godot-engine-editor-import-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -177,7 +153,6 @@
   <url><loc>https://sweeprcleaner.com/clean/folder/obs-studio-remux-temp-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/streamlabs-desktop-worker-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/pcsx2-ps2-texture-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/ryujinx-switch-vulkan-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/cemu-wii-u-pipeline-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/solidworks-temporary-scratch-files</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/autocad-graphics-hardware-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -186,22 +161,17 @@
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-dism-superseded-components</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/vmware-workstation-vmem-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/virtualbox-guest-snapshots-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/arc-browser-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/vscode-insiders-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/overwolf-client-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/steelseries-gg-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-pycharm-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-webstorm-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-rider-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/github-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/insomnia-rest-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/dbeaver-db-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/league-of-legends-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/geforce-now-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/tiktok-live-studio-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/waterfox-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/floorp-browser-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/tor-browser-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/linear-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/clickup-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/asana-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -210,40 +180,30 @@
   <url><loc>https://sweeprcleaner.com/clean/app/streamlabs-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/adobe-illustrator-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/adobe-audition-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/fl-studio-daw-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/sidefx-houdini-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/autodesk-maya-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/autodesk-3ds-max-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/rpcs3-ps3-emulator-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/retroarch-emu-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/prism-minecraft-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-clion-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-datagrip-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-goland-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jetbrains-phpstorm-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/megasync-app-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/gitkraken-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/vscodium-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/bruno-api-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/beekeeper-studio-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/heroic-games-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/modrinth-app-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/deezer-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/bambu-studio-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/chatgpt-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/prusa-slicer-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/orca-slicer-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/ultimaker-cura-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/krita-painting-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/gimp-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/sublime-text-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/claude-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/handbrake-encoder-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/calibre-ebook-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/freecad-3d-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/shotcut-video-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/kdenlive-video-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/zed-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/trae-ide-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/warp-terminal-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/fork-git-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -261,7 +221,6 @@
   <url><loc>https://sweeprcleaner.com/clean/app/amazon-music-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/teamviewer-remote-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/darktable-photo-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/mongodb-compass-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/redis-insight-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/logseq-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/proton-mail-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -291,24 +250,19 @@
   <url><loc>https://sweeprcleaner.com/clean/app/foobar2000-audio-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/paint-net-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/lightworks-video-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/snagit-capture-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/screen-to-gif-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/wire-messenger-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/wezterm-terminal-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/ghostty-terminal-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/lapce-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/geany-editor-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/rekordbox-dj-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/serato-dj-pro-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/musescore-studio-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/bandicam-recorder-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/viber-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/line-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/internet-download-manager-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/mobaxterm-terminal-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/jdownloader-client-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/wondershare-filmora-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/app/topaz-video-ai-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/parsec-gaming-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/sourcetree-git-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/traktor-pro-dj-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -317,6 +271,7 @@
   <url><loc>https://sweeprcleaner.com/clean/app/autodesk-fusion-360-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/sketchup-pro-3d-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-search-edb-index</loc><lastmod>2026-11-16</lastmod></url>
+  <url><loc>https://sweeprcleaner.com/clean/app/gradle-wrapper-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/vllm-triton-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/tabby-ml-coding-assistant-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/continue-dev-autocomplete-index-cache</loc><lastmod>2026-11-16</lastmod></url>

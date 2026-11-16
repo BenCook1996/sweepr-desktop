@@ -75,6 +75,14 @@ export function getCleanItemBySlug(category: string, slug: string): CleanItem | 
 const RETIRED_VARIANT_SUFFIX_RE =
   /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs)$/;
 
+function resolveIndexableRedirect(target: string): string {
+  const m = target.match(/^\/clean\/(?:app|folder)\/([a-z0-9-]+)$/i);
+  if (m && isPseoSlugNoindexed(m[1])) {
+    return "/clean";
+  }
+  return target;
+}
+
 export function getPseoRedirectTarget(category: string, slug: string): string | undefined {
   getCleanItems();
   const key = `${category}:${slug}`;
@@ -83,7 +91,7 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
   }
   const direct = pseoRedirectsData[key];
   if (direct) {
-    return direct;
+    return resolveIndexableRedirect(direct);
   }
   if (slug === "nvidia-shader-cache" || slug === "nvidia-dx-cache") {
     return "/clean/app/nvidia-dxcache";
@@ -111,7 +119,7 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
   // Cross-category canonical redirect (e.g. /clean/folder/<slug> when item is /clean/app/<slug>)
   const otherCategory = category === "app" ? "folder" : "app";
   const crossMatch = cleanItemsMap.get(`${otherCategory}:${slug}`);
-  if (crossMatch) {
+  if (crossMatch && !crossMatch.noindex) {
     return `/clean/${crossMatch.category}/${crossMatch.slug}`;
   }
   if (RETIRED_VARIANT_SUFFIX_RE.test(slug)) {
@@ -120,7 +128,7 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
     for (const cand of candidates) {
       const match = cleanItemsMap.get(`app:${cand}`) || cleanItemsMap.get(`folder:${cand}`);
       if (match) {
-        return `/clean/${match.category}/${match.slug}`;
+        return resolveIndexableRedirect(`/clean/${match.category}/${match.slug}`);
       }
     }
   }
@@ -725,7 +733,7 @@ export function getSiblingAndRelatedItems(item: CleanItem): {
   siblings: CleanItem[];
   related: CleanItem[];
 } {
-  const all = getCleanItems();
+  const all = getCleanItems().filter((i) => !isPseoSlugNoindexed(i.slug));
   const familyKey = getAppFamilyKey(item.slug);
   const siblings = all.filter((i) => i.slug !== item.slug && getAppFamilyKey(i.slug) === familyKey);
   const siblingSlugs = new Set(siblings.map((s) => s.slug));
@@ -1308,7 +1316,7 @@ export function renderPseoDirectory(): string {
   } catch {
     if (cachedDirectoryHtml) return cachedDirectoryHtml;
   }
-  const items = cleanItems;
+  const items = cleanItems.filter((i) => !isPseoSlugNoindexed(i.slug));
   const appItems = items.filter((i) => i.category === "app");
   const folderItems = items.filter((i) => i.category === "folder");
   const priorityList = Array.from(new Set([...getGscPriorityInternalLinkSlugs(), ...FEATURED_GSC_SLUGS])).slice(0, 50);
@@ -1388,8 +1396,8 @@ export function renderPseoDirectory(): string {
       {
         "@type": "ItemList",
         name: "Windows Cache & Folder Cleanup Guides",
-        numberOfItems: cleanItems.length,
-        itemListElement: cleanItems.map((i, idx) => ({
+        numberOfItems: items.length,
+        itemListElement: items.map((i, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
           name: i.name,

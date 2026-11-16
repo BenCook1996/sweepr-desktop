@@ -63,20 +63,19 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.ok(!text.includes("\uFEFF"), "Text must not contain unicode BOM zero-width character");
     });
 
-    test("1.2: Static server/public/sitemap.xml contains exact 76 Tier-1 URLs", () => {
+    test("1.2: Static server/public/sitemap.xml contains exact 135 Tier-1 URLs", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 76, `Expected exactly 76 Tier-1 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 135, `Expected exactly 135 Tier-1 URLs, got ${urls.length}`);
 
       // Count check by regex
       const locTags = (xml.match(/<loc>/g) || []).length;
-      assert.equal(locTags, 76, `Expected exactly 76 <loc> tags, got ${locTags}`);
+      assert.equal(locTags, 135, `Expected exactly 135 <loc> tags, got ${locTags}`);
 
-      // All 8 Core Hubs present
+      // All 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages present (/download excluded as noindex)
       const coreHubs = [
         "https://sweeprcleaner.com/",
         "https://sweeprcleaner.com/pricing",
-        "https://sweeprcleaner.com/download",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
         "https://sweeprcleaner.com/bloat-watch",
@@ -86,6 +85,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       for (const hub of coreHubs) {
         assert.ok(urls.includes(hub), `Static sitemap missing core hub: ${hub}`);
       }
+      assert.equal(urls.includes("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
 
       // All 20 Switchers present
       const switchers = [
@@ -102,7 +102,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const { app } = setup();
       const allItems = getCleanItems();
       const noindexed = allItems.filter((i) => i.noindex);
-      assert.equal(noindexed.length, 329, `Expected exactly 329 noindexed long-tail guides`);
+      assert.equal(noindexed.length, 283, `Expected exactly 283 noindexed long-tail guides`);
 
       const staticXml = readFileSync("public/sitemap.xml", "utf8");
       const staticUrls = parseSitemap(staticXml);
@@ -148,8 +148,8 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const dynamicXml = await dynamicRes.text();
       const dynamicUrls = parseSitemap(dynamicXml);
 
-      assert.equal(staticUrls.length, 76, "Static sitemap count must be 76");
-      assert.equal(dynamicUrls.length, 76, "Dynamic sitemap count must be 76");
+      assert.equal(staticUrls.length, 135, "Static sitemap count must be 135");
+      assert.equal(dynamicUrls.length, 135, "Dynamic sitemap count must be 135");
       assert.deepEqual(dynamicUrls, staticUrls, "Dynamic and static sitemaps must have identical URL list in identical order");
     });
   });
@@ -436,7 +436,9 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
 
       for (let i = 0; i < 120; i++) {
         const scenario = scenarioTypes[i % scenarioTypes.length];
-        const promise = app.request(scenario.path, { headers: scenario.headers });
+        const promise = Promise.resolve(
+          app.request(scenario.path, scenario.headers ? { headers: scenario.headers as Record<string, string> } : undefined)
+        );
         tasks.push({ scenario, index: i, promise });
       }
 

@@ -73,13 +73,13 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       // Tag balance checks
       const openUrls = (xml.match(/<url>/g) || []).length;
       const closeUrls = (xml.match(/<\/url>/g) || []).length;
-      assert.equal(openUrls, 76, `Expected exactly 76 <url> tags, found ${openUrls}`);
-      assert.equal(closeUrls, 76, `Expected exactly 76 </url> tags, found ${closeUrls}`);
+      assert.equal(openUrls, 135, `Expected exactly 135 <url> tags, found ${openUrls}`);
+      assert.equal(closeUrls, 135, `Expected exactly 135 </url> tags, found ${closeUrls}`);
 
       const openLocs = (xml.match(/<loc>/g) || []).length;
       const closeLocs = (xml.match(/<\/loc>/g) || []).length;
-      assert.equal(openLocs, 76, `Expected exactly 76 <loc> tags, found ${openLocs}`);
-      assert.equal(closeLocs, 76, `Expected exactly 76 </loc> tags, found ${closeLocs}`);
+      assert.equal(openLocs, 135, `Expected exactly 135 <loc> tags, found ${openLocs}`);
+      assert.equal(closeLocs, 135, `Expected exactly 135 </loc> tags, found ${closeLocs}`);
 
       // Ensure no raw unescaped ampersands in URLs
       const locContents = [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/g)].map((m) => m[1]);
@@ -88,29 +88,43 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       }
     });
 
-    test("1.3: Static sitemap contains EXACTLY 76 curated Tier-1 URLs with required components", () => {
+    test("1.3: Static sitemap contains EXACTLY 135 curated Tier-1 URLs with required components", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 76, `Expected exact 76 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 135, `Expected exact 135 URLs, got ${urls.length}`);
 
       // Check unique URLs (no duplicates)
       const uniqueUrls = new Set(urls);
-      assert.equal(uniqueUrls.size, 76, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
+      assert.equal(uniqueUrls.size, 135, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
 
-      // 8 Core Commercial / Hub URLs
+      // 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages (/download excluded as noindex)
       const requiredHubs = [
         "https://sweeprcleaner.com/",
         "https://sweeprcleaner.com/pricing",
-        "https://sweeprcleaner.com/download",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
         "https://sweeprcleaner.com/bloat-watch",
         "https://sweeprcleaner.com/state-of-windows-storage",
         "https://sweeprcleaner.com/tools",
+        "https://sweeprcleaner.com/privacy",
+        "https://sweeprcleaner.com/terms",
+        "https://sweeprcleaner.com/refund",
+        "https://sweeprcleaner.com/support",
+        "https://sweeprcleaner.com/tools/discord-cache-cleaner",
+        "https://sweeprcleaner.com/tools/steam-cache-cleaner",
+        "https://sweeprcleaner.com/tools/logitech-ghub-cleaner",
+        "https://sweeprcleaner.com/tools/elgato-streamdeck-cleaner",
+        "https://sweeprcleaner.com/tools/valorant-logs-cleaner",
+        "https://sweeprcleaner.com/tools/nvidia-shader-cleaner",
+        "https://sweeprcleaner.com/tools/adobe-media-cache-cleaner",
+        "https://sweeprcleaner.com/tools/jetbrains-gradle-cleaner",
+        "https://sweeprcleaner.com/tools/windows-24h2-update-cleaner",
+        "https://sweeprcleaner.com/tools/ai-model-cache-cleaner",
       ];
       for (const hub of requiredHubs) {
-        assert.ok(uniqueUrls.has(hub), `Missing required core hub: ${hub}`);
+        assert.ok(uniqueUrls.has(hub), `Missing required Tier-1 route: ${hub}`);
       }
+      assert.equal(uniqueUrls.has("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
 
       // 20 Switchers (10 /vs/* and 10 /alternatives/*)
       const competitors = [
@@ -122,16 +136,16 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
         assert.ok(uniqueUrls.has(`https://sweeprcleaner.com/alternatives/${comp}`), `Missing /alternatives/${comp}`);
       }
 
-      // Exactly 48 indexed clean guides (76 - 8 hubs - 20 switchers = 48)
+      // Exactly 94 indexed clean guides (135 - 7 hubs - 4 policy - 10 tools - 20 switchers = 94)
       const guideUrls = urls.filter((u) => u.includes("/clean/app/") || u.includes("/clean/folder/"));
-      assert.equal(guideUrls.length, 48, `Expected exactly 48 clean guide URLs, got ${guideUrls.length}`);
+      assert.equal(guideUrls.length, 94, `Expected exactly 94 clean guide URLs, got ${guideUrls.length}`);
     });
 
     test("1.4: Zero long-tail noindexed guides appear in static or dynamic sitemap", async () => {
       const { app } = setup();
       const allItems = getCleanItems();
       const noindexed = allItems.filter((i) => i.noindex);
-      assert.equal(noindexed.length, 329, "Expected 329 noindexed long-tail guides in catalog");
+      assert.equal(noindexed.length, 283, "Expected 283 noindexed long-tail guides in catalog");
 
       const staticUrls = new Set(parseSitemap(readFileSync("public/sitemap.xml", "utf8")));
 
@@ -172,8 +186,8 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       const dynXml = await dynRes.text();
       const dynUrls = parseSitemap(dynXml);
 
-      assert.equal(staticUrls.length, 76, "Static sitemap count must be 76");
-      assert.equal(dynUrls.length, 76, "Dynamic sitemap count must be 76");
+      assert.equal(staticUrls.length, 135, "Static sitemap count must be 135");
+      assert.equal(dynUrls.length, 135, "Dynamic sitemap count must be 135");
       assert.deepEqual(dynUrls, staticUrls, "Dynamic and static URLs must match identically in count and sequence");
     });
   });
@@ -525,7 +539,9 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
 
       for (let i = 0; i < 150; i++) {
         const scenario = scenarios[i % scenarios.length];
-        const promise = app.request(scenario.path, { headers: scenario.headers });
+        const promise = Promise.resolve(
+          app.request(scenario.path, scenario.headers ? { headers: scenario.headers as Record<string, string> } : undefined)
+        );
         tasks.push({ scenario, index: i, promise });
       }
 

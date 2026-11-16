@@ -533,8 +533,7 @@
       "Exit any running games or creative software.",
       "Press Windows Key + R, type %localappdata%\\NVIDIA\\GLCache and hit Enter.",
       "Delete the hexadecimal cache folders inside."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "nvidia-nv-cache",
@@ -549,8 +548,7 @@
       "Press Windows Key + R, type C:\\ProgramData\\NVIDIA Corporation\\NV_Cache and press Enter.",
       "Select all files (Ctrl+A) and press Delete.",
       "Skip any file currently in use by nvcontainer.exe."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "amd-shader-cache",
@@ -1160,8 +1158,7 @@
       "Close osu!.",
       "Press Windows Key + R, type %localappdata%\\osu! and press Enter.",
       "Delete the contents of the 'Logs' folder (never delete 'Songs' or 'Skins')."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "razer-synapse-logs",
@@ -1176,8 +1173,7 @@
       "Press Windows Key + R, type C:\\ProgramData\\Razer\\Synapse3\\Log and press Enter.",
       "Select all old log files (Ctrl+A) and delete them.",
       "Skip the current active log file if Synapse is running."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "corsair-icue-logs",
@@ -1286,8 +1282,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete DaVinci Resolve CacheClip & Optimized Media? YES — Safe Cleanup Guide (Reclaim 8–75 GB)",
-    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (8–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-    "noindex": true
+    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (8–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
   },
   {
     "slug": "capcut-desktop-cache",
@@ -1555,8 +1550,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Microsoft Teams EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Micros (1.5–9 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
-    "noindex": true
+    "metaDescription": "Delete %LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Micros (1.5–9 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan."
   },
   {
     "slug": "slack-desktop-cache",
@@ -1587,8 +1581,7 @@
       "Exit the Zoom Workplace app.",
       "Press Windows Key + R, type %appdata%\\Zoom and press Enter.",
       "Delete the contents of 'logs' and 'data\\WebviewCache'."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "telegram-desktop-cache",
@@ -1619,8 +1612,7 @@
       "Close WhatsApp on your PC.",
       "Press Windows Key + R, type %localappdata%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalState and press Enter.",
       "Delete temporary cache files inside LocalCache and TempState."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "edge-browser-cache",
@@ -1635,8 +1627,7 @@
       "Close Microsoft Edge.",
       "Press Windows Key + R, type %localappdata%\\Microsoft\\Edge\\User Data\\Default and press Enter.",
       "Delete the 'Cache', 'Code Cache', 'GPUCache', and 'Service Worker\\CacheStorage' directories."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "brave-browser-cache",
@@ -1651,8 +1642,7 @@
       "Close Brave Browser.",
       "Press Windows Key + R, type %localappdata%\\BraveSoftware\\Brave-Browser\\User Data\\Default and press Enter.",
       "Delete 'Cache', 'Code Cache', and 'Service Worker\\CacheStorage'."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "firefox-cache2",
@@ -1973,8 +1963,7 @@
       "Close Visual Studio Code.",
       "Press Windows Key + R, type %appdata%\\Code and press Enter.",
       "Delete 'CachedData', 'CachedExtensionVSIXs', 'Cache', and 'logs'."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "npm-cache",
@@ -2093,8 +2082,7 @@
     "manualSteps": [
       "Run 'dotnet nuget locals http-cache --clear' and 'dotnet nuget locals temp --clear' in Terminal.",
       "Or delete %localappdata%\\NuGet\\v3-cache manually."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "gradle-wrapper-caches",
@@ -2834,8 +2822,7 @@
       "Open Windows Settings > System > Storage > Temporary files.",
       "Check 'Windows upgrade log files' and 'Temporary Windows installation files'.",
       "Click 'Remove files'."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "windows-error-reporting-wer",
@@ -2917,8 +2904,7 @@
     "manualSteps": [
       "Open Settings > System > Storage > Temporary files.",
       "Check 'DirectX Shader Cache' and click 'Remove files'."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "windows-cbs-logs",
@@ -3114,8 +3100,7 @@
     "manualSteps": [
       "Open Command Prompt and run: certutil -urlcache * delete.",
       "This safely flushes stale CryptnetUrlCache entries."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "windows-srum-telemetry-db",
@@ -3191,8 +3176,7 @@
     "manualSteps": [
       "Open Windows Settings > Apps > Installed apps > Microsoft Clipchamp > Advanced options.",
       "Click 'Reset' after exporting your completed videos, or clean its LocalCache\\EBWebView folder."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "windows-retaildemo-offline-content",
@@ -3299,8 +3283,7 @@
     "manualSteps": [
       "Open File Explorer and navigate to Local Disk (C:).",
       "If a folder named C:\\NVIDIA exists, right-click it and select Delete."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "amd-driver-extraction-c-amd",
@@ -3329,8 +3312,7 @@
     "manualSteps": [
       "Navigate to C:\\Windows\\System32\\SleepStudy as Administrator.",
       "Remove old archived .etl trace files."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "ollama-models-blob-cache",
@@ -3517,8 +3499,7 @@
       "Close Cursor completely.",
       "Press Windows Key + R, type %appdata%\\Cursor, and press Enter.",
       "Delete the 'Cache', 'CachedData', 'CachedExtensionVSIXs', and 'GPUCache' folders."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "unity-gi-package-cache",
@@ -3565,8 +3546,7 @@
       "Close Fortnite and Epic Games Launcher.",
       "Press Windows Key + R, type %localappdata%\\FortniteGame\\Saved, and press Enter.",
       "Clear the 'Logs', 'Crashes', and old 'Demos' replay files."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "vrchat-avatar-world-cache",
@@ -3908,8 +3888,7 @@
       "Open Event Viewer (eventvwr.msc).",
       "Right-click 'Application' or 'System' and select 'Clear Log'.",
       "Or use SWEEPR Cleaner to safely archive and purge old Windows event logs in 1 click."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "windows-prefetch-readyboot",
@@ -4004,8 +3983,7 @@
       "Close the Godot Engine editor.",
       "Open %appdata%\\Godot in File Explorer.",
       "Delete the 'editor_data' and 'tmp' subfolders to clear stale cache files."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "substance-painter-cache",
@@ -4036,8 +4014,7 @@
       "Close the CurseForge app.",
       "Navigate to %userprofile%\\CurseForge\\Cache in File Explorer.",
       "Delete downloaded archive files to recover drive space."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "mod-organizer-downloads",
@@ -4067,8 +4044,7 @@
       "Open Vortex Mod Manager.",
       "Navigate to the Downloads tab.",
       "Remove completed archives that have already been installed."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "ea-anticheat-logs",
@@ -4885,8 +4861,7 @@
       "Close Unity Hub and all open Unity Editor instances.",
       "Press Windows Key + R, type %LocalAppData%\\Unity\\cache, and press Enter.",
       "Delete the 'packages' and 'npm' folders."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "unity-editor-gi-cache",
@@ -5053,8 +5028,7 @@
     "manualSteps": [
       "Right-click any game in Ryujinx and select 'Purge PPTC Cache' or 'Purge Shader Cache'.",
       "Or delete cache subfolders in %AppData%\\Ryujinx\\games."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "cemu-wii-u-pipeline-shader-cache",
@@ -5192,8 +5166,7 @@
       "Press Windows Key + R, type %LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Arc Browser for Windows (or use SWEEPR Cleaner to purge all Arc Browser for Windows cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "vscode-insiders-cache",
@@ -5226,8 +5199,7 @@
       "Press Windows Key + R, type %LocalAppData%\\Overwolf\\BrowserCache into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Overwolf Gaming Overlay (or use SWEEPR Cleaner to purge all Overwolf Gaming Overlay cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "medal-tv-cache",
@@ -5480,8 +5452,7 @@
       "Press Windows Key + R, type %AppData%\\GitHub Desktop into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch GitHub Desktop (or use SWEEPR Cleaner to purge all GitHub Desktop cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "insomnia-rest-cache",
@@ -5531,8 +5502,7 @@
       "Press Windows Key + R, type C:\\Riot Games\\League of Legends\\Logs into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch League of Legends Client (or use SWEEPR Cleaner to purge all League of Legends Client cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "geforce-now-cache",
@@ -5682,8 +5652,7 @@
       "Press Windows Key + R, type %LocalAppData%\\Tor Browser\\Browser\\TorBrowser\\Data into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Tor Browser (or use SWEEPR Cleaner to purge all Tor Browser cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "linear-desktop-cache",
@@ -5835,8 +5804,7 @@
       "Press Windows Key + R, type %Documents%\\Image-Line\\FL Studio into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch FL Studio DAW (or use SWEEPR Cleaner to purge all FL Studio DAW cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "sidefx-houdini-cache",
@@ -5953,8 +5921,7 @@
       "Press Windows Key + R, type %AppData%\\PrismLauncher into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Prism Launcher Minecraft (or use SWEEPR Cleaner to purge all Prism Launcher Minecraft cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "jetbrains-clion-cache",
@@ -5970,8 +5937,7 @@
       "Press Windows Key + R, enter %LocalAppData%\\JetBrains and press Enter.",
       "Delete any old versioned JetBrains CLion folders from previous years, or clear the caches, tmp, and log folders inside your current version directory.",
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "jetbrains-datagrip-cache",
@@ -6004,8 +5970,7 @@
       "Press Windows Key + R, enter %LocalAppData%\\JetBrains and press Enter.",
       "Delete any old versioned JetBrains GoLand folders from previous years, or clear the caches, tmp, and log folders inside your current version directory.",
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "jetbrains-phpstorm-cache",
@@ -6089,8 +6054,7 @@
       "Press Windows Key + R, type %AppData%\\bruno into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Bruno API Client (or use SWEEPR Cleaner to purge all Bruno API Client cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "beekeeper-studio-cache",
@@ -6246,8 +6210,7 @@
       "Press Windows Key + R, type %AppData%\\BambuStudio into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Bambu Studio Slicer (or use SWEEPR Cleaner to purge all Bambu Studio Slicer cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "chatgpt-desktop-cache",
@@ -6331,8 +6294,7 @@
       "Press Windows Key + R, type %LocalAppData%\\krita into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Krita Digital Art (or use SWEEPR Cleaner to purge all Krita Digital Art cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "gimp-editor-cache",
@@ -6415,8 +6377,7 @@
       "Press Windows Key + R, type %AppData%\\HandBrake into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch HandBrake Video Transcoder (or use SWEEPR Cleaner to purge all HandBrake Video Transcoder cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "calibre-ebook-cache",
@@ -6432,8 +6393,7 @@
       "Press Windows Key + R, type %AppData%\\calibre into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Calibre E-Book Manager (or use SWEEPR Cleaner to purge all Calibre E-Book Manager cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "freecad-3d-cache",
@@ -6500,8 +6460,7 @@
       "Press Windows Key + R, type %LocalAppData%\\Zed into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Zed Code Editor (or use SWEEPR Cleaner to purge all Zed Code Editor cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "trae-ide-cache",
@@ -6806,8 +6765,7 @@
       "Press Windows Key + R, type %AppData%\\MongoDB Compass into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch MongoDB Compass (or use SWEEPR Cleaner to purge all MongoDB Compass cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "redis-insight-cache",
@@ -7386,8 +7344,7 @@
       "Press Windows Key + R, type %LocalAppData%\\TechSmith\\Snagit into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch TechSmith Snagit Screen Capture (or use SWEEPR Cleaner to purge all TechSmith Snagit Screen Capture cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "screen-to-gif-cache",
@@ -7454,8 +7411,7 @@
       "Press Windows Key + R, type %AppData%\\ghostty into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Ghostty Fast Terminal (or use SWEEPR Cleaner to purge all Ghostty Fast Terminal cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "lapce-editor-cache",
@@ -7505,8 +7461,7 @@
       "Press Windows Key + R, type %AppData%\\Pioneer\\rekordbox into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Pioneer Rekordbox DJ Software (or use SWEEPR Cleaner to purge all Pioneer Rekordbox DJ Software cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "serato-dj-pro-cache",
@@ -7590,8 +7545,7 @@
       "Press Windows Key + R, type %LocalAppData%\\LINE\\Data into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch LINE Messenger Desktop (or use SWEEPR Cleaner to purge all LINE Messenger Desktop cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "internet-download-manager-cache",
@@ -7675,8 +7629,7 @@
       "Press Windows Key + R, type %AppData%\\Topaz Labs LLC\\Topaz Video AI into the Run dialog, and press Enter.",
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Topaz Video AI Upscaler (or use SWEEPR Cleaner to purge all Topaz Video AI Upscaler cache directories automatically in one click)."
-    ],
-    "noindex": true
+    ]
   },
   {
     "slug": "parsec-gaming-cache",
@@ -7826,7 +7779,8 @@
       "Close Android Studio and IntelliJ IDEA.",
       "Open %userprofile%\\.gradle\\caches in File Explorer.",
       "Delete old 'modules-2', 'transforms-3', and 'jars-9' folders."
-    ]
+    ],
+    "noindex": true
   },
   {
     "slug": "c-drive-filling-up-by-itself-windows-11",

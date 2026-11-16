@@ -991,10 +991,18 @@ export function createApp(deps: AppDeps) {
       return c.redirect("/clean/app/elgato-streamdeck-cache", 301);
     }
     if (category === "folder" && cleanSlug === "davinci-resolve-render-cache") {
-      return c.redirect("/clean/folder/davinci-resolve-fusion-cache", 301);
+      return c.redirect(
+        isPseoSlugNoindexed("davinci-resolve-fusion-cache")
+          ? "/clean/app/davinci-resolve-cacheclip"
+          : "/clean/folder/davinci-resolve-fusion-cache",
+        301
+      );
     }
     if (category === "folder" && cleanSlug === "localappdata-explorer-thumbcache-db") {
-      return c.redirect("/clean/folder/windows-iconcache-db", 301);
+      return c.redirect(
+        isPseoSlugNoindexed("windows-iconcache-db") ? "/clean" : "/clean/folder/windows-iconcache-db",
+        301
+      );
     }
     if (category === "app" && (cleanSlug === "qbittorrent-itunes-logs" || rawSlug.includes("qBittorrent"))) {
       cleanSlug = "qbittorrent-itunes-logs";

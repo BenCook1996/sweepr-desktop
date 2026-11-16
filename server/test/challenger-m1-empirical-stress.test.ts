@@ -51,8 +51,8 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     const indexed = items.filter((i) => !i.noindex);
     const noindexed = items.filter((i) => i.noindex);
 
-    assert.equal(indexed.length, 48, `Expected exactly 48 indexed items, found ${indexed.length}`);
-    assert.equal(noindexed.length, 329, `Expected exactly 329 noindexed items, found ${noindexed.length}`);
+    assert.equal(indexed.length, 94, `Expected exactly 94 indexed items, found ${indexed.length}`);
+    assert.equal(noindexed.length, 283, `Expected exactly 283 noindexed items, found ${noindexed.length}`);
     assert.equal(indexed.length + noindexed.length, 377, "Sum of indexed + noindexed must equal 377");
 
     // Slug uniqueness check
@@ -70,9 +70,9 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
   });
 
   // -------------------------------------------------------------
-  // Test Suite 2: Exhaustive Verification of All 48 Indexed Guides
+  // Test Suite 2: Exhaustive Verification of All 94 Indexed Guides
   // -------------------------------------------------------------
-  test("CH-IDX-01: Exhaustive check of ALL 48 indexed items: HTTP 200, index robots, in sitemap", async () => {
+  test("CH-IDX-01: Exhaustive check of ALL 94 indexed items: HTTP 200, index robots, in sitemap", async () => {
     const { app } = setup();
     const items = getCleanItems();
     const indexed = items.filter((i) => !i.noindex);
@@ -122,7 +122,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
   });
 
   // -------------------------------------------------------------
-  // Test Suite 3: Sampling & Boundary Verification of 329 Pruned Items
+  // Test Suite 3: Sampling & Boundary Verification of 283 Pruned Items
   // -------------------------------------------------------------
   test("CH-PRUNE-01: Random sampling of 50 pruned items: HTTP 200, meta noindex, follow", async () => {
     const { app } = setup();
@@ -154,7 +154,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     }
   });
 
-  test("CH-PRUNE-02: Strict exclusion of ALL 329 pruned items from sitemaps", async () => {
+  test("CH-PRUNE-02: Strict exclusion of ALL 283 pruned items from sitemaps", async () => {
     const { app } = setup();
     const items = getCleanItems();
     const noindexed = items.filter((i) => i.noindex);
@@ -224,9 +224,9 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     assert.equal(openUrls, openFreq, "Every <url> must have exactly one <changefreq>");
     assert.equal(openUrls, openPri, "Every <url> must have exactly one <priority>");
 
-    // Total count between 70 and 80
-    assert.ok(openUrls >= 70 && openUrls <= 80, `Expected ~75 URLs (70-80), got ${openUrls}`);
-    assert.equal(openUrls, 76, `Expected exactly 76 URLs, got ${openUrls}`);
+    // Total count exactly 135 Tier-1 indexable URLs
+    assert.ok(openUrls >= 130 && openUrls <= 140, `Expected 135 URLs (130-140), got ${openUrls}`);
+    assert.equal(openUrls, 135, `Expected exactly 135 URLs, got ${openUrls}`);
 
     // Check duplicate URLs
     const locs = parseSitemap(xml);
@@ -274,7 +274,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
 
     const xml = await res.text();
     const urls = parseSitemap(xml);
-    assert.equal(urls.length, 76, "Dynamic sitemap must contain exactly 76 URLs");
+    assert.equal(urls.length, 135, "Dynamic sitemap must contain exactly 135 URLs");
 
     const staticXml = readFileSync("public/sitemap.xml", "utf-8");
     const staticUrls = parseSitemap(staticXml);
@@ -374,7 +374,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
 
     for (let i = 0; i < 100; i++) {
       const target = targets[i % targets.length];
-      const promise = app.request(target.path);
+      const promise = Promise.resolve(app.request(target.path));
       requestTasks.push({ target, index: i, promise });
     }
 

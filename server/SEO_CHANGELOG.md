@@ -29,7 +29,29 @@ Maintained centrally in the SWEEPR CRM (`sweepr-crm`) tracking technical SEO, ro
 
 ### 2026-11-16
 
-#### [Cleaner] Resolve Hreflang/Robots Contradictions, Add Pruned `X-Robots-Tag` Headers & Submit Temporary `/sitemap-cleanup.xml`
+#### [Cleaner] Eliminate 7-Day Cross-Commit SEO Collisions: Rescue 47 GSC Winners, Fix 1,064 `301 -> noindex` Chains, Clean `/clean` & `ItemList` Internal Links & Realign `135`-URL Sitemap
+- **Project**: `cleaner`
+- **Category**: `gsc_indexing`
+- **Status**: `completed`
+- **Target URLs**: `/sitemap.xml`, `/sitemap-cleanup.xml`, `/clean`, `/tools/*`, `/privacy`, `/terms`, `/refund`, `/support`, `/clean/app/*`, `/clean/folder/*`
+- **Files Modified**: `server/src/data/clean-items.json`, `server/src/pseo.ts`, `server/src/app.ts`, `server/public/sitemap.xml`, `server/public/sitemap-cleanup.xml`, `server/test/e2e-seo-hygiene.test.ts`, `server/test/challenger-m1-empirical-stress.test.ts`, `server/test/challenger-m6-1-empirical-stress.test.ts`, `server/test/challenger-m6-3-empirical-gate.test.ts`, `docs/distribution/gsc-reindexing-plan.md`
+- **Technical Breakdown**:
+  Re-audited all last-7-days SEO commits (`2026-11-09`–`2026-11-16`) after Wave 1 (`ad70079`) and resolved four cross-commit collisions: (1) Rescued `47` GSC click / Page-1 / Strike-Zone winning guides (`94` indexable, `283` `noindex`) in `server/src/data/clean-items.json` and marked duplicate `gradle-wrapper-cache` `noindex: true`; (2) Added `resolveIndexableRedirect` in `server/src/pseo.ts` + conditional redirect guards in `server/src/app.ts` (`davinci-resolve-render-cache`, `localappdata-explorer-thumbcache-db`) eliminating all `935 / 1,064` `301 -> noindex` chains (`0` remaining); (3) Filtered `getSiblingAndRelatedItems` and `/clean` HTML + `ItemList` JSON-LD in `server/src/pseo.ts` so `0` internal links point to `noindex` pages; (4) Removed `noindex` `/download` from `server/public/sitemap.xml` while adding `10` `/tools/:slug` + `4` policy pages + `47` rescued guides (`135` Tier-1 URLs total), and rebuilt `server/public/sitemap-cleanup.xml` (`1,366` unique non-Tier-1 URLs including `/download`, `0` overlap with `sitemap.xml`).
+- **Impact**:
+  Restores Page-1/click-generating cleanup guides to the active index, recovers PageRank lost into `301 -> noindex` loops and `noindex` internal links, and enforces 100% clean Tier-1 vs cleanup sitemap hygiene.
+- **Metadata**:
+  ```json
+  {
+    "tier1_sitemap_urls": 135,
+    "cleanup_sitemap_urls": 1366,
+    "rescued_gsc_guides": 47,
+    "indexable_clean_guides": 94,
+    "noindexed_clean_guides": 283,
+    "redirect_to_noindex_chains": 0
+  }
+  ```
+
+#### [Cleaner] Resolve Hreflang/Robots Contradictions, Add Pruned `X-Robots-Tag` Headers & Submit Temporary `/sitemap-cleanup.xml` (Wave 1, `ad70079`)
 - **Project**: `cleaner`
 - **Category**: `gsc_indexing`
 - **Status**: `completed`

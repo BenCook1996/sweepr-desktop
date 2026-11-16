@@ -72,37 +72,64 @@ async function loadDynamicSitemap(targetApp: ReturnType<typeof createApp> = app)
 }
 
 describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", () => {
-  test("TC-T1-SM-01: Sitemap pruned footprint down to curated ~75 Tier-1 URLs (between 70 and 80) across dynamic and static files", async () => {
+  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 135 Tier-1 URLs across dynamic and static files", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
     assert.ok(
-      staticUrls.length >= 70 && staticUrls.length <= 80,
-      `Expected static sitemap.xml to contain ~75 URLs (70-80), got ${staticUrls.length}`
+      staticUrls.length >= 130 && staticUrls.length <= 140,
+      `Expected static sitemap.xml to contain 135 URLs (130-140), got ${staticUrls.length}`
     );
+    assert.equal(staticUrls.length, 135, `Expected exact 135 URLs in static sitemap.xml, got ${staticUrls.length}`);
     assert.ok(
-      dynamicUrls.length >= 70 && dynamicUrls.length <= 80,
-      `Expected dynamic /sitemap.xml to contain ~75 URLs (70-80), got ${dynamicUrls.length}`
+      dynamicUrls.length >= 130 && dynamicUrls.length <= 140,
+      `Expected dynamic /sitemap.xml to contain 135 URLs (130-140), got ${dynamicUrls.length}`
     );
+    assert.equal(dynamicUrls.length, 135, `Expected exact 135 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
   });
 
-  test("TC-T1-SM-02: Core commercial and hub pages present in sitemap (both dynamic and static)", async () => {
+  test("TC-T1-SM-02: Core commercial, policy, /tools/:slug and hub pages present (and noindex /download excluded) in sitemap", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
     const hubs = [
       "/",
       "/pricing",
-      "/download",
       "/clean",
       "/tools",
+      "/bloat-watch",
       "/safe-to-delete",
       "/state-of-windows-storage",
+      "/privacy",
+      "/terms",
+      "/refund",
+      "/support",
+      "/tools/discord-cache-cleaner",
+      "/tools/steam-cache-cleaner",
+      "/tools/logitech-ghub-cleaner",
+      "/tools/elgato-streamdeck-cleaner",
+      "/tools/valorant-logs-cleaner",
+      "/tools/nvidia-shader-cleaner",
+      "/tools/adobe-media-cache-cleaner",
+      "/tools/jetbrains-gradle-cleaner",
+      "/tools/windows-24h2-update-cleaner",
+      "/tools/ai-model-cache-cleaner",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],
       ["static public/sitemap.xml", staticUrls],
     ] as const) {
+      assert.equal(
+        urls.some((u) => {
+          try {
+            return new URL(u).pathname === "/download";
+          } catch {
+            return u.endsWith("/download");
+          }
+        }),
+        false,
+        `${sourceName} must NOT include noindexed /download`
+      );
       for (const h of hubs) {
         const match = urls.some((u) => {
           try {
@@ -112,7 +139,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
             return u.endsWith(h);
           }
         });
-        assert.ok(match, `${sourceName} must contain core hub: ${h}`);
+        assert.ok(match, `${sourceName} must contain Tier-1 route: ${h}`);
       }
     }
   });
@@ -177,21 +204,24 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
   test("TC-T1-SM-05: Zero pruned long-tail guides appear in sitemap (both dynamic /sitemap.xml and static public/sitemap.xml)", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
+    const dynamicSet = new Set(dynamicUrls);
+    const staticSet = new Set(staticUrls);
 
     const items = getCleanItems();
     const prunedItems = items.filter((i) => i.noindex);
     assert.ok(prunedItems.length > 0, "Expected pruned long-tail items in clean-items.json");
 
     for (const item of prunedItems) {
+      const url = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
       assert.equal(
-        dynamicUrls.some((u) => u.includes(item.slug)),
+        dynamicSet.has(url),
         false,
-        `Pruned item ${item.slug} must NOT appear in dynamic /sitemap.xml`
+        `Pruned item ${url} must NOT appear in dynamic /sitemap.xml`
       );
       assert.equal(
-        staticUrls.some((u) => u.includes(item.slug)),
+        staticSet.has(url),
         false,
-        `Pruned item ${item.slug} must NOT appear in static server/public/sitemap.xml`
+        `Pruned item ${url} must NOT appear in static server/public/sitemap.xml`
       );
     }
   });
@@ -518,8 +548,11 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
     }
   });
 
-  test("TC-T1-SM-CLEANUP-01: Temporary /sitemap-cleanup.xml has >=1400 unique non-Tier-1 URLs and zero 404s", async () => {
-    const cleanupRes = await app.request("/sitemap-cleanup.xml");
+  test("TC-T1-SM-CLEANUP-01: Temporary /sitemap-cleanup.xml has >=1360 unique non-Tier-1 URLs, /download, zero 404s, and zero 301->noindex chains", async () => {
+    const botHeaders = {
+      "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    };
+    const cleanupRes = await app.request("/sitemap-cleanup.xml", { headers: botHeaders });
     assert.equal(cleanupRes.status, 200, "Dynamic /sitemap-cleanup.xml must return HTTP 200");
     assert.equal(
       cleanupRes.headers.get("x-robots-tag"),
@@ -532,8 +565,12 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
     const cleanupSet = new Set(cleanupUrls);
     assert.equal(cleanupUrls.length, cleanupSet.size, "/sitemap-cleanup.xml URLs must be unique");
     assert.ok(
-      cleanupUrls.length >= 1400,
-      `Expected >= 1400 URLs in /sitemap-cleanup.xml, got ${cleanupUrls.length}`
+      cleanupUrls.length >= 1360,
+      `Expected >= 1360 URLs in /sitemap-cleanup.xml, got ${cleanupUrls.length}`
+    );
+    assert.ok(
+      cleanupSet.has("https://sweeprcleaner.com/download"),
+      "/sitemap-cleanup.xml must include https://sweeprcleaner.com/download for noindex recrawl"
     );
 
     const { urls: tier1Urls } = await loadDynamicSitemap(app);
@@ -544,10 +581,29 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
 
     for (const u of cleanupUrls) {
       const path = new URL(u).pathname;
-      const res = await app.request(path);
+      const res = await app.request(path, { headers: botHeaders });
       if (res.status === 301) {
         const loc = res.headers.get("location") || "";
         assert.ok(loc.length > 0, `Cleanup URL ${path} returned 301 without Location header`);
+        const destPath = loc.startsWith("http") ? new URL(loc).pathname : loc;
+        const destRes = await app.request(destPath, { headers: botHeaders });
+        assert.equal(
+          destRes.status,
+          200,
+          `Cleanup 301 target ${destPath} (from ${path}) returned HTTP ${destRes.status} instead of 200`
+        );
+        const destXRobots = destRes.headers.get("x-robots-tag") || "";
+        assert.equal(
+          destXRobots.includes("noindex"),
+          false,
+          `Cleanup 301 target ${destPath} (from ${path}) must NOT serve X-Robots-Tag noindex (got: ${destXRobots})`
+        );
+        const destParsed = parseHtml(await destRes.text());
+        assert.equal(
+          (destParsed.metaRobots || "").includes("noindex"),
+          false,
+          `Cleanup 301 target ${destPath} (from ${path}) must NOT serve meta noindex (got: ${destParsed.metaRobots})`
+        );
         continue;
       }
       assert.equal(
@@ -555,17 +611,57 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
         200,
         `Cleanup URL ${path} returned unexpected HTTP ${res.status} (must be 301 or 200 noindex)`
       );
-      assert.equal(
-        res.headers.get("x-robots-tag"),
-        "noindex, follow",
-        `Cleanup 200 URL ${path} must serve X-Robots-Tag: noindex, follow`
+      const xRobots = res.headers.get("x-robots-tag") || "";
+      assert.ok(
+        xRobots.includes("noindex"),
+        `Cleanup 200 URL ${path} must serve X-Robots-Tag noindex (got: ${xRobots})`
       );
       const parsed = parseHtml(await res.text());
-      assert.equal(
-        parsed.metaRobots,
-        "noindex, follow",
-        `Cleanup 200 URL ${path} must have <meta name="robots" content="noindex, follow">`
+      assert.ok(
+        (parsed.metaRobots || "").includes("noindex"),
+        `Cleanup 200 URL ${path} must have <meta name="robots" content="noindex..."> (got: ${parsed.metaRobots})`
       );
+    }
+  });
+
+  test("TC-T1-INTERNAL-LINKS-01: /clean directory, ItemList JSON-LD, and guide cross-links emit zero noindex guide links", async () => {
+    const items = getCleanItems();
+    const noindexSlugs = new Set(items.filter((i) => i.noindex).map((i) => i.slug.toLowerCase()));
+
+    for (const route of ["/clean", "/clean/app/steam-depotcache"]) {
+      const res = await app.request(route);
+      assert.equal(res.status, 200, `${route} must return HTTP 200`);
+      const html = await res.text();
+      const hrefMatches = [...html.matchAll(/href="(\/clean\/(?:app|folder)\/([a-z0-9-]+))"/gi)];
+      for (const m of hrefMatches) {
+        const linkedSlug = m[2].toLowerCase();
+        assert.equal(
+          noindexSlugs.has(linkedSlug),
+          false,
+          `Route ${route} leaked internal anchor to noindexed guide ${m[1]}`
+        );
+      }
+      if (route === "/clean") {
+        const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/i);
+        assert.ok(jsonLdMatch, "/clean must include JSON-LD");
+        const graph = JSON.parse(jsonLdMatch[1]);
+        const nodes = graph["@graph"] || [graph];
+        const itemLists = nodes.filter((n: any) => n["@type"] === "ItemList");
+        assert.ok(itemLists.length >= 1, "/clean must emit ItemList JSON-LD");
+        for (const list of itemLists) {
+          for (const el of list.itemListElement || []) {
+            const url = String(el.url || el.item?.["@id"] || "");
+            const m = url.match(/\/clean\/(?:app|folder)\/([a-z0-9-]+)/i);
+            if (m) {
+              assert.equal(
+                noindexSlugs.has(m[1].toLowerCase()),
+                false,
+                `/clean ItemList JSON-LD leaked noindexed guide URL: ${url}`
+              );
+            }
+          }
+        }
+      }
     }
   });
 });
@@ -591,27 +687,27 @@ describe("E2E SEO Hygiene Track — Tier 3: Cross-Feature Interactions & Parity"
       assert.ok(dynamicSet.has(u), `Dynamic sitemap is missing URL found in static sitemap: ${u}`);
     }
 
-    // 2. Both dynamic and static sitemaps must exclude all pruned items
-    const prunedSlugs = items.filter((i) => i.noindex).map((i) => i.slug);
-    for (const [sourceName, sitemapUrls] of [
-      ["dynamic /sitemap.xml", dynamicUrls],
-      ["static public/sitemap.xml", staticUrls],
+    // 2. Both dynamic and static sitemaps must exclude all pruned items (exact URL check to avoid substring traps like gradle-wrapper-cache vs caches)
+    const prunedItems = items.filter((i) => i.noindex);
+    for (const [sourceName, sitemapSet] of [
+      ["dynamic /sitemap.xml", dynamicSet],
+      ["static public/sitemap.xml", staticSet],
     ] as const) {
-      for (const slug of prunedSlugs) {
-        const appears = sitemapUrls.some((u) => u.includes(slug));
-        assert.equal(appears, false, `Pruned slug ${slug} must not be in ${sourceName}`);
+      for (const item of prunedItems) {
+        const url = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+        assert.equal(sitemapSet.has(url), false, `Pruned guide ${url} must not be in ${sourceName}`);
       }
     }
 
     // 3. Every active guide in clean-items.json must be present in both sitemaps
     const activeGuides = items.filter((i) => !i.noindex);
-    for (const [sourceName, sitemapUrls] of [
-      ["dynamic /sitemap.xml", dynamicUrls],
-      ["static public/sitemap.xml", staticUrls],
+    for (const [sourceName, sitemapSet] of [
+      ["dynamic /sitemap.xml", dynamicSet],
+      ["static public/sitemap.xml", staticSet],
     ] as const) {
       for (const item of activeGuides) {
-        const appears = sitemapUrls.some((u) => u.includes(item.slug));
-        assert.ok(appears, `Active guide ${item.slug} must appear in ${sourceName}`);
+        const url = `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+        assert.ok(sitemapSet.has(url), `Active guide ${url} must appear in ${sourceName}`);
       }
     }
 

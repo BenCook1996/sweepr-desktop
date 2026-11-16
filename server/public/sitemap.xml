@@ -13,12 +13,6 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://sweeprcleaner.com/download</loc>
-    <lastmod>2026-11-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
     <loc>https://sweeprcleaner.com/clean</loc>
     <lastmod>2026-11-04</lastmod>
     <changefreq>weekly</changefreq>
@@ -41,6 +35,36 @@
     <lastmod>2026-11-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/privacy</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/terms</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/refund</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/support</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://sweeprcleaner.com/vs/ccleaner</loc>
@@ -163,6 +187,66 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/tools/discord-cache-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/steam-cache-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/logitech-ghub-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/elgato-streamdeck-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/valorant-logs-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/nvidia-shader-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/adobe-media-cache-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/jetbrains-gradle-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/windows-24h2-update-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/tools/ai-model-cache-cleaner</loc>
+    <lastmod>2026-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/discord-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -200,6 +284,18 @@
   </url>
   <url>
     <loc>https://sweeprcleaner.com/clean/app/nvidia-dxcache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/nvidia-glcache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/nvidia-nv-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -253,6 +349,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/osu-local-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/razer-synapse-logs</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/adobe-premiere-media-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -260,6 +368,12 @@
   </url>
   <url>
     <loc>https://sweeprcleaner.com/clean/app/creative-cloud-installer-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/davinci-resolve-cacheclip</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -277,6 +391,36 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/microsoft-teams-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/zoom-data-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/whatsapp-desktop-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/edge-browser-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/brave-browser-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/opera-gx-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -289,6 +433,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/vscode-cacheddata</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/npm-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -296,6 +446,12 @@
   </url>
   <url>
     <loc>https://sweeprcleaner.com/clean/app/pip-http-wheels-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/nuget-packages-http-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -331,13 +487,49 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/folder/windows-bt-upgrade-folder</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/folder/localappdata-crashdumps</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/folder/directx-d3dscache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/folder/windows-livekernelreports</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/cryptneturlcache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/clipchamp-uwp-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/nvidia-driver-extraction-c-nvidia</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/windows-logs-etw-sleepstudy</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -355,6 +547,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/cursor-ai-editor-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/fortnite-d3d12-shader-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/folder/programdata-package-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -367,7 +571,55 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/folder/windows-system32-winevt-logs</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/godot-editor-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/curseforge-addon-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/vortex-mod-downloads</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/unity-editor-package-manager-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/folder/ryujinx-switch-vulkan-shader-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/arc-browser-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/overwolf-client-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -385,7 +637,31 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/github-desktop-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/league-of-legends-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/zen-browser-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/tor-browser-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/fl-studio-daw-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -397,7 +673,43 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/prism-minecraft-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/jetbrains-clion-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/jetbrains-goland-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/bruno-api-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/logitech-options-plus-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/bambu-studio-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/krita-painting-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -409,7 +721,61 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://sweeprcleaner.com/clean/app/handbrake-encoder-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/calibre-ebook-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/zed-editor-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/mongodb-compass-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://sweeprcleaner.com/clean/app/stremio-desktop-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/snagit-capture-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/ghostty-terminal-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/rekordbox-dj-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/line-desktop-cache</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://sweeprcleaner.com/clean/app/topaz-video-ai-cache</loc>
     <lastmod>2026-11-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -441,18 +807,6 @@
   <url>
     <loc>https://sweeprcleaner.com/clean/folder/other-storage-full-windows-11-cleanup</loc>
     <lastmod>2026-11-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://sweeprcleaner.com/tools</loc>
-    <lastmod>2026-11-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://sweeprcleaner.com/clean/app/gradle-wrapper-cache</loc>
-    <lastmod>2026-11-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

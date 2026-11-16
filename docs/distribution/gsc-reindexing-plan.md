@@ -30,28 +30,28 @@ Attempting to request indexation for all 75 Tier-1 URLs in a single day is mathe
 
 **Prerequisite:** Complete all technical checks before submitting a single URL in GSC.
 
-- [ ] **Check 0.1: Sitemap Footprint Verified (~75 URLs)**
-  - Verify that `https://sweeprcleaner.com/sitemap.xml` returns HTTP 200 and contains strictly the ~75 Tier-1 URLs.
-  - Verify zero pruned long-tail guides and zero localized routes (`/de*`, `/fr*`, `/es*`) appear in the XML.
+- [x] **Check 0.1: Sitemap Footprint Verified (Exact `135` Tier-1 URLs)**
+  - Verify that `https://sweeprcleaner.com/sitemap.xml` returns HTTP 200 and contains strictly the `135` indexable Tier-1 URLs (`7` core hubs excluding `noindex` `/download`, `4` policy pages `/privacy`, `/terms`, `/refund`, `/support`, `20` `/vs/*` + `/alternatives/*` switchers, `10` `/tools/:slug` tool landing pages, and `94` indexable clean guides after rescuing `47` GSC click/strike-zone winners and marking duplicate `gradle-wrapper-cache` `noindex: true`).
+  - Verify zero pruned `283` long-tail guides, zero `/download`, and zero localized routes (`/de*`, `/fr*`, `/es*`) appear in `sitemap.xml`.
   - Test command: `curl -sI https://sweeprcleaner.com/sitemap.xml`
-- [ ] **Check 0.2: Long-Tail Guides Serve Noindex**
-  - Verify that pruned guides return HTTP 200 with both HTTP `X-Robots-Tag: noindex, follow` and `<meta name="robots" content="noindex, follow">`.
+- [x] **Check 0.2: Long-Tail Guides Serve Noindex**
+  - Verify that all `283` pruned guides return HTTP 200 with both HTTP `X-Robots-Tag: noindex, follow` and `<meta name="robots" content="noindex, follow">`.
   - Test URL: `https://sweeprcleaner.com/clean/app/megasync-app-cache`
-- [ ] **Check 0.3: Localized Routes Serve X-Robots-Tag**
-  - Verify that `/de`, `/de/pricing`, `/fr`, `/fr/pricing`, `/es`, `/es/pricing` return header `X-Robots-Tag: noindex, follow`.
+- [x] **Check 0.3: Localized Routes Serve X-Robots-Tag**
+  - Verify that `/de`, `/de/pricing`, `/fr`, `/fr/pricing`, `/es`, `/es/pricing` return header `X-Robots-Tag: noindex, follow` matching HTML `<meta name="robots">`.
   - Test command: `curl -sI https://sweeprcleaner.com/de | grep -i x-robots-tag`
-- [ ] **Check 0.4: Phantom Routes Return 301 Redirects**
-  - Verify that `/month`, `/mo`, `/year`, `/yr` return HTTP 301 to `https://sweeprcleaner.com/pricing`.
+- [x] **Check 0.4: Phantom Routes & Consolidated Redirects (Zero `301 -> noindex` Chains)**
+  - Verify that `/month`, `/mo`, `/year`, `/yr` return HTTP 301 to `https://sweeprcleaner.com/pricing`, and all `1,064` `pseo-redirects.json` + hardcoded legacy aliases resolve to indexable HTTP 200 destinations (`resolveIndexableRedirect` + `app.ts` redirect guards -> `0` `301 -> noindex` chains).
   - Test command: `curl -sI https://sweeprcleaner.com/month`
-- [ ] **Check 0.5: Robots.txt Configuration**
+- [x] **Check 0.5: Robots.txt Configuration**
   - Verify that `https://sweeprcleaner.com/robots.txt` allows clean `/download` while disallowing `/download?` and `/download/`.
   - Verify `Sitemap: https://sweeprcleaner.com/sitemap.xml` directive is present.
 - [ ] **Check 0.6: GSC Sitemap Re-Submission**
-  - In GSC, navigate to **Indexing &rarr; Sitemaps**.
+  - In GSC, navigate to **Indexing &rarr; Sitemaps** (or submit via GSC Sitemaps API).
   - Re-submit `https://sweeprcleaner.com/sitemap.xml`.
-  - Confirm status: **"Success"** with ~75 discovered URLs.
+  - Confirm status: **"Success"** with `135` discovered URLs.
 - [ ] **Check 0.7: Temporary Cleanup Sitemap (`sitemap-cleanup.xml`, 14-Day Re-Crawl Accelerator)**
-  - Submit `https://sweeprcleaner.com/sitemap-cleanup.xml` (`1,411` URLs covering the `329` noindexed guides, `1,064` `pseo-redirects.json` + `14` legacy `301` aliases, `6` noindexed localized routes, and `4` phantom `/month`–`/yr` redirects; serves `X-Robots-Tag: noindex`) alongside `/sitemap.xml` on `2026-11-16`.
+  - Submit `https://sweeprcleaner.com/sitemap-cleanup.xml` (`1,366` unique non-Tier-1 URLs covering the `283` noindexed guides, `1,064` `pseo-redirects.json` + `8` legacy `301` aliases, `/download` (`noindex, nofollow`), `6` noindexed localized routes, and `4` phantom `/month`–`/yr` redirects, `0` overlap with `sitemap.xml`; serves `X-Robots-Tag: noindex`) alongside `/sitemap.xml` on `2026-11-16`.
   - Purpose: Force Googlebot to re-crawl and flush orphaned thin/301/404 URLs out of Google's site-quality denominator.
   - Scheduled retirement: Remove `sitemap-cleanup.xml` between **`2026-11-30` and `2026-12-07`** once GSC shows those URLs moved to `Excluded by 'noindex' tag` and `Page with redirect`.
 
