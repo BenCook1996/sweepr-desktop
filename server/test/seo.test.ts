@@ -1073,10 +1073,10 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
   assert.equal(pricingHtml.includes("Marcus Vance"), false, "pricing.html must not contain synthetic Marcus Vance review");
   assert.equal(safeHtml.includes("Marcus T."), false, "safe-to-delete must not contain synthetic Marcus T. review");
   for (const badge of [
-    "6.52 MB Native Rust Binary (Zero Electron Bloat)",
-    "SSL.com Authenticode Signed (SHA-256 Verified)",
-    "100% Local On-Device Scan",
-    "7-Day 1-Click Quarantine Rollback",
+    "Lightweight &amp; Fast — Never Slows Your Device",
+    "Verified Safe — Never Deletes Personal Files",
+    "100% Private — Your Files Never Leave Your Device",
+    "7-Day Undo — Put Back Any File in 1 Click",
   ]) {
     assert.ok(indexHtml.includes(badge), `index.html includes verifiable badge: ${badge}`);
     assert.ok(pricingHtml.includes(badge), `pricing.html includes verifiable badge: ${badge}`);
