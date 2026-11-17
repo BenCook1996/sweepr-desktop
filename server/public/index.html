@@ -544,31 +544,6 @@
       font-weight: 700;
       letter-spacing: 0.03em;
     }
-    .device-switcher-bar {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--surface);
-      padding: 3px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-    }
-    .os-chip {
-      border: none;
-      background: transparent;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: var(--muted);
-      cursor: pointer;
-      min-height: 28px;
-    }
-    .os-chip[aria-pressed="true"] {
-      background: var(--surface-elevated);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
 
     .w3-headline {
       font-family: var(--font-display);
@@ -1186,12 +1161,6 @@
       <div>
         <div class="status-row">
           <span class="status-pill" id="detectedDeviceBadge">For Windows 11 &amp; 10</span>
-          <div class="device-switcher-bar" role="group" aria-label="Preview operating system">
-            <button type="button" class="os-chip" data-os="windows" aria-pressed="true">Windows</button>
-            <button type="button" class="os-chip" data-os="mac" aria-pressed="false">Mac</button>
-            <button type="button" class="os-chip" data-os="ios" aria-pressed="false">iPhone</button>
-            <button type="button" class="os-chip" data-os="android" aria-pressed="false">Android</button>
-          </div>
         </div>
 
         <h1 id="hero-heading" class="w3-headline">
@@ -1771,9 +1740,17 @@
 
       function detectInitialOS() {
         var ua = (navigator.userAgent || '').toLowerCase();
-        if (/iphone|ipad|ipod/.test(ua)) return 'ios';
-        if (/android/.test(ua)) return 'android';
-        if (/macintosh|mac os x/.test(ua)) return 'mac';
+        var platform = (navigator.platform || '').toLowerCase();
+        var uaPlatform = (navigator.userAgentData && navigator.userAgentData.platform
+          ? navigator.userAgentData.platform
+          : ''
+        ).toLowerCase();
+        if (/iphone|ipad|ipod/.test(ua) || ((/macintosh|mac os x/.test(ua) || platform === 'macintel' || uaPlatform === 'macos') && navigator.maxTouchPoints > 1)) {
+          return 'ios';
+        }
+        if (/android/.test(ua) || uaPlatform === 'android') return 'android';
+        if (/macintosh|mac os x/.test(ua) || uaPlatform === 'macos') return 'mac';
+        if ((/linux/.test(ua) && !/android/.test(ua)) || uaPlatform === 'linux') return 'linux';
         return 'windows';
       }
 
@@ -1808,6 +1785,7 @@
         var p = OS_PROFILES[osKey];
         var badge = document.getElementById('detectedDeviceBadge');
         var cta = document.getElementById('primaryDownloadCta');
+        var headerCta = document.getElementById('headerDownloadBtn');
         var label = document.getElementById('primaryDownloadLabel');
         var path1 = document.getElementById('auditPath1');
         var path2 = document.getElementById('auditPath2');
@@ -1815,16 +1793,11 @@
 
         if (badge) badge.textContent = p.badge;
         if (cta) cta.setAttribute('href', p.href);
+        if (headerCta) headerCta.setAttribute('href', p.href);
         if (label) label.textContent = p.ctaLabel;
         if (path1) path1.textContent = p.path1;
         if (path2) path2.textContent = p.path2;
         if (path3) path3.textContent = p.path3;
-
-        var chips = document.querySelectorAll('.os-chip');
-        for (var i = 0; i < chips.length; i++) {
-          var isMatch = chips[i].getAttribute('data-os') === osKey;
-          chips[i].setAttribute('aria-pressed', isMatch ? 'true' : 'false');
-        }
       }
 
       function renderPricing() {
@@ -1968,15 +1941,12 @@
           .catch(function () {});
       }
 
+      // Apply initial OS detection immediately (elements already parsed above)
+      applyOS(detectInitialOS());
+
       document.addEventListener('DOMContentLoaded', function () {
-        // 1. OS Detection & Switcher
+        // 1. Ensure OS badge, links & preview paths match detected platform
         applyOS(detectInitialOS());
-        var osBtns = document.querySelectorAll('.os-chip');
-        for (var i = 0; i < osBtns.length; i++) {
-          osBtns[i].addEventListener('click', function () {
-            applyOS(this.getAttribute('data-os'));
-          });
-        }
 
         // 2. 3-Stage Scrubber Tabs
         var scrubTabs = document.querySelectorAll('.scrubber-tab');
