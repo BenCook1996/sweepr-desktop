@@ -467,9 +467,6 @@
       background: var(--surface);
     }
 
-    .currency-pill-bar { display: inline-flex; align-items: center; gap: 3px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: 10px; }
-    .curr-pill { padding: 4px 8px; border-radius: 7px; border: none; background: transparent; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--muted); cursor: pointer; transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out); }
-    .curr-pill[aria-pressed="true"] { background: var(--surface-elevated); color: var(--text); box-shadow: 0 1px 2px rgba(19, 22, 20, 0.06); }
     .header-controls {
       display: flex;
       align-items: center;
@@ -1126,12 +1123,6 @@
       </nav>
 
       <div class="header-controls">
-        <div class="currency-pill-bar" role="group" aria-label="Quick currency switcher">
-          <button type="button" class="curr-pill" data-currency-pill="gbp" aria-pressed="true">£ GBP</button>
-          <button type="button" class="curr-pill" data-currency-pill="usd" aria-pressed="false">$ USD</button>
-          <button type="button" class="curr-pill" data-currency-pill="eur" aria-pressed="false">€ EUR</button>
-        </div>
-        <label for="globalCurrencySelect" class="mono" style="font-size:0.74rem;color:var(--muted);">More:</label>
         <select id="globalCurrencySelect" class="region-select" aria-label="Select currency and location">
           <option value="gbp">GBP (£) · UK</option>
           <option value="usd">USD ($) · US</option>
@@ -1847,10 +1838,6 @@
         var faqAddon = document.getElementById('faqAddonAnswer');
 
         if (locEl) locEl.textContent = 'Region: ' + c.label;
-        var currPills = document.querySelectorAll('[data-currency-pill]');
-        for (var cpIdx = 0; cpIdx < currPills.length; cpIdx++) {
-          currPills[cpIdx].setAttribute('aria-pressed', currPills[cpIdx].getAttribute('data-currency-pill') === state.currency ? 'true' : 'false');
-        }
         if (swAnnualTitle) swAnnualTitle.textContent = 'Yearly Plan · Save ' + annualSavingsPercent + '%';
         if (swAnnualSub) swAnnualSub.textContent = annualEq + '/mo equivalent';
         if (swMonthlySub) swMonthlySub.textContent = monthlyRenew + '/month · Cancel anytime';
@@ -1924,16 +1911,6 @@
               state.currency = curr;
               state.apiPricing = p;
               var sel = document.getElementById('globalCurrencySelect');
-        var quickPills = document.querySelectorAll('[data-currency-pill]');
-        for (var qp = 0; qp < quickPills.length; qp++) {
-          quickPills[qp].addEventListener('click', function () {
-            var nextCurr = this.getAttribute('data-currency-pill');
-            if (sel && nextCurr) {
-              sel.value = nextCurr;
-              sel.dispatchEvent(new Event('change'));
-            }
-          });
-        }
               if (sel) sel.value = curr;
               renderPricing();
             }
@@ -1984,16 +1961,6 @@
         // 5. Currency Selector + Instant Geo-Hydration
         state.currency = detectInitialCurrencyByLocale();
         var sel = document.getElementById('globalCurrencySelect');
-        var quickPills = document.querySelectorAll('[data-currency-pill]');
-        for (var qp = 0; qp < quickPills.length; qp++) {
-          quickPills[qp].addEventListener('click', function () {
-            var nextCurr = this.getAttribute('data-currency-pill');
-            if (sel && nextCurr) {
-              sel.value = nextCurr;
-              sel.dispatchEvent(new Event('change'));
-            }
-          });
-        }
         if (sel && FALLBACK_PRICING[state.currency]) {
           sel.value = state.currency;
         }
