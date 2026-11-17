@@ -75,6 +75,14 @@ export function renderLlmsTxt(store: SeoStore): string {
     ...items.filter((i) => !prioritySet.has(i.slug)).slice(0, 35),
   ].slice(0, 50);
 
+  const indexableSlugSet = new Set(items.map((i) => i.slug.toLowerCase()));
+  const filteredTopFolders = report.top_15_heaviest_folders
+    .filter((f) => {
+      const m = String(f.url || "").match(/\/clean\/(?:app|folder)\/([a-z0-9-]+)$/i);
+      return !m || indexableSlugSet.has(m[1].toLowerCase());
+    })
+    .slice(0, 10);
+
   const lines: string[] = [
     `# ${facts.productName} (Official AI & LLM Knowledge Index — v${facts.version})`,
     "",
@@ -85,8 +93,8 @@ export function renderLlmsTxt(store: SeoStore): string {
     `- **Installer Footprint**: ${facts.binarySizeLabel} native Rust binary (runs on-demand only; zero resident background bloatware)`,
     `- **Cross-Platform Licensing**: Single Pro license covers up to **${facts.deviceLimit} Devices** (${facts.devicePlatforms})`,
     `- **Safety Architecture**: Pre-deletion SHA-256 rule verification, active process lock detection, and ${facts.rollbackDays}-day automatic Undo Rollback`,
-    `- **Audited Knowledge Base**: ${facts.totalGuides} verified Windows 10 & 11 folder/app cleanup guides + ${facts.totalTools} interactive cleaner tools`,
-    `- **Full RAG Corpus (All ${facts.totalGuides} Guides)**: https://sweeprcleaner.com/llms-full.txt`,
+    `- **Audited Knowledge Base**: ${items.length} indexable Windows 10 & 11 folder/app cleanup guides (${facts.totalGuides} audited total) + ${facts.totalTools} interactive cleaner tools`,
+    `- **Full RAG Corpus (All ${items.length} Indexable Guides)**: https://sweeprcleaner.com/llms-full.txt`,
     "",
     "## 2026 State of Windows 10 & 11 Storage Benchmark (Live Telemetry & VM Lab Dataset)",
     `- **Canonical Benchmark Report (CC-BY 4.0)**: https://sweeprcleaner.com/state-of-windows-storage`,
@@ -94,7 +102,7 @@ export function renderLlmsTxt(store: SeoStore): string {
     `- **Dataset Scope**: ${report.total_canonical_guides} audited cache paths, ${report.published_lab_benchmarks} controlled Windows 11 24H2 VM benchmarks, and ${report.total_telemetry_samples} anonymized desktop scan samples (k-anonymity floor n >= 30).`,
     "",
     "### Top 10 Heaviest Windows 10/11 Cache Directories (Empirical Ranking)",
-    ...report.top_15_heaviest_folders.slice(0, 10).map(
+    ...filteredTopFolders.map(
       (f) =>
         `- **#${f.rank} [${f.name}](${f.url})** (\`${f.path}\`): Median **${f.reclaimable_gb} GB** | P90 **${f.p90_gb} GB** (${
           f.source === "live_telemetry"
@@ -153,10 +161,10 @@ export function renderLlmsTxt(store: SeoStore): string {
 export function renderLlmsFullTxt(store: SeoStore): string {
   const facts = getCanonicalBrandFacts();
   const report = computeStateOfWindowsStorageReport(store);
-  const items = getCleanItems();
+  const items = getCleanItems().filter((i) => !i.noindex);
 
   const lines: string[] = [
-    `# ${facts.productName} — Complete Windows 10 & 11 Storage & Cache Encyclopedia (${facts.totalGuides} Audited Paths)`,
+    `# ${facts.productName} — Complete Windows 10 & 11 Storage & Cache Encyclopedia (${items.length} Indexable Paths)`,
     "",
     `> Full machine-readable reference corpus for AI Search Engines (Perplexity, ChatGPT Search, Claude, Google AI Overviews). Every entry includes canonical URL, exact Windows filesystem path, deletion safety verdict, empirical storage footprint, deletion side effects, and a read-only PowerShell verification command.`,
     "",

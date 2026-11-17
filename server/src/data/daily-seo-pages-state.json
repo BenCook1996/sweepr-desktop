@@ -10,8 +10,8 @@
   ],
   "ctrCooldownDays": 14,
   "ctrOptimizedAt": {
-    "steam-depotcache": "2026-11-03",
-    "riot-client-logs": "2026-11-03",
+    "steam-depotcache": "2026-11-17",
+    "riot-client-logs": "2026-11-17",
     "programdata-package-cache": "2026-11-09",
     "capcut-pc-cache": "2026-11-03",
     "medal-tv-cache": "2026-11-09",
@@ -43,7 +43,7 @@
     "hiberfil-sys": "2026-11-09",
     "gradle-caches": "2026-11-09",
     "pip-http-wheels-cache": "2026-11-09",
-    "steam-shader-cache": "2026-11-14",
+    "steam-shader-cache": "2026-11-17",
     "localappdata-webview2-ebwebview-cache": "2026-11-09",
     "ea-app-cache": "2026-11-09",
     "chrome-gpu-shader-cache": "2026-11-09",
@@ -63,9 +63,9 @@
     "davinci-resolve-cacheclip"
   ],
   "nextStrikeZoneBatch": [
+    "elgato-stream-deck-media-blob-storage",
     "logitech-ghub-installer-cache",
     "windows-livekernelreports-watchdog-dumps",
-    "jetbrains-intellij-service-worker-cachestorage",
     "stremio-desktop-cache"
   ]
 }

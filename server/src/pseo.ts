@@ -881,26 +881,34 @@ export function buildPseoTitle(item: CleanItem): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  if (cleanName.length > 48) {
+  if (cleanName.length > 19) {
     const words = cleanName.split(" ");
     let acc = "";
     for (const w of words) {
-      if ((acc + " " + w).trim().length <= 48) {
+      if ((acc + " " + w).trim().length <= 19) {
         acc = (acc + " " + w).trim();
       } else {
         break;
       }
     }
-    cleanName = acc.replace(/[&:,\-–—]+$/, "").trim() || cleanName.slice(0, 48).trim();
+    cleanName = acc.replace(/[&:,\-–—]+$/, "").trim() || cleanName.slice(0, 19).trim();
   }
 
   const telemetry = getActiveTelemetryTruthForSlug(item.slug);
   const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : formatCompactSpaceRange(item.avgSpace);
-  const candidateTitle = `Can I Delete ${cleanName}? YES (${spaceLabel}) — Safe Cleanup Guide`;
-  if (candidateTitle.length >= 30 && candidateTitle.length <= 115) {
+  const candidateTitle = `Can I Delete ${cleanName}? YES (${spaceLabel}) — Safe Guide`;
+  if (candidateTitle.length >= 30 && candidateTitle.length <= 60 && candidateTitle.slice(0, 48).includes(")")) {
     return candidateTitle;
   }
-  return `Can I Delete ${cleanName}? YES — Safe Cleanup Guide (Reclaim ${spaceLabel})`;
+  const compactGuideTitle = `Can I Delete ${cleanName}? YES (${spaceLabel}) — Guide`;
+  if (compactGuideTitle.length >= 30 && compactGuideTitle.length <= 60 && compactGuideTitle.slice(0, 48).includes(")")) {
+    return compactGuideTitle;
+  }
+  const shortTitle = `Delete ${cleanName}? YES (${spaceLabel}) — Safe Cleanup Guide`;
+  if (shortTitle.length >= 30 && shortTitle.length <= 115) {
+    return shortTitle;
+  }
+  return `Delete ${cleanName}? YES (${spaceLabel}) — Guide`;
 }
 
 export function buildPseoDescription(item: CleanItem): string {
@@ -1250,7 +1258,7 @@ export function renderGamingAndAiCacheBloatCalculatorPage(): string {
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <script type="application/ld+json">${calcJsonLd}</script>
-  <script src="/vendor/tailwindcss-3.4.5.js"></script>
+  <link rel="stylesheet" href="/vendor/tailwind.min.css">
   <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/style.css" />
 </head>
@@ -1366,8 +1374,6 @@ export function renderPseoDirectory(): string {
   <meta name="description" content="Wondering what is filling up your hard drive? Browse verified guides to safely cleaning hidden Windows folders, app caches, and temp files in minutes.">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://sweeprcleaner.com/clean">
-  <link rel="dns-prefetch" href="https://translate.google.com">
-  <link rel="dns-prefetch" href="https://translate.googleapis.com">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SWEEPR Cleaner">
   <meta property="og:locale" content="en_GB">
@@ -1427,7 +1433,7 @@ export function renderPseoDirectory(): string {
   <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="/vendor/tailwindcss-3.4.5.js"></script>
+  <link rel="stylesheet" href="/vendor/tailwind.min.css">
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
@@ -1594,7 +1600,6 @@ export function renderPseoDirectory(): string {
   </footer>
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="/i18n.js" defer></script>
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>`;
   cachedDirectoryHtml = htmlResult;
@@ -1823,8 +1828,6 @@ export function renderPseoPage(item: CleanItem): string {
   <meta name="description" content="${pageDesc}">
   <meta name="robots" content="${robotsMetaContent}">
   <link rel="canonical" href="${canonicalUrl}">
-  <link rel="dns-prefetch" href="https://translate.google.com">
-  <link rel="dns-prefetch" href="https://translate.googleapis.com">
   
   <!-- Open Graph -->
   <meta property="og:type" content="article">
@@ -1918,7 +1921,7 @@ export function renderPseoPage(item: CleanItem): string {
   <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
   <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <script src="/vendor/tailwindcss-3.4.5.js"></script>
+  <link rel="stylesheet" href="/vendor/tailwind.min.css">
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <script src="/nav.js" defer></script>
@@ -2296,7 +2299,6 @@ export function renderPseoPage(item: CleanItem): string {
   </footer>
   <div id="google_translate_element" style="display:none !important;"></div>
   <script src="/i18n.js" defer></script>
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 </body>
 </html>`;
 }

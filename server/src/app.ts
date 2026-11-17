@@ -419,12 +419,17 @@ export function createApp(deps: AppDeps) {
       c.res.headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     } else if (p.endsWith(".css") || p.endsWith(".js")) {
       c.res.headers.set("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      c.res.headers.set("CDN-Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
     } else if (/\.(png|jpe?g|gif|svg|webp|ico|woff2?|ttf)$/.test(p)) {
       c.res.headers.set("Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
+      c.res.headers.set("CDN-Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
     } else if (p === "/robots.txt" || p === "/sitemap.xml" || p === "/llms.txt" || p === "/pad.xml" || p.endsWith(".txt")) {
       c.res.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      c.res.headers.set("CDN-Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     } else if (c.res.headers.get("content-type")?.includes("text/html")) {
       c.res.headers.set("Cache-Control", "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400");
+      c.res.headers.set("CDN-Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      c.res.headers.set("Cloudflare-CDN-Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     }
   });
   // Nothing we accept legitimately needs more than this; protects JSON parsing from huge bodies.
@@ -875,6 +880,7 @@ export function createApp(deps: AppDeps) {
   app.get("/llms-full.txt", (c) => {
     c.header("Content-Type", "text/plain; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    c.header("X-Robots-Tag", "noindex, follow");
     return c.body(renderLlmsFullTxt(seoStore));
   });
   app.get("/vs/:competitor", async (c) => {

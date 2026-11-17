@@ -1,6 +1,7 @@
 import { classifyPseoCluster, getCleanItems, type CleanItem, type PseoClusterId } from "../pseo.js";
 import { listBloatWatchPosts, type BloatWatchPost } from "./bloat-watch.js";
 import type { SeoStore } from "./store.js";
+import { isSafeObjectKey } from "../security.js";
 
 export const TELEMETRY_TRUTH_MIN_SAMPLES = 30; // k-anonymity floor (n >= 30)
 const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
@@ -98,15 +99,16 @@ export function resolveCleanSlugFromRuleId(rawRuleOrSlug: string): string | null
     .trim()
     .toLowerCase()
     .replace(/^\/+clean\/(?:app|folder)\//, "");
-  if (!cleaned) return null;
+  if (!cleaned || !isSafeObjectKey(cleaned)) return null;
 
-  if (RULE_ID_TO_CLEAN_SLUG[cleaned]) {
+  if (Object.prototype.hasOwnProperty.call(RULE_ID_TO_CLEAN_SLUG, cleaned)) {
     return RULE_ID_TO_CLEAN_SLUG[cleaned];
   }
 
   const normalizedDash = cleaned.replace(/_/g, "-");
-  if (RULE_ID_TO_CLEAN_SLUG[normalizedDash.replace(/-/g, "_")]) {
-    return RULE_ID_TO_CLEAN_SLUG[normalizedDash.replace(/-/g, "_")];
+  const underscoreKey = normalizedDash.replace(/-/g, "_");
+  if (isSafeObjectKey(underscoreKey) && Object.prototype.hasOwnProperty.call(RULE_ID_TO_CLEAN_SLUG, underscoreKey)) {
+    return RULE_ID_TO_CLEAN_SLUG[underscoreKey];
   }
 
   const allItems = getCleanItems();
@@ -654,7 +656,7 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
   <meta property="og:url" content="${canonicalUrl}">
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <link rel="stylesheet" href="/vendor/tailwind.min.css">
   <script src="/attribution.js" defer></script>
   <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/style.css">

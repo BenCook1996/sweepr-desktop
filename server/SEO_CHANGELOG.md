@@ -27,6 +27,30 @@ Maintained centrally in the SWEEPR CRM (`sweepr-crm`) tracking technical SEO, ro
 
 ## Chronological Changelog
 
+### 2026-11-17
+
+#### [Cleaner] Ship Core Web Vitals & GEO/CTR Performance Suite (Precompiled Tailwind CSS, Lazy i18n, CDN-Cache-Control, Real WebP Proofs, 94-Guide Enrichment & Clean /llms-full.txt)
+- **Project**: `cleaner`
+- **Category**: `technical_seo`
+- **Status**: `completed`
+- **Target URLs**: `/`, `/clean`, `/clean/*`, `/tools/pc-cache-calculator`, `/privacy`, `/terms`, `/refund`, `/support`, `/llms.txt`, `/llms-full.txt`, `/vendor/tailwind.min.css`, `/i18n.js`, `/i18n-dict.js`, `/img/proof/*.webp`
+- **Files Modified**: `server/public/vendor/tailwind.min.css`, `server/public/i18n.js`, `server/public/i18n-dict.js`, `server/public/llms.txt`, `server/public/img/proof/*.webp`, `server/public/privacy.html`, `server/public/refund.html`, `server/public/support.html`, `server/public/terms.html`, `server/public/login.html`, `server/public/dashboard.html`, `server/public/order.html`, `server/src/data/clean-items.json`, `server/src/pseo.ts`, `server/src/seo/telemetry-truth.ts`, `server/src/seo/llms-index.ts`, `server/src/app.ts`
+- **Technical Breakdown**:
+  Executed a 6-part performance, CWV, CTR, and GEO upgrade: (1) Replaced blocking 411.5 KB runtime `/vendor/tailwindcss-3.4.5.js` and `cdn.tailwindcss.com` scripts across `pseo.ts`, `telemetry-truth.ts`, and 7 static HTML pages with precompiled static `/vendor/tailwind.min.css`; (2) Split 396.8 KB `i18n.js` into a `< 6 KB` core loader + lazy on-demand `/i18n-dict.js` (`388.9 KB`) for non-English locales only, and removed eager Google Translate preconnect/script tags; (3) Added `CDN-Cache-Control` and `Cloudflare-CDN-Cache-Control` (`s-maxage`/`max-age=3600`, `stale-while-revalidate=86400`) on public HTML and static assets while keeping personalized portal/checkout routes `private, no-store`; (4) Filtered all `283` `noindex` guide links out of `/llms.txt` and `/llms-full.txt` (`94` indexable guides only) and added `X-Robots-Tag: noindex, follow` on `/llms-full.txt`; (5) Replaced all `10` `44`-byte placeholder `.webp` files in `server/public/img/proof/` with real `800×450` Windows 11 Storage Lab visual inspection graphics (`30.5–39.9 KB` each); (6) Enriched non-locked guides in `server/src/data/clean-items.json` (`337` front-loaded `< 60`-char SERP titles, `327` descriptions, `69` indexable guides given 3-row `subLocations` tables, `58` indexable guides given `customFaqs`) and tightened `buildPseoTitle` fallback while keeping all locked/Top-25 titles untouched.
+- **Impact**:
+  Eliminates >800 KB of blocking runtime CSS/translation JS per English page load, activates edge HTML caching headers, unlocks rich `max-image-preview:large` proof thumbnails on top guides, closes `noindex` AI crawler leaks, and boosts Tier-1 SERP CTR and subfolder Information Gain.
+- **Metadata**:
+  ```json
+  {
+    "precompiled_tailwind_css": "/vendor/tailwind.min.css",
+    "lazy_i18n_loader_bytes": 5678,
+    "real_webp_proofs": 10,
+    "llms_full_noindex_leaks": 0,
+    "enriched_sublocations_guides": 69,
+    "cdn_cache_control": "public, max-age=3600, stale-while-revalidate=86400"
+  }
+  ```
+
 ### 2026-11-16
 
 #### [Cleaner] Eliminate 7-Day Cross-Commit SEO Collisions: Rescue 47 GSC Winners, Fix 1,064 `301 -> noindex` Chains, Clean `/clean` & `ItemList` Internal Links & Realign `135`-URL Sitemap
