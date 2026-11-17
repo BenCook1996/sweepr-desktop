@@ -64,11 +64,11 @@ interface OAuthRefreshCredential {
   token_uri?: string;
 }
 
-function parseCredentialText(raw: string | undefined): string | null {
+function parseCredentialText(raw: string | undefined, allowFilePath = false): string | null {
   const v = (raw ?? "").trim();
   if (!v) return null;
   if (v.startsWith("{")) return v;
-  if (existsSync(v)) {
+  if (allowFilePath && existsSync(v)) {
     try {
       return readFileSync(v, "utf8");
     } catch {
@@ -84,8 +84,8 @@ function parseCredentialText(raw: string | undefined): string | null {
   return null;
 }
 
-export function loadServiceAccount(raw: string | undefined): ServiceAccount | null {
-  const text = parseCredentialText(raw);
+export function loadServiceAccount(raw: string | undefined, allowFilePath = false): ServiceAccount | null {
+  const text = parseCredentialText(raw, allowFilePath);
   if (!text) return null;
   try {
     const j = JSON.parse(text);
@@ -96,8 +96,8 @@ export function loadServiceAccount(raw: string | undefined): ServiceAccount | nu
   return null;
 }
 
-export function loadOAuthRefreshCredential(raw: string | undefined): OAuthRefreshCredential | null {
-  const text = parseCredentialText(raw);
+export function loadOAuthRefreshCredential(raw: string | undefined, allowFilePath = false): OAuthRefreshCredential | null {
+  const text = parseCredentialText(raw, allowFilePath);
   if (!text) return null;
   try {
     const j = JSON.parse(text);

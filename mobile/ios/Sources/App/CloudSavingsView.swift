@@ -188,6 +188,12 @@ enum MobileCloudVault {
             if accessed { sourceURL.stopAccessingSecurityScopedResource() }
         }
 
+        if let values = try? sourceURL.resourceValues(forKeys: [.fileSizeKey]),
+           let fileSize = values.fileSize,
+           fileSize > maxFileBytes {
+            throw VaultError.fileTooLarge
+        }
+
         let plain = try Data(contentsOf: sourceURL)
         guard plain.count <= maxFileBytes else { throw VaultError.fileTooLarge }
 
@@ -248,8 +254,19 @@ enum MobileCloudVault {
         dirValues.isExcludedFromBackup = true
         try? restoredDir.setResourceValues(dirValues)
 
-        let safeName = URL(fileURLWithPath: name).lastPathComponent
-        var dest = restoredDir.appendingPathComponent(safeName.isEmpty ? "restored_file" : safeName)
+        let rawBaseName = URL(fileURLWithPath: name).lastPathComponent
+        let baseName = rawBaseName.isEmpty ? "restored_file" : rawBaseName
+        var dest = restoredDir.appendingPathComponent(baseName)
+        if FileManager.default.fileExists(atPath: dest.path) {
+            let ext = (baseName as NSString).pathExtension
+            let stem = (baseName as NSString).deletingPathExtension
+            var counter = 1
+            while FileManager.default.fileExists(atPath: dest.path) && counter < 10_000 {
+                let candidateName = ext.isEmpty ? "\(stem)_\(counter)" : "\(stem)_\(counter).\(ext)"
+                dest = restoredDir.appendingPathComponent(candidateName)
+                counter += 1
+            }
+        }
         try body.write(to: dest, options: [.atomic, .completeFileProtection])
         var destValues = URLResourceValues()
         destValues.isExcludedFromBackup = true
@@ -746,6 +763,7 @@ struct CloudSavingsView: View {
                         .foregroundColor(.sweeprEmerald)
 
                         Button(role: .destructive) {
+                            guard vaultUnlocked else { return }
                             try? FileManager.default.removeItem(at: entry.fileURL)
                             vaultEntries = MobileCloudVault.list(password: vaultPassword)
                         } label: {
@@ -753,6 +771,7 @@ struct CloudSavingsView: View {
                                 .font(.caption)
                                 .foregroundColor(.sweeprRose)
                         }
+                        .disabled(!vaultUnlocked)
                     }
                     .padding(.vertical, 6)
                 }

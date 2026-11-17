@@ -741,15 +741,16 @@
               </div>
               <div style="margin-top: 8px;">
                 <label for="activate-otp-input" style="display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 5px;">
-                  6-Digit Verification Code / Pairing Key
+                  Full Activation Code / 6-Digit Email Code / Pairing Key
                 </label>
                 <input
                   id="activate-otp-input"
                   type="text"
+                  maxlength="64"
                   bind:value={otpCode}
-                  placeholder="123456 or ptk_..."
+                  placeholder="SWEEPR-PRO-XXXX-XXXX-XXXX, 123456, or ptk_..."
                   class="neutral-input"
-                  aria-label="6-digit verification code or pairing key"
+                  aria-label="Full activation code, 6-digit verification code, or pairing key"
                   onkeydown={(e) => e.key === "Enter" && handleActivate()}
                 />
               </div>

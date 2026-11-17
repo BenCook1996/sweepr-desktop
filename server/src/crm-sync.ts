@@ -7,6 +7,8 @@
  * across all SWEEPR products (`cleaner`, `vpn`, `deepblock`, `shopsafe`).
  */
 
+import { isFullActivationCode } from "./security.js";
+
 export const PROJECT_ID = "cleaner";
 
 let crmConsecutiveFailures = 0;
@@ -105,6 +107,8 @@ export async function verifyCentralEntitlement(
   const crmUrl = getCrmUrl();
   const cleanLookup = String(lookup || "").trim();
   if (!crmUrl || !cleanLookup || isCrmCircuitOpen()) return null;
+  // Reject bare 6-digit codes for permanent subscription activation; require full activation code, email, or account_id
+  if (/^\d{6}$/.test(cleanLookup)) return null;
 
   try {
     const res = await fetch(`${crmUrl}/v1/license/verify-key`, {
@@ -144,8 +148,9 @@ export async function verifyCentralEntitlement(
 }
 
 /**
- * Verifies a 6-digit OTP or permanent 6-digit Subscription Key against the centralized `sweepr-crm`
- * hub (`/v1/account/verify-otp`), registering the device in the central CRM as well.
+ * Verifies an ephemeral 6-digit email OTP or a full Subscription Activation Code against the centralized `sweepr-crm`
+ * hub (`/v1/account/verify-otp` / `/v1/license/verify-key`), registering the device in the central CRM as well.
+ * Bare 6-digit codes are never accepted as permanent subscription activation keys.
  */
 export async function verifyCentralOtp(params: {
   email: string;
@@ -156,7 +161,8 @@ export async function verifyCentralOtp(params: {
   deviceLabel?: string;
 }): Promise<CentralEntitlementResult | null> {
   const crmUrl = getCrmUrl();
-  if (!crmUrl || !params.email || !params.code) return null;
+  const cleanCode = String(params.code || "").trim();
+  if (!crmUrl || !params.email || !cleanCode) return null;
 
   try {
     const res = await fetch(`${crmUrl}/v1/account/verify-otp`, {
@@ -165,7 +171,8 @@ export async function verifyCentralOtp(params: {
       body: JSON.stringify({
         project_id: PROJECT_ID,
         email: params.email.trim().toLowerCase(),
-        code: params.code.trim(),
+        code: cleanCode,
+        require_full_activation_code: true,
         device_id: params.deviceId || `web_cleaner_${Date.now()}`,
         device_type: params.deviceType || "pc",
         platform: params.platform,
@@ -189,18 +196,20 @@ export async function verifyCentralOtp(params: {
       };
     }
   } catch {
-    // Fall through to verify-key check
+    // Fall through to full activation code check if applicable
   }
 
-  // Also check if `code` matches the account's 6-digit activation_code in central CRM
-  const byKey = await verifyCentralEntitlement(params.code, params.deviceId);
-  if (
-    byKey &&
-    byKey.valid &&
-    byKey.email &&
-    byKey.email.trim().toLowerCase() === params.email.trim().toLowerCase()
-  ) {
-    return byKey;
+  // Only allow full activation codes (never bare 6-digit codes) to activate via permanent license key lookup
+  if (isFullActivationCode(cleanCode)) {
+    const byKey = await verifyCentralEntitlement(cleanCode, params.deviceId);
+    if (
+      byKey &&
+      byKey.valid &&
+      byKey.email &&
+      byKey.email.trim().toLowerCase() === params.email.trim().toLowerCase()
+    ) {
+      return byKey;
+    }
   }
   return null;
 }

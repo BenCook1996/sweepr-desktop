@@ -347,16 +347,16 @@ export async function handleStripeWebhook(
               .get(accountId, nowSec - 300)
           : null;
         if (!recentSent) {
-          const { randomInt } = await import("node:crypto");
+          const { generateFullActivationCode } = await import("./security.js");
           const { sha256 } = await import("./tokens.js");
-          const activationKey = randomInt(100000, 1000000).toString();
+          const activationKey = generateFullActivationCode("SWEEPR-PRO");
           repo.setOtp(`activation:${normEmail}`, sha256(activationKey), nowSec + 7 * 86400);
           if (accountId) {
             repo.addActivity({
               account_id: accountId,
               type: "welcome_email_sent",
               title: "Welcome & Subscription Key Sent",
-              description: `6-digit Subscription Key sent to ${normEmail}`,
+              description: `Full Subscription Activation Key sent to ${normEmail}`,
               actor: "stripe",
               metadata: { email: normEmail, plan: "Pro" },
             });
@@ -457,9 +457,9 @@ export async function handleStripeWebhook(
             )
             .get(account.id, nowSec - 300);
           if (!recentSent) {
-            const { randomInt } = await import("node:crypto");
+            const { generateFullActivationCode } = await import("./security.js");
             const { sha256 } = await import("./tokens.js");
-            const activationKey = randomInt(100000, 1000000).toString();
+            const activationKey = generateFullActivationCode("SWEEPR-PRO");
             repo.setOtp(`activation:${normEmail}`, sha256(activationKey), nowSec + 7 * 86400);
             const ent = repo.entitlement(account.id);
             const planLabel = ent?.plan || retrievedSub?.metadata?.plan || "Pro";
@@ -467,7 +467,7 @@ export async function handleStripeWebhook(
               account_id: account.id,
               type: "welcome_email_sent",
               title: "Payment Receipt & Subscription Key Sent",
-              description: `Receipt (${formattedPaid}) & 6-digit Subscription Key sent to ${normEmail}`,
+              description: `Receipt (${formattedPaid}) & Full Subscription Activation Key sent to ${normEmail}`,
               actor: "stripe",
               metadata: { email: normEmail, plan: planLabel, invoice_id: inv.id },
             });

@@ -606,8 +606,8 @@ struct AccountView: View {
         NavigationStack {
             Form {
                 Section(
-                    header: Text("6-Digit Email OTP Verification"),
-                    footer: Text("We'll send a one-time 6-digit verification code to link this device with your SWEEPR Cleaner account.")
+                    header: Text("Full Activation Code or 6-Digit Email Verification"),
+                    footer: Text("Enter your full activation code (e.g. SWEEPR-PRO-XXXX-XXXX-XXXX) or request a 6-digit email verification code to link this device.")
                 ) {
                     if !otpSent {
                         TextField("Email Address", text: $otpEmail)
@@ -616,21 +616,38 @@ struct AccountView: View {
                             .textInputAutocapitalization(.never)
                             .disableAutocorrection(true)
 
-                        Button("Send 6-Digit Code") {
-                            Task {
-                                let ok = await vm.sendOtp(email: otpEmail)
-                                if ok { otpSent = true }
+                        TextField("Full Activation Code (optional)", text: $otpCode)
+                            .keyboardType(.asciiCapable)
+                            .textInputAutocapitalization(.characters)
+                            .disableAutocorrection(true)
+
+                        if !otpCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Button("Activate & Link Account") {
+                                Task {
+                                    let ok = await vm.verifyOtp(email: otpEmail, code: otpCode)
+                                    if ok { showSignInSheet = false }
+                                }
                             }
+                            .disabled(otpEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || vm.isWorking)
+                        } else {
+                            Button("Send 6-Digit Email Code") {
+                                Task {
+                                    let ok = await vm.sendOtp(email: otpEmail)
+                                    if ok { otpSent = true }
+                                }
+                            }
+                            .disabled(otpEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || vm.isWorking)
                         }
-                        .disabled(otpEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || vm.isWorking)
                     } else {
-                        Text("Enter the 6-digit code sent to \(otpEmail)")
+                        Text("Enter the 6-digit code sent to \(otpEmail) or your full activation code")
                             .font(.caption)
                             .foregroundColor(.secondary)
 
-                        TextField("6-Digit Code", text: $otpCode)
-                            .keyboardType(.numberPad)
+                        TextField("Full Activation Code or 6-Digit Code", text: $otpCode)
+                            .keyboardType(.asciiCapable)
                             .textContentType(.oneTimeCode)
+                            .textInputAutocapitalization(.characters)
+                            .disableAutocorrection(true)
 
                         Button("Verify & Link Account") {
                             Task {
@@ -638,7 +655,12 @@ struct AccountView: View {
                                 if ok { showSignInSheet = false }
                             }
                         }
-                        .disabled(otpCode.trimmingCharacters(in: .whitespacesAndNewlines).count != 6 || vm.isWorking)
+                        .disabled({
+                            let c = otpCode.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let isSix = c.count == 6 && c.allSatisfy(\.isNumber)
+                            let isFull = c.count >= 10 && c.count <= 64 && c.contains("-")
+                            return (!isSix && !isFull) || vm.isWorking
+                        }())
 
                         Button("Use a Different Email") {
                             otpSent = false

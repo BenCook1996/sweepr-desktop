@@ -115,6 +115,7 @@ class SweeprApp : Application(), ImageLoaderFactory {
             runCatching {
                 val linked = Prefs.account.value
                 val builder = PurchasesConfiguration.Builder(this, apiKey)
+                    .entitlementVerificationMode(com.revenuecat.purchases.EntitlementVerificationMode.INFORMATIONAL)
                 if (linked.accountId.isNotBlank()) {
                     builder.appUserID(linked.accountId)
                 }

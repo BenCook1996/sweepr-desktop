@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCleanItems } from "../pseo.js";
-import { isPublicHttpUrl } from "./backlinks.js";
+import { fetchPublicUrlSafe, isPublicHttpUrl } from "./backlinks.js";
 import type { FetchLike } from "./dataforseo.js";
 import type { SeoProviderConfig } from "./google.js";
 import { parseHtml, parseSitemap } from "./html.js";
@@ -449,7 +449,7 @@ export async function harvestCompetitorOrganicPages(
     fetchImpl?: FetchLike;
   }
 ) {
-  const fetchFn: FetchLike = opts?.fetchImpl ?? ((u, i) => fetch(u, i));
+  const fetchFn: FetchLike = opts?.fetchImpl ?? (async (u) => (await fetchPublicUrlSafe(String(u), 15_000)).res);
   const trackedCompetitors =
     opts?.competitors && opts.competitors.length > 0
       ? opts.competitors
@@ -691,7 +691,7 @@ export async function teardownCompetitorOrganicPage(
   let html = input.raw_html || "";
   let httpStatus = 200;
   if (!html && !matchedBenchmark && isPublicHttpUrl(cleanUrl)) {
-    const fetchFn: FetchLike = fetchImpl ?? ((u, i) => fetch(u, i));
+    const fetchFn: FetchLike = fetchImpl ?? (async (u) => (await fetchPublicUrlSafe(String(u), 15_000)).res);
     try {
       const res = await fetchFn(cleanUrl, { method: "GET" });
       httpStatus = res.status;

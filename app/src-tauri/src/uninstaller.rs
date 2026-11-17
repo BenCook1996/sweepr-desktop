@@ -208,6 +208,23 @@ fn resolve_program(uninstall_string: &str) -> AppResult<(std::path::PathBuf, Str
         let base = Path::new(&sys).join("System32");
         path = base.join("msiexec.exe");
     }
+    let file_name_check = path
+        .file_name()
+        .map(|f| f.to_string_lossy().to_ascii_lowercase())
+        .unwrap_or_default();
+    if file_name_check == "msiexec.exe" {
+        let lower_args = args.to_ascii_lowercase();
+        if lower_args.contains("http://")
+            || lower_args.contains("https://")
+            || lower_args.contains("\\\\")
+            || !args.contains('{')
+            || !args.contains('}')
+        {
+            return Err(AppError::Other(
+                "Refusing to run msiexec without a valid local product GUID or with a remote/UNC target.".into(),
+            ));
+        }
+    }
     if !path.is_absolute() || !path.is_file() {
         return Err(AppError::Other(format!("Uninstaller not found: {}", path.display())));
     }

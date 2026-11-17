@@ -358,6 +358,20 @@ object SweeprAccountApi {
 
     class ApiException(val statusCode: Int, message: String) : IllegalStateException(message)
 
+    private fun requireSecureBaseUrl(rawBase: String): String {
+        val base = rawBase.trim().trimEnd('/')
+        if (base.startsWith("https://", ignoreCase = true)) return base
+        if (BuildConfig.DEBUG && (
+                base.startsWith("http://127.0.0.1") ||
+                    base.startsWith("http://10.0.2.2") ||
+                    base.startsWith("http://localhost")
+                )
+        ) {
+            return base
+        }
+        throw SecurityException("Refusing insecure non-HTTPS API URL")
+    }
+
     private fun postJson(
         path: String,
         body: org.json.JSONObject,
@@ -367,7 +381,7 @@ object SweeprAccountApi {
         if (!body.has("project_id")) {
             body.put("project_id", PROJECT_ID)
         }
-        val base = API_URL.trimEnd('/')
+        val base = requireSecureBaseUrl(API_URL)
         val conn = (java.net.URL("$base$path").openConnection() as java.net.HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 10_000

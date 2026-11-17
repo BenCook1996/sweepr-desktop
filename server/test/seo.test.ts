@@ -1083,23 +1083,32 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
   }
 });
 
-test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-PC license key 662026, 1-PC device limit, and window closure", async () => {
+test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-PC license key GOTD-2026-SWEEPR, 1-PC device limit, and window closure", async () => {
   const { app, get, post } = setup();
+
+  // Open the 24-hour giveaway window explicitly via CRM (fail-closed by default)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const openWinRes = await post("/api/crm/giveaway/window", {
+    window_start_ts: nowSec - 3600,
+    window_end_ts: nowSec + 3600,
+    allow_preview_redemption: false,
+  });
+  assert.equal(openWinRes.status, 200);
 
   // 1. Public /giveaway and /giveaway/readme.txt routes render 200 OK
   const pageRes = await app.request("/giveaway");
   assert.equal(pageRes.status, 200);
   const pageHtml = await pageRes.text();
   assert.ok(pageHtml.includes("Giveaway of the Day"), "/giveaway page mentions Giveaway of the Day");
-  assert.ok(pageHtml.includes("662026"), "/giveaway page displays 6-digit key 662026");
+  assert.ok(pageHtml.includes("GOTD-2026-SWEEPR"), "/giveaway page displays full promo key GOTD-2026-SWEEPR");
   assert.ok(pageHtml.includes("GOTD50"), "/giveaway page includes 50% off upgrade coupon GOTD50");
 
   const readmeRes = await app.request("/giveaway/readme.txt");
   assert.equal(readmeRes.status, 200);
   const readmeTxt = await readmeRes.text();
-  assert.ok(readmeTxt.includes("662026") && readmeTxt.includes("GOTD50"), "readme.txt contains key and upgrade coupon");
+  assert.ok(readmeTxt.includes("GOTD-2026-SWEEPR") && readmeTxt.includes("GOTD50"), "readme.txt contains key and upgrade coupon");
 
-  // 2. Redeem via Desktop App OTP endpoint (/v1/account/verify-otp) using 6-digit Giveaway key 662026
+  // 2. Redeem via Desktop App OTP endpoint (/v1/account/verify-otp) using full Giveaway key GOTD-2026-SWEEPR
   const dev1 = "a".repeat(32);
   const dev2 = "b".repeat(32);
   const verifyDev1Res = await app.request("/v1/account/verify-otp", {
@@ -1107,7 +1116,7 @@ test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-P
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email: "gotd.user1@example.com",
-      code: "662026",
+      code: "GOTD-2026-SWEEPR",
       device_id: dev1,
       platform: "windows",
     }),
@@ -1124,7 +1133,7 @@ test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-P
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email: "gotd.user1@example.com",
-      code: "662026",
+      code: "GOTD-2026-SWEEPR",
       device_id: dev2,
       platform: "windows",
     }),
@@ -1146,7 +1155,7 @@ test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-P
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email: "late.visitor@example.com",
-      code: "662026",
+      code: "GOTD-2026-SWEEPR",
     }),
   });
   assert.equal(expiredRes.status, 400);
@@ -1780,12 +1789,18 @@ test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 6
 
   // 5. A10: High-Intent Scan/Checkout Abandonment & Giveaway GOTD50 Lifecycle Sweep + /v1/conversion/offer
   const nowSec = Math.floor(Date.now() / 1000);
+  const openWinRes = await post("/api/crm/giveaway/window", {
+    window_start_ts: nowSec - 3600,
+    window_end_ts: nowSec + 3600,
+    allow_preview_redemption: false,
+  });
+  assert.equal(openWinRes.status, 200);
   const redeemRes = await app.request("/api/giveaway/redeem", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email: "gotd-lifecycle@example.com",
-      code: "662026",
+      code: "GOTD-2026-SWEEPR",
     }),
   });
   assert.equal(redeemRes.status, 200);

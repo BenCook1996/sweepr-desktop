@@ -246,11 +246,25 @@ fun AccountScreen(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = codeInput,
+                            onValueChange = { raw ->
+                                codeInput = raw.filter { ch -> ch.isLetterOrDigit() || ch == '-' || ch == '_' }.take(64)
+                            },
+                            label = { Text("Full Activation Code (optional — or tap Send Code)") },
+                            placeholder = { Text("SWEEPR-PRO-XXXX-XXXX-XXXX") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     } else {
                         OutlinedTextField(
                             value = codeInput,
-                            onValueChange = { codeInput = it.filter { ch -> ch.isDigit() }.take(6) },
-                            label = { Text(stringResource(R.string.account_otp_code_label)) },
+                            onValueChange = { raw ->
+                                codeInput = raw.filter { ch -> ch.isLetterOrDigit() || ch == '-' || ch == '_' }.take(64)
+                            },
+                            label = { Text("Full Activation Code or 6-Digit Email Code") },
+                            placeholder = { Text("SWEEPR-PRO-XXXX-XXXX-XXXX or 123456") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -264,10 +278,10 @@ fun AccountScreen(
                         if (Purchases.isConfigured && emailInput.isNotBlank()) {
                             runCatching { Purchases.shared.setEmail(emailInput.trim()) }
                         }
-                        if (!otpSent) {
+                        if (!otpSent && codeInput.trim().isEmpty()) {
                             onSendOtp(emailInput) { otpSent = true }
                         } else {
-                            onVerifyOtp(emailInput, codeInput) {
+                            onVerifyOtp(emailInput, codeInput.trim()) {
                                 showSignInDialog = false
                                 otpSent = false
                                 codeInput = ""
@@ -275,7 +289,10 @@ fun AccountScreen(
                         }
                     },
                 ) {
-                    Text(if (otpSent) stringResource(R.string.account_otp_verify_btn) else stringResource(R.string.account_otp_send_btn))
+                    Text(
+                        if (otpSent || codeInput.trim().isNotEmpty()) stringResource(R.string.account_otp_verify_btn)
+                        else stringResource(R.string.account_otp_send_btn),
+                    )
                 }
             },
             dismissButton = {

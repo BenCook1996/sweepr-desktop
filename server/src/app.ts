@@ -20,6 +20,8 @@ import {
   adminBasicAuth,
   createRateLimiter,
   escapeHtml,
+  generateFullActivationCode,
+  isFullActivationCode,
   isSameOriginRequest,
   makeClientIp,
   normalizeEmail,
@@ -341,7 +343,7 @@ export function createApp(deps: AppDeps) {
       const acc = repo.accountById(accId);
       if (!acc) return null;
       const currentPrefix = (acc.refresh_token_hash || "").slice(0, 16);
-      if (currentPrefix !== hashPrefix) return null;
+      if (!currentPrefix || !safeEqual(currentPrefix, hashPrefix)) return null;
       return acc.id;
     }
     return null;
@@ -411,6 +413,23 @@ export function createApp(deps: AppDeps) {
       c.res.headers.set("X-Robots-Tag", "noindex, follow");
     }
     if (c.res.headers.has("Cache-Control")) return;
+
+    if (
+      c.res.headers.has("Set-Cookie") ||
+      c.res.headers.has("set-cookie") ||
+      p === "/dashboard" ||
+      p === "/login" ||
+      p === "/order" ||
+      p === "/checkout" ||
+      p.startsWith("/checkout/") ||
+      p === "/pair" ||
+      p === "/safe-to-delete" ||
+      p === "/delete-account" ||
+      p.startsWith("/tools/")
+    ) {
+      c.res.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate");
+      return;
+    }
 
     if (
       /^\/+(?:favicon(?:-dark)?\.(?:svg|png|ico)|padlock-favicon\.svg|apple-touch-icon\.png|icon-(?:32x32|192|512)\.png|logo-(?:emerald|mint-glass)\.svg|manifest\.webmanifest)$/i.test(p) ||
@@ -895,6 +914,10 @@ export function createApp(deps: AppDeps) {
     }
     const file = `./public/vs/${competitor}.html`;
     if (!existsSync(file)) return c.notFound();
+    c.header("Vary", "CF-IPCountry, Accept-Encoding");
+    if (c.req.query("country") || c.req.query("currency")) {
+      c.header("Cache-Control", "private, no-store");
+    }
     const cur = await resolvePricingForRequest(c, { allowQueryOverride: true });
     const pricingSummary = `${cur.annualFormatted}/yr (Save ${cur.annualSavingsPercent}%), ${cur.sixMonthFormatted}/6mo, or ${cur.monthlyFormatted}/mo`;
     return c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor, pricingSummary));
@@ -911,6 +934,10 @@ export function createApp(deps: AppDeps) {
     }
     const file = `./public/alternatives/${competitor}.html`;
     if (!existsSync(file)) return c.notFound();
+    c.header("Vary", "CF-IPCountry, Accept-Encoding");
+    if (c.req.query("country") || c.req.query("currency")) {
+      c.header("Cache-Control", "private, no-store");
+    }
     const cur = await resolvePricingForRequest(c, { allowQueryOverride: true });
     const pricingSummary = `${cur.annualFormatted}/yr (Save ${cur.annualSavingsPercent}%), ${cur.sixMonthFormatted}/6mo, or ${cur.monthlyFormatted}/mo`;
     return c.html(normalizeCompetitorHtmlClaims(readFileSync(file, "utf-8"), competitor, pricingSummary));
@@ -2390,10 +2417,7 @@ export function createApp(deps: AppDeps) {
         });
       }
       const sessAccId = await sessionAccountId(c);
-      const visitorIp =
-        c.req.header("cf-connecting-ip")?.trim() ||
-        c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-        clientIp(c);
+      const visitorIp = clientIp(c);
       const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
       c.header("X-Sweepr-Attribution-Id", resolvedAttrId);
       recordInstallerDownloaded(repo, {
@@ -3291,6 +3315,7 @@ export function createApp(deps: AppDeps) {
   });
 
   app.post("/api/web-checkout", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
     if (!limitCheckoutIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     if (!stripe) return c.json({ error: "stripe_not_configured" }, 503);
     const body = await c.req.json().catch(() => ({}));
@@ -3736,8 +3761,8 @@ export function createApp(deps: AppDeps) {
       .get(account.id, now() - 300);
     if (recentSent) return;
 
-    const activationKey = randomInt(100000, 1000000).toString();
-    const expiresAt = now() + 7 * 86400; // 7 days validity for subscription activation key
+    const activationKey = generateFullActivationCode("SWEEPR-PRO");
+    const expiresAt = now() + 7 * 86400; // 7 days validity for full subscription activation key
     repo.setOtp(`activation:${email}`, sha256(activationKey), expiresAt);
 
     const { sendSubscriptionEmail } = await import("./email.js");
@@ -3753,7 +3778,7 @@ export function createApp(deps: AppDeps) {
       account_id: account.id,
       type: "welcome_email_sent",
       title: "Welcome & Subscription Key Sent",
-      description: `6-digit Subscription Key sent to ${email}`,
+      description: `Subscription Key sent to ${email}`,
       actor: "system",
       metadata: { email, plan: planLabel, dispatch },
     });
@@ -4490,28 +4515,15 @@ export function createApp(deps: AppDeps) {
     const invalid = () => c.json({ error: "Invalid or expired code." }, 400);
     if (!email) return invalid();
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "Too many attempts. Please try again later." }, 429);
-    if (!/^\d{6}$/.test(code)) return invalid();
+    const isSixDigitOtp = /^\d{6}$/.test(code);
+    const isFullKey = isFullActivationCode(code);
+    if (!isSixDigitOtp && !isFullKey) return invalid();
 
+    const normalizedCode = isFullKey ? code.toUpperCase() : code;
     const nowSec = Math.floor(Date.now() / 1000);
-    let valid = repo.verifyRecentEmailCode(email, code, sha256(code), nowSec);
+    let valid = repo.verifyRecentEmailCode(email, normalizedCode, sha256(normalizedCode), nowSec);
     if (!valid) {
-      const gotdCfg = getGiveawayConfig(repo, nowSec);
-      if (isGiveawayCodeMatch(gotdCfg, code)) {
-        const gotdRes = redeemGiveawayLicense(repo, {
-          email,
-          code,
-          ipHash: sha256(clientIp(c)),
-          nowSec,
-        });
-        if (gotdRes.ok) {
-          valid = true;
-        } else if (gotdRes.error === "giveaway_window_closed") {
-          return c.json({ error: gotdRes.message || "Giveaway window has closed." }, 400);
-        }
-      }
-    }
-    if (!valid) {
-      const centralOtp = await verifyCentralOtp({ email, code, deviceType: "pc" });
+      const centralOtp = await verifyCentralOtp({ email, code: normalizedCode, deviceType: "pc" });
       if (centralOtp?.valid) {
         valid = true;
       }
@@ -4960,7 +4972,7 @@ export function createApp(deps: AppDeps) {
       </div>
       <div>
         <div class="flex items-center justify-between mb-1">
-          <label class="block text-xs font-bold text-slate-300">6-Digit Code / Subscription Key</label>
+          <label class="block text-xs font-bold text-slate-300">6-Digit Email Login Code</label>
           <button id="delSendOtpBtn" type="button" class="text-xs font-bold text-emerald-400 hover:underline cursor-pointer">Email me a code</button>
         </div>
         <input id="delCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-center font-mono text-lg tracking-widest focus:outline-none focus:border-red-500">
@@ -6040,7 +6052,7 @@ export function createApp(deps: AppDeps) {
         {
           ok: false,
           error: "authentication_required",
-          message: "Please sign in with your account email and 6-digit Subscription Key to approve this device.",
+          message: "Please sign in with your account email and Subscription Key to approve this device.",
         },
         401
       );
@@ -6147,7 +6159,7 @@ export function createApp(deps: AppDeps) {
                     </div>
                     <div id="codeWrap">
                       <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-bold text-slate-300">6-Digit Subscription Key / Login Code</label>
+                        <label class="block text-xs font-bold text-slate-300">6-Digit Email Login Code</label>
                         <button id="sendOtpBtn" type="button" class="text-xs font-bold text-emerald-400 hover:underline cursor-pointer">Email me a code</button>
                       </div>
                       <input id="pairCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-center font-mono text-lg tracking-widest focus:outline-none focus:border-emerald-500">
@@ -6342,10 +6354,7 @@ export function createApp(deps: AppDeps) {
       const attrId =
         sanitizeAttributionId(body.attribution_id) ||
         sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
-      const reqIp =
-        c.req.header("cf-connecting-ip")?.trim() ||
-        c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-        clientIp(c);
+      const reqIp = clientIp(c);
       const reqPlatform = deviceType === "mobile" ? "android" : "windows";
       const matchedSession = recordAppInstalledForRecovery(repo, {
         attributionId: attrId,
@@ -6357,7 +6366,7 @@ export function createApp(deps: AppDeps) {
         ipOsFingerprint: computeIpOsFingerprint(reqIp, reqPlatform),
         source: "v1_accounts",
         nowSec: now(),
-        allowRecentWindowsFallback: deviceType === "pc",
+        allowRecentWindowsFallback: false,
       });
       resolvedAttrId = matchedSession?.attribution_id || attrId || null;
       repo.recordAnalyticsEvent({
@@ -6573,19 +6582,22 @@ export function createApp(deps: AppDeps) {
       body.device_type === "mobile" || body.platform === "android" || body.platform === "ios"
         ? "mobile"
         : "pc";
-    if (!email || !/^\d{6}$/.test(code) || !DEVICE_RE.test(deviceId)) {
+    const isSixDigitOtp = /^\d{6}$/.test(code);
+    const isFullKey = isFullActivationCode(code);
+    if (!email || (!isSixDigitOtp && !isFullKey) || !DEVICE_RE.test(deviceId)) {
       return c.json({ error: "invalid_request" }, 400);
     }
     if (!limitOtpVerifyEmail.hit(email)) return c.json({ error: "rate_limited" }, 429);
 
+    const normalizedCode = isFullKey ? code.toUpperCase() : code;
     const t = now();
-    let localOtpValid = repo.verifyRecentEmailCode(email, code, sha256(code), t);
-    if (!localOtpValid) {
+    let localOtpValid = repo.verifyRecentEmailCode(email, normalizedCode, sha256(normalizedCode), t);
+    if (!localOtpValid && isFullKey) {
       const gotdCfg = getGiveawayConfig(repo, t);
-      if (isGiveawayCodeMatch(gotdCfg, code)) {
+      if (isGiveawayCodeMatch(gotdCfg, normalizedCode)) {
         const gotdRes = redeemGiveawayLicense(repo, {
           email,
-          code,
+          code: normalizedCode,
           deviceId,
           ipHash: sha256(clientIp(c)),
           nowSec: t,
@@ -6600,7 +6612,7 @@ export function createApp(deps: AppDeps) {
     if (!localOtpValid) {
       const centralOtp = await verifyCentralOtp({
         email,
-        code,
+        code: normalizedCode,
         deviceId,
         deviceType,
         platform: typeof body.platform === "string" ? body.platform : undefined,
@@ -7671,12 +7683,10 @@ export function createApp(deps: AppDeps) {
       emailAcc?.id ||
       null;
 
+    const isAuthenticatedTelemetry = Boolean(bearerAcc?.id || sessAccId || deviceAccountId);
     let effectiveAttrId = attrId;
     let effectiveAccountId = resolvedAccountId;
-    const visitorIp =
-      c.req.header("cf-connecting-ip")?.trim() ||
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-      clientIp(c);
+    const visitorIp = clientIp(c);
     const eventPlatform = String(body.platform || "windows").toLowerCase();
     const ipOsFingerprint = computeIpOsFingerprint(visitorIp, eventPlatform);
 
@@ -7709,7 +7719,7 @@ export function createApp(deps: AppDeps) {
           ipOsFingerprint,
           source: eventName,
           nowSec: now(),
-          allowRecentWindowsFallback: eventPlatform.startsWith("win"),
+          allowRecentWindowsFallback: false,
         });
         if (matchedRecovery) {
           effectiveAttrId = matchedRecovery.attribution_id || effectiveAttrId;
@@ -7731,7 +7741,7 @@ export function createApp(deps: AppDeps) {
             body?.reclaimable_bytes ??
             0
         );
-        if (resolvedAccountId) {
+        if (resolvedAccountId && isAuthenticatedTelemetry) {
           ledgerSummary = repo.recordAccountScanAndCleanProgress(resolvedAccountId, {
             isScan: true,
             reclaimableBytes: scanBytes,
@@ -7749,7 +7759,7 @@ export function createApp(deps: AppDeps) {
         const cleanedFiles = Number(
           body?.metadata?.files_removed ?? body?.metadata?.cleaned_files ?? body?.files_removed ?? 0
         );
-        if (resolvedAccountId) {
+        if (resolvedAccountId && isAuthenticatedTelemetry) {
           ledgerSummary = repo.recordAccountScanAndCleanProgress(resolvedAccountId, {
             isClean: true,
             cleanedBytes,
@@ -7849,12 +7859,17 @@ export function createApp(deps: AppDeps) {
     return c.json(status);
   });
 
+  const experimentExposureDedupe = createRateLimiter(1, 3600_000, 10_000);
+
   app.post("/api/download-recovery/bind-email", async (c) => {
+    if (!isSameOriginRequest(c, config.publicUrl, trustProxy)) return c.json({ error: "forbidden_origin" }, 403);
+    if (!limitOtpSendIp.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     const body = await c.req.json().catch(() => ({}));
-    const rawEmail = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
-    if (!rawEmail || !rawEmail.includes("@") || rawEmail.length > 254) {
+    const rawEmail = normalizeEmail(body?.email);
+    if (!rawEmail) {
       return c.json({ error: "invalid_email" }, 400);
     }
+    if (!limitOtpSendEmail.hit(rawEmail)) return c.json({ error: "rate_limited" }, 429);
     let attrId =
       sanitizeAttributionId(body?.attribution_id) ||
       sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
@@ -7972,7 +7987,7 @@ export function createApp(deps: AppDeps) {
         label: exp.variants[variant].label,
         copy: exp.variants[variant].copy,
       };
-      if (recordExposure) {
+      if (recordExposure && experimentExposureDedupe.hit(`${exp.id}:${visitorKey}`)) {
         repo.recordAnalyticsEvent({
           event_name: "experiment_exposure",
           platform: "windows",
@@ -8042,9 +8057,14 @@ export function createApp(deps: AppDeps) {
 
   // Dynamic In-App & Web Conversion Offer Endpoint (A10 High-Intent Scan & Giveaway Upgrade)
   app.get("/v1/conversion/offer", async (c) => {
+    if (!limitEntitlement.hit(clientIp(c))) return c.json({ error: "rate_limited" }, 429);
     const email = normalizeEmail(c.req.query("email"));
     const accountId = String(c.req.query("account_id") ?? "").trim();
     const hardwareId = String(c.req.query("hardware_id") ?? c.req.query("device_id") ?? "").trim();
+    const sessAccId = await sessionAccountId(c);
+    const authHeader = c.req.header("authorization") ?? "";
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    const bearerAcc = bearerToken ? repo.accountByTokenHash(sha256(bearerToken)) : undefined;
     let deviceAccId = "";
     if (hardwareId) {
       const devRow = repo.db
@@ -8057,16 +8077,24 @@ export function createApp(deps: AppDeps) {
       (deviceAccId && repo.accountById(deviceAccId)) ||
       (email && repo.accountByEmail(email)) ||
       undefined;
+    const isCallerAuthenticatedForAcc = Boolean(
+      acc &&
+        (bearerAcc?.id === acc.id ||
+          sessAccId === acc.id ||
+          (deviceAccId && deviceAccId === acc.id) ||
+          (email && acc.email && acc.email.toLowerCase() === email.toLowerCase()))
+    );
+    const safeEmailForUrl = isCallerAuthenticatedForAcc ? acc?.email || email : email;
     const ent = acc ? repo.entitlement(acc.id) : undefined;
     const gotdCfg = getGiveawayConfig(repo, now());
     const isGiveaway = ent?.plan === "giveaway_6m";
     const explicitBytes = Math.max(0, Number(c.req.query("bytes_found") ?? 0));
-    const storedBytes = Number(acc?.max_scan_reclaimable_bytes ?? 0);
+    const storedBytes = isCallerAuthenticatedForAcc ? Number(acc?.max_scan_reclaimable_bytes ?? 0) : 0;
     const bytesFound = Math.max(explicitBytes, storedBytes);
     const gbFound = +(bytesFound / (1024 * 1024 * 1024)).toFixed(1);
 
     if (isGiveaway) {
-      const upgradeUrl = `/order?plan=annual&coupon=${encodeURIComponent(gotdCfg.upgrade_coupon)}${acc?.email ? `&email=${encodeURIComponent(acc.email)}` : ""}&utm_source=app_offer`;
+      const upgradeUrl = `/order?plan=annual&coupon=${encodeURIComponent(gotdCfg.upgrade_coupon)}${safeEmailForUrl ? `&email=${encodeURIComponent(safeEmailForUrl)}` : ""}&utm_source=app_offer`;
       return c.json({
         ok: true,
         offer_type: "giveaway_5device_upgrade",
@@ -8080,7 +8108,7 @@ export function createApp(deps: AppDeps) {
       });
     }
 
-    const emailQuery = (acc?.email || email) ? `&email=${encodeURIComponent((acc?.email || email)!)}` : "";
+    const emailQuery = safeEmailForUrl ? `&email=${encodeURIComponent(safeEmailForUrl)}` : "";
     const isHighBloat = bytesFound >= 5 * 1024 * 1024 * 1024;
     return c.json({
       ok: true,
@@ -8454,7 +8482,7 @@ export function createApp(deps: AppDeps) {
           const resolvedAccount = repo.accountById(metaAccountId);
 
           if (resolvedAccount && (effectiveSub.status === "active" || effectiveSub.status === "trialing")) {
-            const isFreshSub = !sub.created || now() - Number(sub.created) < 86400;
+            const isFreshSub = Boolean(sub.created && now() - Number(sub.created) < 900);
             if (isFreshSub) {
               await issuePortalSessionCookie(c, resolvedAccount.id);
             }
@@ -8542,7 +8570,7 @@ export function createApp(deps: AppDeps) {
       return c.html(
         page(
           "You're Activated 🎉",
-          `Thanks for purchasing SWEEPR Cleaner! We have emailed your 6-digit Subscription Activation Key. Download the app below, open the Account tab, and enter your email + 6-digit Subscription Key to activate Pro immediately.<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 First-Launch Tip:</strong> If Windows SmartScreen appears when opening <code>SWEEPRCleaner.exe</code>: <strong>1. Click &ldquo;More info&rdquo;</strong> &rarr; <strong>2. Click &ldquo;Run anyway&rdquo;</strong>.</div>${clearDraftScript}`,
+          `Thanks for purchasing SWEEPR Cleaner! We have emailed your SWEEPR-PRO Subscription License Key. Download the app below, open the Account tab, and paste your SWEEPR-PRO License Key (or sign in with your email) to activate Pro immediately.<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 First-Launch Tip:</strong> If Windows SmartScreen appears when opening <code>SWEEPRCleaner.exe</code>: <strong>1. Click &ldquo;More info&rdquo;</strong> &rarr; <strong>2. Click &ldquo;Run anyway&rdquo;</strong>.</div>${clearDraftScript}`,
           true
         )
       );

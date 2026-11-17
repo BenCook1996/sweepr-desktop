@@ -1527,6 +1527,7 @@ test("Referral loop: referred checkout followed by invoice.paid webhook retains 
   const { repo, app, post } = setup({
     stripe: mockStripe,
     stripeWebhookSecret: "whsec_ref_test",
+    trustProxy: true,
   });
 
   // 1. Seed active referrer account + entitlement
@@ -1866,6 +1867,100 @@ test("Browser GET /download renders Post-Download Thank-You SmartScreen/Gatekeep
   const resolved = resolveCheckoutPromoCoupon("welcome20");
   assert.deepEqual(resolved, { code: "WELCOME20", discountPct: 20, multiplier: 0.8 });
 });
+
+test("20-Pen-Test Security Hardening & Full Activation Code Requirement", async () => {
+  const { isFullActivationCode, generateFullActivationCode, isSafeObjectKey } = await import("../src/security.js");
+  const { updateGiveawayConfig, redeemGiveawayLicense } = await import("../src/giveaway.js");
+  const { app, post, repo } = setup();
+
+  // 1. Full Activation Code format validation & generation
+  const generatedCode = generateFullActivationCode("SWEEPR-PRO");
+  assert.equal(isFullActivationCode(generatedCode), true, `Expected ${generatedCode} to be a valid full activation code`);
+  assert.equal(isFullActivationCode("GOTD-2026-SWEEPR"), true);
+  assert.equal(isFullActivationCode("662026"), false, "6-digit code must NOT be treated as a full activation code");
+  assert.equal(isFullActivationCode("123456"), false);
+
+  // 2. Unicode homoglyph email normalization (Attack #14)
+  assert.equal(normalizeEmail("user\u212A@example.com"), "userk@example.com");
+  assert.equal(normalizeEmail("ｕｓｅｒ@example.com"), "user@example.com");
+  assert.equal(normalizeEmail("user@exаmple.com"), null, "Cyrillic homoglyph in domain must be rejected");
+
+  // 3. Prototype pollution object key guard (Attack #13)
+  assert.equal(isSafeObjectKey("__proto__"), false);
+  assert.equal(isSafeObjectKey("constructor"), false);
+  assert.equal(isSafeObjectKey("prototype"), false);
+  assert.equal(isSafeObjectKey("clean-windows-temp-files"), true);
+
+  // 4. Giveaway campaign fail-closed by default, rejects bare 6-digit code, and protects existing paid accounts
+  const closedRedeem = redeemGiveawayLicense(repo, {
+    email: "newgiveaway@example.com",
+    code: "GOTD-2026-SWEEPR",
+  });
+  assert.equal(closedRedeem.ok, false, "Giveaway redemption must fail closed when no active window is configured");
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  updateGiveawayConfig(repo, {
+    window_start_ts: nowSec - 3600,
+    window_end_ts: nowSec + 3600,
+    promo_code: "GOTD-2026-SWEEPR",
+  });
+
+  const sixDigitGiveaway = redeemGiveawayLicense(repo, {
+    email: "newgiveaway@example.com",
+    code: "662026",
+  });
+  assert.equal(sixDigitGiveaway.ok, false, "Bare 6-digit code 662026 must be rejected for giveaway activation");
+
+  const fullCodeGiveaway = redeemGiveawayLicense(repo, {
+    email: "newgiveaway@example.com",
+    code: "GOTD-2026-SWEEPR",
+  });
+  assert.equal(fullCodeGiveaway.ok, true, "Full activation code GOTD-2026-SWEEPR must succeed during active campaign");
+
+  // Existing paid account must NEVER be overwritten or hijacked by giveaway code
+  repo.createAccount("acc_paid_pro", sha256("tok_paid_pro"), "paidpro@example.com");
+  repo.upsertEntitlement({
+    account_id: "acc_paid_pro",
+    stripe_subscription_id: "sub_paid_pro_1",
+    status: "active",
+    plan: "annual",
+    current_period_end: nowSec + 365 * 86400,
+    cancel_at_period_end: 0,
+  });
+  const hijackAttempt = redeemGiveawayLicense(repo, {
+    email: "paidpro@example.com",
+    code: "GOTD-2026-SWEEPR",
+  });
+  assert.equal(hijackAttempt.ok, false);
+  assert.equal(hijackAttempt.error, "existing_account_requires_email_otp");
+
+  // Web portal /api/verify-otp must NEVER accept a shared giveaway promo code to mint a session cookie
+  const webGiveawayLogin = await post("/api/verify-otp", {
+    email: "paidpro@example.com",
+    code: "GOTD-2026-SWEEPR",
+  });
+  assert.equal(webGiveawayLogin.status, 400);
+
+  // Web portal /api/verify-otp and Desktop /v1/account/verify-otp accept full per-account activation codes
+  const fullSubKey = generateFullActivationCode("SWEEPR-PRO");
+  repo.setOtp("activation:paidpro@example.com", sha256(fullSubKey), nowSec + 7 * 86400);
+  const fullKeyLogin = await post("/api/verify-otp", {
+    email: "paidpro@example.com",
+    code: fullSubKey,
+  });
+  assert.equal(fullKeyLogin.status, 200);
+
+  // 5. /v1/conversion/offer does not leak account email on unauthenticated ?account_id= query (Attack #1)
+  const offerRes = await app.request("/v1/conversion/offer?account_id=acc_paid_pro");
+  assert.equal(offerRes.status, 200);
+  const offerText = await offerRes.text();
+  assert.ok(!offerText.includes("paidpro@example.com"), "Unauthenticated offer response must not leak account email");
+
+  // 6. CDN Cache-Control: private, no-store on personalized routes and Set-Cookie responses (Attack #3)
+  const orderRes = await app.request("/order");
+  assert.match(orderRes.headers.get("cache-control") ?? "", /private,\s*no-store/i);
+});
+
 
 
 

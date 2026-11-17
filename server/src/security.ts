@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { isPrivateOrLoopbackIp } from "./pricing.js";
@@ -20,14 +20,41 @@ export function escapeHtml(v: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-const EMAIL_RE = /^[^\s@<>"'`;,()]+@[^\s@<>"'`;,()]+\.[^\s@<>"'`;,()]{2,}$/;
+const EMAIL_RE = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
 
-/** Trim + lowercase + validate an email address. Returns null when invalid. */
+/** NFKC-normalize + trim + lowercase + ASCII-validate an email address. Returns null when invalid. */
 export function normalizeEmail(v: unknown): string | null {
   if (typeof v !== "string") return null;
-  const e = v.trim().toLowerCase();
-  if (e.length < 6 || e.length > 254 || !EMAIL_RE.test(e)) return null;
+  const e = v.normalize("NFKC").trim().toLowerCase();
+  if (e.length < 6 || e.length > 254) return null;
+  if (/[^\x21-\x7E]/.test(e)) return null;
+  if (e.normalize("NFKC").toLowerCase() !== e) return null;
+  if (!EMAIL_RE.test(e)) return null;
+  const [, domain] = e.split("@");
+  if (!domain || domain.split(".").pop()!.length < 2) return null;
   return e;
+}
+
+const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+/** Guard against prototype-pollution keys when indexing plain JS objects with untrusted strings. */
+export function isSafeObjectKey(key: unknown): key is string {
+  return typeof key === "string" && key.length > 0 && key.length <= 200 && !UNSAFE_OBJECT_KEYS.has(key);
+}
+
+const FULL_ACTIVATION_CODE_RE = /^(?:SWEEPR|SWP|CLN|GOTD|DEEPBLOCK)-[A-Z0-9]{2,16}(?:-[A-Z0-9]{2,16}){1,5}$/i;
+
+/** Returns true only when `code` is a full prefixed product activation code (never a bare 6-digit number). */
+export function isFullActivationCode(code: unknown): boolean {
+  if (typeof code !== "string") return false;
+  const trimmed = code.trim();
+  return trimmed.length >= 10 && trimmed.length <= 64 && FULL_ACTIVATION_CODE_RE.test(trimmed);
+}
+
+/** Generates a canonical full product activation code (e.g. SWEEPR-PRO-XXXX-XXXX-XXXX). */
+export function generateFullActivationCode(prefix = "SWEEPR-PRO"): string {
+  const hex = randomBytes(6).toString("hex").toUpperCase();
+  return `${prefix}-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
 }
 
 export interface RateLimiter {

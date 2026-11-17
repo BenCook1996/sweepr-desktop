@@ -112,7 +112,7 @@ export async function sendDownloadRecoveryEmail(opts: {
     sha256,
     "",
     `Re-download ${installerFile}: ${downloadUrl}`,
-    `Or activate your Web Pro license first (instant 6-digit key): ${orderUrl}`,
+    `Or activate your Web Pro license first (instant SWEEPR-PRO-... license key): ${orderUrl}`,
     "",
     "Need a hand? Just reply to this email.",
     "— The SWEEPR Cleaner Team",
@@ -139,7 +139,7 @@ export async function sendDownloadRecoveryEmail(opts: {
     <a href="${downloadUrl}" style="display: inline-block; background: #0d6847; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 9999px;">Re-Download ${escapeHtml(installerFile)}</a>
   </div>
   <div style="text-align: center; margin-bottom: 20px;">
-    <a href="${orderUrl}" style="font-size: 13px; font-weight: 700; color: #059669; text-decoration: underline;">Or activate your Web Pro license first (instant 6-digit key) &rarr;</a>
+    <a href="${orderUrl}" style="font-size: 13px; font-weight: 700; color: #059669; text-decoration: underline;">Or activate your Web Pro license first (instant SWEEPR-PRO-... license key) &rarr;</a>
   </div>
   <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
     Sent once because you started checkout and downloaded SWEEPR Cleaner. Need help? Reply directly to this email.
@@ -433,25 +433,7 @@ export function associateCheckoutLeadWithRecovery(
     if (res.changes > 0) return;
   }
 
-  // Fallback: associate with the most recent un-emailed anonymous Windows download within the last 2 hours
-  const recentAnon = repo.db
-    .prepare(
-      `SELECT attribution_id FROM download_recovery_sessions
-       WHERE email IS NULL AND installed_at IS NULL AND downloaded_at >= ?
-       ORDER BY downloaded_at DESC LIMIT 1`
-    )
-    .get(nowSec - 7200) as { attribution_id: string } | undefined;
-  if (recentAnon?.attribution_id) {
-    repo.db
-      .prepare(
-        `UPDATE download_recovery_sessions
-         SET email = ?, account_id = COALESCE(?, account_id),
-             email_status = CASE WHEN email_status = 'skipped_no_email' THEN 'pending' ELSE email_status END,
-             updated_at = ?
-         WHERE attribution_id = ?`
-      )
-      .run(email, opts.accountId ?? null, nowSec, recentAnon.attribution_id);
-  }
+  // Do not globally bind to another user's anonymous download session without attribution_id, fingerprint, or accountId match.
 }
 
 /**
@@ -515,13 +497,6 @@ export function recordAppInstalledForRecovery(
         "SELECT * FROM download_recovery_sessions WHERE lower(email) = lower(?) ORDER BY downloaded_at DESC LIMIT 1"
       )
       .get(opts.email) as DownloadRecoverySession | undefined;
-  }
-  if (!session && opts.allowRecentWindowsFallback && (!attrId || attrId.startsWith("dt_"))) {
-    session = repo.db
-      .prepare(
-        "SELECT * FROM download_recovery_sessions WHERE installed_at IS NULL AND platform = 'windows' AND downloaded_at >= ? ORDER BY downloaded_at DESC LIMIT 1"
-      )
-      .get(nowSec - ATTRIBUTION_MATCH_WINDOW_SEC) as DownloadRecoverySession | undefined;
   }
 
   if (!session) return null;

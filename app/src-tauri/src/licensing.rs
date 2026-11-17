@@ -26,8 +26,8 @@ const DEFAULT_API: &str = "https://sweeprcleaner.com";
 const DEFAULT_PUBKEY_B64: &str = "t04hn-7TfW5RIemEhi4mKbZy6rHRYBO6HxeN5OOIR_8";
 /// Optional secondary Ed25519 public key for zero-downtime key rotation (`#32 JWT Rotation`).
 const BACKUP_PUBKEY_B64: Option<&str> = option_env!("SWEEPR_LICENSE_BACKUP_PUBKEY");
-/// Tolerate up to 24 hours of local CMOS / timezone / DST clock skew (`#19 Clock Skew`).
-pub const CLOCK_SKEW_LEEWAY_SECS: u64 = 24 * 3600;
+/// Tolerate up to 1 hour of local CMOS / timezone / DST clock skew (`#19 Clock Skew`).
+pub const CLOCK_SKEW_LEEWAY_SECS: u64 = 3600;
 pub const PROJECT_ID: &str = "cleaner";
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -667,9 +667,10 @@ impl Licensing {
         .await;
 
         match result {
-            Ok(resp) if resp.status == "unauthorized" && resp.token.is_none() => match &st.token {
-                Some((_, c)) if c.exp > now() => Ok(active_status(c, true)),
-                _ => Ok(LicenseStatus {
+            Ok(resp) if resp.status == "unauthorized" && resp.token.is_none() => {
+                st.token = None;
+                let _ = std::fs::remove_file(self.data_dir.join("entitlement.jws"));
+                Ok(LicenseStatus {
                     active: false,
                     status: "unauthorized".into(),
                     plan: None,
@@ -677,8 +678,8 @@ impl Licensing {
                     expires_at: None,
                     offline: false,
                     dev_unlock: false,
-                }),
-            },
+                })
+            }
             Ok(resp) => {
                 if let Some(ref rules) = resp.disabled_rules {
                     let _ = crate::safety::save_disabled_rules(&self.data_dir, rules);
@@ -966,7 +967,7 @@ impl Licensing {
         Ok(())
     }
 
-    /// Step 2 of linking an existing email purchase: verifies the 6-digit OTP (or a `ptk_...` pairing key) and binds this device.
+    /// Step 2 of linking an existing email purchase: verifies the 6-digit email OTP, full activation code (`SWEEPR-PRO-...`), or `ptk_...` pairing key and binds this device.
     pub async fn verify_email_otp(&self, email: &str, code: &str) -> AppResult<LicenseStatus> {
         let email = email.trim();
         let code = code.trim();
@@ -976,8 +977,14 @@ impl Licensing {
         if email.is_empty() || !email.contains('@') {
             return Err(AppError::License("Please enter a valid email address.".into()));
         }
-        if code.len() != 6 || !code.chars().all(|c| c.is_ascii_digit()) {
-            return Err(AppError::License("Please enter a valid 6-digit Subscription Key or ptk_... pairing key.".into()));
+        let is_six_digit_otp = code.len() == 6 && code.chars().all(|c| c.is_ascii_digit());
+        let is_full_activation_code = (10..=64).contains(&code.len())
+            && code.contains('-')
+            && code.chars().all(|c| c.is_ascii_alphanumeric() || c == '-');
+        if !is_six_digit_otp && !is_full_activation_code {
+            return Err(AppError::License(
+                "Please enter a valid full Activation Code (e.g. SWEEPR-PRO-XXXX-XXXX-XXXX), 6-digit email verification code, or ptk_... pairing key.".into(),
+            ));
         }
 
         let resp = self
@@ -1034,7 +1041,7 @@ impl Licensing {
         }
 
         Err(AppError::License(
-            "Invalid or expired 6-digit Subscription Key. Click 'Email me a new key' to receive a fresh code.".into(),
+            "Invalid or expired Activation Code or email login code. Click 'Email me a new key' to receive a fresh login code.".into(),
         ))
     }
 

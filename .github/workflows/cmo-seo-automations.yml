@@ -41,23 +41,31 @@ jobs:
 
       - name: Run Unified Cloud Automation Runner (A21 Google Cloud GSC + Drip + 100/100 Audit + A20 Advisor)
         working-directory: ./server
+        env:
+          INPUT_BATCH_COUNT: ${{ github.event.inputs.batch_count || '0' }}
+          INPUT_RUN_ADVISOR: ${{ github.event.inputs.run_weekly_product_advisor || 'false' }}
         run: |
-          COUNT="${{ github.event.inputs.batch_count || '0' }}"
+          COUNT=$(printf "%s" "$INPUT_BATCH_COUNT" | tr -cd '0-9')
+          COUNT="${COUNT:-0}"
           SKIP_DRIP=""
           if [ "$COUNT" = "0" ]; then
             SKIP_DRIP="--skip-drip"
           fi
           FORCE_WEEKLY=""
-          if [ "$(date -u +%u)" = "1" ] || [ "${{ github.event.inputs.run_weekly_product_advisor || 'false' }}" = "true" ]; then
+          if [ "$(date -u +%u)" = "1" ] || [ "$INPUT_RUN_ADVISOR" = "true" ]; then
             FORCE_WEEKLY="--force-weekly"
           fi
           npx tsx scripts/cloud-automation-runner.ts --count="$COUNT" $SKIP_DRIP --submit-sitemap --update-log $FORCE_WEEKLY
 
       - name: Commit Cloud SEO Artifacts, GSC Seed, Audit Log & Product Mockups (if changed)
+        env:
+          INPUT_BATCH_COUNT: ${{ github.event.inputs.batch_count || '0' }}
+          INPUT_RUN_ADVISOR: ${{ github.event.inputs.run_weekly_product_advisor || 'false' }}
         run: |
-          COUNT="${{ github.event.inputs.batch_count || '0' }}"
+          COUNT=$(printf "%s" "$INPUT_BATCH_COUNT" | tr -cd '0-9')
+          COUNT="${COUNT:-0}"
           IS_MONDAY=$([ "$(date -u +%u)" = "1" ] && echo "1" || echo "0")
-          RUN_WEEKLY="${{ github.event.inputs.run_weekly_product_advisor || 'false' }}"
+          RUN_WEEKLY="$INPUT_RUN_ADVISOR"
           if [ "$COUNT" = "0" ] && [ "$IS_MONDAY" = "0" ] && [ "$RUN_WEEKLY" != "true" ]; then
             echo "Skipping daily git commit/push while pSEO batch_count=0 during Core Update stabilization (GSC ingest continues via HTTPS below)."
             exit 0

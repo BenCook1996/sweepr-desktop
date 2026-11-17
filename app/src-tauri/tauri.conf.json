@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://sweeprcleaner.com; connect-src ipc: http://ipc.localhost https://ipc.localhost https://sweeprcleaner.com"
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://sweeprcleaner.com; connect-src ipc: http://ipc.localhost https://ipc.localhost https://sweeprcleaner.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
     }
   },
   "bundle": {

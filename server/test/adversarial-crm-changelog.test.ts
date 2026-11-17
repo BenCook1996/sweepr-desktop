@@ -399,24 +399,28 @@ describe("Milestone 5 Adversarial API, Injection & Concurrency Challenge Suite",
       // 15 writes
       for (let i = 0; i < 15; i++) {
         mixedOps.push(
-          app.request("/api/crm/seo/changelog", {
-            method: "POST",
-            headers: { authorization: AUTH_HEADER, "content-type": "application/json" },
-            body: JSON.stringify({
-              category: "content_information_gain",
-              title: `Mixed Load Write #${i + 1}`,
-              description: `Mixed Load write description #${i + 1}`,
-            }),
-          })
+          Promise.resolve(
+            app.request("/api/crm/seo/changelog", {
+              method: "POST",
+              headers: { authorization: AUTH_HEADER, "content-type": "application/json" },
+              body: JSON.stringify({
+                category: "content_information_gain",
+                title: `Mixed Load Write #${i + 1}`,
+                description: `Mixed Load write description #${i + 1}`,
+              }),
+            })
+          )
         );
       }
 
       // 15 reads (list + summary)
       for (let i = 0; i < 15; i++) {
         mixedOps.push(
-          app.request(i % 2 === 0 ? "/api/crm/seo/changelog?limit=50" : "/api/crm/seo/changelog/summary", {
-            headers: { authorization: AUTH_HEADER },
-          })
+          Promise.resolve(
+            app.request(i % 2 === 0 ? "/api/crm/seo/changelog?limit=50" : "/api/crm/seo/changelog/summary", {
+              headers: { authorization: AUTH_HEADER },
+            })
+          )
         );
       }
 

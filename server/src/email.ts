@@ -234,7 +234,7 @@ export async function sendSubscriptionEmail(
     ? `Hi,\n\nHere is your one-time login code for SWEEPR Cleaner: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nThe SWEEPR Cleaner Team`
     : isActivated
     ? activationCode
-      ? `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.${receiptTextBlock}\nYour Subscription Activation Key: ${activationCode}\nRegistered Email: ${recipient}\n\nHow to activate SWEEPR Cleaner Pro:\n1. Download SWEEPR Cleaner: https://sweeprcleaner.com/download\n2. Launch the app and open the "Account & Settings" tab (or visit https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp).\n3. Enter your email (${recipient}) and your 6-digit Subscription Key (${activationCode}) to unlock all Pro features.\n\nThank you for choosing SWEEPR Cleaner.`
+      ? `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.${receiptTextBlock}\nYour Subscription Activation Key: ${activationCode}\nRegistered Email: ${recipient}\n\nHow to activate SWEEPR Cleaner Pro:\n1. Download SWEEPR Cleaner: https://sweeprcleaner.com/download\n2. Launch the app and open the "Account & Settings" tab (or visit https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp).\n3. Enter your email (${recipient}) and your Subscription Key (${activationCode}) to unlock all Pro features.\n\nThank you for choosing SWEEPR Cleaner.`
       : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.${receiptTextBlock}\nThank you for choosing SWEEPR Cleaner.`
     : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe SWEEPR Cleaner Team`;
 
@@ -310,7 +310,7 @@ export async function sendSubscriptionEmail(
     safeActivationCode
       ? `
   <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
-    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #047857; margin-bottom: 8px;">Your 6-Digit Subscription Activation Key</div>
+    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #047857; margin-bottom: 8px;">Your Subscription Activation Key</div>
     <span style="font-family: monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #059669;">${safeActivationCode}</span>
     <div style="font-size: 12px; color: #475569; margin-top: 8px;">Registered Email: <strong>${safeRecipient}</strong></div>
   </div>`
@@ -321,7 +321,7 @@ export async function sendSubscriptionEmail(
     <ol style="margin: 0; padding-left: 18px; color: #475569; font-size: 13px; line-height: 1.7;">
       <li>Download and install <strong>SWEEPR Cleaner</strong> using the button below.</li>
       <li>Open the <strong>Account &amp; Settings</strong> tab inside the app.</li>
-      <li>Enter your email (<strong>${safeRecipient}</strong>) and your <strong>6-digit Subscription Key</strong>${safeActivationCode ? ` (<strong>${safeActivationCode}</strong>)` : ""} to unlock all Pro features immediately.</li>
+      <li>Enter your email (<strong>${safeRecipient}</strong>) and your <strong>SWEEPR-PRO-... Subscription Key</strong>${safeActivationCode ? ` (<strong>${safeActivationCode}</strong>)` : ""} to unlock all Pro features immediately.</li>
     </ol>
   </div>
   <div style="text-align: center; margin: 24px 0 16px 0;">

@@ -63,22 +63,24 @@ struct SweeprApp: App {
         }
         #if DEBUG
         let linked = AccountService.loadAccount()
+        var builder = Configuration.Builder(withAPIKey: apiKey)
+            .with(entitlementVerificationMode: .informational)
         if !linked.accountId.isEmpty {
-            Purchases.configure(withAPIKey: apiKey, appUserID: linked.accountId)
-        } else {
-            Purchases.configure(withAPIKey: apiKey)
+            builder = builder.with(appUserID: linked.accountId)
         }
+        Purchases.configure(with: builder.build())
         #else
         guard apiKey.hasPrefix("appl_") else {
             NSLog("Sweepr: Release build requires a production App Store RevenueCat API key (appl_...) – purchases are disabled.")
             return
         }
         let linked = AccountService.loadAccount()
+        var builder = Configuration.Builder(withAPIKey: apiKey)
+            .with(entitlementVerificationMode: .informational)
         if !linked.accountId.isEmpty {
-            Purchases.configure(withAPIKey: apiKey, appUserID: linked.accountId)
-        } else {
-            Purchases.configure(withAPIKey: apiKey)
+            builder = builder.with(appUserID: linked.accountId)
         }
+        Purchases.configure(with: builder.build())
         #endif
         guard Purchases.isConfigured else { return }
         Purchases.shared.attribution.setAttributes(["project_id": AppConfig.projectId])

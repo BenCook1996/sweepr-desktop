@@ -223,6 +223,11 @@ fn validate_scan_folder(dir: &str) -> AppResult<PathBuf> {
     if !root.is_absolute() {
         return Err(AppError::Other("Please enter the full (absolute) path to a folder.".into()));
     }
+    if is_protected_system_path(root) {
+        return Err(AppError::Other(
+            "Refusing to scan or modify a protected system or application directory.".into(),
+        ));
+    }
     let md = std::fs::symlink_metadata(root)
         .map_err(|e| AppError::Other(format!("Cannot access folder: {e}")))?;
     if safety::metadata_is_link_like(&md) {
@@ -233,6 +238,11 @@ fn validate_scan_folder(dir: &str) -> AppResult<PathBuf> {
     }
     let canon = std::fs::canonicalize(root)
         .map_err(|e| AppError::Other(format!("Cannot resolve folder path: {e}")))?;
+    if is_protected_system_path(&canon) {
+        return Err(AppError::Other(
+            "Refusing to scan or modify a protected system or application directory.".into(),
+        ));
+    }
     Ok(canon)
 }
 
@@ -862,6 +872,24 @@ pub fn delete_duplicates_in(
 
     let mut report = DuplicateCleanReport::default();
     for (path, size) in allowed_targets {
+        if is_protected_system_path(&path) {
+            report.files_skipped += 1;
+            continue;
+        }
+        let is_exec_ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|ext| {
+                matches!(
+                    ext.to_ascii_lowercase().as_str(),
+                    "exe" | "dll" | "sys" | "drv" | "ocx" | "msi" | "bat" | "cmd" | "ps1" | "vbs"
+                )
+            })
+            .unwrap_or(false);
+        if is_exec_ext {
+            report.files_skipped += 1;
+            continue;
+        }
         let Ok(md) = std::fs::symlink_metadata(&path) else {
             report.files_skipped += 1;
             continue;

@@ -577,7 +577,7 @@ object MobileCloudVault {
         require(password.length >= 8) { "Password must be at least 8 characters" }
         dir.mkdirs()
         val rng = SecureRandom()
-        val salt = getOrCreateDirSalt(dir)
+        val salt = ByteArray(SALT_LEN).also(rng::nextBytes)
         val headerIv = ByteArray(IV_LEN).also(rng::nextBytes)
         val bodyIv = ByteArray(IV_LEN).also(rng::nextBytes)
         val key = deriveKey(password, salt)
@@ -749,6 +749,20 @@ object MobileCloudVault {
     internal fun sanitizeRestoreFileName(originalName: String): String =
         File(originalName).name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim('.').ifBlank { "restored_file" }
 
+    private fun uniqueRestoreFile(dir: File, safeName: String): File {
+        var candidate = File(dir, safeName)
+        if (!candidate.exists()) return candidate
+        val dot = safeName.lastIndexOf('.')
+        val stem = if (dot > 0) safeName.substring(0, dot) else safeName
+        val ext = if (dot > 0) safeName.substring(dot) else ""
+        var counter = 1
+        while (candidate.exists() && counter < 10_000) {
+            candidate = File(dir, "${stem}_$counter$ext")
+            counter++
+        }
+        return candidate
+    }
+
     /**
      * Streams decryption directly into the user's Downloads folder using `CipherInputStream`
      * with a 64 KB buffer so restoring a 250 MB video never buffers the file in heap memory.
@@ -797,7 +811,7 @@ object MobileCloudVault {
                 "SWEEPR Restored",
             )
             if (dir.exists() || dir.mkdirs()) {
-                val f = File(dir, safeName)
+                val f = uniqueRestoreFile(dir, safeName)
                 try {
                     BufferedOutputStream(FileOutputStream(f), STREAM_BUFFER_SIZE).use { bos ->
                         decryptToStream(item.file, password, bos)
@@ -815,7 +829,7 @@ object MobileCloudVault {
             context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir,
             "Restored",
         ).apply { mkdirs() }
-        val outFile = File(outDir, safeName)
+        val outFile = uniqueRestoreFile(outDir, safeName)
         try {
             BufferedOutputStream(FileOutputStream(outFile), STREAM_BUFFER_SIZE).use { bos ->
                 decryptToStream(item.file, password, bos)
@@ -935,14 +949,9 @@ fun CloudSavingsScreen(
     LaunchedEffect(Unit) {
         val savedPw = withContext(Dispatchers.IO) { MobileCloudVault.getRememberedPassword(context) }
         rememberedPassword = savedPw
-        if (!savedPw.isNullOrEmpty()) {
-            vaultPassword = savedPw
-        }
-        val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, savedPw) }
+        val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, null) }
         vaultItems = list
-        if (!savedPw.isNullOrEmpty() && list.any { it.unlockedName != null }) {
-            vaultUnlocked = true
-        }
+        vaultUnlocked = false
     }
 
     val filePicker = rememberLauncherForActivityResult(
@@ -1291,7 +1300,9 @@ fun CloudSavingsScreen(
                                         Text(stringResource(R.string.vault_btn_restore), fontWeight = FontWeight.Bold)
                                     }
                                     TextButton(
+                                        enabled = vaultUnlocked,
                                         onClick = {
+                                            if (!vaultUnlocked) return@TextButton
                                             scope.launch {
                                                 withContext(Dispatchers.IO) { item.file.delete() }
                                                 vaultItems = withContext(Dispatchers.IO) {

@@ -374,20 +374,33 @@
               type="email"
               bind:value={linkEmail}
               placeholder="Account email"
-              style="flex: 1; min-width: 240px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border);"
+              style="flex: 1; min-width: 200px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border);"
             />
-            <button class="primary small-btn" disabled={busy} onclick={sendOtp}>
-              Send Code
-            </button>
+            <input
+              type="text"
+              maxlength="64"
+              bind:value={otpCode}
+              placeholder="Full activation code (optional)"
+              style="flex: 1; min-width: 200px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border);"
+            />
+            {#if otpCode.trim().length > 0}
+              <button class="primary small-btn" disabled={busy} onclick={verifyOtp}>
+                Activate
+              </button>
+            {:else}
+              <button class="primary small-btn" disabled={busy} onclick={sendOtp}>
+                Send Email Code
+              </button>
+            {/if}
           </div>
         {:else}
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <input
               type="text"
-              maxlength="6"
+              maxlength="64"
               bind:value={otpCode}
-              placeholder="6-digit code"
-              style="width: 150px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border); letter-spacing: 2px;"
+              placeholder="Full activation code or 6-digit email code"
+              style="min-width: 240px; padding: 9px 14px; border-radius: 9999px; border: 1px solid var(--border);"
             />
             <button class="primary small-btn" disabled={busy} onclick={verifyOtp}>
               Activate

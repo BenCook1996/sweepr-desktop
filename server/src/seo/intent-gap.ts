@@ -10,6 +10,7 @@ import {
 import { scanBloatWatchSignals } from "./bloat-watch.js";
 import { LOCKED_TEST_TITLE_SLUGS } from "./keywords.js";
 import type { SeoStore } from "./store.js";
+import { isSafeObjectKey } from "../security.js";
 
 export type SearchIntentType = "informational" | "navigational" | "commercial" | "transactional";
 
@@ -625,7 +626,7 @@ export function approveIntentGapRecommendation(
 
   if (input.action_type === "ctr_rewrite") {
     const slug = String(input.slug || "").trim().toLowerCase();
-    if (!slug) {
+    if (!slug || !isSafeObjectKey(slug)) {
       return { ok: false, error: "slug_required" };
     }
     const existingOverrides =

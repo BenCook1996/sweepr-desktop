@@ -1,6 +1,6 @@
 import type { Repo, Account } from "./db.js";
 import { randomToken, sha256 } from "./tokens.js";
-import { escapeHtml } from "./security.js";
+import { escapeHtml, isFullActivationCode, normalizeEmail, safeEqual } from "./security.js";
 import { dispatchTransactionalCustomerEmail } from "./download-recovery.js";
 
 export interface GiveawayConfig {
@@ -99,10 +99,10 @@ export function getGiveawayConfig(repo: Repo, nowSec = Math.floor(Date.now() / 1
     license_duration_days: 180,
     max_devices_pc: 1,
     max_devices_mobile: 0,
-    // Default window covers current QA/review period + 24h slot configurable via CRM
-    window_start_ts: nowSec - 3600,
-    window_end_ts: nowSec + 30 * 86400,
-    allow_preview_redemption: true,
+    // Fail-closed by default unless explicitly opened via CRM config or environment variables
+    window_start_ts: Number(process.env.GIVEAWAY_WINDOW_START_TS || 0),
+    window_end_ts: Number(process.env.GIVEAWAY_WINDOW_END_TS || 0),
+    allow_preview_redemption: process.env.GIVEAWAY_ALLOW_PREVIEW === "1",
     updated_at: nowSec,
   };
 
@@ -141,18 +141,15 @@ export function updateGiveawayConfig(
 
 export function isGiveawayWindowOpen(cfg: GiveawayConfig, nowSec = Math.floor(Date.now() / 1000)): boolean {
   if (cfg.allow_preview_redemption) return true;
+  if (!cfg.window_end_ts || cfg.window_end_ts <= 0) return false;
   return nowSec >= cfg.window_start_ts && nowSec <= cfg.window_end_ts;
 }
 
 export function isGiveawayCodeMatch(cfg: GiveawayConfig, rawCode: string): boolean {
   const cleaned = String(rawCode || "").trim().toUpperCase();
-  if (!cleaned) return false;
-  return (
-    cleaned === cfg.master_key_6digit.toUpperCase() ||
-    cleaned === cfg.promo_code.toUpperCase() ||
-    cleaned === DEFAULT_GOTD_KEY_6DIGIT ||
-    cleaned === DEFAULT_GOTD_PROMO_CODE
-  );
+  if (!cleaned || !isFullActivationCode(cleaned)) return false;
+  const promoCode = String(cfg.promo_code || DEFAULT_GOTD_PROMO_CODE).trim().toUpperCase();
+  return safeEqual(cleaned, promoCode) || safeEqual(cleaned, DEFAULT_GOTD_PROMO_CODE);
 }
 
 /**
@@ -173,13 +170,13 @@ export function redeemGiveawayLicense(
   const nowSec = opts.nowSec ?? Math.floor(Date.now() / 1000);
   const cfg = getGiveawayConfig(repo, nowSec);
 
-  const email = String(opts.email || "").trim().toLowerCase();
-  if (!email || !email.includes("@")) {
+  const email = normalizeEmail(opts.email);
+  if (!email) {
     return { ok: false, error: "invalid_email", message: "Please enter a valid email address." };
   }
 
   if (!isGiveawayCodeMatch(cfg, opts.code)) {
-    return { ok: false, error: "invalid_giveaway_key", message: "Invalid Giveaway activation key." };
+    return { ok: false, error: "invalid_giveaway_key", message: "Invalid Giveaway activation code. Please enter the full activation code." };
   }
 
   if (!isGiveawayWindowOpen(cfg, nowSec)) {
@@ -193,7 +190,23 @@ export function redeemGiveawayLicense(
   }
 
   let account: Account | undefined = repo.accountByEmail(email);
-  if (!account) {
+  if (account) {
+    const existingEnt = repo.entitlement(account.id);
+    const isPaidActive =
+      existingEnt &&
+      (existingEnt.status === "active" || existingEnt.status === "trialing") &&
+      existingEnt.plan !== "giveaway_6m" &&
+      (existingEnt.current_period_end ?? 0) > nowSec;
+    const hasDevicesOrCustomer =
+      Boolean(account.stripe_customer_id) || repo.devicesForAccount(account.id).length > 0;
+    if (isPaidActive || (hasDevicesOrCustomer && existingEnt?.plan !== "giveaway_6m")) {
+      return {
+        ok: false,
+        error: "existing_account_requires_email_otp",
+        message: "This email already has an active SWEEPR account. Please sign in with an email verification code.",
+      };
+    }
+  } else {
     const newId = `acc_gotd_${randomToken(10)}`;
     repo.createAccount(newId, sha256(randomToken(32)), email, null, {
       country: "GB",
@@ -205,34 +218,21 @@ export function redeemGiveawayLicense(
     return { ok: false, error: "account_error", message: "Could not initialize account." };
   }
 
-  // Never downgrade an existing paid multi-device subscriber
-  const existingEnt = repo.entitlement(account.id);
-  const isPaidActive =
-    existingEnt &&
-    (existingEnt.status === "active" || existingEnt.status === "trialing") &&
-    existingEnt.plan !== "giveaway_6m" &&
-    (existingEnt.current_period_end ?? 0) > nowSec;
+  const expiresAt = nowSec + cfg.license_duration_days * 86400;
+  const effectivePlan = "giveaway_6m";
 
-  const expiresAt =
-    isPaidActive && existingEnt?.current_period_end
-      ? existingEnt.current_period_end
-      : nowSec + cfg.license_duration_days * 86400;
+  repo.upsertEntitlement({
+    account_id: account.id,
+    status: "active",
+    plan: "giveaway_6m",
+    current_period_end: expiresAt,
+    cancel_at_period_end: 1,
+    stripe_subscription_id: `sub_gotd_${cfg.campaign_id}_${account.id}`,
+  });
 
-  const effectivePlan = isPaidActive && existingEnt?.plan ? existingEnt.plan : "giveaway_6m";
-
-  if (!isPaidActive) {
-    repo.upsertEntitlement({
-      account_id: account.id,
-      status: "active",
-      plan: "giveaway_6m",
-      current_period_end: expiresAt,
-      cancel_at_period_end: 1,
-      stripe_subscription_id: `sub_gotd_${cfg.campaign_id}_${account.id}`,
-    });
-  }
-
-  // Set 6-digit OTP in local store so the user can also immediately use 662026 in `/v1/account/verify-otp` or `/api/verify-otp`
-  repo.setOtp(`activation:${email}`, sha256(cfg.master_key_6digit), nowSec + 7 * 86400);
+  const fullActivationCode = String(cfg.promo_code || DEFAULT_GOTD_PROMO_CODE).trim().toUpperCase();
+  // Store only the full activation code hash (never a bare 6-digit master key) for new giveaway accounts
+  repo.setOtp(`activation:${email}`, sha256(fullActivationCode), nowSec + 7 * 86400);
 
   repo.db
     .prepare(
@@ -247,7 +247,7 @@ export function redeemGiveawayLicense(
       cfg.campaign_id,
       account.id,
       email,
-      String(opts.code).trim().toUpperCase(),
+      fullActivationCode,
       opts.deviceId ?? null,
       opts.ipHash ?? null,
       expiresAt,
@@ -281,11 +281,10 @@ export function redeemGiveawayLicense(
     email,
     plan: effectivePlan,
     expires_at: expiresAt,
-    max_devices_pc: isPaidActive ? 5 : cfg.max_devices_pc,
-    activation_key: cfg.master_key_6digit,
+    max_devices_pc: cfg.max_devices_pc,
+    activation_key: fullActivationCode,
     upgrade_url: `/order?plan=annual&coupon=${encodeURIComponent(cfg.upgrade_coupon)}&email=${encodeURIComponent(email)}`,
-    message:
-      "Your 6-Month SWEEPR Cleaner Pro License (1 Windows PC) is now active! Open SWEEPR Cleaner -> Account & Settings -> enter your email and 6-digit key 662026 to unlock Pro immediately.",
+    message: `Your 6-Month SWEEPR Cleaner Pro License (1 Windows PC) is now active! Open SWEEPR Cleaner -> Account & Settings -> enter your email and full activation code ${fullActivationCode} to unlock Pro immediately.`,
   };
 }
 
@@ -608,12 +607,12 @@ export function buildGiveawayReadmeTxt(cfg: GiveawayConfig): string {
     "   OPTION A — Activate Directly Inside the Desktop App (Fastest):",
     "   - Open SWEEPR Cleaner and click the 'Account / Settings' tab.",
     "   - Enter your email address and click 'Send Code'.",
-    `   - Enter the 6-digit Giveaway Activation Key: ${cfg.master_key_6digit}`,
+    `   - Enter the Giveaway Activation Key: ${cfg.promo_code}`,
     "   - Click 'Activate' — your PC is immediately unlocked for 6 months!",
     "",
     "   OPTION B — Activate on the Official Giveaway Web Page:",
     "   - Visit: https://sweeprcleaner.com/giveaway",
-    `   - Enter your email address and Giveaway Key: ${cfg.master_key_6digit} (or ${cfg.promo_code})`,
+    `   - Enter your email address and Giveaway Key: ${cfg.promo_code}`,
     "",
     "----------------------------------------------------------------------",
     "EXCLUSIVE 50% OFF UPGRADE FOR GIVEAWAY OF THE DAY USERS:",
@@ -633,7 +632,7 @@ export function buildGiveawayReadmeTxt(cfg: GiveawayConfig): string {
 export function renderGiveawayPageHtml(cfg: GiveawayConfig, nowSec = Math.floor(Date.now() / 1000)): string {
   const isOpen = isGiveawayWindowOpen(cfg, nowSec);
   const safePartner = escapeHtml(cfg.partner_name);
-  const safeKey = escapeHtml(cfg.master_key_6digit);
+  const safeKey = escapeHtml(cfg.promo_code);
   const safePromo = escapeHtml(cfg.promo_code);
   const safeCoupon = escapeHtml(cfg.upgrade_coupon);
 
@@ -838,7 +837,7 @@ export function renderGiveawayPageHtml(cfg: GiveawayConfig, nowSec = Math.floor(
         <ol style="margin: 8px 0 0; padding-left: 20px;">
           <li>Download &amp; launch <a href="/download" style="color:var(--emerald-dark);font-weight:700;">SWEEPRCleaner.exe</a> (5 MB native Rust installer, SSL.com Authenticode signed).</li>
           <li>Open the <strong>Account / Settings</strong> tab inside the app, enter your email address, and click <strong>Send Code</strong>.</li>
-          <li>Enter the 6-digit Giveaway Key <span class="key-pill">${safeKey}</span> and click <strong>Activate</strong>.</li>
+          <li>Enter your full Giveaway Key <span class="key-pill">${safeKey}</span> and click <strong>Activate</strong>.</li>
         </ol>
       </div>
     </div>

@@ -52,6 +52,10 @@ export function loadOrPersistFallbackSecrets(dbPath: string): {
   let envLicenseKey = (process.env.LICENSE_PRIVATE_KEY_B64 ?? "").trim();
   let envSessionSecret = (process.env.SESSION_SECRET ?? "").trim();
 
+  if (process.env.NODE_ENV === "production" && !envSessionSecret) {
+    throw new Error("FATAL: SESSION_SECRET must be explicitly configured in production");
+  }
+
   if (envLicenseKey && envSessionSecret) {
     return { licensePrivateKeyB64: envLicenseKey, sessionSecret: envSessionSecret };
   }

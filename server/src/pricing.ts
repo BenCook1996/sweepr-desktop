@@ -932,12 +932,7 @@ export async function resolvePricingForRequest(
       process.env.TRUST_CLOUDFLARE === "1" ||
       process.env.TRUST_CLOUDFLARE === "true" ||
       (!process.env.RAILWAY_ENVIRONMENT && !process.env.RENDER && process.env.TRUST_CLOUDFLARE !== "0");
-    const headerCountry =
-      (trustCloudflareHeader ? c.req.header("cf-ipcountry") : undefined) ||
-      c.req.header("x-vercel-ip-country") ||
-      c.req.header("cloudfront-viewer-country") ||
-      c.req.header("x-country-code") ||
-      c.req.header("x-appengine-country");
+    const headerCountry = trustCloudflareHeader ? c.req.header("cf-ipcountry") : undefined;
 
     if (headerCountry && /^[A-Za-z]{2}$/.test(headerCountry.trim()) && headerCountry.trim().toUpperCase() !== "XX") {
       return getPricingForCountryOrCurrency(headerCountry.trim().toUpperCase(), null);
@@ -974,7 +969,7 @@ export async function resolvePricingForRequest(
     }
   }
 
-  const tier1TzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
+  const tier1TzHint = allowQuery ? c.req.query("tz") : undefined;
   const tier1TzCountry = countryFromTimezone(tier1TzHint);
   if (tier1TzCountry && ["GB", "IE", "DE", "CH", "SE", "NO", "DK", "US", "CA", "AU", "NZ", "JP", "KR", "SG", "HK", "TW", "AE", "SA"].includes(tier1TzCountry)) {
     return getPricingForCountryOrCurrency(tier1TzCountry, null);
@@ -985,7 +980,7 @@ export async function resolvePricingForRequest(
     return getPricingForCountryOrCurrency(lookedUp, null);
   }
 
-  const tzHint = (allowQuery ? c.req.query("tz") : undefined) || c.req.header("x-timezone");
+  const tzHint = allowQuery ? c.req.query("tz") : undefined;
   const tzCountry = countryFromTimezone(tzHint);
   if (tzCountry) {
     return getPricingForCountryOrCurrency(tzCountry, null);

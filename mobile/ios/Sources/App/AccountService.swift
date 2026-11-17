@@ -554,7 +554,10 @@ enum AccountService {
         if let url = URL(string: token),
            let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let qTok = comps.queryItems?.first(where: { $0.name == "token" })?.value {
-            token = qTok
+            token = qTok.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard token.range(of: "^ptk_[A-Za-z0-9_-]{20,64}$", options: .regularExpression) != nil else {
+            throw NSError(domain: "SweeprAccount", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid QR pairing token."])
         }
         let deviceId = currentDeviceId()
         let res = try await requestJSON(
@@ -595,10 +598,16 @@ enum AccountService {
 
     static func approveDesktopQrChallenge(_ rawChallenge: String, current: LinkedSweeprAccount) async throws {
         var challenge = rawChallenge.trimmingCharacters(in: .whitespacesAndNewlines)
+        if challenge.hasPrefix("challenge:") {
+            challenge = String(challenge.dropFirst("challenge:".count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         if let url = URL(string: challenge),
            let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let qCh = comps.queryItems?.first(where: { $0.name == "challenge" || $0.name == "challenge_id" })?.value {
-            challenge = qCh
+            challenge = qCh.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard challenge.range(of: "^chk_[A-Za-z0-9_-]{20,64}$", options: .regularExpression) != nil else {
+            throw NSError(domain: "SweeprAccount", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid desktop QR challenge."])
         }
         _ = try await requestJSON(
             path: "/api/device-link/approve",
@@ -711,9 +720,20 @@ enum AccountService {
         bearerToken: String? = nil
     ) async throws -> [String: Any] {
         let base = AppConfig.apiURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard let url = URL(string: "\(base)\(path)") else {
+        guard let url = URL(string: "\(base)\(path)"),
+              let scheme = url.scheme?.lowercased() else {
             throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid API URL"])
         }
+        #if DEBUG
+        let isLocalDebug = scheme == "http" && (url.host == "localhost" || url.host == "127.0.0.1")
+        guard scheme == "https" || isLocalDebug else {
+            throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Insecure API URL blocked"])
+        }
+        #else
+        guard scheme == "https" else {
+            throw NSError(domain: "SweeprAccount", code: -1, userInfo: [NSLocalizedDescriptionKey: "Insecure API URL blocked"])
+        }
+        #endif
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.timeoutInterval = 10

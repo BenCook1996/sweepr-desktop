@@ -161,8 +161,9 @@ function scoreItemMatch(normInput: string, rawLower: string, item: CleanItem): n
 
 export function analyzeSafeToDeleteInput(rawInput: string): SafeToDeleteAnalysis {
   const lines = String(rawInput ?? "")
+    .slice(0, 16_384)
     .split(/\r?\n/)
-    .map((l) => l.trim())
+    .map((l) => l.trim().slice(0, 512))
     .filter((l) => l.length > 0 && !/^#|^\/\/|^"?path"?\s*[,;\t]/i.test(l))
     .slice(0, 100);
 

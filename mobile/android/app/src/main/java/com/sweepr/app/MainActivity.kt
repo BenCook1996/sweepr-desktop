@@ -221,12 +221,15 @@ class MainActivity : AppCompatActivity() {
             (data.host == "sweeprcleaner.com" || data.host == "www.sweeprcleaner.com") &&
             (data.path?.startsWith("/pair") == true)
         if (!isCustomScheme && !isHttpsAppLink) return null
-        val challenge = data.getQueryParameter("challenge")?.takeIf { it.isNotBlank() }
-        if (challenge != null) {
-            return if (challenge.startsWith("challenge:")) challenge else "challenge:$challenge"
+        val challenge = data.getQueryParameter("challenge")?.trim()?.removePrefix("challenge:")?.trim()
+        if (!challenge.isNullOrEmpty()) {
+            return if (Regex("^chk_[A-Za-z0-9_-]{20,64}$").matches(challenge)) "challenge:$challenge" else null
         }
-        val token = data.getQueryParameter("token")?.takeIf { it.isNotBlank() }
-        return token ?: data.toString()
+        val token = data.getQueryParameter("token")?.trim()
+        if (!token.isNullOrEmpty()) {
+            return if (Regex("^ptk_[A-Za-z0-9_-]{20,64}$").matches(token)) token else null
+        }
+        return null
     }
 
     private fun launchPlanPurchase(

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getActiveTelemetryTruthForSlug } from "./seo/telemetry-truth.js";
 import { getPublishedBloatWatchForCleanSlug } from "./seo/bloat-watch.js";
-import { escapeHtml as esc } from "./security.js";
+import { escapeHtml as esc, isSafeObjectKey } from "./security.js";
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -68,6 +68,7 @@ function rebuildCleanItemsMap() {
 rebuildCleanItemsMap();
 
 export function getCleanItemBySlug(category: string, slug: string): CleanItem | undefined {
+  if (!isSafeObjectKey(category) || !isSafeObjectKey(slug)) return undefined;
   getCleanItems();
   return cleanItemsMap.get(`${category}:${slug}`);
 }
@@ -84,12 +85,15 @@ function resolveIndexableRedirect(target: string): string {
 }
 
 export function getPseoRedirectTarget(category: string, slug: string): string | undefined {
+  if (!isSafeObjectKey(category) || !isSafeObjectKey(slug)) return undefined;
   getCleanItems();
   const key = `${category}:${slug}`;
   if (cleanItemsMap.has(key)) {
     return undefined;
   }
-  const direct = pseoRedirectsData[key];
+  const direct = Object.prototype.hasOwnProperty.call(pseoRedirectsData, key)
+    ? pseoRedirectsData[key]
+    : undefined;
   if (direct) {
     return resolveIndexableRedirect(direct);
   }
@@ -2118,14 +2122,22 @@ export function renderPseoPage(item: CleanItem): string {
                 var first = d && d.results && d.results[0];
                 if (!first) return;
                 out.classList.remove('hidden');
+                var escText = function(s) {
+                  return String(s || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                };
                 var badgeColor = first.verdict === 'SAFE_TO_DELETE' ? '#34d399' : first.verdict === 'DO_NOT_DELETE' ? '#f87171' : '#fbbf24';
                 out.innerHTML =
                   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-                  '<strong style="color:' + badgeColor + ';">' + (first.verdict_label || first.verdict) + ' — ' + (first.matched_name || '') + '</strong>' +
-                  '<span style="font-weight:700;color:#d1fae5;">Typical Space: ' + (first.avg_space || '${item.avgSpace}') + '</span>' +
+                  '<strong style="color:' + badgeColor + ';">' + escText(first.verdict_label || first.verdict) + ' — ' + escText(first.matched_name || '') + '</strong>' +
+                  '<span style="font-weight:700;color:#d1fae5;">Typical Space: ' + escText(first.avg_space || '${esc(item.avgSpace)}') + '</span>' +
                   '</div>' +
-                  '<div style="color:#e2e8f0;line-height:1.45;margin-bottom:6px;">' + (first.explanation || '') + '</div>' +
-                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${item.slug}" style="color:#34d399;font-weight:800;text-decoration:underline;" rel="nofollow">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
+                  '<div style="color:#e2e8f0;line-height:1.45;margin-bottom:6px;">' + escText(first.explanation || '') + '</div>' +
+                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${encodeURIComponent(item.slug)}" style="color:#34d399;font-weight:800;text-decoration:underline;" rel="nofollow">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
               })
               .catch(function() {
                 btn.disabled = false;
