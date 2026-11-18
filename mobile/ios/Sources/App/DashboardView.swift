@@ -97,9 +97,9 @@ struct DashboardView: View {
                                     ? "4K Large Videos / Duplicate Bursts"
                                     : "Duplicate Bursts / Screenshots / Cache",
                                 scanDurationMs: max(180, min(920, 190 + vm.mediaResult.allItems.count * 2)),
-                                referralCode: AccountService.shared.referralCode.isEmpty
+                                referralCode: vm.linkedAccount.referralCode.isEmpty
                                     ? "SWP-IOS2026"
-                                    : AccountService.shared.referralCode
+                                    : vm.linkedAccount.referralCode
                             )
                         }
                     }
@@ -766,7 +766,7 @@ struct DashboardView: View {
                     .padding(.leading, 56)
 
                 NavigationLink(
-                    destination: CalendarCleanerView(vm: vm)
+                    destination: ContactsCleanerView(vm: vm, initialMode: 2)
                 ) {
                     moreToolRow(
                         icon: "calendar.badge.clock",
@@ -992,9 +992,9 @@ struct CleaningCompleteView: View {
                         reclaimedBytes: max(summary.removedBytes, 2_800_000_000),
                         topCulprit: "4K Large Videos / Duplicate Bursts / Xcode",
                         scanDurationMs: 284,
-                        referralCode: AccountService.shared.referralCode.isEmpty
+                        referralCode: vm.linkedAccount.referralCode.isEmpty
                             ? "SWP-IOS2026"
-                            : AccountService.shared.referralCode
+                            : vm.linkedAccount.referralCode
                     )
 
                     if !vm.hasBatteryCare {

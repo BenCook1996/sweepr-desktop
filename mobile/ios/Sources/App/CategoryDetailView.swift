@@ -1970,10 +1970,15 @@ struct SingleMediaListView: View {
 // MARK: - Contacts & Old Calendar Events Cleaner View (#18)
 struct ContactsCleanerView: View {
     @ObservedObject var vm: AppViewModel
-    @State private var selectedMode = 0 // 0 = Duplicates, 1 = Incomplete, 2 = Old Calendar Events (>1 yr)
+    @State private var selectedMode: Int // 0 = Duplicates, 1 = Incomplete, 2 = Old Calendar Events (>1 yr)
     @State private var showMergeConfirm = false
     @State private var showIncompleteDeleteConfirm = false
     @State private var showCalendarDeleteConfirm = false
+
+    init(vm: AppViewModel, initialMode: Int = 0) {
+        self.vm = vm
+        _selectedMode = State(initialValue: initialMode)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -2001,6 +2006,9 @@ struct ContactsCleanerView: View {
         .navigationTitle("Contacts & Calendar")
         .task {
             await vm.requestContactsAndScan()
+            if selectedMode == 2 {
+                await vm.scanOldCalendarEvents()
+            }
         }
         .confirmationDialog(
             "Smart Merge \(vm.selectedContactGroupIDs.count) Contact Group(s)?",
