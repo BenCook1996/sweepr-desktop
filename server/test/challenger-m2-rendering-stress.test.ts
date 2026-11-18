@@ -252,25 +252,15 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
         `Guide ${slug} BreadcrumbList must have >= 3 items`
       );
 
-      // 3. HowTo or FAQPage node
-      const hasHowTo = types.includes("HowTo");
-      const hasFaq = types.includes("FAQPage");
+      // 3. Valid TechArticle node (zero deprecated HowTo or FAQPage)
+      assert.equal(types.includes("HowTo"), false, `Guide ${slug} must not emit deprecated HowTo schema`);
+      assert.equal(types.includes("FAQPage"), false, `Guide ${slug} must not emit deprecated FAQPage schema`);
       assert.ok(
-        hasHowTo || hasFaq,
-        `Guide ${slug} must contain HowTo or FAQPage node, found types: ${types.join(", ")}`
+        types.includes("TechArticle"),
+        `Guide ${slug} must contain TechArticle node, found types: ${types.join(", ")}`
       );
-
-      if (hasHowTo) {
-        const howTo = nodes.find((n: any) => n["@type"] === "HowTo");
-        assert.ok(Array.isArray(howTo.step) && howTo.step.length > 0, `Guide ${slug} HowTo must have steps`);
-      }
-      if (hasFaq) {
-        const faq = nodes.find((n: any) => n["@type"] === "FAQPage");
-        assert.ok(
-          Array.isArray(faq.mainEntity) && faq.mainEntity.length > 0,
-          `Guide ${slug} FAQPage must have mainEntity questions`
-        );
-      }
+      const article = nodes.find((n: any) => n["@type"] === "TechArticle");
+      assert.ok(article?.headline && article?.author && article?.mainEntityOfPage, `Guide ${slug} TechArticle must include headline, author, and mainEntityOfPage`);
     }
   });
 

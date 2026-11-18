@@ -13,6 +13,7 @@ const BOT_PATTERNS: Array<[string, RegExp]> = [
   ["Google-Extended", /Google-Extended/i],
   ["Googlebot", /Googlebot|Google-InspectionTool|GoogleOther/i],
   ["Bingbot", /bingbot/i],
+  ["AdIdxBot", /adidxbot/i],
   ["Applebot", /Applebot/i],
   ["DuckDuckBot", /DuckDuckBot|DuckAssistBot/i],
   ["YandexBot", /YandexBot/i],

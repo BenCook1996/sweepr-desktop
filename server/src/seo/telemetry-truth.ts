@@ -1,5 +1,5 @@
 import { classifyPseoCluster, getCleanItems, type CleanItem, type PseoClusterId } from "../pseo.js";
-import { listBloatWatchPosts, type BloatWatchPost } from "./bloat-watch.js";
+import { isLiveIndexNowAllowed, listBloatWatchPosts, type BloatWatchPost } from "./bloat-watch.js";
 import type { SeoStore } from "./store.js";
 import { isSafeObjectKey } from "../security.js";
 
@@ -192,7 +192,7 @@ export function refreshAllTelemetryTruthCache(store: SeoStore): TelemetryTruthSu
 }
 
 function triggerTelemetryTruthIndexNowPing(urls: string[]) {
-  if (!urls.length || process.env.NODE_ENV === "test") return;
+  if (!urls.length || !isLiveIndexNowAllowed()) return;
   const payload = {
     host: "sweeprcleaner.com",
     key: INDEXNOW_KEY,

@@ -3,6 +3,19 @@ import type { SeoStore } from "./store.js";
 
 const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
 
+/** Returns true only when live IndexNow pings are allowed outside automated test runs. */
+export function isLiveIndexNowAllowed(): boolean {
+  const isTestRun =
+    process.env.NODE_ENV === "test" ||
+    Boolean(process.env.NODE_TEST_CONTEXT) ||
+    process.execArgv.includes("--test") ||
+    process.argv.includes("--test");
+  return (
+    !isTestRun &&
+    (process.env.ALLOW_LIVE_INDEXNOW === "1" || process.env.NODE_ENV === "production")
+  );
+}
+
 export interface BloatWatchMeasurements {
   before_gb?: number | null;
   after_gb?: number | null;
@@ -789,7 +802,7 @@ export async function publishBloatWatchPost(
 
   const publicUrl = `${siteUrl.replace(/\/$/, "")}/bloat-watch/${existing.slug}`;
   let pinged = false;
-  if (pingSearchEngines && siteUrl.includes("sweeprcleaner.com")) {
+  if (pingSearchEngines && siteUrl.includes("sweeprcleaner.com") && isLiveIndexNowAllowed()) {
     try {
       const res = await fetch("https://api.indexnow.org/indexnow", {
         method: "POST",

@@ -465,11 +465,11 @@ const CLUSTER_PROFILES: Record<PseoClusterId, ClusterProfile> = {
     id: "win_update",
     label: "Windows Update, Servicing & Installer Caches",
     badge: "🪟 Windows Servicing & Update Store",
-    sectionTitle: (item) => `How Windows Servicing & Installer Packages Accumulate in ${item.name}`,
+    sectionTitle: (item) => `${item.name}: Windows Architecture & Safe Storage Pruning`,
     leadParagraph: (item) =>
-      `Windows Component-Based Servicing (CBS), the Windows Update Agent (wuauserv), and WiX/Burn MSI bootstrapper engines stage compressed cabinet (.cab), express delta (.esd), and superseded side-by-side assemblies inside ${item.path}. Windows retains many of these payload packages so you can roll back recent cumulative updates or repair installed Visual C++ / .NET runtimes without internet access.`,
+      `${item.whatIsIt} Inside <code>${item.path}</code>, Windows tracks servicing manifests, hard-linked assemblies, or staged installer bundles differently from normal user documents, which is why standard right-click properties and casual Disk Cleanup passes either misreport or skip ${item.avgSpace} of reclaimable overhead.`,
     mechanicsParagraph: (item) =>
-      `However, once cumulative updates are superseded by newer monthly rollups—or after MSI applications are uninstalled—gigabytes of orphaned payloads remain behind in ${item.path}. Following the verified cleanup procedure for ${item.name} reclaims ${item.avgSpace} while preserving active servicing manifests and currently registered uninstaller packages.`,
+      `${item.whatHappens} Starting with safe verification (for example: <em>${item.manualSteps?.[0] || "inspecting the target folder safely"}</em>) avoids removing active rollback states or registered MSI repair manifests while recovering full C: drive headroom.`,
     protectedSummary:
       "Active Windows system binaries, registered MSI repair manifests for installed apps, and current security update state stay intact.",
     removedSummary:
@@ -1164,7 +1164,14 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
           <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">
             Exact Windows <code class="text-emerald-200">%LOCALAPPDATA%</code> &amp; <code class="text-emerald-200">%USERPROFILE%</code> Target Paths:
           </div>
-          <div id="bloatCalcPathsList" class="space-y-1.5 font-mono text-xs text-emerald-100 bg-black/40 p-3.5 rounded-lg border border-emerald-500/20 max-h-48 overflow-y-auto"></div>
+          <div id="bloatCalcPathsList" class="space-y-1.5 font-mono text-xs text-emerald-100 bg-black/40 p-3.5 rounded-lg border border-emerald-500/20 max-h-48 overflow-y-auto">
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\NVIDIA\DXCache</span><span class="text-emerald-400 font-bold">Steam &amp; NVIDIA DXCache</span></div>
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>C:\Program Files (x86)\Steam\steamapps\shadercache</span><span class="text-emerald-400 font-bold">Steam &amp; NVIDIA DXCache</span></div>
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%UserProfile%\.cache\huggingface\hub</span><span class="text-emerald-400 font-bold">ComfyUI &amp; HuggingFace</span></div>
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\pip\Cache</span><span class="text-emerald-400 font-bold">ComfyUI &amp; HuggingFace</span></div>
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%UserProfile%\.ollama\models\blobs</span><span class="text-emerald-400 font-bold">Ollama &amp; LM Studio</span></div>
+            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\JetBrains</span><span class="text-emerald-400 font-bold">JetBrains IDEs &amp; Cursor</span></div>
+          </div>
           <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-200/80">
             <span>🟢 100% Non-Destructive: Saved logins, game saves &amp; active checkpoints stay untouched.</span>
             <a href="/tools/pc-cache-calculator" class="text-emerald-300 underline font-bold">Permalink: /tools/pc-cache-calculator</a>
@@ -1547,7 +1554,7 @@ export function renderPseoDirectory(): string {
     <section class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
       <h2 class="text-xl font-bold text-gray-900 mb-2">Compare SWEEPR Cleaner vs. Legacy Windows &amp; Mac Cleaners (2026 Benchmarks)</h2>
       <p class="text-xs text-gray-600 mb-5">
-        See how SWEEPR's 5.8 MB native Rust engine compares against Windows and macOS utilities across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
+        See how SWEEPR's 6.52 MB native Rust engine compares against Windows and macOS utilities across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
         <a href="/vs/ccleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CCleaner &rarr;</a>
@@ -1857,25 +1864,23 @@ export function renderPseoPage(item: CleanItem): string {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "HowTo",
-        name: `How to Clean ${item.name} Safely`,
-        description: `Step-by-step instructions to reclaim ${item.avgSpace} by cleaning ${item.name}.`,
-        step: item.manualSteps.map((s, idx) => ({
-          "@type": "HowToStep",
-          position: idx + 1,
-          text: s,
-        })),
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: faqItems.map((f) => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: f.a,
-          },
-        })),
+        "@type": "TechArticle",
+        "@id": `${canonicalUrl}#article`,
+        headline: pageTitle,
+        description: pageDesc,
+        proficiencyLevel: "Beginner",
+        datePublished: "2026-11-01",
+        dateModified: "2026-11-18",
+        author: {
+          "@type": "Person",
+          name: "Benjamin Cook",
+          jobTitle: "Founder & Systems Engineer",
+          url: "https://github.com/BenCook1996",
+        },
+        publisher: {
+          "@id": "https://sweeprcleaner.com/#organization",
+        },
+        mainEntityOfPage: canonicalUrl,
       },
       {
         "@type": "BreadcrumbList",
@@ -1916,6 +1921,8 @@ export function renderPseoPage(item: CleanItem): string {
           "https://www.softpedia.com/get/Tweak/System-Tweak/SWEEPR-Cleaner.shtml",
           "https://community.chocolatey.org/packages/sweepr-cleaner/0.1.0",
           "https://www.producthunt.com/products/sweepr-cleaner",
+          "https://www.indiehackers.com/product/sweepr-cleaner",
+          "https://devhunt.org/tool/sweepr-cleaner",
         ],
       },
     ],
@@ -1980,6 +1987,28 @@ export function renderPseoPage(item: CleanItem): string {
           ? "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)"
           : `How to Clean ${item.name}`
       }</h1>
+      <p id="ai-direct-verdict" class="text-sm md:text-base text-gray-800 font-medium leading-relaxed bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 mb-3">${(() => {
+        const prefix = item.safeToDelete ? "Yes, it is safe to delete" : "Use caution before cleaning";
+        const core = `${prefix} ${item.name} at ${item.path} to reclaim ${item.avgSpace} without deleting personal files or saved logins.`;
+        const tailText = "Verify your folder path in the checker below before cleaning.";
+        const baseCount = `${core} ${tailText}`.trim().split(/\s+/).length;
+        const sentences = String(item.whatHappens || "")
+          .trim()
+          .split(/(?<=[.!?])\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        let extra = "";
+        const firstSentence = sentences[0] || "";
+        const firstWords = firstSentence ? firstSentence.split(/\s+/).length : 0;
+        if (firstSentence && baseCount + firstWords <= 60) {
+          extra = `${firstSentence} `;
+        } else if (baseCount < 42) {
+          extra = item.safeToDelete
+            ? "Windows and your apps recreate any needed cache files automatically. "
+            : "Back up active project files and confirm pending updates first. ";
+        }
+        return `${core} ${extra}<a href="#sweepr-inline-checker-widget" class="text-emerald-800 underline font-bold">Verify your folder path in the checker below</a> before cleaning.`;
+      })()}</p>
       <div class="flex flex-wrap gap-3 items-center text-sm">
         <span class="px-3 py-1 rounded-full font-bold text-xs ${
           item.safeToDelete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
@@ -1992,7 +2021,7 @@ export function renderPseoPage(item: CleanItem): string {
         <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
         </svg>
-        <span>Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook</span>
+        <span>Updated <time datetime="2026-11-18">18 Nov 2026</time> · Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook (<a href="https://github.com/BenCook1996" rel="author" class="underline font-bold">Author Profile</a>)</span>
       </div>
       ${
         isStreamDeck
@@ -2065,7 +2094,7 @@ export function renderPseoPage(item: CleanItem): string {
     <div id="sweepr-inline-checker-widget" class="bg-gradient-to-br from-emerald-950 via-gray-900 to-gray-900 text-white rounded-2xl p-6 shadow-md mb-8 border border-emerald-500/30">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
         <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">⚡ Instant Folder Safety Verifier &amp; 1-Click Cleaner</span>
-        <span class="text-[11px] text-gray-300">5 MB Native Rust Engine · 7-Day Undo Quarantine</span>
+        <span class="text-[11px] text-gray-300">6.52 MB Native Rust Engine · 7-Day Undo Quarantine</span>
       </div>
       <h2 class="text-base md:text-lg font-extrabold text-white mb-1.5">Verify Any Windows Folder Path or Clean ${item.name} in 1 Click</h2>
       <p class="text-xs text-gray-300 mb-3">
@@ -2260,14 +2289,14 @@ export function renderPseoPage(item: CleanItem): string {
         <div>
           <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full mb-1.5">⚡ Interactive 1-Click Tool</span>
           <h2 class="text-base font-extrabold text-gray-900">${esc(matchedTool.label)} (Free ${esc(matchedTool.savings)})</h2>
-          <p class="text-xs text-gray-600 mt-0.5">Paste your PowerShell folder scan output or download the 5.8 MB signed Rust cleaner for ${esc(item.name)}.</p>
+          <p class="text-xs text-gray-600 mt-0.5">Paste your PowerShell folder scan output or download the 6.52 MB signed Rust cleaner for ${esc(item.name)}.</p>
         </div>
         <a href="/tools/${matchedTool.slug}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs no-underline whitespace-nowrap shadow-sm">
           Open ${esc(matchedTool.label)} &rarr;
         </a>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-        <span class="font-semibold text-gray-800">Why Windows &amp; Mac users switch to SWEEPR (5.8 MB Rust, Zero Telemetry Bloat):</span>
+        <span class="font-semibold text-gray-800">Why Windows &amp; Mac users switch to SWEEPR (6.52 MB Rust, Zero Telemetry Bloat):</span>
         <div class="flex flex-wrap gap-3 font-bold">
           <a href="/vs/ccleaner" class="text-emerald-700 hover:underline">SWEEPR vs CCleaner</a>
           <a href="/alternatives/ccleaner" class="text-emerald-700 hover:underline">Best CCleaner Alternative</a>

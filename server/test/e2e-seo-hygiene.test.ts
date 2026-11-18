@@ -728,7 +728,7 @@ describe("E2E SEO Hygiene Track — Tier 3: Cross-Feature Interactions & Parity"
     }
   });
 
-  test("TC-T3-JSONLD-01: Multi-entity JSON-LD graph integrity (HowTo, FAQPage, Organization)", async () => {
+  test("TC-T3-JSONLD-01: Multi-entity JSON-LD graph integrity (TechArticle, BreadcrumbList, Organization)", async () => {
     const res = await app.request("/clean/app/steam-depotcache");
     const html = await res.text();
 
@@ -740,7 +740,9 @@ describe("E2E SEO Hygiene Track — Tier 3: Cross-Feature Interactions & Parity"
 
     assert.ok(types.includes("Organization"), "JSON-LD must contain Organization");
     assert.ok(types.includes("BreadcrumbList"), "JSON-LD must contain BreadcrumbList");
-    assert.ok(types.includes("HowTo") || types.includes("FAQPage"), "JSON-LD must contain HowTo or FAQPage");
+    assert.ok(types.includes("TechArticle"), "JSON-LD must contain TechArticle");
+    assert.equal(types.includes("HowTo"), false, "JSON-LD must not emit deprecated HowTo");
+    assert.equal(types.includes("FAQPage"), false, "JSON-LD must not emit deprecated FAQPage");
   });
 });
 

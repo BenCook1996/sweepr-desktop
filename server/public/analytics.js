@@ -383,6 +383,14 @@
 
     // 4. Fire page-entry funnel events AFTER providers are initialized
     const path = window.location.pathname || '/';
+    if (attr.text_fragment || attr.ai_source) {
+      window.sweeprTrack('ai_overview_fragment', {
+        text_fragment: attr.text_fragment || undefined,
+        ai_source: attr.ai_source || 'google_ai_overview',
+        landing_page: path,
+        transport_type: 'beacon'
+      });
+    }
     if (/^\/(?:de\/|fr\/|es\/)?pricing(?:\.html)?$/i.test(path)) {
       window.sweeprTrack('view_pricing', { transport_type: 'beacon' });
     }

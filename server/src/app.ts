@@ -409,6 +409,10 @@ export function createApp(deps: AppDeps) {
     if (p === "/pad.xml") {
       c.res.headers.set("X-Robots-Tag", "noindex, follow");
     }
+    if ((c.req.query("currency") || c.req.query("country")) && !c.res.headers.has("X-Robots-Tag")) {
+      c.res.headers.set("X-Robots-Tag", "noindex, follow");
+      c.res.headers.set("Cache-Control", "private, no-store");
+    }
     if (/^\/(?:de|fr|es)(?:\/|$)/.test(p) && !p.includes("/order") && !c.res.headers.has("X-Robots-Tag")) {
       c.res.headers.set("X-Robots-Tag", "noindex, follow");
     }
@@ -423,9 +427,7 @@ export function createApp(deps: AppDeps) {
       p === "/checkout" ||
       p.startsWith("/checkout/") ||
       p === "/pair" ||
-      p === "/safe-to-delete" ||
-      p === "/delete-account" ||
-      p.startsWith("/tools/")
+      p === "/delete-account"
     ) {
       c.res.headers.set("Cache-Control", "private, no-store, no-cache, must-revalidate");
       return;
@@ -982,11 +984,21 @@ export function createApp(deps: AppDeps) {
   app.get("/sitemap.xml", (c) => {
     const file = "./public/sitemap.xml";
     if (!existsSync(file)) return c.notFound();
+    const cleanDataMtime = (() => {
+      try {
+        return new Date(statSync("./src/data/clean-items.json").mtimeMs).toISOString().slice(0, 10);
+      } catch {
+        return "2026-11-18";
+      }
+    })();
     let xml = readFileSync(file, "utf-8");
     xml = xml.replace(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>\s*/gi, (block, loc) => {
       const m = String(loc || "").match(/\/clean\/[^/]+\/([a-z0-9-]+)$/i);
       if (m && isPseoSlugNoindexed(m[1])) {
         return "";
+      }
+      if (m) {
+        return block.replace(/<lastmod>[^<]+<\/lastmod>/i, `<lastmod>${cleanDataMtime}</lastmod>`);
       }
       return block;
     });

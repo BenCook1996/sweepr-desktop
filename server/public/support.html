@@ -32,44 +32,19 @@
         "@id": "https://sweeprcleaner.com/support#contact",
         "url": "https://sweeprcleaner.com/support",
         "name": "SWEEPR Cleaner Support & Help Center",
-        "description": "Contact SWEEPR Cleaner support for technical assistance, billing inquiries, or subscription management."
-      },
-      {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How do I manage or cancel my SWEEPR Cleaner subscription?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Visit the Customer Portal at https://sweeprcleaner.com/login and enter your email address to view your SWEEPR-PRO-... activation key, update payment methods, or cancel anytime in one click."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How do I request a refund under the 14-day money-back guarantee?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Send a message using the Support form on https://sweeprcleaner.com/support with your account email within 14 days of purchase for a full refund."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Which Windows operating systems and architectures are supported?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "SWEEPR Cleaner is fully compatible with Windows 11 (all versions including 24H2 and 23H2) and Windows 10 (64-bit and 32-bit). It is a standalone, lightweight native application under 15MB that requires no extra runtime dependencies."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do I need administrator permissions to run SWEEPR Cleaner?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Standard user cache and browser cleaning functions operate without elevation. Deep system maintenance (such as Windows Update cache purging) prompts standard Windows UAC confirmation to safely clear locked system areas."
-            }
+        "description": "Contact SWEEPR Cleaner support for technical assistance, billing inquiries, or subscription management.",
+        "mainEntity": {
+          "@type": "Organization",
+          "name": "SWEEPR Cleaner",
+          "url": "https://sweeprcleaner.com/",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "support@sweeprcleaner.com",
+            "url": "https://sweeprcleaner.com/support",
+            "availableLanguage": ["en", "de", "fr", "es"]
           }
-        ]
+        }
       },
       {
         "@type": "BreadcrumbList",
@@ -139,7 +114,7 @@
           </div>
         </div>
       </div>
-      <a href="/login" class="btn btn-ghost text-sm">Login</a>
+      <a href="/login" rel="nofollow" class="btn btn-ghost text-sm">Login</a>
       <a href="/download" class="hidden sm:inline-flex btn btn-go gap-2" rel="nofollow">
         <span>Get SWEEPR Cleaner</span>
         <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -151,12 +126,13 @@
     <h1 class="text-4xl font-black mb-6 text-gray-900">How can we help?</h1>
     <p class="text-lg text-gray-600 mb-12">Our team is here to assist you with any questions or technical issues.</p>
     
-    <h2 class="sr-only">Support &amp; Self-Service Options</h2>
+    <h2 class="text-xl font-bold text-gray-900 mb-6 text-left">Support &amp; Self-Service Options</h2>
     <div class="grid md:grid-cols-2 gap-8 text-left">
       <div class="glass-card p-8">
         <div class="text-3xl mb-4">📧</div>
         <h3 class="text-xl font-bold mb-2 text-gray-900">Contact Support</h3>
         <p class="text-gray-600 mb-4 text-sm">Send a message directly to our support team for technical assistance, billing inquiries, or refund requests. Our engineering team typically responds within 2 hours, 24/7.</p>
+        <p class="text-xs text-gray-500 mb-4">Direct email: <a href="mailto:support@sweeprcleaner.com" class="text-emerald-700 font-semibold underline">support@sweeprcleaner.com</a> &middot; Verified Publisher: Benjamin Cook</p>
         <form id="supportForm" class="space-y-3" onsubmit="submitSupportForm(event)">
           <div>
             <input type="email" id="supEmail" required placeholder="Your email address" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-emerald-500" />
@@ -178,7 +154,7 @@
           <h3 class="text-xl font-bold mb-2 text-gray-900">Customer Portal</h3>
           <p class="text-gray-600 mb-4 text-sm">Manage your subscription, view your SWEEPR-PRO-... Activation Code, update payment methods, or cancel anytime.</p>
         </div>
-        <a href="/login" class="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Go to Portal &rarr;</a>
+        <a href="/login" rel="nofollow" class="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">Go to Portal &rarr;</a>
       </div>
     </div>
 
@@ -213,7 +189,7 @@
         <div>
           <h3 class="text-base font-bold text-gray-900 mb-1">Which Windows versions and architectures are supported?</h3>
           <p class="text-sm text-gray-600 leading-relaxed">
-            SWEEPR Cleaner is engineered specifically for Windows 11 (including versions 24H2, 23H2, and earlier) as well as Windows 10 (both 64-bit and 32-bit). It is compiled as a standalone, ultra-lean native binary under 15 MB with zero runtime dependencies like .NET or Java.
+            SWEEPR Cleaner is engineered specifically for Windows 11 (including versions 24H2, 23H2, and earlier) as well as Windows 10 (both 64-bit and 32-bit). It is compiled as a standalone, ultra-lean native binary (6.52 MB) with zero runtime dependencies like .NET or Java.
           </p>
         </div>
         <div>

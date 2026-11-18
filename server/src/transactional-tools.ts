@@ -476,15 +476,12 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         },
       },
       {
-        "@type": "FAQPage",
-        mainEntity: tool.faqs.map((f) => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: f.a,
-          },
-        })),
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
+          { "@type": "ListItem", position: 2, name: "Tools", item: "https://sweeprcleaner.com/tools" },
+          { "@type": "ListItem", position: 3, name: tool.shortName, item: canonicalUrl },
+        ],
       },
     ],
   });
@@ -571,7 +568,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       <div class="nav-links">
         <a href="/tools">All 10 Cleaner Tools</a>
         <a href="/safe-to-delete">Safe-to-Delete Checker</a>
-        <a href="/clean">367 Folder Guides</a>
+        <a href="/clean">377 Folder Guides</a>
         <a href="/bloat-watch">Bloat Watch</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
@@ -581,7 +578,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
 
     <header style="background:#ffffff;border:1px solid var(--border);border-radius:22px;padding:26px 24px;margin-bottom:22px;box-shadow:0 8px 28px rgba(17,22,19,0.05);">
       <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:11.5px;font-weight:800;margin-bottom:10px;">
-        ${escapeHtml(tool.heroBadge)} &bull; SSL.COM AUTHENTICODE SIGNED (5 MB)
+        ${escapeHtml(tool.heroBadge)} &bull; SSL.COM AUTHENTICODE SIGNED (6.52 MB)
       </div>
       <h1 style="font-size:clamp(26px,3.8vw,36px);line-height:1.15;margin:0 0 10px;">
         ${escapeHtml(tool.h1)}
@@ -798,7 +795,7 @@ export function renderTransactionalToolsHub(): string {
       </a>
       <div class="nav-links">
         <a href="/safe-to-delete">Safe-to-Delete Checker</a>
-        <a href="/clean">367 Folder Guides</a>
+        <a href="/clean">377 Folder Guides</a>
         <a href="/bloat-watch">Bloat Watch</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>

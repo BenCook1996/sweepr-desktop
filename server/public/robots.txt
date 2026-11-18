@@ -8,6 +8,8 @@ Disallow: /order
 Disallow: /login
 Disallow: /download?
 Disallow: /download/
+Disallow: /*?*currency=
+Disallow: /*?*country=
 Disallow: /share/
 Disallow: /ios-app
 Disallow: /r/

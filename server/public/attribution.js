@@ -83,6 +83,26 @@
       irclickid: params.get('irclickid') || '',
       ref: params.get('ref') || params.get('aff') || params.get('referral') || '',
       referrer: document.referrer || '',
+      ai_source: (function (ref) {
+        const r = String(ref || '').toLowerCase();
+        if (!r) return '';
+        if (r.includes('chatgpt.com') || r.includes('chat.openai.com')) return 'chatgpt';
+        if (r.includes('perplexity.ai')) return 'perplexity';
+        if (r.includes('claude.ai')) return 'claude';
+        if (r.includes('gemini.google.com')) return 'gemini';
+        if (r.includes('copilot.microsoft.com')) return 'copilot';
+        return '';
+      })(document.referrer),
+      text_fragment: (function () {
+        try {
+          const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+          const rawUrl = (nav && nav.name) || window.location.href || '';
+          const m = rawUrl.match(/#:~:text=([^&]+)/i);
+          return m ? decodeURIComponent(m[1]).slice(0, 140) : '';
+        } catch {
+          return '';
+        }
+      })(),
       landing_page: window.location.pathname,
       timestamp: new Date().toISOString()
     };
@@ -174,6 +194,8 @@
         irclickid: last.irclickid || first.irclickid || '',
         ref: last.ref || first.ref || '',
         referrer: last.referrer || first.referrer || '',
+        ai_source: last.ai_source || first.ai_source || '',
+        text_fragment: last.text_fragment || first.text_fragment || '',
         landing_page: first.landing_page || ''
       };
     }

@@ -18,6 +18,10 @@
       {
         "q": "Will deleting %AppData%\\Discord\\Cache_Data log me out or delete my Discord messages?",
         "a": "No. All Discord messages and server history live on Discord's cloud servers, and your session token is stored separately. Clearing Cache_Data, Code Cache, and GPUCache frees disk space and fixes laggy server switching."
+      },
+      {
+        "q": "Why does Discord store gigabytes inside Cache_Data and Code Cache on Windows 11?",
+        "a": "Discord is built on Electron/Chromium and aggressively caches server images, embedded videos, voice waveforms, and JS bytecode in %AppData%\\discord. Purging Cache, Code Cache, and GPUCache restores 1.5–6 GB without touching Local Storage tokens."
       }
     ],
     "metaTitle": "Can I Delete Discord Cache & Code Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
@@ -109,9 +113,13 @@
       {
         "q": "Does clearing %LocalAppData%\\Spotify\\Storage delete my Spotify playlists or liked songs?",
         "a": "No. Your playlists and library are stored in your Spotify cloud account. %LocalAppData%\\Spotify\\Storage and Data hold encrypted stream chunks from recently played tracks that safely regenerate as you listen."
+      },
+      {
+        "q": "How do I reclaim Spotify C: drive space without losing downloaded offline albums?",
+        "a": "If you keep Offline Playlists downloaded, lower Spotify's Storage cache limit or use Settings -> Offline storage location. Otherwise, clearing %LocalAppData%\\Spotify\\Storage frees 2–10 GB immediately; liked songs and playlists stay in your cloud account."
       }
     ],
-    "metaTitle": "Can I Delete Spotify Offline Storage & Streaming Cache? YES — Safe Cleanup Guide (Reclaim 2–10 GB)",
+    "metaTitle": "Can I Delete Spotify Cache? YES (2–10 GB) — Safe Cleanup Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Spotify\\Storage? YES (2–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -244,6 +252,10 @@
       {
         "q": "Why does Google Chrome still use 10GB+ on disk after clearing browsing data in settings?",
         "a": "Chrome's built-in Clear Browsing Data dialog often leaves orphaned Service Worker\\CacheStorage folders, File System API blobs, and multi-profile GPUCache directories in %LocalAppData%\\Google\\Chrome\\User Data."
+      },
+      {
+        "q": "Will deleting Chrome Service Worker CacheStorage remove saved passwords or bookmarks?",
+        "a": "No. Saved logins, bookmarks, and extension state live in Login Data, Bookmarks, and Extension State inside User Data. Removing Service Worker\\CacheStorage strictly drops offline web app asset caches that websites rebuild automatically."
       }
     ],
     "metaTitle": "Can I Delete Chrome ServiceWorker? YES (1–5 GB) — Safe Guide",
@@ -420,8 +432,8 @@
     "path": "C:\\Windows.old",
     "safeToDelete": true,
     "avgSpace": "15.0 GB – 35.0 GB",
-    "whatIsIt": "When Windows upgrades to a major new version or build, it saves a complete backup of your previous OS files in C:\\Windows.old so you can roll back.",
-    "whatHappens": "If your PC has been running smoothly for more than 10 days after an update, deleting Windows.old is completely safe and reclaims 20+ GB.",
+    "whatIsIt": "C:\\Windows.old is the full snapshot archive created during a Windows 10-to-11 upgrade or annual feature update (such as 23H2 to 24H2), holding your previous OS Windows, Program Files, and Users directories under TrustedInstaller permissions so the 'Go back' recovery option remains available for 10 days.",
+    "whatHappens": "Once the 10-day upgrade rollback window expires—or once you confirm your upgraded PC runs smoothly—removing 'Previous Windows installation(s)' via Windows Storage Settings or SWEEPR Cleaner safely reclaims 15 GB to 35 GB of primary SSD storage without touching your active Documents or apps.",
     "manualSteps": [
       "Open Windows Settings > System > Storage.",
       "Click on 'Temporary files'.",
@@ -535,6 +547,10 @@
       {
         "q": "Why does Windows say 'File In Use' when I try to delete files in NVIDIA\\DXCache?",
         "a": "Desktop Window Manager (dwm.exe), browsers with hardware acceleration, and NVIDIA background containers keep active locks on the current driver's .bin/.toc shader files. SWEEPR Cleaner automatically skips locked active files and purges all orphaned shader generations."
+      },
+      {
+        "q": "Does clearing NVIDIA DXCache affect my GeForce Control Panel settings or driver version?",
+        "a": "No. %LocalAppData%\\NVIDIA\\DXCache holds only compiled DirectX 11/12 shader bytecode. Purging stale shaders after a GeForce update resolves micro-stutter without changing any 3D Settings or installed drivers."
       }
     ],
     "metaTitle": "Can I Delete NVIDIA DXCache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
@@ -1280,6 +1296,10 @@
       {
         "q": "Will deleting Genshin Impact update cache or webCaches delete my game progress?",
         "a": "No. All Genshin Impact account progress, characters, and inventory are stored on HoYoverse servers. Clearing webCaches, SDKCaches, and leftover patch .zip_tmp archives only removes temporary installer bloat."
+      },
+      {
+        "q": "When is it safe to remove HoYoPlay Genshin Impact Temp update packages?",
+        "a": "Delete temporary .zip_temp or patch staging archives in Genshin Impact game\\Temp only after HoYoPlay finishes patching and launching the game successfully. Never interrupt an active preload download."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -1596,6 +1616,10 @@
       {
         "q": "Will deleting Adobe Media Cache Files (.cfa and .pek) break my Premiere Pro project?",
         "a": "No. .cfa (conformed audio) and .pek (waveform peak) files are temporary cache assets. Premiere Pro and After Effects automatically rebuild them only for the active timeline you open next."
+      },
+      {
+        "q": "Where do Premiere Pro peak files (.pek) and conformed audio (.cfa) rebuild if deleted?",
+        "a": "Only the waveforms and conformed audio needed by the specific .prproj project you next open regenerate inside %AppData%\\Adobe\\Common. Legacy .pek/.cfa files from finished client timelines never return, freeing 5–60 GB permanently."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -1740,6 +1764,10 @@
       {
         "q": "Will deleting the DaVinci Resolve CacheClip folder corrupt my project?",
         "a": "No. CacheClip holds temporary timeline render cache and scratch video proxies. Your project databases, edit timelines, and source media remain completely untouched."
+      },
+      {
+        "q": "How do I tell completed DaVinci Resolve UUID folders apart inside CacheClip?",
+        "a": "Sort CacheClip by Date Modified in File Explorer—older timestamped UUID folders belong to finished timelines, or open Resolve's Playback -> Delete Render Cache menu to reclaim 8–75 GB cleanly without touching Project Server databases."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -1795,6 +1823,10 @@
       {
         "q": "Will clearing CapCut PC cache delete my video editing drafts or templates?",
         "a": "No. CapCut project drafts are stored inside CapCut Drafts, whereas %LocalAppData%\\CapCut\\User Data\\Cache holds temporary render previews, proxy clips, and Service Worker web blobs that safely regenerate if you re-open an old timeline."
+      },
+      {
+        "q": "Why is CapCut User Data still large after I clicked Clear Cache inside CapCut settings?",
+        "a": "CapCut Desktop accumulates extra Chromium Service Worker web blobs and orphaned effect downloads outside its in-app cache button. SWEEPR removes both User Data\\Cache and Cache_Data safely while protecting Projects\\com.lveditor.draft."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -1924,6 +1956,10 @@
       {
         "q": "How do I clear OBS Studio cache without losing my scenes, sources, or stream keys?",
         "a": "Your OBS scenes and profiles are stored in %AppData%\\obs-studio\\basic\\scenes and basic\\profiles. Cleaning %AppData%\\obs-studio\\logs, crashes, and plugin_config\\obs-browser\\Cache frees disk space and fixes laggy browser overlays without touching any scene collections."
+      },
+      {
+        "q": "Does deleting OBS Studio obs-browser Cache reset Browser Source URLs or Stream Keys?",
+        "a": "No. OBS Browser Source URLs, scenes, audio routing, and stream keys are saved in %AppData%\\obs-studio\\basic\\scenes and global.ini. Only cached cookies/HTML assets and historical text crash logs are deleted."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -2085,6 +2121,10 @@
       {
         "q": "Where is the cache folder for the New Microsoft Teams app on Windows 11?",
         "a": "New Teams (WebView2) stores its cache inside %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView, whereas Classic Teams uses %AppData%\\Microsoft\\Teams. SWEEPR Cleaner cleans both automatically."
+      },
+      {
+        "q": "Can clearing Microsoft Teams EBWebView fix notification, calendar, or status sync glitches?",
+        "a": "Yes. Quitting Teams from the tray and removing %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView forces a clean webview cache rebuild on relaunch while keeping chats, teams, and SSO sessions intact."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -2782,12 +2822,17 @@
     "whatHappens": "Safe to delete. Existing node_modules folders in your projects continue working normally.",
     "manualSteps": [
       "Open Terminal or PowerShell and run: npm cache clean --force.",
-      "Or navigate to %localappdata%\\npm-cache and delete '_cacache' and '_npx'."
+      "Or navigate to %localappdata%\\npm-cache and delete '_cacache' and '_npx'.",
+      "Finish by running \"npm cache verify\" in PowerShell, or launch SWEEPR Cleaner to purge _cacache and stale _npx folders automatically while leaving all project node_modules folders untouched."
     ],
     "customFaqs": [
       {
         "q": "Does deleting %LocalAppData%\\npm-cache break existing node_modules folders in my projects?",
         "a": "No. %LocalAppData%\\npm-cache (_cacache) is strictly a global download cache of compressed package tarballs. Your project node_modules directories are completely independent and will continue to run normally."
+      },
+      {
+        "q": "Why does %LocalAppData%\\npm-cache grow past 10 GB on Windows developer PCs?",
+        "a": "npm retains compressed tarballs for every dependency version and every transient npx CLI run indefinitely in _cacache and _npx. Running npm cache clean --force or scanning with SWEEPR removes orphaned archives safely without touching project node_modules."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -2887,12 +2932,17 @@
     "whatHappens": "Safe to delete. Virtual environments (venv/conda) and installed Python packages are not affected.",
     "manualSteps": [
       "Run 'pip cache purge' in Command Prompt or PowerShell.",
-      "Or navigate to %localappdata%\\pip\\Cache and delete all files."
+      "Or navigate to %localappdata%\\pip\\Cache and delete all files.",
+      "Run \"pip cache info\" in PowerShell to confirm %LocalAppData%\\pip\\Cache now reads 0 bytes—existing Python virtual environments and installed site-packages remain untouched."
     ],
     "customFaqs": [
       {
         "q": "Does clearing %LocalAppData%\\pip\\Cache uninstall my Python packages?",
         "a": "No. Installed Python packages live inside your site-packages or virtual environment directories. %LocalAppData%\\pip\\Cache only holds downloaded .whl and .tar.gz installer archives from past pip install runs."
+      },
+      {
+        "q": "Does clearing %LocalAppData%\\pip\\Cache slow down my active Python virtual environments?",
+        "a": "No. Active venv, conda, and uv environments read already-unpacked packages from site-packages. Clearing %LocalAppData%\\pip\\Cache only deletes archived .whl downloads from past installs, instantly freeing 1.5–18 GB."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -2953,7 +3003,8 @@
     "whatHappens": "Safely reclaims gigabytes of SSD space; Visual Studio automatically restores any needed package on build.",
     "manualSteps": [
       "Run 'dotnet nuget locals http-cache --clear' and 'dotnet nuget locals temp --clear' in Terminal.",
-      "Or delete %localappdata%\\NuGet\\v3-cache manually."
+      "Or delete %localappdata%\\NuGet\\v3-cache manually.",
+      "Run \"dotnet nuget locals all --list\" and check %LocalAppData%\\Temp\\NuGetScratch for leftover extraction directories after closing Visual Studio."
     ],
     "metaTitle": "Can I Delete .NET NuGet HTTP? YES (2–16 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\NuGet\\v3-cache? YES (2–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -3016,6 +3067,10 @@
       {
         "q": "Is it safe to delete the .gradle\\caches folder on Windows 11?",
         "a": "Yes. %UserProfile%\\.gradle\\caches and .gradle\\wrapper\\dists store downloaded Maven/Gradle dependencies and old Gradle distributions. Deleting them reclaims 4–25 GB; Gradle automatically re-downloads only the dependencies needed by your active project."
+      },
+      {
+        "q": "Is it safe to delete old Android Studio Gradle wrapper distributions in .gradle\\wrapper\\dists?",
+        "a": "Yes. Android Studio accumulates a full Gradle SDK distribution for every minor plugin bump over the years. Stop background daemons via 'gradle --stop', delete old .gradle\\wrapper\\dists and .gradle\\caches folders, and rebuild your active repo."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -3295,6 +3350,10 @@
       {
         "q": "Where does Logitech G HUB store its mouse DPI profiles and macros when cleaning LGHUB cache?",
         "a": "Your G HUB profiles and macros live in %LocalAppData%\\LGHUB\\settings.db. Cleaning C:\\ProgramData\\LGHUB\\depots and %LocalAppData%\\LGHUB\\cache reclaims 1–6 GB of orphaned update payloads without touching settings.db."
+      },
+      {
+        "q": "What should I never delete inside %LocalAppData%\\LGHUB when cleaning Logitech G HUB?",
+        "a": "Never delete settings.db or settings.json—those store your mouse DPI stages, G-Shift macros, and Onboard Memory Manager presets. Delete only C:\\ProgramData\\LGHUB\\depots and the cache/GPUCache folders."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -3369,6 +3428,10 @@
       {
         "q": "Will clearing %AppData%\\Elgato\\StreamDeck\\logs and cache delete my button profiles or icons?",
         "a": "No. Your custom Stream Deck profiles and icon packs live inside %AppData%\\Elgato\\StreamDeck\\ProfilesV2. Cleaning the logs, Crashpad dumps, and QtWebEngine cache only removes background software telemetry and plugin debug bloat."
+      },
+      {
+        "q": "Does this guide cover cleaning physical Stream Deck LCD keys or only the Windows cache folder?",
+        "a": "Both are covered clearly: quit Stream Deck before purging %AppData%\\Elgato\\StreamDeck\\logs, Cache, and Blob_Storage (protecting ProfilesV2), and unplug USB before gently wiping physical keys with a lightly damp microfiber cloth."
       }
     ],
     "metaTitle": "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
@@ -3592,6 +3655,10 @@
       {
         "q": "What is the Windows Delivery Optimization cache folder used for?",
         "a": "Delivery Optimization stores downloaded Windows Update and Microsoft Store chunks so your PC can share them with other PCs on your local network. Clearing it frees 2–15 GB immediately without rolling back any installed updates."
+      },
+      {
+        "q": "Will clearing Windows Delivery Optimization files undo installed Windows 11 patches?",
+        "a": "No. Delivery Optimization stores peer-to-peer distribution blocks of updates and Store apps already downloaded. Removing them reclaims 2–15 GB immediately without rolling back any Windows features."
       }
     ],
     "metaTitle": "Can I Delete Windows Delivery? YES (2–15 GB) — Safe Guide",
@@ -3711,6 +3778,10 @@
       {
         "q": "Why can't I delete C:\\hiberfil.sys directly in File Explorer?",
         "a": "Windows locks C:\\hiberfil.sys while Hibernation is enabled. Running powercfg -h off in an elevated terminal (or using SWEEPR Cleaner) disables hibernation and instructs the Windows kernel to delete the 6–32 GB file immediately."
+      },
+      {
+        "q": "What is the difference between powercfg /h off and powercfg /h /type reduced?",
+        "a": "Running powercfg /h /type reduced shrinks C:\\hiberfil.sys by roughly half while keeping Windows Fast Startup working. Running powercfg /h off removes the entire 6–32 GB file completely, ideal for desktop PCs that never Hibernate."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -3912,12 +3983,17 @@
     "whatHappens": "Completely safe to delete unless you are actively debugging a recent crash in WinDbg.",
     "manualSteps": [
       "Press Windows Key + R, type %localappdata%\\CrashDumps and press Enter.",
-      "Select all .dmp files (Ctrl+A) and press Delete."
+      "Select all .dmp files (Ctrl+A) and press Delete.",
+      "Optionally run SWEEPR Cleaner to remove historical .dmp files automatically whenever a game or browser crashes, reclaiming C: space without changing app configurations."
     ],
     "customFaqs": [
       {
         "q": "Why is %LocalAppData%\\CrashDumps suddenly taking up gigabytes on my C: drive?",
         "a": "Windows Error Reporting (WER) writes a full or mini user-mode memory dump (.dmp) into %LocalAppData%\\CrashDumps whenever a game, browser, or creative app crashes on exit. Unless you are actively debugging a crash in WinDbg, these .dmp files are 100% safe to delete."
+      },
+      {
+        "q": "Can a single game or browser crash create multi-gigabyte .dmp files in CrashDumps?",
+        "a": "Yes. Windows Error Reporting (WER) captures full or heap process snapshots (.dmp) on exit crashes—often 1–4 GB per file. Unless you are opening them in WinDbg, deleting everything in %LocalAppData%\\CrashDumps is 100% safe."
       }
     ],
     "metaTitle": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
@@ -3999,7 +4075,8 @@
     "whatHappens": "100% safe to clean. Removes stale shaders and resolves graphical glitches after Windows updates.",
     "manualSteps": [
       "Open Settings > System > Storage > Temporary files.",
-      "Check 'DirectX Shader Cache' and click 'Remove files'."
+      "Check 'DirectX Shader Cache' and click 'Remove files'.",
+      "If older shader cache files remain locked by background apps, press Win + R -> %LocalAppData%\\D3DSCache, delete unlocked .lockfile/.cache files, or run SWEEPR Cleaner to skip active locks safely."
     ],
     "metaTitle": "Can I Delete Microsoft DirectX? YES (0.5–5 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\D3DSCache? YES (0.5–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -4249,7 +4326,8 @@
     "whatHappens": "Safe to clear; Windows automatically fetches fresh certificate revocation data when verifying signed apps.",
     "manualSteps": [
       "Open Command Prompt and run: certutil -urlcache * delete.",
-      "This safely flushes stale CryptnetUrlCache entries."
+      "This safely flushes stale CryptnetUrlCache entries.",
+      "If stale certificate metadata files remain in %LocalAppData%Low\\Microsoft\\CryptnetUrlCache, close browsers and remove old Content/Meta subdirectories (never deleting active root folders)."
     ],
     "metaTitle": "Can I Delete Windows Certificate? YES (0.1–1 GB) — Guide",
     "metaDescription": "Delete %LOCALAPPDATA%Low\\Microsoft\\CryptnetUrlCache (0.1–1 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -4375,7 +4453,8 @@
     "whatHappens": "Safe to clear once your exported MP4 video is saved to your Videos folder.",
     "manualSteps": [
       "Open Windows Settings > Apps > Installed apps > Microsoft Clipchamp > Advanced options.",
-      "Click 'Reset' after exporting your completed videos, or clean its LocalCache\\EBWebView folder."
+      "Click 'Reset' after exporting your completed videos, or clean its LocalCache\\EBWebView folder.",
+      "Reopen Clipchamp only after restarting Windows or finishing pending exports so it recreates a clean WebView2 profile without legacy 2–20 GB video scratch chunks."
     ],
     "metaTitle": "Can I Delete Microsoft Clipchamp? YES (2–20 GB) — Safe Guide",
     "metaDescription": "Delete ...DATA%\\Packages\\Clipchamp.Clipchamp_yxz26nhyzhsrt\\LocalCache (2–20 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
@@ -4535,7 +4614,8 @@
     "whatHappens": "100% safe to delete after the driver installation is complete! Your installed NVIDIA driver lives in C:\\Windows\\System32\\DriverStore, not C:\\NVIDIA.",
     "manualSteps": [
       "Open File Explorer and navigate to Local Disk (C:).",
-      "If a folder named C:\\NVIDIA exists, right-click it and select Delete."
+      "If a folder named C:\\NVIDIA exists, right-click it and select Delete.",
+      "Empty the Windows Recycle Bin (or press Shift + Delete once you confirm C:\\Windows\\System32\\DriverStore holds your active GeForce display driver) to reclaim C:\\NVIDIA\\DisplayDriver immediately."
     ],
     "metaTitle": "Can I Delete Leftover NVIDIA? YES (1.5–8 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\NVIDIA\\DisplayDriver? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -4607,7 +4687,8 @@
     "whatHappens": "Old historical .etl traces in SleepStudy\\ScreenOnPowerStudyTraceSession can be safely purged.",
     "manualSteps": [
       "Navigate to C:\\Windows\\System32\\SleepStudy as Administrator.",
-      "Remove old archived .etl trace files."
+      "Remove old archived .etl trace files.",
+      "Leave the C:\\Windows\\System32\\SleepStudy folder structure intact and delete only dated ScreenOnPowerStudyTraceSession*.etl archives—or let SWEEPR Cleaner prune rotated ETL traces safely."
     ],
     "metaTitle": "Can I Delete Windows SleepStudy? YES (0.2–2 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\Windows\\System32\\SleepStudy? YES (0.2–2 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -4688,6 +4769,10 @@
       {
         "q": "Where does LM Studio store downloaded GGUF models on Windows 11?",
         "a": "LM Studio downloads model weights into %UserProfile%\\.cache\\lm-studio\\models. Deleting unused models or partial downloads reclaims 10–80 GB of SSD space without affecting your LM Studio application settings or conversation history."
+      },
+      {
+        "q": "Will removing models from %UserProfile%\\.cache\\lm-studio\\models delete my chat prompts or system presets?",
+        "a": "No. Prompt templates and chat threads are saved separately inside LM Studio's config directory. Deleting large .gguf folders removes only multi-gigabyte downloaded LLM weights you no longer run locally."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -4789,6 +4874,10 @@
       {
         "q": "Can I automate cleaning ComfyUI temp files on Windows 11 without manual terminal commands?",
         "a": "Yes. SWEEPR Cleaner automatically detects C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui, skips any files locked by active processes, and reclaims 2.0 GB – 18.0 GB in a single click while protecting user settings."
+      },
+      {
+        "q": "What is stored in ComfyUI\\temp compared to ComfyUI\\output?",
+        "a": "ComfyUI\\temp holds transient step previews and Gradio intermediate uploads, while ComfyUI\\output stores your finished saved renders and embedded workflow PNG metadata. Cleaning ComfyUI\\temp keeps your workflows, LoRAs, and finished outputs untouched."
       }
     ],
     "lastUpdated": "2026-11-09",
@@ -6829,7 +6918,8 @@
     "whatHappens": "Safe to clean. Resolves shader compilation glitches and frees multiple gigabytes of C: drive storage.",
     "manualSteps": [
       "Right-click any game in Ryujinx and select 'Purge PPTC Cache' or 'Purge Shader Cache'.",
-      "Or delete cache subfolders in %AppData%\\Ryujinx\\games."
+      "Or delete cache subfolders in %AppData%\\Ryujinx\\games.",
+      "Launch Ryujinx once after cleaning so fresh SPIR-V/Vulkan shaders compile cleanly for your current GPU driver without stale stutters or corrupt textures."
     ],
     "metaTitle": "Can I Delete Ryujinx Nintendo? YES (2–18 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\Ryujinx\\games? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
@@ -7280,6 +7370,10 @@
       {
         "q": "Does clearing IntelliJ IDEA system caches delete my project settings or keymaps?",
         "a": "No. Project settings live in .idea inside your project folder, and custom keymaps live in %AppData%\\JetBrains\\IntelliJIdea*\\keymaps. Purging %LocalAppData%\\JetBrains\\IntelliJIdea*\\caches only clears stale symbol indexes and compiler caches, which safely rebuild on the next build."
+      },
+      {
+        "q": "Why do old JetBrains IntelliJIdea2024.x folders stay behind in %LocalAppData%\\JetBrains?",
+        "a": "JetBrains ToolBox and standalone updaters create a fresh versioned system cache directory on each major IDE release without automatically deleting legacy AST symbol indexes—often leaving 2–14 GB per prior version."
       }
     ],
     "metaTitle": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
@@ -8537,6 +8631,10 @@
       {
         "q": "Does clearing Logi Options+ cache reset my MX Master mouse button mappings?",
         "a": "No. Your custom MX Master and MX Keys button assignments are saved in settings.db and synced to your Logi ID. Purging WebCache, GPUCache, and Crashpad dumps only removes temporary updater and Electron cache files."
+      },
+      {
+        "q": "Does LogiOptionsPlus need lghub or LogiOptionsPlus_Agent stopped before cleaning depots?",
+        "a": "Yes. End LogiOptionsPlus_Agent.exe in Task Manager before deleting C:\\ProgramData\\LogiOptionsPlus\\depots and %LocalAppData%\\LogiOptionsPlus\\cache (preserving settings.db) so active Flow/Smart Actions files remain untouched."
       }
     ],
     "metaTitle": "Can I Delete LogiOptionsPlus Cache? YES — Safe Cleanup Guide (Reclaim 1.2–6.5 GB)",
@@ -11075,7 +11173,8 @@
     "whatHappens": "Reclaims gigabytes of hidden SSD space from orphaned installer depots, shader caches, and CLI package stores without touching active projects or installed software.",
     "manualSteps": [
       "Inspect %UserProfile%\\.cache, %LocalAppData%\\NVIDIA\\DXCache, and C:\\ProgramData\\Package Cache for orphaned multi-gigabyte folders.",
-      "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner."
+      "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner.",
+      "Paste suspicious paths from WizTree or PowerShell into sweeprcleaner.com/safe-to-delete first, or run SWEEPR Cleaner's 6.52 MB scanner to reclaim hidden AppData, ProgramData, and GPU shader caches with 7-day undo protection."
     ],
     "subLocations": [
       {

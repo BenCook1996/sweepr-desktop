@@ -257,7 +257,7 @@ export function analyzeSafeToDeleteInput(rawInput: string): SafeToDeleteAnalysis
       estimated_gb: 0,
       guide_url: "/clean",
       explanation:
-        "This path did not match our 367 pre-audited cache rules. Check if it belongs to an active project or installed application before deleting.",
+        `This path did not match our ${getCleanItems().length} pre-audited cache rules. Check if it belongs to an active project or installed application before deleting.`,
       what_happens:
         "Use SWEEPR Cleaner's non-destructive desktop scanner to inspect file locks and last-modified timestamps before removing unknown folders.",
     });
@@ -419,10 +419,10 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Is This Folder Safe to Delete? Windows Path Checker | SWEEPR</title>
-  <meta name="description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across 367 audited AppData, Steam, NVIDIA &amp; system caches.">
+  <meta name="description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across ${totalRules} audited AppData, Steam, NVIDIA &amp; system caches.">
   <link rel="canonical" href="https://sweeprcleaner.com/safe-to-delete">
   <meta property="og:title" content="Is This Folder Safe to Delete? Windows Path Checker | SWEEPR">
-  <meta property="og:description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across 367 audited AppData, Steam, NVIDIA &amp; system caches.">
+  <meta property="og:description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across ${totalRules} audited AppData, Steam, NVIDIA &amp; system caches.">
   <meta property="og:url" content="https://sweeprcleaner.com/safe-to-delete">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
@@ -453,7 +453,7 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
         <span>SWEEPR <span style="color:#0d6847;">Cleaner</span></span>
       </a>
       <div class="nav-links">
-        <a href="/clean">367 Folder Encyclopedia</a>
+        <a href="/clean">${totalRules} Folder Encyclopedia</a>
         <a href="/bloat-watch">Bloat Watch</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/vs/ccleaner">SWEEPR vs CCleaner</a>

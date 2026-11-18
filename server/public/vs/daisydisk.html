@@ -34,32 +34,36 @@
         "description": "Compare SWEEPR vs DaisyDisk. Stop guessing which folders are safe to delete: get 367 automated cache safety rules, 1-click cleanup, and 7-day rollback on Mac & PC.",
         "datePublished": "2026-11-11",
         "dateModified": "2026-11-11",
-        "author": { "@type": "Organization", "name": "SWEEPR Cleaner", "url": "https://sweeprcleaner.com" },
+        "author": {
+          "@type": "Organization",
+          "name": "SWEEPR Cleaner",
+          "url": "https://sweeprcleaner.com"
+        },
         "publisher": {
           "@type": "Organization",
           "name": "SWEEPR Cleaner",
-          "logo": { "@type": "ImageObject", "url": "https://sweeprcleaner.com/favicon-192.png" }
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://sweeprcleaner.com/favicon-192.png"
+          }
         },
         "mainEntityOfPage": "https://sweeprcleaner.com/vs/daisydisk"
       },
       {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How is SWEEPR different from DaisyDisk?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "DaisyDisk is a manual visual disk map: it shows you large folders on a sunburst chart, but you have to research whether deleting a folder inside ~/Library or AppData will break your apps. SWEEPR combines visual storage radar with 367 automated cache safety rules, 1-click safe cleanup, a SHA-256 duplicate finder, and a 7-day rollback vault across macOS, Windows 11, iOS, and Android."
-            }
-          }
-        ]
-      },
-      {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://sweeprcleaner.com/" },
-          { "@type": "ListItem", "position": 2, "name": "SWEEPR vs DaisyDisk", "item": "https://sweeprcleaner.com/vs/daisydisk" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://sweeprcleaner.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "SWEEPR vs DaisyDisk",
+            "item": "https://sweeprcleaner.com/vs/daisydisk"
+          }
         ]
       }
     ]
@@ -69,7 +73,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/vendor/tailwind.min.css">
+  <link rel="stylesheet" href="/style.css">
   <script src="/analytics.js" defer></script>
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
@@ -81,7 +86,7 @@
         <span>SWEEPR <span class="text-emerald-600">Cleaner</span></span>
       </a>
       <div class="flex items-center gap-3">
-        <a href="/clean" class="btn btn-ghost text-sm">365+ Cache Guides</a>
+        <a href="/clean" class="btn btn-ghost text-sm">377 Cache Guides</a>
         <a href="/pricing" class="btn btn-ghost text-sm">Pricing</a>
         <a href="/download" class="btn btn-go text-sm" rel="nofollow">Free Download</a>
       </div>
@@ -142,7 +147,7 @@
           <tbody class="divide-y divide-gray-200 text-sm">
             <tr>
               <td class="p-4 pl-6 font-medium">Automated Cache Safety Verdicts</td>
-              <td class="p-4 bg-emerald-50/50 text-emerald-900 font-semibold border-l border-emerald-100">Yes (365+ Guides with Safe / Caution / Never-Delete locks)</td>
+              <td class="p-4 bg-emerald-50/50 text-emerald-900 font-semibold border-l border-emerald-100">Yes (377 Guides with Safe / Caution / Never-Delete locks)</td>
               <td class="p-4 pr-6 text-gray-600 border-l border-gray-200">No (Manual folder inspection &amp; drag-to-delete)</td>
             </tr>
             <tr>
