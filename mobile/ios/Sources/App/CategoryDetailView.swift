@@ -1,4 +1,6 @@
+import Photos
 import SwiftUI
+import UIKit
 
 typealias SmartCleanView = CategoryDetailView
 
