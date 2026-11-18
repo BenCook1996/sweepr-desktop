@@ -1,12 +1,33 @@
+import { existsSync, readFileSync } from "node:fs";
 import { escapeHtml } from "./security.js";
 import type { Repo } from "./db.js";
 import type { EmailDispatchResult } from "./email.js";
 
+const DEFAULT_WINDOWS_EXE_SHA256 = "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA";
+const DEFAULT_WINDOWS_MSI_SHA256 = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
+
+function loadReleaseSha256(kind: "exe" | "msi", fallback: string): string {
+  try {
+    const manifestPath = "./public/release-manifest.json";
+    if (existsSync(manifestPath)) {
+      const parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+        exe?: { sha256?: string };
+        msi?: { sha256?: string };
+      };
+      const sha = String(parsed?.[kind]?.sha256 || "").trim().toUpperCase();
+      if (/^[A-F0-9]{64}$/.test(sha)) return sha;
+    }
+  } catch {
+    // Fall back to default compiled SHA-256
+  }
+  return fallback;
+}
+
 export const A3_FLAG_AFTER_SEC = 30 * 60; // 30 minutes
 export const A3_EMAIL_AFTER_SEC = 2 * 3600; // 2 hours
 export const ATTRIBUTION_MATCH_WINDOW_SEC = 60 * 60; // 60 minutes
-export const SWEEPR_WINDOWS_EXE_SHA256 = "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA";
-export const SWEEPR_WINDOWS_MSI_SHA256 = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
+export const SWEEPR_WINDOWS_EXE_SHA256 = loadReleaseSha256("exe", DEFAULT_WINDOWS_EXE_SHA256);
+export const SWEEPR_WINDOWS_MSI_SHA256 = loadReleaseSha256("msi", DEFAULT_WINDOWS_MSI_SHA256);
 
 export function normalizeFingerprintIp(ip: string | null | undefined): string | null {
   let norm = String(ip ?? "").trim().toLowerCase();

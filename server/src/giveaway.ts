@@ -1,7 +1,7 @@
 import type { Repo, Account } from "./db.js";
 import { randomToken, sha256 } from "./tokens.js";
 import { escapeHtml, isFullActivationCode, normalizeEmail, safeEqual } from "./security.js";
-import { dispatchTransactionalCustomerEmail } from "./download-recovery.js";
+import { SWEEPR_WINDOWS_EXE_SHA256, dispatchTransactionalCustomerEmail } from "./download-recovery.js";
 
 export interface GiveawayConfig {
   campaign_id: string;
@@ -600,7 +600,7 @@ export function buildGiveawayReadmeTxt(cfg: GiveawayConfig): string {
     "INSTALLATION & ACTIVATION INSTRUCTIONS (24-HOUR GIVEAWAY WINDOW):",
     "----------------------------------------------------------------------",
     "1. Run SWEEPRCleaner.exe to install and launch SWEEPR Cleaner.",
-    "   (Signed with SSL.com Authenticode — SHA-256: 38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA)",
+    `   (Signed with SSL.com Authenticode — SHA-256: ${SWEEPR_WINDOWS_EXE_SHA256})`,
     "",
     "2. Activate your 6-Month Pro License (choose Option A or Option B):",
     "",
@@ -835,7 +835,7 @@ export function renderGiveawayPageHtml(cfg: GiveawayConfig, nowSec = Math.floor(
       <div class="steps-box">
         <strong>How to unlock the SWEEPR Cleaner desktop app in 30 seconds:</strong>
         <ol style="margin: 8px 0 0; padding-left: 20px;">
-          <li>Download &amp; launch <a href="/download" style="color:var(--emerald-dark);font-weight:700;">SWEEPRCleaner.exe</a> (5 MB native Rust installer, SSL.com Authenticode signed).</li>
+          <li>Download &amp; launch <a href="/download" rel="nofollow" style="color:var(--emerald-dark);font-weight:700;">SWEEPRCleaner.exe</a> (5 MB native Rust installer, SSL.com Authenticode signed).</li>
           <li>Open the <strong>Account / Settings</strong> tab inside the app, enter your email address, and click <strong>Send Code</strong>.</li>
           <li>Enter your full Giveaway Key <span class="key-pill">${safeKey}</span> and click <strong>Activate</strong>.</li>
         </ol>

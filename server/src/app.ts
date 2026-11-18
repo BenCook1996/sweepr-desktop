@@ -84,6 +84,7 @@ import {
   dispatchPostCleanAhaMilestoneEmail,
   dispatchTransactionalCustomerEmail,
   getVisitorRecoveryStatus,
+  normalizeFingerprintIp,
   recordAppInstalledForRecovery,
   recordInstallerDownloaded,
   recordRecoveryBannerInteraction,
@@ -1953,7 +1954,7 @@ export function createApp(deps: AppDeps) {
       btn("https://testflight.apple.com", "🍏 App Store & TestFlight Early Access", false) +
       `</div>` +
       `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
-      `<a href="/download?platform=picker" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+      `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
       `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
       `</div><p style="display:none">`;
     return page("SWEEPR Cleaner for iPhone, PC & Mac", iosBodyHtml);
@@ -2330,6 +2331,8 @@ export function createApp(deps: AppDeps) {
 </body></html>`);
   });
 
+  const recentDownloadIpHits = new Map<string, { firstTs: number; count: number; platforms: Set<string> }>();
+
   app.get("/download", async (c) => {
     const rawUa = c.req.header("user-agent") || "";
     const ua = rawUa.toLowerCase();
@@ -2338,6 +2341,8 @@ export function createApp(deps: AppDeps) {
     const secFetchMode = (c.req.header("sec-fetch-mode") || "").toLowerCase();
     const chPlatform = c.req.header("sec-ch-ua-platform")?.toLowerCase() || "";
     const chMobile = c.req.header("sec-ch-ua-mobile")?.toLowerCase() || "";
+    const purposeHdr = `${c.req.header("purpose") || ""} ${c.req.header("sec-purpose") || ""}`.toLowerCase();
+    const isPrefetch = purposeHdr.includes("prefetch") || purposeHdr.includes("preview");
     let host = "sweeprcleaner.com";
     try {
       host = new URL(config.publicUrl).host || "sweeprcleaner.com";
@@ -2361,12 +2366,11 @@ export function createApp(deps: AppDeps) {
         isBrowserUa);
 
     const validPlatforms = ["windows", "mac", "linux", "android", "ios"] as const;
-    const detectedPlatform: Platform | null =
-      requested && (validPlatforms as readonly string[]).includes(requested)
+    const detectedPlatform: Platform | null = isCrawler
+      ? null
+      : requested && (validPlatforms as readonly string[]).includes(requested)
         ? (requested as Platform)
-        : isCrawler
-          ? null
-          : detectPlatform(ua, chPlatform, chMobile);
+        : detectPlatform(ua, chPlatform, chMobile);
 
     if (isCrawler || requested === "picker" || (!detectedPlatform && requested !== undefined)) {
       c.header("Cache-Control", "private, no-store");
@@ -2375,31 +2379,58 @@ export function createApp(deps: AppDeps) {
 
     const platform: Platform = detectedPlatform ?? "windows";
 
+    const visitorIp = clientIp(c);
+    const normIp = normalizeFingerprintIp(visitorIp);
+    const isExemptDownloadIp =
+      !normIp || normIp === "local" || normIp === "127.0.0.1" || normIp.startsWith("198.51.100.");
+    let isScraperBurst = false;
+    if (!isExemptDownloadIp && normIp) {
+      const nowMs = Date.now();
+      let entry = recentDownloadIpHits.get(normIp);
+      if (!entry || nowMs - entry.firstTs > 60_000) {
+        if (recentDownloadIpHits.size > 2000) recentDownloadIpHits.clear();
+        entry = { firstTs: nowMs, count: 0, platforms: new Set<string>() };
+        recentDownloadIpHits.set(normIp, entry);
+      }
+      entry.count += 1;
+      entry.platforms.add(platform);
+      isScraperBurst = entry.platforms.size >= 2 || entry.count > 3;
+    }
+
+    if (isPrefetch || isScraperBurst) {
+      c.header("Cache-Control", "private, no-store");
+      return c.html(pickerPage("Download SWEEPR Cleaner", "Choose your device platform:", ua, host));
+    }
+
+    const shouldRecordDownloadTelemetry = !isCrawler && !isPrefetch && !isScraperBurst && isBrowserUa;
+
     // Never force an immediate raw .apk sideload or unsigned .mobileconfig MDM stream on mobile visitors!
     // Route Android to the Google Play + Verified SHA-256 APK landing view, and iOS to the App Store / Cross-Device Email capture card.
     if ((platform === "android" && !isStream) || (platform === "ios" && !isStream)) {
-      try {
-        let attrId =
-          sanitizeAttributionId(c.req.query("attribution_id")) ||
-          sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
-        if (!attrId) {
-          attrId = `attr_dl_${randomToken(8)}`;
-          setCookie(c, "sweepr_attr_id", attrId, {
-            httpOnly: false,
-            sameSite: "Lax",
-            secure: isHttps,
-            path: "/",
-            maxAge: 90 * 86400,
+      if (shouldRecordDownloadTelemetry) {
+        try {
+          let attrId =
+            sanitizeAttributionId(c.req.query("attribution_id")) ||
+            sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+          if (!attrId) {
+            attrId = `attr_dl_${randomToken(8)}`;
+            setCookie(c, "sweepr_attr_id", attrId, {
+              httpOnly: false,
+              sameSite: "Lax",
+              secure: isHttps,
+              path: "/",
+              maxAge: 90 * 86400,
+            });
+          }
+          const sessAccId = await sessionAccountId(c);
+          repo.recordAnalyticsEvent({
+            event_name: "mobile_download_landing_viewed",
+            platform,
+            account_id: sessAccId,
+            metadata: { platform, referrer: c.req.header("referer") || null, attribution_id: attrId },
           });
-        }
-        const sessAccId = await sessionAccountId(c);
-        repo.recordAnalyticsEvent({
-          event_name: "mobile_download_landing_viewed",
-          platform,
-          account_id: sessAccId,
-          metadata: { platform, referrer: c.req.header("referer") || null, attribution_id: attrId },
-        });
-      } catch {}
+        } catch {}
+      }
       c.header("Cache-Control", "private, no-store");
       return c.html(mobileDownloadLandingPage(platform, ua, host));
     }
@@ -2418,58 +2449,59 @@ export function createApp(deps: AppDeps) {
       (platform === "windows" || platform === "mac" || platform === "linux") &&
       (!requested || isBrowserNavigation);
 
-    try {
-      if (!getCookie(c, "sweepr_attr_id")) {
-        setCookie(c, "sweepr_attr_id", resolvedAttrId, {
-          httpOnly: false,
-          sameSite: "Lax",
-          secure: isHttps,
-          path: "/",
-          maxAge: 90 * 86400,
-        });
-      }
-      const sessAccId = await sessionAccountId(c);
-      const visitorIp = clientIp(c);
-      const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
-      c.header("X-Sweepr-Attribution-Id", resolvedAttrId);
-      recordInstallerDownloaded(repo, {
-        attributionId: resolvedAttrId,
-        platform,
-        installerFile: file,
-        accountId: sessAccId,
-        clientIp: visitorIp,
-        ipOsFingerprint,
-        metadata: {
-          installer: file,
-          available: hasFile,
-          referrer: c.req.header("referer") || null,
-          ip_os_fingerprint: ipOsFingerprint,
-          stage: shouldRenderThankYouHtml ? "thankyou_page" : "binary_stream",
-        },
-        nowSec: now(),
-      });
-      if (shouldRenderThankYouHtml) {
-        repo.recordAnalyticsEvent({
-          event_name: "download_thankyou_viewed",
+    if (shouldRecordDownloadTelemetry) {
+      try {
+        if (!getCookie(c, "sweepr_attr_id")) {
+          setCookie(c, "sweepr_attr_id", resolvedAttrId, {
+            httpOnly: false,
+            sameSite: "Lax",
+            secure: isHttps,
+            path: "/",
+            maxAge: 90 * 86400,
+          });
+        }
+        const sessAccId = await sessionAccountId(c);
+        const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
+        c.header("X-Sweepr-Attribution-Id", resolvedAttrId);
+        recordInstallerDownloaded(repo, {
+          attributionId: resolvedAttrId,
           platform,
-          account_id: sessAccId,
-          metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+          installerFile: file,
+          accountId: sessAccId,
+          clientIp: visitorIp,
+          ipOsFingerprint,
+          metadata: {
+            installer: file,
+            available: hasFile,
+            referrer: c.req.header("referer") || null,
+            ip_os_fingerprint: ipOsFingerprint,
+            stage: shouldRenderThankYouHtml ? "thankyou_page" : "binary_stream",
+          },
+          nowSec: now(),
         });
-      } else {
-        repo.recordAnalyticsEvent({
-          event_name: "installer_downloaded",
-          platform,
-          account_id: sessAccId,
-          metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
-        });
-        syncToCentralCrm("/v1/telemetry/event", {
-          event_name: "installer_downloaded",
-          category: "funnel",
-          os: platform,
-          properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
-        });
-      }
-    } catch {}
+        if (shouldRenderThankYouHtml) {
+          repo.recordAnalyticsEvent({
+            event_name: "download_thankyou_viewed",
+            platform,
+            account_id: sessAccId,
+            metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+          });
+        } else {
+          repo.recordAnalyticsEvent({
+            event_name: "installer_downloaded",
+            platform,
+            account_id: sessAccId,
+            metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+          });
+          syncToCentralCrm("/v1/telemetry/event", {
+            event_name: "installer_downloaded",
+            category: "funnel",
+            os: platform,
+            properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+          });
+        }
+      } catch {}
+    }
 
     if (shouldRenderThankYouHtml) {
       if (!hasFile && requested) {
@@ -2602,8 +2634,8 @@ export function createApp(deps: AppDeps) {
       <canvas id="winCanvas" width="1200" height="630" style="display:block;width:100%;height:auto;"></canvas>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="/r/${safeCode}" style="flex:1.4;min-width:210px;text-align:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:800;font-size:14.5px;">Claim +30 Days Free SWEEPR Pro &rarr;</a>
-      <a href="/download?ref=${safeCode}" style="flex:1;min-width:180px;text-align:center;background:rgba(255,255,255,0.08);border:1px solid rgba(16,185,129,0.4);color:#ecfdf5;text-decoration:none;padding:13px 16px;border-radius:12px;font-weight:700;font-size:14px;">Download Free Scanner</a>
+      <a href="/r/${safeCode}" rel="nofollow" style="flex:1.4;min-width:210px;text-align:center;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;padding:13px 18px;border-radius:12px;font-weight:800;font-size:14.5px;">Claim +30 Days Free SWEEPR Pro &rarr;</a>
+      <a href="/download?ref=${safeCode}" rel="nofollow" style="flex:1;min-width:180px;text-align:center;background:rgba(255,255,255,0.08);border:1px solid rgba(16,185,129,0.4);color:#ecfdf5;text-decoration:none;padding:13px 16px;border-radius:12px;font-weight:700;font-size:14px;">Download Free Scanner</a>
       <button type="button" id="copyCardBtn" style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;padding:13px 16px;border-radius:12px;font-weight:800;font-size:13.5px;cursor:pointer;">📋 Copy Image</button>
     </div>
   </main>
@@ -7662,6 +7694,15 @@ export function createApp(deps: AppDeps) {
     const eventName = String(body?.event_name ?? body?.event ?? "").trim();
     if (!ALLOWED_FUNNEL_EVENTS.has(eventName)) {
       return c.json({ error: "unsupported_event" }, 400);
+    }
+    const reqUa = c.req.header("user-agent") || "";
+    if (
+      eventName === "installer_downloaded" &&
+      (Boolean(detectBot(reqUa)) ||
+        reqUa === AUDIT_USER_AGENT ||
+        /headlesschrome|playwright|puppeteer|selenium/i.test(reqUa))
+    ) {
+      return c.json({ ok: true, ignored_bot: true });
     }
     const attrId =
       sanitizeAttributionId(body?.attribution_id) ||

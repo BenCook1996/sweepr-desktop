@@ -1961,6 +1961,62 @@ test("20-Pen-Test Security Hardening & Full Activation Code Requirement", async 
   assert.match(orderRes.headers.get("cache-control") ?? "", /private,\s*no-store/i);
 });
 
+test("/download crawler & scraper burst guard blocks bot telemetry and binary streaming", async () => {
+  const { app, repo } = setup({ trustProxy: true });
+  const { getDownloadRecoveryStats } = await import("../src/download-recovery.js");
+
+  // 1. Bots and headless scrapers hitting /download?platform=windows get picker HTML + noindex and ZERO telemetry
+  const botUas = [
+    "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.0; +https://openai.com/gptbot)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/128.0.0.0 Safari/537.36",
+    "python-requests/2.31.0",
+  ];
+  for (const ua of botUas) {
+    const res = await app.request("/download?platform=windows", { headers: { "user-agent": ua } });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get("x-robots-tag"), "noindex, nofollow");
+    assert.equal(res.headers.get("content-disposition"), null, `Bot ${ua} must never receive a binary stream`);
+  }
+
+  // Headless client calling POST /v1/telemetry/event with installer_downloaded is ignored
+  const beaconRes = await app.request("/v1/telemetry/event", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "user-agent": "Mozilla/5.0 HeadlessChrome/128.0.0.0",
+    },
+    body: JSON.stringify({ event_name: "installer_downloaded", platform: "windows", attribution_id: "attr_bot_1" }),
+  });
+  assert.equal(beaconRes.status, 200);
+  const beaconJson = (await beaconRes.json()) as { ok: boolean; ignored_bot?: boolean };
+  assert.equal(beaconJson.ignored_bot, true);
+
+  assert.equal(getDownloadRecoveryStats(repo).sessions.length, 0, "Bots must record 0 recovery sessions");
+  const dlCountRow = repo.db
+    .prepare("SELECT COUNT(*) AS cnt FROM analytics_events WHERE event_name IN ('installer_downloaded','download_thankyou_viewed')")
+    .get() as { cnt: number };
+  assert.equal(dlCountRow.cnt, 0, "Bots must record 0 download analytics events");
+
+  // 2. Multi-platform burst from a single non-test IP (203.0.113.99) suppresses fake telemetry on burst requests
+  const humanBrowserUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36";
+  await app.request("/download?platform=windows&stream=1", {
+    headers: { "user-agent": humanBrowserUa, "x-forwarded-for": "203.0.113.99" },
+  });
+  const burstLinux = await app.request("/download?platform=linux&stream=1", {
+    headers: { "user-agent": humanBrowserUa, "x-forwarded-for": "203.0.113.99" },
+  });
+  const burstMac = await app.request("/download?platform=mac&stream=1", {
+    headers: { "user-agent": humanBrowserUa, "x-forwarded-for": "203.0.113.99" },
+  });
+  assert.equal(burstLinux.headers.get("content-disposition"), null, "Burst request must not stream binary");
+  assert.equal(burstMac.headers.get("content-disposition"), null, "Burst request must not stream binary");
+
+  const sessionsAfterBurst = getDownloadRecoveryStats(repo).sessions;
+  assert.equal(sessionsAfterBurst.length, 1, "Multi-platform burst from one IP must suppress subsequent fake sessions");
+  assert.equal(sessionsAfterBurst[0].platform, "windows");
+});
+
 
 
 

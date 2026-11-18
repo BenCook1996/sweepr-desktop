@@ -23,6 +23,14 @@ const BOT_PATTERNS: Array<[string, RegExp]> = [
   ["AhrefsBot", /AhrefsBot/i],
   ["SemrushBot", /SemrushBot/i],
   ["CCBot", /CCBot/i],
+  ["HeadlessChrome", /HeadlessChrome|PhantomJS|Playwright|Puppeteer|Selenium|webdriver/i],
+  ["PetalBot", /PetalBot/i],
+  ["MJ12bot", /MJ12bot/i],
+  ["DotBot", /DotBot/i],
+  ["DataForSeoBot", /DataForSeoBot|Barkrowler|SeekportBot|ZoominfoBot/i],
+  ["Amazonbot", /Amazonbot/i],
+  ["Sogou", /Sogou/i],
+  ["CliScraper", /python-requests|Python-urllib|aiohttp|httpx|Go-http-client|Scrapy|curl\/|wget\/|libwww-perl|zgrab|CensysInspect|Expanse/i],
 ];
 
 export const AI_BOTS = new Set([
