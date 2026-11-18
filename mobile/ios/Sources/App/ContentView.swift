@@ -77,7 +77,7 @@ extension View {
 struct SweeprTactileButtonStyle: ButtonStyle {
     var pressedScale: CGFloat = 0.97
 
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: ButtonStyleConfiguration) -> some View {
         SweeprTactileButtonBody(configuration: configuration, pressedScale: pressedScale)
     }
 
@@ -96,7 +96,7 @@ struct SweeprTactileButtonStyle: ButtonStyle {
 
 /// Full-width emerald gradient pill button.
 struct SweeprPrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: ButtonStyleConfiguration) -> some View {
         SweeprPrimaryButtonBody(configuration: configuration)
     }
 
