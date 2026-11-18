@@ -1,10 +1,12 @@
-import { test, describe } from "node:test";
+import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import { SeoStore } from "../src/seo/store.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -107,12 +109,43 @@ describe("Challenger M6 Empirical Stress Suite", () => {
   });
 
   describe("3. SQLite Concurrency, WAL Mode & Schema Integrity", () => {
-    test("Databases have WAL journal_mode and proper table schema", () => {
-      assert.ok(fs.existsSync(LOCAL_DB_PATH), `Local DB must exist at ${LOCAL_DB_PATH}`);
-      assert.ok(fs.existsSync(CENTRAL_DB_PATH), `Central DB must exist at ${CENTRAL_DB_PATH}`);
+    let tmpDir: string | null = null;
+    let resolvedLocalDbPath = LOCAL_DB_PATH;
+    let resolvedCentralDbPath = CENTRAL_DB_PATH;
 
-      const localDb = new DatabaseSync(LOCAL_DB_PATH);
-      const centralDb = new DatabaseSync(CENTRAL_DB_PATH);
+    function ensureWalSeoDb(candidatePath: string, fallbackName: string): string {
+      if (fs.existsSync(candidatePath)) return candidatePath;
+      if (!tmpDir) {
+        tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "sweepr-m6-stress-"));
+      }
+      const fallbackPath = path.join(tmpDir, fallbackName);
+      const db = new DatabaseSync(fallbackPath);
+      try {
+        db.exec("PRAGMA journal_mode = WAL;");
+        new SeoStore(db);
+      } finally {
+        db.close();
+      }
+      return fallbackPath;
+    }
+
+    before(() => {
+      resolvedLocalDbPath = ensureWalSeoDb(LOCAL_DB_PATH, "sweepr-local.db");
+      resolvedCentralDbPath = ensureWalSeoDb(CENTRAL_DB_PATH, "sweepr-central.db");
+    });
+
+    after(() => {
+      if (tmpDir && fs.existsSync(tmpDir)) {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
+    });
+
+    test("Databases have WAL journal_mode and proper table schema", () => {
+      assert.ok(fs.existsSync(resolvedLocalDbPath), `Local DB must exist at ${resolvedLocalDbPath}`);
+      assert.ok(fs.existsSync(resolvedCentralDbPath), `Central DB must exist at ${resolvedCentralDbPath}`);
+
+      const localDb = new DatabaseSync(resolvedLocalDbPath);
+      const centralDb = new DatabaseSync(resolvedCentralDbPath);
 
       try {
         const localJournal = localDb.prepare("PRAGMA journal_mode").get() as { journal_mode: string };
@@ -137,7 +170,7 @@ describe("Challenger M6 Empirical Stress Suite", () => {
     });
 
     test("WAL mode concurrent multi-transaction write stress test", async () => {
-      const db = new DatabaseSync(LOCAL_DB_PATH);
+      const db = new DatabaseSync(resolvedLocalDbPath);
       try {
         db.exec("PRAGMA busy_timeout = 5000;");
 
@@ -186,7 +219,7 @@ describe("Challenger M6 Empirical Stress Suite", () => {
     });
 
     test("Payload size limits and extreme string inputs", () => {
-      const db = new DatabaseSync(LOCAL_DB_PATH);
+      const db = new DatabaseSync(resolvedLocalDbPath);
       try {
         const largeDiff = "# Diff Header\n" + "+ line addition\n".repeat(2000); // ~32KB diff
         const insertStmt = db.prepare(`

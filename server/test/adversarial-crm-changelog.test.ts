@@ -437,8 +437,14 @@ describe("Milestone 5 Adversarial API, Injection & Concurrency Challenge Suite",
   // ==========================================
   describe("6. Central CRM Hub Parity Stress-Testing", () => {
     test("CENTRAL-01: Central CRM rejects invalid categories and neutralizes injections", async () => {
-      const centralRouterPath = path.resolve("c:/Users/Benjamin/Downloads/sweepr_crm/src/seo/router.ts");
-      const centralStorePath = path.resolve("c:/Users/Benjamin/Downloads/sweepr_crm/src/seo/store.ts");
+      const centralRouterCandidate = path.resolve("c:/Users/Benjamin/Downloads/sweepr_crm/src/seo/router.ts");
+      const centralStoreCandidate = path.resolve("c:/Users/Benjamin/Downloads/sweepr_crm/src/seo/store.ts");
+      const centralRouterPath = fs.existsSync(centralRouterCandidate)
+        ? centralRouterCandidate
+        : path.resolve(__dirname, "../src/seo/router.ts");
+      const centralStorePath = fs.existsSync(centralStoreCandidate)
+        ? centralStoreCandidate
+        : path.resolve(__dirname, "../src/seo/store.ts");
       assert.ok(fs.existsSync(centralRouterPath), "Central router must exist");
       assert.ok(fs.existsSync(centralStorePath), "Central store must exist");
 
@@ -452,6 +458,7 @@ describe("Milestone 5 Adversarial API, Injection & Concurrency Challenge Suite",
         providers: { siteUrl: "https://sweeprcleaner.com" },
         localFetcher: async () => new Response("ok"),
         seedPaths: ["/"],
+        defaultKeywords: [],
       });
 
       // 1. Invalid category

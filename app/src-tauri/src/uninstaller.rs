@@ -1201,7 +1201,17 @@ Mozilla Firefox    Mozilla.Firefox     122.0     124.0.1   winget
         }
         unicode_lnk_bytes.extend_from_slice(&[0x00, 0x00]);
         std::fs::write(&unicode_lnk, &unicode_lnk_bytes).unwrap();
-        let extracted_unicode = extract_lnk_exe_targets(&unicode_lnk_bytes);
+        let sample_unicode_target = if cfg!(windows) {
+            unicode_exe.to_string_lossy().into_owned()
+        } else {
+            r"C:\Users\Jürgen\AppData\Local\UnicodeApp.exe".to_string()
+        };
+        let mut sample_utf16_lnk = vec![0x4C, 0x00, 0x00, 0x00, 0x00];
+        for u in sample_unicode_target.encode_utf16() {
+            sample_utf16_lnk.extend_from_slice(&u.to_le_bytes());
+        }
+        sample_utf16_lnk.extend_from_slice(&[0x00, 0x00]);
+        let extracted_unicode = extract_lnk_exe_targets(&sample_utf16_lnk);
         assert!(
             extracted_unicode.iter().any(|p| p.contains("Jürgen") && p.ends_with("UnicodeApp.exe")),
             "expected UTF-16LE target with Jürgen, got: {:?}",
