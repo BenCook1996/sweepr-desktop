@@ -189,7 +189,7 @@ object MediaScanner {
             item.relativePath.contains("screenshot", ignoreCase = true) ||
             item.name.contains("screenshot", ignoreCase = true)
 
-    /** Scoped-storage safe detection of WhatsApp, Telegram, Discord, CapCut, Medal, and game/creator media folders. */
+    /** Scoped-storage safe detection of WhatsApp, Telegram, Discord, Snapchat, Instagram, Viber, Signal, Messenger, CapCut, and game/creator media folders. */
     fun isMessengerMedia(item: MediaItem): Boolean {
         val haystacks = listOf(item.bucket, item.relativePath, item.name)
         return haystacks.any { s ->
@@ -197,6 +197,13 @@ object MediaScanner {
                 s.contains("telegram", ignoreCase = true) ||
                 s.contains("wa0", ignoreCase = true) ||
                 s.contains("discord", ignoreCase = true) ||
+                s.contains("snapchat", ignoreCase = true) ||
+                s.contains("instagram", ignoreCase = true) ||
+                s.contains("viber", ignoreCase = true) ||
+                s.contains("signal", ignoreCase = true) ||
+                s.contains("wechat", ignoreCase = true) ||
+                s.contains("messenger", ignoreCase = true) ||
+                s.contains("facebook", ignoreCase = true) ||
                 s.contains("capcut", ignoreCase = true) ||
                 s.contains("medal", ignoreCase = true) ||
                 s.contains("tiktok", ignoreCase = true) ||

@@ -185,7 +185,7 @@ fun ContactsScreen(
             onDismissRequest = { showMergeConfirm = false },
             title = { Text(pluralStringResource(R.plurals.contacts_merge_n, selectedHere.size, selectedHere.size)) },
             text = {
-                Text("This will combine phone numbers and emails into a single contact per group and remove the duplicate entries. Continue?")
+                Text("This links the selected duplicate contacts into a single unified contact card in Android Contacts. No phone numbers, emails, or notes are deleted, and linked contacts can be unlinked anytime in your Contacts app. Continue?")
             },
             confirmButton = {
                 Button(

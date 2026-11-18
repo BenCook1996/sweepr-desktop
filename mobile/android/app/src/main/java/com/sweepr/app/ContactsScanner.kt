@@ -187,13 +187,25 @@ object ContactsScanner {
                     .build()
             }
         }
-        if (ops.isNotEmpty()) context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
+        if (ops.isNotEmpty()) {
+            for (chunk in ops.chunked(200)) {
+                context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(chunk))
+            }
+        }
+    }
+
+    internal fun shouldEmitNameKey(normalizedName: String, noNameLabel: String, phones: List<String>): Boolean {
+        if (normalizedName.isEmpty() || normalizedName.equals(noNameLabel.trim(), ignoreCase = true)) {
+            return false
+        }
+        return normalizedName.contains(" ") || phones.isEmpty()
     }
 
     private fun keysFor(context: Context, entry: ContactEntry): List<String> {
         val keys = mutableListOf<String>()
         val name = normalizeName(entry.name)
-        if (name.isNotEmpty() && entry.name != context.getString(R.string.contact_no_name)) keys += "n:$name"
+        val noNameLabel = context.getString(R.string.contact_no_name)
+        if (shouldEmitNameKey(name, noNameLabel, entry.phones)) keys += "n:$name"
         entry.phones.map { normalizePhone(it) }.filter { it.length >= 6 }.forEach { keys += "p:$it" }
         return keys
     }

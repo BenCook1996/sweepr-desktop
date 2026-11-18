@@ -156,11 +156,27 @@ class SweeprFeatureTest {
         val u = allocateDummyUri()
         val waItem = MediaItem(1L, u, "IMG-20260101-WA0001.jpg", 1000L, 1L, 100, 100, "WhatsApp Images", "Pictures/WhatsApp/", false)
         val tgItem = MediaItem(2L, u, "photo.jpg", 1000L, 1L, 100, 100, "Telegram", "Pictures/Telegram/", false)
-        val camItem = MediaItem(3L, u, "PXL_20260101_120000.jpg", 1000L, 1L, 100, 100, "Camera", "DCIM/Camera/", false)
+        val scItem = MediaItem(3L, u, "snap.jpg", 1000L, 1L, 100, 100, "Snapchat", "Pictures/Snapchat/", false)
+        val igItem = MediaItem(4L, u, "reel.mp4", 1000L, 1L, 100, 100, "Instagram", "Movies/Instagram/", true)
+        val vbItem = MediaItem(5L, u, "viber.jpg", 1000L, 1L, 100, 100, "Viber Images", "Pictures/Viber/", false)
+        val sigItem = MediaItem(6L, u, "signal.jpg", 1000L, 1L, 100, 100, "Signal", "Pictures/Signal/", false)
+        val msgItem = MediaItem(7L, u, "fb.jpg", 1000L, 1L, 100, 100, "Messenger", "Pictures/Messenger/", false)
+        val camItem = MediaItem(8L, u, "PXL_20260101_120000.jpg", 1000L, 1L, 100, 100, "Camera", "DCIM/Camera/", false)
 
         assertTrue(MediaScanner.isMessengerMedia(waItem))
         assertTrue(MediaScanner.isMessengerMedia(tgItem))
+        assertTrue(MediaScanner.isMessengerMedia(scItem))
+        assertTrue(MediaScanner.isMessengerMedia(igItem))
+        assertTrue(MediaScanner.isMessengerMedia(vbItem))
+        assertTrue(MediaScanner.isMessengerMedia(sigItem))
+        assertTrue(MediaScanner.isMessengerMedia(msgItem))
         assertFalse(MediaScanner.isMessengerMedia(camItem))
+
+        // ContactsScanner name-key grouping: allow multi-word full names or zero-phone entries; block single first names with numbers
+        assertFalse(ContactsScanner.shouldEmitNameKey("john", "No name", listOf("+447700900123")))
+        assertTrue(ContactsScanner.shouldEmitNameKey("john", "No name", emptyList()))
+        assertTrue(ContactsScanner.shouldEmitNameKey("john smith", "No name", listOf("+447700900123")))
+        assertFalse(ContactsScanner.shouldEmitNameKey("no name", "No name", emptyList()))
     }
 
     @Test
