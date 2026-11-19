@@ -234,6 +234,10 @@ export function syncSubscriptionToCentralCrm(params: {
   notes?: string;
   ref?: string | null;
   affiliateCode?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  canceledAt?: number | null;
+  cancelReason?: string | null;
+  skipInvoice?: boolean;
 }): void {
   const email = (params.email || "").trim().toLowerCase();
   if (!email || email.endsWith("@pending.sweeprcleaner.com")) return;
@@ -257,7 +261,76 @@ export function syncSubscriptionToCentralCrm(params: {
     activation_code: params.activationCode,
     addons: params.addons ?? [],
     notes: params.notes,
+    ...(params.cancelAtPeriodEnd !== undefined ? { cancel_at_period_end: params.cancelAtPeriodEnd } : {}),
+    ...(params.canceledAt !== undefined ? { canceled_at: params.canceledAt } : {}),
+    ...(params.cancelReason ? { cancel_reason: params.cancelReason } : {}),
+    ...(params.skipInvoice !== undefined ? { skip_invoice: params.skipInvoice } : {}),
     ...(affiliateRef ? { ref: affiliateRef, affiliate_code: affiliateRef } : {}),
+  });
+}
+
+export function reportBillingEventToCentralCrm(params: {
+  email?: string | null;
+  accountId?: string | null;
+  stripeCustomerId?: string | null;
+  eventType:
+    | "cancellation_scheduled"
+    | "cancellation_immediate"
+    | "cancellation_completed"
+    | "cancellation_reactivated"
+    | "refund_full"
+    | "refund_partial"
+    | "refund_addon"
+    | "dispute_created"
+    | "account_deleted_cancel";
+  provider?: string;
+  source?: string;
+  externalEventId?: string;
+  externalSubscriptionId?: string;
+  externalChargeId?: string;
+  externalRefundId?: string;
+  externalInvoiceId?: string;
+  plan?: string | null;
+  amountCents?: number;
+  chargeAmountCents?: number;
+  totalRefundedCents?: number;
+  addon?: string;
+  currency?: string;
+  cancelAtPeriodEnd?: boolean;
+  effectiveAt?: number | null;
+  reason?: string | null;
+  actor?: string;
+  metadata?: Record<string, unknown>;
+  createdAt?: number;
+}): void {
+  const email = (params.email || "").trim().toLowerCase();
+  if (email.endsWith("@pending.sweeprcleaner.com")) return;
+  if (!email && !params.accountId && !params.stripeCustomerId) return;
+  syncToCentralCrm("/api/crm/billing-events?project=cleaner", {
+    project_id: "cleaner",
+    ...(params.accountId ? { account_id: params.accountId } : {}),
+    ...(email ? { email } : {}),
+    ...(params.stripeCustomerId ? { stripe_customer_id: params.stripeCustomerId } : {}),
+    event_type: params.eventType,
+    ...(params.provider ? { provider: params.provider } : {}),
+    source: params.source || "service_bridge",
+    ...(params.externalEventId ? { external_event_id: params.externalEventId } : {}),
+    ...(params.externalSubscriptionId ? { external_subscription_id: params.externalSubscriptionId } : {}),
+    ...(params.externalChargeId ? { external_charge_id: params.externalChargeId } : {}),
+    ...(params.externalRefundId ? { external_refund_id: params.externalRefundId } : {}),
+    ...(params.externalInvoiceId ? { external_invoice_id: params.externalInvoiceId } : {}),
+    ...(params.plan ? { plan: params.plan.replace(/^pro_/, "") } : {}),
+    ...(params.amountCents !== undefined ? { amount_cents: params.amountCents } : {}),
+    ...(params.chargeAmountCents !== undefined ? { charge_amount_cents: params.chargeAmountCents } : {}),
+    ...(params.totalRefundedCents !== undefined ? { total_refunded_cents: params.totalRefundedCents } : {}),
+    ...(params.addon ? { addon: params.addon } : {}),
+    ...(params.currency ? { currency: params.currency } : {}),
+    ...(params.cancelAtPeriodEnd !== undefined ? { cancel_at_period_end: params.cancelAtPeriodEnd } : {}),
+    ...(params.effectiveAt !== undefined && params.effectiveAt !== null ? { effective_at: params.effectiveAt } : {}),
+    ...(params.reason ? { reason: params.reason } : {}),
+    ...(params.actor ? { actor: params.actor } : {}),
+    ...(params.metadata ? { metadata: params.metadata } : {}),
+    ...(params.createdAt !== undefined ? { created_at: params.createdAt } : {}),
   });
 }
 

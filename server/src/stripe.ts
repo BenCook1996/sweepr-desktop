@@ -1,6 +1,10 @@
 import type Stripe from "stripe";
 import type { EntStatus, Repo } from "./db.js";
-import { syncToCentralCrm } from "./crm-sync.js";
+import {
+  syncToCentralCrm,
+  syncSubscriptionToCentralCrm,
+  reportBillingEventToCentralCrm,
+} from "./crm-sync.js";
 import { processAnnualRenewalRecap } from "./renewal-recap.js";
 import { dispatchChurnWinbackEmail, dispatchFailedPaymentDunningEmail } from "./download-recovery.js";
 import { attributeCheckoutToExperiments } from "./experiments.js";
@@ -228,16 +232,31 @@ export function syncSubscription(repo: Repo, sub: Stripe.Subscription, accountId
   }
 
   if (account.email && !account.email.endsWith("@pending.sweeprcleaner.com")) {
-    syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+    const mappedStatus =
+      sub.status === "active" || sub.status === "trialing" || sub.status === "past_due" ? sub.status : "canceled";
+    const cancelAtPeriodEnd = Boolean((sub as any).cancel_at_period_end);
+    const canceledAtSec = (sub as any).canceled_at ?? (sub as any).ended_at ?? null;
+    const cancelReason =
+      (sub as any).cancellation_details?.comment ||
+      (sub as any).cancellation_details?.feedback ||
+      (sub as any).cancellation_details?.reason ||
+      undefined;
+    syncSubscriptionToCentralCrm({
       email: account.email,
       name: account.name,
       country: account.country,
       plan: `pro_${planName}`,
-      status: sub.status === "active" || sub.status === "trialing" || sub.status === "past_due" ? sub.status : "canceled",
-      amount_cents: amountCents,
+      status: mappedStatus,
+      amountCents,
       currency: sub.currency || "usd",
+      stripeCustomerId: customerId ?? undefined,
+      stripeSubscriptionId: sub.id,
       addons: Array.from(detectedAddons),
-      ...(refCode ? { ref: refCode, affiliate_code: refCode } : {}),
+      cancelAtPeriodEnd,
+      canceledAt: typeof canceledAtSec === "number" ? canceledAtSec : undefined,
+      cancelReason,
+      skipInvoice: mappedStatus === "canceled" || cancelAtPeriodEnd,
+      ...(refCode ? { ref: refCode } : {}),
       notes: `Synced from SWEEPR Cleaner Stripe (${sub.id})`,
     });
   }
@@ -380,15 +399,76 @@ export async function handleStripeWebhook(
       const fresh = await stripe.subscriptions.retrieve(sub.id).catch(() => sub);
       await syncPayPalEmailFromSubscription(stripe, repo, fresh);
       syncSubscription(repo, fresh);
+      const custId = idOf(fresh.customer as any);
+      const acc =
+        (custId ? repo.accountByCustomer(custId) : undefined) ??
+        (fresh.metadata?.account_id ? repo.accountById(fresh.metadata.account_id) : undefined);
+      const subCancelReason =
+        (fresh as any).cancellation_details?.comment ||
+        (fresh as any).cancellation_details?.feedback ||
+        (fresh as any).cancellation_details?.reason ||
+        undefined;
+      const prevCancelAtPeriodEnd = (event.data.previous_attributes as any)?.cancel_at_period_end;
+      if (event.type === "customer.subscription.deleted" || fresh.status === "canceled") {
+        reportBillingEventToCentralCrm({
+          email: acc?.email,
+          accountId: acc?.id ?? fresh.metadata?.account_id,
+          stripeCustomerId: custId,
+          eventType: "cancellation_completed",
+          provider: "stripe",
+          source: "service_bridge",
+          externalEventId: `stripe_sub_canceled_${fresh.id}`,
+          externalSubscriptionId: fresh.id,
+          plan: fresh.metadata?.plan,
+          cancelAtPeriodEnd: false,
+          effectiveAt:
+            typeof (fresh as any).canceled_at === "number"
+              ? (fresh as any).canceled_at
+              : typeof (fresh as any).ended_at === "number"
+              ? (fresh as any).ended_at
+              : Math.floor(Date.now() / 1000),
+          reason: subCancelReason || "subscription_deleted",
+          actor: "stripe_webhook",
+        });
+      } else if (fresh.cancel_at_period_end) {
+        const effectiveSec = (fresh as any).cancel_at ?? periodEnd(fresh) ?? Math.floor(Date.now() / 1000);
+        reportBillingEventToCentralCrm({
+          email: acc?.email,
+          accountId: acc?.id ?? fresh.metadata?.account_id,
+          stripeCustomerId: custId,
+          eventType: "cancellation_scheduled",
+          provider: "stripe",
+          source: "service_bridge",
+          externalEventId: `stripe_sub_cap_${fresh.id}_${effectiveSec}`,
+          externalSubscriptionId: fresh.id,
+          plan: fresh.metadata?.plan,
+          cancelAtPeriodEnd: true,
+          effectiveAt: effectiveSec,
+          reason: subCancelReason || "cancel_at_period_end",
+          actor: "stripe_webhook",
+        });
+      } else if (prevCancelAtPeriodEnd === true && !fresh.cancel_at_period_end && (fresh.status === "active" || fresh.status === "trialing")) {
+        const reactPeriodEnd = periodEnd(fresh) ?? Math.floor(Date.now() / 1000);
+        reportBillingEventToCentralCrm({
+          email: acc?.email,
+          accountId: acc?.id ?? fresh.metadata?.account_id,
+          stripeCustomerId: custId,
+          eventType: "cancellation_reactivated",
+          provider: "stripe",
+          source: "service_bridge",
+          externalEventId: `stripe_sub_react_${fresh.id}_${reactPeriodEnd}`,
+          externalSubscriptionId: fresh.id,
+          plan: fresh.metadata?.plan,
+          cancelAtPeriodEnd: false,
+          reason: "reactivated",
+          actor: "stripe_webhook",
+        });
+      }
       if (
         event.type === "customer.subscription.deleted" ||
         fresh.status === "canceled" ||
         fresh.cancel_at_period_end
       ) {
-        const custId = idOf(fresh.customer as any);
-        const acc =
-          (custId ? repo.accountByCustomer(custId) : undefined) ??
-          (fresh.metadata?.account_id ? repo.accountById(fresh.metadata.account_id) : undefined);
         if (acc) {
           await dispatchChurnWinbackEmail(repo, {
             accountId: acc.id,
@@ -575,19 +655,36 @@ export async function handleStripeWebhook(
         ? await stripe.charges.retrieve(ch.id).catch(() => ch)
         : ch;
       const customerId = idOf(charge.customer as any);
-      const account = customerId ? repo.accountByCustomer(customerId) : undefined;
-      if (account && charge.refunded && (charge.amount_refunded ?? 0) >= (charge.amount ?? 0)) {
-        const addonMeta = String(charge.metadata?.sweepr_addon || charge.metadata?.addon || "").toLowerCase();
-        const desc = String(charge.description || "").toLowerCase();
-        const isAddonRefund =
-          addonMeta === "battery_care" ||
-          addonMeta === "cloud_vault" ||
-          desc.includes("battery care") ||
-          desc.includes("cloud vault");
+      const chargeEmail = (
+        charge.billing_details?.email ||
+        charge.receipt_email ||
+        ""
+      ).trim().toLowerCase() || undefined;
+      const account =
+        (customerId ? repo.accountByCustomer(customerId) : undefined) ??
+        (chargeEmail ? repo.accountByEmail(chargeEmail) : undefined);
 
-        if (isAddonRefund) {
-          const refundedAddon =
-            addonMeta === "cloud_vault" || desc.includes("cloud vault") ? "cloud_vault" : "battery_care";
+      const addonMeta = String(charge.metadata?.sweepr_addon || charge.metadata?.addon || "").toLowerCase();
+      const desc = String(charge.description || "").toLowerCase();
+      const isAddonRefund =
+        addonMeta === "battery_care" ||
+        addonMeta === "cloud_vault" ||
+        desc.includes("battery care") ||
+        desc.includes("cloud vault");
+      const refundedAddon =
+        addonMeta === "cloud_vault" || desc.includes("cloud vault")
+          ? "cloud_vault"
+          : isAddonRefund
+          ? "battery_care"
+          : undefined;
+      const chargeAmountCents = Number(charge.amount ?? 0);
+      const totalRefundedCents = Number(charge.amount_refunded ?? 0);
+      const isFullRefund = chargeAmountCents > 0 ? totalRefundedCents >= chargeAmountCents : Boolean(charge.refunded);
+      const latestRefund = Array.isArray((charge as any).refunds?.data) ? (charge as any).refunds.data[0] : null;
+      const invId = idOf((charge as any).invoice);
+
+      if (account && (charge.refunded || isFullRefund) && totalRefundedCents >= chargeAmountCents) {
+        if (isAddonRefund && refundedAddon) {
           const currentAddons = repo.addonsForAccount(account.id);
           repo.setAddons(
             account.id,
@@ -620,15 +717,59 @@ export async function handleStripeWebhook(
             metadata: { charge_id: charge.id, amount_refunded: charge.amount_refunded },
           });
           if (account.email) {
-            syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+            syncSubscriptionToCentralCrm({
               email: account.email,
               name: account.name,
               country: account.country,
+              plan: existingEnt?.plan || "annual",
               status: "canceled",
+              stripeCustomerId: customerId ?? undefined,
+              stripeSubscriptionId: existingEnt?.stripe_subscription_id ?? undefined,
+              canceledAt: Math.floor(Date.now() / 1000),
+              cancelReason: latestRefund?.reason || "charge_refunded",
+              skipInvoice: true,
+              addons: repo.addonsForAccount(account.id),
               notes: `Charge refunded in SWEEPR Cleaner Stripe (${charge.id})`,
             });
           }
         }
+      } else if (account && totalRefundedCents > 0) {
+        repo.addActivity({
+          account_id: account.id,
+          type: "charge_partial_refund",
+          title: "Partial Refund Processed",
+          description: `Partial refund (${totalRefundedCents} of ${chargeAmountCents}) on charge ${charge.id}.`,
+          actor: "stripe",
+          metadata: { charge_id: charge.id, amount_refunded: totalRefundedCents, charge_amount: chargeAmountCents },
+        });
+      }
+
+      if (totalRefundedCents > 0 || charge.refunded) {
+        reportBillingEventToCentralCrm({
+          email: account?.email || chargeEmail,
+          accountId: account?.id,
+          stripeCustomerId: customerId,
+          eventType: isAddonRefund
+            ? "refund_addon"
+            : isFullRefund
+            ? "refund_full"
+            : "refund_partial",
+          provider: "stripe",
+          source: "service_bridge",
+          externalEventId: latestRefund?.id
+            ? `stripe_refund_${latestRefund.id}`
+            : `stripe_charge_refund_${charge.id}_${totalRefundedCents}`,
+          externalChargeId: charge.id,
+          externalRefundId: latestRefund?.id,
+          externalInvoiceId: invId ?? undefined,
+          amountCents: Number(latestRefund?.amount ?? totalRefundedCents ?? 0),
+          chargeAmountCents: chargeAmountCents || undefined,
+          totalRefundedCents: totalRefundedCents || undefined,
+          addon: refundedAddon,
+          currency: charge.currency,
+          reason: latestRefund?.reason || (isFullRefund ? "refund_full" : "refund_partial"),
+          actor: "stripe_webhook",
+        });
       }
       break;
     }
@@ -637,8 +778,17 @@ export async function handleStripeWebhook(
       const chargeId = idOf(d.charge as any);
       const charge = chargeId ? await stripe.charges.retrieve(chargeId).catch(() => null) : null;
       const customerId = charge ? idOf(charge.customer as any) : null;
-      const account = customerId ? repo.accountByCustomer(customerId) : undefined;
+      const disputeEmail = (
+        charge?.billing_details?.email ||
+        charge?.receipt_email ||
+        (d as any).evidence_details?.customer_email_address ||
+        ""
+      ).trim().toLowerCase() || undefined;
+      const account =
+        (customerId ? repo.accountByCustomer(customerId) : undefined) ??
+        (disputeEmail ? repo.accountByEmail(disputeEmail) : undefined);
       if (account && charge) {
+        const existingEnt = repo.entitlement(account.id);
         repo.setStatus(account.id, "disputed");
         repo.addActivity({
           account_id: account.id,
@@ -649,15 +799,38 @@ export async function handleStripeWebhook(
           metadata: { dispute_id: d.id, charge_id: charge.id },
         });
         if (account.email) {
-          syncToCentralCrm("/api/crm/subscriptions?project=cleaner", {
+          syncSubscriptionToCentralCrm({
             email: account.email,
             name: account.name,
             country: account.country,
+            plan: existingEnt?.plan || "annual",
             status: "canceled",
+            stripeCustomerId: customerId ?? undefined,
+            stripeSubscriptionId: existingEnt?.stripe_subscription_id ?? undefined,
+            canceledAt: Math.floor(Date.now() / 1000),
+            cancelReason: d.reason || "charge_dispute",
+            skipInvoice: true,
+            addons: repo.addonsForAccount(account.id),
             notes: `Charge disputed in SWEEPR Cleaner Stripe (${charge.id})`,
           });
         }
       }
+      reportBillingEventToCentralCrm({
+        email: account?.email || disputeEmail,
+        accountId: account?.id,
+        stripeCustomerId: customerId,
+        eventType: "dispute_created",
+        provider: "stripe",
+        source: "service_bridge",
+        externalEventId: `stripe_dispute_${d.id}`,
+        externalChargeId: charge?.id ?? chargeId ?? undefined,
+        externalRefundId: d.id,
+        externalInvoiceId: charge ? idOf((charge as any).invoice) ?? undefined : undefined,
+        amountCents: d.amount,
+        currency: d.currency,
+        reason: d.reason || "dispute_created",
+        actor: "stripe_webhook",
+      });
       break;
     }
     default:

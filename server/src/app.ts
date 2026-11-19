@@ -106,6 +106,7 @@ import { AUDIT_USER_AGENT } from "./seo/audit.js";
 import {
   syncToCentralCrm,
   syncSubscriptionToCentralCrm,
+  reportBillingEventToCentralCrm,
   reportAffiliateClickToCentralCrm,
   verifyCentralEntitlement,
   verifyCentralOtp,
@@ -5253,8 +5254,28 @@ export function createApp(deps: AppDeps) {
       country: account.country,
       plan: ent.plan || "annual",
       status: ent.status,
+      stripeCustomerId: account.stripe_customer_id ?? undefined,
+      stripeSubscriptionId: ent.stripe_subscription_id ?? undefined,
+      cancelAtPeriodEnd: true,
+      cancelReason: reason,
+      skipInvoice: true,
       addons: repo.addonsForAccount(accountId),
       notes: `Scheduled cancellation at period end (${reason})`,
+    });
+    reportBillingEventToCentralCrm({
+      email: account.email,
+      accountId,
+      stripeCustomerId: account.stripe_customer_id ?? undefined,
+      eventType: "cancellation_scheduled",
+      provider: "portal",
+      source: "customer_portal",
+      externalEventId: `cleaner_portal_cancel_${accountId}_${Math.floor(Date.now() / 60000)}`,
+      externalSubscriptionId: ent.stripe_subscription_id ?? undefined,
+      plan: ent.plan || "annual",
+      cancelAtPeriodEnd: true,
+      effectiveAt: ent.current_period_end ?? undefined,
+      reason,
+      actor: "user",
     });
 
     repo.addActivity({

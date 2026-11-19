@@ -1,7 +1,7 @@
 import type { EntStatus, Repo } from "./db.js";
 import { randomToken, sha256 } from "./tokens.js";
 import { normalizeEmail } from "./security.js";
-import { syncSubscriptionToCentralCrm } from "./crm-sync.js";
+import { syncSubscriptionToCentralCrm, reportBillingEventToCentralCrm } from "./crm-sync.js";
 
 /** RevenueCat event types we act on, mapped to the entitlement status they imply. */
 const STATUS_MAP: Record<string, EntStatus> = {
@@ -183,6 +183,30 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
   });
 
   console.log(`[revenuecat] Processed ${event.type} for account ${account.id}. Status: ${newStatus}`);
+  const rcCancelReason =
+    typeof event.cancel_reason === "string"
+      ? event.cancel_reason
+      : typeof event.expiration_reason === "string"
+      ? event.expiration_reason
+      : undefined;
+  const rcCancelAtPeriodEnd = isAddon ? Boolean(existing?.cancel_at_period_end) : event.type === "CANCELLATION";
+  const rcIsCancelOrExpire =
+    event.type === "CANCELLATION" || event.type === "EXPIRATION" || (hasActiveStripeSub && mapped === "canceled");
+  const rcProvider =
+    store === "APP_STORE" || store === "MAC_APP_STORE"
+      ? "apple"
+      : store === "PLAY_STORE"
+      ? "google_play"
+      : "revenuecat";
+  const rawPrice =
+    typeof event.price_in_purchased_currency === "number"
+      ? event.price_in_purchased_currency
+      : typeof event.price === "number"
+      ? event.price
+      : undefined;
+  const isRcRefund = rcCancelReason === "CUSTOMER_SUPPORT" || (typeof rawPrice === "number" && rawPrice < 0);
+  const rcEventBaseId = typeof event.id === "string" && event.id ? event.id : `${account.id}_${Date.now()}`;
+
   if (account.email) {
     syncSubscriptionToCentralCrm({
       email: account.email,
@@ -190,8 +214,57 @@ export async function handleRevenueCatWebhook(repo: Repo, payload: any) {
       country: account.country,
       plan: resolvedPlan,
       status: newStatus,
+      stripeCustomerId: account.stripe_customer_id ?? undefined,
+      stripeSubscriptionId: resolvedSubId ?? undefined,
+      cancelAtPeriodEnd: rcCancelAtPeriodEnd,
+      canceledAt: event.type === "EXPIRATION" ? (expirationAt ?? Math.floor(Date.now() / 1000)) : undefined,
+      cancelReason: rcCancelReason,
+      skipInvoice: rcIsCancelOrExpire,
       addons: rcAddons,
       notes: `Synced from SWEEPR Cleaner RevenueCat (${store}: ${event.type})`,
+    });
+  }
+
+  if (event.type === "CANCELLATION" || event.type === "EXPIRATION" || event.type === "UNCANCELLATION") {
+    reportBillingEventToCentralCrm({
+      email: account.email,
+      accountId: account.id,
+      stripeCustomerId: account.stripe_customer_id ?? undefined,
+      eventType:
+        event.type === "CANCELLATION"
+          ? isRcRefund
+            ? "cancellation_immediate"
+            : "cancellation_scheduled"
+          : event.type === "EXPIRATION"
+          ? "cancellation_completed"
+          : "cancellation_reactivated",
+      provider: rcProvider,
+      source: "service_bridge",
+      externalEventId: `rc_${event.type.toLowerCase()}_${rcEventBaseId}`,
+      externalSubscriptionId: resolvedSubId ?? undefined,
+      plan: resolvedPlan,
+      cancelAtPeriodEnd: event.type === "CANCELLATION" && !isRcRefund,
+      effectiveAt: expirationAt ?? Math.floor(Date.now() / 1000),
+      reason: rcCancelReason || event.type.toLowerCase(),
+      actor: "revenuecat",
+    });
+  }
+  if (isRcRefund) {
+    reportBillingEventToCentralCrm({
+      email: account.email,
+      accountId: account.id,
+      stripeCustomerId: account.stripe_customer_id ?? undefined,
+      eventType: isAddon ? "refund_addon" : "refund_full",
+      provider: rcProvider,
+      source: "service_bridge",
+      externalEventId: `rc_refund_${rcEventBaseId}`,
+      externalSubscriptionId: resolvedSubId ?? undefined,
+      plan: resolvedPlan,
+      amountCents: typeof rawPrice === "number" ? Math.round(Math.abs(rawPrice) * 100) : undefined,
+      addon: isAddon ? rcAddons[0] : undefined,
+      currency: typeof event.currency === "string" ? event.currency.toLowerCase() : undefined,
+      reason: rcCancelReason || "customer_support_refund",
+      actor: "revenuecat",
     });
   }
 }
