@@ -6,6 +6,7 @@ Disallow: /crm
 Disallow: /checkout/
 Disallow: /order
 Disallow: /login
+Allow: /download$
 Disallow: /download?
 Disallow: /download/
 Disallow: /*?*currency=

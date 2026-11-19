@@ -2508,6 +2508,7 @@ test("GSC Nov 2026 Core Update recovery: clean /download unblocked for noindex d
   assert.equal(robotsRes.status, 200);
   const robotsTxt = await robotsRes.text();
   assert.ok(!/^Disallow:\s*\/download\s*$/m.test(robotsTxt), "clean /download must not be blanket-disallowed");
+  assert.ok(/^Allow:\s*\/download\$\s*$/m.test(robotsTxt), "clean /download$ must be explicitly allowed in robots.txt");
   assert.ok(/^Disallow:\s*\/download\?\s*$/m.test(robotsTxt), "parameterized /download? must remain disallowed");
   assert.ok(/^Disallow:\s*\/download\/\s*$/m.test(robotsTxt), "/download/ subpaths must remain disallowed");
 
