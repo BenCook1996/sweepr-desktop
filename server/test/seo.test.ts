@@ -10,7 +10,7 @@ import { createApp } from "../src/app.js";
 import { parseHtml, parseSitemap } from "../src/seo/html.js";
 import { detectBot } from "../src/seo/bots.js";
 import { isPublicHttpUrl, checkBacklink } from "../src/seo/backlinks.js";
-import { ctrForPosition } from "../src/seo/router.js";
+import { createSeoRouter, ctrForPosition } from "../src/seo/router.js";
 import { SeoStore } from "../src/seo/store.js";
 
 const { privateKey } = generateKeyPairSync("ed25519");
@@ -438,6 +438,151 @@ test("SEO Phase 3: DataForSEO syncs keywords, domain overview, backlinks, link g
   // Spend cap guard prevents accidental overrun
   store.setSetting("dfs_spend_cap_usd", 0.05);
   await assert.rejects(() => syncDfsKeywords(store, cfg, mockDfsFetch), /spend cap reached/i);
+});
+
+test("SEO: DataForSEO error mapping returns 403 for 40104 verification, 402 for balance/spend cap, and surfaces verification_required", async () => {
+  const repo = openDb(":memory:");
+  const store = new SeoStore(repo.db);
+  store.addKeyword("winsxs folder", "pseo-folder", "/clean/folder/winsxs");
+
+  let mode: "40104" | "40200" | "503" | "ok" = "40104";
+  const upstreamCalls: string[] = [];
+
+  const mockDfsFetcher = async (url: string): Promise<Response> => {
+    upstreamCalls.push(url);
+    if (url.endsWith("/v3/appendix/user_data")) {
+      return new Response(
+        JSON.stringify({
+          status_code: 20000,
+          status_message: "Ok.",
+          cost: 0,
+          tasks: [{ status_code: 20000, status_message: "Ok.", cost: 0, result: [{ login: "test_dfs_user", money: { total: 1, balance: 1 } }] }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }
+    if (mode === "40104") {
+      return new Response(
+        JSON.stringify({
+          status_code: 20000,
+          status_message: "Ok.",
+          cost: 0,
+          tasks: [
+            {
+              status_code: 40104,
+              status_message: "Please verify your account before using the API. You can complete verification in the user panel: https://app.dataforseo.com/ .",
+              cost: 0,
+              result: null,
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }
+    if (mode === "40200") {
+      return new Response(
+        JSON.stringify({
+          status_code: 20000,
+          status_message: "Ok.",
+          cost: 0,
+          tasks: [{ status_code: 40200, status_message: "Payment Required.", cost: 0, result: null }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    }
+    if (mode === "503") {
+      return new Response("Service Unavailable", { status: 503, statusText: "Service Unavailable" });
+    }
+    return new Response(
+      JSON.stringify({
+        status_code: 20000,
+        status_message: "Ok.",
+        cost: 0.015,
+        tasks: [
+          {
+            status_code: 20000,
+            status_message: "Ok.",
+            cost: 0.015,
+            result: [{ metrics: { organic: { pos_1: 0, pos_2_3: 0, pos_4_10: 1, pos_11_20: 2, etv: 12.5, count: 3, estimated_paid_traffic_cost: 20 } }, items: [] }],
+          },
+        ],
+      }),
+      { status: 200, headers: { "content-type": "application/json" } }
+    );
+  };
+
+  const seoRouter = createSeoRouter({
+    store,
+    providers: {
+      siteUrl: "https://sweeprcleaner.com",
+      dataForSeoLogin: "test_dfs_user",
+      dataForSeoPassword: "test_dfs_password",
+      dataForSeoLocationCode: 2840,
+      dataForSeoLanguageCode: "en",
+    },
+    localFetcher: async () => new Response("<html><title>ok</title></html>", { status: 200, headers: { "content-type": "text/html" } }),
+    seedPaths: ["/"],
+    defaultKeywords: [],
+    dfsFetcher: mockDfsFetcher,
+  });
+
+  // 1. 40104 on POST /dfs/backlinks -> HTTP 403 + structured verification error
+  const blRes = await seoRouter.request("/dfs/backlinks", { method: "POST", body: "{}" });
+  assert.equal(blRes.status, 403);
+  const blJson = (await blRes.json()) as any;
+  assert.equal(blJson.error, "dfs_account_unverified");
+  assert.equal(blJson.dfs_code, 40104);
+  assert.equal(blJson.action_url, "https://app.dataforseo.com/");
+  assert.match(blJson.message, /app\.dataforseo\.com/);
+  assert.doesNotMatch(blJson.message, /still propagating/i);
+
+  // 2. GET /dfs/status and GET /overview expose verification_required & summary
+  const statusJson1 = (await (await seoRouter.request("/dfs/status")).json()) as any;
+  assert.equal(statusJson1.verification_required, true);
+  assert.equal(statusJson1.last_error_code, 40104);
+  assert.equal(statusJson1.verification_url, "https://app.dataforseo.com/");
+  assert.ok(statusJson1.recent_calls?.[0]?.summary);
+
+  const ovJson1 = (await (await seoRouter.request("/overview")).json()) as any;
+  assert.equal(ovJson1.dfs.verification_required, true);
+  assert.equal(ovJson1.dfs.last_error_code, 40104);
+
+  // 3. POST /dfs/keywords short-circuits on 40104 after 1 upstream call (no wasted second request)
+  upstreamCalls.length = 0;
+  const kwRes = await seoRouter.request("/dfs/keywords", { method: "POST", body: "{}" });
+  assert.equal(kwRes.status, 403);
+  assert.equal(upstreamCalls.length, 1);
+
+  // 4. 40200 -> 402, spend cap -> 402, upstream 503 -> 502
+  mode = "40200";
+  const balRes = await seoRouter.request("/dfs/backlinks", { method: "POST", body: "{}" });
+  assert.equal(balRes.status, 402);
+  assert.equal(((await balRes.json()) as any).error, "dfs_insufficient_balance");
+
+  store.setSetting("dfs_spend_cap_usd", 0);
+  const capRes = await seoRouter.request("/dfs/backlinks", { method: "POST", body: "{}" });
+  assert.equal(capRes.status, 402);
+  assert.equal(((await capRes.json()) as any).error, "dfs_spend_cap_reached");
+  store.setSetting("dfs_spend_cap_usd", 0.95);
+
+  mode = "503";
+  const err503Res = await seoRouter.request("/dfs/backlinks", { method: "POST", body: "{}" });
+  assert.equal(err503Res.status, 502);
+  assert.equal(((await err503Res.json()) as any).error, "dfs_upstream_error");
+
+  // 5. Subsequent 20000 success clears verification_required back to false
+  mode = "ok";
+  const okDomRes = await seoRouter.request("/dfs/domain-overview", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ include_competitors: false }),
+  });
+  assert.equal(okDomRes.status, 200);
+
+  const statusJson2 = (await (await seoRouter.request("/dfs/status")).json()) as any;
+  assert.equal(statusJson2.verification_required, false);
+  const ovJson2 = (await (await seoRouter.request("/overview")).json()) as any;
+  assert.equal(ovJson2.dfs.verification_required, false);
 });
 
 test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and index hygiene", async () => {

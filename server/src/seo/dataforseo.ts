@@ -38,19 +38,124 @@ function cleanDomain(raw: string): string {
     .trim();
 }
 
-function formatDfsError(statusCode: number | undefined, statusMessage: string | undefined, httpStatus: number): string {
+export class DfsApiError extends Error {
+  httpStatus: number;
+  code: string;
+  dfsCode: number | null;
+  actionUrl: string | null;
+
+  constructor(
+    message: string,
+    opts: { httpStatus: number; code: string; dfsCode?: number | null; actionUrl?: string | null }
+  ) {
+    super(message);
+    this.name = "DfsApiError";
+    this.httpStatus = opts.httpStatus;
+    this.code = opts.code;
+    this.dfsCode = opts.dfsCode ?? null;
+    this.actionUrl = opts.actionUrl ?? null;
+  }
+}
+
+function buildDfsError(
+  statusCode: number | undefined,
+  statusMessage: string | undefined,
+  httpStatus: number
+): DfsApiError {
   const code = statusCode ?? httpStatus;
   const msg = statusMessage || `HTTP ${httpStatus}`;
   if (code === 40104) {
-    return "DataForSEO account verification is still propagating in their portal (code 40104). Please wait a few minutes and try again.";
+    const trimmed = statusMessage?.trim();
+    const detail = trimmed
+      ? trimmed.includes("app.dataforseo.com")
+        ? trimmed
+        : `${trimmed} (Verify at https://app.dataforseo.com/)`
+      : "Please verify your account in the DataForSEO user panel at https://app.dataforseo.com/ before running API syncs.";
+    return new DfsApiError(`DataForSEO account verification required (code 40104): ${detail}`, {
+      httpStatus: 403,
+      code: "dfs_account_unverified",
+      dfsCode: 40104,
+      actionUrl: "https://app.dataforseo.com/",
+    });
+  }
+  if (code === 40100 || code === 40101 || code === 40102 || httpStatus === 401) {
+    return new DfsApiError(`DataForSEO authentication failed (code ${code}): ${msg}`, {
+      httpStatus: 401,
+      code: "dfs_unauthorized",
+      dfsCode: code,
+      actionUrl: "https://app.dataforseo.com/api-access",
+    });
   }
   if (code === 40200) {
-    return "DataForSEO balance is insufficient for this request (code 40200).";
+    return new DfsApiError("DataForSEO balance is insufficient for this request (code 40200).", {
+      httpStatus: 402,
+      code: "dfs_insufficient_balance",
+      dfsCode: 40200,
+      actionUrl: "https://app.dataforseo.com/billing",
+    });
   }
   if (code === 40204 || code === 40210) {
-    return `DataForSEO subscription required for this API module (code ${code}: ${msg}).`;
+    return new DfsApiError(`DataForSEO subscription required for this API module (code ${code}: ${msg}).`, {
+      httpStatus: 402,
+      code: "dfs_subscription_required",
+      dfsCode: code,
+      actionUrl: "https://app.dataforseo.com/api-dashboard",
+    });
   }
-  return `DataForSEO error ${code}: ${msg}`;
+  if (code === 40202 || httpStatus === 429) {
+    return new DfsApiError(`DataForSEO rate limit reached (code ${code}): ${msg}`, {
+      httpStatus: 429,
+      code: "dfs_rate_limited",
+      dfsCode: code,
+    });
+  }
+  if (code >= 40000 && code < 40600) {
+    return new DfsApiError(`DataForSEO request error ${code}: ${msg}`, {
+      httpStatus: 400,
+      code: "dfs_bad_request",
+      dfsCode: code,
+    });
+  }
+  return new DfsApiError(`DataForSEO error ${code}: ${msg}`, {
+    httpStatus: 502,
+    code: "dfs_upstream_error",
+    dfsCode: code,
+  });
+}
+
+function isAccountWideDfsError(e: unknown): e is DfsApiError {
+  return (
+    e instanceof DfsApiError &&
+    (e.code === "dfs_account_unverified" ||
+      e.code === "dfs_unauthorized" ||
+      e.code === "dfs_insufficient_balance" ||
+      e.code === "dfs_spend_cap_reached")
+  );
+}
+
+export function getDfsVerificationState(store: SeoStore): {
+  verification_required: boolean;
+  last_error_code: number | null;
+  last_error: string | null;
+  verification_url: string | null;
+} {
+  const latest = store.dfsRecentCalls(1)[0];
+  if (latest && latest.status_code === 40104) {
+    return {
+      verification_required: true,
+      last_error_code: 40104,
+      last_error:
+        latest.summary ||
+        "Please verify your account before using the API at https://app.dataforseo.com/.",
+      verification_url: "https://app.dataforseo.com/",
+    };
+  }
+  return {
+    verification_required: false,
+    last_error_code: latest && latest.status_code !== 20000 ? latest.status_code : null,
+    last_error: latest && latest.status_code !== 20000 ? latest.summary : null,
+    verification_url: null,
+  };
 }
 
 interface DfsCallResult<T = any> {
@@ -71,15 +176,19 @@ async function callDfs<T = any>(
   const login = (cfg.dataForSeoLogin ?? "").trim();
   const password = (cfg.dataForSeoPassword ?? "").trim();
   if (!login || !password) {
-    throw new Error("DataForSEO credentials not configured (set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in server/.env)");
+    throw new DfsApiError(
+      "DataForSEO credentials not configured (set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD in server/.env)",
+      { httpStatus: 400, code: "dfs_not_configured" }
+    );
   }
 
   if (method === "POST") {
     const cap = store.getSetting<number>("dfs_spend_cap_usd", DEFAULT_DFS_SPEND_CAP_USD);
     const spent = store.dfsTotalSpend();
     if (spent >= cap) {
-      throw new Error(
-        `DataForSEO spend cap reached ($${spent.toFixed(4)} spent of $${cap.toFixed(2)} cap). Increase the cap in Data Sources if you want to run more queries.`
+      throw new DfsApiError(
+        `DataForSEO spend cap reached ($${spent.toFixed(4)} spent of $${cap.toFixed(2)} cap). Increase the cap in Data Sources if you want to run more queries.`,
+        { httpStatus: 402, code: "dfs_spend_cap_reached" }
       );
     }
   }
@@ -108,7 +217,7 @@ async function callDfs<T = any>(
   }
 
   if (!res.ok || topCode !== 20000 || taskCode !== 20000) {
-    throw new Error(formatDfsError(taskCode !== 20000 ? taskCode : topCode, taskCode !== 20000 ? taskMsg : topMsg, res.status));
+    throw buildDfsError(taskCode !== 20000 ? taskCode : topCode, taskCode !== 20000 ? taskMsg : topMsg, res.status);
   }
 
   return {
@@ -140,6 +249,7 @@ export async function fetchDfsAccountStatus(store: SeoStore, cfg: SeoProviderCon
       location_code: cfg.dataForSeoLocationCode ?? 2840,
       language_code: cfg.dataForSeoLanguageCode ?? "en",
       recent_calls: store.dfsRecentCalls(20),
+      ...getDfsVerificationState(store),
     };
   }
 
@@ -163,6 +273,7 @@ export async function fetchDfsAccountStatus(store: SeoStore, cfg: SeoProviderCon
       location_code: cfg.dataForSeoLocationCode ?? 2840,
       language_code: cfg.dataForSeoLanguageCode ?? "en",
       recent_calls: store.dfsRecentCalls(20),
+      ...getDfsVerificationState(store),
     };
   } catch (e) {
     return {
@@ -177,6 +288,7 @@ export async function fetchDfsAccountStatus(store: SeoStore, cfg: SeoProviderCon
       location_code: cfg.dataForSeoLocationCode ?? 2840,
       language_code: cfg.dataForSeoLanguageCode ?? "en",
       recent_calls: store.dfsRecentCalls(20),
+      ...getDfsVerificationState(store),
     };
   }
 }
@@ -189,7 +301,12 @@ export async function fetchDfsAccountStatus(store: SeoStore, cfg: SeoProviderCon
  */
 export async function syncDfsKeywords(store: SeoStore, cfg: SeoProviderConfig, fetchImpl: FetchLike = fetch) {
   const kws = store.listKeywords().map((k) => k.keyword);
-  if (!kws.length) throw new Error("No keywords tracked yet. Add keywords first.");
+  if (!kws.length) {
+    throw new DfsApiError("No keywords tracked yet. Add keywords first.", {
+      httpStatus: 400,
+      code: "dfs_no_keywords",
+    });
+  }
 
   const location_code = cfg.dataForSeoLocationCode ?? 2840;
   const language_code = cfg.dataForSeoLanguageCode ?? "en";
@@ -206,6 +323,7 @@ export async function syncDfsKeywords(store: SeoStore, cfg: SeoProviderConfig, f
   let kdUpdated = 0;
   let totalCost = 0;
   const warnings: string[] = [];
+  let firstDfsErr: DfsApiError | null = null;
 
   // 1. Google Ads Search Volume + CPC + Competition + 12-month monthly_searches
   try {
@@ -235,6 +353,8 @@ export async function syncDfsKeywords(store: SeoStore, cfg: SeoProviderConfig, f
       svUpdated++;
     }
   } catch (e) {
+    if (isAccountWideDfsError(e)) throw e;
+    if (!firstDfsErr && e instanceof DfsApiError) firstDfsErr = e;
     warnings.push(`Search Volume: ${(e as Error).message}`);
   }
 
@@ -258,10 +378,20 @@ export async function syncDfsKeywords(store: SeoStore, cfg: SeoProviderConfig, f
       kdUpdated++;
     }
   } catch (e) {
+    if (isAccountWideDfsError(e) && svUpdated === 0) throw e;
+    if (!firstDfsErr && e instanceof DfsApiError) firstDfsErr = e;
     warnings.push(`Keyword Difficulty: ${(e as Error).message}`);
   }
 
   if (svUpdated === 0 && kdUpdated === 0 && warnings.length > 0) {
+    if (firstDfsErr) {
+      throw new DfsApiError(warnings.join(" | "), {
+        httpStatus: firstDfsErr.httpStatus,
+        code: firstDfsErr.code,
+        dfsCode: firstDfsErr.dfsCode,
+        actionUrl: firstDfsErr.actionUrl,
+      });
+    }
     throw new Error(warnings.join(" | "));
   }
 
@@ -530,7 +660,12 @@ export async function syncDfsCompetitorLinkGap(
 ) {
   const siteHost = cleanDomain(new URL(cfg.siteUrl).hostname);
   const cleanComps = [...new Set(competitors.map(cleanDomain).filter((d) => d && d !== siteHost))].slice(0, 20);
-  if (!cleanComps.length) throw new Error("Add at least one competitor domain first.");
+  if (!cleanComps.length) {
+    throw new DfsApiError("Add at least one competitor domain first.", {
+      httpStatus: 400,
+      code: "dfs_no_competitors",
+    });
+  }
 
   const targets: Record<string, string> = {};
   cleanComps.forEach((c, idx) => {

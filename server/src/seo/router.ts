@@ -5,7 +5,9 @@ import { verifyBacklinks, isPublicHttpUrl } from "./backlinks.js";
 import { AI_BOTS } from "./bots.js";
 import {
   DEFAULT_DFS_SPEND_CAP_USD,
+  DfsApiError,
   fetchDfsAccountStatus,
+  getDfsVerificationState,
   syncDfsBacklinks,
   syncDfsCompetitorLinkGap,
   syncDfsDomainOverview,
@@ -287,6 +289,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
         spend_logged_usd: store.dfsTotalSpend(),
         spend_cap_usd: store.getSetting<number>("dfs_spend_cap_usd", DEFAULT_DFS_SPEND_CAP_USD),
         link_gap_count: store.listLinkGap(200).length,
+        ...getDfsVerificationState(store),
       },
       authority: {
         source: own?.dfs_rank != null ? "dataforseo_and_opr" : own?.opr_decimal != null ? "open_pagerank" : null,
@@ -882,6 +885,21 @@ export function createSeoRouter(deps: SeoRouterDeps) {
   });
 
   // ---------------- DataForSEO (Phase 3: US Search Volume, KD%, SERP ETV, 0-100 DR, Link Gap) ----------------
+  const dfsErrorResponse = (c: any, fallbackError: string, e: unknown) => {
+    if (e instanceof DfsApiError) {
+      return c.json(
+        {
+          error: e.code || fallbackError,
+          dfs_code: e.dfsCode,
+          action_url: e.actionUrl,
+          message: e.message,
+        },
+        e.httpStatus as any
+      );
+    }
+    return c.json({ error: fallbackError, message: (e as Error).message }, 502);
+  };
+
   router.get("/dfs/status", async (c) => {
     return c.json(await fetchDfsAccountStatus(store, providers, dfsFetch));
   });
@@ -899,7 +917,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       const res = await syncDfsKeywords(store, providers, dfsFetch);
       return c.json({ ok: true, ...res });
     } catch (e) {
-      return c.json({ error: "dfs_keywords_failed", message: (e as Error).message }, 502);
+      return dfsErrorResponse(c, "dfs_keywords_failed", e);
     }
   });
   router.post("/dfs/domain-overview", async (c) => {
@@ -913,7 +931,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       const res = await syncDfsDomainOverview(store, providers, competitors, includeCompetitors, dfsFetch);
       return c.json({ ok: true, ...res });
     } catch (e) {
-      return c.json({ error: "dfs_domain_overview_failed", message: (e as Error).message }, 502);
+      return dfsErrorResponse(c, "dfs_domain_overview_failed", e);
     }
   });
   router.post("/dfs/backlinks", async (c) => {
@@ -925,7 +943,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       const res = await syncDfsBacklinks(store, providers, competitors, dfsFetch);
       return c.json({ ok: true, ...res });
     } catch (e) {
-      return c.json({ error: "dfs_backlinks_failed", message: (e as Error).message }, 502);
+      return dfsErrorResponse(c, "dfs_backlinks_failed", e);
     }
   });
   router.post("/dfs/link-gap", async (c) => {
@@ -939,7 +957,7 @@ export function createSeoRouter(deps: SeoRouterDeps) {
       const res = await syncDfsCompetitorLinkGap(store, providers, competitors, limit, dfsFetch);
       return c.json({ ok: true, ...res });
     } catch (e) {
-      return c.json({ error: "dfs_link_gap_failed", message: (e as Error).message }, 502);
+      return dfsErrorResponse(c, "dfs_link_gap_failed", e);
     }
   });
   router.post("/dfs/link-gap/outreach", async (c) => {

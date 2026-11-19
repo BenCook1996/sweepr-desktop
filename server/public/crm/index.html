@@ -3272,7 +3272,9 @@
 
       const t = d.traffic, kw = d.keywords, bl = d.backlinks, au = d.authority;
       const own = au.own;
+      const dfs = d.dfs || {};
       const dfsOn = Boolean(d.providers?.dataforseo?.configured);
+      const dfsVerify = Boolean(dfs.verification_required);
       const hasDfsRank = own && own.dfs_rank !== null && own.dfs_rank !== undefined;
       const hasOpr = own && own.opr_decimal !== null && own.opr_decimal !== undefined;
       const authVal = hasDfsRank
@@ -3307,8 +3309,13 @@
           ? seoCard('Tracked US Search Vol', `${fmtNum(kw.total_search_volume)}/mo`, `Avg KD ${kw.avg_kd ?? '\u2014'}/100 across ${fmtNum(kw.with_volume_count)} keywords`, 'text-white', 'search')
           : seoCard('Tracked Search Volume', '\u2014', dfsOn ? '<button data-seo-action="dfs-keywords" class="text-brand-400 hover:underline font-semibold">Sync US Volume &amp; KD</button> \u00b7 DataForSEO' : 'Sync DataForSEO or Search Console', 'text-white', 'search');
 
+      const dfsStatusBadge = !dfsOn
+        ? '<span class="text-amber-300">DataForSEO / GSC Setup Available</span>'
+        : dfsVerify
+          ? '<span class="text-amber-300 font-semibold">DataForSEO: Verification Required (40104)</span> <a href="https://app.dataforseo.com/" target="_blank" rel="noopener noreferrer" class="underline text-amber-200 ml-1">Verify at app.dataforseo.com \u2197</a>'
+          : '<span class="text-emerald-400 font-semibold">DataForSEO Connected</span>';
       const toolbar = `<div class="bg-surface-900 border border-slate-800 rounded-2xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
-        <div class="text-xs text-slate-300"><span class="font-bold text-white">SEO &amp; Search Intelligence</span> \u00b7 <span class="text-slate-400">US Market (2840) \u00b7 ${dfsOn ? '<span class="text-emerald-400 font-semibold">DataForSEO Connected</span>' : '<span class="text-amber-300">DataForSEO / GSC Setup Available</span>'}</span></div>
+        <div class="text-xs text-slate-300"><span class="font-bold text-white">SEO &amp; Search Intelligence</span> \u00b7 <span class="text-slate-400">US Market (2840) \u00b7 ${dfsStatusBadge}</span></div>
         <div class="flex flex-wrap items-center gap-2">
           ${seoBtn('<i data-lucide="zap" class="w-3.5 h-3.5 inline"></i> Sync All DataForSEO (~$0.22)', `data-seo-action="dfs-sync-all" ${dfsOn ? '' : 'disabled title="Configure DATAFORSEO_LOGIN & DATAFORSEO_PASSWORD in server/.env"'}`, 'primary')}
           ${seoBtn('<i data-lucide="stethoscope" class="w-3.5 h-3.5 inline"></i> Run Site Audit', 'data-seo-action="audit-local"')}
@@ -3341,9 +3348,9 @@
       const compRows = [own ? { label: 'sweeprcleaner.com (you)', value: own.dfs_rank ?? own.opr_decimal, display: own.dfs_rank !== null && own.dfs_rank !== undefined ? `DR ${own.dfs_rank}/100` : (own.opr_decimal !== null ? `OPR ${Number(own.opr_decimal).toFixed(2)}` : 'n/a'), color: 'bg-sky-500' } : null,
         ...au.competitors.map(c => ({ label: c.domain, value: c.dfs_rank ?? c.opr_decimal, display: c.dfs_rank !== null && c.dfs_rank !== undefined ? `DR ${c.dfs_rank}/100` : (c.opr_decimal !== null && c.opr_decimal !== undefined ? `OPR ${Number(c.opr_decimal).toFixed(2)}` : '\u2014'), color: 'bg-slate-500' }))].filter(Boolean);
       const authPanel = panel('Authority vs competitors', (d.providers.dataforseo.configured || d.providers.open_pagerank.configured) ? barRows(compRows) + `<p class="text-[11px] text-slate-500 mt-3">${esc(au.note)}</p>` : emptyState('Configure DataForSEO or Open PageRank to compare domain authority.'));
-      const dfs = d.dfs || {};
       const dfsPanel = panel('DataForSEO Search Intelligence (US \u00b7 2840)', `<div class="text-xs text-slate-300 space-y-2">
-        <div class="flex items-center justify-between"><span class="text-slate-400">Status</span><span class="font-semibold ${dfs.configured ? 'text-emerald-400' : 'text-amber-300'}">${dfs.configured ? 'Credentials configured' : 'Set in server/.env'}</span></div>
+        <div class="flex items-center justify-between"><span class="text-slate-400">Status</span><span class="font-semibold ${dfsVerify ? 'text-amber-300' : dfs.configured ? 'text-emerald-400' : 'text-amber-300'}">${dfsVerify ? 'Account verification required (40104)' : dfs.configured ? 'Credentials configured' : 'Set in server/.env'}</span></div>
+        ${dfsVerify ? `<div class="rounded-lg bg-amber-500/10 border border-amber-500/30 px-2.5 py-2 text-[11px] text-amber-200">${esc(dfs.last_error || 'Please verify your account before using the API.')} <a href="${esc(dfs.verification_url || 'https://app.dataforseo.com/')}" target="_blank" rel="noopener noreferrer" class="underline font-semibold ml-1">Verify at app.dataforseo.com \u2197</a></div>` : ''}
         <div class="flex items-center justify-between"><span class="text-slate-400">Tracked session spend</span><span class="font-mono text-white">${fmtUsd(dfs.spend_logged_usd, 4)} / ${fmtUsd(dfs.spend_cap_usd, 2)} cap</span></div>
         <div class="flex items-center justify-between"><span class="text-slate-400">Competitor link gap</span><span class="font-mono text-white">${fmtNum(dfs.link_gap_count || 0)} domains cached</span></div>
         <p class="text-[11px] text-slate-500 pt-1">All DataForSEO syncs are manual (button-triggered) and cached in SQLite so viewing tabs never consumes API credits.</p></div>`);
@@ -3676,25 +3683,26 @@
     // ---------------- Data sources ----------------
     async function seoSetup() {
       const [p, dfs, insp] = await Promise.all([seoFetch('/providers'), seoFetch('/dfs/status').catch(() => null), seoFetch('/gsc/inspection-ledger').catch(() => null)]);
-      const row = (name, ok, detail, envs) => `<div class="flex items-start justify-between gap-4 py-3 border-b border-slate-800/70">
+      const row = (name, ok, detail, envs, badgeText = null) => `<div class="flex items-start justify-between gap-4 py-3 border-b border-slate-800/70">
         <div><div class="text-sm font-semibold text-white">${esc(name)}</div><div class="text-xs text-slate-400 mt-0.5">${detail}</div>
         ${envs ? `<div class="text-[11px] text-slate-500 mt-1 font-mono">${esc(envs)}</div>` : ''}</div>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${ok ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${ok ? 'Connected' : 'Not set'}</span></div>`;
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${ok ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${esc(badgeText || (ok ? 'Connected' : 'Not set'))}</span></div>`;
+      const dfsVerify = Boolean(dfs?.verification_required);
       const dfsDetail = dfs && dfs.configured
-        ? `Login: <b>${esc(dfs.login || '')}</b> \u00b7 Balance: <b>${fmtUsd(dfs.balance_usd, 4)}</b> \u00b7 Tracked CRM spend: <b>${fmtUsd(dfs.spend_logged_usd, 4)}</b> / cap <b>${fmtUsd(dfs.spend_cap_usd, 2)}</b> \u00b7 Market: US (${p.dataforseo.location_code})${dfs.error ? ` <span class="text-amber-300">(\u26a0 ${esc(dfs.error)})</span>` : ''}`
+        ? `Login: <b>${esc(dfs.login || '')}</b> \u00b7 Balance: <b>${fmtUsd(dfs.balance_usd, 4)}</b> \u00b7 Tracked CRM spend: <b>${fmtUsd(dfs.spend_logged_usd, 4)}</b> / cap <b>${fmtUsd(dfs.spend_cap_usd, 2)}</b> \u00b7 Market: US (${p.dataforseo.location_code})${dfsVerify ? `<div class="mt-1 text-amber-300">\u26a0 Account verification required (code 40104) \u2014 verify at <a href="${esc(dfs.verification_url || 'https://app.dataforseo.com/')}" target="_blank" rel="noopener noreferrer" class="underline text-amber-200 font-semibold">app.dataforseo.com \u2197</a></div>` : (dfs.error ? ` <span class="text-amber-300">(\u26a0 ${esc(dfs.error)})</span>` : '')}`
         : 'Ahrefs-style DR (0-100), commercial backlink index, competitor link intersect, US search volume, KD, CPC & SERP traffic estimates.';
       const capForm = `<form data-seo-form="dfs-cap" class="flex flex-wrap items-center gap-2 mt-3">
         <span class="text-xs text-slate-400">DataForSEO spend cap (USD):</span>
         <input name="spend_cap_usd" value="${esc(String(dfs?.spend_cap_usd ?? 0.95))}" class="w-28 bg-surface-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-mono">
         ${seoBtn('Update Cap', 'type="submit"')}
       </form>`;
-      const callRows = (dfs?.recent_calls || []).map(c => `<tr><td class="py-1.5 font-mono text-[11px] text-slate-300">${esc(c.endpoint)}</td><td class="py-1.5 font-mono">${c.status_code}</td><td class="py-1.5 font-mono text-amber-300">${fmtUsd(c.cost_usd, 4)}</td><td class="py-1.5 text-[11px] text-slate-400">${esc(c.note || '')}</td><td class="py-1.5 text-[11px] text-slate-500">${esc(fmtDate(c.created_at))}</td></tr>`).join('');
+      const callRows = (dfs?.recent_calls || []).map(c => `<tr><td class="py-1.5 font-mono text-[11px] text-slate-300">${esc(c.endpoint)}</td><td class="py-1.5 font-mono ${Number(c.status_code) === 20000 ? 'text-emerald-400' : 'text-rose-300 font-semibold'}">${c.status_code}</td><td class="py-1.5 font-mono text-amber-300">${fmtUsd(c.cost_usd, 4)}</td><td class="py-1.5 text-[11px] text-slate-400">${esc(c.summary || c.note || '')}</td><td class="py-1.5 text-[11px] text-slate-500">${esc(fmtDate(c.created_at))}</td></tr>`).join('');
       const ledger = callRows ? `<table class="w-full text-left text-xs mt-3"><thead><tr class="text-[10px] uppercase text-slate-400 border-b border-slate-800"><th class="py-1.5">Endpoint</th><th>Status</th><th>Cost</th><th>Note</th><th>When</th></tr></thead><tbody class="divide-y divide-slate-800/70">${callRows}</tbody></table>` : '<div class="text-xs text-slate-500 mt-2">No DataForSEO calls made from this CRM yet.</div>';
 
       const cloudConfigPanel = panel('Google Cloud Service Account & Cloud Automation Setup (Free Tier · A21)', `<div class="space-y-3 text-xs"><p class="text-slate-300">Configure your 100% free <strong>Google Cloud Service Account JSON</strong> (powers Search Console Search Analytics, Sitemaps Submit &amp; URL Inspection API) and optional free <strong>Google Cloud API Key</strong> (25,000 req/day for PageSpeed Insights &amp; CrUX). Values saved here persist immediately in SQLite without restarting Railway.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">GSC Auth Mode</div><div class="text-sm font-bold text-emerald-400 font-mono mt-0.5">${esc(p.gsc.auth_mode || 'unconfigured')}</div><div class="text-[11px] text-slate-400 truncate mt-0.5">${esc(p.gsc.service_account || 'Seed / OAuth Continuity')}</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">GSC Rows Synced</div><div class="text-sm font-bold text-white font-mono mt-0.5">${fmtNum(p.gsc.rows || 0)} rows</div><div class="text-[11px] text-slate-400 mt-0.5">Latest: ${esc(p.gsc.latest_date || 'N/A')}</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">URL Inspection Ledger</div><div class="text-sm font-bold text-sky-400 font-mono mt-0.5">${fmtNum(insp?.total_inspected || 0)} URLs</div><div class="text-[11px] text-slate-400 mt-0.5">${fmtNum(insp?.indexed_pass_count || 0)} PASS verdict</div></div><div class="bg-surface-850 border border-slate-800 rounded-xl p-3"><div class="text-[10px] uppercase text-slate-400">PageSpeed / CrUX API Key</div><div class="text-sm font-bold ${p.pagespeed.keyed ? 'text-emerald-400' : 'text-amber-300'} font-mono mt-0.5">${p.pagespeed.keyed ? 'Active (25k/day)' : 'Unkeyed Fallback'}</div><div class="text-[11px] text-slate-400 mt-0.5">Free Google Cloud tier</div></div></div><form data-seo-form="gsc-cloud-config" class="space-y-3 pt-2 border-t border-slate-800/80"><div class="grid grid-cols-1 md:grid-cols-2 gap-3"><div><label class="block text-[11px] text-slate-400 mb-1">GSC Property URL (<code>GSC_SITE_URL</code>)</label><input name="site_url" value="${esc(p.gsc.site_url || 'sc-domain:sweeprcleaner.com')}" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono"></div><div><label class="block text-[11px] text-slate-400 mb-1">Google Cloud API Key (<code>GOOGLE_API_KEY</code> — optional, for PageSpeed/CrUX)</label><input name="google_api_key" type="password" placeholder="AIzaSy... (leave blank to keep current)" class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono"></div></div><div><label class="block text-[11px] text-slate-400 mb-1">Google Cloud Service Account JSON or Base64 (<code>GSC_SERVICE_ACCOUNT_JSON</code>)</label><textarea name="service_account_json" rows="3" placeholder="Paste Google Cloud Service Account JSON..." class="w-full bg-surface-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono"></textarea></div><div class="flex flex-wrap items-center gap-2">${seoBtn('Save Cloud Credentials to Runtime DB', 'type="submit"', 'primary')}${seoBtn('Run Cloud GSC &amp; CWV Sync Now (A21)', 'data-seo-action="gsc-cloud-sync" type="button"')}</div></form></div>`);
       return cloudConfigPanel + panel('Data sources', `
         ${row('Site auditor, backlink verifier, crawler log', true, 'Built in. No keys needed.', `SEO_SITE_URL=${p.site_url}`)}
-        ${row('DataForSEO v3 (Search Volume, KD, DR, Backlinks, Competitor Gap)', p.dataforseo.configured, dfsDetail, 'DATAFORSEO_LOGIN=...   DATAFORSEO_PASSWORD=...   DATAFORSEO_LOCATION_CODE=2840')}
+        ${row('DataForSEO v3 (Search Volume, KD, DR, Backlinks, Competitor Gap)', p.dataforseo.configured && !dfsVerify, dfsDetail, 'DATAFORSEO_LOGIN=...   DATAFORSEO_PASSWORD=...   DATAFORSEO_LOCATION_CODE=2840', dfsVerify ? 'Verify Account' : null)}
         ${row('Google Search Console', p.gsc.configured, p.gsc.configured ? `Property ${esc(p.gsc.site_url)} via ${esc(p.gsc.service_account)}` : 'Real rankings, clicks, impressions, CTR. Create a Google Cloud service account, enable the Search Console API, then add the service account email as a user on your GSC property.', 'GSC_SITE_URL=sc-domain:sweeprcleaner.com   GSC_SERVICE_ACCOUNT_JSON=<json | base64 | file path>')}
         ${row('PageSpeed Insights', true, p.pagespeed.keyed ? 'Using GOOGLE_API_KEY (25k requests/day).' : esc(p.pagespeed.note), 'GOOGLE_API_KEY=<key with PageSpeed Insights API enabled>')}
         ${row('Chrome UX Report (CrUX)', p.crux.configured, '28-day real-user Core Web Vitals for your origin/URLs.', 'GOOGLE_API_KEY=<key with Chrome UX Report API enabled>')}
@@ -4123,15 +4131,28 @@
           else if (a === 'opr-refresh') { seoJobPill('Refreshing authority scores'); const r = await seoFetch('/authority/refresh', { method: 'POST' }); seoJobPill(null); alert(`Updated ${r.updated} domain(s).`); seoShow('authority'); }
           else if (a === 'crux') { seoJobPill('Querying CrUX'); const r = await seoFetch('/crux/run', { method: 'POST', body: JSON.stringify({ form_factor: 'PHONE' }) }); seoJobPill(null); if (r.result.insufficient_data) alert(r.result.message); seoShow('cwv'); }
           else if (a === 'dfs-sync-all') {
-            seoJobPill('1/3 Syncing Backlinks & Domain Rating via DataForSEO...');
-            const r1 = await seoFetch('/dfs/backlinks', { method: 'POST', body: JSON.stringify({ limit: 100 }) });
-            seoJobPill('2/3 Syncing US SERP Rankings & Competitor Traffic...');
-            const r2 = await seoFetch('/dfs/domain-overview', { method: 'POST', body: JSON.stringify({ include_competitors: true }) });
-            seoJobPill('3/3 Syncing US Keyword Volume, KD & CPC...');
-            const r3 = await seoFetch('/dfs/keywords', { method: 'POST' });
+            const isBlocker = (err) => err?.status === 401 || err?.status === 403 || err?.data?.error === 'dfs_spend_cap_reached' || err?.data?.error === 'dfs_insufficient_balance' || err?.data?.dfs_code === 40104;
+            const stepWarnings = [];
+            const runStep = async (pill, label, fn) => {
+              seoJobPill(pill);
+              try {
+                return await fn();
+              } catch (err) {
+                if (isBlocker(err)) throw err;
+                stepWarnings.push(`${label}: ${err.message}`);
+                return null;
+              }
+            };
+            const r1 = await runStep('1/3 Syncing Backlinks & Domain Rating via DataForSEO...', 'Backlinks', () => seoFetch('/dfs/backlinks', { method: 'POST', body: JSON.stringify({ limit: 100 }) }));
+            const r2 = await runStep('2/3 Syncing US SERP Rankings & Competitor Traffic...', 'Domain Overview', () => seoFetch('/dfs/domain-overview', { method: 'POST', body: JSON.stringify({ include_competitors: true }) }));
+            const r3 = await runStep('3/3 Syncing US Keyword Volume, KD & CPC...', 'Keywords', () => seoFetch('/dfs/keywords', { method: 'POST' }));
             seoJobPill(null);
-            const cost = Number(r1.cost_usd || 0) + Number(r2.cost_usd || 0) + Number(r3.cost_usd || 0);
-            alert(`DataForSEO sync complete! DR: ${r1.dr_100 ?? '\u2014'}/100, ${r3.search_volume_updated} keywords enriched, ${r2.ranked_keywords_synced} SERP rankings synced. Total cost: $${cost.toFixed(4)}.`);
+            if (!r1 && !r2 && !r3 && stepWarnings.length) {
+              throw new Error(stepWarnings.join('\n'));
+            }
+            const cost = Number(r1?.cost_usd || 0) + Number(r2?.cost_usd || 0) + Number(r3?.cost_usd || 0);
+            const warnText = stepWarnings.length ? `\n\nWarnings:\n- ${stepWarnings.join('\n- ')}` : '';
+            alert(`DataForSEO sync complete! DR: ${r1?.dr_100 ?? '\u2014'}/100, ${r3?.search_volume_updated ?? 0} keywords enriched, ${r2?.ranked_keywords_synced ?? 0} SERP rankings synced. Total cost: $${cost.toFixed(4)}.${warnText}`);
             seoShow(seoState.view);
           }
           else if (a === 'dfs-keywords') {
@@ -4197,7 +4218,13 @@
             alert(`Found ${r.opportunities_found} referring domains linking to competitors (${(r.competitors || []).join(', ')}) but not you. Cost: $${Number(r.cost_usd || 0).toFixed(4)}.`);
             seoShow('authority');
           }
-        } catch (err) { seoJobPill(null); alert(err.message); }
+        } catch (err) {
+          seoJobPill(null);
+          alert(err.message);
+          if (err?.data?.dfs_code === 40104 || err?.data?.error === 'dfs_account_unverified') {
+            seoShow(seoState.view);
+          }
+        }
             return;
       }
       const tdBtn = e.target.closest('[data-seo-teardown-url]');
