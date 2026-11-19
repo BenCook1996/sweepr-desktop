@@ -690,7 +690,7 @@
           '</div>' +
           '<div style="color:#e2e8f0;margin-bottom:8px;">' +
             'Because v0.1.0 is a freshly compiled 5 MB native Rust binary: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>. ' +
-            '<span title="38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA" style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: 38E5CDF3...F77544AA)</span>' +
+            '<span title="FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A" style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: FEAE464C...F2BB706A)</span>' +
           '</div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
             '<button type="button" id="sweepr-recovery-installed-btn" style="background:#0d6847;color:#ffffff;border:none;border-radius:9px;padding:7px 13px;font-weight:800;font-size:12px;cursor:pointer;">' +

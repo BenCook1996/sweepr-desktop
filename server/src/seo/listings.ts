@@ -441,7 +441,7 @@ export function listListingCrmTasks(store: SeoStore) {
 export function getDirectorySubmissionPack(store: SeoStore) {
   const version = readCurrentReleaseVersion();
   const listings = listDirectoryListings(store);
-  const sha256Exe = "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA";
+  const sha256Exe = "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A";
   const sha256Msi = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
 
   return {
