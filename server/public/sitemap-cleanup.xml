@@ -2,7 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://sweeprcleaner.com/download</loc><lastmod>2026-11-19</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-temp</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/appdata-temp</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/intel-arc-shader-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/ubisoft-connect-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/roblox-http-cache</loc><lastmod>2026-11-16</lastmod></url>
@@ -53,7 +52,6 @@
   <url><loc>https://sweeprcleaner.com/clean/app/tidal-desktop-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/qbittorrent-itunes-logs</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/app/anki-media-trash-cache</loc><lastmod>2026-11-16</lastmod></url>
-  <url><loc>https://sweeprcleaner.com/clean/folder/software-distribution-download</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-prefetch</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/windows-installer-patch-cache</loc><lastmod>2026-11-16</lastmod></url>
   <url><loc>https://sweeprcleaner.com/clean/folder/pagefile-sys</loc><lastmod>2026-11-16</lastmod></url>

@@ -63,14 +63,14 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.ok(!text.includes("\uFEFF"), "Text must not contain unicode BOM zero-width character");
     });
 
-    test("1.2: Static server/public/sitemap.xml contains exact 135 Tier-1 URLs", () => {
+    test("1.2: Static server/public/sitemap.xml contains exact 137 Tier-1 URLs", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 135, `Expected exactly 135 Tier-1 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 137, `Expected exactly 137 Tier-1 URLs, got ${urls.length}`);
 
       // Count check by regex
       const locTags = (xml.match(/<loc>/g) || []).length;
-      assert.equal(locTags, 135, `Expected exactly 135 <loc> tags, got ${locTags}`);
+      assert.equal(locTags, 137, `Expected exactly 137 <loc> tags, got ${locTags}`);
 
       // All 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages present (/download excluded as noindex)
       const coreHubs = [
@@ -102,7 +102,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const { app } = setup();
       const allItems = getCleanItems();
       const noindexed = allItems.filter((i) => i.noindex);
-      assert.equal(noindexed.length, 283, `Expected exactly 283 noindexed long-tail guides`);
+      assert.equal(noindexed.length, 281, `Expected exactly 281 noindexed long-tail guides`);
 
       const staticXml = readFileSync("public/sitemap.xml", "utf8");
       const staticUrls = parseSitemap(staticXml);
@@ -148,8 +148,8 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const dynamicXml = await dynamicRes.text();
       const dynamicUrls = parseSitemap(dynamicXml);
 
-      assert.equal(staticUrls.length, 135, "Static sitemap count must be 135");
-      assert.equal(dynamicUrls.length, 135, "Dynamic sitemap count must be 135");
+      assert.equal(staticUrls.length, 137, "Static sitemap count must be 137");
+      assert.equal(dynamicUrls.length, 137, "Dynamic sitemap count must be 137");
       assert.deepEqual(dynamicUrls, staticUrls, "Dynamic and static sitemaps must have identical URL list in identical order");
     });
   });

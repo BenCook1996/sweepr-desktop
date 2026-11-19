@@ -421,9 +421,62 @@
       "Select all files (Ctrl+A) and press Delete.",
       "If Windows prompts that a file is open in another program, check 'Do this for all current items' and choose Skip."
     ],
-    "noindex": true,
-    "metaTitle": "Can I Delete User AppData Local? YES (2–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan."
+    "metaTitle": "Delete Temp Files on Windows 11 Safely (Reclaim 2–12 GB)",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Temp and C:\\Windows\\Temp safely on Windows 11 (2–12 GB). Zero saves or logins lost. Manual %temp% steps + 1-click Sweepr scan.",
+    "lastUpdated": "2026-11-19",
+    "subLocations": [
+      {
+        "subPath": "%LocalAppData%\\Temp (*.tmp, *.log, *.dmp)",
+        "role": "Unpacked app installers, Chromium/Electron temp dumps, and orphaned scratch files.",
+        "avgSpace": "1.5 GB – 9.0 GB",
+        "safe": "🟢 100% Safe",
+        "extensions": [
+          ".tmp",
+          ".log",
+          ".dmp"
+        ],
+        "regenerates": "Created transiently by installers and closed apps",
+        "troubleshooting": "Choose Skip on actively locked session files."
+      },
+      {
+        "subPath": "C:\\Windows\\Temp (*.cab, *.msi, *.log)",
+        "role": "System-wide installer logs and unpacked Microsoft setup packages.",
+        "avgSpace": "500 MB – 3.0 GB",
+        "safe": "🟢 100% Safe",
+        "extensions": [
+          ".cab",
+          ".msi",
+          ".log"
+        ],
+        "regenerates": "Written only during system installer runs",
+        "troubleshooting": "Standard Windows admin prompt may appear for C:\\Windows\\Temp."
+      },
+      {
+        "subPath": "%LocalAppData%\\Temp (Active Session File Locks)",
+        "role": "Temporary IPC pipes and session locks currently held open by running Windows processes.",
+        "avgSpace": "Protected",
+        "safe": "🔒 In-Use Handles Safely Skipped"
+      }
+    ],
+    "customFaqs": [
+      {
+        "q": "Is it safe to delete everything in %temp% on Windows 11?",
+        "a": "Yes. Everything in %LocalAppData%\\Temp is transient scratch storage. Any file currently open in a running app stays protected by Windows; simply check 'Do this for all current items' and click Skip."
+      },
+      {
+        "q": "What is the fastest way to open and clear temp files on Windows 11?",
+        "a": "Press Windows + R, type %temp%, press Enter, select all with Ctrl+A, and press Delete—or open Windows Settings > System > Storage > Temporary files."
+      },
+      {
+        "q": "Does deleting Windows 11 temp files remove personal documents or browser logins?",
+        "a": "No. Personal documents live in Documents/Desktop and browser sessions live in User Data profile databases outside %temp%."
+      }
+    ],
+    "troubleshooting": {
+      "processLock": "Active desktop apps, installers & svchost.exe",
+      "adminRequired": false,
+      "edgeCaseNote": "Seeing 'File In Use' when clearing %temp% is completely normal—choose Skip so active apps stay undisturbed while all orphaned installers and logs are deleted."
+    }
   },
   {
     "slug": "windows-old",
@@ -467,9 +520,9 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete C:\\Windows.old? YES — Safe Cleanup Guide (Reclaim 15–35 GB)",
-    "metaDescription": "Can I delete C:\\Windows.old on Windows 11? YES (15–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "lastUpdated": "2026-11-19",
+    "metaTitle": "Delete Windows.old Folder Safely on Windows 11 (15–35 GB)",
+    "metaDescription": "Delete C:\\Windows.old safely on Windows 11 to reclaim 15–35 GB without losing personal files. Manual Storage Settings steps + 1-click Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\Windows.old\\Windows\\System32 (*.dll, *.sys, *.exe)",
@@ -553,8 +606,8 @@
         "a": "No. %LocalAppData%\\NVIDIA\\DXCache holds only compiled DirectX 11/12 shader bytecode. Purging stale shaders after a GeForce update resolves micro-stutter without changing any 3D Settings or installed drivers."
       }
     ],
-    "metaTitle": "Can I Delete NVIDIA DXCache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\NVIDIA\\DXCache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaTitle": "Clear NVIDIA Shader Cache (DXCache) Safely — 2–14 GB",
+    "metaDescription": "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\NVIDIA\\DXCache (*.bin, *.toc, *.nvph)",
@@ -609,7 +662,8 @@
       "path": "/img/proof/nvidia-dxcache-proof.webp",
       "alt": "NVIDIA DXCache folder contents showing compiled .nvph, .bin, and .toc shader files",
       "caption": "Verified NVIDIA DirectX shader cache directory layout and unlocked binary files on Windows 11."
-    }
+    },
+    "lastUpdated": "2026-11-19"
   },
   {
     "slug": "nvidia-glcache",
@@ -2127,9 +2181,9 @@
         "a": "Yes. Quitting Teams from the tray and removing %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView forces a clean webview cache rebuild on relaunch while keeping chats, teams, and SSO sessions intact."
       }
     ],
-    "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete MS Teams? YES (1.5–9 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Micros (1.5–9 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "lastUpdated": "2026-11-19",
+    "metaTitle": "Clear Microsoft Teams Cache on Windows 11 (1.5–9 GB)",
+    "metaDescription": "Clear New & Classic Microsoft Teams EBWebView cache on Windows 11 to reclaim 1.5–9 GB and fix sync bugs. Chats stay safe. Manual + 1-click Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView",
@@ -3618,7 +3672,7 @@
         "a": "No. 100% safe to delete. It removes leftover installation packages and also fixes stuck Windows Update error codes."
       }
     ],
-    "lastUpdated": "2026-11-09",
+    "lastUpdated": "2026-11-19",
     "competitorBlueprint": {
       "sourceDomain": "wisecleaner.com",
       "replicatedPatterns": [
@@ -3633,9 +3687,46 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete Windows Update? YES (2.5–16 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\Windows\\SoftwareDistribution\\Download? YES (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-    "noindex": true
+    "metaTitle": "Clear Windows Update Cache on Windows 11 (2.5–16 GB)",
+    "metaDescription": "Clear C:\\Windows\\SoftwareDistribution\\Download safely on Windows 11 to reclaim 2.5–16 GB and fix stuck updates. Manual steps + 1-click Sweepr scan.",
+    "subLocations": [
+      {
+        "subPath": "C:\\Windows\\SoftwareDistribution\\Download (*.cab, *.esd, *.psf)",
+        "role": "Completed or interrupted Windows Update delta, cab, and esd installer packages waiting for cleanup.",
+        "avgSpace": "2.0 GB – 14.0 GB",
+        "safe": "🟢 100% Safe (Stop wuauserv First)",
+        "extensions": [
+          ".cab",
+          ".esd",
+          ".psf"
+        ],
+        "regenerates": "Windows Update re-fetches clean packages on next check",
+        "troubleshooting": "Stop wuauserv service if Windows Update holds a lock."
+      },
+      {
+        "subPath": "C:\\Windows\\SoftwareDistribution\\DeliveryOptimization",
+        "role": "Peer-to-peer Windows Update bandwidth sharing cache left on disk after cumulative patches.",
+        "avgSpace": "500 MB – 2.5 GB",
+        "safe": "🟢 100% Safe",
+        "extensions": [
+          ".dat",
+          ".bin"
+        ],
+        "regenerates": "Only refills when Delivery Optimization downloads updates",
+        "troubleshooting": "Safe to purge whenever Windows Update is idle."
+      },
+      {
+        "subPath": "C:\\Windows\\SoftwareDistribution\\DataStore\\DataStore.edb",
+        "role": "Installed Windows Update history database displayed in Settings > Update history.",
+        "avgSpace": "Protected",
+        "safe": "🔒 Caution — Windows Update History DB"
+      }
+    ],
+    "troubleshooting": {
+      "processLock": "wuauserv (Windows Update) & usosvc",
+      "adminRequired": true,
+      "edgeCaseNote": "If File Explorer reports 'Folder In Use', run `net stop wuauserv` as Administrator, delete C:\\Windows\\SoftwareDistribution\\Download contents, then run `net start wuauserv`."
+    }
   },
   {
     "slug": "delivery-optimization-cache",

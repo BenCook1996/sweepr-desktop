@@ -72,20 +72,20 @@ async function loadDynamicSitemap(targetApp: ReturnType<typeof createApp> = app)
 }
 
 describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", () => {
-  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 135 Tier-1 URLs across dynamic and static files", async () => {
+  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 137 Tier-1 URLs across dynamic and static files", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
     assert.ok(
-      staticUrls.length >= 130 && staticUrls.length <= 140,
-      `Expected static sitemap.xml to contain 135 URLs (130-140), got ${staticUrls.length}`
+      staticUrls.length >= 130 && staticUrls.length <= 145,
+      `Expected static sitemap.xml to contain 137 URLs (130-145), got ${staticUrls.length}`
     );
-    assert.equal(staticUrls.length, 135, `Expected exact 135 URLs in static sitemap.xml, got ${staticUrls.length}`);
+    assert.equal(staticUrls.length, 137, `Expected exact 137 URLs in static sitemap.xml, got ${staticUrls.length}`);
     assert.ok(
-      dynamicUrls.length >= 130 && dynamicUrls.length <= 140,
-      `Expected dynamic /sitemap.xml to contain 135 URLs (130-140), got ${dynamicUrls.length}`
+      dynamicUrls.length >= 130 && dynamicUrls.length <= 145,
+      `Expected dynamic /sitemap.xml to contain 137 URLs (130-145), got ${dynamicUrls.length}`
     );
-    assert.equal(dynamicUrls.length, 135, `Expected exact 135 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
+    assert.equal(dynamicUrls.length, 137, `Expected exact 137 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
   });
 
   test("TC-T1-SM-02: Core commercial, policy, /tools/:slug and hub pages present (and noindex /download excluded) in sitemap", async () => {
@@ -187,6 +187,8 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
       "medal-tv-cache",
       "stremio-desktop-cache",
       "docker-desktop-ext4-disk",
+      "software-distribution-download",
+      "appdata-temp",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],

@@ -185,12 +185,12 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "obs-studio-logs-crashes": "Can I Delete OBS Studio Logs & Cache? YES — Safe Cleanup Guide (Reclaim 1–6.5 GB)",
   "adobe-media-cache": "Can I Delete Adobe Media Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
   "creative-cloud-installer-cache": "Can I Delete Adobe Creative Cloud Cache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
-  "nvidia-dxcache": "Can I Delete NVIDIA DXCache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+  "nvidia-dxcache": "Clear NVIDIA Shader Cache (DXCache) Safely — 2–14 GB",
   "npm-cache": "Can I Delete %LOCALAPPDATA%\\npm-cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
   "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
   "localappdata-crashdumps": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
   "hiberfil-sys": "Can I Delete C:\\hiberfil.sys? YES — Safe Cleanup Guide (Reclaim 6–32 GB)",
-  "windows-old": "Can I Delete C:\\Windows.old? YES — Safe Cleanup Guide (Reclaim 15–35 GB)",
+  "windows-old": "Delete Windows.old Folder Safely on Windows 11 (15–35 GB)",
   "pip-cache": "Can I Delete %LOCALAPPDATA%\\pip\\Cache? YES — Safe Cleanup Guide (Reclaim 2–20 GB)",
   "delivery-optimization": "Can I Delete DeliveryOptimization Cache? YES — Safe Cleanup Guide (Reclaim 3–20 GB)",
   "c-drive-filling-up-by-itself-windows-11": "Can I Delete Hidden C: Drive Bloat? YES — Safe Cleanup Guide (Reclaim 12–65 GB)",
@@ -204,6 +204,9 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "chrome-gpu-shader-cache": "Can I Delete Chrome GPUCache? YES — Safe Cleanup Guide (Reclaim 1–6 GB)",
   "vrchat-cache": "Can I Delete VRChat Cache-WindowsPlayer? YES — Safe Cleanup Guide (Reclaim 10–30 GB)",
   "lm-studio-models-cache": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
+  "microsoft-teams-cache": "Clear Microsoft Teams Cache on Windows 11 (1.5–9 GB)",
+  "software-distribution-download": "Clear Windows Update Cache on Windows 11 (2.5–16 GB)",
+  "appdata-temp": "Delete Temp Files on Windows 11 Safely (Reclaim 2–12 GB)",
 };
 
 export const CUSTOM_GSC_TITLE_SLUGS: readonly string[] = Object.keys(CUSTOM_GSC_TITLES);
@@ -262,7 +265,7 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "creative-cloud-installer-cache":
     "Can I delete %LOCALAPPDATA%\\Adobe\\Creative Cloud? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "nvidia-dxcache":
-    "Can I delete %LOCALAPPDATA%\\NVIDIA\\DXCache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "npm-cache":
     "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "gradle-wrapper-caches":
@@ -272,7 +275,7 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "hiberfil-sys":
     "Can I delete C:\\hiberfil.sys on Windows 11? YES (6–32 GB). Zero save files or active logins lost. Manual powercfg steps + 1-click free 6.5 MB Sweepr scan.",
   "windows-old":
-    "Can I delete C:\\Windows.old on Windows 11? YES (15–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Delete C:\\Windows.old safely on Windows 11 to reclaim 15–35 GB without losing personal files. Manual Storage Settings steps + 1-click Sweepr scan.",
   "pip-cache":
     "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (2–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "delivery-optimization":
@@ -299,6 +302,12 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
     "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "lm-studio-models-cache":
     "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+  "microsoft-teams-cache":
+    "Clear New & Classic Microsoft Teams EBWebView cache on Windows 11 to reclaim 1.5–9 GB and fix sync bugs. Chats stay safe. Manual + 1-click Sweepr scan.",
+  "software-distribution-download":
+    "Clear C:\\Windows\\SoftwareDistribution\\Download safely on Windows 11 to reclaim 2.5–16 GB and fix stuck updates. Manual steps + 1-click Sweepr scan.",
+  "appdata-temp":
+    "Delete %LOCALAPPDATA%\\Temp and C:\\Windows\\Temp safely on Windows 11 (2–12 GB). Zero saves or logins lost. Manual %temp% steps + 1-click Sweepr scan.",
 };
 
 export type PseoClusterId =

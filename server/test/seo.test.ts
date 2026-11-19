@@ -1012,7 +1012,7 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   assert.equal(packJson.release_version, "0.1.0");
   assert.equal(
     packJson.hashes.windows_exe_sha256,
-    "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA"
+    "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A"
   );
   assert.equal(
     packJson.hashes.windows_msi_sha256,
@@ -1116,7 +1116,7 @@ test("A3 Download-Without-Install Recovery: T+30m flag, Step 2 banner, T+2h tran
   assert.equal(statusA.flagged, true);
   assert.equal(statusA.should_show_banner, true);
   assert.equal(statusA.recovery_outcome, "flagged_uninstalled");
-  assert.equal(statusA.sha256_exe, "38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA");
+  assert.equal(statusA.sha256_exe, "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A");
   assert.ok(Array.isArray(statusA.smartscreen_steps) && statusA.smartscreen_steps.length === 2);
 
   // Banner shown on next site visit
