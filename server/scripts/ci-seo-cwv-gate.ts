@@ -6,13 +6,16 @@
  * errors, <=60-char titles, <main> landmarks, and async Google Fonts loading, and
  * optionally runs headless Mobile Lighthouse on 4 key templates (--lighthouse).
  */
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { generateKeyPairSync } from "node:crypto";
 import fs from "node:fs";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 import { serve } from "@hono/node-server";
 import { createApp } from "../src/app.js";
 import { openDb } from "../src/db.js";
@@ -211,7 +214,7 @@ async function main() {
         for (const route of LIGHTHOUSE_ROUTES) {
           const outFile = path.join(tmpDir, `${route.replace(/[^a-z0-9]+/gi, "_") || "home"}.json`);
           const targetUrl = `${baseUrl}${route}`;
-          execFileSync(
+          const { stdout, stderr } = await execFileAsync(
             runner.cmd,
             [
               ...runner.prefixArgs,
@@ -222,8 +225,10 @@ async function main() {
               "--only-categories=performance,accessibility,best-practices,seo",
               "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu",
             ],
-            { stdio: "inherit", shell: runner.shell, timeout: 120_000 }
+            { shell: runner.shell, timeout: 120_000, maxBuffer: 10 * 1024 * 1024 }
           );
+          if (stdout) process.stdout.write(stdout);
+          if (stderr) process.stderr.write(stderr);
           const lhr = JSON.parse(fs.readFileSync(outFile, "utf8")) as any;
           const cats = lhr.categories || {};
           const perf = Math.round((cats.performance?.score ?? 0) * 100);
