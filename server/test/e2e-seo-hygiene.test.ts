@@ -72,20 +72,20 @@ async function loadDynamicSitemap(targetApp: ReturnType<typeof createApp> = app)
 }
 
 describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", () => {
-  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 137 Tier-1 URLs across dynamic and static files", async () => {
+  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 144 Tier-1 URLs across dynamic and static files", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
     assert.ok(
-      staticUrls.length >= 130 && staticUrls.length <= 145,
-      `Expected static sitemap.xml to contain 137 URLs (130-145), got ${staticUrls.length}`
+      staticUrls.length >= 130 && staticUrls.length <= 155,
+      `Expected static sitemap.xml to contain 144 URLs (130-155), got ${staticUrls.length}`
     );
-    assert.equal(staticUrls.length, 137, `Expected exact 137 URLs in static sitemap.xml, got ${staticUrls.length}`);
+    assert.equal(staticUrls.length, 144, `Expected exact 144 URLs in static sitemap.xml, got ${staticUrls.length}`);
     assert.ok(
-      dynamicUrls.length >= 130 && dynamicUrls.length <= 145,
-      `Expected dynamic /sitemap.xml to contain 137 URLs (130-145), got ${dynamicUrls.length}`
+      dynamicUrls.length >= 130 && dynamicUrls.length <= 155,
+      `Expected dynamic /sitemap.xml to contain 144 URLs (130-155), got ${dynamicUrls.length}`
     );
-    assert.equal(dynamicUrls.length, 137, `Expected exact 137 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
+    assert.equal(dynamicUrls.length, 144, `Expected exact 144 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
   });
 
   test("TC-T1-SM-02: Core commercial, policy, /tools/:slug and hub pages present (and noindex /download excluded) in sitemap", async () => {
@@ -114,6 +114,13 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
       "/tools/jetbrains-gradle-cleaner",
       "/tools/windows-24h2-update-cleaner",
       "/tools/ai-model-cache-cleaner",
+      "/tools/pc-cache-calculator",
+      "/bloat-watch/windows-11-24h2-8gb-update-cache-bug",
+      "/bloat-watch/nvidia-rtx-shader-cache-10gb-limit-fix",
+      "/bloat-watch/steam-depotcache-orphaned-chunks-spike",
+      "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026",
+      "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026",
+      "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],
@@ -402,55 +409,55 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
     const ctrTargets = [
       {
         path: "/clean/app/steam-depotcache",
-        expectedTitle: "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+        expectedTitle: "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
       },
       {
         path: "/clean/app/riot-client-logs",
-        expectedTitle: "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
       },
       {
         path: "/clean/app/logitech-ghub-installer-cache",
-        expectedTitle: "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
       },
       {
         path: "/clean/app/stremio-desktop-cache",
-        expectedTitle: "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
       {
         path: "/clean/app/amd-shader-cache",
-        expectedTitle: "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+        expectedTitle: "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
       },
       {
         path: "/clean/app/comfyui-temp-output-cache",
-        expectedTitle: "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+        expectedTitle: "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
       },
       {
         path: "/clean/app/genshin-impact-update-cache",
-        expectedTitle: "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+        expectedTitle: "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
       },
       {
         path: "/clean/folder/winsxs",
-        expectedTitle: "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
       },
       {
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
       },
       {
         path: "/clean/app/elgato-streamdeck-cache",
-        expectedTitle: "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+        expectedTitle: "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
       },
       {
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
       },
       {
         path: "/clean/app/vivaldi-browser-cache",
-        expectedTitle: "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+        expectedTitle: "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
       },
       {
         path: "/clean/app/jetbrains-intellij-cache",
-        expectedTitle: "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
     ];
 

@@ -24,7 +24,7 @@
         "a": "Discord is built on Electron/Chromium and aggressively caches server images, embedded videos, voice waveforms, and JS bytecode in %AppData%\\discord. Purging Cache, Code Cache, and GPUCache restores 1.5–6 GB without touching Local Storage tokens."
       }
     ],
-    "metaTitle": "Can I Delete Discord Cache & Code Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
+    "metaTitle": "Can I Delete Discord Cache? YES (1.5–6 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\discord\\Cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -119,7 +119,7 @@
         "a": "If you keep Offline Playlists downloaded, lower Spotify's Storage cache limit or use Settings -> Offline storage location. Otherwise, clearing %LocalAppData%\\Spotify\\Storage frees 2–10 GB immediately; liked songs and playlists stay in your cloud account."
       }
     ],
-    "metaTitle": "Can I Delete Spotify Cache? YES (2–10 GB) — Safe Cleanup Guide",
+    "metaTitle": "Can I Delete Spotify Cache? YES (2–10 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Spotify\\Storage? YES (2–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -330,7 +330,7 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+    "metaTitle": "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
     "metaDescription": "Can I clean C:\\Windows\\WinSxS via DISM? YES (6–20 GB). Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -470,6 +470,14 @@
       {
         "q": "Does deleting Windows 11 temp files remove personal documents or browser logins?",
         "a": "No. Personal documents live in Documents/Desktop and browser sessions live in User Data profile databases outside %temp%."
+      },
+      {
+        "q": "Is it safe to delete files in %TEMP% on Windows 11?",
+        "a": "Yes. Files inside %LocalAppData%\\Temp are temporary installer extractions and scratch caches. Personal documents and saved logins are stored elsewhere, and Windows automatically locks any file actively in use so skipping locked items keeps apps safe."
+      },
+      {
+        "q": "What is the CMD command to clean up temp files?",
+        "a": "Open Command Prompt and run 'del /q /f /s %TEMP%\\*' to purge unlocked user temp files, or run 'cleanmgr /sagerun:1' / Windows Disk Cleanup as Administrator to also include C:\\Windows\\Temp and delivery optimization caches."
       }
     ],
     "troubleshooting": {
@@ -504,6 +512,18 @@
       {
         "q": "Does clearing Windows.old (Previous Windows Installation) delete personal saves or logins?",
         "a": "No. If your PC has been running smoothly for more than 10 days after an update, deleting Windows.old is completely safe and reclaims 20+ GB."
+      },
+      {
+        "q": "Is it safe to delete Windows.old folder?",
+        "a": "Yes, once your Windows 11 upgrade or 24H2 feature update has run stably and you do not plan to roll back to your previous OS build, removing C:\\Windows.old safely reclaims 15–35 GB without affecting personal files."
+      },
+      {
+        "q": "Can I delete Windows.old after 10 days?",
+        "a": "Yes. Windows 10 and 11 only allow 'Go back' rollbacks for 10 days after a feature upgrade anyway—after 10 days the rollback expires automatically, so deleting 'Previous Windows installation(s)' is recommended to free SSD space."
+      },
+      {
+        "q": "How do I force delete Windows.old if Access Denied?",
+        "a": "File Explorer blocks direct deletion because TrustedInstaller owns C:\\Windows.old. Instead open Settings -> System -> Storage -> Temporary files and check 'Previous Windows installation(s)', or run cleanmgr as Administrator and select 'Previous Windows installation(s)'."
       }
     ],
     "competitorBlueprint": {
@@ -604,6 +624,22 @@
       {
         "q": "Does clearing NVIDIA DXCache affect my GeForce Control Panel settings or driver version?",
         "a": "No. %LocalAppData%\\NVIDIA\\DXCache holds only compiled DirectX 11/12 shader bytecode. Purging stale shaders after a GeForce update resolves micro-stutter without changing any 3D Settings or installed drivers."
+      },
+      {
+        "q": "Is it safe to clear NVIDIA shader cache?",
+        "a": "Yes. Deleting %LocalAppData%\\NVIDIA\\DXCache is 100% safe when games are closed. Windows skips any currently locked file in use by dwm.exe and your driver automatically recompiles fresh shader pipelines the next time each game launches."
+      },
+      {
+        "q": "What happens if I reset the shader cache?",
+        "a": "Resetting the NVIDIA shader cache removes 2–14 GB of old DirectX 11/12 compiled shaders from prior driver updates. The first launch of each game briefly rebuilds only active shaders, often eliminating stuttering caused by stale GPU cache binaries."
+      },
+      {
+        "q": "Should I leave the NVIDIA shader cache on or off?",
+        "a": "Leave Shader Cache Size enabled (Driver Default or 10 GB) in NVIDIA Control Panel so games do not stutter recompiling shaders every session, and periodically clear obsolete shader generations inside DXCache to reclaim SSD space."
+      },
+      {
+        "q": "Where is the NVIDIA shader cache?",
+        "a": "Modern GeForce drivers store compiled DirectX shaders in %LocalAppData%\\NVIDIA\\DXCache, legacy OpenGL/Vulkan shaders in %LocalAppData%\\NVIDIA\\GLCache, and Windows shared shaders in %LocalAppData%\\D3DSCache and C:\\ProgramData\\NVIDIA Corporation\\NV_Cache."
       }
     ],
     "metaTitle": "Clear NVIDIA Shader Cache (DXCache) Safely — 2–14 GB",
@@ -804,7 +840,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+    "metaTitle": "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -904,7 +940,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete Epic Games webcache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+    "metaTitle": "Delete Epic Games webcache? YES (1–5 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -964,7 +1000,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+    "metaTitle": "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -1132,7 +1168,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete EA App Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
+    "metaTitle": "Can I Delete EA App Cache? YES (1.5–6 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -1222,7 +1258,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    "metaTitle": "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -1370,7 +1406,7 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+    "metaTitle": "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
     "metaDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -1470,7 +1506,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete VRChat Cache-WindowsPlayer? YES — Safe Cleanup Guide (Reclaim 10–30 GB)",
+    "metaTitle": "Delete VRChat Cache Folder? YES (10–30 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -1798,7 +1834,8 @@
         "q": "What happens if Adobe Creative Cloud Installer & Patch Staging Cache says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting C:\\ProgramData\\Adobe\\Installer, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Delete Creative Cloud Cache? YES (2–12 GB) — Safe Guide"
   },
   {
     "slug": "davinci-resolve-cacheclip",
@@ -1884,7 +1921,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
+    "metaTitle": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -2017,7 +2054,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete OBS Studio Logs & Cache? YES — Safe Cleanup Guide (Reclaim 1–6.5 GB)",
+    "metaTitle": "Delete OBS Studio Logs & Cache? YES (1–6.5 GB) — Guide",
     "metaDescription": "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -2179,6 +2216,14 @@
       {
         "q": "Can clearing Microsoft Teams EBWebView fix notification, calendar, or status sync glitches?",
         "a": "Yes. Quitting Teams from the tray and removing %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView forces a clean webview cache rebuild on relaunch while keeping chats, teams, and SSO sessions intact."
+      },
+      {
+        "q": "Does clearing Microsoft Teams cache delete chats or files?",
+        "a": "No. Teams messages, channels, and SharePoint/OneDrive attachments live in Microsoft 365 cloud storage. Clearing the local EBWebView or Classic Teams cache only removes cached UI assets and forces a clean reload on next sign-in."
+      },
+      {
+        "q": "Where is the new Microsoft Teams cache stored on Windows 11?",
+        "a": "New Microsoft Teams stores its WebView2 cache inside %LocalAppData%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache\\Microsoft\\MSTeams\\EBWebView\\Default\\Cache, which often grows to 1.5–9 GB over months of meetings and shared media."
       }
     ],
     "lastUpdated": "2026-11-19",
@@ -2536,7 +2581,7 @@
       ]
     },
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete Opera GX Cache? YES — Safe Cleanup Guide (Reclaim 1.8–12 GB)",
+    "metaTitle": "Can I Delete Opera GX Cache? YES (1.8–12 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -2602,7 +2647,7 @@
       "Press Windows Key + R, type %localappdata%\\Vivaldi\\User Data\\Default and press Enter.",
       "Delete 'Cache', 'Code Cache', and 'Service Worker\\CacheStorage'."
     ],
-    "metaTitle": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+    "metaTitle": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -2890,7 +2935,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete %LOCALAPPDATA%\\npm-cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+    "metaTitle": "Can I Delete npm-cache? YES (2–18 GB) — Safe Cleanup Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -3141,7 +3186,7 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
+    "metaTitle": "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
     "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -3411,7 +3456,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+    "metaTitle": "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -3488,7 +3533,7 @@
         "a": "Both are covered clearly: quit Stream Deck before purging %AppData%\\Elgato\\StreamDeck\\logs, Cache, and Blob_Storage (protecting ProfilesV2), and unplug USB before gently wiping physical keys with a lightly damp microfiber cloth."
       }
     ],
-    "metaTitle": "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+    "metaTitle": "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -3670,6 +3715,18 @@
       {
         "q": "Does clearing Windows Update Download Cache (SoftwareDistribution\\Download) delete personal saves or logins?",
         "a": "No. 100% safe to delete. It removes leftover installation packages and also fixes stuck Windows Update error codes."
+      },
+      {
+        "q": "Can I do Windows Update cleanup?",
+        "a": "Yes. Running Windows Storage Settings -> Temporary files -> Windows Update Cleanup, or clearing C:\\Windows\\SoftwareDistribution\\Download after stopping the wuauserv service, safely frees 2.5–16 GB of completed update staging files."
+      },
+      {
+        "q": "Why isn't my Windows Update downloading?",
+        "a": "Corrupted partial packages inside C:\\Windows\\SoftwareDistribution\\Download or a stalled Background Intelligent Transfer Service (BITS) queue commonly freeze downloads at 0% or 100%. Clearing Download after stopping wuauserv and bits forces a clean redownload."
+      },
+      {
+        "q": "How can I fix problems using Windows Updates?",
+        "a": "Open Command Prompt as Administrator, run 'net stop wuauserv' and 'net stop bits', clear C:\\Windows\\SoftwareDistribution\\Download, run 'sfc /scannow' and 'DISM /Online /Cleanup-Image /RestoreHealth', then restart the services with 'net start wuauserv'."
       }
     ],
     "lastUpdated": "2026-11-19",
@@ -3889,7 +3946,7 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete C:\\hiberfil.sys? YES — Safe Cleanup Guide (Reclaim 6–32 GB)",
+    "metaTitle": "Can I Delete C:\\hiberfil.sys? YES (6–32 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\hiberfil.sys on Windows 11? YES (6–32 GB). Zero save files or active logins lost. Manual powercfg steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -4087,7 +4144,7 @@
         "a": "Yes. Windows Error Reporting (WER) captures full or heap process snapshots (.dmp) on exit crashes—often 1–4 GB per file. Unless you are opening them in WinDbg, deleting everything in %LocalAppData%\\CrashDumps is 100% safe."
       }
     ],
-    "metaTitle": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
+    "metaTitle": "Can I Delete CrashDumps? YES (1–15 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\CrashDumps? YES (1–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -4306,7 +4363,7 @@
       ]
     },
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+    "metaTitle": "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -4867,7 +4924,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
+    "metaTitle": "Delete LM Studio Models Cache? YES (10–80 GB) — Guide",
     "metaDescription": "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -4972,7 +5029,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+    "metaTitle": "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
     "metaDescription": "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -5263,7 +5320,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+    "metaTitle": "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
     "metaDescription": "Can I delete orphaned C:\\ProgramData\\Package Cache? YES (3.5–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -5379,7 +5436,7 @@
       }
     ],
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
+    "metaTitle": "Delete WebView2 EBWebView? YES (1.5–9 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -6357,7 +6414,7 @@
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
-    "metaTitle": "Can I Delete Docker Desktop WSL2 Virtual Disk Bloat? YES — Safe Cleanup Guide (Reclaim 12–80 GB)",
+    "metaTitle": "Shrink Docker WSL2 ext4.vhdx? YES (12–80 GB) — Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\wsl\\data\\ext4.vhdx? YES (12–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -7371,7 +7428,7 @@
       ]
     },
     "lastUpdated": "2026-11-09",
-    "metaTitle": "Can I Delete Medal TV Cache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
+    "metaTitle": "Can I Delete Medal TV Cache? YES (2–14 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -7467,7 +7524,7 @@
         "a": "JetBrains ToolBox and standalone updaters create a fresh versioned system cache directory on each major IDE release without automatically deleting legacy AST symbol indexes—often leaving 2–14 GB per prior version."
       }
     ],
-    "metaTitle": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaTitle": "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -7783,7 +7840,7 @@
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Zen Browser (or use SWEEPR Cleaner to purge all Zen Browser cache directories automatically in one click)."
     ],
-    "metaTitle": "Can I Delete Zen Browser Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaTitle": "Delete Zen Browser Cache? YES (1.5–9.5 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -8279,7 +8336,8 @@
         "q": "What happens if Dolphin Emulator Cache & Temporary Files says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting %APPDATA%\\Dolphin Emulator\\cache, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Delete Dolphin Emulator Cache? YES (1.5–9.5 GB) — Guide"
   },
   {
     "slug": "retroarch-emu-cache",
@@ -8728,7 +8786,7 @@
         "a": "Yes. End LogiOptionsPlus_Agent.exe in Task Manager before deleting C:\\ProgramData\\LogiOptionsPlus\\depots and %LocalAppData%\\LogiOptionsPlus\\cache (preserving settings.db) so active Flow/Smart Actions files remain untouched."
       }
     ],
-    "metaTitle": "Can I Delete LogiOptionsPlus Cache? YES — Safe Cleanup Guide (Reclaim 1.2–6.5 GB)",
+    "metaTitle": "Delete LogiOptionsPlus Cache? YES (1.2–6.5 GB) — Guide",
     "metaDescription": "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -10073,7 +10131,7 @@
       "Open the Cache, Temp, or Logs subdirectories, select the cached files (Ctrl + A), and press Shift + Delete.",
       "Relaunch Stremio Streaming App (or use SWEEPR Cleaner to purge all Stremio Streaming App cache directories automatically in one click)."
     ],
-    "metaTitle": "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+    "metaTitle": "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
     "metaDescription": "Can I delete %APPDATA%\\stremio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
     "subLocations": [
       {
@@ -11087,7 +11145,8 @@
         "q": "What happens if C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup) says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting C:\\Windows\\Temp & %LocalAppData%\\Temp & C:\\ProgramData\\Package Cache, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Fix C: Drive Filling Up? YES (12–65 GB) — Safe Guide"
   },
   {
     "slug": "system-and-reserved-storage-100gb-windows-11",
@@ -11141,7 +11200,8 @@
         "q": "What happens if System & Reserved Storage Taking 80GB–100GB+ on Windows 11 says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting C:\\Windows\\WinSxS & C:\\Windows\\SoftwareDistribution\\Download, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Shrink System & Reserved? YES (10–60 GB) — Safe Guide"
   },
   {
     "slug": "appdata-local-folder-huge-windows-11",
@@ -11196,7 +11256,8 @@
         "q": "What happens if AppData\\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide) says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting %LOCALAPPDATA%\\Packages & %LocalAppData%\\Temp & %LocalAppData%\\D3DSCache, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Clean Huge %LOCALAPPDATA%? YES (10–50 GB) — Safe Guide"
   },
   {
     "slug": "windows-11-24h2-update-cache-8gb-bug",
@@ -11251,7 +11312,8 @@
         "q": "What happens if Windows 11 24H2 8.63 GB Undeletable Update Cache Fix says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting C:\\Windows\\WinSxS\\Temp\\PendingDeletes & C:\\$Windows.~BT, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Fix Windows 11 24H2 8.6 GB Bug? YES — Safe Cleanup Guide"
   },
   {
     "slug": "other-storage-full-windows-11-cleanup",
@@ -11306,7 +11368,8 @@
         "q": "What happens if Temporary Files & 'Other' Storage Full on Windows 11 (Deep Clean) says files are in use?",
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting C:\\ProgramData & %UserProfile%\\.cache & %LocalAppData%\\NVIDIA\\DXCache, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
-    ]
+    ],
+    "metaTitle": "Clear Windows 11 Temp Files? YES (6–45 GB) — Safe Guide"
   },
   {
     "slug": "vllm-triton-cache",

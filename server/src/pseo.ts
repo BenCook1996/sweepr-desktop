@@ -158,52 +158,54 @@ export function getCleanItems(): CleanItem[] {
 }
 
 const CUSTOM_GSC_TITLES: Record<string, string> = {
-  "steam-depotcache": "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
-  "riot-client-logs": "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
-  "logitech-ghub-installer-cache": "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
-  "stremio-desktop-cache": "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
-  "amd-shader-cache": "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
-  "comfyui-temp-output-cache": "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
-  "genshin-impact-update-cache": "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
-  "winsxs": "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
-  "programdata-package-cache": "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
-  "windows-livekernelreports": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
-  "livekernelreports": "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
-  "logitech-options-plus-cache": "Can I Delete LogiOptionsPlus Cache? YES — Safe Cleanup Guide (Reclaim 1.2–6.5 GB)",
-  "elgato-streamdeck-cache":
-    "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
-  "vivaldi-browser-cache": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
-  "vivaldi-cache": "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
-  "jetbrains-intellij-cache": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
-  "intellij-idea-caches": "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
-  "dolphin-emulator-cache": "Can I Delete Dolphin Emulator Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
-  "zen-browser-cache": "Can I Delete Zen Browser Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
-  "opera-gx-cache": "Can I Delete Opera GX Cache? YES — Safe Cleanup Guide (Reclaim 1.8–12 GB)",
-  "medal-tv-cache": "Can I Delete Medal TV Cache? YES — Safe Cleanup Guide (Reclaim 2–14 GB)",
-  "capcut-desktop-cache": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
-  "capcut-pc-cache": "Can I Delete CapCut PC Cache? YES — Safe Cleanup Guide (Reclaim 2.5–18 GB)",
-  "obs-studio-logs-crashes": "Can I Delete OBS Studio Logs & Cache? YES — Safe Cleanup Guide (Reclaim 1–6.5 GB)",
-  "adobe-media-cache": "Can I Delete Adobe Media Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
-  "creative-cloud-installer-cache": "Can I Delete Adobe Creative Cloud Cache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+  "steam-depotcache": "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
+  "riot-client-logs": "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
+  "logitech-ghub-installer-cache": "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
+  "stremio-desktop-cache": "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "amd-shader-cache": "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
+  "comfyui-temp-output-cache": "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
+  "genshin-impact-update-cache": "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
+  "winsxs": "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+  "programdata-package-cache": "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+  "windows-livekernelreports": "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+  "livekernelreports": "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+  "logitech-options-plus-cache": "Delete LogiOptionsPlus Cache? YES (1.2–6.5 GB) — Guide",
+  "elgato-streamdeck-cache": "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
+  "vivaldi-browser-cache": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
+  "vivaldi-cache": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
+  "jetbrains-intellij-cache": "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "intellij-idea-caches": "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "dolphin-emulator-cache": "Delete Dolphin Emulator Cache? YES (1.5–9.5 GB) — Guide",
+  "zen-browser-cache": "Delete Zen Browser Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "opera-gx-cache": "Can I Delete Opera GX Cache? YES (1.8–12 GB) — Safe Guide",
+  "medal-tv-cache": "Can I Delete Medal TV Cache? YES (2–14 GB) — Safe Guide",
+  "capcut-desktop-cache": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
+  "capcut-pc-cache": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
+  "obs-studio-logs-crashes": "Delete OBS Studio Logs & Cache? YES (1–6.5 GB) — Guide",
+  "adobe-media-cache": "Can I Delete Adobe Media Cache? YES (10–80 GB) — Guide",
+  "creative-cloud-installer-cache": "Delete Creative Cloud Cache? YES (2–12 GB) — Safe Guide",
   "nvidia-dxcache": "Clear NVIDIA Shader Cache (DXCache) Safely — 2–14 GB",
-  "npm-cache": "Can I Delete %LOCALAPPDATA%\\npm-cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
-  "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
-  "localappdata-crashdumps": "Can I Delete %LOCALAPPDATA%\\CrashDumps? YES — Safe Cleanup Guide (Reclaim 1–15 GB)",
-  "hiberfil-sys": "Can I Delete C:\\hiberfil.sys? YES — Safe Cleanup Guide (Reclaim 6–32 GB)",
+  "npm-cache": "Can I Delete npm-cache? YES (2–18 GB) — Safe Cleanup Guide",
+  "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
+  "localappdata-crashdumps": "Can I Delete CrashDumps? YES (1–15 GB) — Safe Guide",
+  "hiberfil-sys": "Can I Delete C:\\hiberfil.sys? YES (6–32 GB) — Safe Guide",
   "windows-old": "Delete Windows.old Folder Safely on Windows 11 (15–35 GB)",
-  "pip-cache": "Can I Delete %LOCALAPPDATA%\\pip\\Cache? YES — Safe Cleanup Guide (Reclaim 2–20 GB)",
-  "delivery-optimization": "Can I Delete DeliveryOptimization Cache? YES — Safe Cleanup Guide (Reclaim 3–20 GB)",
-  "c-drive-filling-up-by-itself-windows-11": "Can I Delete Hidden C: Drive Bloat? YES — Safe Cleanup Guide (Reclaim 12–65 GB)",
-  "system-and-reserved-storage-100gb-windows-11": "Can I Delete System & Reserved Bloat? YES — Safe Cleanup Guide (Reclaim 10–60 GB)",
-  "appdata-local-folder-huge-windows-11": "Can I Delete %LOCALAPPDATA% Cache Bloat? YES — Safe Cleanup Guide (Reclaim 10–50 GB)",
-  "windows-11-24h2-update-cache-8gb-bug": "Can I Delete Windows 11 24H2 Update Cache? YES — Safe Cleanup Guide (Reclaim 8.6 GB)",
-  "other-storage-full-windows-11-cleanup": "Can I Delete Windows 11 Temporary Files? YES — Safe Cleanup Guide (Reclaim 6–45 GB)",
-  "localappdata-webview2-ebwebview-cache": "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)",
-  "ea-app-cache": "Can I Delete EA App Cache? YES — Safe Cleanup Guide (Reclaim 1.5–6 GB)",
-  "epic-games-webcache": "Can I Delete Epic Games webcache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
-  "chrome-gpu-shader-cache": "Can I Delete Chrome GPUCache? YES — Safe Cleanup Guide (Reclaim 1–6 GB)",
-  "vrchat-cache": "Can I Delete VRChat Cache-WindowsPlayer? YES — Safe Cleanup Guide (Reclaim 10–30 GB)",
-  "lm-studio-models-cache": "Can I Delete LM Studio Models Cache? YES — Safe Cleanup Guide (Reclaim 10–80 GB)",
+  "pip-cache": "Can I Delete pip Cache? YES (2–20 GB) — Safe Cleanup Guide",
+  "delivery-optimization": "Delete DeliveryOptimization? YES (3–20 GB) — Safe Guide",
+  "c-drive-filling-up-by-itself-windows-11": "Fix C: Drive Filling Up? YES (12–65 GB) — Safe Guide",
+  "system-and-reserved-storage-100gb-windows-11": "Shrink System & Reserved? YES (10–60 GB) — Safe Guide",
+  "appdata-local-folder-huge-windows-11": "Clean Huge %LOCALAPPDATA%? YES (10–50 GB) — Safe Guide",
+  "windows-11-24h2-update-cache-8gb-bug": "Fix Windows 11 24H2 8.6 GB Bug? YES — Safe Cleanup Guide",
+  "other-storage-full-windows-11-cleanup": "Clear Windows 11 Temp Files? YES (6–45 GB) — Safe Guide",
+  "localappdata-webview2-ebwebview-cache": "Delete WebView2 EBWebView? YES (1.5–9 GB) — Safe Guide",
+  "ea-app-cache": "Can I Delete EA App Cache? YES (1.5–6 GB) — Safe Guide",
+  "epic-games-webcache": "Delete Epic Games webcache? YES (1–5 GB) — Safe Guide",
+  "chrome-gpu-shader-cache": "Delete Chrome GPUCache? YES (1–6 GB) — Safe Cleanup Guide",
+  "vrchat-cache": "Delete VRChat Cache Folder? YES (10–30 GB) — Safe Guide",
+  "lm-studio-models-cache": "Delete LM Studio Models Cache? YES (10–80 GB) — Guide",
+  "discord-cache": "Can I Delete Discord Cache? YES (1.5–6 GB) — Safe Guide",
+  "spotify-cache": "Can I Delete Spotify Cache? YES (2–10 GB) — Safe Guide",
+  "docker-desktop-ext4-disk": "Shrink Docker WSL2 ext4.vhdx? YES (12–80 GB) — Guide",
   "microsoft-teams-cache": "Clear Microsoft Teams Cache on Windows 11 (1.5–9 GB)",
   "software-distribution-download": "Clear Windows Update Cache on Windows 11 (2.5–16 GB)",
   "appdata-temp": "Delete Temp Files on Windows 11 Safely (Reclaim 2–12 GB)",
@@ -917,11 +919,14 @@ export function buildPseoTitle(item: CleanItem): string {
   if (compactGuideTitle.length >= 30 && compactGuideTitle.length <= 60 && compactGuideTitle.slice(0, 48).includes(")")) {
     return compactGuideTitle;
   }
-  const shortTitle = `Delete ${cleanName}? YES (${spaceLabel}) — Safe Cleanup Guide`;
-  if (shortTitle.length >= 30 && shortTitle.length <= 115) {
-    return shortTitle;
+  const shortSafeTitle = `Delete ${cleanName}? YES (${spaceLabel}) — Safe Guide`;
+  if (shortSafeTitle.length >= 30 && shortSafeTitle.length <= 60) {
+    return shortSafeTitle;
   }
-  return `Delete ${cleanName}? YES (${spaceLabel}) — Guide`;
+  const suffix = `? YES (${spaceLabel}) — Guide`;
+  const maxNameLen = Math.max(8, 60 - "Delete ".length - suffix.length);
+  const trimmedName = cleanName.length > maxNameLen ? cleanName.slice(0, maxNameLen).trim() : cleanName;
+  return `Delete ${trimmedName}${suffix}`;
 }
 
 export function buildPseoDescription(item: CleanItem): string {
@@ -1447,6 +1452,35 @@ export function renderPseoDirectory(): string {
           },
         ],
       },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What is the best PC storage cleaner?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "The best PC storage cleaner targets deep Windows update leftovers, GPU shader caches, launcher depots, and Chromium Service Worker blobs without adware or always-on background bloat. SWEEPR Cleaner is a 6.52 MB Authenticode-signed native Rust cleaner with 377 verification rules and 7-day automatic rollback protection.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "What is the CMD command to clean up the system?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Run Command Prompt as Administrator and execute cleanmgr /sageset:1 followed by cleanmgr /sagerun:1 for built-in temporary folders, plus Dism.exe /online /Cleanup-Image /StartComponentCleanup to reclaim superseded Windows WinSxS update components safely.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Does Disk Cleanup actually work?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes, Windows Disk Cleanup safely clears basic %TEMP%, Windows Update downloads, and Recycle Bin files. However, it misses 10–60+ GB inside %LocalAppData% Chromium caches, Steam depotcache, NVIDIA/AMD DXCache shaders, and developer package caches that dedicated cache rules detect.",
+            },
+          },
+        ],
+      },
     ],
   })}</script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
@@ -1463,13 +1497,13 @@ export function renderPseoDirectory(): string {
   <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
     <a href="/" class="flex items-center gap-3 text-inherit no-underline">
       <div class="logo-box">S</div>
-      <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
+      <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-700">Cleaner</span></span>
     </a>
     <div class="flex gap-2 md:gap-3 items-center">
       <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
-          <span class="text-base" id="currentLangFlag">🇬🇧</span>
-          <span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
+        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-700 transition-colors" aria-expanded="false">
+          <span class="text-base" id="currentLangFlag" aria-hidden="true">🇬🇧</span>
+          <span class="sr-only">Language: </span><span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
           <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
@@ -1493,7 +1527,7 @@ export function renderPseoDirectory(): string {
     </div>
   </nav>
 
-  <main class="max-w-5xl mx-auto px-6 py-12">
+  <main class="w-full min-w-0 max-w-5xl mx-auto px-6 pt-24 pb-12">
     <div class="text-center mb-10">
       <h1 class="text-3xl md:text-5xl font-black text-gray-900 mb-4">Windows Storage &amp; Cache Directory</h1>
       <p class="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
@@ -1586,6 +1620,24 @@ export function renderPseoDirectory(): string {
         <a href="/alternatives/avast-cleanup" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Avast Cleanup Alternative &rarr;</a>
         <a href="/alternatives/wise-disk-cleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Wise Disk Cleaner Alternative &rarr;</a>
         <a href="/alternatives/glary-utilities" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Glary Utilities Alternative &rarr;</a>
+      </div>
+    </section>
+
+    <section id="clean-directory-faq" class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900 mb-4">Windows Storage Cleanup FAQ</h2>
+      <div class="space-y-4">
+        <div class="border-b border-gray-100 pb-4">
+          <h3 class="text-sm font-bold text-gray-900 mb-1.5">What is the best PC storage cleaner?</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">The best PC storage cleaner targets deep Windows update leftovers, GPU shader caches, launcher depots, and Chromium Service Worker blobs without adware or always-on background bloat. SWEEPR Cleaner is a 6.52 MB Authenticode-signed native Rust cleaner with 377 verification rules and 7-day automatic rollback protection.</p>
+        </div>
+        <div class="border-b border-gray-100 pb-4">
+          <h3 class="text-sm font-bold text-gray-900 mb-1.5">What is the CMD command to clean up the system?</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">Run Command Prompt as Administrator and execute <code>cleanmgr /sageset:1</code> followed by <code>cleanmgr /sagerun:1</code> for built-in temporary folders, plus <code>Dism.exe /online /Cleanup-Image /StartComponentCleanup</code> to reclaim superseded Windows WinSxS update components safely.</p>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-gray-900 mb-1.5">Does Disk Cleanup actually work?</h3>
+          <p class="text-xs text-gray-600 leading-relaxed">Yes, Windows Disk Cleanup safely clears basic <code>%TEMP%</code>, Windows Update downloads, and Recycle Bin files. However, it misses 10–60+ GB inside <code>%LocalAppData%</code> Chromium caches, Steam <code>depotcache</code>, NVIDIA/AMD DXCache shaders, and developer package caches that dedicated cache rules detect.</p>
+        </div>
       </div>
     </section>
 
@@ -1748,6 +1800,7 @@ export function renderPseoPage(item: CleanItem): string {
           decoding="async"
           width="800"
           height="450"
+          style="aspect-ratio: 800 / 450; height: auto;"
         />
         <figcaption class="mt-2.5 text-xs text-gray-500 text-center italic">
           ${typeof item.visualProof === 'object' && item.visualProof?.caption ? esc(item.visualProof.caption) : `Live Windows 11 file inspection demonstrating disk footprint and safe subfolder layout for ${esc(item.name)}.`}
@@ -1797,7 +1850,7 @@ export function renderPseoPage(item: CleanItem): string {
             <tr>
               <td class="py-2.5 pr-3">
                 <a href="/clean/${s.category}/${s.slug}" class="font-bold text-emerald-700 hover:underline">${s.name}</a>
-                <div class="font-mono text-[11px] text-gray-400 truncate max-w-xs">${s.path}</div>
+                <div class="font-mono text-[11px] text-gray-600 truncate max-w-xs">${s.path}</div>
               </td>
               <td class="py-2.5 pr-3">${describeCacheVariantRole(s.slug)}</td>
               <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${s.avgSpace}</td>
@@ -1829,7 +1882,7 @@ export function renderPseoPage(item: CleanItem): string {
               <span class="font-semibold text-gray-500">Reclaim ${r.avgSpace}</span>
             </div>
             <div class="text-xs font-bold text-gray-900 mb-1 line-clamp-1">${r.name}</div>
-            <div class="text-[11px] font-mono text-gray-400 truncate">${r.path}</div>
+            <div class="text-[11px] font-mono text-gray-600 truncate">${r.path}</div>
           </a>
         `
           )
@@ -1952,15 +2005,15 @@ export function renderPseoPage(item: CleanItem): string {
     <div class="flex items-center gap-3 md:gap-4">
       <a href="/" class="flex items-center gap-3 text-inherit no-underline">
         <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Cleaner</span></span>
+        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-700">Cleaner</span></span>
       </a>
-      <a href="/clean" class="hidden sm:inline-block text-xs font-semibold text-gray-500 hover:text-gray-900">Directory &rarr;</a>
+      <a href="/clean" class="hidden sm:inline-block text-xs font-semibold text-gray-600 hover:text-gray-900">Directory &rarr;</a>
     </div>
     <div class="flex gap-2 md:gap-3 items-center">
       <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-600 transition-colors" aria-expanded="false" aria-label="Select Language">
-          <span class="text-base" id="currentLangFlag">🇬🇧</span>
-          <span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
+        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-700 transition-colors" aria-expanded="false">
+          <span class="text-base" id="currentLangFlag" aria-hidden="true">🇬🇧</span>
+          <span class="sr-only">Language: </span><span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
           <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
@@ -1984,9 +2037,9 @@ export function renderPseoPage(item: CleanItem): string {
     </div>
   </nav>
 
-  <main class="max-w-3xl mx-auto px-6 py-12">
+  <main class="w-full min-w-0 max-w-3xl mx-auto px-6 pt-24 pb-12">
     <div class="mb-8">
-      <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-600 uppercase tracking-wider">
+      <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider">
         <a href="/clean" class="hover:underline">&larr; Clean Directory</a>
         <span class="text-gray-300">/</span>
         <a href="/clean#silo-${cluster.id}" class="hover:underline">${cluster.badge}</a>
@@ -2262,12 +2315,12 @@ export function renderPseoPage(item: CleanItem): string {
             </tr>
             <tr>
               <td class="py-2 font-medium text-gray-800">Accidental Deletion Risk</td>
-              <td class="py-2 text-amber-600">Moderate (easy to delete wrong folder)</td>
+              <td class="py-2 text-amber-800">Moderate (easy to delete wrong folder)</td>
               <td class="py-2 text-emerald-700 font-semibold">Zero (strict rules &amp; hashes)</td>
             </tr>
             <tr>
               <td class="py-2 font-medium text-gray-800">Safety Undo Rollback</td>
-              <td class="py-2 text-gray-400">None (Shift+Del is permanent)</td>
+              <td class="py-2 text-gray-600">None (Shift+Del is permanent)</td>
               <td class="py-2 text-emerald-700 font-semibold">7-Day Automatic Rollback</td>
             </tr>
             <tr>

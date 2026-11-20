@@ -45,6 +45,7 @@ import { LOCKED_TEST_TITLE_SLUGS } from "./seo/keywords.js";
 import {
   ensureBloatWatchSeeded,
   getBloatWatchPost,
+  listBloatWatchPosts,
   refreshBloatWatchCleanSlugCache,
   renderBloatWatchIndexHtml,
   renderBloatWatchPostHtml,
@@ -1004,6 +1005,25 @@ export function createApp(deps: AppDeps) {
       }
       return block;
     });
+    const existingLocs = new Set(
+      [...xml.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((m) => String(m[1] || "").trim())
+    );
+    const extraBlocks: string[] = [];
+    for (const post of listBloatWatchPosts(seoStore, "published")) {
+      const postLoc = `https://sweeprcleaner.com/bloat-watch/${post.slug}`;
+      if (!existingLocs.has(postLoc)) {
+        existingLocs.add(postLoc);
+        const modDate = post.published_at
+          ? new Date(post.published_at * 1000).toISOString().slice(0, 10)
+          : cleanDataMtime;
+        extraBlocks.push(
+          `  <url>\n    <loc>${postLoc}</loc>\n    <lastmod>${modDate}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>`
+        );
+      }
+    }
+    if (extraBlocks.length > 0) {
+      xml = xml.replace("</urlset>", `${extraBlocks.join("\n")}\n</urlset>`);
+    }
     c.header("Content-Type", "application/xml; charset=utf-8");
     return c.body(xml);
   });

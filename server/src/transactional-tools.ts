@@ -134,7 +134,7 @@ export const TRANSACTIONAL_TOOLS: TransactionalToolConfig[] = [
     slug: "elgato-streamdeck-cleaner",
     appName: "Elgato Stream Deck & Wave Link",
     shortName: "Elgato Stream Deck Cleaner",
-    title: "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)",
+    title: "Elgato Stream Deck Cache Cleaner — Free 1–4 GB on Windows",
     metaDescription:
       "Clean the Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) on Windows 11. Safely reclaim 1–4 GB of software disk cache, logs & blobs.",
     heroBadge: "🎛️ ELGATO STREAM DECK SOFTWARE DISK CACHE CLEANER",
@@ -576,6 +576,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       </div>
     </nav>
 
+    <main>
     <header style="background:#ffffff;border:1px solid var(--border);border-radius:22px;padding:26px 24px;margin-bottom:22px;box-shadow:0 8px 28px rgba(17,22,19,0.05);">
       <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:11.5px;font-weight:800;margin-bottom:10px;">
         ${escapeHtml(tool.heroBadge)} &bull; SSL.COM AUTHENTICODE SIGNED (6.52 MB)
@@ -663,6 +664,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         ${otherToolsHtml}
       </div>
     </section>
+    </main>
   </div>
 
   <script>
@@ -801,6 +803,7 @@ export function renderTransactionalToolsHub(): string {
         <a href="/pricing">Pricing</a>
       </div>
     </nav>
+    <main>
     <header style="margin-bottom:24px;">
       <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:12px;font-weight:800;margin-bottom:10px;">
         🛠️ 10 DEDICATED WINDOWS 10/11 CACHE CLEANERS
@@ -813,6 +816,7 @@ export function renderTransactionalToolsHub(): string {
     <div class="grid">
       ${cards}
     </div>
+    </main>
   </div>
 </body>
 </html>`;

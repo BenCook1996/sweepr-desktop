@@ -59,67 +59,67 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "steam-depotcache",
         path: "/clean/app/steam-depotcache",
-        expectedTitle: "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+        expectedTitle: "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
       },
       {
         slug: "riot-client-logs",
         path: "/clean/app/riot-client-logs",
-        expectedTitle: "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
       },
       {
         slug: "logitech-ghub-installer-cache",
         path: "/clean/app/logitech-ghub-installer-cache",
-        expectedTitle: "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
       },
       {
         slug: "stremio-desktop-cache",
         path: "/clean/app/stremio-desktop-cache",
-        expectedTitle: "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
       {
         slug: "amd-shader-cache",
         path: "/clean/app/amd-shader-cache",
-        expectedTitle: "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+        expectedTitle: "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
       },
       {
         slug: "comfyui-temp-output-cache",
         path: "/clean/app/comfyui-temp-output-cache",
-        expectedTitle: "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+        expectedTitle: "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
       },
       {
         slug: "genshin-impact-update-cache",
         path: "/clean/app/genshin-impact-update-cache",
-        expectedTitle: "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+        expectedTitle: "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
       },
       {
         slug: "winsxs",
         path: "/clean/folder/winsxs",
-        expectedTitle: "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
       },
       {
         slug: "programdata-package-cache",
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
       },
       {
         slug: "elgato-streamdeck-cache",
         path: "/clean/app/elgato-streamdeck-cache",
-        expectedTitle: "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+        expectedTitle: "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
       },
       {
         slug: "windows-livekernelreports",
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
       },
       {
         slug: "vivaldi-browser-cache",
         path: "/clean/app/vivaldi-browser-cache",
-        expectedTitle: "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+        expectedTitle: "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
       },
       {
         slug: "jetbrains-intellij-cache",
         path: "/clean/app/jetbrains-intellij-cache",
-        expectedTitle: "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
     ];
 

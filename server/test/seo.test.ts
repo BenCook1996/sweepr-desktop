@@ -962,7 +962,7 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   const parsedWebview = parseHtml(await webviewRes.text());
   assert.equal(
     parsedWebview.title,
-    "Can I Delete WebView2 EBWebView Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9 GB)"
+    "Delete WebView2 EBWebView? YES (1.5–9 GB) — Safe Guide"
   );
   assert.ok((parsedWebview.title?.length ?? 0) >= 30 && (parsedWebview.title?.length ?? 0) <= 115);
   assert.ok((parsedWebview.metaDescription?.length ?? 0) >= 70 && (parsedWebview.metaDescription?.length ?? 0) <= 160);
@@ -972,7 +972,7 @@ test("Phase 1 Actions 1.1, 1.5, 1.6, 1.7, and 1.8 end-to-end verification", asyn
   const parsedGenshin = parseHtml(await genshinRes.text());
   assert.equal(
     parsedGenshin.title,
-    "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)"
+    "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide"
   );
 
   // Action 1.6: /safe-to-delete Interactive Checker (Campaign 1 MVP)
@@ -1405,55 +1405,55 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   const ctrTargets = [
     {
       path: "/clean/app/steam-depotcache",
-      expectedTitle: "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+      expectedTitle: "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
     },
     {
       path: "/clean/app/riot-client-logs",
-      expectedTitle: "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+      expectedTitle: "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
     },
     {
       path: "/clean/app/logitech-ghub-installer-cache",
-      expectedTitle: "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+      expectedTitle: "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
     },
     {
       path: "/clean/app/stremio-desktop-cache",
-      expectedTitle: "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+      expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
     },
     {
       path: "/clean/app/amd-shader-cache",
-      expectedTitle: "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+      expectedTitle: "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
     },
     {
       path: "/clean/app/comfyui-temp-output-cache",
-      expectedTitle: "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+      expectedTitle: "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
     },
     {
       path: "/clean/app/genshin-impact-update-cache",
-      expectedTitle: "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+      expectedTitle: "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
     },
     {
       path: "/clean/folder/winsxs",
-      expectedTitle: "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+      expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
     },
     {
       path: "/clean/folder/programdata-package-cache",
-      expectedTitle: "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+      expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
     },
     {
       path: "/clean/app/elgato-streamdeck-cache",
-      expectedTitle: "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+      expectedTitle: "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
     },
     {
       path: "/clean/folder/windows-livekernelreports",
-      expectedTitle: "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+      expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
     },
     {
       path: "/clean/app/vivaldi-browser-cache",
-      expectedTitle: "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+      expectedTitle: "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
     },
     {
       path: "/clean/app/jetbrains-intellij-cache",
-      expectedTitle: "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+      expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
     },
   ];
 
@@ -2381,7 +2381,7 @@ test("A16 Competitor Organic SEO Replication, 5-Tier Transactional Forecaster & 
   const gradleHtml = await (await healedApp.request("/clean/app/gradle-wrapper-caches")).text();
   assert.equal(
     parseHtml(gradleHtml).title,
-    "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)"
+    "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide"
   );
   const cleanedOverrides = staleStore.getSetting<Record<string, any>>("intent_gap_approved_ctr_overrides", {});
   assert.equal(cleanedOverrides["gradle-wrapper-caches"]?.title, null);

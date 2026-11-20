@@ -63,14 +63,14 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.ok(!text.includes("\uFEFF"), "Text must not contain unicode BOM zero-width character");
     });
 
-    test("1.2: Static server/public/sitemap.xml contains exact 137 Tier-1 URLs", () => {
+    test("1.2: Static server/public/sitemap.xml contains exact 144 Tier-1 URLs", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 137, `Expected exactly 137 Tier-1 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 144, `Expected exactly 144 Tier-1 URLs, got ${urls.length}`);
 
       // Count check by regex
       const locTags = (xml.match(/<loc>/g) || []).length;
-      assert.equal(locTags, 137, `Expected exactly 137 <loc> tags, got ${locTags}`);
+      assert.equal(locTags, 144, `Expected exactly 144 <loc> tags, got ${locTags}`);
 
       // All 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages present (/download excluded as noindex)
       const coreHubs = [
@@ -148,8 +148,8 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const dynamicXml = await dynamicRes.text();
       const dynamicUrls = parseSitemap(dynamicXml);
 
-      assert.equal(staticUrls.length, 137, "Static sitemap count must be 137");
-      assert.equal(dynamicUrls.length, 137, "Dynamic sitemap count must be 137");
+      assert.equal(staticUrls.length, 144, "Static sitemap count must be 144");
+      assert.equal(dynamicUrls.length, 144, "Dynamic sitemap count must be 144");
       assert.deepEqual(dynamicUrls, staticUrls, "Dynamic and static sitemaps must have identical URL list in identical order");
     });
   });
@@ -286,59 +286,59 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
     const expectedLockedTitles: Record<string, { category: "app" | "folder"; expectedTitle: string }> = {
       "steam-depotcache": {
         category: "app",
-        expectedTitle: "Can I Delete Steam depotcache? YES — Safe Cleanup Guide (Reclaim 2–25 GB)",
+        expectedTitle: "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
       },
       "riot-client-logs": {
         category: "app",
-        expectedTitle: "Can I Delete Riot Client Logs? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
       },
       "logitech-ghub-installer-cache": {
         category: "app",
-        expectedTitle: "Can I Delete LGHUB Depots Cache? YES — Safe Cleanup Guide (Reclaim 1.5–8 GB)",
+        expectedTitle: "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
       },
       "stremio-desktop-cache": {
         category: "app",
-        expectedTitle: "Can I Delete Stremio Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
       "amd-shader-cache": {
         category: "app",
-        expectedTitle: "Can I Delete AMD DxCache? YES — Safe Cleanup Guide (Reclaim 2–12 GB)",
+        expectedTitle: "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
       },
       "comfyui-temp-output-cache": {
         category: "app",
-        expectedTitle: "Can I Delete ComfyUI Temp Cache? YES — Safe Cleanup Guide (Reclaim 2–18 GB)",
+        expectedTitle: "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
       },
       "genshin-impact-update-cache": {
         category: "app",
-        expectedTitle: "Can I Delete Genshin Impact Temp? YES — Safe Cleanup Guide (Reclaim 3–22 GB)",
+        expectedTitle: "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
       },
       "winsxs": {
         category: "folder",
-        expectedTitle: "Can I Delete C:\\Windows\\WinSxS? YES — Safe Cleanup Guide (Reclaim 6–20 GB)",
+        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
       },
       "programdata-package-cache": {
         category: "folder",
-        expectedTitle: "Can I Delete ProgramData Package Cache? YES — Safe Cleanup Guide (Reclaim 3.5–22 GB)",
+        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
       },
       "elgato-streamdeck-cache": {
         category: "app",
-        expectedTitle: "Can I Delete %APPDATA%\\Elgato\\StreamDeck? YES — Safe Cleanup Guide (Reclaim 1–4 GB)",
+        expectedTitle: "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
       },
       "windows-livekernelreports": {
         category: "folder",
-        expectedTitle: "Can I Delete LiveKernelReports? YES — Safe Cleanup Guide (Reclaim 1.5–10 GB)",
+        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
       },
       "vivaldi-browser-cache": {
         category: "app",
-        expectedTitle: "Can I Delete Vivaldi Browser Cache? YES — Safe Cleanup Guide (Reclaim 1–5 GB)",
+        expectedTitle: "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
       },
       "jetbrains-intellij-cache": {
         category: "app",
-        expectedTitle: "Can I Delete IntelliJ IDEA Cache? YES — Safe Cleanup Guide (Reclaim 1.5–9.5 GB)",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
       },
       "gradle-wrapper-caches": {
         category: "app",
-        expectedTitle: "Can I Delete .gradle\\caches? YES — Safe Cleanup Guide (Reclaim 4–35 GB)",
+        expectedTitle: "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
       },
     };
 

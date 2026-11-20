@@ -224,9 +224,9 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     assert.equal(openUrls, openFreq, "Every <url> must have exactly one <changefreq>");
     assert.equal(openUrls, openPri, "Every <url> must have exactly one <priority>");
 
-    // Total count exactly 137 Tier-1 indexable URLs
-    assert.ok(openUrls >= 130 && openUrls <= 145, `Expected 137 URLs (130-145), got ${openUrls}`);
-    assert.equal(openUrls, 137, `Expected exactly 137 URLs, got ${openUrls}`);
+    // Total count exactly 144 Tier-1 indexable URLs
+    assert.ok(openUrls >= 130 && openUrls <= 155, `Expected 144 URLs (130-155), got ${openUrls}`);
+    assert.equal(openUrls, 144, `Expected exactly 144 URLs, got ${openUrls}`);
 
     // Check duplicate URLs
     const locs = parseSitemap(xml);
@@ -274,7 +274,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
 
     const xml = await res.text();
     const urls = parseSitemap(xml);
-    assert.equal(urls.length, 137, "Dynamic sitemap must contain exactly 137 URLs");
+    assert.equal(urls.length, 144, "Dynamic sitemap must contain exactly 144 URLs");
 
     const staticXml = readFileSync("public/sitemap.xml", "utf-8");
     const staticUrls = parseSitemap(staticXml);
