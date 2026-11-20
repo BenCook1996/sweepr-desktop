@@ -1920,10 +1920,7 @@
       applyOS(detectInitialOS());
 
       document.addEventListener('DOMContentLoaded', function () {
-        // 1. Ensure OS badge, links & preview paths match detected platform
-        applyOS(detectInitialOS());
-
-        // 2. 3-Stage Scrubber Tabs
+        // 1. 3-Stage Scrubber Tabs
         var scrubTabs = document.querySelectorAll('.scrubber-tab');
         for (var j = 0; j < scrubTabs.length; j++) {
           scrubTabs[j].addEventListener('click', function () {

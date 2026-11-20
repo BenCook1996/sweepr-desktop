@@ -353,10 +353,22 @@
     // 1. Google Analytics 4 (runs in cookieless Consent Mode v2 when consentState === 'denied')
     if (cfg.gaMeasurementId && cfg.gaMeasurementId.startsWith('G-')) {
       log('Initializing Google Analytics 4 with ID:', cfg.gaMeasurementId, 'Consent:', consentState);
-      const gaScript = document.createElement('script');
-      gaScript.async = true;
-      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cfg.gaMeasurementId)}`;
-      document.head.appendChild(gaScript);
+      const gaMeasurementId = cfg.gaMeasurementId;
+      const appendGaScript = function () {
+        if (document.querySelector('script[data-sweepr-ga="1"]')) return;
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.dataset.sweeprGa = '1';
+        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaMeasurementId)}`;
+        document.head.appendChild(gaScript);
+      };
+      if (document.readyState === 'complete') {
+        setTimeout(appendGaScript, 0);
+      } else {
+        window.addEventListener('load', function () {
+          setTimeout(appendGaScript, 0);
+        }, { once: true });
+      }
 
       window.gtag('js', new Date());
       window.gtag('config', cfg.gaMeasurementId, {
