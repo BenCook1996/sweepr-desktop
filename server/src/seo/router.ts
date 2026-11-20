@@ -1085,17 +1085,40 @@ export function createSeoRouter(deps: SeoRouterDeps) {
     });
   });
 
+  const VALID_LISTING_VERSION_STATUSES = new Set([
+    "current",
+    "stale",
+    "pending_submission",
+    "blocked",
+    "unverified",
+    "requires_payment",
+  ]);
+  const VALID_LISTING_TASK_STATUSES = new Set(["none", "open", "resolved"]);
+
   const handleUpsertListing = async (c: any) => {
     const body = await c.req.json().catch(() => ({}));
     const platformId = String(body.platform_id ?? "").trim();
     const listingUrl = String(body.listing_url ?? "").trim();
     if (!platformId || !listingUrl) return c.json({ error: "platform_id_and_listing_url_required" }, 400);
     if (!isPublicHttpUrl(listingUrl)) return c.json({ error: "invalid_public_url" }, 400);
+
+    const rawVersionStatus = body.version_status !== undefined && body.version_status !== null ? String(body.version_status).trim() : undefined;
+    if (rawVersionStatus !== undefined && !VALID_LISTING_VERSION_STATUSES.has(rawVersionStatus)) {
+      return c.json({ error: "invalid_version_status" }, 400);
+    }
+    const rawTaskStatus = body.crm_task_status !== undefined && body.crm_task_status !== null ? String(body.crm_task_status).trim() : undefined;
+    if (rawTaskStatus !== undefined && !VALID_LISTING_TASK_STATUSES.has(rawTaskStatus)) {
+      return c.json({ error: "invalid_crm_task_status" }, 400);
+    }
+
     const row = upsertDirectoryListing(store, {
       platform_id: platformId,
       platform_name: body.platform_name ? String(body.platform_name) : undefined,
       listing_url: listingUrl,
       expected_version: body.expected_version ? String(body.expected_version) : undefined,
+      version_status: rawVersionStatus as any,
+      crm_task_status: rawTaskStatus as any,
+      crm_task_note: body.crm_task_note === null ? null : typeof body.crm_task_note === "string" ? body.crm_task_note : undefined,
     });
     return c.json({ ok: true, listing: row });
   };

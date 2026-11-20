@@ -8,6 +8,7 @@ process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import {
+  checkDirectoryListings,
   extractVersionAndRatingFromHtml,
   isSubmissionOrRootListingUrl,
 } from "../src/seo/listings.js";
@@ -128,4 +129,41 @@ test("getAutomationLastRunAt returns persisted last_run_at timestamp after recor
 
   assert.equal(getAutomationLastRunAt("A5_directory_listings"), expectedTs);
   assert.equal(getAutomationLastRunAt("nonexistent_job_id"), null);
+});
+
+test("A5 listing allows marking requires_payment and resolving/closing the open CRM task across checks", async () => {
+  const { repo, app } = setupApp();
+  const store = new SeoStore(repo.db);
+
+  const upsertRes = await app.request("/api/crm/seo/listings", {
+    method: "POST",
+    headers: { ...auth, "content-type": "application/json", origin: "http://test" },
+    body: JSON.stringify({
+      platform_id: "betalist",
+      platform_name: "BetaList Startup Directory",
+      listing_url: "https://betalist.com/submit",
+      expected_version: "0.1.0",
+      version_status: "requires_payment",
+      crm_task_status: "resolved",
+      crm_task_note: "Requires payment (no free option per betalist.com/faq). Task closed.",
+    }),
+  });
+  assert.equal(upsertRes.status, 200);
+  const upsertJson = (await upsertRes.json()) as { ok: boolean; listing: { version_status: string; crm_task_status: string } };
+  assert.equal(upsertJson.ok, true);
+  assert.equal(upsertJson.listing.version_status, "requires_payment");
+  assert.equal(upsertJson.listing.crm_task_status, "resolved");
+
+  // Running checkDirectoryListings with mock HTML on other platforms must keep closed betalist resolved
+  const checkRes = await checkDirectoryListings(store, {
+    platformId: "betalist",
+  });
+  assert.equal(checkRes.listings.length, 1);
+  assert.equal(checkRes.listings[0].version_status, "requires_payment");
+  assert.equal(checkRes.listings[0].crm_task_status, "resolved");
+
+  const tasksRes = await app.request("/api/crm/seo/listings/tasks", { headers: auth });
+  assert.equal(tasksRes.status, 200);
+  const tasksJson = (await tasksRes.json()) as { open_count: number; tasks: Array<{ platform_id: string }> };
+  assert.equal(tasksJson.tasks.some((t) => t.platform_id === "betalist"), false);
 });

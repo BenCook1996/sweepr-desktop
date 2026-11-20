@@ -14,7 +14,7 @@ export interface DirectoryListingRow {
   listing_url: string;
   expected_version: string;
   detected_version: string | null;
-  version_status: "current" | "stale" | "pending_submission" | "blocked" | "unverified";
+  version_status: "current" | "stale" | "pending_submission" | "blocked" | "unverified" | "requires_payment";
   detected_rating: string | null;
   backlink_status: string;
   found_href: string | null;
@@ -206,6 +206,9 @@ export function upsertDirectoryListing(
     platform_name?: string;
     listing_url: string;
     expected_version?: string;
+    version_status?: DirectoryListingRow["version_status"];
+    crm_task_status?: DirectoryListingRow["crm_task_status"];
+    crm_task_note?: string | null;
   }
 ): DirectoryListingRow {
   ensureDirectoryListingsSeeded(store);
@@ -213,20 +216,57 @@ export function upsertDirectoryListing(
   const expected = input.expected_version?.trim() || readCurrentReleaseVersion();
   const id = input.platform_id.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
   const name = input.platform_name?.trim() || id;
+  const existing = store.db
+    .prepare("SELECT * FROM seo_directory_listings WHERE platform_id = ?")
+    .get(id) as DirectoryListingRow | undefined;
+
+  const nextVersionStatus: DirectoryListingRow["version_status"] =
+    input.version_status ?? existing?.version_status ?? "unverified";
+  const nextTaskStatus: DirectoryListingRow["crm_task_status"] =
+    input.crm_task_status ?? existing?.crm_task_status ?? "none";
+  const nextTaskNote: string | null =
+    input.crm_task_note !== undefined
+      ? (input.crm_task_note ? input.crm_task_note.trim() : null)
+      : (existing?.crm_task_note ?? null);
+  const cleanUrl = input.listing_url.trim();
 
   store.db
     .prepare(
       `INSERT INTO seo_directory_listings (
          platform_id, platform_name, listing_url, expected_version,
-         version_status, backlink_status, crm_task_status, updated_at
-       ) VALUES (?, ?, ?, ?, 'unverified', 'unverified', 'none', ?)
+         version_status, backlink_status, crm_task_status, crm_task_note, updated_at
+       ) VALUES (?, ?, ?, ?, ?, 'unverified', ?, ?, ?)
        ON CONFLICT(platform_id) DO UPDATE SET
          platform_name = COALESCE(?, seo_directory_listings.platform_name),
          listing_url = excluded.listing_url,
          expected_version = excluded.expected_version,
+         version_status = excluded.version_status,
+         crm_task_status = excluded.crm_task_status,
+         crm_task_note = excluded.crm_task_note,
          updated_at = excluded.updated_at`
     )
-    .run(id, name, input.listing_url.trim(), expected, now, input.platform_name?.trim() || null);
+    .run(
+      id,
+      name,
+      cleanUrl,
+      expected,
+      nextVersionStatus,
+      nextTaskStatus,
+      nextTaskNote,
+      now,
+      input.platform_name?.trim() || null
+    );
+
+  if (nextTaskStatus === "resolved") {
+    try {
+      const outStatus = nextVersionStatus === "requires_payment" ? "requires_payment" : "delivered";
+      store.db
+        .prepare("UPDATE outreach_logs SET status = ?, category = ? WHERE url = ? AND how = 'A5 Listing Freshness Monitor'")
+        .run(outStatus, nextTaskNote, cleanUrl);
+    } catch {
+      /* ignore if outreach_logs schema differs */
+    }
+  }
 
   return store.db.prepare("SELECT * FROM seo_directory_listings WHERE platform_id = ?").get(id) as unknown as DirectoryListingRow;
 }
@@ -268,6 +308,11 @@ export async function checkDirectoryListings(
   let tasksCreated = 0;
 
   for (const row of all) {
+    if (!opts.customHtmlByPlatform?.[row.platform_id] && row.version_status === "requires_payment" && row.crm_task_status === "resolved") {
+      results.push(row);
+      continue;
+    }
+
     let detectedVersion: string | null = null;
     let detectedRating: string | null = null;
     let hasUnsignedFlag = false;
