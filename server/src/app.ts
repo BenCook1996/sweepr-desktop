@@ -457,7 +457,12 @@ export function createApp(deps: AppDeps) {
     }
   });
   // Nothing we accept legitimately needs more than this; protects JSON parsing from huge bodies.
-  app.use("/api/*", bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
+  const apiBodyLimit256k = bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) });
+  const apiBodyLimit2m = bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) });
+  app.use("/api/*", async (c, next) => {
+    if (c.req.path === "/api/crm/seo/gsc/ingest") return apiBodyLimit2m(c, next);
+    return apiBodyLimit256k(c, next);
+  });
   app.use("/v1/*", bodyLimit({ maxSize: 256 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
   app.use("/webhooks/*", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "payload_too_large" }, 413) }));
 

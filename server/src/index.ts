@@ -32,7 +32,7 @@ import { syncStaticLlmsTxtFile } from "./seo/llms-index.js";
 import { runCloudGoogleSeoSync } from "./seo/google.js";
 import { verifyBacklinks } from "./seo/backlinks.js";
 import { generateWeeklyContentToProductReport } from "./seo/product-advisor.js";
-import { recordAutomationRunStatus } from "./crm.js";
+import { getAutomationLastRunAt, recordAutomationRunStatus } from "./crm.js";
 
 process.on("uncaughtException", (err) => {
   console.error("[fatal-guard] Uncaught exception:", err);
@@ -296,7 +296,12 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
   activeTimeouts.push(timeout5m);
   activeIntervals.push(interval5m);
 
-  // 2. Every 6 hours (+ T+30s boot): A1 Telemetry Truth & Storage Benchmark + A4 Bloat Watch + A12 GEO Index + A15 Competitor Freshness
+  const shouldSkipBootRun = (jobId: string, minAgeSec: number): boolean => {
+    const last = getAutomationLastRunAt(jobId);
+    return Boolean(last && Math.floor(Date.now() / 1000) - last < minAgeSec);
+  };
+
+  // 2. Every 6 hours (+ T+30s boot when due): A1 Telemetry Truth & Storage Benchmark + A4 Bloat Watch + A12 GEO Index + A15 Competitor Freshness
   let running6h = false;
   const runSixHourSeoIntelligence = async () => {
     if (running6h) return;
@@ -385,7 +390,13 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       running6h = false;
     }
   };
-  const timeout6h = setTimeout(runSixHourSeoIntelligence, 30_000);
+  const timeout6h = setTimeout(() => {
+    if (shouldSkipBootRun("A1_telemetry_truth", Math.floor(5.5 * 3600))) {
+      console.log("[timers] Skipping boot A1/A4/A12/A15 run (last run < 5.5h ago).");
+      return;
+    }
+    void runSixHourSeoIntelligence();
+  }, 30_000);
   timeout6h.unref?.();
   const interval6h = setInterval(runSixHourSeoIntelligence, 6 * 3600 * 1000);
   interval6h.unref?.();
@@ -525,29 +536,16 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
 
     const t0A18 = Date.now();
     try {
-      if (process.env.ALLOW_A18_AUTO_REFRESH === "1") {
-        const refreshRes = await runUnderperformerAutoRefresh(seoStore, { persist_disk: false });
-        recordAutomationRunStatus("A18_underperformer_auto_refresh", {
-          status: "ok",
-          durationMs: Date.now() - t0A18,
-          summary: {
-            evaluated_candidates: refreshRes.evaluated_candidates,
-            refreshed_count: refreshRes.refreshed_count,
-            queued_for_indexnow: refreshRes.queued_for_indexnow,
-          },
-        });
-      } else {
-        recordAutomationRunStatus("A18_underperformer_auto_refresh", {
-          status: "ok",
-          durationMs: 0,
-          summary: {
-            skipped: "frozen_during_core_update_stabilization",
-            evaluated_candidates: 0,
-            refreshed_count: 0,
-            queued_for_indexnow: 0,
-          },
-        });
-      }
+      recordAutomationRunStatus("A18_underperformer_auto_refresh", {
+        status: "ok",
+        durationMs: 0,
+        summary: {
+          skipped: "advisory_only_manual_approval_required",
+          evaluated_candidates: 0,
+          refreshed_count: 0,
+          queued_for_indexnow: 0,
+        },
+      });
     } catch (err: any) {
       recordAutomationRunStatus("A18_underperformer_auto_refresh", {
         status: "error",
@@ -578,11 +576,13 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
 
     const t0A8 = Date.now();
     try {
-      const roasRes = applyRoasReallocation(repo, seoStore, { auto_adjust_bids: true });
+      const autoAdjustBids = process.env.ENABLE_PAID_ADS_AUTOBID === "1";
+      const roasRes = applyRoasReallocation(repo, seoStore, { auto_adjust_bids: autoAdjustBids });
       recordAutomationRunStatus("A8_roas_reallocation", {
         status: "ok",
         durationMs: Date.now() - t0A8,
         summary: {
+          auto_adjust_bids_enabled: autoAdjustBids,
           paid_roas: roasRes.report.totals.paid_roas,
           reinvestment_unlock_gbp: roasRes.report.totals.reinvestment_unlock_gbp,
           bids_adjusted: roasRes.bids_adjusted,
@@ -653,7 +653,13 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       running12h = false;
     }
   };
-  const timeout12h = setTimeout(runTwelveHourLifecycleAndSeo, 45_000);
+  const timeout12h = setTimeout(() => {
+    if (shouldSkipBootRun("A21_google_cloud_gsc_cwv_sync", 11 * 3600)) {
+      console.log("[timers] Skipping boot A21/12h lifecycle run (last run < 11h ago).");
+      return;
+    }
+    void runTwelveHourLifecycleAndSeo();
+  }, 45_000);
   timeout12h.unref?.();
   const interval12h = setInterval(runTwelveHourLifecycleAndSeo, 12 * 3600 * 1000);
   interval12h.unref?.();
@@ -725,7 +731,13 @@ serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
       running7d = false;
     }
   };
-  const timeout7d = setTimeout(runWeeklyListingAudit, 20_000);
+  const timeout7d = setTimeout(() => {
+    if (shouldSkipBootRun("A5_directory_listings", 6 * 86400)) {
+      console.log("[timers] Skipping boot A5/A20 weekly run (last run < 6d ago).");
+      return;
+    }
+    void runWeeklyListingAudit();
+  }, 20_000);
   timeout7d.unref?.();
   const interval7d = setInterval(runWeeklyListingAudit, 7 * 86_400 * 1000);
   interval7d.unref?.();

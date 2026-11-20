@@ -135,6 +135,10 @@ export function recordAutomationRunStatus(
   return next;
 }
 
+export function getAutomationLastRunAt(id: string): number | null {
+  return automationRuntimeRegistry.get(id)?.last_run_at ?? null;
+}
+
 export function getAutomationStatusList(): AutomationJobStatus[] {
   return DEFAULT_AUTOMATION_JOBS.map((def) => {
     const existing = automationRuntimeRegistry.get(def.id);

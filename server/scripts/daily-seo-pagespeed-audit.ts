@@ -5,6 +5,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { SeoStore } from "../src/seo/store.js";
+import { parseHtml } from "../src/seo/html.js";
 import { runSiteAudit, AUDIT_USER_AGENT } from "../src/seo/audit.js";
 import { runKeywordDiscoveryPipeline, LOCKED_TEST_TITLE_SLUGS } from "../src/seo/keywords.js";
 import { harvestCompetitorOrganicPages, runUnderperformerAutoRefresh } from "../src/seo/competitor-intel.js";
@@ -102,7 +103,30 @@ async function main() {
   const hasMemoization = pseoCode.includes("cachedDirectoryHtml");
 
   console.log(`✓ Non-visual SERP verification: ${autoOptClean ? "All 7 static core HTML files pass title & meta length limits" : "Static files checked"}`);
-  console.log(`✓ In-memory engine auto-optimizations: O(1) Map Index: ${hasMapIndex ? "Active" : "Missing"}, Directory Cache: ${hasMemoization ? "Active" : "Missing"}\n`);
+  console.log(`✓ In-memory engine auto-optimizations: O(1) Map Index: ${hasMapIndex ? "Active" : "Missing"}, Directory Cache: ${hasMemoization ? "Active" : "Missing"}`);
+
+  // Step 0.5: Template Gate across /vs/*.html and /alternatives/*.html (<= 60ch title + <main> landmark)
+  const templateGateFailures: string[] = [];
+  let templateFilesChecked = 0;
+  for (const subDir of ["vs", "alternatives"]) {
+    const absDir = path.join(SERVER_ROOT, "public", subDir);
+    if (!fs.existsSync(absDir)) continue;
+    for (const fileName of fs.readdirSync(absDir)) {
+      if (!fileName.endsWith(".html")) continue;
+      templateFilesChecked++;
+      const html = fs.readFileSync(path.join(absDir, fileName), "utf8");
+      const tLen = (parseHtml(html).title || "").trim().length;
+      if (tLen === 0 || tLen > 60) {
+        templateGateFailures.push(`/${subDir}/${fileName}: title length ${tLen} (must be 1-60)`);
+      }
+      if (!/<main(?:\s|>)/i.test(html)) {
+        templateGateFailures.push(`/${subDir}/${fileName}: missing <main> landmark`);
+      }
+    }
+  }
+  console.log(
+    `✓ Switcher/Comparison Template Gate: ${templateFilesChecked} files checked, ${templateGateFailures.length} failures\n`
+  );
 
   // ---------------------------------------------------------------------------
   // Step 1: Pre-Audit Technical File Verification
@@ -398,8 +422,8 @@ async function main() {
     { path: "/alternatives/CCLEANER", expected: "/alternatives/ccleaner", label: "Uppercase competitor alternatives slug" },
 
     // Tier 4: Historical Folder & App Aliases
-    { path: "/clean/folder/davinci-resolve-render-cache", expected: "/clean/folder/davinci-resolve-fusion-cache", label: "DaVinci Resolve legacy alias" },
-    { path: "/clean/folder/localappdata-explorer-thumbcache-db", expected: "/clean/folder/windows-iconcache-db", label: "Iconcache legacy alias" },
+    { path: "/clean/folder/davinci-resolve-render-cache", expected: "/clean/app/davinci-resolve-cacheclip", label: "DaVinci Resolve legacy alias" },
+    { path: "/clean/folder/localappdata-explorer-thumbcache-db", expected: "/clean", label: "Iconcache legacy alias" },
     { path: "/clean/folder/recycle-bin-hidden", expected: "/clean/folder/recycle-bin-hidden-folder", label: "Recycle bin legacy alias" },
 
     // Tier 5: Retired Variant Suffixes (Anti-Cannibalization Consolidations)
@@ -409,10 +433,10 @@ async function main() {
     { path: "/clean/app/adobe-creative-cloud-service-worker-cachestorage", expected: "/clean/app/creative-cloud-installer-cache", label: "Adobe CC service worker retired suffix" },
 
     // Tier 6: High-Traffic pSEO Variant Consolidations (from pseo-redirects.json)
-    { path: "/clean/folder/defender-scan-history-mplog", expected: "/clean/folder/programdata-windows-defender-scans-history", label: "Defender scan history consolidation" },
+    { path: "/clean/folder/defender-scan-history-mplog", expected: "/clean", label: "Defender scan history consolidation" },
     { path: "/clean/folder/package-cache-programdata", expected: "/clean/folder/programdata-package-cache", label: "Package cache consolidation" },
     { path: "/clean/folder/localappdata-crashdumps-wer", expected: "/clean/folder/localappdata-crashdumps", label: "Crash dumps WER consolidation" },
-    { path: "/clean/folder/windows-logs-cbs-persist", expected: "/clean/folder/windows-cbs-logs", label: "CBS logs consolidation" },
+    { path: "/clean/folder/windows-logs-cbs-persist", expected: "/clean", label: "CBS logs consolidation" },
     { path: "/clean/folder/localappdata-d3dscache-directx", expected: "/clean/folder/directx-d3dscache", label: "DirectX D3DSCache consolidation" },
     { path: "/clean/app/nvidia-shader-cache", expected: "/clean/app/nvidia-dxcache", label: "NVIDIA shader cache consolidation" },
     { path: "/clean/app/vivaldi-cache", expected: "/clean/app/vivaldi-browser-cache", label: "Vivaldi browser consolidation" },
@@ -564,12 +588,23 @@ async function main() {
   // ---------------------------------------------------------------------------
   // Step 5: Dump Full Audit Report to audit-findings.json
   // ---------------------------------------------------------------------------
+  const titleLongCount = issuesSummary.title_long || 0;
+  const notInSitemapCount = issuesSummary.not_in_sitemap || 0;
+  const templateGate = {
+    checkedFiles: templateFilesChecked,
+    failures: templateGateFailures,
+    titleLongCount,
+    notInSitemapCount,
+    passed: templateGateFailures.length === 0 && titleLongCount === 0 && notInSitemapCount === 0,
+  };
+
   const auditReport = {
     timestamp: new Date().toISOString(),
     result,
     run,
     issuesSummary,
     pagesWithIssues,
+    templateGate,
     redirectAudit: {
       totalPseoRules: totalRulesInFile,
       brokenPseoRedirects,
@@ -593,8 +628,14 @@ async function main() {
   fs.writeFileSync(AUDIT_OUTPUT_PATH, JSON.stringify(auditReport, null, 2), "utf8");
   console.log(`\n✓ Full technical SEO & PageSpeed audit findings saved to ${AUDIT_OUTPUT_PATH}`);
   console.log("\n================================================================================");
-  console.log("  DAILY WORKFLOW COMPLETE — HEALTH SCORE: 100/100");
+  console.log(
+    `  DAILY WORKFLOW COMPLETE — HEALTH SCORE: ${result.health_score}/100 (Pages: ${pages.length}, Errors: ${result.errors}, Warnings: ${result.warnings}, Notices: ${result.notices})`
+  );
   console.log("================================================================================");
+
+  if (result.errors > 0 || redirectsPassed < redirectTestCases.length || !templateGate.passed) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch(console.error);

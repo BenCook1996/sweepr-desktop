@@ -21,12 +21,10 @@ jobs:
       contents: write
     env:
       CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
-      GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON }}
+      GSC_SERVICE_ACCOUNT_JSON: ${{ secrets.GSC_SERVICE_ACCOUNT_JSON || secrets.GCP_SERVICE_ACCOUNT_JSON || secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       GSC_SITE_URL: ${{ secrets.GSC_SITE_URL || 'sc-domain:sweeprcleaner.com' }}
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-      OPEN_PAGERANK_API_KEY: ${{ secrets.OPEN_PAGERANK_API_KEY }}
-      DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
-      DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+      ALLOW_LIVE_INDEXNOW: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -81,24 +79,131 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - name: Sync GSC Data & Trigger Production Railway Automations (A1-A21)
+      - name: Sync Cleaner & Central CRM GSC, Weekly Live Audits & Endpoint Health
         if: env.CRM_ADMIN_PASSWORD != ''
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           B64=$(printf "admin:%s" "$CRM_ADMIN_PASSWORD" | base64 -w 0)
-          curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/cloud-sync" \
+
+          echo "### 1. Sweepr Cleaner Production GSC Sync" >> "$GITHUB_STEP_SUMMARY"
+          CLOUD_RESP=$(curl -sS -w "\n%{http_code}" -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/cloud-sync" \
             -H "Authorization: Basic $B64" \
             -H "Origin: https://sweeprcleaner.com" \
             -H "Content-Type: application/json" \
-            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true,"submit_sitemap":true}' || true
-          if [ -f server/src/data/gsc-seed.json ]; then
-            curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/ingest" \
+            -d '{"days":90,"max_inspect_urls":6,"run_cwv":true,"submit_sitemap":true}')
+          CLOUD_CODE=$(printf "%s" "$CLOUD_RESP" | tail -n1)
+          CLOUD_BODY=$(printf "%s" "$CLOUD_RESP" | sed '$d')
+          echo "Cleaner cloud-sync HTTP $CLOUD_CODE: $CLOUD_BODY"
+          echo "- Cleaner \`/gsc/cloud-sync\`: HTTP $CLOUD_CODE" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$CLOUD_CODE" -lt 200 ] || [ "$CLOUD_CODE" -ge 300 ]; then
+            echo "::error::Cleaner /api/crm/seo/gsc/cloud-sync returned HTTP $CLOUD_CODE"
+            exit 1
+          fi
+
+          GSC_LIVE=$(printf "%s" "$CLOUD_BODY" | node -e 'let d="";process.stdin.on("data",c=>d+=c);process.stdin.on("end",()=>{try{const j=JSON.parse(d);console.log(Boolean(j.gsc_synced_live||j?.summary?.gsc_synced_live));}catch{console.log("false")}});')
+          if [ "$GSC_LIVE" != "true" ] && [ -f server/src/data/gsc-seed.json ]; then
+            INGEST_RESP=$(curl -sS -w "\n%{http_code}" -X POST "https://sweeprcleaner.com/api/crm/seo/gsc/ingest" \
               -H "Authorization: Basic $B64" \
               -H "Origin: https://sweeprcleaner.com" \
               -H "Content-Type: application/json" \
-              --data-binary @server/src/data/gsc-seed.json || true
+              --data-binary @server/src/data/gsc-seed.json)
+            INGEST_CODE=$(printf "%s" "$INGEST_RESP" | tail -n1)
+            echo "Fallback seed ingest HTTP $INGEST_CODE"
+            if [ "$INGEST_CODE" -lt 200 ] || [ "$INGEST_CODE" -ge 300 ]; then
+              echo "::error::Cleaner /api/crm/seo/gsc/ingest returned HTTP $INGEST_CODE"
+              exit 1
+            fi
           fi
-          curl -fsSL -X POST "https://sweeprcleaner.com/api/crm/automations/run" \
-            -H "Authorization: Basic $B64" \
-            -H "Origin: https://sweeprcleaner.com" \
-            -H "Content-Type: application/json" \
-            -d '{"id":"all"}' || true
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '### 2. Central CRM Free Sync ($0.00 DataForSEO Spend)' >> "$GITHUB_STEP_SUMMARY"
+          for proj in cleaner vpn deepblock; do
+            CRM_GSC_RESP=$(curl -sS -w "\n%{http_code}" -X POST "https://sweepr-crm-production.up.railway.app/api/crm/seo/gsc/sync?project=$proj&wait=1" \
+              -H "Authorization: Basic $B64" \
+              -H "Origin: https://sweepr-crm-production.up.railway.app" \
+              -H "Content-Type: application/json" \
+              -d '{"days":90}')
+            CRM_GSC_CODE=$(printf "%s" "$CRM_GSC_RESP" | tail -n1)
+            CRM_GSC_BODY=$(printf "%s" "$CRM_GSC_RESP" | sed '$d')
+            echo "Central CRM GSC sync [$proj] HTTP $CRM_GSC_CODE: $CRM_GSC_BODY"
+            if [ "$CRM_GSC_CODE" -lt 200 ] || [ "$CRM_GSC_CODE" -ge 300 ]; then
+              echo "::warning::Central CRM GSC sync [$proj] returned HTTP $CRM_GSC_CODE"
+              echo "- [$proj] GSC sync: **HTTP $CRM_GSC_CODE**" >> "$GITHUB_STEP_SUMMARY"
+            else
+              ROWS=$(printf "%s" "$CRM_GSC_BODY" | node -e 'let d="";process.stdin.on("data",c=>d+=c);process.stdin.on("end",()=>{try{const j=JSON.parse(d);console.log(j?.job?.result?.rows ?? j?.rows ?? "ok");}catch{console.log("ok")}});')
+              echo "- [$proj] GSC sync: HTTP $CRM_GSC_CODE (rows=$ROWS)" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          IS_MONDAY=$([ "$(date -u +%u)" = "1" ] && echo "1" || echo "0")
+          if [ "$IS_MONDAY" = "1" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "### 3. Central CRM Weekly Live Site Audits" >> "$GITHUB_STEP_SUMMARY"
+            for proj in cleaner vpn deepblock; do
+              AUD_RESP=$(curl -sS -w "\n%{http_code}" -X POST "https://sweepr-crm-production.up.railway.app/api/crm/seo/audit/run?project=$proj&wait=1" \
+                -H "Authorization: Basic $B64" \
+                -H "Origin: https://sweepr-crm-production.up.railway.app" \
+                -H "Content-Type: application/json" \
+                -d '{"source":"live","max_pages":150}')
+              AUD_CODE=$(printf "%s" "$AUD_RESP" | tail -n1)
+              AUD_BODY=$(printf "%s" "$AUD_RESP" | sed '$d')
+              echo "Central CRM audit [$proj] HTTP $AUD_CODE: $AUD_BODY"
+              if [ "$AUD_CODE" -ge 200 ] && [ "$AUD_CODE" -lt 300 ]; then
+                LINE=$(printf "%s" "$AUD_BODY" | node -e 'let d="";process.stdin.on("data",c=>d+=c);process.stdin.on("end",()=>{try{const r=JSON.parse(d)?.job?.result||{};const s=Number(r.health_score??0);const e=Number(r.errors??0);const p=Number(r.pages??0);console.log(JSON.stringify({s,e,p}));}catch{console.log("{\"s\":0,\"e\":1,\"p\":0}");}});')
+                HS=$(printf "%s" "$LINE" | node -e 'const j=JSON.parse(require("fs").readFileSync(0,"utf8"));console.log(j.s)')
+                ERR=$(printf "%s" "$LINE" | node -e 'const j=JSON.parse(require("fs").readFileSync(0,"utf8"));console.log(j.e)')
+                PG=$(printf "%s" "$LINE" | node -e 'const j=JSON.parse(require("fs").readFileSync(0,"utf8"));console.log(j.p)')
+                echo "- [$proj] Live audit: **${HS}/100** (${PG} pages, ${ERR} errors)" >> "$GITHUB_STEP_SUMMARY"
+                if [ "$ERR" -gt 0 ] || [ "$HS" -lt 98 ]; then
+                  echo "::warning::[$proj] Live audit alert: health_score=$HS, errors=$ERR"
+                fi
+              else
+                echo "::warning::[$proj] Live audit HTTP $AUD_CODE"
+                echo "- [$proj] Live audit: **HTTP $AUD_CODE**" >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 4. Production Endpoint & Bot Crawl-Error Watch" >> "$GITHUB_STEP_SUMMARY"
+          for route in "/" "/sitemap.xml" "/robots.txt" "/llms.txt" "/pad.xml"; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://sweeprcleaner.com$route")
+            echo "- \`GET $route\`: HTTP $CODE" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$CODE" != "200" ]; then
+              echo "::error::Production route $route returned HTTP $CODE"
+              exit 1
+            fi
+          done
+          EXE_CODE=$(curl -sI -o /dev/null -w "%{http_code}" "https://sweeprcleaner.com/SWEEPRCleaner.exe")
+          echo "- \`HEAD /SWEEPRCleaner.exe\`: HTTP $EXE_CODE" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$EXE_CODE" != "200" ]; then
+            echo "::error::HEAD /SWEEPRCleaner.exe returned HTTP $EXE_CODE"
+            exit 1
+          fi
+
+          BOTS_JSON=$(curl -sS "https://sweepr-crm-production.up.railway.app/api/crm/seo/bots?project=cleaner&days=7" \
+            -H "Authorization: Basic $B64" || echo "{}")
+          printf "%s" "$BOTS_JSON" | node -e '
+            let d = "";
+            process.stdin.on("data", c => d += c);
+            process.stdin.on("end", () => {
+              try {
+                const j = JSON.parse(d);
+                const rows = Array.isArray(j.by_bot) ? j.by_bot : [];
+                const bad = rows.filter(r => Number(r.errors || 0) > 0);
+                if (bad.length === 0) {
+                  console.log("- 7d Bot Crawl Errors: 0 errors across all search/AI bots");
+                } else {
+                  for (const b of bad) {
+                    console.log(`- **${b.bot}**: ${b.errors} error(s) out of ${b.hits} hits (last_seen=${b.last_seen})`);
+                    if (/Googlebot|Bingbot|OAI-SearchBot|PerplexityBot|ClaudeBot/i.test(String(b.bot))) {
+                      console.error(`::warning::Priority crawler ${b.bot} hit ${b.errors} HTTP error(s) on cleaner in the past 7d`);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.log("- Could not parse Central CRM bot telemetry");
+              }
+            });
+          ' >> "$GITHUB_STEP_SUMMARY"

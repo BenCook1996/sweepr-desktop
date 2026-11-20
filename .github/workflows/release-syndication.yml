@@ -66,39 +66,82 @@ jobs:
             if (-not [string]::IsNullOrWhiteSpace($env:CRM_ADMIN_PASSWORD)) {
               try {
                 $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("admin:$env:CRM_ADMIN_PASSWORD"))
-                $h = @{ "Authorization" = "Basic $b64"; "Origin" = "https://sweeprcleaner.com"; "Content-Type" = "application/json" }
+                $h = @{ "Authorization" = "Basic $b64"; "Origin" = "https://sweepr-crm-production.up.railway.app"; "Content-Type" = "application/json" }
                 $p = @{
                   project_id = "cleaner"
+                  date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
                   category = "distribution_backlinks"
                   title = "Automated Release Syndication (v$env:SYNC_VERSION)"
                   description = "Synced PAD XML, Winget v1.6.0 & Chocolatey manifests for v$env:SYNC_VERSION"
+                  impact = "Synchronized winget-manifests, chocolatey, and server/public/pad.xml"
                   impact_area = "winget-manifests, chocolatey, server/public/pad.xml"
                   author = "GitHub Actions Release Bot"
                   status = "completed"
                 } | ConvertTo-Json
-                Invoke-RestMethod -Method Post -Uri "https://sweeprcleaner.com/api/crm/seo/changelog" -Headers $h -Body $p | Out-Null
-              } catch {}
+                Invoke-RestMethod -Method Post -Uri "https://sweepr-crm-production.up.railway.app/api/crm/seo/changelog" -Headers $h -Body $p | Out-Null
+              } catch {
+                Write-Warning "Central CRM changelog post warning: $_"
+              }
             }
           }
 
-      - name: Submit Winget Manifest via wingetcreate (when WINGET_TOKEN is configured)
+      - name: Submit Winget Manifest via wingetcreate (when WINGET_TOKEN is configured and base package exists)
         if: env.WINGET_TOKEN != ''
         shell: pwsh
         env:
           SYNC_VERSION: ${{ steps.sync.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          ./wingetcreate.exe update Sweepr.SweeprCleaner --version "$env:SYNC_VERSION" --urls "https://sweeprcleaner.com/SWEEPRCleaner.exe" "https://sweeprcleaner.com/Sweepr_Setup.msi" --token $env:WINGET_TOKEN --submit
+          $existsInWinget = $false
+          try {
+            $ghHeaders = @{ "User-Agent" = "Sweepr-Release-Bot" }
+            if (-not [string]::IsNullOrWhiteSpace($env:GH_TOKEN)) {
+              $ghHeaders["Authorization"] = "Bearer $env:GH_TOKEN"
+            }
+            $null = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-pkgs/contents/manifests/s/Sweepr/SweeprCleaner" -Headers $ghHeaders
+            $existsInWinget = $true
+          } catch {
+            $statusCode = $_.Exception.Response.StatusCode.value__
+            if ($statusCode -eq 404) {
+              $msg = "Sweepr.SweeprCleaner not yet merged in microsoft/winget-pkgs — skipping wingetcreate update until PR #480164 merges."
+              Write-Host $msg
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $msg"
+            } else {
+              Write-Warning "Could not verify Winget base package status (HTTP $statusCode) — skipping wingetcreate update cleanly."
+            }
+          }
+          if ($existsInWinget) {
+            Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+            ./wingetcreate.exe update Sweepr.SweeprCleaner --version "$env:SYNC_VERSION" --urls "https://sweeprcleaner.com/SWEEPRCleaner.exe" "https://sweeprcleaner.com/Sweepr_Setup.msi" --token $env:WINGET_TOKEN --submit
+          }
 
-      - name: Pack & Push Chocolatey Package (when CHOCOLATEY_API_KEY is configured)
+      - name: Pack & Push Chocolatey Package (when CHOCOLATEY_API_KEY is configured and version not published)
         if: env.CHOCOLATEY_API_KEY != ''
         shell: pwsh
         working-directory: ./chocolatey
         env:
           SYNC_VERSION: ${{ steps.sync.outputs.version }}
         run: |
-          choco pack sweepr-cleaner.nuspec
-          choco push "sweepr-cleaner.$env:SYNC_VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          $alreadyPublished = $false
+          try {
+            $chocoRes = Invoke-WebRequest -Uri "https://community.chocolatey.org/api/v2/Packages(Id='sweepr-cleaner',Version='$env:SYNC_VERSION')" -UseBasicParsing
+            if ($chocoRes.StatusCode -eq 200) {
+              $alreadyPublished = $true
+            }
+          } catch {
+            $statusCode = $_.Exception.Response.StatusCode.value__
+            if ($statusCode -ne 404) {
+              Write-Warning "Chocolatey OData check returned HTTP $statusCode"
+            }
+          }
+          if ($alreadyPublished) {
+            $msg = "Chocolatey package sweepr-cleaner v$env:SYNC_VERSION already published — skipping push."
+            Write-Host $msg
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $msg"
+          } else {
+            choco pack sweepr-cleaner.nuspec
+            choco push "sweepr-cleaner.$env:SYNC_VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          }
 
       - name: Trigger Weekly / Post-Release Listing Freshness Audit on Production CRM
         if: env.CRM_ADMIN_PASSWORD != ''

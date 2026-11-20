@@ -537,6 +537,14 @@ export async function inspectGscPriorityUrls(
   const gsc = resolveGscConfig(cfg, store);
   const maxUrls = Math.min(20, Math.max(1, opts?.maxUrls ?? 6));
   const queuePath = opts?.queueFilePath || DEFAULT_INDEXING_QUEUE_PATH;
+  const existingLedger = store.getSetting<GscUrlInspectionResult[]>("gsc_url_inspection_ledger", []) ?? [];
+  const lastInspectedMs = new Map<string, number>();
+  for (const item of existingLedger) {
+    if (item?.url) {
+      const parsedMs = item.inspected_at ? Date.parse(item.inspected_at) : 0;
+      lastInspectedMs.set(item.url, Number.isFinite(parsedMs) ? parsedMs : 0);
+    }
+  }
 
   let candidateUrls: string[] = Array.isArray(opts?.urls) ? [...opts!.urls!] : [];
   let queueData: {
@@ -546,6 +554,8 @@ export async function inspectGscPriorityUrls(
     gsc_requested?: string[];
     [k: string]: unknown;
   } = {};
+  const sitemapSet = loadSitemapUrlSet();
+  let applySitemapFilter = false;
   if (candidateUrls.length === 0 && existsSync(queuePath)) {
     try {
       queueData = JSON.parse(readFileSync(queuePath, "utf8")) || {};
@@ -557,8 +567,7 @@ export async function inspectGscPriorityUrls(
             : Array.isArray(queueData.submitted) && queueData.submitted.length > 0
               ? queueData.submitted
               : [];
-      const sitemapSet = loadSitemapUrlSet();
-      const applySitemapFilter =
+      applySitemapFilter =
         sitemapSet.size > 0 &&
         (path.resolve(queuePath) === path.resolve(DEFAULT_INDEXING_QUEUE_PATH) ||
           rawList.some((u) => sitemapSet.has(u)));
@@ -569,21 +578,35 @@ export async function inspectGscPriorityUrls(
         return true;
       });
       if (filtered.length > 0) {
-        candidateUrls = filtered.slice(0, maxUrls);
+        candidateUrls.push(...filtered);
       }
     } catch {}
   }
 
-  if (candidateUrls.length === 0) {
+  if (!opts?.urls || opts.urls.length === 0) {
     const base = (cfg.siteUrl || "https://sweeprcleaner.com").replace(/\/$/, "");
-    candidateUrls = [
+    const priorityPool = [
       `${base}/`,
       `${base}/clean`,
       `${base}/safe-to-delete`,
       `${base}/vs/ccleaner`,
       `${base}/clean/folder/winsxs`,
       `${base}/clean/app/discord-cache`,
-    ].slice(0, maxUrls);
+      `${base}/clean/folder/software-distribution-download`,
+      `${base}/clean/folder/windows-temp`,
+      `${base}/clean/folder/windows-old`,
+      `${base}/clean/app/microsoft-teams-cache`,
+      `${base}/clean/app/nvidia-dxcache`,
+      `${base}/tools/pc-cache-calculator`,
+    ];
+    const dedup = new Set<string>(candidateUrls);
+    for (const u of priorityPool) {
+      if (sitemapSet.size > 0 && !sitemapSet.has(u)) continue;
+      dedup.add(u);
+    }
+    candidateUrls = [...dedup].sort((a, b) => (lastInspectedMs.get(a) ?? 0) - (lastInspectedMs.get(b) ?? 0)).slice(0, maxUrls);
+  } else {
+    candidateUrls = candidateUrls.slice(0, maxUrls);
   }
 
   if ((!gsc.sa && !gsc.oauth) || !gsc.siteUrl) {
@@ -645,7 +668,6 @@ export async function inspectGscPriorityUrls(
     }
   }
 
-  const existingLedger = store.getSetting<GscUrlInspectionResult[]>("gsc_url_inspection_ledger", []) ?? [];
   const byUrl = new Map<string, GscUrlInspectionResult>();
   for (const item of existingLedger) {
     if (item && item.url) byUrl.set(item.url, item);

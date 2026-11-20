@@ -155,8 +155,8 @@ export function extractVersionAndRatingFromHtml(html: string): {
     detectedRating = `${ratingMatch[1]}/5`;
   }
 
-  // 3. Check visible version strings (e.g. "Version 0.1.0" or "SWEEPR Cleaner 0.1.0" or "v0.1.0")
-  if (!detectedVersion) {
+  // 3. Check visible version strings (only when HTML mentions Sweepr to avoid false matches like Bootstrap v5.3.1)
+  if (!detectedVersion && /sweepr/i.test(html)) {
     const verMatch =
       html.match(/(?:version|release|sweepr(?:\s+cleaner)?)\s*[:\-]?\s*v?([0-9]+\.[0-9]+\.[0-9]+)/i) ||
       html.match(/\bv([0-9]+\.[0-9]+\.[0-9]+)\b/);
@@ -231,6 +231,22 @@ export function upsertDirectoryListing(
   return store.db.prepare("SELECT * FROM seo_directory_listings WHERE platform_id = ?").get(id) as unknown as DirectoryListingRow;
 }
 
+export function isSubmissionOrRootListingUrl(rawUrl: string): boolean {
+  try {
+    const u = new URL(rawUrl);
+    const host = u.hostname.toLowerCase();
+    const p = u.pathname || "/";
+    if (host.endsWith("sweeprcleaner.com") && p === "/pad.xml") return false;
+    if (host.includes("github.com") && /\/(?:pull|releases|scoop-sweepr)\b/i.test(p)) return false;
+    if (host.includes("community.chocolatey.org") && /^\/packages\/[^/]+/i.test(p)) return false;
+    if (host.includes("form.asana.com")) return true;
+    if (p === "/" || p === "") return true;
+    return /\/(?:(?:pad_)?submit(?:-[a-z0-9_-]+)?|contact|vendors\/new|feedback)(?:[/?#.]|$)/i.test(p);
+  } catch {
+    return false;
+  }
+}
+
 export async function checkDirectoryListings(
   store: SeoStore,
   opts: {
@@ -276,6 +292,12 @@ export async function checkDirectoryListings(
       httpStatus = 200;
       backlinkStatus = xml.includes(targetDomain) ? "live" : "missing";
       foundHref = `https://${targetDomain}/SWEEPRCleaner.exe`;
+    } else if (isSubmissionOrRootListingUrl(row.listing_url)) {
+      backlinkStatus = "needs_listing_url";
+      foundHref = null;
+      httpStatus = row.http_status ?? null;
+      detectedVersion = null;
+      hasUnsignedFlag = false;
     } else {
       const bl = await checkBacklink(row.listing_url, targetDomain, 10000);
       backlinkStatus = bl.status;
