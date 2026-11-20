@@ -1,4 +1,4 @@
-name: "SWEEPR Cleaner — Weekly Full-System Security & Code Signing Audit"
+name: "SWEEPR Cleaner — Weekly Security, Dependency & Binary Integrity Audit"
 
 on:
   schedule:
@@ -13,15 +13,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
 
       - name: Install Server Dependencies & Run Full Security + SEO Test Suite
         working-directory: ./server
         run: |
           npm ci
           npm test
+
+      - name: Production Dependency Audit (server & app)
+        run: |
+          echo "## Weekly Production Dependency Audit" >> "$GITHUB_STEP_SUMMARY"
+          for pkg in server app; do
+            echo "### \`$pkg\` (\`npm audit --omit=dev\`)" >> "$GITHUB_STEP_SUMMARY"
+            AUDIT_JSON=$(npm --prefix "./$pkg" audit --omit=dev --json || true)
+            printf "%s" "$AUDIT_JSON" | node -e '
+              let d=""; process.stdin.on("data", c => d += c);
+              process.stdin.on("end", () => {
+                try {
+                  const v = JSON.parse(d)?.metadata?.vulnerabilities || {};
+                  console.log(`- info=${v.info||0}, low=${v.low||0}, moderate=${v.moderate||0}, high=${v.high||0}, critical=${v.critical||0}`);
+                } catch { console.log("- audit summary unavailable"); }
+              });
+            ' >> "$GITHUB_STEP_SUMMARY"
+            npm --prefix "./$pkg" audit --omit=dev --audit-level=critical
+          done
+
+      - name: Live Security Headers & Binary SHA-256 / Ed25519 Integrity Audit
+        run: node server/scripts/live-security-binary-audit.mjs

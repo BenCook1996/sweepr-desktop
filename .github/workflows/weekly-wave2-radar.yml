@@ -1,0 +1,29 @@
+name: "Weekly Wave 2 Distribution, Package-PR & GEO Radar"
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wave2-radar:
+    name: "Package-Manager Parity & Read-Only GEO Opportunity Digest"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run Read-Only Wave 2 Authority & GEO Radar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CRM_ADMIN_PASSWORD: ${{ secrets.CRM_ADMIN_PASSWORD }}
+        run: node server/scripts/wave2-authority-radar.mjs

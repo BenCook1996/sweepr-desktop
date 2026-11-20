@@ -1,0 +1,59 @@
+name: "SEO & Mobile Lighthouse CWV CI Guard"
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "server/public/**"
+      - "server/src/pseo.ts"
+      - "server/src/app.ts"
+      - "server/src/data/clean-items.json"
+      - "server/src/data/pseo-redirects.json"
+      - "server/src/transactional-tools.ts"
+      - "server/scripts/ci-seo-cwv-gate.ts"
+      - ".github/workflows/seo-cwv-guard.yml"
+  pull_request:
+    paths:
+      - "server/public/**"
+      - "server/src/pseo.ts"
+      - "server/src/app.ts"
+      - "server/src/data/clean-items.json"
+      - "server/src/data/pseo-redirects.json"
+      - "server/src/transactional-tools.ts"
+      - "server/scripts/ci-seo-cwv-gate.ts"
+      - ".github/workflows/seo-cwv-guard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-cwv-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  seo-cwv-gate:
+    name: "Deterministic SEO & Mobile Lighthouse CWV Gate"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Server Dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Install Lighthouse CLI
+        run: npm install -g lighthouse@12
+
+      - name: Run SEO & Headless Mobile Lighthouse Gate
+        working-directory: ./server
+        run: npx tsx scripts/ci-seo-cwv-gate.ts --lighthouse
