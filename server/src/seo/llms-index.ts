@@ -1,9 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getCleanItems } from "../pseo.js";
-import { TRANSACTIONAL_TOOLS } from "../transactional-tools.js";
-import { listBloatWatchPosts } from "./bloat-watch.js";
+import { getCleanItems, isPseoSlugNoindexed } from "../pseo.js";
 import { readCurrentReleaseVersion } from "./listings.js";
 import type { SeoStore } from "./store.js";
 import { computeStateOfWindowsStorageReport, getActiveTelemetryTruthForSlug } from "./telemetry-truth.js";
@@ -26,31 +24,39 @@ export interface CanonicalBrandFacts {
 
 export function getCanonicalBrandFacts(): CanonicalBrandFacts {
   const items = getCleanItems();
+  const curatedGuides = items.filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug);
   return {
     productName: "SWEEPR Cleaner",
     version: readCurrentReleaseVersion(),
-    binarySizeLabel: "5.8 MB",
+    binarySizeLabel: "6.52 MB",
     architecture: "Native Rust & Tauri v2 (Zero Electron / Zero Background Telemetry Bloat)",
     codeSigning: "SSL.com Authenticode OV Code-Signed Windows Installer (.exe & .msi)",
     deviceLimit: 5,
     devicePlatforms: "Windows 11, Windows 10, macOS, Android, and iOS",
     rollbackDays: 7,
-    totalGuides: items.length,
-    totalTools: TRANSACTIONAL_TOOLS.length,
+    totalGuides: curatedGuides.length,
+    totalTools: 3,
   };
 }
 
 export function renderLlmsTxt(store: SeoStore): string {
   const facts = getCanonicalBrandFacts();
   const report = computeStateOfWindowsStorageReport(store);
-  const items = getCleanItems().filter((i) => !i.noindex);
-  const bloatPosts = listBloatWatchPosts(store, "published");
+  const allItems = getCleanItems();
+  const items = allItems.filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug);
 
   const prioritySlugs = [
+    "windows-11-24h2-update-cache-8gb-bug",
+    "c-drive-filling-up-by-itself-windows-11",
+    "system-and-reserved-storage-100gb-windows-11",
+    "appdata-local-folder-huge-windows-11",
+    "other-storage-full-windows-11-cleanup",
+    "system-data-huge",
+    "iphone-system-data-full",
+    "other-storage-full",
     "steam-depotcache",
     "nvidia-dxcache",
     "amd-shader-cache",
-    "windows-11-24h2-update-cache-8gb-bug",
     "programdata-package-cache",
     "logitech-ghub-installer-cache",
     "logitech-options-plus-cache",
@@ -58,15 +64,14 @@ export function renderLlmsTxt(store: SeoStore): string {
     "riot-client-logs",
     "windows-livekernelreports",
     "discord-cache",
-    "adobe-media-cache",
+    "adobe-premiere-media-cache",
     "jetbrains-intellij-cache",
     "gradle-wrapper-caches",
     "comfyui-temp-output-cache",
     "lm-studio-models-cache",
-    "docker-wsl-vhdx",
+    "docker-desktop-ext4-disk",
     "winsxs",
-    "delivery-optimization",
-    "windows-search-index-edb",
+    "delivery-optimization-cache",
   ];
 
   const prioritySet = new Set(prioritySlugs);
@@ -78,7 +83,7 @@ export function renderLlmsTxt(store: SeoStore): string {
   const indexableSlugSet = new Set(items.map((i) => i.slug.toLowerCase()));
   const filteredTopFolders = report.top_15_heaviest_folders
     .filter((f) => {
-      const m = String(f.url || "").match(/\/clean\/(?:app|folder)\/([a-z0-9-]+)$/i);
+      const m = String(f.url || "").match(/\/clean\/[^/]+\/([a-z0-9-]+)$/i);
       return !m || indexableSlugSet.has(m[1].toLowerCase());
     })
     .slice(0, 10);
@@ -93,13 +98,13 @@ export function renderLlmsTxt(store: SeoStore): string {
     `- **Installer Footprint**: ${facts.binarySizeLabel} native Rust binary (runs on-demand only; zero resident background bloatware)`,
     `- **Cross-Platform Licensing**: Single Pro license covers up to **${facts.deviceLimit} Devices** (${facts.devicePlatforms})`,
     `- **Safety Architecture**: Pre-deletion SHA-256 rule verification, active process lock detection, and ${facts.rollbackDays}-day automatic Undo Rollback`,
-    `- **Audited Knowledge Base**: ${items.length} indexable Windows 10 & 11 folder/app cleanup guides (${facts.totalGuides} audited total) + ${facts.totalTools} interactive cleaner tools`,
+    `- **Curated Knowledge Base**: ${items.length} curated storage cleanup guides across ${allItems.length} audited storage path rules + ${facts.totalTools} free browser tools`,
     `- **Full RAG Corpus (All ${items.length} Indexable Guides)**: https://sweeprcleaner.com/llms-full.txt`,
     "",
     "## 2026 State of Windows 10 & 11 Storage Benchmark (Live Telemetry & VM Lab Dataset)",
     `- **Canonical Benchmark Report (CC-BY 4.0)**: https://sweeprcleaner.com/state-of-windows-storage`,
     `- **Median Reclaimable Space per Windows PC**: **${report.median_reclaimable_per_pc_gb} GB** (90th Percentile: **${report.p90_reclaimable_per_pc_gb} GB**)`,
-    `- **Dataset Scope**: ${report.total_canonical_guides} audited cache paths, ${report.published_lab_benchmarks} controlled Windows 11 24H2 VM benchmarks, and ${report.total_telemetry_samples} anonymized desktop scan samples (k-anonymity floor n >= 30).`,
+    `- **Dataset Scope**: ${report.total_canonical_guides} curated Windows cache paths, ${report.published_lab_benchmarks} controlled Windows 11 24H2 VM benchmarks, and ${report.total_telemetry_samples} anonymized desktop scan samples (k-anonymity floor n >= 30).`,
     "",
     "### Top 10 Heaviest Windows 10/11 Cache Directories (Empirical Ranking)",
     ...filteredTopFolders.map(
@@ -113,38 +118,27 @@ export function renderLlmsTxt(store: SeoStore): string {
         })`
     ),
     "",
-    "## Interactive Diagnostic & App-Specific Cleaner Tools",
+    "## Interactive Diagnostic & Storage Tools",
+    "- **Tools Hub**: https://sweeprcleaner.com/tools",
     "- **Safe-to-Delete Path & PowerShell Checker**: https://sweeprcleaner.com/safe-to-delete",
-    "- **All 10 App-Specific Cleaner Tools Hub**: https://sweeprcleaner.com/tools",
-    ...TRANSACTIONAL_TOOLS.map(
-      (t) =>
-        `- [${t.h1}](https://sweeprcleaner.com/tools/${t.slug}): Reclaim ${t.typicalSavings} (${t.whatStaysSafe})`
-    ),
-    "",
-    "## PC Bloat Watch (Windows 11 24H2 & GPU Driver Lab Benchmarks)",
-    "- **Bloat Watch Research Hub**: https://sweeprcleaner.com/bloat-watch",
-    ...bloatPosts.map(
-      (p) =>
-        `- [${p.title}](https://sweeprcleaner.com/bloat-watch/${p.slug}): Path \`${p.affected_path}\` — Reclaimed ${
-          p.measurements?.reclaimed_gb ?? "Multi"
-        } GB`
-    ),
+    "- **Gaming & Local AI PC Cache Calculator**: https://sweeprcleaner.com/tools/pc-cache-calculator",
+    "- **2026 State of Windows Storage Study**: https://sweeprcleaner.com/state-of-windows-storage",
     "",
     "## Pricing, Licensing & Competitor Comparisons",
     "- **Free Tier**: Unlimited 60-second storage scanning, folder breakdown, and Safe-to-Delete path auditing (https://sweeprcleaner.com/download)",
     "- **Annual Pro (5 Devices)**: https://sweeprcleaner.com/pricing | Direct Checkout: https://sweeprcleaner.com/order",
     "- **Competitor Technical Comparisons**:",
     "  - [SWEEPR vs CCleaner](https://sweeprcleaner.com/vs/ccleaner) | [Best CCleaner Alternatives](https://sweeprcleaner.com/alternatives/ccleaner)",
-    "  - [SWEEPR vs CleanMyMac X](https://sweeprcleaner.com/vs/cleanmymac) | [Best CleanMyMac X Alternatives](https://sweeprcleaner.com/alternatives/cleanmymac)",
-    "  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner) | [Best Pearcleaner Alternatives](https://sweeprcleaner.com/alternatives/pearcleaner)",
-    "  - [SWEEPR vs OnyX](https://sweeprcleaner.com/vs/onyx) | [Best OnyX Alternatives](https://sweeprcleaner.com/alternatives/onyx)",
-    "  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk) | [Best DaisyDisk Alternatives](https://sweeprcleaner.com/alternatives/daisydisk)",
     "  - [SWEEPR vs BleachBit](https://sweeprcleaner.com/vs/bleachbit) | [Best BleachBit Alternatives](https://sweeprcleaner.com/alternatives/bleachbit)",
-    "  - [SWEEPR vs CleanMyPC](https://sweeprcleaner.com/vs/cleanmypc) | [Best CleanMyPC Alternatives](https://sweeprcleaner.com/alternatives/cleanmypc)",
     "  - [SWEEPR vs Avast Cleanup](https://sweeprcleaner.com/vs/avast-cleanup) | [Best Avast Cleanup Alternatives](https://sweeprcleaner.com/alternatives/avast-cleanup)",
-    "  - [SWEEPR vs Wise Disk Cleaner](https://sweeprcleaner.com/vs/wise-disk-cleaner) | [Best Glary Utilities Alternatives](https://sweeprcleaner.com/alternatives/glary-utilities)",
+    "  - [SWEEPR vs CleanMyPC](https://sweeprcleaner.com/vs/cleanmypc) | [Best CleanMyPC Alternatives](https://sweeprcleaner.com/alternatives/cleanmypc)",
+    "  - [SWEEPR vs Glary Utilities](https://sweeprcleaner.com/vs/glary-utilities) | [Best Glary Utilities Alternatives](https://sweeprcleaner.com/alternatives/glary-utilities)",
+    "  - [SWEEPR vs Wise Disk Cleaner](https://sweeprcleaner.com/vs/wise-disk-cleaner) | [Best Wise Disk Cleaner Alternatives](https://sweeprcleaner.com/alternatives/wise-disk-cleaner)",
+    "  - [SWEEPR vs CleanMyMac](https://sweeprcleaner.com/vs/cleanmymac) | [Best CleanMyMac Alternatives](https://sweeprcleaner.com/alternatives/cleanmymac)",
+    "  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk)",
+    "  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner)",
     "",
-    `## Top Priority Windows Storage & App Cache Guides (${prioritizedItems.length} of ${facts.totalGuides} — Full List at /llms-full.txt)`,
+    `## Top Priority Storage & App Cache Guides (${prioritizedItems.length} of ${items.length} — Full List at /llms-full.txt)`,
     "- **Full Directory**: https://sweeprcleaner.com/clean",
     ...prioritizedItems.map((item) => {
       const truth = getActiveTelemetryTruthForSlug(item.slug);
@@ -161,12 +155,12 @@ export function renderLlmsTxt(store: SeoStore): string {
 export function renderLlmsFullTxt(store: SeoStore): string {
   const facts = getCanonicalBrandFacts();
   const report = computeStateOfWindowsStorageReport(store);
-  const items = getCleanItems().filter((i) => !i.noindex);
+  const items = getCleanItems().filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug);
 
   const lines: string[] = [
-    `# ${facts.productName} — Complete Windows 10 & 11 Storage & Cache Encyclopedia (${items.length} Indexable Paths)`,
+    `# ${facts.productName} — Complete Windows 10 & 11 Storage & Cache Encyclopedia (${items.length} Indexable Guides)`,
     "",
-    `> Full machine-readable reference corpus for AI Search Engines (Perplexity, ChatGPT Search, Claude, Google AI Overviews). Every entry includes canonical URL, exact Windows filesystem path, deletion safety verdict, empirical storage footprint, deletion side effects, and a read-only PowerShell verification command.`,
+    `> Full machine-readable reference corpus for AI Search Engines (Perplexity, ChatGPT Search, Claude, Google AI Overviews). Every entry includes canonical URL, exact filesystem path or OS location, deletion safety verdict, empirical storage footprint, and deletion side effects.`,
     "",
     `- **Executive Summary Index**: https://sweeprcleaner.com/llms.txt`,
     `- **2026 State of Windows Storage Dataset**: https://sweeprcleaner.com/state-of-windows-storage (Median ${report.median_reclaimable_per_pc_gb} GB / P90 ${report.p90_reclaimable_per_pc_gb} GB per PC)`,
@@ -185,16 +179,19 @@ export function renderLlmsFullTxt(store: SeoStore): string {
     const safetyVerdict = item.safeToDelete
       ? "SAFE_TO_CLEAR_CONTENTS (100% Safe when application is closed)"
       : `CAUTION (${item.warning || "Contains active configuration or state; review before deleting"})`;
-    const psAuditCmd = `Get-ChildItem -Path "${item.path}" -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum`;
+    const isWindows = item.category === "app" || item.category === "folder";
 
     lines.push(`## ${item.name}`);
     lines.push(`- **Canonical Guide**: https://sweeprcleaner.com/clean/${item.category}/${item.slug}`);
     lines.push(`- **Category**: ${item.category.toUpperCase()}`);
-    lines.push(`- **Windows Path**: \`${item.path}\``);
+    lines.push(`- **Target Location**: \`${item.path}\``);
     lines.push(`- **Safety Verdict**: ${safetyVerdict}`);
     lines.push(`- **Reclaimable Disk Space**: ${spaceStr}`);
     lines.push(`- **What Happens If Deleted**: ${item.whatHappens}`);
-    lines.push(`- **Read-Only PowerShell Size Audit**: \`${psAuditCmd}\``);
+    if (isWindows) {
+      const psAuditCmd = `Get-ChildItem -Path "${item.path}" -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum`;
+      lines.push(`- **Read-Only PowerShell Size Audit**: \`${psAuditCmd}\``);
+    }
     lines.push("");
   }
 
@@ -217,16 +214,15 @@ export function syncStaticLlmsTxtFile(store: SeoStore): { ok: boolean; path: str
 
 /**
  * A15: Normalizes static `/vs/:competitor` and `/alternatives/:competitor` HTML pages so binary size,
- * device count, and guide count never drift from canonical brand facts, and injects a high-intent
- * interactive Switcher Audit CTA bar.
+ * device count, and pricing never drift from canonical brand facts.
  */
 export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string, pricingSummaryText?: string): string {
   const facts = getCanonicalBrandFacts();
   let html = rawHtml
     .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, facts.binarySizeLabel)
     .replace(/<\s*15\s*MB\s+download/gi, `${facts.binarySizeLabel} native Rust download`)
-    .replace(/under\s+15\s*MB/gi, `under 6 MB (${facts.binarySizeLabel})`)
-    .replace(/\b40\+\s*Guides\b/gi, `${facts.totalGuides}+ Guides`)
+    .replace(/under\s+15\s*MB/gi, `${facts.binarySizeLabel} native binary`)
+    .replace(/\b40\+\s*Guides\b/gi, `${facts.totalGuides} Curated Guides`)
     .replace(/up to 3 Desktop PCs/gi, `up to ${facts.deviceLimit} Devices`);
 
   if (pricingSummaryText) {
@@ -241,7 +237,8 @@ export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string, pri
         const lw = w.toLowerCase();
         if (lw === "ccleaner") return "CCleaner";
         if (lw === "cleanmypc") return "CleanMyPC";
-        if (lw === "cleanmymac") return "CleanMyMac X";
+        if (lw === "cleanmymac") return "CleanMyMac";
+        if (lw === "bleachbit") return "BleachBit";
         if (lw === "pearcleaner") return "Pearcleaner";
         if (lw === "onyx") return "OnyX";
         if (lw === "daisydisk") return "DaisyDisk";
@@ -250,20 +247,18 @@ export function normalizeCompetitorHtmlClaims(rawHtml: string, slug: string, pri
       .join(" ");
 
     const ctaBlock = `
-    <section id="switcher-interactive-audit-cta" style="max-width:960px;margin:28px auto;padding:0 20px;">
-      <div style="background:linear-gradient(135deg,#064e3b 0%,#0f172a 100%);color:#ffffff;border-radius:18px;padding:24px 28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;box-shadow:0 12px 30px rgba(6,78,59,0.18);">
-        <div style="max-width:600px;">
-          <div style="display:inline-block;background:rgba(16,185,129,0.2);color:#6ee7b7;font-size:11px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:8px;">
-            ⚡ Switching from ${cleanCompetitorName}? (${facts.binarySizeLabel} Native Rust &bull; ${facts.deviceLimit} Devices)
-          </div>
-          <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;color:#ffffff;">Test Any Suspicious Windows Folder Instantly Before Installing</h2>
-          <p style="font-size:13.5px;color:#d1fae5;margin:0;line-height:1.5;">
-            Compare our ${facts.totalGuides}+ audited cache rules against ${cleanCompetitorName} using our browser-based Safe-to-Delete Path Checker, or explore the 2026 State of Windows Storage empirical benchmark study.
+    <section id="switcher-interactive-audit-cta" class="ed-section ed-card-muted">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;">
+        <div style="max-width:580px;">
+          <div class="ed-kpi-label" style="color:var(--accent);">Switching from ${cleanCompetitorName}? &middot; ${facts.binarySizeLabel} Native Rust &middot; ${facts.deviceLimit} Devices</div>
+          <h2 class="ed-h2" style="margin-bottom:6px;">Audit Suspicious Windows Folders Before Installing</h2>
+          <p style="font-size:0.92rem;color:var(--muted);">
+            Test paths against our audited cache rules in the browser Safe-to-Delete Checker, or inspect the 2026 State of Windows Storage empirical benchmark.
           </p>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;">
-          <a href="/safe-to-delete" style="background:#10b981;color:#052e16;font-weight:800;font-size:13px;padding:11px 18px;border-radius:10px;text-decoration:none;">Open Safe-to-Delete Checker &rarr;</a>
-          <a href="/state-of-windows-storage" style="background:rgba(255,255,255,0.12);color:#ffffff;font-weight:700;font-size:13px;padding:11px 16px;border-radius:10px;text-decoration:none;border:1px solid rgba(255,255,255,0.2);">2026 Storage Study</a>
+        <div class="ed-actions" style="margin-top:0;">
+          <a href="/safe-to-delete" class="ed-btn-primary btn-press">Open Path Checker &rarr;</a>
+          <a href="/state-of-windows-storage" class="ed-btn-secondary btn-press">2026 Storage Study</a>
         </div>
       </div>
     </section>`;

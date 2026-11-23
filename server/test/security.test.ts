@@ -1628,19 +1628,24 @@ test("Referral loop: referred checkout followed by invoice.paid webhook retains 
   assert.equal(svgRes.status, 200);
   assert.match(svgRes.headers.get("content-type") ?? "", /image\/svg\+xml/i);
 
-  // 7. Verify GET /clean, GET /benchmark, and GET /tools/pc-cache-calculator render the Windows Gaming & AI Cache Bloat Calculator
-  for (const calcPath of ["/clean", "/benchmark", "/tools/pc-cache-calculator"]) {
+  // 7. Verify GET /benchmark and GET /tools/pc-cache-calculator render the Windows Gaming & AI Cache Bloat Calculator, and /clean links to it
+  const cleanHubRes = await app.request("/clean");
+  assert.equal(cleanHubRes.status, 200);
+  const cleanHubHtml = await cleanHubRes.text();
+  assert.ok(cleanHubHtml.includes('href="/tools/pc-cache-calculator"'));
+
+  for (const calcPath of ["/benchmark", "/tools/pc-cache-calculator"]) {
     const calcRes = await app.request(calcPath);
     assert.equal(calcRes.status, 200);
     const calcHtml = await calcRes.text();
     assert.ok(calcHtml.includes("Windows Gaming &amp; AI Cache Bloat Calculator"));
     assert.ok(calcHtml.includes("Steam &amp; NVIDIA DXCache"));
     assert.ok(calcHtml.includes("Genshin / HoYoPlay"));
-    assert.ok(calcHtml.includes("Valorant &amp; Riot"));
-    assert.ok(calcHtml.includes("ComfyUI &amp; HuggingFace"));
-    assert.ok(calcHtml.includes("Ollama &amp; LM Studio"));
-    assert.ok(calcHtml.includes("Docker &amp; WSL2"));
-    assert.ok(calcHtml.includes("JetBrains &amp; Cursor"));
+    assert.ok(calcHtml.includes("VALORANT &amp; Riot Client"));
+    assert.ok(calcHtml.includes("ComfyUI &amp; Python pip"));
+    assert.ok(calcHtml.includes("LM Studio Local Models"));
+    assert.ok(calcHtml.includes("Docker &amp; WSL2 Virtual Disk"));
+    assert.ok(calcHtml.includes("IntelliJ IDEA, Cursor &amp; VS Code"));
     assert.ok(calcHtml.includes("Adobe Media Cache"));
   }
 
@@ -1869,7 +1874,7 @@ test("Browser GET /download renders Post-Download Thank-You SmartScreen/Gatekeep
 });
 
 test("20-Pen-Test Security Hardening & Full Activation Code Requirement", async () => {
-  const { isFullActivationCode, generateFullActivationCode, isSafeObjectKey } = await import("../src/security.js");
+  const { isFullActivationCode, generateFullActivationCode, isSafeObjectKey, isSafeSeoRouteParam } = await import("../src/security.js");
   const { updateGiveawayConfig, redeemGiveawayLicense } = await import("../src/giveaway.js");
   const { app, post, repo } = setup();
 
@@ -1885,11 +1890,69 @@ test("20-Pen-Test Security Hardening & Full Activation Code Requirement", async 
   assert.equal(normalizeEmail("ｕｓｅｒ@example.com"), "user@example.com");
   assert.equal(normalizeEmail("user@exаmple.com"), null, "Cyrillic homoglyph in domain must be rejected");
 
-  // 3. Prototype pollution object key guard (Attack #13)
-  assert.equal(isSafeObjectKey("__proto__"), false);
-  assert.equal(isSafeObjectKey("constructor"), false);
-  assert.equal(isSafeObjectKey("prototype"), false);
+  // 3. Prototype pollution object key & SEO route param guards (Attack #13)
+  for (const unsafeKey of [
+    "__proto__",
+    "__PROTO__",
+    " __proto__ ",
+    "constructor",
+    "CONSTRUCTOR",
+    "Constructor",
+    "prototype",
+    "toString",
+    "tostring",
+    "valueOf",
+    "hasOwnProperty",
+    "isPrototypeOf",
+    "propertyIsEnumerable",
+    "toLocaleString",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__",
+    "",
+    "   ",
+    "a".repeat(201),
+  ]) {
+    assert.equal(isSafeObjectKey(unsafeKey), false, `isSafeObjectKey(${JSON.stringify(unsafeKey)}) must be false`);
+  }
+  assert.equal(isSafeObjectKey(null), false);
+  assert.equal(isSafeObjectKey(undefined), false);
   assert.equal(isSafeObjectKey("clean-windows-temp-files"), true);
+  assert.equal(isSafeObjectKey("proton-mail-desktop-cache"), true);
+
+  for (const unsafeParam of [
+    "constructor.html",
+    "CONSTRUCTOR.HTML",
+    "valueOf.htm",
+    "toString.HTM",
+    "constructor.html.html",
+    "prototype.json",
+    "__proto__!",
+    "toString!",
+    "c_onstructor",
+    "___proto___",
+    "%20constructor%20",
+    " constructor ",
+    "",
+    ".html",
+    ".htm",
+    ".html.html",
+    "!!!",
+    "---",
+    "%20",
+  ]) {
+    assert.equal(isSafeSeoRouteParam(unsafeParam), false, `isSafeSeoRouteParam(${JSON.stringify(unsafeParam)}) must be false`);
+  }
+  for (const safeParam of [
+    "ccleaner.html",
+    "CCleaner",
+    "steam-depotcache",
+    "proton-mail-desktop-cache",
+    "windows-11-24h2-update-cache-8gb-bug",
+  ]) {
+    assert.equal(isSafeSeoRouteParam(safeParam), true, `isSafeSeoRouteParam(${JSON.stringify(safeParam)}) must be true`);
+  }
 
   // 4. Giveaway campaign fail-closed by default, rejects bare 6-digit code, and protects existing paid accounts
   const closedRedeem = redeemGiveawayLicense(repo, {

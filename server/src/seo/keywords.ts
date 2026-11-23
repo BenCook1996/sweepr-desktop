@@ -1652,7 +1652,7 @@ export interface KeywordDiscoveryOptions {
 
 export interface CtrEnrichmentCandidate {
   slug: string;
-  category: "app" | "folder";
+  category: CleanItem["category"];
   url: string;
   trigger_query: string;
   impressions: number;

@@ -46,14 +46,14 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
   // -------------------------------------------------------------
   test("CH-CAT-01: Catalog parsing, total item count, and exact indexed/noindexed split", () => {
     const items = getCleanItems();
-    assert.equal(items.length, 377, `Expected exactly 377 items, found ${items.length}`);
+    assert.equal(items.length, 380, `Expected exactly 380 items, found ${items.length}`);
 
     const indexed = items.filter((i) => !i.noindex);
     const noindexed = items.filter((i) => i.noindex);
 
-    assert.equal(indexed.length, 96, `Expected exactly 96 indexed items, found ${indexed.length}`);
-    assert.equal(noindexed.length, 281, `Expected exactly 281 noindexed items, found ${noindexed.length}`);
-    assert.equal(indexed.length + noindexed.length, 377, "Sum of indexed + noindexed must equal 377");
+    assert.equal(indexed.length, 69, `Expected exactly 69 indexed items, found ${indexed.length}`);
+    assert.equal(noindexed.length, 311, `Expected exactly 311 noindexed items, found ${noindexed.length}`);
+    assert.equal(indexed.length + noindexed.length, 380, "Sum of indexed + noindexed must equal 380");
 
     // Slug uniqueness check
     const slugs = items.map((i) => i.slug);
@@ -63,7 +63,10 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     // Field integrity check
     for (const item of items) {
       assert.ok(item.slug && typeof item.slug === "string" && item.slug.trim().length > 0, "Item slug must be valid string");
-      assert.ok(item.category === "app" || item.category === "folder", `Item ${item.slug} category must be app or folder`);
+      assert.ok(
+        item.category === "app" || item.category === "folder" || item.category === "mac" || item.category === "ios" || item.category === "android",
+        `Item ${item.slug} category must be valid (${item.category})`
+      );
       assert.ok(item.name && typeof item.name === "string", `Item ${item.slug} name must be string`);
       assert.ok(item.avgSpace && typeof item.avgSpace === "string", `Item ${item.slug} avgSpace must be string`);
     }
@@ -224,9 +227,8 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     assert.equal(openUrls, openFreq, "Every <url> must have exactly one <changefreq>");
     assert.equal(openUrls, openPri, "Every <url> must have exactly one <priority>");
 
-    // Total count exactly 144 Tier-1 indexable URLs
-    assert.ok(openUrls >= 130 && openUrls <= 155, `Expected 144 URLs (130-155), got ${openUrls}`);
-    assert.equal(openUrls, 144, `Expected exactly 144 URLs, got ${openUrls}`);
+    // Total count exactly 96 curated indexable URLs
+    assert.equal(openUrls, 96, `Expected exactly 96 URLs, got ${openUrls}`);
 
     // Check duplicate URLs
     const locs = parseSitemap(xml);
@@ -274,7 +276,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
 
     const xml = await res.text();
     const urls = parseSitemap(xml);
-    assert.equal(urls.length, 144, "Dynamic sitemap must contain exactly 144 URLs");
+    assert.equal(urls.length, 96, "Dynamic sitemap must contain exactly 96 URLs");
 
     const staticXml = readFileSync("public/sitemap.xml", "utf-8");
     const staticUrls = parseSitemap(staticXml);

@@ -63,37 +63,43 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.ok(!text.includes("\uFEFF"), "Text must not contain unicode BOM zero-width character");
     });
 
-    test("1.2: Static server/public/sitemap.xml contains exact 144 Tier-1 URLs", () => {
+    test("1.2: Static server/public/sitemap.xml contains exact 96 Tier-1 URLs", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 144, `Expected exactly 144 Tier-1 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 96, `Expected exactly 96 Tier-1 URLs, got ${urls.length}`);
 
       // Count check by regex
       const locTags = (xml.match(/<loc>/g) || []).length;
-      assert.equal(locTags, 144, `Expected exactly 144 <loc> tags, got ${locTags}`);
+      assert.equal(locTags, 96, `Expected exactly 96 <loc> tags, got ${locTags}`);
 
-      // All 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages present (/download excluded as noindex)
+      // All 6 Indexable Core Hubs + 4 Policy Pages + /tools/pc-cache-calculator present (/download & /bloat-watch excluded)
       const coreHubs = [
         "https://sweeprcleaner.com/",
         "https://sweeprcleaner.com/pricing",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
-        "https://sweeprcleaner.com/bloat-watch",
         "https://sweeprcleaner.com/state-of-windows-storage",
         "https://sweeprcleaner.com/tools",
+        "https://sweeprcleaner.com/tools/pc-cache-calculator",
       ];
       for (const hub of coreHubs) {
         assert.ok(urls.includes(hub), `Static sitemap missing core hub: ${hub}`);
       }
       assert.equal(urls.includes("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
+      assert.equal(urls.includes("https://sweeprcleaner.com/bloat-watch"), false, "Retired /bloat-watch must NOT appear in static sitemap.xml");
 
-      // All 20 Switchers present
-      const switchers = [
-        "ccleaner", "bleachbit", "cleanmypc", "avast-cleanup", "wise-disk-cleaner",
-        "glary-utilities", "cleanmymac", "pearcleaner", "onyx", "daisydisk",
+      // All 16 Surviving Switchers present (12 Windows + 4 macOS; 4 thin macOS switchers retired via 301)
+      const vsSwitchers = [
+        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner",
+        "cleanmypc", "glary-utilities", "wise-disk-cleaner",
       ];
-      for (const sw of switchers) {
+      for (const sw of vsSwitchers) {
         assert.ok(urls.includes(`https://sweeprcleaner.com/vs/${sw}`), `Missing /vs/${sw}`);
+      }
+      const altSwitchers = [
+        "ccleaner", "cleanmymac", "avast-cleanup", "bleachbit", "cleanmypc", "glary-utilities", "wise-disk-cleaner",
+      ];
+      for (const sw of altSwitchers) {
         assert.ok(urls.includes(`https://sweeprcleaner.com/alternatives/${sw}`), `Missing /alternatives/${sw}`);
       }
     });
@@ -102,7 +108,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const { app } = setup();
       const allItems = getCleanItems();
       const noindexed = allItems.filter((i) => i.noindex);
-      assert.equal(noindexed.length, 281, `Expected exactly 281 noindexed long-tail guides`);
+      assert.equal(noindexed.length, 311, `Expected exactly 311 noindexed long-tail guides`);
 
       const staticXml = readFileSync("public/sitemap.xml", "utf8");
       const staticUrls = parseSitemap(staticXml);
@@ -148,8 +154,8 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const dynamicXml = await dynamicRes.text();
       const dynamicUrls = parseSitemap(dynamicXml);
 
-      assert.equal(staticUrls.length, 144, "Static sitemap count must be 144");
-      assert.equal(dynamicUrls.length, 144, "Dynamic sitemap count must be 144");
+      assert.equal(staticUrls.length, 96, "Static sitemap count must be 96");
+      assert.equal(dynamicUrls.length, 96, "Dynamic sitemap count must be 96");
       assert.deepEqual(dynamicUrls, staticUrls, "Dynamic and static sitemaps must have identical URL list in identical order");
     });
   });
@@ -298,7 +304,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "stremio-desktop-cache": {
         category: "app",
-        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
       },
       "amd-shader-cache": {
         category: "app",
@@ -314,11 +320,11 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "winsxs": {
         category: "folder",
-        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+        expectedTitle: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
       },
       "programdata-package-cache": {
         category: "folder",
-        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
       },
       "elgato-streamdeck-cache": {
         category: "app",
@@ -326,7 +332,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "windows-livekernelreports": {
         category: "folder",
-        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
       },
       "vivaldi-browser-cache": {
         category: "app",
@@ -334,7 +340,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "jetbrains-intellij-cache": {
         category: "app",
-        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
       },
       "gradle-wrapper-caches": {
         category: "app",

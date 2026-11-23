@@ -107,9 +107,9 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       assert.ok(html.includes("Typical Footprint"), `Guide ${slug} table missing Typical Footprint column header`);
       assert.ok(html.includes("Deletion Safety"), `Guide ${slug} table missing Deletion Safety column header`);
 
-      // 4. Extract table rows from tbody
-      const tableMatch = html.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
-      assert.ok(tableMatch, `Guide ${slug} must have <tbody> section`);
+      // 4. Extract table rows from tbody inside #subfolders-breakdown-table
+      const tableMatch = html.match(/<div id="subfolders-breakdown-table"[\s\S]*?<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
+      assert.ok(tableMatch, `Guide ${slug} must have <tbody> section inside #subfolders-breakdown-table`);
       const tbodyHtml = tableMatch[1];
       const rows = tbodyHtml.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
 
@@ -153,13 +153,12 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       ".log": [
         "steam-depotcache",
         "riot-client-logs",
-        "stremio-desktop-cache",
         "logitech-ghub-installer-cache",
         "elgato-streamdeck-cache",
         "logitech-options-plus-cache",
         "jetbrains-intellij-cache",
       ],
-      ".cache": ["logitech-ghub-installer-cache"],
+      ".cache": ["logitech-ghub-installer-cache", "stremio-desktop-cache"],
       // Note: .pak is declared in clean-items.json (windows-old row 2 extensions: [".exe", ".dll", ".pak"]),
       // but windows-old subPath is "C:\\Windows.old\\Program Files & Program Files (x86)" without (*.pak).
       // We assert its presence across all top 25 guides to empirically verify if .pak is rendered anywhere.
@@ -370,15 +369,17 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
         `Guide ${slug} must render verified attribution badge verbatim`
       );
 
-      // Check styling/structure around badge
+      // Check editorial styling around badge
       assert.ok(
-        html.includes("bg-emerald-50") && html.includes("text-emerald-800"),
-        `Guide ${slug} attribution badge must have proper Tailwind emerald styling`
+        html.includes("ed-meta-row") && html.includes("/sweepr-editorial.css"),
+        `Guide ${slug} attribution badge must use editorial design styling`
       );
     }
 
-    // Also spot-check 10 randomly sampled guides from remainder of indexed catalog
-    const remainingIndexed = items.filter((i) => !i.noindex && !TOP_25_SLUGS.includes(i.slug)).slice(0, 10);
+    // Also spot-check 10 randomly sampled Windows guides from remainder of indexed catalog
+    const remainingIndexed = items
+      .filter((i) => !i.noindex && (i.category === "app" || i.category === "folder") && !TOP_25_SLUGS.includes(i.slug))
+      .slice(0, 10);
     for (const item of remainingIndexed) {
       const res = await app.request(`/clean/${item.category}/${item.slug}`);
       assert.equal(res.status, 200);

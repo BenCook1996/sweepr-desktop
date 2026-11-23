@@ -22,6 +22,7 @@ import {
   escapeHtml,
   generateFullActivationCode,
   isFullActivationCode,
+  isSafeSeoRouteParam,
   isSameOriginRequest,
   makeClientIp,
   normalizeEmail,
@@ -33,9 +34,11 @@ import {
   getCleanItems,
   getCleanItemBySlug,
   getPseoRedirectTarget,
+  getPseoRouteDisposition,
   isPseoSlugNoindexed,
   renderGamingAndAiCacheBloatCalculatorPage,
   renderPseoDirectory,
+  renderPseoGonePage,
   renderPseoPage,
   setApprovedIntentGapSeoOverride,
 } from "./pseo.js";
@@ -66,6 +69,7 @@ import {
   getTransactionalToolBySlug,
   renderTransactionalToolPage,
   renderTransactionalToolsHub,
+  RETIRED_TOOL_REDIRECTS,
   TRANSACTIONAL_TOOLS,
 } from "./transactional-tools.js";
 import {
@@ -197,6 +201,44 @@ function sanitizeTelemetryText(v: unknown, maxLen: number): string {
     .replace(/(\/Users\/|\/home\/)[^/]+/g, "$1<redacted>")
     .trim()
     .slice(0, maxLen);
+}
+
+function extractTelemetryClientMeta(c: Context, platformHint?: string | null): { browser: string; os_platform: string; country?: string } {
+  const ua = String(c.req.header("user-agent") || "");
+  const uaLower = ua.toLowerCase();
+  const chUa = String(c.req.header("sec-ch-ua") || "").toLowerCase();
+  const platLower = `${String(platformHint || "").toLowerCase()} ${uaLower}`;
+  let browser = "Desktop App";
+  if (chUa.includes("microsoft edge") || uaLower.includes("edg/")) browser = "Edge";
+  else if (chUa.includes("brave") || uaLower.includes("brave")) browser = "Brave";
+  else if (chUa.includes("opera") || uaLower.includes("opr/") || uaLower.includes("opera")) browser = "Opera";
+  else if (uaLower.includes("firefox/")) browser = "Firefox";
+  else if (chUa.includes("google chrome") || uaLower.includes("chrome/") || uaLower.includes("chromium/")) browser = "Chrome";
+  else if (uaLower.includes("safari/") && !uaLower.includes("chrome")) browser = "Safari";
+  else if (platLower.includes("android") || platLower.includes("ios") || platLower.includes("mobile")) browser = "Mobile App";
+
+  let os_platform = "Windows";
+  if (platLower.includes("android")) os_platform = "Android";
+  else if (platLower.includes("ios") || platLower.includes("iphone") || platLower.includes("ipad")) os_platform = "iOS";
+  else if (platLower.includes("mac") || platLower.includes("darwin")) os_platform = "macOS";
+  else if (platLower.includes("linux") || platLower.includes("x11")) os_platform = "Linux";
+
+  const rawCountry = String(
+    c.req.header("cf-ipcountry") ||
+      c.req.header("x-vercel-ip-country") ||
+      c.req.header("x-country-code") ||
+      c.req.header("cloudfront-viewer-country") ||
+      ""
+  )
+    .trim()
+    .toUpperCase();
+  const langMatch = String(c.req.header("accept-language") || "").match(/\b[a-z]{2,3}[-_]([A-Z]{2})\b/i);
+  const country = /^[A-Z]{2}$/.test(rawCountry) && rawCountry !== "XX"
+    ? rawCountry
+    : langMatch && langMatch[1] && langMatch[1].toUpperCase() !== "XX"
+    ? langMatch[1].toUpperCase()
+    : undefined;
+  return { browser, os_platform, ...(country ? { country } : {}) };
 }
 
 function hasBatteryCareAddon(body: any): boolean {
@@ -395,7 +437,10 @@ export function createApp(deps: AppDeps) {
       }
       if (p.length > 1 && /[).,\]]+$/.test(p)) {
         const cleanTarget = p.replace(/[).,\]]+$/, "") || "/";
-        return c.redirect(cleanTarget, 301);
+        const segments = cleanTarget.split("/").filter(Boolean);
+        if (!segments.some((seg) => !isSafeSeoRouteParam(seg))) {
+          return c.redirect(cleanTarget, 301);
+        }
       }
       if (p === "/" && c.req.query("home") === "1" && detectBot(c.req.header("user-agent"))) {
         return c.redirect("/", 301);
@@ -912,18 +957,37 @@ export function createApp(deps: AppDeps) {
     c.header("X-Robots-Tag", "noindex, follow");
     return c.body(renderLlmsFullTxt(seoStore));
   });
+  const RETIRED_VS_REDIRECTS: Record<string, string> = {
+    onyx: "/vs/cleanmymac",
+  };
+  const RETIRED_ALTERNATIVES_REDIRECTS: Record<string, string> = {
+    daisydisk: "/vs/daisydisk",
+    onyx: "/alternatives/cleanmymac",
+    pearcleaner: "/vs/pearcleaner",
+  };
+  const BLOAT_WATCH_SLUG_REDIRECTS: Record<string, string> = {
+    "windows-11-24h2-8gb-update-cache-bug": "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
+    "nvidia-rtx-shader-cache-10gb-limit-fix": "/clean/app/nvidia-dxcache",
+    "steam-depotcache-orphaned-chunks-spike": "/clean/app/steam-depotcache",
+    "logitech-ghub-options-plus-depots-media-blob-benchmark-2026": "/clean/app/logitech-ghub-installer-cache",
+    "elgato-streamdeck-cef-media-blob-cache-bloat-2026": "/clean/app/elgato-streamdeck-cache",
+    "comfyui-cursor-ai-developer-cache-bloat-2026": "/clean/app/comfyui-temp-output-cache",
+    "logitech-ghub-2026-media-blob-leak": "/clean/app/logitech-ghub-installer-cache",
+  };
+
   app.get("/vs/:competitor", async (c) => {
     const raw = String(c.req.param("competitor") ?? "");
-    if (raw.toLowerCase().endsWith(".html")) {
-      const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
-      return c.redirect(`/vs/${clean}`, 301);
-    }
-    const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
-    if (raw !== competitor) {
-      return c.redirect(`/vs/${competitor}`, 301);
+    if (!isSafeSeoRouteParam(raw)) return c.notFound();
+    const competitor = raw.replace(/\.html?$/i, "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!isSafeSeoRouteParam(competitor)) return c.notFound();
+    if (Object.hasOwn(RETIRED_VS_REDIRECTS, competitor)) {
+      return c.redirect(RETIRED_VS_REDIRECTS[competitor], 301);
     }
     const file = `./public/vs/${competitor}.html`;
     if (!existsSync(file)) return c.notFound();
+    if (raw !== competitor) {
+      return c.redirect(`/vs/${competitor}`, 301);
+    }
     c.header("Vary", "CF-IPCountry, Accept-Encoding");
     if (c.req.query("country") || c.req.query("currency")) {
       c.header("Cache-Control", "private, no-store");
@@ -934,16 +998,17 @@ export function createApp(deps: AppDeps) {
   });
   app.get("/alternatives/:competitor", async (c) => {
     const raw = String(c.req.param("competitor") ?? "");
-    if (raw.toLowerCase().endsWith(".html")) {
-      const clean = raw.slice(0, -5).toLowerCase().replace(/[^a-z0-9-]/g, "");
-      return c.redirect(`/alternatives/${clean}`, 301);
-    }
-    const competitor = raw.toLowerCase().replace(/[^a-z0-9-]/g, "");
-    if (raw !== competitor) {
-      return c.redirect(`/alternatives/${competitor}`, 301);
+    if (!isSafeSeoRouteParam(raw)) return c.notFound();
+    const competitor = raw.replace(/\.html?$/i, "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!isSafeSeoRouteParam(competitor)) return c.notFound();
+    if (Object.hasOwn(RETIRED_ALTERNATIVES_REDIRECTS, competitor)) {
+      return c.redirect(RETIRED_ALTERNATIVES_REDIRECTS[competitor], 301);
     }
     const file = `./public/alternatives/${competitor}.html`;
     if (!existsSync(file)) return c.notFound();
+    if (raw !== competitor) {
+      return c.redirect(`/alternatives/${competitor}`, 301);
+    }
     c.header("Vary", "CF-IPCountry, Accept-Encoding");
     if (c.req.query("country") || c.req.query("currency")) {
       c.header("Cache-Control", "private, no-store");
@@ -966,9 +1031,21 @@ export function createApp(deps: AppDeps) {
   });
   app.get("/tools", (c) => c.html(renderTransactionalToolsHub()));
   app.get("/tools/:slug", (c) => {
-    const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const raw = String(c.req.param("slug") ?? "");
+    if (!isSafeSeoRouteParam(raw)) return c.notFound();
+    const slug = raw.replace(/\.html?$/i, "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!isSafeSeoRouteParam(slug)) return c.notFound();
+    if (slug === "pc-cache-calculator") {
+      return c.redirect("/tools/pc-cache-calculator", 301);
+    }
+    if (Object.hasOwn(RETIRED_TOOL_REDIRECTS, slug)) {
+      return c.redirect(RETIRED_TOOL_REDIRECTS[slug], 301);
+    }
     const tool = getTransactionalToolBySlug(slug);
     if (!tool) return c.notFound();
+    if (raw !== slug) {
+      return c.redirect(`/tools/${slug}`, 301);
+    }
     const visitorKey =
       c.req.query("visitor_id") ||
       getCookie(c, "sweepr_attr_id") ||
@@ -987,7 +1064,7 @@ export function createApp(deps: AppDeps) {
     const analysis = analyzeSafeToDeleteInput(raw);
     return c.json({ ok: true, ...analysis });
   });
-  app.get("/bloat-watch", (c) => c.html(renderBloatWatchIndexHtml(seoStore)));
+  app.get("/bloat-watch", (c) => c.redirect("/state-of-windows-storage", 301));
   app.get("/state-of-windows-storage", (c) => c.html(renderStateOfWindowsStorageHtml(seoStore)));
   app.get("/sitemap.xml", (c) => {
     const file = "./public/sitemap.xml";
@@ -1010,25 +1087,6 @@ export function createApp(deps: AppDeps) {
       }
       return block;
     });
-    const existingLocs = new Set(
-      [...xml.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((m) => String(m[1] || "").trim())
-    );
-    const extraBlocks: string[] = [];
-    for (const post of listBloatWatchPosts(seoStore, "published")) {
-      const postLoc = `https://sweeprcleaner.com/bloat-watch/${post.slug}`;
-      if (!existingLocs.has(postLoc)) {
-        existingLocs.add(postLoc);
-        const modDate = post.published_at
-          ? new Date(post.published_at * 1000).toISOString().slice(0, 10)
-          : cleanDataMtime;
-        extraBlocks.push(
-          `  <url>\n    <loc>${postLoc}</loc>\n    <lastmod>${modDate}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>`
-        );
-      }
-    }
-    if (extraBlocks.length > 0) {
-      xml = xml.replace("</urlset>", `${extraBlocks.join("\n")}\n</urlset>`);
-    }
     c.header("Content-Type", "application/xml; charset=utf-8");
     return c.body(xml);
   });
@@ -1040,15 +1098,36 @@ export function createApp(deps: AppDeps) {
     return c.body(readFileSync(file, "utf-8"));
   });
   app.get("/bloat-watch/:slug", (c) => {
-    const slug = String(c.req.param("slug") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const rawSlug = String(c.req.param("slug") ?? "");
+    if (!isSafeSeoRouteParam(rawSlug)) return c.notFound();
+    const slug = rawSlug.replace(/\.html?$/i, "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    if (!isSafeSeoRouteParam(slug)) return c.notFound();
+    if (Object.hasOwn(BLOAT_WATCH_SLUG_REDIRECTS, slug)) {
+      return c.redirect(BLOAT_WATCH_SLUG_REDIRECTS[slug], 301);
+    }
     const post = getBloatWatchPost(seoStore, slug);
-    if (!post || post.status !== "published") return c.notFound();
-    return c.html(renderBloatWatchPostHtml(post));
+    if (!post) return c.notFound();
+    if (post.clean_item_slug && !isPseoSlugNoindexed(post.clean_item_slug)) {
+      return c.redirect(`/clean/${post.clean_item_category || "app"}/${post.clean_item_slug}`, 301);
+    }
+    return c.redirect("/state-of-windows-storage", 301);
   });
   app.get("/clean/:category/:slug", (c) => {
-    const category = String(c.req.param("category") ?? "").toLowerCase();
+    const rawCategory = String(c.req.param("category") ?? "");
     const rawSlug = String(c.req.param("slug") ?? "");
-    let cleanSlug = rawSlug.toLowerCase().replace(/%20|\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    if (!isSafeSeoRouteParam(rawCategory) || !isSafeSeoRouteParam(rawSlug)) {
+      return c.notFound();
+    }
+    const category = rawCategory.toLowerCase();
+    let cleanSlug = rawSlug
+      .replace(/\.html?$/i, "")
+      .toLowerCase()
+      .replace(/%20|\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    if (!isSafeSeoRouteParam(category) || !isSafeSeoRouteParam(cleanSlug)) {
+      return c.notFound();
+    }
 
     // Legacy / historical redirect aliases
     if (
@@ -1083,17 +1162,20 @@ export function createApp(deps: AppDeps) {
       cleanSlug = "recycle-bin-hidden-folder";
     }
 
-    const consolidatedTarget = getPseoRedirectTarget(category, cleanSlug);
-    if (consolidatedTarget) {
-      return c.redirect(consolidatedTarget, 301);
+    const disposition = getPseoRouteDisposition(category, cleanSlug);
+    if (disposition?.action === "gone") {
+      c.header("X-Robots-Tag", "noindex, nofollow");
+      return c.html(renderPseoGonePage(category, cleanSlug), 410);
     }
-
-    if (rawSlug !== cleanSlug) {
-      return c.redirect(`/clean/${category}/${cleanSlug}`, 301);
+    if (disposition?.action === "redirect") {
+      return c.redirect(disposition.target, 301);
     }
 
     const item = getCleanItemBySlug(category, cleanSlug) ?? getCleanItems().find((i) => i.category === category && i.slug === cleanSlug);
     if (!item) return c.notFound();
+    if (rawCategory !== category || rawSlug !== cleanSlug) {
+      return c.redirect(`/clean/${category}/${cleanSlug}`, 301);
+    }
     if (item.noindex) {
       c.header("X-Robots-Tag", "noindex, follow");
     }
@@ -2513,18 +2595,23 @@ export function createApp(deps: AppDeps) {
             metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
           });
         } else {
+          const clientMeta = extractTelemetryClientMeta(c, platform);
           repo.recordAnalyticsEvent({
             event_name: "installer_downloaded",
             platform,
             account_id: sessAccId,
-            metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
+            metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId, ...clientMeta },
           });
-          syncToCentralCrm("/v1/telemetry/event", {
-            event_name: "installer_downloaded",
-            category: "funnel",
-            os: platform,
-            properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
-          });
+          syncToCentralCrm(
+            "/v1/telemetry/event",
+            {
+              event_name: "installer_downloaded",
+              category: "funnel",
+              os: platform,
+              properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId, ...clientMeta },
+            },
+            visitorIp ? { "x-sweepr-forwarded-ip": visitorIp } : {}
+          );
         }
       } catch {}
     }
@@ -6472,19 +6559,25 @@ export function createApp(deps: AppDeps) {
         },
       });
     } catch {}
-    syncToCentralCrm("/v1/telemetry/event", {
-      event_name: "app_installed",
-      category: "funnel",
-      os: deviceType === "mobile" ? "android" : "windows",
-      device_id: deviceId,
-      account_id: accountId,
-      properties: {
-        device_type: deviceType,
-        country: localizedPricing.country,
-        attribution_id: resolvedAttrId,
-        source: "v1_accounts",
+    syncToCentralCrm(
+      "/v1/telemetry/event",
+      {
+        event_name: "app_installed",
+        category: "funnel",
+        os: deviceType === "mobile" ? "android" : "windows",
+        device_id: deviceId,
+        account_id: accountId,
+        properties: {
+          device_type: deviceType,
+          browser: deviceType === "mobile" ? "Mobile App" : "Desktop App",
+          os_platform: deviceType === "mobile" ? "Android" : "Windows",
+          country: localizedPricing.country,
+          attribution_id: resolvedAttrId,
+          source: "v1_accounts",
+        },
       },
-    });
+      clientIp(c) ? { "x-sweepr-forwarded-ip": clientIp(c) } : {}
+    );
     const referralCode = repo.ensureReferralCode(accountId);
     return c.json({
       account_id: accountId,
@@ -7905,19 +7998,14 @@ export function createApp(deps: AppDeps) {
       }
     } catch {}
 
-    const enrichedMetadata =
-      body.metadata && typeof body.metadata === "object"
-        ? {
-            ...body.metadata,
-            ...(effectiveAttrId ? { attribution_id: effectiveAttrId } : {}),
-            ...(rawDeviceId ? { device_id: rawDeviceId } : {}),
-          }
-        : effectiveAttrId || rawDeviceId
-          ? {
-              ...(effectiveAttrId ? { attribution_id: effectiveAttrId } : {}),
-              ...(rawDeviceId ? { device_id: rawDeviceId } : {}),
-            }
-          : body.metadata;
+    const clientMeta = extractTelemetryClientMeta(c, body.platform || "windows");
+    const enrichedMetadata = {
+      ...(body.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+      ...clientMeta,
+      ...(typeof body.metadata === "object" && body.metadata?.country ? { country: body.metadata.country } : {}),
+      ...(effectiveAttrId ? { attribution_id: effectiveAttrId } : {}),
+      ...(rawDeviceId ? { device_id: rawDeviceId } : {}),
+    };
 
     const id = repo.recordAnalyticsEvent({
       event_name: eventName,
@@ -7925,13 +8013,18 @@ export function createApp(deps: AppDeps) {
       account_id: effectiveAccountId,
       metadata: enrichedMetadata,
     });
-    syncToCentralCrm("/v1/telemetry/event", {
-      event_name: eventName,
-      category: "funnel",
-      os: body.platform || "windows",
-      account_id: effectiveAccountId,
-      properties: enrichedMetadata || null,
-    });
+    syncToCentralCrm(
+      "/v1/telemetry/event",
+      {
+        event_name: eventName,
+        category: "funnel",
+        os: body.platform || "windows",
+        device_id: rawDeviceId || undefined,
+        account_id: effectiveAccountId,
+        properties: enrichedMetadata || null,
+      },
+      visitorIp ? { "x-sweepr-forwarded-ip": visitorIp } : {}
+    );
     return c.json({
       ok: true,
       id,

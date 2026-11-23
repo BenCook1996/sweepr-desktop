@@ -65,13 +65,17 @@ function crmHeaders(extra: Record<string, string> = {}): Record<string, string> 
   return h;
 }
 
-export function syncToCentralCrm(path: string, body: Record<string, unknown>): void {
+export function syncToCentralCrm(
+  path: string,
+  body: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
+): void {
   const crmUrl = getCrmUrl();
   if (!crmUrl) return;
   try {
     fetch(`${crmUrl}${path}`, {
       method: "POST",
-      headers: crmHeaders(),
+      headers: crmHeaders(extraHeaders),
       body: JSON.stringify({ project_id: PROJECT_ID, ...body }),
       signal: AbortSignal.timeout(8000),
     }).catch(() => {});

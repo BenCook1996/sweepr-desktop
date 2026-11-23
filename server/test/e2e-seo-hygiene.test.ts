@@ -10,8 +10,9 @@ process.chdir(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
 import { openDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { parseHtml, parseSitemap } from "../src/seo/html.js";
-import { getCleanItems } from "../src/pseo.js";
-import { LOCKED_TEST_TITLE_SLUGS } from "../src/seo/keywords.js";
+import { getCleanItems, getAbsorbedRedirectVariants, renderPseoPage } from "../src/pseo.js";
+import { LOCKED_TEST_TITLE_SLUGS, RETIRED_5X_SUFFIX_RE } from "../src/seo/keywords.js";
+import { RETIRED_TOOL_REDIRECTS } from "../src/transactional-tools.js";
 
 const { privateKey } = generateKeyPairSync("ed25519");
 const ADMIN_PASSWORD = "test-admin-password";
@@ -72,23 +73,15 @@ async function loadDynamicSitemap(targetApp: ReturnType<typeof createApp> = app)
 }
 
 describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", () => {
-  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 144 Tier-1 URLs across dynamic and static files", async () => {
+  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 96 Tier-1 URLs across dynamic and static files", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
-    assert.ok(
-      staticUrls.length >= 130 && staticUrls.length <= 155,
-      `Expected static sitemap.xml to contain 144 URLs (130-155), got ${staticUrls.length}`
-    );
-    assert.equal(staticUrls.length, 144, `Expected exact 144 URLs in static sitemap.xml, got ${staticUrls.length}`);
-    assert.ok(
-      dynamicUrls.length >= 130 && dynamicUrls.length <= 155,
-      `Expected dynamic /sitemap.xml to contain 144 URLs (130-155), got ${dynamicUrls.length}`
-    );
-    assert.equal(dynamicUrls.length, 144, `Expected exact 144 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
+    assert.equal(staticUrls.length, 96, `Expected exact 96 URLs in static sitemap.xml, got ${staticUrls.length}`);
+    assert.equal(dynamicUrls.length, 96, `Expected exact 96 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
   });
 
-  test("TC-T1-SM-02: Core commercial, policy, /tools/:slug and hub pages present (and noindex /download excluded) in sitemap", async () => {
+  test("TC-T1-SM-02: Core commercial, policy, and hub pages present (and noindex /download & retired /tools/:slug excluded) in sitemap", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
@@ -97,30 +90,13 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
       "/pricing",
       "/clean",
       "/tools",
-      "/bloat-watch",
       "/safe-to-delete",
       "/state-of-windows-storage",
       "/privacy",
       "/terms",
       "/refund",
       "/support",
-      "/tools/discord-cache-cleaner",
-      "/tools/steam-cache-cleaner",
-      "/tools/logitech-ghub-cleaner",
-      "/tools/elgato-streamdeck-cleaner",
-      "/tools/valorant-logs-cleaner",
-      "/tools/nvidia-shader-cleaner",
-      "/tools/adobe-media-cache-cleaner",
-      "/tools/jetbrains-gradle-cleaner",
-      "/tools/windows-24h2-update-cleaner",
-      "/tools/ai-model-cache-cleaner",
       "/tools/pc-cache-calculator",
-      "/bloat-watch/windows-11-24h2-8gb-update-cache-bug",
-      "/bloat-watch/nvidia-rtx-shader-cache-10gb-limit-fix",
-      "/bloat-watch/steam-depotcache-orphaned-chunks-spike",
-      "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026",
-      "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026",
-      "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],
@@ -137,6 +113,13 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
         false,
         `${sourceName} must NOT include noindexed /download`
       );
+      for (const retiredSlug of Object.keys(RETIRED_TOOL_REDIRECTS)) {
+        assert.equal(
+          urls.some((u) => u.endsWith(`/tools/${retiredSlug}`)),
+          false,
+          `${sourceName} must NOT include retired tool URL /tools/${retiredSlug}`
+        );
+      }
       for (const h of hubs) {
         const match = urls.some((u) => {
           try {
@@ -151,27 +134,34 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     }
   });
 
-  test("TC-T1-SM-03: All 20 switcher pages present in sitemap (both dynamic and static)", async () => {
+  test("TC-T1-SM-03: All 16 surviving switcher pages present in sitemap (both dynamic and static)", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
     const expectedSwitchers = [
       "/vs/ccleaner",
-      "/vs/cleanmymac",
       "/vs/bleachbit",
+      "/vs/avast-cleanup",
+      "/vs/cleanmypc",
+      "/vs/glary-utilities",
+      "/vs/wise-disk-cleaner",
+      "/vs/cleanmymac",
       "/vs/daisydisk",
       "/vs/pearcleaner",
-      "/vs/onyx",
       "/alternatives/ccleaner",
-      "/alternatives/cleanmymac",
       "/alternatives/bleachbit",
+      "/alternatives/avast-cleanup",
+      "/alternatives/cleanmypc",
+      "/alternatives/glary-utilities",
+      "/alternatives/wise-disk-cleaner",
+      "/alternatives/cleanmymac",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],
       ["static public/sitemap.xml", staticUrls],
     ] as const) {
       for (const s of expectedSwitchers) {
-        assert.ok(urls.some((u) => u.includes(s)), `${sourceName} missing switcher page: ${s}`);
+        assert.ok(urls.some((u) => u.endsWith(s)), `${sourceName} missing switcher page: ${s}`);
       }
     }
   });
@@ -421,7 +411,7 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/app/stremio-desktop-cache",
-        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
       },
       {
         path: "/clean/app/amd-shader-cache",
@@ -437,11 +427,11 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/folder/winsxs",
-        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+        expectedTitle: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
       },
       {
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
       },
       {
         path: "/clean/app/elgato-streamdeck-cache",
@@ -449,7 +439,11 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+      },
+      {
+        path: "/clean/folder/hiberfil-sys",
+        expectedTitle: "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
       },
       {
         path: "/clean/app/vivaldi-browser-cache",
@@ -457,7 +451,7 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/app/jetbrains-intellij-cache",
-        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
       },
     ];
 
@@ -475,14 +469,13 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
   });
 
   test("TC-T2-TITLE-02: Description assertions for locked CTR targets", async () => {
-    const targets = [
+    const appTargets = [
       "/clean/app/steam-depotcache",
       "/clean/app/riot-client-logs",
-      "/clean/folder/winsxs",
       "/clean/app/nvidia-dxcache",
     ];
 
-    for (const p of targets) {
+    for (const p of appTargets) {
       const res = await app.request(p);
       assert.equal(res.status, 200);
       const html = await res.text();
@@ -496,6 +489,28 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       assert.ok(
         desc.includes("Zero save files or active logins lost") && desc.includes("6.5 MB Sweepr scan"),
         `${p} description must contain reassuring micro-copy and Sweepr scan CTA`
+      );
+    }
+
+    const r5FolderTargets = [
+      "/clean/folder/winsxs",
+      "/clean/folder/hiberfil-sys",
+      "/clean/folder/programdata-package-cache",
+      "/clean/folder/windows-livekernelreports",
+    ];
+    for (const p of r5FolderTargets) {
+      const res = await app.request(p);
+      assert.equal(res.status, 200);
+      const parsed = parseHtml(await res.text());
+      const desc = parsed.metaDescription ?? "";
+      assert.ok(
+        desc.length >= 70 && desc.length <= 160,
+        `${p} description length (${desc.length}) must be between 70 and 160 characters`
+      );
+      assert.equal(
+        desc.includes("Zero save files or active logins lost"),
+        false,
+        `${p} OS folder description must NOT contain save-file boilerplate`
       );
     }
   });
@@ -591,6 +606,18 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
     for (const u of cleanupUrls) {
       const path = new URL(u).pathname;
       const res = await app.request(path, { headers: botHeaders });
+      if (res.status === 410) {
+        assert.ok(
+          RETIRED_5X_SUFFIX_RE.test(path),
+          `Only retired 5x sub-cache URLs may return HTTP 410 in /sitemap-cleanup.xml, got 410 for ${path}`
+        );
+        const xRobots = res.headers.get("x-robots-tag") || "";
+        assert.ok(
+          xRobots.includes("noindex") && xRobots.includes("nofollow"),
+          `Cleanup 410 URL ${path} must serve X-Robots-Tag: noindex, nofollow (got: ${xRobots})`
+        );
+        continue;
+      }
       if (res.status === 301) {
         const loc = res.headers.get("location") || "";
         assert.ok(loc.length > 0, `Cleanup URL ${path} returned 301 without Location header`);
@@ -808,5 +835,368 @@ describe("E2E SEO Hygiene Track — Tier 4: Real-World Crawl Simulation", () => 
     assert.equal(resGuide.status, 200);
     const html = await resGuide.text();
     assert.ok(html.includes("Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook"));
+  });
+});
+
+describe("E2E SEO Hygiene Track — Milestone M3 Remediation Verification (R1, R2, R4, R5)", () => {
+  test("TC-M3-R1: Retired /tools/:slug 301-redirect, live tools return 200, sitemap excludes retired tools, merged canonical pages render troubleshooting & subfolder details, and Chromium sub-cache paths are clean", async () => {
+    const retiredEntries = Object.entries(RETIRED_TOOL_REDIRECTS);
+    assert.equal(retiredEntries.length, 10, "Expected exactly 10 retired tool redirects");
+
+    const { urls: sitemapUrls } = await loadDynamicSitemap(app);
+    for (const [toolSlug, targetPath] of retiredEntries) {
+      const res = await app.request(`/tools/${toolSlug}`, { redirect: "manual" });
+      assert.equal(res.status, 301, `/tools/${toolSlug} must return 301`);
+      assert.equal(res.headers.get("location"), targetPath, `/tools/${toolSlug} must redirect to ${targetPath}`);
+      assert.equal(
+        sitemapUrls.some((u) => new URL(u).pathname === `/tools/${toolSlug}`),
+        false,
+        `sitemap.xml must NOT contain retired /tools/${toolSlug}`
+      );
+      const targetRes = await app.request(targetPath);
+      assert.equal(targetRes.status, 200, `Canonical target ${targetPath} must return 200`);
+    }
+
+    for (const liveRoute of ["/tools", "/tools/pc-cache-calculator", "/safe-to-delete"]) {
+      const res = await app.request(liveRoute);
+      assert.equal(res.status, 200, `${liveRoute} must return 200`);
+      const xRobots = res.headers.get("x-robots-tag") || "";
+      assert.equal(xRobots.includes("noindex"), false, `${liveRoute} must not be noindexed`);
+    }
+
+    // Verify canonical pages for the 8 merged tools render #manual-troubleshooting-notes and Regenerates:/Note: in #subfolders-breakdown-table
+    const mergedCanonicals = [
+      "/clean/app/logitech-ghub-installer-cache",
+      "/clean/app/nvidia-dxcache",
+      "/clean/app/elgato-streamdeck-cache",
+      "/clean/app/riot-client-logs",
+      "/clean/app/adobe-premiere-media-cache",
+      "/clean/app/jetbrains-intellij-cache",
+      "/clean/app/gradle-wrapper-caches",
+      "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
+      "/clean/app/comfyui-temp-output-cache",
+      "/clean/app/discord-cache",
+      "/clean/app/steam-depotcache",
+    ];
+    const itemsBySlug = new Map(getCleanItems().map((i) => [i.slug, i]));
+    for (const canonicalPath of mergedCanonicals) {
+      const slug = canonicalPath.split("/").pop()!;
+      const item = itemsBySlug.get(slug)!;
+      const res = await app.request(canonicalPath);
+      assert.equal(res.status, 200, `${canonicalPath} must return 200`);
+      const html = await res.text();
+      assert.ok(
+        html.includes('id="manual-troubleshooting-notes"'),
+        `${canonicalPath} must render #manual-troubleshooting-notes`
+      );
+      if (item.subLocations?.some((l) => l.regenerates || l.troubleshooting)) {
+        const tableSection = html.match(/<div id="subfolders-breakdown-table"[\s\S]*?<\/table>/i)?.[0] || "";
+        assert.ok(
+          tableSection.includes("<strong>Regenerates:</strong>") || tableSection.includes("<strong>Note:</strong>"),
+          `${canonicalPath} #subfolders-breakdown-table must render Regenerates:/Note: details`
+        );
+      }
+    }
+
+    // Verify Chromium absorbed sub-cache variants have valid Windows env/drive prefixes and zero stray prefixes/suffixes
+    const chromiumItems = getCleanItems().filter((i) => i.isChromiumBased);
+    for (const item of chromiumItems) {
+      const variants = getAbsorbedRedirectVariants(item);
+      for (const v of variants) {
+        assert.match(
+          v.subPath,
+          /^(?:%[a-z]+%|[a-z]:\\)/i,
+          `${item.slug} variant subPath must start with %ENV% or X:\\: ${v.subPath}`
+        );
+        assert.equal(/^(?:and|or)\s+/i.test(v.subPath), false, `${item.slug} variant subPath has stray conjunction: ${v.subPath}`);
+        assert.equal(/,\\/.test(v.subPath), false, `${item.slug} variant subPath has trailing comma: ${v.subPath}`);
+        assert.equal(/\\depots\\/i.test(v.subPath), false, `${item.slug} variant subPath wrongly uses \\depots\\: ${v.subPath}`);
+        assert.equal(/\\logs\\/i.test(v.subPath), false, `${item.slug} variant subPath wrongly uses \\logs\\: ${v.subPath}`);
+      }
+    }
+
+    // Verify rendered .ed-path-mono values inside #consolidated-subcache-modules on key Chromium guides
+    for (const slug of ["obs-studio-logs-crashes", "logitech-options-plus-cache", "medal-tv-cache"]) {
+      const res = await app.request(`/clean/app/${slug}`);
+      assert.equal(res.status, 200, `/clean/app/${slug} must return 200`);
+      const html = await res.text();
+      const subSection = html.match(/id="consolidated-subcache-modules"[\s\S]*?<\/section>/i)?.[0] || "";
+      assert.ok(subSection.length > 0, `/clean/app/${slug} must render #consolidated-subcache-modules`);
+      const renderedPaths = Array.from(subSection.matchAll(/<div class="ed-path-mono"[^>]*>([^<]+)<\/div>/gi)).map((m) => m[1].trim());
+      assert.equal(renderedPaths.length, 5, `/clean/app/${slug} must render 5 .ed-path-mono sub-cache cards`);
+      for (const p of renderedPaths) {
+        assert.match(p, /^(?:%[a-z]+%|[a-z]:\\)/i, `/clean/app/${slug} rendered invalid .ed-path-mono: ${p}`);
+        assert.equal(/^(?:and|or)\s+/i.test(p), false, `/clean/app/${slug} rendered stray conjunction: ${p}`);
+        assert.equal(/,\\/.test(p), false, `/clean/app/${slug} rendered trailing comma: ${p}`);
+        assert.equal(/\\depots\\/i.test(p), false, `/clean/app/${slug} rendered \\depots\\: ${p}`);
+        assert.equal(/\\logs\\/i.test(p), false, `/clean/app/${slug} rendered \\logs\\: ${p}`);
+      }
+      if (slug === "obs-studio-logs-crashes") {
+        assert.ok(
+          renderedPaths.every((p) => p.startsWith("%AppData%\\obs-studio\\plugin_config\\obs-browser\\")),
+          `obs-studio-logs-crashes paths must target obs-browser\\: ${JSON.stringify(renderedPaths)}`
+        );
+      }
+    }
+
+    // Verify all 13 prototype-property keys × case/extension/punctuation/%20 variants return 404 (never 301 or 500)
+    const protoKeys = [
+      "constructor",
+      "__proto__",
+      "prototype",
+      "toString",
+      "valueOf",
+      "hasOwnProperty",
+      "isPrototypeOf",
+      "propertyIsEnumerable",
+      "toLocaleString",
+      "__defineGetter__",
+      "__defineSetter__",
+      "__lookupGetter__",
+      "__lookupSetter__",
+    ];
+    const protoVariants = new Set<string>([
+      ".html",
+      ".htm",
+      ".html.html",
+      "!!!",
+      "---",
+      "%20",
+      "c_onstructor",
+      "___proto___",
+    ]);
+    for (const key of protoKeys) {
+      const titleCase = key.charAt(0).toUpperCase() + key.slice(1);
+      const caseVariants = new Set([key, key.toUpperCase(), key.toLowerCase(), titleCase]);
+      for (const variant of caseVariants) {
+        for (const suffix of ["", ".html", ".HTML", ".htm", ".HTM", ".json", "!", ".", ",", ")", "]"]) {
+          protoVariants.add(`${variant}${suffix}`);
+        }
+        protoVariants.add(`%20${variant}`);
+        protoVariants.add(`${variant}%20`);
+      }
+    }
+
+    const protoRoutes: string[] = [];
+    for (const variant of protoVariants) {
+      protoRoutes.push(
+        `/tools/${variant}`,
+        `/vs/${variant}`,
+        `/alternatives/${variant}`,
+        `/bloat-watch/${variant}`,
+        `/clean/app/${variant}`,
+      );
+    }
+    for (const key of protoKeys) {
+      protoRoutes.push(`/clean/${key}/${key}`, `/clean/${key}.html/${key}.html`);
+    }
+
+    for (const protoRoute of protoRoutes) {
+      const res = await app.request(protoRoute, { redirect: "manual" });
+      assert.equal(res.status, 404, `${protoRoute} must return 404 (got ${res.status}, location=${res.headers.get("location")})`);
+    }
+
+    // Negative controls: non-prototype unknown slugs must return 404 (never 301 canonicalization loops)
+    for (const unknownRoute of [
+      "/vs/nonexistent-cleaner",
+      "/vs/nonexistent-cleaner.html",
+      "/vs/NonExistent-Cleaner.htm",
+      "/alternatives/nonexistent-cleaner",
+      "/alternatives/nonexistent-cleaner.html",
+      "/tools/nonexistent-tool",
+      "/tools/nonexistent-tool.html",
+      "/bloat-watch/nonexistent-post",
+      "/bloat-watch/nonexistent-post.html",
+      "/clean/app/NonExistent-Cache-Guide",
+      "/clean/app/nonexistent-cache-guide.html",
+    ]) {
+      const res = await app.request(unknownRoute, { redirect: "manual" });
+      assert.equal(res.status, 404, `${unknownRoute} must return 404 (got ${res.status}, location=${res.headers.get("location")})`);
+    }
+
+    // Positive controls: valid target canonicalization & query-currency prototype-key safety
+    for (const [legacyRoute, expectedTarget] of [
+      ["/vs/ccleaner.html", "/vs/ccleaner"],
+      ["/vs/CCleaner", "/vs/ccleaner"],
+      ["/vs/onyx.html", "/vs/cleanmymac"],
+      ["/alternatives/ccleaner.html", "/alternatives/ccleaner"],
+      ["/alternatives/daisydisk.html", "/vs/daisydisk"],
+      ["/tools/discord-cache-cleaner.html", "/clean/app/discord-cache"],
+      ["/tools/pc-cache-calculator.html", "/tools/pc-cache-calculator"],
+      ["/bloat-watch/windows-11-24h2-8gb-update-cache-bug.html", "/clean/folder/windows-11-24h2-update-cache-8gb-bug"],
+      ["/clean/app/Steam-DepotCache", "/clean/app/steam-depotcache"],
+      ["/clean/app/steam-depotcache.html", "/clean/app/steam-depotcache"],
+    ] as const) {
+      const res = await app.request(legacyRoute, { redirect: "manual" });
+      assert.equal(res.status, 301, `${legacyRoute} must return 301 (got ${res.status})`);
+      assert.equal(res.headers.get("location"), expectedTarget, `${legacyRoute} Location mismatch`);
+    }
+
+    const vsCurrencyRes = await app.request("/vs/ccleaner?currency=constructor", { redirect: "manual" });
+    assert.equal(vsCurrencyRes.status, 200);
+    const vsCurrencyHtml = await vsCurrencyRes.text();
+    assert.equal(vsCurrencyHtml.includes("NaN"), false, "/vs/ccleaner?currency=constructor must not render NaN");
+
+    const apiPricingRes = await app.request("/api/pricing?currency=toString", { redirect: "manual" });
+    assert.equal(apiPricingRes.status, 200);
+    const apiPricingBody = await apiPricingRes.text();
+    assert.equal(apiPricingBody.includes("NaN"), false, "/api/pricing?currency=toString must not emit NaN");
+  });
+
+  test("TC-M3-R2: Noindex-parent 5x sub-cache URLs (static & dynamic) return HTTP 410 + X-Robots-Tag: noindex, nofollow, while indexable-parent 5x URLs return 301", async () => {
+    const redirectsMap = JSON.parse(readFileSync("src/data/pseo-redirects.json", "utf-8")) as Record<string, string>;
+    const items = getCleanItems();
+    const itemBySlug = new Map(items.map((i) => [i.slug, i]));
+
+    let goneChecked = 0;
+    let redirectChecked = 0;
+    for (const [key, target] of Object.entries(redirectsMap)) {
+      const colonIdx = key.indexOf(":");
+      const category = colonIdx >= 0 ? key.slice(0, colonIdx) : "app";
+      const slug = colonIdx >= 0 ? key.slice(colonIdx + 1) : key;
+      if (!RETIRED_5X_SUFFIX_RE.test(slug)) continue;
+
+      const m = target.match(/^\/clean\/[^/]+\/([a-z0-9-]+)$/i);
+      const parent = m ? itemBySlug.get(m[1]) : undefined;
+      assert.ok(parent, `Redirect ${key} -> ${target} must resolve to an item in clean-items.json`);
+
+      const res = await app.request(`/clean/${category}/${slug}`, { redirect: "manual" });
+      if (parent.noindex) {
+        assert.equal(res.status, 410, `Noindex-parent 5x URL /clean/${category}/${slug} must return 410 Gone`);
+        const xRobots = res.headers.get("x-robots-tag") || "";
+        assert.ok(
+          xRobots.includes("noindex") && xRobots.includes("nofollow"),
+          `410 response for /clean/${category}/${slug} must include X-Robots-Tag: noindex, nofollow (got: ${xRobots})`
+        );
+        goneChecked++;
+      } else {
+        assert.equal(res.status, 301, `Indexable-parent 5x URL /clean/${category}/${slug} must return 301`);
+        assert.equal(res.headers.get("location"), target, `301 Location mismatch for /clean/${category}/${slug}`);
+        redirectChecked++;
+      }
+    }
+    assert.equal(goneChecked, 870, `Expected 870 noindex-parent 5x URLs returning 410, checked ${goneChecked}`);
+    assert.equal(redirectChecked, 155, `Expected 155 indexable-parent 5x URLs returning 301, checked ${redirectChecked}`);
+
+    // Dynamic RETIRED_VARIANT_SUFFIX_RE test for a noindex parent not explicitly listed in pseo-redirects.json
+    const dynamicNoindexParent = items.find(
+      (i) =>
+        i.noindex &&
+        (i.category === "app" || i.category === "folder") &&
+        !redirectsMap[`${i.category}:${i.slug}-gpu-shader-cache`]
+    );
+    assert.ok(dynamicNoindexParent, "Must find a noindex parent for dynamic 5x 410 check");
+    const dynParentCat = dynamicNoindexParent.category;
+    const dynParentSlug = dynamicNoindexParent.slug;
+    for (const suffix of [
+      "-gpu-shader-cache",
+      "-code-bytecode-cache",
+      "-service-worker-cachestorage",
+      "-crashpad-dump-logs",
+      "-media-blob-storage",
+    ]) {
+      const dynSlug: string = `${dynParentSlug}${suffix}`;
+      if (redirectsMap[`${dynParentCat}:${dynSlug}`]) continue;
+      const dynRes = await app.request(`/clean/${dynParentCat}/${dynSlug}`, { redirect: "manual" });
+      assert.equal(dynRes.status, 410, `Dynamic 5x URL /clean/${dynParentCat}/${dynSlug} must return 410`);
+      const xRobots = dynRes.headers.get("x-robots-tag") || "";
+      assert.ok(xRobots.includes("noindex") && xRobots.includes("nofollow"));
+    }
+  });
+
+  test("TC-M3-R4: All 12 Windows switchers return 200, appear in sitemap.xml and NOT sitemap-cleanup.xml, while 4 retired macOS switchers remain 301", async () => {
+    const windowsSwitchers = [
+      "/vs/ccleaner",
+      "/vs/bleachbit",
+      "/vs/avast-cleanup",
+      "/vs/cleanmypc",
+      "/vs/glary-utilities",
+      "/vs/wise-disk-cleaner",
+      "/alternatives/ccleaner",
+      "/alternatives/bleachbit",
+      "/alternatives/avast-cleanup",
+      "/alternatives/cleanmypc",
+      "/alternatives/glary-utilities",
+      "/alternatives/wise-disk-cleaner",
+    ];
+    const { urls: sitemapUrls } = await loadDynamicSitemap(app);
+    const cleanupRes = await app.request("/sitemap-cleanup.xml");
+    assert.equal(cleanupRes.status, 200);
+    const cleanupUrls = parseSitemap(await cleanupRes.text());
+
+    for (const path of windowsSwitchers) {
+      const res = await app.request(path, { redirect: "manual" });
+      assert.equal(res.status, 200, `${path} must return HTTP 200`);
+      const parsed = parseHtml(await res.text());
+      assert.equal((parsed.metaRobots || "").includes("noindex"), false, `${path} must be indexable`);
+      assert.ok(sitemapUrls.some((u) => new URL(u).pathname === path), `${path} must appear in sitemap.xml`);
+      assert.equal(cleanupUrls.some((u) => new URL(u).pathname === path), false, `${path} must NOT appear in sitemap-cleanup.xml`);
+    }
+
+    for (const [retiredMac, target] of [
+      ["/vs/onyx", "/vs/cleanmymac"],
+      ["/alternatives/daisydisk", "/vs/daisydisk"],
+      ["/alternatives/onyx", "/alternatives/cleanmymac"],
+      ["/alternatives/pearcleaner", "/vs/pearcleaner"],
+    ] as const) {
+      const res = await app.request(retiredMac, { redirect: "manual" });
+      assert.equal(res.status, 301, `${retiredMac} must remain a 301 redirect`);
+      assert.equal(res.headers.get("location"), target);
+      assert.equal(sitemapUrls.some((u) => new URL(u).pathname === retiredMac), false);
+    }
+  });
+
+  test("TC-M3-R5: R5 OS folder titles/descriptions are accurate and zero folder guides emit save-file boilerplate or 'Can I Delete WinSxS Folder? YES'", async () => {
+    const r5Expected = [
+      {
+        path: "/clean/folder/winsxs",
+        title: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
+        desc: "Never delete C:\\Windows\\WinSxS manually. Run DISM /StartComponentCleanup to reclaim gigabytes of superseded update files while keeping system files intact.",
+      },
+      {
+        path: "/clean/folder/hiberfil-sys",
+        title: "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
+        desc: "Disable hibernation with powercfg /h off or shrink hiberfil.sys to reclaim 6–32 GB on Windows 11. Note: disables Hibernate and Fast Startup.",
+      },
+      {
+        path: "/clean/folder/programdata-package-cache",
+        title: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        desc: "Never delete C:\\ProgramData\\Package Cache wholesale—it breaks Visual C++ and MSI repair. Learn how to remove only orphaned GUID installers safely.",
+      },
+      {
+        path: "/clean/folder/windows-livekernelreports",
+        title: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        desc: "C:\\Windows\\LiveKernelReports\\WATCHDOG holds GPU and kernel crash dumps (.dmp). Safe to delete after debugging—keep the folder and check TDR stability.",
+      },
+    ];
+
+    for (const spec of r5Expected) {
+      const res = await app.request(spec.path);
+      assert.equal(res.status, 200);
+      const html = await res.text();
+      const parsed = parseHtml(html);
+      assert.equal(parsed.title, spec.title);
+      assert.equal(parsed.metaDescription, spec.desc);
+      assert.equal(html.includes("Can I Delete WinSxS Folder? YES"), false);
+      assert.equal(html.includes("Zero save files or active logins lost"), false);
+    }
+
+    const folderItems = getCleanItems().filter((i) => i.category === "folder");
+    assert.ok(folderItems.length > 0);
+    for (const item of folderItems) {
+      const html = renderPseoPage(item);
+      const parsed = parseHtml(html);
+      const desc = parsed.metaDescription ?? "";
+      assert.equal(
+        desc.includes("Zero save files or active logins lost") || desc.includes("Zero saves or logins lost"),
+        false,
+        `Folder guide ${item.slug} must not emit save-file boilerplate in metaDescription: ${desc}`
+      );
+      assert.equal(
+        html.includes("Can I Delete WinSxS Folder? YES"),
+        false,
+        `Folder guide ${item.slug} must not emit 'Can I Delete WinSxS Folder? YES'`
+      );
+    }
   });
 });

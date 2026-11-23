@@ -74,7 +74,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "stremio-desktop-cache",
         path: "/clean/app/stremio-desktop-cache",
-        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
       },
       {
         slug: "amd-shader-cache",
@@ -94,12 +94,12 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "winsxs",
         path: "/clean/folder/winsxs",
-        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+        expectedTitle: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
       },
       {
         slug: "programdata-package-cache",
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
       },
       {
         slug: "elgato-streamdeck-cache",
@@ -109,7 +109,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "windows-livekernelreports",
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
       },
       {
         slug: "vivaldi-browser-cache",
@@ -119,7 +119,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "jetbrains-intellij-cache",
         path: "/clean/app/jetbrains-intellij-cache",
-        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
       },
     ];
 
@@ -165,8 +165,8 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
   // -------------------------------------------------------------
   // Test 2: All 377 Guide Titles Length & Collision Checks
   // -------------------------------------------------------------
-  test("CH-M2-1-02: All 377 guide titles satisfy length limits (30-115) with 0 duplicate collisions", () => {
-    assert.equal(allItems.length, 377, `Expected exactly 377 clean items, got ${allItems.length}`);
+  test("CH-M2-1-02: All 380 guide titles satisfy length limits (30-115) with 0 duplicate collisions", () => {
+    assert.equal(allItems.length, 380, `Expected exactly 380 clean items, got ${allItems.length}`);
 
     const titles: string[] = [];
     const titleToSlugs = new Map<string, string[]>();
@@ -217,7 +217,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
 
     assert.equal(outOfBounds.length, 0, `Found ${outOfBounds.length} titles outside 30-115 chars`);
     assert.equal(collisions.length, 0, `Found ${collisions.length} duplicate title collisions`);
-    assert.equal(new Set(titles).size, 377, "Expected exactly 377 unique titles");
+    assert.equal(new Set(titles).size, 380, "Expected exactly 380 unique titles");
   });
 
   // -------------------------------------------------------------

@@ -1,6 +1,7 @@
 import { analyzeSafeToDeleteInput } from "./safe-to-delete.js";
 import { escapeHtml } from "./security.js";
 import { assignExperimentVariant } from "./experiments.js";
+import { renderEditorialHead, renderSiteFooter, renderSiteHeader } from "./ui-shell.js";
 
 export interface TransactionalToolConfig {
   slug: string;
@@ -391,6 +392,19 @@ export const TRANSACTIONAL_TOOLS: TransactionalToolConfig[] = [
   },
 ];
 
+export const RETIRED_TOOL_REDIRECTS: Record<string, string> = {
+  "discord-cache-cleaner": "/clean/app/discord-cache",
+  "steam-cache-cleaner": "/clean/app/steam-depotcache",
+  "logitech-ghub-cleaner": "/clean/app/logitech-ghub-installer-cache",
+  "elgato-streamdeck-cleaner": "/clean/app/elgato-streamdeck-cache",
+  "valorant-logs-cleaner": "/clean/app/riot-client-logs",
+  "nvidia-shader-cleaner": "/clean/app/nvidia-dxcache",
+  "adobe-media-cache-cleaner": "/clean/app/adobe-premiere-media-cache",
+  "jetbrains-gradle-cleaner": "/clean/app/jetbrains-intellij-cache",
+  "windows-24h2-update-cleaner": "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
+  "ai-model-cache-cleaner": "/clean/app/comfyui-temp-output-cache",
+};
+
 export function getTransactionalToolBySlug(slug: string): TransactionalToolConfig | undefined {
   const clean = String(slug || "").trim().toLowerCase();
   return TRANSACTIONAL_TOOLS.find((t) => t.slug === clean);
@@ -719,105 +733,189 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
 }
 
 export function renderTransactionalToolsHub(): string {
-  const cards = TRANSACTIONAL_TOOLS.map(
-    (t) => `
-    <a href="/tools/${t.slug}" style="display:block;background:#ffffff;border:1px solid #d6dad5;border-radius:16px;padding:18px 20px;text-decoration:none;color:#111613;box-shadow:0 4px 14px rgba(17,22,19,0.04);">
-      <div style="font-size:11px;font-weight:800;color:#0d6847;margin-bottom:4px;">${escapeHtml(t.heroBadge)}</div>
-      <h2 style="font-size:18px;margin:0 0 6px;color:#111613;">${escapeHtml(t.shortName)} &rarr;</h2>
-      <p style="font-size:13.5px;color:#4b554e;margin:0 0 10px;">${escapeHtml(t.subtitle)}</p>
-      <div style="font-size:12.5px;font-weight:800;color:#073825;background:#e3ede7;display:inline-block;padding:4px 10px;border-radius:999px;">
-        Reclaim ${escapeHtml(t.typicalSavings)}
-      </div>
-    </a>`
-  ).join("\n");
+  const title = "Free Storage Diagnostic Tools & Path Checkers | SWEEPR";
+  const description =
+    "Interactive Windows & Mac storage tools: check if any Windows folder path is safe to delete, estimate reclaimable gaming/AI cache GB, and inspect 2026 benchmark data.";
+  const canonicalUrl = "https://sweeprcleaner.com/tools";
 
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Windows 11 App &amp; Game Cache Cleaner Tools (2026) | SWEEPR</title>
-  <meta name="description" content="Free interactive Windows 10/11 cache cleaner tools for Discord, Steam depotcache, Logitech G HUB, Stream Deck, VALORANT, NVIDIA DXCache, Adobe &amp; AI models.">
-  <link rel="canonical" href="https://sweeprcleaner.com/tools">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
-  <script type="application/ld+json">
-  {
+  const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "CollectionPage",
         "@id": "https://sweeprcleaner.com/tools#webpage",
-        "url": "https://sweeprcleaner.com/tools",
-        "name": "Windows 11 App & Game Cache Cleaner Tools (2026) | SWEEPR",
-        "description": "Free interactive Windows 10/11 cache cleaner tools for Discord, Steam, Logitech, Stream Deck, VALORANT, NVIDIA, Adobe, and AI dev models.",
-        "isPartOf": {
+        url: canonicalUrl,
+        name: title,
+        description,
+        isPartOf: {
           "@type": "WebSite",
           "@id": "https://sweeprcleaner.com/#website",
-          "name": "SWEEPR Cleaner",
-          "url": "https://sweeprcleaner.com"
-        }
+          name: "SWEEPR Cleaner",
+          url: "https://sweeprcleaner.com",
+        },
       },
       {
         "@type": "BreadcrumbList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "https://sweeprcleaner.com/"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Tools",
-            "item": "https://sweeprcleaner.com/tools"
-          }
-        ]
-      }
-    ]
-  }
-  </script>
-  <script src="/attribution.js" defer></script>
-  <script src="/analytics.js" defer></script>
-  <style>
-    body { margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f4f5f3; color:#111613; line-height:1.55; }
-    .container { max-width:980px; margin:0 auto; padding:24px 18px 80px; }
-    .nav { display:flex; justify-content:space-between; align-items:center; padding:12px 0 22px; border-bottom:1px solid #d6dad5; margin-bottom:26px; flex-wrap:wrap; gap:12px; }
-    .nav-links { display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-size:14px; font-weight:600; }
-    .nav-links a { color:#111613; text-decoration:none; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:14px; }
-  </style>
-</head>
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
+          { "@type": "ListItem", position: 2, name: "Tools", item: canonicalUrl },
+        ],
+      },
+    ],
+  };
+
+  const primaryTools = [
+    {
+      badge: "Interactive Diagnostic",
+      title: "Safe-to-Delete Folder & Path Checker",
+      href: "/safe-to-delete",
+      cta: "Open Path Checker",
+      summary:
+        "Paste any Windows path, %LocalAppData% directory, or PowerShell CSV export to check deletion safety verdicts before touching a single file.",
+    },
+    {
+      badge: "Capacity Estimator",
+      title: "PC Cache Bloat Calculator",
+      href: "/tools/pc-cache-calculator",
+      cta: "Launch Calculator",
+      summary:
+        "Select your installed games, GPU drivers, developer IDEs, and local AI workflows to estimate reclaimable SSD gigabytes.",
+    },
+    {
+      badge: "Empirical Dataset",
+      title: "2026 State of Windows Storage Study",
+      href: "/state-of-windows-storage",
+      cta: "Read Storage Report",
+      summary:
+        "See median and 90th-percentile disk usage across WinSxS, Steam depotcache, NVIDIA shaders, and Windows 11 24H2 updates.",
+    },
+  ];
+
+  const featuredGuides = [
+    {
+      href: "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
+      title: "Fix Windows 11 24H2 8.63 GB Update Cache Bug",
+      meta: "8.8 GB Lab Reclaimed",
+    },
+    {
+      href: "/clean/app/steam-depotcache",
+      title: "Steam depotcache & Shader Cache Cleanup",
+      meta: "18.5 GB Lab Reclaimed",
+    },
+    {
+      href: "/clean/app/nvidia-dxcache",
+      title: "NVIDIA DXCache & GLCache Cleanup",
+      meta: "10.1 GB Lab Reclaimed",
+    },
+    {
+      href: "/clean/app/comfyui-temp-output-cache",
+      title: "ComfyUI & Local AI Temp Cache Cleanup",
+      meta: "21.6 GB Lab Reclaimed",
+    },
+    {
+      href: "/clean/mac/system-data-huge",
+      title: "Fix Huge Mac System Data on macOS Sequoia/Sonoma",
+      meta: "12–90 GB Reclaimable",
+    },
+    {
+      href: "/clean/ios/iphone-system-data-full",
+      title: "Fix iPhone System Data Storage Full Without Reset",
+      meta: "5–35 GB Reclaimable",
+    },
+    {
+      href: "/clean/android/other-storage-full",
+      title: "Clear Android Other Storage Without Deleting Photos",
+      meta: "4–30 GB Reclaimable",
+    },
+    {
+      href: "/clean/app/logitech-ghub-installer-cache",
+      title: "Logitech G HUB Depots Bloat Cleanup",
+      meta: "10.8 GB Lab Reclaimed",
+    },
+    {
+      href: "/clean/app/elgato-streamdeck-cache",
+      title: "Elgato Stream Deck App Cache Folder Cleanup",
+      meta: "4.6 GB Lab Reclaimed",
+    },
+  ];
+
+  return `<!DOCTYPE html>
+<html lang="en">
+${renderEditorialHead({ title, description, canonical: canonicalUrl, jsonLd })}
 <body>
-  <div class="container">
-    <nav class="nav">
-      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#111613;font-weight:900;font-size:18px;">
-        <img src="/favicon.svg?v=20261031b" alt="SWEEPR" width="30" height="30" style="border-radius:8px;">
-        <span>SWEEPR <span style="color:#0d6847;">Cleaner</span></span>
-      </a>
-      <div class="nav-links">
-        <a href="/safe-to-delete">Safe-to-Delete Checker</a>
-        <a href="/clean">377 Folder Guides</a>
-        <a href="/bloat-watch">Bloat Watch</a>
-        <a href="/state-of-windows-storage">2026 Storage Study</a>
-        <a href="/pricing">Pricing</a>
-      </div>
+  ${renderSiteHeader("tools")}
+  <main id="main-content" class="ed-container">
+    <nav class="ed-crumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span>Tools</span>
     </nav>
-    <main>
-    <header style="margin-bottom:24px;">
-      <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:12px;font-weight:800;margin-bottom:10px;">
-        🛠️ 10 DEDICATED WINDOWS 10/11 CACHE CLEANERS
+
+    <h1 class="ed-h1">Free Storage Diagnostic Tools &amp; <em>Cleanup Utilities</em></h1>
+    <p class="ed-lead">
+      Every utility below runs directly in your browser with zero account sign-up and zero telemetry collection of personal paths. Audit suspicious folders first, calculate likely bloat, or jump directly to our verified OS guides.
+    </p>
+
+    <section class="ed-section">
+      <div class="ed-grid-3">
+        ${primaryTools
+          .map(
+            (tool) => `
+          <article class="ed-card" style="display:flex;flex-direction:column;justify-content:space-between;gap:14px;">
+            <div>
+              <div class="ed-kpi-label">${escapeHtml(tool.badge)}</div>
+              <h2 class="ed-h3" style="margin-bottom:8px;">${escapeHtml(tool.title)}</h2>
+              <p style="font-size:0.9rem;color:var(--muted);line-height:1.55;">${escapeHtml(tool.summary)}</p>
+            </div>
+            <div>
+              <a href="${tool.href}" class="ed-btn-primary btn-press">${escapeHtml(tool.cta)} &rarr;</a>
+            </div>
+          </article>`
+          )
+          .join("\n")}
       </div>
-      <h1 style="font-size:clamp(26px,4vw,36px);margin:0 0 10px;">App-Specific Windows Cache Cleaner Tools</h1>
-      <p style="color:#4b554e;font-size:15.5px;max-width:740px;margin:0;">
-        Select any application or game launcher below to audit its exact Windows cache directories, verify what stays protected, and clean it in one click with our Authenticode-signed native Rust cleaner.
-      </p>
-    </header>
-    <div class="grid">
-      ${cards}
-    </div>
-    </main>
-  </div>
+    </section>
+
+    <section class="ed-section">
+      <div class="ed-card">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px;">
+          <div>
+            <h2 class="ed-h2" style="margin-bottom:4px;">Direct App &amp; System Storage Fix Guides</h2>
+            <p style="font-size:0.9rem;color:var(--muted);">Canonical problem-solution walkthroughs for Windows 11, macOS, iPhone, and Android storage spikes.</p>
+          </div>
+          <a href="/clean" class="ed-btn-secondary btn-press">Browse All 69 Guides</a>
+        </div>
+        <div class="ed-ledger">
+          ${featuredGuides
+            .map(
+              (g) => `
+            <a href="${g.href}" class="ed-ledger-row">
+              <strong style="font-size:0.94rem;">${escapeHtml(g.title)}</strong>
+              <span class="ed-path-mono">${escapeHtml(g.href)}</span>
+              <span class="ed-status ed-status-safe"><span class="ed-dot" aria-hidden="true"></span>${escapeHtml(g.meta)}</span>
+              <span style="font-size:0.84rem;font-weight:700;color:var(--accent);">Open &rarr;</span>
+            </a>`
+            )
+            .join("\n")}
+        </div>
+      </div>
+    </section>
+
+    <section class="ed-section">
+      <div class="ed-card-muted">
+        <h2 class="ed-h2">Prefer Automated One-Click Scanning?</h2>
+        <p style="font-size:0.94rem;color:var(--muted);max-width:65ch;">
+          SWEEPR Cleaner is a 6.52 MB Authenticode-signed Rust utility for Windows, Mac, iPhone, and Android. It checks locked files safely, never runs hidden background processes when closed, and backs every eligible cleanup with a 7-day Undo Quarantine.
+        </p>
+        <div class="ed-actions">
+          <a href="/download?utm_source=tools_hub" class="ed-btn-primary btn-press" rel="nofollow">Free Download</a>
+          <a href="/vs/ccleaner" class="ed-btn-secondary btn-press">Compare vs CCleaner</a>
+          <a href="/vs/cleanmymac" class="ed-btn-secondary btn-press">Compare vs CleanMyMac</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  ${renderSiteFooter()}
 </body>
 </html>`;
 }

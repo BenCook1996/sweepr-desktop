@@ -1,6 +1,7 @@
-import { getCleanItems, getGscPriorityInternalLinkSlugs, type CleanItem } from "./pseo.js";
+import { getCleanItems, getGscPriorityInternalLinkSlugs, isPseoSlugNoindexed, type CleanItem } from "./pseo.js";
 import { escapeHtml } from "./security.js";
 import { ACTIVE_EXPERIMENTS, assignExperimentVariant } from "./experiments.js";
+import { renderEditorialHead, renderSiteFooter, renderSiteHeader } from "./ui-shell.js";
 
 export interface SafeToDeleteMatchResult {
   input: string;
@@ -12,7 +13,7 @@ export interface SafeToDeleteMatchResult {
     | "UNRECOGNIZED PATH";
   badge_color: "green" | "amber" | "red" | "gray";
   slug: string | null;
-  category: "app" | "folder" | null;
+  category: CleanItem["category"] | null;
   name: string;
   canonical_path: string;
   avg_space: string;
@@ -204,6 +205,8 @@ export function analyzeSafeToDeleteInput(rawInput: string): SafeToDeleteAnalysis
       const estGb = reportedGb ?? estimateMidpointGb(bestItem.avgSpace);
       totalGb += estGb;
 
+      const hasIndexableGuide = !isPseoSlugNoindexed(bestItem.slug) && !bestItem.noindex && !bestItem.mergedIntoSlug;
+
       results.push({
         input: line,
         matched: true,
@@ -215,7 +218,7 @@ export function analyzeSafeToDeleteInput(rawInput: string): SafeToDeleteAnalysis
         canonical_path: bestItem.path,
         avg_space: bestItem.avgSpace,
         estimated_gb: estGb,
-        guide_url: `/clean/${bestItem.category}/${bestItem.slug}`,
+        guide_url: hasIndexableGuide ? `/clean/${bestItem.category}/${bestItem.slug}` : null,
         explanation: bestItem.whatIsIt,
         what_happens: bestItem.whatHappens,
       });
@@ -378,186 +381,163 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
   const renderRowsHtml = (analysis: SafeToDeleteAnalysis) =>
     analysis.results
       .map((r) => {
-        const badgeStyles =
+        const statusCls =
           r.badge_color === "green"
-            ? "background:#dcfce7;color:#14532d;border:1px solid #86efac;"
+            ? "ed-status-safe"
             : r.badge_color === "amber"
-            ? "background:#fef3c7;color:#78350f;border:1px solid #fcd34d;"
-            : r.badge_color === "red"
-            ? "background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;"
-            : "background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;";
-        return `<div class="result-card" style="background:#ffffff;border:1px solid #d6dad5;border-radius:16px;padding:18px 20px;margin-bottom:12px;">
-          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
-            <div>
-              <span style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:0.04em;${badgeStyles}">${escapeHtml(r.verdict)}</span>
-              <strong style="font-size:16px;margin-left:8px;color:#111613;">${escapeHtml(r.name)}</strong>
+              ? "ed-status-caution"
+              : r.badge_color === "red"
+                ? "ed-status-danger"
+                : "";
+        return `<article class="ed-card result-card" style="margin-bottom:12px;">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+              <span class="ed-status ${statusCls}"><span class="ed-dot" aria-hidden="true"></span>${escapeHtml(r.verdict)}</span>
+              <strong style="font-size:1rem;color:var(--text);">${escapeHtml(r.name)}</strong>
             </div>
-            <div style="font-size:13px;font-weight:700;color:#0d6847;">
+            <div class="mono" style="font-size:0.84rem;font-weight:700;color:var(--accent);">
               ${r.estimated_gb > 0 ? `Est. Savings: ~${r.estimated_gb} GB (${escapeHtml(r.avg_space)})` : escapeHtml(r.avg_space)}
             </div>
           </div>
-          <div style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;color:#334155;background:#f8faf9;padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:10px;word-break:break-all;">
+          <div class="ed-path-box" style="margin:8px 0 12px;">
             Input: <strong>${escapeHtml(r.input)}</strong> &rarr; Canonical: <code>${escapeHtml(r.canonical_path)}</code>
           </div>
-          <p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 6px;"><strong>Why it grows:</strong> ${escapeHtml(r.explanation)}</p>
-          <p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 10px;"><strong>If deleted:</strong> ${escapeHtml(r.what_happens)}</p>
+          <p style="font-size:0.9rem;color:var(--text);line-height:1.55;margin-bottom:6px;"><strong>Why it grows:</strong> ${escapeHtml(r.explanation)}</p>
+          <p style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:10px;"><strong>If deleted:</strong> ${escapeHtml(r.what_happens)}</p>
           ${
             r.guide_url
-              ? `<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-                  <a href="${escapeHtml(r.guide_url)}" style="font-size:13px;font-weight:700;color:#0d6847;text-decoration:none;">Read Full Safety Audit &amp; Manual Steps &rarr;</a>
-                  <a href="/order?plan=annual&utm_source=safe_to_delete_item" rel="nofollow" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a>
+              ? `<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+                  <a href="${escapeHtml(r.guide_url)}" style="font-size:0.86rem;font-weight:700;color:var(--accent);text-decoration:underline;">Read Full Safety Guide &amp; Manual Steps &rarr;</a>
+                  <a href="/order?plan=annual&amp;utm_source=safe_to_delete_item" rel="nofollow" style="font-size:0.84rem;font-weight:600;color:var(--text);text-decoration:underline;">Auto-Clean with SWEEPR Pro</a>
                 </div>`
               : ""
           }
-        </div>`;
+        </article>`;
       })
       .join("\n");
 
-  return `<!doctype html>
+  const trendingGuides = getGscPriorityInternalLinkSlugs()
+    .map((slug) => getCleanItems().find((i) => i.slug === slug))
+    .filter((i): i is CleanItem => Boolean(i))
+    .filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug)
+    .slice(0, 9);
+
+  const pageTitle = "Is This Folder Safe to Delete? Windows Path Checker | SWEEPR";
+  const pageDesc = `Paste any Windows 10/11 folder path or PowerShell disk export to check if it is safe to delete across ${totalRules} audited AppData, Steam, NVIDIA & system rules.`;
+
+  return `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Is This Folder Safe to Delete? Windows Path Checker | SWEEPR</title>
-  <meta name="description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across ${totalRules} audited AppData, Steam, NVIDIA &amp; system caches.">
-  <link rel="canonical" href="https://sweeprcleaner.com/safe-to-delete">
-  <meta property="og:title" content="Is This Folder Safe to Delete? Windows Path Checker | SWEEPR">
-  <meta property="og:description" content="Paste any Windows 10/11 folder path or PowerShell disk export to check if it is 100% safe to delete across ${totalRules} audited AppData, Steam, NVIDIA &amp; system caches.">
-  <meta property="og:url" content="https://sweeprcleaner.com/safe-to-delete">
-  <meta property="og:type" content="website">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
-  <script type="application/ld+json">${jsonLd}</script>
-  <script src="/attribution.js" defer></script>
-  <script src="/analytics.js" defer></script>
-  <style>
-    :root { --bg:#f4f5f3; --card:#ffffff; --text:#111613; --muted:#4b554e; --accent:#0d6847; --border:#d6dad5; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
-    .container { max-width:980px; margin:0 auto; padding:24px 18px 80px; }
-    .nav { display:flex; justify-content:space-between; align-items:center; padding:14px 0 24px; border-bottom:1px solid var(--border); margin-bottom:28px; flex-wrap:wrap; gap:12px; }
-    .nav-links { display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-size:14px; font-weight:600; }
-    .nav-links a { color:var(--text); text-decoration:none; }
-    .btn-primary { background:var(--accent); color:#fff !important; padding:10px 18px; border-radius:10px; font-weight:700; text-decoration:none; display:inline-block; border:none; cursor:pointer; font-size:14px; }
-    .btn-secondary { background:#111613; color:#fff !important; padding:10px 18px; border-radius:10px; font-weight:700; text-decoration:none; display:inline-block; border:none; cursor:pointer; font-size:14px; }
-    .preset-btn { background:#e3ede7; color:#073825; border:1px solid #b8d8c5; padding:7px 12px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; }
-    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin:18px 0; }
-    .kpi-box { background:#fff; border:1px solid var(--border); border-radius:14px; padding:14px 16px; }
-    textarea { width:100%; min-height:165px; padding:14px; border-radius:12px; border:1px solid #b8c0b8; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:13px; resize:vertical; background:#fbfcfb; color:#111613; }
-  </style>
-</head>
+${renderEditorialHead({
+  title: pageTitle,
+  description: pageDesc,
+  canonical: "https://sweeprcleaner.com/safe-to-delete",
+  jsonLd,
+})}
 <body>
-  <div class="container">
-    <nav class="nav" aria-label="Primary Navigation">
-      <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#111613;font-weight:900;font-size:18px;">
-        <img src="/favicon.svg?v=20261031b" alt="SWEEPR" width="30" height="30" style="border-radius:8px;">
-        <span>SWEEPR <span style="color:#0d6847;">Cleaner</span></span>
-      </a>
-      <div class="nav-links">
-        <a href="/clean">${totalRules} Folder Encyclopedia</a>
-        <a href="/bloat-watch">Bloat Watch</a>
-        <a href="/state-of-windows-storage">2026 Storage Study</a>
-        <a href="/vs/ccleaner">SWEEPR vs CCleaner</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/order?plan=annual" rel="nofollow" class="btn-primary">Get SWEEPR Pro &rarr;</a>
-      </div>
+  ${renderSiteHeader("tools")}
+  <main id="main-content" class="ed-container">
+    <nav class="ed-crumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/tools">Tools</a>
+      <span aria-hidden="true">/</span>
+      <span>Safe-to-Delete Checker</span>
     </nav>
 
-    <header style="margin-bottom:24px;">
-      <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:12px;font-weight:800;margin-bottom:10px;">
-        🛡️ INSTANT WINDOWS PATH AUDIT &bull; ${totalRules} AUDITED CACHE RULES
-      </div>
-      <h1 style="font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0 0 10px;">
-        Is This Windows Folder Safe to Delete?
-      </h1>
-      <p style="color:var(--muted);font-size:16px;max-width:760px;margin:0;">
-        Paste any Windows 10/11 folder path, <code>%LocalAppData%</code> directory, or PowerShell/WizTree CSV list below. We match every line against <strong>${totalRules} engineer-audited cache rules</strong> and flag OS-critical directories before you delete anything.
-      </p>
-    </header>
+    <h1 class="ed-h1">Is This Windows Folder <em>Safe to Delete?</em></h1>
+    <p class="ed-lead">
+      Paste any Windows 10 or Windows 11 folder path, <code class="ed-code">%LocalAppData%</code> directory, or WizTree/PowerShell CSV export below. Every line is checked against <strong>${totalRules} audited Windows storage rules</strong> with explicit protection for OS-critical system directories.
+    </p>
 
-    <section style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:0 8px 28px rgba(17,22,19,0.05);margin-bottom:24px;">
+    <section class="ed-section ed-card">
       <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;">
-        <label for="pathInput" style="font-weight:800;font-size:14px;">Paste Windows Paths or Folder Names (1 per line):</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          <button type="button" class="preset-btn" onclick="loadPreset('gaming')">🎮 Gaming &amp; Shader Preset</button>
-          <button type="button" class="preset-btn" onclick="loadPreset('dev')">💻 AppData &amp; Dev Preset</button>
-          <button type="button" class="preset-btn" onclick="loadPreset('win')">🪟 Windows Update Preset</button>
-          <label class="preset-btn" style="cursor:pointer;">
-            📂 Upload .CSV / .TXT
-            <input type="file" id="csvUpload" accept=".csv,.txt,.log" style="display:none" onchange="handleFileUpload(event)">
+        <label for="pathInput" style="font-weight:700;font-size:0.92rem;">Paste Windows paths or folder names (one per line):</label>
+        <div class="ed-filter-pills" style="margin-top:0;">
+          <button type="button" class="ed-filter-pill" onclick="loadPreset('gaming')">Gaming &amp; Shaders Preset</button>
+          <button type="button" class="ed-filter-pill" onclick="loadPreset('dev')">AppData &amp; Dev Preset</button>
+          <button type="button" class="ed-filter-pill" onclick="loadPreset('win')">Windows Update Preset</button>
+          <label class="ed-filter-pill" style="display:inline-flex;align-items:center;">
+            Upload .CSV / .TXT
+            <input type="file" id="csvUpload" accept=".csv,.txt,.log" style="display:none" onchange="handleFileUpload(event)" />
           </label>
         </div>
       </div>
 
-      <textarea id="pathInput" placeholder="Example:&#10;C:\Program Files (x86)\Steam\depotcache&#10;%LocalAppData%\NVIDIA\DXCache&#10;C:\ProgramData\Package Cache">${escapeHtml(defaultSample)}</textarea>
+      <textarea id="pathInput" class="ed-textarea" placeholder="Example:&#10;C:\\Program Files (x86)\\Steam\\depotcache&#10;%LocalAppData%\\NVIDIA\\DXCache&#10;C:\\ProgramData\\Package Cache">${escapeHtml(defaultSample)}</textarea>
 
       <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;">
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-          <button type="button" class="btn-primary" onclick="runAudit()" id="auditBtn">🔍 Audit Paths Now</button>
-          <button type="button" class="preset-btn" onclick="copyPowerShellHelper()" id="psCopyBtn">📋 Copy 1-Line PowerShell Folder Exporter</button>
+          <button type="button" class="ed-btn-primary btn-press" onclick="runAudit()" id="auditBtn">Audit Paths Now</button>
+          <button type="button" class="ed-btn-secondary btn-press" onclick="copyPowerShellHelper()" id="psCopyBtn">Copy 1-Line PowerShell Exporter</button>
         </div>
-        <span style="font-size:12.5px;color:var(--muted);">100% privacy-safe: Windows usernames are automatically redacted.</span>
+        <span style="font-size:0.82rem;color:var(--muted);">Privacy-safe: Windows usernames are stripped before matching.</span>
       </div>
     </section>
 
-    <section class="kpi-grid" id="kpiSummary">
-      <div class="kpi-box">
-        <div style="font-size:12px;color:var(--muted);font-weight:700;">EST. RECLAIMABLE SPACE</div>
-        <div style="font-size:26px;font-weight:900;color:#0d6847;" id="kpiGb">~${initialAnalysis.estimated_reclaimable_gb} GB</div>
+    <section class="ed-section ed-grid-4" id="kpiSummary">
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">EST. RECLAIMABLE SPACE</div>
+        <div class="ed-kpi-val" style="color:var(--accent);" id="kpiGb">~${initialAnalysis.estimated_reclaimable_gb} GB</div>
       </div>
-      <div class="kpi-box">
-        <div style="font-size:12px;color:var(--muted);font-weight:700;">SAFE TO DELETE</div>
-        <div style="font-size:26px;font-weight:900;color:#15803d;" id="kpiSafe">${initialAnalysis.safe_count} folders</div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">SAFE TO DELETE</div>
+        <div class="ed-kpi-val" style="color:var(--accent-ink);" id="kpiSafe">${initialAnalysis.safe_count} folders</div>
       </div>
-      <div class="kpi-box">
-        <div style="font-size:12px;color:var(--muted);font-weight:700;">CONDITIONAL / CAUTION</div>
-        <div style="font-size:26px;font-weight:900;color:#b45309;" id="kpiCaution">${initialAnalysis.caution_count} folders</div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">CONDITIONAL / CAUTION</div>
+        <div class="ed-kpi-val" style="color:var(--amber-ink);" id="kpiCaution">${initialAnalysis.caution_count} folders</div>
       </div>
-      <div class="kpi-box">
-        <div style="font-size:12px;color:var(--muted);font-weight:700;">OS CRITICAL (PROTECTED)</div>
-        <div style="font-size:26px;font-weight:900;color:#b91c1c;" id="kpiDanger">${initialAnalysis.danger_count} folders</div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">OS CRITICAL (PROTECTED)</div>
+        <div class="ed-kpi-val" style="color:var(--red-ink);" id="kpiDanger">${initialAnalysis.danger_count} folders</div>
       </div>
     </section>
 
-    <div style="background:linear-gradient(135deg,#073825,#0d6847);color:#fff;border-radius:18px;padding:20px 24px;margin-bottom:24px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
-      <div style="max-width:600px;">
-        <div style="font-size:12px;font-weight:800;letter-spacing:0.05em;color:#9adbc0;margin-bottom:4px;">AUTOMATED ZERO-RISK CLEANUP</div>
-        <h2 style="margin:0 0 6px;font-size:20px;">Don&rsquo;t want to delete folders by hand in File Explorer?</h2>
-        <p style="margin:0;font-size:13.5px;color:#e3ede7;">
-          SWEEPR Cleaner automatically skips files locked by active games or Windows processes, preserves all logins &amp; save files, and reclaims 10&ndash;65 GB in one click.
-        </p>
+    <section class="ed-section ed-card-muted">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+        <div style="max-width:600px;">
+          <div class="ed-kpi-label" style="color:var(--accent);">AUTOMATED SAFE CLEANUP</div>
+          <h2 class="ed-h2" style="margin-bottom:6px;">Skip manual File Explorer deletion</h2>
+          <p style="font-size:0.92rem;color:var(--muted);">
+            SWEEPR Cleaner skips files locked by active games or Windows services, keeps logins and save files intact, and protects eligible cleanups with a 7-day Undo Quarantine.
+          </p>
+        </div>
+        <div class="ed-actions" style="margin-top:0;" data-experiment-id="checker_cta_copy_v1" data-experiment-variant="${ctaVariant}">
+          <a href="/order?plan=annual&amp;utm_source=safe_to_delete_cta&amp;exp_var=${ctaVariant}" rel="nofollow" id="checkerMainProCta" class="ed-btn-primary btn-press" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual'})">${escapeHtml(ctaButtonCopy)}</a>
+          <a href="/download?platform=windows" rel="nofollow" class="ed-btn-secondary btn-press" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
+        </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;" data-experiment-id="checker_cta_copy_v1" data-experiment-variant="${ctaVariant}">
-        <a href="/order?plan=annual&utm_source=safe_to_delete_cta&exp_var=${ctaVariant}" rel="nofollow" id="checkerMainProCta" class="btn-primary" style="background:#ffffff;color:#073825 !important;font-weight:800;" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'order_annual'})">${escapeHtml(ctaButtonCopy)}</a>
-        <a href="/download?platform=windows" rel="nofollow" class="btn-secondary" style="background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);" onclick="if(window.sweeprTrack)window.sweeprTrack('experiment_conversion',{experiment:'checker_cta_copy_v1',variant:'${ctaVariant}',action:'download_exe'})">Download Free Scanner (.exe)</a>
-      </div>
-    </div>
+    </section>
 
-    <section id="gsc-trending-storage-fixes" style="margin-bottom:24px;background:#ffffff;border:1px solid #d6dad5;border-radius:18px;padding:22px;">
-      <h2 style="font-size:18px;font-weight:800;margin:0 0 6px;color:#111613;">🔥 Trending Windows 10 &amp; 11 Storage Cleanup Guides</h2>
-      <p style="font-size:13px;color:#4b554e;margin:0 0 14px;">Direct safety audits and step-by-step cleanup instructions for the most frequently queried Windows folders in Search Console:</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
-        ${getGscPriorityInternalLinkSlugs()
-          .slice(0, 9)
-          .map((slug) => getCleanItems().find((i) => i.slug === slug))
-          .filter((i): i is CleanItem => Boolean(i))
+    <section class="ed-section" id="resultsContainer" aria-live="polite">
+      ${renderRowsHtml(initialAnalysis)}
+    </section>
+
+    <section id="gsc-trending-storage-fixes" class="ed-section ed-card">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:14px;">
+        <div>
+          <h2 class="ed-h2" style="margin-bottom:4px;">Frequently Audited Windows Storage Guides</h2>
+          <p style="font-size:0.88rem;color:var(--muted);">Direct path audits and manual PowerShell commands for the highest-impact folders.</p>
+        </div>
+        <a href="/clean" class="ed-btn-secondary btn-press">All Storage Guides</a>
+      </div>
+      <div class="ed-grid-3">
+        ${trendingGuides
           .map(
-            (i) => `<a href="/clean/${i.category}/${i.slug}" style="display:block;padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#f8faf9;text-decoration:none;color:#111613;">
-              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:4px;">
-                <span style="color:${i.safeToDelete ? "#0d6847" : "#b45309"};">${i.safeToDelete ? "🟢 Safe to Delete" : "⚠️ Caution"}</span>
-                <span style="color:#334155;">${escapeHtml(i.avgSpace)}</span>
+            (i) => `<a href="/clean/${i.category}/${i.slug}" class="ed-card-muted" style="display:block;padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+                <span class="ed-status ${i.safeToDelete ? "ed-status-safe" : "ed-status-caution"}"><span class="ed-dot" aria-hidden="true"></span>${i.safeToDelete ? "Safe to Delete" : "Caution"}</span>
+                <span class="mono" style="font-size:0.78rem;font-weight:700;color:var(--text);">${escapeHtml(i.avgSpace)}</span>
               </div>
-              <div style="font-size:13.5px;font-weight:800;margin-bottom:2px;">${escapeHtml(i.name)}</div>
-              <div style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(i.path)}</div>
+              <div style="font-size:0.92rem;font-weight:700;color:var(--text);margin-bottom:4px;">${escapeHtml(i.name)}</div>
+              <div class="ed-path-mono">${escapeHtml(i.path)}</div>
             </a>`
           )
           .join("\n")}
       </div>
     </section>
-
-    <section id="resultsContainer">
-      ${renderRowsHtml(initialAnalysis)}
-    </section>
-  </div>
+  </main>
+  ${renderSiteFooter()}
 
   <script>
     const PRESETS = {
@@ -597,8 +577,8 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
       const cmd = 'Get-ChildItem "$env:LOCALAPPDATA" -Directory | ForEach-Object { $_.FullName } | Set-Clipboard';
       navigator.clipboard.writeText(cmd).then(() => {
         const btn = document.getElementById('psCopyBtn');
-        btn.textContent = '✓ Copied PowerShell Command to Clipboard!';
-        setTimeout(() => { btn.textContent = '📋 Copy 1-Line PowerShell Folder Exporter'; }, 3000);
+        btn.textContent = 'Copied PowerShell Command';
+        setTimeout(() => { btn.textContent = 'Copy 1-Line PowerShell Exporter'; }, 3000);
       }).catch(() => {});
     }
 
@@ -641,31 +621,31 @@ export function renderSafeToDeletePageHtml(initialQuery = "", visitorKey = "anon
         document.getElementById('kpiDanger').textContent = data.danger_count + ' folders';
 
         const html = (data.results || []).map(r => {
-          const badgeStyles =
+          const statusCls =
             r.badge_color === 'green'
-              ? 'background:#dcfce7;color:#14532d;border:1px solid #86efac;'
+              ? 'ed-status-safe'
               : r.badge_color === 'amber'
-              ? 'background:#fef3c7;color:#78350f;border:1px solid #fcd34d;'
+              ? 'ed-status-caution'
               : r.badge_color === 'red'
-              ? 'background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;'
-              : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;';
-          return '<div class="result-card" style="background:#ffffff;border:1px solid #d6dad5;border-radius:16px;padding:18px 20px;margin-bottom:12px;">' +
-            '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">' +
-              '<div><span style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:0.04em;' + badgeStyles + '">' + esc(r.verdict) + '</span>' +
-              '<strong style="font-size:16px;margin-left:8px;color:#111613;">' + esc(r.name) + '</strong></div>' +
-              '<div style="font-size:13px;font-weight:700;color:#0d6847;">' + (r.estimated_gb > 0 ? 'Est. Savings: ~' + r.estimated_gb + ' GB (' + esc(r.avg_space) + ')' : esc(r.avg_space)) + '</div>' +
+              ? 'ed-status-danger'
+              : '';
+          return '<article class="ed-card result-card" style="margin-bottom:12px;">' +
+            '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">' +
+              '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;"><span class="ed-status ' + statusCls + '"><span class="ed-dot" aria-hidden="true"></span>' + esc(r.verdict) + '</span>' +
+              '<strong style="font-size:1rem;color:var(--text);">' + esc(r.name) + '</strong></div>' +
+              '<div class="mono" style="font-size:0.84rem;font-weight:700;color:var(--accent);">' + (r.estimated_gb > 0 ? 'Est. Savings: ~' + r.estimated_gb + ' GB (' + esc(r.avg_space) + ')' : esc(r.avg_space)) + '</div>' +
             '</div>' +
-            '<div style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px;color:#334155;background:#f8faf9;padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:10px;word-break:break-all;">' +
+            '<div class="ed-path-box" style="margin:8px 0 12px;">' +
               'Input: <strong>' + esc(r.input) + '</strong> &rarr; Canonical: <code>' + esc(r.canonical_path) + '</code>' +
             '</div>' +
-            '<p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 6px;"><strong>Why it grows:</strong> ' + esc(r.explanation) + '</p>' +
-            '<p style="font-size:13.5px;color:#374151;line-height:1.55;margin:0 0 10px;"><strong>If deleted:</strong> ' + esc(r.what_happens) + '</p>' +
-            (r.guide_url ? '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;"><a href="' + esc(r.guide_url) + '" style="font-size:13px;font-weight:700;color:#0d6847;text-decoration:none;">Read Full Safety Audit &amp; Manual Steps &rarr;</a><a href="/order?plan=annual&utm_source=safe_to_delete_item" rel="nofollow" style="font-size:12.5px;font-weight:700;color:#111613;text-decoration:underline;">Auto-Clean with SWEEPR Pro</a></div>' : '') +
-          '</div>';
+            '<p style="font-size:0.9rem;color:var(--text);line-height:1.55;margin-bottom:6px;"><strong>Why it grows:</strong> ' + esc(r.explanation) + '</p>' +
+            '<p style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:10px;"><strong>If deleted:</strong> ' + esc(r.what_happens) + '</p>' +
+            (r.guide_url ? '<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;"><a href="' + esc(r.guide_url) + '" style="font-size:0.86rem;font-weight:700;color:var(--accent);text-decoration:underline;">Read Full Safety Guide &amp; Manual Steps &rarr;</a><a href="/order?plan=annual&amp;utm_source=safe_to_delete_item" rel="nofollow" style="font-size:0.84rem;font-weight:600;color:var(--text);text-decoration:underline;">Auto-Clean with SWEEPR Pro</a></div>' : '') +
+          '</article>';
         }).join('');
         document.getElementById('resultsContainer').innerHTML = html;
       } catch (e) {}
-      btn.textContent = '🔍 Audit Paths Now';
+      btn.textContent = 'Audit Paths Now';
     }
   </script>
 </body>

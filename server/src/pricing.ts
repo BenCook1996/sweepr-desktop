@@ -592,16 +592,21 @@ export function getPricingForCountryOrCurrency(
   const rawCountry = (countryInput || "").trim().toUpperCase();
   const rawCurrency = (currencyInput || "").trim().toLowerCase();
   const fallbackCountry =
-    (rawCurrency && CURRENCY_TO_DEFAULT_COUNTRY[rawCurrency]) || "GB";
+    (rawCurrency && Object.hasOwn(CURRENCY_TO_DEFAULT_COUNTRY, rawCurrency)
+      ? CURRENCY_TO_DEFAULT_COUNTRY[rawCurrency]
+      : undefined) || "GB";
   const country = /^[A-Z]{2}$/.test(rawCountry) && rawCountry !== "XX" ? rawCountry : fallbackCountry;
   const normCountry = country === "UK" ? "GB" : country;
 
   const resolvedCurrencyKey =
-    (rawCurrency && PRICING_BY_CURRENCY[rawCurrency] ? rawCurrency : null) ||
+    (rawCurrency && Object.hasOwn(PRICING_BY_CURRENCY, rawCurrency) ? rawCurrency : null) ||
     COUNTRY_TO_CURRENCY[normCountry] ||
     "gbp";
 
-  const tier = PRICING_BY_CURRENCY[resolvedCurrencyKey] || PRICING_BY_CURRENCY.gbp;
+  const tier =
+    (Object.hasOwn(PRICING_BY_CURRENCY, resolvedCurrencyKey)
+      ? PRICING_BY_CURRENCY[resolvedCurrencyKey]
+      : undefined) || PRICING_BY_CURRENCY.gbp;
   const language = COUNTRY_TO_LANG[normCountry] || "en";
   const countryFlag = countryCodeToFlag(normCountry);
 

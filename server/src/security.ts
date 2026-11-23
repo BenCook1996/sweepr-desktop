@@ -35,11 +35,54 @@ export function normalizeEmail(v: unknown): string | null {
   return e;
 }
 
-const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const UNSAFE_OBJECT_KEYS = new Set([
+  "constructor",
+  "__proto__",
+  "prototype",
+  "tostring",
+  "valueof",
+  "hasownproperty",
+  "isprototypeof",
+  "propertyisenumerable",
+  "tolocalestring",
+  "__definegetter__",
+  "__definesetter__",
+  "__lookupgetter__",
+  "__lookupsetter__",
+]);
 
-/** Guard against prototype-pollution keys when indexing plain JS objects with untrusted strings. */
+const UNSAFE_OBJECT_KEYS_ALNUM = new Set(
+  Array.from(UNSAFE_OBJECT_KEYS, (k) => k.replace(/[^a-z0-9]/g, ""))
+);
+
+/** Guard against prototype-pollution / Object.prototype keys when indexing plain JS objects with untrusted strings. */
 export function isSafeObjectKey(key: unknown): key is string {
-  return typeof key === "string" && key.length > 0 && key.length <= 200 && !UNSAFE_OBJECT_KEYS.has(key);
+  if (typeof key !== "string") return false;
+  const trimmed = key.trim();
+  if (trimmed.length === 0 || key.length > 200) return false;
+  return !UNSAFE_OBJECT_KEYS.has(trimmed.toLowerCase());
+}
+
+/**
+ * Guard SEO route parameters against Object.prototype property probes disguised via
+ * casing, `.html`/`.htm`/web extensions, URL-encoded spaces (`%20`), or punctuation/underscores.
+ */
+export function isSafeSeoRouteParam(raw: unknown): raw is string {
+  if (!isSafeObjectKey(raw)) return false;
+  const trimmed = raw.trim();
+  const stem = trimmed.replace(/(?:\.html?)+$/i, "");
+  const dotStem = trimmed.replace(/(?:\.[a-z0-9]{1,10})+$/i, "");
+  if (!isSafeObjectKey(stem) || !isSafeObjectKey(dotStem)) return false;
+  for (const candidate of [trimmed, stem, dotStem]) {
+    const noPct = candidate.replace(/%20/gi, "");
+    const keepUnderscore = noPct.replace(/[^a-z0-9_]/gi, "").toLowerCase();
+    const alphaNum = noPct.replace(/[^a-z0-9]/gi, "").toLowerCase();
+    if (!keepUnderscore || !alphaNum) return false;
+    if (UNSAFE_OBJECT_KEYS.has(keepUnderscore) || UNSAFE_OBJECT_KEYS_ALNUM.has(alphaNum)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 const FULL_ACTIVATION_CODE_RE = /^(?:SWEEPR|SWP|CLN|GOTD|DEEPBLOCK)-[A-Z0-9]{2,16}(?:-[A-Z0-9]{2,16}){1,5}$/i;

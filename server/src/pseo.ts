@@ -3,8 +3,13 @@ import { readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getActiveTelemetryTruthForSlug } from "./seo/telemetry-truth.js";
-import { getPublishedBloatWatchForCleanSlug } from "./seo/bloat-watch.js";
 import { escapeHtml as esc, isSafeObjectKey } from "./security.js";
+import {
+  ORGANIZATION_SAME_AS,
+  renderEditorialHead,
+  renderSiteFooter,
+  renderSiteHeader,
+} from "./ui-shell.js";
 
 const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -14,7 +19,8 @@ const pseoRedirectsData: Record<string, string> = require("./data/pseo-redirects
 
 export interface CleanItem {
   slug: string;
-  category: "app" | "folder";
+  category: "app" | "folder" | "mac" | "ios" | "android";
+  platform?: "windows" | "mac" | "ios" | "android";
   name: string;
   path: string;
   safeToDelete: boolean;
@@ -23,6 +29,23 @@ export interface CleanItem {
   whatIsIt: string;
   whatHappens: string;
   manualSteps: string[];
+  questionTitle?: string;
+  directAnswer?: string;
+  whenNotToDelete?: string;
+  whyItGrows?: string;
+  isChromiumBased?: boolean;
+  shellCommand?: {
+    label: string;
+    language: "powershell" | "bash" | "cmd";
+    code: string;
+  };
+  labMeasurement?: {
+    beforeGb: number;
+    afterGb: number;
+    reclaimedGb: number;
+    osBuild: string;
+    notes: string;
+  };
   metaTitle?: string;
   metaDescription?: string;
   customFaqs?: Array<{ q: string; a: string }>;
@@ -77,14 +100,18 @@ const RETIRED_VARIANT_SUFFIX_RE =
   /-(service-worker-cachestorage|media-blob-storage|code-bytecode-cache|gpu-shader-cache|crashpad-dump-logs)$/;
 
 function resolveIndexableRedirect(target: string): string {
-  const m = target.match(/^\/clean\/(?:app|folder)\/([a-z0-9-]+)$/i);
+  const m = target.match(/^\/clean\/(?:app|folder|mac|ios|android)\/([a-z0-9-]+)$/i);
   if (m && isPseoSlugNoindexed(m[1])) {
     return "/clean";
   }
   return target;
 }
 
-export function getPseoRedirectTarget(category: string, slug: string): string | undefined {
+export type PseoRouteDisposition =
+  | { action: "redirect"; target: string }
+  | { action: "gone"; parentTarget?: string };
+
+export function getPseoRouteDisposition(category: string, slug: string): PseoRouteDisposition | undefined {
   if (!isSafeObjectKey(category) || !isSafeObjectKey(slug)) return undefined;
   getCleanItems();
   const key = `${category}:${slug}`;
@@ -95,19 +122,23 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
     ? pseoRedirectsData[key]
     : undefined;
   if (direct) {
-    return resolveIndexableRedirect(direct);
+    const m = direct.match(/^\/clean\/(?:app|folder|mac|ios|android)\/([a-z0-9-]+)$/i);
+    if (m && isPseoSlugNoindexed(m[1]) && RETIRED_VARIANT_SUFFIX_RE.test(slug)) {
+      return { action: "gone", parentTarget: direct };
+    }
+    return { action: "redirect", target: resolveIndexableRedirect(direct) };
   }
   if (slug === "nvidia-shader-cache" || slug === "nvidia-dx-cache") {
-    return "/clean/app/nvidia-dxcache";
+    return { action: "redirect", target: "/clean/app/nvidia-dxcache" };
   }
   if (slug === "livekernelreports") {
-    return "/clean/folder/windows-livekernelreports";
+    return { action: "redirect", target: "/clean/folder/windows-livekernelreports" };
   }
   if (slug === "vivaldi-cache") {
-    return "/clean/app/vivaldi-browser-cache";
+    return { action: "redirect", target: "/clean/app/vivaldi-browser-cache" };
   }
   if (slug === "intellij-idea-caches" || slug === "intellij-cache") {
-    return "/clean/app/jetbrains-intellij-cache";
+    return { action: "redirect", target: "/clean/app/jetbrains-intellij-cache" };
   }
   if (
     slug === "elgato-stream-deck-cache" ||
@@ -118,13 +149,14 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
     slug === "elgato-stream-deck-crashpad-dump-logs" ||
     (slug.startsWith("elgato-streamdeck-") && slug !== "elgato-streamdeck-cache")
   ) {
-    return "/clean/app/elgato-streamdeck-cache";
+    return { action: "redirect", target: "/clean/app/elgato-streamdeck-cache" };
   }
-  // Cross-category canonical redirect (e.g. /clean/folder/<slug> when item is /clean/app/<slug>)
-  const otherCategory = category === "app" ? "folder" : "app";
-  const crossMatch = cleanItemsMap.get(`${otherCategory}:${slug}`);
-  if (crossMatch && !crossMatch.noindex) {
-    return `/clean/${crossMatch.category}/${crossMatch.slug}`;
+  if (category === "app" || category === "folder") {
+    const otherCategory = category === "app" ? "folder" : "app";
+    const crossMatch = cleanItemsMap.get(`${otherCategory}:${slug}`);
+    if (crossMatch && !crossMatch.noindex) {
+      return { action: "redirect", target: `/clean/${crossMatch.category}/${crossMatch.slug}` };
+    }
   }
   if (RETIRED_VARIANT_SUFFIX_RE.test(slug)) {
     const base = slug.replace(RETIRED_VARIANT_SUFFIX_RE, "");
@@ -132,11 +164,52 @@ export function getPseoRedirectTarget(category: string, slug: string): string | 
     for (const cand of candidates) {
       const match = cleanItemsMap.get(`app:${cand}`) || cleanItemsMap.get(`folder:${cand}`);
       if (match) {
-        return resolveIndexableRedirect(`/clean/${match.category}/${match.slug}`);
+        const parentTarget = `/clean/${match.category}/${match.slug}`;
+        if (isPseoSlugNoindexed(match.slug)) {
+          return { action: "gone", parentTarget };
+        }
+        return { action: "redirect", target: parentTarget };
       }
     }
   }
   return undefined;
+}
+
+export function getPseoRedirectTarget(category: string, slug: string): string | undefined {
+  const disp = getPseoRouteDisposition(category, slug);
+  return disp?.action === "redirect" ? disp.target : undefined;
+}
+
+export function renderPseoGonePage(category: string, slug: string): string {
+  const canonicalUrl = `https://sweeprcleaner.com/clean/${encodeURIComponent(category)}/${encodeURIComponent(slug)}`;
+  return `<!doctype html>
+<html lang="en">
+${renderEditorialHead({
+  title: "410 Gone — Retired Sub-Cache Guide | SWEEPR Cleaner",
+  description:
+    "This retired sub-cache URL has been permanently removed (HTTP 410 Gone). Browse active Windows, Mac, iOS & Android storage guides.",
+  canonical: canonicalUrl,
+  robots: "noindex, nofollow",
+  ogType: "website",
+})}
+<body>
+  ${renderSiteHeader("guides")}
+  <main id="main-content" class="ed-article">
+    <section class="ed-section ed-card">
+      <div class="ed-verdict-label">HTTP 410 GONE</div>
+      <h1 class="ed-h1">This sub-cache guide has been permanently retired</h1>
+      <p style="font-size:0.96rem;color:var(--muted);line-height:1.6;margin-bottom:16px;">
+        The URL <code class="ed-code">/clean/${esc(category)}/${esc(slug)}</code> is a retired synthetic sub-cache page that has been permanently removed.
+      </p>
+      <div class="ed-actions">
+        <a href="/clean" class="ed-btn-primary">Browse Active Storage Guides</a>
+        <a href="/safe-to-delete" class="ed-btn-secondary">Open Path Safety Checker</a>
+      </div>
+    </section>
+  </main>
+  ${renderSiteFooter()}
+</body>
+</html>`;
 }
 
 export function getCleanItems(): CleanItem[] {
@@ -161,26 +234,20 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "steam-depotcache": "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
   "riot-client-logs": "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
   "logitech-ghub-installer-cache": "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
-  "stremio-desktop-cache": "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "stremio-desktop-cache": "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
   "amd-shader-cache": "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
   "comfyui-temp-output-cache": "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
   "genshin-impact-update-cache": "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
-  "winsxs": "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
-  "programdata-package-cache": "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
-  "windows-livekernelreports": "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
-  "livekernelreports": "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+  "winsxs": "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
+  "programdata-package-cache": "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+  "windows-livekernelreports": "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
   "logitech-options-plus-cache": "Delete LogiOptionsPlus Cache? YES (1.2–6.5 GB) — Guide",
   "elgato-streamdeck-cache": "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
   "vivaldi-browser-cache": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
-  "vivaldi-cache": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
-  "jetbrains-intellij-cache": "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
-  "intellij-idea-caches": "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
-  "dolphin-emulator-cache": "Delete Dolphin Emulator Cache? YES (1.5–9.5 GB) — Guide",
-  "zen-browser-cache": "Delete Zen Browser Cache? YES (1.5–9.5 GB) — Safe Guide",
+  "jetbrains-intellij-cache": "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
   "opera-gx-cache": "Can I Delete Opera GX Cache? YES (1.8–12 GB) — Safe Guide",
   "medal-tv-cache": "Can I Delete Medal TV Cache? YES (2–14 GB) — Safe Guide",
   "capcut-desktop-cache": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
-  "capcut-pc-cache": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
   "obs-studio-logs-crashes": "Delete OBS Studio Logs & Cache? YES (1–6.5 GB) — Guide",
   "adobe-media-cache": "Can I Delete Adobe Media Cache? YES (10–80 GB) — Guide",
   "creative-cloud-installer-cache": "Delete Creative Cloud Cache? YES (2–12 GB) — Safe Guide",
@@ -188,7 +255,7 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "npm-cache": "Can I Delete npm-cache? YES (2–18 GB) — Safe Cleanup Guide",
   "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
   "localappdata-crashdumps": "Can I Delete CrashDumps? YES (1–15 GB) — Safe Guide",
-  "hiberfil-sys": "Can I Delete C:\\hiberfil.sys? YES (6–32 GB) — Safe Guide",
+  "hiberfil-sys": "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
   "windows-old": "Delete Windows.old Folder Safely on Windows 11 (15–35 GB)",
   "pip-cache": "Can I Delete pip Cache? YES (2–20 GB) — Safe Cleanup Guide",
   "delivery-optimization": "Delete DeliveryOptimization? YES (3–20 GB) — Safe Guide",
@@ -209,6 +276,9 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "microsoft-teams-cache": "Clear Microsoft Teams Cache on Windows 11 (1.5–9 GB)",
   "software-distribution-download": "Clear Windows Update Cache on Windows 11 (2.5–16 GB)",
   "appdata-temp": "Delete Temp Files on Windows 11 Safely (Reclaim 2–12 GB)",
+  "system-data-huge": "Mac System Data Huge (100 GB+)? Safe Cleanup Guide",
+  "iphone-system-data-full": "iPhone System Data Full (40 GB+)? Clear Without Reset",
+  "other-storage-full": "Android Other Storage Full? Clear Hidden Trash & Cache",
 };
 
 export const CUSTOM_GSC_TITLE_SLUGS: readonly string[] = Object.keys(CUSTOM_GSC_TITLES);
@@ -221,7 +291,7 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "logitech-ghub-installer-cache":
     "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "stremio-desktop-cache":
-    "Can I delete %APPDATA%\\stremio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %AppData%\\stremio\\stremio-server\\stremio-cache? YES (2–10 GB). Zero add-ons or watch history lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "amd-shader-cache":
     "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "comfyui-temp-output-cache":
@@ -229,41 +299,27 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "genshin-impact-update-cache":
     "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
   "winsxs":
-    "Can I clean C:\\Windows\\WinSxS via DISM? YES (6–20 GB). Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan.",
+    "Never delete C:\\Windows\\WinSxS manually. Run DISM /StartComponentCleanup to reclaim gigabytes of superseded update files while keeping system files intact.",
   "programdata-package-cache":
-    "Can I delete orphaned C:\\ProgramData\\Package Cache? YES (3.5–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Never delete C:\\ProgramData\\Package Cache wholesale—it breaks Visual C++ and MSI repair. Learn how to remove only orphaned GUID installers safely.",
   "windows-livekernelreports":
-    "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-  "livekernelreports":
-    "Can I delete C:\\Windows\\LiveKernelReports\\WATCHDOG? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "C:\\Windows\\LiveKernelReports\\WATCHDOG holds GPU and kernel crash dumps (.dmp). Safe to delete after debugging—keep the folder and check TDR stability.",
   "logitech-options-plus-cache":
     "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "elgato-streamdeck-cache":
     "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "vivaldi-browser-cache":
     "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
-  "vivaldi-cache":
-    "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
   "jetbrains-intellij-cache":
-    "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
-  "intellij-idea-caches":
-    "Can I delete %LOCALAPPDATA%\\JetBrains\\IntelliJIdea caches? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
-  "dolphin-emulator-cache":
-    "Can I delete %APPDATA%\\Dolphin Emulator\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-  "zen-browser-cache":
-    "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LocalAppData%\\JetBrains\\IntelliJIdea* caches? YES (1–8 GB). Zero projects, keymaps, or plugins lost. Manual steps + 6.5 MB Sweepr scan.",
   "opera-gx-cache":
     "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "medal-tv-cache":
     "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "capcut-desktop-cache":
     "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-  "capcut-pc-cache":
-    "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "obs-studio-logs-crashes":
     "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-  "adobe-media-cache":
-    "Can I delete %APPDATA%\\Adobe\\Common\\Media Cache Files? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "creative-cloud-installer-cache":
     "Can I delete %LOCALAPPDATA%\\Adobe\\Creative Cloud? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "nvidia-dxcache":
@@ -273,33 +329,27 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "gradle-wrapper-caches":
     "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "localappdata-crashdumps":
-    "Can I delete %LOCALAPPDATA%\\CrashDumps? YES (1–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Delete %LOCALAPPDATA%\\CrashDumps (.dmp files) safely on Windows 11 to reclaim 1–15 GB without affecting apps or OS stability. Manual + 1-click Sweepr scan.",
   "hiberfil-sys":
-    "Can I delete C:\\hiberfil.sys on Windows 11? YES (6–32 GB). Zero save files or active logins lost. Manual powercfg steps + 1-click free 6.5 MB Sweepr scan.",
+    "Disable hibernation with powercfg /h off or shrink hiberfil.sys to reclaim 6–32 GB on Windows 11. Note: disables Hibernate and Fast Startup.",
   "windows-old":
     "Delete C:\\Windows.old safely on Windows 11 to reclaim 15–35 GB without losing personal files. Manual Storage Settings steps + 1-click Sweepr scan.",
-  "pip-cache":
-    "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (2–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-  "delivery-optimization":
-    "Can I delete Windows DeliveryOptimization cache? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
   "c-drive-filling-up-by-itself-windows-11":
-    "C: drive filling up in %LOCALAPPDATA% & C:\\Windows\\Temp? Reclaim 12–65 GB. Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "C: drive filling up in %LOCALAPPDATA% & C:\\Windows\\Temp? Reclaim 12–65 GB while keeping Windows and personal files intact. Manual + 1-click Sweepr scan.",
   "system-and-reserved-storage-100gb-windows-11":
-    "System & Reserved taking 100GB in C:\\Windows\\WinSxS? Reclaim 10–60 GB. Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "System & Reserved taking 100 GB in WinSxS & hiberfil.sys? Reclaim 10–60 GB safely via DISM & Storage Sense without risking Windows. Manual + Sweepr scan.",
   "appdata-local-folder-huge-windows-11":
-    "Can I delete %LOCALAPPDATA%\\Temp & GPUCache bloat? YES (10–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can you clean bloated %LOCALAPPDATA%\\Temp & GPUCache? Reclaim 10–50 GB while keeping app settings and personal files intact. Manual + 1-click Sweepr scan.",
   "windows-11-24h2-update-cache-8gb-bug":
-    "Fix Windows 11 24H2 8.63 GB cache in C:\\Windows\\WinSxS\\Temp. Zero save files or active logins lost. Manual DISM steps + 1-click free 6.5 MB Sweepr scan.",
+    "Fix the Windows 11 24H2 8.63 GB cache bug in C:\\Windows\\WinSxS\\Temp. Reclaim update space safely via DISM without risking OS stability. Manual + Sweepr scan.",
   "other-storage-full-windows-11-cleanup":
-    "Clean 'Other' storage in C:\\ProgramData\\Package Cache (6–45 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Clean 'Other' storage in C:\\ProgramData\\Package Cache & app caches (6–45 GB) while keeping installed apps and personal files intact. Manual + Sweepr scan.",
   "localappdata-webview2-ebwebview-cache":
-    "Can I delete %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Clear %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data cache safely (1.5–9 GB) while keeping Windows widgets and desktop apps working. Manual + Sweepr scan.",
   "ea-app-cache":
     "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
   "epic-games-webcache":
     "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
-  "chrome-gpu-shader-cache":
-    "Can I delete %LOCALAPPDATA%\\Google\\Chrome\\User Data\\ShaderCache? YES (1–6 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "vrchat-cache":
     "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
   "lm-studio-models-cache":
@@ -309,7 +359,13 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "software-distribution-download":
     "Clear C:\\Windows\\SoftwareDistribution\\Download safely on Windows 11 to reclaim 2.5–16 GB and fix stuck updates. Manual steps + 1-click Sweepr scan.",
   "appdata-temp":
-    "Delete %LOCALAPPDATA%\\Temp and C:\\Windows\\Temp safely on Windows 11 (2–12 GB). Zero saves or logins lost. Manual %temp% steps + 1-click Sweepr scan.",
+    "Delete %LOCALAPPDATA%\\Temp and C:\\Windows\\Temp safely on Windows 11 (2–12 GB). Keeps active system files and user data intact. Manual + 1-click Sweepr scan.",
+  "system-data-huge":
+    "Mac System Data taking 100 GB+? Clear APFS Time Machine snapshots with tmutil, ~/Library/Caches, Xcode DerivedData & orphaned backups without risking macOS.",
+  "iphone-system-data-full":
+    "iPhone System Data taking 40 GB+? Clear camouflaged social app caches, flush Finder/iTunes temp files, and remove near-duplicate bursts without a factory reset.",
+  "other-storage-full":
+    "Android Other or System storage full on Samsung or Pixel? Fix hidden Android/.Trash, One UI Usage Access, and WhatsApp/Telegram caches safely.",
 };
 
 export type PseoClusterId =
@@ -326,7 +382,7 @@ export function classifyPseoCluster(item: CleanItem): PseoClusterId {
   const s = `${item.slug} ${item.name} ${item.path}`.toLowerCase();
   if (item.category === "folder") {
     if (
-      /winsxs|softwaredistribution|package-cache|installer-patch|delivery-optimization|windows-old|catroot2|servicing|wuau|rempl|sihclient|usoclient|waasmedic/.test(
+      /winsxs|softwaredistribution|package-cache|installer-patch|delivery-optimization|windows-old|catroot2|servicing|wuau|rempl|sihclient|usoclient|waasmedic|24h2-update-cache/.test(
         s
       )
     ) {
@@ -337,196 +393,89 @@ export function classifyPseoCluster(item: CleanItem): PseoClusterId {
     }
     return "win_system";
   }
-
-  if (
-    /nvidia|amd-dx|intel-shader|directx-shader|vulkan|shader|geforce|adrenalin|msi-afterburner|rivatuner|3dmark|furmark/.test(
-      s
-    )
-  ) {
+  if (/nvidia|amd-dx|amd-shader|intel-shader|directx-shader|vulkan|shader|geforce|adrenalin|msi-afterburner|rivatuner|3dmark|furmark/.test(s)) {
     return "gpu";
   }
-  if (
-    /steam|epic-games|riot|valorant|battlenet|ea-app|ubisoft|gog-galaxy|xbox|minecraft|roblox|genshin|honkai|fortnite|call-of-duty|apex|overwatch|fivem|curseforge|overwolf|modrinth|vortex|nexus-mods|playnite|retroarch|rpcs3|yuzu|ryujinx|dolphin|pcsx2|cemu|ppsspp|duckstation|medal|parsec|moonlight|sunshine|razer|corsair|steelseries|logitech-ghub|armoury-crate|nzxt|lian-li|signalrgb|openrgb|vrchat|oculus|steamvr|faceit|esea|we-mod|plitch/.test(
-      s
-    )
-  ) {
+  if (/steam|epic-games|riot|valorant|battlenet|ea-app|ubisoft|gog-galaxy|xbox|minecraft|roblox|genshin|honkai|fortnite|call-of-duty|apex|overwatch|fivem|curseforge|overwolf|modrinth|vortex|nexus-mods|playnite|retroarch|rpcs3|yuzu|ryujinx|dolphin|pcsx2|cemu|ppsspp|duckstation|medal|parsec|moonlight|sunshine|razer|corsair|steelseries|logitech-ghub|armoury-crate|nzxt|lian-li|signalrgb|openrgb|vrchat|oculus|steamvr|faceit|esea|we-mod|plitch/.test(s)) {
     return "gaming";
   }
-  if (
-    /adobe|creative-cloud|premiere|after-effects|photoshop|lightroom|illustrator|indesign|audition|davinci|capcut|obs-studio|streamlabs|elgato|figma|canva|affinity|blender|unreal-engine|unity|godot|maya|3ds-max|cinema-4d|zbrush|substance|houdini|autocad|revit|solidworks|sketchup|rhino|lumion|enscape|twinmotion|handbrake|topaz|vlc|plex|jellyfin|kodi|ableton|fl-studio|reaper|cubase|studio-one|pro-tools|native-instruments|splice|musescore|audacity|kdenlive|shotcut|clip-studio|krita|gimp|inkscape|pureref|eagle|gyroflow|snagit|camtasia/.test(
-      s
-    )
-  ) {
+  if (/adobe|creative-cloud|premiere|after-effects|photoshop|lightroom|illustrator|indesign|audition|davinci|capcut|obs-studio|streamlabs|elgato|figma|canva|affinity|blender|unreal-engine|unity|godot|maya|3ds-max|cinema-4d|zbrush|substance|houdini|autocad|revit|solidworks|sketchup|rhino|lumion|enscape|twinmotion|handbrake|topaz|vlc|plex|jellyfin|kodi|ableton|fl-studio|reaper|cubase|studio-one|pro-tools|native-instruments|splice|musescore|audacity|kdenlive|shotcut|clip-studio|krita|gimp|inkscape|pureref|eagle|gyroflow|snagit|camtasia/.test(s)) {
     return "creative";
   }
-  if (
-    /npm|pnpm|yarn|bun|pip|conda|poetry|uv-python|cargo|rustup|go-build|gradle|maven|nuget|composer|cocoapods|vcpkg|conan|huggingface|ollama|lm-studio|pytorch|vs-code|cursor|windsurf|zed|visual-studio|jetbrains|intellij|pycharm|webstorm|rider|clion|goland|android-studio|docker|podman|vagrant|virtualbox|vmware|wsl|gitkraken|sourcetree|github-desktop|fork|postman|insomnia|bruno|dbeaver|datagrip|pgadmin|mongodb|tableplus|wireshark|fiddler|charles|ngrok|Tailscale|cloudflare|putty|mobaxterm|winscp|filezilla|termius|tabby|wezterm|alacritty|cypress|playwright|puppeteer|electron-cache|node-gyp|storybook|nx-workspace|turborepo|expo/.test(
-      s
-    )
-  ) {
+  if (/npm|pnpm|yarn|bun|pip|conda|poetry|uv-python|cargo|rustup|go-build|gradle|maven|nuget|composer|cocoapods|vcpkg|conan|huggingface|ollama|lm-studio|pytorch|vs-code|vscode|cursor|windsurf|zed|visual-studio|jetbrains|intellij|pycharm|webstorm|rider|clion|goland|android-studio|docker|podman|vagrant|virtualbox|vmware|wsl|gitkraken|sourcetree|github-desktop|fork|postman|insomnia|bruno|dbeaver|datagrip|pgadmin|mongodb|tableplus|comfyui/.test(s)) {
     return "devtools";
   }
   return "browsers_chat";
 }
 
-interface ClusterProfile {
-  id: PseoClusterId;
-  label: string;
-  badge: string;
-  sectionTitle: (item: CleanItem) => string;
-  leadParagraph: (item: CleanItem) => string;
-  mechanicsParagraph: (item: CleanItem) => string;
-  protectedSummary: string;
-  removedSummary: string;
-  extraFaq: (item: CleanItem) => { q: string; a: string };
+export type DirectoryGroupId =
+  | "problems"
+  | "mac_mobile"
+  | "win_system"
+  | "gaming_gpu"
+  | "devtools_ai"
+  | "creative_browsers";
+
+export function classifyDirectoryGroup(item: CleanItem): DirectoryGroupId {
+  if (item.category === "mac" || item.category === "ios" || item.category === "android") {
+    return "mac_mobile";
+  }
+  const s = `${item.slug} ${item.name} ${item.path}`.toLowerCase();
+  if (/c-drive-filling-up|system-and-reserved|appdata-local-folder-huge|24h2-update-cache|other-storage-full/.test(s)) {
+    return "problems";
+  }
+  if (item.category === "folder") {
+    return "win_system";
+  }
+  const c = classifyPseoCluster(item);
+  if (c === "gaming" || c === "gpu") return "gaming_gpu";
+  if (c === "devtools") return "devtools_ai";
+  return "creative_browsers";
 }
 
-const CLUSTER_PROFILES: Record<PseoClusterId, ClusterProfile> = {
-  gaming: {
-    id: "gaming",
-    label: "PC Gaming Launchers, Depots & Peripherals",
-    badge: "🎮 Gaming & Launcher Storage",
-    sectionTitle: (item) => `Why ${item.name} Balloons After Game Patches & Season Updates`,
-    leadParagraph: (item) =>
-      `Modern PC game launchers, anti-cheat engines, and peripheral daemons write encrypted chunk depots, delta-patch staging archives, and Embedded Chromium (CEF) storefront assets directly into ${item.path}. Whenever a download pauses, switches branches, or applies a major seasonal update, uncommitted delta chunks and superseded installer archives are frequently left orphaned on disk because launchers prioritize patch speed over post-install garbage collection.`,
-    mechanicsParagraph: (item) =>
-      `Leaving ${item.avgSpace} of stale depot chunks and session telemetry sitting on your primary NVMe SSD reduces free block headroom and slows down Steam/Epic/Riot delta-patching I/O. Purging ${item.name} while no game update is actively downloading frees ${item.avgSpace} immediately without touching installed game binaries, local save files, or controller/mouse macro profiles.`,
-    protectedSummary:
-      "Installed games, Steam Cloud / local save files, keybinds, mouse DPI stages, and anti-cheat certificates stay 100% untouched.",
-    removedSummary:
-      "Orphaned depot chunk files (.chunk), uncommitted patch staging archives, CEF storefront webcache, and old match/session logs.",
-    extraFaq: (item) => ({
-      q: `Will cleaning ${item.name} force my games to re-download or reset my settings?`,
-      a: `No. Game binaries live in your main library directory (such as steamapps\\common) and user settings live in separate configuration profiles. Deleting ${item.name} only removes temporary update staging chunks, cached storefront media, and rotated session logs.`,
-    }),
+interface ClusterMeta {
+  id: DirectoryGroupId;
+  filterKey: string;
+  label: string;
+  shortLabel: string;
+}
+
+const CLUSTER_META: Record<DirectoryGroupId, ClusterMeta> = {
+  problems: {
+    id: "problems",
+    filterKey: "problems",
+    label: "Common Storage Symptoms",
+    shortLabel: "Common Problems",
   },
-  gpu: {
-    id: "gpu",
-    label: "GPU Shader Caches & Graphics Drivers",
-    badge: "🖥️ DirectX / Vulkan GPU Cache",
-    sectionTitle: (item) => `How Compiled DirectX 12, Vulkan & Driver Pipelines Accumulate in ${item.name}`,
-    leadParagraph: (item) =>
-      `Every time a modern DirectX 12, Vulkan, or OpenGL title launches, your graphics driver compiles hardware-specific Pipeline State Objects (PSOs) and compute shaders into binary cache buckets at ${item.path}. Across dozens of driver updates and game patches, shaders compiled for retired driver versions remain on disk alongside active pipelines—and corrupted shader buckets are a primary cause of micro-stutter and DXGI_ERROR_DEVICE_HUNG crashes.`,
-    mechanicsParagraph: (item) =>
-      `When you clear ${item.name}, the graphics driver automatically allocates a clean, defragmented shader cache directory on next launch and compiles only the active pipeline states required by your current driver version. Note that any files locked by the Desktop Window Manager (dwm.exe) or active tray overlays are safely skipped.`,
-    protectedSummary:
-      "Display driver installations, custom resolution profiles, G-SYNC / FreeSync settings, and fan curves remain completely intact.",
-    removedSummary:
-      "Superseded DirectX 11/12 bytecode (.bin/.toc), Vulkan pipeline caches, WebGPU Dawn blobs, and unpacked driver installer folders.",
-    extraFaq: (item) => ({
-      q: `Will deleting ${item.name} cause shader compilation stutter in games?`,
-      a: `Only briefly on the very first launch of a game while your GPU compiles fresh shaders for your current driver version. In fact, clearing bloated or corrupted shader caches often resolves persistent frame-time spikes and driver crashes after GPU driver updates.`,
-    }),
-  },
-  creative: {
-    id: "creative",
-    label: "Video Editing, Streaming, 3D & Creative Apps",
-    badge: "🎬 Creative & Media Scratch",
-    sectionTitle: (item) => `How Timeline Previews, Conform Audio & Render Scratch Fill ${item.name}`,
-    leadParagraph: (item) =>
-      `Non-linear video editors (NLEs), streaming encoders, 3D DCC tools, and DAWs continuously write uncompressed audio conform files (.cfa), waveform peak indexes (.pek), proxy transcodes, and frame-accurate undo scratch into ${item.path}. Even after you finish exporting and archiving a client project, gigabytes of intermediate timeline render caches remain permanently allocated on your scratch disk.`,
-    mechanicsParagraph: (item) =>
-      `On 4K/8K timelines or multi-scene streaming setups, ${item.name} routinely consumes ${item.avgSpace} of high-speed SSD space. Safely pruning stale media caches reclaims scratch bandwidth immediately; if you ever reopen an older project file, the application simply regenerates audio waveforms and timeline previews in the background.`,
-    protectedSummary:
-      "Project files (.prproj, .drp, .blend, .als), original camera footage, exported renders, LUTs, plugins, and scene collections are never touched.",
-    removedSummary:
-      "Conformed audio (.cfa), waveform peaks (.pek), orphaned timeline render previews, browser-source CEF caches, and crash minidumps.",
-    extraFaq: (item) => ({
-      q: `Will clearing ${item.name} delete my video projects, drafts, or saved recordings?`,
-      a: `No. Project timelines, source media clips, and exported videos are stored in your project folders—not in ${item.path}. If you reopen an active project after cleaning, the software automatically rebuilds any needed waveform peaks or preview frames.`,
-    }),
-  },
-  devtools: {
-    id: "devtools",
-    label: "Developer Package Managers, IDEs & Containers",
-    badge: "🛠️ Developer & Build Cache",
-    sectionTitle: (item) => `Why Package Tarballs, Symbol Indexes & Build Artifacts Pile Up in ${item.name}`,
-    leadParagraph: (item) =>
-      `Developer toolchains, language package managers, and modern IDEs cache every downloaded dependency version, pre-compiled wheel/crate tarball, C++/Rust incremental build target, and Language Server Protocol (LSP) AST index inside ${item.path}. Because dependency lockfiles evolve every week, historical versions from old branches remain cached indefinitely—turning ${item.name} into a multi-gigabyte graveyard of thousands of small files.`,
-    mechanicsParagraph: (item) =>
-      `Thousands of small cache entries inside ${item.path} also degrade Windows Defender real-time filesystem scanning and slow down backup indexing. Cleaning ${item.name} reclaims ${item.avgSpace} of SSD capacity while preserving your active source code repositories, .env secrets, SSH keys, and workspace configurations.`,
-    protectedSummary:
-      "Source code repositories, uncommitted Git changes, .env files, SSH keys, IDE keymaps, and active project node_modules/venvs stay safe.",
-    removedSummary:
-      "Cached registry tarballs/wheels, orphaned content-addressable store blobs, stale LSP symbol indexes, and old extension versions.",
-    extraFaq: (item) => ({
-      q: `Will cleaning ${item.name} break my active local development projects?`,
-      a: `No. Installed dependencies inside your project workspaces remain intact. Cleaning ${item.name} only clears the global download cache and historical build artifacts; any package needed in the future is transparently fetched on demand.`,
-    }),
-  },
-  browsers_chat: {
-    id: "browsers_chat",
-    label: "Browsers, Desktop Chat & Productivity Apps",
-    badge: "🌐 Chromium / Electron App Cache",
-    sectionTitle: (item) => `How Embedded Chromium (Electron / CEF) Caches Bloated ${item.name}`,
-    leadParagraph: (item) =>
-      `Modern web browsers and desktop apps built on Electron, Chromium Embedded Framework (CEF), or WebView2 run a full browser storage engine inside ${item.path}. Every inline video preview, animated sticker, PWA offline bundle, and compiled V8 JavaScript script is written into disk-backed Cache_Data, Code Cache, Service Worker CacheStorage, and IndexedDB LevelDB tables without strict disk quotas.`,
-    mechanicsParagraph: (item) =>
-      `Over months of daily usage, ${item.name} accumulates ${item.avgSpace} of expired media blobs and stale Service Worker caches that are never evicted automatically. Clearing these cache subdirectories forces a clean storage state without deleting your saved passwords, active session cookies, bookmarks, or local databases.`,
-    protectedSummary:
-      "Saved logins, session cookies, bookmarks, open tabs, local notes/databases, and workspace preferences remain 100% intact.",
-    removedSummary:
-      "HTTP media cache blobs, Service Worker CacheStorage offline bundles, compiled V8 bytecode caches, and Dawn/GPU shader caches.",
-    extraFaq: (item) => ({
-      q: `Will clearing ${item.name} sign me out of my accounts or delete my chat history?`,
-      a: `No. Authentication tokens, cookies, and bookmarks live in separate profile files (such as Cookies, Login Data, and Local Storage). Cleaning the cache subfolders inside ${item.path} only removes temporary media and script caches.`,
-    }),
-  },
-  win_update: {
-    id: "win_update",
-    label: "Windows Update, Servicing & Installer Caches",
-    badge: "🪟 Windows Servicing & Update Store",
-    sectionTitle: (item) => `${item.name}: Windows Architecture & Safe Storage Pruning`,
-    leadParagraph: (item) =>
-      `${item.whatIsIt} Inside <code>${item.path}</code>, Windows tracks servicing manifests, hard-linked assemblies, or staged installer bundles differently from normal user documents, which is why standard right-click properties and casual Disk Cleanup passes either misreport or skip ${item.avgSpace} of reclaimable overhead.`,
-    mechanicsParagraph: (item) =>
-      `${item.whatHappens} Starting with safe verification (for example: <em>${item.manualSteps?.[0] || "inspecting the target folder safely"}</em>) avoids removing active rollback states or registered MSI repair manifests while recovering full C: drive headroom.`,
-    protectedSummary:
-      "Active Windows system binaries, registered MSI repair manifests for installed apps, and current security update state stay intact.",
-    removedSummary:
-      "Superseded WinSxS component versions, downloaded SoftwareDistribution update payloads, Delivery Optimization P2P caches, and orphaned installer caches.",
-    extraFaq: (item) => ({
-      q: `Can I simply press Shift+Delete on ${item.name} in File Explorer?`,
-      a: item.safeToDelete
-        ? `Yes, once any associated Windows Update or Delivery Optimization service handles are released, the cached payload files in ${item.path} can be safely removed.`
-        : `No—do not blindly delete the entire folder. ${item.warning || "Always use the built-in Windows servicing command (such as DISM /Cleanup-Image) or SWEEPR Cleaner's orphan-aware rules so active uninstaller and servicing links remain intact."}`,
-    }),
-  },
-  win_crash_logs: {
-    id: "win_crash_logs",
-    label: "Windows Kernel Dumps, Crash Reports & Diagnostics",
-    badge: "🩺 Windows Crash Dumps & Telemetry",
-    sectionTitle: (item) => `Why Kernel Minidumps, WER Archives & ETW Traces Fill ${item.name}`,
-    leadParagraph: (item) =>
-      `Whenever a hardware driver times out (TDR), a background service faults, or Windows Servicing installs a patch, the Windows Error Reporting (WER) pipeline and kernel crash handler write uncompressed memory snapshots (.dmp) and verbose text logs into ${item.path}. A single full or kernel memory dump or LiveKernelReports WATCHDOG snapshot can consume 500 MB to 4 GB of disk space immediately.`,
-    mechanicsParagraph: (item) =>
-      `Unless you are actively debugging a recurring Blue Screen of Death (BSOD) with WinDbg right now, historical crash dumps and rotated CBS/DISM log archives inside ${item.path} serve zero runtime purpose. Deleting ${item.name} safely reclaims ${item.avgSpace} without affecting Windows stability or future error reporting.`,
-    protectedSummary:
-      "Active Windows kernel drivers, system services, Event Viewer configuration, and OS stability are completely unaffected.",
-    removedSummary:
-      "Historical kernel/user minidumps (.dmp), WATCHDOG GPU timeout snapshots, Windows Error Reporting (.wer) queues, and rotated servicing logs.",
-    extraFaq: (item) => ({
-      q: `Does Windows need the files in ${item.name} to boot or run properly?`,
-      a: `No. Files inside ${item.path} are strictly post-mortem diagnostic snapshots and historical logs written for troubleshooting. Windows never reads them during normal startup or runtime operation.`,
-    }),
+  mac_mobile: {
+    id: "mac_mobile",
+    filterKey: "mac_mobile",
+    label: "Mac, iPhone & Android Storage",
+    shortLabel: "Mac & Mobile",
   },
   win_system: {
     id: "win_system",
-    label: "Hidden Windows System Folders & Virtual Storage",
-    badge: "🗄️ Windows System & Storage Internals",
-    sectionTitle: (item) => `How Windows Manages ${item.name} on NTFS & NVMe Drives`,
-    leadParagraph: (item) =>
-      `Windows 10 and Windows 11 maintain hidden system directories and root-level allocation files at ${item.path} to handle shell thumbnail databases, prefetcher launch traces, hibernation power states, and user-profile scratch storage. Because many of these paths are marked with +H (Hidden) or +S (System) attributes or guarded by SYSTEM ACL permissions, standard folder size scans often miss them entirely.`,
-    mechanicsParagraph: (item) =>
-      `Over time, orphaned temporary files, stale Explorer DataCache_* buckets, and uncompacted virtual storage allocations inside ${item.path} lock up ${item.avgSpace} of primary C: drive space. Cleaning ${item.name} using the proper administrative method restores drive headroom safely.`,
-    protectedSummary:
-      "User documents, desktop files, Windows registry hives, boot configuration, and active system locks remain 100% protected.",
-    removedSummary:
-      "Unlocked temporary scratch files, stale Explorer thumbnail/icon caches, obsolete prefetch traces, and reclaimable system allocations.",
-    extraFaq: (item) => ({
-      q: `Why does Windows say some files in ${item.name} are "In Use" when I try to delete them?`,
-      a: `Active background processes (such as explorer.exe, svchost.exe, or running desktop apps) hold open file handles to current session scratch files. Skipping locked files—or letting SWEEPR Cleaner clean unlocked items automatically—is normal and completely safe.`,
-    }),
+    filterKey: "win_system",
+    label: "Windows System & Update Folders",
+    shortLabel: "Windows System",
+  },
+  gaming_gpu: {
+    id: "gaming_gpu",
+    filterKey: "gaming_gpu",
+    label: "PC Gaming Launchers & GPU Shaders",
+    shortLabel: "Gaming & GPU",
+  },
+  devtools_ai: {
+    id: "devtools_ai",
+    filterKey: "devtools_ai",
+    label: "Developer Toolchains & Local AI",
+    shortLabel: "Dev & AI",
+  },
+  creative_browsers: {
+    id: "creative_browsers",
+    filterKey: "creative_browsers",
+    label: "Video Editors, Browsers & Chat Apps",
+    shortLabel: "Creative & Browsers",
   },
 };
 
@@ -562,12 +511,65 @@ export function describeCacheVariantRole(slug: string): string {
   return "Primary Application & System Storage Cache";
 }
 
+function extractChromiumBasePath(item: CleanItem): string {
+  if (item.slug === "spotify-cache") {
+    return "%LocalAppData%\\Spotify\\Browser";
+  }
+  const rawParts = item.path
+    .split(/(?:,\s*|\s+)\b(?:or|and)\b\s+|\s+&\s+|,\s*/i)
+    .map((p) => p.trim().replace(/^(?:and|or)\s+/i, "").replace(/,+$/, "").replace(/\\+$/, ""))
+    .filter((p) => p.length > 0 && /^(?:%[a-z]+%|[a-z]:\\)/i.test(p));
+
+  const candidates = rawParts.length > 0 ? rawParts : [item.path.trim().replace(/\\+$/, "")];
+
+  const scoreSegment = (seg: string): number => {
+    const lower = seg.toLowerCase();
+    let score = 0;
+    if (lower.includes("obs-browser")) score += 40;
+    if (lower.includes("webview") || lower.includes("ebwebview")) score += 30;
+    if (lower.includes("user data")) score += 25;
+    if (/(?:^|\\)(?:cache|cache_data|cacheddata|webcache[^\\]*|localcache)$/i.test(lower)) score += 20;
+    if (lower.startsWith("%localappdata%") || lower.startsWith("%appdata%")) score += 10;
+    if (/\\(?:depots|logs|crashes|crashpad)(?:\\|$)/i.test(lower)) score -= 50;
+    if (lower.includes("programdata\\") && candidates.some((c) => /^%(?:localappdata|appdata)%/i.test(c))) score -= 20;
+    return score;
+  };
+
+  let best = candidates[0];
+  let bestScore = scoreSegment(best);
+  for (let i = 1; i < candidates.length; i++) {
+    const s = scoreSegment(candidates[i]);
+    if (s > bestScore) {
+      best = candidates[i];
+      bestScore = s;
+    }
+  }
+
+  best = best
+    .replace(/\\Service Worker\\CacheStorage$/i, "")
+    .replace(/\\Cache\\Cache_Data$/i, "")
+    .replace(/\\Cache_Data$/i, "")
+    .replace(/\\(?:CachedData|CachedExtensionVSIXs)$/i, "")
+    .replace(/\\Cache$/i, (match, offset, str) => {
+      const prev = str.slice(0, offset);
+      if (match === "\\cache" && /\\(?:LGHUB|LogiOptionsPlus|StreamDeck)$/i.test(prev)) {
+        return match;
+      }
+      return "";
+    });
+
+  return best.replace(/\\+$/, "") || "%LOCALAPPDATA%";
+}
+
 export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
   slug: string;
   label: string;
   subPath: string;
   role: string;
 }> {
+  if (!item.isChromiumBased) {
+    return [];
+  }
   const canonicalTarget = `/clean/${item.category}/${item.slug}`;
   const matchedSlugs: string[] = [];
   for (const [key, target] of Object.entries(pseoRedirectsData)) {
@@ -577,7 +579,10 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
       matchedSlugs.push(s);
     }
   }
-  const basePath = item.path.split(/\s+(?:or|and|&)\s+/i)[0].trim().replace(/\\+$/, "");
+  if (matchedSlugs.length === 0 && item.slug !== "logitech-options-plus-cache") {
+    return [];
+  }
+  const basePath = extractChromiumBasePath(item);
   const variants: Array<{ slug: string; label: string; subPath: string; role: string }> = [];
   const seenLabels = new Set<string>();
 
@@ -626,7 +631,7 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
     }
   }
 
-  if (item.category === "app" && variants.length === 0) {
+  if (variants.length === 0) {
     const prefix = getAppFamilyKey(item.slug);
     addVariant(
       `${prefix}-media-blob-storage`,
@@ -665,7 +670,7 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
 
 export function buildSubLocationsForItem(
   item: CleanItem,
-  clusterId: PseoClusterId
+  _clusterId: PseoClusterId
 ): Array<{
   subPath: string;
   role: string;
@@ -678,115 +683,56 @@ export function buildSubLocationsForItem(
   if (Array.isArray(item.subLocations) && item.subLocations.length > 0) {
     return item.subLocations;
   }
-  const basePath = item.path.split(/\s+(?:or|and|&)\s+/i)[0].trim().replace(/\\+$/, "");
-  switch (clusterId) {
-    case "gaming":
-      return [
-        { subPath: `${basePath}`, role: "Primary Update Staging, Patch Depots & Chunk Cache", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (When Game Closed)" : "⚠️ Caution" },
-        { subPath: `${basePath}\\ShaderCache / GPUCache`, role: "Compiled DirectX 12 / Vulkan / CEF Shader Pipelines", avgSpace: "350 MB – 3.5 GB", safe: "🟢 100% Safe (Rebuilds on Launch)" },
-        { subPath: `${basePath}\\webcache / Service Worker\\CacheStorage`, role: "Embedded Launcher Storefront & News Feed Web Assets", avgSpace: "250 MB – 2.0 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\Logs & Crashpad\\reports`, role: "Rotating Session Telemetry & Crash Minidumps (.dmp)", avgSpace: "150 MB – 4.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "%UserProfile%\\Saved Games & Config.json", role: "Player Save Files, Keybinds, Profiles & Loadouts", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "gpu":
-      return [
-        { subPath: `${basePath} (*.bin / *.toc / *.nvph)`, role: "Compiled DirectX 11/12 & Vulkan Shader Pipeline Binaries", avgSpace: item.avgSpace, safe: "🟢 100% Safe (Unlocked Entries)" },
-        { subPath: "%LocalAppData%\\D3DSCache", role: "Windows Direct3D Shared Driver Shader Cache", avgSpace: "500 MB – 4.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "%LocalAppData%\\NVIDIA\\GLCache / AMD\\GLCache", role: "OpenGL & Legacy Shader Compilation Cache", avgSpace: "250 MB – 2.5 GB", safe: "🟢 100% Safe" },
-        { subPath: "Driver Display Profiles & Control Panel Settings", role: "Custom 3D Settings, G-Sync/FreeSync & Color Calibration", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "creative":
-      return [
-        { subPath: `${basePath}`, role: "Primary Media Cache, Proxy Scratch & Render Previews", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Re-renders on Demand)" : "⚠️ Caution" },
-        { subPath: `${basePath}\\Media Cache Files (*.cfa, *.pek)`, role: "Conformed Audio Waveforms & Timeline Peak Files", avgSpace: "2.0 GB – 25.0 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\GPUCache & Code Cache`, role: "Hardware-Accelerated Viewport & UI Plugin Cache", avgSpace: "300 MB – 3.0 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\logs & Crashpad\\reports`, role: "Render Session Logs & Crash Dump Archives (.dmp)", avgSpace: "200 MB – 4.5 GB", safe: "🟢 100% Safe" },
-        { subPath: "Project Timelines (.prproj / .drp / .blend) & LUTs", role: "Source Footage, Edit Timelines, Presets & Exported Renders", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "devtools":
-      return [
-        { subPath: `${basePath}`, role: "Content-Addressable Package Tarballs, Wheels & Build Artifacts", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Re-downloads on Build)" : "⚠️ Caution" },
-        { subPath: `${basePath}\\wrapper\\dists / _cacache`, role: "Historical Toolchain Distributions & Integrity Blobs", avgSpace: "1.5 GB – 15.0 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\logs & crashpad`, role: "Compiler Diagnostics, Daemon Logs & Crash Snapshots", avgSpace: "150 MB – 2.5 GB", safe: "🟢 100% Safe" },
-        { subPath: "Source Repositories, .env Files & SSH/API Keys", role: "Working Git Trees, Local Databases & Credentials", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "win_update":
-      return [
-        { subPath: `${basePath}`, role: "Superseded Component Packages & Update Staging Payloads", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe" : "⚠️ Use DISM / SWEEPR Orphan Rule" },
-        { subPath: "C:\\Windows\\SoftwareDistribution\\Download", role: "Downloaded Windows Update CAB/ESD Installation Packages", avgSpace: "2.0 GB – 16.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "C:\\Windows\\WinSxS\\Temp\\PendingDeletes", role: "Orphaned Servicing Checkpoint Staging Files", avgSpace: "1.0 GB – 9.0 GB", safe: "🟢 100% Safe via DISM" },
-        { subPath: "Active Windows 11 System32 Binaries & MSI Manifests", role: "Live OS Kernel Files & Active Uninstaller Packages", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "win_crash_logs":
-      return [
-        { subPath: `${basePath} (*.dmp / *.hdmp / *.mdmp)`, role: "Uncompressed Kernel & User-Mode Memory Crash Dumps", avgSpace: item.avgSpace, safe: "🟢 100% Safe" },
-        { subPath: "C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive", role: "Queued & Archived Windows Error Reporting Bundles", avgSpace: "300 MB – 4.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "C:\\Windows\\Logs\\CBS & DISM", role: "Rotated Servicing & Component Store Text Logs", avgSpace: "250 MB – 3.5 GB", safe: "🟢 100% Safe" },
-        { subPath: "Active Windows Drivers & Event Viewer Channels", role: "Live System Services & Security Audit Configuration", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "win_system":
-      return [
-        { subPath: `${basePath}`, role: "Primary System Scratch, Thumbnail/Icon DB or Virtual Allocation", avgSpace: item.avgSpace, safe: item.safeToDelete ? "🟢 100% Safe (Unlocked Files)" : "⚠️ System Managed" },
-        { subPath: "%LocalAppData%\\Temp & C:\\Windows\\Temp", role: "Orphaned Installer Extraction & Session Scratch Files", avgSpace: "1.5 GB – 18.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "%LocalAppData%\\Microsoft\\Windows\\Explorer (thumbcache_*.db)", role: "Cached File Explorer Image & Video Thumbnail Databases", avgSpace: "250 MB – 3.0 GB", safe: "🟢 100% Safe (Rebuilds Automatically)" },
-        { subPath: "User Documents, Desktop & Registry Hives", role: "Personal Files, Boot Configuration & System Certificates", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-    case "browsers_chat":
-    default:
-      return [
-        { subPath: `${basePath}\\Cache\\Cache_Data`, role: "HTTP Disk Cache, Web Bundles & Static Media Chunks", avgSpace: item.avgSpace, safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\Service Worker\\CacheStorage`, role: "Offline PWA Assets, Background Sync & Media Blob Storage", avgSpace: "500 MB – 6.5 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\Code Cache\\js & wasm`, role: "V8 Compiled JavaScript & WebAssembly Bytecode Cache", avgSpace: "250 MB – 2.5 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\GPUCache & DawnCache`, role: "Chromium Skia/ANGLE/WebGPU Compiled Shader Cache", avgSpace: "200 MB – 2.0 GB", safe: "🟢 100% Safe" },
-        { subPath: `${basePath}\\Crashpad\\reports`, role: "Historical Process Minidump (.dmp) Telemetry Files", avgSpace: "150 MB – 3.0 GB", safe: "🟢 100% Safe" },
-        { subPath: "Cookies, Login Data, Bookmarks & Local Storage (leveldb)", role: "Active Account Sessions, Saved Passwords & User Preferences", avgSpace: "Protected", safe: "🔒 Protected — Never Touched" },
-      ];
-  }
+  const basePath = extractPrimaryDisplayPath(item.path);
+  return [
+    {
+      subPath: basePath,
+      role: item.whatIsIt,
+      avgSpace: item.avgSpace,
+      safe: item.safeToDelete ? "Safe to delete" : "Conditional — follow manual steps",
+    },
+    {
+      subPath: "User Settings, Logins & Project Files",
+      role: "Application configuration, saved sessions, and personal documents.",
+      avgSpace: "Protected",
+      safe: "Protected — keep",
+    },
+  ];
 }
 
 export function getSiblingAndRelatedItems(item: CleanItem): {
   siblings: CleanItem[];
   related: CleanItem[];
 } {
-  const all = getCleanItems().filter((i) => !isPseoSlugNoindexed(i.slug));
+  const all = getCleanItems().filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug);
+  const seen = new Set<string>([item.slug]);
   const familyKey = getAppFamilyKey(item.slug);
   const siblings = all.filter((i) => i.slug !== item.slug && getAppFamilyKey(i.slug) === familyKey);
-  const siblingSlugs = new Set(siblings.map((s) => s.slug));
-  siblingSlugs.add(item.slug);
+  for (const s of siblings) seen.add(s.slug);
 
-  const myCluster = classifyPseoCluster(item);
-  const clusterPeers = all.filter((i) => classifyPseoCluster(i) === myCluster);
-  const pool = clusterPeers.length >= 7 ? clusterPeers : all.filter((i) => i.category === item.category);
-  const myIdx = Math.max(0, pool.findIndex((i) => i.slug === item.slug));
   const related: CleanItem[] = [];
+  const pushItem = (cand: CleanItem | undefined) => {
+    if (!cand || seen.has(cand.slug)) return;
+    seen.add(cand.slug);
+    related.push(cand);
+  };
 
-  // A19: Prioritize active GSC Strike-Zone pages inside the same cluster first (up to 3), then top cross-cluster GSC winners (up to 2)
-  const prioritySlugs = getGscPriorityInternalLinkSlugs();
-  for (const pSlug of prioritySlugs) {
-    if (related.length >= 3) break;
-    if (siblingSlugs.has(pSlug)) continue;
-    const match = clusterPeers.find((i) => i.slug === pSlug);
-    if (match) {
-      siblingSlugs.add(match.slug);
-      related.push(match);
+  // Ring step across all surviving items (consecutive stride = 1 guarantees uniform in-degree >= 4)
+  const myGlobalIdx = all.findIndex((i) => i.slug === item.slug && i.category === item.category);
+  const startGlobal = myGlobalIdx >= 0 ? myGlobalIdx : 0;
+  for (let offset = 1; offset <= all.length && related.length < 4; offset++) {
+    const cand = all[(startGlobal + offset) % all.length];
+    if (classifyPseoCluster(cand) === classifyPseoCluster(item)) {
+      pushItem(cand);
     }
   }
-  for (const pSlug of prioritySlugs) {
-    if (related.length >= 4) break;
-    if (siblingSlugs.has(pSlug)) continue;
-    const match = all.find((i) => i.slug === pSlug);
-    if (match) {
-      siblingSlugs.add(match.slug);
-      related.push(match);
-    }
+  for (let offset = 1; offset <= all.length && related.length < 4; offset++) {
+    pushItem(all[(startGlobal + offset) % all.length]);
   }
 
-  for (let offset = 1; offset < pool.length && related.length < 6; offset++) {
-    const candidate = pool[(myIdx + offset * 3) % pool.length];
-    if (candidate && !siblingSlugs.has(candidate.slug)) {
-      siblingSlugs.add(candidate.slug);
-      related.push(candidate);
-    }
+  // Add 2 cross-topic high-value guides deterministically
+  for (let jump = 7; related.length < 6 && jump < all.length + 7; jump += 5) {
+    pushItem(all[(startGlobal + jump) % all.length]);
   }
 
   return { siblings, related };
@@ -882,7 +828,8 @@ export function buildPseoTitle(item: CleanItem): string {
   if (approved && approved.length >= 30 && approved.length <= 115) {
     return approved;
   }
-  const custom = CUSTOM_GSC_TITLES[item.slug] || item.metaTitle;
+  const custom =
+    (Object.hasOwn(CUSTOM_GSC_TITLES, item.slug) ? CUSTOM_GSC_TITLES[item.slug] : undefined) || item.metaTitle;
   if (custom && custom.length >= 30 && custom.length <= 115) {
     return custom;
   }
@@ -934,7 +881,8 @@ export function buildPseoDescription(item: CleanItem): string {
   if (approvedDesc && approvedDesc.length >= 70 && approvedDesc.length <= 160) {
     return approvedDesc;
   }
-  const customDesc = CUSTOM_GSC_DESCRIPTIONS[item.slug] || item.metaDescription;
+  const customDesc =
+    (Object.hasOwn(CUSTOM_GSC_DESCRIPTIONS, item.slug) ? CUSTOM_GSC_DESCRIPTIONS[item.slug] : undefined) || item.metaDescription;
   if (customDesc && customDesc.length >= 70 && customDesc.length <= 160) {
     return customDesc;
   }
@@ -942,125 +890,50 @@ export function buildPseoDescription(item: CleanItem): string {
   const spaceLabel = telemetry ? `${telemetry.median_gb}–${telemetry.p90_gb} GB` : formatCompactSpaceRange(item.avgSpace);
   let primaryPath = extractPrimaryDisplayPath(item.path);
 
-  let desc = `Can I delete ${primaryPath}? YES (${spaceLabel}). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+  const safetyPhrase =
+    item.category === "folder"
+      ? "Keeps OS files and user data intact."
+      : "Zero save files or active logins lost.";
+  let desc = `Can I delete ${primaryPath}? YES (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.5 MB Sweepr scan.`;
   if (desc.length > 158) {
-    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.5 MB Sweepr scan.`;
   }
   if (desc.length > 158) {
-    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`;
   }
   if (desc.length > 158) {
-    const maxP = 158 - `Delete  (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`.length;
+    const maxP = 158 - `Delete  (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`.length;
     primaryPath = primaryPath.slice(0, Math.max(18, maxP));
-    desc = `Delete ${primaryPath} (${spaceLabel}). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`;
   }
   return desc;
 }
 
-function matchTransactionalToolForItem(
-  item: CleanItem,
-  clusterId: string
-): { slug: string; label: string; savings: string } {
-  const s = item.slug.toLowerCase();
-  const p = item.path.toLowerCase();
-  if (s.includes("discord")) {
-    return { slug: "discord-cache-cleaner", label: "Discord Cache & GPU Blob Cleaner", savings: "2–15 GB" };
-  }
-  if (s.includes("steam") || p.includes("steam")) {
-    return { slug: "steam-cache-cleaner", label: "Steam depotcache & Shader Cache Cleaner", savings: "5–40 GB" };
-  }
-  if (s.includes("logitech") || s.includes("lghub") || p.includes("lghub") || p.includes("logioptions")) {
-    return { slug: "logitech-ghub-cleaner", label: "Logitech G HUB & Options+ Depots Cleaner", savings: "2–10 GB" };
-  }
-  if (s.includes("elgato") || s.includes("streamdeck")) {
-    return { slug: "elgato-streamdeck-cleaner", label: "Elgato Stream Deck Cache & Logs Cleaner", savings: "1–5 GB" };
-  }
-  if (s.includes("riot") || s.includes("valorant") || s.includes("league")) {
-    return { slug: "valorant-logs-cleaner", label: "Valorant & Riot Client Logs Cleaner", savings: "2–12 GB" };
-  }
-  if (s.includes("nvidia") || s.includes("amd-shader") || s.includes("dxcache") || clusterId === "gpu_drivers") {
-    return { slug: "nvidia-shader-cleaner", label: "NVIDIA DXCache & DirectX Shader Cleaner", savings: "2–15 GB" };
-  }
-  if (
-    s.includes("comfyui") ||
-    s.includes("lm-studio") ||
-    s.includes("ollama") ||
-    s.includes("huggingface") ||
-    s.includes("cursor") ||
-    s.includes("vllm") ||
-    s.includes("fooocus") ||
-    s.includes("invokeai") ||
-    s.includes("kobold")
-  ) {
-    return { slug: "ai-model-cache-cleaner", label: "ComfyUI, LM Studio & AI Model Cache Cleaner", savings: "15–90 GB" };
-  }
-  if (s.includes("adobe") || s.includes("davinci") || s.includes("capcut") || clusterId === "creative") {
-    return { slug: "adobe-media-cache-cleaner", label: "Adobe Media Cache & Creative Cloud Cleaner", savings: "10–80 GB" };
-  }
-  if (clusterId === "devtools") {
-    return { slug: "jetbrains-gradle-cleaner", label: "IntelliJ IDEA, Gradle & Developer Cache Cleaner", savings: "10–55 GB" };
-  }
-  if (clusterId === "gaming") {
-    return { slug: "steam-cache-cleaner", label: "Steam & PC Game Shader Cache Cleaner", savings: "5–40 GB" };
-  }
-  if (clusterId === "browsers_comms") {
-    return { slug: "discord-cache-cleaner", label: "Discord & Chromium App Cache Cleaner", savings: "2–15 GB" };
-  }
-  return { slug: "windows-24h2-update-cleaner", label: "Windows 11 24H2 Update & WinSxS Cleaner", savings: "10–45 GB" };
-}
-
 export const FEATURED_GSC_SLUGS = [
+  "c-drive-filling-up-by-itself-windows-11",
+  "windows-11-24h2-update-cache-8gb-bug",
+  "appdata-local-folder-huge-windows-11",
+  "system-and-reserved-storage-100gb-windows-11",
+  "system-data-huge",
+  "iphone-system-data-full",
+  "other-storage-full",
   "steam-depotcache",
-  "genshin-impact-update-cache",
-  "riot-client-logs",
-  "logitech-ghub-installer-cache",
-  "stremio-desktop-cache",
-  "amd-shader-cache",
+  "nvidia-dxcache",
   "winsxs",
-  "windows-livekernelreports",
+  "windows-old",
+  "hiberfil-sys",
+  "logitech-ghub-installer-cache",
+  "riot-client-logs",
+  "genshin-impact-update-cache",
   "comfyui-temp-output-cache",
   "programdata-package-cache",
-  "brave-browser-cache",
-  "medal-tv-cache",
-  "nvidia-nv-cache",
-  "nvidia-dxcache",
-  "battlenet-cache",
-  "capcut-desktop-cache",
-  "zen-browser-cache",
-  "opera-gx-cache",
-  "jetbrains-intellij-cache",
-  "windows-old",
-  "elgato-streamdeck-cache",
-  "logitech-options-plus-cache",
-  "vivaldi-browser-cache",
-  "localappdata-webview2-ebwebview-cache",
-  "dolphin-emulator-cache",
-  "obs-studio-logs-crashes",
-  "creative-cloud-installer-cache",
-  "npm-cache",
-  "gradle-wrapper-caches",
-  "localappdata-crashdumps",
-  "hiberfil-sys",
-  "c-drive-filling-up-by-itself-windows-11",
-  "system-and-reserved-storage-100gb-windows-11",
-  "appdata-local-folder-huge-windows-11",
-  "windows-11-24h2-update-cache-8gb-bug",
-  "other-storage-full-windows-11-cleanup",
-  "ea-app-cache",
-  "epic-games-webcache",
-  "vrchat-cache",
-  "lm-studio-models-cache",
+  "amd-shader-cache",
   "discord-cache",
   "spotify-cache",
-  "steam-shader-cache",
-  "chrome-service-worker-cache",
-  "huggingface-hub-cache",
-  "windows-temp",
+  "docker-desktop-ext4-disk",
+  "adobe-premiere-media-cache",
+  "software-distribution-download",
   "appdata-temp",
-  "nvidia-glcache",
-  "intel-arc-shader-cache",
-  "ubisoft-connect-cache",
-  "roblox-http-cache",
 ];
 
 let gscPriorityInternalLinkSlugs: string[] = [...FEATURED_GSC_SLUGS];
@@ -1084,173 +957,156 @@ export function getGscPriorityInternalLinkSlugs(): string[] {
 }
 
 export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
-  return `
-    <section id="pc-cache-bloat-calculator" class="mb-12 bg-[#062017] text-emerald-50 border border-emerald-500/40 rounded-2xl p-6 md:p-8 shadow-xl">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <span class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
-          ⚡ Zero-Signup Interactive Benchmark Tool
+  return `<section id="pc-cache-bloat-calculator" class="ed-card">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;">
+      <div>
+        <div class="ed-kpi-label" style="color:var(--accent);margin-bottom:4px;">Windows Gaming &amp; AI Cache Bloat Calculator</div>
+        <h2 class="ed-h2" style="margin:0;">Select the apps you run on your PC</h2>
+      </div>
+      <span class="mono" style="font-size:0.75rem;color:var(--muted);">Windows 10 &amp; 11 typical ranges</span>
+    </div>
+    <p class="ed-lead" style="font-size:0.94rem;margin-bottom:18px;">
+      Check any game launcher, GPU driver, local AI model, or creative suite installed on your drive to inspect the exact cache folders and estimate reclaimable gigabytes.
+    </p>
+
+    <div class="ed-grid-2" id="bloatCalcGrid" style="gap:10px;margin-bottom:20px;">
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="steam" data-name="Steam depotcache &amp; NVIDIA DXCache" data-guide="/clean/app/steam-depotcache" data-gb="12.5" data-paths="%LocalAppData%\\NVIDIA\\DXCache|C:\\Program Files (x86)\\Steam\\depotcache|%LocalAppData%\\Steam\\htmlcache" checked />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">Steam &amp; NVIDIA DXCache</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~12.5 GB typical</span>
         </span>
-        <span class="text-xs font-mono text-emerald-300/90">GSC-Verified Windows 11/10 Paths · 6.5 MB Native Rust Engine</span>
-      </div>
-      <h2 class="text-2xl md:text-3xl font-black text-white mb-2">
-        Windows Gaming &amp; AI Cache Bloat Calculator
-      </h2>
-      <p class="text-sm text-emerald-100/85 mb-6 max-w-3xl">
-        Check the games, AI tools, and IDEs installed on your PC to see the exact <code class="bg-black/30 px-1.5 py-0.5 rounded text-emerald-300">%LOCALAPPDATA%</code> folders silently eating your C: drive and your estimated reclaimable GB:
-      </p>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="genshin" data-name="Genshin Impact / HoYoPlay" data-guide="/clean/app/genshin-impact-update-cache" data-gb="8.4" data-paths="%AppData%\\Cognosphere\\HYP\\1_1\\fedata\\Cache|C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp" />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">Genshin / HoYoPlay</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~8.4 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="valorant" data-name="VALORANT &amp; Riot Client" data-guide="/clean/app/riot-client-logs" data-gb="4.8" data-paths="%LocalAppData%\\VALORANT\\Saved\\Logs|%LocalAppData%\\VALORANT\\Saved\\Crashes|%LocalAppData%\\Riot Games\\Riot Client\\Logs" />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">VALORANT &amp; Riot Client</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~4.8 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="comfyui" data-name="ComfyUI Temp &amp; Output" data-guide="/clean/app/comfyui-temp-output-cache" data-gb="21.6" data-paths="C:\\ComfyUI\\temp|%LocalAppData%\\Temp\\comfyui|%LocalAppData%\\pip\\Cache" checked />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">ComfyUI &amp; Python pip</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~21.6 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="lmstudio" data-name="LM Studio Models Cache" data-guide="/clean/app/lm-studio-models-cache" data-gb="26.5" data-paths="%UserProfile%\\.cache\\lm-studio\\models" checked />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">LM Studio Local Models</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~26.5 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="docker" data-name="Docker Desktop WSL2 ext4.vhdx" data-guide="/clean/app/docker-desktop-ext4-disk" data-gb="28.0" data-paths="%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx" />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">Docker &amp; WSL2 Virtual Disk</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~28.0 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="jetbrains" data-name="JetBrains IntelliJ &amp; Cursor" data-guide="/clean/app/jetbrains-intellij-cache" data-gb="9.2" data-paths="%LocalAppData%\\JetBrains|%AppData%\\Cursor\\User\\workspaceStorage|%AppData%\\Code\\CachedData" checked />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">IntelliJ IDEA, Cursor &amp; VS Code</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~9.2 GB typical</span>
+        </span>
+      </label>
+      <label class="ed-check-card">
+        <input type="checkbox" class="bloat-calc-cb" data-id="adobe" data-name="Adobe Premiere Media Cache" data-guide="/clean/app/adobe-premiere-media-cache" data-gb="22.0" data-paths="%AppData%\\Adobe\\Common\\Media Cache Files|%AppData%\\Adobe\\Common\\Peak Files" />
+        <span>
+          <strong style="display:block;font-size:0.92rem;">Adobe Media Cache</strong>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~22.0 GB typical</span>
+        </span>
+      </label>
+    </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6" id="bloatCalcGrid">
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="steam" data-name="Steam &amp; NVIDIA DXCache" data-gb="12.5" data-paths="%LocalAppData%\\NVIDIA\\DXCache|C:\\Program Files (x86)\\Steam\\steamapps\\shadercache|%LocalAppData%\\Steam\\htmlcache" checked />
-          <span>
-            <strong class="block text-sm text-white">Steam &amp; NVIDIA DXCache</strong>
-            <span class="text-xs text-emerald-300 font-mono">~12.5 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="genshin" data-name="Genshin Impact / HoYoPlay" data-gb="8.4" data-paths="%AppData%\\Cognosphere\\HYP\\1_1\\fedata\\Cache|%LocalAppData%\\HoYoverse\\Genshin Impact\\cache" />
-          <span>
-            <strong class="block text-sm text-white">Genshin / HoYoPlay</strong>
-            <span class="text-xs text-emerald-300 font-mono">~8.4 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="valorant" data-name="Valorant &amp; Riot Client" data-gb="4.8" data-paths="%LocalAppData%\\VALORANT\\Saved\\Logs|%LocalAppData%\\VALORANT\\Saved\\Crashes|%LocalAppData%\\Riot Games\\Riot Client\\Logs" />
-          <span>
-            <strong class="block text-sm text-white">Valorant &amp; Riot</strong>
-            <span class="text-xs text-emerald-300 font-mono">~4.8 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="comfyui" data-name="ComfyUI &amp; HuggingFace" data-gb="34.0" data-paths="%UserProfile%\\.cache\\huggingface\\hub|%LocalAppData%\\pip\\Cache|ComfyUI\\temp" checked />
-          <span>
-            <strong class="block text-sm text-white">ComfyUI &amp; HuggingFace</strong>
-            <span class="text-xs text-emerald-300 font-mono">~34.0 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="ollama" data-name="Ollama &amp; LM Studio" data-gb="26.5" data-paths="%UserProfile%\\.ollama\\models\\blobs|%UserProfile%\\.cache\\lm-studio" checked />
-          <span>
-            <strong class="block text-sm text-white">Ollama &amp; LM Studio</strong>
-            <span class="text-xs text-emerald-300 font-mono">~26.5 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="docker" data-name="Docker Desktop &amp; WSL2" data-gb="28.0" data-paths="%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx|%LocalAppData%\\Temp\\docker-scout" />
-          <span>
-            <strong class="block text-sm text-white">Docker &amp; WSL2</strong>
-            <span class="text-xs text-emerald-300 font-mono">~28.0 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="jetbrains" data-name="JetBrains IDEs &amp; Cursor" data-gb="14.2" data-paths="%LocalAppData%\\JetBrains|%AppData%\\Cursor\\User\\workspaceStorage|%AppData%\\Code\\Cache" checked />
-          <span>
-            <strong class="block text-sm text-white">JetBrains &amp; Cursor</strong>
-            <span class="text-xs text-emerald-300 font-mono">~14.2 GB avg bloat</span>
-          </span>
-        </label>
-        <label class="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#04150f] border border-emerald-500/30 cursor-pointer hover:border-emerald-400 transition-all">
-          <input type="checkbox" class="bloat-calc-cb mt-1 accent-emerald-500" data-id="adobe" data-name="Adobe Premiere &amp; After Effects" data-gb="22.0" data-paths="%AppData%\\Adobe\\Common\\Media Cache Files|%AppData%\\Adobe\\Common\\Peak Files" />
-          <span>
-            <strong class="block text-sm text-white">Adobe Media Cache</strong>
-            <span class="text-xs text-emerald-300 font-mono">~22.0 GB avg bloat</span>
-          </span>
-        </label>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch bg-[#03110c] border border-emerald-500/35 rounded-xl p-5">
-        <div class="flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-emerald-500/20 pb-4 lg:pb-0 lg:pr-5">
-          <div>
-            <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Estimated Hidden Cache Wasted</div>
-            <div id="bloatCalcTotalGb" class="text-4xl md:text-5xl font-black text-emerald-300 tabular-nums">87.2 GB</div>
-            <div id="bloatCalcCountLabel" class="text-xs text-emerald-100/75 mt-1">Across 4 selected gaming/AI workloads on C:</div>
-          </div>
-          <div class="mt-4 flex flex-col gap-2">
-            <a href="/download" rel="nofollow" class="inline-block text-center bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-sm py-3 px-4 rounded-xl no-underline transition-all">
-              ⚡ Scan &amp; Reclaim with SWEEPR (6.5 MB Rust App) &rarr;
-            </a>
-            <a id="bloatCalcShareWinLink" href="/share/win?gb=87.2%20GB&amp;culprit=ComfyUI%20%2F%20Ollama%20%2F%20NVIDIA%20DXCache&amp;ms=280" rel="nofollow" class="inline-block text-center bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold text-xs py-2.5 px-3 rounded-lg no-underline transition-all">
-              Share My Benchmark Card (+30d Free Pro)
-            </a>
-          </div>
+    <div class="ed-card-muted">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+        <div>
+          <div class="ed-kpi-label">ESTIMATED HIDDEN CACHE</div>
+          <div id="bloatCalcTotalGb" class="ed-kpi-val" style="font-size:2.4rem;color:var(--accent);">69.8 GB</div>
+          <div id="bloatCalcCountLabel" style="font-size:0.84rem;color:var(--muted);margin-top:4px;">Across 4 selected workloads</div>
         </div>
-        <div class="lg:col-span-2 flex flex-col justify-between">
-          <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">
-            Exact Windows <code class="text-emerald-200">%LOCALAPPDATA%</code> &amp; <code class="text-emerald-200">%USERPROFILE%</code> Target Paths:
-          </div>
-          <div id="bloatCalcPathsList" class="space-y-1.5 font-mono text-xs text-emerald-100 bg-black/40 p-3.5 rounded-lg border border-emerald-500/20 max-h-48 overflow-y-auto">
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\NVIDIA\DXCache</span><span class="text-emerald-400 font-bold">Steam &amp; NVIDIA DXCache</span></div>
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>C:\Program Files (x86)\Steam\steamapps\shadercache</span><span class="text-emerald-400 font-bold">Steam &amp; NVIDIA DXCache</span></div>
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%UserProfile%\.cache\huggingface\hub</span><span class="text-emerald-400 font-bold">ComfyUI &amp; HuggingFace</span></div>
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\pip\Cache</span><span class="text-emerald-400 font-bold">ComfyUI &amp; HuggingFace</span></div>
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%UserProfile%\.ollama\models\blobs</span><span class="text-emerald-400 font-bold">Ollama &amp; LM Studio</span></div>
-            <div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>%LocalAppData%\JetBrains</span><span class="text-emerald-400 font-bold">JetBrains IDEs &amp; Cursor</span></div>
-          </div>
-          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-200/80">
-            <span>🟢 100% Non-Destructive: Saved logins, game saves &amp; active checkpoints stay untouched.</span>
-            <a href="/tools/pc-cache-calculator" class="text-emerald-300 underline font-bold">Permalink: /tools/pc-cache-calculator</a>
-          </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <a href="/safe-to-delete" class="ed-btn-secondary">Check Custom Paths</a>
+          <a href="/download" rel="nofollow" class="ed-btn-primary">Download Free 60s Scan</a>
         </div>
       </div>
 
-      <script>
-        (function(){
-          var cbs = document.querySelectorAll('.bloat-calc-cb');
-          var totalEl = document.getElementById('bloatCalcTotalGb');
-          var countEl = document.getElementById('bloatCalcCountLabel');
-          var listEl = document.getElementById('bloatCalcPathsList');
-          var shareEl = document.getElementById('bloatCalcShareWinLink');
-          function updateBloatCalc() {
-            var total = 0;
-            var count = 0;
-            var names = [];
-            var rows = [];
-            for (var i = 0; i < cbs.length; i++) {
-              var cb = cbs[i];
-              if (cb.checked) {
-                var gb = parseFloat(cb.getAttribute('data-gb') || '0') || 0;
-                var nm = cb.getAttribute('data-name') || '';
-                var rawPaths = (cb.getAttribute('data-paths') || '').split('|');
-                total += gb;
-                count++;
-                names.push(nm);
-                for (var j = 0; j < rawPaths.length; j++) {
-                  if (rawPaths[j]) {
-                    rows.push('<div class="flex items-center justify-between gap-2 py-0.5 border-b border-emerald-500/10"><span>' + rawPaths[j] + '</span><span class="text-emerald-400 font-bold">' + nm + '</span></div>');
-                  }
+      <div class="ed-kpi-label" style="margin-bottom:8px;">WINDOWS PATHS TO INSPECT &amp; GUIDE LINKS</div>
+      <div id="bloatCalcPathsList" class="ed-ledger"></div>
+    </div>
+
+    <script>
+      (function(){
+        var cbs = document.querySelectorAll('.bloat-calc-cb');
+        var totalEl = document.getElementById('bloatCalcTotalGb');
+        var countEl = document.getElementById('bloatCalcCountLabel');
+        var listEl = document.getElementById('bloatCalcPathsList');
+        function escHtml(s){
+          return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+        function updateBloatCalc() {
+          var total = 0;
+          var count = 0;
+          var rows = [];
+          for (var i = 0; i < cbs.length; i++) {
+            var cb = cbs[i];
+            if (cb.checked) {
+              var gb = parseFloat(cb.getAttribute('data-gb') || '0') || 0;
+              var nm = cb.getAttribute('data-name') || '';
+              var guide = cb.getAttribute('data-guide') || '/clean';
+              var rawPaths = (cb.getAttribute('data-paths') || '').split('|');
+              total += gb;
+              count++;
+              for (var j = 0; j < rawPaths.length; j++) {
+                if (rawPaths[j]) {
+                  rows.push(
+                    '<a href="' + escHtml(guide) + '" class="ed-ledger-row" style="grid-template-columns:1.5fr 1fr auto;">' +
+                      '<span class="ed-path-mono" style="color:var(--text);">' + escHtml(rawPaths[j]) + '</span>' +
+                      '<span style="font-size:0.82rem;font-weight:700;color:var(--muted);">' + escHtml(nm) + '</span>' +
+                      '<span style="font-size:0.82rem;font-weight:700;color:var(--accent);">Read guide &rarr;</span>' +
+                    '</a>'
+                  );
                 }
               }
             }
-            var gbStr = total.toFixed(1) + ' GB';
-            if (totalEl) totalEl.textContent = gbStr;
-            if (countEl) countEl.textContent = 'Across ' + count + ' selected gaming/AI workload' + (count === 1 ? '' : 's') + ' on C:';
-            if (listEl) listEl.innerHTML = rows.length ? rows.join('') : '<div class="text-emerald-400/70">Select at least one game or AI tool above to inspect its exact cache paths.</div>';
-            if (shareEl) {
-              var culpritStr = names.slice(0, 2).join(' / ') || 'NVIDIA DXCache / ComfyUI';
-              shareEl.setAttribute('href', '/share/win?gb=' + encodeURIComponent(gbStr) + '&culprit=' + encodeURIComponent(culpritStr) + '&ms=280');
-            }
           }
-          for (var k = 0; k < cbs.length; k++) {
-            cbs[k].addEventListener('change', updateBloatCalc);
-          }
-          updateBloatCalc();
-        })();
-      </script>
-    </section>
-  `;
+          if (totalEl) totalEl.textContent = total.toFixed(1) + ' GB';
+          if (countEl) countEl.textContent = 'Across ' + count + ' selected workload' + (count === 1 ? '' : 's') + ' — saved logins and game saves stay untouched';
+          if (listEl) listEl.innerHTML = rows.length ? rows.join('') : '<div style="padding:14px;font-size:0.88rem;color:var(--muted);">Select at least one workload above to inspect its folder paths.</div>';
+        }
+        for (var k = 0; k < cbs.length; k++) {
+          cbs[k].addEventListener('change', updateBloatCalc);
+        }
+        updateBloatCalc();
+      })();
+    </script>
+  </section>`;
 }
 
 export function renderGamingAndAiCacheBloatCalculatorPage(): string {
   const widgetHtml = renderGamingAndAiCacheBloatCalculatorWidget();
-  const calcJsonLd = JSON.stringify({
+  const pageTitle = "PC Cache Bloat Calculator (Windows 10 & 11) | SWEEPR Cleaner";
+  const pageDesc =
+    "Estimate how much hidden storage is tied up in Steam depotcache, NVIDIA DXCache, ComfyUI, LM Studio, Docker WSL2, JetBrains, and Adobe caches.";
+  const canonicalUrl = "https://sweeprcleaner.com/tools/pc-cache-calculator";
+  const calcJsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "TechArticle",
-        headline: "Windows Gaming & AI Cache Bloat Calculator (2026 Benchmark)",
-        description:
-          "Interactive Windows 11/10 storage calculator measuring hidden %LOCALAPPDATA% and %USERPROFILE% cache footprints across Steam, Genshin Impact, Valorant, ComfyUI, Ollama, Docker, JetBrains, and Adobe.",
-        url: "https://sweeprcleaner.com/tools/pc-cache-calculator",
+        headline: "Windows Cache Bloat Calculator",
+        description: pageDesc,
+        url: canonicalUrl,
         author: { "@type": "Organization", name: "SWEEPR Storage Research Lab" },
       },
       {
@@ -1258,82 +1114,59 @@ export function renderGamingAndAiCacheBloatCalculatorPage(): string {
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
           { "@type": "ListItem", position: 2, name: "Cleaner Tools", item: "https://sweeprcleaner.com/tools" },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: "PC Cache Calculator",
-            item: "https://sweeprcleaner.com/tools/pc-cache-calculator",
-          },
+          { "@type": "ListItem", position: 3, name: "PC Cache Calculator", item: canonicalUrl },
         ],
       },
     ],
-  });
-  return `<!DOCTYPE html>
+  };
+
+  return `<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR</title>
-  <meta name="description" content="Free Windows 11/10 Gaming &amp; AI Cache Bloat Calculator. Check Steam, Genshin, Valorant, ComfyUI, Ollama, Docker &amp; JetBrains %LOCALAPPDATA% paths." />
-  <link rel="canonical" href="https://sweeprcleaner.com/tools/pc-cache-calculator" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Windows Gaming &amp; AI Cache Bloat Calculator | SWEEPR" />
-  <meta property="og:description" content="See exact %LOCALAPPDATA% shader, HuggingFace, Ollama, and IDE cache paths and calculate how many GB are hiding on your C: drive." />
-  <meta property="og:url" content="https://sweeprcleaner.com/tools/pc-cache-calculator" />
-  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <script type="application/ld+json">${calcJsonLd}</script>
-  <link rel="stylesheet" href="/vendor/tailwind.min.css">
-  <script src="/analytics.js" defer></script>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body class="bg-[#03110c] text-emerald-50 min-h-screen flex flex-col">
-  <nav class="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between w-full">
-    <a href="/" class="font-extrabold text-xl text-white no-underline">SWEEPR <span class="text-emerald-400">Cleaner</span></a>
-    <div class="flex items-center gap-4 text-sm">
-      <a href="/tools" class="text-emerald-200 hover:text-white no-underline">Cleaner Tools</a>
-      <a href="/clean" class="text-emerald-200 hover:text-white no-underline">377-Rule Directory</a>
-      <a href="/safe-to-delete" class="text-emerald-200 hover:text-white no-underline">Path Safety Checker</a>
-      <a href="/download" rel="nofollow" class="bg-emerald-500 text-gray-950 font-extrabold px-4 py-2 rounded-xl no-underline">Download 6.5 MB App</a>
-    </div>
-  </nav>
-  <main class="max-w-5xl mx-auto px-6 py-8 flex-1 w-full">
-    <header class="mb-8">
-      <h1 class="text-3xl md:text-4xl font-black text-white mb-3">Windows Gaming &amp; AI Cache Bloat Calculator (2026 Benchmark)</h1>
-      <p class="text-sm md:text-base text-emerald-100/85 max-w-3xl leading-relaxed">
-        Modern PC games, GPU shader compilers, local AI inference tools, and developer IDEs silently store tens of gigabytes inside hidden <code class="text-emerald-300">%LOCALAPPDATA%</code>, <code class="text-emerald-300">%USERPROFILE%</code>, and <code class="text-emerald-300">C:\ProgramData</code> directories that Windows Storage Sense completely misses. Select the apps installed on your PC below to inspect exact folder paths and estimate how much disk space you can safely reclaim without losing save files, logins, or active projects.
+${renderEditorialHead({
+  title: pageTitle,
+  description: pageDesc,
+  canonical: canonicalUrl,
+  ogType: "website",
+  jsonLd: calcJsonLd,
+})}
+<body>
+  ${renderSiteHeader("tools")}
+  <main id="main-content" class="ed-container">
+    <nav class="ed-crumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      <a href="/tools">Tools</a>
+      <span>/</span>
+      <span>PC Cache Calculator</span>
+    </nav>
+
+    <header style="margin-bottom:24px;">
+      <h1 class="ed-h1">How much space is hiding in <em>PC caches</em>?</h1>
+      <p class="ed-lead">
+        Modern PC games, GPU shader compilers, local AI tools, and IDEs write tens of gigabytes into <code class="ed-code">%LOCALAPPDATA%</code> and <code class="ed-code">%USERPROFILE%</code> folders that Windows Storage Settings often skips. Select your apps below to inspect every path and read its safety guide.
       </p>
     </header>
+
     ${widgetHtml}
-    <section class="mt-8 bg-[#062017] border border-emerald-500/30 rounded-2xl p-6 md:p-8 text-sm text-emerald-100/85 leading-relaxed space-y-4">
-      <h2 class="text-xl font-bold text-white">Benchmark Methodology &amp; Non-Destructive Cleanup Guarantees</h2>
+
+    <section class="ed-section ed-card ed-prose">
+      <h2 class="ed-h2">What stays untouched when you clear these caches</h2>
       <p>
-        Every workload profile in this calculator is calibrated against SWEEPR Storage Research Lab measurements on Windows 10 (22H2) and Windows 11 (23H2 / 24H2) workstations. Unlike legacy registry cleaners, SWEEPR Cleaner targets strictly disposable staging depots, compiled DirectX/Vulkan shader caches, orphaned MSI/EXE patch payloads, and temporary preview buffers—never touching saved game progress, browser passwords, session cookies, or active model weights unless explicitly selected.
+        Disposable shader caches, interrupted game patch chunks, and temporary build artifacts can be removed safely while leaving saved games, source code repositories, browser logins, and active AI model weights alone. For exact manual steps and "when not to delete" notes, inspect individual guides:
+        <a href="/clean/app/steam-depotcache">Steam depotcache</a>,
+        <a href="/clean/app/nvidia-dxcache">NVIDIA DXCache</a>,
+        <a href="/clean/app/comfyui-temp-output-cache">ComfyUI temp files</a>,
+        <a href="/clean/app/docker-desktop-ext4-disk">Docker WSL2 virtual disk</a>, and
+        <a href="/clean/folder/winsxs">Windows WinSxS Component Store</a>.
       </p>
-      <p>
-        For manual verification before running an automated scan, inspect our step-by-step safety audits for the largest C: drive culprits:
-        <a href="/clean/app/steam-depotcache" class="text-emerald-300 underline font-semibold">Steam depotcache</a>,
-        <a href="/clean/app/genshin-impact-update-cache" class="text-emerald-300 underline font-semibold">Genshin Impact Update Cache</a>,
-        <a href="/clean/app/comfyui-temp-output-cache" class="text-emerald-300 underline font-semibold">ComfyUI Temp &amp; Output Cache</a>,
-        <a href="/clean/app/amd-shader-cache" class="text-emerald-300 underline font-semibold">AMD Radeon DXCache</a>,
-        <a href="/clean/app/nvidia-dxcache" class="text-emerald-300 underline font-semibold">NVIDIA DXCache</a>, and
-        <a href="/clean/folder/winsxs" class="text-emerald-300 underline font-semibold">Windows WinSxS Component Store</a>.
-        You can also compare SWEEPR against legacy utilities in <a href="/vs/ccleaner" class="text-emerald-300 underline font-semibold">SWEEPR vs CCleaner</a> and <a href="/vs/cleanmymac" class="text-emerald-300 underline font-semibold">SWEEPR vs CleanMyMac X</a>.
-      </p>
+      <div class="ed-actions">
+        <a href="/safe-to-delete" class="ed-btn-secondary">Open Path Safety Checker</a>
+        <a href="/state-of-windows-storage" class="ed-btn-secondary">Read 2026 Storage Study</a>
+        <a href="/vs/ccleaner" class="ed-btn-secondary">SWEEPR vs CCleaner</a>
+      </div>
     </section>
   </main>
-  <footer class="mt-auto py-8 text-center text-emerald-200/70 text-xs border-t border-emerald-500/20">
-    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
-      <a href="/pricing" class="hover:text-emerald-300 transition-colors">Pricing</a>
-      <a href="/vs/ccleaner" class="hover:text-emerald-300 transition-colors">vs CCleaner</a>
-      <a href="/refund" class="hover:text-emerald-300 transition-colors">Refund Policy</a>
-      <a href="/terms" class="hover:text-emerald-300 transition-colors">Terms of Service</a>
-      <a href="/privacy" class="hover:text-emerald-300 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-emerald-300 transition-colors">Support &amp; Help</a>
-      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-300 transition-colors">Cookie Preferences</a>
-    </div>
-    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
-  </footer>
+  ${renderSiteFooter()}
 </body>
 </html>`;
 }
@@ -1349,349 +1182,331 @@ export function renderPseoDirectory(): string {
   } catch {
     if (cachedDirectoryHtml) return cachedDirectoryHtml;
   }
-  const items = cleanItems.filter((i) => !isPseoSlugNoindexed(i.slug));
-  const appItems = items.filter((i) => i.category === "app");
-  const folderItems = items.filter((i) => i.category === "folder");
-  const priorityList = Array.from(new Set([...getGscPriorityInternalLinkSlugs(), ...FEATURED_GSC_SLUGS])).slice(0, 50);
-  const featuredItems = priorityList
-    .slice(0, 20)
+
+  const items = cleanItems.filter((i) => !isPseoSlugNoindexed(i.slug) && !i.noindex && !i.mergedIntoSlug);
+
+  const topQuestionSlugs = [
+    "c-drive-filling-up-by-itself-windows-11",
+    "windows-11-24h2-update-cache-8gb-bug",
+    "appdata-local-folder-huge-windows-11",
+    "system-and-reserved-storage-100gb-windows-11",
+    "system-data-huge",
+    "iphone-system-data-full",
+    "other-storage-full",
+    "windows-old",
+    "hiberfil-sys",
+    "steam-depotcache",
+  ];
+  const topQuestions = topQuestionSlugs
     .map((s) => items.find((i) => i.slug === s))
     .filter((i): i is CleanItem => Boolean(i));
 
-  const siloOrder: PseoClusterId[] = [
-    "gaming",
-    "gpu",
-    "creative",
-    "devtools",
-    "browsers_chat",
-    "win_update",
-    "win_crash_logs",
+  const clusterOrder: DirectoryGroupId[] = [
+    "problems",
+    "mac_mobile",
     "win_system",
+    "gaming_gpu",
+    "devtools_ai",
+    "creative_browsers",
   ];
-  const siloGroups = siloOrder.map((cid) => ({
-    profile: CLUSTER_PROFILES[cid],
-    items: items.filter((i) => classifyPseoCluster(i) === cid),
-  }));
+  const clusterGroups = clusterOrder
+    .map((cid) => ({
+      meta: CLUSTER_META[cid],
+      items: items.filter((i) => classifyDirectoryGroup(i) === cid),
+    }))
+    .filter((g) => g.items.length > 0);
 
-  const renderCard = (i: CleanItem) => `
-    <a href="/clean/${i.category}/${i.slug}" class="block bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md hover:border-emerald-400 transition-all text-inherit no-underline">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-          i.safeToDelete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-        }">
-          ${i.safeToDelete ? "🟢 100% Safe to Delete" : "⚠️ Use Caution"}
-        </span>
-        <span class="text-xs font-bold text-gray-500">Reclaim ${i.avgSpace}</span>
-      </div>
-      <h3 class="text-lg font-bold text-gray-900 mb-2">${i.name}</h3>
-      <p class="text-xs text-gray-500 font-mono mb-3 truncate bg-gray-50 p-1.5 rounded">${i.path}</p>
-      <p class="text-sm text-gray-600 line-clamp-2">${i.whatIsIt}</p>
-    </a>
-  `;
+  const platformBadgeLabel = (i: CleanItem) => {
+    if (i.category === "mac") return "macOS";
+    if (i.category === "ios") return "iPhone / iOS";
+    if (i.category === "android") return "Android";
+    return i.category === "folder" ? "Windows System" : "Windows App";
+  };
 
-  const htmlResult = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta name="color-scheme" content="light">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner</title>
-  <meta name="description" content="Wondering what is filling up your hard drive? Browse verified guides to safely cleaning hidden Windows folders, app caches, and temp files in minutes.">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <link rel="canonical" href="https://sweeprcleaner.com/clean">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="SWEEPR Cleaner">
-  <meta property="og:locale" content="en_GB">
-  <meta property="og:url" content="https://sweeprcleaner.com/clean">
-  <meta property="og:title" content="Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner">
-  <meta property="og:description" content="Verified guides to safely cleaning hidden Windows folders, app caches, and temporary files.">
-  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="SWEEPR Cleaner Windows Storage &amp; Cache Directory">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://sweeprcleaner.com/clean">
-  <meta name="twitter:title" content="Windows Cache &amp; Storage Cleanup Directory | SWEEPR Cleaner">
-  <meta name="twitter:description" content="Browse verified guides to cleaning hidden Windows folders, app caches, and temporary files safely.">
-  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
-  <script type="application/ld+json">${JSON.stringify({
+  const pageTitle = "Storage & Folder Safety Guides (Windows, Mac & Mobile) | SWEEPR";
+  const pageDesc =
+    "Wondering if a Windows, Mac, iPhone, or Android folder is safe to delete? Browse verified Q&A cleanup guides, manual steps, and exact folder verdicts.";
+  const canonicalUrl = "https://sweeprcleaner.com/clean";
+
+  const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "CollectionPage",
-        "@id": "https://sweeprcleaner.com/clean#collection",
-        url: "https://sweeprcleaner.com/clean",
-        name: "Windows Cache & Storage Cleanup Directory",
-        description: "Verified guides to safely cleaning hidden Windows folders, app caches, and temporary files.",
+        "@id": `${canonicalUrl}#collection`,
+        url: canonicalUrl,
+        name: "Storage & Folder Safety Guides",
+        description: pageDesc,
       },
       {
         "@type": "ItemList",
-        name: "Windows Cache & Folder Cleanup Guides",
+        name: "Verified Storage Cleanup Guides",
         numberOfItems: items.length,
         itemListElement: items.map((i, idx) => ({
           "@type": "ListItem",
           position: idx + 1,
-          name: i.name,
+          name: i.questionTitle || i.name,
           url: `https://sweeprcleaner.com/clean/${i.category}/${i.slug}`,
         })),
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: "https://sweeprcleaner.com/",
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: "Storage & Cache Directory",
-            item: "https://sweeprcleaner.com/clean",
-          },
-        ],
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "What is the best PC storage cleaner?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "The best PC storage cleaner targets deep Windows update leftovers, GPU shader caches, launcher depots, and Chromium Service Worker blobs without adware or always-on background bloat. SWEEPR Cleaner is a 6.52 MB Authenticode-signed native Rust cleaner with 377 verification rules and 7-day automatic rollback protection.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "What is the CMD command to clean up the system?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Run Command Prompt as Administrator and execute cleanmgr /sageset:1 followed by cleanmgr /sagerun:1 for built-in temporary folders, plus Dism.exe /online /Cleanup-Image /StartComponentCleanup to reclaim superseded Windows WinSxS update components safely.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "Does Disk Cleanup actually work?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Yes, Windows Disk Cleanup safely clears basic %TEMP%, Windows Update downloads, and Recycle Bin files. However, it misses 10–60+ GB inside %LocalAppData% Chromium caches, Steam depotcache, NVIDIA/AMD DXCache shaders, and developer package caches that dedicated cache rules detect.",
-            },
-          },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
+          { "@type": "ListItem", position: 2, name: "Storage Guides", item: canonicalUrl },
         ],
       },
     ],
-  })}</script>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
-  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
-  <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
-  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <link rel="stylesheet" href="/vendor/tailwind.min.css">
-  <script src="/attribution.js" defer></script>
-  <script src="/analytics.js" defer></script>
-  <script src="/nav.js" defer></script>
-  <link rel="stylesheet" href="/style.css">
-</head>
-<body class="bg-[#fafafa] text-gray-800">
-  <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-    <a href="/" class="flex items-center gap-3 text-inherit no-underline">
-      <div class="logo-box">S</div>
-      <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-700">Cleaner</span></span>
-    </a>
-    <div class="flex gap-2 md:gap-3 items-center">
-      <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-700 transition-colors" aria-expanded="false">
-          <span class="text-base" id="currentLangFlag" aria-hidden="true">🇬🇧</span>
-          <span class="sr-only">Language: </span><span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
-          <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all">
-          <div class="space-y-0.5 text-xs">
-            <button type="button" onclick="setLanguage('en')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span><span class="text-[10px] text-gray-400 font-mono">EN</span></button>
-            <button type="button" onclick="setLanguage('de')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇩🇪</span> <span>Deutsch</span></span><span class="text-[10px] text-gray-400 font-mono">DE</span></button>
-            <button type="button" onclick="setLanguage('fr')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇫🇷</span> <span>Français</span></span><span class="text-[10px] text-gray-400 font-mono">FR</span></button>
-            <button type="button" onclick="setLanguage('es')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇪🇸</span> <span>Español</span></span><span class="text-[10px] text-gray-400 font-mono">ES</span></button>
-          </div>
-        </div>
-      </div>
-      <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
-      <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
-      <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
-      <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
-      <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
-      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700" rel="nofollow">Get Pro</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm" rel="nofollow">Download Free Scan</a>
-    </div>
-  </nav>
+  };
 
-  <main class="w-full min-w-0 max-w-5xl mx-auto px-6 pt-24 pb-12">
-    <div class="text-center mb-10">
-      <h1 class="text-3xl md:text-5xl font-black text-gray-900 mb-4">Windows Storage &amp; Cache Directory</h1>
-      <p class="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
-        Wondering what is filling up your hard drive? Browse ${items.length} verified Windows 10 &amp; 11 cleanup guides organized by technical domain (${appItems.length} application caches &amp; ${folderItems.length} system folders).
+  const htmlResult = `<!doctype html>
+<html lang="en">
+${renderEditorialHead({
+  title: pageTitle,
+  description: pageDesc,
+  canonical: canonicalUrl,
+  ogType: "website",
+  jsonLd,
+})}
+<body>
+  ${renderSiteHeader("guides")}
+
+  <main id="main-content" class="ed-container">
+    <header style="margin-bottom:8px;">
+      <h1 class="ed-h1">What's eating your drive—and is it <em>safe to delete?</em></h1>
+      <p class="ed-lead">
+        ${items.length} straightforward cleanup guides across Windows 11, macOS, iPhone, and Android. Every guide gives you the direct answer first, tells you what never to touch, and includes manual steps you can run yourself.
       </p>
-      <div class="flex flex-wrap justify-center gap-2">
-        ${siloGroups
+    </header>
+
+    <!-- Search & Domain Filter -->
+    <div class="ed-filter-bar" role="search" aria-label="Filter storage guides">
+      <label for="guideSearchInput" class="skip-link">Search guides by folder path, app name, or question</label>
+      <input
+        id="guideSearchInput"
+        type="search"
+        class="ed-search-input"
+        placeholder="Search by folder path, app name, or question (e.g. WinSxS, System Data, NVIDIA, AppData)..."
+        aria-label="Search guides by folder path, app name, or question"
+      />
+      <div class="ed-filter-pills" role="group" aria-label="Filter by category">
+        <button type="button" class="ed-filter-pill" data-cluster="all" aria-pressed="true">All (${items.length})</button>
+        ${clusterGroups
           .map(
             (g) =>
-              `<a href="#silo-${g.profile.id}" class="text-xs font-bold px-3 py-1.5 rounded-full bg-white border border-gray-200 hover:border-emerald-500 text-gray-700 hover:text-emerald-700 no-underline transition-all">${g.profile.badge} (${g.items.length})</a>`
+              `<button type="button" class="ed-filter-pill" data-cluster="${g.meta.filterKey}" aria-pressed="false">${esc(g.meta.shortLabel)} (${g.items.length})</button>`
           )
           .join("")}
       </div>
     </div>
 
-    ${renderGamingAndAiCacheBloatCalculatorWidget()}
-
-    ${
-      featuredItems.length > 0
-        ? `
-    <div id="gsc-trending-storage-fixes" class="mb-12 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6">
-      <h2 class="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-        <span>🔥 Most Searched Windows Cache &amp; Folder Guides (2026)</span>
-      </h2>
-      <p class="text-xs text-gray-600 mb-4">Direct safety verdicts and 1-click cleanup instructions for the largest hidden space hogs on Windows 10 &amp; 11:</p>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        ${featuredItems
-          .map(
-            (f) => `
-          <a href="/clean/${f.category}/${f.slug}" class="block bg-white border border-emerald-200/80 rounded-xl p-4 hover:shadow-md hover:border-emerald-500 transition-all text-inherit no-underline">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] font-bold ${f.safeToDelete ? "text-emerald-700" : "text-amber-700"}">${
-                f.safeToDelete ? "🟢 Safe to Delete" : "⚠️ Orphaned Only"
-              }</span>
-              <span class="text-[11px] font-extrabold text-gray-700">${f.avgSpace}</span>
-            </div>
-            <div class="text-sm font-bold text-gray-900 mb-1 line-clamp-1">${f.name}</div>
-            <div class="text-[11px] font-mono text-gray-500 truncate">${f.path}</div>
-          </a>
-        `
-          )
+    <!-- Top Forum-Backed Storage Questions -->
+    <section id="most-asked-questions" style="margin-bottom:36px;">
+      <h2 class="ed-h2">Most asked storage questions</h2>
+      <p class="ed-lead" style="font-size:0.94rem;margin-bottom:16px;">
+        Start here if your drive filled up unexpectedly on Windows, Mac, iPhone, or Android.
+      </p>
+      <div class="ed-grid-2">
+        ${topQuestions
+          .map((q) => {
+            const verdictClass = q.safeToDelete ? "ed-status-safe" : "ed-status-caution";
+            const verdictLabel = q.safeToDelete ? "Safe to clear" : "Conditional";
+            const summaryLine = (q.directAnswer || q.whatHappens).split(/(?<=[.!?])\s+/)[0] || q.whatIsIt;
+            return `<a href="/clean/${q.category}/${q.slug}" class="ed-card" style="display:flex;flex-direction:column;justify-content:space-between;gap:12px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                  <span class="mono" style="font-size:0.74rem;font-weight:700;color:var(--muted);">${esc(platformBadgeLabel(q))}</span>
+                  <span class="ed-status ${verdictClass}"><span class="ed-dot" aria-hidden="true"></span>${verdictLabel}</span>
+                </div>
+                <h3 class="ed-h3" style="margin-bottom:6px;">${esc(q.questionTitle || q.name)}</h3>
+                <p style="font-size:0.86rem;color:var(--muted);line-height:1.5;">${esc(summaryLine)}</p>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.82rem;">
+                <span class="mono" style="color:var(--text);font-weight:700;">Typical: ${esc(q.avgSpace)}</span>
+                <span style="color:var(--accent);font-weight:700;">Read guide &rarr;</span>
+              </div>
+            </a>`;
+          })
           .join("")}
       </div>
-    </div>`
-        : ""
-    }
-
-    ${siloGroups
-      .map(
-        (g) => `
-    <section id="silo-${g.profile.id}" class="mb-12 scroll-mt-24">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
-        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <span>${g.profile.label}</span>
-        </h2>
-        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">${g.items.length} Verified Guides</span>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        ${g.items.map(renderCard).join("")}
-      </div>
-    </section>
-    `
-      )
-      .join("")}
-
-    <!-- Competitor Comparison & Switcher Hub -->
-    <section class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
-      <h2 class="text-xl font-bold text-gray-900 mb-2">Compare SWEEPR Cleaner vs. Legacy Windows &amp; Mac Cleaners (2026 Benchmarks)</h2>
-      <p class="text-xs text-gray-600 mb-5">
-        See how SWEEPR's 6.52 MB native Rust engine compares against Windows and macOS utilities across deep app/shader/developer cache detection, zero-telemetry privacy, and 7-day automatic rollback:
-      </p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-        <a href="/vs/ccleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CCleaner &rarr;</a>
-        <a href="/vs/cleanmymac" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CleanMyMac X &rarr;</a>
-        <a href="/vs/pearcleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Pearcleaner &rarr;</a>
-        <a href="/vs/onyx" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. OnyX &rarr;</a>
-        <a href="/vs/daisydisk" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. DaisyDisk &rarr;</a>
-        <a href="/vs/bleachbit" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. BleachBit &rarr;</a>
-        <a href="/vs/cleanmypc" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. CleanMyPC &rarr;</a>
-        <a href="/vs/avast-cleanup" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Avast Cleanup &rarr;</a>
-        <a href="/vs/wise-disk-cleaner" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Wise Disk Cleaner &rarr;</a>
-        <a href="/vs/glary-utilities" class="p-3 rounded-xl border border-gray-200 hover:border-emerald-500 font-bold text-gray-800 hover:text-emerald-700 no-underline">SWEEPR vs. Glary Utilities &rarr;</a>
-        <a href="/alternatives/ccleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CCleaner Alternative (2026) &rarr;</a>
-        <a href="/alternatives/cleanmymac" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CleanMyMac X Alternative &rarr;</a>
-        <a href="/alternatives/pearcleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Pearcleaner Alternative &rarr;</a>
-        <a href="/alternatives/onyx" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best OnyX Alternative &rarr;</a>
-        <a href="/alternatives/daisydisk" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best DaisyDisk Alternative &rarr;</a>
-        <a href="/alternatives/bleachbit" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best BleachBit Alternative (2026) &rarr;</a>
-        <a href="/alternatives/cleanmypc" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best CleanMyPC Alternative (2026) &rarr;</a>
-        <a href="/alternatives/avast-cleanup" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Avast Cleanup Alternative &rarr;</a>
-        <a href="/alternatives/wise-disk-cleaner" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Wise Disk Cleaner Alternative &rarr;</a>
-        <a href="/alternatives/glary-utilities" class="p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-emerald-500 font-semibold text-gray-700 hover:text-emerald-700 no-underline">Best Glary Utilities Alternative &rarr;</a>
-      </div>
     </section>
 
-    <section id="clean-directory-faq" class="mb-12 bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">Windows Storage Cleanup FAQ</h2>
-      <div class="space-y-4">
-        <div class="border-b border-gray-100 pb-4">
-          <h3 class="text-sm font-bold text-gray-900 mb-1.5">What is the best PC storage cleaner?</h3>
-          <p class="text-xs text-gray-600 leading-relaxed">The best PC storage cleaner targets deep Windows update leftovers, GPU shader caches, launcher depots, and Chromium Service Worker blobs without adware or always-on background bloat. SWEEPR Cleaner is a 6.52 MB Authenticode-signed native Rust cleaner with 377 verification rules and 7-day automatic rollback protection.</p>
+    <!-- Full Folder & App Safety Index (Compact Ledger) -->
+    <section id="directory-ledger-sections" style="space-y:28px;">
+      ${clusterGroups
+        .map(
+          (g) => `
+      <div class="directory-cluster-block" data-cluster-block="${g.meta.filterKey}" style="margin-bottom:32px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h2 class="ed-h2" style="margin:0;">${esc(g.meta.label)}</h2>
+          <span class="mono" style="font-size:0.78rem;color:var(--muted);">${g.items.length} guides</span>
         </div>
-        <div class="border-b border-gray-100 pb-4">
-          <h3 class="text-sm font-bold text-gray-900 mb-1.5">What is the CMD command to clean up the system?</h3>
-          <p class="text-xs text-gray-600 leading-relaxed">Run Command Prompt as Administrator and execute <code>cleanmgr /sageset:1</code> followed by <code>cleanmgr /sagerun:1</code> for built-in temporary folders, plus <code>Dism.exe /online /Cleanup-Image /StartComponentCleanup</code> to reclaim superseded Windows WinSxS update components safely.</p>
+        <div class="ed-ledger">
+          ${g.items
+            .map((item) => {
+              const statusClass = item.safeToDelete ? "ed-status-safe" : "ed-status-caution";
+              const statusText = item.safeToDelete ? "Safe" : "Conditional";
+              const searchBlob = `${item.name} ${item.questionTitle || ""} ${item.path} ${item.slug} ${item.category}`.toLowerCase();
+              return `<a href="/clean/${item.category}/${item.slug}" class="ed-ledger-row" data-search="${esc(searchBlob)}" data-cluster="${g.meta.filterKey}">
+                <span style="font-weight:700;font-size:0.93rem;color:var(--text);">${esc(item.questionTitle || item.name)}</span>
+                <span class="ed-path-mono">${esc(item.path)}</span>
+                <span class="ed-status ${statusClass}"><span class="ed-dot" aria-hidden="true"></span>${statusText}</span>
+                <span class="mono" style="font-size:0.82rem;font-weight:700;color:var(--text);white-space:nowrap;">${esc(item.avgSpace)}</span>
+              </a>`;
+            })
+            .join("")}
         </div>
-        <div>
-          <h3 class="text-sm font-bold text-gray-900 mb-1.5">Does Disk Cleanup actually work?</h3>
-          <p class="text-xs text-gray-600 leading-relaxed">Yes, Windows Disk Cleanup safely clears basic <code>%TEMP%</code>, Windows Update downloads, and Recycle Bin files. However, it misses 10–60+ GB inside <code>%LocalAppData%</code> Chromium caches, Steam <code>depotcache</code>, NVIDIA/AMD DXCache shaders, and developer package caches that dedicated cache rules detect.</p>
-        </div>
-      </div>
+      </div>`
+        )
+        .join("")}
     </section>
 
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center mt-12">
-      <h3 class="text-2xl font-bold mb-2">Want to clean all of these in 60 seconds?</h3>
-      <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        SWEEPR Cleaner checks all 40+ hidden folders at once and safely frees up your storage in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
-      </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4 mb-5">
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go btn-big" rel="nofollow">
-          Activate Pro Now (5 Devices) &rarr;
-        </a>
-        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm px-6 py-3" rel="nofollow">
-          Download Free Windows / Mac Scan
-        </a>
-      </div>
-      <div class="max-w-lg mx-auto bg-white/5 border border-white/10 rounded-xl p-3 text-left text-xs text-gray-300">
-        <strong class="text-emerald-400">🛡️ Windows 10/11 First-Launch Tip:</strong> Because v0.1.0 is a freshly compiled native Rust binary, if Windows SmartScreen appears on first launch:
-        <strong>1. Click "More info"</strong> &rarr; <strong>2. Click "Run anyway"</strong>.
-      </div>
+    <div id="directoryNoMatches" class="ed-card" style="display:none;margin-bottom:28px;text-align:center;">
+      <p style="font-weight:700;margin-bottom:6px;">No guide matches that filter.</p>
+      <p style="font-size:0.88rem;color:var(--muted);">Try searching by app name or paste an exact Windows path into our <a href="/safe-to-delete" style="color:var(--accent);text-decoration:underline;font-weight:700;">Safe-to-Delete Path Checker</a>.</p>
     </div>
+
+    <!-- Interactive Utilities -->
+    <section class="ed-section ed-grid-2">
+      <div class="ed-card">
+        <h2 class="ed-h2" style="font-size:1.25rem;">Not sure about a specific path?</h2>
+        <p style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:14px;">
+          Paste any folder path or WizTree CSV list into our Path Safety Checker to verify whether it is disposable cache or critical OS data before deleting.
+        </p>
+        <a href="/safe-to-delete" class="ed-btn-secondary">Open Path Safety Checker &rarr;</a>
+      </div>
+      <div class="ed-card">
+        <h2 class="ed-h2" style="font-size:1.25rem;">Estimate hidden PC cache bloat</h2>
+        <p style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:14px;">
+          Run our interactive Gaming, AI &amp; Dev Cache Calculator or explore the 2026 State of Windows Storage benchmark dataset.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <a href="/tools/pc-cache-calculator" class="ed-btn-secondary">PC Cache Calculator &rarr;</a>
+          <a href="/state-of-windows-storage" class="ed-btn-secondary">2026 Storage Study &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare Cleaners Strip -->
+    <section class="ed-section ed-card-muted">
+      <h2 class="ed-h2" style="font-size:1.15rem;">Looking for a safer cleaner instead of CCleaner or CleanMyMac?</h2>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">
+        Read honest side-by-side comparisons against legacy cleaners and open-source utilities:
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:0.86rem;font-weight:700;">
+        <a href="/vs/ccleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CCleaner</a>
+        <a href="/alternatives/ccleaner" style="color:var(--accent);text-decoration:underline;">Best CCleaner Alternatives</a>
+        <a href="/vs/bleachbit" style="color:var(--accent);text-decoration:underline;">SWEEPR vs BleachBit</a>
+        <a href="/alternatives/bleachbit" style="color:var(--accent);text-decoration:underline;">Best BleachBit Alternatives</a>
+        <a href="/vs/avast-cleanup" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Avast Cleanup</a>
+        <a href="/alternatives/avast-cleanup" style="color:var(--accent);text-decoration:underline;">Best Avast Cleanup Alternatives</a>
+        <a href="/vs/cleanmypc" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CleanMyPC</a>
+        <a href="/alternatives/cleanmypc" style="color:var(--accent);text-decoration:underline;">Best CleanMyPC Alternatives</a>
+        <a href="/vs/glary-utilities" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Glary Utilities</a>
+        <a href="/alternatives/glary-utilities" style="color:var(--accent);text-decoration:underline;">Best Glary Utilities Alternatives</a>
+        <a href="/vs/wise-disk-cleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Wise Disk Cleaner</a>
+        <a href="/alternatives/wise-disk-cleaner" style="color:var(--accent);text-decoration:underline;">Best Wise Disk Cleaner Alternatives</a>
+        <a href="/vs/cleanmymac" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CleanMyMac X</a>
+        <a href="/alternatives/cleanmymac" style="color:var(--accent);text-decoration:underline;">Best CleanMyMac Alternatives</a>
+        <a href="/vs/daisydisk" style="color:var(--accent);text-decoration:underline;">SWEEPR vs DaisyDisk</a>
+        <a href="/vs/pearcleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Pearcleaner</a>
+      </div>
+    </section>
+
+    <!-- Quiet Single CTA -->
+    <section class="ed-section ed-card" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;">
+      <div style="max-width:60ch;">
+        <h2 class="ed-h2" style="margin-bottom:6px;">Want one lightweight app to scan all of these at once?</h2>
+        <p style="font-size:0.92rem;color:var(--muted);line-height:1.55;">
+          SWEEPR Cleaner scans hidden app caches, shader folders, and duplicate photos in under 60 seconds with zero background slowdowns and a 7-day undo safety net across up to 5 devices.
+        </p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <a href="/download" class="ed-btn-primary" rel="nofollow">Download Free Scan</a>
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="ed-btn-secondary" rel="nofollow">Get 5-Device Pro</a>
+      </div>
+    </section>
   </main>
-  <footer class="mt-auto py-8 text-center text-gray-500 text-xs border-t border-gray-200 bg-white">
-    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
-      <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
-      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
-      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
-      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
-    </div>
-    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
-  </footer>
-  <div id="google_translate_element" style="display:none !important;"></div>
+
+  <script>
+    (function(){
+      var input = document.getElementById('guideSearchInput');
+      var pills = document.querySelectorAll('.ed-filter-pill');
+      var rows = document.querySelectorAll('.ed-ledger-row');
+      var blocks = document.querySelectorAll('.directory-cluster-block');
+      var emptyMsg = document.getElementById('directoryNoMatches');
+      var topSection = document.getElementById('most-asked-questions');
+      var activeCluster = 'all';
+
+      function applyFilter() {
+        var q = (input && input.value ? input.value : '').trim().toLowerCase();
+        var visibleCount = 0;
+
+        if (topSection) {
+          topSection.style.display = q || activeCluster !== 'all' ? 'none' : '';
+        }
+
+        for (var b = 0; b < blocks.length; b++) {
+          var block = blocks[b];
+          var blockCluster = block.getAttribute('data-cluster-block');
+          var blockMatchesCluster = activeCluster === 'all' || blockCluster === activeCluster;
+          var blockRows = block.querySelectorAll('.ed-ledger-row');
+          var blockVisible = 0;
+
+          for (var r = 0; r < blockRows.length; r++) {
+            var row = blockRows[r];
+            var hay = row.getAttribute('data-search') || '';
+            var match = blockMatchesCluster && (!q || hay.indexOf(q) !== -1);
+            row.style.display = match ? '' : 'none';
+            if (match) {
+              blockVisible++;
+              visibleCount++;
+            }
+          }
+          block.style.display = blockVisible > 0 ? '' : 'none';
+        }
+
+        if (emptyMsg) {
+          emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
+        }
+      }
+
+      if (input) {
+        input.addEventListener('input', applyFilter);
+      }
+      for (var p = 0; p < pills.length; p++) {
+        pills[p].addEventListener('click', function(){
+          activeCluster = this.getAttribute('data-cluster') || 'all';
+          for (var j = 0; j < pills.length; j++) {
+            pills[j].setAttribute('aria-pressed', pills[j] === this ? 'true' : 'false');
+          }
+          applyFilter();
+        });
+      }
+    })();
+  </script>
+
+  ${renderSiteFooter()}
   <script src="/i18n.js" defer></script>
 </body>
 </html>`;
+
   cachedDirectoryHtml = htmlResult;
   return htmlResult;
 }
 
 export function renderPseoPage(item: CleanItem): string {
   const clusterId = classifyPseoCluster(item);
-  const cluster = CLUSTER_PROFILES[clusterId];
-  const psSnippet = buildPowerShellInspectionSnippet(item);
-  const stepsList = item.manualSteps
-    .map(
-      (s, idx) => `
-    <li class="flex gap-3 text-gray-700">
-      <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center mt-0.5">${idx + 1}</span>
-      <span>${s}</span>
-    </li>
-  `
-    )
-    .join("");
+  const cluster = CLUSTER_META[classifyDirectoryGroup(item)];
+  const platform =
+    item.platform ||
+    (item.category === "mac"
+      ? "mac"
+      : item.category === "ios"
+        ? "ios"
+        : item.category === "android"
+          ? "android"
+          : "windows");
 
   const pageTitle = buildPseoTitle(item);
   const pageDesc = buildPseoDescription(item);
@@ -1707,222 +1522,75 @@ export function renderPseoPage(item: CleanItem): string {
   const canonicalUrl = mergedTargetItem
     ? `https://sweeprcleaner.com/clean/${mergedTargetItem.category}/${mergedTargetItem.slug}`
     : `https://sweeprcleaner.com/clean/${item.category}/${item.slug}`;
+
   const { siblings, related } = getSiblingAndRelatedItems(item);
   const absorbedVariants = getAbsorbedRedirectVariants(item);
   const telemetryTruth = getActiveTelemetryTruthForSlug(item.slug);
-  const bloatBenchmark = getPublishedBloatWatchForCleanSlug(item.slug);
-  const matchedTool = matchTransactionalToolForItem(item, cluster.id);
   const isStreamDeck = item.slug === "elgato-streamdeck-cache";
+  const isWindows = platform === "windows";
+  const isMac = platform === "mac";
 
-  const faqItems = [
-    {
-      q: `Is it safe to delete ${item.name}?`,
-      a: item.warning
-        ? `Exercise caution: ${item.warning}`
-        : `Yes, 100% safe. ${item.whatHappens}`,
-    },
-    {
-      q: `How much storage space will cleaning ${item.name} free up?`,
-      a: telemetryTruth?.badge_text
-        ? `${telemetryTruth.badge_text}. Across Windows 10 and Windows 11 PCs, users typically reclaim ${item.avgSpace} in ${item.path}.`
-        : `Users typically reclaim ${item.avgSpace} on Windows 10 and Windows 11 systems depending on update frequency and active cache retention in ${item.path}.`,
-    },
-    cluster.extraFaq(item),
-    {
-      q: `Where is ${item.name} located on Windows 10 and Windows 11?`,
-      a: `It is stored at ${item.path}. You can paste that path directly into the Windows Run dialog (Win + R) or File Explorer address bar to inspect it.`,
-    },
-    ...(absorbedVariants.length > 0
-      ? [
-          {
-            q: `Can I also delete Media Blob Storage, Service Worker CacheStorage, Code Cache, GPU Shader Cache, and Crashpad Dump Logs for ${item.name}?`,
-            a: `Yes. All sub-cache modules associated with ${item.name}—including Media Blob Storage (blob_storage / IndexedDB), Service Worker CacheStorage, V8 Code & Bytecode Cache, GPU Shader Cache (GPUCache / DawnCache), and Crashpad Dump Logs (.dmp)—are 100% safe to delete when the app is closed and rebuild automatically on demand without resetting your profiles or logins.`,
-          },
-        ]
-      : []),
+  const headingText = isStreamDeck
+    ? "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete?"
+    : item.questionTitle || `How to clean ${item.name}`;
+
+  const directAnswerHtml = (() => {
+    if (item.directAnswer) {
+      return esc(item.directAnswer);
+    }
+    const prefix = item.safeToDelete ? "Yes—it is safe to delete" : "Use caution before cleaning";
+    const base = `${prefix} ${item.name} at ${item.path} to reclaim ${item.avgSpace}. ${item.whatHappens}`;
+    return esc(base);
+  })();
+
+  const subLocations = buildSubLocationsForItem(item, clusterId);
+
+  const shellCmd = item.shellCommand
+    ? item.shellCommand
+    : isWindows
+      ? {
+          label: "PowerShell: Measure current disk footprint (Read-Only)",
+          language: "powershell" as const,
+          code: buildPowerShellInspectionSnippet(item),
+        }
+      : null;
+
+  const faqItems: Array<{ q: string; a: string }> = [
+    ...(Array.isArray(item.customFaqs) ? item.customFaqs.filter((f) => f && f.q && f.a) : []),
     ...(isStreamDeck
       ? [
           {
             q: "How do I clean physical Elgato Stream Deck LCD keys vs. the Windows Stream Deck app cache?",
-            a: "To clean the Windows software cache (500 MB–3.5 GB), quit the Stream Deck tray app and clear %AppData%\\Elgato\\StreamDeck\\logs, Cache, Service Worker\\CacheStorage, and Media Blob Storage (your button profiles in ProfilesV2 stay 100% safe). To clean physical Stream Deck LCD keys and housing, unplug the USB cable first and gently wipe the keys with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol—never spray liquid directly onto the LCD keys or seams.",
+            a: "To clean the Windows software cache (1–4 GB), quit the Stream Deck tray app and clear %AppData%\\Elgato\\StreamDeck\\logs, Cache, Service Worker\\CacheStorage, and Media Blob Storage (your button profiles in ProfilesV2 stay untouched). To clean physical Stream Deck LCD keys, unplug the USB cable first and gently wipe the keys with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol—never spray liquid directly onto the keys.",
           },
         ]
       : []),
-    ...(Array.isArray(item.customFaqs) ? item.customFaqs.filter((f) => f && f.q && f.a) : []),
+    ...(absorbedVariants.length > 0
+      ? [
+          {
+            q: `Can I also clear Service Worker CacheStorage, Media Blob Storage, Code Cache, and GPUCache for ${item.name}?`,
+            a: `Yes. Those Chromium/Electron cache folders inside ${item.name} are temporary web assets and compiled script caches that rebuild automatically without signing you out or removing preferences.`,
+          },
+        ]
+      : []),
+    {
+      q: `How much space does cleaning ${item.name} usually free?`,
+      a: telemetryTruth?.badge_text
+        ? `${telemetryTruth.badge_text}. Across Windows PCs, users typically reclaim ${item.avgSpace} in ${item.path}.`
+        : `Typically ${item.avgSpace} depending on app activity and update history at ${item.path}.`,
+    },
   ];
 
-  const subLocations = buildSubLocationsForItem(item, clusterId);
-  const consolidatedSubCacheHtml =
-    absorbedVariants.length > 0
-      ? `
-      <div id="consolidated-subcache-modules" class="mt-6 pt-6 border-t border-gray-100">
-        <h3 class="text-sm font-bold text-gray-900 mb-2">Consolidated Sub-Cache Modules: Media Blob Storage, Service Worker CacheStorage &amp; Shader Caches</h3>
-        <p class="text-xs text-gray-600 mb-3">
-          This canonical guide also covers all sub-cache directories for <strong>${item.name}</strong>. Every sub-module below is scanned and safely cleaned by SWEEPR Cleaner without affecting your saved settings or accounts:
-        </p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-          ${absorbedVariants
-            .map(
-              (v) => `
-          <div class="p-3 rounded-xl bg-gray-50 border border-gray-200/80">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <span class="font-bold text-gray-900">${v.label}</span>
-              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">🟢 Safe</span>
-            </div>
-            <div class="font-mono text-[11px] text-gray-500 truncate mb-1">${v.subPath}</div>
-            <div class="text-[11px] text-gray-600 leading-snug">${v.role}</div>
-          </div>`
-            )
-            .join("")}
-        </div>
-      </div>`
-      : "";
+  const envLabel =
+    platform === "mac"
+      ? "Verified on macOS Sequoia / Tahoe"
+      : platform === "ios"
+        ? "Verified on iOS 18 / 19"
+        : platform === "android"
+          ? "Verified on Android 14 / 15"
+          : "Tested on Windows 11 24H2";
 
-  const visualProofHtml = item.proofImage
-    ? `
-    <!-- Verified Visual Proof (Windows 11 File System Inspection) -->
-    <div id="verified-visual-proof" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-            📸 Verified Visual Proof
-          </span>
-          <h3 class="text-sm font-bold text-gray-900 m-0">Live Windows 11 24H2 Disk Inspection</h3>
-        </div>
-        <span class="text-[11px] font-mono text-gray-500 hidden sm:inline">SWEEPR Engineering Lab</span>
-      </div>
-      <figure class="m-0">
-        <img
-          src="${item.proofImage}"
-          alt="${typeof item.visualProof === 'object' && item.visualProof?.alt ? esc(item.visualProof.alt) : `Verified disk inspection of ${esc(item.name)} on Windows 11`}"
-          class="w-full rounded-xl border border-gray-200 shadow-inner object-cover"
-          loading="lazy"
-          decoding="async"
-          width="800"
-          height="450"
-          style="aspect-ratio: 800 / 450; height: auto;"
-        />
-        <figcaption class="mt-2.5 text-xs text-gray-500 text-center italic">
-          ${typeof item.visualProof === 'object' && item.visualProof?.caption ? esc(item.visualProof.caption) : `Live Windows 11 file inspection demonstrating disk footprint and safe subfolder layout for ${esc(item.name)}.`}
-        </figcaption>
-      </figure>
-    </div>`
-    : "";
-
-  const siblingTableSection = `
-    <!-- Sub-Folders & Cache Locations Breakdown Table -->
-    <div id="subfolders-breakdown-table" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">Sub-Folders &amp; Cache Locations Breakdown for ${item.name}</h2>
-      <p class="text-xs text-gray-600 mb-4">
-        Modern Windows applications and system services split their disk footprint across multiple sub-directories (` + "`Cache_Data`" + `, ` + "`Service Worker\\CacheStorage`" + `, ` + "`Media Blob Storage`" + `, ` + "`Code Cache`" + `, ` + "`GPUCache`" + `, and ` + "`Crashpad\\reports`" + `). Review which sub-folders inside <strong>${item.name}</strong> are safe to purge and which files remain protected:
-      </p>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-gray-200">
-              <th class="py-2.5 pr-3 font-bold text-gray-700">Sub-Folder / Cache Location</th>
-              <th class="py-2.5 pr-3 font-bold text-gray-700">Storage Role</th>
-              <th class="py-2.5 pr-3 font-bold text-gray-700">Typical Footprint</th>
-              <th class="py-2.5 font-bold text-gray-700">Deletion Safety</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 text-gray-600">
-            ${subLocations
-              .map(
-                (loc, idx) => `
-            <tr class="${idx === 0 ? "bg-emerald-50/50" : loc.safe.includes("Protected") ? "bg-gray-50/80" : ""}">
-              <td class="py-2.5 pr-3 font-mono text-[11px] font-semibold text-gray-900 break-all max-w-xs">${loc.subPath}</td>
-              <td class="py-2.5 pr-3">
-                <div>${loc.role}</div>
-                ${Array.isArray(loc.extensions) && loc.extensions.length > 0 ? `
-                <div class="mt-1 flex flex-wrap gap-1">
-                  ${loc.extensions.map((ext) => `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-700 border border-gray-200/80">${esc(ext)}</span>`).join("")}
-                </div>` : ""}
-              </td>
-              <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${loc.avgSpace}</td>
-              <td class="py-2.5 whitespace-nowrap font-semibold">${loc.safe}</td>
-            </tr>`
-              )
-              .join("")}
-            ${siblings
-              .map(
-                (s) => `
-            <tr>
-              <td class="py-2.5 pr-3">
-                <a href="/clean/${s.category}/${s.slug}" class="font-bold text-emerald-700 hover:underline">${s.name}</a>
-                <div class="font-mono text-[11px] text-gray-600 truncate max-w-xs">${s.path}</div>
-              </td>
-              <td class="py-2.5 pr-3">${describeCacheVariantRole(s.slug)}</td>
-              <td class="py-2.5 pr-3 font-semibold text-gray-800 whitespace-nowrap">${s.avgSpace}</td>
-              <td class="py-2.5 whitespace-nowrap">${s.safeToDelete ? "🟢 100% Safe" : "⚠️ Caution"}</td>
-            </tr>`
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-      ${consolidatedSubCacheHtml}
-    </div>`;
-
-  const relatedSection =
-    related.length > 0
-      ? `
-    <!-- Related Windows Cleanup Guides -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-3">Related Windows Cleanup Guides &amp; Hidden Space Hogs</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        ${related
-          .map(
-            (r) => `
-          <a href="/clean/${r.category}/${r.slug}" class="block p-3.5 rounded-xl border border-gray-200 hover:border-emerald-400 hover:shadow-sm transition-all text-inherit no-underline">
-            <div class="flex items-center justify-between text-[11px] mb-1">
-              <span class="font-bold ${r.safeToDelete ? "text-emerald-700" : "text-amber-700"}">${
-                r.safeToDelete ? "🟢 Safe to Delete" : "⚠️ Caution"
-              }</span>
-              <span class="font-semibold text-gray-500">Reclaim ${r.avgSpace}</span>
-            </div>
-            <div class="text-xs font-bold text-gray-900 mb-1 line-clamp-1">${r.name}</div>
-            <div class="text-[11px] font-mono text-gray-600 truncate">${r.path}</div>
-          </a>
-        `
-          )
-          .join("")}
-      </div>
-    </div>`
-      : "";
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta name="color-scheme" content="light">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${pageTitle}</title>
-  <meta name="description" content="${pageDesc}">
-  <meta name="robots" content="${robotsMetaContent}">
-  <link rel="canonical" href="${canonicalUrl}">
-  
-  <!-- Open Graph -->
-  <meta property="og:type" content="article">
-  <meta property="og:site_name" content="SWEEPR Cleaner">
-  <meta property="og:locale" content="en_GB">
-  <meta property="og:url" content="${canonicalUrl}">
-  <meta property="og:title" content="${pageTitle}">
-  <meta property="og:description" content="Reclaim ${item.avgSpace} from ${item.name}. Detailed safety guide and manual steps.">
-  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="How to clean ${item.name} safely">
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="${canonicalUrl}">
-  <meta name="twitter:title" content="${pageTitle}">
-  <meta name="twitter:description" content="${pageDesc}">
-  <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png">
-
-  <!-- Schema Markup -->
-  <script type="application/ld+json">${JSON.stringify({
+  const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
@@ -1932,7 +1600,7 @@ export function renderPseoPage(item: CleanItem): string {
         description: pageDesc,
         proficiencyLevel: "Beginner",
         datePublished: "2026-11-01",
-        dateModified: "2026-11-18",
+        dateModified: "2026-11-22",
         author: {
           "@type": "Person",
           name: "Benjamin Cook",
@@ -1947,24 +1615,9 @@ export function renderPseoPage(item: CleanItem): string {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "Home",
-            item: "https://sweeprcleaner.com/",
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: "Storage & Cache Directory",
-            item: "https://sweeprcleaner.com/clean",
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: item.name,
-            item: canonicalUrl,
-          },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
+          { "@type": "ListItem", position: 2, name: "Storage Guides", item: "https://sweeprcleaner.com/clean" },
+          { "@type": "ListItem", position: 3, name: item.name, item: canonicalUrl },
         ],
       },
       {
@@ -1973,435 +1626,414 @@ export function renderPseoPage(item: CleanItem): string {
         name: "SWEEPR Cleaner",
         url: "https://sweeprcleaner.com",
         logo: "https://sweeprcleaner.com/logo-mint-glass.svg",
-        sameAs: [
-          "https://github.com/BenCook1996/sweepr-desktop",
-          "https://github.com/BenCook1996/scoop-sweepr",
-          "https://github.com/microsoft/winget-pkgs/pull/480164",
-          "https://alternativeto.net/software/sweeprcleaner/",
-          "https://www.saashub.com/sweepr-cleaner",
-          "https://sourceforge.net/software/product/SWEEPR-Cleaner/",
-          "https://www.softpedia.com/get/Tweak/System-Tweak/SWEEPR-Cleaner.shtml",
-          "https://community.chocolatey.org/packages/sweepr-cleaner/0.1.0",
-          "https://www.producthunt.com/products/sweepr-cleaner",
-          "https://www.indiehackers.com/product/sweepr-cleaner",
-          "https://devhunt.org/tool/sweepr-cleaner",
-        ],
+        sameAs: ORGANIZATION_SAME_AS,
       },
     ],
-  })}</script>
+  };
 
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
-  <link rel="icon" type="image/png" href="/favicon.png?v=20261031b" media="(prefers-color-scheme: light)">
-  <link rel="icon" type="image/png" href="/favicon-dark.png?v=20261031b" media="(prefers-color-scheme: dark)">
-  <link rel="shortcut icon" href="/favicon.ico?v=20261031b">
-  <link rel="stylesheet" href="/vendor/tailwind.min.css">
-  <script src="/attribution.js" defer></script>
-  <script src="/analytics.js" defer></script>
-  <script src="/nav.js" defer></script>
-  <link rel="stylesheet" href="/style.css">
-</head>
-<body class="bg-[#fafafa] text-gray-800">
-  <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-    <div class="flex items-center gap-3 md:gap-4">
-      <a href="/" class="flex items-center gap-3 text-inherit no-underline">
-        <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-700">Cleaner</span></span>
-      </a>
-      <a href="/clean" class="hidden sm:inline-block text-xs font-semibold text-gray-600 hover:text-gray-900">Directory &rarr;</a>
-    </div>
-    <div class="flex gap-2 md:gap-3 items-center">
-      <div class="relative inline-block text-left" id="langDropdownContainer">
-        <button type="button" id="langDropdownBtn" class="btn btn-ghost text-sm flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer font-medium text-gray-700 hover:text-emerald-700 transition-colors" aria-expanded="false">
-          <span class="text-base" id="currentLangFlag" aria-hidden="true">🇬🇧</span>
-          <span class="sr-only">Language: </span><span class="text-xs font-bold tracking-wide" id="currentLangCode">EN</span>
-          <svg id="langDropdownChevron" class="w-3 h-3 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div id="langDropdownMenu" class="hidden absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur-xl border border-gray-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all">
-          <div class="space-y-0.5 text-xs">
-            <button type="button" onclick="setLanguage('en')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇬🇧</span> <span>English</span></span><span class="text-[10px] text-gray-400 font-mono">EN</span></button>
-            <button type="button" onclick="setLanguage('de')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇩🇪</span> <span>Deutsch</span></span><span class="text-[10px] text-gray-400 font-mono">DE</span></button>
-            <button type="button" onclick="setLanguage('fr')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇫🇷</span> <span>Français</span></span><span class="text-[10px] text-gray-400 font-mono">FR</span></button>
-            <button type="button" onclick="setLanguage('es')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-gray-800 hover:text-emerald-700 transition-colors font-medium cursor-pointer"><span class="flex items-center gap-2"><span>🇪🇸</span> <span>Español</span></span><span class="text-[10px] text-gray-400 font-mono">ES</span></button>
-          </div>
+  const visualProofHtml = item.proofImage
+    ? `<section id="verified-visual-proof" class="ed-section ed-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <h2 class="ed-h2" style="margin:0;">Windows 11 Disk Inspection Snapshot</h2>
+          <span class="mono" style="font-size:0.75rem;color:var(--muted);">SWEEPR Storage Lab</span>
         </div>
-      </div>
-      <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
-      <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
-      <a href="/bloat-watch" class="hidden md:inline-flex btn btn-ghost text-sm">Bloat Watch</a>
-      <a href="/state-of-windows-storage" class="hidden lg:inline-flex btn btn-ghost text-sm">2026 Storage Study</a>
-      <a href="/pricing" class="hidden md:inline-flex btn btn-ghost text-sm">Pricing</a>
-      <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="hidden sm:inline-flex btn btn-ghost text-sm font-bold text-emerald-700" rel="nofollow">Get Pro</a>
-      <a href="/download" class="hidden sm:inline-flex btn btn-go text-sm" rel="nofollow">Get SWEEPR Cleaner</a>
-    </div>
-  </nav>
+        <figure style="margin:0;">
+          <img
+            src="${esc(item.proofImage)}"
+            alt="${typeof item.visualProof === "object" && item.visualProof?.alt ? esc(item.visualProof.alt) : `Verified disk inspection of ${esc(item.name)} on Windows 11`}"
+            class="ed-proof-img"
+            loading="lazy"
+            decoding="async"
+            width="800"
+            height="450"
+            style="aspect-ratio: 800 / 450;"
+          />
+          <figcaption style="margin-top:8px;font-size:0.82rem;color:var(--muted);">
+            ${typeof item.visualProof === "object" && item.visualProof?.caption ? esc(item.visualProof.caption) : `Disk inspection demonstrating folder footprint for ${esc(item.name)}.`}
+          </figcaption>
+        </figure>
+      </section>`
+    : "";
 
-  <main class="w-full min-w-0 max-w-3xl mx-auto px-6 pt-24 pb-12">
-    <div class="mb-8">
-      <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-700 uppercase tracking-wider">
-        <a href="/clean" class="hover:underline">&larr; Clean Directory</a>
-        <span class="text-gray-300">/</span>
-        <a href="/clean#silo-${cluster.id}" class="hover:underline">${cluster.badge}</a>
-      </div>
-      <h1 class="text-3xl md:text-4xl font-black text-gray-900 mt-2 mb-3">${
-        isStreamDeck
-          ? "Elgato Stream Deck App Cache Folder (%APPDATA%\\Elgato\\StreamDeck) — Safe to Delete? (Reclaim 1–4 GB on Windows 11)"
-          : `How to Clean ${item.name}`
-      }</h1>
-      <p id="ai-direct-verdict" class="text-sm md:text-base text-gray-800 font-medium leading-relaxed bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 mb-3">${(() => {
-        const prefix = item.safeToDelete ? "Yes, it is safe to delete" : "Use caution before cleaning";
-        const core = `${prefix} ${item.name} at ${item.path} to reclaim ${item.avgSpace} without deleting personal files or saved logins.`;
-        const tailText = "Verify your folder path in the checker below before cleaning.";
-        const baseCount = `${core} ${tailText}`.trim().split(/\s+/).length;
-        const sentences = String(item.whatHappens || "")
-          .trim()
-          .split(/(?<=[.!?])\s+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        let extra = "";
-        const firstSentence = sentences[0] || "";
-        const firstWords = firstSentence ? firstSentence.split(/\s+/).length : 0;
-        if (firstSentence && baseCount + firstWords <= 60) {
-          extra = `${firstSentence} `;
-        } else if (baseCount < 42) {
-          extra = item.safeToDelete
-            ? "Windows and your apps recreate any needed cache files automatically. "
-            : "Back up active project files and confirm pending updates first. ";
-        }
-        return `${core} ${extra}<a href="#sweepr-inline-checker-widget" class="text-emerald-800 underline font-bold">Verify your folder path in the checker below</a> before cleaning.`;
-      })()}</p>
-      <div class="flex flex-wrap gap-3 items-center text-sm">
-        <span class="px-3 py-1 rounded-full font-bold text-xs ${
-          item.safeToDelete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-        }">
-          ${item.safeToDelete ? "🟢 100% Safe to Delete" : "⚠️ Exercise Caution"}
+  const labBenchmarkHtml = item.labMeasurement
+    ? `<section id="lab-benchmark-box" class="ed-section ed-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <h2 class="ed-h2" style="margin:0;">Measured Lab Cleanup Result</h2>
+          <span class="mono" style="font-size:0.75rem;color:var(--accent);">${esc(item.labMeasurement.osBuild)}</span>
+        </div>
+        <div class="ed-table-wrap">
+          <table class="ed-table">
+            <thead>
+              <tr>
+                <th>Before Cleanup</th>
+                <th>After Cleanup</th>
+                <th>Space Reclaimed</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono" style="font-weight:700;">${item.labMeasurement.beforeGb} GB</td>
+                <td class="mono">${item.labMeasurement.afterGb} GB</td>
+                <td class="mono" style="color:var(--accent);font-weight:700;">${item.labMeasurement.reclaimedGb} GB</td>
+                <td>${esc(item.labMeasurement.notes)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>`
+    : "";
+
+  const consolidatedSubCacheHtml =
+    absorbedVariants.length > 0
+      ? `<div id="consolidated-subcache-modules" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+          <h3 class="ed-h3" style="margin-bottom:6px;">Included Chromium &amp; Electron Sub-Caches</h3>
+          <p style="font-size:0.86rem;color:var(--muted);margin-bottom:12px;">
+            The folders below are safe to clear alongside ${esc(item.name)} without logging you out:
+          </p>
+          <div class="ed-grid-2" style="gap:10px;">
+            ${absorbedVariants
+              .map(
+                (v) => `<div style="padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);">
+                  <div style="font-weight:700;font-size:0.88rem;margin-bottom:4px;">${esc(v.label)}</div>
+                  <div class="ed-path-mono">${esc(v.subPath)}</div>
+                  <div style="font-size:0.8rem;color:var(--muted);">${esc(v.role)}</div>
+                </div>`
+              )
+              .join("")}
+          </div>
+        </div>`
+      : "";
+
+  const inlinePathWidgetHtml = isWindows
+    ? `<section id="sweepr-inline-checker-widget" class="ed-section ed-card-muted">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+          <h2 class="ed-h2" style="font-size:1.15rem;margin:0;">Verify a path on your PC</h2>
+          <a href="/safe-to-delete" style="font-size:0.84rem;font-weight:700;color:var(--accent);text-decoration:underline;">Open full batch checker &rarr;</a>
+        </div>
+        <p style="font-size:0.86rem;color:var(--muted);margin-bottom:12px;">
+          Check this folder or paste any <code class="ed-code">%LocalAppData%</code> path from File Explorer before deleting it manually:
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <input
+            id="inlineSafeCheckInput"
+            type="text"
+            class="ed-input"
+            style="flex:1;min-width:220px;font-family:var(--font-mono);font-size:0.84rem;background:var(--surface-elevated);"
+            value="${esc(extractPrimaryDisplayPath(item.path))}"
+            aria-label="Windows folder path to verify"
+          />
+          <button id="inlineSafeCheckBtn" type="button" class="ed-btn-primary">Verify Path Safety</button>
+        </div>
+        <div id="inlineSafeCheckResult" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--surface-elevated);border:1px solid var(--border);font-size:0.86rem;"></div>
+        <script>
+          (function(){
+            var btn = document.getElementById('inlineSafeCheckBtn');
+            var inp = document.getElementById('inlineSafeCheckInput');
+            var out = document.getElementById('inlineSafeCheckResult');
+            if (!btn || !inp || !out) return;
+            btn.addEventListener('click', function(){
+              var val = (inp.value || '').trim();
+              if (!val) return;
+              btn.disabled = true;
+              btn.textContent = 'Checking...';
+              fetch('/api/safe-to-delete/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input: val })
+              })
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                  btn.disabled = false;
+                  btn.textContent = 'Verify Path Safety';
+                  var first = d && d.results && d.results[0];
+                  if (!first) return;
+                  out.style.display = 'block';
+                  var escT = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+                  out.innerHTML =
+                    '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
+                      '<strong>' + escT(first.verdict || '') + ' &mdash; ' + escT(first.name || '') + '</strong>' +
+                      '<span class="mono" style="font-weight:700;color:var(--accent);">' + escT(first.avg_space || '') + '</span>' +
+                    '</div>' +
+                    '<div style="color:var(--muted);">' + escT(first.explanation || '') + '</div>';
+                })
+                .catch(function(){
+                  btn.disabled = false;
+                  btn.textContent = 'Verify Path Safety';
+                });
+            });
+          })();
+        </script>
+      </section>`
+    : "";
+
+  const html = `<!doctype html>
+<html lang="en">
+${renderEditorialHead({
+  title: pageTitle,
+  description: pageDesc,
+  canonical: canonicalUrl,
+  robots: robotsMetaContent,
+  ogType: "article",
+  jsonLd,
+})}
+<body>
+  ${renderSiteHeader("guides")}
+
+  <main id="main-content" class="ed-article">
+    <nav class="ed-crumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      <a href="/clean">Storage Guides</a>
+      <span>/</span>
+      <a href="/clean#silo-${cluster.id}">${esc(cluster.shortLabel)}</a>
+      <span>/</span>
+      <span>${esc(item.name)}</span>
+    </nav>
+
+    <header>
+      <h1 class="ed-h1">${esc(headingText)}</h1>
+      <div class="ed-meta-row">
+        <span class="ed-status ${item.safeToDelete ? "ed-status-safe" : "ed-status-caution"}">
+          <span class="ed-dot" aria-hidden="true"></span>
+          ${item.safeToDelete ? "Safe to Delete" : "Use Caution"}
         </span>
-        <span class="text-gray-500">Typical Space Reclaimed: <strong>${item.avgSpace}</strong></span>
-      </div>
-      <div class="mt-3 flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-xl px-3.5 py-1.5">
-        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-        </svg>
-        <span>Updated <time datetime="2026-11-18">18 Nov 2026</time> · Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook (<a href="https://github.com/BenCook1996" rel="author" class="underline font-bold">Author Profile</a>)</span>
-      </div>
-      ${
-        isStreamDeck
-          ? `<div id="streamdeck-top-intent-callout" class="mt-4 bg-amber-50/90 border border-amber-300 rounded-xl p-3.5 text-xs text-slate-800 leading-relaxed shadow-sm">
-              <p class="mb-1"><strong>1. Looking to clean physical Elgato Stream Deck LCD keys?</strong> Unplug the USB cable first and gently wipe the LCD buttons with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</p>
-              <p class="m-0"><strong>2. Looking to reclaim 1–4 GB of Windows 11 PC disk bloat?</strong> This guide covers deleting the software disk cache in <code>%APPDATA%\\Elgato\\StreamDeck</code> (<code>logs</code>, <code>Cache</code>, <code>Blob_Storage</code>, and <code>Service Worker\\CacheStorage</code>) while keeping your <code>ProfilesV2</code> button layouts 100% intact.</p>
-            </div>`
-          : ""
-      }
-    </div>
-
-    <!-- Quick Verdict Box (GEO / AI Snippet Optimized) -->
-    <div class="bg-white border-2 border-emerald-500/30 rounded-2xl p-6 shadow-sm mb-6">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-        <h2 class="text-lg font-bold text-gray-900">Location &amp; Quick Verdict</h2>
+        <span class="mono" style="font-weight:700;color:var(--text);">Typical space: ${esc(item.avgSpace)}</span>
         ${
           telemetryTruth?.badge_text
-            ? `<span id="telemetry-truth-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">${telemetryTruth.badge_text}</span>`
+            ? `<span id="telemetry-truth-badge" class="ed-status ed-status-safe">${esc(telemetryTruth.badge_text)}</span>`
             : ""
         }
+        <span>${isWindows ? "Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook" : `${esc(envLabel)} · Verified Publisher: Benjamin Cook`} · Updated <time datetime="2026-11-22">22 Nov 2026</time> (<a href="https://github.com/BenCook1996" rel="author">GitHub</a>)</span>
       </div>
-      <p class="font-mono text-xs bg-gray-100 p-2.5 rounded-lg text-gray-800 break-all mb-4">
-        ${item.path}
+    </header>
+
+    <!-- Direct Answer / Quick Verdict -->
+    <section class="ed-verdict ${item.safeToDelete ? "" : "ed-verdict-caution"}" aria-labelledby="quick-verdict-heading">
+      <div id="quick-verdict-heading" class="ed-verdict-label">DIRECT ANSWER</div>
+      <p id="ai-direct-verdict" style="font-size:1.02rem;line-height:1.6;color:var(--text);font-weight:500;">
+        ${directAnswerHtml}
       </p>
-      <p class="text-gray-700 text-sm leading-relaxed mb-4">
-        ${item.whatIsIt}
-      </p>
+      <div class="ed-path-box">${esc(item.path)}</div>
       ${
-        item.warning
-          ? `<div class="bg-red-50 border-l-4 border-red-500 p-3 text-red-800 text-xs mb-4"><strong>Warning:</strong> ${item.warning}</div>`
-          : `<div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 text-emerald-800 text-xs mb-4"><strong>Safety confirmation:</strong> ${item.whatHappens}</div>`
+        item.whenNotToDelete || item.warning
+          ? `<div class="ed-caution-box"><strong>When not to delete:</strong> ${esc(item.whenNotToDelete || item.warning || "")}</div>`
+          : ""
       }
       ${
         isStreamDeck
-          ? `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 mb-4 leading-relaxed">
-              <strong class="text-slate-900 block mb-1">💡 Cleaning Physical Stream Deck LCD Keys vs. Windows App Cache:</strong>
-              <span><strong>1. Windows App Cache (500 MB–3.5 GB):</strong> Quit Stream Deck from the system tray and clean <code>%AppData%\\Elgato\\StreamDeck\\logs</code>, <code>Cache</code>, <code>Service Worker\\CacheStorage</code>, and <code>Media Blob Storage</code> (your <code>ProfilesV2</code> button layouts stay 100% untouched).<br><strong>2. Physical LCD Keys:</strong> Unplug the USB cable first, then wipe the LCD keycaps with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol (never spray liquid directly onto the keys).</span>
+          ? `<div class="ed-caution-box" style="background:var(--surface);border-color:var(--border);color:var(--text);margin-top:12px;">
+              <strong>Cleaning physical Stream Deck LCD keys?</strong> Unplug the USB cable first and wipe gently with a lint-free microfiber cloth lightly dampened with water or 70% isopropyl alcohol. To reclaim 1–4 GB of PC disk bloat, follow the software cache steps below without touching <code class="ed-code">ProfilesV2</code>.
             </div>`
           : ""
       }
       ${
         mergedTargetItem
-          ? `<div id="soft-merge-consolidation-banner" class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 mb-4 leading-relaxed">
-              <strong>📌 Consolidated Storage Guide:</strong> This folder is part of our primary guide for <a href="/clean/${mergedTargetItem.category}/${mergedTargetItem.slug}" class="font-bold underline hover:text-blue-700">${mergedTargetItem.name} (${mergedTargetItem.path})</a>.
+          ? `<div id="soft-merge-consolidation-banner" class="ed-caution-box" style="background:var(--accent-soft);border-color:var(--border);color:var(--accent-ink);">
+              <strong>Merged guide:</strong> See the primary guide for <a href="/clean/${mergedTargetItem.category}/${mergedTargetItem.slug}" style="text-decoration:underline;font-weight:700;">${esc(mergedTargetItem.name)}</a>.
             </div>`
           : ""
       }
+      <div class="ed-actions">
+        <a href="/download?platform=${encodeURIComponent(platform)}&amp;utm_source=pseo_quick_verdict&amp;slug=${encodeURIComponent(item.slug)}" class="ed-btn-primary" rel="nofollow">
+          Download Free Scan
+        </a>
+        <a href="/order?plan=annual&amp;utm_source=pseo_quick_verdict&amp;slug=${encodeURIComponent(item.slug)}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="ed-btn-secondary" rel="nofollow">
+          Unlock 5-Device Pro
+        </a>
+      </div>
+    </section>
+
+    ${inlinePathWidgetHtml}
+    ${labBenchmarkHtml}
+
+    <!-- What Causes It & Safe Command -->
+    <section class="ed-section ed-card ed-prose">
+      <h2 class="ed-h2">Why ${esc(item.name)} grows</h2>
+      <p>${esc(item.whyItGrows || item.whatIsIt)}</p>
+      ${item.whyItGrows && item.whatHappens ? `<p>${esc(item.whatHappens)}</p>` : ""}
       ${
-        bloatBenchmark
-          ? `<div id="bloat-watch-benchmark-callout" class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 text-xs text-emerald-950 mb-4 flex flex-wrap items-center justify-between gap-2">
-              <span>🧪 <strong>Lab VM Benchmark Available:</strong> ${bloatBenchmark.title}${bloatBenchmark.reclaimed_gb ? ` (${bloatBenchmark.reclaimed_gb} GB reclaimed)` : ""}</span>
-              <a href="/bloat-watch/${bloatBenchmark.slug}" class="font-bold text-emerald-800 underline hover:text-emerald-600 whitespace-nowrap">Read Lab Benchmark &rarr;</a>
+        shellCmd
+          ? `<div style="margin-top:16px;">
+              <div style="font-size:0.84rem;font-weight:700;color:var(--text);margin-bottom:6px;">${esc(shellCmd.label)}</div>
+              <pre class="ed-pre">${esc(shellCmd.code)}</pre>
             </div>`
           : ""
       }
-      <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
-        <a href="/download?platform=windows&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" class="btn btn-go text-xs py-2 px-4" rel="nofollow">
-          Download Free 60-Second Windows Scan (.exe) &rarr;
-        </a>
-        <a href="/order?plan=annual&amp;utm_source=pseo_quick_verdict&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="text-xs font-bold text-emerald-700 hover:underline" rel="nofollow">
-          Or Activate 1-Click Pro Cleaner (5 Devices) &rarr;
-        </a>
-        <a href="/safe-to-delete" class="text-xs font-bold text-gray-700 hover:underline">
-          🔍 Open Multi-Folder Batch Checker
-        </a>
-      </div>
-    </div>
+    </section>
 
-    <!-- Above-the-Fold Interactive "Safe-to-Delete + 1-Click Clean" Conversion Widget -->
-    <div id="sweepr-inline-checker-widget" class="bg-gradient-to-br from-emerald-950 via-gray-900 to-gray-900 text-white rounded-2xl p-6 shadow-md mb-8 border border-emerald-500/30">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-        <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">⚡ Instant Folder Safety Verifier &amp; 1-Click Cleaner</span>
-        <span class="text-[11px] text-gray-300">6.52 MB Native Rust Engine · 7-Day Undo Quarantine</span>
-      </div>
-      <h2 class="text-base md:text-lg font-extrabold text-white mb-1.5">Verify Any Windows Folder Path or Clean ${item.name} in 1 Click</h2>
-      <p class="text-xs text-gray-300 mb-3">
-        Paste any <code>C:\\</code>, <code>%LocalAppData%</code>, or <code>%AppData%</code> path below to check if it is safe to delete—or download SWEEPR Cleaner to scan all 40+ hidden cache locations automatically:
-      </p>
-      <div class="flex flex-col sm:flex-row gap-2 mb-3">
-        <input
-          id="inlineSafeCheckInput"
-          type="text"
-          value="${item.path.split(/\s+(?:or|and)\s+/i)[0].trim().replace(/"/g, "&quot;")}"
-          aria-label="Windows folder path to verify"
-          class="flex-1 px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white font-mono text-xs focus:outline-none focus:border-emerald-400"
-        />
-        <button
-          id="inlineSafeCheckBtn"
-          type="button"
-          class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-extrabold text-xs cursor-pointer transition whitespace-nowrap"
-        >
-          Verify Path Safety
-        </button>
-      </div>
-      <div id="inlineSafeCheckResult" class="hidden rounded-xl bg-white/10 border border-white/15 p-3.5 text-xs mb-3"></div>
-      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
-        <div class="flex flex-wrap items-center gap-3">
-          <a href="/download?platform=windows&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" class="inline-flex items-center gap-1.5 font-extrabold text-emerald-300 hover:text-emerald-200 underline" rel="nofollow">
-            💻 Download Free Windows Scan (Reclaim ${item.avgSpace}) &rarr;
-          </a>
-          <a href="/order?plan=annual&amp;utm_source=pseo_inline_widget&amp;slug=${item.slug}" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="inline-flex items-center gap-1 font-bold text-white/90 hover:text-white" rel="nofollow">
-            🔑 Unlock 5-Device Pro
-          </a>
-        </div>
-        <span class="text-[11px] text-gray-400">Protected: saves, logins &amp; personal files untouched</span>
-      </div>
-      <script>
-        (function() {
-          var btn = document.getElementById('inlineSafeCheckBtn');
-          var inp = document.getElementById('inlineSafeCheckInput');
-          var out = document.getElementById('inlineSafeCheckResult');
-          if (!btn || !inp || !out) return;
-          btn.addEventListener('click', function() {
-            var val = (inp.value || '').trim();
-            if (!val) return;
-            btn.disabled = true;
-            btn.textContent = 'Checking…';
-            fetch('/api/safe-to-delete/check', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ input: val })
-            })
-              .then(function(r) { return r.json(); })
-              .then(function(d) {
-                btn.disabled = false;
-                btn.textContent = 'Verify Path Safety';
-                var first = d && d.results && d.results[0];
-                if (!first) return;
-                out.classList.remove('hidden');
-                var escText = function(s) {
-                  return String(s || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-                };
-                var badgeColor = first.verdict === 'SAFE_TO_DELETE' ? '#34d399' : first.verdict === 'DO_NOT_DELETE' ? '#f87171' : '#fbbf24';
-                out.innerHTML =
-                  '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-                  '<strong style="color:' + badgeColor + ';">' + escText(first.verdict_label || first.verdict) + ' — ' + escText(first.matched_name || '') + '</strong>' +
-                  '<span style="font-weight:700;color:#d1fae5;">Typical Space: ' + escText(first.avg_space || '${esc(item.avgSpace)}') + '</span>' +
-                  '</div>' +
-                  '<div style="color:#e2e8f0;line-height:1.45;margin-bottom:6px;">' + escText(first.explanation || '') + '</div>' +
-                  '<a href="/download?platform=windows&utm_source=pseo_inline_verified&slug=${encodeURIComponent(item.slug)}" style="color:#34d399;font-weight:800;text-decoration:underline;" rel="nofollow">Clean this path safely in 1 click with SWEEPR Cleaner (.exe) &rarr;</a>';
-              })
-              .catch(function() {
-                btn.disabled = false;
-                btn.textContent = 'Verify Path Safety';
-              });
-          });
-        })();
-      </script>
-    </div>
-
-    <!-- Technical Architecture & Cache Mechanics -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-3">${cluster.sectionTitle(item)}</h2>
-      <p class="text-gray-600 text-sm leading-relaxed mb-4">
-        ${cluster.leadParagraph(item)}
-      </p>
-      <p class="text-gray-600 text-sm leading-relaxed mb-4">
-        ${cluster.mechanicsParagraph(item)}
-      </p>
-      <div class="mt-4 mb-5">
-        <div class="text-xs font-bold text-gray-700 mb-1.5">PowerShell Size Verification (Read-Only Check):</div>
-        <pre class="bg-gray-900 text-emerald-300 font-mono text-[11px] p-3.5 rounded-xl overflow-x-auto leading-relaxed">${psSnippet}</pre>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100 text-xs">
-        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
-          <span class="font-bold text-gray-900 block mb-1">🛡️ What Stays 100% Protected</span>
-          <span class="text-gray-600">${cluster.protectedSummary}</span>
-        </div>
-        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
-          <span class="font-bold text-gray-900 block mb-1">⚡ What Gets Safely Removed</span>
-          <span class="text-gray-600">${cluster.removedSummary}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Manual Steps -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">Manual Cleaning Instructions</h2>
-      <ol class="space-y-4 mb-6">
-        ${stepsList}
+    <!-- Manual Cleaning Steps -->
+    <section class="ed-section ed-card">
+      <h2 class="ed-h2">How to clean it manually</h2>
+      <ol class="ed-steps">
+        ${item.manualSteps
+          .map(
+            (step, idx) =>
+              `<li><span class="ed-step-num">${idx + 1}</span><span>${esc(step)}</span></li>`
+          )
+          .join("")}
       </ol>
-      <p class="text-xs text-gray-500 italic mt-4 pt-4 border-t border-gray-100">
-        Note: If Windows alerts that a file is in use or locked by a background process, close the associated task in Task Manager before deleting, or use SWEEPR Cleaner to release locked handles safely.
-      </p>
-    </div>
+      ${
+        item.troubleshooting &&
+        (item.troubleshooting.processLock ||
+          typeof item.troubleshooting.adminRequired === "boolean" ||
+          item.troubleshooting.edgeCaseNote)
+          ? `<div id="manual-troubleshooting-notes" class="ed-caution-box" style="margin-top:16px;">
+              <div style="font-weight:700;margin-bottom:6px;">Troubleshooting &amp; Process Locks</div>
+              ${
+                item.troubleshooting.processLock
+                  ? `<div style="margin-bottom:4px;"><strong>Processes to close:</strong> <code class="ed-code">${esc(item.troubleshooting.processLock)}</code></div>`
+                  : ""
+              }
+              ${
+                typeof item.troubleshooting.adminRequired === "boolean"
+                  ? `<div style="margin-bottom:4px;"><strong>Administrator privileges:</strong> ${item.troubleshooting.adminRequired ? "Required (run Command Prompt / PowerShell as Administrator)" : "Not required for standard user folders"}</div>`
+                  : ""
+              }
+              ${
+                item.troubleshooting.edgeCaseNote
+                  ? `<div>${esc(item.troubleshooting.edgeCaseNote)}</div>`
+                  : ""
+              }
+            </div>`
+          : isWindows
+            ? `<p style="font-size:0.84rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+                If Windows reports a file is currently in use, close the parent app in Task Manager first—or leave active session files untouched.
+              </p>`
+            : ""
+      }
+    </section>
 
     ${visualProofHtml}
-    ${siblingTableSection}
 
-    <!-- Frequently Asked Questions -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-      <div class="space-y-4">
+    <!-- Sub-Folders Breakdown Table -->
+    <section class="ed-section ed-card">
+      <div id="subfolders-breakdown-table">
+        <h2 class="ed-h2">Sub-folder safety breakdown</h2>
+        <p style="font-size:0.88rem;color:var(--muted);">
+          Review which paths inside <strong>${esc(item.name)}</strong> are disposable versus protected:
+        </p>
+        <div class="ed-table-wrap">
+          <table class="ed-table">
+            <thead>
+              <tr>
+                <th>Sub-Folder / Cache Location</th>
+                <th>Storage Role</th>
+                <th>Typical Footprint</th>
+                <th>Deletion Safety</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${subLocations
+                .map(
+                  (loc) => `<tr>
+                    <td>
+                      <span class="ed-path-mono" style="color:var(--text);font-weight:600;">${esc(loc.subPath)}</span>
+                      ${
+                        Array.isArray(loc.extensions) && loc.extensions.length > 0
+                          ? `<div class="mono" style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${loc.extensions.map((e) => esc(e)).join(" &middot; ")}</div>`
+                          : ""
+                      }
+                    </td>
+                    <td>
+                      <div>${esc(loc.role)}</div>
+                      ${
+                        loc.regenerates
+                          ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:4px;"><strong>Regenerates:</strong> ${esc(loc.regenerates)}</div>`
+                          : ""
+                      }
+                      ${
+                        loc.troubleshooting
+                          ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:2px;"><strong>Note:</strong> ${esc(loc.troubleshooting)}</div>`
+                          : ""
+                      }
+                    </td>
+                    <td class="mono" style="font-weight:700;">${esc(loc.avgSpace)}</td>
+                    <td style="font-weight:700;">${esc(loc.safe)}</td>
+                  </tr>`
+                )
+                .join("")}
+              ${siblings
+                .map(
+                  (s) => `<tr>
+                    <td>
+                      <a href="/clean/${s.category}/${s.slug}">${esc(s.name)}</a>
+                      <div class="ed-path-mono">${esc(s.path)}</div>
+                    </td>
+                    <td>${esc(describeCacheVariantRole(s.slug))}</td>
+                    <td class="mono" style="font-weight:700;">${esc(s.avgSpace)}</td>
+                    <td style="font-weight:700;">${s.safeToDelete ? "Safe to delete" : "Conditional"}</td>
+                  </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ${consolidatedSubCacheHtml}
+    </section>
+
+    <!-- FAQs -->
+    <section class="ed-section ed-card">
+      <h2 class="ed-h2">Common questions</h2>
+      <div>
         ${faqItems
           .map(
-            (f) => `
-          <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-            <h3 class="text-sm font-bold text-gray-900 mb-1.5">${f.q}</h3>
-            <p class="text-xs text-gray-600 leading-relaxed">${f.a}</p>
-          </div>
-        `
+            (f) => `<div class="ed-faq-item">
+              <h3 class="ed-faq-q">${esc(f.q)}</h3>
+              <p class="ed-faq-a">${esc(f.a)}</p>
+            </div>`
           )
           .join("")}
       </div>
-    </div>
+    </section>
 
-    <!-- Comparison Table: Manual vs Automated -->
-    <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-8">
-      <h2 class="text-lg font-bold text-gray-900 mb-4">Manual File Explorer vs. 1-Click SWEEPR Cleanup</h2>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b border-gray-200">
-              <th class="py-2.5 font-bold text-gray-700">Feature</th>
-              <th class="py-2.5 font-bold text-gray-500">Manual Deletion</th>
-              <th class="py-2.5 font-bold text-emerald-700">SWEEPR Cleaner</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 text-gray-600">
-            <tr>
-              <td class="py-2 font-medium text-gray-800">Locked File Handling</td>
-              <td class="py-2 text-red-600">Fails on locked processes</td>
-              <td class="py-2 text-emerald-700 font-semibold">Safe background release</td>
-            </tr>
-            <tr>
-              <td class="py-2 font-medium text-gray-800">Accidental Deletion Risk</td>
-              <td class="py-2 text-amber-800">Moderate (easy to delete wrong folder)</td>
-              <td class="py-2 text-emerald-700 font-semibold">Zero (strict rules &amp; hashes)</td>
-            </tr>
-            <tr>
-              <td class="py-2 font-medium text-gray-800">Safety Undo Rollback</td>
-              <td class="py-2 text-gray-600">None (Shift+Del is permanent)</td>
-              <td class="py-2 text-emerald-700 font-semibold">7-Day Automatic Rollback</td>
-            </tr>
-            <tr>
-              <td class="py-2 font-medium text-gray-800">Time Required</td>
-              <td class="py-2">10–20 minutes per app</td>
-              <td class="py-2 text-emerald-700 font-semibold">&lt; 60 seconds across ${cleanItems.length}+ areas</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      ${
-        item.competitorBlueprint && item.competitorBlueprint.superiorityFixes?.length
-          ? `<div class="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-600">
-               <p class="font-semibold text-gray-800 mb-1">Why this guide goes further than legacy PC cleaners (${esc(item.competitorBlueprint.sourceDomain)}):</p>
-               <ul class="list-disc pl-4 space-y-0.5">
-                 ${item.competitorBlueprint.superiorityFixes.map((f) => `<li>${esc(f)}</li>`).join("")}
-               </ul>
-             </div>`
-          : ""
-      }
-    </div>
+    ${
+      related.length > 0
+        ? `<section class="ed-section ed-card">
+            <h2 class="ed-h2" style="margin-bottom:12px;">Related storage guides</h2>
+            <div class="ed-grid-2">
+              ${related
+                .map(
+                  (r) => `<a href="/clean/${r.category}/${r.slug}" style="display:block;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+                      <span class="ed-status ${r.safeToDelete ? "ed-status-safe" : "ed-status-caution"}" style="font-size:0.72rem;padding:2px 8px;">
+                        <span class="ed-dot" aria-hidden="true"></span>${r.safeToDelete ? "Safe" : "Conditional"}
+                      </span>
+                      <span class="mono" style="font-size:0.78rem;font-weight:700;color:var(--text);">${esc(r.avgSpace)}</span>
+                    </div>
+                    <div style="font-weight:700;font-size:0.92rem;color:var(--text);margin-bottom:4px;">${esc(r.questionTitle || r.name)}</div>
+                    <div class="ed-path-mono">${esc(r.path)}</div>
+                  </a>`
+                )
+                .join("")}
+            </div>
+          </section>`
+        : ""
+    }
 
-    ${relatedSection}
-
-    <!-- A15: Matched Transactional Cleaner Tool & Competitor Switcher Hub -->
-    <div id="pseo-commercial-crosslinks" class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6 mb-8">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-emerald-200/70">
-        <div>
-          <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full mb-1.5">⚡ Interactive 1-Click Tool</span>
-          <h2 class="text-base font-extrabold text-gray-900">${esc(matchedTool.label)} (Free ${esc(matchedTool.savings)})</h2>
-          <p class="text-xs text-gray-600 mt-0.5">Paste your PowerShell folder scan output or download the 6.52 MB signed Rust cleaner for ${esc(item.name)}.</p>
-        </div>
-        <a href="/tools/${matchedTool.slug}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs no-underline whitespace-nowrap shadow-sm">
-          Open ${esc(matchedTool.label)} &rarr;
-        </a>
-      </div>
-      <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-        <span class="font-semibold text-gray-800">Why Windows &amp; Mac users switch to SWEEPR (6.52 MB Rust, Zero Telemetry Bloat):</span>
-        <div class="flex flex-wrap gap-3 font-bold">
-          <a href="/vs/ccleaner" class="text-emerald-700 hover:underline">SWEEPR vs CCleaner</a>
-          <a href="/alternatives/ccleaner" class="text-emerald-700 hover:underline">Best CCleaner Alternative</a>
-          <a href="/vs/cleanmymac" class="text-emerald-700 hover:underline">SWEEPR vs CleanMyMac X</a>
-          <a href="/vs/pearcleaner" class="text-emerald-700 hover:underline">SWEEPR vs Pearcleaner</a>
-          <a href="/vs/onyx" class="text-emerald-700 hover:underline">SWEEPR vs OnyX</a>
-          <a href="/vs/daisydisk" class="text-emerald-700 hover:underline">SWEEPR vs DaisyDisk</a>
-          <a href="/vs/bleachbit" class="text-emerald-700 hover:underline">SWEEPR vs BleachBit</a>
-          <a href="/safe-to-delete" class="text-emerald-700 hover:underline">Safe-to-Delete Checker</a>
-          <a href="/state-of-windows-storage" class="text-emerald-700 hover:underline">2026 Storage Study</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Automated 1-Click Callout -->
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 text-center shadow-lg">
-      <h3 class="text-2xl font-bold mb-2">Clean ${item.name} Automatically</h3>
-      <p class="text-gray-300 text-sm max-w-lg mx-auto mb-6">
-        SWEEPR Cleaner safely clears ${item.name} along with ${cleanItems.length}+ other hidden app folders and leftover files in one click—covering up to 5 devices (Windows, Mac, Android &amp; iOS) with a 7-day undo safety net.
+    <!-- Single Restrained CTA -->
+    <section class="ed-section ed-card-muted">
+      <h2 class="ed-h2">Prefer a 1-click scan with a 7-day undo net?</h2>
+      <p style="font-size:0.92rem;color:var(--muted);line-height:1.6;">
+        SWEEPR Cleaner checks ${esc(item.name)} alongside your other hidden system and app folders, keeps active settings and personal files protected, and covers up to 5 Windows, Mac, iPhone, and Android devices.
       </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="btn btn-go gap-2" rel="nofollow">
-          <span>Activate Pro Now (5 Devices)</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </a>
-        <a href="/download" class="btn bg-white/10 hover:bg-white/20 text-white text-sm" rel="nofollow">
-          Download Free Scan (.exe / .dmg)
-        </a>
+      <div class="ed-actions">
+        <a href="/download?platform=${encodeURIComponent(platform)}" class="ed-btn-primary" rel="nofollow">Download Free Scan</a>
+        <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="ed-btn-secondary" rel="nofollow">Get 5-Device Pro</a>
+        ${
+          isWindows
+            ? `<a href="/tools/pc-cache-calculator" class="ed-btn-secondary">PC Cache Calculator</a>`
+            : `<a href="/clean" class="ed-btn-secondary">Browse All Guides</a>`
+        }
       </div>
-    </div>
+    </section>
   </main>
-  <footer class="mt-auto py-8 text-center text-gray-500 text-xs border-t border-gray-200 bg-white">
-    <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
-      <a href="/refund" class="hover:text-emerald-600 transition-colors">Refund Policy</a>
-      <a href="/terms" class="hover:text-emerald-600 transition-colors">Terms of Service</a>
-      <a href="/privacy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a>
-      <a href="/support" class="hover:text-emerald-600 transition-colors">Support &amp; Help</a>
-      <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="hover:text-emerald-600 transition-colors">Cookie Preferences</a>
-    </div>
-    <p>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
-  </footer>
-  <div id="google_translate_element" style="display:none !important;"></div>
+
+  ${renderSiteFooter()}
   <script src="/i18n.js" defer></script>
 </body>
 </html>`;
+
+  return html;
 }

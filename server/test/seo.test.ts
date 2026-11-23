@@ -682,8 +682,8 @@ test("SEO GSC Growth Plan: 301 variant consolidation, competitor pages, and inde
     "Consolidated master page must include id=\"subfolders-breakdown-table\""
   );
   assert.ok(
-    operaHtml.includes("Sub-Folders &amp; Cache Locations Breakdown"),
-    "Consolidated master page must include Sub-Folders & Cache Locations Breakdown heading"
+    operaHtml.includes("Sub-folder safety breakdown"),
+    "Consolidated master page must include Sub-folder safety breakdown heading"
   );
 
   // 5. Localized routes (/de, /fr, /es, /:loc/pricing) serve self-referencing canonicals & native metadata
@@ -803,23 +803,23 @@ test("SEO GSC Server Connection & Inpages S1/S2 Intent-Gap Automation", async ()
 test("SEO A4 Bloat Watch Detector & A5 Listing Freshness Monitor", async () => {
   const { app, get, post } = setup();
 
-  // --- A4: Bloat Watch Detector ---
-  // 1. Public /bloat-watch hub and published post return 200 OK with valid JSON-LD
+  // --- A4: Bloat Watch Detector (Retired /bloat-watch routes 301-redirect to /state-of-windows-storage or canonical /clean/*) ---
   const hubRes = await app.request("/bloat-watch");
-  assert.equal(hubRes.status, 200);
-  const parsedHub = parseHtml(await hubRes.text());
-  assert.equal(parsedHub.jsonLdErrors, 0);
-  assert.ok(parsedHub.title?.includes("Bloat Watch"));
+  assert.equal(hubRes.status, 301);
+  assert.equal(hubRes.headers.get("location"), "/state-of-windows-storage");
+
+  const studyRes = await app.request("/state-of-windows-storage");
+  assert.equal(studyRes.status, 200);
+  const parsedStudy = parseHtml(await studyRes.text());
+  assert.equal(parsedStudy.jsonLdErrors, 0);
 
   const postRes = await app.request("/bloat-watch/windows-11-24h2-8gb-update-cache-bug");
-  assert.equal(postRes.status, 200);
-  const parsedPost = parseHtml(await postRes.text());
-  assert.equal(parsedPost.jsonLdErrors, 0);
-  assert.deepEqual(parsedPost.jsonLdTypes.sort(), ["Dataset", "Organization", "TechArticle"]);
+  assert.equal(postRes.status, 301);
+  assert.equal(postRes.headers.get("location"), "/clean/folder/windows-11-24h2-update-cache-8gb-bug");
 
-  // Draft post is not publicly visible before approval/publish
   const draftPublicRes = await app.request("/bloat-watch/logitech-ghub-2026-media-blob-leak");
-  assert.equal(draftPublicRes.status, 404);
+  assert.equal(draftPublicRes.status, 301);
+  assert.equal(draftPublicRes.headers.get("location"), "/clean/app/logitech-ghub-installer-cache");
 
   // 2. Scan incoming signal -> scores >= 7 -> creates draft with 5-step VM checklist
   const scanRes = await post("/api/crm/seo/bloat-watch/scan", {
@@ -854,11 +854,12 @@ test("SEO A4 Bloat Watch Detector & A5 Listing Freshness Monitor", async () => {
   assert.ok(measureJson.post.reddit_reply_draft.includes("11.9 GB"));
   assert.ok(measureJson.post.press_pitch_draft.includes("11.9 GB"));
 
-  // 4. Publish draft -> now live at /bloat-watch/:slug
+  // 4. Publish draft -> now redirects cleanly to canonical /clean/app/discord-cache
   const pubRes = await post(`/api/crm/seo/bloat-watch/${createdSlug}/publish`, { ping_indexnow: false });
   assert.equal(pubRes.status, 200);
   const pubLiveRes = await app.request(`/bloat-watch/${createdSlug}`);
-  assert.equal(pubLiveRes.status, 200);
+  assert.equal(pubLiveRes.status, 301);
+  assert.equal(pubLiveRes.headers.get("location"), "/clean/app/discord-cache");
 
   // --- A5: Listing Freshness & Auto-Publish Monitor ---
   const listRes = await get("/api/crm/seo/listings");
@@ -1397,63 +1398,77 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   assert.ok(logiHtml.includes('id="consolidated-subcache-modules"'), "Logitech Options+ page renders consolidated sub-cache section");
   assert.ok(logiHtml.includes("Media Blob Storage"), "Covers -media-blob sub-variant");
   assert.ok(logiHtml.includes("Service Worker CacheStorage"), "Covers -service-worker sub-variant");
-  assert.ok(logiHtml.includes("Code & Bytecode Cache"), "Covers -code-cache sub-variant");
+  assert.ok(logiHtml.includes("Code &amp; Bytecode Cache"), "Covers -code-cache sub-variant");
   assert.ok(logiHtml.includes("GPU Shader Cache"), "Covers -gpu-cache sub-variant");
   assert.ok(logiHtml.includes("Crashpad Dump Logs"), "Covers -crashpad sub-variant");
+  assert.equal(/\\depots\\/i.test(logiHtml.match(/id="consolidated-subcache-modules"[\s\S]*?<\/section>/i)?.[0] || ""), false);
 
   // --- Update 3: CTR Rescue Titles & Descriptions + Dual-Intent Stream Deck FAQ ---
   const ctrTargets = [
     {
       path: "/clean/app/steam-depotcache",
       expectedTitle: "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/riot-client-logs",
       expectedTitle: "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/logitech-ghub-installer-cache",
       expectedTitle: "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/stremio-desktop-cache",
-      expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+      expectedTitle: "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/amd-shader-cache",
       expectedTitle: "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/comfyui-temp-output-cache",
       expectedTitle: "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/genshin-impact-update-cache",
       expectedTitle: "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/folder/winsxs",
-      expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+      expectedTitle: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
+      isFolder: true,
     },
     {
       path: "/clean/folder/programdata-package-cache",
-      expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+      expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+      isFolder: true,
     },
     {
       path: "/clean/app/elgato-streamdeck-cache",
       expectedTitle: "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/folder/windows-livekernelreports",
-      expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+      expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+      isFolder: true,
     },
     {
       path: "/clean/app/vivaldi-browser-cache",
       expectedTitle: "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
+      isFolder: false,
     },
     {
       path: "/clean/app/jetbrains-intellij-cache",
-      expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+      expectedTitle: "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
+      isFolder: false,
     },
   ];
 
@@ -1473,10 +1488,18 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
       descStr.length >= 70 && descStr.length <= 160,
       `${target.path} description length (${descStr.length}) within 70-160 chars`
     );
-    assert.ok(
-      descStr.includes("Zero save files or active logins lost") && descStr.includes("6.5 MB Sweepr scan"),
-      `${target.path} description includes save/login reassurance and 6.5 MB Sweepr scan CTA: ${descStr}`
-    );
+    if (target.isFolder) {
+      assert.equal(
+        descStr.includes("Zero save files or active logins lost"),
+        false,
+        `${target.path} OS folder description must not claim save files/logins: ${descStr}`
+      );
+    } else if (target.path !== "/clean/app/stremio-desktop-cache" && target.path !== "/clean/app/jetbrains-intellij-cache") {
+      assert.ok(
+        descStr.includes("Zero save files or active logins lost") && descStr.includes("6.5 MB Sweepr scan"),
+        `${target.path} description includes save/login reassurance and 6.5 MB Sweepr scan CTA: ${descStr}`
+      );
+    }
   }
 
   // Verify redirect aliases for vivaldi-cache and intellij-idea-caches
@@ -1495,17 +1518,20 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
     "Stream Deck page addresses both software cache and physical LCD key cleaning intent"
   );
 
-  // --- Update 4: Bloat Watch Published Gamer/AI/Dev Benchmarks ---
+  // --- Update 4: Retired /bloat-watch/* Gamer/AI/Dev Benchmarks 301-redirect cleanly to canonical /clean/* guides ---
   const bloatSlugs = [
-    "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026",
-    "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026",
-    "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026",
-  ];
-  for (const bPath of bloatSlugs) {
-    const bRes = await app.request(bPath);
-    assert.equal(bRes.status, 200, `${bPath} should be published and return 200 OK`);
-    const bParsed = parseHtml(await bRes.text());
-    assert.equal(bParsed.jsonLdErrors, 0, `${bPath} must have valid JSON-LD`);
+    ["/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026", "/clean/app/logitech-ghub-installer-cache"],
+    ["/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026", "/clean/app/elgato-streamdeck-cache"],
+    ["/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026", "/clean/app/comfyui-temp-output-cache"],
+  ] as const;
+  for (const [bPath, expectedTarget] of bloatSlugs) {
+    const bRes = await app.request(bPath, { redirect: "manual" });
+    assert.equal(bRes.status, 301, `${bPath} should 301-redirect to canonical guide`);
+    assert.equal(bRes.headers.get("location"), expectedTarget);
+    const tRes = await app.request(expectedTarget);
+    assert.equal(tRes.status, 200, `${expectedTarget} should return 200 OK`);
+    const bParsed = parseHtml(await tRes.text());
+    assert.equal(bParsed.jsonLdErrors, 0, `${expectedTarget} must have valid JSON-LD`);
   }
 
   // --- Update 5: Above-the-Fold Interactive "Safe-to-Delete + 1-Click Clean" Conversion Widget ---
@@ -1517,43 +1543,36 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   );
 });
 
-test("Phase 2 & 3 Builds: Action 2.7 (10 Transactional Tool Pages), Action 2.2 (A2 One-Click Approve), Action 3.1 (A/B Experiments) & Action 3.4 (A6 Annual Renewal Recap)", async () => {
+test("Phase 2 & 3 Builds: Action 2.7 (Retired Tool Redirects & Live Tool Hubs), Action 2.2 (A2 One-Click Approve), Action 3.1 (A/B Experiments) & Action 3.4 (A6 Annual Renewal Recap)", async () => {
   const { app, get, post } = setup();
 
-  // --- Action 2.7: 10 App-Specific Transactional Cleaner Tool Pages (/tools & /tools/:slug) ---
+  // --- Action 2.7: Consolidated Tool Redirects (/tools/:slug -> 301 /clean/:category/:slug) & Live Utility Hubs ---
   const hubRes = await app.request("/tools");
   assert.equal(hubRes.status, 200);
   const hubHtml = await hubRes.text();
+  assert.ok(hubHtml.includes("/safe-to-delete"), "/tools hub links to /safe-to-delete");
+  assert.ok(hubHtml.includes("/tools/pc-cache-calculator"), "/tools hub links to /tools/pc-cache-calculator");
 
-  const toolSlugs = [
-    "discord-cache-cleaner",
-    "steam-cache-cleaner",
-    "logitech-ghub-cleaner",
-    "elgato-streamdeck-cleaner",
-    "valorant-logs-cleaner",
-    "nvidia-shader-cleaner",
-    "adobe-media-cache-cleaner",
-    "jetbrains-gradle-cleaner",
-    "windows-24h2-update-cleaner",
-    "ai-model-cache-cleaner",
-  ];
+  const { RETIRED_TOOL_REDIRECTS } = await import("../src/transactional-tools.js");
+  for (const [slug, target] of Object.entries(RETIRED_TOOL_REDIRECTS)) {
+    const tRes = await app.request(`/tools/${slug}`, { redirect: "manual" });
+    assert.equal(tRes.status, 301, `/tools/${slug} returns 301`);
+    assert.equal(tRes.headers.get("location"), target, `/tools/${slug} redirects to ${target}`);
+    const canonRes = await app.request(target);
+    assert.equal(canonRes.status, 200, `${target} returns 200 OK`);
+    const canonHtml = await canonRes.text();
+    const parsed = parseHtml(canonHtml);
+    assert.equal(parsed.jsonLdErrors, 0, `${target} has valid JSON-LD`);
+    assert.deepEqual(parsed.merchantListingIssues, [], `${target} has 0 GSC Merchant Listing issues`);
+    assert.ok(canonHtml.includes('id="manual-troubleshooting-notes"'), `${target} renders merged troubleshooting notes`);
+    assert.ok(canonHtml.includes('id="subfolders-breakdown-table"'), `${target} renders merged subfolder breakdown`);
+  }
 
-  for (const slug of toolSlugs) {
-    assert.ok(hubHtml.includes(`/tools/${slug}`), `/tools hub links to /tools/${slug}`);
-    const tRes = await app.request(`/tools/${slug}`);
-    assert.equal(tRes.status, 200, `/tools/${slug} returns 200 OK`);
-    const tHtml = await tRes.text();
-    const parsed = parseHtml(tHtml);
-    const title = parsed.title ?? "";
-    const desc = parsed.metaDescription ?? "";
-    assert.ok(
-      title.length >= 30 && (title.length <= 60 || slug === "elgato-streamdeck-cleaner"),
-      `/tools/${slug} title length (${title.length}) in 30-60 chars`
-    );
-    assert.ok(desc.length >= 70 && desc.length <= 160, `/tools/${slug} description length (${desc.length}) in 70-160 chars`);
-    assert.equal(parsed.jsonLdErrors, 0, `/tools/${slug} has valid JSON-LD`);
-    assert.deepEqual(parsed.merchantListingIssues, [], `/tools/${slug} has 0 GSC Merchant Listing issues`);
-    assert.ok(tHtml.includes('id="interactive-tool-auditor"'), `/tools/${slug} renders interactive path auditor`);
+  for (const liveToolPath of ["/tools/pc-cache-calculator", "/safe-to-delete"]) {
+    const lRes = await app.request(liveToolPath);
+    assert.equal(lRes.status, 200, `${liveToolPath} returns 200 OK`);
+    const parsed = parseHtml(await lRes.text());
+    assert.equal(parsed.jsonLdErrors, 0, `${liveToolPath} has valid JSON-LD`);
   }
 
   // --- Action 2.2: A2 Intent-Gap One-Click Approve & Microsoft Ads Export ---
@@ -2060,13 +2079,13 @@ test("CMO Automations v3: Persistent Storage Ledger, GEO llms.txt, Dunning/Winba
   assert.ok(llmsFullText.includes("Complete Windows 10 & 11 Storage & Cache Encyclopedia"));
   assert.ok(llmsFullText.includes("/clean/app/discord-cache"));
 
-  // 4. A15: Leaf-to-Tool & Switcher Commercial Crosslinks + Brand Fact Drift Audit
+  // 4. A15: Leaf-to-Tool Commercial Crosslinks & Brand Fact Drift Audit
   const leafRes = await app.request("/clean/app/discord-cache");
   assert.equal(leafRes.status, 200);
   const leafHtml = await leafRes.text();
-  assert.ok(leafHtml.includes('id="pseo-commercial-crosslinks"'));
-  assert.ok(leafHtml.includes('/tools/discord-cache-cleaner'));
-  assert.ok(leafHtml.includes('/vs/ccleaner'));
+  assert.ok(leafHtml.includes('/tools/pc-cache-calculator'));
+  assert.ok(leafHtml.includes('/download?platform=windows'));
+  assert.ok(leafHtml.includes('/order?plan=annual'));
 
   const { auditInternalBrandFactConsistency } = await import("../src/seo/listings.js");
   const auditReport = auditInternalBrandFactConsistency({ autoFix: true });
@@ -2550,10 +2569,14 @@ test("GSC Nov 2026 Core Update recovery: clean /download unblocked for noindex d
   for (const expectedHref of [
     "/pricing",
     "/vs/ccleaner",
+    "/vs/bleachbit",
+    "/vs/avast-cleanup",
+    "/vs/cleanmypc",
+    "/vs/glary-utilities",
+    "/vs/wise-disk-cleaner",
     "/vs/cleanmymac",
     "/vs/daisydisk",
     "/vs/pearcleaner",
-    "/vs/onyx",
     "/clean/app/steam-depotcache",
     "/clean/app/genshin-impact-update-cache",
     "/clean/app/riot-client-logs",

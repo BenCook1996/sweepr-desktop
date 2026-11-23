@@ -73,13 +73,13 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       // Tag balance checks
       const openUrls = (xml.match(/<url>/g) || []).length;
       const closeUrls = (xml.match(/<\/url>/g) || []).length;
-      assert.equal(openUrls, 144, `Expected exactly 144 <url> tags, found ${openUrls}`);
-      assert.equal(closeUrls, 144, `Expected exactly 144 </url> tags, found ${closeUrls}`);
+      assert.equal(openUrls, 96, `Expected exactly 96 <url> tags, found ${openUrls}`);
+      assert.equal(closeUrls, 96, `Expected exactly 96 </url> tags, found ${closeUrls}`);
 
       const openLocs = (xml.match(/<loc>/g) || []).length;
       const closeLocs = (xml.match(/<\/loc>/g) || []).length;
-      assert.equal(openLocs, 144, `Expected exactly 144 <loc> tags, found ${openLocs}`);
-      assert.equal(closeLocs, 144, `Expected exactly 144 </loc> tags, found ${closeLocs}`);
+      assert.equal(openLocs, 96, `Expected exactly 96 <loc> tags, found ${openLocs}`);
+      assert.equal(closeLocs, 96, `Expected exactly 96 </loc> tags, found ${closeLocs}`);
 
       // Ensure no raw unescaped ampersands in URLs
       const locContents = [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/g)].map((m) => m[1]);
@@ -88,64 +88,57 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       }
     });
 
-    test("1.3: Static sitemap contains EXACTLY 144 curated Tier-1 URLs with required components", () => {
+    test("1.3: Static sitemap contains EXACTLY 96 curated Tier-1 URLs with required components", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 144, `Expected exact 144 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 96, `Expected exact 96 URLs, got ${urls.length}`);
 
       // Check unique URLs (no duplicates)
       const uniqueUrls = new Set(urls);
-      assert.equal(uniqueUrls.size, 144, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
+      assert.equal(uniqueUrls.size, 96, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
 
-      // 7 Indexable Core Hubs + 4 Policy Pages + 10 Tool Pages (/download excluded as noindex)
+      // 6 Indexable Core Hubs + 4 Policy Pages + /tools/pc-cache-calculator (/download & /bloat-watch excluded)
       const requiredHubs = [
         "https://sweeprcleaner.com/",
         "https://sweeprcleaner.com/pricing",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
-        "https://sweeprcleaner.com/bloat-watch",
         "https://sweeprcleaner.com/state-of-windows-storage",
         "https://sweeprcleaner.com/tools",
+        "https://sweeprcleaner.com/tools/pc-cache-calculator",
         "https://sweeprcleaner.com/privacy",
         "https://sweeprcleaner.com/terms",
         "https://sweeprcleaner.com/refund",
         "https://sweeprcleaner.com/support",
-        "https://sweeprcleaner.com/tools/discord-cache-cleaner",
-        "https://sweeprcleaner.com/tools/steam-cache-cleaner",
-        "https://sweeprcleaner.com/tools/logitech-ghub-cleaner",
-        "https://sweeprcleaner.com/tools/elgato-streamdeck-cleaner",
-        "https://sweeprcleaner.com/tools/valorant-logs-cleaner",
-        "https://sweeprcleaner.com/tools/nvidia-shader-cleaner",
-        "https://sweeprcleaner.com/tools/adobe-media-cache-cleaner",
-        "https://sweeprcleaner.com/tools/jetbrains-gradle-cleaner",
-        "https://sweeprcleaner.com/tools/windows-24h2-update-cleaner",
-        "https://sweeprcleaner.com/tools/ai-model-cache-cleaner",
       ];
       for (const hub of requiredHubs) {
         assert.ok(uniqueUrls.has(hub), `Missing required Tier-1 route: ${hub}`);
       }
       assert.equal(uniqueUrls.has("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
+      assert.equal(uniqueUrls.has("https://sweeprcleaner.com/bloat-watch"), false, "Retired /bloat-watch must NOT appear in static sitemap.xml");
 
-      // 20 Switchers (10 /vs/* and 10 /alternatives/*)
-      const competitors = [
-        "ccleaner", "bleachbit", "cleanmypc", "avast-cleanup", "wise-disk-cleaner",
-        "glary-utilities", "cleanmymac", "pearcleaner", "onyx", "daisydisk",
+      // 16 Surviving Switchers (9 /vs/* and 7 /alternatives/*)
+      const vsCompetitors = [
+        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner",
+        "cleanmypc", "glary-utilities", "wise-disk-cleaner",
       ];
-      for (const comp of competitors) {
+      for (const comp of vsCompetitors) {
         assert.ok(uniqueUrls.has(`https://sweeprcleaner.com/vs/${comp}`), `Missing /vs/${comp}`);
+      }
+      for (const comp of ["ccleaner", "cleanmymac", "avast-cleanup", "bleachbit", "cleanmypc", "glary-utilities", "wise-disk-cleaner"]) {
         assert.ok(uniqueUrls.has(`https://sweeprcleaner.com/alternatives/${comp}`), `Missing /alternatives/${comp}`);
       }
 
-      // Exactly 96 indexed clean guides (144 - 7 hubs - 4 policy - 11 tools - 20 switchers - 6 bloat-watch = 96)
-      const guideUrls = urls.filter((u) => u.includes("/clean/app/") || u.includes("/clean/folder/"));
-      assert.equal(guideUrls.length, 96, `Expected exactly 96 clean guide URLs, got ${guideUrls.length}`);
+      // Exactly 69 indexed clean guides (96 - 6 hubs - 4 policy - 1 tool - 16 switchers = 69)
+      const guideUrls = urls.filter((u) => u.includes("/clean/"));
+      assert.equal(guideUrls.length, 69, `Expected exactly 69 clean guide URLs, got ${guideUrls.length}`);
     });
 
     test("1.4: Zero long-tail noindexed guides appear in static or dynamic sitemap", async () => {
       const { app } = setup();
       const allItems = getCleanItems();
       const noindexed = allItems.filter((i) => i.noindex);
-      assert.equal(noindexed.length, 281, "Expected 281 noindexed long-tail guides in catalog");
+      assert.equal(noindexed.length, 311, "Expected 311 noindexed long-tail guides in catalog");
 
       const staticUrls = new Set(parseSitemap(readFileSync("public/sitemap.xml", "utf8")));
 
@@ -186,8 +179,8 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       const dynXml = await dynRes.text();
       const dynUrls = parseSitemap(dynXml);
 
-      assert.equal(staticUrls.length, 144, "Static sitemap count must be 144");
-      assert.equal(dynUrls.length, 144, "Dynamic sitemap count must be 144");
+      assert.equal(staticUrls.length, 96, "Static sitemap count must be 96");
+      assert.equal(dynUrls.length, 96, "Dynamic sitemap count must be 96");
       assert.deepEqual(dynUrls, staticUrls, "Dynamic and static URLs must match identically in count and sequence");
     });
   });
@@ -383,7 +376,7 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "stremio-desktop-cache": {
         category: "app",
-        expectedTitle: "Can I Delete Stremio Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
       },
       "amd-shader-cache": {
         category: "app",
@@ -399,11 +392,11 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "winsxs": {
         category: "folder",
-        expectedTitle: "Can I Delete WinSxS Folder? YES (6–20 GB) — Safe Guide",
+        expectedTitle: "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
       },
       "programdata-package-cache": {
         category: "folder",
-        expectedTitle: "Delete Package Cache? YES (3.5–22 GB) — Safe Cleanup Guide",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
       },
       "elgato-streamdeck-cache": {
         category: "app",
@@ -411,7 +404,7 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "windows-livekernelreports": {
         category: "folder",
-        expectedTitle: "Delete LiveKernelReports? YES (1.5–10 GB) — Safe Guide",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
       },
       "vivaldi-browser-cache": {
         category: "app",
@@ -419,7 +412,7 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "jetbrains-intellij-cache": {
         category: "app",
-        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1.5–9.5 GB) — Safe Guide",
+        expectedTitle: "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
       },
       "gradle-wrapper-caches": {
         category: "app",

@@ -614,9 +614,9 @@ export function auditInternalBrandFactConsistency(opts: { autoFix?: boolean; tot
       let fixed = false;
       if (reasons.length > 0 && opts.autoFix) {
         const updated = raw
-          .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, "5.8 MB")
-          .replace(/<\s*15\s*MB\s+download/gi, "5.8 MB native Rust download")
-          .replace(/under\s+15\s*MB/gi, "under 6 MB (5.8 MB)")
+          .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, "6.52 MB")
+          .replace(/<\s*15\s*MB\s+download/gi, "6.52 MB native Rust download")
+          .replace(/under\s+15\s*MB/gi, "under 7 MB (6.52 MB)")
           .replace(/\b40\+\s*Guides\b/gi, `${totalGuides}+ Guides`)
           .replace(/up to 3 Desktop PCs/gi, "up to 5 Devices");
         if (updated !== raw) {

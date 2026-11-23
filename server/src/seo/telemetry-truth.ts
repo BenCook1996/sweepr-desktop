@@ -1,7 +1,8 @@
-import { classifyPseoCluster, getCleanItems, type CleanItem, type PseoClusterId } from "../pseo.js";
+import { classifyPseoCluster, getCleanItems, isPseoSlugNoindexed, type CleanItem, type PseoClusterId } from "../pseo.js";
 import { isLiveIndexNowAllowed, listBloatWatchPosts, type BloatWatchPost } from "./bloat-watch.js";
 import type { SeoStore } from "./store.js";
 import { isSafeObjectKey } from "../security.js";
+import { renderEditorialHead, renderSiteFooter, renderSiteHeader } from "../ui-shell.js";
 
 export const TELEMETRY_TRUTH_MIN_SAMPLES = 30; // k-anonymity floor (n >= 30)
 const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
@@ -306,7 +307,6 @@ export function ingestScanCompletedTelemetry(
   if (snapshotsChanged) {
     store.setSetting("telemetry_truth_snapshots", prevSnapshots);
     indexNowUrls.push("https://sweeprcleaner.com/state-of-windows-storage");
-    indexNowUrls.push("https://sweeprcleaner.com/bloat-watch");
     triggerTelemetryTruthIndexNowPing([...new Set(indexNowUrls)]);
   }
 
@@ -422,8 +422,14 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
     if (p.clean_item_slug) labBySlug.set(p.clean_item_slug, p);
   }
 
-  const items = getCleanItems();
-  const byCluster = new Map<PseoClusterId, CleanItem[]>();
+  const items = getCleanItems().filter(
+    (i): i is CleanItem & { category: "app" | "folder" } =>
+      !isPseoSlugNoindexed(i.slug) &&
+      !i.noindex &&
+      !i.mergedIntoSlug &&
+      (i.category === "app" || i.category === "folder")
+  );
+  const byCluster = new Map<PseoClusterId, Array<CleanItem & { category: "app" | "folder" }>>();
   for (const clusterId of Object.keys(SILO_META) as PseoClusterId[]) {
     byCluster.set(clusterId, []);
   }
@@ -582,9 +588,9 @@ function escapeHtml(s: string): string {
 
 export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
   const report = computeStateOfWindowsStorageReport(store);
-  const title = "State of Windows 11 Storage 2026: Cache Bloat Benchmark"; // 55 chars (30-60)
+  const title = "State of Windows 11 Storage 2026: Cache Bloat Benchmark";
   const desc =
-    "2026 Windows 11 storage benchmark across 360+ app caches, GPU shaders, Steam depots, and AI models. See median GB reclaimed and PowerShell audit commands."; // 154 chars (70-158)
+    "2026 Windows 11 storage benchmark across audited app caches, GPU shaders, Steam depots, and AI models. See median GB reclaimed and PowerShell audit commands.";
   const canonicalUrl = "https://sweeprcleaner.com/state-of-windows-storage";
 
   const jsonLd = {
@@ -634,7 +640,7 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: "https://sweeprcleaner.com/" },
-          { "@type": "ListItem", position: 2, name: "Bloat Watch Lab", item: "https://sweeprcleaner.com/bloat-watch" },
+          { "@type": "ListItem", position: 2, name: "Tools", item: "https://sweeprcleaner.com/tools" },
           { "@type": "ListItem", position: 3, name: "State of Windows Storage 2026", item: canonicalUrl },
         ],
       },
@@ -643,135 +649,101 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
 
   return `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(desc)}">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
-  <link rel="canonical" href="${canonicalUrl}">
-  <meta property="og:type" content="article">
-  <meta property="og:title" content="${escapeHtml(title)}">
-  <meta property="og:description" content="${escapeHtml(desc)}">
-  <meta property="og:url" content="${canonicalUrl}">
-  <meta property="og:image" content="https://sweeprcleaner.com/og-image.png">
-  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <link rel="stylesheet" href="/vendor/tailwind.min.css">
-  <script src="/attribution.js" defer></script>
-  <script src="/analytics.js" defer></script>
-  <link rel="stylesheet" href="/style.css">
-</head>
-<body class="bg-[#fafafa] text-gray-800">
-  <nav class="glass-nav px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-200">
-    <div class="flex items-center gap-4">
-      <a href="/" class="flex items-center gap-2.5 text-inherit no-underline">
-        <div class="logo-box">S</div>
-        <span class="font-extrabold text-xl tracking-tight text-gray-900">SWEEPR <span class="text-emerald-600">Research</span></span>
-      </a>
-      <a href="/bloat-watch" class="text-xs font-semibold text-gray-500 hover:text-gray-900">&larr; Bloat Watch Lab</a>
-    </div>
-    <div class="flex items-center gap-3">
-      <a href="/tools" class="hidden md:inline-flex btn btn-ghost text-sm">Cleaner Tools</a>
-      <a href="/safe-to-delete" class="hidden md:inline-flex btn btn-ghost text-sm">Path Checker</a>
-      <a href="/clean" class="hidden sm:inline-flex btn btn-ghost text-sm">Directory</a>
-      <a href="/download?platform=windows&amp;utm_source=state_of_storage" rel="nofollow" class="btn btn-go text-sm">Free 60s Storage Scan (.exe)</a>
-    </div>
-  </nav>
+${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogType: "article", jsonLd })}
+<body>
+  ${renderSiteHeader("study")}
+  <main id="main-content" class="ed-container">
+    <nav class="ed-crumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/tools">Tools</a>
+      <span aria-hidden="true">/</span>
+      <span>State of Windows Storage 2026</span>
+    </nav>
 
-  <main class="max-w-5xl mx-auto px-6 py-12">
-    <div class="mb-10">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-3">
-        📊 Live Empirical Storage Dataset &bull; CC-BY 4.0 Open Citation
-      </div>
-      <h1 class="text-3xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
-        State of Windows 10 &amp; 11 Storage (2026 Benchmark Report)
-      </h1>
-      <p class="text-base md:text-lg text-gray-600 max-w-3xl leading-relaxed">
-        Where does primary NVMe C: drive space actually disappear on modern Windows 11 24H2 PCs? This live benchmark aggregates <strong>${report.total_canonical_guides} verified Windows cache directories</strong>, <strong>${report.published_lab_benchmarks} controlled VM lab benchmarks</strong>, and k-anonymous desktop scan telemetry ($n \\ge 30$ floor).
-      </p>
+    <div class="ed-meta-row" style="margin-top:0;margin-bottom:10px;">
+      <span class="ed-status ed-status-safe"><span class="ed-dot" aria-hidden="true"></span>CC-BY 4.0 Open Benchmark Dataset</span>
+      <span>Updated ${escapeHtml(report.generated_at.slice(0, 10))}</span>
     </div>
 
-    <!-- Top KPI Scorecard -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-      <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-xs font-bold text-gray-400 uppercase">Median Reclaimable / PC</div>
-        <div class="text-3xl font-black text-emerald-700 mt-1">${report.median_reclaimable_per_pc_gb} GB</div>
-        <div class="text-[11px] text-gray-500 mt-1">Across Browsers, Shaders &amp; Update Caches</div>
-      </div>
-      <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-xs font-bold text-gray-400 uppercase">90th Percentile Power User</div>
-        <div class="text-3xl font-black text-gray-900 mt-1">${report.p90_reclaimable_per_pc_gb} GB</div>
-        <div class="text-[11px] text-gray-500 mt-1">Gaming, 4K Video &amp; Local AI/Dev Workstations</div>
-      </div>
-      <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-xs font-bold text-gray-400 uppercase">Audited Windows Paths</div>
-        <div class="text-3xl font-black text-gray-900 mt-1">${report.total_canonical_guides}</div>
-        <div class="text-[11px] text-gray-500 mt-1">100% Path-Verified in Windows 11 24H2</div>
-      </div>
-      <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div class="text-xs font-bold text-gray-400 uppercase">Live Telemetry &amp; Lab Runs</div>
-        <div class="text-3xl font-black text-emerald-700 mt-1">${(report.total_telemetry_samples + report.published_lab_benchmarks * 30).toLocaleString("en-US")}</div>
-        <div class="text-[11px] text-gray-500 mt-1">${report.k_anonymous_verified_folders} k-Anonymous ($n\\ge 30$) Live Clusters</div>
-      </div>
-    </div>
+    <h1 class="ed-h1">State of Windows 10 &amp; 11 Storage <em>(2026 Benchmark)</em></h1>
+    <p class="ed-lead">
+      Where does primary NVMe C: drive space actually disappear on modern Windows 11 24H2 PCs? This live benchmark aggregates <strong>${report.total_canonical_guides} curated Windows cache directories</strong>, <strong>${report.published_lab_benchmarks} controlled Windows 11 24H2 VM lab runs</strong>, and k-anonymous desktop scan telemetry (n &ge; 30 floor).
+    </p>
 
-    <!-- Top 15 Heaviest Windows 11 Folders Table -->
-    <section id="top-15-heaviest-folders" class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm mb-10">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <section class="ed-section ed-grid-4">
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">MEDIAN RECLAIMABLE / PC</div>
+        <div class="ed-kpi-val" style="color:var(--accent);">${report.median_reclaimable_per_pc_gb} GB</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Browsers, shaders &amp; update caches</p>
+      </div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">90TH PERCENTILE WORKSTATION</div>
+        <div class="ed-kpi-val">${report.p90_reclaimable_per_pc_gb} GB</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Gaming, 4K editing &amp; local AI builds</p>
+      </div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">CURATED WINDOWS PATHS</div>
+        <div class="ed-kpi-val">${report.total_canonical_guides}</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Path-verified on Windows 11 24H2</p>
+      </div>
+      <div class="ed-kpi-card">
+        <div class="ed-kpi-label">TELEMETRY &amp; VM SAMPLES</div>
+        <div class="ed-kpi-val" style="color:var(--accent);">${(report.total_telemetry_samples + report.published_lab_benchmarks * 30).toLocaleString("en-US")}</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">${report.k_anonymous_verified_folders} k-anonymous (n &ge; 30) live clusters</p>
+      </div>
+    </section>
+
+    <section id="top-15-heaviest-folders" class="ed-section ed-card">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
         <div>
-          <h2 class="text-xl font-black text-gray-900">Top 15 Heaviest Orphaned Cache Folders on Windows 11</h2>
-          <p class="text-xs text-gray-500 mt-0.5">Ranked by empirical k-anonymous scan telemetry, controlled VM benchmarks, and engineering baselines.</p>
+          <h2 class="ed-h2" style="margin-bottom:4px;">Top 15 Heaviest Orphaned Cache Folders on Windows 11</h2>
+          <p style="font-size:0.88rem;color:var(--muted);">Ranked by empirical k-anonymous scan telemetry, controlled VM lab runs, and audit baselines.</p>
         </div>
         <button
           type="button"
           id="copyCitationMarkdownBtn"
-          onclick="navigator.clipboard.writeText(document.getElementById('rawCitationMarkdown').value).then(() => { this.textContent = '✓ Copied Markdown Table!'; })"
-          class="px-3.5 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
+          onclick="navigator.clipboard.writeText(document.getElementById('rawCitationMarkdown').value).then(() => { this.textContent = 'Copied Markdown Table'; })"
+          class="ed-btn-secondary btn-press"
         >
-          📋 Copy Markdown Table for Reddit / Press
+          Copy Markdown Table for Reddit / Press
         </button>
       </div>
-      <textarea id="rawCitationMarkdown" class="hidden" readonly>${escapeHtml(report.citation_markdown)}</textarea>
+      <textarea id="rawCitationMarkdown" style="display:none;" readonly>${escapeHtml(report.citation_markdown)}</textarea>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="ed-table-wrap">
+        <table class="ed-table">
           <thead>
-            <tr class="border-b border-gray-200 text-gray-600">
-              <th class="py-2.5 pr-3 font-bold">#</th>
-              <th class="py-2.5 pr-3 font-bold">Application / System Cache</th>
-              <th class="py-2.5 pr-3 font-bold">Canonical Windows Path</th>
-              <th class="py-2.5 pr-3 font-bold">Median</th>
-              <th class="py-2.5 pr-3 font-bold">P90 Bloat</th>
-              <th class="py-2.5 font-bold">Verification Source</th>
+            <tr>
+              <th>#</th>
+              <th>Application / System Cache</th>
+              <th>Canonical Windows Path</th>
+              <th>Median</th>
+              <th>P90 Bloat</th>
+              <th>Verification Source</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 text-gray-700">
+          <tbody>
             ${report.top_15_heaviest_folders
               .map(
                 (row) => `
-            <tr class="hover:bg-emerald-50/40">
-              <td class="py-2.5 pr-3 font-black text-gray-400">${row.rank}</td>
-              <td class="py-2.5 pr-3">
-                <a href="/clean/${row.category}/${row.slug}" class="font-bold text-emerald-700 hover:underline">${escapeHtml(row.name)}</a>
-                <div class="text-[10px] text-gray-400">${escapeHtml(row.silo)}</div>
+            <tr>
+              <td class="mono" style="font-weight:700;color:var(--muted);">${row.rank}</td>
+              <td>
+                <a href="/clean/${row.category}/${row.slug}">${escapeHtml(row.name)}</a>
+                <div style="font-size:0.76rem;color:var(--muted);margin-top:2px;">${escapeHtml(row.silo)}</div>
               </td>
-              <td class="py-2.5 pr-3 font-mono text-[11px] text-gray-800 break-all max-w-xs">${escapeHtml(row.path)}</td>
-              <td class="py-2.5 pr-3 font-extrabold text-gray-900 whitespace-nowrap">${row.reclaimable_gb} GB</td>
-              <td class="py-2.5 pr-3 font-semibold text-gray-600 whitespace-nowrap">${row.p90_gb} GB</td>
-              <td class="py-2.5 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  row.source === "live_telemetry"
-                    ? "bg-emerald-100 text-emerald-800"
-                    : row.source === "lab_benchmark"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-gray-100 text-gray-700"
-                }">
-                  ${
+              <td class="ed-path-mono">${escapeHtml(row.path)}</td>
+              <td class="mono" style="font-weight:700;white-space:nowrap;">${row.reclaimable_gb} GB</td>
+              <td class="mono" style="color:var(--muted);white-space:nowrap;">${row.p90_gb} GB</td>
+              <td style="white-space:nowrap;">
+                <span class="ed-status ${row.source === "live_telemetry" || row.source === "lab_benchmark" ? "ed-status-safe" : "ed-status-caution"}">
+                  <span class="ed-dot" aria-hidden="true"></span>${
                     row.source === "live_telemetry"
-                      ? `📊 Live Telemetry (n=${row.sample_count})`
+                      ? `Live Telemetry (n=${row.sample_count})`
                       : row.source === "lab_benchmark"
-                        ? "🧪 Win11 24H2 Lab VM"
-                        : "📐 Engineering Baseline"
+                        ? "Win11 24H2 Lab VM"
+                        : "Audit Baseline"
                   }
                 </span>
               </td>
@@ -783,58 +755,50 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
       </div>
     </section>
 
-    <!-- Breakdown by 8 Storage Silos -->
-    <section class="mb-10">
-      <h2 class="text-2xl font-black text-gray-900 mb-4">Storage Footprint Breakdown by Windows Ecosystem Silo</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <section class="ed-section">
+      <h2 class="ed-h2" style="margin-bottom:14px;">Storage Footprint Breakdown by Windows Ecosystem Silo</h2>
+      <div class="ed-grid-2">
         ${report.silos
           .map(
             (silo) => `
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center justify-between gap-2 mb-2">
-            <h3 class="text-base font-extrabold text-gray-900">${escapeHtml(silo.label)}</h3>
-            <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold text-xs whitespace-nowrap">
-              ~${silo.estimated_median_gb} GB Median
-            </span>
+        <article class="ed-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;">
+            <h3 class="ed-h3">${escapeHtml(silo.label)}</h3>
+            <span class="ed-status ed-status-safe mono" style="flex-shrink:0;">~${silo.estimated_median_gb} GB median</span>
           </div>
-          <p class="text-xs text-gray-500 mb-3">${silo.total_guides} verified Windows paths in this silo</p>
-          <ul class="space-y-2 text-xs">
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">${silo.total_guides} curated Windows paths in this silo</p>
+          <ul style="list-style:none;padding:0;margin:0;">
             ${silo.top_folders
               .map(
                 (f) => `
-            <li class="flex items-center justify-between gap-2 pt-1.5 border-t border-gray-100">
-              <a href="${f.url}" class="font-semibold text-gray-800 hover:text-emerald-700 truncate">${escapeHtml(f.name)}</a>
-              <span class="font-mono text-[11px] font-bold text-emerald-700 whitespace-nowrap">
-                ${f.measured_median_gb != null ? `${f.measured_median_gb} GB (measured)` : escapeHtml(f.avg_space)}
+            <li style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:0.86rem;">
+              <a href="${f.url}" style="font-weight:600;color:var(--text);">${escapeHtml(f.name)}</a>
+              <span class="mono" style="font-size:0.78rem;font-weight:700;color:var(--accent);white-space:nowrap;">
+                ${f.measured_median_gb != null ? `${f.measured_median_gb} GB measured` : escapeHtml(f.avg_space)}
               </span>
             </li>`
               )
               .join("")}
           </ul>
-        </div>`
+        </article>`
           )
           .join("")}
       </div>
     </section>
 
-    <!-- CTA Banner -->
-    <section class="bg-gradient-to-br from-emerald-950 via-gray-900 to-gray-900 text-white rounded-2xl p-8 shadow-md">
-      <div class="max-w-2xl">
-        <h2 class="text-2xl font-black mb-2">Audit Your Own PC Against the 2026 Benchmark in 60 Seconds</h2>
-        <p class="text-sm text-gray-300 mb-5">
-          SWEEPR Cleaner is a native 6.5 MB Rust desktop utility for Windows 10 &amp; 11 with zero background bloatware and a 7-day Undo Quarantine.
-        </p>
-        <div class="flex flex-wrap gap-3">
-          <a href="/download?platform=windows&amp;utm_source=state_of_storage_cta" rel="nofollow" class="btn btn-go text-sm py-2.5 px-5">
-            Download Free Windows Analyzer (.exe) &rarr;
-          </a>
-          <a href="/tools" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold no-underline">
-            Explore 10 App-Specific Cleaner Tools
-          </a>
-        </div>
+    <section class="ed-section ed-card-muted">
+      <h2 class="ed-h2">Audit Your Own PC Against the 2026 Benchmark</h2>
+      <p style="font-size:0.94rem;color:var(--muted);max-width:64ch;">
+        Paste your Windows folders into our browser Path Checker, estimate your savings with the PC Cache Calculator, or download the 6.52 MB native Rust SWEEPR Cleaner for a 60-second read-only scan.
+      </p>
+      <div class="ed-actions">
+        <a href="/download?platform=windows&amp;utm_source=state_of_storage_cta" rel="nofollow" class="ed-btn-primary btn-press">Download Free Windows Analyzer (.exe) &rarr;</a>
+        <a href="/safe-to-delete" class="ed-btn-secondary btn-press">Open Path Safety Checker</a>
+        <a href="/tools/pc-cache-calculator" class="ed-btn-secondary btn-press">PC Cache Calculator</a>
       </div>
     </section>
   </main>
+  ${renderSiteFooter()}
 </body>
 </html>`;
 }
