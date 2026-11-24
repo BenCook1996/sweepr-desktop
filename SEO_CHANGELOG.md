@@ -27,6 +27,34 @@ Maintained centrally in the SWEEPR CRM (`sweepr-crm`) tracking technical SEO, ro
 
 ## Chronological Changelog
 
+### 2026-11-20
+
+#### [Cleaner] Loganix Link Building Order #198BC21D Paid & Submitted (`$392.40` USD: EnosTech DR 54, DaySaver DR 59, WebToSociety DR 64)
+- **Project**: `cleaner`
+- **Category**: `distribution_backlinks`
+- **Status**: `completed`
+- **Target URLs**: `https://sweeprcleaner.com/`, `https://sweeprcleaner.com/vs/ccleaner`, `https://enostech.com/`, `https://daysaver.net/`, `https://webtosociety.com/`
+- **Technical Breakdown**:
+  Submitted and paid Loganix Link Building Order `#198BC21D` (`$417.00` placements + `$19.00` content = `$436.00` gross, `-$43.60` `WELCOME10` 10% coupon = **`$392.40` USD net** via Stripe `cus_VfEJFJyiWoqnMx`; Loganix manager: John Aquino; TAT: `2-3 weeks`) covering three contextual dofollow backlinks for `sweeprcleaner.com` (`74,188/mo` combined publisher traffic):
+  1. **`enostech.com`** (`site_id: 103031`, DR `54` / DA `43`, `7,059/mo`, Guest Post `$143.10` net) &rarr; `https://sweeprcleaner.com/` with anchor `SWEEPR Cleaner`; supplied `1,688`-word Windows 11 NVMe/GPU/LGHUB/StreamDeck/EBWebView guide + `1640×924` PNG (`Google Doc 1EIBDsYGnU8gZuUAIK60PMnTJBc4hytiFmASWQpS74XY`). **Forecast:** `150–335 visits/mo` (`30–75` referral + `120–260` DR 54 organic) &rarr; `10–22 installs/mo` &rarr; **`1.4–3.1 paid customers/mo`** (`8–18` customers / `$380–$970` over 6 months).
+  2. **`daysaver.net`** (`site_id: 123142`, DR `59` / DA `52`, `28,930/mo`, Guest Post `$143.10` net) &rarr; `https://sweeprcleaner.com/` with anchor `cross-platform storage cleaner`; supplied `1,513`-word PC Gaming Stutter & 10-Launcher Cache guide + `1640×924` PNG (`Google Doc 1CnxTz1JtCk_X3PXi5jdWE7ou2Ax-E5BI06BiEplICmY`). **Forecast:** `205–455 visits/mo` (`45–115` referral + `160–340` DR 59 organic) &rarr; `13–30 installs/mo` &rarr; **`1.8–4.2 paid customers/mo`** (`11–25` customers / `$520–$1,350` over 6 months).
+  3. **`webtosociety.com`** (`site_id: 302567`, DR `64` / DA `28`, `38,199/mo`, Link Insert `$106.20` net incl. Loganix writing) &rarr; `https://sweeprcleaner.com/vs/ccleaner` with anchor `privacy-first PC and mobile storage cleaner` and CRO insertion brief. **Forecast:** `95–230 BOFU visits/mo` (`15–40` referral + `80–190` DR 64 organic) &rarr; `8–18 installs/mo` &rarr; **`1.1–2.7 paid customers/mo`** (`7–16` customers / `$340–$860` over 6 months).
+- **Combined 6-Month Forecast & Impact**:
+  - **Expected Traffic:** **`450–1,020` high-intent visits/mo** (`90–230` direct referral + `360–790` organic search lift).
+  - **Predicted Downloads & Customers:** **`31–70` installs/mo** (`185–420` over 6mo) &rarr; **`4.3–10.0` paid customers/mo** (**`26–59` paid customers** over 6 months at `14%` download-to-paid CVR; **`$1,240–$3,180`** est. revenue = **`3.1x–8.1x` ROAS**; break-even at `6–8` customers).
+- **Metadata**:
+  ```json
+  {
+    "order_id": "198BC21D",
+    "total_paid_usd": 392.4,
+    "expected_traffic_monthly": "450-1,020",
+    "predicted_downloads_monthly": "31-70",
+    "predicted_customers_monthly": "4.3-10.0",
+    "predicted_customers_6mo": "26-59",
+    "projected_revenue_6mo_usd": "$1,240-$3,180"
+  }
+  ```
+
 ### 2026-11-17
 
 #### [Cleaner] Ship Core Web Vitals & GEO/CTR Performance Suite (Precompiled Tailwind CSS, Lazy i18n, CDN-Cache-Control, Real WebP Proofs, 94-Guide Enrichment & Clean /llms-full.txt)

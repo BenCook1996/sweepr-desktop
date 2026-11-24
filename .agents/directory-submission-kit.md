@@ -165,12 +165,3 @@ Tag Sweepr Cleaner as an alternative to the following applications on the submis
 
 - **Submission URL:** [https://alternative.me/](https://alternative.me/) (Footer -> Contact Us)
 - **Message:** Request addition of `SWEEPR Cleaner` (`https://sweeprcleaner.com`) as a native Rust alternative to `CCleaner`, `BleachBit`, and `CleanMyPC`.
-
----
-
-## 11. G2 Product Listing (DR 92)
-
-- **Submission URL:** [https://www.g2.com/products/new](https://www.g2.com/products/new)
-- **Product Name:** `SWEEPR Cleaner`
-- **Vendor Website:** `https://sweeprcleaner.com`
-- **Category:** `Disk Cleanup Software` / `System Utilities`

@@ -239,8 +239,8 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "comfyui-temp-output-cache": "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
   "genshin-impact-update-cache": "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
   "winsxs": "Can You Delete WinSxS? No — Safe DISM Cleanup Guide (Win 11)",
-  "programdata-package-cache": "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
-  "windows-livekernelreports": "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+  "programdata-package-cache": "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
+  "windows-livekernelreports": "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
   "logitech-options-plus-cache": "Delete LogiOptionsPlus Cache? YES (1.2–6.5 GB) — Guide",
   "elgato-streamdeck-cache": "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
   "vivaldi-browser-cache": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
@@ -255,7 +255,7 @@ const CUSTOM_GSC_TITLES: Record<string, string> = {
   "npm-cache": "Can I Delete npm-cache? YES (2–18 GB) — Safe Cleanup Guide",
   "gradle-wrapper-caches": "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
   "localappdata-crashdumps": "Can I Delete CrashDumps? YES (1–15 GB) — Safe Guide",
-  "hiberfil-sys": "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
+  "hiberfil-sys": "Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
   "windows-old": "Delete Windows.old Folder Safely on Windows 11 (15–35 GB)",
   "pip-cache": "Can I Delete pip Cache? YES (2–20 GB) — Safe Cleanup Guide",
   "delivery-optimization": "Delete DeliveryOptimization? YES (3–20 GB) — Safe Guide",
@@ -1223,7 +1223,7 @@ export function renderPseoDirectory(): string {
     return i.category === "folder" ? "Windows System" : "Windows App";
   };
 
-  const pageTitle = "Storage & Folder Safety Guides (Windows, Mac & Mobile) | SWEEPR";
+  const pageTitle = "Storage & Folder Safety Guides (PC, Mac & Mobile) | SWEEPR";
   const pageDesc =
     "Wondering if a Windows, Mac, iPhone, or Android folder is safe to delete? Browse verified Q&A cleanup guides, manual steps, and exact folder verdicts.";
   const canonicalUrl = "https://sweeprcleaner.com/clean";

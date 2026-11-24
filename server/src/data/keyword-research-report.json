@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "generated_at": "2026-11-14T13:20:26.659Z",
+  "generated_at": "2026-11-20T06:38:11.142Z",
   "summary": {
     "total_evaluated": 1068,
     "low_competition_count": 221,
@@ -55,7 +55,7 @@
       "TOFU_Safety_Diagnostic": 1.06
     },
     "empirical_download_to_paid_cvr_pct": 14,
-    "updated_at": "2026-11-14T13:20:26.198Z",
+    "updated_at": "2026-11-20T06:38:10.424Z",
     "calibration_note": "Increased low_comp_weight to 0.62 (demand_weight=0.38) to accelerate Top-10 ranking velocity on KD <= 30 targets."
   },
   "top_opportunities": [
@@ -2373,7 +2373,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete DaVinci Resolve Studio Gallery Stills & Neural? YES (2–18 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete DaVinci Resolve? YES (2–18 GB) — Safe Guide",
         "computedDescription": "Delete %APPDATA%\\Blackmagic Design\\DaVinci Resolve\\Support\\logs (2–18 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\blackmagic design\\davinci resolve\\support\\logs"
@@ -2431,7 +2431,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete CapCut Desktop Proxy Video & AI Matting Render? YES (4–40 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete CapCut Desktop? YES (4–40 GB) — Safe Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache\\effect (4–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\capcut\\user data\\cache\\effect",
@@ -2490,7 +2490,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Microsoft DirectStorage GPU Decompression? YES (1–8 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Microsoft? YES (1–8 GB) — Safe Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Microsoft\\DirectStorage\\Cache (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\microsoft\\directstorage\\cache"
@@ -2548,7 +2548,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Astral uv Python Package & Wheel Cache? YES (3–35 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Astral uv Python? YES (3–35 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\uv\\cache? YES (3–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\uv\\cache"
@@ -2605,7 +2605,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Podman Desktop OCI Image Tarball & Machine Cache? YES (2.5–24 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Podman Desktop OCI? YES (2.5–24 GB) — Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\containers\\cache? YES (2.5–24 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\containers\\cache",
@@ -2663,7 +2663,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Path of Exile 2 DirectX 12 & Vulkan Shader Cache? YES (2.5–16 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Path of Exile 2? YES (2.5–16 GB) — Safe Guide",
         "computedDescription": "Delete %APPDATA%\\Path of Exile 2\\ShaderCacheD3D12 (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\path of exile 2\\shadercached3d12",
@@ -2722,7 +2722,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete S.T.A.L.K.E.R. 2 Unreal Engine 5 PSO Shader? YES (2–18 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete S.T.A.L.K.E.R. 2? YES (2–18 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Stalker2\\Saved\\Crashes? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\stalker2\\saved\\crashes",
@@ -2781,7 +2781,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Marvel Rivals Unreal Engine 5 Shader & Crash? YES (2–14.5 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Marvel Rivals? YES (2–14.5 GB) — Safe Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Marvel\\Saved\\Config\\CrashReportClient (2–14.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\marvel\\saved\\config\\crashreportclient",
@@ -2840,7 +2840,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Zenless Zone Zero HoYoPlay WebCache & Temporary? YES (2–15 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Zenless Zone Zero? YES (2–15 GB) — Safe Guide",
         "computedDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\ZenlessZoneZero Game\\ZenlessZone (2–15 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files\\hoyoplay\\games\\zenlesszonezero game\\zenlesszonezero_data\\webcaches"
@@ -2898,7 +2898,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Monster Hunter Wilds RE Engine Shader.cache2? YES (2.5–14 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Monster Hunter? YES (2.5–14 GB) — Safe Guide",
         "computedDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache\\2246340 (2.5–14 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files (x86)\\steam\\steamapps\\shadercache\\2246340"
@@ -2956,7 +2956,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windows 11 Recall Screen Snapshots & Vector? YES (5–75 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Windows 11 Recall? YES (5–75 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\CoreAIPlatform.00\\UKP? YES (5–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\coreaiplatform.00\\ukp"
@@ -3014,7 +3014,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Delta Force Shader & Anti-Cheat Log Cache? YES (1.5–10.5 GB) — Safe Cleanup Guide",
+        "computedTitle": "Delete Delta Force Shader? YES (1.5–10.5 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\DFM\\Saved\\Logs? YES (1.5–10.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\dfm\\saved\\logs",
@@ -3073,7 +3073,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Wuthering Waves Kuro Launcher Patch & WebCache? YES (1.8–12 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Wuthering Waves? YES (1.8–12 GB) — Safe Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\KRInstall\\Wuthering Waves\\Log (1.8–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\krinstall\\wuthering waves\\log",
@@ -3132,7 +3132,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Helldivers 2 Arrowhead Shader Cache & Crash? YES (1.5–9.5 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Helldivers 2? YES (1.5–9.5 GB) — Safe Guide",
         "computedDescription": "Delete %APPDATA%\\Arrowhead\\Helldivers2\\shader_cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\arrowhead\\helldivers2\\shader_cache",
@@ -3191,7 +3191,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Trae AI IDE Bytecode, GPUCache & Extension? YES (1.5–10 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Trae AI IDE? YES (1.5–10 GB) — Safe Guide",
         "computedDescription": "Can I delete %APPDATA%\\Trae\\Cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\trae\\cache",
@@ -3250,7 +3250,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Valve Deadlock Source 2 Vulkan & DirectX Shader? YES (1.8–11 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Valve Deadlock? YES (1.8–11 GB) — Safe Guide",
         "computedDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache\\1422450 (1.8–11 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "c:\\program files (x86)\\steam\\steamapps\\shadercache\\1422450"
@@ -3308,7 +3308,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Zed Editor Language Server & Node Runtime Cache? YES (1.5–11 GB) — Safe Cleanup Guide",
+        "computedTitle": "Delete Zed Editor Language? YES (1.5–11 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Zed\\languages? YES (1.5–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\zed\\languages",
@@ -3367,7 +3367,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windsurf AI IDE Chromium & Cascade Index Cache? YES (1.8–12.5 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Windsurf AI IDE? YES (1.8–12.5 GB) — Safe Guide",
         "computedDescription": "Can I delete %APPDATA%\\Windsurf\\Cache? YES (1.8–12.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%appdata%\\windsurf\\cache",
@@ -3426,7 +3426,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete THE FINALS Unreal Engine 5 PSO Shader & Crash? YES (1.8–14 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete THE FINALS Unreal? YES (1.8–14 GB) — Safe Guide",
         "computedDescription": "Can I delete %LOCALAPPDATA%\\Discovery\\Saved\\Logs? YES (1.8–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\discovery\\saved\\logs",
@@ -3485,7 +3485,7 @@
       "validation": {
         "valid": true,
         "errors": [],
-        "computedTitle": "Can I Delete Windows 11 CrossDevice / Phone Link Clipboard? YES (1.2–12 GB) — Safe Cleanup Guide",
+        "computedTitle": "Can I Delete Windows 11? YES (1.2–12 GB) — Safe Guide",
         "computedDescription": "Delete %LOCALAPPDATA%\\Packages\\MicrosoftWindows.Client.Core_cw5n1h2tx (1.2–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
         "canonicalPaths": [
           "%localappdata%\\packages\\microsoftwindows.client.core_cw5n1h2txyewy\\tempstate"
@@ -3530,7 +3530,7 @@
       "impressions": 5168,
       "position": 7.7,
       "opportunity_score": 100,
-      "on_cooldown": true,
+      "on_cooldown": false,
       "title_locked_by_test": true,
       "recommended_update": "faq_only",
       "suggested_faq": {
@@ -3690,7 +3690,7 @@
       "impressions": 21,
       "position": 6,
       "opportunity_score": 52,
-      "on_cooldown": true,
+      "on_cooldown": false,
       "title_locked_by_test": true,
       "recommended_update": "faq_only",
       "suggested_faq": {

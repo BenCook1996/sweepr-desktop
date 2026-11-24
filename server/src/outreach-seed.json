@@ -3614,8 +3614,8 @@
     "website": "g2.com",
     "url": "https://www.g2.com",
     "how": "Directory Submission (PAD XML + Verified SMTP)",
-    "category": "B2B & Utility Software Review Directory (DR 91) — SWEEPR Cleaner v0.1.0 Submission",
-    "status": "submitted",
+    "category": "Disqualified (B2B-only directory; SWEEPR Cleaner is B2C — do not retry)",
+    "status": "disqualified",
     "message_id": "<248adffe-c505-8ccc-6870-4bdcaa5e1c89@gmail.com>",
     "reached_out_at": 1792539776
   },
@@ -3624,8 +3624,8 @@
     "website": "capterra.com",
     "url": "https://www.capterra.com/vendors/",
     "how": "Directory Submission (PAD XML + Verified SMTP)",
-    "category": "Software Vendor Directory Listing (DR 90) — SWEEPR Cleaner v0.1.0 Submission",
-    "status": "submitted",
+    "category": "Disqualified (B2B-only directory; SWEEPR Cleaner is B2C — do not retry)",
+    "status": "disqualified",
     "message_id": "<952dfb41-bd90-13af-7fa5-d5e082b81ac9@gmail.com>",
     "reached_out_at": 1792539779
   },
@@ -224400,5 +224400,93 @@
     "status": "listed",
     "message_id": "portal-vpn-sitepatent-com",
     "reached_out_at": 1793786752
+  },
+  {
+    "project_id": "vpn",
+    "who": "GitHub Official Repository (SWEEPR VPN)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/sweepr-vpn",
+    "how": "Public GitHub Repository",
+    "category": "DR 96 · Source, Smart-TV ACR Blocklist & Releases -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-github-repo",
+    "reached_out_at": 1795170438
+  },
+  {
+    "project_id": "vpn",
+    "who": "Scoop Package Bucket (scoop-sweepr)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/scoop-sweepr",
+    "how": "Windows Scoop Manifest",
+    "category": "DR 96 · Windows Package Manager Bucket -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-scoop-bucket",
+    "reached_out_at": 1795170438
+  },
+  {
+    "project_id": "vpn",
+    "who": "Homebrew Tap (homebrew-sweepr)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/homebrew-sweepr",
+    "how": "macOS Homebrew Cask",
+    "category": "DR 96 · macOS Package Manager Tap -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-homebrew-tap",
+    "reached_out_at": 1795170438
+  },
+  {
+    "project_id": "vpn",
+    "who": "Chocolatey Community Repository",
+    "website": "community.chocolatey.org",
+    "url": "https://community.chocolatey.org/packages/sweepr-vpn",
+    "how": "Windows Chocolatey Package",
+    "category": "DR 82 · Windows Package Registry -> https://sweeprvpn.com",
+    "status": "listed",
+    "message_id": "portal-vpn-chocolatey-org",
+    "reached_out_at": 1795170438
+  },
+  {
+    "project_id": "vpn",
+    "who": "GitHub Official Repository (SWEEPR VPN)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/sweepr-vpn",
+    "how": "Public GitHub Repository",
+    "category": "DR 96 · Source, Smart-TV ACR Blocklist & Releases -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-github-repo",
+    "reached_out_at": 1795407429
+  },
+  {
+    "project_id": "vpn",
+    "who": "Scoop Package Bucket (scoop-sweepr)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/scoop-sweepr",
+    "how": "Windows Scoop Manifest",
+    "category": "DR 96 · Windows Package Manager Bucket -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-scoop-bucket",
+    "reached_out_at": 1795407429
+  },
+  {
+    "project_id": "vpn",
+    "who": "Homebrew Tap (homebrew-sweepr)",
+    "website": "github.com",
+    "url": "https://github.com/BenCook1996/homebrew-sweepr",
+    "how": "macOS Homebrew Cask",
+    "category": "DR 96 · macOS Package Manager Tap -> https://sweeprvpn.com/",
+    "status": "listed",
+    "message_id": "portal-vpn-homebrew-tap",
+    "reached_out_at": 1795407429
+  },
+  {
+    "project_id": "vpn",
+    "who": "Chocolatey Community Repository",
+    "website": "community.chocolatey.org",
+    "url": "https://community.chocolatey.org/packages/sweepr-vpn",
+    "how": "Windows Chocolatey Package",
+    "category": "DR 82 · Windows Package Registry -> https://sweeprvpn.com",
+    "status": "listed",
+    "message_id": "portal-vpn-chocolatey-org",
+    "reached_out_at": 1795407429
   }
 ]

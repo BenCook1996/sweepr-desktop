@@ -1,122 +1,40 @@
 {
-  "timestamp": "2026-11-14T13:20:38.346Z",
+  "timestamp": "2026-11-20T06:38:25.291Z",
   "result": {
     "run_id": 1,
-    "pages": 426,
-    "html_pages": 426,
-    "health_score": 95,
+    "pages": 172,
+    "html_pages": 172,
+    "health_score": 99,
     "errors": 0,
-    "warnings": 350,
-    "notices": 0,
+    "warnings": 27,
+    "notices": 6,
     "truncated": false
   },
   "run": {
     "id": 1,
     "source": "local",
     "base_url": "in-process",
-    "started_at": 1794662361,
-    "finished_at": 1794662373,
-    "pages": 426,
-    "health_score": 95,
+    "started_at": 1795156622,
+    "finished_at": 1795156636,
+    "pages": 172,
+    "health_score": 99,
     "errors": 0,
-    "warnings": 350,
-    "notices": 0,
+    "warnings": 27,
+    "notices": 6,
     "site_issues_json": "[]",
     "status": "done"
   },
   "issuesSummary": {
-    "not_in_sitemap": 21,
-    "noindex": 329
+    "noindex": 27,
+    "unreachable_from_home": 4,
+    "slow_response": 1,
+    "meta_long": 1
   },
   "pagesWithIssues": [
     {
-      "path": "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026",
+      "path": "/clean/app/deno-typescript-global-dep-cache",
       "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/comfyui-cursor-ai-developer-cache-bloat-2026 not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/elgato-streamdeck-cef-media-blob-cache-bloat-2026 not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/logitech-ghub-options-plus-depots-media-blob-benchmark-2026 not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/bloat-watch/nvidia-rtx-shader-cache-10gb-limit-fix",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/nvidia-rtx-shader-cache-10gb-limit-fix not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/bloat-watch/steam-depotcache-orphaned-chunks-spike",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/steam-depotcache-orphaned-chunks-spike not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/bloat-watch/windows-11-24h2-8gb-update-cache-bug",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/bloat-watch/windows-11-24h2-8gb-update-cache-bug not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/1password-desktop-cache",
-      "status": 200,
-      "score": 94,
+      "score": 93,
       "issues": [
         {
           "code": "noindex",
@@ -124,13 +42,20 @@
           "finding": "Page is marked noindex",
           "evidence": "meta robots: noindex, follow",
           "fix": "Remove noindex if this page should rank."
+        },
+        {
+          "code": "unreachable_from_home",
+          "severity": "notice",
+          "finding": "Not reachable by following links from the homepage",
+          "evidence": "Found only via sitemap/seed",
+          "fix": "Add an internal link path from the homepage."
         }
       ]
     },
     {
-      "path": "/clean/app/7zip-winrar-temp-extractions",
+      "path": "/clean/folder/windows-11-24h2-sihclient-waasmedic-logs",
       "status": 200,
-      "score": 94,
+      "score": 93,
       "issues": [
         {
           "code": "noindex",
@@ -138,13 +63,20 @@
           "finding": "Page is marked noindex",
           "evidence": "meta robots: noindex, follow",
           "fix": "Remove noindex if this page should rank."
+        },
+        {
+          "code": "unreachable_from_home",
+          "severity": "notice",
+          "finding": "Not reachable by following links from the homepage",
+          "evidence": "Found only via sitemap/seed",
+          "fix": "Add an internal link path from the homepage."
         }
       ]
     },
     {
-      "path": "/clean/app/ableton-waveform-peaks-cache",
+      "path": "/clean/folder/windows-connected-devices-platform-cdp-cache",
       "status": 200,
-      "score": 94,
+      "score": 93,
       "issues": [
         {
           "code": "noindex",
@@ -152,13 +84,20 @@
           "finding": "Page is marked noindex",
           "evidence": "meta robots: noindex, follow",
           "fix": "Remove noindex if this page should rank."
+        },
+        {
+          "code": "unreachable_from_home",
+          "severity": "notice",
+          "finding": "Not reachable by following links from the homepage",
+          "evidence": "Found only via sitemap/seed",
+          "fix": "Add an internal link path from the homepage."
         }
       ]
     },
     {
-      "path": "/clean/app/acrobat-reader-arm-cache",
+      "path": "/clean/folder/windows-pca-program-compatibility-assistant-logs",
       "status": 200,
-      "score": 94,
+      "score": 93,
       "issues": [
         {
           "code": "noindex",
@@ -166,389 +105,18 @@
           "finding": "Page is marked noindex",
           "evidence": "meta robots: noindex, follow",
           "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/adobe-audition-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
+        },
         {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/adobe-illustrator-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/affinity-scratch-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
+          "code": "unreachable_from_home",
+          "severity": "notice",
+          "finding": "Not reachable by following links from the homepage",
+          "evidence": "Found only via sitemap/seed",
+          "fix": "Add an internal link path from the homepage."
         }
       ]
     },
     {
       "path": "/clean/app/after-effects-disk-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/alacritty-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/amazon-music-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/amd-oglcache-bloat",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/android-studio-avd-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/anki-media-trash-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/anythingllm-vector-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/arc-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/asana-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/audacity-session-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/autodesk-3ds-max-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/autodesk-autocad-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/autodesk-fusion-360-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/autodesk-maya-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bambu-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bandicam-recorder-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/beekeeper-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bitwarden-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bitwig-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/blender-cycles-gpu-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/blender-temp-render-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/brave-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bruno-api-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/bun-install-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/calibre-ebook-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -576,329 +144,7 @@
       ]
     },
     {
-      "path": "/clean/app/camtasia-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/canva-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cargo-registry-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cargo-target-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/chatgpt-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cinema4d-temp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/claude-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/clickup-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/clip-studio-paint-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/composer-php-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/conda-package-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/continue-dev-autocomplete-index-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/corsair-icue-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/craft-docs-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cubase-daw-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/curseforge-addon-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cursor-ai-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/cursor-windsurf-ide-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/darktable-photo-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/davinci-resolve-cacheclip",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/davinci-resolve-optimized-media",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/dbeaver-db-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/deezer-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/deno-typescript-global-dep-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -926,146 +172,6 @@
       ]
     },
     {
-      "path": "/clean/app/dropbox-staging-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/duckduckgo-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/ea-anticheat-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/easy-anticheat-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/edge-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/element-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/evernote-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/figma-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/firefox-cache2",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/fivem-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/fivem-citizenfx-priv-cache",
       "status": 200,
       "score": 94,
@@ -1080,357 +186,7 @@
       ]
     },
     {
-      "path": "/clean/app/fl-studio-daw-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/floorp-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/flutter-sdk-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/foobar2000-audio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/fooocus-diffusion-temp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/fork-git-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/fortnite-d3d12-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/freecad-3d-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/garena-client-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/geany-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/geforce-now-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/ghostty-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/gimp-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/git-lfs-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/github-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/gitkraken-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/go-build-mod-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/godot-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/gog-galaxy-webcache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/google-drive-desktop-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/gpt4all-models-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/grammarly-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/handbrake-encoder-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/heroic-games-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/hoppscotch-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/hoyoplay-download-chunks",
+      "path": "/clean/app/gradle-wrapper-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -1458,581 +214,7 @@
       ]
     },
     {
-      "path": "/clean/app/hyper-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/inkscape-thumbnail-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/insomnia-rest-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/intel-arc-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/internet-download-manager-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/invokeai-models-latents-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/itch-io-app-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/itunes-apple-mobile-backups",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jan-ai-models-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jdownloader-client-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jellyfin-media-player-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-clion-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-datagrip-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-goland-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-phpstorm-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-pycharm-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-rider-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-system-caches",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/jetbrains-webstorm-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/kdenlive-video-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/keybase-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/koboldai-models-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/koboldcpp-context-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/kodi-media-center-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/krita-painting-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/lapce-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/league-of-legends-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/lens-k8s-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/librewolf-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/lightroom-classic-preview-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/lightworks-video-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/line-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/linear-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/logseq-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/mailspring-client-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/mattermost-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/maven-m2-temp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/megasync-app-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/microsoft-teams-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/minecraft-logs-crash-reports",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/miro-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/mobaxterm-terminal-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -2060,609 +242,7 @@
       ]
     },
     {
-      "path": "/clean/app/modrinth-app-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/mongodb-compass-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/mullvad-vpn-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/musescore-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/musicbee-player-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/notion-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/nuget-packages-http-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/nvidia-glcache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/nvidia-nv-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/obsidian-gpu-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/oculus-client-staging",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/ollama-models-blob-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/onedrive-logs-setup-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/open-webui-pip-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/openlens-k8s-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/orca-slicer-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/osu-local-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/outlook-securetemp-olk",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/overwolf-client-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/paint-net-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/parsec-gaming-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/photoshop-temp-scratch",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/playnite-launcher-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/plex-media-server-transcode-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/pnpm-store-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/podman-machine-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/postman-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/prism-minecraft-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/proton-drive-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/proton-mail-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/prusa-slicer-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/pytorch-torch-hub-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/qbittorrent-itunes-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/razer-synapse-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/reaper-reapeaks-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/redis-insight-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/rekordbox-dj-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/retroarch-emu-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/riot-vanguard-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/roblox-http-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/roon-music-player-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/rpcs3-ps3-emulator-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/rustup-toolchain-downloads",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/screen-to-gif-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -2690,343 +270,7 @@
       ]
     },
     {
-      "path": "/clean/app/serato-dj-pro-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/session-messenger-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/shotcut-video-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/sidefx-houdini-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/signal-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/sketchup-pro-3d-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/skype-media-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/slack-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/snagit-capture-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/sourcetree-git-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/standard-notes-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/steam-workshop-orphaned-mods",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/steelseries-gg-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/streamlabs-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/studio-one-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/sublime-merge-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/sublime-text-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/substance-painter-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tabby-ml-coding-assistant-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tabby-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tableplus-db-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/teamviewer-remote-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/telegram-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/termius-app-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/terraform-plugin-cache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -3054,693 +298,7 @@
       ]
     },
     {
-      "path": "/clean/app/thunderbird-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/ticktick-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tidal-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tiktok-live-studio-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/todoist-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/topaz-video-ai-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/tor-browser-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/trae-ide-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/traktor-pro-dj-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/ubisoft-connect-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/ultimaker-cura-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/unity-asset-store-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/unity-gi-package-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/app/unity-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/unreal-engine-derived-data-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/unreal-engine-niagara-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vcpkg-binary-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vegas-pro-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/viber-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/visual-studio-symbols-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vlc-art-thumbnail-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vllm-triton-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vortex-mod-downloads",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vrchat-avatar-world-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vscode-cacheddata",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vscode-insiders-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/vscodium-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/wargaming-update-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/warp-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/waterfox-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/wezterm-terminal-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/whatsapp-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/whisper-faster-huggingface-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/wire-messenger-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/wondershare-filmora-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/xbox-app-delivery-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/yaak-api-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/yarn-berry-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/zed-editor-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/zoom-data-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/app/zulip-desktop-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/amd-driver-extraction-c-amd",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/android-studio-avd-snapshots-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/android-studio-gradle-build-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/appdata-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/autocad-graphics-hardware-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/cemu-wii-u-pipeline-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/clip-studio-paint-canvas-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/clipchamp-uwp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/cryptneturlcache",
       "status": 200,
       "score": 94,
       "issues": [
@@ -3768,105 +326,7 @@
       ]
     },
     {
-      "path": "/clean/folder/davinci-resolve-fusion-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/davinci-resolve-gallery-stills",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/directx-d3dscache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/folder/docker-desktop-buildx-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/downloaded-program-files-legacy",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/explorer-thumbnail-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/godot-engine-editor-import-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/inetcache-temporary-internet-files",
       "status": 200,
       "score": 94,
       "issues": [
@@ -3894,217 +354,7 @@
       ]
     },
     {
-      "path": "/clean/folder/localappdata-squirreltemp-installers",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/msocache-office-setup",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/nvidia-driver-extraction-c-nvidia",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/obs-studio-remux-temp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/pagefile-sys",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/pcsx2-ps2-texture-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/podman-desktop-machine-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/folder/premiere-pro-media-cache-database",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/programdata-windows-defender-scans-history",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/recycle-bin-hidden-folder",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/ryujinx-switch-vulkan-shader-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/software-distribution-download",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/solidworks-temporary-scratch-files",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/streamlabs-desktop-worker-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/swapfile-sys",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/system-volume-information",
       "status": 200,
       "score": 94,
       "issues": [
@@ -4132,217 +382,7 @@
       ]
     },
     {
-      "path": "/clean/folder/unity-editor-package-manager-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/folder/unreal-engine-crash-reports",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/uwp-packages-tempstate",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/virtualbox-guest-snapshots-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/vmware-workstation-vmem-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-11-24h2-sihclient-waasmedic-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-action-center-database",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-branchcache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-bt-upgrade-folder",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-cbs-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-connected-devices-platform-cdp-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-defender-quarantine-old",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-dism-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-dism-scratch-dir",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-dism-superseded-components",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-driverstore-old-drivers",
       "status": 200,
       "score": 94,
       "issues": [
@@ -4370,63 +410,7 @@
       ]
     },
     {
-      "path": "/clean/folder/windows-fontcache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-iconcache-db",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-ink-handwriting-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
       "path": "/clean/folder/windows-installer-patch-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-logs-etw-sleepstudy",
       "status": 200,
       "score": 94,
       "issues": [
@@ -4454,489 +438,48 @@
       ]
     },
     {
-      "path": "/clean/folder/windows-panther-setup-logs",
+      "path": "/clean/app/tor-browser-cache",
       "status": 200,
-      "score": 94,
+      "score": 99,
       "issues": [
         {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
+          "code": "slow_response",
+          "severity": "notice",
+          "finding": "Slow response (1995 ms)",
+          "evidence": "1995 ms server time",
+          "fix": "Cache or optimise this route (TTFB target < 600 ms)."
         }
       ]
     },
     {
-      "path": "/clean/folder/windows-pca-program-compatibility-assistant-logs",
+      "path": "/vs/cleanmymac",
       "status": 200,
-      "score": 94,
+      "score": 99,
       "issues": [
         {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-prefetch",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-prefetch-readyboot",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-rdp-bitmap-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-retaildemo-offline-content",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-search-edb-index",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-search-index-edb",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-speech-recognition-cache",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-srum-telemetry-db",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-system32-driverstore-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-system32-logfiles-w3c",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-system32-wbem-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-system32-winevt-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-telemetry-staging",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-temp",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-tracing-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/windows-usoshared-logs",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/clean/folder/wsl2-temp-vhdx-compaction",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "noindex",
-          "severity": "warning",
-          "finding": "Page is marked noindex",
-          "evidence": "meta robots: noindex, follow",
-          "fix": "Remove noindex if this page should rank."
-        }
-      ]
-    },
-    {
-      "path": "/privacy",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/privacy not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/refund",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/refund not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/support",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/support not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/terms",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/terms not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/adobe-media-cache-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/adobe-media-cache-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/ai-model-cache-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/ai-model-cache-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/discord-cache-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/discord-cache-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/elgato-streamdeck-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/elgato-streamdeck-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/jetbrains-gradle-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/jetbrains-gradle-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/logitech-ghub-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/logitech-ghub-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/nvidia-shader-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/nvidia-shader-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/pc-cache-calculator",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/pc-cache-calculator not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/steam-cache-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/steam-cache-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/valorant-logs-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/valorant-logs-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
-        }
-      ]
-    },
-    {
-      "path": "/tools/windows-24h2-update-cleaner",
-      "status": 200,
-      "score": 94,
-      "issues": [
-        {
-          "code": "not_in_sitemap",
-          "severity": "warning",
-          "finding": "Indexable page missing from sitemap.xml",
-          "evidence": "/tools/windows-24h2-update-cleaner not in sitemap",
-          "fix": "Add it to sitemap.xml."
+          "code": "meta_long",
+          "severity": "notice",
+          "finding": "Meta description may truncate (161 chars)",
+          "evidence": "Compare SWEEPR vs CleanMyMac X across macOS, Windows 11, iOS, and Android. Get a 6.52 MB native Rust cleaner with 367 cache rules, 7-day rollback, and 5 devices.",
+          "fix": "Trim to <= 160 characters."
         }
       ]
     }
   ],
+  "templateGate": {
+    "checkedFiles": 20,
+    "failures": [],
+    "titleLongCount": 0,
+    "notInSitemapCount": 0,
+    "passed": true
+  },
   "redirectAudit": {
     "totalPseoRules": 1064,
     "brokenPseoRedirects": 0,
     "circularPseoRedirects": 0,
     "liveTestedCount": 39,
     "livePassedCount": 39,
-    "avgLatencyMs": 1.04,
+    "avgLatencyMs": 5.87,
     "singleHopCompliance": "100%",
     "sampleResults": [
       {
@@ -4946,7 +489,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.98,
+        "ms": 1.4,
         "label": "Root index.html alias",
         "passed": true
       },
@@ -4957,7 +500,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 1.64,
+        "ms": 43.34,
         "label": "Pricing HTML alias",
         "passed": true
       },
@@ -4968,7 +511,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.51,
+        "ms": 0.52,
         "label": "Login HTML alias",
         "passed": true
       },
@@ -4979,7 +522,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.51,
+        "ms": 0.47,
         "label": "Terms HTML alias",
         "passed": true
       },
@@ -4990,7 +533,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.52,
+        "ms": 0.5,
         "label": "Privacy HTML alias",
         "passed": true
       },
@@ -5001,7 +544,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 2.66,
+        "ms": 0.69,
         "label": "Refund HTML alias",
         "passed": true
       },
@@ -5012,7 +555,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.43,
+        "ms": 0.62,
         "label": "Support HTML alias",
         "passed": true
       },
@@ -5023,7 +566,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 2.49,
+        "ms": 0.52,
         "label": "Cloudflare email obfuscation redirect",
         "passed": true
       },
@@ -5034,7 +577,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 2.65,
+        "ms": 0.55,
         "label": "Speculative JS /month 404 recovery redirect",
         "passed": true
       },
@@ -5045,7 +588,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.86,
+        "ms": 0.69,
         "label": "Speculative JS /mo 404 recovery redirect",
         "passed": true
       },
@@ -5056,7 +599,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.5,
+        "ms": 0.44,
         "label": "Speculative JS /year 404 recovery redirect",
         "passed": true
       },
@@ -5067,7 +610,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.51,
+        "ms": 0.53,
         "label": "Speculative JS /yr 404 recovery redirect",
         "passed": true
       },
@@ -5078,7 +621,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.88,
+        "ms": 1.08,
         "label": "German root trailing slash",
         "passed": true
       },
@@ -5089,7 +632,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 3.73,
+        "ms": 0.54,
         "label": "German pricing trailing slash",
         "passed": true
       },
@@ -5100,7 +643,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.59,
+        "ms": 0.47,
         "label": "German order trailing slash",
         "passed": true
       },
@@ -5111,7 +654,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.31,
+        "ms": 0.61,
         "label": "French root trailing slash",
         "passed": true
       },
@@ -5122,7 +665,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.4,
+        "ms": 0.46,
         "label": "French pricing trailing slash",
         "passed": true
       },
@@ -5133,7 +676,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 5.71,
+        "ms": 0.32,
         "label": "French order trailing slash",
         "passed": true
       },
@@ -5144,7 +687,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.36,
+        "ms": 0.34,
         "label": "Spanish root trailing slash",
         "passed": true
       },
@@ -5155,7 +698,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.29,
+        "ms": 0.31,
         "label": "Spanish pricing trailing slash",
         "passed": true
       },
@@ -5166,7 +709,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.38,
+        "ms": 0.81,
         "label": "Spanish order trailing slash",
         "passed": true
       },
@@ -5177,7 +720,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.64,
+        "ms": 30.35,
         "label": "Uppercase competitor vs slug",
         "passed": true
       },
@@ -5188,29 +731,29 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 1.44,
+        "ms": 5.7,
         "label": "Uppercase competitor alternatives slug",
         "passed": true
       },
       {
         "path": "/clean/folder/davinci-resolve-render-cache",
-        "expectedTarget": "/clean/folder/davinci-resolve-fusion-cache",
-        "actualTarget": "/clean/folder/davinci-resolve-fusion-cache",
+        "expectedTarget": "/clean/app/davinci-resolve-cacheclip",
+        "actualTarget": "/clean/app/davinci-resolve-cacheclip",
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.65,
+        "ms": 0.73,
         "label": "DaVinci Resolve legacy alias",
         "passed": true
       },
       {
         "path": "/clean/folder/localappdata-explorer-thumbcache-db",
-        "expectedTarget": "/clean/folder/windows-iconcache-db",
-        "actualTarget": "/clean/folder/windows-iconcache-db",
+        "expectedTarget": "/clean",
+        "actualTarget": "/clean",
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.39,
+        "ms": 1,
         "label": "Iconcache legacy alias",
         "passed": true
       },
@@ -5221,7 +764,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 1.11,
+        "ms": 1.03,
         "label": "Recycle bin legacy alias",
         "passed": true
       },
@@ -5232,7 +775,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.53,
+        "ms": 1.44,
         "label": "Opera GX service worker retired suffix",
         "passed": true
       },
@@ -5243,7 +786,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.5,
+        "ms": 11.05,
         "label": "Medal.tv media blob retired suffix",
         "passed": true
       },
@@ -5254,7 +797,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.61,
+        "ms": 16.1,
         "label": "CapCut service worker retired suffix",
         "passed": true
       },
@@ -5265,18 +808,18 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.48,
+        "ms": 80.09,
         "label": "Adobe CC service worker retired suffix",
         "passed": true
       },
       {
         "path": "/clean/folder/defender-scan-history-mplog",
-        "expectedTarget": "/clean/folder/programdata-windows-defender-scans-history",
-        "actualTarget": "/clean/folder/programdata-windows-defender-scans-history",
+        "expectedTarget": "/clean",
+        "actualTarget": "/clean",
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.75,
+        "ms": 1.04,
         "label": "Defender scan history consolidation",
         "passed": true
       },
@@ -5287,7 +830,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.57,
+        "ms": 12.27,
         "label": "Package cache consolidation",
         "passed": true
       },
@@ -5298,18 +841,18 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.59,
+        "ms": 0.64,
         "label": "Crash dumps WER consolidation",
         "passed": true
       },
       {
         "path": "/clean/folder/windows-logs-cbs-persist",
-        "expectedTarget": "/clean/folder/windows-cbs-logs",
-        "actualTarget": "/clean/folder/windows-cbs-logs",
+        "expectedTarget": "/clean",
+        "actualTarget": "/clean",
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.61,
+        "ms": 0.72,
         "label": "CBS logs consolidation",
         "passed": true
       },
@@ -5320,7 +863,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.54,
+        "ms": 3.78,
         "label": "DirectX D3DSCache consolidation",
         "passed": true
       },
@@ -5331,7 +874,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.62,
+        "ms": 5.7,
         "label": "NVIDIA shader cache consolidation",
         "passed": true
       },
@@ -5342,7 +885,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.46,
+        "ms": 0.88,
         "label": "Vivaldi browser consolidation",
         "passed": true
       },
@@ -5353,7 +896,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 0.55,
+        "ms": 0.68,
         "label": "JetBrains IntelliJ consolidation",
         "passed": true
       },
@@ -5364,7 +907,7 @@
         "status": 301,
         "targetStatus": 200,
         "hops": 1,
-        "ms": 2.65,
+        "ms": 0.54,
         "label": "Elgato Stream Deck consolidation",
         "passed": true
       }
@@ -5374,126 +917,126 @@
     {
       "path": "/",
       "status": 200,
-      "ms": 38.4,
+      "ms": 72.33,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pricing",
       "status": 200,
-      "ms": 47.73,
+      "ms": 30.86,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/support",
       "status": 200,
-      "ms": 36.6,
+      "ms": 16.37,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/refund",
       "status": 200,
-      "ms": 64.32,
+      "ms": 12.53,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/privacy",
       "status": 200,
-      "ms": 52.07,
+      "ms": 4.43,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/terms",
       "status": 200,
-      "ms": 50.41,
+      "ms": 129.38,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/vs/ccleaner",
       "status": 200,
-      "ms": 17.1,
+      "ms": 62.96,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/alternatives/ccleaner",
       "status": 200,
-      "ms": 132.31,
+      "ms": 56.59,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 150.27,
+      "ms": 10.45,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean",
       "status": 200,
-      "ms": 113,
+      "ms": 37.35,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/app/standard-notes-cache",
       "status": 200,
-      "ms": 9.57,
+      "ms": 100.02,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/clean/folder/delivery-optimization-cache",
       "status": 200,
-      "ms": 84.02,
+      "ms": 329.7,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools",
       "status": 200,
-      "ms": 74.39,
+      "ms": 1.9,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/tools/discord-cache-cleaner",
       "status": 200,
-      "ms": 147.42,
+      "ms": 164.83,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/safe-to-delete",
       "status": 200,
-      "ms": 250.03,
+      "ms": 96.27,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/state-of-windows-storage",
       "status": 200,
-      "ms": 51.07,
+      "ms": 24.76,
       "cacheControl": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/robots.txt",
       "status": 200,
-      "ms": 248.91,
+      "ms": 22.86,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/sitemap.xml",
       "status": 200,
-      "ms": 4.17,
+      "ms": 10.94,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/llms.txt",
       "status": 200,
-      "ms": 38.87,
+      "ms": 26.96,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     },
     {
       "path": "/pad.xml",
       "status": 200,
-      "ms": 68.98,
+      "ms": 29.05,
       "cacheControl": "public, max-age=3600, stale-while-revalidate=86400"
     }
   ],
   "indexing": {
-    "sitemapUrlCount": 76,
+    "sitemapUrlCount": 144,
     "bingIndexNowStatus": "skipped (0 delta URLs)",
     "apiIndexNowStatus": "skipped (0 delta URLs)",
     "googlePingStatus": "pending",

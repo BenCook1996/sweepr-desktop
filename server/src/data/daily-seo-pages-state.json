@@ -43,7 +43,7 @@
     "hiberfil-sys": "2026-11-09",
     "gradle-caches": "2026-11-09",
     "pip-http-wheels-cache": "2026-11-09",
-    "steam-shader-cache": "2026-11-17",
+    "steam-shader-cache": "2026-11-24",
     "localappdata-webview2-ebwebview-cache": "2026-11-09",
     "ea-app-cache": "2026-11-09",
     "chrome-gpu-shader-cache": "2026-11-09",
@@ -66,6 +66,6 @@
     "elgato-stream-deck-media-blob-storage",
     "logitech-ghub-installer-cache",
     "windows-livekernelreports-watchdog-dumps",
-    "stremio-desktop-cache"
+    "programdata-package-cache"
   ]
 }

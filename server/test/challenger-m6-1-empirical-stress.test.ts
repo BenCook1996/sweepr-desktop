@@ -324,7 +324,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "programdata-package-cache": {
         category: "folder",
-        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
       },
       "elgato-streamdeck-cache": {
         category: "app",
@@ -332,7 +332,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       },
       "windows-livekernelreports": {
         category: "folder",
-        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
       },
       "vivaldi-browser-cache": {
         category: "app",

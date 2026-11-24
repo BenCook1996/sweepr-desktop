@@ -99,7 +99,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "programdata-package-cache",
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
       },
       {
         slug: "elgato-streamdeck-cache",
@@ -109,7 +109,7 @@ describe("Empirical Challenger M2-1 — Titles & Locked Slugs Stress Test", () =
       {
         slug: "windows-livekernelreports",
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
       },
       {
         slug: "vivaldi-browser-cache",

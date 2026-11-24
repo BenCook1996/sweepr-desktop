@@ -1447,7 +1447,7 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
     },
     {
       path: "/clean/folder/programdata-package-cache",
-      expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+      expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
       isFolder: true,
     },
     {
@@ -1457,7 +1457,7 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
     },
     {
       path: "/clean/folder/windows-livekernelreports",
-      expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+      expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
       isFolder: true,
     },
     {

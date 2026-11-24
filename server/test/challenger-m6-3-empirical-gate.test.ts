@@ -396,7 +396,7 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "programdata-package-cache": {
         category: "folder",
-        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
       },
       "elgato-streamdeck-cache": {
         category: "app",
@@ -404,7 +404,7 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       },
       "windows-livekernelreports": {
         category: "folder",
-        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
       },
       "vivaldi-browser-cache": {
         category: "app",

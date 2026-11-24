@@ -431,7 +431,7 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/folder/programdata-package-cache",
-        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        expectedTitle: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
       },
       {
         path: "/clean/app/elgato-streamdeck-cache",
@@ -439,11 +439,11 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
       },
       {
         path: "/clean/folder/windows-livekernelreports",
-        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        expectedTitle: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
       },
       {
         path: "/clean/folder/hiberfil-sys",
-        expectedTitle: "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
+        expectedTitle: "Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
       },
       {
         path: "/clean/app/vivaldi-browser-cache",
@@ -1155,17 +1155,17 @@ describe("E2E SEO Hygiene Track — Milestone M3 Remediation Verification (R1, R
       },
       {
         path: "/clean/folder/hiberfil-sys",
-        title: "How to Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
+        title: "Remove hiberfil.sys on Windows 11 Safely (powercfg Guide)",
         desc: "Disable hibernation with powercfg /h off or shrink hiberfil.sys to reclaim 6–32 GB on Windows 11. Note: disables Hibernate and Fast Startup.",
       },
       {
         path: "/clean/folder/programdata-package-cache",
-        title: "ProgramData\\Package Cache: Safe to Delete? (MSI & Burn Guide)",
+        title: "ProgramData\\Package Cache: Safe to Delete? (MSI Guide)",
         desc: "Never delete C:\\ProgramData\\Package Cache wholesale—it breaks Visual C++ and MSI repair. Learn how to remove only orphaned GUID installers safely.",
       },
       {
         path: "/clean/folder/windows-livekernelreports",
-        title: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete on Windows 11?",
+        title: "LiveKernelReports & WATCHDOG .dmp: Safe to Delete? (Win 11)",
         desc: "C:\\Windows\\LiveKernelReports\\WATCHDOG holds GPU and kernel crash dumps (.dmp). Safe to delete after debugging—keep the folder and check TDR stability.",
       },
     ];
