@@ -10,6 +10,9 @@
 <script lang="ts">
   import CloudProtection from "./CloudProtection.svelte";
   import Shredder from "./Shredder.svelte";
+  import PreCleanConfirmDrawer, {
+    type ConfirmCleanCategoryItem,
+  } from "./PreCleanConfirmDrawer.svelte";
   import {
     api,
     errorMessage,
@@ -41,6 +44,7 @@
   let scanningBrowsers = $state(false);
   let cleaningBrowsers = $state(false);
   let browserStatus = $state<string | null>(null);
+  let showPrivacyConfirm = $state(false);
 
   // Websites to Keep Signed In
   let showKeepSignedIn = $state(false);
@@ -128,6 +132,62 @@
     } finally {
       scanningBrowsers = false;
     }
+  }
+
+  const selectedBrowserItems = $derived(
+    browsers.filter((b) => selectedBrowsers[b.id || b.browser])
+  );
+  const selectedBrowserNamesLabel = $derived(
+    selectedBrowserItems.map((b) => b.name || b.browser).join(", ")
+  );
+  const privacyConfirmCategories = $derived.by<ConfirmCleanCategoryItem[]>(() => {
+    const items: ConfirmCleanCategoryItem[] = [];
+    const count = selectedBrowserItems.length;
+    const unit = count === 1 ? "browser" : "browsers";
+    if (clearCache) {
+      items.push({
+        id: "privacy_cache",
+        name: "Browser Cache & GPU Shader Storage",
+        bytes: selectedBrowserItems.reduce((s, b) => s + b.cache_bytes, 0),
+        files: count,
+        fileUnit: unit,
+        note: selectedBrowserNamesLabel || "Selected browsers",
+      });
+    }
+    if (clearCookies) {
+      items.push({
+        id: "privacy_cookies",
+        name: "Cookies & Active Site Sessions",
+        bytes: selectedBrowserItems.reduce((s, b) => s + b.cookies_bytes, 0),
+        files: count,
+        fileUnit: unit,
+        note:
+          cookieAllowlist.length > 0
+            ? `Keeping ${cookieAllowlist.length} allowlisted site(s) signed in`
+            : "Signs out active websites on selected browsers",
+      });
+    }
+    if (clearHistory) {
+      items.push({
+        id: "privacy_history",
+        name: "Browsing & Download History",
+        bytes: selectedBrowserItems.reduce((s, b) => s + b.history_bytes, 0),
+        files: count,
+        fileUnit: unit,
+        note: selectedBrowserNamesLabel || "Selected browsers",
+      });
+    }
+    return items;
+  });
+
+  function requestCleanBrowsers() {
+    if (!selectedBrowserKeys.length || (!clearCache && !clearCookies && !clearHistory)) return;
+    showPrivacyConfirm = true;
+  }
+
+  function confirmCleanBrowsers() {
+    showPrivacyConfirm = false;
+    void cleanBrowsers();
   }
 
   async function cleanBrowsers() {
@@ -352,7 +412,7 @@
         <button
           class="primary clean-btn"
           disabled={cleaningBrowsers || !selectedBrowserKeys.length || (!clearCache && !clearCookies && !clearHistory)}
-          onclick={cleanBrowsers}
+          onclick={requestCleanBrowsers}
         >
           {cleaningBrowsers
             ? "Cleaning…"
@@ -431,6 +491,27 @@
     </div>
   {/if}
 </div>
+
+<PreCleanConfirmDrawer
+  open={showPrivacyConfirm}
+  title={totalBrowserBytes > 0
+    ? `Confirm Browser Privacy Cleanup — ${formatBytes(totalBrowserBytes)}`
+    : "Confirm Browser Privacy Cleanup"}
+  rollback="permanent"
+  rollbackDetail="Selected browser caches, cookies, and history tables are erased permanently on disk and cannot be undone."
+  categories={privacyConfirmCategories}
+  totalBytes={totalBrowserBytes}
+  totalFiles={selectedBrowserKeys.length}
+  totalFilesUnit={selectedBrowserKeys.length === 1 ? "browser profile" : "browser profiles"}
+  confirmLabel={totalBrowserBytes > 0
+    ? `Permanently Clean ${formatBytes(totalBrowserBytes)}`
+    : "Permanently Clean"}
+  busy={cleaningBrowsers}
+  onConfirm={confirmCleanBrowsers}
+  onCancel={() => {
+    showPrivacyConfirm = false;
+  }}
+/>
 
 <style>
   .privacy-layout {

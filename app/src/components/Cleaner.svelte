@@ -43,6 +43,9 @@
     resolveFilePathSafetyIntelligence,
     resolveRuleSafetyIntelligence,
   } from "../lib/cache-intelligence";
+  import PreCleanConfirmDrawer, {
+    type ConfirmCleanCategoryItem,
+  } from "./PreCleanConfirmDrawer.svelte";
 
   let {
     license,
@@ -80,6 +83,8 @@
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let pendingCleanAfterAuth = $state(false);
   let freeAllowance = $state<FreeAllowanceStatus>(cachedFreeAllowance);
+  let showCleanConfirm = $state(false);
+  let confirmCleanForcePro = $state(false);
 
   async function refreshFreeAllowance(): Promise<FreeAllowanceStatus> {
     try {
@@ -786,6 +791,54 @@
     }
   }
 
+  const confirmIsProRun = $derived(Boolean(license?.active || confirmCleanForcePro));
+  const confirmDrawerCategories = $derived.by<ConfirmCleanCategoryItem[]>(() => {
+    if (confirmIsProRun) {
+      const items: ConfirmCleanCategoryItem[] = selectedCats.map((c) => ({
+        id: c.id,
+        name: c.name,
+        bytes: c.bytes,
+        files: c.files,
+        note: "Moved to 7-Day Undo Quarantine",
+      }));
+      if (includeRemnants && remnants.length > 0) {
+        items.push({
+          id: "app_remnants",
+          name: "Uninstalled App Leftovers",
+          bytes: remnantsBytes,
+          files: remnants.reduce((s, r) => s + (r.files || 1), 0),
+          note: "OS Recycle Bin",
+        });
+      }
+      return items;
+    }
+    const freeCats = selectedCats.filter((c) => c.free && c.bytes > 0);
+    const rawBytes = freeCats.reduce((s, c) => s + c.bytes, 0);
+    const isCapped = rawBytes > freeAllowance.remaining_bytes;
+    return freeCats.map((c) => ({
+      id: c.id,
+      name: c.name,
+      bytes: Math.min(c.bytes, freeAllowance.remaining_bytes),
+      files: c.files,
+      note: isCapped
+        ? `Capped at ${formatBytes(freeAllowance.remaining_bytes)} Free Starter allowance · 7-Day Quarantine`
+        : "Free Starter Clean · Moved to 7-Day Undo Quarantine",
+    }));
+  });
+  const confirmDrawerTotalBytes = $derived(
+    confirmIsProRun
+      ? selectedBytes
+      : Math.min(starterSelectedBytes, freeAllowance.remaining_bytes)
+  );
+  const confirmDrawerTotalFiles = $derived(
+    confirmDrawerCategories.reduce((s, item) => s + item.files, 0)
+  );
+  const confirmDrawerSecondaryBadge = $derived(
+    confirmIsProRun && includeRemnants && remnants.length > 0
+      ? "OS Recycle Bin (App Leftovers)"
+      : undefined
+  );
+
   function requestClean() {
     if (!report || totalFoundBytes === 0) {
       scan();
@@ -813,7 +866,15 @@
         return;
       }
     }
-    void executeClean();
+    confirmCleanForcePro = false;
+    showCleanConfirm = true;
+  }
+
+  function confirmAndExecuteClean() {
+    const forcePro = confirmCleanForcePro;
+    showCleanConfirm = false;
+    confirmCleanForcePro = false;
+    void executeClean(forcePro);
   }
 
   function cleanSpecificCategoryGroup(cats: CategoryResult[], withRemnants = false) {
@@ -1077,26 +1138,15 @@
   }
 
   function onWindowKeydown(e: KeyboardEvent) {
-    const target = e.target as HTMLElement | null;
-    const inInput =
-      target &&
-      (target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT" ||
-        target.isContentEditable);
-
+    if (showCleanConfirm) return;
     if (e.key === "Escape" && showQuarantine) {
       e.preventDefault();
       showQuarantine = false;
       return;
     }
-    if (!inInput && e.key === "Enter" && !showQuarantine) {
-      if (phase === "done") {
-        phase = "idle";
-        scan();
-      } else if (phase === "idle") {
-        requestClean();
-      }
+    if (e.key === "Escape" && showShareWinModal) {
+      e.preventDefault();
+      showShareWinModal = false;
     }
   }
 
@@ -1176,7 +1226,9 @@
         }
         const live = license?.active || (await api.licenseStatus(false).catch(() => null))?.active;
         if (live) {
-          void executeClean(true);
+          pendingCleanAfterAuth = false;
+          confirmCleanForcePro = true;
+          showCleanConfirm = true;
         }
       }
     };
@@ -2051,6 +2103,25 @@
     </button>
   </footer>
 </div>
+
+<PreCleanConfirmDrawer
+  open={showCleanConfirm}
+  title={confirmIsProRun
+    ? `Confirm Cleanup — ${formatBytes(confirmDrawerTotalBytes)}`
+    : `Confirm Free Starter Clean — ${formatBytes(confirmDrawerTotalBytes)}`}
+  rollback="quarantine"
+  secondaryRollbackBadge={confirmDrawerSecondaryBadge}
+  categories={confirmDrawerCategories}
+  totalBytes={confirmDrawerTotalBytes}
+  totalFiles={confirmDrawerTotalFiles}
+  confirmLabel={`Clean ${formatBytes(confirmDrawerTotalBytes)}`}
+  busy={phase === "cleaning"}
+  onConfirm={confirmAndExecuteClean}
+  onCancel={() => {
+    showCleanConfirm = false;
+    confirmCleanForcePro = false;
+  }}
+/>
 
 <!-- 7-Day Safety Undo Modal (Always 100% Free) -->
 {#if showQuarantine}

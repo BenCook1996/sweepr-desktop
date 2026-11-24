@@ -12,6 +12,9 @@
 
 <script lang="ts">
   import CloudClean from "./CloudClean.svelte";
+  import PreCleanConfirmDrawer, {
+    type ConfirmCleanCategoryItem,
+  } from "./PreCleanConfirmDrawer.svelte";
   import {
     api,
     errorMessage,
@@ -51,6 +54,8 @@
   let movingFile = $state<string | null>(null);
   let dragOver = $state(false);
   let lastClickedFile = $state<string | null>(null);
+  let showDupConfirm = $state(false);
+  let pendingLargeFileTrash = $state<{ path: string; name: string; size: number } | null>(null);
 
   const flatExtraFiles = $derived(groups.flatMap((g) => g.files.slice(1)));
 
@@ -185,6 +190,93 @@
       }
     } finally {
       loading = false;
+    }
+  }
+
+  const dupConfirmCategories = $derived.by<ConfirmCleanCategoryItem[]>(() => {
+    if (pendingLargeFileTrash) {
+      return [
+        {
+          id: "large_file",
+          name: pendingLargeFileTrash.name,
+          bytes: pendingLargeFileTrash.size,
+          files: 1,
+          note: shortenPath(pendingLargeFileTrash.path, 52),
+        },
+      ];
+    }
+    let exactFiles = 0;
+    let exactBytes = 0;
+    let similarFiles = 0;
+    let similarBytes = 0;
+    for (const g of groups) {
+      if (g.kind === "similar_photo") {
+        if (g.photo_details && g.photo_details.length > 0) {
+          for (const pd of g.photo_details) {
+            if (selectedFiles[pd.path]) {
+              similarFiles += 1;
+              similarBytes += pd.size;
+            }
+          }
+        } else {
+          const c = g.files.filter((f) => selectedFiles[f]).length;
+          similarFiles += c;
+          similarBytes += c * g.size;
+        }
+      } else {
+        const c = g.files.filter((f) => selectedFiles[f]).length;
+        exactFiles += c;
+        exactBytes += c * g.size;
+      }
+    }
+    const items: ConfirmCleanCategoryItem[] = [];
+    if (exactFiles > 0) {
+      items.push({
+        id: "exact_duplicates",
+        name: "Exact Duplicate Copies",
+        bytes: exactBytes,
+        files: exactFiles,
+        note: `1 original kept safe per set · ${shortenPath(selectedDir, 32)}`,
+      });
+    }
+    if (similarFiles > 0) {
+      items.push({
+        id: "similar_photos",
+        name: "Similar Burst Photo Copies",
+        bytes: similarBytes,
+        files: similarFiles,
+        note: "Sharpest best shot kept protected per burst",
+      });
+    }
+    return items;
+  });
+
+  const dupConfirmTotalBytes = $derived(
+    pendingLargeFileTrash ? pendingLargeFileTrash.size : selectedBytes
+  );
+  const dupConfirmTotalFiles = $derived(
+    pendingLargeFileTrash ? 1 : selectedList.length
+  );
+
+  function requestCleanSelected() {
+    if (!selectedList.length) return;
+    pendingLargeFileTrash = null;
+    showDupConfirm = true;
+  }
+
+  function requestTrashLargeFile(lf: { path: string; name: string; size: number }) {
+    pendingLargeFileTrash = lf;
+    showDupConfirm = true;
+  }
+
+  function confirmDupDrawerAction() {
+    const lf = pendingLargeFileTrash;
+    showDupConfirm = false;
+    pendingLargeFileTrash = null;
+    if (lf) {
+      void trashLargeFile(lf.path);
+    } else {
+      void cleanSelected();
     }
   }
 
@@ -426,7 +518,7 @@
           <button class="ghost small-btn" onclick={smartSelectExtras}>
             Select Extras
           </button>
-          <button class="primary small-btn" disabled={!selectedList.length || cleaning} onclick={cleanSelected}>
+          <button class="primary small-btn" disabled={!selectedList.length || cleaning} onclick={requestCleanSelected}>
             {cleaning ? "Cleaning…" : `Clean (${formatBytes(selectedBytes)})`}
           </button>
         </div>
@@ -528,7 +620,7 @@
                   >
                     {movingFile === lf.path ? "…" : "Move"}
                   </button>
-                  <button class="ghost small-btn" onclick={() => trashLargeFile(lf.path)}>
+                  <button class="ghost small-btn" onclick={() => requestTrashLargeFile(lf)}>
                     Trash
                   </button>
                 </div>
@@ -540,6 +632,27 @@
     {/if}
   {/if}
 </div>
+
+<PreCleanConfirmDrawer
+  open={showDupConfirm}
+  title={pendingLargeFileTrash
+    ? `Move "${pendingLargeFileTrash.name}" to ${trashLabel}?`
+    : `Confirm Duplicate Cleanup — ${formatBytes(dupConfirmTotalBytes)}`}
+  rollback="recycle_bin"
+  rollbackDetail={`Extra copies are moved to your ${trashLabel} so you can restore anything anytime.`}
+  categories={dupConfirmCategories}
+  totalBytes={dupConfirmTotalBytes}
+  totalFiles={dupConfirmTotalFiles}
+  confirmLabel={pendingLargeFileTrash
+    ? `Move to ${trashLabel}`
+    : `Clean ${formatBytes(dupConfirmTotalBytes)}`}
+  busy={cleaning}
+  onConfirm={confirmDupDrawerAction}
+  onCancel={() => {
+    showDupConfirm = false;
+    pendingLargeFileTrash = null;
+  }}
+/>
 
 <style>
   .space-layout {

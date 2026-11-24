@@ -32,6 +32,10 @@
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
   import { lang, t } from "../lib/i18n";
+  import PreCleanConfirmDrawer, {
+    type ConfirmCleanCategoryItem,
+    type RollbackDestination,
+  } from "./PreCleanConfirmDrawer.svelte";
 
   let { license }: { license: LicenseStatus | null } = $props();
   let mode = $state<"apps" | "maintenance">(cachedMode);
@@ -63,6 +67,8 @@
   let error = $state<string | null>(null);
   let confirmUninstallId = $state<string | null>(null);
   let searchInputEl = $state<HTMLInputElement | null>(null);
+  let showOrphansConfirm = $state(false);
+  let pendingSingleRegIssue = $state<RegistryIssue | null>(null);
 
   $effect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -240,6 +246,90 @@
       statusNotice = `Restored registry key: ${backup.name}`;
     } catch (e) {
       error = errorMessage(e);
+    }
+  }
+
+  const appsConfirmCategories = $derived.by<ConfirmCleanCategoryItem[]>(() => {
+    if (pendingSingleRegIssue) {
+      return [
+        {
+          id: pendingSingleRegIssue.key,
+          name: `Orphaned Registry Entry · ${pendingSingleRegIssue.name}`,
+          bytes: 0,
+          files: 1,
+          fileUnit: "key",
+          note: `${pendingSingleRegIssue.issue_type} · Snapshot saved to Registry Backups`,
+        },
+      ];
+    }
+    const items: ConfirmCleanCategoryItem[] = [];
+    if (remnants.length > 0) {
+      items.push({
+        id: "app_remnant_folders",
+        name: "Uninstalled App Leftover Folders",
+        bytes: totalRemnantBytes,
+        files: remnants.length,
+        fileUnit: remnants.length === 1 ? "folder" : "folders",
+        note: "Moved to OS Recycle Bin",
+      });
+    }
+    if (brokenItems.length > 0) {
+      items.push({
+        id: "broken_shortcuts",
+        name: "Broken App Shortcuts",
+        bytes: 0,
+        files: brokenItems.length,
+        fileUnit: brokenItems.length === 1 ? "shortcut" : "shortcuts",
+        note: "Dead shortcut links removed permanently",
+      });
+    }
+    if (regIssues.length > 0) {
+      items.push({
+        id: "registry_orphans",
+        name: "Orphaned Registry Entries",
+        bytes: 0,
+        files: regIssues.length,
+        fileUnit: regIssues.length === 1 ? "key" : "keys",
+        note: "Snapshot saved to Registry Backups before delete",
+      });
+    }
+    return items;
+  });
+
+  const appsConfirmRollback = $derived<RollbackDestination>(
+    pendingSingleRegIssue || regIssues.length > 0 || brokenItems.length > 0
+      ? "permanent"
+      : "recycle_bin"
+  );
+  const appsConfirmSecondaryBadge = $derived(
+    !pendingSingleRegIssue &&
+      (regIssues.length > 0 || brokenItems.length > 0) &&
+      remnants.length > 0
+      ? "OS Recycle Bin (App Folders)"
+      : undefined
+  );
+  const appsConfirmTotalBytes = $derived(pendingSingleRegIssue ? 0 : totalRemnantBytes);
+  const appsConfirmTotalItems = $derived(pendingSingleRegIssue ? 1 : totalOrphanCount);
+
+  function requestCleanAllOrphans() {
+    if (totalOrphanCount === 0) return;
+    pendingSingleRegIssue = null;
+    showOrphansConfirm = true;
+  }
+
+  function requestFixRegistry(issue: RegistryIssue) {
+    pendingSingleRegIssue = issue;
+    showOrphansConfirm = true;
+  }
+
+  function confirmOrphansDrawerAction() {
+    const singleReg = pendingSingleRegIssue;
+    showOrphansConfirm = false;
+    pendingSingleRegIssue = null;
+    if (singleReg) {
+      void fixRegistry(singleReg);
+    } else {
+      void cleanAllOrphans();
     }
   }
 
@@ -447,7 +537,7 @@
               {totalOrphanCount} leftover(s) {totalRemnantBytes > 0 ? `(${formatBytes(totalRemnantBytes)})` : ""}
             </strong>
             <div class="row" style="gap: 8px; margin-top: 10px;">
-              <button class="primary small-btn" disabled={cleaningOrphans} onclick={cleanAllOrphans}>
+              <button class="primary small-btn" disabled={cleaningOrphans} onclick={requestCleanAllOrphans}>
                 {cleaningOrphans ? "Cleaning…" : "Clean Leftovers"}
               </button>
               <button class="ghost small-btn" onclick={() => (showLeftoverDetails = !showLeftoverDetails)}>
@@ -483,7 +573,7 @@
                     <span class="muted small">{reg.issue_type} · {shortenPath(reg.key, 50)}</span>
                   </div>
                   <div class="spacer"></div>
-                  <button class="ghost small-btn" onclick={() => fixRegistry(reg)}>Fix</button>
+                  <button class="ghost small-btn" onclick={() => requestFixRegistry(reg)}>Fix</button>
                 </div>
               {/each}
             </div>
@@ -511,6 +601,29 @@
     </div>
   {/if}
 </div>
+
+<PreCleanConfirmDrawer
+  open={showOrphansConfirm}
+  title={pendingSingleRegIssue
+    ? `Confirm Registry Cleanup — ${pendingSingleRegIssue.name}`
+    : `Confirm App Leftovers Cleanup (${appsConfirmTotalItems} ${appsConfirmTotalItems === 1 ? "item" : "items"})`}
+  rollback={appsConfirmRollback}
+  secondaryRollbackBadge={appsConfirmSecondaryBadge}
+  rollbackDetail={appsConfirmRollback === "permanent"
+    ? "Broken shortcuts are permanently removed; registry keys save a local snapshot in Registry Backups; leftover AppData folders move to OS Recycle Bin."
+    : "Leftover AppData folders from uninstalled apps are moved to your OS Recycle Bin."}
+  categories={appsConfirmCategories}
+  totalBytes={appsConfirmTotalBytes}
+  totalFiles={appsConfirmTotalItems}
+  totalFilesUnit={appsConfirmTotalItems === 1 ? "item" : "items"}
+  confirmLabel={pendingSingleRegIssue ? "Fix Registry Key" : "Clean Leftovers"}
+  busy={cleaningOrphans}
+  onConfirm={confirmOrphansDrawerAction}
+  onCancel={() => {
+    showOrphansConfirm = false;
+    pendingSingleRegIssue = null;
+  }}
+/>
 
 <style>
   .apps-layout {
