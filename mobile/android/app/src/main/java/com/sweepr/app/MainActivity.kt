@@ -12,6 +12,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -93,6 +94,7 @@ class MainActivity : AppCompatActivity() {
     private var incomingDeepLinkPair by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         PlayBillingManager.init(this)
         PlayAppUpdateManager.checkAndPrompt(this)
@@ -247,8 +249,13 @@ class MainActivity : AppCompatActivity() {
                         purchaseToken = pToken,
                         orderId = orderId,
                         isNewPurchase = true,
+                        onComplete = { unlocked ->
+                            if (unlocked) then()
+                        },
                     )
-                    then()
+                },
+                onPending = {
+                    vm.showMessage(getString(R.string.billing_purchase_pending))
                 },
                 onFallback = {
                     if (Purchases.isConfigured) {
@@ -285,9 +292,15 @@ class MainActivity : AppCompatActivity() {
                                         purchaseToken = pToken,
                                         orderId = storeTransaction.orderId,
                                         isNewPurchase = true,
+                                        onComplete = { unlocked ->
+                                            if (unlocked || vm.state.value.hasPremium || vm.state.value.hasBatteryCare || vm.state.value.hasCloudVault) {
+                                                then()
+                                            }
+                                        },
                                     )
+                                } else {
+                                    then()
                                 }
-                                then()
                             }
 
                             override fun onError(error: PurchasesError, userCancelled: Boolean) {
@@ -361,13 +374,13 @@ object AppPermissions {
             ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
         val full = if (Build.VERSION.SDK_INT >= 33) {
-            granted(Manifest.permission.READ_MEDIA_IMAGES)
+            granted(Manifest.permission.READ_MEDIA_IMAGES) || granted(Manifest.permission.READ_MEDIA_VIDEO)
         } else {
             granted(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         val limited = Build.VERSION.SDK_INT >= 34 &&
             granted(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) &&
-            !granted(Manifest.permission.READ_MEDIA_IMAGES)
+            !(granted(Manifest.permission.READ_MEDIA_IMAGES) || granted(Manifest.permission.READ_MEDIA_VIDEO))
 
         return PermissionState(
             media = full || limited,
@@ -424,7 +437,7 @@ fun SweeprRoot(
         }
     }
     val requestPermissions: () -> Unit = {
-        if (permissions.contactsRead) {
+        if (permissions.contactsRead && permissions.contactsWrite) {
             vm.scan(permissions)
         } else {
             showContactsDisclosure = true
@@ -757,6 +770,7 @@ fun SweeprRoot(
                     onSetSelected = vm::setMediaSelected,
                     onTrash = handleTrash,
                     onCompressVideo = handleCompressVideo,
+                    onCancelVideoCompression = vm::cancelVideoCompression,
                     onClearCompressionResult = vm::clearCompressionResult,
                     onOptimizePhotos = handleOptimizePhotos,
                     onClearPhotoOptimizationResult = vm::clearPhotoOptimizationResult,

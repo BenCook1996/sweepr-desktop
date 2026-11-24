@@ -68,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -365,7 +366,7 @@ object BatteryCareManager {
                     val title = "${loc.getString(R.string.app_name)} Overheat Guard — ${tempC}°C"
                     val body = "Your battery temperature reached ${tempC}°C. Unplug charger or open System Storage Settings to clear heavy app caches."
                     val notif = NotificationCompat.Builder(loc, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setSmallIcon(R.drawable.ic_stat_sweepr)
                         .setColor(0xFFEF4444.toInt())
                         .setContentTitle(title)
                         .setContentText(body)
@@ -408,7 +409,7 @@ object BatteryCareManager {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notif = NotificationCompat.Builder(loc, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_stat_sweepr)
             .setColor(0xFFF59E0B.toInt())
             .setContentTitle(title)
             .setContentText(body)
@@ -480,7 +481,7 @@ fun BatteryCareDashboardBanner(
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Battery & Thermal Care", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    if (!state.hasBatteryCare) {
+                    if (!state.hasPremium && !state.hasBatteryCare) {
                         Spacer(Modifier.width(8.dp))
                         Surface(
                             color = Color(0xFFF59E0B).copy(alpha = 0.18f),
@@ -488,7 +489,7 @@ fun BatteryCareDashboardBanner(
                         ) {
                             Text(
                                 "ADD-ON",
-                                color = Color(0xFFB45309),
+                                color = amberText(),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
@@ -720,7 +721,7 @@ fun BatteryCareScreen(
                         ) {
                             Text("0% Low", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("20%–80% Best Longevity", fontSize = 10.sp, color = emeraldText(), fontWeight = FontWeight.Bold)
-                            Text("100% Wear", fontSize = 10.sp, color = SweeprAmber)
+                            Text("100% Wear", fontSize = 10.sp, color = amberText())
                         }
                     }
                 }
@@ -916,7 +917,7 @@ fun BatteryCareScreen(
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                "80% Charge-Limit Unplug Guard, Thermal Sensor Alerts & Deep System Storage Settings Shortcut. Android 11+ Scoped Storage requires system settings to clear third-party app caches.",
+                                stringResource(R.string.battery_storage_shortcut_desc),
                                 fontSize = 11.5.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -1091,7 +1092,7 @@ private fun AddonPill() {
     ) {
         Text(
             "$addonPrice/YR",
-            color = Color(0xFFF59E0B),
+            color = amberText(),
             fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 1,

@@ -136,7 +136,7 @@ fun DashboardScreen(
                         ) {
                             SweeprVectorIcon(
                                 kind = SweeprIconKind.TRASH_RESTORE,
-                                tint = SweeprAmber,
+                                tint = amberText(),
                                 modifier = Modifier.size(13.dp),
                             )
                             Text(
@@ -210,7 +210,7 @@ fun DashboardScreen(
                                 .sweeprTactileClickable(
                                     enabled = !state.isBusy,
                                     pressedScale = 0.97f,
-                                    onClick = { onOpenPhotosTab(4) },
+                                    onClick = { onOpenPhotosTab(3) },
                                 )
                                 .padding(horizontal = 14.dp),
                             contentAlignment = Alignment.Center,
@@ -774,7 +774,9 @@ private fun HomeTiles(
                 state = state,
                 onOpen = { onOpen(Screen.CloudSavings) },
             )
-            ShareStorageWinBanner(state = state)
+            if (shouldShowStorageWinBanner(state.totalBytesFreed)) {
+                ShareStorageWinBanner(state = state)
+            }
         }
         SweeprPanel(Modifier.fillMaxWidth()) {
             ToolRow(
@@ -812,7 +814,7 @@ private fun BentoCategoryCard(
     val badgeFg = when (value.kind) {
         TileValue.Kind.Saving -> emeraldText()
         TileValue.Kind.Hint -> MaterialTheme.colorScheme.onSurfaceVariant
-        TileValue.Kind.Warning -> SweeprRose
+        TileValue.Kind.Warning -> roseText()
     }
 
     SweeprPanel(
@@ -999,15 +1001,14 @@ fun ShareStorageWinBanner(
     state: DashboardState,
     reclaimedBytesOverride: Long? = null,
 ) {
+    val rawBytes = reclaimedBytesOverride ?: state.totalBytesFreed
+    if (!shouldShowStorageWinBanner(rawBytes)) return
+
     val context = LocalContext.current
     var showWinDialog by remember { mutableStateOf(false) }
     var copiedToast by remember { mutableStateOf<String?>(null) }
 
     val videoSaving = remember(state.media) { CloudSavings.breakdown(state.media).compressibleBytes }
-    val rawBytes = reclaimedBytesOverride
-        ?: state.lastCleanup?.bytes?.takeIf { it > 0L }
-        ?: (state.media.reclaimableBytes + videoSaving).takeIf { it > 0L }
-        ?: (3_800_000_000L)
     val gbLabel = formatBytes(rawBytes)
     val topCulprit = remember(state.media, videoSaving) {
         when {
@@ -1017,9 +1018,7 @@ fun ShareStorageWinBanner(
             else -> "4K Videos / Duplicate Bursts / Cache"
         }
     }
-    val scanDurationMs = remember(state.media) {
-        (180 + (state.media.everything.size * 2)).coerceIn(180, 940)
-    }
+    val scanDurationMs = state.lastScanDurationMs
     val refCode = remember(state.linkedAccount) {
         state.linkedAccount.referralCode.ifBlank {
             Prefs.defaultReferralCode(state.linkedAccount.deviceId, state.linkedAccount.accountId)
@@ -1027,11 +1026,18 @@ fun ShareStorageWinBanner(
     }
     val shortRefDisplay = "sweeprcleaner.com/r/$refCode"
     val shareWinUrl = remember(gbLabel, topCulprit, scanDurationMs, refCode) {
-        "https://sweeprcleaner.com/share/win?gb=" +
-            Uri.encode(gbLabel) +
-            "&culprit=" + Uri.encode(topCulprit) +
-            "&ms=" + scanDurationMs +
-            "&code=" + Uri.encode(refCode)
+        buildString {
+            append("https://sweeprcleaner.com/share/win?gb=")
+            append(Uri.encode(gbLabel))
+            append("&culprit=")
+            append(Uri.encode(topCulprit))
+            if (scanDurationMs > 0L) {
+                append("&ms=")
+                append(scanDurationMs)
+            }
+            append("&code=")
+            append(Uri.encode(refCode))
+        }
     }
 
     SweeprPanel(
@@ -1048,14 +1054,14 @@ fun ShareStorageWinBanner(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Share My Storage Win (+30 Days Free Pro)",
+                    text = stringResource(R.string.win_banner_title),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 13.sp,
                     color = emeraldText(),
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "I Just Reclaimed $gbLabel · $shortRefDisplay",
+                    text = stringResource(R.string.win_banner_subtitle, gbLabel, shortRefDisplay),
                     fontSize = 11.5.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -1070,7 +1076,7 @@ fun ShareStorageWinBanner(
                     .padding(horizontal = 11.dp, vertical = 5.dp),
             ) {
                 Text(
-                    text = "Share Card",
+                    text = stringResource(R.string.win_share_card_cta),
                     color = Color.White,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -1080,14 +1086,20 @@ fun ShareStorageWinBanner(
     }
 
     if (showWinDialog) {
-        val shareSummaryText =
-            "I just reclaimed $gbLabel in ${scanDurationMs}ms with SWEEPR Cleaner (Top culprit: $topCulprit)! Claim +30 days Free Pro: $shareWinUrl"
+        val dialogTitle = stringResource(R.string.win_dialog_title, gbLabel)
+        val shareSummaryText = if (scanDurationMs > 0L) {
+            stringResource(R.string.win_share_summary_with_ms, gbLabel, scanDurationMs, topCulprit, shareWinUrl)
+        } else {
+            stringResource(R.string.win_share_summary_no_ms, gbLabel, topCulprit, shareWinUrl)
+        }
+        val copiedMsg = stringResource(R.string.win_copied_toast)
+        val chooserTitle = stringResource(R.string.win_chooser_title)
 
         AlertDialog(
             onDismissRequest = { showWinDialog = false },
             title = {
                 Text(
-                    text = "I Just Reclaimed $gbLabel with SWEEPR",
+                    text = dialogTitle,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 17.sp,
                 )
@@ -1105,26 +1117,30 @@ fun ShareStorageWinBanner(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "⚡ SWEEPR CLEANER · BENCHMARK CARD",
+                            text = stringResource(R.string.win_card_header),
                             color = SweeprGreen,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 0.8.sp,
                         )
                         Text(
-                            text = "$gbLabel Reclaimed",
+                            text = stringResource(R.string.win_card_reclaimed, gbLabel),
                             color = Color.White,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                         )
                         Text(
-                            text = "Top Culprit: $topCulprit",
+                            text = stringResource(R.string.win_card_culprit, topCulprit),
                             color = Color(0xFFA7F3D0),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            text = "Scan Duration: ${scanDurationMs} ms · $shortRefDisplay",
+                            text = if (scanDurationMs > 0L) {
+                                stringResource(R.string.win_card_duration_ref, scanDurationMs, shortRefDisplay)
+                            } else {
+                                shortRefDisplay
+                            },
                             color = Color(0xFF6EE7B7),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -1134,7 +1150,7 @@ fun ShareStorageWinBanner(
                     if (copiedToast != null) {
                         Text(
                             text = copiedToast!!,
-                            color = SweeprGreen,
+                            color = emeraldText(),
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -1152,13 +1168,13 @@ fun ShareStorageWinBanner(
                                 .clickable {
                                     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                                     cm?.setPrimaryClip(ClipData.newPlainText("SWEEPR Storage Win", shareSummaryText))
-                                    copiedToast = "Copied benchmark link & card to clipboard!"
+                                    copiedToast = copiedMsg
                                 }
                                 .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "Copy Image / Link",
+                                text = stringResource(R.string.win_btn_copy),
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.ExtraBold,
@@ -1172,11 +1188,11 @@ fun ShareStorageWinBanner(
                                 .clickable {
                                     val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
-                                        putExtra(Intent.EXTRA_SUBJECT, "I Just Reclaimed $gbLabel with SWEEPR")
+                                        putExtra(Intent.EXTRA_SUBJECT, dialogTitle)
                                         putExtra(Intent.EXTRA_TEXT, shareSummaryText)
                                     }
                                     context.startActivity(
-                                        Intent.createChooser(sendIntent, "Share on X / Reddit / Discord")
+                                        Intent.createChooser(sendIntent, chooserTitle)
                                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                     )
                                 }
@@ -1184,7 +1200,7 @@ fun ShareStorageWinBanner(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = "X / Reddit / Discord",
+                                text = stringResource(R.string.win_btn_share_social),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -1195,7 +1211,7 @@ fun ShareStorageWinBanner(
             },
             confirmButton = {
                 TextButton(onClick = { showWinDialog = false }) {
-                    Text(stringResource(R.string.action_close), color = SweeprGreen)
+                    Text(stringResource(R.string.action_close), color = emeraldText())
                 }
             },
         )

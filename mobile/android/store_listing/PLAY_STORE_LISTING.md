@@ -72,10 +72,12 @@ Whether it's thousands of duplicate and burst photos, blurry out-of-focus shots,
 
 💳 SUBSCRIPTION & PRICING
 • Scanning your phone is completely free.
-• Unlock unlimited cleanup, video & photo optimization, EXIF GPS privacy stripping, swipe triage, and contact/calendar cleanup with Sweepr Premium:
-  – Monthly Plan: £9.99/month (no free trial, cancel anytime in Google Play)
-  – Annual Plan: £49.99/year — Save 58% (£4.16/mo equivalent, no free trial, cancel anytime in Google Play)
-  – Cross-Platform Account Linking: Link your Sweepr Pro license via 6-digit email OTP to clean up to 5 devices.
+• Unlock unlimited cleanup, video & photo optimization, EXIF GPS privacy stripping, swipe triage, contact/calendar cleanup, Battery Care, and the Private File Vault with SWEEPR Pro:
+  – Monthly Plan: £9.99/month (cancel anytime in Google Play)
+  – 6-Month Plan: £38.99/6 months (Save 35%, cancel anytime in Google Play)
+  – Annual Plan: £49.99/year — Save 58% (£4.16/mo equivalent, cancel anytime in Google Play)
+  – Cross-Platform Account Linking: Link your SWEEPR Pro license via 6-digit email OTP, full activation key, or QR code to clean up to 5 devices.
+  – Standalone Add-Ons (for Free users): Total Battery Care (£9.99/yr) & Private File Vault (£9.99/yr) are also included automatically in every SWEEPR Pro plan.
 • Subscriptions renew automatically through Google Play unless cancelled before the renewal date at https://play.google.com/store/account/subscriptions.
 ```
 

@@ -107,10 +107,6 @@ fun SettingsScreen(
     var generatingLog by remember { mutableStateOf(false) }
     var showSupportTools by remember { mutableStateOf(false) }
     var showLanguage by remember { mutableStateOf(false) }
-    var showSignInDialog by remember { mutableStateOf(false) }
-    var otpSent by remember { mutableStateOf(false) }
-    var emailInput by remember { mutableStateOf("") }
-    var codeInput by remember { mutableStateOf("") }
     var friendReferralInput by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val linked = state.linkedAccount
@@ -185,72 +181,6 @@ fun SettingsScreen(
         )
     }
 
-    if (showSignInDialog) {
-        AlertDialog(
-            onDismissRequest = { if (!state.isWorking) showSignInDialog = false },
-            title = {
-                Text(
-                    if (otpSent) stringResource(R.string.account_otp_enter_code_title)
-                    else stringResource(R.string.account_sign_in_title),
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        if (otpSent) stringResource(R.string.account_otp_code_sent_desc, emailInput)
-                        else stringResource(R.string.account_sign_in_desc),
-                        fontSize = 13.sp,
-                        color = Color.Gray,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    if (!otpSent) {
-                        OutlinedTextField(
-                            value = emailInput,
-                            onValueChange = { emailInput = it },
-                            label = { Text(stringResource(R.string.account_email_label)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                        OutlinedTextField(
-                            value = codeInput,
-                            onValueChange = { codeInput = it.filter { ch -> ch.isDigit() }.take(6) },
-                            label = { Text(stringResource(R.string.account_otp_code_label)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = !state.isWorking,
-                    onClick = {
-                        if (!otpSent) {
-                            onSendOtp(emailInput) { otpSent = true }
-                        } else {
-                            onVerifyOtp(emailInput, codeInput) {
-                                showSignInDialog = false
-                                otpSent = false
-                                codeInput = ""
-                            }
-                        }
-                    },
-                ) {
-                    Text(if (otpSent) stringResource(R.string.account_otp_verify_btn) else stringResource(R.string.account_otp_send_btn))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    enabled = !state.isWorking,
-                    onClick = { if (otpSent) otpSent = false else showSignInDialog = false },
-                ) {
-                    Text(if (otpSent) stringResource(R.string.action_back) else stringResource(R.string.action_cancel))
-                }
-            },
-        )
-    }
-
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { if (!state.isWorking) showDeleteConfirm = false },
@@ -294,14 +224,7 @@ fun SettingsScreen(
             ProCustomerHeroCard(
                 state = state,
                 onUpgrade = onUpgrade,
-                onOpenAccount = {
-                    if (linked.isSignedIn) {
-                        onOpen(Screen.Account)
-                    } else {
-                        otpSent = false
-                        showSignInDialog = true
-                    }
-                },
+                onOpenAccount = { onOpen(Screen.Account) },
                 onRestore = onRestore,
             )
 
@@ -313,10 +236,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Person,
                         title = stringResource(R.string.account_sign_in_title),
                         value = stringResource(R.string.account_sign_in_subtitle),
-                        onClick = {
-                            otpSent = false
-                            showSignInDialog = true
-                        },
+                        onClick = { onOpen(Screen.Account) },
                     )
                 } else {
                     SettingsItem(

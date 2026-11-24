@@ -157,14 +157,25 @@ object ContactsScanner {
         return incomplete.sortedBy { it.displayName.lowercase() }
     }
 
-    /** Deletes contacts by contactId. */
+    /** Deletes contacts by contactId via RawContacts (falling back to Contacts lookup/delete when empty). */
     fun deleteContacts(context: Context, contactIds: Set<Long>): Int {
         if (contactIds.isEmpty()) return 0
         val resolver = context.contentResolver
         var deleted = 0
         for (id in contactIds) {
-            val uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id)
-            val rows = runCatching { resolver.delete(uri, null, null) }.getOrDefault(0)
+            val rawRows = runCatching {
+                resolver.delete(
+                    ContactsContract.RawContacts.CONTENT_URI,
+                    "${ContactsContract.RawContacts.CONTACT_ID} = ?",
+                    arrayOf(id.toString()),
+                )
+            }.getOrDefault(0)
+            val rows = if (rawRows > 0) {
+                rawRows
+            } else {
+                val uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id)
+                runCatching { resolver.delete(uri, null, null) }.getOrDefault(0)
+            }
             if (rows > 0) deleted += 1
         }
         return deleted

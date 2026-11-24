@@ -78,7 +78,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val shortMonthFormatter = DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault())
+private fun formatShortMonth(ym: YearMonth): String =
+    ym.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault()))
 
 private fun MediaItem.yearMonth(): YearMonth =
     YearMonth.from(Instant.ofEpochMilli(dateTaken).atZone(ZoneId.systemDefault()))
@@ -124,7 +125,7 @@ fun SwipeCleanupScreen(
                 list.add(
                     SwipeFilterCapsule(
                         key = ym.toString(),
-                        label = ym.format(shortMonthFormatter),
+                        label = formatShortMonth(ym),
                         count = monthList.size,
                         items = monthList,
                     ),
@@ -141,6 +142,7 @@ fun SwipeCleanupScreen(
     var keptUriStrings by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var markedUriStrings by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var historyUriStrings by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    var previewItem by remember { mutableStateOf<MediaItem?>(null) }
 
     // Once items are deleted, prune them from our tracking lists.
     LaunchedEffect(items) {
@@ -337,7 +339,11 @@ fun SwipeCleanupScreen(
                                 .clip(RoundedCornerShape(999.dp))
                                 .background(MaterialTheme.colorScheme.surface)
                                 .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp))
-                                .clickable { markedUriStrings = emptyList() }
+                                .clickable {
+                                    val cleared = markedUriStrings.toSet()
+                                    markedUriStrings = emptyList()
+                                    historyUriStrings = historyUriStrings.filter { it !in cleared }
+                                }
                                 .padding(horizontal = 7.dp, vertical = 2.dp),
                         )
                     }
@@ -448,6 +454,7 @@ fun SwipeCleanupScreen(
                                 item = top,
                                 onKeep = { keep(top) },
                                 onDelete = { delete(top) },
+                                onPreview = { previewItem = top },
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(top = 12.dp),
@@ -514,6 +521,7 @@ fun SwipeCleanupScreen(
             Spacer(Modifier.height(4.dp))
         }
     }
+    previewItem?.let { MediaPreviewDialog(it) { previewItem = null } }
 }
 
 @Composable
@@ -556,6 +564,7 @@ private fun SwipeCard(
     item: MediaItem,
     onKeep: () -> Unit,
     onDelete: () -> Unit,
+    onPreview: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val offsetX = remember { Animatable(0f) }
@@ -564,6 +573,7 @@ private fun SwipeCard(
     SwipeCardContent(
         item = item,
         dragOffset = offsetX.value,
+        onPreview = onPreview,
         modifier = modifier
             .graphicsLayer {
                 translationX = offsetX.value
@@ -599,7 +609,12 @@ private fun SwipeCard(
 }
 
 @Composable
-private fun SwipeCardContent(item: MediaItem, modifier: Modifier = Modifier, dragOffset: Float) {
+private fun SwipeCardContent(
+    item: MediaItem,
+    modifier: Modifier = Modifier,
+    dragOffset: Float,
+    onPreview: (() -> Unit)? = null,
+) {
     Card(
         modifier = modifier
             .shadow(14.dp, RoundedCornerShape(24.dp))
@@ -680,8 +695,10 @@ private fun SwipeCardContent(item: MediaItem, modifier: Modifier = Modifier, dra
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(64.dp)
+                        .clip(CircleShape)
                         .background(Color.Black.copy(alpha = 0.45f), CircleShape)
                         .border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                        .then(if (onPreview != null) Modifier.clickable(onClick = onPreview) else Modifier)
                         .padding(10.dp),
                 )
             }

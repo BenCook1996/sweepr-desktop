@@ -528,6 +528,27 @@ object MobileCloudVault {
         return items
     }
 
+    fun delete(context: Context, item: VaultItem, password: String?): Boolean =
+        deleteInDir(vaultDir(context), item.file.name, password)
+
+    internal fun deleteInDir(dir: File, fileName: String, password: String?): Boolean {
+        val target = File(dir, fileName)
+        val deleted = target.delete()
+        if (password != null && password.length >= 8) {
+            val existing = readEncryptedIndex(dir, password)
+            if (existing != null && existing.containsKey(fileName)) {
+                val updated = existing.toMutableMap().apply { remove(fileName) }
+                val hasRemainingVaultFiles = dir.listFiles { f -> f.isFile && f.name.endsWith(".swvault") }?.isNotEmpty() == true
+                if (updated.isEmpty() && !hasRemainingVaultFiles) {
+                    File(dir, INDEX_FILE_NAME).delete()
+                } else {
+                    writeEncryptedIndex(dir, password, updated)
+                }
+            }
+        }
+        return deleted
+    }
+
     /**
      * Streams file encryption directly from `uri` into a `.swvault` container using `CipherOutputStream`
      * with a 64 KB buffer so importing a 250 MB video never allocates 1 GB on the Android heap.
@@ -911,7 +932,7 @@ fun CloudSavingsBanner(state: DashboardState, onOpen: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = SweeprGreen.copy(alpha = 0.12f)),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.cloud_eyebrow), color = SweeprGreenDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.cloud_eyebrow), color = emeraldText(), fontSize = 11.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
             Spacer(Modifier.height(2.dp))
@@ -945,6 +966,9 @@ fun CloudSavingsScreen(
     var vaultUnlocked by remember { mutableStateOf(false) }
     var vaultBusy by remember { mutableStateOf(false) }
     var vaultStatus by remember { mutableStateOf<String?>(null) }
+    var vaultStatusIsError by remember { mutableStateOf(false) }
+    var pendingDeleteItem by remember { mutableStateOf<MobileCloudVault.VaultItem?>(null) }
+    var showPasswordMismatchWarning by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val savedPw = withContext(Dispatchers.IO) { MobileCloudVault.getRememberedPassword(context) }
@@ -964,6 +988,7 @@ fun CloudSavingsScreen(
         }
         vaultBusy = true
         vaultStatus = null
+        vaultStatusIsError = false
         scope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
@@ -979,8 +1004,10 @@ fun CloudSavingsScreen(
             result.onSuccess { list ->
                 vaultItems = list
                 vaultUnlocked = true
+                vaultStatusIsError = false
                 vaultStatus = context.getString(R.string.vault_msg_encrypted, uris.size)
             }.onFailure { err ->
+                vaultStatusIsError = true
                 vaultStatus = err.message ?: context.getString(R.string.vault_msg_error)
             }
         }
@@ -994,7 +1021,7 @@ fun CloudSavingsScreen(
             },
             title = {
                 Text(
-                    if (pendingEncryptAfterModal) "Set Vault Password (8+ chars)" else "Unlock Private Vault",
+                    if (pendingEncryptAfterModal && vaultItems.isEmpty()) "Set Vault Password (8+ chars)" else "Unlock Private Vault",
                     fontWeight = FontWeight.ExtraBold,
                 )
             },
@@ -1044,32 +1071,60 @@ fun CloudSavingsScreen(
                         showPasswordModal = false
                         pendingEncryptAfterModal = false
                         scope.launch {
-                            if (rememberInKeystore) {
-                                withContext(Dispatchers.IO) {
-                                    MobileCloudVault.saveRememberedPassword(context, vaultPassword)
-                                }
-                                rememberedPassword = vaultPassword
-                            } else {
-                                MobileCloudVault.clearRememberedPassword(context)
-                                rememberedPassword = null
-                            }
                             if (shouldLaunchPicker) {
+                                if (vaultItems.isNotEmpty() && !vaultUnlocked) {
+                                    val verifiedList = withContext(Dispatchers.IO) {
+                                        MobileCloudVault.list(context, vaultPassword)
+                                    }
+                                    val unlockedExisting = verifiedList.any { it.unlockedName != null }
+                                    if (!unlockedExisting) {
+                                        vaultItems = verifiedList
+                                        vaultUnlocked = false
+                                        vaultStatusIsError = true
+                                        vaultStatus = context.getString(R.string.vault_msg_unlock_first)
+                                        showPasswordMismatchWarning = true
+                                        return@launch
+                                    }
+                                    vaultItems = verifiedList
+                                    vaultUnlocked = true
+                                    vaultStatusIsError = false
+                                }
+                                if (rememberInKeystore) {
+                                    withContext(Dispatchers.IO) {
+                                        MobileCloudVault.saveRememberedPassword(context, vaultPassword)
+                                    }
+                                    rememberedPassword = vaultPassword
+                                } else {
+                                    MobileCloudVault.clearRememberedPassword(context)
+                                    rememberedPassword = null
+                                }
                                 filePicker.launch(arrayOf("image/*", "application/pdf", "*/*"))
                             } else {
                                 val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, vaultPassword) }
                                 vaultItems = list
                                 vaultUnlocked = list.any { it.unlockedName != null }
-                                vaultStatus = if (vaultUnlocked || list.isEmpty()) {
-                                    context.getString(R.string.vault_msg_unlocked)
+                                if (vaultUnlocked || list.isEmpty()) {
+                                    if (rememberInKeystore) {
+                                        withContext(Dispatchers.IO) {
+                                            MobileCloudVault.saveRememberedPassword(context, vaultPassword)
+                                        }
+                                        rememberedPassword = vaultPassword
+                                    } else {
+                                        MobileCloudVault.clearRememberedPassword(context)
+                                        rememberedPassword = null
+                                    }
+                                    vaultStatusIsError = false
+                                    vaultStatus = context.getString(R.string.vault_msg_unlocked)
                                 } else {
-                                    context.getString(R.string.vault_msg_wrong_pw)
+                                    vaultStatusIsError = true
+                                    vaultStatus = context.getString(R.string.vault_msg_wrong_pw)
                                 }
                             }
                         }
                     },
                 ) {
                     Text(
-                        if (pendingEncryptAfterModal) "Continue & Pick File" else "Unlock Vault",
+                        if (pendingEncryptAfterModal && vaultItems.isEmpty()) "Continue & Pick File" else "Unlock Vault",
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -1081,6 +1136,86 @@ fun CloudSavingsScreen(
                         pendingEncryptAfterModal = false
                     },
                 ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    if (showPasswordMismatchWarning) {
+        AlertDialog(
+            onDismissRequest = { showPasswordMismatchWarning = false },
+            title = { Text(stringResource(R.string.vault_mismatch_title), fontWeight = FontWeight.ExtraBold) },
+            text = {
+                Text(
+                    stringResource(R.string.vault_mismatch_body),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = SweeprGreen),
+                    onClick = {
+                        showPasswordMismatchWarning = false
+                        pendingEncryptAfterModal = true
+                        showPasswordModal = true
+                    },
+                ) {
+                    Text(stringResource(R.string.vault_mismatch_unlock_btn), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPasswordMismatchWarning = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
+    pendingDeleteItem?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteItem = null },
+            title = { Text(stringResource(R.string.vault_delete_confirm_title), fontWeight = FontWeight.ExtraBold) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.vault_delete_confirm_body,
+                        target.unlockedName ?: stringResource(R.string.vault_locked_file),
+                    ),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            confirmButton = {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                    onClick = {
+                        val itemToDelete = target
+                        pendingDeleteItem = null
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                MobileCloudVault.delete(
+                                    context,
+                                    itemToDelete,
+                                    if (vaultUnlocked) vaultPassword else null,
+                                )
+                            }
+                            val updated = withContext(Dispatchers.IO) {
+                                MobileCloudVault.list(context, if (vaultUnlocked) vaultPassword else null)
+                            }
+                            vaultItems = updated
+                            vaultUnlocked = updated.isNotEmpty() && updated.any { it.unlockedName != null }
+                            vaultStatusIsError = false
+                            vaultStatus = context.getString(R.string.vault_msg_deleted)
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.swipe_delete), color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteItem = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -1166,7 +1301,7 @@ fun CloudSavingsScreen(
                         Button(
                             onClick = {
                                 val runEncrypt = {
-                                    if (vaultPassword.length >= 8) {
+                                    if ((vaultItems.isEmpty() || vaultUnlocked) && vaultPassword.length >= 8) {
                                         filePicker.launch(arrayOf("image/*", "application/pdf", "*/*"))
                                     } else {
                                         pendingEncryptAfterModal = true
@@ -1197,6 +1332,7 @@ fun CloudSavingsScreen(
                                             val list = withContext(Dispatchers.IO) { MobileCloudVault.list(context, saved) }
                                             vaultItems = list
                                             vaultUnlocked = list.any { it.unlockedName != null }
+                                            vaultStatusIsError = false
                                             vaultStatus = if (vaultUnlocked) {
                                                 context.getString(R.string.vault_msg_unlocked)
                                             } else {
@@ -1234,7 +1370,12 @@ fun CloudSavingsScreen(
                     }
 
                     vaultStatus?.let { msg ->
-                        Text(msg, fontSize = 12.sp, color = emeraldText(), fontWeight = FontWeight.SemiBold)
+                        Text(
+                            msg,
+                            fontSize = 12.sp,
+                            color = if (vaultStatusIsError) MaterialTheme.colorScheme.error else emeraldText(),
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
 
                     if (vaultItems.isEmpty()) {
@@ -1290,8 +1431,10 @@ fun CloudSavingsScreen(
                                                 }.onSuccess { (out, list) ->
                                                     vaultItems = list
                                                     vaultUnlocked = true
+                                                    vaultStatusIsError = false
                                                     vaultStatus = context.getString(R.string.vault_msg_restored, out.name)
                                                 }.onFailure {
+                                                    vaultStatusIsError = true
                                                     vaultStatus = context.getString(R.string.vault_msg_wrong_pw)
                                                 }
                                             }
@@ -1303,15 +1446,14 @@ fun CloudSavingsScreen(
                                         enabled = vaultUnlocked,
                                         onClick = {
                                             if (!vaultUnlocked) return@TextButton
-                                            scope.launch {
-                                                withContext(Dispatchers.IO) { item.file.delete() }
-                                                vaultItems = withContext(Dispatchers.IO) {
-                                                    MobileCloudVault.list(context, if (vaultUnlocked) vaultPassword else null)
-                                                }
-                                            }
+                                            pendingDeleteItem = item
                                         },
                                     ) {
-                                        Text(stringResource(R.string.swipe_delete), color = DangerRed, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            stringResource(R.string.swipe_delete),
+                                            color = if (vaultUnlocked) DangerRed else DangerRed.copy(alpha = 0.38f),
+                                            fontWeight = FontWeight.Bold,
+                                        )
                                     }
                                 }
                             }
@@ -1398,6 +1540,6 @@ private fun manageUrl(provider: CloudSavings.Provider): String = when (provider)
 private fun BreakdownRow(label: String, value: String, highlight: Boolean = false) {
     Row(Modifier.fillMaxWidth()) {
         Text(label, modifier = Modifier.weight(1f), fontSize = 14.sp)
-        Text(value, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = if (highlight) SweeprGreen else MaterialTheme.colorScheme.onSurface)
+        Text(value, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = if (highlight) emeraldText() else MaterialTheme.colorScheme.onSurface)
     }
 }

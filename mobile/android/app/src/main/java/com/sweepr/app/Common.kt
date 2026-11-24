@@ -4,6 +4,9 @@ package com.sweepr.app
 
 import android.app.Activity
 import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.res.stringResource
@@ -23,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -115,6 +119,22 @@ fun isSweeprDark(): Boolean {
 @Composable
 fun emeraldText(): Color = if (isSweeprDark()) Emerald400 else SweeprGreenDark
 
+/** High-contrast adaptive ink tokens (WCAG AA across Obsidian Dark and Mint Light). */
+@Composable
+fun amberText(): Color = if (isSweeprDark()) Color(0xFFFBBF24) else Color(0xFFB45309)
+
+@Composable
+fun purpleText(): Color = if (isSweeprDark()) Color(0xFFC4B5FD) else Color(0xFF6D28D9)
+
+@Composable
+fun cyanText(): Color = if (isSweeprDark()) Color(0xFF67E8F9) else Color(0xFF0A2870)
+
+@Composable
+fun indigoText(): Color = if (isSweeprDark()) Color(0xFFA5B4FC) else Color(0xFF3C1766)
+
+@Composable
+fun roseText(): Color = if (isSweeprDark()) Color(0xFFFB7185) else DangerRed
+
 @Composable
 fun SweeprTheme(content: @Composable () -> Unit) {
     val mode by Prefs.theme.collectAsState()
@@ -161,9 +181,22 @@ fun SweeprTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
+            val activity = view.context as? ComponentActivity
+            if (activity != null) {
+                activity.enableEdgeToEdge(
+                    statusBarStyle = if (dark) {
+                        SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                    },
+                    navigationBarStyle = if (dark) {
+                        SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+                    },
+                )
+            }
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.surface.toArgb()
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !dark
             controller.isAppearanceLightNavigationBars = !dark
@@ -645,36 +678,41 @@ fun MediaThumb(
         if (selected) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
         }
-        if (badge != null) {
-            Text(
-                text = badge,
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(4.dp)
-                    .background(SweeprGreenDark, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-            )
-        } else if (actionLabel != null && onActionClick != null) {
-            Surface(
-                onClick = onActionClick,
-                color = SweeprGreenDark.copy(alpha = 0.92f),
-                shape = RoundedCornerShape(8.dp),
+        if (badge != null || (actionLabel != null && onActionClick != null)) {
+            Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(4.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Box(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
+                if (actionLabel != null && onActionClick != null) {
+                    Surface(
+                        onClick = onActionClick,
+                        color = SweeprGreenDark.copy(alpha = 0.92f),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = actionLabel,
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+                if (badge != null) {
                     Text(
-                        text = actionLabel,
+                        text = badge,
                         color = Color.White,
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .background(SweeprGreenDark.copy(alpha = 0.92f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                     )
                 }
             }
@@ -717,7 +755,12 @@ fun MediaPreviewDialog(item: MediaItem, onDismiss: () -> Unit) {
     val context = LocalContext.current
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
-            modifier = Modifier.fillMaxSize().background(Color.Black).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

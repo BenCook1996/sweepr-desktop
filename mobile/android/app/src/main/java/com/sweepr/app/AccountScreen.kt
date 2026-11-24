@@ -45,7 +45,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -148,7 +147,6 @@ fun AccountScreen(
     val cloudAddonPrice = prices["sweepr_cloud_vault_999"]?.formattedPrice ?: batteryAddonPrice
 
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
-    val activeAddonBadge = PlayBillingManager.addonBadgeForPlan(selectedPlan.productId, prices)
     var showSignInDialog by rememberSaveable { mutableStateOf(false) }
     var showQrPairDialog by rememberSaveable { mutableStateOf(false) }
     var qrPairInput by rememberSaveable { mutableStateOf("") }
@@ -184,7 +182,7 @@ fun AccountScreen(
                         Column(Modifier.padding(12.dp)) {
                             Text(
                                 stringResource(R.string.plan_annual_badge),
-                                color = SweeprGreenDark,
+                                color = emeraldText(),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                             )
@@ -476,17 +474,30 @@ fun AccountScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Total Battery & Mac/Phone Care Add-on Card (+20% charm pricing)
+            // Option A: Battery Care & Private File Lockbox are included in SWEEPR Pro; standalone /yr add-ons shown for Free users only.
+            val batteryUnlocked = state.hasPremium || state.hasBatteryCare
+            val cloudUnlocked = state.hasPremium || state.hasCloudVault
+            val batteryBadgeText = when {
+                state.hasPremium -> stringResource(R.string.addon_included_in_pro)
+                state.hasBatteryCare -> stringResource(R.string.addon_active_badge)
+                else -> "$batteryAddonPrice/yr"
+            }
+            val cloudBadgeText = when {
+                state.hasPremium -> stringResource(R.string.addon_included_in_pro)
+                state.hasCloudVault -> stringResource(R.string.addon_active_badge)
+                else -> "$cloudAddonPrice/yr"
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (state.hasBatteryCare) SweeprGreen.copy(alpha = 0.12f)
+                    containerColor = if (batteryUnlocked) SweeprGreen.copy(alpha = 0.12f)
                     else Color(0xFFF59E0B).copy(alpha = 0.08f),
                 ),
                 border = BorderStroke(
                     1.dp,
-                    if (state.hasBatteryCare) SweeprGreen.copy(alpha = 0.45f) else Color(0xFFF59E0B).copy(alpha = 0.55f),
+                    if (batteryUnlocked) SweeprGreen.copy(alpha = 0.45f) else Color(0xFFF59E0B).copy(alpha = 0.55f),
                 ),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -496,7 +507,7 @@ fun AccountScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            "Total Battery Care",
+                            stringResource(R.string.addon_battery_title),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             maxLines = 1,
@@ -505,8 +516,8 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (state.hasBatteryCare) "ACTIVE" else activeAddonBadge,
-                            color = if (state.hasBatteryCare) SweeprGreenDark else Color(0xFFB45309),
+                            batteryBadgeText,
+                            color = if (batteryUnlocked) emeraldText() else amberText(),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
                             maxLines = 1,
@@ -514,18 +525,21 @@ fun AccountScreen(
                         )
                     }
                     Text(
-                        "80% Charge-Limit Unplug Guard, Thermal Sensor Alerts & Deep System Storage Settings Shortcut",
-                        color = Color.Gray,
+                        stringResource(R.string.addon_battery_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
-                    if (!state.hasBatteryCare) {
+                    if (!batteryUnlocked) {
                         Spacer(Modifier.height(4.dp))
                         Button(
                             onClick = { onUpgrade("sweepr_battery_care_999") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                         ) {
-                            Text("Add Battery Care ($activeAddonBadge)", fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.addon_battery_buy, batteryAddonPrice),
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
                     }
                 }
@@ -533,16 +547,18 @@ fun AccountScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // SWEEPR Cloud Protection Add-on Card
+            // Private File Lockbox / Cloud Protection card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF8B5CF6).copy(alpha = 0.08f),
+                    containerColor = if (cloudUnlocked) SweeprGreen.copy(alpha = 0.12f)
+                    else Color(0xFF8B5CF6).copy(alpha = 0.08f),
                 ),
                 border = BorderStroke(
                     1.dp,
-                    Color(0xFF8B5CF6).copy(alpha = 0.45f),
+                    if (cloudUnlocked) SweeprGreen.copy(alpha = 0.45f)
+                    else Color(0xFF8B5CF6).copy(alpha = 0.45f),
                 ),
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -552,7 +568,7 @@ fun AccountScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            "SWEEPR Cloud Protection",
+                            stringResource(R.string.addon_vault_title),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             maxLines = 1,
@@ -561,8 +577,8 @@ fun AccountScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            activeAddonBadge,
-                            color = Color(0xFF6D28D9),
+                            cloudBadgeText,
+                            color = if (cloudUnlocked) emeraldText() else purpleText(),
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp,
                             maxLines = 1,
@@ -570,17 +586,22 @@ fun AccountScreen(
                         )
                     }
                     Text(
-                        "Locks private photos and documents with your own password in an AES-256-GCM On-Device Biometric Lockbox.",
-                        color = Color.Gray,
+                        stringResource(R.string.addon_vault_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Button(
-                        onClick = { onUpgrade("sweepr_cloud_vault_999") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Text("Add Cloud Protection ($activeAddonBadge)", fontWeight = FontWeight.Bold)
+                    if (!cloudUnlocked) {
+                        Spacer(Modifier.height(4.dp))
+                        Button(
+                            onClick = { onUpgrade("sweepr_cloud_vault_999") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.addon_vault_buy, cloudAddonPrice),
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 }
             }
@@ -622,9 +643,13 @@ fun AccountScreen(
                 }
 
                 Spacer(Modifier.height(14.dp))
-                val selectedPriceText = prices[selectedPlan.productId]?.formattedPrice ?: selectedPlan.priceLabel
+                val selectedPriceText = PlayBillingManager.ctaTotalForPlan(
+                    planProductId = selectedPlan.productId,
+                    addonCount = 0,
+                    pricesMap = prices,
+                )
                 EmeraldButton(
-                    text = "Continue for $selectedPriceText →",
+                    text = stringResource(R.string.paywall_continue_for, selectedPriceText),
                     onClick = { onUpgrade(selectedPlan.productId) },
                 )
                 Spacer(Modifier.height(12.dp))
@@ -635,15 +660,23 @@ fun AccountScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
+                val isWebOnlySubscription = linked.isSignedIn &&
+                    linked.serverActive &&
+                    !PlayBillingManager.hasActiveBaseSubscription() &&
+                    sub.managementUrl.isNullOrBlank()
                 SettingsItem(
                     icon = Icons.Default.Settings,
                     title = stringResource(R.string.account_manage),
                     value = stringResource(R.string.account_manage_detail),
                     onClick = {
-                        if (state.hasPremium) {
-                            showRetentionDialog = true
-                        } else {
-                            context.openUrl(playSubscriptionsUrl)
+                        when {
+                            shouldShowAnnualRetentionOffer(
+                                sub = sub,
+                                linked = linked,
+                                hasActivePlaySub = PlayBillingManager.hasActiveBaseSubscription(),
+                            ) -> showRetentionDialog = true
+                            isWebOnlySubscription -> context.openUrl("$WEBSITE_URL/login")
+                            else -> context.openUrl(playSubscriptionsUrl)
                         }
                     },
                 )
@@ -707,11 +740,13 @@ fun AccountScreen(
                     icon = Icons.Default.Info,
                     title = stringResource(R.string.account_customer_id),
                     value = sub.appUserId.ifBlank { stringResource(R.string.account_not_available) },
-                    onClick = {
-                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        cm.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.account_customer_id_clip_label), sub.appUserId))
-                        Toast.makeText(context, context.getString(R.string.account_customer_id_copied), Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = if (sub.appUserId.isNotBlank()) {
+                        {
+                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            cm.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.account_customer_id_clip_label), sub.appUserId))
+                            Toast.makeText(context, context.getString(R.string.account_customer_id_copied), Toast.LENGTH_SHORT).show()
+                        }
+                    } else null,
                 )
             }
 
@@ -885,8 +920,6 @@ fun PaywallModalSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedPlan by rememberSaveable { mutableStateOf(PlanTier.ANNUAL) }
-    var includeBatteryAddon by rememberSaveable { mutableStateOf(false) }
-    var includeCloudAddon by rememberSaveable { mutableStateOf(false) }
     val prices by PlayBillingManager.prices.collectAsState()
     val monthlyPrice = prices[PlanTier.MONTHLY.productId]?.formattedPrice ?: PlanTier.MONTHLY.priceLabel
     val monthlySub = prices[PlanTier.MONTHLY.productId]?.subtitle ?: "Billed monthly · Cancel anytime"
@@ -894,9 +927,11 @@ fun PaywallModalSheet(
     val sixMonthSub = prices[PlanTier.SIX_MONTH.productId]?.subtitle ?: "Save 35% (£6.50/mo)"
     val annualPrice = prices[PlanTier.ANNUAL.productId]?.formattedPrice ?: PlanTier.ANNUAL.priceLabel
     val annualSub = prices[PlanTier.ANNUAL.productId]?.subtitle ?: "Save 58% (£4.16/mo)"
-    val addonBadge = PlayBillingManager.addonBadgeForPlan(selectedPlan.productId, prices)
-    val addonCount = (if (includeBatteryAddon) 1 else 0) + (if (includeCloudAddon) 1 else 0)
-    val selectedPriceText = PlayBillingManager.ctaTotalForPlan(selectedPlan.productId, addonCount)
+    val selectedPriceText = PlayBillingManager.ctaTotalForPlan(
+        planProductId = selectedPlan.productId,
+        addonCount = 0,
+        pricesMap = prices,
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -929,7 +964,7 @@ fun PaywallModalSheet(
                             .background(SweeprGreen),
                     )
                     Text(
-                        "SWEEPR Pro",
+                        stringResource(R.string.paywall_eyebrow),
                         color = emeraldText(),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -939,13 +974,13 @@ fun PaywallModalSheet(
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "Clean & speed up in 1 click",
+                    stringResource(R.string.paywall_headline),
                     fontSize = 21.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    "Choose a plan below, or save 58% with Yearly. Cancel anytime.",
+                    stringResource(R.string.paywall_subheadline),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -957,7 +992,7 @@ fun PaywallModalSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ConceptAPlanCard(
-                    label = "Monthly",
+                    label = stringResource(R.string.paywall_plan_monthly),
                     price = monthlyPrice,
                     sub = monthlySub,
                     highlightSub = false,
@@ -966,7 +1001,7 @@ fun PaywallModalSheet(
                     modifier = Modifier.weight(1f),
                 )
                 ConceptAPlanCard(
-                    label = "6 Months",
+                    label = stringResource(R.string.paywall_plan_six_months),
                     price = sixMonthPrice,
                     sub = sixMonthSub,
                     highlightSub = true,
@@ -975,7 +1010,7 @@ fun PaywallModalSheet(
                     modifier = Modifier.weight(1f),
                 )
                 ConceptAPlanCard(
-                    label = "Yearly",
+                    label = stringResource(R.string.paywall_plan_yearly),
                     price = annualPrice,
                     sub = annualSub,
                     highlightSub = true,
@@ -985,55 +1020,50 @@ fun PaywallModalSheet(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(
-                    onClick = { includeBatteryAddon = !includeBatteryAddon },
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    modifier = Modifier.fillMaxWidth(),
+            // Option A: Battery Health Saver & Private File Lockbox included in every Pro plan
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = SweeprGreen.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, SweeprGreen.copy(alpha = 0.30f)),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Checkbox(
-                                checked = includeBatteryAddon,
-                                onCheckedChange = { includeBatteryAddon = it },
+                    Text(
+                        stringResource(R.string.paywall_included_title),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = emeraldText(),
+                    )
+                    listOf(
+                        stringResource(R.string.paywall_included_battery),
+                        stringResource(R.string.paywall_included_vault),
+                    ).forEach { feature ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = null,
+                                tint = emeraldText(),
+                                modifier = Modifier.size(16.dp),
                             )
-                            Text("Battery Health Saver", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Text(addonBadge, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = emeraldText())
-                    }
-                }
-                Surface(
-                    onClick = { includeCloudAddon = !includeCloudAddon },
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Checkbox(
-                                checked = includeCloudAddon,
-                                onCheckedChange = { includeCloudAddon = it },
+                            Text(
+                                feature,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
-                            Text("Private File Lockbox", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                         }
-                        Text(addonBadge, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = emeraldText())
                     }
                 }
             }
 
             EmeraldButton(
-                text = "Continue for $selectedPriceText →",
+                text = stringResource(R.string.paywall_continue_for, selectedPriceText),
                 onClick = {
                     val chosen = selectedPlan.productId
                     onDismiss()
@@ -1060,7 +1090,7 @@ fun PaywallModalSheet(
                         onOpenEmailSignIn()
                     },
                 ) {
-                    Text("Already have Pro? Sign in", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.paywall_sign_in_prompt), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

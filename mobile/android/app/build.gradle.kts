@@ -6,18 +6,25 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// RevenueCat public SDK key: read from the REVENUECAT_API_KEY gradle property (-P / ~/.gradle/gradle.properties)
-// or from local.properties (not committed). Falls back to the Test Store key so local builds keep working.
-// IMPORTANT: release builds shipped to Google Play MUST use the production "goog_..." key.
+// RevenueCat public SDK key:
+// - Debug builds read RC_TEST_STORE_KEY (or REVENUECAT_API_KEY) so Test Store QA works locally.
+// - Release builds ONLY accept a production Google Play key starting with "goog_"; never bundle "test_..." into release.
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val revenueCatApiKey: String =
+val rcTestStoreKey: String =
+    (findProperty("RC_TEST_STORE_KEY") as String?)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty("RC_TEST_STORE_KEY")?.takeIf { it.isNotBlank() }
+        ?: System.getenv("RC_TEST_STORE_KEY")?.takeIf { it.isNotBlank() }
+        ?: ""
+val revenueCatAnyKey: String =
     (findProperty("REVENUECAT_API_KEY") as String?)?.takeIf { it.isNotBlank() }
         ?: localProps.getProperty("REVENUECAT_API_KEY")?.takeIf { it.isNotBlank() }
         ?: System.getenv("REVENUECAT_API_KEY")?.takeIf { it.isNotBlank() }
         ?: ""
+val revenueCatProdKey: String = revenueCatAnyKey.takeIf { it.startsWith("goog_") } ?: ""
+val revenueCatDebugKey: String = rcTestStoreKey.ifBlank { revenueCatAnyKey }
 
 val sweeprWebsiteUrl: String =
     (findProperty("SWEEPR_WEBSITE_URL") as String?)?.takeIf { it.isNotBlank() }
@@ -60,13 +67,12 @@ android {
         applicationId = "com.sweepr.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
 
         // Only ship the languages Sweepr is translated into (drops unused library translations).
         resourceConfigurations += listOf("en", "es", "fr", "de", "it", "pt", "nl")
 
-        buildConfigField("String", "REVENUECAT_API_KEY", "\"${escapeBuildConfigString(revenueCatApiKey)}\"")
         buildConfigField("String", "SWEEPR_WEBSITE_URL", "\"${escapeBuildConfigString(sweeprWebsiteUrl)}\"")
         buildConfigField("String", "SWEEPR_PUBLIC_URL", "\"${escapeBuildConfigString(sweeprWebsiteUrl)}\"")
         buildConfigField("String", "SWEEPR_SUPPORT_EMAIL", "\"${escapeBuildConfigString(sweeprSupportEmail)}\"")
@@ -74,6 +80,13 @@ android {
         buildConfigField("String", "SWEEPR_PROJECT_ID", "\"cleaner\"")
         buildConfigField("String", "SWEEPR_LICENSE_PUBKEY", "\"${escapeBuildConfigString(sweeprLicensePubkey)}\"")
         buildConfigField("String", "SWEEPR_ED25519_PUBKEY_B64", "\"${escapeBuildConfigString(sweeprLicensePubkey)}\"")
+    }
+
+    bundle {
+        language {
+            // Keep all 7 app languages in the base APK split so in-app AppCompatDelegate language switching works on Play AAB installs.
+            enableSplit = false
+        }
     }
 
     signingConfigs {
@@ -99,15 +112,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "REVENUECAT_API_KEY", "\"${escapeBuildConfigString(revenueCatDebugKey)}\"")
+        }
         release {
+            buildConfigField("String", "REVENUECAT_API_KEY", "\"${escapeBuildConfigString(revenueCatProdKey)}\"")
             isMinifyEnabled = true
             isShrinkResources = true
             val relSigning = signingConfigs.getByName("release")
             val hasValidReleaseKeystore = relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()
-            signingConfig = if (hasValidReleaseKeystore) {
-                relSigning
-            } else {
-                signingConfigs.getByName("debug")
+            if (hasValidReleaseKeystore) {
+                signingConfig = relSigning
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -130,13 +145,14 @@ gradle.taskGraph.whenReady {
     if (isReleaseBuild) {
         val relSigning = android.signingConfigs.getByName("release")
         val hasValidReleaseKeystore = relSigning.storeFile?.exists() == true && !relSigning.storePassword.isNullOrBlank()
-        if (System.getenv("CI") == "true" && !hasValidReleaseKeystore) {
-            throw GradleException("Release build in CI requires a valid upload-keystore.jks and SWEEPR_KEYSTORE_PASSWORD.")
+        if (!hasValidReleaseKeystore) {
+            throw GradleException("Release build requires upload-keystore.jks and SWEEPR_KEYSTORE_PASSWORD (never fall back to debug signing).")
         }
-        if (!revenueCatApiKey.startsWith("goog_")) {
+        if (!revenueCatProdKey.startsWith("goog_")) {
             logger.lifecycle(
-                "NOTE: Building release with fallback RevenueCat key ('$revenueCatApiKey'). " +
-                    "Direct SweeprAccountApi (/v1/billing/google-play/verify) & Cross-Platform OTP/QR entitlement verification remain active."
+                "NOTE: Building release without a production goog_ RevenueCat key. " +
+                    "Direct PlayBillingManager + SweeprAccountApi (/v1/billing/google-play/verify) & Cross-Platform OTP/QR remain active; " +
+                    "supply -PREVENUECAT_API_KEY=goog_... before Play Production launch."
             )
         }
     }

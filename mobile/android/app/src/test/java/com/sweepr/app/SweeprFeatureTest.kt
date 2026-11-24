@@ -350,4 +350,161 @@ class SweeprFeatureTest {
         assertFalse(PlayAppUpdateManager.isValidStoreUri("http://evil.example.com/sweepr.apk"))
         assertFalse(PlayAppUpdateManager.isValidStoreUri("intent://scan/#Intent;scheme=sweepr;end"))
     }
+
+    @Test
+    fun isValidVerificationCode_acceptsSixDigitOtpsAndFullLicenseKeys_rejectsInvalid() {
+        assertTrue(isValidVerificationCode("123456"))
+        assertTrue(isValidVerificationCode("  654321  "))
+        assertTrue(isValidVerificationCode("SWEEPR-ABCD-EF12"))
+        assertTrue(isValidVerificationCode("swp-12ab-34cd-56ef"))
+        assertTrue(isValidVerificationCode("CLN-99AA-BB88"))
+        assertTrue(isValidVerificationCode("GOTD-2026-PROMO"))
+        assertTrue(isValidVerificationCode("DEEPBLOCK-XY12-ZA99"))
+
+        assertFalse(isValidVerificationCode(""))
+        assertFalse(isValidVerificationCode("12345"))
+        assertFalse(isValidVerificationCode("1234567"))
+        assertFalse(isValidVerificationCode("SWEEPR-ONLYONE"))
+        assertFalse(isValidVerificationCode("OTHER-ABCD-1234"))
+    }
+
+    @Test
+    fun ctaTotalForPlan_prefersLivePricesAndComputesOptionAPlanTotals() {
+        val defaultLoc = java.util.Locale.getDefault()
+        val livePrices = mapOf(
+            "sweepr_annual_4999" to PlayProductPrice("sweepr_annual_4999", "€59,99", "", "EUR"),
+            "sweepr_monthly_999" to PlayProductPrice("sweepr_monthly_999", "€10,99", "", "EUR"),
+        )
+        assertEquals(
+            "€59,99/yr",
+            PlayBillingManager.ctaTotalForPlan(
+                planProductId = "sweepr_annual_4999",
+                addonCount = 0,
+                locale = defaultLoc,
+                pricesMap = livePrices,
+            ),
+        )
+        assertEquals(
+            "€10,99/mo",
+            PlayBillingManager.ctaTotalForPlan(
+                planProductId = "sweepr_monthly_999",
+                addonCount = 0,
+                locale = defaultLoc,
+                pricesMap = livePrices,
+            ),
+        )
+
+        // Empty live map falls back cleanly to locale-formatted plan-only totals
+        assertEquals(
+            "£49.99/yr",
+            PlayBillingManager.ctaTotalForPlan(
+                planProductId = "sweepr_annual_4999",
+                addonCount = 0,
+                locale = java.util.Locale.UK,
+                pricesMap = emptyMap(),
+            ),
+        )
+        assertEquals(
+            "$11.99/mo",
+            PlayBillingManager.ctaTotalForPlan(
+                planProductId = "sweepr_monthly_999",
+                addonCount = 0,
+                locale = java.util.Locale.US,
+                pricesMap = emptyMap(),
+            ),
+        )
+        assertEquals(
+            "£38.99/6mo",
+            PlayBillingManager.ctaTotalForPlan(
+                planProductId = "sweepr_six_month_3899",
+                addonCount = 0,
+                locale = java.util.Locale.UK,
+                pricesMap = emptyMap(),
+            ),
+        )
+    }
+
+    @Test
+    fun mobileCloudVault_deleteInDir_removesFileAndPrunesEncryptedIndex() {
+        val tempDir = Files.createTempDirectory("sweepr_vault_delete_test").toFile()
+        try {
+            val password = "DeleteTestPass99!"
+            val first = MobileCloudVault.encryptBytesToDir(
+                dir = tempDir,
+                displayName = "first_secret.pdf",
+                payload = "first secret payload".toByteArray(Charsets.UTF_8),
+                password = password,
+            )
+            val second = MobileCloudVault.encryptBytesToDir(
+                dir = tempDir,
+                displayName = "second_secret.jpg",
+                payload = "second secret payload".toByteArray(Charsets.UTF_8),
+                password = password,
+            )
+            assertEquals(2, MobileCloudVault.listInDir(tempDir, password).size)
+            assertEquals(2, MobileCloudVault.readEncryptedIndex(tempDir, password)?.size)
+
+            assertTrue(MobileCloudVault.deleteInDir(tempDir, first.file.name, password))
+            assertFalse(first.file.exists())
+            assertTrue(second.file.exists())
+
+            val remaining = MobileCloudVault.listInDir(tempDir, password)
+            assertEquals(1, remaining.size)
+            assertEquals("second_secret.jpg", remaining[0].unlockedName)
+
+            val updatedIndex = MobileCloudVault.readEncryptedIndex(tempDir, password)
+            assertFalse(updatedIndex?.containsKey(first.file.name) ?: true)
+            assertTrue(updatedIndex?.containsKey(second.file.name) == true)
+
+            assertTrue(MobileCloudVault.deleteInDir(tempDir, second.file.name, password))
+            assertFalse(java.io.File(tempDir, "vault_index.json").exists())
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun storageWinBanner_and_annualRetentionOffer_gatesWorkAsExpected() {
+        assertFalse(shouldShowStorageWinBanner(0L))
+        assertFalse(shouldShowStorageWinBanner(-512L))
+        assertTrue(shouldShowStorageWinBanner(1_500_000_000L))
+        assertTrue(shouldShowStorageWinBanner(0L, reclaimedBytesOverride = 250_000L))
+
+        val linkedEmpty = Prefs.LinkedAccount()
+        assertTrue(
+            shouldShowAnnualRetentionOffer(
+                sub = SubscriptionInfo(active = true, productId = "sweepr_monthly_999"),
+                linked = linkedEmpty,
+                hasActivePlaySub = true,
+            ),
+        )
+        assertTrue(
+            shouldShowAnnualRetentionOffer(
+                sub = SubscriptionInfo(active = true, productId = "sweepr_six_month_3899"),
+                linked = linkedEmpty,
+                hasActivePlaySub = true,
+            ),
+        )
+        assertFalse(
+            shouldShowAnnualRetentionOffer(
+                sub = SubscriptionInfo(active = true, productId = "sweepr_annual_4999"),
+                linked = linkedEmpty,
+                hasActivePlaySub = true,
+            ),
+        )
+        assertFalse(
+            shouldShowAnnualRetentionOffer(
+                sub = SubscriptionInfo(active = true, productId = "pro_monthly", managementUrl = null),
+                linked = Prefs.LinkedAccount(plan = "monthly"),
+                hasActivePlaySub = false,
+            ),
+        )
+        assertFalse(
+            shouldShowAnnualRetentionOffer(
+                sub = SubscriptionInfo(active = false, productId = "sweepr_monthly_999"),
+                linked = linkedEmpty,
+                hasActivePlaySub = false,
+            ),
+        )
+    }
 }

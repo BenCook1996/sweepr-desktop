@@ -46,18 +46,30 @@ data class VideoCompressionResult(
  */
 object VideoCompressor {
 
+    private const val STALL_TIMEOUT_NS = 15_000_000_000L
+
     fun compress(
         context: Context,
         item: MediaItem,
         preset: CompressionPreset = CompressionPreset.COMPACT_720P,
+        isCancelled: () -> Boolean = { false },
         onProgress: (Float) -> Unit = {},
     ): VideoCompressionResult {
         val tempFile = File(context.cacheDir, "compressed_${item.id}_${System.currentTimeMillis()}.mp4")
         try {
+            if (isCancelled() || Thread.currentThread().isInterrupted) {
+                throw java.util.concurrent.CancellationException("Video compression cancelled")
+            }
             onProgress(0.05f)
             val transcodedOk = runCatching {
-                transcodeOrRemuxToFile(context, item.uri, tempFile, preset, onProgress)
-            }.getOrDefault(false)
+                transcodeOrRemuxToFile(context, item.uri, tempFile, preset, isCancelled, onProgress)
+            }.getOrElse { err ->
+                if (err is java.util.concurrent.CancellationException) throw err
+                false
+            }
+            if (isCancelled() || Thread.currentThread().isInterrupted) {
+                throw java.util.concurrent.CancellationException("Video compression cancelled")
+            }
 
             if (!transcodedOk || !tempFile.exists() || tempFile.length() <= 0L) {
                 throw IllegalStateException("Could not compress this video format on this device.")
@@ -90,6 +102,7 @@ object VideoCompressor {
         sourceUri: Uri,
         outputFile: File,
         preset: CompressionPreset,
+        isCancelled: () -> Boolean,
         onProgress: (Float) -> Unit,
     ): Boolean {
         val pfd = context.contentResolver.openFileDescriptor(sourceUri, "r") ?: return false
@@ -141,9 +154,13 @@ object VideoCompressor {
                         preset = preset,
                         rotation = rotation,
                         durationUs = durationUs,
+                        isCancelled = isCancelled,
                         onProgress = onProgress,
                     )
-                }.getOrDefault(false)
+                }.getOrElse { err ->
+                    if (err is java.util.concurrent.CancellationException) throw err
+                    false
+                }
 
                 if (reencodedSurface && outputFile.exists() && outputFile.length() > 1024L) {
                     if (inputLength > 0L && outputFile.length() >= inputLength) {
@@ -154,6 +171,9 @@ object VideoCompressor {
                 }
 
                 // Secondary fallback: ByteBuffer H.264 re-encode keeping encoder resolution equal to source resolution with reduced bitrate
+                if (isCancelled() || Thread.currentThread().isInterrupted) {
+                    throw java.util.concurrent.CancellationException("Video compression cancelled")
+                }
                 outputFile.delete()
                 val byteBufferExtractor = MediaExtractor()
                 try {
@@ -169,9 +189,13 @@ object VideoCompressor {
                             preset = preset,
                             rotation = rotation,
                             durationUs = durationUs,
+                            isCancelled = isCancelled,
                             onProgress = onProgress,
                         )
-                    }.getOrDefault(false)
+                    }.getOrElse { err ->
+                        if (err is java.util.concurrent.CancellationException) throw err
+                        false
+                    }
 
                     if (reencodedByteBuffer && outputFile.exists() && outputFile.length() > 1024L) {
                         if (inputLength > 0L && outputFile.length() >= inputLength) {
@@ -185,6 +209,9 @@ object VideoCompressor {
                 }
 
                 // Fallback: fast stream remux with audio + video tracks into clean MP4 container
+                if (isCancelled() || Thread.currentThread().isInterrupted) {
+                    throw java.util.concurrent.CancellationException("Video compression cancelled")
+                }
                 outputFile.delete()
                 val remuxExtractor = MediaExtractor()
                 try {
@@ -198,6 +225,7 @@ object VideoCompressor {
                         outputFile = outputFile,
                         rotation = rotation,
                         durationUs = durationUs,
+                        isCancelled = isCancelled,
                         onProgress = onProgress,
                     )
                     if (remuxed && inputLength > 0L && outputFile.length() >= inputLength) {
@@ -228,6 +256,7 @@ object VideoCompressor {
         preset: CompressionPreset,
         rotation: Int,
         durationUs: Long,
+        isCancelled: () -> Boolean,
         onProgress: (Float) -> Unit,
     ): Boolean {
         val srcWidth = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_WIDTH) }.getOrDefault(1280)
@@ -272,11 +301,19 @@ object VideoCompressor {
             var decoderDone = false
             var encoderDone = false
             val timeoutUs = 10_000L
+            var lastProgressNs = System.nanoTime()
 
             while (!encoderDone) {
+                if (isCancelled() || Thread.currentThread().isInterrupted) {
+                    throw java.util.concurrent.CancellationException("Video compression cancelled")
+                }
+                if ((System.nanoTime() - lastProgressNs) > STALL_TIMEOUT_NS) {
+                    return false
+                }
                 if (!inputDone) {
                     val inIndex = decoder.dequeueInputBuffer(timeoutUs)
                     if (inIndex >= 0) {
+                        lastProgressNs = System.nanoTime()
                         val inBuf = decoder.getInputBuffer(inIndex)!!
                         val sampleSize = extractor.readSampleData(inBuf, 0)
                         if (sampleSize < 0) {
@@ -296,6 +333,7 @@ object VideoCompressor {
                 if (!decoderDone) {
                     val outIndex = decoder.dequeueOutputBuffer(bufferInfo, timeoutUs)
                     if (outIndex >= 0) {
+                        lastProgressNs = System.nanoTime()
                         val isEos = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
                         val doRender = bufferInfo.size > 0 && !isEos
                         decoder.releaseOutputBuffer(outIndex, doRender)
@@ -309,6 +347,7 @@ object VideoCompressor {
                 val encOutIndex = encoder.dequeueOutputBuffer(encInfo, timeoutUs)
                 when {
                     encOutIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        lastProgressNs = System.nanoTime()
                         muxerVideoTrack = muxer.addTrack(encoder.outputFormat)
                         if (sourceAudioFormat != null && audioTrackIndex >= 0) {
                             muxerAudioTrack = runCatching { muxer.addTrack(sourceAudioFormat) }.getOrDefault(-1)
@@ -317,6 +356,7 @@ object VideoCompressor {
                         muxerStarted = true
                     }
                     encOutIndex >= 0 -> {
+                        lastProgressNs = System.nanoTime()
                         val encodedData = encoder.getOutputBuffer(encOutIndex)
                         if (encodedData != null && (encInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 && encInfo.size > 0 && muxerStarted) {
                             encodedData.position(encInfo.offset)
@@ -332,20 +372,27 @@ object VideoCompressor {
             }
 
             if (muxerStarted && muxerAudioTrack >= 0 && audioTrackIndex >= 0) {
-                extractor.unselectTrack(videoTrackIndex)
-                extractor.selectTrack(audioTrackIndex)
-                extractor.seekTo(0L, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
-                val audioBuf = ByteBuffer.allocate(256 * 1024)
-                val audioInfo = MediaCodec.BufferInfo()
-                while (true) {
-                    val sampleSize = extractor.readSampleData(audioBuf, 0)
-                    if (sampleSize < 0) break
-                    audioInfo.offset = 0
-                    audioInfo.size = sampleSize
-                    audioInfo.presentationTimeUs = extractor.sampleTime
-                    audioInfo.flags = toCodecFlags(extractor.sampleFlags)
-                    muxer.writeSampleData(muxerAudioTrack, audioBuf, audioInfo)
-                    extractor.advance()
+                runCatching {
+                    extractor.unselectTrack(videoTrackIndex)
+                    extractor.selectTrack(audioTrackIndex)
+                    extractor.seekTo(0L, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                    val audioBuf = ByteBuffer.allocate(256 * 1024)
+                    val audioInfo = MediaCodec.BufferInfo()
+                    while (true) {
+                        if (isCancelled() || Thread.currentThread().isInterrupted) {
+                            throw java.util.concurrent.CancellationException("Video compression cancelled")
+                        }
+                        val sampleSize = extractor.readSampleData(audioBuf, 0)
+                        if (sampleSize < 0) break
+                        audioInfo.offset = 0
+                        audioInfo.size = sampleSize
+                        audioInfo.presentationTimeUs = extractor.sampleTime
+                        audioInfo.flags = toCodecFlags(extractor.sampleFlags)
+                        muxer.writeSampleData(muxerAudioTrack, audioBuf, audioInfo)
+                        extractor.advance()
+                    }
+                }.onFailure { err ->
+                    if (err is java.util.concurrent.CancellationException) throw err
                 }
             }
             return muxerStarted
@@ -374,6 +421,7 @@ object VideoCompressor {
         preset: CompressionPreset,
         rotation: Int,
         durationUs: Long,
+        isCancelled: () -> Boolean,
         onProgress: (Float) -> Unit,
     ): Boolean {
         val srcWidth = runCatching { sourceVideoFormat.getInteger(MediaFormat.KEY_WIDTH) }.getOrDefault(1280)
@@ -411,14 +459,24 @@ object VideoCompressor {
             var muxerAudioTrack = -1
 
             var inputDone = false
+            var decoderEosPending = false
+            var decoderEosPtsUs = 0L
             var decoderDone = false
             var encoderDone = false
             val timeoutUs = 10_000L
+            var lastProgressNs = System.nanoTime()
 
             while (!encoderDone) {
+                if (isCancelled() || Thread.currentThread().isInterrupted) {
+                    throw java.util.concurrent.CancellationException("Video compression cancelled")
+                }
+                if ((System.nanoTime() - lastProgressNs) > STALL_TIMEOUT_NS) {
+                    return false
+                }
                 if (!inputDone) {
                     val inIndex = decoder.dequeueInputBuffer(timeoutUs)
                     if (inIndex >= 0) {
+                        lastProgressNs = System.nanoTime()
                         val inBuf = decoder.getInputBuffer(inIndex)!!
                         val sampleSize = extractor.readSampleData(inBuf, 0)
                         if (sampleSize < 0) {
@@ -435,17 +493,13 @@ object VideoCompressor {
                     }
                 }
 
-                if (!decoderDone) {
+                if (!decoderDone && !decoderEosPending) {
                     val outIndex = decoder.dequeueOutputBuffer(bufferInfo, timeoutUs)
                     if (outIndex >= 0) {
+                        lastProgressNs = System.nanoTime()
                         val outBuf = decoder.getOutputBuffer(outIndex)
-                        if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                            val encIn = encoder.dequeueInputBuffer(timeoutUs)
-                            if (encIn >= 0) {
-                                encoder.queueInputBuffer(encIn, 0, 0, bufferInfo.presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                                decoderDone = true
-                            }
-                        } else if (outBuf != null && bufferInfo.size > 0) {
+                        val isEos = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                        if (outBuf != null && bufferInfo.size > 0) {
                             val encIn = encoder.dequeueInputBuffer(timeoutUs)
                             if (encIn >= 0) {
                                 val encInBuf = encoder.getInputBuffer(encIn)!!
@@ -454,16 +508,42 @@ object VideoCompressor {
                                 outBuf.position(bufferInfo.offset)
                                 outBuf.limit(bufferInfo.offset + copyBytes)
                                 encInBuf.put(outBuf)
-                                encoder.queueInputBuffer(encIn, 0, copyBytes, bufferInfo.presentationTimeUs, 0)
+                                encoder.queueInputBuffer(
+                                    encIn,
+                                    0,
+                                    copyBytes,
+                                    bufferInfo.presentationTimeUs,
+                                    if (isEos) MediaCodec.BUFFER_FLAG_END_OF_STREAM else 0,
+                                )
+                                if (isEos) {
+                                    decoderDone = true
+                                }
+                            } else if (isEos) {
+                                decoderEosPending = true
+                                decoderEosPtsUs = bufferInfo.presentationTimeUs
                             }
+                        } else if (isEos) {
+                            decoderEosPending = true
+                            decoderEosPtsUs = bufferInfo.presentationTimeUs
                         }
                         decoder.releaseOutputBuffer(outIndex, false)
+                    }
+                }
+
+                if (decoderEosPending && !decoderDone) {
+                    val encIn = encoder.dequeueInputBuffer(timeoutUs)
+                    if (encIn >= 0) {
+                        lastProgressNs = System.nanoTime()
+                        encoder.queueInputBuffer(encIn, 0, 0, decoderEosPtsUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                        decoderEosPending = false
+                        decoderDone = true
                     }
                 }
 
                 val encOutIndex = encoder.dequeueOutputBuffer(encInfo, timeoutUs)
                 when {
                     encOutIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        lastProgressNs = System.nanoTime()
                         muxerVideoTrack = muxer.addTrack(encoder.outputFormat)
                         if (sourceAudioFormat != null && audioTrackIndex >= 0) {
                             muxerAudioTrack = runCatching { muxer.addTrack(sourceAudioFormat) }.getOrDefault(-1)
@@ -472,6 +552,7 @@ object VideoCompressor {
                         muxerStarted = true
                     }
                     encOutIndex >= 0 -> {
+                        lastProgressNs = System.nanoTime()
                         val encodedData = encoder.getOutputBuffer(encOutIndex)
                         if (encodedData != null && (encInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 && encInfo.size > 0 && muxerStarted) {
                             encodedData.position(encInfo.offset)
@@ -487,20 +568,27 @@ object VideoCompressor {
             }
 
             if (muxerStarted && muxerAudioTrack >= 0 && audioTrackIndex >= 0) {
-                extractor.unselectTrack(videoTrackIndex)
-                extractor.selectTrack(audioTrackIndex)
-                extractor.seekTo(0L, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
-                val audioBuf = ByteBuffer.allocate(256 * 1024)
-                val audioInfo = MediaCodec.BufferInfo()
-                while (true) {
-                    val sampleSize = extractor.readSampleData(audioBuf, 0)
-                    if (sampleSize < 0) break
-                    audioInfo.offset = 0
-                    audioInfo.size = sampleSize
-                    audioInfo.presentationTimeUs = extractor.sampleTime
-                    audioInfo.flags = toCodecFlags(extractor.sampleFlags)
-                    muxer.writeSampleData(muxerAudioTrack, audioBuf, audioInfo)
-                    extractor.advance()
+                runCatching {
+                    extractor.unselectTrack(videoTrackIndex)
+                    extractor.selectTrack(audioTrackIndex)
+                    extractor.seekTo(0L, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                    val audioBuf = ByteBuffer.allocate(256 * 1024)
+                    val audioInfo = MediaCodec.BufferInfo()
+                    while (true) {
+                        if (isCancelled() || Thread.currentThread().isInterrupted) {
+                            throw java.util.concurrent.CancellationException("Video compression cancelled")
+                        }
+                        val sampleSize = extractor.readSampleData(audioBuf, 0)
+                        if (sampleSize < 0) break
+                        audioInfo.offset = 0
+                        audioInfo.size = sampleSize
+                        audioInfo.presentationTimeUs = extractor.sampleTime
+                        audioInfo.flags = toCodecFlags(extractor.sampleFlags)
+                        muxer.writeSampleData(muxerAudioTrack, audioBuf, audioInfo)
+                        extractor.advance()
+                    }
+                }.onFailure { err ->
+                    if (err is java.util.concurrent.CancellationException) throw err
                 }
             }
             return muxerStarted
@@ -534,6 +622,7 @@ object VideoCompressor {
         outputFile: File,
         rotation: Int,
         durationUs: Long,
+        isCancelled: () -> Boolean,
         onProgress: (Float) -> Unit,
     ): Boolean {
         val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -552,6 +641,9 @@ object VideoCompressor {
 
             extractor.selectTrack(videoTrackIndex)
             while (true) {
+                if (isCancelled() || Thread.currentThread().isInterrupted) {
+                    throw java.util.concurrent.CancellationException("Video compression cancelled")
+                }
                 val size = extractor.readSampleData(buffer, 0)
                 if (size < 0) break
                 info.offset = 0
@@ -567,16 +659,23 @@ object VideoCompressor {
             extractor.unselectTrack(videoTrackIndex)
 
             if (muxAudio >= 0 && audioTrackIndex >= 0) {
-                extractor.selectTrack(audioTrackIndex)
-                while (true) {
-                    val size = extractor.readSampleData(buffer, 0)
-                    if (size < 0) break
-                    info.offset = 0
-                    info.size = size
-                    info.presentationTimeUs = extractor.sampleTime
-                    info.flags = toCodecFlags(extractor.sampleFlags)
-                    muxer.writeSampleData(muxAudio, buffer, info)
-                    extractor.advance()
+                runCatching {
+                    extractor.selectTrack(audioTrackIndex)
+                    while (true) {
+                        if (isCancelled() || Thread.currentThread().isInterrupted) {
+                            throw java.util.concurrent.CancellationException("Video compression cancelled")
+                        }
+                        val size = extractor.readSampleData(buffer, 0)
+                        if (size < 0) break
+                        info.offset = 0
+                        info.size = size
+                        info.presentationTimeUs = extractor.sampleTime
+                        info.flags = toCodecFlags(extractor.sampleFlags)
+                        muxer.writeSampleData(muxAudio, buffer, info)
+                        extractor.advance()
+                    }
+                }.onFailure { err ->
+                    if (err is java.util.concurrent.CancellationException) throw err
                 }
             }
             return true

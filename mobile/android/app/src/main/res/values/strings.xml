@@ -465,7 +465,7 @@
     <string name="media_opt_tab_video">Shrink Videos</string>
     <string name="media_opt_tab_photo_privacy">Shrink Photos</string>
     <string name="photo_opt_toggle_compress">Shrink Photo File Size</string>
-    <string name="photo_opt_toggle_compress_sub">~60%% smaller with no visible quality loss</string>
+    <string name="photo_opt_toggle_compress_sub" formatted="false">~60% smaller with no visible quality loss</string>
     <string name="photo_opt_toggle_gps">Remove Hidden Location Info</string>
     <string name="photo_opt_toggle_gps_sub">Strips GPS tags (%1$d photos tagged)</string>
     <string name="photo_opt_batch_cta">Shrink %1$d Photos (Save ~%2$s)</string>
@@ -673,4 +673,50 @@
     <string name="update_required_title">Update Required (v%1$s)</string>
     <string name="update_required_default_body">A critical security and stability update is required to continue using SWEEPR Cleaner.</string>
     <string name="update_required_cta">Update on Google Play</string>
+
+    <!-- Added v1.0.5 Paywall, Vault, Storage Win & Localization Parity -->
+    <string name="addon_included_in_pro">INCLUDED IN PRO</string>
+    <string name="addon_active_badge">ACTIVE</string>
+    <string name="addon_battery_title">Battery Health &amp; Thermal Saver</string>
+    <string name="addon_battery_desc" formatted="false">80% charge-limit unplug guard, thermal overheat alerts, and voltage health monitoring — included in SWEEPR Pro.</string>
+    <string name="addon_battery_buy">Unlock Battery Care — %1$s/yr</string>
+    <string name="addon_vault_title">Private File Lockbox (AES-256)</string>
+    <string name="addon_vault_desc">Lock sensitive photos, IDs, and documents offline using AES-256-GCM hardware-backed encryption — included in SWEEPR Pro.</string>
+    <string name="addon_vault_buy">Unlock Private Lockbox — %1$s/yr</string>
+    <string name="paywall_eyebrow">SWEEPR PRO</string>
+    <string name="paywall_headline">Unlock Full Storage &amp; Privacy Control</string>
+    <string name="paywall_subheadline">Clean faster with unlimited smart cleanup, 4K video shrinking, Battery Care &amp; AES-256 Lockbox included.</string>
+    <string name="paywall_plan_monthly">Monthly</string>
+    <string name="paywall_plan_six_months">6 Months</string>
+    <string name="paywall_plan_yearly">Yearly</string>
+    <string name="paywall_included_title">INCLUDED WITH SWEEPR PRO</string>
+    <string name="paywall_included_battery" formatted="false">Battery Health &amp; Thermal Saver (80% charge guard)</string>
+    <string name="paywall_included_vault">AES-256 Private File Lockbox</string>
+    <string name="paywall_continue_for">Continue for %1$s</string>
+    <string name="paywall_sign_in_prompt">Already subscribed on desktop or web? Sign in</string>
+    <string name="billing_purchase_pending">Purchase is pending confirmation from Google Play.</string>
+    <string name="compressor_cancelled">Video compression cancelled.</string>
+    <string name="quick_clean_best_kept">✓ Best Kept</string>
+    <string name="battery_storage_shortcut_desc">Jump straight to Android\'s system Storage Settings to clear third-party app caches on Android 11+.</string>
+    <string name="vault_msg_unlock_first">Unlock your existing vault files with your current password before adding new files.</string>
+    <string name="vault_mismatch_title">Unlock Existing Vault First</string>
+    <string name="vault_mismatch_body">Your existing locked files use a different vault password. Enter that existing password first so your encrypted file index stays intact.</string>
+    <string name="vault_mismatch_unlock_btn">Enter Existing Password</string>
+    <string name="vault_delete_confirm_title">Delete Locked File?</string>
+    <string name="vault_delete_confirm_body">Permanently delete \"%1$s\" from your Private Vault? This cannot be undone.</string>
+    <string name="vault_msg_deleted">Removed file from Private Vault.</string>
+    <string name="win_banner_title">Share My Storage Win (+30 Days Free Pro)</string>
+    <string name="win_banner_subtitle">I Just Reclaimed %1$s · %2$s</string>
+    <string name="win_share_card_cta">Share Card</string>
+    <string name="win_dialog_title">I Just Reclaimed %1$s with SWEEPR</string>
+    <string name="win_card_header">⚡ SWEEPR CLEANER · BENCHMARK CARD</string>
+    <string name="win_card_reclaimed">%1$s Reclaimed</string>
+    <string name="win_card_culprit">Top Culprit: %1$s</string>
+    <string name="win_card_duration_ref">Scan Duration: %1$d ms · %2$s</string>
+    <string name="win_share_summary_with_ms">I just reclaimed %1$s in %2$d ms with SWEEPR Cleaner (Top culprit: %3$s)! Claim +30 days Free Pro: %4$s</string>
+    <string name="win_share_summary_no_ms">I just reclaimed %1$s with SWEEPR Cleaner (Top culprit: %2$s)! Claim +30 days Free Pro: %3$s</string>
+    <string name="win_copied_toast">Copied benchmark link &amp; card to clipboard!</string>
+    <string name="win_btn_copy">Copy Image / Link</string>
+    <string name="win_btn_share_social">X / Reddit / Discord</string>
+    <string name="win_chooser_title">Share on X / Reddit / Discord</string>
 </resources>

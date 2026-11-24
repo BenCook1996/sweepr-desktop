@@ -21,10 +21,12 @@
     <string name="status_no_duplicates">Sem duplicatas</string>
     <plurals name="duplicates_count">
         <item quantity="one">%d duplicata</item>
+        <item quantity="many">%d duplicatas</item>
         <item quantity="other">%d duplicatas</item>
     </plurals>
     <plurals name="videos_count">
         <item quantity="one">%d vídeo</item>
+        <item quantity="many">%d vídeos</item>
         <item quantity="other">%d vídeos</item>
     </plurals>
     <string name="nav_home">Início</string>
@@ -54,28 +56,34 @@
     <string name="storage_free">Espaço livre: %1$s</string>
     <plurals name="card_photos_duplicates">
         <item quantity="one">%1$d duplicata · %2$s</item>
+        <item quantity="many">%1$d duplicatas · %2$s</item>
         <item quantity="other">%1$d duplicatas · %2$s</item>
     </plurals>
     <plurals name="card_swipe_subtitle">
         <item quantity="one">%d item para revisar\nmês a mês</item>
+        <item quantity="many">%d itens para revisar\nmês a mês</item>
         <item quantity="other">%d itens para revisar\nmês a mês</item>
     </plurals>
     <plurals name="card_screenshots_found">
         <item quantity="one">%1$d encontrada\n%2$s</item>
+        <item quantity="many">%1$d encontradas\n%2$s</item>
         <item quantity="other">%1$d encontradas\n%2$s</item>
     </plurals>
     <plurals name="card_contacts_to_merge">
         <item quantity="one">%d para mesclar</item>
+        <item quantity="many">%d para mesclar</item>
         <item quantity="other">%d para mesclar</item>
     </plurals>
     <string name="cleanup_working">Trabalhando…</string>
     <string name="cleanup_now">Limpar agora</string>
     <plurals name="cleanup_files">
         <item quantity="one">%d arquivo</item>
+        <item quantity="many">%d arquivos</item>
         <item quantity="other">%d arquivos</item>
     </plurals>
     <plurals name="cleanup_merge_contacts">
         <item quantity="one">mesclar %d contato</item>
+        <item quantity="many">mesclar %d contatos</item>
         <item quantity="other">mesclar %d contatos</item>
     </plurals>
     <string name="clean_title">Limpeza Inteligente</string>
@@ -86,18 +94,22 @@
     <string name="clean_storage_used">%1$s de %2$s usados</string>
     <plurals name="clean_photos_status">
         <item quantity="one">%1$d duplicata/similar · %2$s</item>
+        <item quantity="many">%1$d duplicatas/similares · %2$s</item>
         <item quantity="other">%1$d duplicatas/similares · %2$s</item>
     </plurals>
     <plurals name="clean_videos_status">
         <item quantity="one">%1$d vídeo · %2$s</item>
+        <item quantity="many">%1$d vídeos · %2$s</item>
         <item quantity="other">%1$d vídeos · %2$s</item>
     </plurals>
     <plurals name="screenshots_status">
         <item quantity="one">%1$d captura · %2$s</item>
+        <item quantity="many">%1$d capturas · %2$s</item>
         <item quantity="other">%1$d capturas · %2$s</item>
     </plurals>
     <plurals name="clean_swipe_status">
         <item quantity="one">%d item, mês a mês</item>
+        <item quantity="many">%d itens, mês a mês</item>
         <item quantity="other">%d itens, mês a mês</item>
     </plurals>
     <string name="media_play_video">Reproduzir vídeo</string>
@@ -111,10 +123,12 @@
     <string name="tab_videos">Vídeos (%1$d)</string>
     <plurals name="group_identical_copies">
         <item quantity="one">%d cópia idêntica</item>
+        <item quantity="many">%d cópias idênticas</item>
         <item quantity="other">%d cópias idênticas</item>
     </plurals>
     <plurals name="group_similar_shots">
         <item quantity="one">%d foto similar</item>
+        <item quantity="many">%d fotos similares</item>
         <item quantity="other">%d fotos similares</item>
     </plurals>
     <string name="empty_no_duplicates">Nenhuma foto ou vídeo duplicado 🎉</string>
@@ -132,6 +146,7 @@
     <string name="contacts_select_to_merge">Selecione contatos para mesclar</string>
     <plurals name="contacts_merge_n">
         <item quantity="one">Mesclar %d duplicata</item>
+        <item quantity="many">Mesclar %d duplicatas</item>
         <item quantity="other">Mesclar %d duplicatas</item>
     </plurals>
     <string name="contacts_permission_text">SWEEPR Cleaner precisa de acesso aos contatos para encontrar duplicatas.</string>
@@ -148,6 +163,7 @@
     <string name="swipe_intro">Escolha um mês, deslize à esquerda para apagar, à direita para guardar.</string>
     <plurals name="swipe_month_items">
         <item quantity="one">%1$d item · %2$s</item>
+        <item quantity="many">%1$d itens · %2$s</item>
         <item quantity="other">%1$d itens · %2$s</item>
     </plurals>
     <string name="swipe_progress">Revisados %1$d/%2$d · para apagar: %3$d</string>
@@ -156,6 +172,7 @@
     <string name="swipe_kept_everything">Você guardou tudo deste mês.</string>
     <plurals name="swipe_move_n">
         <item quantity="one">Toque abaixo para mover %d item para a lixeira.</item>
+        <item quantity="many">Toque abaixo para mover %d itens para a lixeira.</item>
         <item quantity="other">Toque abaixo para mover %d itens para a lixeira.</item>
     </plurals>
     <string name="swipe_start_again">Começar o mês de novo</string>
@@ -176,15 +193,18 @@
     <string name="msg_nothing_deleted">Nada foi apagado</string>
     <plurals name="msg_freed_deleted">
         <item quantity="one">Liberado %1$s · %2$d item apagado</item>
+        <item quantity="many">Liberado %1$s · %2$d itens apagados</item>
         <item quantity="other">Liberado %1$s · %2$d itens apagados</item>
     </plurals>
     <plurals name="msg_freed_trashed">
         <item quantity="one">Liberado %1$s · %2$d item na lixeira</item>
+        <item quantity="many">Liberado %1$s · %2$d itens na lixeira</item>
         <item quantity="other">Liberado %1$s · %2$d itens na lixeira</item>
     </plurals>
     <string name="msg_merge_failed">Não foi possível mesclar</string>
     <plurals name="msg_merged">
         <item quantity="one">Mesclado %d contato duplicado</item>
+        <item quantity="many">Mesclados %d contatos duplicados</item>
         <item quantity="other">Mesclados %d contatos duplicados</item>
     </plurals>
     <string name="msg_allow_contacts_merge">Permita acesso aos contatos para mesclar</string>
@@ -402,13 +422,13 @@
     <string name="triage_review_again">Revisar novamente</string>
     <string name="triage_btn_trash">Lixeira</string>
     <string name="triage_btn_keep">Manter</string>
-    <string name="triage_sharpness_badge">Nitidez %1$s</string>
+    <string name="triage_sharpness_badge">Foto nítida</string>
     <string name="triage_marked_trash_badge">LIXEIRA</string>
 
     <string name="media_opt_tab_video">Compressor de Vídeo</string>
     <string name="media_opt_tab_photo_privacy">Otimizador de Fotos e GPS</string>
     <string name="photo_opt_toggle_compress">Comprimir tamanho (82% JPEG)</string>
-    <string name="photo_opt_toggle_compress_sub">Reduz &gt;2560px e codifica com 82% de qualidade</string>
+    <string name="photo_opt_toggle_compress_sub" formatted="false">Reduz &gt;2560px e codifica com 82% de qualidade</string>
     <string name="photo_opt_toggle_gps">Remover coordenadas GPS EXIF</string>
     <string name="photo_opt_toggle_gps_sub">Remove tags GPS ocultas (%1$d fotos com GPS)</string>
     <string name="photo_opt_batch_cta">Otimizar %1$d fotos (Economizar ~%2$s)</string>
@@ -457,4 +477,203 @@
     <string name="update_required_title">Atualização obrigatória (v%1$s)</string>
     <string name="update_required_default_body">Uma atualização crítica de segurança e estabilidade é necessária para continuar usando o SWEEPR Cleaner.</string>
     <string name="update_required_cta">Atualizar no Google Play</string>
+
+    <!-- Added v1.0.5 Full Parity Translations -->
+    <string name="acct_pro_unlocked">SWEEPR Pro desbloqueado — tudo pronto!</string>
+    <string name="action_delete">Excluir</string>
+    <string name="cloud_action_attachments">Limpar mídias salvas de chats</string>
+    <string name="cloud_action_duplicates">Limpar fotos duplicadas e semelhantes</string>
+    <string name="cloud_action_manage">Abrir configurações de armazenamento do %1$s</string>
+    <string name="cloud_action_screenshots">Limpar capturas de tela antigas</string>
+    <string name="cloud_action_videos">Reduzir vídeos grandes</string>
+    <string name="cloud_banner_body">%1$s de duplicatas, capturas de tela e vídeos grandes estão ocupando espaço no %2$s.</string>
+    <string name="cloud_banner_title">%1$s de espaço na nuvem podem ser liberados</string>
+    <string name="cloud_estimate_note">Verificado com privacidade no seu celular — sem login na nuvem.</string>
+    <string name="cloud_eyebrow">LOCALIZADOR DE ESPAÇO NA NUVEM</string>
+    <string name="cloud_headline">Libere %1$s de espaço na nuvem</string>
+    <string name="cloud_headline_body">Excluir arquivos inúteis no celular também libera espaço no backup na nuvem.</string>
+    <string name="cloud_row_attachments">Fotos e vídeos salvos de chats</string>
+    <string name="cloud_row_junk">Fotos duplicadas, borradas e capturas de tela</string>
+    <string name="cloud_row_total_reclaimable">Espaço total na nuvem que você pode liberar</string>
+    <string name="cloud_row_videos">Espaço economizado ao reduzir vídeos grandes</string>
+    <string name="cloud_sync_note">Excluir duplicatas no celular também libera esse espaço no seu backup na nuvem.</string>
+    <string name="cloud_title">Cofre privado e espaço na nuvem</string>
+    <string name="cloud_which_service">Qual backup na nuvem você usa?</string>
+    <string name="done_30_days">30 dias</string>
+    <string name="done_all_clean">TUDO LIMPO</string>
+    <string name="done_button">Concluir</string>
+    <string name="done_days_to_restore">para restaurar</string>
+    <string name="done_files_removed">arquivos removidos</string>
+    <string name="done_freed">%1$s liberados!</string>
+    <string name="done_keep_clean_body">Vamos lembrar você toda semana</string>
+    <string name="done_keep_clean_enabled">Ativado ✓</string>
+    <string name="done_keep_clean_on">Ativar</string>
+    <string name="done_keep_clean_title">Manter limpo automaticamente?</string>
+    <string name="done_left_to_clean">restantes para limpar</string>
+    <string name="done_storage_went">O armazenamento foi de %1$d%% para %2$d%% usado.</string>
+    <string name="home_free_space">Espaço livre</string>
+    <string name="home_more_tools">Mais ferramentas</string>
+    <string name="home_quick_clean">LIMPEZA RÁPIDA</string>
+    <string name="home_rescan">↻ Verificar de novo</string>
+    <string name="home_scan">VERIFICAR</string>
+    <string name="home_scanning">VERIFICANDO</string>
+    <string name="home_storage_details">Detalhes de armazenamento</string>
+    <string name="home_storage_used">Armazenamento usado</string>
+    <string name="home_swipe_body">Mantenha ou remova fotos uma por uma</string>
+    <string name="home_swipe_title">Deslizar para limpar</string>
+    <string name="home_tap_to_review">toque para revisar</string>
+    <string name="home_tap_to_scan">toque para verificar seu celular</string>
+    <string name="home_tile_battery">Bateria</string>
+    <string name="home_tile_battery_hint">Saúde e carga</string>
+    <string name="home_tile_contacts">Contatos</string>
+    <string name="home_tile_needs_permission">Permitir</string>
+    <string name="home_tile_not_scanned">Toque para verificar</string>
+    <string name="home_tile_nothing">Tudo limpo</string>
+    <string name="home_tile_photos">Fotos</string>
+    <string name="home_tile_videos">Vídeos</string>
+    <string name="nav_battery_vault">Bateria e Cofre</string>
+    <string name="nav_swipe">Deslizar</string>
+    <string name="overview_all_tabs">Visão geral</string>
+    <string name="overview_card_big_videos">Vídeos grandes</string>
+    <string name="overview_card_big_videos_note">Reduzir ou remover</string>
+    <string name="overview_card_blurry">Fotos borradas</string>
+    <string name="overview_card_blurry_note">Fora de foco ou tremidas</string>
+    <string name="overview_card_chat">Mídia de chats</string>
+    <string name="overview_card_chat_note">WhatsApp e Telegram</string>
+    <string name="overview_card_duplicates">Duplicatas</string>
+    <string name="overview_card_duplicates_note">Cópias exatas</string>
+    <string name="overview_card_screenshots">Capturas</string>
+    <string name="overview_card_screenshots_note">Geralmente seguras para apagar</string>
+    <string name="overview_card_shrink">Reduzir fotos e vídeos</string>
+    <string name="overview_card_shrink_note">Economize espaço, mantenha tudo</string>
+    <string name="overview_card_similar">Fotos semelhantes</string>
+    <string name="overview_card_similar_note">Mantém a melhor</string>
+    <string name="overview_cleanup_header">Fotos para limpar</string>
+    <string name="overview_used_by_media">usado por mídia</string>
+    <string name="review_finish">Finalizar limpeza</string>
+    <string name="review_more_items">+%1$d mais</string>
+    <string name="review_nothing_found">Nada para limpar agora. Seu celular está ótimo!</string>
+    <string name="review_open_all">Ver tudo</string>
+    <string name="review_other_selected">Também selecionados</string>
+    <string name="review_row_blurry">Fotos borradas</string>
+    <string name="review_row_contacts">Contatos duplicados</string>
+    <string name="review_row_contacts_note">mesclados, não excluídos</string>
+    <string name="review_row_duplicates">Cópias idênticas</string>
+    <string name="review_row_duplicates_note">mantém uma de cada</string>
+    <string name="review_row_other">Escolhido por você</string>
+    <string name="review_row_screenshots">Capturas de tela</string>
+    <string name="review_row_similar">Fotos semelhantes</string>
+    <string name="review_row_similar_note">mantém a melhor</string>
+    <string name="review_safe_to_clean">Seguro para limpar</string>
+    <string name="review_selected">Selecionado (%1$s)</string>
+    <string name="review_size_items">%1$s • %2$d itens</string>
+    <string name="review_title">Revisão de limpeza rápida</string>
+    <string name="review_undo_note">🛡️ Movido para a Lixeira – restaure em até 30 dias</string>
+    <string name="shrink_after">Depois · ~%1$s</string>
+    <string name="shrink_balanced">Equilibrado</string>
+    <string name="shrink_before">Antes · %1$s</string>
+    <string name="shrink_clean_n_photos">Remover localização de %1$d fotos</string>
+    <string name="shrink_gentle">Suave</string>
+    <string name="shrink_gps_toggle_chip">Remover tags ocultas de localização GPS</string>
+    <string name="shrink_looks_same">Fica igual na tela do seu celular</string>
+    <string name="shrink_maximum">Máximo</string>
+    <string name="shrink_n_photos">Reduzir %1$d fotos (Economize ~%2$s)</string>
+    <string name="shrink_n_videos">vídeos</string>
+    <string name="shrink_photo_balanced_desc">Até 2560px · Idêntica em telas de celular</string>
+    <string name="shrink_photo_gentle_desc">Até 3200px · Ideal para impressão e telas grandes</string>
+    <string name="shrink_photo_maximum_desc">Até 1920px · Libera mais armazenamento</string>
+    <string name="shrink_recommended">Melhor</string>
+    <string name="shrink_safety_note">Os originais ficam intactos salvo se «Mover originais para a Lixeira» estiver ativo.</string>
+    <string name="shrink_screen_size">tamanho de tela</string>
+    <string name="shrink_select_photos">Selecione fotos para reduzir</string>
+    <string name="shrink_smaller">menor</string>
+    <string name="shrink_strength_label">NÍVEL DE COMPRESSÃO</string>
+    <string name="shrink_total_saved">total economizado</string>
+    <string name="shrink_video_hint">Toque em Reduzir em um vídeo abaixo para comprimi-lo.</string>
+    <string name="vault_btn_encrypt">+ Bloquear foto ou arquivo…</string>
+    <string name="vault_btn_restore">Restaurar</string>
+    <string name="vault_btn_unlock">Desbloquear meu Cofre</string>
+    <string name="vault_empty">Nenhum arquivo bloqueado no seu Cofre privado ainda.</string>
+    <string name="vault_eyebrow">COFRE PRIVADO DE ARQUIVOS</string>
+    <string name="vault_hide">Ocultar</string>
+    <string name="vault_locked_file">Arquivo privado bloqueado</string>
+    <string name="vault_msg_encrypted">%1$d arquivo(s) bloqueado(s) no seu Cofre privado.</string>
+    <string name="vault_msg_error">Não foi possível bloquear o arquivo selecionado.</string>
+    <string name="vault_msg_restored">%1$s salvo de volta no seu celular.</string>
+    <string name="vault_msg_short_pw">Digite uma senha com pelo menos 8 caracteres.</string>
+    <string name="vault_msg_unlocked">Cofre desbloqueado — exibindo seus arquivos.</string>
+    <string name="vault_msg_wrong_pw">Essa senha não corresponde aos arquivos deste cofre.</string>
+    <string name="vault_password_label">Senha do cofre (mínimo 8 caracteres)</string>
+    <string name="vault_show">Mostrar</string>
+    <string name="vault_subtitle">Proteja fotos, documentos e IDs confidenciais com uma senha que só você conhece.</string>
+    <string name="vault_title">Cofre privado de fotos e documentos</string>
+    <string name="addon_included_in_pro">INCLUÍDO NO PRO</string>
+    <string name="addon_active_badge">ATIVO</string>
+    <string name="addon_battery_title">Saúde da bateria e proteção térmica</string>
+    <string name="addon_battery_desc" formatted="false">Alerta de desconexão aos 80%, avisos de superaquecimento e monitoramento de voltagem — incluído no SWEEPR Pro.</string>
+    <string name="addon_battery_buy">Desbloquear Cuidado da Bateria — %1$s/ano</string>
+    <string name="addon_vault_title">Cofre privado de arquivos (AES-256)</string>
+    <string name="addon_vault_desc">Proteja fotos e documentos offline com criptografia por hardware AES-256-GCM — incluído no SWEEPR Pro.</string>
+    <string name="addon_vault_buy">Desbloquear Cofre Privado — %1$s/ano</string>
+    <string name="paywall_eyebrow">SWEEPR PRO</string>
+    <string name="paywall_headline">Controle total de espaço e privacidade</string>
+    <string name="paywall_subheadline">Limpe mais rápido com limpeza inteligente ilimitada, compressão 4K, Cuidado da Bateria e Cofre AES-256 incluídos.</string>
+    <string name="paywall_plan_monthly">Mensal</string>
+    <string name="paywall_plan_six_months">6 meses</string>
+    <string name="paywall_plan_yearly">Anual</string>
+    <string name="paywall_included_title">INCLUÍDO NO SWEEPR PRO</string>
+    <string name="paywall_included_battery" formatted="false">Saúde da bateria e proteção térmica (limite 80%)</string>
+    <string name="paywall_included_vault">Cofre privado AES-256</string>
+    <string name="paywall_continue_for">Continuar por %1$s</string>
+    <string name="paywall_sign_in_prompt">Já assinou no desktop ou web? Entrar</string>
+    <string name="billing_purchase_pending">Compra aguardando confirmação do Google Play.</string>
+    <string name="compressor_cancelled">Compressão de vídeo cancelada.</string>
+    <string name="quick_clean_best_kept">✓ Melhor mantida</string>
+    <string name="battery_storage_shortcut_desc">Vá direto às configurações de Armazenamento do sistema para limpar caches de apps no Android 11+.</string>
+    <string name="vault_msg_unlock_first">Desbloqueie primeiro os arquivos existentes com sua senha atual antes de adicionar novos.</string>
+    <string name="vault_mismatch_title">Desbloqueie o cofre existente primeiro</string>
+    <string name="vault_mismatch_body">Seus arquivos bloqueados atuais usam outra senha. Digite essa senha primeiro para manter seu índice criptografado íntegro.</string>
+    <string name="vault_mismatch_unlock_btn">Digitar senha atual</string>
+    <string name="vault_delete_confirm_title">Excluir arquivo bloqueado?</string>
+    <string name="vault_delete_confirm_body">Excluir permanentemente \"%1$s\" do Cofre privado? Esta ação não pode ser desfeita.</string>
+    <string name="vault_msg_deleted">Arquivo removido do Cofre privado.</string>
+    <string name="win_banner_title">Compartilhar meu ganho (+30 dias Pro grátis)</string>
+    <string name="win_banner_subtitle">Acabei de liberar %1$s · %2$s</string>
+    <string name="win_share_card_cta">Compartilhar cartão</string>
+    <string name="win_dialog_title">Acabei de liberar %1$s com o SWEEPR</string>
+    <string name="win_card_header">⚡ SWEEPR CLEANER · CARTÃO DE BENCHMARK</string>
+    <string name="win_card_reclaimed">%1$s liberados</string>
+    <string name="win_card_culprit">Maior responsável: %1$s</string>
+    <string name="win_card_duration_ref">Duração da análise: %1$d ms · %2$s</string>
+    <string name="win_share_summary_with_ms">Acabei de liberar %1$s em %2$d ms com o SWEEPR Cleaner (Maior responsável: %3$s)! Garanta +30 dias de Pro grátis: %4$s</string>
+    <string name="win_share_summary_no_ms">Acabei de liberar %1$s com o SWEEPR Cleaner (Maior responsável: %2$s)! Garanta +30 dias de Pro grátis: %3$s</string>
+    <string name="win_copied_toast">Link e cartão copiados para a área de transferência!</string>
+    <string name="win_btn_copy">Copiar link / imagem</string>
+    <string name="win_btn_share_social">X / Reddit / Discord</string>
+    <string name="win_chooser_title">Compartilhar no X / Reddit / Discord</string>
+    <plurals name="overview_photos">
+        <item quantity="one">%1$d foto</item>
+        <item quantity="many">%1$d fotos</item>
+        <item quantity="other">%1$d fotos</item>
+    </plurals>
+    <plurals name="overview_videos">
+        <item quantity="one">%1$d vídeo</item>
+        <item quantity="many">%1$d vídeos</item>
+        <item quantity="other">%1$d vídeos</item>
+    </plurals>
+    <plurals name="overview_screenshots">
+        <item quantity="one">%1$d captura</item>
+        <item quantity="many">%1$d capturas</item>
+        <item quantity="other">%1$d capturas</item>
+    </plurals>
+    <plurals name="review_groups">
+        <item quantity="one">%1$d grupo</item>
+        <item quantity="many">%1$d grupos</item>
+        <item quantity="other">%1$d grupos</item>
+    </plurals>
+    <plurals name="home_tile_contacts_dupes">
+        <item quantity="one">%1$d duplicata</item>
+        <item quantity="many">%1$d duplicatas</item>
+        <item quantity="other">%1$d duplicatas</item>
+    </plurals>
 </resources>

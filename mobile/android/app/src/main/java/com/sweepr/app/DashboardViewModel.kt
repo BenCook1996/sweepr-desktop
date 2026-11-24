@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.IntentSender
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,13 +16,17 @@ import com.revenuecat.purchases.awaitCustomerInfo
 import com.revenuecat.purchases.interfaces.LogInCallback
 import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.restorePurchasesWith
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
 
 /** A trash or restore request waiting for the user to confirm it in the Android 11+ system dialog. */
 data class PendingTrash(
@@ -45,6 +50,34 @@ data class SubscriptionInfo(
 
 const val PREMIUM_ENTITLEMENT = "premium"
 const val CLOUD_VAULT_ENTITLEMENT = "cloud_vault"
+
+internal val EMAIL_OTP_CODE_REGEX = Regex("^\\d{6}$")
+internal val FULL_ACTIVATION_KEY_REGEX =
+    Regex("^(?:SWEEPR|SWP|CLN|GOTD|DEEPBLOCK)-[A-Z0-9]{2,16}(?:-[A-Z0-9]{2,16}){1,5}$")
+
+internal fun isValidVerificationCode(raw: String): Boolean {
+    val normalized = raw.trim().uppercase()
+    return EMAIL_OTP_CODE_REGEX.matches(normalized) || FULL_ACTIVATION_KEY_REGEX.matches(normalized)
+}
+
+internal fun shouldShowStorageWinBanner(
+    totalBytesFreed: Long,
+    reclaimedBytesOverride: Long? = null,
+): Boolean = (reclaimedBytesOverride?.takeIf { it > 0L } ?: totalBytesFreed) > 0L
+
+internal fun shouldShowAnnualRetentionOffer(
+    sub: SubscriptionInfo,
+    linked: Prefs.LinkedAccount,
+    hasActivePlaySub: Boolean,
+): Boolean {
+    if (!sub.active) return false
+    val prod = (sub.productId ?: linked.plan ?: "").trim().lowercase()
+    if (prod.isBlank() || prod.contains("annual") || prod.contains("year")) return false
+    val isMonthlyOrSixMonth = prod.contains("month") || prod.contains("6m")
+    if (!isMonthlyOrSixMonth) return false
+    val isPlayManaged = hasActivePlaySub || !sub.managementUrl.isNullOrBlank() || prod.startsWith("sweepr_")
+    return isPlayManaged
+}
 
 /**
  * Real result of the most recent media cleanup, shown on the Cleaning Complete screen.
@@ -83,6 +116,8 @@ data class DashboardState(
     val subscription: SubscriptionInfo = SubscriptionInfo(),
     val linkedAccount: LinkedAccount = LinkedAccount(),
     val lastCleanup: CleanupSummary? = null,
+    val totalBytesFreed: Long = Prefs.totalBytesFreed.value,
+    val lastScanDurationMs: Long = 0L,
     val updateStatus: AppUpdateStatus = AppUpdateStatus(),
 ) {
     val hasPremium: Boolean get() = subscription.active
@@ -105,8 +140,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     /** StatFs storage-used fraction captured when a trash request starts (for the Cleaning Complete screen). */
     private var storageBeforeClean: Float? = null
+    private var compressionJob: Job? = null
 
-    private val _state = MutableStateFlow(DashboardState(linkedAccount = Prefs.account.value))
+    private val _state = MutableStateFlow(
+        DashboardState(
+            linkedAccount = Prefs.account.value,
+            totalBytesFreed = Prefs.totalBytesFreed.value,
+        ),
+    )
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
     private fun isServerAccountCurrentlyEntitled(acc: Prefs.LinkedAccount?): Boolean {
@@ -147,45 +188,51 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         return if (exp > 0L) (if (exp > 10_000_000_000L) exp else exp * 1000L) else null
     }
 
-    init {
-        val linked = Prefs.account.value
+    private fun applyEntitledState(
+        linked: Prefs.LinkedAccount,
+        isWorking: Boolean? = null,
+        message: String? = null,
+        preferServerDates: Boolean = false,
+    ) {
         serverActive = isServerAccountCurrentlyEntitled(linked)
-        val initialActive = rcActive || serverActive
-        val initialBatteryCare = initialActive || rcBatteryCare || isServerBatteryCareEntitled(linked)
-        val initialCloudVault = initialActive || rcCloudVault || isServerCloudVaultEntitled(linked)
-        BatteryCareManager.enforceEntitlement(application, initialActive || initialBatteryCare)
+        val active = rcActive || serverActive
+        val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(linked)
+        val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(linked)
+        BatteryCareManager.enforceEntitlement(app, active || batActive)
         _state.update { s ->
+            val fallbackPlayProd = PlayBillingManager.activeBaseProductId()
             s.copy(
+                isWorking = isWorking ?: s.isWorking,
                 linkedAccount = linked,
                 subscription = s.subscription.copy(
-                    active = initialActive,
-                    batteryCareActive = initialBatteryCare,
-                    cloudVaultActive = initialCloudVault,
-                    productId = s.subscription.productId ?: linked.plan,
-                    expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(linked),
+                    active = active,
+                    batteryCareActive = batActive,
+                    cloudVaultActive = vaultActive,
+                    productId = if (rcActive) s.subscription.productId else (linked.plan ?: fallbackPlayProd ?: s.subscription.productId),
+                    expiresAt = if (rcActive && !preferServerDates) {
+                        s.subscription.expiresAt
+                    } else {
+                        serverExpiresAtMillis(linked) ?: s.subscription.expiresAt
+                    },
                 ),
+                message = message ?: s.message,
             )
+        }
+    }
+
+    init {
+        val linked = Prefs.account.value
+        applyEntitledState(linked)
+
+        viewModelScope.launch {
+            Prefs.totalBytesFreed.collect { total ->
+                _state.update { s -> s.copy(totalBytesFreed = total) }
+            }
         }
 
         viewModelScope.launch {
             Prefs.account.collect { acc ->
-                serverActive = isServerAccountCurrentlyEntitled(acc)
-                val active = rcActive || serverActive
-                val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(acc)
-                val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(acc)
-                BatteryCareManager.enforceEntitlement(app, active || batActive)
-                _state.update { s ->
-                    s.copy(
-                        linkedAccount = acc,
-                        subscription = s.subscription.copy(
-                            active = active,
-                            batteryCareActive = batActive,
-                            cloudVaultActive = vaultActive,
-                            productId = if (rcActive) s.subscription.productId else (acc.plan ?: s.subscription.productId),
-                            expiresAt = if (rcActive) s.subscription.expiresAt else (serverExpiresAtMillis(acc) ?: s.subscription.expiresAt),
-                        ),
-                    )
-                }
+                applyEntitledState(acc)
             }
         }
 
@@ -215,28 +262,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 withContext(Dispatchers.IO) {
                     runCatching { SweeprAccountApi.refreshEntitlement(linked) }.onSuccess { updated ->
                         Prefs.setLinkedAccount(updated)
-                        serverActive = isServerAccountCurrentlyEntitled(updated)
-                        val active = rcActive || serverActive
-                        val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
-                        val vaultActive = active || rcCloudVault || isServerCloudVaultEntitled(updated)
-                        BatteryCareManager.enforceEntitlement(app, active || batActive)
-                        _state.update { s ->
-                            s.copy(
-                                linkedAccount = updated,
-                                subscription = s.subscription.copy(
-                                    active = active,
-                                    batteryCareActive = batActive,
-                                    cloudVaultActive = vaultActive,
-                                    expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
-                                ),
-                            )
-                        }
+                        applyEntitledState(updated, preferServerDates = true)
                     }
                 }
             } else {
-                val active = rcActive || serverActive
-                val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(linked)
-                BatteryCareManager.enforceEntitlement(app, active || batActive)
+                applyEntitledState(linked)
             }
         }
     }
@@ -271,42 +301,22 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun applyCustomerInfo(info: CustomerInfo) = updateCustomerInfo(info)
 
     private fun onAccountLinked(linked: Prefs.LinkedAccount) {
-        serverActive = isServerAccountCurrentlyEntitled(linked)
-        val active = rcActive || serverActive
-        val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(linked)
-        BatteryCareManager.enforceEntitlement(app, active || batActive)
-        _state.update { s ->
-            s.copy(
-                isWorking = false,
-                linkedAccount = linked,
-                subscription = s.subscription.copy(
-                    active = active,
-                    batteryCareActive = batActive,
-                    productId = if (rcActive) s.subscription.productId else linked.plan,
-                    expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(linked),
-                ),
-                message = locApp.getString(R.string.account_signed_in_as, linked.email),
-            )
-        }
+        applyEntitledState(
+            linked = linked,
+            isWorking = false,
+            message = locApp.getString(R.string.account_signed_in_as, linked.email),
+            preferServerDates = true,
+        )
     }
 
     private fun onAccountUnlinked(message: String, isWorking: Boolean = false) {
         val cleared = Prefs.account.value
-        serverActive = isServerAccountCurrentlyEntitled(cleared)
-        val active = rcActive || serverActive
-        val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(cleared)
-        BatteryCareManager.enforceEntitlement(app, active || batActive)
-        _state.update { s ->
-            s.copy(
-                isWorking = isWorking,
-                linkedAccount = cleared,
-                subscription = s.subscription.copy(
-                    active = active,
-                    batteryCareActive = batActive,
-                ),
-                message = message,
-            )
-        }
+        applyEntitledState(
+            linked = cleared,
+            isWorking = isWorking,
+            message = message,
+            preferServerDates = true,
+        )
     }
 
     fun sendOtp(email: String, onSent: () -> Unit) {
@@ -330,15 +340,17 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun verifyOtp(email: String, code: String, onVerified: () -> Unit) {
-        if (code.trim().length != 6) {
+        val trimmedCode = code.trim()
+        if (!isValidVerificationCode(trimmedCode)) {
             showMessage(locApp.getString(R.string.account_otp_enter_6_digits))
             return
         }
+        val normalizedCode = if (EMAIL_OTP_CODE_REGEX.matches(trimmedCode)) trimmedCode else trimmedCode.uppercase()
         viewModelScope.launch {
             _state.update { it.copy(isWorking = true) }
             val deviceId = Prefs.account.value.deviceId
             val result = withContext(Dispatchers.IO) {
-                runCatching { SweeprAccountApi.verifyOtp(email, code, deviceId) }
+                runCatching { SweeprAccountApi.verifyOtp(email, normalizedCode, deviceId) }
             }
             result.onSuccess { linked ->
                 Prefs.setLinkedAccount(linked)
@@ -412,23 +424,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
             res.onSuccess { updated ->
                 Prefs.setLinkedAccount(updated)
-                serverActive = isServerAccountCurrentlyEntitled(updated)
-                val active = rcActive || serverActive
-                val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
-                BatteryCareManager.enforceEntitlement(app, active || batActive)
-                _state.update { s ->
-                    s.copy(
-                        isWorking = false,
-                        linkedAccount = updated,
-                        subscription = s.subscription.copy(
-                            active = active,
-                            batteryCareActive = batActive,
-                            productId = if (rcActive) s.subscription.productId else updated.plan,
-                            expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
-                        ),
-                        message = "Referral code ${updated.redeemedReferralCode} applied! +30 days Pro unlocked.",
-                    )
-                }
+                applyEntitledState(
+                    linked = updated,
+                    isWorking = false,
+                    message = "Referral code ${updated.redeemedReferralCode} applied! +30 days Pro unlocked.",
+                    preferServerDates = true,
+                )
                 onDone()
             }.onFailure { err ->
                 _state.update { it.copy(isWorking = false) }
@@ -494,75 +495,81 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    /** Syncs a Google Play purchase with the SWEEPR backend + Central CRM and updates local entitlement state. */
-    fun syncGooglePlayPurchase(
+    private suspend fun syncGooglePlayPurchaseSuspend(
         productId: String,
         purchaseToken: String,
         orderId: String? = null,
         isNewPurchase: Boolean = false,
-    ) {
+        showErrorOnFailure: Boolean = true,
+    ): Boolean {
         val isAddonOnly = productId.contains("battery_care", ignoreCase = true) ||
             productId.contains("cloud_vault", ignoreCase = true)
         val current = _state.value.linkedAccount
-
-        viewModelScope.launch {
-            _state.update { it.copy(isWorking = true) }
-            val res = withContext(Dispatchers.IO) {
-                runCatching {
-                    SweeprAccountApi.verifyGooglePlayPurchase(
-                        productId = productId,
-                        purchaseToken = purchaseToken,
-                        orderId = orderId,
-                        current = current,
-                    )
-                }
+        val res = withContext(Dispatchers.IO) {
+            runCatching {
+                SweeprAccountApi.verifyGooglePlayPurchase(
+                    productId = productId,
+                    purchaseToken = purchaseToken,
+                    orderId = orderId,
+                    current = current,
+                )
             }
-            res.onSuccess { updated ->
+        }
+        return res.fold(
+            onSuccess = { updated ->
                 val isCloudVaultSku = productId.equals("sweepr_cloud_vault_999", ignoreCase = true) ||
                     productId.contains("cloud_vault", ignoreCase = true)
-                var hasCloudVault = rcCloudVault
                 if (updated.serverActive) {
                     if (!isAddonOnly) {
                         rcActive = true
                     } else if (isCloudVaultSku) {
-                        hasCloudVault = true
                         rcCloudVault = true
                     } else {
                         rcBatteryCare = true
                     }
                 }
                 Prefs.setLinkedAccount(updated)
-                serverActive = isServerAccountCurrentlyEntitled(updated)
-                val active = rcActive || serverActive
-                val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
-                val vaultActive = active || hasCloudVault || isServerCloudVaultEntitled(updated)
-                BatteryCareManager.enforceEntitlement(app, active || batActive)
-                _state.update { s ->
-                    s.copy(
-                        isWorking = false,
-                        linkedAccount = updated,
-                        subscription = s.subscription.copy(
-                            active = active,
-                            batteryCareActive = batActive,
-                            cloudVaultActive = vaultActive,
-                            productId = s.subscription.productId ?: updated.plan,
-                            expiresAt = s.subscription.expiresAt ?: serverExpiresAtMillis(updated),
-                        ),
-                        message = if (active || batActive || vaultActive) {
-                            locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored)
-                        } else {
-                            s.message
-                        },
-                    )
+                val unlocked = rcActive || isServerAccountCurrentlyEntitled(updated) ||
+                    rcBatteryCare || isServerBatteryCareEntitled(updated) ||
+                    rcCloudVault || isServerCloudVaultEntitled(updated)
+                val msg = if (unlocked) {
+                    locApp.getString(if (isNewPurchase) R.string.acct_pro_unlocked else R.string.msg_premium_restored)
+                } else null
+                applyEntitledState(updated, isWorking = false, message = msg, preferServerDates = true)
+                unlocked
+            },
+            onFailure = { err ->
+                if (showErrorOnFailure) {
+                    _state.update { s ->
+                        s.copy(
+                            isWorking = false,
+                            message = err.message ?: "Could not verify purchase with server.",
+                        )
+                    }
                 }
-            }.onFailure { err ->
-                _state.update { s ->
-                    s.copy(
-                        isWorking = false,
-                        message = err.message ?: "Could not verify purchase with server.",
-                    )
-                }
-            }
+                false
+            },
+        )
+    }
+
+    /** Syncs a Google Play purchase with the SWEEPR backend + Central CRM and updates local entitlement state. */
+    fun syncGooglePlayPurchase(
+        productId: String,
+        purchaseToken: String,
+        orderId: String? = null,
+        isNewPurchase: Boolean = false,
+        onComplete: (Boolean) -> Unit = {},
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val unlocked = syncGooglePlayPurchaseSuspend(
+                productId = productId,
+                purchaseToken = purchaseToken,
+                orderId = orderId,
+                isNewPurchase = isNewPurchase,
+                showErrorOnFailure = true,
+            )
+            onComplete(unlocked)
         }
     }
 
@@ -608,61 +615,49 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     /** Re-attaches a Google Play subscription bought earlier (new phone, reinstall). */
     fun restorePurchases() {
-        _state.update { it.copy(isWorking = true) }
-        PlayBillingManager.queryActivePurchases(app) { activePlayPurchases ->
+        viewModelScope.launch {
+            _state.update { it.copy(isWorking = true) }
+            val activePlayPurchases = suspendCancellableCoroutine { cont ->
+                PlayBillingManager.queryActivePurchases(app) { list ->
+                    if (cont.isActive) cont.resume(list)
+                }
+            }
             for (purchase in activePlayPurchases) {
                 val prodId = purchase.products.firstOrNull() ?: "sweepr_annual_4999"
-                syncGooglePlayPurchase(
+                syncGooglePlayPurchaseSuspend(
                     productId = prodId,
                     purchaseToken = purchase.purchaseToken,
                     orderId = purchase.orderId,
+                    isNewPurchase = false,
+                    showErrorOnFailure = false,
                 )
             }
-            viewModelScope.launch {
-                val linked = _state.value.linkedAccount
-                if (linked.isSignedIn) {
-                    withContext(Dispatchers.IO) {
-                        runCatching { SweeprAccountApi.refreshEntitlement(linked) }.onSuccess { updated ->
-                            Prefs.setLinkedAccount(updated)
-                            serverActive = isServerAccountCurrentlyEntitled(updated)
-                            val active = rcActive || serverActive
-                            val batActive = active || rcBatteryCare || isServerBatteryCareEntitled(updated)
-                            BatteryCareManager.enforceEntitlement(app, active || batActive)
-                            _state.update { s ->
-                                s.copy(
-                                    linkedAccount = updated,
-                                    subscription = s.subscription.copy(
-                                        active = active,
-                                        batteryCareActive = batActive,
-                                        expiresAt = if (rcActive) s.subscription.expiresAt else serverExpiresAtMillis(updated),
-                                    ),
-                                )
-                            }
-                        }
+            val linked = _state.value.linkedAccount
+            if (linked.isSignedIn) {
+                withContext(Dispatchers.IO) {
+                    runCatching { SweeprAccountApi.refreshEntitlement(linked) }.onSuccess { updated ->
+                        Prefs.setLinkedAccount(updated)
+                        applyEntitledState(updated, preferServerDates = true)
                     }
                 }
-                val finishRestore = {
-                    _state.update { s ->
-                        val restored = s.hasPremium || s.hasBatteryCare
-                        s.copy(
-                            isWorking = false,
-                            message = if (restored) locApp.getString(R.string.msg_premium_restored) else locApp.getString(R.string.msg_no_subscription_found),
-                        )
-                    }
-                }
-                if (Purchases.isConfigured && BuildConfig.REVENUECAT_API_KEY.startsWith("goog_")) {
+            }
+            if (Purchases.isConfigured && BuildConfig.REVENUECAT_API_KEY.startsWith("goog_")) {
+                val restoredInfo = suspendCancellableCoroutine<CustomerInfo?> { cont ->
                     Purchases.sharedInstance.restorePurchasesWith(
-                        onError = { _ ->
-                            finishRestore()
-                        },
-                        onSuccess = { info ->
-                            applyCustomerInfo(info)
-                            finishRestore()
-                        },
+                        onError = { _ -> if (cont.isActive) cont.resume(null) },
+                        onSuccess = { info -> if (cont.isActive) cont.resume(info) },
                     )
-                } else {
-                    finishRestore()
                 }
+                if (restoredInfo != null) {
+                    applyCustomerInfo(restoredInfo)
+                }
+            }
+            _state.update { s ->
+                val restored = s.hasPremium || s.hasBatteryCare || s.hasCloudVault
+                s.copy(
+                    isWorking = false,
+                    message = if (restored) locApp.getString(R.string.msg_premium_restored) else locApp.getString(R.string.msg_no_subscription_found),
+                )
             }
         }
     }
@@ -670,11 +665,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     fun scan(permissions: PermissionState) {
         if (_state.value.isScanning) return
         viewModelScope.launch {
+            val scanStartMs = SystemClock.elapsedRealtime()
             _state.update { it.copy(isScanning = true, scanStatus = locApp.getString(R.string.scan_status_media)) }
             val media = if (permissions.media) {
                 withContext(Dispatchers.IO) {
                     runCatching { MediaScanner.scan(app) }
-                        .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                        .onFailure { if (it is CancellationException) throw it }
                         .getOrDefault(MediaScanResult())
                 }
             } else MediaScanResult()
@@ -694,6 +690,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 .plus(media.blurry.map { it.uri })
                 .toSet()
 
+            val elapsedMs = (SystemClock.elapsedRealtime() - scanStartMs).coerceAtLeast(1L)
             _state.update {
                 it.copy(
                     isScanning = false,
@@ -706,6 +703,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     selectedTrash = emptySet(),
                     selectedContactGroups = contacts.map { g -> g.key }.toSet(),
                     selectedIncompleteContactIds = emptySet(),
+                    lastScanDurationMs = elapsedMs,
                 )
             }
             StorageWidgetProvider.refreshAll(app)
@@ -781,7 +779,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
      */
     fun compressVideo(item: MediaItem, preset: CompressionPreset = CompressionPreset.COMPACT_720P) {
         if (!_state.value.hasPremium || _state.value.compressingVideo != null) return
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             _state.update {
                 it.copy(
                     compressingVideo = item,
@@ -791,12 +789,23 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
             val result = withContext(Dispatchers.IO) {
                 runCatching {
-                    VideoCompressor.compress(app, item, preset) { progress ->
+                    VideoCompressor.compress(
+                        context = app,
+                        item = item,
+                        preset = preset,
+                        isCancelled = { _state.value.compressingVideo == null },
+                    ) { progress ->
                         _state.update { s -> s.copy(compressionProgress = progress) }
                     }
                 }
             }
+            val err = result.exceptionOrNull()
+            if (err is CancellationException) {
+                _state.update { it.copy(compressingVideo = null, compressionProgress = 0f) }
+                return@launch
+            }
             result.onSuccess { res ->
+                Prefs.addBytesFreed(res.savedBytes)
                 _state.update {
                     it.copy(
                         compressingVideo = null,
@@ -804,15 +813,31 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         compressionResult = res,
                     )
                 }
-            }.onFailure { err ->
+            }.onFailure { failure ->
                 _state.update {
                     it.copy(
                         compressingVideo = null,
                         compressionProgress = 0f,
-                        message = locApp.getString(R.string.compressor_failed, err.message ?: ""),
+                        message = locApp.getString(R.string.compressor_failed, failure.message ?: ""),
                     )
                 }
             }
+        }
+        compressionJob = job
+        job.invokeOnCompletion {
+            if (compressionJob === job) compressionJob = null
+        }
+    }
+
+    fun cancelVideoCompression() {
+        compressionJob?.cancel()
+        compressionJob = null
+        _state.update {
+            it.copy(
+                compressingVideo = null,
+                compressionProgress = 0f,
+                message = locApp.getString(R.string.compressor_cancelled),
+            )
         }
     }
 
@@ -840,10 +865,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
             if (results.isNotEmpty()) {
+                val summary = BatchPhotoOptimizationSummary(results)
+                Prefs.addBytesFreed(summary.totalSavedBytes)
                 _state.update {
                     it.copy(
                         optimizingPhotos = false,
-                        photoOptimizationSummary = BatchPhotoOptimizationSummary(results),
+                        photoOptimizationSummary = summary,
                     )
                 }
             } else {
@@ -995,6 +1022,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
         val uris = items.map { it.uri }.toSet()
         val bytes = items.sumOf { it.size }
+        Prefs.addBytesFreed(bytes)
         val shouldAskReview = Prefs.recordCleanupForReviewPrompt()
         val summary = CleanupSummary(
             fileCount = items.size,

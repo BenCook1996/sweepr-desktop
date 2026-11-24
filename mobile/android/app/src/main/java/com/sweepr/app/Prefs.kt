@@ -89,6 +89,7 @@ object Prefs {
     private const val KEY_SIGNED_TOKEN = "server_signed_token"
     private const val KEY_CLEANUP_COUNT = "cleanup_count"
     private const val KEY_REVIEW_SHOWN = "review_shown"
+    private const val KEY_TOTAL_BYTES_FREED = "total_bytes_freed"
 
     internal var appContext: Context? = null
     private lateinit var prefs: SharedPreferences
@@ -159,6 +160,9 @@ object Prefs {
     private val _account = MutableStateFlow(LinkedAccount())
     val account: StateFlow<LinkedAccount> = _account.asStateFlow()
 
+    private val _totalBytesFreed = MutableStateFlow(0L)
+    val totalBytesFreed: StateFlow<Long> = _totalBytesFreed.asStateFlow()
+
     private fun getOrCreateMasterKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
         val existing = keyStore.getEntry(MASTER_KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
@@ -224,6 +228,7 @@ object Prefs {
         // Monthly reminders are on by default, like the competition.
         _reminder.value = prefs.getString(KEY_REMINDER, null)
             ?.let { runCatching { ReminderFrequency.valueOf(it) }.getOrNull() } ?: ReminderFrequency.Monthly
+        _totalBytesFreed.value = prefs.getLong(KEY_TOTAL_BYTES_FREED, 0L).coerceAtLeast(0L)
 
         // Migrate and purge any legacy plaintext refresh token or entitlement keys from sweepr_prefs
         val legacyToken = prefs.getString(KEY_LEGACY_LINKED_REFRESH_TOKEN, null)
@@ -334,6 +339,16 @@ object Prefs {
             referralCode = defaultReferralCode(currentDevice),
         )
         setLinkedAccount(cleared)
+    }
+
+    fun addBytesFreed(bytes: Long): Long {
+        if (bytes <= 0L) return _totalBytesFreed.value
+        val updated = (_totalBytesFreed.value + bytes).coerceAtLeast(0L)
+        _totalBytesFreed.value = updated
+        if (::prefs.isInitialized) {
+            prefs.edit().putLong(KEY_TOTAL_BYTES_FREED, updated).apply()
+        }
+        return updated
     }
 
     /**
@@ -894,7 +909,7 @@ object Reminders {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_stat_sweepr)
             .setColor(0xFF10B981.toInt())
             .setContentTitle(loc.getString(R.string.notif_title))
             .setContentText(text)

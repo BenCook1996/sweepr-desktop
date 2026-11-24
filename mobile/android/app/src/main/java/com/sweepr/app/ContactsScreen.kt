@@ -83,7 +83,6 @@ fun ContactsScreen(
     var showIncompleteDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     var showCalendarDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     var showCalendarDisclosure by rememberSaveable { mutableStateOf(false) }
-    var showContactsDisclosure by rememberSaveable { mutableStateOf(false) }
 
     fun hasCalendarPerm(): Boolean {
         val readOk = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
@@ -118,34 +117,7 @@ fun ContactsScreen(
     val selectedEventsHere = state.selectedCalendarEventIds.filter { it in existingEventIds }.toSet()
 
     fun merge(keys: Set<String>) {
-        if (permissions.contactsWrite) onMerge(keys) else showContactsDisclosure = true
-    }
-
-    if (showContactsDisclosure) {
-        AlertDialog(
-            onDismissRequest = { showContactsDisclosure = false },
-            title = { Text("Contacts Access Disclosure") },
-            text = {
-                Text(
-                    "SWEEPR Cleaner needs access to your device's Contacts (READ_CONTACTS & WRITE_CONTACTS) solely to detect duplicate or incomplete contacts and merge/clean them at your request.\n\nAll contact scanning and merging happens 100% locally on your phone. Your contacts are never uploaded or shared with any server.",
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showContactsDisclosure = false
-                        onRequestPermission()
-                    },
-                ) {
-                    Text(stringResource(R.string.action_continue))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showContactsDisclosure = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
+        if (permissions.contactsWrite) onMerge(keys) else onRequestPermission()
     }
 
     if (showCalendarDisclosure) {
@@ -216,7 +188,7 @@ fun ContactsScreen(
                 Button(
                     onClick = {
                         showIncompleteDeleteConfirm = false
-                        if (permissions.contactsWrite) onDeleteIncompleteContacts(selectedIncompleteHere) else showContactsDisclosure = true
+                        if (permissions.contactsWrite) onDeleteIncompleteContacts(selectedIncompleteHere) else onRequestPermission()
                     },
                 ) {
                     Text(stringResource(R.string.action_delete))
@@ -381,7 +353,7 @@ fun ContactsScreen(
                         !permissions.contactsRead -> PermissionPrompt(
                             text = stringResource(R.string.contacts_permission_text),
                             buttonText = stringResource(R.string.contacts_permission_button),
-                            onClick = { showContactsDisclosure = true },
+                            onClick = onRequestPermission,
                             modifier = Modifier.weight(1f),
                         )
                         state.contactGroups.isEmpty() -> EmptyState(
@@ -434,7 +406,7 @@ fun ContactsScreen(
                         !permissions.contactsRead -> PermissionPrompt(
                             text = stringResource(R.string.contacts_permission_text),
                             buttonText = stringResource(R.string.contacts_permission_button),
-                            onClick = { showContactsDisclosure = true },
+                            onClick = onRequestPermission,
                             modifier = Modifier.weight(1f),
                         )
                         state.incompleteContacts.isEmpty() -> EmptyState(
@@ -655,7 +627,7 @@ private fun ContactGroupCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     group.reason,
-                    color = SweeprGreenDark,
+                    color = emeraldText(),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier

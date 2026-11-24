@@ -100,6 +100,7 @@ fun PhotosVideosScreen(
     onSetSelected: (Collection<Uri>, Boolean) -> Unit,
     onTrash: (List<MediaItem>) -> Unit,
     onCompressVideo: (MediaItem, CompressionPreset) -> Unit = { _, _ -> },
+    onCancelVideoCompression: () -> Unit = {},
     onClearCompressionResult: () -> Unit = {},
     onOptimizePhotos: (List<MediaItem>, Boolean, Boolean, PhotoCompressionPreset) -> Unit = { _, _, _, _ -> },
     onClearPhotoOptimizationResult: () -> Unit = {},
@@ -364,6 +365,11 @@ fun PhotosVideosScreen(
                 }
             },
             confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onCancelVideoCompression) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         )
     }
 
@@ -423,6 +429,11 @@ fun PhotosVideosScreen(
                 }
             },
             confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onCancelVideoCompression) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         )
     }
 
@@ -447,7 +458,7 @@ fun PhotosVideosScreen(
                         Spacer(Modifier.height(6.dp))
                         Text(
                             stringResource(R.string.photo_opt_gps_stripped_summary, summary.gpsStrippedCount),
-                            color = SweeprGreenDark,
+                            color = emeraldText(),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp,
                         )
@@ -697,7 +708,7 @@ fun StrengthSlider(
                                 text = stringResource(R.string.shrink_recommended),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = SweeprGreenDark,
+                                color = emeraldText(),
                                 modifier = Modifier
                                     .background(SweeprGreen.copy(alpha = 0.16f), RoundedCornerShape(999.dp))
                                     .padding(horizontal = 7.dp, vertical = 2.dp),
@@ -769,14 +780,14 @@ fun StrengthSlider(
                             text = label,
                             fontSize = 11.5.sp,
                             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
-                            color = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurface,
+                            color = if (isSelected) emeraldText() else MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
                         )
                         Text(
                             text = "-$pct%",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) SweeprGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isSelected) emeraldText() else MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -1337,7 +1348,7 @@ fun VideoCompressorOptionDialog(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     stringResource(R.string.compressor_subtitle, formatBytes(estSaved)),
-                    color = SweeprGreenDark,
+                    color = emeraldText(),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                 )

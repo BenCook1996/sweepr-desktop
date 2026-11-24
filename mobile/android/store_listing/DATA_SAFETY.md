@@ -5,6 +5,7 @@ Sweepr strictly adheres to Google Play's Photo and Video Permissions policy and 
 - **Included Permissions:**
   - `android.permission.READ_MEDIA_IMAGES` & `android.permission.READ_MEDIA_VIDEO` (Core functionality: scanning and cleaning duplicate/similar/blurry photos, screenshots, and large videos on Android 13+)
   - `android.permission.READ_MEDIA_VISUAL_USER_SELECTED` (Android 14+ partial photo picker access support)
+  - `android.permission.ACCESS_MEDIA_LOCATION` (On-device detection and user-initiated stripping of embedded EXIF GPS location coordinates from photos; coordinates never leave the device)
   - `android.permission.READ_EXTERNAL_STORAGE` (`maxSdkVersion="32"`) & `android.permission.WRITE_EXTERNAL_STORAGE` (`maxSdkVersion="28"`)
   - `android.permission.READ_CONTACTS` & `android.permission.WRITE_CONTACTS` (Core functionality: finding and merging duplicate contacts on-device)
   - `android.permission.READ_CALENDAR` & `android.permission.WRITE_CALENDAR` (Core functionality: scanning and cleaning past calendar events older than 1 year 100% locally on-device)
@@ -57,5 +58,5 @@ Sweepr strictly adheres to Google Play's Photo and Video Permissions policy and 
 - **Shared:** **No**.
 - **Purpose:** App functionality, Fraud prevention (enforcing device seat limit on linked cross-platform accounts and restoring subscriptions).
 
-#### F. Crash Logs & Diagnostics (`LogFiles.kt`)
-- **Collected automatically:** **No** (Crash stack traces and warnings are stored strictly in local cache `cache/logs/last_crash.txt` with billing tokens redacted, and are only shared if the user explicitly taps **Settings → Generate Log Files** and chooses to send an email).
+#### F. Crash Logs & Diagnostics (`SweeprApp.kt`, `LogFiles.kt`)
+- **Collected automatically:** **Yes — Redacted Crash Logs** (`error_type`, sanitized exception message with file paths/tokens scrubbed, stack trace up to 4 KB, OS/app version) are stored locally in `cache/logs/` and reported automatically via HTTPS to `POST https://sweeprcleaner.com/v1/telemetry/crash` (`App functionality / Analytics`, encrypted in transit, **Not shared with third parties**). Users can also explicitly export full local diagnostic logs via **Settings → Support & Diagnostics → Generate Log Files**.

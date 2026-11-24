@@ -73,6 +73,7 @@ private data class ReviewCategory(
     val title: String,
     val note: String?,
     val items: List<MediaItem>,
+    val showBestKeptBadge: Boolean = false,
     val onSeeAll: (() -> Unit)?,
 )
 
@@ -107,8 +108,8 @@ fun QuickCleanReviewScreen(
 
     val safe = remember(media, dupTitle) {
         listOf(
-            ReviewCategory("dup", dupTitle, dupNote, media.duplicateGroups.flatMap { it.extras }) { onOpenPhotosTab(0) },
-            ReviewCategory("sim", simTitle, simNote, media.similarGroups.flatMap { it.extras }) { onOpenPhotosTab(1) },
+            ReviewCategory("dup", dupTitle, dupNote, media.duplicateGroups.flatMap { it.extras }, showBestKeptBadge = true) { onOpenPhotosTab(0) },
+            ReviewCategory("sim", simTitle, simNote, media.similarGroups.flatMap { it.extras }, showBestKeptBadge = true) { onOpenPhotosTab(1) },
             ReviewCategory("shots", shotsTitle, null, media.screenshots) { onOpen(Screen.Screenshots) },
             ReviewCategory("blurry", blurryTitle, null, media.blurry) { onOpenPhotosTab(2) },
             ReviewCategory(
@@ -116,13 +117,13 @@ fun QuickCleanReviewScreen(
                 "App, Chat & Creator Media",
                 "WhatsApp, Telegram, Discord, CapCut & game media caches",
                 media.messengerMedia,
-            ) { onOpen(Screen.PhotosVideos) },
+            ) { onOpenPhotosTab(5) },
         ).filter { it.items.isNotEmpty() }
     }
     // Anything the user ticked elsewhere (videos, chat media, swipe…) so the dock total adds up.
     val covered = remember(safe) { safe.flatMap { c -> c.items.map { it.uri } }.toSet() }
     val other = state.selectedItems.filter { it.uri !in covered }
-    val otherCategory = if (other.isNotEmpty()) ReviewCategory("other", otherTitle, null, other, null) else null
+    val otherCategory = if (other.isNotEmpty()) ReviewCategory("other", otherTitle, null, other, onSeeAll = null) else null
     val hasContacts = state.contactGroups.isNotEmpty()
 
     Scaffold(
@@ -244,6 +245,7 @@ private fun ReviewMediaRow(
         title = category.title,
         subtitle = subtitle,
         note = category.note,
+        showBestKeptBadge = category.showBestKeptBadge,
         toggle = toggle,
         onCheck = { onSetSelected(uris, toggle != ToggleableState.On) },
         isExpanded = isExpanded,
@@ -294,6 +296,7 @@ private fun ReviewRowShell(
     title: String,
     subtitle: String,
     note: String?,
+    showBestKeptBadge: Boolean = false,
     toggle: ToggleableState,
     onCheck: () -> Unit,
     isExpanded: Boolean,
@@ -328,8 +331,8 @@ private fun ReviewRowShell(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    if (note != null) {
-                        SizeBadge("✓ Best Kept")
+                    if (showBestKeptBadge) {
+                        SizeBadge(stringResource(R.string.quick_clean_best_kept))
                     }
                 }
                 Text(
